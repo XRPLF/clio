@@ -147,11 +147,7 @@ CustomValidator IssuerValidator =
         if (issuer == ripple::noAccount())
         {
             return Error{Status{
-                RippledError::rpcINVALID_PARAMS,
-                fmt::format(
-                    "Invalid field '{}', bad issuer account "
-                    "one.",
-                    key)}};
+                RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer account one.", key)}};
         }
 
         return MaybeError{};

@@ -105,9 +105,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
     if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger)
     {
         if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin))
-        {
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
-        }
 
         if (!input.ledgerIndexMax && !input.ledgerIndexMin)
         {
