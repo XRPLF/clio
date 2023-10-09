@@ -105,15 +105,21 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
     if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger)
     {
         if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin))
+        {
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
+        }
+        else if (!input.ledgerIndexMax && !input.ledgerIndexMin)
+        {
+            // mimic rippled, when both range and index specified, respect the range.
+            // take ledger from ledgerHash or ledgerIndex only when range is not specified
+            auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+                *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
 
-        auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+            if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
+                return Error{*status};
 
-        if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
-            return Error{*status};
-
-        maxIndex = minIndex = std::get<ripple::LedgerHeader>(lgrInfoOrStatus).seq;
+            maxIndex = minIndex = std::get<ripple::LedgerHeader>(lgrInfoOrStatus).seq;
+        }
     }
 
     std::optional<data::TransactionsCursor> cursor;
@@ -191,9 +197,6 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             obj[JS(meta)] = ripple::strHex(txnPlusMeta.metadata);
             obj[JS(tx_blob)] = ripple::strHex(txnPlusMeta.transaction);
             obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
-
-            if (ctx.apiVersion < 2u)
-                obj[JS(inLedger)] = txnPlusMeta.ledgerSequence;
         }
 
         obj[JS(validated)] = true;
