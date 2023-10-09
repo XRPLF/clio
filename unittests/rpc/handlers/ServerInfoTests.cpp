@@ -99,12 +99,18 @@ protected:
     }
 
     static void
-    validateAdminOutput(rpc::ReturnType const& output)
+    validateAdminOutput(rpc::ReturnType const& output, bool shouldHaveBackendCounters = false)
     {
         auto const& result = output.value().as_object();
         auto const& info = result.at("info").as_object();
         EXPECT_TRUE(info.contains("etl"));
         EXPECT_TRUE(info.contains("counters"));
+        if (shouldHaveBackendCounters)
+        {
+            ASSERT_TRUE(info.contains("backend_counters")) << boost::json::serialize(info);
+            EXPECT_TRUE(info.at("backend_counters").is_object());
+            EXPECT_TRUE(!info.at("backend_counters").as_object().empty());
+        }
     }
 
     static void
@@ -326,6 +332,64 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 
         validateNormalOutput(output);
         validateAdminOutput(output);
+    });
+}
+
+TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
+{
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = mockCountersPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
+    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
+
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+
+    auto const empty = json::object{};
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(feeBlob));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+
+    ON_CALL(*rawBalancerPtr, forwardToRippled).WillByDefault(Return(empty));
+    EXPECT_CALL(*rawBalancerPtr, forwardToRippled).Times(1);
+
+    ON_CALL(*rawCountersPtr, uptime).WillByDefault(Return(std::chrono::seconds{1234}));
+    EXPECT_CALL(*rawCountersPtr, uptime).Times(1);
+
+    ON_CALL(*rawETLServicePtr, isAmendmentBlocked).WillByDefault(Return(false));
+    EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).Times(1);
+
+    // admin calls
+    ON_CALL(*rawCountersPtr, report).WillByDefault(Return(empty));
+    EXPECT_CALL(*rawCountersPtr, report).Times(1);
+
+    ON_CALL(*rawSubscriptionManagerPtr, report).WillByDefault(Return(empty));
+    EXPECT_CALL(*rawSubscriptionManagerPtr, report).Times(1);
+
+    ON_CALL(*rawETLServicePtr, getInfo).WillByDefault(Return(empty));
+    EXPECT_CALL(*rawETLServicePtr, getInfo).Times(1);
+
+    EXPECT_CALL(*rawBackendPtr, stats).WillOnce(Return(boost::json::object{{"read_cout", 10}, {"write_count", 3}}));
+
+    auto const handler = AnyHandler{TestServerInfoHandler{
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
+
+    runSpawn([&](auto yield) {
+        auto const req = json::parse(R"(
+        {
+            "backend_counters": true
+        }
+        )");
+        auto const output = handler.process(req, Context{yield, {}, true});
+
+        validateNormalOutput(output);
+        validateAdminOutput(output, true);
     });
 }
 
