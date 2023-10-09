@@ -81,7 +81,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCBookChangesGroup1,
     BookChangesParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    BookChangesParameterTest::NameGenerator{});
+    BookChangesParameterTest::NameGenerator{}
+);
 
 TEST_P(BookChangesParameterTest, InvalidParams)
 {
@@ -155,7 +156,8 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
         R"({{
             "ledger_hash":"{}"
         }})",
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});

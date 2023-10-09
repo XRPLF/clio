@@ -44,7 +44,8 @@ TEST_F(RPCVersionHandlerTest, Default)
         }})",
         MIN_API_VERSION,
         MAX_API_VERSION,
-        DEFAULT_API_VERSION))};
+        DEFAULT_API_VERSION
+    ))};
 
     runSpawn([&](auto yield) {
         auto const handler = AnyHandler{VersionHandler{cfg}};

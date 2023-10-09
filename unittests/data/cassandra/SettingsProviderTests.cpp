@@ -125,7 +125,8 @@ TEST_F(SettingsProviderTest, CertificateConfig)
             "contact_points": "127.0.0.1",
             "certfile": "{}"
         }})",
-        file.path))};
+        file.path
+    ))};
     SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();

@@ -40,7 +40,8 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -94,7 +95,8 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
     };
 
     auto const next = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse, true);
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse, true
+    );
 
     if (auto status = std::get_if<Status>(&next))
         return Error{*status};
@@ -120,7 +122,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHa
         std::cbegin(output.accountObjects),
         std::cend(output.accountObjects),
         std::back_inserter(objects),
-        [](auto const& sle) { return toJson(sle); });
+        [](auto const& sle) { return toJson(sle); }
+    );
 
     jv = {
         {JS(ledger_hash), output.ledgerHash},

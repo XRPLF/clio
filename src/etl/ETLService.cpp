@@ -49,7 +49,8 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     for (auto i = 0u; i < numExtractors; ++i)
     {
         extractors.push_back(std::make_unique<ExtractorType>(
-            pipe, networkValidatedLedgers_, ledgerFetcher_, startSequence + i, finishSequence_, state_));
+            pipe, networkValidatedLedgers_, ledgerFetcher_, startSequence + i, finishSequence_, state_
+        ));
     }
 
     auto transformer =
@@ -272,7 +273,8 @@ ETLService::ETLService(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManagerType> subscriptions,
     std::shared_ptr<LoadBalancerType> balancer,
-    std::shared_ptr<NetworkValidatedLedgersType> ledgers)
+    std::shared_ptr<NetworkValidatedLedgersType> ledgers
+)
     : backend_(backend)
     , loadBalancer_(balancer)
     , networkValidatedLedgers_(std::move(ledgers))

@@ -530,7 +530,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCSubscribe,
     SubscribeParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    SubscribeParameterTest::NameGenerator{});
+    SubscribeParameterTest::NameGenerator{}
+);
 
 TEST_P(SubscribeParameterTest, InvalidParams)
 {
@@ -562,7 +563,8 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
     auto const input = json::parse(
         R"({
             "streams": ["transactions_proposed","transactions","validations","manifests","book_changes"]
-        })");
+        })"
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
@@ -608,7 +610,8 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
     auto const input = json::parse(
         R"({
             "streams": ["ledger"]
-        })");
+        })"
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
@@ -628,7 +631,8 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
         }})",
         ACCOUNT,
         ACCOUNT2,
-        ACCOUNT2));
+        ACCOUNT2
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
@@ -649,7 +653,8 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
         }})",
         ACCOUNT,
         ACCOUNT2,
-        ACCOUNT2));
+        ACCOUNT2
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
@@ -681,7 +686,8 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
                 }}
             ]
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
@@ -713,7 +719,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
                 }}
             ]
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
@@ -747,7 +754,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
                 }}
             ]
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
@@ -755,10 +763,12 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     auto const issuer = GetAccountIDWithString(ACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
+        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())
+    ));
 
     auto const reversedBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)));
+        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)
+    ));
 
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, MAXSEQ, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
@@ -785,12 +795,14 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
 
     // offer owner account root
     ON_CALL(
-        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, MAXSEQ, _))
+        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, MAXSEQ, _)
+    )
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     // issuer account root
     ON_CALL(
-        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, MAXSEQ, _))
+        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, MAXSEQ, _)
+    )
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     // fee
@@ -805,7 +817,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         ripple::to_string(ripple::to_currency("USD")),
         toBase58(ripple::xrpAccount()),
         ACCOUNT,
-        PAYS20USDGETS10XRPBOOKDIR);
+        PAYS20USDGETS10XRPBOOKDIR
+    );
 
     // for reverse
     // offer owner is USD issuer
@@ -817,7 +830,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT,
         toBase58(ripple::xrpAccount()),
-        PAYS20XRPGETS10USDBOOKDIR);
+        PAYS20XRPGETS10USDBOOKDIR
+    );
 
     std::vector<Blob> const bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes, MAXSEQ, _)).WillByDefault(Return(bbs));
@@ -852,7 +866,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         }})",
         ACCOUNT2,
         PAYS20USDGETS10XRPBOOKDIR,
-        ACCOUNT);
+        ACCOUNT
+    );
     static auto const expectedReversedOffer = fmt::format(
         R"({{
             "Account":"{}",
@@ -877,7 +892,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         }})",
         ACCOUNT,
         PAYS20XRPGETS10USDBOOKDIR,
-        ACCOUNT);
+        ACCOUNT
+    );
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
@@ -913,7 +929,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
                 }}
             ]
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
@@ -921,10 +938,12 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     auto const issuer = GetAccountIDWithString(ACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
+        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())
+    ));
 
     auto const reversedBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)));
+        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)
+    ));
 
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, MAXSEQ, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
@@ -950,12 +969,14 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
 
     // offer owner account root
     ON_CALL(
-        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, MAXSEQ, _))
+        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, MAXSEQ, _)
+    )
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     // issuer account root
     ON_CALL(
-        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, MAXSEQ, _))
+        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, MAXSEQ, _)
+    )
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     // fee
@@ -970,7 +991,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         ripple::to_string(ripple::to_currency("USD")),
         toBase58(ripple::xrpAccount()),
         ACCOUNT,
-        PAYS20USDGETS10XRPBOOKDIR);
+        PAYS20USDGETS10XRPBOOKDIR
+    );
 
     // for reverse
     // offer owner is USD issuer
@@ -982,7 +1004,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT,
         toBase58(ripple::xrpAccount()),
-        PAYS20XRPGETS10USDBOOKDIR);
+        PAYS20XRPGETS10USDBOOKDIR
+    );
 
     std::vector<Blob> const bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes, MAXSEQ, _)).WillByDefault(Return(bbs));
@@ -1017,7 +1040,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         }})",
         ACCOUNT2,
         PAYS20USDGETS10XRPBOOKDIR,
-        ACCOUNT);
+        ACCOUNT
+    );
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};

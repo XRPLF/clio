@@ -113,7 +113,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
         EXPECT_EQ(
             cursor->toString(),
             "0000000000000000000000000000000000000000000000000000000000000000,"
-            "0");
+            "0"
+        );
     });
     ctx.run();
 }
@@ -259,7 +260,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX1, pageNum), yield, [&](auto) { count++; });
+            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX1, pageNum), yield, [&](auto) { count++; }
+        );
         auto cursor = std::get_if<AccountCursor>(&ret);
         EXPECT_TRUE(cursor != nullptr);
         EXPECT_EQ(count, limit);
@@ -299,7 +301,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX2, pageNum), yield, [&](auto) { count++; });
+            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX2, pageNum), yield, [&](auto) { count++; }
+        );
         auto status = std::get_if<Status>(&ret);
         EXPECT_TRUE(status != nullptr);
         EXPECT_EQ(*status, ripple::rpcINVALID_PARAMS);

@@ -47,7 +47,8 @@ public:
         : apiVersionParser_(
               config.valueOr("default", API_VERSION_DEFAULT),
               config.valueOr("min", API_VERSION_MIN),
-              config.valueOr("max", API_VERSION_MAX))
+              config.valueOr("max", API_VERSION_MAX)
+          )
     {
     }
 

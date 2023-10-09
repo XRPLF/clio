@@ -77,7 +77,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
             "tx_hash": "{}"
         }})",
         INDEX,
-        TXNID));
+        TXNID
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -103,7 +104,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
             "ledger_index": "4",
             "tx_hash": "{}"
         }})",
-        TXNID));
+        TXNID
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -131,7 +133,8 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
             R"({{ 
                 "tx_hash": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -165,7 +168,8 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
                 "tx_hash": "{}",
                 "ledger_index": "30"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -244,7 +248,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
                 "ledger_index": {}
             }})",
             TXNID,
-            tx.ledgerSequence));
+            tx.ledgerSequence
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(OUTPUT), *output);

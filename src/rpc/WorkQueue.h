@@ -113,7 +113,8 @@ public:
 
                 func(yield);
                 --curSize_;
-            });
+            }
+        );
 
         return true;
     }

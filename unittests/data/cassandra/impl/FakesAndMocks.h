@@ -100,13 +100,15 @@ struct MockHandle
         FutureWithCallbackType,
         asyncExecute,
         (StatementType const&, std::function<void(ResultOrErrorType)>&&),
-        (const));
+        (const)
+    );
 
     MOCK_METHOD(
         FutureWithCallbackType,
         asyncExecute,
         (std::vector<StatementType> const&, std::function<void(ResultOrErrorType)>&&),
-        (const));
+        (const)
+    );
 
     MOCK_METHOD(ResultOrErrorType, execute, (StatementType const&), (const));
 };

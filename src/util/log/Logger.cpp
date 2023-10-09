@@ -65,7 +65,8 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
         return Severity::FTL;
 
     throw std::runtime_error(
-        "Could not parse `log_level`: expected `trace`, `debug`, `info`, `warning`, `error` or `fatal`");
+        "Could not parse `log_level`: expected `trace`, `debug`, `info`, `warning`, `error` or `fatal`"
+    );
 }
 
 void
@@ -100,9 +101,11 @@ LogService::init(util::Config const& config)
             keywords::open_mode = std::ios_base::app,
             keywords::rotation_size = rotationSize,
             keywords::time_based_rotation =
-                sinks::file::rotation_at_time_interval(boost::posix_time::hours(rotationPeriod)));
+                sinks::file::rotation_at_time_interval(boost::posix_time::hours(rotationPeriod))
+        );
         fileSink->locked_backend()->set_file_collector(
-            sinks::file::make_collector(keywords::target = dirPath, keywords::max_size = dirSize));
+            sinks::file::make_collector(keywords::target = dirPath, keywords::max_size = dirSize)
+        );
         fileSink->locked_backend()->scan_for_files();
     }
 

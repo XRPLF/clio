@@ -77,7 +77,8 @@ getDeliveredAmount(
     std::shared_ptr<ripple::STTx const> const& txn,
     std::shared_ptr<ripple::TxMeta const> const& meta,
     std::uint32_t const ledgerSequence,
-    uint32_t date)
+    uint32_t date
+)
 {
     if (meta->hasDeliveredAmount())
         return meta->getDeliveredAmount();
@@ -106,7 +107,8 @@ getDeliveredAmount(
 bool
 canHaveDeliveredAmount(
     std::shared_ptr<ripple::STTx const> const& txn,
-    std::shared_ptr<ripple::TxMeta const> const& meta)
+    std::shared_ptr<ripple::TxMeta const> const& meta
+)
 {
     ripple::TxType const tt{txn->getTxnType()};
     if (tt != ripple::ttPAYMENT && tt != ripple::ttCHECK_CASH && tt != ripple::ttACCOUNT_DELETE)
@@ -249,7 +251,8 @@ insertDeliveredAmount(
     boost::json::object& metaJson,
     std::shared_ptr<ripple::STTx const> const& txn,
     std::shared_ptr<ripple::TxMeta const> const& meta,
-    uint32_t date)
+    uint32_t date
+)
 {
     if (canHaveDeliveredAmount(txn, meta))
     {
@@ -398,7 +401,8 @@ getLedgerInfoFromHashOrSeq(
     boost::asio::yield_context yield,
     std::optional<std::string> ledgerHash,
     std::optional<uint32_t> ledgerIndex,
-    uint32_t maxSeq)
+    uint32_t maxSeq
+)
 {
     std::optional<ripple::LedgerHeader> lgrInfo;
     auto const err = Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
@@ -473,7 +477,8 @@ traverseNFTObjects(
     ripple::uint256 nextPage,
     std::uint32_t limit,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode)
+    std::function<void(ripple::SLE&&)> atOwnedNode
+)
 {
     auto const firstNFTPage = ripple::keylet::nftpage_min(accountID);
     auto const lastNFTPage = ripple::keylet::nftpage_max(accountID);
@@ -527,7 +532,8 @@ traverseOwnedNodes(
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context yield,
     std::function<void(ripple::SLE&&)> atOwnedNode,
-    bool nftIncluded)
+    bool nftIncluded
+)
 {
     auto const maybeCursor = parseAccountCursor(jsonCursor);
 
@@ -569,7 +575,8 @@ traverseOwnedNodes(
     }
 
     return traverseOwnedNodes(
-        backend, ripple::keylet::ownerDir(accountID), hexCursor, startHint, sequence, limit, yield, atOwnedNode);
+        backend, ripple::keylet::ownerDir(accountID), hexCursor, startHint, sequence, limit, yield, atOwnedNode
+    );
 }
 
 std::variant<Status, AccountCursor>
@@ -581,7 +588,8 @@ traverseOwnedNodes(
     std::uint32_t sequence,
     std::uint32_t limit,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode)
+    std::function<void(ripple::SLE&&)> atOwnedNode
+)
 {
     auto cursor = AccountCursor({beast::zero, 0});
 
@@ -701,7 +709,8 @@ traverseOwnedNodes(
     LOG(gLog.debug()) << fmt::format(
         "Time loading owned directories: {} milliseconds, entries size: {}",
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(),
-        keys.size());
+        keys.size()
+    );
 
     auto [objects, timeDiff] = util::timed([&]() { return backend.fetchLedgerObjects(keys, sequence, yield); });
 
@@ -724,7 +733,8 @@ read(
     std::shared_ptr<data::BackendInterface const> const& backend,
     ripple::Keylet const& keylet,
     ripple::LedgerHeader const& lgrInfo,
-    web::Context const& context)
+    web::Context const& context
+)
 {
     if (auto const blob = backend->fetchLedgerObject(keylet.key, lgrInfo.seq, context.yield); blob)
     {
@@ -896,7 +906,8 @@ isGlobalFrozen(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context yield)
+    boost::asio::yield_context yield
+)
 {
     if (ripple::isXRP(issuer))
         return false;
@@ -920,7 +931,8 @@ isFrozen(
     ripple::AccountID const& account,
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context yield)
+    boost::asio::yield_context yield
+)
 {
     if (ripple::isXRP(currency))
         return false;
@@ -962,7 +974,8 @@ xrpLiquid(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& id,
-    boost::asio::yield_context yield)
+    boost::asio::yield_context yield
+)
 {
     auto key = ripple::keylet::account(id).key;
     auto blob = backend.fetchLedgerObject(key, sequence, yield);
@@ -992,7 +1005,8 @@ accountFunds(
     std::uint32_t const sequence,
     ripple::STAmount const& amount,
     ripple::AccountID const& id,
-    boost::asio::yield_context yield)
+    boost::asio::yield_context yield
+)
 {
     if (!amount.native() && amount.getIssuer() == id)
     {
@@ -1010,7 +1024,8 @@ accountHolds(
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
     bool const zeroIfFrozen,
-    boost::asio::yield_context yield)
+    boost::asio::yield_context yield
+)
 {
     ripple::STAmount amount;
     if (ripple::isXRP(currency))
@@ -1053,7 +1068,8 @@ transferRate(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context yield)
+    boost::asio::yield_context yield
+)
 {
     auto key = ripple::keylet::account(issuer).key;
     auto blob = backend.fetchLedgerObject(key, sequence, yield);
@@ -1077,7 +1093,8 @@ postProcessOrderBook(
     ripple::AccountID const& takerID,
     data::BackendInterface const& backend,
     std::uint32_t const ledgerSequence,
-    boost::asio::yield_context yield)
+    boost::asio::yield_context yield
+)
 {
     boost::json::array jsonOffers;
 
@@ -1127,7 +1144,8 @@ postProcessOrderBook(
                 else
                 {
                     saOwnerFunds = accountHolds(
-                        backend, ledgerSequence, uOfferOwnerID, book.out.currency, book.out.account, true, yield);
+                        backend, ledgerSequence, uOfferOwnerID, book.out.currency, book.out.account, true, yield
+                    );
 
                     if (saOwnerFunds < beast::zero)
                         saOwnerFunds.clear();
@@ -1383,7 +1401,8 @@ isAmendmentEnabled(
     std::shared_ptr<data::BackendInterface const> const& backend,
     boost::asio::yield_context yield,
     uint32_t seq,
-    ripple::uint256 amendmentId)
+    ripple::uint256 amendmentId
+)
 {
     // the amendments should always be present in ledger
     auto const& amendments = backend->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);

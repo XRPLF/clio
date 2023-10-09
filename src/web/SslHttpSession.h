@@ -62,14 +62,16 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer buffer)
+        boost::beast::flat_buffer buffer
+    )
         : detail::HttpBase<SslHttpSession, HandlerType>(
               ip,
               tagFactory,
               std::move(adminPassword),
               dosGuard,
               handler,
-              std::move(buffer))
+              std::move(buffer)
+          )
         , stream_(std::move(socket), ctx)
         , tagFactory_(tagFactory)
     {
@@ -98,7 +100,8 @@ public:
             self->stream_.async_handshake(
                 boost::asio::ssl::stream_base::server,
                 self->buffer_.data(),
-                boost::beast::bind_front_handler(&SslHttpSession<HandlerType>::onHandshake, self));
+                boost::beast::bind_front_handler(&SslHttpSession<HandlerType>::onHandshake, self)
+            );
         });
     }
 
@@ -151,7 +154,8 @@ public:
             this->handler_,
             std::move(this->buffer_),
             std::move(this->req_),
-            ConnectionBase::isAdmin())
+            ConnectionBase::isAdmin()
+        )
             ->run();
     }
 };

@@ -56,7 +56,8 @@ public:
         LedgerFetcherType& ledgerFetcher,
         uint32_t startSequence,
         std::optional<uint32_t> finishSequence,
-        SystemState const& state)
+        SystemState const& state
+    )
         : pipe_(std::ref(pipe))
         , networkValidatedLedgers_{std::move(networkValidatedLedgers)}
         , ledgerFetcher_{std::ref(ledgerFetcher)}
@@ -91,8 +92,9 @@ private:
 
         while (!shouldFinish(currentSequence) && networkValidatedLedgers_->waitUntilValidatedByNetwork(currentSequence))
         {
-            auto [fetchResponse, time] = ::util::timed<std::chrono::duration<double>>(
-                [this, currentSequence]() { return ledgerFetcher_.get().fetchDataAndDiff(currentSequence); });
+            auto [fetchResponse, time] = ::util::timed<std::chrono::duration<double>>([this, currentSequence]() {
+                return ledgerFetcher_.get().fetchDataAndDiff(currentSequence);
+            });
             totalTime += time;
 
             // if the fetch is unsuccessful, stop. fetchLedger only returns false if the server is shutting down, or if

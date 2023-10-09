@@ -164,7 +164,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCDepositAuthorizedGroup,
     DepositAuthorizedParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    DepositAuthorizedParameterTest::NameGenerator{});
+    DepositAuthorizedParameterTest::NameGenerator{}
+);
 
 TEST_P(DepositAuthorizedParameterTest, InvalidParams)
 {
@@ -201,7 +202,8 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
             }})",
             ACCOUNT,
             ACCOUNT2,
-            RANGEMAX));
+            RANGEMAX
+        ));
 
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -231,7 +233,8 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
             }})",
             ACCOUNT,
             ACCOUNT2,
-            RANGEMAX));
+            RANGEMAX
+        ));
 
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -261,7 +264,8 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
             }})",
             ACCOUNT,
             ACCOUNT2,
-            LEDGERHASH));
+            LEDGERHASH
+        ));
 
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -294,7 +298,8 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
         }})",
         ACCOUNT,
         ACCOUNT2,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
@@ -334,7 +339,8 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
         }})",
         ACCOUNT,
         ACCOUNT2,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
@@ -381,7 +387,8 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
         }})",
         ACCOUNT,
         ACCOUNT,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
@@ -430,7 +437,8 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
         }})",
         ACCOUNT,
         ACCOUNT2,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
@@ -480,7 +488,8 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
         }})",
         ACCOUNT,
         ACCOUNT2,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
@@ -530,7 +539,8 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
         }})",
         ACCOUNT,
         ACCOUNT2,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};

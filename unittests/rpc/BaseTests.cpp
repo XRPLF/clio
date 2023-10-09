@@ -328,7 +328,8 @@ TEST_F(RPCBaseTest, WithCustomError)
         {"other", WithCustomError{Type<std::string>{}, rpc::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}}}};
 
     auto passingInput = json::parse(
-        R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC", "other": "1"})");
+        R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC", "other": "1"})"
+    );
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput =
@@ -522,7 +523,8 @@ TEST_F(RPCBaseTest, SubscribeStreamValidator)
                 "transactions",
                 "book_changes"
             ]
-        })");
+        })"
+    );
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput = json::parse(R"({ "streams": 256})");

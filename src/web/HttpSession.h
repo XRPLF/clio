@@ -60,14 +60,16 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer buffer)
+        boost::beast::flat_buffer buffer
+    )
         : detail::HttpBase<HttpSession, HandlerType>(
               ip,
               tagFactory,
               std::move(adminPassword),
               dosGuard,
               handler,
-              std::move(buffer))
+              std::move(buffer)
+          )
         , stream_(std::move(socket))
         , tagFactory_(tagFactory)
     {
@@ -89,7 +91,9 @@ public:
         boost::asio::dispatch(
             stream_.get_executor(),
             boost::beast::bind_front_handler(
-                &detail::HttpBase<HttpSession, HandlerType>::doRead, this->shared_from_this()));
+                &detail::HttpBase<HttpSession, HandlerType>::doRead, this->shared_from_this()
+            )
+        );
     }
 
     /** @brief Closes the underlying socket. */
@@ -112,7 +116,8 @@ public:
             this->handler_,
             std::move(this->buffer_),
             std::move(this->req_),
-            ConnectionBase::isAdmin())
+            ConnectionBase::isAdmin()
+        )
             ->run();
     }
 };

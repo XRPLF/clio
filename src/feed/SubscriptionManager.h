@@ -360,7 +360,8 @@ public:
         ripple::LedgerHeader const& lgrInfo,
         ripple::Fees const& fees,
         std::string const& ledgerRange,
-        std::uint32_t txnCount);
+        std::uint32_t txnCount
+    );
 
     /**
      * @brief Publish to the book changes stream.

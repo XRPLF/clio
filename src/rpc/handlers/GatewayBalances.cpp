@@ -27,7 +27,8 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -116,7 +117,8 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
         std::numeric_limits<std::uint32_t>::max(),
         {},
         ctx.yield,
-        addToResponse);
+        addToResponse
+    );
 
     if (auto status = std::get_if<Status>(&ret))
         return Error{*status};
@@ -225,7 +227,8 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
                 hotWallets.begin(),
                 hotWallets.end(),
                 std::inserter(input.hotWallets, input.hotWallets.begin()),
-                [](auto const& hotWallet) { return *accountFromStringStrict(hotWallet.as_string().c_str()); });
+                [](auto const& hotWallet) { return *accountFromStringStrict(hotWallet.as_string().c_str()); }
+            );
         }
     }
 

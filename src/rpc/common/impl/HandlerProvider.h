@@ -58,7 +58,8 @@ public:
         std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
         std::shared_ptr<etl::ETLService const> const& etl,
-        Counters const& counters);
+        Counters const& counters
+    );
 
     bool
     contains(std::string const& method) const override;

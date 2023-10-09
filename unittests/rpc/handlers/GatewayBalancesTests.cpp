@@ -107,7 +107,8 @@ generateParameterTestBundles()
                     "account": "{}",
                     "ledger_index": "meh"
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "ledgerIndexMalformed"},
         ParameterTestBundle{
@@ -117,7 +118,8 @@ generateParameterTestBundles()
                     "account": "{}",
                     "ledger_hash": "meh"
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "ledger_hashMalformed"},
         ParameterTestBundle{
@@ -127,7 +129,8 @@ generateParameterTestBundles()
                     "account": "{}",
                     "ledger_hash": 12
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "ledger_hashNotString"},
         ParameterTestBundle{
@@ -137,7 +140,8 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": 12
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "hotwalletNotStringOrArray"},
         ParameterTestBundle{
@@ -147,7 +151,8 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": [12]
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "hotwalletMalformed"},
         ParameterTestBundle{
@@ -157,7 +162,8 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": ["12"]
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "hotwalletMalformed"},
         ParameterTestBundle{
@@ -167,7 +173,8 @@ generateParameterTestBundles()
                     "account": "{}",
                     "hotwallet": "12"
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "hotwalletMalformed"},
     };
@@ -177,7 +184,8 @@ INSTANTIATE_TEST_SUITE_P(
     RPCGatewayBalancesHandler,
     ParameterTest,
     testing::ValuesIn(generateParameterTestBundles()),
-    ParameterTest::NameGenerator());
+    ParameterTest::NameGenerator()
+);
 
 TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
 {
@@ -199,8 +207,10 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
                     "ledger_index": "{}"
                 }})",
                 ACCOUNT,
-                seq)),
-            Context{yield});
+                seq
+            )),
+            Context{yield}
+        );
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -228,8 +238,10 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
                     "ledger_index": {}
                 }})",
                 ACCOUNT,
-                seq)),
-            Context{yield});
+                seq
+            )),
+            Context{yield}
+        );
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -257,8 +269,10 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
                     "ledger_hash": "{}"
                 }})",
                 ACCOUNT,
-                LEDGERHASH)),
-            Context{yield});
+                LEDGERHASH
+            )),
+            Context{yield}
+        );
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -290,8 +304,10 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
                 R"({{
                     "account": "{}"
                 }})",
-                ACCOUNT)),
-            Context{yield});
+                ACCOUNT
+            )),
+            Context{yield}
+        );
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
@@ -338,8 +354,10 @@ TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
                     "hotwallet": "{}"
                 }})",
                 ACCOUNT,
-                ACCOUNT2)),
-            Context{yield});
+                ACCOUNT2
+            )),
+            Context{yield}
+        );
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidHotWallet");
@@ -396,9 +414,11 @@ TEST_P(NormalPathTest, CheckOutput)
 
     std::vector<Blob> bbs;
     std::transform(
-        bundle.mockedObjects.begin(), bundle.mockedObjects.end(), std::back_inserter(bbs), [](auto const& obj) {
-            return obj.getSerializer().peekData();
-        });
+        bundle.mockedObjects.begin(),
+        bundle.mockedObjects.end(),
+        std::back_inserter(bbs),
+        [](auto const& obj) { return obj.getSerializer().peekData(); }
+    );
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
@@ -411,8 +431,10 @@ TEST_P(NormalPathTest, CheckOutput)
                     {}
                 }})",
                 ACCOUNT,
-                bundle.hotwallet)),
-            Context{yield});
+                bundle.hotwallet
+            )),
+            Context{yield}
+        );
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value(), json::parse(bundle.expectedJson));
     });
@@ -437,7 +459,8 @@ generateNormalPathTestBundles()
                  ripple::uint256{INDEX2},
                  ripple::uint256{INDEX2},
                  ripple::uint256{INDEX2}},
-                INDEX1),
+                INDEX1
+            ),
             std::vector{// hotwallet
                         CreateRippleStateLedgerObject("USD", ISSUER, -10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
                         // hotwallet
@@ -495,7 +518,8 @@ generateNormalPathTestBundles()
                 ACCOUNT2,
                 ACCOUNT3,
                 ACCOUNT3,
-                ACCOUNT),
+                ACCOUNT
+            ),
             fmt::format(R"("hotwallet": "{}")", ACCOUNT2)},
         NormalTestBundle{
             "NoHotwallet",
@@ -510,7 +534,8 @@ generateNormalPathTestBundles()
                     "ledger_index":300,
                     "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             R"("ledger_index" : "validated")"},
         NormalTestBundle{
             "ObligationOverflow",
@@ -525,13 +550,15 @@ generateNormalPathTestBundles()
                     "ledger_index":300,
                     "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             R"("ledger_index" : "validated")"},
         NormalTestBundle{
             "HighID",
             CreateOwnerDirLedgerObject(
                 {ripple::uint256{INDEX2}, ripple::uint256{INDEX2}, ripple::uint256{INDEX2}, ripple::uint256{INDEX2}},
-                INDEX1),
+                INDEX1
+            ),
             std::vector{// hotwallet
                         CreateRippleStateLedgerObject("USD", ISSUER, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123),
                         // hotwallet
@@ -569,12 +596,14 @@ generateNormalPathTestBundles()
                 }})",
                 ACCOUNT2,
                 ACCOUNT3,
-                ACCOUNT),
+                ACCOUNT
+            ),
             fmt::format(R"("hotwallet": "{}")", ACCOUNT2)},
         NormalTestBundle{
             "HotWalletArray",
             CreateOwnerDirLedgerObject(
-                {ripple::uint256{INDEX2}, ripple::uint256{INDEX2}, ripple::uint256{INDEX2}}, INDEX1),
+                {ripple::uint256{INDEX2}, ripple::uint256{INDEX2}, ripple::uint256{INDEX2}}, INDEX1
+            ),
             std::vector{
                 CreateRippleStateLedgerObject("USD", ISSUER, -10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
                 CreateRippleStateLedgerObject("CNY", ISSUER, -20, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123),
@@ -607,7 +636,8 @@ generateNormalPathTestBundles()
                 }})",
                 ACCOUNT3,
                 ACCOUNT2,
-                ACCOUNT),
+                ACCOUNT
+            ),
             fmt::format(R"("hotwallet": ["{}", "{}"])", ACCOUNT2, ACCOUNT3)},
     };
 }
@@ -616,4 +646,5 @@ INSTANTIATE_TEST_SUITE_P(
     RPCGatewayBalancesHandler,
     NormalPathTest,
     testing::ValuesIn(generateNormalPathTestBundles()),
-    NormalPathTest::NameGenerator());
+    NormalPathTest::NameGenerator()
+);

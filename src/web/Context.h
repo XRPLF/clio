@@ -69,7 +69,8 @@ struct Context : util::Taggable
         util::TagDecoratorFactory const& tagFactory,
         data::LedgerRange const& range,
         std::string clientIp,
-        bool isAdmin)
+        bool isAdmin
+    )
         : Taggable(tagFactory)
         , yield(std::move(yield))
         , method(std::move(command))

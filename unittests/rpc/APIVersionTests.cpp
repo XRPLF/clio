@@ -102,7 +102,8 @@ TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
         }})",
         MIN_API_VERSION,
         MAX_API_VERSION,
-        DEFAULT_API_VERSION))};
+        DEFAULT_API_VERSION
+    ))};
 
     ProductionAPIVersionParser const configuredParser{cfg};
 

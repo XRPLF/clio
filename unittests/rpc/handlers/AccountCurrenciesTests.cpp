@@ -57,7 +57,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
         R"({{
             "account":"{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -82,7 +83,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
         R"({{
             "account":"{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -110,7 +112,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
             "ledger_index":"{}"
         }})",
         ACCOUNT,
-        seq));
+        seq
+    ));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -138,7 +141,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
             "ledger_hash":"{}"
         }})",
         ACCOUNT,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -203,7 +207,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
         R"({{
             "account":"{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -243,7 +248,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
             "ledger_hash":"{}"
         }})",
         ACCOUNT,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -284,7 +290,8 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
             "ledger_index":{}
         }})",
         ACCOUNT,
-        ledgerSeq));
+        ledgerSeq
+    ));
     auto const handler = AnyHandler{AccountCurrenciesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});

@@ -60,7 +60,8 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
                     static_assert(unsupported_v<decltype(*req)>);
                 }
             }(),
-            ...);
+            ...
+        );
 
         if (firstFailure)
             return Error{firstFailure.value()};

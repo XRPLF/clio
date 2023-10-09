@@ -86,7 +86,8 @@ protected:
         Input input,
         ripple::uint256 const& tokenID,
         ripple::Keylet const& directory,
-        boost::asio::yield_context yield) const;
+        boost::asio::yield_context yield
+    ) const;
 
 private:
     friend void

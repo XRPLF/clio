@@ -81,7 +81,8 @@ public:
                     if (j.is_string())
                     {
                         auto const pk = ripple::parseBase58<ripple::PublicKey>(
-                            ripple::TokenType::AccountPublic, j.as_string().c_str());
+                            ripple::TokenType::AccountPublic, j.as_string().c_str()
+                        );
 
                         if (pk)
                             return ripple::calcAccountID(*pk);

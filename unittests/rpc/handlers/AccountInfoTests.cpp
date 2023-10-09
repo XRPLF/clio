@@ -99,7 +99,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountInfoGroup1,
     AccountInfoParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    AccountInfoParameterTest::NameGenerator{});
+    AccountInfoParameterTest::NameGenerator{}
+);
 
 TEST_P(AccountInfoParameterTest, InvalidParams)
 {
@@ -151,7 +152,8 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
             "account": "{}",
             "ledger_index": 30
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -177,7 +179,8 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
             "account": "{}",
             "ledger_index": "30"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -205,7 +208,8 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
             "ledger_hash": "{}"
         }})",
         ACCOUNT,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -233,7 +237,8 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
         R"({{
             "account": "{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -262,7 +267,8 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
         R"({{
             "account": "{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -300,7 +306,8 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
             "account": "{}",
             "signer_lists": true
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -378,7 +385,8 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
         INDEX1,
         ACCOUNT1,
         ACCOUNT2,
-        LEDGERHASH);
+        LEDGERHASH
+    );
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
@@ -404,7 +412,8 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
             "account": "{}",
             "signer_lists": true
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2});
@@ -480,7 +489,8 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
         INDEX1,
         ACCOUNT1,
         ACCOUNT2,
-        LEDGERHASH);
+        LEDGERHASH
+    );
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
@@ -506,7 +516,8 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
             "account": "{}",
             "signer_lists": true
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 1});
@@ -548,7 +559,8 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
         }})",
         ACCOUNT,
         INDEX1,
-        LEDGERHASH);
+        LEDGERHASH
+    );
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
@@ -568,7 +580,8 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
         200,
         2,
         INDEX1,
-        2);
+        2
+    );
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
@@ -579,7 +592,8 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
         R"({{
             "account": "{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -611,7 +625,8 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
         R"({{
             "ident": "{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -657,7 +672,8 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
         }})",
         ACCOUNT,
         INDEX1,
-        LEDGERHASH);
+        LEDGERHASH
+    );
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
@@ -678,7 +694,8 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
         200,
         2,
         INDEX1,
-        2);
+        2
+    );
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
@@ -689,7 +706,8 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
         R"({{
             "account": "{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -732,7 +750,8 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
         }})",
         ACCOUNT,
         INDEX1,
-        LEDGERHASH);
+        LEDGERHASH
+    );
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
@@ -752,7 +771,8 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
         200,
         2,
         INDEX1,
-        2);
+        2
+    );
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
@@ -763,7 +783,8 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
         R"({{
             "account": "{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountInfoHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});

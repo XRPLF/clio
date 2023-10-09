@@ -71,7 +71,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<LoadBalancerType> balancer,
         LedgerFetcherType& fetcher,
-        SystemState const& state)
+        SystemState const& state
+    )
         : backend_{std::move(backend)}
         , loadBalancer_{std::move(balancer)}
         , fetcher_{std::ref(fetcher)}
@@ -119,7 +120,8 @@ public:
                 ledger.seq,
                 ledger.closeTime.time_since_epoch().count(),
                 std::move(*raw),
-                std::move(*txn.mutable_metadata_blob()));
+                std::move(*txn.mutable_metadata_blob())
+            );
         }
 
         // Remove all but the last NFTsData for each id. unique removes all but the first of a group, so we want to
@@ -130,9 +132,10 @@ public:
 
         // Now we can unique the NFTs by tokenID.
         auto last = std::unique(
-            result.nfTokensData.begin(), result.nfTokensData.end(), [](NFTsData const& a, NFTsData const& b) {
-                return a.tokenID == b.tokenID;
-            });
+            result.nfTokensData.begin(),
+            result.nfTokensData.end(),
+            [](NFTsData const& a, NFTsData const& b) { return a.tokenID == b.tokenID; }
+        );
         result.nfTokensData.erase(last, result.nfTokensData.end());
 
         return result;
@@ -223,7 +226,8 @@ public:
                                                           << " - " << ripple::strHex(cur->key);
 
                                         backend_->writeSuccessor(
-                                            uint256ToString(base), sequence, uint256ToString(cur->key));
+                                            uint256ToString(base), sequence, uint256ToString(cur->key)
+                                        );
                                     }
                                 }
 

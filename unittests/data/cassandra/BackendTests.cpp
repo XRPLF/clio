@@ -51,7 +51,8 @@ protected:
             "replication_factor": 1
         }})JSON",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
     SettingsProvider settingsProvider{cfg, 0};
 
     // recreated for each test
@@ -327,7 +328,8 @@ TEST_F(BackendCassandraTest, Basic)
         ripple::uint256 nftID;
         EXPECT_TRUE(
             nftID.parseHex("000800006203F49C21D5D6E022CB16DE3538F248662"
-                           "FC73CEF7FF5C60000002C"));
+                           "FC73CEF7FF5C60000002C")
+        );
 
         std::string metaBlob = hexStringToBinaryString(metaHex);
         std::string txnBlob = hexStringToBinaryString(txnHex);
@@ -378,7 +380,8 @@ TEST_F(BackendCassandraTest, Basic)
                 lgrInfoNext.seq,
                 lgrInfoNext.closeTime.time_since_epoch().count(),
                 std::string{txnBlob},
-                std::string{metaBlob});
+                std::string{metaBlob}
+            );
             backend->writeAccountTransactions(std::move(accountTxData));
             backend->writeNFTs(std::move(nftData));
             backend->writeNFTTransactions(std::move(parsedNFTTxs));
@@ -402,10 +405,12 @@ TEST_F(BackendCassandraTest, Basic)
             ASSERT_EQ(allTransactions.size(), 1);
             EXPECT_STREQ(
                 reinterpret_cast<const char*>(allTransactions[0].transaction.data()),
-                static_cast<const char*>(txnBlob.data()));
+                static_cast<const char*>(txnBlob.data())
+            );
             EXPECT_STREQ(
                 reinterpret_cast<const char*>(allTransactions[0].metadata.data()),
-                static_cast<const char*>(metaBlob.data()));
+                static_cast<const char*>(metaBlob.data())
+            );
             auto hashes = backend->fetchAllTransactionHashesInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(hashes.size(), 1);
             EXPECT_EQ(ripple::strHex(hashes[0]), hashHex);
@@ -599,7 +604,8 @@ TEST_F(BackendCassandraTest, Basic)
                     lgrInfo.seq,
                     lgrInfo.closeTime.time_since_epoch().count(),
                     std::move(txn),
-                    std::move(meta));
+                    std::move(meta)
+                );
             }
             for (auto [key, obj] : objs)
             {
@@ -615,18 +621,21 @@ TEST_F(BackendCassandraTest, Basic)
                     if (i + 1 < objs.size())
                     {
                         backend->writeSuccessor(
-                            std::string{objs[i].first}, lgrInfo.seq, std::string{objs[i + 1].first});
+                            std::string{objs[i].first}, lgrInfo.seq, std::string{objs[i + 1].first}
+                        );
                     }
                     else
                     {
                         backend->writeSuccessor(
-                            std::string{objs[i].first}, lgrInfo.seq, uint256ToString(data::lastKey));
+                            std::string{objs[i].first}, lgrInfo.seq, uint256ToString(data::lastKey)
+                        );
                     }
                 }
                 if (state.contains(lgrInfo.seq - 1))
                 {
                     backend->writeSuccessor(
-                        std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first});
+                        std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first}
+                    );
                 }
                 else
                 {
@@ -656,11 +665,13 @@ TEST_F(BackendCassandraTest, Basic)
                     if (std::strncmp(
                             reinterpret_cast<const char*>(retTxn.data()),
                             static_cast<const char*>(txn.data()),
-                            txn.size()) == 0 &&
+                            txn.size()
+                        ) == 0 &&
                         std::strncmp(
                             reinterpret_cast<const char*>(retMeta.data()),
                             static_cast<const char*>(meta.data()),
-                            meta.size()) == 0)
+                            meta.size()
+                        ) == 0)
                         found = true;
                 }
                 ASSERT_TRUE(found);
@@ -716,7 +727,8 @@ TEST_F(BackendCassandraTest, Basic)
                     {
                         ASSERT_TRUE(retObj.size());
                         EXPECT_STREQ(
-                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data()));
+                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data())
+                        );
                     }
                     else
                     {
@@ -766,7 +778,8 @@ TEST_F(BackendCassandraTest, Basic)
                 for (auto account : rec.accounts)
                 {
                     allAccountTx[lgrInfoNext.seq][account].emplace_back(
-                        reinterpret_cast<const char*>(rec.txHash.data()), ripple::uint256::size());
+                        reinterpret_cast<const char*>(rec.txHash.data()), ripple::uint256::size()
+                    );
                 }
             }
             EXPECT_EQ(objs.size(), 25);
@@ -803,7 +816,8 @@ TEST_F(BackendCassandraTest, Basic)
                 for (auto account : rec.accounts)
                 {
                     allAccountTx[lgrInfoNext.seq][account].emplace_back(
-                        reinterpret_cast<const char*>(rec.txHash.data()), ripple::uint256::size());
+                        reinterpret_cast<const char*>(rec.txHash.data()), ripple::uint256::size()
+                    );
                 }
             }
             EXPECT_EQ(objs.size(), 25);
@@ -1141,18 +1155,21 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                     if (i + 1 < objs.size())
                     {
                         backend->writeSuccessor(
-                            std::string{objs[i].first}, lgrInfo.seq, std::string{objs[i + 1].first});
+                            std::string{objs[i].first}, lgrInfo.seq, std::string{objs[i + 1].first}
+                        );
                     }
                     else
                     {
                         backend->writeSuccessor(
-                            std::string{objs[i].first}, lgrInfo.seq, uint256ToString(data::lastKey));
+                            std::string{objs[i].first}, lgrInfo.seq, uint256ToString(data::lastKey)
+                        );
                     }
                 }
                 if (state.contains(lgrInfo.seq - 1))
                 {
                     backend->writeSuccessor(
-                        std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first});
+                        std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first}
+                    );
                 }
                 else
                 {
@@ -1207,7 +1224,8 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                     {
                         ASSERT_TRUE(retObj.size());
                         EXPECT_STREQ(
-                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data()));
+                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data())
+                        );
                     }
                     else
                     {

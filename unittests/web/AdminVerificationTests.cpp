@@ -80,7 +80,8 @@ struct MakeAdminVerificationStrategyTestParams
     MakeAdminVerificationStrategyTestParams(
         std::optional<std::string> passwordOpt,
         bool expectIpStrategy,
-        bool expectPasswordStrategy)
+        bool expectPasswordStrategy
+    )
         : passwordOpt(std::move(passwordOpt))
         , expectIpStrategy(expectIpStrategy)
         , expectPasswordStrategy(expectPasswordStrategy)
@@ -110,4 +111,6 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         MakeAdminVerificationStrategyTestParams(std::nullopt, true, false),
         MakeAdminVerificationStrategyTestParams("p", false, true),
-        MakeAdminVerificationStrategyTestParams("", false, true)));
+        MakeAdminVerificationStrategyTestParams("", false, true)
+    )
+);

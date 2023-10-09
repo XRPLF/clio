@@ -103,8 +103,8 @@ public:
     template <SomeRequirement... Requirements>
     IfType(Requirements&&... requirements)
         : processor_(
-              [... r = std::forward<Requirements>(
-                   requirements)](boost::json::value& j, std::string_view key) -> MaybeError {
+              [... r = std::forward<Requirements>(requirements
+               )](boost::json::value& j, std::string_view key) -> MaybeError {
                   std::optional<Status> firstFailure = std::nullopt;
 
                   // the check logic is the same as fieldspec
@@ -116,13 +116,15 @@ public:
                           if (auto const res = req->verify(j, key); not res)
                               firstFailure = res.error();
                       }(),
-                      ...);
+                      ...
+                  );
 
                   if (firstFailure)
                       return Error{firstFailure.value()};
 
                   return {};
-              })
+              }
+          )
     {
     }
 

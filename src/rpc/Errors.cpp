@@ -142,7 +142,8 @@ makeError(Status const& status)
                 return makeError(err, wrapOptional(status.error), wrapOptional(status.message));
             },
         },
-        status.code);
+        status.code
+    );
 
     if (status.extraInfo)
     {

@@ -78,7 +78,8 @@ private:
                 std::make_move_iterator(std::begin(tally_)),
                 std::make_move_iterator(std::end(tally_)),
                 std::back_inserter(changes),
-                [](auto obj) { return obj.second; });
+                [](auto obj) { return obj.second; }
+            );
             return changes;
         }
 

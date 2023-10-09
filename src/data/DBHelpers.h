@@ -107,7 +107,8 @@ struct NFTsData
         ripple::uint256 const& tokenID,
         ripple::AccountID const& owner,
         ripple::Blob const& uri,
-        ripple::TxMeta const& meta)
+        ripple::TxMeta const& meta
+    )
         : tokenID(tokenID), ledgerSequence(meta.getLgrSeq()), transactionIndex(meta.getIndex()), owner(owner), uri(uri)
     {
     }
@@ -133,7 +134,8 @@ struct NFTsData
         ripple::uint256 const& tokenID,
         std::uint32_t const ledgerSequence,
         ripple::AccountID const& owner,
-        ripple::Blob const& uri)
+        ripple::Blob const& uri
+    )
         : tokenID(tokenID), ledgerSequence(ledgerSequence), owner(owner), uri(uri)
     {
     }

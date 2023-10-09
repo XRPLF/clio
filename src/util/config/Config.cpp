@@ -165,8 +165,9 @@ Config::array() const
     auto const& arr = store_.as_array();
     out.reserve(arr.size());
 
-    std::transform(
-        std::cbegin(arr), std::cend(arr), std::back_inserter(out), [](auto const& element) { return Config{element}; });
+    std::transform(std::cbegin(arr), std::cend(arr), std::back_inserter(out), [](auto const& element) {
+        return Config{element};
+    });
     return out;
 }
 

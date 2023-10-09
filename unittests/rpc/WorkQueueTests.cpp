@@ -60,7 +60,8 @@ TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
                 if (++executeCount; executeCount == TOTAL)
                     sem.release();  // 1) note we are still in user function
             },
-            true);
+            true
+        );
     }
 
     sem.acquire();
@@ -98,7 +99,8 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
                 if (--expectedCount; expectedCount == 0)
                     sem.release();
             },
-            false);
+            false
+        );
 
         if (i == TOTAL - 1)
         {

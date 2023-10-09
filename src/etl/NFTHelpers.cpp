@@ -58,9 +58,11 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
             ripple::STArray const& toAddNFTs =
                 node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>().getFieldArray(ripple::sfNFTokens);
             std::transform(
-                toAddNFTs.begin(), toAddNFTs.end(), std::back_inserter(finalIDs), [](ripple::STObject const& nft) {
-                    return nft.getFieldH256(ripple::sfNFTokenID);
-                });
+                toAddNFTs.begin(),
+                toAddNFTs.end(),
+                std::back_inserter(finalIDs),
+                [](ripple::STObject const& nft) { return nft.getFieldH256(ripple::sfNFTokenID); }
+            );
         }
         // Else it's modified, as there should never be a deleted NFToken page
         // as a result of a mint.
@@ -82,9 +84,11 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 
             ripple::STArray const& toAddNFTs = previousFields.getFieldArray(ripple::sfNFTokens);
             std::transform(
-                toAddNFTs.begin(), toAddNFTs.end(), std::back_inserter(prevIDs), [](ripple::STObject const& nft) {
-                    return nft.getFieldH256(ripple::sfNFTokenID);
-                });
+                toAddNFTs.begin(),
+                toAddNFTs.end(),
+                std::back_inserter(prevIDs),
+                [](ripple::STObject const& nft) { return nft.getFieldH256(ripple::sfNFTokenID); }
+            );
 
             ripple::STArray const& toAddFinalNFTs =
                 node.peekAtField(ripple::sfFinalFields).downcast<ripple::STObject>().getFieldArray(ripple::sfNFTokens);
@@ -92,7 +96,8 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
                 toAddFinalNFTs.begin(),
                 toAddFinalNFTs.end(),
                 std::back_inserter(finalIDs),
-                [](ripple::STObject const& nft) { return nft.getFieldH256(ripple::sfNFTokenID); });
+                [](ripple::STObject const& nft) { return nft.getFieldH256(ripple::sfNFTokenID); }
+            );
         }
     }
 
@@ -107,8 +112,8 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
     // iterator should never be end().  But better safe than sorry.
     if (finalIDs.size() != prevIDs.size() + 1 || diff.first == finalIDs.end() || !owner)
     {
-        throw std::runtime_error(
-            fmt::format(" - unexpected NFTokenMint data in tx {}", strHex(sttx.getTransactionID())));
+        throw std::runtime_error(fmt::format(" - unexpected NFTokenMint data in tx {}", strHex(sttx.getTransactionID()))
+        );
     }
 
     return {
@@ -166,10 +171,9 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
             return std::make_pair(
                 txs,
                 NFTsData(
-                    tokenID,
-                    ripple::AccountID::fromVoid(node.getFieldH256(ripple::sfLedgerIndex).data()),
-                    txMeta,
-                    true));
+                    tokenID, ripple::AccountID::fromVoid(node.getFieldH256(ripple::sfLedgerIndex).data()), txMeta, true
+                )
+            );
         }
     }
 

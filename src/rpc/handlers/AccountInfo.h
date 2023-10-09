@@ -57,7 +57,8 @@ public:
             bool isDisallowIncomingEnabled,
             bool isClawbackEnabled,
             uint32_t version,
-            std::optional<std::vector<ripple::STLedgerEntry>> signerLists = std::nullopt)
+            std::optional<std::vector<ripple::STLedgerEntry>> signerLists = std::nullopt
+        )
             : ledgerIndex(ledgerId)
             , ledgerHash(std::move(ledgerHash))
             , accountData(std::move(sle))

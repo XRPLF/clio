@@ -81,7 +81,8 @@ insertDeliveredAmount(
     boost::json::object& metaJson,
     std::shared_ptr<ripple::STTx const> const& txn,
     std::shared_ptr<ripple::TxMeta const> const& meta,
-    uint32_t date);
+    uint32_t date
+);
 
 boost::json::object
 toJson(ripple::STBase const& obj);
@@ -104,7 +105,8 @@ generatePubLedgerMessage(
     ripple::LedgerHeader const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
-    std::uint32_t txnCount);
+    std::uint32_t txnCount
+);
 
 std::variant<Status, ripple::LedgerHeader>
 ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx);
@@ -115,7 +117,8 @@ getLedgerInfoFromHashOrSeq(
     boost::asio::yield_context yield,
     std::optional<std::string> ledgerHash,
     std::optional<uint32_t> ledgerIndex,
-    uint32_t maxSeq);
+    uint32_t maxSeq
+);
 
 std::variant<Status, AccountCursor>
 traverseOwnedNodes(
@@ -126,7 +129,8 @@ traverseOwnedNodes(
     std::uint32_t sequence,
     std::uint32_t limit,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode);
+    std::function<void(ripple::SLE&&)> atOwnedNode
+);
 
 // Remove the account check from traverseOwnedNodes
 // Account check has been done by framework,remove it from internal function
@@ -139,14 +143,16 @@ traverseOwnedNodes(
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context yield,
     std::function<void(ripple::SLE&&)> atOwnedNode,
-    bool nftIncluded = false);
+    bool nftIncluded = false
+);
 
 std::shared_ptr<ripple::SLE const>
 read(
     std::shared_ptr<data::BackendInterface const> const& backend,
     ripple::Keylet const& keylet,
     ripple::LedgerHeader const& lgrInfo,
-    web::Context const& context);
+    web::Context const& context
+);
 
 std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
 keypairFromRequst(boost::json::object const& request);
@@ -162,7 +168,8 @@ isGlobalFrozen(
     BackendInterface const& backend,
     std::uint32_t seq,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context yield);
+    boost::asio::yield_context yield
+);
 
 bool
 isFrozen(
@@ -171,7 +178,8 @@ isFrozen(
     ripple::AccountID const& account,
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context yield);
+    boost::asio::yield_context yield
+);
 
 ripple::STAmount
 accountFunds(
@@ -179,7 +187,8 @@ accountFunds(
     std::uint32_t sequence,
     ripple::STAmount const& amount,
     ripple::AccountID const& id,
-    boost::asio::yield_context yield);
+    boost::asio::yield_context yield
+);
 
 ripple::STAmount
 accountHolds(
@@ -189,21 +198,24 @@ accountHolds(
     ripple::Currency const& currency,
     ripple::AccountID const& issuer,
     bool zeroIfFrozen,
-    boost::asio::yield_context yield);
+    boost::asio::yield_context yield
+);
 
 ripple::Rate
 transferRate(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& issuer,
-    boost::asio::yield_context yield);
+    boost::asio::yield_context yield
+);
 
 ripple::XRPAmount
 xrpLiquid(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& id,
-    boost::asio::yield_context yield);
+    boost::asio::yield_context yield
+);
 
 boost::json::array
 postProcessOrderBook(
@@ -212,7 +224,8 @@ postProcessOrderBook(
     ripple::AccountID const& takerID,
     data::BackendInterface const& backend,
     std::uint32_t ledgerSequence,
-    boost::asio::yield_context yield);
+    boost::asio::yield_context yield
+);
 
 std::variant<Status, ripple::Book>
 parseBook(ripple::Currency pays, ripple::AccountID payIssuer, ripple::Currency gets, ripple::AccountID getIssuer);
@@ -234,7 +247,8 @@ isAmendmentEnabled(
     std::shared_ptr<data::BackendInterface const> const& backend,
     boost::asio::yield_context yield,
     uint32_t seq,
-    ripple::uint256 amendmentId);
+    ripple::uint256 amendmentId
+);
 
 std::optional<std::string>
 encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept;
@@ -289,9 +303,8 @@ logDuration(web::Context const& ctx, T const& dur)
     auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     auto const msg = fmt::format(
-        "Request processing duration = {} milliseconds. request = {}",
-        millis,
-        serialize(util::removeSecret(ctx.params)));
+        "Request processing duration = {} milliseconds. request = {}", millis, serialize(util::removeSecret(ctx.params))
+    );
 
     if (seconds > DURATION_ERROR_THRESHOLD_SECONDS)
     {

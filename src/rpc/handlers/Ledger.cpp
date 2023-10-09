@@ -25,7 +25,8 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -103,13 +104,15 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                                     amount.getCurrency(),
                                     amount.getIssuer(),
                                     false,  // fhIGNORE_FREEZE from rippled
-                                    ctx.yield);
+                                    ctx.yield
+                                );
                                 entry[JS(owner_funds)] = ownerFunds.getText();
                             }
                         }
                     }
                     return entry;
-                });
+                }
+            );
         }
         else
         {
@@ -118,7 +121,8 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                 std::move_iterator(hashes.begin()),
                 std::move_iterator(hashes.end()),
                 std::back_inserter(jsonTxs),
-                [](auto hash) { return boost::json::string(ripple::strHex(hash)); });
+                [](auto hash) { return boost::json::string(ripple::strHex(hash)); }
+            );
         }
     }
 

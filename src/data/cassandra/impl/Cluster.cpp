@@ -50,14 +50,15 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
     cass_cluster_set_token_aware_routing(*this, cass_true);
     if (auto const rc = cass_cluster_set_protocol_version(*this, CASS_PROTOCOL_VERSION_V4); rc != CASS_OK)
     {
-        throw std::runtime_error(
-            fmt::format("Error setting cassandra protocol version to v4: {}", cass_error_desc(rc)));
+        throw std::runtime_error(fmt::format("Error setting cassandra protocol version to v4: {}", cass_error_desc(rc))
+        );
     }
 
     if (auto const rc = cass_cluster_set_num_threads_io(*this, settings.threads); rc != CASS_OK)
     {
         throw std::runtime_error(
-            fmt::format("Error setting cassandra io threads to {}: {}", settings.threads, cass_error_desc(rc)));
+            fmt::format("Error setting cassandra io threads to {}: {}", settings.threads, cass_error_desc(rc))
+        );
     }
 
     cass_log_set_level(settings.enableLog ? CASS_LOG_TRACE : CASS_LOG_DISABLED);
@@ -93,7 +94,8 @@ Cluster::setupConnection(Settings const& settings)
         overloadSet{
             [this](Settings::ContactPoints const& points) { setupContactPoints(points); },
             [this](Settings::SecureConnectionBundle const& bundle) { setupSecureBundle(bundle); }},
-        settings.connectionInfo);
+        settings.connectionInfo
+    );
 }
 
 void
@@ -104,7 +106,8 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
         if (rc != CASS_OK)
         {
             throw std::runtime_error(
-                fmt::format("Cassandra: Error setting {} [{}]: {}", label, value, cass_error_desc(rc)));
+                fmt::format("Cassandra: Error setting {} [{}]: {}", label, value, cass_error_desc(rc))
+            );
         }
     };
 

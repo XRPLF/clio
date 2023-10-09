@@ -99,7 +99,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerDataGroup1,
     LedgerDataParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    LedgerDataParameterTest::NameGenerator{});
+    LedgerDataParameterTest::NameGenerator{}
+);
 
 TEST_P(LedgerDataParameterTest, InvalidParams)
 {
@@ -133,7 +134,8 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
             R"({{
                 "ledger_index": {}
             }})",
-            RANGEMAX));
+            RANGEMAX
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -158,7 +160,8 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
             R"({{
                 "ledger_index": "{}"
             }})",
-            RANGEMAX));
+            RANGEMAX
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -183,7 +186,8 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
             R"({{
                 "ledger_hash": "{}"
             }})",
-            LEDGERHASH));
+            LEDGERHASH
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -213,7 +217,8 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
             R"({{
                 "marker": "{}"
             }})",
-            INDEX1));
+            INDEX1
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -423,7 +428,8 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
         .WillByDefault(
             Return(CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123)
                        .getSerializer()
-                       .peekData()));
+                       .peekData())
+        );
 
     auto limit = 10;
     std::vector<Blob> bbs;
@@ -449,7 +455,8 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
                 "limit":10,
                 "marker": "{}"
             }})",
-            INDEX1));
+            INDEX1
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(output->as_object().contains("ledger"));
@@ -496,7 +503,8 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
                 "marker": {},
                 "out_of_order": true
             }})",
-            RANGEMAX));
+            RANGEMAX
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(output->as_object().contains("ledger"));
@@ -539,7 +547,8 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
             R"({
                 "limit":10,
                 "binary": true
-            })");
+            })"
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
@@ -584,7 +593,8 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
                 "limit":{},
                 "binary": true
             }})",
-            LedgerDataHandler::LIMITBINARY + 1));
+            LedgerDataHandler::LIMITBINARY + 1
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
@@ -629,7 +639,8 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
                 "limit":{},
                 "binary": false
             }})",
-            LedgerDataHandler::LIMITJSON + 1));
+            LedgerDataHandler::LIMITJSON + 1
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));

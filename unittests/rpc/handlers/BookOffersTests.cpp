@@ -452,7 +452,8 @@ INSTANTIATE_TEST_SUITE_P(
     RPCBookOffersHandler,
     RPCBookOffersParameterTest,
     testing::ValuesIn(generateParameterBookOffersTestBundles()),
-    RPCBookOffersParameterTest::NameGenerator());
+    RPCBookOffersParameterTest::NameGenerator()
+);
 
 struct BookOffersNormalTestBundle
 {
@@ -509,9 +510,11 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
 
     std::vector<Blob> bbs;
     std::transform(
-        bundle.mockedOffers.begin(), bundle.mockedOffers.end(), std::back_inserter(bbs), [](auto const& obj) {
-            return obj.getSerializer().peekData();
-        });
+        bundle.mockedOffers.begin(),
+        bundle.mockedOffers.end(),
+        std::back_inserter(bbs),
+        [](auto const& obj) { return obj.getSerializer().peekData(); }
+    );
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
@@ -530,7 +533,8 @@ generateNormalPathBookOffersTestBundles()
     auto const account2 = GetAccountIDWithString(ACCOUNT2);
 
     auto const frozenTrustLine = CreateRippleStateLedgerObject(
-        "USD", ACCOUNT, -8, ACCOUNT2, 1000, ACCOUNT, 2000, INDEX1, 2, ripple::lsfLowFreeze);
+        "USD", ACCOUNT, -8, ACCOUNT2, 1000, ACCOUNT, 2000, INDEX1, 2, ripple::lsfLowFreeze
+    );
 
     auto const gets10USDPays20XRPOffer = CreateOfferLedgerObject(
         ACCOUNT2,
@@ -540,7 +544,8 @@ generateNormalPathBookOffersTestBundles()
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT,
         toBase58(ripple::xrpAccount()),
-        PAYS20XRPGETS10USDBOOKDIR);
+        PAYS20XRPGETS10USDBOOKDIR
+    );
 
     auto const gets10USDPays20XRPOwnerOffer = CreateOfferLedgerObject(
         ACCOUNT,
@@ -550,7 +555,8 @@ generateNormalPathBookOffersTestBundles()
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT,
         toBase58(ripple::xrpAccount()),
-        PAYS20XRPGETS10USDBOOKDIR);
+        PAYS20XRPGETS10USDBOOKDIR
+    );
 
     auto const gets10XRPPays20USDOffer = CreateOfferLedgerObject(
         ACCOUNT2,
@@ -560,12 +566,15 @@ generateNormalPathBookOffersTestBundles()
         ripple::to_string(ripple::to_currency("USD")),
         toBase58(ripple::xrpAccount()),
         ACCOUNT,
-        PAYS20USDGETS10XRPBOOKDIR);
+        PAYS20USDGETS10XRPBOOKDIR
+    );
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::to_currency("USD"), account, ripple::xrpCurrency(), ripple::xrpAccount())));
+        rpc::parseBook(ripple::to_currency("USD"), account, ripple::xrpCurrency(), ripple::xrpAccount())
+    ));
     auto const getsUSDPaysXRPBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), account)));
+        rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), account)
+    ));
 
     auto const getsXRPPaysUSDInputJson = fmt::format(
         R"({{
@@ -579,7 +588,8 @@ generateNormalPathBookOffersTestBundles()
                 "issuer": "{}"
             }}
         }})",
-        ACCOUNT);
+        ACCOUNT
+    );
 
     auto const paysXRPGetsUSDInputJson = fmt::format(
         R"({{
@@ -593,7 +603,8 @@ generateNormalPathBookOffersTestBundles()
                 "issuer": "{}"
             }}
         }})",
-        ACCOUNT);
+        ACCOUNT
+    );
 
     auto const feeLedgerObject = CreateFeeSettingBlob(1, 2, 3, 4, 0);
 
@@ -657,7 +668,8 @@ generateNormalPathBookOffersTestBundles()
                 LEDGERHASH,
                 ACCOUNT2,
                 193,
-                2)},
+                2
+            )},
         BookOffersNormalTestBundle{
             "PaysUSDGetsXRPNoFrozenOwnerFundNotEnough",
             getsXRPPaysUSDInputJson,
@@ -718,7 +730,8 @@ generateNormalPathBookOffersTestBundles()
                 LEDGERHASH,
                 ACCOUNT2,
                 5,
-                2)},
+                2
+            )},
         BookOffersNormalTestBundle{
             "PaysUSDGetsXRPFrozen",
             getsXRPPaysUSDInputJson,
@@ -774,7 +787,8 @@ generateNormalPathBookOffersTestBundles()
                 LEDGERHASH,
                 ACCOUNT2,
                 0,
-                2)},
+                2
+            )},
         BookOffersNormalTestBundle{
             "GetsUSDPaysXRPFrozen",
             paysXRPGetsUSDInputJson,
@@ -831,7 +845,8 @@ generateNormalPathBookOffersTestBundles()
                 ACCOUNT2,
                 PAYS20XRPGETS10USDBOOKDIR,
                 0,
-                2)},
+                2
+            )},
         BookOffersNormalTestBundle{
             "PaysXRPGetsUSDWithTransferFee",
             paysXRPGetsUSDInputJson,
@@ -890,7 +905,8 @@ generateNormalPathBookOffersTestBundles()
                 ACCOUNT2,
                 PAYS20XRPGETS10USDBOOKDIR,
                 8,
-                2)},
+                2
+            )},
         BookOffersNormalTestBundle{
             "PaysXRPGetsUSDWithMultipleOffers",
             paysXRPGetsUSDInputJson,
@@ -977,7 +993,8 @@ generateNormalPathBookOffersTestBundles()
                 2,
                 ACCOUNT2,
                 PAYS20XRPGETS10USDBOOKDIR,
-                2)},
+                2
+            )},
         BookOffersNormalTestBundle{
             "PaysXRPGetsUSDSellingOwnCurrency",
             paysXRPGetsUSDInputJson,
@@ -1027,7 +1044,8 @@ generateNormalPathBookOffersTestBundles()
                 ACCOUNT,
                 PAYS20XRPGETS10USDBOOKDIR,
                 10,
-                2)},
+                2
+            )},
         BookOffersNormalTestBundle{
             "PaysXRPGetsUSDTrustLineFrozen",
             paysXRPGetsUSDInputJson,
@@ -1086,7 +1104,8 @@ generateNormalPathBookOffersTestBundles()
                 ACCOUNT2,
                 PAYS20XRPGETS10USDBOOKDIR,
                 0,
-                2)},
+                2
+            )},
     };
 }
 
@@ -1094,7 +1113,8 @@ INSTANTIATE_TEST_SUITE_P(
     RPCBookOffersHandler,
     RPCBookOffersNormalPathTest,
     testing::ValuesIn(generateNormalPathBookOffersTestBundles()),
-    RPCBookOffersNormalPathTest::NameGenerator());
+    RPCBookOffersNormalPathTest::NameGenerator()
+);
 
 // ledger not exist
 TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
@@ -1120,7 +1140,8 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
                 "issuer": "{}"
             }}
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
@@ -1154,7 +1175,8 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
                 "issuer": "{}"
             }}
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
@@ -1190,7 +1212,8 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
             }}
         }})",
         LEDGERHASH,
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
@@ -1218,7 +1241,8 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(1);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
+        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())
+    ));
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
 
@@ -1234,8 +1258,9 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
         .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(issuer).key, seq, _))
-        .WillByDefault(Return(
-            CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2, TRANSFERRATEX2).getSerializer().peekData()));
+        .WillByDefault(
+            Return(CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2, TRANSFERRATEX2).getSerializer().peekData())
+        );
 
     auto const gets10XRPPays20USDOffer = CreateOfferLedgerObject(
         ACCOUNT2,
@@ -1245,7 +1270,8 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
         ripple::to_string(ripple::to_currency("USD")),
         toBase58(ripple::xrpAccount()),
         ACCOUNT,
-        PAYS20USDGETS10XRPBOOKDIR);
+        PAYS20USDGETS10XRPBOOKDIR
+    );
 
     std::vector<Blob> const bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -1264,7 +1290,8 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
             }},
             "limit": 5
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
@@ -1290,7 +1317,8 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(1);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
-        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())));
+        rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())
+    ));
     ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
 
@@ -1306,8 +1334,9 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
         .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(issuer).key, seq, _))
-        .WillByDefault(Return(
-            CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2, TRANSFERRATEX2).getSerializer().peekData()));
+        .WillByDefault(
+            Return(CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2, TRANSFERRATEX2).getSerializer().peekData())
+        );
 
     auto const gets10XRPPays20USDOffer = CreateOfferLedgerObject(
         ACCOUNT2,
@@ -1317,7 +1346,8 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
         ripple::to_string(ripple::to_currency("USD")),
         toBase58(ripple::xrpAccount()),
         ACCOUNT,
-        PAYS20USDGETS10XRPBOOKDIR);
+        PAYS20USDGETS10XRPBOOKDIR
+    );
 
     std::vector<Blob> const bbs(BookOffersHandler::LIMIT_MAX + 1, gets10XRPPays20USDOffer.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -1337,7 +1367,8 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
             "limit": {}
         }})",
         ACCOUNT,
-        BookOffersHandler::LIMIT_MAX + 1));
+        BookOffersHandler::LIMIT_MAX + 1
+    ));
     auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});

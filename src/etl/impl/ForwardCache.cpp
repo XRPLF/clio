@@ -36,7 +36,8 @@ ForwardCache::freshen()
     for (auto const& cacheEntry : latestForwarded_)
     {
         boost::asio::spawn(
-            strand_, [this, numOutstanding, command = cacheEntry.first](boost::asio::yield_context yield) {
+            strand_,
+            [this, numOutstanding, command = cacheEntry.first](boost::asio::yield_context yield) {
                 boost::json::object const request = {{"command", command}};
                 auto resp = source_.requestFromRippled(request, std::nullopt, yield);
 
@@ -47,7 +48,8 @@ ForwardCache::freshen()
                     std::scoped_lock const lk(mtx_);
                     latestForwarded_[command] = resp;
                 }
-            });
+            }
+        );
     }
 }
 

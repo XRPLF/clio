@@ -75,7 +75,8 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer&& buffer)
+        boost::beast::flat_buffer&& buffer
+    )
         : ConnectionBase(tagFactory, ip), buffer_(std::move(buffer)), dosGuard_(dosGuard), handler_(handler)
     {
         upgraded = true;  // NOLINT (cppcoreguidelines-pro-type-member-init)
@@ -100,7 +101,8 @@ public:
         sending_ = true;
         derived().ws().async_write(
             boost::asio::buffer(messages_.front()->data(), messages_.front()->size()),
-            boost::beast::bind_front_handler(&WsBase::onWrite, derived().shared_from_this()));
+            boost::beast::bind_front_handler(&WsBase::onWrite, derived().shared_from_this())
+        );
     }
 
     void
@@ -141,10 +143,12 @@ public:
     send(std::shared_ptr<std::string> msg) override
     {
         boost::asio::dispatch(
-            derived().ws().get_executor(), [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
+            derived().ws().get_executor(),
+            [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
                 messages_.push(msg);
                 maybeSendNext();
-            });
+            }
+        );
     }
 
     /**

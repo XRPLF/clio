@@ -71,7 +71,8 @@ public:
 
     BaseSubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<SubscriptionManagerType> const& subscriptions)
+        std::shared_ptr<SubscriptionManagerType> const& subscriptions
+    )
         : sharedPtrBackend_(sharedPtrBackend), subscriptions_(subscriptions)
     {
     }
@@ -99,7 +100,8 @@ public:
                     {
                         if (auto err = meta::WithCustomError(
                                            validation::AccountValidator,
-                                           Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."})
+                                           Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."}
+                            )
                                            .verify(book.as_object(), "taker");
                             !err)
                             return err;
@@ -154,7 +156,8 @@ private:
     subscribeToStreams(
         boost::asio::yield_context yield,
         std::vector<std::string> const& streams,
-        std::shared_ptr<web::ConnectionBase> const& session) const
+        std::shared_ptr<web::ConnectionBase> const& session
+    ) const
     {
         auto response = boost::json::object{};
 
@@ -203,7 +206,8 @@ private:
     void
     subscribeToAccountsProposed(
         std::vector<std::string> const& accounts,
-        std::shared_ptr<web::ConnectionBase> const& session) const
+        std::shared_ptr<web::ConnectionBase> const& session
+    ) const
     {
         for (auto const& account : accounts)
         {
@@ -217,7 +221,8 @@ private:
         std::vector<OrderBook> const& books,
         std::shared_ptr<web::ConnectionBase> const& session,
         boost::asio::yield_context yield,
-        Output& output) const
+        Output& output
+    ) const
     {
         static auto constexpr fetchLimit = 200;
 

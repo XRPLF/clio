@@ -56,7 +56,8 @@ public:
 
     BaseUnsubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<SubscriptionManagerType> const& subscriptions)
+        std::shared_ptr<SubscriptionManagerType> const& subscriptions
+    )
         : sharedPtrBackend_(sharedPtrBackend), subscriptions_(subscriptions)
     {
     }
@@ -165,7 +166,8 @@ private:
     void
     unsubscribeFromProposedAccounts(
         std::vector<std::string> accountsProposed,
-        std::shared_ptr<web::ConnectionBase> const& session) const
+        std::shared_ptr<web::ConnectionBase> const& session
+    ) const
     {
         for (auto const& account : accountsProposed)
         {

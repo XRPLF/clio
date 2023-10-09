@@ -83,7 +83,8 @@ public:
         web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
-        std::shared_ptr<HandlerProvider const> const& handlerProvider)
+        std::shared_ptr<HandlerProvider const> const& handlerProvider
+    )
         : backend_{backend}
         , subscriptions_{subscriptions}
         , balancer_{balancer}
@@ -103,10 +104,12 @@ public:
         web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
-        std::shared_ptr<HandlerProvider const> const& handlerProvider)
+        std::shared_ptr<HandlerProvider const> const& handlerProvider
+    )
     {
         return std::make_shared<RPCEngine>(
-            backend, subscriptions, balancer, dosGuard, workQueue, counters, handlerProvider);
+            backend, subscriptions, balancer, dosGuard, workQueue, counters, handlerProvider
+        );
     }
 
     /**

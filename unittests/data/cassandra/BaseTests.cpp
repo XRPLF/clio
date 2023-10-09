@@ -44,7 +44,8 @@ protected:
                   WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}} 
                    AND durable_writes = true
             )",
-            keyspace);
+            keyspace
+        );
         EXPECT_TRUE(handle.execute(query));
         EXPECT_TRUE(handle.reconnect(keyspace));
         return handle;
@@ -73,7 +74,8 @@ protected:
                 CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
                   WITH default_time_to_live = {}
             )",
-            to_string(5000));
+            to_string(5000)
+        );
 
         auto const f1 = handle.asyncExecute(q1);
         auto const rc = f1.await();
@@ -201,7 +203,8 @@ TEST_F(BackendCassandraBaseTest, KeyspaceManipulation)
                   WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}} 
                    AND durable_writes = true
             )",
-            keyspace);
+            keyspace
+        );
         auto const f = handle.asyncExecute(query);
         auto const rc = f.await();
         ASSERT_TRUE(rc);  // keyspace created
@@ -238,7 +241,8 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
             WITH default_time_to_live = {}
         )",
-        5000);
+        5000
+    );
 
     {
         auto const f1 = handle.asyncExecute(q1);
@@ -303,7 +307,8 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
               WITH default_time_to_live = {}
         )",
-        5000);
+        5000
+    );
     {
         auto const f1 = handle.asyncExecute(q1);
         auto const rc = f1.await();
@@ -361,7 +366,8 @@ TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
               WITH default_time_to_live = {}
         )",
-        5000);
+        5000
+    );
     auto const f1 = handle.asyncExecute(q1);
     auto const rc = f1.await();
     ASSERT_TRUE(rc) << rc.error();
@@ -406,7 +412,8 @@ TEST_F(BackendCassandraBaseTest, AlterTableAddColumn)
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
               WITH default_time_to_live = {}
         )",
-        5000);
+        5000
+    );
     ASSERT_TRUE(handle.execute(q1));
 
     std::string const update = "ALTER TABLE strings ADD tmp blob";
@@ -425,7 +432,8 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
             CREATE TABLE IF NOT EXISTS strings_v2 (hash blob PRIMARY KEY, sequence bigint, tmp bigint) 
               WITH default_time_to_live = {}
         )",
-        5000);
+        5000
+    );
     ASSERT_TRUE(handle.execute(newTable));
 
     // now migrate data; tmp column will just get the sequence number + 1 stored

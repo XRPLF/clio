@@ -486,7 +486,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCUnsubscribe,
     UnsubscribeParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    UnsubscribeParameterTest::NameGenerator{});
+    UnsubscribeParameterTest::NameGenerator{}
+);
 
 TEST_P(UnsubscribeParameterTest, InvalidParams)
 {
@@ -517,7 +518,8 @@ TEST_F(RPCUnsubscribeTest, Streams)
     auto const input = json::parse(
         R"({
             "streams": ["transactions_proposed","transactions","validations","manifests","book_changes","ledger"]
-        })");
+        })"
+    );
 
     MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubLedger).Times(1);
@@ -542,7 +544,8 @@ TEST_F(RPCUnsubscribeTest, Accounts)
             "accounts": ["{}","{}"]
         }})",
         ACCOUNT,
-        ACCOUNT2));
+        ACCOUNT2
+    ));
 
     MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(rpc::accountFromStringStrict(ACCOUNT).value(), _)).Times(1);
@@ -563,7 +566,8 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
             "accounts_proposed": ["{}","{}"]
         }})",
         ACCOUNT,
-        ACCOUNT2));
+        ACCOUNT2
+    ));
 
     MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedAccount(rpc::accountFromStringStrict(ACCOUNT).value(), _))
@@ -596,7 +600,8 @@ TEST_F(RPCUnsubscribeTest, Books)
                 }}
             ]
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
 
     auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = std::get<ripple::Book>(parsedBookMaybe);
@@ -629,7 +634,8 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
                 }}
             ]
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
 
     auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = std::get<ripple::Book>(parsedBookMaybe);

@@ -25,7 +25,8 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -70,7 +71,8 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
         std::numeric_limits<std::uint32_t>::max(),
         {},
         ctx.yield,
-        addToResponse);
+        addToResponse
+    );
 
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;

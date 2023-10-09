@@ -122,7 +122,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManagerType> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
-        std::shared_ptr<NetworkValidatedLedgersType> ledgers);
+        std::shared_ptr<NetworkValidatedLedgersType> ledgers
+    );
 
     /**
      * @brief A factory function to spawn new ETLService instances.
@@ -143,7 +144,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManagerType> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
-        std::shared_ptr<NetworkValidatedLedgersType> ledgers)
+        std::shared_ptr<NetworkValidatedLedgersType> ledgers
+    )
     {
         auto etl = std::make_shared<ETLService>(config, ioc, backend, subscriptions, balancer, ledgers);
         etl->run();

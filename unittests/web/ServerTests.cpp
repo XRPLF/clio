@@ -204,7 +204,8 @@ makeServerSync(
     boost::asio::io_context& ioc,
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> const& sslCtx,
     web::DOSGuard& dosGuard,
-    std::shared_ptr<Executor> const& handler)
+    std::shared_ptr<Executor> const& handler
+)
 {
     auto server = std::shared_ptr<web::HttpServer<Executor>>();
     std::mutex m;
@@ -253,7 +254,8 @@ TEST_F(WebServerTest, HttpInternalError)
     auto const res = HttpSyncClient::syncPost("localhost", "8888", R"({})");
     EXPECT_EQ(
         res,
-        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"})");
+        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"})"
+    );
 }
 
 TEST_F(WebServerTest, WsInternalError)
@@ -266,7 +268,8 @@ TEST_F(WebServerTest, WsInternalError)
     wsClient.disconnect();
     EXPECT_EQ(
         res,
-        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":"id1","request":{"id":"id1"}})");
+        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":"id1","request":{"id":"id1"}})"
+    );
 }
 
 TEST_F(WebServerTest, WsInternalErrorNotJson)
@@ -279,7 +282,8 @@ TEST_F(WebServerTest, WsInternalErrorNotJson)
     wsClient.disconnect();
     EXPECT_EQ(
         res,
-        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","request":"not json"})");
+        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","request":"not json"})"
+    );
 }
 
 TEST_F(WebServerTest, Https)
@@ -315,7 +319,8 @@ TEST_F(WebServerTest, HttpRequestOverload)
     res = HttpSyncClient::syncPost("localhost", "8888", R"({})");
     EXPECT_EQ(
         res,
-        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response"})");
+        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response"})"
+    );
 }
 
 TEST_F(WebServerTest, WsRequestOverload)
@@ -333,7 +338,8 @@ TEST_F(WebServerTest, WsRequestOverload)
     wsClient2.disconnect();
     EXPECT_EQ(
         res,
-        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response","request":{}})");
+        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response","request":{}})"
+    );
 }
 
 TEST_F(WebServerTest, HttpPayloadOverload)
@@ -344,7 +350,8 @@ TEST_F(WebServerTest, HttpPayloadOverload)
     auto const res = HttpSyncClient::syncPost("localhost", "8888", fmt::format(R"({{"payload":"{}"}})", s100));
     EXPECT_EQ(
         res,
-        R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})");
+        R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})"
+    );
 }
 
 TEST_F(WebServerTest, WsPayloadOverload)
@@ -358,7 +365,8 @@ TEST_F(WebServerTest, WsPayloadOverload)
     wsClient.disconnect();
     EXPECT_EQ(
         res,
-        R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})");
+        R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})"
+    );
 }
 
 TEST_F(WebServerTest, WsTooManyConnection)
@@ -457,4 +465,6 @@ INSTANTIATE_TEST_CASE_P(
             .expectedResponse = "admin"},
         WebServerAdminTestParams{
             .headers = {WebHeader(http::field::authentication_info, "secret")},
-            .expectedResponse = "user"}));
+            .expectedResponse = "user"}
+    )
+);

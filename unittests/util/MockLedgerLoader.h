@@ -34,6 +34,7 @@ struct MockLedgerLoader
         FormattedTransactionsData,
         insertTransactions,
         (ripple::LedgerInfo const&, GetLedgerResponseType& data),
-        ());
+        ()
+    );
     MOCK_METHOD(std::optional<ripple::LedgerInfo>, loadInitialLedger, (uint32_t sequence), ());
 };

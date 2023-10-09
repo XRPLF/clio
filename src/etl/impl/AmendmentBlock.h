@@ -57,7 +57,8 @@ public:
         boost::asio::io_context& ioc,
         SystemState& state,
         DurationType interval = DurationType{1},
-        ActionCallableType&& action = ActionCallableType())
+        ActionCallableType&& action = ActionCallableType()
+    )
         : ctx_{std::ref(ioc)}
         , state_{std::ref(state)}
         , timer_{ioc}

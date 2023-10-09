@@ -52,9 +52,11 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     else if (input.rippleStateAccount)
     {
         auto const id1 = ripple::parseBase58<ripple::AccountID>(
-            input.rippleStateAccount->at(JS(accounts)).as_array().at(0).as_string().c_str());
+            input.rippleStateAccount->at(JS(accounts)).as_array().at(0).as_string().c_str()
+        );
         auto const id2 = ripple::parseBase58<ripple::AccountID>(
-            input.rippleStateAccount->at(JS(accounts)).as_array().at(1).as_string().c_str());
+            input.rippleStateAccount->at(JS(accounts)).as_array().at(1).as_string().c_str()
+        );
         auto const currency = ripple::to_currency(input.rippleStateAccount->at(JS(currency)).as_string().c_str());
 
         key = ripple::keylet::line(*id1, *id2, currency).key;
@@ -90,7 +92,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     // check ledger exists
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};

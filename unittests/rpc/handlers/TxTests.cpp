@@ -90,7 +90,8 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
                 "min_ledger": 1,
                 "max_ledger": 1002
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -111,7 +112,8 @@ TEST_F(RPCTxTest, InvalidLgrRange)
                 "max_ledger": 1,
                 "min_ledger": 10
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -139,7 +141,8 @@ TEST_F(RPCTxTest, TxnNotFound)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -171,7 +174,8 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -204,7 +208,8 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -273,7 +278,8 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
 
@@ -308,7 +314,8 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(DEFAULT_OUT));
@@ -392,7 +399,8 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
                 "transaction": "{}",
                 "binary": true
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
@@ -458,7 +466,8 @@ TEST_F(RPCTxTest, MintNFT)
             "validated": true
         }})",
         NFTID,
-        NFTID);
+        NFTID
+    );
     TransactionAndMetadata tx = CreateMintNFTTxWithMetadata(ACCOUNT, 1, 50, 123, NFTID);
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
@@ -477,7 +486,8 @@ TEST_F(RPCTxTest, MintNFT)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
@@ -504,7 +514,8 @@ TEST_F(RPCTxTest, NFTAcceptOffer)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("meta").at("nftoken_id").as_string(), NFTID);
@@ -532,7 +543,8 @@ TEST_F(RPCTxTest, NFTCancelOffer)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
 
@@ -568,7 +580,8 @@ TEST_F(RPCTxTest, NFTCreateOffer)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->at("meta").at("offer_id").as_string() == NFTID2);

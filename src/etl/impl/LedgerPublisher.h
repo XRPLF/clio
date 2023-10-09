@@ -73,7 +73,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         CacheType& cache,
         std::shared_ptr<SubscriptionManagerType> subscriptions,
-        SystemState const& state)
+        SystemState const& state
+    )
         : publishStrand_{boost::asio::make_strand(ioc)}
         , backend_{std::move(backend)}
         , cache_{cache}
@@ -114,8 +115,9 @@ public:
                 continue;
             }
 
-            auto lgr = data::synchronousAndRetryOnTimeout(
-                [&](auto yield) { return backend_->fetchLedgerBySequence(ledgerSequence, yield); });
+            auto lgr = data::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchLedgerBySequence(ledgerSequence, yield);
+            });
 
             assert(lgr);
             publish(*lgr);
@@ -142,8 +144,9 @@ public:
             {
                 LOG(log_.info()) << "Updating cache";
 
-                std::vector<data::LedgerObject> const diff = data::synchronousAndRetryOnTimeout(
-                    [&](auto yield) { return backend_->fetchLedgerDiff(lgrInfo.seq, yield); });
+                std::vector<data::LedgerObject> const diff = data::synchronousAndRetryOnTimeout([&](auto yield) {
+                    return backend_->fetchLedgerDiff(lgrInfo.seq, yield);
+                });
 
                 cache_.get().update(diff, lgrInfo.seq);
                 backend_->updateRange(lgrInfo.seq);
@@ -157,12 +160,15 @@ public:
             static constexpr std::uint32_t MAX_LEDGER_AGE_SECONDS = 600;
             if (age < MAX_LEDGER_AGE_SECONDS)
             {
-                std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout(
-                    [&](auto yield) { return backend_->fetchFees(lgrInfo.seq, yield); });
+                std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout([&](auto yield) {
+                    return backend_->fetchFees(lgrInfo.seq, yield);
+                });
                 assert(fees);
 
-                std::vector<data::TransactionAndMetadata> transactions = data::synchronousAndRetryOnTimeout(
-                    [&](auto yield) { return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield); });
+                std::vector<data::TransactionAndMetadata> transactions =
+                    data::synchronousAndRetryOnTimeout([&](auto yield) {
+                        return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield);
+                    });
 
                 auto const ledgerRange = backend_->fetchLedgerRange();
                 assert(ledgerRange);

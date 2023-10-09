@@ -29,7 +29,8 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -66,7 +67,8 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
     {
         output.problems.emplace_back(
             "You appear to have set your default ripple flag even though you are not a gateway. This is not "
-            "recommended unless you are experimenting");
+            "recommended unless you are experimenting"
+        );
     }
     else if (input.roleGateway && !bDefaultRipple)
     {
@@ -121,13 +123,15 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
                         ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit);
 
                     problem += fmt::format(
-                        "{} line to {}", to_string(peerLimit.getCurrency()), to_string(peerLimit.getIssuer()));
+                        "{} line to {}", to_string(peerLimit.getCurrency()), to_string(peerLimit.getIssuer())
+                    );
                     output.problems.emplace_back(problem);
 
                     if (input.transactions)
                     {
                         ripple::STAmount limitAmount(
-                            ownedItem.getFieldAmount(bLow ? ripple::sfLowLimit : ripple::sfHighLimit));
+                            ownedItem.getFieldAmount(bLow ? ripple::sfLowLimit : ripple::sfHighLimit)
+                        );
                         limitAmount.setIssuer(peer);
 
                         auto tx = getBaseTx(*accountID, accountSeq++);
@@ -142,7 +146,8 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
             }
 
             return true;
-        });
+        }
+    );
 
     output.ledgerIndex = lgrInfo.seq;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);

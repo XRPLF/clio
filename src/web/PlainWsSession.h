@@ -55,7 +55,8 @@ public:
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer,
-        bool isAdmin)
+        bool isAdmin
+    )
         : detail::WsBase<PlainWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
         , ws_(std::move(socket))
     {
@@ -113,7 +114,8 @@ public:
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer,
         http::request<http::string_body> request,
-        bool isAdmin)
+        bool isAdmin
+    )
         : http_(std::move(stream))
         , buffer_(std::move(buffer))
         , tagFactory_(tagFactory)
@@ -131,7 +133,8 @@ public:
     {
         boost::asio::dispatch(
             http_.get_executor(),
-            boost::beast::bind_front_handler(&WsUpgrader<HandlerType>::doUpgrade, shared_from_this()));
+            boost::beast::bind_front_handler(&WsUpgrader<HandlerType>::doUpgrade, shared_from_this())
+        );
     }
 
 private:
@@ -157,7 +160,8 @@ private:
         boost::beast::get_lowest_layer(http_).expires_never();
 
         std::make_shared<PlainWsSession<HandlerType>>(
-            http_.release_socket(), ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_), isAdmin_)
+            http_.release_socket(), ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_), isAdmin_
+        )
             ->run(std::move(req_));
     }
 };

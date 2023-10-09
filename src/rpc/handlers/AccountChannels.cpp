@@ -60,7 +60,8 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -88,7 +89,8 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
     };
 
     auto const next = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
+    );
 
     if (auto status = std::get_if<Status>(&next))
         return Error{*status};

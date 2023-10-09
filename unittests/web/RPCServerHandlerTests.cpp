@@ -69,7 +69,8 @@ protected:
         subManager = std::make_shared<SubscriptionManager>(cfg, mockBackendPtr);
         session = std::make_shared<MockWsBase>(*tagFactory);
         handler = std::make_shared<RPCServerHandler<MockAsyncRPCEngine, MockETLService>>(
-            cfg, mockBackendPtr, rpcEngine, etl, subManager);
+            cfg, mockBackendPtr, rpcEngine, etl, subManager
+        );
     }
 
     void
@@ -712,7 +713,8 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
 
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
     auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine, MockETLService>>(
-        cfg, mockBackendPtr, localRpcEngine, etl, subManager);
+        cfg, mockBackendPtr, localRpcEngine, etl, subManager
+    );
     static auto constexpr request = R"({
                                         "command": "server_info",
                                         "id": 99
@@ -741,7 +743,8 @@ TEST_F(WebRPCServerHandlerTest, HTTPTooBusy)
 {
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
     auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine, MockETLService>>(
-        cfg, mockBackendPtr, localRpcEngine, etl, subManager);
+        cfg, mockBackendPtr, localRpcEngine, etl, subManager
+    );
     static auto constexpr request = R"({
                                         "method": "server_info",
                                         "params": [{}]

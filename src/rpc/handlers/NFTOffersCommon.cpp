@@ -58,7 +58,8 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     Input input,
     ripple::uint256 const& tokenID,
     ripple::Keylet const& directory,
-    boost::asio::yield_context yield) const
+    boost::asio::yield_context yield
+) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus =
@@ -110,7 +111,14 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     }
 
     auto result = traverseOwnedNodes(
-        *sharedPtrBackend_, directory, cursor, startHint, lgrInfo.seq, reserve, yield, [&offers](ripple::SLE&& offer) {
+        *sharedPtrBackend_,
+        directory,
+        cursor,
+        startHint,
+        lgrInfo.seq,
+        reserve,
+        yield,
+        [&offers](ripple::SLE&& offer) {
             if (offer.getType() == ripple::ltNFTOKEN_OFFER)
             {
                 offers.push_back(std::move(offer));
@@ -118,7 +126,8 @@ NFTOffersHandlerBase::iterateOfferDirectory(
             }
 
             return false;
-        });
+        }
+    );
 
     if (auto status = std::get_if<Status>(&result))
         return Error{*status};

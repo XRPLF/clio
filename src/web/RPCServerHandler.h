@@ -65,7 +65,8 @@ public:
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
         std::shared_ptr<ETLType const> const& etl,
-        std::shared_ptr<feed::SubscriptionManager> const& subscriptions)
+        std::shared_ptr<feed::SubscriptionManager> const& subscriptions
+    )
         : backend_(backend)
         , rpcEngine_(rpcEngine)
         , etl_(etl)
@@ -96,7 +97,8 @@ public:
                     [this, request = std::move(req), connection](boost::asio::yield_context yield) mutable {
                         handleRequest(yield, std::move(request), connection);
                     },
-                    connection->clientIp))
+                    connection->clientIp
+                ))
             {
                 rpcEngine_->notifyTooBusy();
                 web::detail::ErrorHelper(connection).sendTooBusyError();
@@ -142,7 +144,8 @@ private:
     handleRequest(
         boost::asio::yield_context yield,
         boost::json::object&& request,
-        std::shared_ptr<web::ConnectionBase> const& connection)
+        std::shared_ptr<web::ConnectionBase> const& connection
+    )
     {
         LOG(log_.info()) << connection->tag() << (connection->upgraded ? "ws" : "http")
                          << " received request from work queue: " << util::removeSecret(request)
@@ -168,7 +171,8 @@ private:
                         tagFactory_.with(connection->tag()),
                         *range,
                         connection->clientIp,
-                        std::cref(apiVersionParser_));
+                        std::cref(apiVersionParser_)
+                    );
                 }
                 return rpc::make_HttpContext(
                     yield,
@@ -177,7 +181,8 @@ private:
                     *range,
                     connection->clientIp,
                     std::cref(apiVersionParser_),
-                    connection->isAdmin());
+                    connection->isAdmin()
+                );
             }();
 
             if (!context)

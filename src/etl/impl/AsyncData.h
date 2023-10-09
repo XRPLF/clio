@@ -77,7 +77,8 @@ public:
         grpc::CompletionQueue& cq,
         BackendInterface& backend,
         bool abort,
-        bool cacheOnly = false)
+        bool cacheOnly = false
+    )
     {
         LOG(log_.trace()) << "Processing response. "
                           << "Marker prefix = " << getMarkerPrefix();
@@ -94,8 +95,8 @@ public:
         }
         if (!next_->is_unlimited())
         {
-            LOG(log_.warn())
-                << "AsyncCallData is_unlimited is false. Make sure secure_gateway is set correctly at the ETL source";
+            LOG(log_.warn()
+            ) << "AsyncCallData is_unlimited is false. Make sure secure_gateway is set correctly at the ETL source";
         }
 
         std::swap(cur_, next_);
@@ -133,8 +134,8 @@ public:
                     continue;
             }
             cacheUpdates.push_back(
-                {*ripple::uint256::fromVoidChecked(obj.key()),
-                 {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
+                {*ripple::uint256::fromVoidChecked(obj.key()), {obj.mutable_data()->begin(), obj.mutable_data()->end()}}
+            );
             if (!cacheOnly)
             {
                 if (!lastKey_.empty())
@@ -142,7 +143,8 @@ public:
                 lastKey_ = obj.key();
                 backend.writeNFTs(getNFTDataFromObj(request_.ledger().sequence(), obj.key(), obj.data()));
                 backend.writeLedgerObject(
-                    std::move(*obj.mutable_key()), request_.ledger().sequence(), std::move(*obj.mutable_data()));
+                    std::move(*obj.mutable_key()), request_.ledger().sequence(), std::move(*obj.mutable_data())
+                );
             }
         }
         backend.cache().update(cacheUpdates, request_.ledger().sequence(), cacheOnly);
@@ -157,7 +159,8 @@ public:
         context_ = std::make_unique<grpc::ClientContext>();
 
         std::unique_ptr<grpc::ClientAsyncResponseReader<org::xrpl::rpc::v1::GetLedgerDataResponse>> rpc(
-            stub->PrepareAsyncGetLedgerData(context_.get(), request_, &cq));
+            stub->PrepareAsyncGetLedgerData(context_.get(), request_, &cq)
+        );
 
         rpc->StartCall();
 

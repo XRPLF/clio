@@ -64,7 +64,8 @@ concept SomeExecutionStrategy = requires(
     Statement statement,
     std::vector<Statement> statements,
     PreparedStatement prepared,
-    boost::asio::yield_context token) {
+    boost::asio::yield_context token
+) {
     {
         T(settings, handle)
     };

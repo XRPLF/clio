@@ -94,8 +94,9 @@ synchronous(FnType&& func)
     if constexpr (!std::is_same<R, void>::value)
     {
         R res;
-        boost::asio::spawn(
-            ctx, [_ = boost::asio::make_work_guard(ctx), &func, &res](auto yield) { res = func(yield); });
+        boost::asio::spawn(ctx, [_ = boost::asio::make_work_guard(ctx), &func, &res](auto yield) {
+            res = func(yield);
+        });
 
         ctx.run();
         return res;
@@ -245,7 +246,8 @@ public:
         std::uint32_t limit,
         bool forward,
         std::optional<TransactionsCursor> const& cursor,
-        boost::asio::yield_context yield) const = 0;
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief Fetches all transactions from a specific ledger.
@@ -294,7 +296,8 @@ public:
         std::uint32_t limit,
         bool forward,
         std::optional<TransactionsCursor> const& cursorIn,
-        boost::asio::yield_context yield) const = 0;
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief Fetches a specific ledger object.
@@ -325,7 +328,8 @@ public:
     fetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
         std::uint32_t sequence,
-        boost::asio::yield_context yield) const;
+        boost::asio::yield_context yield
+    ) const;
 
     /**
      * @brief The database-specific implementation for fetching a ledger object.
@@ -350,7 +354,8 @@ public:
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
         std::uint32_t sequence,
-        boost::asio::yield_context yield) const = 0;
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief Returns the difference between ledgers.
@@ -378,7 +383,8 @@ public:
         std::uint32_t ledgerSequence,
         std::uint32_t limit,
         bool outOfOrder,
-        boost::asio::yield_context yield) const;
+        boost::asio::yield_context yield
+    ) const;
 
     /**
      * @brief Fetches the successor object.
@@ -430,7 +436,8 @@ public:
         ripple::uint256 const& book,
         std::uint32_t ledgerSequence,
         std::uint32_t limit,
-        boost::asio::yield_context yield) const;
+        boost::asio::yield_context yield
+    ) const;
 
     /**
      * @brief Synchronously fetches the ledger range from DB.
@@ -492,7 +499,8 @@ public:
         std::uint32_t seq,
         std::uint32_t date,
         std::string&& transaction,
-        std::string&& metadata) = 0;
+        std::string&& metadata
+    ) = 0;
 
     /**
      * @brief Writes NFTs to the database.

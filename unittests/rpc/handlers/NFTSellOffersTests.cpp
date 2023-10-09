@@ -47,7 +47,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNotInt)
                 "nft_id": "{}", 
                 "limit": "xxx"
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -65,7 +66,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNegative)
                 "nft_id": "{}", 
                 "limit": -1
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -83,7 +85,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitZero)
                 "nft_id": "{}", 
                 "limit": 0
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -101,7 +104,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonHexLedgerHash)
                 "nft_id": "{}", 
                 "ledger_hash": "xxx"
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -120,7 +124,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonStringLedgerHash)
                 "nft_id": "{}", 
                 "ledger_hash": 123
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -139,7 +144,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidLedgerIndexString)
                 "nft_id": "{}", 
                 "ledger_index": "notvalidated"
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -198,7 +204,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
             "ledger_hash": "{}"
         }})",
         NFTID,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -225,7 +232,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
             "nft_id": "{}",
             "ledger_index": "4"
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -254,7 +262,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
             "ledger_hash": "{}"
         }})",
         NFTID,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -280,7 +289,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
             "nft_id": "{}",
             "ledger_index": "31"
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -309,7 +319,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
             "ledger_hash": "{}"
         }})",
         NFTID,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -329,7 +340,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, MarkerNotString)
                 "nft_id": "{}", 
                 "marker": 9
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -350,7 +362,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
                 "nft_id": "{}",
                 "marker": "123invalid"
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -365,7 +378,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
                 "nft_id": "{}", 
                 "marker": 250
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -423,7 +437,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
         R"({{
             "nft_id": "{}"
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -468,7 +483,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
             "nft_id": "{}",
             "limit": 50
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -477,8 +493,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
         EXPECT_EQ(output->at("offers").as_array().size(), 50);
         EXPECT_EQ(output->at("limit").as_uint64(), 50);
         EXPECT_STREQ(
-            output->at("marker").as_string().c_str(),
-            "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353");
+            output->at("marker").as_string().c_str(), "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"
+        );
     });
 }
 
@@ -530,7 +546,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
             "marker": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353",
             "limit": 50
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -540,8 +557,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
         EXPECT_EQ(output->at("limit").as_uint64(), 50);
         // marker also progressed by 50
         EXPECT_STREQ(
-            output->at("marker").as_string().c_str(),
-            "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC385");
+            output->at("marker").as_string().c_str(), "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC385"
+        );
     });
 }
 
@@ -596,7 +613,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
                 "marker": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353",
                 "limit": 50
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -613,7 +631,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
                 "nft_id": "{}", 
                 "limit": 49
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit?
     });
@@ -625,7 +644,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
                 "nft_id": "{}", 
                 "limit": 501
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit?
     });
@@ -665,7 +685,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
             "limit": {}
         }})",
         NFTID,
-        NFTSellOffersHandler::LIMIT_MIN - 1));
+        NFTSellOffersHandler::LIMIT_MIN - 1
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -710,7 +731,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
             "limit": {}
         }})",
         NFTID,
-        NFTSellOffersHandler::LIMIT_MAX + 1));
+        NFTSellOffersHandler::LIMIT_MAX + 1
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});

@@ -80,7 +80,8 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> const& backend,
-        CacheType& ledgerCache)
+        CacheType& ledgerCache
+    )
         : ioContext_{std::ref(ioc)}, backend_{backend}, cache_{ledgerCache}
     {
         if (config.contains("cache"))
@@ -187,7 +188,8 @@ private:
         uint32_t ledgerIndex,
         std::string const& ip,
         std::string const& port,
-        boost::asio::yield_context yield)
+        boost::asio::yield_context yield
+    )
     {
         LOG(log_.info()) << "Loading cache from peer. ip = " << ip << " . port = " << port;
         namespace beast = boost::beast;          // from <boost/beast.hpp>
@@ -437,7 +439,8 @@ private:
                             LOG(log_.info()) << "Finished a cursor. num remaining = " << *numRemaining
                                              << " start = " << cursorStr << " markers = " << *markers;
                         }
-                    });
+                    }
+                );
             }
         }};
     }

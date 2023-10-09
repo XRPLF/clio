@@ -58,7 +58,8 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
 
         auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        );
 
         if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
             return Error{*status};
@@ -88,8 +89,9 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     auto const limit = input.limit.value_or(LIMIT_DEFAULT);
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
 
-    auto const [txnsAndCursor, timeDiff] = util::timed(
-        [&]() { return sharedPtrBackend_->fetchNFTTransactions(tokenID, limit, input.forward, cursor, ctx.yield); });
+    auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
+        return sharedPtrBackend_->fetchNFTTransactions(tokenID, limit, input.forward, cursor, ctx.yield);
+    });
     LOG(log_.info()) << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
 
     Output response;

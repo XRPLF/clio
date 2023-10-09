@@ -73,7 +73,8 @@ TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
             {
                 "type":"unknown"
             }
-        })")};
+        })"
+    )};
     EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
@@ -93,7 +94,8 @@ TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
             }}
         }})",
         "127.0.0.2",
-        keyspace))};
+        keyspace
+    ))};
     EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
@@ -112,7 +114,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
 
     {
         auto backend = make_Backend(cfg);
@@ -154,7 +157,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmpt
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
     EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
@@ -174,7 +178,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
 
     util::Config const cfgWrite{boost::json::parse(fmt::format(
         R"({{
@@ -190,7 +195,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
 
     EXPECT_TRUE(make_Backend(cfgWrite));
     EXPECT_TRUE(make_Backend(cfgReadOnly));

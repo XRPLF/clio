@@ -30,7 +30,8 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -86,11 +87,13 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
             isDisallowIncomingEnabled,
             isClawbackEnabled,
             ctx.apiVersion,
-            signerList);
+            signerList
+        );
     }
 
     return Output(
-        lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled, ctx.apiVersion);
+        lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled, ctx.apiVersion
+    );
 }
 
 void
@@ -144,7 +147,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
             std::cbegin(output.signerLists.value()),
             std::cend(output.signerLists.value()),
             std::back_inserter(signers),
-            [](auto const& signerList) { return toJson(signerList); });
+            [](auto const& signerList) { return toJson(signerList); }
+        );
         if (output.apiVersion == 1)
         {
             jv.as_object()[JS(account_data)].as_object()[JS(signer_lists)] = std::move(signers);

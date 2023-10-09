@@ -87,7 +87,8 @@ TEST_F(ETLTransformerTest, StopsOnWriteConflict)
     EXPECT_CALL(ledgerPublisher_, publish(_)).Times(0);
 
     transformer_ = std::make_unique<TransformerType>(
-        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_);
+        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_
+    );
 
     transformer_->waitTillFinished();  // explicitly joins the thread
 }
@@ -120,7 +121,8 @@ TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
     EXPECT_CALL(ledgerPublisher_, publish(_)).Times(AtLeast(1));
 
     transformer_ = std::make_unique<TransformerType>(
-        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_);
+        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_
+    );
 
     // after 10ms we start spitting out empty responses which means the extractor is finishing up
     // this is normally combined with stopping the entire thing by setting the isStopping flag.
@@ -154,7 +156,8 @@ TEST_F(ETLTransformerTest, DoesNotPublishIfCanNotBuildNextLedger)
     EXPECT_CALL(ledgerPublisher_, publish(_)).Times(0);
 
     transformer_ = std::make_unique<TransformerType>(
-        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_);
+        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_
+    );
 }
 
 // TODO: implement tests for amendment block. requires more refactoring

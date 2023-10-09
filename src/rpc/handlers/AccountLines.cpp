@@ -26,7 +26,8 @@ AccountLinesHandler::addLine(
     std::vector<LineResponse>& lines,
     ripple::SLE const& lineSle,
     ripple::AccountID const& account,
-    std::optional<ripple::AccountID> const& peerAccount)
+    std::optional<ripple::AccountID> const& peerAccount
+)
 {
     auto const flags = lineSle.getFieldU32(ripple::sfFlags);
     auto const lowLimit = lineSle.getFieldAmount(ripple::sfLowLimit);
@@ -94,7 +95,8 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -134,7 +136,8 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
     };
 
     auto const next = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
+    );
 
     if (auto status = std::get_if<Status>(&next))
         return Error{*status};
@@ -214,7 +217,8 @@ void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    [[maybe_unused]] AccountLinesHandler::LineResponse const& line)
+    [[maybe_unused]] AccountLinesHandler::LineResponse const& line
+)
 {
     auto obj = boost::json::object{
         {JS(account), line.account},

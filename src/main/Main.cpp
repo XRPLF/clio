@@ -198,13 +198,16 @@ try
     auto workQueue = rpc::WorkQueue::make_WorkQueue(config);
     auto counters = rpc::Counters::make_Counters(workQueue);
     auto const handlerProvider = std::make_shared<rpc::detail::ProductionHandlerProvider const>(
-        config, backend, subscriptions, balancer, etl, counters);
+        config, backend, subscriptions, balancer, etl, counters
+    );
     auto const rpcEngine = rpc::RPCEngine::make_RPCEngine(
-        backend, subscriptions, balancer, dosGuard, workQueue, counters, handlerProvider);
+        backend, subscriptions, balancer, dosGuard, workQueue, counters, handlerProvider
+    );
 
     // Init the web server
     auto handler = std::make_shared<web::RPCServerHandler<rpc::RPCEngine, etl::ETLService>>(
-        config, backend, rpcEngine, etl, subscriptions);
+        config, backend, rpcEngine, etl, subscriptions
+    );
     auto ctx = parseCerts(config);
     auto const ctxRef = ctx ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()} : std::nullopt;
     auto const httpServer = web::make_HttpServer(config, ioc, ctxRef, dosGuard, handler);

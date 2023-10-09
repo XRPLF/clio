@@ -138,7 +138,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountOffersGroup1,
     AccountOfferParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    AccountOfferParameterTest::NameGenerator{});
+    AccountOfferParameterTest::NameGenerator{}
+);
 
 TEST_P(AccountOfferParameterTest, InvalidParams)
 {
@@ -171,7 +172,8 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaHash)
             "ledger_hash":"{}"
         }})",
         ACCOUNT,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -199,7 +201,8 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
             "ledger_index":"{}"
         }})",
         ACCOUNT,
-        seq));
+        seq
+    ));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -227,7 +230,8 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
             "ledger_index":{}
         }})",
         ACCOUNT,
-        seq));
+        seq
+    ));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -255,7 +259,8 @@ TEST_F(RPCAccountOffersHandlerTest, AccountNotFound)
         R"({{
             "account":"{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -293,7 +298,8 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
         }})",
         LEDGERHASH,
         ACCOUNT,
-        ACCOUNT2);
+        ACCOUNT2
+    );
     auto constexpr ledgerSeq = 30;
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
@@ -322,7 +328,8 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
     offer.setFieldU32(ripple::sfExpiration, 123);
     bbs.push_back(offer.getSerializer().peekData());
 
@@ -333,7 +340,8 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
         R"({{
             "account":"{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -374,7 +382,8 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
             ripple::to_string(ripple::xrpCurrency()),
             ACCOUNT2,
             toBase58(ripple::xrpAccount()),
-            INDEX1);
+            INDEX1
+        );
         bbs.push_back(offer.getSerializer().peekData());
     }
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -385,7 +394,8 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
             "account":"{}",
             "limit":10
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -430,7 +440,8 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
             ripple::to_string(ripple::xrpCurrency()),
             ACCOUNT2,
             toBase58(ripple::xrpAccount()),
-            INDEX1);
+            INDEX1
+        );
         bbs.push_back(offer.getSerializer().peekData());
     }
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -443,7 +454,8 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
         }})",
         ACCOUNT,
         INDEX1,
-        startPage));
+        startPage
+    ));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -482,7 +494,8 @@ TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
         }})",
         ACCOUNT,
         INDEX1,
-        startPage));
+        startPage
+    ));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -524,7 +537,8 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
     offer.setFieldU32(ripple::sfExpiration, 123);
 
     bbs.reserve(AccountOffersHandler::LIMIT_MIN + 1);
@@ -540,7 +554,8 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
             "limit":{}
         }})",
         ACCOUNT,
-        AccountOffersHandler::LIMIT_MIN - 1));
+        AccountOffersHandler::LIMIT_MIN - 1
+    ));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -581,7 +596,8 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
     offer.setFieldU32(ripple::sfExpiration, 123);
     bbs.reserve(AccountOffersHandler::LIMIT_MAX + 1);
     for (auto i = 0; i < AccountOffersHandler::LIMIT_MAX + 1; i++)
@@ -596,7 +612,8 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
             "limit":{}
         }})",
         ACCOUNT,
-        AccountOffersHandler::LIMIT_MAX + 1));
+        AccountOffersHandler::LIMIT_MAX + 1
+    ));
     auto const handler = AnyHandler{AccountOffersHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});

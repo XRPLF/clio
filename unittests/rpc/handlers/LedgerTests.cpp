@@ -160,7 +160,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerGroup1,
     LedgerParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    LedgerParameterTest::NameGenerator{});
+    LedgerParameterTest::NameGenerator{}
+);
 
 TEST_P(LedgerParameterTest, InvalidParams)
 {
@@ -192,7 +193,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
             R"({{
                 "ledger_index": {}
             }})",
-            RANGEMAX));
+            RANGEMAX
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -217,7 +219,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
             R"({{
                 "ledger_index": "{}"
             }})",
-            RANGEMAX));
+            RANGEMAX
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -242,7 +245,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
             R"({{
                 "ledger_hash": "{}"
             }})",
-            LEDGERHASH));
+            LEDGERHASH
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -311,7 +315,8 @@ TEST_F(RPCLedgerHandlerTest, NotSupportedFieldsDefaultValue)
                 "full": false,
                 "accounts": false,
                 "queue": false
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
     });
@@ -383,7 +388,8 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
         auto const req = json::parse(
             R"({
                 "binary": true
-            })");
+            })"
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -436,7 +442,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
                 "binary": true,
                 "expand": true,
                 "transactions": true
-            })");
+            })"
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -525,7 +532,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
                 "binary": false,
                 "expand": true,
                 "transactions": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
@@ -554,12 +562,14 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
         auto const req = json::parse(
             R"({
                 "transactions": true
-            })");
+            })"
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
             output->as_object().at("ledger").at("transactions"),
-            json::parse(fmt::format(R"(["{}","{}"])", INDEX1, INDEX2)));
+            json::parse(fmt::format(R"(["{}","{}"])", INDEX1, INDEX2))
+        );
     });
 }
 
@@ -612,7 +622,8 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
         auto const req = json::parse(
             R"({
                 "diff": true
-            })");
+            })"
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("ledger").at("diff"), json::parse(expectedOut));
@@ -658,7 +669,8 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
             R"({
                 "diff": true,
                 "binary": true
-            })");
+            })"
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("ledger").at("diff"), json::parse(expectedOut));
@@ -748,7 +760,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
@@ -857,7 +870,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
@@ -928,7 +942,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -965,11 +980,13 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_FALSE(output->as_object()["ledger"].as_object()["transactions"].as_array()[0].as_object().contains(
-            "owner_funds"));
+        EXPECT_FALSE(
+            output->as_object()["ledger"].as_object()["transactions"].as_array()[0].as_object().contains("owner_funds")
+        );
     });
 }
 
@@ -1035,7 +1052,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -1059,7 +1077,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
     auto lineKey = ripple::keylet::line(
                        GetAccountIDWithString(ACCOUNT),
                        GetAccountIDWithString(ACCOUNT2),
-                       ripple::to_currency(std::string(CURRENCY)))
+                       ripple::to_currency(std::string(CURRENCY))
+    )
                        .key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(lineKey, RANGEMAX, _))
         .WillByDefault(Return(line.getSerializer().peekData()));
@@ -1084,7 +1103,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
@@ -1093,7 +1113,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
                 .as_array()[0]
                 .as_object()["owner_funds"]
                 .as_string(),
-            "50");
+            "50"
+        );
     });
 }
 
@@ -1119,11 +1140,13 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
         20,
         INDEX1,
         123,
-        ripple::lsfLowFreeze | ripple::lsfHighFreeze);
+        ripple::lsfLowFreeze | ripple::lsfHighFreeze
+    );
     auto lineKey = ripple::keylet::line(
                        GetAccountIDWithString(ACCOUNT),
                        GetAccountIDWithString(ACCOUNT2),
-                       ripple::to_currency(std::string(CURRENCY)))
+                       ripple::to_currency(std::string(CURRENCY))
+    )
                        .key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(lineKey, RANGEMAX, _))
         .WillByDefault(Return(line.getSerializer().peekData()));
@@ -1148,7 +1171,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
@@ -1157,6 +1181,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
                 .as_array()[0]
                 .as_object()["owner_funds"]
                 .as_string(),
-            "50");
+            "50"
+        );
     });
 }

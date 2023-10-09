@@ -106,7 +106,8 @@ public:
         std::uint32_t const limit,
         bool forward,
         std::optional<TransactionsCursor> const& cursorIn,
-        boost::asio::yield_context yield) const override
+        boost::asio::yield_context yield
+    ) const override
     {
         auto rng = fetchLedgerRange();
         if (!rng)
@@ -413,7 +414,8 @@ public:
         std::uint32_t const limit,
         bool const forward,
         std::optional<TransactionsCursor> const& cursorIn,
-        boost::asio::yield_context yield) const override
+        boost::asio::yield_context yield
+    ) const override
     {
         auto rng = fetchLedgerRange();
         if (!rng)
@@ -569,9 +571,11 @@ public:
         auto const timeDiff = util::timed([this, yield, &results, &hashes, &statements]() {
             // TODO: seems like a job for "hash IN (list of hashes)" instead?
             std::transform(
-                std::cbegin(hashes), std::cend(hashes), std::back_inserter(statements), [this](auto const& hash) {
-                    return schema_->selectTransaction.bind(hash);
-                });
+                std::cbegin(hashes),
+                std::cend(hashes),
+                std::back_inserter(statements),
+                [this](auto const& hash) { return schema_->selectTransaction.bind(hash); }
+            );
 
             auto const entries = executor_.readEach(yield, statements);
             std::transform(
@@ -583,7 +587,8 @@ public:
                         return *maybeRow;
 
                     return {};
-                });
+                }
+            );
         });
 
         assert(numHashes == results.size());
@@ -596,7 +601,8 @@ public:
     doFetchLedgerObjects(
         std::vector<ripple::uint256> const& keys,
         std::uint32_t const sequence,
-        boost::asio::yield_context yield) const override
+        boost::asio::yield_context yield
+    ) const override
     {
         if (keys.empty())
             return {};
@@ -612,18 +618,24 @@ public:
 
         // TODO: seems like a job for "key IN (list of keys)" instead?
         std::transform(
-            std::cbegin(keys), std::cend(keys), std::back_inserter(statements), [this, &sequence](auto const& key) {
-                return schema_->selectObject.bind(key, sequence);
-            });
+            std::cbegin(keys),
+            std::cend(keys),
+            std::back_inserter(statements),
+            [this, &sequence](auto const& key) { return schema_->selectObject.bind(key, sequence); }
+        );
 
         auto const entries = executor_.readEach(yield, statements);
         std::transform(
-            std::cbegin(entries), std::cend(entries), std::back_inserter(results), [](auto const& res) -> Blob {
+            std::cbegin(entries),
+            std::cend(entries),
+            std::back_inserter(results),
+            [](auto const& res) -> Blob {
                 if (auto const maybeValue = res.template get<Blob>(); maybeValue)
                     return *maybeValue;
 
                 return {};
-            });
+            }
+        );
 
         LOG(log_.trace()) << "Fetched " << numKeys << " objects";
         return results;
@@ -672,7 +684,8 @@ public:
             std::back_inserter(results),
             [](auto const& key, auto const& obj) {
                 return LedgerObject{key, obj};
-            });
+            }
+        );
 
         return results;
     }
@@ -715,8 +728,10 @@ public:
                     return schema_->insertAccountTx.bind(
                         std::forward<decltype(account)>(account),
                         std::make_tuple(record.ledgerSequence, record.transactionIndex),
-                        record.txHash);
-                });
+                        record.txHash
+                    );
+                }
+            );
         }
 
         executor_.write(std::move(statements));
@@ -730,7 +745,8 @@ public:
 
         std::transform(std::cbegin(data), std::cend(data), std::back_inserter(statements), [this](auto const& record) {
             return schema_->insertNFTTx.bind(
-                record.tokenID, std::make_tuple(record.ledgerSequence, record.transactionIndex), record.txHash);
+                record.tokenID, std::make_tuple(record.ledgerSequence, record.transactionIndex), record.txHash
+            );
         });
 
         executor_.write(std::move(statements));
@@ -742,13 +758,15 @@ public:
         std::uint32_t const seq,
         std::uint32_t const date,
         std::string&& transaction,
-        std::string&& metadata) override
+        std::string&& metadata
+    ) override
     {
         LOG(log_.trace()) << "Writing txn to cassandra";
 
         executor_.write(schema_->insertLedgerTransaction, seq, hash);
         executor_.write(
-            schema_->insertTransaction, std::move(hash), seq, date, std::move(transaction), std::move(metadata));
+            schema_->insertTransaction, std::move(hash), seq, date, std::move(transaction), std::move(metadata)
+        );
     }
 
     void
@@ -760,7 +778,8 @@ public:
         for (NFTsData const& record : data)
         {
             statements.push_back(
-                schema_->insertNFT.bind(record.tokenID, record.ledgerSequence, record.owner, record.isBurned));
+                schema_->insertNFT.bind(record.tokenID, record.ledgerSequence, record.owner, record.isBurned)
+            );
 
             // If `uri` is set (and it can be set to an empty uri), we know this
             // is a net-new NFT. That is, this NFT has not been seen before by
@@ -772,9 +791,11 @@ public:
                 statements.push_back(schema_->insertIssuerNFT.bind(
                     ripple::nft::getIssuer(record.tokenID),
                     static_cast<uint32_t>(ripple::nft::getTaxon(record.tokenID)),
-                    record.tokenID));
+                    record.tokenID
+                ));
                 statements.push_back(
-                    schema_->insertNFTURI.bind(record.tokenID, record.ledgerSequence, record.uri.value()));
+                    schema_->insertNFTURI.bind(record.tokenID, record.ledgerSequence, record.uri.value())
+                );
             }
         }
 

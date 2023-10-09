@@ -92,7 +92,8 @@ public:
     BasicDOSGuard(
         util::Config const& config,
         WhitelistHandlerType const& whitelistHandler,
-        SweepHandlerType& sweepHandler)
+        SweepHandlerType& sweepHandler
+    )
         : whitelistHandler_{std::cref(whitelistHandler)}
         , maxFetches_{config.valueOr("dos_guard.max_fetches", DEFAULT_MAX_FETCHES)}
         , maxConnCount_{config.valueOr("dos_guard.max_connections", DEFAULT_MAX_CONNECTIONS)}

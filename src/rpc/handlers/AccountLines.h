@@ -122,7 +122,8 @@ private:
         std::vector<LineResponse>& lines,
         ripple::SLE const& lineSle,
         ripple::AccountID const& account,
-        std::optional<ripple::AccountID> const& peerAccount);
+        std::optional<ripple::AccountID> const& peerAccount
+    );
 
 private:
     friend void

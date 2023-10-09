@@ -89,15 +89,15 @@ public:
         if (addr.is_v4())
         {
             return std::find_if(
-                       std::begin(subnetsV4_), std::end(subnetsV4_), std::bind_front(&isInV4Subnet, std::cref(addr))) !=
-                std::end(subnetsV4_);
+                       std::begin(subnetsV4_), std::end(subnetsV4_), std::bind_front(&isInV4Subnet, std::cref(addr))
+                   ) != std::end(subnetsV4_);
         }
 
         if (addr.is_v6())
         {
             return std::find_if(
-                       std::begin(subnetsV6_), std::end(subnetsV6_), std::bind_front(&isInV6Subnet, std::cref(addr))) !=
-                std::end(subnetsV6_);
+                       std::begin(subnetsV6_), std::end(subnetsV6_), std::bind_front(&isInV6Subnet, std::cref(addr))
+                   ) != std::end(subnetsV6_);
         }
 
         return false;

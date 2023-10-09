@@ -46,7 +46,8 @@ TEST_F(RPCNFTInfoHandlerTest, NonHexLedgerHash)
                 "nft_id": "{}", 
                 "ledger_hash": "xxx"
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -65,7 +66,8 @@ TEST_F(RPCNFTInfoHandlerTest, NonStringLedgerHash)
                 "nft_id": "{}", 
                 "ledger_hash": 123
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -84,7 +86,8 @@ TEST_F(RPCNFTInfoHandlerTest, InvalidLedgerIndexString)
                 "nft_id": "{}", 
                 "ledger_index": "notvalidated"
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -143,7 +146,8 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash)
             "ledger_hash": "{}"
         }})",
         NFTID,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -170,7 +174,8 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
             "nft_id": "{}",
             "ledger_index": "4"
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -195,7 +200,8 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
             "nft_id": "{}",
             "ledger_index": 4
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -224,7 +230,8 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
             "ledger_hash": "{}"
         }})",
         NFTID,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -250,7 +257,8 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
             "nft_id": "{}",
             "ledger_index": "31"
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -280,7 +288,8 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
             "ledger_hash": "{}"
         }})",
         NFTID,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTInfoHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -324,7 +333,8 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
         R"({{
             "nft_id": "{}"
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -367,7 +377,8 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
         R"({{
             "nft_id": "{}"
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -409,7 +420,8 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
         R"({{
             "nft_id": "{}"
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -451,7 +463,8 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
         R"({{
             "nft_id": "{}"
         }})",
-        NFTID2));
+        NFTID2
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTInfoHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});

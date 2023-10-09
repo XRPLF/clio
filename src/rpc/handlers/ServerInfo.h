@@ -118,7 +118,8 @@ public:
         std::shared_ptr<SubscriptionManagerType> const& subscriptions,
         std::shared_ptr<LoadBalancerType> const& balancer,
         std::shared_ptr<ETLServiceType const> const& etl,
-        CountersType const& counters)
+        CountersType const& counters
+    )
         : backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)

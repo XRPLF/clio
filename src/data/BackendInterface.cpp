@@ -59,7 +59,8 @@ std::optional<Blob>
 BackendInterface::fetchLedgerObject(
     ripple::uint256 const& key,
     std::uint32_t const sequence,
-    boost::asio::yield_context yield) const
+    boost::asio::yield_context yield
+) const
 {
     auto obj = cache_.get(key, sequence);
     if (obj)
@@ -85,7 +86,8 @@ std::vector<Blob>
 BackendInterface::fetchLedgerObjects(
     std::vector<ripple::uint256> const& keys,
     std::uint32_t const sequence,
-    boost::asio::yield_context yield) const
+    boost::asio::yield_context yield
+) const
 {
     std::vector<Blob> results;
     results.resize(keys.size());
@@ -124,7 +126,8 @@ std::optional<ripple::uint256>
 BackendInterface::fetchSuccessorKey(
     ripple::uint256 key,
     std::uint32_t const ledgerSequence,
-    boost::asio::yield_context yield) const
+    boost::asio::yield_context yield
+) const
 {
     auto succ = cache_.getSuccessor(key, ledgerSequence);
     if (succ)
@@ -142,7 +145,8 @@ std::optional<LedgerObject>
 BackendInterface::fetchSuccessorObject(
     ripple::uint256 key,
     std::uint32_t const ledgerSequence,
-    boost::asio::yield_context yield) const
+    boost::asio::yield_context yield
+) const
 {
     auto succ = fetchSuccessorKey(key, ledgerSequence, yield);
     if (succ)
@@ -161,7 +165,8 @@ BackendInterface::fetchBookOffers(
     ripple::uint256 const& book,
     std::uint32_t const ledgerSequence,
     std::uint32_t const limit,
-    boost::asio::yield_context yield) const
+    boost::asio::yield_context yield
+) const
 {
     // TODO try to speed this up. This can take a few seconds. The goal is
     // to get it down to a few hundred milliseconds.
@@ -267,7 +272,8 @@ BackendInterface::fetchLedgerPage(
     std::uint32_t const ledgerSequence,
     std::uint32_t const limit,
     bool outOfOrder,
-    boost::asio::yield_context yield) const
+    boost::asio::yield_context yield
+) const
 {
     LedgerPage page;
 

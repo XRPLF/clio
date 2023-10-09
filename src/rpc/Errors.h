@@ -235,7 +235,8 @@ boost::json::object
 makeError(
     RippledError err,
     std::optional<std::string_view> customError = std::nullopt,
-    std::optional<std::string_view> customMessage = std::nullopt);
+    std::optional<std::string_view> customMessage = std::nullopt
+);
 
 /**
  * @brief Generate JSON from a @ref rpc::ClioError.
@@ -247,6 +248,7 @@ boost::json::object
 makeError(
     ClioError err,
     std::optional<std::string_view> customError = std::nullopt,
-    std::optional<std::string_view> customMessage = std::nullopt);
+    std::optional<std::string_view> customMessage = std::nullopt
+);
 
 }  // namespace rpc

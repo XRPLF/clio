@@ -80,8 +80,8 @@ class HttpBase : public ConnectionBase
             http::async_write(
                 self_.derived().stream(),
                 *sp,
-                boost::beast::bind_front_handler(
-                    &HttpBase::onWrite, self_.derived().shared_from_this(), sp->need_eof()));
+                boost::beast::bind_front_handler(&HttpBase::onWrite, self_.derived().shared_from_this(), sp->need_eof())
+            );
         }
     };
 
@@ -135,7 +135,8 @@ public:
         std::optional<std::string> adminPassword,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer buffer)
+        boost::beast::flat_buffer buffer
+    )
         : ConnectionBase(tagFactory, ip)
         , sender_(*this)
         , adminVerification_(make_AdminVerificationStrategy(std::move(adminPassword)))
@@ -170,7 +171,8 @@ public:
             derived().stream(),
             buffer_,
             req_,
-            boost::beast::bind_front_handler(&HttpBase::onRead, derived().shared_from_this()));
+            boost::beast::bind_front_handler(&HttpBase::onRead, derived().shared_from_this())
+        );
     }
 
     void
@@ -213,7 +215,8 @@ public:
             return sender_(httpResponse(
                 http::status::service_unavailable,
                 "text/plain",
-                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcSLOW_DOWN))));
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcSLOW_DOWN))
+            ));
         }
 
         LOG(log_.info()) << tag() << "Received request from ip = " << clientIp << " - posting to WorkQueue";
@@ -227,7 +230,8 @@ public:
             return sender_(httpResponse(
                 http::status::internal_server_error,
                 "application/json",
-                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcINTERNAL))));
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcINTERNAL))
+            ));
         }
     }
 

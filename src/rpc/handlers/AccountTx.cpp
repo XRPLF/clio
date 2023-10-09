@@ -112,7 +112,8 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             // mimic rippled, when both range and index specified, respect the range.
             // take ledger from ledgerHash or ledgerIndex only when range is not specified
             auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-                *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+                *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+            );
 
             if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
                 return Error{*status};

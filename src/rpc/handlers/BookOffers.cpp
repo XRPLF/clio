@@ -32,7 +32,8 @@ BookOffersHandler::process(Input input, Context const& ctx) const
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -48,7 +49,8 @@ BookOffersHandler::process(Input input, Context const& ctx) const
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
     output.offers = postProcessOrderBook(
-        offers, book, input.taker ? *(input.taker) : beast::zero, *sharedPtrBackend_, lgrInfo.seq, ctx.yield);
+        offers, book, input.taker ? *(input.taker) : beast::zero, *sharedPtrBackend_, lgrInfo.seq, ctx.yield
+    );
 
     return output;
 }

@@ -86,7 +86,8 @@ public:
         LedgerPublisherType& publisher,
         AmendmentBlockHandlerType& amendmentBlockHandler,
         uint32_t startSequence,
-        SystemState& state)
+        SystemState& state
+    )
         : pipe_{std::ref(pipe)}
         , backend_{std::move(backend)}
         , loader_{std::ref(loader)}

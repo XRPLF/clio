@@ -39,13 +39,15 @@ public:
         void,
         pubLedger,
         (ripple::LedgerInfo const&, ripple::Fees const&, std::string const&, std::uint32_t),
-        ());
+        ()
+    );
 
     MOCK_METHOD(
         void,
         pubBookChanges,
         (ripple::LedgerInfo const&, std::vector<data::TransactionAndMetadata> const&),
-        ());
+        ()
+    );
 
     MOCK_METHOD(void, unsubLedger, (session_ptr), ());
 

@@ -130,7 +130,8 @@ generateTestValuesForParametersTest()
             "NFTMarkerInvalid",
             fmt::format(
                 R"({{"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":"wronghex256,{}"}})",
-                std::numeric_limits<uint32_t>::max()),
+                std::numeric_limits<uint32_t>::max()
+            ),
             "invalidParams",
             "Malformed cursor."},
         AccountObjectsParamTestCaseBundle{
@@ -150,7 +151,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountObjectsGroup1,
     AccountObjectsParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    AccountObjectsParameterTest::NameGenerator{});
+    AccountObjectsParameterTest::NameGenerator{}
+);
 
 TEST_P(AccountObjectsParameterTest, InvalidParams)
 {
@@ -182,7 +184,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
             "account":"{}",
             "ledger_index":30
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -208,7 +211,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
             "account":"{}",
             "ledger_index":"30"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -236,7 +240,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
             "ledger_hash":"{}"
         }})",
         ACCOUNT,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -264,7 +269,8 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
         R"({{
             "account":"{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -342,7 +348,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
         R"({{
             "account":"{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -395,7 +402,8 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
             "limit":{}
         }})",
         ACCOUNT,
-        limit));
+        limit
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -445,7 +453,8 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
         }})",
         ACCOUNT,
         INDEX1,
-        page));
+        page
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -506,7 +515,8 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
             "limit":{}
         }})",
         ACCOUNT,
-        2 * count));
+        2 * count
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -552,7 +562,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(offer.getSerializer().peekData());
 
@@ -564,7 +575,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
             "account":"{}",
             "type":"offer"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -608,7 +620,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(offer.getSerializer().peekData());
 
@@ -620,7 +633,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
             "account":"{}",
             "type": "check"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -668,7 +682,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
 
     std::vector<Blob> bbs;
     bbs.push_back(line.getSerializer().peekData());
@@ -683,7 +698,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
             "account": "{}",
             "deletion_blockers_only": true
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -735,7 +751,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
             "deletion_blockers_only": true,
             "type": "payment_channel"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -780,7 +797,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
     auto const offer2 = CreateOfferLedgerObject(
         ACCOUNT,
         20,
@@ -789,7 +807,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
 
     std::vector<Blob> bbs;
     bbs.push_back(offer1.getSerializer().peekData());
@@ -803,7 +822,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
             "account": "{}",
             "deletion_blockers_only": true
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -846,7 +866,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
     auto const offer2 = CreateOfferLedgerObject(
         ACCOUNT,
         20,
@@ -855,7 +876,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
 
     std::vector<Blob> bbs;
     bbs.push_back(offer1.getSerializer().peekData());
@@ -870,7 +892,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
             "deletion_blockers_only": true,
             "type": "offer"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -988,7 +1011,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
         R"({{
             "account":"{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -1035,7 +1059,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
             "limit":{}
         }})",
         ACCOUNT,
-        10));
+        10
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -1044,7 +1069,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
         EXPECT_EQ(output.value().as_object().at("account_objects").as_array().size(), 10);
         EXPECT_EQ(
             output.value().as_object().at("marker").as_string(),
-            fmt::format("{},{}", ripple::strHex(current), std::numeric_limits<uint32_t>::max()));
+            fmt::format("{},{}", ripple::strHex(current), std::numeric_limits<uint32_t>::max())
+        );
     });
 }
 
@@ -1089,7 +1115,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
             "limit":{}
         }})",
         ACCOUNT,
-        11));
+        11
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -1099,7 +1126,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
         //"0000000000000000000000000000000000000000000000000000000000000000,4294967295"
         EXPECT_EQ(
             output.value().as_object().at("marker").as_string(),
-            fmt::format("{},{}", ripple::strHex(ripple::uint256(beast::zero)), std::numeric_limits<uint32_t>::max()));
+            fmt::format("{},{}", ripple::strHex(ripple::uint256(beast::zero)), std::numeric_limits<uint32_t>::max())
+        );
     });
 }
 
@@ -1153,7 +1181,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
 
     std::vector<Blob> bbs;
     bbs.push_back(line.getSerializer().peekData());
@@ -1172,7 +1201,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
         }})",
         ACCOUNT,
         ripple::strHex(marker),
-        std::numeric_limits<uint32_t>::max()));
+        std::numeric_limits<uint32_t>::max()
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -1214,7 +1244,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
 
     std::vector<Blob> bbs;
     bbs.push_back(line.getSerializer().peekData());
@@ -1233,7 +1264,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
         }})",
         ACCOUNT,
         ripple::strHex(ripple::uint256{beast::zero}),
-        std::numeric_limits<uint32_t>::max()));
+        std::numeric_limits<uint32_t>::max()
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -1266,7 +1298,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
         }})",
         ACCOUNT,
         INDEX1,
-        std::numeric_limits<std::uint32_t>::max()));
+        std::numeric_limits<std::uint32_t>::max()
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -1304,7 +1337,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
         }})",
         ACCOUNT,
         ripple::strHex(accountNftMax),
-        std::numeric_limits<std::uint32_t>::max()));
+        std::numeric_limits<std::uint32_t>::max()
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -1365,7 +1399,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
         ripple::to_string(ripple::xrpCurrency()),
         ACCOUNT2,
         toBase58(ripple::xrpAccount()),
-        INDEX1);
+        INDEX1
+    );
 
     std::vector<Blob> bbs;
     bbs.push_back(line.getSerializer().peekData());
@@ -1385,7 +1420,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
         }})",
         ACCOUNT,
         ripple::strHex(marker),
-        std::numeric_limits<uint32_t>::max()));
+        std::numeric_limits<uint32_t>::max()
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -1484,7 +1520,8 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
             "account":"{}",
             "type": "nft_page"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -1536,7 +1573,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
         ACCOUNT,
         limit,
         ripple::strHex(ripple::uint256{beast::zero}),
-        std::numeric_limits<uint32_t>::max()));
+        std::numeric_limits<uint32_t>::max()
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -1581,7 +1619,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
                 }}
             ]
         }})",
-        AccountObjectsHandler::LIMIT_MIN);
+        AccountObjectsHandler::LIMIT_MIN
+    );
 
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
@@ -1618,7 +1657,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
             "limit": {}
         }})",
         ACCOUNT,
-        AccountObjectsHandler::LIMIT_MIN - 1));
+        AccountObjectsHandler::LIMIT_MIN - 1
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
@@ -1662,7 +1702,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
                 }}
             ]
         }})",
-        AccountObjectsHandler::LIMIT_MAX);
+        AccountObjectsHandler::LIMIT_MAX
+    );
 
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
@@ -1699,7 +1740,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
             "limit": {}
         }})",
         ACCOUNT,
-        AccountObjectsHandler::LIMIT_MAX + 1));
+        AccountObjectsHandler::LIMIT_MAX + 1
+    ));
 
     auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {

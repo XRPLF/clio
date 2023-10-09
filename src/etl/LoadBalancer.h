@@ -79,7 +79,8 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers);
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+    );
 
     /**
      * @brief A factory function for the load balancer.
@@ -96,7 +97,8 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers);
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+    );
 
     /**
      * @brief A factory function for the ETL source.
@@ -115,7 +117,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-        LoadBalancer& balancer);
+        LoadBalancer& balancer
+    );
 
     ~LoadBalancer();
 
