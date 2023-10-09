@@ -371,14 +371,6 @@ TEST_P(AccountTxParameterTest, CheckParams)
     }
     else
     {
-        if (req.as_object().contains("ledger_hash"))
-        {
-            EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).WillOnce(testing::Return(ripple::LedgerHeader{}));
-        }
-        else if (req.as_object().contains("ledger_index"))
-        {
-            EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(testing::Return(ripple::LedgerHeader{}));
-        }
         EXPECT_CALL(*rawBackendPtr, fetchAccountTransactions);
 
         runSpawn([&, this](auto yield) {
@@ -660,7 +652,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
             "144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451"
             "243869B38667CBD89DF3");
         EXPECT_FALSE(output->at("transactions").as_array()[0].as_object().contains("date"));
-
+        EXPECT_FALSE(output->at("transactions").as_array()[0].as_object().contains("inLedger"));
         EXPECT_FALSE(output->as_object().contains("limit"));
     });
 }
