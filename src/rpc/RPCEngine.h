@@ -145,9 +145,8 @@ public:
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
             if (v)
-            {
                 return v->as_object();
-            }
+
             notifyErrored(ctx.method);
             return Status{v.error()};
         }
