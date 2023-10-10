@@ -761,7 +761,7 @@ keypairFromRequst(boost::json::object const& request)
 
     // All of the secret types we allow, but only one at a time.
     // The array should be constexpr, but that makes Visual Studio unhappy.
-    static const std::string secretTypes[]{"passphrase", "secret", "seed", "seed_hex"};
+    static std::string const secretTypes[]{"passphrase", "secret", "seed", "seed_hex"};
 
     // Identify which secret type is in use.
     std::string secretType;
