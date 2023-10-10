@@ -21,7 +21,7 @@ class Clio(ConanFile):
 
     requires = [
         'boost/1.82.0',
-        'cassandra-cpp-driver/2.16.2',
+        'cassandra-cpp-driver/2.17.0',
         'fmt/10.0.0',
         'grpc/1.50.1',
         'openssl/1.1.1u',
@@ -57,7 +57,7 @@ class Clio(ConanFile):
 
     def requirements(self):
         if self.options.tests:
-            self.requires('gtest/1.13.0')
+            self.requires('gtest/1.14.0')
 
     def configure(self):
         if self.settings.compiler == 'apple-clang':

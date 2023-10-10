@@ -256,7 +256,7 @@ generateParameterBookOffersTestBundles()
                 "taker": "123"
             })",
             "invalidParams",
-            "Invalid field 'taker'"},
+            "Invalid field 'taker'."},
         ParameterTestBundle{
             "TakerNotString",
             R"({
@@ -272,7 +272,7 @@ generateParameterBookOffersTestBundles()
                 "taker": 123
             })",
             "invalidParams",
-            "Invalid field 'taker'"},
+            "Invalid field 'taker'."},
         ParameterTestBundle{
             "LimitNotInt",
             R"({
@@ -384,8 +384,7 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "srcIsrMalformed",
-            "Unneeded field 'taker_pays.issuer' for XRP currency "
-            "specification."},
+            "Unneeded field 'taker_pays.issuer' for XRP currency specification."},
         ParameterTestBundle{
             "PaysCurrencyWithXRPIssuer",
             R"({
@@ -430,8 +429,7 @@ generateParameterBookOffersTestBundles()
                 }            
             })",
             "dstIsrMalformed",
-            "Unneeded field 'taker_gets.issuer' for XRP currency "
-            "specification."},
+            "Unneeded field 'taker_gets.issuer' for XRP currency specification."},
         ParameterTestBundle{
             "BadMarket",
             R"({
