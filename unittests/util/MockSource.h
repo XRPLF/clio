@@ -41,12 +41,12 @@ public:
     MOCK_METHOD(
         std::optional<boost::json::object>,
         forwardToRippled,
-        (boost::json::object const&, std::optional<std::string>, boost::asio::yield_context),
+        (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
         (const, override));
     MOCK_METHOD(
         std::optional<boost::json::object>,
         requestFromRippled,
-        (boost::json::object const&, std::optional<std::string>, boost::asio::yield_context),
+        (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
         (const, override));
     MOCK_METHOD(boost::uuids::uuid, token, (), (const, override));
 };

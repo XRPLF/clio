@@ -39,6 +39,6 @@ struct MockLoadBalancer
     MOCK_METHOD(
         std::optional<boost::json::object>,
         forwardToRippled,
-        (boost::json::object const&, std::string const&, boost::asio::yield_context),
+        (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
         (const));
 };

@@ -107,7 +107,7 @@ public:
     std::optional<boost::json::object>
     forwardToRippled(
         boost::json::object const& request,
-        std::optional<std::string> clientIp,
+        std::optional<std::string> const& clientIp,
         boost::asio::yield_context yield) const override;
 
     boost::uuids::uuid
@@ -117,7 +117,7 @@ private:
     std::optional<boost::json::object>
     requestFromRippled(
         boost::json::object const& request,
-        std::optional<std::string> clientIp,
+        std::optional<std::string> const& clientIp,
         boost::asio::yield_context yield) const override;
 
     SourceHooks

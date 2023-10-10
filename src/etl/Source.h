@@ -132,7 +132,7 @@ public:
     virtual std::optional<boost::json::object>
     forwardToRippled(
         boost::json::object const& request,
-        std::optional<std::string> clientIp,
+        std::optional<std::string> const& forwardToRippledclientIp,
         boost::asio::yield_context yield) const = 0;
 
     /**
@@ -165,7 +165,7 @@ private:
     virtual std::optional<boost::json::object>
     requestFromRippled(
         boost::json::object const& request,
-        std::optional<std::string> clientIp,
+        std::optional<std::string> const& clientIp,
         boost::asio::yield_context yield) const = 0;
 };
 
@@ -306,7 +306,7 @@ public:
     std::optional<boost::json::object>
     requestFromRippled(
         boost::json::object const& request,
-        std::optional<std::string> clientIp,
+        std::optional<std::string> const& clientIp,
         boost::asio::yield_context yield) const override
     {
         LOG(log_.trace()) << "Attempting to forward request to tx. Request = " << boost::json::serialize(request);
@@ -538,7 +538,7 @@ public:
     std::optional<boost::json::object>
     forwardToRippled(
         boost::json::object const& request,
-        std::optional<std::string> clientIp,
+        std::optional<std::string> const& clientIp,
         boost::asio::yield_context yield) const override
     {
         if (auto resp = forwardCache_.get(request); resp)

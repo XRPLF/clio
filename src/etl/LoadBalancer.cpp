@@ -94,7 +94,7 @@ LoadBalancer::LoadBalancer(
         {
             LOG(log_.error()) << "Failed to fetch ETL state from source = " << source->toString()
                               << " Please check the configuration and network";
-            throw std::runtime_error("ETL node not available");
+            throw std::logic_error("ETL node not available");
         }
 
         if (etlState_ && etlState_->networkID != state.networkID)
@@ -102,7 +102,7 @@ LoadBalancer::LoadBalancer(
             LOG(log_.error()) << "ETL sources must be on the same network. "
                               << "Source network id = " << *(state.networkID)
                               << " does not match others network id = " << *(etlState_->networkID);
-            throw std::runtime_error("ETL nodes are not in the same network");
+            throw std::logic_error("ETL nodes are not in the same network");
         }
         etlState_ = state;
         sources_.push_back(std::move(source));
@@ -112,7 +112,7 @@ LoadBalancer::LoadBalancer(
     if (sources_.empty())
     {
         LOG(log_.error()) << "No ETL sources configured. Please check the configuration";
-        throw std::runtime_error("No ETL sources configured");
+        throw std::logic_error("No ETL sources configured");
     }
 }
 
@@ -176,7 +176,7 @@ LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObje
 std::optional<boost::json::object>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
-    std::optional<std::string> clientIp,
+    std::optional<std::string> const& clientIp,
     boost::asio::yield_context yield) const
 {
     srand(static_cast<unsigned>(time(0)));
