@@ -274,7 +274,6 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccountProposedT
     CheckSubscriberMessage(dummyTransaction, session);
     auto rawIdle = dynamic_cast<MockSession*>(sessionIdle.get());
     ASSERT_NE(rawIdle, nullptr);
-    ASSERT_NE(rawIdle, nullptr);
     EXPECT_EQ("", rawIdle->message);
 }
 

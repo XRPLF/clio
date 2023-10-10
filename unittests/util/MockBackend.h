@@ -146,6 +146,8 @@ struct MockBackend : public BackendInterface
 
     MOCK_METHOD(bool, isTooBusy, (), (const, override));
 
+    MOCK_METHOD(boost::json::object, stats, (), (const, override));
+
     MOCK_METHOD(void, doWriteLedgerObject, (std::string&&, std::uint32_t const, std::string&&), (override));
 
     MOCK_METHOD(bool, doFinishWrites, (), (override));

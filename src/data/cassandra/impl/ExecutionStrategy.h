@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <data/BackendCounters.h>
+#include <data/BackendInterface.h>
 #include <data/cassandra/Handle.h>
 #include <data/cassandra/Types.h>
 #include <data/cassandra/impl/AsyncExecutor.h>
@@ -46,7 +48,7 @@ namespace data::cassandra::detail {
  * Note: A lot of the code that uses yield is repeated below.
  * This is ok for now because we are hopefully going to be getting rid of it entirely later on.
  */
-template <typename HandleType = Handle>
+template <typename HandleType = Handle, SomeBackendCounters BackendCountersType = BackendCounters>
 class DefaultExecutionStrategy
 {
     util::Logger log_{"Backend"};
@@ -69,6 +71,8 @@ class DefaultExecutionStrategy
     std::reference_wrapper<HandleType const> handle_;
     std::thread thread_;
 
+    typename BackendCountersType::PtrType counters_;
+
 public:
     using ResultOrErrorType = typename HandleType::ResultOrErrorType;
     using StatementType = typename HandleType::StatementType;
@@ -82,12 +86,16 @@ public:
      * @param settings The settings to use
      * @param handle A handle to the cassandra database
      */
-    DefaultExecutionStrategy(Settings const& settings, HandleType const& handle)
+    DefaultExecutionStrategy(
+        Settings const& settings,
+        HandleType const& handle,
+        typename BackendCountersType::PtrType counters = BackendCountersType::make())
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
         , maxReadRequestsOutstanding_{settings.maxReadRequestsOutstanding}
         , work_{ioc_}
         , handle_{std::cref(handle)}
         , thread_{[this]() { ioc_.run(); }}
+        , counters_{std::move(counters)}
     {
         LOG(log_.info()) << "Max write requests outstanding is " << maxWriteRequestsOutstanding_
                          << "; Max read requests outstanding is " << maxReadRequestsOutstanding_;
@@ -118,7 +126,10 @@ public:
     bool
     isTooBusy() const
     {
-        return numReadRequestsOutstanding_ >= maxReadRequestsOutstanding_;
+        bool const result = numReadRequestsOutstanding_ >= maxReadRequestsOutstanding_;
+        if (result)
+            counters_->registerTooBusy();
+        return result;
     }
 
     /**
@@ -129,6 +140,7 @@ public:
     ResultOrErrorType
     writeSync(StatementType const& statement)
     {
+        counters_->registerWriteSync();
         while (true)
         {
             auto res = handle_.get().execute(statement);
@@ -137,6 +149,7 @@ public:
                 return res;
             }
 
+            counters_->registerWriteSyncRetry();
             LOG(log_.warn()) << "Cassandra sync write error, retrying: " << res.error();
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
@@ -170,9 +183,18 @@ public:
         auto statement = preparedStatement.bind(std::forward<Args>(args)...);
         incrementOutstandingRequestCount();
 
+        counters_->registerWriteStarted();
         // Note: lifetime is controlled by std::shared_from_this internally
         AsyncExecutor<std::decay_t<decltype(statement)>, HandleType>::run(
-            ioc_, handle_, std::move(statement), [this](auto const&) { decrementOutstandingRequestCount(); });
+            ioc_,
+            handle_,
+            std::move(statement),
+            [this](auto const&) {
+                decrementOutstandingRequestCount();
+
+                counters_->registerWriteFinished();
+            },
+            [this]() { counters_->registerWriteRetry(); });
     }
 
     /**
@@ -191,9 +213,17 @@ public:
 
         incrementOutstandingRequestCount();
 
+        counters_->registerWriteStarted();
         // Note: lifetime is controlled by std::shared_from_this internally
         AsyncExecutor<std::decay_t<decltype(statements)>, HandleType>::run(
-            ioc_, handle_, std::move(statements), [this](auto const&) { decrementOutstandingRequestCount(); });
+            ioc_,
+            handle_,
+            std::move(statements),
+            [this](auto const&) {
+                decrementOutstandingRequestCount();
+                counters_->registerWriteFinished();
+            },
+            [this]() { counters_->registerWriteRetry(); });
     }
 
     /**
@@ -229,6 +259,7 @@ public:
     {
         auto const numStatements = statements.size();
         std::optional<FutureWithCallbackType> future;
+        counters_->registerReadStarted(numStatements);
 
         // todo: perhaps use policy instead
         while (true)
@@ -251,11 +282,21 @@ public:
 
             if (res)
             {
+                counters_->registerReadFinished(numStatements);
                 return res;
             }
 
             LOG(log_.error()) << "Failed batch read in coroutine: " << res.error();
-            throwErrorIfNeeded(res.error());
+            try
+            {
+                throwErrorIfNeeded(res.error());
+            }
+            catch (...)
+            {
+                counters_->registerReadError(numStatements);
+                throw;
+            }
+            counters_->registerReadRetry(numStatements);
         }
     }
 
@@ -273,6 +314,7 @@ public:
     read(CompletionTokenType token, StatementType const& statement)
     {
         std::optional<FutureWithCallbackType> future;
+        counters_->registerReadStarted();
 
         // todo: perhaps use policy instead
         while (true)
@@ -293,10 +335,22 @@ public:
             --numReadRequestsOutstanding_;
 
             if (res)
+            {
+                counters_->registerReadFinished();
                 return res;
+            }
 
             LOG(log_.error()) << "Failed read in coroutine: " << res.error();
-            throwErrorIfNeeded(res.error());
+            try
+            {
+                throwErrorIfNeeded(res.error());
+            }
+            catch (...)
+            {
+                counters_->registerReadError();
+                throw;
+            }
+            counters_->registerReadRetry();
         }
     }
 
@@ -314,18 +368,19 @@ public:
     std::vector<ResultType>
     readEach(CompletionTokenType token, std::vector<StatementType> const& statements)
     {
-        std::atomic_bool hadError = false;
+        std::atomic_uint64_t errorsCount = 0u;
         std::atomic_int numOutstanding = statements.size();
         numReadRequestsOutstanding_ += statements.size();
 
         auto futures = std::vector<FutureWithCallbackType>{};
         futures.reserve(numOutstanding);
+        counters_->registerReadStarted(statements.size());
 
-        auto init = [this, &statements, &futures, &hadError, &numOutstanding]<typename Self>(Self& self) {
+        auto init = [this, &statements, &futures, &errorsCount, &numOutstanding]<typename Self>(Self& self) {
             auto sself = std::make_shared<Self>(std::move(self));
-            auto executionHandler = [&hadError, &numOutstanding, sself](auto const& res) mutable {
+            auto executionHandler = [&errorsCount, &numOutstanding, sself](auto const& res) mutable {
                 if (not res)
-                    hadError = true;
+                    ++errorsCount;
 
                 // when all async operations complete unblock the result
                 if (--numOutstanding == 0)
@@ -348,8 +403,14 @@ public:
             init, token, boost::asio::get_associated_executor(token));
         numReadRequestsOutstanding_ -= statements.size();
 
-        if (hadError)
+        if (errorsCount > 0)
+        {
+            assert(errorsCount <= statements.size());
+            counters_->registerReadError(errorsCount);
+            counters_->registerReadFinished(statements.size() - errorsCount);
             throw DatabaseTimeout{};
+        }
+        counters_->registerReadFinished(statements.size());
 
         std::vector<ResultType> results;
         results.reserve(futures.size());
@@ -368,6 +429,15 @@ public:
         assert(futures.size() == statements.size());
         assert(results.size() == statements.size());
         return results;
+    }
+
+    /**
+     * @brief Get statistics about the backend.
+     */
+    boost::json::object
+    stats() const
+    {
+        return counters_->report();
     }
 
 private:

@@ -85,16 +85,16 @@ struct Settings
     uint32_t coreConnectionsPerHost = 1u;
 
     /** @brief Size of the IO queue */
-    std::optional<uint32_t> queueSizeIO;
+    std::optional<uint32_t> queueSizeIO{};
 
     /** @brief SSL certificate */
-    std::optional<std::string> certificate;  // ssl context
+    std::optional<std::string> certificate{};  // ssl context
 
     /** @brief Username/login */
-    std::optional<std::string> username;
+    std::optional<std::string> username{};
 
     /** @brief Password to match the `username` */
-    std::optional<std::string> password;
+    std::optional<std::string> password{};
 
     /**
      * @brief Creates a new Settings object as a copy of the current one with overridden contact points.

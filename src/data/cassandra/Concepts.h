@@ -22,6 +22,7 @@
 #include <data/cassandra/Types.h>
 
 #include <boost/asio/spawn.hpp>
+#include <boost/json.hpp>
 
 #include <chrono>
 #include <concepts>
@@ -69,6 +70,7 @@ concept SomeExecutionStrategy = requires(
     { a.read(token, statement) } -> std::same_as<ResultOrError>;
     { a.read(token, statements) } -> std::same_as<ResultOrError>;
     { a.readEach(token, statements) } -> std::same_as<std::vector<Result>>;
+    { a.stats() } -> std::same_as<boost::json::object>;
 };
 // clang-format on
 

@@ -49,6 +49,8 @@ namespace rpc {
 template <typename SubscriptionManagerType, typename LoadBalancerType, typename ETLServiceType, typename CountersType>
 class BaseServerInfoHandler
 {
+    static constexpr auto BACKEND_COUNTERS_KEY = "backend_counters";
+
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManagerType> subscriptions_;
     std::shared_ptr<LoadBalancerType> balancer_;
@@ -56,9 +58,15 @@ class BaseServerInfoHandler
     std::reference_wrapper<CountersType const> counters_;
 
 public:
+    struct Input
+    {
+        bool backendCounters = false;
+    };
+
     struct AdminSection
     {
         boost::json::object counters = {};
+        std::optional<boost::json::object> backendCounters = {};
         boost::json::object subscriptions = {};
         boost::json::object etl = {};
     };
@@ -119,8 +127,15 @@ public:
     {
     }
 
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
+    {
+        static const RpcSpec rpcSpec = {};
+        return rpcSpec;
+    }
+
     Result
-    process(Context const& ctx) const
+    process(Input input, Context const& ctx) const
     {
         using namespace rpc;
         using namespace std::chrono;
@@ -143,7 +158,13 @@ public:
         output.info.completeLedgers = fmt::format("{}-{}", range->minSequence, range->maxSequence);
 
         if (ctx.isAdmin)
-            output.info.adminSection = {counters_.get().report(), subscriptions_->report(), etl_->getInfo()};
+        {
+            output.info.adminSection = {
+                .counters = counters_.get().report(),
+                .backendCounters = input.backendCounters ? std::make_optional(backend_->stats()) : std::nullopt,
+                .subscriptions = subscriptions_->report(),
+                .etl = etl_->getInfo()};
+        }
 
         auto const serverInfoRippled =
             balancer_->forwardToRippled({{"command", "server_info"}}, ctx.clientIp, ctx.yield);
@@ -223,6 +244,10 @@ private:
             jv.as_object()["etl"] = info.adminSection->etl;
             jv.as_object()[JS(counters)] = info.adminSection->counters;
             jv.as_object()[JS(counters)].as_object()["subscriptions"] = info.adminSection->subscriptions;
+            if (info.adminSection->backendCounters.has_value())
+            {
+                jv.as_object()[BACKEND_COUNTERS_KEY] = *info.adminSection->backendCounters;
+            }
         }
     }
 
@@ -249,6 +274,16 @@ private:
             {"object_hit_rate", cache.objectHitRate},
             {"successor_hit_rate", cache.successorHitRate},
         };
+    }
+
+    friend Input
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv)
+    {
+        auto input = BaseServerInfoHandler::Input{};
+        auto const jsonObject = jv.as_object();
+        if (jsonObject.contains(BACKEND_COUNTERS_KEY) && jsonObject.at(BACKEND_COUNTERS_KEY).is_bool())
+            input.backendCounters = jv.at(BACKEND_COUNTERS_KEY).as_bool();
+        return input;
     }
 };
 
