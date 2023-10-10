@@ -31,8 +31,7 @@ protected:
     static boost::json::object
     emptyReport()
     {
-        return boost::json::parse(R"(
-        {
+        return boost::json::parse(R"({
             "too_busy": 0,
             "write_sync": 0,
             "write_sync_retry": 0,
@@ -44,8 +43,7 @@ protected:
             "read_async_completed": 0,
             "read_async_retry": 0,
             "read_async_error": 0
-        }
-    )")
+        })")
             .as_object();
     }
 };
