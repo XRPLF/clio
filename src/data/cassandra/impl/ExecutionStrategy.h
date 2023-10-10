@@ -89,7 +89,7 @@ public:
     DefaultExecutionStrategy(
         Settings const& settings,
         HandleType const& handle,
-        BackendCountersType::Ptr counters = BackendCountersType::make())
+        typename BackendCountersType::Ptr counters = BackendCountersType::make())
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
         , maxReadRequestsOutstanding_{settings.maxReadRequestsOutstanding}
         , work_{ioc_}
@@ -126,7 +126,7 @@ public:
     bool
     isTooBusy() const
     {
-        const bool result = numReadRequestsOutstanding_ >= maxReadRequestsOutstanding_;
+        bool const result = numReadRequestsOutstanding_ >= maxReadRequestsOutstanding_;
         if (result)
             counters_->registerTooBusy();
         return result;
