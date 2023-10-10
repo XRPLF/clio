@@ -34,8 +34,8 @@ protected:
     class MockBackendCounters
     {
     public:
-        using Ptr = std::shared_ptr<StrictMock<MockBackendCounters>>;
-        static Ptr
+        using PtrType = std::shared_ptr<StrictMock<MockBackendCounters>>;
+        static PtrType
         make()
         {
             return std::make_shared<StrictMock<MockBackendCounters>>();
@@ -79,7 +79,7 @@ protected:
     };
 
     MockHandle handle{};
-    MockBackendCounters::Ptr counters = MockBackendCounters::make();
+    MockBackendCounters::PtrType counters = MockBackendCounters::make();
     static constexpr auto NUM_STATEMENTS = 3u;
 
     DefaultExecutionStrategy<MockHandle, MockBackendCounters>

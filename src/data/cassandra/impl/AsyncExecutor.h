@@ -98,7 +98,7 @@ private:
         boost::asio::io_context& ioc,
         StatementType&& data,
         CallbackType&& onComplete,
-        RetryCallbackType onRetry)
+        RetryCallbackType&& onRetry)
         : data_{std::move(data)}, retryPolicy_{ioc}, onComplete_{std::move(onComplete)}, onRetry_{std::move(onRetry)}
     {
     }

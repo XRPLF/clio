@@ -60,13 +60,13 @@ class BaseServerInfoHandler
 public:
     struct Input
     {
-        bool backend_counters = false;
+        bool backendCounters = false;
     };
 
     struct AdminSection
     {
         boost::json::object counters = {};
-        boost::json::object backend_counters = {};
+        std::optional<boost::json::object> backendCounters = {};
         boost::json::object subscriptions = {};
         boost::json::object etl = {};
     };
@@ -161,7 +161,7 @@ public:
         {
             output.info.adminSection = {
                 .counters = counters_.get().report(),
-                .backend_counters = input.backend_counters ? backend_->stats() : boost::json::object{},
+                .backendCounters = input.backendCounters ? std::make_optional(backend_->stats()) : std::nullopt,
                 .subscriptions = subscriptions_->report(),
                 .etl = etl_->getInfo()};
         }
@@ -244,9 +244,9 @@ private:
             jv.as_object()["etl"] = info.adminSection->etl;
             jv.as_object()[JS(counters)] = info.adminSection->counters;
             jv.as_object()[JS(counters)].as_object()["subscriptions"] = info.adminSection->subscriptions;
-            if (!info.adminSection->backend_counters.empty())
+            if (info.adminSection->backendCounters.has_value())
             {
-                jv.as_object()[BACKEND_COUNTERS_KEY] = info.adminSection->backend_counters;
+                jv.as_object()[BACKEND_COUNTERS_KEY] = *info.adminSection->backendCounters;
             }
         }
     }
@@ -282,7 +282,7 @@ private:
         auto input = BaseServerInfoHandler::Input{};
         auto const jsonObject = jv.as_object();
         if (jsonObject.contains(BACKEND_COUNTERS_KEY) && jsonObject.at(BACKEND_COUNTERS_KEY).is_bool())
-            input.backend_counters = jv.at(BACKEND_COUNTERS_KEY).as_bool();
+            input.backendCounters = jv.at(BACKEND_COUNTERS_KEY).as_bool();
         return input;
     }
 };

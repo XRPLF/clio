@@ -21,7 +21,7 @@
 
 namespace data {
 
-BackendCounters::Ptr
+BackendCounters::PtrType
 BackendCounters::make()
 {
     struct EnableMakeShared : public BackendCounters
@@ -139,12 +139,11 @@ BackendCounters::AsyncOperationCounters::registerError(std::uint64_t count)
 boost::json::object
 BackendCounters::AsyncOperationCounters::report() const
 {
-    boost::json::object result;
-    result[name_ + "_pending"] = pendingCounter_;
-    result[name_ + "_completed"] = completedCounter_;
-    result[name_ + "_retry"] = retryCounter_;
-    result[name_ + "_error"] = errorCounter_;
-    return result;
+    return boost::json::object{
+        {name_ + "_pending", pendingCounter_},
+        {name_ + "_completed", completedCounter_},
+        {name_ + "_retry", retryCounter_},
+        {name_ + "_error", errorCounter_}};
 }
 
 }  // namespace data

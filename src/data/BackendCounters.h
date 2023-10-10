@@ -33,7 +33,7 @@ namespace data {
 // clang-format off
 template <typename T>
 concept SomeBackendCounters = requires(T a) {
-    typename T::Ptr;
+    typename T::PtrType;
     { a.registerTooBusy() } -> std::same_as<void>;
     { a.registerWriteSync() } -> std::same_as<void>;
     { a.registerWriteSyncRetry() } -> std::same_as<void>;
@@ -55,9 +55,9 @@ concept SomeBackendCounters = requires(T a) {
 class BackendCounters
 {
 public:
-    using Ptr = std::shared_ptr<BackendCounters>;
+    using PtrType = std::shared_ptr<BackendCounters>;
 
-    static Ptr
+    static PtrType
     make();
 
     void

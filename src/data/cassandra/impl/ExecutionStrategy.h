@@ -71,7 +71,7 @@ class DefaultExecutionStrategy
     std::reference_wrapper<HandleType const> handle_;
     std::thread thread_;
 
-    typename BackendCountersType::Ptr counters_;
+    typename BackendCountersType::PtrType counters_;
 
 public:
     using ResultOrErrorType = typename HandleType::ResultOrErrorType;
@@ -89,7 +89,7 @@ public:
     DefaultExecutionStrategy(
         Settings const& settings,
         HandleType const& handle,
-        typename BackendCountersType::Ptr counters = BackendCountersType::make())
+        typename BackendCountersType::PtrType counters = BackendCountersType::make())
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
         , maxReadRequestsOutstanding_{settings.maxReadRequestsOutstanding}
         , work_{ioc_}
@@ -259,8 +259,8 @@ public:
     {
         auto const numStatements = statements.size();
         std::optional<FutureWithCallbackType> future;
-
         counters_->registerReadStarted(numStatements);
+
         // todo: perhaps use policy instead
         while (true)
         {
