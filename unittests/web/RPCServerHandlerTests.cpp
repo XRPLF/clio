@@ -549,7 +549,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableNotArray)
     EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
 }
 
-TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableEmptyArray)
+TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableArrayWithDigit)
 {
     static auto constexpr response = "params unparseable";
 
@@ -558,7 +558,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPParamsUnparseableEmptyArray)
 
     static auto constexpr requestJSON = R"({
                                             "method": "ledger",
-                                            "params": []
+                                            "params": [1]
                                         })";
 
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);

@@ -180,10 +180,10 @@ public:
 
         if (boost::beast::websocket::is_upgrade(req_))
         {
-            upgraded = true;
-            // Disable the timeout.
-            // The websocket::stream uses its own timeout settings.
+            // Disable the timeout. The websocket::stream uses its own timeout settings.
             boost::beast::get_lowest_layer(derived().stream()).expires_never();
+
+            upgraded = true;
             return derived().upgrade();
         }
 

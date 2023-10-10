@@ -150,11 +150,9 @@ public:
 
             if (v)
                 return v->as_object();
-            else
-            {
-                notifyErrored(ctx.method);
-                return Status{v.error()};
-            }
+
+            notifyErrored(ctx.method);
+            return Status{v.error()};
         }
         catch (data::DatabaseTimeout const& t)
         {
