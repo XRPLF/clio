@@ -89,7 +89,7 @@ public:
             auto req = boost::json::parse(request).as_object();
             LOG(perfLog_.debug()) << connection->tag() << "Adding to work queue";
 
-            if (not connection->upgraded && shouldReplaceParams(req))
+            if (not connection->upgraded and shouldReplaceParams(req))
                 req[JS(params)] = boost::json::array({boost::json::object{}});
 
             if (!rpcEngine_->post(
