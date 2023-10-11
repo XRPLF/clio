@@ -63,7 +63,7 @@ protected:
         if (!ec_ && ec != boost::asio::error::operation_aborted)
         {
             ec_ = ec;
-            LOG(perfLog_.info()) << tag() << ": " << what << ": " << ec.message();
+            LOG(perfLog_.error()) << tag() << ": " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);
             (*handler_)(ec, derived().shared_from_this());
         }
@@ -106,14 +106,14 @@ public:
     void
     onWrite(boost::system::error_code ec, std::size_t)
     {
+        messages_.pop();
+        sending_ = false;
         if (ec)
         {
             wsFail(ec, "Failed to write");
         }
         else
         {
-            messages_.pop();
-            sending_ = false;
             maybeSendNext();
         }
     }
