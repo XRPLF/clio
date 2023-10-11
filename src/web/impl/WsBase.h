@@ -106,16 +106,12 @@ public:
     void
     onWrite(boost::system::error_code ec, std::size_t)
     {
+        messages_.pop();
+        sending_ = false;
         if (ec)
-        {
             wsFail(ec, "Failed to write");
-        }
         else
-        {
-            messages_.pop();
-            sending_ = false;
             maybeSendNext();
-        }
     }
 
     void
