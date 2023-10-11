@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <etl/ETLState.h>
+
 #include <boost/json.hpp>
 #include <gmock/gmock.h>
 
@@ -31,4 +33,5 @@ struct MockETLService
     MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
     MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const));
     MOCK_METHOD(bool, isAmendmentBlocked, (), (const));
+    MOCK_METHOD(etl::ETLState, getETLState, (), (const));
 };

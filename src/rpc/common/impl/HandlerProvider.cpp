@@ -88,7 +88,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"random", {RandomHandler{}}},
           {"server_info", {ServerInfoHandler{backend, subscriptionManager, balancer, etl, counters}}},
           {"transaction_entry", {TransactionEntryHandler{backend}}},
-          {"tx", {TxHandler{backend}}},
+          {"tx", {TxHandler{backend, etl}}},
           {"subscribe", {SubscribeHandler{backend, subscriptionManager}}},
           {"unsubscribe", {UnsubscribeHandler{backend, subscriptionManager}}},
           {"version", {VersionHandler{config}}},

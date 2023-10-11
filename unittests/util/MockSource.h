@@ -16,29 +16,37 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-
 #pragma once
 
 #include <etl/Source.h>
-#include <util/FakeFetchResponse.h>
 
-#include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
 #include <gmock/gmock.h>
 
-#include <optional>
-
-struct MockLoadBalancer
+class MockSource : public etl::Source
 {
-    using RawLedgerObjectType = FakeLedgerObject;
-
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(bool, shouldPropagateTxnStream, (etl::Source*), (const));
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
+public:
+    MOCK_METHOD(bool, isConnected, (), (const, override));
+    MOCK_METHOD(boost::json::object, toJson, (), (const override));
+    MOCK_METHOD(void, run, (), (override));
+    MOCK_METHOD(void, pause, (), (override));
+    MOCK_METHOD(void, resume, (), (override));
+    MOCK_METHOD(std::string, toString, (), (const, override));
+    MOCK_METHOD(bool, hasLedger, (uint32_t), (const, override));
+    MOCK_METHOD(
+        (std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>),
+        fetchLedger,
+        (uint32_t, bool, bool),
+        (override));
+    MOCK_METHOD((std::pair<std::vector<std::string>, bool>), loadInitialLedger, (uint32_t, uint32_t, bool), (override));
     MOCK_METHOD(
         std::optional<boost::json::object>,
         forwardToRippled,
         (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
-        (const));
+        (const, override));
+    MOCK_METHOD(
+        std::optional<boost::json::object>,
+        requestFromRippled,
+        (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
+        (const, override));
+    MOCK_METHOD(boost::uuids::uuid, token, (), (const, override));
 };

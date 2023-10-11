@@ -105,8 +105,10 @@ public:
     fetchLedger(uint32_t sequence, bool getObjects = true, bool getObjectNeighbors = false) override;
 
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context yield)
-        const override;
+    forwardToRippled(
+        boost::json::object const& request,
+        std::optional<std::string> const& clientIp,
+        boost::asio::yield_context yield) const override;
 
     boost::uuids::uuid
     token() const override;
@@ -115,7 +117,7 @@ private:
     std::optional<boost::json::object>
     requestFromRippled(
         boost::json::object const& request,
-        std::string const& clientIp,
+        std::optional<std::string> const& clientIp,
         boost::asio::yield_context yield) const override;
 
     SourceHooks

@@ -19,26 +19,30 @@
 
 #pragma once
 
-#include <etl/Source.h>
-#include <util/FakeFetchResponse.h>
-
-#include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
-#include <gmock/gmock.h>
 
+#include <cstdint>
 #include <optional>
 
-struct MockLoadBalancer
-{
-    using RawLedgerObjectType = FakeLedgerObject;
+namespace etl {
 
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(bool, shouldPropagateTxnStream, (etl::Source*), (const));
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
-    MOCK_METHOD(
-        std::optional<boost::json::object>,
-        forwardToRippled,
-        (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
-        (const));
+class Source;
+
+/**
+ * @brief This class is responsible for fetching and storing the state of the ETL information, such as the network id
+ */
+struct ETLState
+{
+    std::optional<uint32_t> networkID;
+
+    /**
+     * @brief Fetch the ETL state from the rippled server
+     */
+    static ETLState
+    fetchETLStateFromSource(Source const& source) noexcept;
 };
+
+ETLState
+tag_invoke(boost::json::value_to_tag<ETLState>, boost::json::value const& jv);
+
+}  // namespace etl

@@ -93,8 +93,8 @@ getDeliveredAmount(
         // then its absence indicates that the amount delivered is listed in the
         // Amount field. DeliveredAmount went live January 24, 2014.
         // 446000000 is in Feb 2014, well after DeliveredAmount went live
-        static constexpr std::uint32_t FIRST_LEDGER_WITH_DELIVERED_AMOUNT = 4594095;
-        static constexpr std::uint32_t DELIVERED_AMOUNT_LIVE_DATE = 446000000;
+        static std::uint32_t constexpr FIRST_LEDGER_WITH_DELIVERED_AMOUNT = 4594095;
+        static std::uint32_t constexpr DELIVERED_AMOUNT_LIVE_DATE = 446000000;
         if (ledgerSequence >= FIRST_LEDGER_WITH_DELIVERED_AMOUNT || date > DELIVERED_AMOUNT_LIVE_DATE)
         {
             return txn->getFieldAmount(ripple::sfAmount);
@@ -198,7 +198,7 @@ toJson(ripple::STBase const& obj)
 }
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled)
+toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled, std::optional<uint16_t> networkId)
 {
     auto [txn, meta] = deserializeTxPlusMeta(blobs, blobs.ledgerSequence);
     auto txnJson = toJson(*txn);
@@ -218,7 +218,30 @@ toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled
         }
     }
 
+    if (networkId)
+    {
+        // networkId is available, insert ctid field to tx
+        if (auto const ctid = rpc::encodeCTID(meta->getLgrSeq(), meta->getIndex(), *networkId))
+        {
+            txnJson[JS(ctid)] = *ctid;
+        }
+    }
+
     return {txnJson, metaJson};
+}
+
+std::optional<std::string>
+encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept
+{
+    static uint32_t constexpr MAX_LEDGER_SEQ = 0x0FFF'FFFF;
+    if (ledgerSeq > MAX_LEDGER_SEQ)
+        return {};
+
+    static uint64_t constexpr CTID_PREFIX = 0xC000'0000;
+    uint64_t const ctidValue =
+        ((CTID_PREFIX + static_cast<uint64_t>(ledgerSeq)) << 32) + (static_cast<uint64_t>(txnIndex) << 16) + networkId;
+
+    return {fmt::format("{:016X}", ctidValue)};
 }
 
 bool
@@ -571,7 +594,7 @@ traverseOwnedNodes(
     // Only reserve 2048 nodes when fetching all owned ledger objects. If there
     // are more, then keys will allocate more memory, which is suboptimal, but
     // should only occur occasionally.
-    static constexpr std::uint32_t MIN_NODES = 2048;
+    static std::uint32_t constexpr MIN_NODES = 2048;
     keys.reserve(std::min(MIN_NODES, limit));
 
     auto start = std::chrono::system_clock::now();
@@ -722,8 +745,8 @@ parseRippleLibSeed(boost::json::value const& value)
 
     auto const result = ripple::decodeBase58Token(value.as_string().c_str(), ripple::TokenType::None);
 
-    static constexpr std::size_t SEED_SIZE = 18;
-    static constexpr std::array<std::uint8_t, 2> SEED_PREFIX = {0xE1, 0x4B};
+    static std::size_t constexpr SEED_SIZE = 18;
+    static std::array<std::uint8_t, 2> constexpr SEED_PREFIX = {0xE1, 0x4B};
     if (result.size() == SEED_SIZE && static_cast<std::uint8_t>(result[0]) == SEED_PREFIX[0] &&
         static_cast<std::uint8_t>(result[1]) == SEED_PREFIX[1])
         return ripple::Seed(ripple::makeSlice(result.substr(2)));

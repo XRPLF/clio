@@ -36,6 +36,7 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STTx.h>
 
+#include <boost/regex.hpp>
 #include <fmt/core.h>
 
 namespace rpc {
@@ -62,8 +63,18 @@ deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs);
 std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::TxMeta const>>
 deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs, std::uint32_t seq);
 
+/**
+ * @brief Convert a TransactionAndMetadata to two JSON objects.
+ *
+ * @param blobs The TransactionAndMetadata to convert.
+ * @param nftEnabled Whether to include NFT information in the JSON.
+ * @param networkId The network ID to use for ctid, not include ctid if nullopt.
+ */
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled = NFTokenjson::DISABLE);
+toExpandedJson(
+    data::TransactionAndMetadata const& blobs,
+    NFTokenjson nftEnabled = NFTokenjson::DISABLE,
+    std::optional<uint16_t> networkId = std::nullopt);
 
 bool
 insertDeliveredAmount(
@@ -225,6 +236,47 @@ isAmendmentEnabled(
     uint32_t seq,
     ripple::uint256 amendmentId);
 
+std::optional<std::string>
+encodeCTID(uint32_t ledgerSeq, uint16_t txnIndex, uint16_t networkId) noexcept;
+
+template <typename T>
+inline std::optional<std::tuple<uint32_t, uint16_t, uint16_t>>
+decodeCTID(T const ctid) noexcept
+{
+    auto const getCTID64 = [](T const ctid) noexcept -> std::optional<uint64_t> {
+        if constexpr (std::is_convertible_v<T, std::string>)
+        {
+            std::string const ctidString(ctid);
+            static std::size_t constexpr CTID_STRING_LENGTH = 16;
+            if (ctidString.length() != CTID_STRING_LENGTH)
+                return {};
+
+            if (!boost::regex_match(ctidString, boost::regex("^[0-9A-F]+$")))
+                return {};
+
+            return std::stoull(ctidString, nullptr, 16);
+        }
+
+        if constexpr (std::is_same_v<T, uint64_t>)
+            return ctid;
+
+        return {};
+    };
+
+    auto const ctidValue = getCTID64(ctid).value_or(0);
+
+    static uint64_t constexpr CTID_PREFIX = 0xC000'0000'0000'0000ULL;
+    static uint64_t constexpr CTID_PREFIX_MASK = 0xF000'0000'0000'0000ULL;
+
+    if ((ctidValue & CTID_PREFIX_MASK) != CTID_PREFIX)
+        return {};
+
+    uint32_t const ledgerSeq = (ctidValue >> 32) & 0xFFFF'FFFUL;
+    uint16_t const txnIndex = (ctidValue >> 16) & 0xFFFFU;
+    uint16_t const networkId = ctidValue & 0xFFFFU;
+    return {{ledgerSeq, txnIndex, networkId}};
+}
+
 template <class T>
 void
 logDuration(web::Context const& ctx, T const& dur)
@@ -232,7 +284,7 @@ logDuration(web::Context const& ctx, T const& dur)
     using boost::json::serialize;
 
     static util::Logger const log{"RPC"};
-    static constexpr std::int64_t DURATION_ERROR_THRESHOLD_SECONDS = 10;
+    static std::int64_t constexpr DURATION_ERROR_THRESHOLD_SECONDS = 10;
 
     auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();

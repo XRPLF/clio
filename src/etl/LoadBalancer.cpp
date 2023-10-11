@@ -87,8 +87,32 @@ LoadBalancer::LoadBalancer(
     {
         std::unique_ptr<Source> source = make_Source(entry, ioc, backend, subscriptions, validatedLedgers, *this);
 
+        // checking etl node validity
+        auto const state = ETLState::fetchETLStateFromSource(*source);
+
+        if (!state.networkID)
+        {
+            LOG(log_.error()) << "Failed to fetch ETL state from source = " << source->toString()
+                              << " Please check the configuration and network";
+            throw std::logic_error("ETL node not available");
+        }
+
+        if (etlState_ && etlState_->networkID != state.networkID)
+        {
+            LOG(log_.error()) << "ETL sources must be on the same network. "
+                              << "Source network id = " << *(state.networkID)
+                              << " does not match others network id = " << *(etlState_->networkID);
+            throw std::logic_error("ETL nodes are not in the same network");
+        }
+        etlState_ = state;
         sources_.push_back(std::move(source));
         LOG(log_.info()) << "Added etl source - " << sources_.back()->toString();
+    }
+
+    if (sources_.empty())
+    {
+        LOG(log_.error()) << "No ETL sources configured. Please check the configuration";
+        throw std::logic_error("No ETL sources configured");
     }
 }
 
@@ -152,7 +176,7 @@ LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObje
 std::optional<boost::json::object>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
-    std::string const& clientIp,
+    std::optional<std::string> const& clientIp,
     boost::asio::yield_context yield) const
 {
     srand(static_cast<unsigned>(time(0)));
@@ -245,4 +269,12 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
     }
     return true;
 }
+
+ETLState
+LoadBalancer::getETLState() const noexcept
+{
+    assert(etlState_);  // etlState_ is set in the constructor
+    return *etlState_;
+}
+
 }  // namespace etl
