@@ -22,6 +22,7 @@ class Clio(ConanFile):
         'boost/1.82.0',
         'cassandra-cpp-driver/2.16.2',
         'fmt/10.0.0',
+        'protobuf/3.21.12',
         'grpc/1.50.1',
         'openssl/1.1.1u',
         'xrpl/1.12.0',
