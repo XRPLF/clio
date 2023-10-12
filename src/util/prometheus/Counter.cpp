@@ -18,8 +18,57 @@
 //==============================================================================
 #pragma once
 
-#include <cstddef>
+#include <util/prometheus/Counter.h>
 
-namespace util {
-static constexpr std::size_t MILLISECONDS_PER_SECOND = 1000;
-}  // namespace util
+#include <cassert>
+
+namespace util::prometheus {
+
+IntCounterInterface&
+IntCounterInterface::operator++()
+{
+    increaseImpl(1u);
+    return *this;
+}
+
+void
+IntCounterInterface::operator+=(std::uint64_t const value)
+{
+    increaseImpl(value);
+}
+
+void
+IntCounterInterface::reset()
+{
+    resetImpl();
+}
+
+std::uint64_t
+IntCounterInterface::value() const
+{
+    return value_;
+}
+
+void
+IntCounter::increaseImpl(std::uint64_t value)
+{
+    value_ += value;
+}
+
+void
+IntCounter::resetImpl()
+{
+    value_ = 0u;
+}
+
+void
+DoubleCounterInterface::operator+=(double const value)
+{
+    assert(value >= 0.0);
+    increaseImpl(value);
+}
+
+void
+reset()
+
+}  // namespace util::prometheus

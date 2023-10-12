@@ -18,8 +18,28 @@
 //==============================================================================
 #pragma once
 
-#include <cstddef>
+#include <string>
 
-namespace util {
-static constexpr std::size_t MILLISECONDS_PER_SECOND = 1000;
-}  // namespace util
+namespace util::prometheus {
+
+class Label
+{
+public:
+    Label(std::string name, std::string value);
+
+    bool
+    operator<(const Label& rhs) const;
+
+    bool
+    operator==(const Label& rhs) const;
+
+    std::string
+    serialize() const;
+
+private:
+    std::string name_;
+    std::string value_;
+};
+using Labels = std::vector<Label>;
+
+}  // namespace util::prometheus

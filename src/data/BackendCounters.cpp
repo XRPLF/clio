@@ -19,6 +19,8 @@
 
 #include <data/BackendCounters.h>
 
+#include <util/prometheus/Prometheus.h>
+
 namespace data {
 
 BackendCounters::PtrType
@@ -33,6 +35,7 @@ BackendCounters::make()
 void
 BackendCounters::registerTooBusy()
 {
+    util::prometheus().increment();
     ++tooBusyCounter_;
 }
 

@@ -16,10 +16,39 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#pragma once
+#include <util/prometheus/Metrics.h>
 
-#include <cstddef>
+namespace util::prometheus {
 
-namespace util {
-static constexpr std::size_t MILLISECONDS_PER_SECOND = 1000;
-}  // namespace util
+MetricBase::MetricBase(std::string name, Labels labels, std::optional<std::string> description)
+    : name_(std::move(name)), key_({}), description_(std::move(description))
+{
+    fmt::format_to(std::back_inserter(key_), "{}{{", name_);
+    std::sort(labels.begin(), labels.end());
+    for (auto it = labels.begin(); it != labels.end(); ++it)
+    {
+        if (it != labels.begin())
+            fmt::format_to(std::back_inserter(key_), ",");
+        fmt::format_to(std::back_inserter(key_), "{}", it->serialize());
+    }
+    key_ += "}";
+}
+
+std::string
+MetricBase::serialize() const
+{
+    std::string result;
+    if (description_)
+        fmt::format_to(std::back_inserter(result), "# HELP {} {}\n", name_, *description_);
+    fmt::format_to(std::back_inserter(result), "# TYPE {} {}\n", name_, type());
+    serializeValue(result);
+    return result;
+}
+
+const std::string&
+MetricBase::key() const
+{
+    return key_;
+}
+
+}  // namespace util::prometheus
