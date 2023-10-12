@@ -39,11 +39,13 @@ from your `clio`.
 
 ## Usage
 ### Compiling
+> **Note:** The migrator uses **Boost 1.75.0**. You have to point the `BOOST_ROOT` env variable to its root directory.
+
 Git-clone this project to your server. Then from the top-level directory:
 ```bash
 mkdir build
 cd build
-cmake ..
+BOOST_ROOT=/path/to/boost_1_75_0 cmake ..
 cmake --build . -j 4
 ```
 
