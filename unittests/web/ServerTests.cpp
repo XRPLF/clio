@@ -379,7 +379,7 @@ TEST_F(WebServerTest, WsTooManyConnection)
     catch (boost::system::system_error const& ex)
     {
         exceptionThrown = true;
-        EXPECT_EQ(ex.code(), boost::beast::http::error::end_of_stream);
+        EXPECT_EQ(ex.code(), boost::beast::websocket::error::upgrade_declined);
     }
     wsClient1.disconnect();
     wsClient2.disconnect();

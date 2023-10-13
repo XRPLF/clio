@@ -196,7 +196,7 @@ public:
                 return derived().upgrade();
             }
 
-            return httpFail(boost::asio::error::connection_refused, "too many requests");
+            return sender_(httpResponse(http::status::too_many_requests, "text/html", "Too many requests"));
         }
 
         if (req_.method() != http::verb::post)
