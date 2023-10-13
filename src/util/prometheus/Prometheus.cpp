@@ -16,59 +16,13 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#pragma once
-
-#include <util/prometheus/Counter.h>
-
-#include <cassert>
+#include <util/prometheus/Prometheus.h>
 
 namespace util::prometheus {
 
-IntCounterInterface&
-IntCounterInterface::operator++()
-{
-    increaseImpl(1u);
-    return *this;
-}
-
-void
-IntCounterInterface::operator+=(std::uint64_t const value)
-{
-    increaseImpl(value);
-}
-
-void
-IntCounterInterface::reset()
-{
-    resetImpl();
-}
-
-std::uint64_t
-IntCounterInterface::value() const
-{
-    return value_;
-}
-
-void
-IntCounter::increaseImpl(std::uint64_t value)
-{
-    value_ += value;
-}
-
-void
-IntCounter::resetImpl()
-{
-    value_ = 0u;
-}
-
-void
-DoubleCounterInterface::operator+=(double const value)
-{
-    assert(value >= 0.0);
-    increaseImpl(value);
-}
-
-void
-reset()
+// CounterInt&
+// PrometheusImpl::counterInt(std::string name, Labels labels, std::optional<std::string> description)
+// {
+// }
 
 }  // namespace util::prometheus

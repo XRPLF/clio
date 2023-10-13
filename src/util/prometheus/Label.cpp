@@ -67,4 +67,22 @@ Label::serialize() const
     return fmt::format("{}=\"{}\"", name_, value_);
 }
 
+Labels::Labels(std::vector<Label> labels) : labels_(std::move(labels))
+{
+    std::sort(labels_.begin(), labels_.end());
+}
+
+std::string
+Labels::serialize() const
+{
+    std::string result{"{"};
+    for (auto& label : labels_)
+    {
+        result += label.serialize();
+        result.push_back(',');
+    }
+    result.back() = '}';
+    return result;
+}
+
 }  // namespace util::prometheus

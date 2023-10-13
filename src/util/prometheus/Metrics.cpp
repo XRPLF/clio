@@ -16,39 +16,120 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include <util/prometheus/Metrics.h>
+#include <cassert>
+#include <util/prometheus/Counter.h>
 
 namespace util::prometheus {
 
-MetricBase::MetricBase(std::string name, Labels labels, std::optional<std::string> description)
-    : name_(std::move(name)), key_({}), description_(std::move(description))
+MetricBase::MetricBase(std::string name, std::string labelsString)
+    : name_(std::move(name)), labelsString_(std::move(labelsString))
 {
-    fmt::format_to(std::back_inserter(key_), "{}{{", name_);
-    std::sort(labels.begin(), labels.end());
-    for (auto it = labels.begin(); it != labels.end(); ++it)
+}
+
+void
+MetricBase::serialize(std::string& s) const
+{
+    serializeValue(s);
+}
+
+const char*
+toString(MetricType type)
+{
+    switch (type)
     {
-        if (it != labels.begin())
-            fmt::format_to(std::back_inserter(key_), ",");
-        fmt::format_to(std::back_inserter(key_), "{}", it->serialize());
+        case MetricType::COUNTER_INT:
+            [[fallthrough]];
+        case MetricType::COUNTER_DOUBLE:
+            return "counter";
+        case MetricType::GAUGE_INT:
+            [[fallthrough]];
+        case MetricType::GAUGE_DOUBLE:
+            return "gauge";
+        case MetricType::HISTOGRAM:
+            return "histogram";
+        case MetricType::SUMMARY:
+            return "summary";
+        default:
+            assert(false);
     }
-    key_ += "}";
+    return "";
+}
+
+const std::string&
+MetricBase::name() const
+{
+    return name_;
+}
+
+const std::string&
+MetricBase::labelsString() const
+{
+    return labelsString_;
+}
+
+MetricsFamily::MetricsFamily(std::string name, std::optional<std::string> description, MetricType type)
+    : name_(std::move(name)), description_(std::move(description)), type_(type)
+{
+}
+
+MetricBase&
+MetricsFamily::getMetric(Labels labels)
+{
+    auto labelsString = labels.serialize();
+    auto it = metrics_.find(labelsString);
+    if (it == metrics_.end())
+    {
+        auto metric = [&labelsString, this]() -> std::unique_ptr<MetricBase> {
+            switch (type())
+            {
+                case MetricType::COUNTER_INT:
+                    return std::make_unique<CounterInt>(name(), labelsString);
+                case MetricType::COUNTER_DOUBLE:
+                    return std::make_unique<CounterDouble>(name(), labelsString);
+                case MetricType::GAUGE_INT:
+                    [[fallthrough]];
+                case MetricType::GAUGE_DOUBLE:
+                    [[fallthrough]];
+                case MetricType::SUMMARY:
+                    [[fallthrough]];
+                case MetricType::HISTOGRAM:
+                    [[fallthrough]];
+                default:
+                    assert(false);
+            }
+            return nullptr;
+        }();
+        auto [it2, success] = metrics_.emplace(std::move(labelsString), std::move(metric));
+        it = it2;
+    }
+    return *it->second;
 }
 
 std::string
-MetricBase::serialize() const
+MetricsFamily::serialize() const
 {
     std::string result;
+
     if (description_)
         fmt::format_to(std::back_inserter(result), "# HELP {} {}\n", name_, *description_);
-    fmt::format_to(std::back_inserter(result), "# TYPE {} {}\n", name_, type());
-    serializeValue(result);
+    fmt::format_to(std::back_inserter(result), "# TYPE {} {}\n", name_, toString(type()));
+
+    for (const auto& [labelsString, metric] : metrics_)
+        metric->serialize(result);
+
     return result;
 }
 
 const std::string&
-MetricBase::key() const
+MetricsFamily::name() const
 {
-    return key_;
+    return name_;
+}
+
+MetricType
+MetricsFamily::type() const
+{
+    return type_;
 }
 
 }  // namespace util::prometheus

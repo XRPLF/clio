@@ -19,7 +19,7 @@
 #pragma once
 
 #include <cassert>
-#include <util/prometheus/Metrics.h>
+#include <util/prometheus/Counter.h>
 
 namespace util::prometheus {
 
@@ -33,10 +33,10 @@ public:
     virtual CounterDouble&
     counterDouble(std::string name, Labels labels, std::optional<std::string> description) = 0;
 
-    virtual GaugeInt&
-    gaugeInt(std::string name, Labels labels, std::optional<std::string> description) = 0;
-    virtual GaugeDouble&
-    gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) = 0;
+    // virtual GaugeInt&
+    // gaugeInt(std::string name, Labels labels, std::optional<std::string> description) = 0;
+    // virtual GaugeDouble&
+    // gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) = 0;
 
     virtual std::string
     collectMetrics() = 0;
@@ -50,13 +50,16 @@ public:
     CounterDouble&
     counterDouble(std::string name, Labels labels, std::optional<std::string> description) override;
 
-    GaugeInt&
-    gaugeInt(std::string name, Labels labels, std::optional<std::string> description) override;
-    GaugeDouble&
-    gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) override;
+    // GaugeInt&
+    // gaugeInt(std::string name, Labels labels, std::optional<std::string> description) override;
+    // GaugeDouble&
+    // gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) override;
 
     std::string
     collectMetrics() override;
+
+private:
+    std::unordered_map<std::string, std::unique_ptr<MetricBase>> metrics_;
 };
 
 class PrometheusSingleton

@@ -35,7 +35,6 @@ BackendCounters::make()
 void
 BackendCounters::registerTooBusy()
 {
-    util::prometheus().increment();
     ++tooBusyCounter_;
 }
 

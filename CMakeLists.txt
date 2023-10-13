@@ -139,6 +139,7 @@ target_sources (clio PRIVATE
   src/util/log/Logger.cpp
   src/util/prometheus/Label.cpp
   src/util/prometheus/Metrics.cpp
+  src/util/prometheus/Prometheus.cpp
   src/util/Taggable.cpp)
 
 # Clio server

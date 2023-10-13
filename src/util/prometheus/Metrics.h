@@ -22,12 +22,14 @@
 
 #include <fmt/format.h>
 
+#include <unordered_map>
+
 namespace util::prometheus {
 
 class MetricBase
 {
 public:
-    MetricBase(std::string name, Labels labels, std::optional<std::string> description);
+    MetricBase(std::string name, std::string labelsString);
 
     MetricBase(const MetricBase&) = delete;
     MetricBase(MetricBase&&) = default;
@@ -37,57 +39,61 @@ public:
     operator=(MetricBase&&) = default;
     virtual ~MetricBase() = default;
 
-    std::string
-    serialize() const;
+    void
+    serialize(std::string& s) const;
 
     const std::string&
-    key() const;
+    name() const;
+
+    const std::string&
+    labelsString() const;
 
 protected:
-    virtual const char*
-    type() const = 0;
     virtual void
     serializeValue(std::string& result) const = 0;
 
 private:
     std::string name_;
-    std::string key_;
-    std::optional<std::string> description_;
+    std::string labelsString_;
 };
 
-// template <SomeNumberType ImplType>
-// class Gauge : public Counter<ImplType>
-// {
-// public:
-//     template <SomeNumberType OtherType>
-//     void
-//     operator+=(OtherType value)
-//     {
-//         value_ += value;
-//     }
-//
-//     Gauge&
-//     operator--()
-//     {
-//         --value_;
-//         return *this;
-//     }
-//
-//     template <SomeNumberType OtherType>
-//     void
-//     operator-=(OtherType value)
-//     {
-//         value_ -= value;
-//     }
-//
-// protected:
-//     const char*
-//     type() const override
-//     {
-//         return "gauge";
-//     }
-// };
-// using GaugeInt = Gauge<std::int64_t>;
-// using GaugeDouble = Gauge<double>;
+enum class MetricType { COUNTER_INT, COUNTER_DOUBLE, GAUGE_INT, GAUGE_DOUBLE, HISTOGRAM, SUMMARY };
+
+const char*
+toString(MetricType type);
+
+template <typename T>
+concept SomeMetric = std::is_base_of_v<T, MetricBase>;
+
+class MetricsFamily
+{
+public:
+    MetricsFamily(std::string name, std::optional<std::string> description, MetricType type);
+
+    MetricsFamily(const MetricsFamily&) = delete;
+    MetricsFamily(MetricsFamily&&) = default;
+    MetricsFamily&
+    operator=(const MetricsFamily&) = delete;
+    MetricsFamily&
+    operator=(MetricsFamily&&) = default;
+
+    MetricBase&
+    getMetric(Labels labels);
+
+    std::string
+    serialize() const;
+
+    const std::string&
+    name() const;
+
+    MetricType
+    type() const;
+
+private:
+    std::string name_;
+    std::optional<std::string> description_;
+    std::unordered_map<std::string, std::unique_ptr<MetricBase>> metrics_;
+    MetricType type_;
+};
 
 }  // namespace util::prometheus

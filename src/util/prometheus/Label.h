@@ -40,6 +40,16 @@ private:
     std::string name_;
     std::string value_;
 };
-using Labels = std::vector<Label>;
+
+class Labels
+{
+public:
+    explicit Labels(std::vector<Label> labels);
+    std::string
+    serialize() const;
+
+private:
+    std::vector<Label> labels_;
+};
 
 }  // namespace util::prometheus
