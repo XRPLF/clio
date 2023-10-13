@@ -361,6 +361,31 @@ TEST_F(WebServerTest, WsPayloadOverload)
         R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})");
 }
 
+TEST_F(WebServerTest, WsTooManyConnection)
+{
+    auto e = std::make_shared<EchoExecutor>();
+    auto server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
+    // max connection is 2, exception should happen when the third connection is made
+    WebSocketSyncClient wsClient1;
+    wsClient1.connect("localhost", "8888");
+    WebSocketSyncClient wsClient2;
+    wsClient2.connect("localhost", "8888");
+    bool exceptionThrown = false;
+    try
+    {
+        WebSocketSyncClient wsClient3;
+        wsClient3.connect("localhost", "8888");
+    }
+    catch (boost::system::system_error const& ex)
+    {
+        exceptionThrown = true;
+        EXPECT_EQ(ex.code(), boost::beast::websocket::error::upgrade_declined);
+    }
+    wsClient1.disconnect();
+    wsClient2.disconnect();
+    EXPECT_TRUE(exceptionThrown);
+}
+
 static auto constexpr JSONServerConfigWithAdminPassword = R"JSON(
     {
         "server":{
