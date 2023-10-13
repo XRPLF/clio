@@ -25,7 +25,7 @@ class Clio(ConanFile):
         'fmt/10.0.0',
         'grpc/1.50.1',
         'openssl/1.1.1u',
-        'xrpl/1.12.0',
+        'xrpl/2.0.0-b2',
     ]
 
     default_options = {
