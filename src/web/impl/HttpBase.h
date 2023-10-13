@@ -187,11 +187,18 @@ public:
 
         if (boost::beast::websocket::is_upgrade(req_))
         {
-            // Disable the timeout. The websocket::stream uses its own timeout settings.
-            boost::beast::get_lowest_layer(derived().stream()).expires_never();
+            if (dosGuard_.get().isOk(this->clientIp))
+            {
+                // Disable the timeout. The websocket::stream uses its own timeout settings.
+                boost::beast::get_lowest_layer(derived().stream()).expires_never();
 
-            upgraded = true;
-            return derived().upgrade();
+                upgraded = true;
+                return derived().upgrade();
+            }
+            else
+            {
+                httpFail(boost::asio::error::connection_refused, "too many requests");
+            }
         }
 
         if (req_.method() != http::verb::post)

@@ -60,10 +60,10 @@ protected:
     void
     wsFail(boost::beast::error_code ec, char const* what)
     {
+        LOG(perfLog_.error()) << tag() << ": " << what << ": " << ec.message();
         if (!ec_ && ec != boost::asio::error::operation_aborted)
         {
             ec_ = ec;
-            LOG(perfLog_.error()) << tag() << ": " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);
             (*handler_)(ec, derived().shared_from_this());
         }
