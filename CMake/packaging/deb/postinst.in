@@ -1,0 +1,32 @@
+#!/bin/sh
+set -e
+
+USER_NAME=clio
+GROUP_NAME=clio
+case "$1" in
+    configure)
+        id -u $USER_NAME >/dev/null 2>&1 || \
+        adduser --system --quiet \
+            --home /nonexistent --no-create-home \
+            --disabled-password \
+            --group "$GROUP_NAME"
+        chown -R $USER_NAME:$GROUP_NAME @CPACK_PACKAGE_INSTALL_DIRECTORY@
+        mkdir -p /var/log/clio
+        chown -R $USER_NAME:$GROUP_NAME /var/log/clio/
+        chmod 755 /var/log/clio/
+        RIPD_CONF="/opt/ripple/etc/rippled.cfg"
+        mkdir -p /etc/opt/clio/
+        ln -sf /opt/clio/etc/config.json /etc/opt/clio/config.json
+        ln -sf /opt/clio/bin/clio_server /usr/local/bin/clio_server
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0

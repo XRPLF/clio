@@ -1,0 +1,10 @@
+name: Build pkg
+description: Build pkg
+
+runs:
+  using: composite
+  steps:
+    - name: pkg Clio
+      shell: bash
+      run: |
+        ./.github/actions/package_clio/build_package

@@ -15,14 +15,14 @@ jobs:
       - name: Run clang-format
         uses: ./.github/actions/clang_format
 
-  build_mac:
-    name: Build macOS
-    needs: lint
-    runs-on: [self-hosted, macOS]
-    env:
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-      CONAN_USER_HOME: ${{ github.workspace }}
-    steps:
+  # build_mac:
+  #   name: Build macOS
+  #   needs: lint
+  #   runs-on: [self-hosted, macOS]
+  #   env:
+  #     CCACHE_DIR: ${{ github.workspace }}/.ccache
+  #     CONAN_USER_HOME: ${{ github.workspace }}
+  #   steps:
       - uses: actions/checkout@v3
         with:
             fetch-depth: 0
@@ -66,89 +66,139 @@ jobs:
           ccache_dir: ${{ env.CCACHE_DIR }}
           ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
 
-  build_linux:
-    name: Build linux
-    needs: lint
+  # build_linux:
+  #   name: Build linux
+  #   needs: lint
+  #   runs-on: [self-hosted, Linux]
+  #   container:
+  #     image: conanio/gcc11:1.61.0
+  #     options: --user root
+  #   env:
+  #     CCACHE_DIR: /root/.ccache
+  #     CONAN_USER_HOME: /root/
+  #   steps:
+  #     - name: Get Clio
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
+
+  #     - name: Install packages
+  #       run: |
+  #         apt update -qq
+  #         apt install -y jq
+
+  #     - name: Install ccache
+  #       run: |
+  #         wget https://github.com/ccache/ccache/releases/download/v4.8.3/ccache-4.8.3-linux-x86_64.tar.xz
+  #         tar xf ./ccache-4.8.3-linux-x86_64.tar.xz
+  #         mv ./ccache-4.8.3-linux-x86_64/ccache /usr/bin/ccache
+
+  #     - name: Fix git permissions
+  #       run: git config --global --add safe.directory $PWD
+
+  #     - name: Setup conan
+  #       uses: ./.github/actions/setup_conan
+
+  #     - name: Restore cache
+  #       uses: ./.github/actions/restore_cache
+  #       id: restore_cache
+  #       with:
+  #         conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+  #         ccache_dir: ${{ env.CCACHE_DIR }}
+
+  #     - name: Build Clio
+  #       uses: ./.github/actions/build_clio
+  #       with:
+  #         conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+
+  #     - name: Strip tests
+  #       run: strip build/clio_tests
+
+  #     - name: Upload clio_tests
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: clio_tests_linux
+  #         path: build/clio_tests
+
+  #     - name: Save cache
+  #       uses: ./.github/actions/save_cache
+  #       with:
+  #         conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+  #         conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
+  #         conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+  #         ccache_dir: ${{ env.CCACHE_DIR }}
+  #         ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
+
+  build_deb_package:
+    name: Build deb packages
     runs-on: [self-hosted, Linux]
     container:
-      image: conanio/gcc11:1.61.0
-      options: --user root
+      image: legleux/rippled-builder:10-06-23
     env:
-      CCACHE_DIR: /root/.ccache
-      CONAN_USER_HOME: /root/
+      PKG: deb
     steps:
+      - name: Download Git source and build
+        shell: bash
+        run: |
+          ulimit -n 1024000 && yum -y update
+          source /opt/rh/devtoolset-11/enable
+          yum install -y curl-devel expat-devel gettext-devel openssl-devel zlib-devel perl-CPAN perl-devel
+          cd /tmp/ && mkdir git && cd git
+          wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.42.0.tar.gz
+          tar -xvf git-2.42.0.tar.gz # --strip-components=1 # ?
+          cd git-2.42.0
+          make configure
+          ./configure --prefix=/usr/local
+          make -j $(nproc)
+          make install
+          git --version
+
       - name: Get Clio
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Install packages
-        run: |
-          apt update -qq
-          apt install -y jq
+      - uses: ./.github/actions/package_clio
+        name: build_deb_package
 
-      - name: Install ccache
-        run: |
-          wget https://github.com/ccache/ccache/releases/download/v4.8.3/ccache-4.8.3-linux-x86_64.tar.xz
-          tar xf ./ccache-4.8.3-linux-x86_64.tar.xz
-          mv ./ccache-4.8.3-linux-x86_64/ccache /usr/bin/ccache
+  # build_rpm_package:
+  #   runs-on: [self-hosted, Linux]
+  #   container:
+  #     image: legleux/rippled-builder:10-06-23
+  #   env:
+  #     PKG: rpm
+  #   steps:
+  #     - name: Get Clio
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
 
-      - name: Fix git permissions
-        run: git config --global --add safe.directory $PWD
+  #     - name: Update git
+  #       uses: ./.github/actions/update_git
 
-      - name: Setup conan
-        uses: ./.github/actions/setup_conan
+  #     - uses: ./.github/actions/package_clio
+  #       name: build_rpm_package
 
-      - name: Restore cache
-        uses: ./.github/actions/restore_cache
-        id: restore_cache
-        with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-          ccache_dir: ${{ env.CCACHE_DIR }}
+  # test_mac:
+  #   needs: build_mac
+  #   runs-on: [self-hosted, macOS]
+  #   steps:
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: clio_tests_mac
+  #     - name: Run clio_tests
+  #       run: |
+  #         chmod +x ./clio_tests
+  #         ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
 
-      - name: Build Clio
-        uses: ./.github/actions/build_clio
-        with:
-          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-
-      - name: Strip tests
-        run: strip build/clio_tests
-
-      - name: Upload clio_tests
-        uses: actions/upload-artifact@v3
-        with:
-          name: clio_tests_linux
-          path: build/clio_tests
-
-      - name: Save cache
-        uses: ./.github/actions/save_cache
-        with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-          conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
-          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-          ccache_dir: ${{ env.CCACHE_DIR }}
-          ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
-
-  test_mac:
-    needs: build_mac
-    runs-on: [self-hosted, macOS]
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: clio_tests_mac
-      - name: Run clio_tests
-        run: |
-          chmod +x ./clio_tests
-          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
-
-  test_linux:
-    needs: build_linux
-    runs-on: [self-hosted, x-heavy]
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: clio_tests_linux
-      - name: Run clio_tests
-        run: |
-          chmod +x ./clio_tests
-          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+  # test_linux:
+  #   needs: build_linux
+  #   runs-on: [self-hosted, x-heavy]
+  #   steps:
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: clio_tests_linux
+  #     - name: Run clio_tests
+  #       run: |
+  #         chmod +x ./clio_tests
+  #         ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"

@@ -5,12 +5,12 @@
 find_package (Git REQUIRED)
 
 set (GIT_COMMAND rev-parse --short HEAD)
-execute_process (COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND} 
+execute_process (COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE REV OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 set (GIT_COMMAND branch --show-current)
-execute_process (COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND} 
+execute_process (COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE BRANCH OUTPUT_STRIP_TRAILING_WHITESPACE)
 
@@ -23,7 +23,7 @@ if (NOT (BRANCH MATCHES master OR BRANCH MATCHES release/*)) # for develop and a
   set (VERSION "${DATE}-${BRANCH}-${REV}")
 else ()
   set (GIT_COMMAND describe --tags)
-  execute_process (COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND} 
+  execute_process (COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     OUTPUT_VARIABLE TAG_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
   set (VERSION "${TAG_VERSION}-${REV}")
@@ -33,7 +33,17 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
   set (VERSION "${VERSION}+DEBUG")
 endif ()
 
-message (STATUS "Build version: ${VERSION}")
+if(DEFINED PKG)
+  set (GIT_COMMAND tag --points-at HEAD)
+  execute_process (COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND}
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      OUTPUT_VARIABLE VERSION
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  string(REPLACE "\n" ";" VERSION ${VERSION})
+  list(GET VERSION -1 VERSION)
+endif()
+
 set (clio_version "${VERSION}")
 
 configure_file (CMake/Build.cpp.in ${CMAKE_SOURCE_DIR}/src/main/impl/Build.cpp)

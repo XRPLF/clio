@@ -267,6 +267,8 @@ if (docs)
 endif ()
 
 include (CMake/install/install.cmake)
-if (packaging)
-  include (CMake/packaging.cmake) # This file exists only in build runner
+
+if (DEFINED PKG)
+  message(STATUS "Building ${PKG} packages...")
+  include (CMake/packaging/packaging.cmake)
 endif ()
