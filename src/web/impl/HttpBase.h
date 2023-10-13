@@ -195,10 +195,8 @@ public:
                 upgraded = true;
                 return derived().upgrade();
             }
-            else
-            {
-                httpFail(boost::asio::error::connection_refused, "too many requests");
-            }
+
+            return httpFail(boost::asio::error::connection_refused, "too many requests");
         }
 
         if (req_.method() != http::verb::post)
