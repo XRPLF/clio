@@ -137,6 +137,7 @@ target_sources (clio PRIVATE
   ## Util
   src/util/config/Config.cpp
   src/util/log/Logger.cpp
+  src/util/prometheus/Http.cpp
   src/util/prometheus/Label.cpp
   src/util/prometheus/Metrics.cpp
   src/util/prometheus/Prometheus.cpp

@@ -91,4 +91,6 @@ PrometheusImpl::getMetric(
     return it->second.getMetric(std::move(labels));
 }
 
+std::unique_ptr<PrometheusInterface> PrometheusSingleton::instance_{};
+
 }  // namespace util::prometheus
