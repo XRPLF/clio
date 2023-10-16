@@ -16,8 +16,10 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include <cassert>
 #include <util/prometheus/Counter.h>
+#include <util/prometheus/Gauge.h>
+
+#include <cassert>
 
 namespace util::prometheus {
 
@@ -87,9 +89,9 @@ MetricsFamily::getMetric(Labels labels)
                 case MetricType::COUNTER_DOUBLE:
                     return std::make_unique<CounterDouble>(name(), labelsString);
                 case MetricType::GAUGE_INT:
-                    [[fallthrough]];
+                    return std::make_unique<GaugeInt>(name(), labelsString);
                 case MetricType::GAUGE_DOUBLE:
-                    [[fallthrough]];
+                    return std::make_unique<GaugeDouble>(name(), labelsString);
                 case MetricType::SUMMARY:
                     [[fallthrough]];
                 case MetricType::HISTOGRAM:

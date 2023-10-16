@@ -24,58 +24,81 @@
 namespace util::prometheus {
 
 /**
- * @brief A prometheus counter metric implementation. It can only be increased or be reset to zero.
+ * @brief A prometheus gauge metric implementation. It can be increased, decreased or set to a value.
  */
 template <impl::SomeNumberType NumberType>
-struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType>
+struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType>
 {
     using ValueType = NumberType;
 
     /**
-     * @brief Construct a new AnyCounter object
+     * @brief Construct a new AnyGauge object
      *
-     * @param name The name of the counter
-     * @param labelsString The labels of the counter
-     * @param impl The implementation of the counter
+     * @param name The name of the gauge
+     * @param labelsString The labels of the gauge
+     * @param impl The implementation of the counter inside the gauge
      */
     template <impl::SomeCounterImpl ImplType = impl::CounterImpl<ValueType>>
     requires std::same_as<ValueType, typename ImplType::ValueType>
-    AnyCounter(std::string name, std::string labelsString, ImplType&& impl = ImplType{})
+    AnyGauge(std::string name, std::string labelsString, ImplType&& impl = ImplType{})
         : MetricBase(std::move(name), std::move(labelsString))
         , impl::AnyCounterBase<ValueType>(std::forward<ImplType>(impl))
     {
     }
 
     /**
-     * @brief Increase the counter by one
+     * @brief Increase the gauge by one
      */
-    AnyCounter&
+    AnyGauge&
     operator++()
     {
-        this->pimpl_->add(ValueType{1});
+        this->pimpl_->change(ValueType{1});
         return *this;
     }
 
     /**
-     * @brief Increase the counter by the given value
-     *
-     * @param value The value to increase the counter by
+     * @brief Decrease the gauge by one
      */
-    AnyCounter&
+    AnyGauge&
+    operator--()
+    {
+        this->pimpl_->change(ValueType{-1});
+        return *this;
+    }
+
+    /**
+     * @brief Increase the gauge by the given value
+     *
+     * @param value The value to increase the gauge by
+     */
+    AnyGauge&
     operator+=(ValueType const value)
     {
-        assert(value >= 0);
-        this->pimpl_->add(value);
+        this->pimpl_->change(value);
         return *this;
     }
 
     /**
-     * @brief Reset the counter to zero
+     * @brief Decrease the gauge by the given value
+     *
+     * @param value The value to decrease the gauge by
+     */
+    AnyGauge&
+    operator-=(ValueType const value)
+    {
+        this->pimpl_->change(-value);
+        return *this;
+    }
+
+    /**
+     * @brief Set the gauge to the given value
+     *
+     * @param value The value to set the gauge to
      */
     void
-    reset()
+    set(ValueType const value)
     {
-        this->pimpl_->set(ValueType{0});
+        this->pimpl_->set(value);
     }
 
     /**
@@ -99,7 +122,7 @@ struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType>
     }
 };
 
-using CounterInt = AnyCounter<std::uint64_t>;
-using CounterDouble = AnyCounter<double>;
+using GaugeInt = AnyGauge<std::int64_t>;
+using GaugeDouble = AnyGauge<double>;
 
 }  // namespace util::prometheus

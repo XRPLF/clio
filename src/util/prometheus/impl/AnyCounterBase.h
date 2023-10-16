@@ -18,22 +18,22 @@
 //==============================================================================
 #pragma once
 
-#include <util/prometheus/Metrics.h>
 #include <util/prometheus/impl/CounterImpl.h>
+
+#include <memory>
 
 namespace util::prometheus::impl {
 
 template <SomeNumberType NumberType>
-class AnyCounterBase : public MetricBase
+class AnyCounterBase
 {
 public:
     using ValueType = NumberType;
 
     template <SomeCounterImpl ImplType = CounterImpl<ValueType>>
     requires std::same_as<ValueType, typename ImplType::ValueType>
-    AnyCounterBase(std::string name, std::string labelsString, ImplType&& impl = ImplType{})
-        : MetricBase(std::move(name), std::move(labelsString))
-        , pimpl_(std::make_unique<Model<ImplType>>(std::forward<ImplType>(impl)))
+    AnyCounterBase(ImplType&& impl = ImplType{})
+        : pimpl_(std::make_unique<Model<ImplType>>(std::forward<ImplType>(impl)))
     {
     }
 
@@ -42,10 +42,9 @@ protected:
     {
         virtual ~Concept() = default;
 
-        virtual void change(ValueType) = 0;
+        virtual void add(ValueType) = 0;
 
-        virtual void
-        reset() = 0;
+        virtual void set(ValueType) = 0;
 
         virtual ValueType
         value() const = 0;
@@ -59,15 +58,15 @@ protected:
         }
 
         void
-        change(ValueType value) override
+        add(ValueType value) override
         {
-            impl_.change(value);
+            impl_.add(value);
         }
 
         void
-        reset() override
+        set(ValueType v) override
         {
-            impl_.reset();
+            impl_.set(v);
         }
 
         ValueType

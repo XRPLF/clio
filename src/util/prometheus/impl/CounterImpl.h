@@ -19,6 +19,7 @@
 #pragma once
 
 #include <atomic>
+#include <cassert>
 #include <concepts>
 
 namespace util::prometheus::impl {
@@ -32,8 +33,8 @@ concept SomeCounterImpl = requires(T a)
 {
     typename T::ValueType;
     SomeNumberType<typename T::ValueType>;
-    { a.change(typename T::ValueType{1}) } -> std::same_as<void>;
-    { a.reset() } -> std::same_as<void>;
+    { a.add(typename T::ValueType{1}) } -> std::same_as<void>;
+    { a.set(typename T::ValueType{1}) } -> std::same_as<void>;
     { a.value() } -> SomeNumberType;
 };
 // clang-format on
@@ -47,16 +48,21 @@ public:
     CounterImpl() = default;
 
     CounterImpl(CounterImpl const&) = delete;
-    CounterImpl(CounterImpl&& other) : value_(other.value_.load())
+
+    // Move constructor should be used only used during initialization
+    CounterImpl(CounterImpl&& other)
     {
+        assert(other.value_ == 0);
+        value_ = other.value_.exchange(0);
     }
+
     CounterImpl&
     operator=(CounterImpl const&) = delete;
     CounterImpl&
     operator=(CounterImpl&&) = delete;
 
     void
-    change(ValueType value)
+    add(ValueType const value)
     {
         if constexpr (std::is_integral_v<ValueType>)
         {
@@ -78,9 +84,9 @@ public:
     }
 
     void
-    reset()
+    set(ValueType const value)
     {
-        value_ = 0;
+        value_ = value;
     }
 
     ValueType
