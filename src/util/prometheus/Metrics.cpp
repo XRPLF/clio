@@ -107,19 +107,15 @@ MetricsFamily::getMetric(Labels labels)
     return *it->second;
 }
 
-std::string
-MetricsFamily::serialize() const
+void
+MetricsFamily::serialize(std::string& result) const
 {
-    std::string result;
-
     if (description_)
         fmt::format_to(std::back_inserter(result), "# HELP {} {}\n", name_, *description_);
     fmt::format_to(std::back_inserter(result), "# TYPE {} {}\n", name_, toString(type()));
 
     for (const auto& [labelsString, metric] : metrics_)
         metric->serialize(result);
-
-    return result;
 }
 
 const std::string&

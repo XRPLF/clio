@@ -20,9 +20,75 @@
 
 namespace util::prometheus {
 
-// CounterInt&
-// PrometheusImpl::counterInt(std::string name, Labels labels, std::optional<std::string> description)
-// {
-// }
+namespace {
+
+template <typename MetricType>
+MetricType&
+convertBaseTo(MetricBase& metricBase)
+{
+    auto result = dynamic_cast<MetricType*>(&metricBase);
+    return *result;
+}
+
+}  // namespace
+
+CounterInt&
+PrometheusImpl::counterInt(std::string name, Labels labels, std::optional<std::string> description)
+{
+    MetricBase& metricBase =
+        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::COUNTER_INT);
+    return convertBaseTo<CounterInt>(metricBase);
+}
+
+CounterDouble&
+PrometheusImpl::counterDouble(std::string name, Labels labels, std::optional<std::string> description)
+{
+    MetricBase& metricBase =
+        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::COUNTER_DOUBLE);
+    return convertBaseTo<CounterDouble>(metricBase);
+}
+
+GaugeInt&
+PrometheusImpl::gaugeInt(std::string name, Labels labels, std::optional<std::string> description)
+{
+    MetricBase& metricBase =
+        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::GAUGE_INT);
+    return convertBaseTo<GaugeInt>(metricBase);
+}
+
+GaugeDouble&
+PrometheusImpl::gaugeDouble(std::string name, Labels labels, std::optional<std::string> description)
+{
+    MetricBase& metricBase =
+        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::GAUGE_DOUBLE);
+    return convertBaseTo<GaugeDouble>(metricBase);
+}
+
+std::string
+PrometheusImpl::collectMetrics()
+{
+    std::string result;
+    for (auto& [name, family] : metrics_)
+    {
+        family.serialize(result);
+    }
+    return result;
+}
+
+MetricBase&
+PrometheusImpl::getMetric(
+    std::string name,
+    Labels labels,
+    std::optional<std::string> description,
+    MetricType const type)
+{
+    auto it = metrics_.find(name);
+    if (it == metrics_.end())
+    {
+        auto nameCopy = name;
+        it = metrics_.emplace(std::move(nameCopy), MetricsFamily(std::move(name), std::move(description), type)).first;
+    }
+    return it->second.getMetric(std::move(labels));
+}
 
 }  // namespace util::prometheus

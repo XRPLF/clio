@@ -80,8 +80,8 @@ public:
     MetricBase&
     getMetric(Labels labels);
 
-    std::string
-    serialize() const;
+    void
+    serialize(std::string& result) const;
 
     const std::string&
     name() const;

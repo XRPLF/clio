@@ -18,8 +18,10 @@
 //==============================================================================
 #pragma once
 
-#include <cassert>
 #include <util/prometheus/Counter.h>
+#include <util/prometheus/Gauge.h>
+
+#include <cassert>
 
 namespace util::prometheus {
 
@@ -33,10 +35,10 @@ public:
     virtual CounterDouble&
     counterDouble(std::string name, Labels labels, std::optional<std::string> description) = 0;
 
-    // virtual GaugeInt&
-    // gaugeInt(std::string name, Labels labels, std::optional<std::string> description) = 0;
-    // virtual GaugeDouble&
-    // gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) = 0;
+    virtual GaugeInt&
+    gaugeInt(std::string name, Labels labels, std::optional<std::string> description) = 0;
+    virtual GaugeDouble&
+    gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) = 0;
 
     virtual std::string
     collectMetrics() = 0;
@@ -50,16 +52,19 @@ public:
     CounterDouble&
     counterDouble(std::string name, Labels labels, std::optional<std::string> description) override;
 
-    // GaugeInt&
-    // gaugeInt(std::string name, Labels labels, std::optional<std::string> description) override;
-    // GaugeDouble&
-    // gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) override;
+    GaugeInt&
+    gaugeInt(std::string name, Labels labels, std::optional<std::string> description) override;
+    GaugeDouble&
+    gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) override;
 
     std::string
     collectMetrics() override;
 
 private:
-    std::unordered_map<std::string, std::unique_ptr<MetricBase>> metrics_;
+    MetricBase&
+    getMetric(std::string name, Labels labels, std::optional<std::string> description, MetricType type);
+
+    std::unordered_map<std::string, MetricsFamily> metrics_;
 };
 
 class PrometheusSingleton
@@ -88,3 +93,5 @@ private:
 };
 
 }  // namespace util::prometheus
+
+#define PROMETHEUS util::prometheus::PrometheusSingleton::instance
