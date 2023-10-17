@@ -31,10 +31,10 @@ concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && 
 template <typename T>
 concept SomeCounterImpl = requires(T a)
 {
-    typename T::ValueType;
-    SomeNumberType<typename T::ValueType>;
-    { a.add(typename T::ValueType{1}) } -> std::same_as<void>;
-    { a.set(typename T::ValueType{1}) } -> std::same_as<void>;
+    typename std::remove_cvref_t<T>::ValueType;
+    SomeNumberType<typename std::remove_cvref_t<T>::ValueType>;
+    { a.add(typename std::remove_cvref_t<T>::ValueType{1}) } -> std::same_as<void>;
+    { a.set(typename std::remove_cvref_t<T>::ValueType{1}) } -> std::same_as<void>;
     { a.value() } -> SomeNumberType;
 };
 // clang-format on

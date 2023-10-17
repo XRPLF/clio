@@ -39,7 +39,7 @@ struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType>
      * @param impl The implementation of the counter
      */
     template <impl::SomeCounterImpl ImplType = impl::CounterImpl<ValueType>>
-    requires std::same_as<ValueType, typename ImplType::ValueType>
+    requires std::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
     AnyCounter(std::string name, std::string labelsString, ImplType&& impl = ImplType{})
         : MetricBase(std::move(name), std::move(labelsString))
         , impl::AnyCounterBase<ValueType>(std::forward<ImplType>(impl))

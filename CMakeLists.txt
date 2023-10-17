@@ -167,6 +167,12 @@ if (tests)
     unittests/SubscriptionManagerTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
+    unittests/util/prometheus/CounterTests.cpp
+    unittests/util/prometheus/GaugeTests.cpp
+    unittests/util/prometheus/HttpTests.cpp
+    unittests/util/prometheus/LabelTests.cpp
+    unittests/util/prometheus/MetricsTests.cpp
+    unittests/util/prometheus/PrometheusTests.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp

@@ -31,7 +31,7 @@ public:
     using ValueType = NumberType;
 
     template <SomeCounterImpl ImplType = CounterImpl<ValueType>>
-    requires std::same_as<ValueType, typename ImplType::ValueType>
+    requires std::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
     AnyCounterBase(ImplType&& impl = ImplType{})
         : pimpl_(std::make_unique<Model<ImplType>>(std::forward<ImplType>(impl)))
     {
@@ -53,7 +53,7 @@ protected:
     template <SomeCounterImpl ImplType>
     struct Model : Concept
     {
-        Model(ImplType&& impl) : impl_(std::move(impl))
+        Model(ImplType impl) : impl_(std::forward<ImplType>(impl))
         {
         }
 
