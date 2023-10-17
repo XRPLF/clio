@@ -124,7 +124,8 @@ maybeWriteTransaction(
         throw std::runtime_error("Could not repair transaction");
 
     auto package = tx.value();
-    if (!package.contains("result") || !package.at("result").is_object())
+    if (!package.contains("result") || !package.at("result").is_object() ||
+        package.at("result").as_object().contains("error"))
         throw std::runtime_error("Received non-success response from rippled");
 
     auto data = package.at("result").as_object();
