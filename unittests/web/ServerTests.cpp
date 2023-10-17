@@ -454,7 +454,10 @@ INSTANTIATE_TEST_CASE_P(
         WebServerAdminTestParams{.headers = {WebHeader(http::field::authorization, "s")}, .expectedResponse = "user"},
         WebServerAdminTestParams{
             .headers = {WebHeader(http::field::authorization, "secret")},
+            .expectedResponse = "user"},
+        WebServerAdminTestParams{
+            .headers = {WebHeader(http::field::authorization, "Password secret")},
             .expectedResponse = "admin"},
         WebServerAdminTestParams{
-            .headers = {WebHeader(http::field::authentication_info, "secret")},
+            .headers = {WebHeader(http::field::authentication_info, "Password secret")},
             .expectedResponse = "user"}));

@@ -52,7 +52,7 @@ protected:
     makeRequest(std::string const& password, http::field const field = http::field::authorization)
     {
         http::request<http::string_body> request = {};
-        request.set(field, password);
+        request.set(field, "Password " + password);
         return request;
     }
 };
