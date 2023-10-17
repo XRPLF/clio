@@ -681,7 +681,6 @@ private:
     // maximum number of concurrent in flight read requests. isTooBusy() will
     // return true if the number of in flight read requests exceeds this limit
     std::uint32_t maxReadRequestsOutstanding = 100000;
-    mutable std::atomic_uint32_t numReadRequestsOutstanding_ = 0;
 
     // mutex and condition_variable to limit the number of concurrent in flight
     // write requests
@@ -1239,12 +1238,10 @@ public:
         CassError rc;
         do
         {
-            ++numReadRequestsOutstanding_;
             fut = cass_session_execute(session_.get(), statement.get());
 
             boost::system::error_code ec;
             rc = cass_future_error_code(fut, yield[ec]);
-            --numReadRequestsOutstanding_;
 
             if (ec)
             {

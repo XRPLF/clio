@@ -486,6 +486,7 @@ struct ReadCallbackData
     std::atomic_int& numOutstanding;
     handler_type handler;
     std::function<void(CassandraResult&)> onSuccess;
+    clio::Logger log_{"Backend"};
 
     std::atomic_bool errored = false;
     ReadCallbackData(
@@ -502,6 +503,7 @@ struct ReadCallbackData
         CassError rc = cass_future_error_code(fut);
         if (rc != CASS_OK)
         {
+            log_.error() << "Got error response: " << cass_error_desc(rc);
             errored = true;
         }
         else
@@ -540,7 +542,6 @@ CassandraBackend::fetchTransactions(
 {
     if (hashes.size() == 0)
         return {};
-    numReadRequestsOutstanding_ += hashes.size();
 
     handler_type handler(std::forward<decltype(yield)>(yield));
     result_type result(handler);
@@ -572,7 +573,6 @@ CassandraBackend::fetchTransactions(
 
         // suspend the coroutine until completion handler is called.
         result.get();
-        numReadRequestsOutstanding_ -= hashes.size();
     });
     for (auto const& cb : cbs)
     {
@@ -877,8 +877,6 @@ CassandraBackend::doFetchLedgerObjects(
     if (keys.size() == 0)
         return {};
 
-    numReadRequestsOutstanding_ += keys.size();
-
     handler_type handler(std::forward<decltype(yield)>(yield));
     result_type result(handler);
 
@@ -904,7 +902,6 @@ CassandraBackend::doFetchLedgerObjects(
 
     // suspend the coroutine until completion handler is called.
     result.get();
-    numReadRequestsOutstanding_ -= keys.size();
 
     for (auto const& cb : cbs)
     {
@@ -1033,7 +1030,7 @@ CassandraBackend::doOnlineDelete(
 bool
 CassandraBackend::isTooBusy() const
 {
-    return numReadRequestsOutstanding_ >= maxReadRequestsOutstanding;
+    return false;
 }
 
 void
