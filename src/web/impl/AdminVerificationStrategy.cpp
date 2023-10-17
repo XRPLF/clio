@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include <fmt/format.h>
 #include <web/impl/AdminVerificationStrategy.h>
 
 namespace web::detail {
@@ -28,7 +29,7 @@ IPAdminVerificationStrategy::isAdmin(RequestType const&, std::string_view ip) co
 }
 
 PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string password)
-    : password_(std::move(password))
+    : password_(fmt::format("Password {}", std::move(password)))
 {
 }
 

@@ -247,6 +247,7 @@ For a better security `admin_password` could be provided in the `server` section
 }
 ```
 If the password is presented in the config, clio will check the Authorization header (if any) in each request for the password.
+The Authorization header should contain type `Password` and the password from the config, e.g. `Password secret`.
 Exactly equal password gains admin rights for the request or a websocket connection.
 
 ## Using clang-tidy for static analysis
