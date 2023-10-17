@@ -185,36 +185,6 @@ if (tests)
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
-<<<<<<< HEAD
-    unittests/rpc/handlers/AccountCurrenciesTest.cpp
-    unittests/rpc/handlers/AccountLinesTest.cpp
-    unittests/rpc/handlers/AccountTxTest.cpp
-    unittests/rpc/handlers/AccountOffersTest.cpp
-    unittests/rpc/handlers/AccountInfoTest.cpp
-    unittests/rpc/handlers/AccountChannelsTest.cpp
-    unittests/rpc/handlers/AccountNFTsTest.cpp
-    unittests/rpc/handlers/BookOffersTest.cpp
-    unittests/rpc/handlers/GatewayBalancesTest.cpp
-    unittests/rpc/handlers/TxTest.cpp
-    unittests/rpc/handlers/TransactionEntryTest.cpp
-    unittests/rpc/handlers/LedgerEntryTest.cpp
-    unittests/rpc/handlers/LedgerRangeTest.cpp
-    unittests/rpc/handlers/NoRippleCheckTest.cpp
-    unittests/rpc/handlers/ServerInfoTest.cpp
-    unittests/rpc/handlers/PingTest.cpp
-    unittests/rpc/handlers/RandomTest.cpp
-    unittests/rpc/handlers/NFTsByIssuerTest.cpp
-    unittests/rpc/handlers/NFTInfoTest.cpp
-    unittests/rpc/handlers/NFTBuyOffersTest.cpp
-    unittests/rpc/handlers/NFTSellOffersTest.cpp
-    unittests/rpc/handlers/NFTHistoryTest.cpp
-    unittests/rpc/handlers/SubscribeTest.cpp
-    unittests/rpc/handlers/UnsubscribeTest.cpp
-    unittests/rpc/handlers/LedgerDataTest.cpp
-    unittests/rpc/handlers/AccountObjectsTest.cpp
-    unittests/rpc/handlers/BookChangesTest.cpp
-    unittests/rpc/handlers/LedgerTest.cpp
-=======
     unittests/rpc/handlers/AccountCurrenciesTests.cpp
     unittests/rpc/handlers/AccountLinesTests.cpp
     unittests/rpc/handlers/AccountTxTests.cpp
@@ -244,7 +214,6 @@ if (tests)
     unittests/rpc/handlers/BookChangesTests.cpp
     unittests/rpc/handlers/LedgerTests.cpp
     unittests/rpc/handlers/VersionHandlerTests.cpp
->>>>>>> upstream/develop
     # Backend
     unittests/data/BackendFactoryTests.cpp
     unittests/data/BackendCountersTests.cpp
