@@ -24,10 +24,10 @@ wait(
     std::string const& reason,
     std::chrono::seconds timeout = WAIT_TIME)
 {
-    BOOST_LOG_TRIVIAL(info) << reason << ". Waiting then retrying";
+    clio::LogService::info() << reason << ". Waiting then retrying";
     timer.expires_after(timeout);
     timer.wait();
-    BOOST_LOG_TRIVIAL(info) << "Done waiting";
+    clio::LogService::info() << "Done waiting";
 }
 
 static std::optional<boost::json::object>
@@ -39,8 +39,9 @@ doRequestFromRippled(
     auto const ip = source.value<std::string>("ip");
     auto const wsPort = source.value<std::string>("ws_port");
 
-    BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
-                             << "request = " << boost::json::serialize(request);
+    clio::LogService::debug()
+        << "Attempting to forward request to tx. "
+        << "request = " << boost::json::serialize(request);
 
     boost::json::object response;
 
@@ -73,7 +74,7 @@ doRequestFromRippled(
 
         if (!parsed.is_object())
         {
-            BOOST_LOG_TRIVIAL(error)
+            clio::LogService::error()
                 << "Error parsing response: " << std::string{begin, end};
             return {};
         }
@@ -82,7 +83,7 @@ doRequestFromRippled(
     }
     catch (std::exception const& e)
     {
-        BOOST_LOG_TRIVIAL(fatal) << "Encountered exception : " << e.what();
+        clio::LogService::fatal() << "Encountered exception : " << e.what();
         return {};
     }
 }
@@ -152,7 +153,7 @@ repairCorruptedTx(
     Backend::CassandraBackend& backend,
     ripple::uint256 const& hash)
 {
-    BOOST_LOG_TRIVIAL(info) << " - repairing " << hash;
+    clio::LogService::info() << " - repairing " << hash;
     auto const data = requestFromRippled(
         timer,
         config,
@@ -176,7 +177,7 @@ doNFTWrite(
         return nfts;
     backend.writeNFTs(std::move(nfts));
     backend.sync();
-    BOOST_LOG_TRIVIAL(info) << tag << ": Wrote " << size << " records";
+    clio::LogService::info() << tag << ": Wrote " << size << " records";
     return {};
 }
 
@@ -345,12 +346,12 @@ doMigrationStepOne(
             }
             catch (std::exception const& e)
             {
-                BOOST_LOG_TRIVIAL(warning) << "Corrupted tx detected: " << hash;
+                clio::LogService::warn() << "Corrupted tx detected: " << hash;
                 std::cerr << "Corrupted tx detected: " << hash << std::endl;
 
                 if (not repairEnabled)
                 {
-                    BOOST_LOG_TRIVIAL(fatal)
+                    clio::LogService::fatal()
                         << "Not attempting to repair. Rerun with -repair to "
                            "repair corrupted transactions.";
                     exit(-1);
@@ -362,7 +363,7 @@ doMigrationStepOne(
 
                 if (!maybeTx.has_value())
                 {
-                    BOOST_LOG_TRIVIAL(fatal)
+                    clio::LogService::fatal()
                         << "Could not fetch written transaction for hash "
                         << hash << "; Repair failed.";
                     exit(-1);
@@ -449,9 +450,9 @@ doMigrationStepThree(Backend::CassandraBackend& backend)
     backend.sync();
 
     if (rc != CASS_OK)
-        BOOST_LOG_TRIVIAL(warning) << "Could not drop old issuer_nf_tokens "
-                                      "table. If it still exists, "
-                                      "you should drop it yourself\n";
+        clio::LogService::warn() << "Could not drop old issuer_nf_tokens "
+                                    "table. If it still exists, "
+                                    "you should drop it yourself\n";
 }
 
 static void
@@ -462,7 +463,7 @@ doMigration(
     boost::asio::yield_context& yield,
     bool repairEnabled = false)
 {
-    BOOST_LOG_TRIVIAL(info) << "Beginning migration";
+    clio::LogService::info() << "Beginning migration";
     auto const ledgerRange = backend.hardFetchLedgerRangeNoThrow(yield);
 
     /*
@@ -471,21 +472,21 @@ doMigration(
      */
     if (!ledgerRange)
     {
-        BOOST_LOG_TRIVIAL(info) << "There is no data to migrate";
+        clio::LogService::info() << "There is no data to migrate";
         return;
     }
 
     doMigrationStepOne(
         config, backend, timer, yield, *ledgerRange, repairEnabled);
-    BOOST_LOG_TRIVIAL(info) << "\nStep 1 done!\n";
+    clio::LogService::info() << "\nStep 1 done!\n";
 
     doMigrationStepTwo(backend, timer, yield, *ledgerRange);
-    BOOST_LOG_TRIVIAL(info) << "\nStep 2 done!\n";
+    clio::LogService::info() << "\nStep 2 done!\n";
 
     doMigrationStepThree(backend);
-    BOOST_LOG_TRIVIAL(info) << "\nStep 3 done!\n";
+    clio::LogService::info() << "\nStep 3 done!\n";
 
-    BOOST_LOG_TRIVIAL(info)
+    clio::LogService::info()
         << "\nCompleted migration from " << ledgerRange->minSequence << " to "
         << ledgerRange->maxSequence << "!\n";
 }
@@ -518,7 +519,7 @@ main(int argc, char* argv[])
             usage();
             return EXIT_FAILURE;
         }
-        BOOST_LOG_TRIVIAL(info)
+        clio::LogService::info()
             << "Enabling REPAIR mode. Missing/broken transactions will be "
                "downloaded from rippled and overwritten.";
         repairEnabled = true;
@@ -532,6 +533,8 @@ main(int argc, char* argv[])
                   << std::endl;
         return EXIT_FAILURE;
     }
+
+    clio::LogService::init(config);
 
     auto const type = config.value<std::string>("database.type");
     if (!boost::iequals(type, "cassandra"))
@@ -554,6 +557,6 @@ main(int argc, char* argv[])
         });
 
     ioc.run();
-    BOOST_LOG_TRIVIAL(info) << "SUCCESS!";
+    clio::LogService::info() << "SUCCESS!";
     return EXIT_SUCCESS;
 }
