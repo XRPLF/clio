@@ -115,7 +115,11 @@ MetricsFamily::serialize(std::string& result) const
     fmt::format_to(std::back_inserter(result), "# TYPE {} {}\n", name_, toString(type()));
 
     for (const auto& [labelsString, metric] : metrics_)
+    {
         metric->serialize(result);
+        result.push_back('\n');
+    }
+    result.push_back('\n');
 }
 
 const std::string&
