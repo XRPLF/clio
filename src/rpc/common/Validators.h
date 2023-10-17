@@ -230,7 +230,7 @@ public:
  * @brief Deduction guide to help disambiguate what it means to EqualTo a
  * "string" without specifying the type.
  */
-EqualTo(char const*)->EqualTo<std::string>;
+EqualTo(char const*) -> EqualTo<std::string>;
 
 /**
  * @brief Validates that the value is one of the values passed in
@@ -278,7 +278,7 @@ public:
  * @brief Deduction guide to help disambiguate what it means to OneOf a
  * few "strings" without specifying the type.
  */
-OneOf(std::initializer_list<char const*>)->OneOf<std::string>;
+OneOf(std::initializer_list<char const*>) -> OneOf<std::string>;
 
 /**
  * @brief A meta-validator that specifies a list of specs to run against the

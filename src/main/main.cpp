@@ -3,8 +3,12 @@
 #include <config/Config.h>
 #include <etl/NFTHelpers.h>
 #include <main/Build.h>
+#include <rpc/RPCHelpers.h>
 
 #include <boost/asio.hpp>
+#include <boost/beast.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/json.hpp>
 #include <boost/log/trivial.hpp>
 #include <cassandra.h>
 
@@ -13,6 +17,115 @@
 static std::uint32_t const MAX_RETRIES = 5;
 static std::chrono::seconds const WAIT_TIME = std::chrono::seconds(60);
 static std::uint32_t const NFT_WRITE_BATCH_SIZE = 10000;
+
+static std::optional<boost::json::object>
+requestFromRippled(
+    clio::Config const& config,
+    boost::json::object const& request)
+{
+    auto source = config.array("etl_sources").at(0);
+    auto const ip = source.value<std::string>("ip");
+    auto const wsPort = source.value<std::string>("ws_port");
+
+    BOOST_LOG_TRIVIAL(debug) << "Attempting to forward request to tx. "
+                             << "request = " << boost::json::serialize(request);
+
+    boost::json::object response;
+
+    namespace beast = boost::beast;          // from <boost/beast.hpp>
+    namespace http = beast::http;            // from <boost/beast/http.hpp>
+    namespace websocket = beast::websocket;  // from
+    namespace net = boost::asio;             // from
+    using tcp = boost::asio::ip::tcp;        // from
+
+    try
+    {
+        boost::asio::io_context ioc;
+        tcp::resolver resolver{ioc};
+
+        auto ws = std::make_unique<websocket::stream<beast::tcp_stream>>(ioc);
+        auto const results = resolver.resolve(ip, wsPort);
+
+        ws->next_layer().expires_after(std::chrono::seconds(15));
+        ws->next_layer().connect(results);
+
+        ws->handshake(ip, "/");
+        ws->write(net::buffer(boost::json::serialize(request)));
+
+        beast::flat_buffer buffer;
+        ws->read(buffer);
+
+        auto begin = static_cast<char const*>(buffer.data().data());
+        auto end = begin + buffer.data().size();
+        auto parsed = boost::json::parse(std::string(begin, end));
+
+        if (!parsed.is_object())
+        {
+            BOOST_LOG_TRIVIAL(error)
+                << "Error parsing response: " << std::string{begin, end};
+            return {};
+        }
+
+        return parsed.as_object();
+    }
+    catch (std::exception const& e)
+    {
+        BOOST_LOG_TRIVIAL(fatal) << "Encountered exception : " << e.what();
+        return {};
+    }
+}
+
+static std::string
+hexStringToBinaryString(std::string hex)
+{
+    auto blob = ripple::strUnHex(hex);
+    std::string strBlob;
+    for (auto c : *blob)
+        strBlob += c;
+    return strBlob;
+}
+
+static void
+maybeWriteTransaction(
+    Backend::CassandraBackend& backend,
+    std::optional<boost::json::object> const& tx)
+{
+    if (!tx.has_value())
+        throw std::runtime_error("Could not repair transaction");
+
+    auto data = tx.value().at("result").as_object();
+    auto const date = data.at("date").as_int64();
+    auto const ledgerIndex = data.at("ledger_index").as_int64();
+    auto hashStr = hexStringToBinaryString(data.at("hash").as_string().c_str());
+    auto metaStr = hexStringToBinaryString(data.at("meta").as_string().c_str());
+    auto txStr = hexStringToBinaryString(data.at("tx").as_string().c_str());
+
+    backend.writeTransaction(
+        std::move(hashStr),
+        ledgerIndex,
+        date,
+        std::move(txStr),
+        std::move(metaStr));
+    backend.sync();
+}
+
+static void
+repairCorruptedTx(
+    clio::Config const& config,
+    Backend::CassandraBackend& backend,
+    ripple::uint256 const& hash)
+{
+    BOOST_LOG_TRIVIAL(info) << " - repairing " << hash;
+    auto const data = requestFromRippled(
+        config,
+        {
+            {"method", "tx"},
+            {"transaction", to_string(hash)},
+            {"binary", true},
+        });
+
+    maybeWriteTransaction(backend, data);
+}
 
 static void
 wait(boost::asio::steady_timer& timer, std::string const& reason)
@@ -119,10 +232,12 @@ doTryGetTxPageResult(
 
 static void
 doMigrationStepOne(
+    clio::Config const& config,
     Backend::CassandraBackend& backend,
     boost::asio::steady_timer& timer,
     boost::asio::yield_context& yield,
-    Backend::LedgerRange const& ledgerRange)
+    Backend::LedgerRange const& ledgerRange,
+    bool repairEnabled = false)
 {
     /*
      * Step 1 - Look at all NFT transactions recorded in
@@ -173,23 +288,58 @@ doMigrationStepOne(
             txHashes.push_back(ripple::uint256::fromVoid(buf));
         }
 
-        auto const txs =
-            doTryFetchTransactions(timer, backend, txHashes, yield);
+        auto txs = doTryFetchTransactions(timer, backend, txHashes, yield);
+        assert(txs.size() == txHashes.size());
 
-        for (auto const& tx : txs)
+        for (std::size_t idx = 0; idx < txHashes.size(); ++idx)
         {
+            auto const& tx = txs.at(idx);
+            auto const& hash = txHashes.at(idx);
+
             if (tx.ledgerSequence > ledgerRange.maxSequence)
                 continue;
 
-            ripple::STTx const sttx{ripple::SerialIter{
-                tx.transaction.data(), tx.transaction.size()}};
-            if (sttx.getTxnType() != ripple::TxType::ttNFTOKEN_MINT)
-                continue;
+            try
+            {
+                ripple::STTx const sttx{ripple::SerialIter{
+                    tx.transaction.data(), tx.transaction.size()}};
+                if (sttx.getTxnType() != ripple::TxType::ttNFTOKEN_MINT)
+                    continue;
 
-            ripple::TxMeta const txMeta{
-                sttx.getTransactionID(), tx.ledgerSequence, tx.metadata};
-            toWrite.push_back(
-                std::get<1>(getNFTDataFromTx(txMeta, sttx)).value());
+                ripple::TxMeta const txMeta{
+                    sttx.getTransactionID(), tx.ledgerSequence, tx.metadata};
+                toWrite.push_back(
+                    std::get<1>(getNFTDataFromTx(txMeta, sttx)).value());
+            }
+            catch (std::exception const& e)
+            {
+                BOOST_LOG_TRIVIAL(warning) << "Corrupted tx detected: " << hash;
+                std::cerr << "Corrupted tx detected: " << hash << std::endl;
+
+                if (not repairEnabled)
+                {
+                    BOOST_LOG_TRIVIAL(fatal)
+                        << "Not attempting to repair. Rerun with -repair to "
+                           "repair corrupted transactions.";
+                    exit(-1);
+                }
+
+                repairCorruptedTx(config, backend, hash);
+
+                auto maybeTx = backend.fetchTransaction(hash, yield);
+
+                if (!maybeTx.has_value())
+                {
+                    BOOST_LOG_TRIVIAL(fatal)
+                        << "Could not fetch written transaction for hash "
+                        << hash << "; Repair failed.";
+                    exit(-1);
+                }
+
+                txs[idx] = maybeTx.value();
+                --idx;  // repeat the try section for the repaired tx
+                std::cerr << "+ tx repaired: " << hash << std::endl;
+            }
         }
 
         toWrite = maybeDoNFTWrite(toWrite, backend, stepTag);
@@ -274,9 +424,11 @@ doMigrationStepThree(Backend::CassandraBackend& backend)
 
 static void
 doMigration(
+    clio::Config const& config,
     Backend::CassandraBackend& backend,
     boost::asio::steady_timer& timer,
-    boost::asio::yield_context& yield)
+    boost::asio::yield_context& yield,
+    bool repairEnabled = false)
 {
     BOOST_LOG_TRIVIAL(info) << "Beginning migration";
     auto const ledgerRange = backend.hardFetchLedgerRangeNoThrow(yield);
@@ -291,7 +443,8 @@ doMigration(
         return;
     }
 
-    doMigrationStepOne(backend, timer, yield, *ledgerRange);
+    doMigrationStepOne(
+        config, backend, timer, yield, *ledgerRange, repairEnabled);
     BOOST_LOG_TRIVIAL(info) << "\nStep 1 done!\n";
 
     doMigrationStepTwo(backend, timer, yield, *ledgerRange);
@@ -305,13 +458,38 @@ doMigration(
         << ledgerRange->maxSequence << "!\n";
 }
 
+static void
+usage()
+{
+    std::cerr << "\nUsage:\n"
+              << "    with repair: clio_migrator path/to/config -repair 2> "
+                 "repair.log\n"
+              << " without repair: clio_migrator path/to/config" << std::endl;
+}
+
 int
 main(int argc, char* argv[])
 {
     if (argc < 2)
     {
-        std::cerr << "Didn't provide config path!" << std::endl;
+        std::cerr << "Didn't provide config path." << std::endl;
+        usage();
         return EXIT_FAILURE;
+    }
+
+    auto repairEnabled = false;
+    if (argc >= 3)
+    {
+        if (not boost::iequals(argv[2], "-repair"))
+        {
+            std::cerr << "Final argument must be `-repair`." << std::endl;
+            usage();
+            return EXIT_FAILURE;
+        }
+        BOOST_LOG_TRIVIAL(info)
+            << "Enabling REPAIR mode. Missing/broken transactions will be "
+               "downloaded from rippled and overwritten.";
+        repairEnabled = true;
     }
 
     std::string const configPath = argv[1];
@@ -336,8 +514,10 @@ main(int argc, char* argv[])
     auto backend = Backend::make_Backend(ioc, config);
 
     boost::asio::spawn(
-        ioc, [&backend, &workGuard, &timer](boost::asio::yield_context yield) {
-            doMigration(*backend, timer, yield);
+        ioc,
+        [&config, &backend, &workGuard, &timer, &repairEnabled](
+            boost::asio::yield_context yield) {
+            doMigration(config, *backend, timer, yield, repairEnabled);
             workGuard.reset();
         });
 
