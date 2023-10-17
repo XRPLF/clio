@@ -19,27 +19,32 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 class NFTOffersHandlerBase
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    static auto constexpr LIMIT_MIN = 50;
+    static auto constexpr LIMIT_MAX = 500;
+    static auto constexpr LIMIT_DEFAULT = 250;
+
     struct Output
     {
-        std::string nftID;
-        std::vector<ripple::SLE> offers;
+        std::string nftID = {};
+        std::vector<ripple::SLE> offers = {};
 
         // validated should be sent via framework
         bool validated = true;
-        std::optional<uint32_t> limit;
-        std::optional<std::string> marker;
+        std::optional<uint32_t> limit = {};
+        std::optional<std::string> marker = {};
     };
 
     struct Input
@@ -47,7 +52,7 @@ public:
         std::string nftID;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 250;
+        uint32_t limit = LIMIT_DEFAULT;
         std::optional<std::string> marker;
     };
 
@@ -58,14 +63,17 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(nft_id), validation::Required{}, validation::Uint256HexStringValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Between{50, 500}},
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             validation::Min(1u),
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(marker), validation::Uint256HexStringValidator},
         };
 
@@ -78,7 +86,7 @@ protected:
         Input input,
         ripple::uint256 const& tokenID,
         ripple::Keylet const& directory,
-        boost::asio::yield_context& yield) const;
+        boost::asio::yield_context yield) const;
 
 private:
     friend void
@@ -88,4 +96,4 @@ private:
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
-}  // namespace RPC
+}  // namespace rpc

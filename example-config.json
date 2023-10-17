@@ -1,3 +1,6 @@
+/*
+ * This is an example configuration file. Please do not use without modifying to suit your needs.
+ */
 {
     "database": {
         "type": "cassandra",
@@ -9,7 +12,18 @@
             "table_prefix": "",
             "max_write_requests_outstanding": 25000,
             "max_read_requests_outstanding": 30000,
-            "threads": 8
+            "threads": 8,
+            //
+            // Advanced options. USE AT OWN RISK:
+            // ---
+            "core_connections_per_host": 1 // Defaults to 1
+            //
+            // Below options will use defaults from cassandra driver if left unspecified.
+            // See https://docs.datastax.com/en/developer/cpp-driver/2.17/api/struct.CassCluster/ for details.
+            // 
+            // "queue_size_io": 2
+            //
+            // ---
         }
     },
     "etl_sources": [
@@ -20,21 +34,24 @@
         }
     ],
     "dos_guard": {
+        // Comma-separated list of IPs to exclude from rate limiting
         "whitelist": [
             "127.0.0.1"
-        ], // comma-separated list of ips to exclude from rate limiting
-        /* The below values are the default values and are only specified here
-         * for documentation purposes. The rate limiter currently limits
-         * connections and bandwidth per ip. The rate limiter looks at the raw
-         * ip of a client connection, and so requests routed through a load
-         * balancer will all have the same ip and be treated as a single client
-         */
-        "max_fetches": 1000000, // max bytes per ip per sweep interval
-        "max_connections": 20, // max connections per ip
-        "max_requests": 20, // max connections per ip
-        "sweep_interval": 1 // time in seconds before resetting bytes per ip count
+        ],
+        //
+        // The below values are the default values and are only specified here
+        // for documentation purposes. The rate limiter currently limits
+        // connections and bandwidth per IP. The rate limiter looks at the raw
+        // IP of a client connection, and so requests routed through a load
+        // balancer will all have the same IP and be treated as a single client.
+        //
+        "max_fetches": 1000000, // Max bytes per IP per sweep interval
+        "max_connections": 20, // Max connections per IP
+        "max_requests": 20, // Max connections per IP per sweep interval
+        "sweep_interval": 1 // Time in seconds before resetting max_fetches and max_requests
     },
     "cache": {
+        // Comma-separated list of peer nodes that Clio can use to download cache from at startup
         "peers": [
             {
                 "ip": "127.0.0.1",
@@ -45,11 +62,13 @@
     "server": {
         "ip": "0.0.0.0",
         "port": 51233,
-        /* Max number of requests to queue up before rejecting further requests.
-        * Defaults to 0, which disables the limit
-        */
-        "max_queue_size": 500
+        // Max number of requests to queue up before rejecting further requests.
+        // Defaults to 0, which disables the limit.
+        "max_queue_size": 500,
+        "admin_password": "xrp"
     },
+    // Overrides log level on a per logging channel.
+    // Defaults to global "log_level" for each unspecified channel.
     "log_channels": [
         {
             "channel": "Backend",
@@ -77,17 +96,24 @@
         }
     ],
     "log_level": "info",
-    "log_format": "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%", // This is the default format
+    // Log format (this is the default format)
+    "log_format": "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%",
     "log_to_console": true,
-    "log_directory": "./clio_log",
+    // Clio logs to file in the specified directory only if "log_directory" is set
+    // "log_directory": "./clio_log",
     "log_rotation_size": 2048,
     "log_directory_max_size": 51200,
     "log_rotation_hour_interval": 12,
     "log_tag_style": "uint",
     "extractor_threads": 8,
     "read_only": false,
-    //"start_sequence": [integer] the ledger index to start from,
-    //"finish_sequence": [integer] the ledger index to finish at,
-    //"ssl_cert_file" : "/full/path/to/cert.file",
-    //"ssl_key_file" : "/full/path/to/key.file"
+    // "start_sequence": [integer] the ledger index to start from,
+    // "finish_sequence": [integer] the ledger index to finish at,
+    // "ssl_cert_file" : "/full/path/to/cert.file",
+    // "ssl_key_file" : "/full/path/to/key.file"
+    "api_version": {
+        "min": 1, // Minimum API version supported (could be 1 or 2)
+        "max": 2, // Maximum API version supported (could be 1 or 2, but >= min)
+        "default": 1 // Clio behaves the same as rippled by default
+    }
 }

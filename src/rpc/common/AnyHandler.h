@@ -23,7 +23,7 @@
 #include <rpc/common/Types.h>
 #include <rpc/common/impl/Processors.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief A type-erased Handler that can contain any (NextGen) RPC handler class
@@ -40,9 +40,9 @@ public:
      *
      * @tparam HandlerType The real type of wrapped handler class
      * @tparam ProcessingStrategy A strategy that implements how processing of JSON is to be done
-     * @param handler The handler to wrap. Required to fulfil the @ref Handler concept.
+     * @param handler The handler to wrap. Required to fulfil the @ref rpc::SomeHandler concept.
      */
-    template <Handler HandlerType, typename ProcessingStrategy = detail::DefaultProcessor<HandlerType>>
+    template <SomeHandler HandlerType, typename ProcessingStrategy = detail::DefaultProcessor<HandlerType>>
     /* implicit */ AnyHandler(HandlerType&& handler)
         : pimpl_{std::make_unique<Model<HandlerType, ProcessingStrategy>>(std::forward<HandlerType>(handler))}
     {
@@ -69,18 +69,7 @@ public:
      * @brief Process incoming JSON by the stored handler
      *
      * @param value The JSON to process
-     * @return JSON result or @ref Status on error
-     */
-    [[nodiscard]] ReturnType
-    process(boost::json::value const& value) const
-    {
-        return pimpl_->process(value);
-    }
-
-    /**
-     * @brief Process incoming JSON by the stored handler in a provided coroutine
-     *
-     * @param value The JSON to process
+     * @param ctx Request context
      * @return JSON result or @ref Status on error
      */
     [[nodiscard]] ReturnType
@@ -97,9 +86,6 @@ private:
         [[nodiscard]] virtual ReturnType
         process(boost::json::value const& value, Context const& ctx) const = 0;
 
-        [[nodiscard]] virtual ReturnType
-        process(boost::json::value const& value) const = 0;
-
         [[nodiscard]] virtual std::unique_ptr<Concept>
         clone() const = 0;
     };
@@ -115,15 +101,9 @@ private:
         }
 
         [[nodiscard]] ReturnType
-        process(boost::json::value const& value) const override
-        {
-            return processor(handler, value);
-        }
-
-        [[nodiscard]] ReturnType
         process(boost::json::value const& value, Context const& ctx) const override
         {
-            return processor(handler, value, &ctx);
+            return processor(handler, value, ctx);
         }
 
         [[nodiscard]] std::unique_ptr<Concept>
@@ -137,4 +117,4 @@ private:
     std::unique_ptr<Concept> pimpl_;
 };
 
-}  // namespace RPC
+}  // namespace rpc

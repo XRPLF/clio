@@ -19,45 +19,45 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
+#include <feed/SubscriptionManager.h>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/common/Types.h>
-#include <subscriptions/SubscriptionManager.h>
 
 #include <optional>
 #include <string>
 #include <unordered_map>
 
-class SubscriptionManager;
-class ReportingETL;
-class ETLLoadBalancer;
-
-namespace RPC {
+namespace etl {
+class ETLService;
+class LoadBalancer;
+}  // namespace etl
+namespace rpc {
 class Counters;
-}
+}  // namespace rpc
+namespace feed {
+class SubscriptionManager;
+}  // namespace feed
 
-namespace RPC::detail {
+namespace rpc::detail {
 
 class ProductionHandlerProvider final : public HandlerProvider
 {
     struct Handler
     {
         AnyHandler handler;
-        bool isClioOnly;
-
-        /* implicit */ Handler(AnyHandler handler, bool clioOnly = false) : handler{handler}, isClioOnly{clioOnly}
-        {
-        }
+        bool isClioOnly = false;
     };
 
     std::unordered_map<std::string, Handler> handlerMap_;
 
 public:
     ProductionHandlerProvider(
+        util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<SubscriptionManager> const& subscriptionManager,
-        std::shared_ptr<ETLLoadBalancer> const& balancer,
-        std::shared_ptr<ReportingETL const> const& etl,
+        std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
+        std::shared_ptr<etl::LoadBalancer> const& balancer,
+        std::shared_ptr<etl::ETLService const> const& etl,
         Counters const& counters);
 
     bool
@@ -70,4 +70,4 @@ public:
     isClioOnly(std::string const& command) const override;
 };
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

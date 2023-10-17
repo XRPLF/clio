@@ -17,17 +17,35 @@
 */
 //==============================================================================
 
+/** @file */
 #pragma once
 
-#include <backend/DBHelpers.h>
+#include <data/DBHelpers.h>
 
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/TxMeta.h>
 
-// Pulling from tx via ReportingETL
+namespace etl {
+
+/**
+ * @brief Pull NFT data from TX via ETLService.
+ *
+ * @param txMeta Transaction metadata
+ * @param sttx The transaction
+ * @return NFT transactions data as a pair of transactions and optional NFTsData
+ */
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 
-// Pulling from ledger object via loadInitialLedger
+/**
+ * @brief Pull NFT data from ledger object via loadInitialLedger.
+ *
+ * @param seq The ledger sequence to pull for
+ * @param key The owner key
+ * @param blob Object data as blob
+ * @return The NFT data as a vector
+ */
 std::vector<NFTsData>
-getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string const& blob);
+getNFTDataFromObj(std::uint32_t seq, std::string const& key, std::string const& blob);
+
+}  // namespace etl

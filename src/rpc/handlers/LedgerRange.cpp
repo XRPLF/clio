@@ -22,15 +22,13 @@
 
 #include <optional>
 
-namespace RPC {
+namespace rpc {
 
 LedgerRangeHandler::Result
-LedgerRangeHandler::process() const
+LedgerRangeHandler::process([[maybe_unused]] Context const& ctx) const
 {
-    if (auto const maybeRange = sharedPtrBackend_->fetchLedgerRange(); maybeRange)
-        return Output{*maybeRange};
-    else
-        return Error{Status{RippledError::rpcNOT_READY, "rangeNotFound"}};
+    // note: we can't get here if range is not available so it's safe
+    return Output{sharedPtrBackend_->fetchLedgerRange().value()};
 }
 
 void
@@ -42,4 +40,4 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerRangeHandl
     };
 }
 
-}  // namespace RPC
+}  // namespace rpc

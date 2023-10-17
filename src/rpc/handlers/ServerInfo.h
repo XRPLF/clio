@@ -19,43 +19,54 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <backend/DBHelpers.h>
+#include <data/BackendInterface.h>
+#include <data/DBHelpers.h>
 #include <main/Build.h>
 #include <rpc/Errors.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
+#include <ripple/basics/chrono.h>
+#include <ripple/protocol/BuildInfo.h>
+
+#include <chrono>
 #include <fmt/core.h>
 
+namespace etl {
+class ETLService;
+class LoadBalancer;
+}  // namespace etl
+namespace feed {
 class SubscriptionManager;
-class ReportingETL;
-class ETLLoadBalancer;
-
-namespace RPC {
+}  // namespace feed
+namespace rpc {
 class Counters;
-}
+}  // namespace rpc
 
-namespace RPC {
+namespace rpc {
 
-template <
-    typename SubscriptionManagerType,
-    typename ETLLoadBalancerType,
-    typename ReportingETLType,
-    typename CountersType>
+template <typename SubscriptionManagerType, typename LoadBalancerType, typename ETLServiceType, typename CountersType>
 class BaseServerInfoHandler
 {
+    static constexpr auto BACKEND_COUNTERS_KEY = "backend_counters";
+
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<SubscriptionManagerType> subscriptions_;
-    std::shared_ptr<ETLLoadBalancerType> balancer_;
-    std::shared_ptr<ReportingETLType const> etl_;
+    std::shared_ptr<LoadBalancerType> balancer_;
+    std::shared_ptr<ETLServiceType const> etl_;
     std::reference_wrapper<CountersType const> counters_;
 
 public:
+    struct Input
+    {
+        bool backendCounters = false;
+    };
+
     struct AdminSection
     {
         boost::json::object counters = {};
+        std::optional<boost::json::object> backendCounters = {};
         boost::json::object subscriptions = {};
         boost::json::object etl = {};
     };
@@ -82,10 +93,14 @@ public:
         std::optional<AdminSection> adminSection = std::nullopt;
         std::string completeLedgers = {};
         uint32_t loadFactor = 1u;
+        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+        std::chrono::seconds uptime = {};
         std::string clioVersion = Build::getClioVersionString();
+        std::string xrplVersion = ripple::BuildInfo::getVersionString();
         std::optional<boost::json::object> rippledInfo = std::nullopt;
         ValidatedLedgerSection validatedLedger = {};
         CacheSection cache = {};
+        bool isAmendmentBlocked = false;
     };
 
     struct Output
@@ -101,8 +116,8 @@ public:
     BaseServerInfoHandler(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManagerType> const& subscriptions,
-        std::shared_ptr<ETLLoadBalancerType> const& balancer,
-        std::shared_ptr<ReportingETLType const> const& etl,
+        std::shared_ptr<LoadBalancerType> const& balancer,
+        std::shared_ptr<ETLServiceType const> const& etl,
         CountersType const& counters)
         : backend_(backend)
         , subscriptions_(subscriptions)
@@ -112,19 +127,20 @@ public:
     {
     }
 
-    Result
-    process(Context const& ctx) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
-        using namespace RPC;
+        static const RpcSpec rpcSpec = {};
+        return rpcSpec;
+    }
+
+    Result
+    process(Input input, Context const& ctx) const
+    {
+        using namespace rpc;
         using namespace std::chrono;
 
         auto const range = backend_->fetchLedgerRange();
-
-        // TODO: remove this check in https://github.com/XRPLF/clio/issues/592
-        // note: this should happen on framework level.
-        if (not range.has_value())
-            return Error{Status{RippledError::rpcNOT_READY, "emptyDatabase", "The server has no data in the database"}};
-
         auto const lgrInfo = backend_->fetchLedgerBySequence(range->maxSequence, ctx.yield);
         if (not lgrInfo.has_value())
             return Error{Status{RippledError::rpcINTERNAL}};
@@ -142,7 +158,13 @@ public:
         output.info.completeLedgers = fmt::format("{}-{}", range->minSequence, range->maxSequence);
 
         if (ctx.isAdmin)
-            output.info.adminSection = {counters_.get().report(), subscriptions_->report(), etl_->getInfo()};
+        {
+            output.info.adminSection = {
+                .counters = counters_.get().report(),
+                .backendCounters = input.backendCounters ? std::make_optional(backend_->stats()) : std::nullopt,
+                .subscriptions = subscriptions_->report(),
+                .etl = etl_->getInfo()};
+        }
 
         auto const serverInfoRippled =
             balancer_->forwardToRippled({{"command", "server_info"}}, ctx.clientIp, ctx.yield);
@@ -165,6 +187,8 @@ public:
         output.info.cache.latestLedgerSeq = backend_->cache().latestLedgerSequence();
         output.info.cache.objectHitRate = backend_->cache().getObjectHitRate();
         output.info.cache.successorHitRate = backend_->cache().getSuccessorHitRate();
+        output.info.uptime = counters_.get().uptime();
+        output.info.isAmendmentBlocked = etl_->isAmendmentBlocked();
 
         return output;
     }
@@ -173,8 +197,10 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output)
     {
+        using boost::json::value_from;
+
         jv = {
-            {JS(info), output.info},
+            {JS(info), value_from(output.info)},
             {JS(validated), output.validated},
         };
     }
@@ -182,27 +208,35 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, InfoSection const& info)
     {
+        using boost::json::value_from;
+        using ripple::to_string;
+
         jv = {
             {JS(complete_ledgers), info.completeLedgers},
             {JS(load_factor), info.loadFactor},
+            {JS(time), to_string(std::chrono::floor<std::chrono::microseconds>(info.time))},
+            {JS(uptime), info.uptime.count()},
             {"clio_version", info.clioVersion},
-            {JS(validated_ledger), info.validatedLedger},
-            {"cache", info.cache},
+            {"libxrpl_version", info.xrplVersion},
+            {JS(validated_ledger), value_from(info.validatedLedger)},
+            {"cache", value_from(info.cache)},
         };
+
+        if (info.isAmendmentBlocked)
+            jv.as_object()[JS(amendment_blocked)] = true;
 
         if (info.rippledInfo)
         {
-            try
-            {
-                auto const& rippledInfo = info.rippledInfo.value();
+            auto const& rippledInfo = info.rippledInfo.value();
 
+            if (rippledInfo.contains(JS(load_factor)))
                 jv.as_object()[JS(load_factor)] = rippledInfo.at(JS(load_factor));
+            if (rippledInfo.contains(JS(validation_quorum)))
                 jv.as_object()[JS(validation_quorum)] = rippledInfo.at(JS(validation_quorum));
+            if (rippledInfo.contains(JS(build_version)))
                 jv.as_object()["rippled_version"] = rippledInfo.at(JS(build_version));
-            }
-            catch (std::exception const&)
-            {
-            }
+            if (rippledInfo.contains(JS(network_id)))
+                jv.as_object()[JS(network_id)] = rippledInfo.at(JS(network_id));
         }
 
         if (info.adminSection)
@@ -210,6 +244,10 @@ private:
             jv.as_object()["etl"] = info.adminSection->etl;
             jv.as_object()[JS(counters)] = info.adminSection->counters;
             jv.as_object()[JS(counters)].as_object()["subscriptions"] = info.adminSection->subscriptions;
+            if (info.adminSection->backendCounters.has_value())
+            {
+                jv.as_object()[BACKEND_COUNTERS_KEY] = *info.adminSection->backendCounters;
+            }
         }
     }
 
@@ -237,6 +275,16 @@ private:
             {"successor_hit_rate", cache.successorHitRate},
         };
     }
+
+    friend Input
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv)
+    {
+        auto input = BaseServerInfoHandler::Input{};
+        auto const jsonObject = jv.as_object();
+        if (jsonObject.contains(BACKEND_COUNTERS_KEY) && jsonObject.at(BACKEND_COUNTERS_KEY).is_bool())
+            input.backendCounters = jv.at(BACKEND_COUNTERS_KEY).as_bool();
+        return input;
+    }
 };
 
 /**
@@ -245,6 +293,7 @@ private:
  *
  * For more details see: https://xrpl.org/server_info-clio.html
  */
-using ServerInfoHandler = BaseServerInfoHandler<SubscriptionManager, ETLLoadBalancer, ReportingETL, Counters>;
+using ServerInfoHandler =
+    BaseServerInfoHandler<feed::SubscriptionManager, etl::LoadBalancer, etl::ETLService, Counters>;
 
-}  // namespace RPC
+}  // namespace rpc

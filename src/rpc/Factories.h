@@ -19,16 +19,16 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <log/Logger.h>
+#include <data/BackendInterface.h>
 #include <rpc/Errors.h>
-#include <webserver/Context.h>
+#include <rpc/common/APIVersion.h>
+#include <util/Expected.h>
+#include <web/Context.h>
+#include <web/interface/ConnectionBase.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
-#include <fmt/core.h>
 
-#include <chrono>
 #include <optional>
 #include <string>
 
@@ -36,32 +36,51 @@
  * This file contains various classes necessary for executing RPC handlers.
  * Context gives the handlers access to various other parts of the application Status is used to report errors.
  * And lastly, there are various functions for making Contexts, Statuses and serializing Status to JSON.
- * This file is meant to contain any class or function that code outside of the rpc folder needs to use. For helper
- * functions or classes used within the rpc folder, use RPCHelpers.h.
+ * This file is meant to contain any class or function that code outside of the rpc folder needs to use.
+ * For helper functions or classes used within the rpc folder, use RPCHelpers.h.
  */
+namespace rpc {
 
-class WsBase;
-class SubscriptionManager;
-class ETLLoadBalancer;
-class ReportingETL;
-
-namespace RPC {
-
-std::optional<Web::Context>
+/**
+ * @brief A factory function that creates a Websocket context.
+ *
+ * @param yc The coroutine context
+ * @param request The request as JSON object
+ * @param session The connection
+ * @param tagFactory A factory that provides tags to track requests
+ * @param range The ledger range that is available at request time
+ * @param clientIp The IP address of the connected client
+ * @param apiVersionParser A parser that is used to parse out the "api_version" field
+ */
+util::Expected<web::Context, Status>
 make_WsContext(
-    boost::asio::yield_context& yc,
+    boost::asio::yield_context yc,
     boost::json::object const& request,
-    std::shared_ptr<WsBase> const& session,
+    std::shared_ptr<web::ConnectionBase> const& session,
     util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
-    std::string const& clientIp);
+    data::LedgerRange const& range,
+    std::string const& clientIp,
+    std::reference_wrapper<APIVersionParser const> apiVersionParser);
 
-std::optional<Web::Context>
+/**
+ * @brief A factory function that creates a HTTP context.
+ *
+ * @param yc The coroutine context
+ * @param request The request as JSON object
+ * @param tagFactory A factory that provides tags to track requests
+ * @param range The ledger range that is available at request time
+ * @param clientIp The IP address of the connected client
+ * @param apiVersionParser A parser that is used to parse out the "api_version" field
+ * @param isAdmin Whether the connection has admin privileges
+ */
+util::Expected<web::Context, Status>
 make_HttpContext(
-    boost::asio::yield_context& yc,
+    boost::asio::yield_context yc,
     boost::json::object const& request,
     util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
-    std::string const& clientIp);
+    data::LedgerRange const& range,
+    std::string const& clientIp,
+    std::reference_wrapper<APIVersionParser const> apiVersionParser,
+    bool isAdmin);
 
-}  // namespace RPC
+}  // namespace rpc

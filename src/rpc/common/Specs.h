@@ -26,42 +26,41 @@
 #include <string>
 #include <vector>
 
-namespace RPC {
+namespace rpc {
 
 /**
- * @brief Represents a Specification for one field of an RPC command
+ * @brief Represents a Specification for one field of an RPC command.
  */
 struct FieldSpec final
 {
     /**
-     * @brief Construct a field specification out of a set of requirements
+     * @brief Construct a field specification out of a set of processors.
      *
-     * @tparam Requirements The types of requirements @ref Requirement
+     * @tparam Processors The types of processors
      * @param key The key in a JSON object that the field validates
-     * @param requirements The requirements, each of them have to fulfil
-     * the @ref Requirement concept
+     * @param processors The processors, each of them have to fulfil the @ref rpc::SomeProcessor concept
      */
-    template <Requirement... Requirements>
-    FieldSpec(std::string const& key, Requirements&&... requirements)
-        : validator_{detail::makeFieldValidator<Requirements...>(key, std::forward<Requirements>(requirements)...)}
+    template <SomeProcessor... Processors>
+    FieldSpec(std::string const& key, Processors&&... processors)
+        : processor_{detail::makeFieldProcessor<Processors...>(key, std::forward<Processors>(processors)...)}
     {
     }
 
     /**
-     * @brief Validates the passed JSON value using the stored requirements
+     * @brief Processos the passed JSON value using the stored processors.
      *
-     * @param value The JSON value to validate
+     * @param value The JSON value to validate and/or modify
      * @return Nothing on success; @ref Status on error
      */
     [[nodiscard]] MaybeError
-    validate(boost::json::value const& value) const;
+    process(boost::json::value& value) const;
 
 private:
-    std::function<MaybeError(boost::json::value const&)> validator_;
+    std::function<MaybeError(boost::json::value&)> processor_;
 };
 
 /**
- * @brief Represents a Specification of an entire RPC command
+ * @brief Represents a Specification of an entire RPC command.
  *
  * Note: this should really be all constexpr and handlers would expose
  * static constexpr RpcSpec spec instead. Maybe some day in the future.
@@ -69,7 +68,7 @@ private:
 struct RpcSpec final
 {
     /**
-     * @brief Construct a full RPC request specification
+     * @brief Construct a full RPC request specification.
      *
      * @param fields The fields of the RPC specification @ref FieldSpec
      */
@@ -78,16 +77,28 @@ struct RpcSpec final
     }
 
     /**
-     * @brief Validates the passed JSON value using the stored field specs
+     * @brief Construct a full RPC request specification from another spec and additional fields.
      *
-     * @param value The JSON value to validate
+     * @param other The other spec to copy fields from
+     * @param additionalFields The additional fields to add to the spec
+     */
+    RpcSpec(const RpcSpec& other, std::initializer_list<FieldSpec> additionalFields) : fields_{other.fields_}
+    {
+        for (auto& f : additionalFields)
+            fields_.push_back(f);
+    }
+
+    /**
+     * @brief Processos the passed JSON value using the stored field specs.
+     *
+     * @param value The JSON value to validate and/or modify
      * @return Nothing on success; @ref Status on error
      */
     [[nodiscard]] MaybeError
-    validate(boost::json::value const& value) const;
+    process(boost::json::value& value) const;
 
 private:
     std::vector<FieldSpec> fields_;
 };
 
-}  // namespace RPC
+}  // namespace rpc

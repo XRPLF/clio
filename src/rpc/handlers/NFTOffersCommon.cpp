@@ -20,11 +20,10 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/NFTOffersCommon.h>
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/protocol/Indexes.h>
 
 using namespace ripple;
-using namespace ::RPC;
+using namespace ::rpc;
 
 namespace ripple {
 
@@ -52,14 +51,14 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, SLE const& offer
 
 }  // namespace ripple
 
-namespace RPC {
+namespace rpc {
 
 NFTOffersHandlerBase::Result
 NFTOffersHandlerBase::iterateOfferDirectory(
     Input input,
     ripple::uint256 const& tokenID,
     ripple::Keylet const& directory,
-    boost::asio::yield_context& yield) const
+    boost::asio::yield_context yield) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus =
@@ -68,7 +67,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<LedgerHeader>(lgrInfoOrStatus);
 
     // TODO: just check for existence without pulling
     if (not sharedPtrBackend_->fetchLedgerObject(directory.key, lgrInfo.seq, yield))
@@ -85,7 +84,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
         cursor = uint256(input.marker->c_str());
 
         // We have a start point. Use limit - 1 from the result and use the very last one for the resume.
-        auto const sle = [this, &cursor, &lgrInfo, &yield]() -> std::shared_ptr<SLE const> {
+        auto const sle = [this, &cursor, &lgrInfo, yield]() -> std::shared_ptr<SLE const> {
             auto const key = keylet::nftoffer(cursor).key;
 
             if (auto const blob = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, yield); blob)
@@ -111,15 +110,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     }
 
     auto result = traverseOwnedNodes(
-        *sharedPtrBackend_,
-        directory,
-        cursor,
-        startHint,
-        lgrInfo.seq,
-        reserve,
-        {},
-        yield,
-        [&offers](ripple::SLE&& offer) {
+        *sharedPtrBackend_, directory, cursor, startHint, lgrInfo.seq, reserve, yield, [&offers](ripple::SLE&& offer) {
             if (offer.getType() == ripple::ltNFTOKEN_OFFER)
             {
                 offers.push_back(std::move(offer));
@@ -141,16 +132,18 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 
     std::move(std::begin(offers), std::end(offers), std::back_inserter(output.offers));
 
-    return std::move(output);
+    return output;
 }
 
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTOffersHandlerBase::Output const& output)
 {
+    using boost::json::value_from;
+
     auto object = boost::json::object{
         {JS(nft_id), output.nftID},
         {JS(validated), output.validated},
-        {JS(offers), output.offers},
+        {JS(offers), value_from(output.offers)},
     };
 
     if (output.marker)
@@ -176,9 +169,13 @@ tag_invoke(boost::json::value_to_tag<NFTOffersHandlerBase::Input>, boost::json::
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(marker)))
@@ -190,4 +187,4 @@ tag_invoke(boost::json::value_to_tag<NFTOffersHandlerBase::Input>, boost::json::
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

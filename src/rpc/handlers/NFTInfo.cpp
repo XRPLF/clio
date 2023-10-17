@@ -20,13 +20,13 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/NFTInfo.h>
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/nft.h>
 
 using namespace ripple;
-using namespace ::RPC;
+using namespace ::rpc;
 
-namespace RPC {
+namespace rpc {
 
 NFTInfoHandler::Result
 NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
@@ -39,7 +39,7 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<LedgerHeader>(lgrInfoOrStatus);
     auto const maybeNft = sharedPtrBackend_->fetchNFT(tokenID, lgrInfo.seq, ctx.yield);
 
     if (not maybeNft.has_value())
@@ -100,12 +100,16 @@ tag_invoke(boost::json::value_to_tag<NFTInfoHandler::Input>, boost::json::value 
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/AccountCurrencies.h>
 
-namespace RPC {
+namespace rpc {
 AccountCurrenciesHandler::Result
 AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context const& ctx) const
 {
@@ -30,7 +30,7 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const accountID = accountFromStringStrict(input.account);
 
     auto const accountLedgerObject =
@@ -63,7 +63,7 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
     };
 
     // traverse all owned nodes, limit->max, marker->empty
-    ngTraverseOwnedNodes(
+    traverseOwnedNodes(
         *sharedPtrBackend_,
         *accountID,
         lgrInfo.seq,
@@ -81,12 +81,14 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountCurrenciesHandler::Output const& output)
 {
+    using boost::json::value_from;
+
     jv = {
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
-        {JS(receive_currencies), output.receiveCurrencies},
-        {JS(send_currencies), output.sendCurrencies},
+        {JS(receive_currencies), value_from(output.receiveCurrencies)},
+        {JS(send_currencies), value_from(output.sendCurrencies)},
     };
 }
 
@@ -104,12 +106,16 @@ tag_invoke(boost::json::value_to_tag<AccountCurrenciesHandler::Input>, boost::js
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

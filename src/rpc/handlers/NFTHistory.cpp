@@ -20,7 +20,9 @@
 #include <rpc/handlers/NFTHistory.h>
 #include <util/Profiler.h>
 
-namespace RPC {
+#include <limits>
+
+namespace rpc {
 
 // TODO: this is currently very similar to account_tx but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
@@ -61,10 +63,10 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
         if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
             return Error{*status};
 
-        maxIndex = minIndex = std::get<ripple::LedgerInfo>(lgrInfoOrStatus).seq;
+        maxIndex = minIndex = std::get<ripple::LedgerHeader>(lgrInfoOrStatus).seq;
     }
 
-    std::optional<Backend::TransactionsCursor> cursor;
+    std::optional<data::TransactionsCursor> cursor;
 
     // if marker exists
     if (input.marker)
@@ -74,19 +76,21 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     else
     {
         if (input.forward)
+        {
             cursor = {minIndex, 0};
+        }
         else
-            cursor = {maxIndex, INT32_MAX};
+        {
+            cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
+        }
     }
 
-    static auto constexpr limitDefault = 50;
-
-    auto const limit = input.limit.value_or(limitDefault);
+    auto const limit = input.limit.value_or(LIMIT_DEFAULT);
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
 
     auto const [txnsAndCursor, timeDiff] = util::timed(
         [&]() { return sharedPtrBackend_->fetchNFTTransactions(tokenID, limit, input.forward, cursor, ctx.yield); });
-    log_.info() << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
+    LOG(log_.info()) << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
 
     Output response;
     auto const [blobs, retCursor] = txnsAndCursor;
@@ -103,9 +107,9 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
             response.marker = std::nullopt;
             break;
         }
-        else if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward)
+        if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward)
         {
-            log_.debug() << "Skipping over transactions from incomplete ledger";
+            LOG(log_.debug()) << "Skipping over transactions from incomplete ledger";
             continue;
         }
 
@@ -187,9 +191,13 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(binary)))
@@ -202,11 +210,13 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
         input.limit = jsonObject.at(JS(limit)).as_int64();
 
     if (jsonObject.contains(JS(marker)))
+    {
         input.marker = NFTHistoryHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
             jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
+    }
 
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

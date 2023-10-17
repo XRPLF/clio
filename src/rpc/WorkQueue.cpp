@@ -19,18 +19,17 @@
 
 #include <rpc/WorkQueue.h>
 
-WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
+namespace rpc {
+
+WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize) : ioc_{numWorkers}
 {
     if (maxSize != 0)
         maxSize_ = maxSize;
-
-    while (--numWorkers)
-        threads_.emplace_back([this] { ioc_.run(); });
 }
 
 WorkQueue::~WorkQueue()
 {
-    work_.reset();
-    for (auto& thread : threads_)
-        thread.join();
+    ioc_.join();
 }
+
+}  // namespace rpc

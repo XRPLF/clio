@@ -1,25 +1,15 @@
-# Unit Testing
+# Unit testing
+
 The correctness of new implementations can be verified via running unit tests. Below are the information on how to run unit tests.
+
 ## Requirements
-### 1. Cassandra cluster
-Have access to a **local (127.0.0.1)** Cassandra cluster, opened at port **9042**. Please ensure that the cluster is successfully running before running Unit Tests.
+### Cassandra cluster
+If you wish to test the backend component you will need to have access to a **local (127.0.0.1)** Cassandra cluster, opened at port **9042**. Please ensure that the cluster is successfully running before running unit tests unless you filter out all `Backend` tests.
+
 ## Running
-To run the unit tests, first build Clio as normal, then execute `./clio_tests` to run the unit tests.
+To run the unit tests, first build Clio as normal, then execute `./clio_tests` to run all unit tests.
 
-## Tests
-Below is a list of currently available unit tests. Please keep in mind that this list should be constantly updated with new unit tests as new features are added to the project.
-
-- BackendTest.basic
-- Backend.cache
-- Backend.cacheBackground
-- Backend.cacheIntegration
+**Note:** If you don't want to test the Cassandra backend code, the relevant tests can be disabled like this: `./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"`
 
 # Adding Unit Tests
-To add unit tests, append a new test block in the unittests/main.cpp file with the following format:
-
-```cpp
-TEST(module_name, test_name)
-{
-    // Test code goes here
-}
-```
+To add unit tests, please create a separate file for the component you are trying to cover (unless it already exists) and use any other existing unit test file as an example.

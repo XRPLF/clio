@@ -19,14 +19,15 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/JS.h>
+#include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
 #include <vector>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The account_channels method returns information about an account's Payment Channels. This includes only
@@ -41,6 +42,10 @@ class AccountChannelsHandler
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
 public:
+    static constexpr auto LIMIT_MIN = 10;
+    static constexpr auto LIMIT_MAX = 400;
+    static constexpr auto LIMIT_DEFAULT = 200;
+
     // type align with SField.h
     struct ChannelResponse
     {
@@ -51,7 +56,7 @@ public:
         std::string balance;
         std::optional<std::string> publicKey;
         std::optional<std::string> publicKeyHex;
-        uint32_t settleDelay;
+        uint32_t settleDelay{};
         std::optional<uint32_t> expiration;
         std::optional<uint32_t> cancelAfter;
         std::optional<uint32_t> sourceTag;
@@ -63,10 +68,10 @@ public:
         std::vector<ChannelResponse> channels;
         std::string account;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         // validated should be sent via framework
         bool validated = true;
-        uint32_t limit;
+        uint32_t limit{};
         std::optional<std::string> marker;
     };
 
@@ -76,7 +81,7 @@ public:
         std::optional<std::string> destinationAccount;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 200;
+        uint32_t limit = LIMIT_DEFAULT;
         std::optional<std::string> marker;
     };
 
@@ -87,14 +92,17 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(destination_account), validation::Type<std::string>{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Between{10, 400}},
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             validation::Min(1u),
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(marker), validation::AccountMarkerValidator},
         };
@@ -106,8 +114,8 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
-    void
-    addChannel(std::vector<ChannelResponse>& jsonLines, ripple::SLE const& line) const;
+    static void
+    addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle);
 
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
@@ -118,4 +126,4 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, ChannelResponse const& channel);
 };
-}  // namespace RPC
+}  // namespace rpc

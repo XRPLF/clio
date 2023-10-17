@@ -21,7 +21,7 @@
 
 #include <ripple/protocol/ErrorCodes.h>
 
-namespace RPC {
+namespace rpc {
 AccountInfoHandler::Result
 AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx) const
 {
@@ -35,7 +35,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const accountStr = input.account.value_or(input.ident.value_or(""));
     auto const accountID = accountFromStringStrict(accountStr);
     auto const accountKeylet = ripple::keylet::account(*accountID);
@@ -49,6 +49,12 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
 
     if (!accountKeylet.check(sle))
         return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
+
+    auto const isDisallowIncomingEnabled =
+        rpc::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, rpc::Amendments::DisallowIncoming);
+
+    auto const isClawbackEnabled =
+        rpc::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, rpc::Amendments::Clawback);
 
     // Return SignerList(s) if that is requested.
     if (input.signerLists)
@@ -73,10 +79,18 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
             signerList.push_back(sleSigners);
         }
 
-        return Output(lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, signerList);
+        return Output(
+            lgrInfo.seq,
+            ripple::strHex(lgrInfo.hash),
+            sle,
+            isDisallowIncomingEnabled,
+            isClawbackEnabled,
+            ctx.apiVersion,
+            signerList);
     }
 
-    return Output(lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle);
+    return Output(
+        lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled, ctx.apiVersion);
 }
 
 void
@@ -89,6 +103,40 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         {JS(validated), output.validated},
     };
 
+    std::vector<std::pair<std::string_view, ripple::LedgerSpecificFlags>> lsFlags{{
+        {"defaultRipple", ripple::lsfDefaultRipple},
+        {"depositAuth", ripple::lsfDepositAuth},
+        {"disableMasterKey", ripple::lsfDisableMaster},
+        {"disallowIncomingXRP", ripple::lsfDisallowXRP},
+        {"globalFreeze", ripple::lsfGlobalFreeze},
+        {"noFreeze", ripple::lsfNoFreeze},
+        {"passwordSpent", ripple::lsfPasswordSpent},
+        {"requireAuthorization", ripple::lsfRequireAuth},
+        {"requireDestinationTag", ripple::lsfRequireDestTag},
+    }};
+
+    if (output.isDisallowIncomingEnabled)
+    {
+        std::vector<std::pair<std::string_view, ripple::LedgerSpecificFlags>> const disallowIncomingFlags = {
+            {"disallowIncomingNFTokenOffer", ripple::lsfDisallowIncomingNFTokenOffer},
+            {"disallowIncomingCheck", ripple::lsfDisallowIncomingCheck},
+            {"disallowIncomingPayChan", ripple::lsfDisallowIncomingPayChan},
+            {"disallowIncomingTrustline", ripple::lsfDisallowIncomingTrustline},
+        };
+        lsFlags.insert(lsFlags.end(), disallowIncomingFlags.begin(), disallowIncomingFlags.end());
+    }
+
+    if (output.isClawbackEnabled)
+    {
+        lsFlags.emplace_back("allowTrustLineClawback", ripple::lsfAllowTrustLineClawback);
+    }
+
+    boost::json::object acctFlags;
+    for (auto const& lsf : lsFlags)
+        acctFlags[lsf.first.data()] = output.accountData.isFlag(lsf.second);
+
+    jv.as_object()[JS(account_flags)] = std::move(acctFlags);
+
     if (output.signerLists)
     {
         auto signers = boost::json::array();
@@ -97,8 +145,14 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
             std::cend(output.signerLists.value()),
             std::back_inserter(signers),
             [](auto const& signerList) { return toJson(signerList); });
-
-        jv.as_object()[JS(account_data)].as_object()[JS(signer_lists)] = std::move(signers);
+        if (output.apiVersion == 1)
+        {
+            jv.as_object()[JS(account_data)].as_object()[JS(signer_lists)] = std::move(signers);
+        }
+        else
+        {
+            jv.as_object()[JS(signer_lists)] = signers;
+        }
     }
 }
 
@@ -120,15 +174,19 @@ tag_invoke(boost::json::value_to_tag<AccountInfoHandler::Input>, boost::json::va
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(signer_lists)))
-        input.signerLists = jsonObject.at(JS(signer_lists)).as_bool();
+        input.signerLists = boost::json::value_to<JsonBool>(jsonObject.at(JS(signer_lists)));
 
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

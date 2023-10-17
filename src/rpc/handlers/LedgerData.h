@@ -19,12 +19,16 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+#include <unordered_map>
+#include <unordered_set>
+
+namespace rpc {
 
 /**
  * @brief The ledger_data method retrieves contents of the specified ledger. You can iterate through several calls to
@@ -36,16 +40,20 @@ class LedgerDataHandler
 {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    clio::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
 
+    static const std::unordered_map<std::string, ripple::LedgerEntryType> TYPES_MAP;
+
+    static const std::unordered_set<std::string> TYPES_KEYS;
+
+public:
     // constants
     static uint32_t constexpr LIMITBINARY = 2048;
     static uint32_t constexpr LIMITJSON = 256;
 
-public:
     struct Output
     {
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::string ledgerHash;
         std::optional<boost::json::object> header;
         boost::json::array states;
@@ -67,6 +75,7 @@ public:
         std::optional<ripple::uint256> marker;
         std::optional<uint32_t> diffMarker;
         bool outOfOrder = false;
+        ripple::LedgerEntryType type = ripple::LedgerEntryType::ltANY;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -75,18 +84,24 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static const auto rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {"out_of_order", validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>{}},
+            {JS(limit), validation::Type<uint32_t>{}, validation::Min(1u)},
             {JS(marker),
              validation::Type<uint32_t, std::string>{},
-             validation::IfType<std::string>{validation::Uint256HexStringValidator}},
+             meta::IfType<std::string>{validation::Uint256HexStringValidator}},
+            {JS(type),
+             meta::WithCustomError{
+                 validation::Type<std::string>{},
+                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}},
+             validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend())},
+
         };
         return rpcSpec;
     }
@@ -101,4 +116,4 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-}  // namespace RPC
+}  // namespace rpc

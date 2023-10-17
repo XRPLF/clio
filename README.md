@@ -1,51 +1,101 @@
 # Clio
-Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. Validated
-historical ledger and transaction data are stored in a more space-efficient format,
+
+Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. 
+Validated historical ledger and transaction data are stored in a more space-efficient format,
 using up to 4 times less space than rippled. Clio can be configured to store data in Apache Cassandra or ScyllaDB,
-allowing for scalable read throughput. Multiple Clio nodes can share
-access to the same dataset, allowing for a highly available cluster of Clio nodes,
-without the need for redundant data storage or computation.
+allowing for scalable read throughput. Multiple Clio nodes can share access to the same dataset, 
+allowing for a highly available cluster of Clio nodes, without the need for redundant data storage or computation.
 
 Clio offers the full rippled API, with the caveat that Clio by default only returns validated data.
 This means that `ledger_index` defaults to `validated` instead of `current` for all requests.
 Other non-validated data is also not returned, such as information about queued transactions.
-For requests that require access to the p2p network, such as `fee` or `submit`, Clio automatically forwards the request to a rippled node and propagates the response back to the client. To access non-validated data for *any* request, simply add `ledger_index: "current"` to the request, and Clio will forward the request to rippled.
+For requests that require access to the p2p network, such as `fee` or `submit`, Clio automatically forwards the request to a rippled node and propagates the response back to the client. 
+To access non-validated data for *any* request, simply add `ledger_index: "current"` to the request, and Clio will forward the request to rippled.
 
 Clio does not connect to the peer-to-peer network. Instead, Clio extracts data from a group of specified rippled nodes. Running Clio requires access to at least one rippled node
 from which data can be extracted. The rippled node does not need to be running on the same machine as Clio.
 
-
 ## Requirements
 1. Access to a Cassandra cluster or ScyllaDB cluster. Can be local or remote.
-
 2. Access to one or more rippled nodes. Can be local or remote.
 
 ## Building
 
-Clio is built with CMake. Clio requires at least GCC-11/clang-14.0.0 (C++20), and Boost 1.75.0.
+Clio is built with CMake and uses Conan for managing dependencies. 
+It is written in C++20 and therefore requires a modern compiler.
 
-Use these instructions to build a Clio executable from the source. These instructions were tested on Ubuntu 20.04 LTS.
+## Prerequisites 
 
-```sh
-# Install dependencies
-  sudo apt-get -y install git pkg-config protobuf-compiler libprotobuf-dev libssl-dev wget build-essential bison flex autoconf cmake clang-format
-# Install gcovr to run code coverage
-  sudo apt-get -y install gcovr
+### Minimum Requirements
 
-# Compile Boost
-  wget -O $HOME/boost_1_75_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz
-  tar xvzf $HOME/boost_1_75_0.tar.gz
-  cd $HOME/boost_1_75_0
-  ./bootstrap.sh
-  ./b2 -j$(nproc)
-  echo "export BOOST_ROOT=$HOME/boost_1_75_0" >> $HOME/.profile && source $HOME/.profile
+- [Python 3.7](https://www.python.org/downloads/)
+- [Conan 1.55](https://conan.io/downloads.html)
+- [CMake 3.16](https://cmake.org/download/)
+- [**Optional**] [GCovr](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html) (needed for code coverage generation)
 
-# Clone the Clio Git repository & build Clio
-  cd $HOME
-  git clone https://github.com/XRPLF/clio.git
-  cd $HOME/clio
-  cmake -B build && cmake --build build --parallel $(nproc)
+| Compiler    | Version |
+|-------------|---------|
+| GCC         | 11      |
+| Clang       | 14      |
+| Apple Clang | 14.0.3  |
+
+### Conan configuration
+
+Clio does not require anything but default settings in your (`~/.conan/profiles/default`) Conan profile. It's best to have no extra flags specified. 
+> Mac example:
 ```
+[settings]
+os=Macos
+os_build=Macos
+arch=armv8
+arch_build=armv8
+compiler=apple-clang
+compiler.version=14
+compiler.libcxx=libc++
+build_type=Release
+compiler.cppstd=20
+```
+> Linux example:
+```
+[settings]
+os=Linux
+os_build=Linux
+arch=x86_64
+arch_build=x86_64
+compiler=gcc
+compiler.version=11
+compiler.libcxx=libstdc++11
+build_type=Release
+compiler.cppstd=20
+```
+
+### Artifactory
+
+1. Make sure artifactory is setup with Conan
+```sh
+conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
+```
+Now you should be able to download prebuilt `xrpl` package on some platforms.
+
+2. Remove old packages you may have cached: 
+```sh 
+conan remove -f xrpl
+```
+
+## Building Clio
+
+Navigate to Clio's root directory and perform
+```sh
+mkdir build && cd build
+conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True
+cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --parallel 8 # or without the number if you feel extra adventurous
+```
+If all goes well, `conan install` will find required packages and `cmake` will do the rest. you should end up with `clio_server` and `clio_tests` in the `build` directory (the current directory).
+
+> **Tip:** You can omit the `-o tests=True` in `conan install` command above if you don't want to build `clio_tests`.
+
+> **Tip:** To generate a Code Coverage report, include `-o coverage=True` in the `conan install` command above, along with `-o tests=True` to enable tests. After running the `cmake` commands, execute `make clio_tests-ccov`. The coverage report will be found at `clio_tests-llvm-cov/index.html`.
 
 ## Running
 ```sh
@@ -96,12 +146,12 @@ The parameters `ssl_cert_file` and `ssl_key_file` can also be added to the top l
 An example of how to specify `ssl_cert_file` and `ssl_key_file` in the config:
 
 ```json
-"server":{
+"server": {
     "ip": "0.0.0.0",
     "port": 51233
 },
-"ssl_cert_file" : "/full/path/to/cert.file",
-"ssl_key_file" : "/full/path/to/key.file"
+"ssl_cert_file": "/full/path/to/cert.file",
+"ssl_key_file": "/full/path/to/key.file"
 ```
 
 Once your config files are ready, start rippled and Clio. It doesn't matter which you
@@ -171,6 +221,48 @@ are doing this, be aware that database traffic will be flowing across regions,
 which can cause high latencies. A possible alternative to this is to just deploy
 a database in each region, and the Clio nodes in each region use their region's database.
 This is effectively two systems.
+
+Clio supports API versioning as [described here](https://xrpl.org/request-formatting.html#api-versioning).
+It's possible to configure `minimum`, `maximum` and `default` version like so:
+```json
+"api_version": {
+    "min": 1,
+    "max": 2,
+    "default": 1
+}
+```
+All of the above are optional.
+Clio will fallback to hardcoded defaults when not specified in the config file or configured values are outside
+of the minimum and maximum supported versions hardcoded in `src/rpc/common/APIVersion.h`.
+> **Note:** See `example-config.json` for more details. 
+
+## Admin rights for requests
+
+By default clio checks admin privileges by IP address from request (only `127.0.0.1` is considered to be an admin).
+It is not very secure because the IP could be spoofed.
+For a better security `admin_password` could be provided in the `server` section of clio's config:
+```json
+"server": {
+    "admin_password": "secret"
+}
+```
+If the password is presented in the config, clio will check the Authorization header (if any) in each request for the password.
+Exactly equal password gains admin rights for the request or a websocket connection.
+
+## Using clang-tidy for static analysis
+
+Minimum clang-tidy version required is 16.0.
+Clang-tidy could be run by cmake during building the project.
+For that provide the option `-o lint=True` for `conan install` command:
+```sh
+conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True -o lint=True
+```
+By default cmake will try to find clang-tidy automatically in your system.
+To force cmake use desired binary set `CLIO_CLANG_TIDY_BIN` environment variable as path to clang-tidy binary.
+E.g.:
+```sh
+export CLIO_CLANG_TIDY_BIN=/opt/homebrew/opt/llvm@16/bin/clang-tidy
+```
 
 ## Developing against `rippled` in standalone mode
 

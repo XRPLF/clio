@@ -20,7 +20,7 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/BookOffers.h>
 
-namespace RPC {
+namespace rpc {
 
 BookOffersHandler::Result
 BookOffersHandler::process(Input input, Context const& ctx) const
@@ -37,7 +37,7 @@ BookOffersHandler::process(Input input, Context const& ctx) const
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const book = std::get<ripple::Book>(bookMaybe);
     auto const bookKey = getBookBase(book);
 
@@ -84,9 +84,13 @@ tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::val
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(taker)))
@@ -98,4 +102,4 @@ tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::val
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

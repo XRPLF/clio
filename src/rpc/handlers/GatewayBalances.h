@@ -19,12 +19,13 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * The gateway_balances command calculates the total balances issued by a given account, optionally excluding amounts
@@ -51,7 +52,6 @@ public:
         bool validated = true;
     };
 
-    // TODO:we did not implement the "strict" field
     struct Input
     {
         std::string account;
@@ -67,8 +67,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const hotWalletValidator =
             validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
@@ -105,8 +105,7 @@ public:
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(hotwallet), hotWalletValidator},
-        };
+            {JS(hotwallet), hotWalletValidator}};
 
         return rpcSpec;
     }
@@ -122,4 +121,4 @@ private:
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
-}  // namespace RPC
+}  // namespace rpc

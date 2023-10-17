@@ -22,6 +22,7 @@
 #include <rpc/Factories.h>
 #include <rpc/common/Specs.h>
 #include <rpc/common/Validators.h>
+#include <web/DOSGuard.h>
 
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
@@ -70,14 +71,14 @@ class HandlerFake
 public:
     using Input = TestInput;
     using Output = TestOutput;
-    using Result = RPC::HandlerReturnType<Output>;
+    using Result = rpc::HandlerReturnType<Output>;
 
-    RPC::RpcSpecConstRef
-    spec() const
+    rpc::RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion) const
     {
-        using namespace RPC::validation;
+        using namespace rpc::validation;
 
-        static const auto rpcSpec = RPC::RpcSpec{
+        static const auto rpcSpec = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}},  // optional field
         };
@@ -86,35 +87,7 @@ public:
     }
 
     Result
-    process(Input input) const
-    {
-        return Output{input.hello + '_' + std::to_string(input.limit.value_or(0))};
-    }
-};
-
-// example handler
-class CoroutineHandlerFake
-{
-public:
-    using Input = TestInput;
-    using Output = TestOutput;
-    using Result = RPC::HandlerReturnType<Output>;
-
-    RPC::RpcSpecConstRef
-    spec() const
-    {
-        using namespace RPC::validation;
-
-        static const auto rpcSpec = RPC::RpcSpec{
-            {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
-            {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}},  // optional field
-        };
-
-        return rpcSpec;
-    }
-
-    Result
-    process(Input input, RPC::Context const& ctx) const
+    process(Input input, [[maybe_unused]] rpc::Context const& ctx) const
     {
         return Output{input.hello + '_' + std::to_string(input.limit.value_or(0))};
     }
@@ -124,10 +97,10 @@ class NoInputHandlerFake
 {
 public:
     using Output = TestOutput;
-    using Result = RPC::HandlerReturnType<Output>;
+    using Result = rpc::HandlerReturnType<Output>;
 
     Result
-    process() const
+    process([[maybe_unused]] rpc::Context const& ctx) const
     {
         return Output{"test"};
     }
@@ -139,14 +112,14 @@ class FailingHandlerFake
 public:
     using Input = TestInput;
     using Output = TestOutput;
-    using Result = RPC::HandlerReturnType<Output>;
+    using Result = rpc::HandlerReturnType<Output>;
 
-    RPC::RpcSpecConstRef
-    spec() const
+    rpc::RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion) const
     {
-        using namespace RPC::validation;
+        using namespace rpc::validation;
 
-        static const auto rpcSpec = RPC::RpcSpec{
+        static const auto rpcSpec = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0u, 100u}},  // optional field
         };
@@ -155,10 +128,10 @@ public:
     }
 
     Result
-    process([[maybe_unused]] Input input) const
+    process([[maybe_unused]] Input input, [[maybe_unused]] rpc::Context const& ctx) const
     {
         // always fail
-        return RPC::Error{RPC::Status{"Very custom error"}};
+        return rpc::Error{rpc::Status{"Very custom error"}};
     }
 };
 
@@ -189,18 +162,29 @@ struct HandlerMock
 {
     using Input = InOutFake;
     using Output = InOutFake;
-    using Result = RPC::HandlerReturnType<Output>;
+    using Result = rpc::HandlerReturnType<Output>;
 
-    MOCK_METHOD(RPC::RpcSpecConstRef, spec, (), (const));
-    MOCK_METHOD(Result, process, (Input), (const));
+    MOCK_METHOD(rpc::RpcSpecConstRef, spec, (uint32_t), (const));
+    MOCK_METHOD(Result, process, (Input, rpc::Context const&), (const));
 };
 
 struct HandlerWithoutInputMock
 {
     using Output = InOutFake;
-    using Result = RPC::HandlerReturnType<Output>;
+    using Result = rpc::HandlerReturnType<Output>;
 
-    MOCK_METHOD(Result, process, (), (const));
+    MOCK_METHOD(Result, process, (rpc::Context const&), (const));
 };
 
+// testing sweep handler by mocking dos guard
+template <typename SweepHandler>
+struct BasicDOSGuardMock : public web::BaseDOSGuard
+{
+    BasicDOSGuardMock(SweepHandler& handler)
+    {
+        handler.setup(this);
+    }
+
+    MOCK_METHOD(void, clear, (), (noexcept, override));
+};
 }  // namespace unittests::detail

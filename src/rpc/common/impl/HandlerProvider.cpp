@@ -19,9 +19,9 @@
 
 #include <rpc/common/impl/HandlerProvider.h>
 
-#include <etl/ReportingETL.h>
+#include <etl/ETLService.h>
+#include <feed/SubscriptionManager.h>
 #include <rpc/Counters.h>
-#include <subscriptions/SubscriptionManager.h>
 
 #include <rpc/handlers/AccountChannels.h>
 #include <rpc/handlers/AccountCurrencies.h>
@@ -33,6 +33,7 @@
 #include <rpc/handlers/AccountTx.h>
 #include <rpc/handlers/BookChanges.h>
 #include <rpc/handlers/BookOffers.h>
+#include <rpc/handlers/DepositAuthorized.h>
 #include <rpc/handlers/GatewayBalances.h>
 #include <rpc/handlers/Ledger.h>
 #include <rpc/handlers/LedgerData.h>
@@ -51,14 +52,16 @@
 #include <rpc/handlers/TransactionEntry.h>
 #include <rpc/handlers/Tx.h>
 #include <rpc/handlers/Unsubscribe.h>
+#include <rpc/handlers/VersionHandler.h>
 
-namespace RPC::detail {
+namespace rpc::detail {
 
 ProductionHandlerProvider::ProductionHandlerProvider(
+    util::Config const& config,
     std::shared_ptr<BackendInterface> const& backend,
-    std::shared_ptr<SubscriptionManager> const& subscriptionManager,
-    std::shared_ptr<ETLLoadBalancer> const& balancer,
-    std::shared_ptr<ReportingETL const> const& etl,
+    std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
+    std::shared_ptr<etl::LoadBalancer> const& balancer,
+    std::shared_ptr<etl::ETLService const> const& etl,
     Counters const& counters)
     : handlerMap_{
           {"account_channels", {AccountChannelsHandler{backend}}},
@@ -71,6 +74,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"account_tx", {AccountTxHandler{backend}}},
           {"book_changes", {BookChangesHandler{backend}}},
           {"book_offers", {BookOffersHandler{backend}}},
+          {"deposit_authorized", {DepositAuthorizedHandler{backend}}},
           {"gateway_balances", {GatewayBalancesHandler{backend}}},
           {"ledger", {LedgerHandler{backend}}},
           {"ledger_data", {LedgerDataHandler{backend}}},
@@ -86,9 +90,10 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"random", {RandomHandler{}}},
           {"server_info", {ServerInfoHandler{backend, subscriptionManager, balancer, etl, counters}}},
           {"transaction_entry", {TransactionEntryHandler{backend}}},
-          {"tx", {TxHandler{backend}}},
+          {"tx", {TxHandler{backend, etl}}},
           {"subscribe", {SubscribeHandler{backend, subscriptionManager}}},
           {"unsubscribe", {UnsubscribeHandler{backend, subscriptionManager}}},
+          {"version", {VersionHandler{config}}},
       }
 {
 }
@@ -114,4 +119,4 @@ ProductionHandlerProvider::isClioOnly(std::string const& command) const
     return handlerMap_.contains(command) && handlerMap_.at(command).isClioOnly;
 }
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

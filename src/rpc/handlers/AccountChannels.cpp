@@ -20,10 +20,10 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/AccountChannels.h>
 
-namespace RPC {
+namespace rpc {
 
 void
-AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle) const
+AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle)
 {
     ChannelResponse channel;
     channel.channelID = ripple::to_string(channelSle.key());
@@ -65,7 +65,7 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
@@ -87,7 +87,7 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
         return true;
     };
 
-    auto const next = ngTraverseOwnedNodes(
+    auto const next = traverseOwnedNodes(
         *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
 
     if (auto status = std::get_if<Status>(&next))
@@ -128,9 +128,13 @@ tag_invoke(boost::json::value_to_tag<AccountChannelsHandler::Input>, boost::json
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;
@@ -139,13 +143,15 @@ tag_invoke(boost::json::value_to_tag<AccountChannelsHandler::Input>, boost::json
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountChannelsHandler::Output const& output)
 {
+    using boost::json::value_from;
+
     auto obj = boost::json::object{
         {JS(account), output.account},
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
         {JS(limit), output.limit},
-        {JS(channels), output.channels},
+        {JS(channels), value_from(output.channels)},
     };
 
     if (output.marker)
@@ -186,4 +192,4 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountChannelsH
 
     jv = std::move(obj);
 }
-}  // namespace RPC
+}  // namespace rpc

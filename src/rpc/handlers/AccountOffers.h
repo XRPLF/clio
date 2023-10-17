@@ -19,12 +19,14 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
+#include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The account_offers method retrieves a list of offers made by a given account.
@@ -36,10 +38,14 @@ class AccountOffersHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    static auto constexpr LIMIT_MIN = 10;
+    static auto constexpr LIMIT_MAX = 400;
+    static auto constexpr LIMIT_DEFAULT = 200;
+
     struct Offer
     {
-        uint32_t flags;
-        uint32_t seq;
+        uint32_t flags{};
+        uint32_t seq{};
         ripple::STAmount takerGets;
         ripple::STAmount takerPays;
         std::string quality;
@@ -50,20 +56,19 @@ public:
     {
         std::string account;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::vector<Offer> offers;
         std::optional<std::string> marker;
         // validated should be sent via framework
         bool validated = true;
     };
 
-    // TODO: We did not implement the "strict" field
     struct Input
     {
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 200;
+        uint32_t limit = LIMIT_DEFAULT;
         std::optional<std::string> marker;
     };
 
@@ -74,16 +79,18 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(marker), validation::AccountMarkerValidator},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Between{10, 400}},
-        };
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             validation::Min(1u),
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}}};
 
         return rpcSpec;
     }
@@ -92,8 +99,8 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
-    void
-    addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle) const;
+    static void
+    addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle);
 
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
@@ -104,4 +111,4 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Offer const& offer);
 };
-}  // namespace RPC
+}  // namespace rpc

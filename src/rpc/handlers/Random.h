@@ -25,7 +25,7 @@
 
 #include <string>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The random command provides a random number to be used as a source of entropy for random number generation by
@@ -43,12 +43,12 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
-    Result
-    process() const;
+    static Result
+    process(Context const& ctx);
 
 private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 };
 
-}  // namespace RPC
+}  // namespace rpc

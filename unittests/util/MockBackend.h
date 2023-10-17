@@ -19,45 +19,45 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <gmock/gmock.h>
 
-using namespace Backend;
+using namespace data;
 
-class MockBackend : public BackendInterface
+struct MockBackend : public BackendInterface
 {
-public:
-    MockBackend(clio::Config)
+    MockBackend(util::Config)
     {
     }
+
     MOCK_METHOD(
         std::optional<ripple::LedgerInfo>,
         fetchLedgerBySequence,
-        (std::uint32_t const, boost::asio::yield_context&),
+        (std::uint32_t const, boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
         std::optional<ripple::LedgerInfo>,
         fetchLedgerByHash,
-        (ripple::uint256 const&, boost::asio::yield_context&),
+        (ripple::uint256 const&, boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
         std::optional<std::uint32_t>,
         fetchLatestLedgerSequence,
-        (boost::asio::yield_context&),
+        (boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
         std::optional<TransactionAndMetadata>,
         fetchTransaction,
-        (ripple::uint256 const&, boost::asio::yield_context&),
+        (ripple::uint256 const&, boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
         std::vector<TransactionAndMetadata>,
         fetchTransactions,
-        (std::vector<ripple::uint256> const&, boost::asio::yield_context&),
+        (std::vector<ripple::uint256> const&, boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
@@ -67,25 +67,25 @@ public:
          std::uint32_t const,
          bool,
          std::optional<TransactionsCursor> const&,
-         boost::asio::yield_context&),
+         boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
         std::vector<TransactionAndMetadata>,
         fetchAllTransactionsInLedger,
-        (std::uint32_t const, boost::asio::yield_context&),
+        (std::uint32_t const, boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
         std::vector<ripple::uint256>,
         fetchAllTransactionHashesInLedger,
-        (std::uint32_t const, boost::asio::yield_context&),
+        (std::uint32_t const, boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
         std::optional<NFT>,
         fetchNFT,
-        (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context&),
+        (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
@@ -95,7 +95,7 @@ public:
          std::uint32_t const,
          bool const,
          std::optional<TransactionsCursor> const&,
-         boost::asio::yield_context&),
+         boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
@@ -112,28 +112,28 @@ public:
     MOCK_METHOD(
         std::vector<Blob>,
         doFetchLedgerObjects,
-        (std::vector<ripple::uint256> const&, std::uint32_t const, boost::asio::yield_context&),
+        (std::vector<ripple::uint256> const&, std::uint32_t const, boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
         std::optional<Blob>,
         doFetchLedgerObject,
-        (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context&),
+        (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
         std::vector<LedgerObject>,
         fetchLedgerDiff,
-        (std::uint32_t const, boost::asio::yield_context&),
+        (std::uint32_t const, boost::asio::yield_context),
         (const, override));
 
     MOCK_METHOD(
         std::optional<ripple::uint256>,
         doFetchSuccessorKey,
-        (ripple::uint256, std::uint32_t const, boost::asio::yield_context&),
+        (ripple::uint256, std::uint32_t const, boost::asio::yield_context),
         (const, override));
 
-    MOCK_METHOD(std::optional<LedgerRange>, hardFetchLedgerRange, (boost::asio::yield_context&), (const, override));
+    MOCK_METHOD(std::optional<LedgerRange>, hardFetchLedgerRange, (boost::asio::yield_context), (const, override));
 
     MOCK_METHOD(void, writeLedger, (ripple::LedgerInfo const&, std::string&&), (override));
 
@@ -155,13 +155,9 @@ public:
 
     MOCK_METHOD(void, startWrites, (), (const, override));
 
-    MOCK_METHOD(bool, doOnlineDelete, (std::uint32_t, boost::asio::yield_context&), (const, override));
-
     MOCK_METHOD(bool, isTooBusy, (), (const, override));
 
-    MOCK_METHOD(void, open, (bool), (override));
-
-    MOCK_METHOD(void, close, (), (override));
+    MOCK_METHOD(boost::json::object, stats, (), (const, override));
 
     MOCK_METHOD(void, doWriteLedgerObject, (std::string&&, std::uint32_t const, std::string&&), (override));
 

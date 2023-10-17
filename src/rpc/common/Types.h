@@ -26,11 +26,24 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_from.hpp>
 
-class WsBase;
+namespace etl {
+class LoadBalancer;
+}  // namespace etl
+namespace web {
+struct ConnectionBase;
+}  // namespace web
+namespace feed {
 class SubscriptionManager;
+}  // namespace feed
 
-namespace RPC {
+namespace rpc {
+
+class Counters;
+struct RpcSpec;
+struct FieldSpec;
+class AnyHandler;
 
 /**
  * @brief Return type used for Validators that can return error but don't have
@@ -54,31 +67,42 @@ using HandlerReturnType = util::Expected<OutputType, Status>;
  */
 using ReturnType = util::Expected<boost::json::value, Status>;
 
-struct RpcSpec;
-struct FieldSpec;
-
+/**
+ * @brief An alias for a const reference to @ref RpcSpec.
+ */
 using RpcSpecConstRef = RpcSpec const&;
 
+/**
+ * @brief An empty type used as Output for handlers than don't actually produce output.
+ */
 struct VoidOutput
 {
 };
 
+/**
+ * @brief Context of an RPC call.
+ */
 struct Context
 {
-    // TODO: we shall change yield_context to const yield_context after we
-    // update backend interfaces to use const& yield
-    std::reference_wrapper<boost::asio::yield_context> yield;
-    std::shared_ptr<WsBase> session;
+    boost::asio::yield_context yield;
+    std::shared_ptr<web::ConnectionBase> session = {};
     bool isAdmin = false;
-    std::string clientIp;
+    std::string clientIp = {};
+    uint32_t apiVersion = 0u;  // invalid by default
 };
 
+/**
+ * @brief Result type used to return responses or error statuses to the Webserver subsystem.
+ */
 using Result = std::variant<Status, boost::json::object>;
 
+/**
+ * @brief A cursor object used to traverse nodes owned by an account.
+ */
 struct AccountCursor
 {
     ripple::uint256 index;
-    std::uint32_t hint;
+    std::uint32_t hint{};
 
     std::string
     toString() const
@@ -93,8 +117,9 @@ struct AccountCursor
     }
 };
 
-class AnyHandler;
-
+/**
+ * @brief Interface for the provider of RPC handlers.
+ */
 class HandlerProvider
 {
 public:
@@ -116,4 +141,4 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, VoidOutput const
     jv = boost::json::object{};
 }
 
-}  // namespace RPC
+}  // namespace rpc

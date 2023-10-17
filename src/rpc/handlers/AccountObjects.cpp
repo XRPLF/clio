@@ -19,9 +19,9 @@
 
 #include <rpc/handlers/AccountObjects.h>
 
-namespace RPC {
+namespace rpc {
 
-// document does not mention nft_page, we still support it tho
+// found here : https://xrpl.org/ledger_entry.html#:~:text=valid%20fields%20are%3A-,index,-account_root
 std::unordered_map<std::string, ripple::LedgerEntryType> const AccountObjectsHandler::TYPESMAP{
     {"state", ripple::ltRIPPLE_STATE},
     {"ticket", ripple::ltTICKET},
@@ -45,7 +45,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
@@ -53,15 +53,48 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
     if (!accountLedgerObject)
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
+    auto typeFilter = std::optional<std::vector<ripple::LedgerEntryType>>{};
+
+    if (input.deletionBlockersOnly)
+    {
+        static constexpr ripple::LedgerEntryType deletionBlockers[] = {
+            ripple::ltCHECK,
+            ripple::ltESCROW,
+            ripple::ltNFTOKEN_PAGE,
+            ripple::ltPAYCHAN,
+            ripple::ltRIPPLE_STATE,
+        };
+
+        typeFilter.emplace();
+        typeFilter->reserve(std::size(deletionBlockers));
+
+        for (auto type : deletionBlockers)
+        {
+            if (input.type && input.type != type)
+                continue;
+
+            typeFilter->push_back(type);
+        }
+    }
+    else
+    {
+        if (input.type && input.type != ripple::ltANY)
+            typeFilter = {*input.type};
+    }
+
     Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
-        if (!input.type || sle.getType() == *(input.type))
+        if (not typeFilter or
+            std::find(std::begin(typeFilter.value()), std::end(typeFilter.value()), sle.getType()) !=
+                std::end(typeFilter.value()))
+        {
             response.accountObjects.push_back(std::move(sle));
+        }
         return true;
     };
 
-    auto const next = ngTraverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
+    auto const next = traverseOwnedNodes(
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse, true);
 
     if (auto status = std::get_if<Status>(&next))
         return Error{*status};
@@ -116,9 +149,13 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(type)))
@@ -130,7 +167,10 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     if (jsonObject.contains(JS(marker)))
         input.marker = jv.at(JS(marker)).as_string().c_str();
 
+    if (jsonObject.contains(JS(deletion_blockers_only)))
+        input.deletionBlockersOnly = jsonObject.at(JS(deletion_blockers_only)).as_bool();
+
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

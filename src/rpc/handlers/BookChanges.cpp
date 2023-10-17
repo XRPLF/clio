@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/BookChanges.h>
 
-namespace RPC {
+namespace rpc {
 
 BookChangesHandler::Result
 BookChangesHandler::process(BookChangesHandler::Input input, Context const& ctx) const
@@ -31,7 +31,7 @@ BookChangesHandler::process(BookChangesHandler::Input input, Context const& ctx)
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const transactions = sharedPtrBackend_->fetchAllTransactionsInLedger(lgrInfo.seq, ctx.yield);
 
     Output response;
@@ -70,16 +70,20 @@ tag_invoke(boost::json::value_to_tag<BookChangesHandler::Input>, boost::json::va
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;
 }
 
-[[nodiscard]] boost::json::object const
-computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions)
+[[nodiscard]] boost::json::object
+computeBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions)
 {
     using boost::json::value_from;
 
@@ -92,4 +96,4 @@ computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::Trans
     };
 }
 
-}  // namespace RPC
+}  // namespace rpc

@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief Retrieve information about the public ledger.
@@ -38,7 +38,7 @@ class LedgerHandler
 public:
     struct Output
     {
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::string ledgerHash;
         // TODO: use better type
         boost::json::object header;
@@ -54,6 +54,7 @@ public:
         std::optional<uint32_t> ledgerIndex;
         bool binary = false;
         bool expand = false;
+        bool ownerFunds = false;
         bool transactions = false;
         bool diff = false;
     };
@@ -64,13 +65,13 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(full), validation::Type<bool>{}, validation::NotSupported{true}},
             {JS(accounts), validation::Type<bool>{}, validation::NotSupported{true}},
-            {JS(owner_funds), validation::Type<bool>{}, validation::NotSupported{true}},
+            {JS(owner_funds), validation::Type<bool>{}},
             {JS(queue), validation::Type<bool>{}, validation::NotSupported{true}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
@@ -93,4 +94,4 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-}  // namespace RPC
+}  // namespace rpc

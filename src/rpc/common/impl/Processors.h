@@ -19,76 +19,58 @@
 
 #pragma once
 
+#include <rpc/common/APIVersion.h>
 #include <rpc/common/Concepts.h>
 #include <rpc/common/Types.h>
 
-namespace RPC::detail {
+namespace rpc::detail {
 
 template <typename>
 static constexpr bool unsupported_handler_v = false;
 
-template <Handler HandlerType>
+template <SomeHandler HandlerType>
 struct DefaultProcessor final
 {
     [[nodiscard]] ReturnType
-    operator()(HandlerType const& handler, boost::json::value const& value, Context const* ctx = nullptr) const
+    operator()(HandlerType const& handler, boost::json::value const& value, Context const& ctx) const
     {
         using boost::json::value_from;
         using boost::json::value_to;
-        if constexpr (HandlerWithInput<HandlerType>)
+        if constexpr (SomeHandlerWithInput<HandlerType>)
         {
-            // first we run validation
-            auto const spec = handler.spec();
-            if (auto const ret = spec.validate(value); not ret)
+            // first we run validation against specified API version
+            auto const spec = handler.spec(ctx.apiVersion);
+            auto input = value;  // copy here, spec require mutable data
+
+            if (auto const ret = spec.process(input); not ret)
                 return Error{ret.error()};  // forward Status
 
-            auto const inData = value_to<typename HandlerType::Input>(value);
-            if constexpr (NonContextProcess<HandlerType>)
-            {
-                auto const ret = handler.process(inData);
-                // real handler is given expected Input, not json
-                if (!ret)
-                    return Error{ret.error()};  // forward Status
-                else
-                    return value_from(ret.value());
-            }
-            else
-            {
-                auto const ret = handler.process(inData, *ctx);
-                // real handler is given expected Input, not json
-                if (!ret)
-                    return Error{ret.error()};  // forward Status
-                else
-                    return value_from(ret.value());
-            }
-        }
-        else if constexpr (HandlerWithoutInput<HandlerType>)
-        {
-            using OutType = HandlerReturnType<typename HandlerType::Output>;
+            auto const inData = value_to<typename HandlerType::Input>(input);
+            auto const ret = handler.process(inData, ctx);
 
+            // real handler is given expected Input, not json
+            if (!ret)
+            {
+                return Error{ret.error()};  // forward Status
+            }
+            return value_from(ret.value());
+        }
+        else if constexpr (SomeHandlerWithoutInput<HandlerType>)
+        {
             // no input to pass, ignore the value
-            if constexpr (ContextProcessWithoutInput<HandlerType>)
+            auto const ret = handler.process(ctx);
+            if (not ret)
             {
-                if (auto const ret = handler.process(*ctx); not ret)
-                    return Error{ret.error()};  // forward Status
-                else
-                    return value_from(ret.value());
+                return Error{ret.error()};  // forward Status
             }
-            else
-            {
-                if (auto const ret = handler.process(); not ret)
-                    return Error{ret.error()};  // forward Status
-                else
-                    return value_from(ret.value());
-            }
+            return value_from(ret.value());
         }
         else
         {
-            // when concept HandlerWithInput and HandlerWithoutInput not cover
-            // all Handler case
+            // when concept SomeHandlerWithInput and SomeHandlerWithoutInput not cover all Handler case
             static_assert(unsupported_handler_v<HandlerType>);
         }
     }
 };
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

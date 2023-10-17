@@ -21,7 +21,7 @@
 
 #include <rpc/common/Types.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The ping command returns an acknowledgement, so that clients can test the connection status and latency.
@@ -34,11 +34,11 @@ public:
     using Output = VoidOutput;
     using Result = HandlerReturnType<Output>;
 
-    Result
-    process() const
+    static Result
+    process([[maybe_unused]] Context const& ctx)
     {
         return Output{};
     }
 };
 
-}  // namespace RPC
+}  // namespace rpc

@@ -17,72 +17,83 @@
 */
 //==============================================================================
 
-#include <etl/ETLSource.h>
 #include <rpc/Factories.h>
-#include <rpc/common/impl/HandlerProvider.h>
-#include <webserver/HttpBase.h>
-#include <webserver/WsBase.h>
-
-#include <boost/asio/spawn.hpp>
-
-#include <unordered_map>
+#include <rpc/common/Types.h>
 
 using namespace std;
-using namespace clio;
-using namespace RPC;
+using namespace util;
 
-namespace RPC {
+namespace rpc {
 
-optional<Web::Context>
+util::Expected<web::Context, Status>
 make_WsContext(
-    boost::asio::yield_context& yc,
+    boost::asio::yield_context yc,
     boost::json::object const& request,
-    shared_ptr<WsBase> const& session,
-    util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
-    string const& clientIp)
+    shared_ptr<web::ConnectionBase> const& session,
+    TagDecoratorFactory const& tagFactory,
+    data::LedgerRange const& range,
+    string const& clientIp,
+    std::reference_wrapper<APIVersionParser const> apiVersionParser)
 {
     boost::json::value commandValue = nullptr;
     if (!request.contains("command") && request.contains("method"))
+    {
         commandValue = request.at("method");
+    }
     else if (request.contains("command") && !request.contains("method"))
+    {
         commandValue = request.at("command");
+    }
 
     if (!commandValue.is_string())
-        return {};
+        return Error{{ClioError::rpcCOMMAND_IS_MISSING, "Method/Command is not specified or is not a string."}};
 
-    string command = commandValue.as_string().c_str();
-    return make_optional<Web::Context>(yc, command, 1, request, session, tagFactory, range, clientIp);
+    auto const apiVersion = apiVersionParser.get().parse(request);
+    if (!apiVersion)
+        return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
+
+    string const command = commandValue.as_string().c_str();
+    return web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp, session->isAdmin());
 }
 
-optional<Web::Context>
+Expected<web::Context, Status>
 make_HttpContext(
-    boost::asio::yield_context& yc,
+    boost::asio::yield_context yc,
     boost::json::object const& request,
-    util::TagDecoratorFactory const& tagFactory,
-    Backend::LedgerRange const& range,
-    string const& clientIp)
+    TagDecoratorFactory const& tagFactory,
+    data::LedgerRange const& range,
+    string const& clientIp,
+    std::reference_wrapper<APIVersionParser const> apiVersionParser,
+    bool const isAdmin)
 {
-    if (!request.contains("method") || !request.at("method").is_string())
-        return {};
+    if (!request.contains("method"))
+        return Error{{ClioError::rpcCOMMAND_IS_MISSING}};
 
-    string const& command = request.at("method").as_string().c_str();
+    if (!request.at("method").is_string())
+        return Error{{ClioError::rpcCOMMAND_NOT_STRING}};
+
+    if (request.at("method").as_string().empty())
+        return Error{{ClioError::rpcCOMMAND_IS_EMPTY}};
+
+    string const command = request.at("method").as_string().c_str();
 
     if (command == "subscribe" || command == "unsubscribe")
-        return {};
+        return Error{{RippledError::rpcBAD_SYNTAX, "Subscribe and unsubscribe are only allowed or websocket."}};
 
     if (!request.at("params").is_array())
-        return {};
+        return Error{{ClioError::rpcPARAMS_UNPARSEABLE, "Missing params array."}};
 
     boost::json::array const& array = request.at("params").as_array();
 
-    if (array.size() != 1)
-        return {};
+    if (array.size() != 1 || !array.at(0).is_object())
+        return Error{{ClioError::rpcPARAMS_UNPARSEABLE}};
 
-    if (!array.at(0).is_object())
-        return {};
+    auto const apiVersion = apiVersionParser.get().parse(request.at("params").as_array().at(0).as_object());
+    if (!apiVersion)
+        return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
 
-    return make_optional<Web::Context>(yc, command, 1, array.at(0).as_object(), nullptr, tagFactory, range, clientIp);
+    return web::Context(
+        yc, command, *apiVersion, array.at(0).as_object(), nullptr, tagFactory, range, clientIp, isAdmin);
 }
 
-}  // namespace RPC
+}  // namespace rpc

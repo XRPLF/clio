@@ -23,13 +23,13 @@
 #include <ripple/beast/utility/rngfill.h>
 #include <ripple/crypto/csprng.h>
 
-namespace RPC {
+namespace rpc {
 
 RandomHandler::Result
-RandomHandler::process() const
+RandomHandler::process([[maybe_unused]] Context const& ctx)
 {
     ripple::uint256 rand;
-    beast::rngfill(rand.begin(), rand.size(), ripple::crypto_prng());
+    beast::rngfill(rand.begin(), ripple::uint256::size(), ripple::crypto_prng());
 
     return Output{ripple::strHex(rand)};
 }
@@ -42,4 +42,4 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, RandomHandler::O
     };
 }
 
-}  // namespace RPC
+}  // namespace rpc

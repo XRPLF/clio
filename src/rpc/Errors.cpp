@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <rpc/Errors.h>
+#include <rpc/JS.h>
 
 #include <algorithm>
 
@@ -35,7 +36,7 @@ template <class... Ts>
 overloadSet(Ts...) -> overloadSet<Ts...>;
 }  // namespace
 
-namespace RPC {
+namespace rpc {
 
 WarningInfo const&
 getWarningInfo(WarningCode code)
@@ -77,6 +78,15 @@ getErrorInfo(ClioError code)
         {ClioError::rpcMALFORMED_REQUEST, "malformedRequest", "Malformed request."},
         {ClioError::rpcMALFORMED_OWNER, "malformedOwner", "Malformed owner."},
         {ClioError::rpcMALFORMED_ADDRESS, "malformedAddress", "Malformed address."},
+        {ClioError::rpcINVALID_HOT_WALLET, "invalidHotWallet", "Invalid hot wallet."},
+        {ClioError::rpcUNKNOWN_OPTION, "unknownOption", "Unknown option."},
+        {ClioError::rpcFIELD_NOT_FOUND_TRANSACTION, "fieldNotFoundTransaction", "Missing field."},
+        // special system errors
+        {ClioError::rpcINVALID_API_VERSION, JS(invalid_API_version), "Invalid API version."},
+        {ClioError::rpcCOMMAND_IS_MISSING, JS(missingCommand), "Method is not specified or is not a string."},
+        {ClioError::rpcCOMMAND_NOT_STRING, "commandNotString", "Method is not a string."},
+        {ClioError::rpcCOMMAND_IS_EMPTY, "emptyCommand", "Method is an empty string."},
+        {ClioError::rpcPARAMS_UNPARSEABLE, "paramsUnparseable", "Params must be an array holding exactly one object."},
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
@@ -136,10 +146,12 @@ makeError(Status const& status)
         status.code);
 
     if (status.extraInfo)
+    {
         for (auto& [key, value] : status.extraInfo.value())
             res[key] = value;
+    }
 
     return res;
 }
 
-}  // namespace RPC
+}  // namespace rpc

@@ -19,20 +19,19 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <config/Config.h>
-#include <etl/ETLSource.h>
-#include <log/Logger.h>
+#include <data/BackendInterface.h>
+#include <etl/Source.h>
 #include <rpc/Counters.h>
 #include <rpc/Errors.h>
-#include <rpc/HandlerTable.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/common/Types.h>
-#include <rpc/common/impl/AdminVerificationStrategy.h>
+#include <rpc/common/impl/ForwardingProxy.h>
 #include <util/Taggable.h>
-#include <webserver/Context.h>
-#include <webserver/DOSGuard.h>
+#include <util/config/Config.h>
+#include <util/log/Logger.h>
+#include <web/Context.h>
+#include <web/DOSGuard.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -43,39 +42,45 @@
 #include <unordered_map>
 #include <variant>
 
-class WsBase;
+// forward declarations
+namespace feed {
 class SubscriptionManager;
-class ETLLoadBalancer;
-class ReportingETL;
-
-namespace RPC {
+}  // namespace feed
+namespace etl {
+class LoadBalancer;
+class ETLService;
+}  // namespace etl
 
 /**
- * @brief The RPC engine that ties all RPC-related functionality together
+ * @brief This namespace contains all the RPC logic and handlers.
  */
-template <typename AdminVerificationStrategyType>
-class RPCEngineBase
+namespace rpc {
+
+/**
+ * @brief The RPC engine that ties all RPC-related functionality together.
+ */
+class RPCEngine
 {
-    clio::Logger perfLog_{"Performance"};
-    clio::Logger log_{"RPC"};
+    util::Logger perfLog_{"Performance"};
+    util::Logger log_{"RPC"};
 
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<SubscriptionManager> subscriptions_;
-    std::shared_ptr<ETLLoadBalancer> balancer_;
-    std::reference_wrapper<clio::DOSGuard const> dosGuard_;
+    std::shared_ptr<feed::SubscriptionManager> subscriptions_;
+    std::shared_ptr<etl::LoadBalancer> balancer_;
+    std::reference_wrapper<web::DOSGuard const> dosGuard_;
     std::reference_wrapper<WorkQueue> workQueue_;
     std::reference_wrapper<Counters> counters_;
 
-    HandlerTable handlerTable_;
-    AdminVerificationStrategyType adminVerifier_;
+    std::shared_ptr<HandlerProvider const> handlerProvider_;
+
+    detail::ForwardingProxy<etl::LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
 
 public:
-    RPCEngineBase(
+    RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<SubscriptionManager> const& subscriptions,
-        std::shared_ptr<ETLLoadBalancer> const& balancer,
-        std::shared_ptr<ReportingETL> const& etl,
-        clio::DOSGuard const& dosGuard,
+        std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
+        std::shared_ptr<etl::LoadBalancer> const& balancer,
+        web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider)
@@ -85,109 +90,101 @@ public:
         , dosGuard_{std::cref(dosGuard)}
         , workQueue_{std::ref(workQueue)}
         , counters_{std::ref(counters)}
-        , handlerTable_{handlerProvider}
+        , handlerProvider_{handlerProvider}
+        , forwardingProxy_{balancer, counters, handlerProvider}
     {
     }
 
-    static std::shared_ptr<RPCEngineBase>
+    static std::shared_ptr<RPCEngine>
     make_RPCEngine(
-        clio::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<SubscriptionManager> const& subscriptions,
-        std::shared_ptr<ETLLoadBalancer> const& balancer,
-        std::shared_ptr<ReportingETL> const& etl,
-        clio::DOSGuard const& dosGuard,
+        std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
+        std::shared_ptr<etl::LoadBalancer> const& balancer,
+        web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider)
     {
-        return std::make_shared<RPCEngineBase>(
-            backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
+        return std::make_shared<RPCEngine>(
+            backend, subscriptions, balancer, dosGuard, workQueue, counters, handlerProvider);
     }
 
     /**
-     * @brief Main request processor routine
+     * @brief Main request processor routine.
+     *
      * @param ctx The @ref Context of the request
+     * @return A result which can be an error status or a valid JSON response
      */
     Result
-    buildResponse(Web::Context const& ctx)
+    buildResponse(web::Context const& ctx)
     {
-        if (shouldForwardToRippled(ctx))
-        {
-            auto toForward = ctx.params;
-            toForward["command"] = ctx.method;
-
-            auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
-            notifyForwarded(ctx.method);
-
-            if (!res)
-                return Status{RippledError::rpcFAILED_TO_FORWARD};
-
-            return *res;
-        }
+        if (forwardingProxy_.shouldForward(ctx))
+            return forwardingProxy_.forward(ctx);
 
         if (backend_->isTooBusy())
         {
-            log_.error() << "Database is too busy. Rejecting request";
+            LOG(log_.error()) << "Database is too busy. Rejecting request";
+            notifyTooBusy();  // TODO: should we add ctx.method if we have it?
             return Status{RippledError::rpcTOO_BUSY};
         }
 
-        auto const method = handlerTable_.getHandler(ctx.method);
+        auto const method = handlerProvider_->getHandler(ctx.method);
         if (!method)
+        {
+            notifyUnknownCommand();
             return Status{RippledError::rpcUNKNOWN_COMMAND};
+        }
 
         try
         {
-            perfLog_.debug() << ctx.tag() << " start executing rpc `" << ctx.method << '`';
+            LOG(perfLog_.debug()) << ctx.tag() << " start executing rpc `" << ctx.method << '`';
 
-            auto const isAdmin = adminVerifier_.isAdmin(ctx.clientIp);
-            auto const context = Context{ctx.yield, ctx.session, isAdmin, ctx.clientIp};
+            auto const context = Context{ctx.yield, ctx.session, ctx.isAdmin, ctx.clientIp, ctx.apiVersion};
             auto const v = (*method).process(ctx.params, context);
 
-            perfLog_.debug() << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
+            LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
             if (v)
                 return v->as_object();
-            else
-                return Status{v.error()};
+
+            notifyErrored(ctx.method);
+            return Status{v.error()};
         }
-        catch (InvalidParamsError const& err)
+        catch (data::DatabaseTimeout const& t)
         {
-            return Status{RippledError::rpcINVALID_PARAMS, err.what()};
-        }
-        catch (AccountNotFoundError const& err)
-        {
-            return Status{RippledError::rpcACT_NOT_FOUND, err.what()};
-        }
-        catch (Backend::DatabaseTimeout const& t)
-        {
-            log_.error() << "Database timeout";
+            LOG(log_.error()) << "Database timeout";
+            notifyTooBusy();
+
             return Status{RippledError::rpcTOO_BUSY};
         }
-        catch (std::exception const& err)
+        catch (std::exception const& ex)
         {
-            log_.error() << ctx.tag() << " caught exception: " << err.what();
+            LOG(log_.error()) << ctx.tag() << "Caught exception: " << ex.what();
+            notifyInternalError();
+
             return Status{RippledError::rpcINTERNAL};
         }
     }
 
     /**
-     * @brief Used to schedule request processing onto the work queue
+     * @brief Used to schedule request processing onto the work queue.
+     *
+     * @tparam FnType The type of function
      * @param func The lambda to execute when this request is handled
      * @param ip The ip address for which this request is being executed
      */
-    template <typename Fn>
+    template <typename FnType>
     bool
-    post(Fn&& func, std::string const& ip)
+    post(FnType&& func, std::string const& ip)
     {
-        return workQueue_.get().postCoro(std::forward<Fn>(func), dosGuard_.get().isWhiteListed(ip));
+        return workQueue_.get().postCoro(std::forward<FnType>(func), dosGuard_.get().isWhiteListed(ip));
     }
 
     /**
-     * @brief Notify the system that specified method was executed
+     * @brief Notify the system that specified method was executed.
+     *
      * @param method
-     * @param duration The time it took to execute the method specified in
-     * microseconds
+     * @param duration The time it took to execute the method specified in microseconds
      */
     void
     notifyComplete(std::string const& method, std::chrono::microseconds const& duration)
@@ -197,7 +194,25 @@ public:
     }
 
     /**
-     * @brief Notify the system that specified method failed to execute
+     * @brief Notify the system that specified method failed to execute due to a recoverable user error.
+     *
+     * Used for errors based on user input, not actual failures of the db or clio itself.
+     *
+     * @param method
+     */
+    void
+    notifyFailed(std::string const& method)
+    {
+        // FIXME: seems like this is not used?
+        if (validHandler(method))
+            counters_.get().rpcFailed(method);
+    }
+
+    /**
+     * @brief Notify the system that specified method failed due to some unrecoverable error.
+     *
+     * Used for erors such as database timeout, internal errors, etc.
+     *
      * @param method
      */
     void
@@ -208,68 +223,58 @@ public:
     }
 
     /**
-     * @brief Notify the system that specified method execution was forwarded to rippled
-     * @param method
+     * @brief Notify the system that the RPC system is too busy to handle an incoming request.
      */
     void
-    notifyForwarded(std::string const& method)
+    notifyTooBusy()
     {
-        if (validHandler(method))
-            counters_.get().rpcForwarded(method);
+        counters_.get().onTooBusy();
+    }
+
+    /**
+     * @brief Notify the system that the RPC system was not ready to handle an incoming request.
+     *
+     * This happens when the backend is not yet have a ledger range
+     */
+    void
+    notifyNotReady()
+    {
+        counters_.get().onNotReady();
+    }
+
+    /**
+     * @brief Notify the system that the incoming request did not specify the RPC method/command.
+     */
+    void
+    notifyBadSyntax()
+    {
+        counters_.get().onBadSyntax();
+    }
+
+    /**
+     * @brief Notify the system that the incoming request specified an unknown/unsupported method/command.
+     */
+    void
+    notifyUnknownCommand()
+    {
+        counters_.get().onUnknownCommand();
+    }
+
+    /**
+     * @brief Notify the system that the incoming request lead to an internal error (unrecoverable).
+     */
+    void
+    notifyInternalError()
+    {
+        counters_.get().onInternalError();
     }
 
 private:
     bool
-    shouldForwardToRippled(Web::Context const& ctx) const
-    {
-        auto request = ctx.params;
-
-        if (isClioOnly(ctx.method))
-            return false;
-
-        if (isForwardCommand(ctx.method))
-            return true;
-
-        if (specifiesCurrentOrClosedLedger(request))
-            return true;
-
-        if (ctx.method == "account_info" && request.contains("queue") && request.at("queue").as_bool())
-            return true;
-
-        return false;
-    }
-
-    bool
-    isForwardCommand(std::string const& method) const
-    {
-        static std::unordered_set<std::string> const FORWARD_COMMANDS{
-            "submit",
-            "submit_multisigned",
-            "fee",
-            "ledger_closed",
-            "ledger_current",
-            "ripple_path_find",
-            "manifest",
-            "channel_authorize",
-            "channel_verify",
-        };
-
-        return FORWARD_COMMANDS.contains(method);
-    }
-
-    bool
-    isClioOnly(std::string const& method) const
-    {
-        return handlerTable_.isClioOnly(method);
-    }
-
-    bool
     validHandler(std::string const& method) const
     {
-        return handlerTable_.contains(method) || isForwardCommand(method);
+        return handlerProvider_->contains(method) || forwardingProxy_.isProxied(method);
     }
 };
 
-using RPCEngine = RPCEngineBase<detail::IPAdminVerificationStrategy>;
-
-}  // namespace RPC
+}  // namespace rpc

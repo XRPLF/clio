@@ -1,64 +1,103 @@
 cmake_minimum_required(VERSION 3.16.3)
-
 project(clio)
 
-if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11)
-  message(FATAL_ERROR "GCC 11+ required for building clio")
-endif()
+# ========================================================================== #
+#                                   Options                                  #
+# ========================================================================== #
+option (verbose   "Verbose build"                                     FALSE)
+option (tests     "Build tests"                                       FALSE)
+option (docs      "Generate doxygen docs"                             FALSE)
+option (coverage  "Build test coverage report"                        FALSE)
+option (packaging "Create distribution packages"                      FALSE)
+option (lint      "Run clang-tidy checks during compilation"          FALSE)
+# ========================================================================== #
+set (san "" CACHE STRING "Add sanitizer instrumentation")
+set (CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+set_property (CACHE san PROPERTY STRINGS ";undefined;memory;address;thread")
+# ========================================================================== #
 
-option(BUILD_TESTS "Build tests" TRUE)
+# Include required modules
+include (CMake/Ccache.cmake)
+include (CheckCXXCompilerFlag)
+include (CMake/ClangTidy.cmake)
 
-option(VERBOSE "Verbose build" TRUE)
-if(VERBOSE)
-  set(CMAKE_VERBOSE_MAKEFILE TRUE)
-  set(FETCHCONTENT_QUIET FALSE CACHE STRING "Verbose FetchContent()")
-endif()
+if (verbose)
+  set (CMAKE_VERBOSE_MAKEFILE TRUE)
+endif ()
 
+if (packaging)
+  add_definitions (-DPKG=1)
+endif ()
 
-if(PACKAGING)
-  add_definitions(-DPKG=1)
-endif()
+add_library (clio)
 
-#c++20 removed std::result_of but boost 1.75 is still using it.
-add_definitions(-DBOOST_ASIO_HAS_STD_INVOKE_RESULT=1)
+# Clio tweaks and checks
+include (CMake/CheckCompiler.cmake)
+include (CMake/Settings.cmake)
+include (CMake/ClioVersion.cmake)
+include (CMake/SourceLocation.cmake)
 
-add_library(clio)
-target_compile_features(clio PUBLIC cxx_std_20)
-target_include_directories(clio PUBLIC src)
+# Clio deps
+include (CMake/deps/libxrpl.cmake)
+include (CMake/deps/Boost.cmake)
+include (CMake/deps/OpenSSL.cmake)
+include (CMake/deps/Threads.cmake)
+include (CMake/deps/libfmt.cmake)
+include (CMake/deps/cassandra.cmake)
 
-include(FetchContent)
-include(ExternalProject)
-include(CMake/settings.cmake)
-include(CMake/ClioVersion.cmake)
-include(CMake/deps/rippled.cmake)
-include(CMake/deps/libfmt.cmake)
-include(CMake/deps/Boost.cmake)
-include(CMake/deps/cassandra.cmake)
-include(CMake/deps/SourceLocation.cmake)
+# TODO: Include directory will be wrong when installed.
+target_include_directories (clio PUBLIC src)
+target_compile_features (clio PUBLIC cxx_std_20)
 
-target_sources(clio PRIVATE
+target_link_libraries (clio
+  PUBLIC Boost::boost
+  PUBLIC Boost::coroutine
+  PUBLIC Boost::program_options
+  PUBLIC Boost::system
+  PUBLIC Boost::log
+  PUBLIC Boost::log_setup
+  PUBLIC cassandra-cpp-driver::cassandra-cpp-driver
+  PUBLIC fmt::fmt
+  PUBLIC OpenSSL::Crypto
+  PUBLIC OpenSSL::SSL
+  PUBLIC xrpl::libxrpl
+
+  INTERFACE Threads::Threads
+)
+
+if (is_gcc)
+  # FIXME: needed on gcc for now
+  target_compile_definitions (clio PUBLIC BOOST_ASIO_DISABLE_CONCEPTS)
+endif ()
+
+target_sources (clio PRIVATE
   ## Main
   src/main/impl/Build.cpp
   ## Backend
-  src/backend/BackendInterface.cpp
-  src/backend/CassandraBackend.cpp
-  src/backend/SimpleCache.cpp
-  ## NextGen Backend
-  src/backend/cassandra/impl/Future.cpp
-  src/backend/cassandra/impl/Cluster.cpp
-  src/backend/cassandra/impl/Batch.cpp
-  src/backend/cassandra/impl/Result.cpp
-  src/backend/cassandra/impl/Tuple.cpp
-  src/backend/cassandra/impl/SslContext.cpp
-  src/backend/cassandra/Handle.cpp
-  src/backend/cassandra/SettingsProvider.cpp
+  src/data/BackendCounters.cpp
+  src/data/BackendInterface.cpp
+  src/data/LedgerCache.cpp
+  src/data/cassandra/impl/Future.cpp
+  src/data/cassandra/impl/Cluster.cpp
+  src/data/cassandra/impl/Batch.cpp
+  src/data/cassandra/impl/Result.cpp
+  src/data/cassandra/impl/Tuple.cpp
+  src/data/cassandra/impl/SslContext.cpp
+  src/data/cassandra/Handle.cpp
+  src/data/cassandra/SettingsProvider.cpp
   ## ETL
-  src/etl/ETLSource.cpp
-  src/etl/ProbingETLSource.cpp
+  src/etl/Source.cpp
+  src/etl/ProbingSource.cpp
   src/etl/NFTHelpers.cpp
-  src/etl/ReportingETL.cpp
-  ## Subscriptions
-  src/subscriptions/SubscriptionManager.cpp
+  src/etl/ETLService.cpp
+  src/etl/ETLState.cpp
+  src/etl/LoadBalancer.cpp
+  src/etl/impl/ForwardCache.cpp
+  ## Feed
+  src/feed/SubscriptionManager.cpp
+  ## Web
+  src/web/impl/AdminVerificationStrategy.cpp
+  src/web/IntervalSweepHandler.cpp
   ## RPC
   src/rpc/Errors.cpp
   src/rpc/Factories.cpp
@@ -67,9 +106,10 @@ target_sources(clio PRIVATE
   src/rpc/WorkQueue.cpp
   src/rpc/common/Specs.cpp
   src/rpc/common/Validators.cpp
-  # RPC impl
+  src/rpc/common/MetaProcessors.cpp
+  src/rpc/common/impl/APIVersionParser.cpp
   src/rpc/common/impl/HandlerProvider.cpp
-  ## RPC handler
+  ## RPC handlers
   src/rpc/handlers/AccountChannels.cpp
   src/rpc/handlers/AccountCurrencies.cpp
   src/rpc/handlers/AccountInfo.cpp
@@ -80,6 +120,7 @@ target_sources(clio PRIVATE
   src/rpc/handlers/AccountTx.cpp
   src/rpc/handlers/BookChanges.cpp
   src/rpc/handlers/BookOffers.cpp
+  src/rpc/handlers/DepositAuthorized.cpp
   src/rpc/handlers/GatewayBalances.cpp
   src/rpc/handlers/Ledger.cpp
   src/rpc/handlers/LedgerData.cpp
@@ -94,36 +135,57 @@ target_sources(clio PRIVATE
   src/rpc/handlers/NoRippleCheck.cpp
   src/rpc/handlers/Random.cpp
   src/rpc/handlers/TransactionEntry.cpp
-  src/rpc/handlers/Tx.cpp
   ## Util
-  src/config/Config.cpp
-  src/log/Logger.cpp
+  src/util/config/Config.cpp
+  src/util/log/Logger.cpp
   src/util/Taggable.cpp)
 
-add_executable(clio_server src/main/main.cpp)
-target_link_libraries(clio_server PUBLIC clio)
+# Clio server
+add_executable (clio_server src/main/Main.cpp)
+target_link_libraries (clio_server PRIVATE clio)
+target_link_options(clio_server
+  PRIVATE
+    $<$<AND:$<NOT:$<BOOL:${APPLE}>>,$<NOT:$<BOOL:${san}>>>:-static-libstdc++ -static-libgcc>
+)
 
-if(BUILD_TESTS)
-  set(TEST_TARGET clio_tests)
-  add_executable(${TEST_TARGET}
+# Unittesting
+if (tests)
+  set (TEST_TARGET clio_tests)
+  add_executable (${TEST_TARGET}
+    # Common
+    unittests/Main.cpp
     unittests/Playground.cpp
-    unittests/Backend.cpp
-    unittests/Logger.cpp
-    unittests/Config.cpp
-    unittests/ProfilerTest.cpp
-    unittests/DOSGuard.cpp
-    unittests/SubscriptionTest.cpp
-    unittests/SubscriptionManagerTest.cpp
+    unittests/LoggerTests.cpp
+    unittests/ConfigTests.cpp
+    unittests/ProfilerTests.cpp
+    unittests/JsonUtilTests.cpp
+    unittests/DOSGuardTests.cpp
+    unittests/SubscriptionTests.cpp
+    unittests/SubscriptionManagerTests.cpp
     unittests/util/TestObject.cpp
+    unittests/util/StringUtils.cpp
+    # ETL
+    unittests/etl/ExtractionDataPipeTests.cpp
+    unittests/etl/ExtractorTests.cpp
+    unittests/etl/TransformerTests.cpp
+    unittests/etl/CacheLoaderTests.cpp
+    unittests/etl/AmendmentBlockHandlerTests.cpp
+    unittests/etl/LedgerPublisherTests.cpp
+    unittests/etl/ETLStateTests.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
-    unittests/rpc/RPCHelpersTest.cpp
-    unittests/rpc/CountersTest.cpp
-    unittests/rpc/AdminVerificationTest.cpp
+    unittests/rpc/RPCHelpersTests.cpp
+    unittests/rpc/CountersTests.cpp
+    unittests/rpc/APIVersionTests.cpp
+    unittests/rpc/ForwardingProxyTests.cpp
+    unittests/rpc/WorkQueueTests.cpp
+    unittests/rpc/AmendmentsTests.cpp
+    unittests/rpc/JsonBoolTests.cpp
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
+<<<<<<< HEAD
     unittests/rpc/handlers/AccountCurrenciesTest.cpp
     unittests/rpc/handlers/AccountLinesTest.cpp
     unittests/rpc/handlers/AccountTxTest.cpp
@@ -152,26 +214,98 @@ if(BUILD_TESTS)
     unittests/rpc/handlers/AccountObjectsTest.cpp
     unittests/rpc/handlers/BookChangesTest.cpp
     unittests/rpc/handlers/LedgerTest.cpp
+=======
+    unittests/rpc/handlers/AccountCurrenciesTests.cpp
+    unittests/rpc/handlers/AccountLinesTests.cpp
+    unittests/rpc/handlers/AccountTxTests.cpp
+    unittests/rpc/handlers/AccountOffersTests.cpp
+    unittests/rpc/handlers/AccountInfoTests.cpp
+    unittests/rpc/handlers/AccountChannelsTests.cpp
+    unittests/rpc/handlers/AccountNFTsTests.cpp
+    unittests/rpc/handlers/BookOffersTests.cpp
+    unittests/rpc/handlers/DepositAuthorizedTests.cpp
+    unittests/rpc/handlers/GatewayBalancesTests.cpp
+    unittests/rpc/handlers/TxTests.cpp
+    unittests/rpc/handlers/TransactionEntryTests.cpp
+    unittests/rpc/handlers/LedgerEntryTests.cpp
+    unittests/rpc/handlers/LedgerRangeTests.cpp
+    unittests/rpc/handlers/NoRippleCheckTests.cpp
+    unittests/rpc/handlers/ServerInfoTests.cpp
+    unittests/rpc/handlers/PingTests.cpp
+    unittests/rpc/handlers/RandomTests.cpp
+    unittests/rpc/handlers/NFTInfoTests.cpp
+    unittests/rpc/handlers/NFTBuyOffersTests.cpp
+    unittests/rpc/handlers/NFTSellOffersTests.cpp
+    unittests/rpc/handlers/NFTHistoryTests.cpp
+    unittests/rpc/handlers/SubscribeTests.cpp
+    unittests/rpc/handlers/UnsubscribeTests.cpp
+    unittests/rpc/handlers/LedgerDataTests.cpp
+    unittests/rpc/handlers/AccountObjectsTests.cpp
+    unittests/rpc/handlers/BookChangesTests.cpp
+    unittests/rpc/handlers/LedgerTests.cpp
+    unittests/rpc/handlers/VersionHandlerTests.cpp
+>>>>>>> upstream/develop
     # Backend
-    unittests/backend/cassandra/BaseTests.cpp
-    unittests/backend/cassandra/BackendTests.cpp
-    unittests/backend/cassandra/RetryPolicyTests.cpp
-    unittests/backend/cassandra/SettingsProviderTests.cpp
-    unittests/backend/cassandra/ExecutionStrategyTests.cpp
-    unittests/backend/cassandra/AsyncExecutorTests.cpp)
-  include(CMake/deps/gtest.cmake)
+    unittests/data/BackendFactoryTests.cpp
+    unittests/data/BackendCountersTests.cpp
+    unittests/data/cassandra/BaseTests.cpp
+    unittests/data/cassandra/BackendTests.cpp
+    unittests/data/cassandra/RetryPolicyTests.cpp
+    unittests/data/cassandra/SettingsProviderTests.cpp
+    unittests/data/cassandra/ExecutionStrategyTests.cpp
+    unittests/data/cassandra/AsyncExecutorTests.cpp
+    # Webserver
+    unittests/web/AdminVerificationTests.cpp
+    unittests/web/ServerTests.cpp
+    unittests/web/RPCServerHandlerTests.cpp
+    unittests/web/WhitelistHandlerTests.cpp
+    unittests/web/SweepHandlerTests.cpp)
 
-  # test for dwarf5 bug on ci 
-  target_compile_options(clio PUBLIC -gdwarf-4)
+  include (CMake/deps/gtest.cmake)
 
-  # if CODE_COVERAGE enable, add clio_test-ccov
-  if(CODE_COVERAGE)
-    include(CMake/coverage.cmake)
-    add_converage(${TEST_TARGET})
-  endif()
-endif()
+  # See https://github.com/google/googletest/issues/3475
+  gtest_discover_tests (clio_tests DISCOVERY_TIMEOUT 10)
 
-include(CMake/install/install.cmake)
-if(PACKAGING)
-    include(CMake/packaging.cmake)
-endif()
+  # Fix for dwarf5 bug on ci
+  target_compile_options (clio PUBLIC -gdwarf-4)
+
+  target_compile_definitions (${TEST_TARGET} PUBLIC UNITTEST_BUILD)
+  target_include_directories (${TEST_TARGET} PRIVATE unittests)
+  target_link_libraries (${TEST_TARGET} PUBLIC clio gtest::gtest)
+
+  # Generate `clio_tests-ccov` if coverage is enabled
+  # Note: use `make clio_tests-ccov` to generate report
+  if (coverage)
+    target_compile_definitions(${TEST_TARGET} PRIVATE COVERAGE_ENABLED)
+    include (CMake/Coverage.cmake)
+    add_coverage (${TEST_TARGET})
+  endif ()
+endif ()
+
+# Enable selected sanitizer if enabled via `san`
+if (san)
+  target_compile_options (clio
+    PUBLIC
+      # Sanitizers recommend minimum of -O1 for reasonable performance
+      $<$<CONFIG:Debug>:-O1>
+      ${SAN_FLAG}
+      -fno-omit-frame-pointer)
+  target_compile_definitions (clio
+    PUBLIC
+      $<$<STREQUAL:${san},address>:SANITIZER=ASAN>
+      $<$<STREQUAL:${san},thread>:SANITIZER=TSAN>
+      $<$<STREQUAL:${san},memory>:SANITIZER=MSAN>
+      $<$<STREQUAL:${san},undefined>:SANITIZER=UBSAN>)
+  target_link_libraries (clio INTERFACE ${SAN_FLAG} ${SAN_LIB})
+endif ()
+
+# Generate `docs` target for doxygen documentation if enabled
+# Note: use `make docs` to generate the documentation
+if (docs)
+  include (CMake/Docs.cmake)
+endif ()
+
+include (CMake/install/install.cmake)
+if (packaging)
+  include (CMake/packaging.cmake) # This file exists only in build runner
+endif ()

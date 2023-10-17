@@ -26,25 +26,35 @@
 
 #include <optional>
 
-namespace RPC::detail {
+namespace rpc::detail {
 
-template <Requirement... Requirements>
+template <typename>
+static constexpr bool unsupported_v = false;
+
+template <SomeProcessor... Processors>
 [[nodiscard]] auto
-makeFieldValidator(std::string const& key, Requirements&&... requirements)
+makeFieldProcessor(std::string const& key, Processors&&... procs)
 {
-    return [key, ... r = std::forward<Requirements>(requirements)](boost::json::value const& j) -> MaybeError {
+    return [key, ... proc = std::forward<Processors>(procs)](boost::json::value& j) -> MaybeError {
         std::optional<Status> firstFailure = std::nullopt;
 
-        // This expands in order of Requirements and stops evaluating after
-        // first failure which is stored in `firstFailure` and can be checked
-        // later on to see whether the verification failed as a whole or not.
+        // This expands in order of Requirements and stops evaluating after first failure which is stored in
+        // `firstFailure` and can be checked later on to see whether the verification failed as a whole or not.
         // clang-format off
-        ([&j, &key, &firstFailure, req = &r]() {
+        ([&j, &key, &firstFailure, req = &proc]() {
             if (firstFailure)
                 return; // already failed earlier - skip
 
-            if (auto const res = req->verify(j, key); not res)
-                firstFailure = res.error();
+            if constexpr (SomeRequirement<decltype(*req)>) {
+                if (auto const res = req->verify(j, key); not res)
+                    firstFailure = res.error();
+            } else if constexpr (SomeModifier<decltype(*req)>) {
+                if (auto const res = req->modify(j, key); not res)
+                    firstFailure = res.error();
+            } else {
+                static_assert(unsupported_v<decltype(*req)>);
+            }
+
         }(), ...);
         // clang-format on
 
@@ -55,4 +65,4 @@ makeFieldValidator(std::string const& key, Requirements&&... requirements)
     };
 }
 
-}  // namespace RPC::detail
+}  // namespace rpc::detail

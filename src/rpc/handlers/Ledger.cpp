@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/Ledger.h>
 
-namespace RPC {
+namespace rpc {
 LedgerHandler::Result
 LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
 {
@@ -30,7 +30,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     Output output;
 
     if (input.binary)
@@ -39,20 +39,16 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
     }
     else
     {
-        output.header[JS(accepted)] = true;
         output.header[JS(account_hash)] = ripple::strHex(lgrInfo.accountHash);
         output.header[JS(close_flags)] = lgrInfo.closeFlags;
         output.header[JS(close_time)] = lgrInfo.closeTime.time_since_epoch().count();
         output.header[JS(close_time_human)] = ripple::to_string(lgrInfo.closeTime);
         output.header[JS(close_time_resolution)] = lgrInfo.closeTimeResolution.count();
         output.header[JS(closed)] = true;
-        output.header[JS(hash)] = ripple::strHex(lgrInfo.hash);
         output.header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
         output.header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
         output.header[JS(parent_close_time)] = lgrInfo.parentCloseTime.time_since_epoch().count();
         output.header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
-        output.header[JS(seqNum)] = std::to_string(lgrInfo.seq);
-        output.header[JS(totalCoins)] = ripple::to_string(lgrInfo.drops);
         output.header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
         output.header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
     }
@@ -86,6 +82,32 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                         entry[JS(meta)] = ripple::strHex(obj.metadata);
                     }
 
+                    if (input.ownerFunds)
+                    {
+                        // check the type of tx
+                        auto const [tx, meta] = rpc::deserializeTxPlusMeta(obj);
+                        if (tx and tx->isFieldPresent(ripple::sfTransactionType) and
+                            tx->getTxnType() == ripple::ttOFFER_CREATE)
+                        {
+                            auto const account = tx->getAccountID(ripple::sfAccount);
+                            auto const amount = tx->getFieldAmount(ripple::sfTakerGets);
+
+                            // If the offer create is not self funded then add the
+                            // owner balance
+                            if (account != amount.getIssuer())
+                            {
+                                auto const ownerFunds = accountHolds(
+                                    *sharedPtrBackend_,
+                                    lgrInfo.seq,
+                                    account,
+                                    amount.getCurrency(),
+                                    amount.getIssuer(),
+                                    false,  // fhIGNORE_FREEZE from rippled
+                                    ctx.yield);
+                                entry[JS(owner_funds)] = ownerFunds.getText();
+                            }
+                        }
+                    }
                     return entry;
                 });
         }
@@ -116,7 +138,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
             {
                 entry["object"] = ripple::strHex(obj.blob);
             }
-            else if (obj.blob.size())
+            else if (!obj.blob.empty())
             {
                 ripple::STLedgerEntry const sle{ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key};
                 entry["object"] = toJson(sle);
@@ -159,9 +181,13 @@ tag_invoke(boost::json::value_to_tag<LedgerHandler::Input>, boost::json::value c
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(transactions)))
@@ -173,10 +199,13 @@ tag_invoke(boost::json::value_to_tag<LedgerHandler::Input>, boost::json::value c
     if (jsonObject.contains(JS(expand)))
         input.expand = jv.at(JS(expand)).as_bool();
 
+    if (jsonObject.contains(JS(owner_funds)))
+        input.ownerFunds = jv.at(JS(owner_funds)).as_bool();
+
     if (jsonObject.contains("diff"))
         input.diff = jv.at("diff").as_bool();
 
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

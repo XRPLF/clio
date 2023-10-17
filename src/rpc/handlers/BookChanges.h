@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/BookChangesHelper.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief BookChangesHandler returns the order book changes for a given ledger.
@@ -40,8 +40,8 @@ public:
     struct Output
     {
         std::string ledgerHash;
-        uint32_t ledgerIndex;
-        uint32_t ledgerTime;
+        uint32_t ledgerIndex{};
+        uint32_t ledgerTime{};
         std::vector<BookChange> bookChanges;
         bool validated = true;
     };
@@ -59,8 +59,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(ledger_hash), validation::Uint256HexStringValidator},
@@ -81,4 +81,4 @@ private:
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
-}  // namespace RPC
+}  // namespace rpc

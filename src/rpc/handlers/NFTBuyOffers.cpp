@@ -20,12 +20,11 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/NFTBuyOffers.h>
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
 #include <ripple/protocol/Indexes.h>
 
 using namespace ripple;
 
-namespace RPC {
+namespace rpc {
 
 NFTBuyOffersHandler::Result
 NFTBuyOffersHandler::process(NFTBuyOffersHandler::Input input, Context const& ctx) const
@@ -35,4 +34,4 @@ NFTBuyOffersHandler::process(NFTBuyOffersHandler::Input input, Context const& ct
 
     return iterateOfferDirectory(input, tokenID, directory, ctx.yield);
 }
-}  // namespace RPC
+}  // namespace rpc

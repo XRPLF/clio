@@ -19,24 +19,21 @@
 
 #pragma once
 
-#include <ripple/ledger/ReadView.h>
-#include <webserver/WsBase.h>
+#include <web/interface/ConnectionBase.h>
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
 #include <gmock/gmock.h>
 
-#include <optional>
-
-class MockSubscriptionManager
+struct MockSubscriptionManager
 {
 public:
-    using session_ptr = std::shared_ptr<WsBase>;
+    using session_ptr = std::shared_ptr<web::ConnectionBase>;
     MockSubscriptionManager()
     {
     }
 
-    MOCK_METHOD(boost::json::object, subLedger, (boost::asio::yield_context&, session_ptr), ());
+    MOCK_METHOD(boost::json::object, subLedger, (boost::asio::yield_context, session_ptr), ());
 
     MOCK_METHOD(
         void,
@@ -47,7 +44,7 @@ public:
     MOCK_METHOD(
         void,
         pubBookChanges,
-        (ripple::LedgerInfo const&, std::vector<Backend::TransactionAndMetadata> const&),
+        (ripple::LedgerInfo const&, std::vector<data::TransactionAndMetadata> const&),
         ());
 
     MOCK_METHOD(void, unsubLedger, (session_ptr), ());
@@ -56,7 +53,7 @@ public:
 
     MOCK_METHOD(void, unsubTransactions, (session_ptr), ());
 
-    MOCK_METHOD(void, pubTransaction, (Backend::TransactionAndMetadata const&, ripple::LedgerInfo const&), ());
+    MOCK_METHOD(void, pubTransaction, (data::TransactionAndMetadata const&, ripple::LedgerInfo const&), ());
 
     MOCK_METHOD(void, subAccount, (ripple::AccountID const&, session_ptr&), ());
 
@@ -66,9 +63,9 @@ public:
 
     MOCK_METHOD(void, unsubBook, (ripple::Book const&, session_ptr), ());
 
-    MOCK_METHOD(void, subBookChanges, (std::shared_ptr<WsBase>), ());
+    MOCK_METHOD(void, subBookChanges, (session_ptr), ());
 
-    MOCK_METHOD(void, unsubBookChanges, (std::shared_ptr<WsBase>), ());
+    MOCK_METHOD(void, unsubBookChanges, (session_ptr), ());
 
     MOCK_METHOD(void, subManifest, (session_ptr), ());
 

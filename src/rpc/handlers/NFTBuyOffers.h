@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/handlers/NFTOffersCommon.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The nft_buy_offers method returns a list of buy offers for a given NFToken object.
@@ -40,4 +40,4 @@ public:
     Result
     process(Input input, Context const& ctx) const;
 };
-}  // namespace RPC
+}  // namespace rpc

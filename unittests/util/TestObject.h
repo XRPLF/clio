@@ -19,9 +19,13 @@
 
 #pragma once
 
-#include <backend/Types.h>
+#include <data/Types.h>
 
-#include <ripple/ledger/ReadView.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/Protocol.h>
+#include <ripple/protocol/STBase.h>
+#include <ripple/protocol/STTx.h>
+#include <ripple/protocol/TxMeta.h>
 
 #include <optional>
 #include <string_view>
@@ -71,7 +75,8 @@ CreatePaymentTransactionMetaObject(
     std::string_view accountId1,
     std::string_view accountId2,
     int finalBalance1,
-    int finalBalance2);
+    int finalBalance2,
+    uint32_t transactionIndex = 0);
 
 /*
  * Create an account root ledger object
@@ -90,6 +95,7 @@ CreateAccountRootObject(
 /*
  * Create a createoffer treansaction
  * Taker pay is XRP
+ * If reverse is true, taker gets is XRP
  */
 [[nodiscard]] ripple::STObject
 CreateCreateOfferTransactionObject(
@@ -99,7 +105,8 @@ CreateCreateOfferTransactionObject(
     std::string_view currency,
     std::string_view issuer,
     int takerGets,
-    int takerPays);
+    int takerPays,
+    bool reverse = false);
 
 /*
  * Return an issue object with given currency and issue account
@@ -122,6 +129,8 @@ CreateMetaDataForBookChange(
 
 /*
  * Meta data for adding a offer object
+ * finalTakerGets is XRP
+ * If reverse is true, finalTakerPays is XRP
  */
 [[nodiscard]] ripple::STObject
 CreateMetaDataForCreateOffer(
@@ -129,7 +138,8 @@ CreateMetaDataForCreateOffer(
     std::string_view issueId,
     uint32_t transactionIndex,
     int finalTakerGets,
-    int finalTakerPays);
+    int finalTakerPays,
+    bool reverse = false);
 
 /*
  * Meta data for removing a offer object
@@ -163,7 +173,6 @@ CreatePaymentChannelLedgerObject(
 
 [[nodiscard]] ripple::STObject
 CreateRippleStateLedgerObject(
-    std::string_view accountId,
     std::string_view currency,
     std::string_view issuerId,
     int balance,
@@ -181,13 +190,13 @@ CreateOfferLedgerObject(
     int takerGets,
     int takerPays,
     std::string_view getsCurrency,
-    std::string_view payssCurrency,
+    std::string_view paysCurrency,
     std::string_view getsIssueId,
     std::string_view paysIssueId,
     std::string_view bookDirId);
 
 [[nodiscard]] ripple::STObject
-CreateTicketLedgerObject(std::string_view rootIndex, uint32_t sequence);
+CreateTicketLedgerObject(std::string_view account, uint32_t sequence);
 
 [[nodiscard]] ripple::STObject
 CreateEscrowLedgerObject(std::string_view account, std::string_view dest);
@@ -198,7 +207,7 @@ CreateCheckLedgerObject(std::string_view account, std::string_view dest);
 [[nodiscard]] ripple::STObject
 CreateDepositPreauthLedgerObject(std::string_view account, std::string_view auth);
 
-[[nodiscard]] Backend::NFT
+[[nodiscard]] data::NFT
 CreateNFT(
     std::string_view tokenID,
     std::string_view account,
@@ -219,3 +228,36 @@ CreateSignerLists(std::vector<std::pair<std::string, uint32_t>> const& signers);
 CreateNFTTokenPage(
     std::vector<std::pair<std::string, std::string>> const& tokens,
     std::optional<ripple::uint256> previousPage);
+
+[[nodiscard]] data::TransactionAndMetadata
+CreateMintNFTTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    uint32_t nfTokenTaxon,
+    std::string_view nftID);
+
+[[nodiscard]] data::TransactionAndMetadata
+CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view nftId);
+
+[[nodiscard]] data::TransactionAndMetadata
+CreateCancelNFTOffersTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    std::vector<std::string> const& nftOffers);
+
+[[nodiscard]] data::TransactionAndMetadata
+CreateCreateNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view offerId);
+
+[[nodiscard]] data::TransactionAndMetadata
+CreateCreateNFTOfferTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    std::string_view nftId,
+    std::uint32_t offerPrice,
+    std::string_view offerId);
+
+[[nodiscard]] ripple::STObject
+CreateAmendmentsObject(std::vector<ripple::uint256> const& enabledAmendments);

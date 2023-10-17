@@ -19,30 +19,42 @@
 
 #pragma once
 
-#include <webserver/WsBase.h>
+#include <web/interface/ConnectionBase.h>
 
-struct MockSession : public WsBase
+struct MockSession : public web::ConnectionBase
 {
     std::string message;
     void
-    send(std::shared_ptr<Message> msg_type) override
+    send(std::shared_ptr<std::string> msg_type) override
     {
         message += std::string(msg_type->data());
     }
-    MockSession(util::TagDecoratorFactory const& factory) : WsBase(factory)
+
+    void
+    send(std::string&& msg, boost::beast::http::status = boost::beast::http::status::ok) override
+    {
+        message += msg;
+    }
+
+    MockSession(util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "")
     {
     }
 };
 
-struct MockDeadSession : public WsBase
+struct MockDeadSession : public web::ConnectionBase
 {
-    void
-    send(std::shared_ptr<Message> msg_type) override
+    void send(std::shared_ptr<std::string>) override
     {
         // err happen, the session should remove from subscribers
         ec_.assign(2, boost::system::system_category());
     }
-    MockDeadSession(util::TagDecoratorFactory const& factory) : WsBase(factory)
+
+    void
+    send(std::string&&, boost::beast::http::status = boost::beast::http::status::ok) override
+    {
+    }
+
+    MockDeadSession(util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "")
     {
     }
 };

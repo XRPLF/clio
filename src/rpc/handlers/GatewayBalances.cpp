@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/GatewayBalances.h>
 
-namespace RPC {
+namespace rpc {
 
 GatewayBalancesHandler::Result
 GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context const& ctx) const
@@ -33,7 +33,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
         return Error{*status};
 
     // check account
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const accountID = accountFromStringStrict(input.account);
     auto const accountLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*accountID).key, lgrInfo.seq, ctx.yield);
@@ -67,7 +67,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
             // Here, a negative balance means the cold wallet owes (normal)
             // A positive balance means the cold wallet has an asset (unusual)
 
-            if (input.hotWallets.count(peer) > 0)
+            if (input.hotWallets.contains(peer))
             {
                 // This is a specified hot wallet
                 output.hotBalances[peer].push_back(-balance);
@@ -77,7 +77,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
                 // This is a gateway asset
                 output.assets[peer].push_back(balance);
             }
-            else if (freeze)
+            else if (freeze != 0u)
             {
                 // An obligation the gateway has frozen
                 output.frozenBalances[peer].push_back(-balance);
@@ -99,7 +99,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
                     }
                     catch (std::runtime_error const& e)
                     {
-                        output.overflow = true;
+                        bal = ripple::STAmount(bal.issue(), ripple::STAmount::cMaxValue, ripple::STAmount::cMaxOffset);
                     }
                 }
             }
@@ -109,7 +109,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     };
 
     // traverse all owned nodes, limit->max, marker->empty
-    auto const ret = ngTraverseOwnedNodes(
+    auto const ret = traverseOwnedNodes(
         *sharedPtrBackend_,
         *accountID,
         lgrInfo.seq,
@@ -123,7 +123,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
 
     auto inHotbalances = [&](auto const& hw) { return output.hotBalances.contains(hw); };
     if (not std::all_of(input.hotWallets.begin(), input.hotWallets.end(), inHotbalances))
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "invalidHotWallet"}};
+        return Error{Status{ClioError::rpcINVALID_HOT_WALLET}};
 
     output.accountID = input.account;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
@@ -168,15 +168,15 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesH
         return balancesObj;
     };
 
-    if (auto balances = toJson(output.hotBalances); balances.size())
+    if (auto balances = toJson(output.hotBalances); !balances.empty())
         obj[JS(balances)] = balances;
 
     // we don't have frozen_balances field in the
     // document:https://xrpl.org/gateway_balances.html#gateway_balances
-    if (auto balances = toJson(output.frozenBalances); balances.size())
+    if (auto balances = toJson(output.frozenBalances); !balances.empty())
         obj[JS(frozen_balances)] = balances;
 
-    if (auto balances = toJson(output.assets); balances.size())
+    if (auto balances = toJson(output.assets); !balances.empty())
         obj[JS(assets)] = balances;
 
     obj[JS(account)] = output.accountID;
@@ -203,9 +203,13 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(hotwallet)))
@@ -228,4 +232,4 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

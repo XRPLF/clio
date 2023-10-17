@@ -19,14 +19,16 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
+#include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
 #include <vector>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The account_lines method returns information about an account's trust lines, which contain balances in all
@@ -40,6 +42,10 @@ class AccountLinesHandler
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
 public:
+    static auto constexpr LIMIT_MIN = 10;
+    static auto constexpr LIMIT_MAX = 400;
+    static auto constexpr LIMIT_DEFAULT = 200;
+
     struct LineResponse
     {
         std::string account;
@@ -47,10 +53,10 @@ public:
         std::string currency;
         std::string limit;
         std::string limitPeer;
-        uint32_t qualityIn;
-        uint32_t qualityOut;
-        bool noRipple;
-        bool noRipplePeer;
+        uint32_t qualityIn{};
+        uint32_t qualityOut{};
+        bool noRipple{};
+        bool noRipplePeer{};
         std::optional<bool> authorized;
         std::optional<bool> peerAuthorized;
         std::optional<bool> freeze;
@@ -62,10 +68,10 @@ public:
         std::string account;
         std::vector<LineResponse> lines;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         bool validated = true;  // should be sent via framework
         std::optional<std::string> marker;
-        uint32_t limit;
+        uint32_t limit{};
     };
 
     struct Input
@@ -76,7 +82,7 @@ public:
         std::optional<std::string> peer;
         bool ignoreDefault = false;  // TODO: document
                                      // https://github.com/XRPLF/xrpl-dev-portal/issues/1839
-        uint32_t limit = 200;
+        uint32_t limit = LIMIT_DEFAULT;
         std::optional<std::string> marker;
     };
 
@@ -86,15 +92,20 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(account), validation::Required{}, validation::AccountValidator},
-            {JS(peer), validation::Type<std::string>{}, validation::AccountValidator},
+            {JS(account),
+             validation::Required{},
+             meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+            {JS(peer), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
             {JS(ignore_default), validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Between{10, 400}},
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             validation::Min(1u),
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(marker), validation::AccountMarkerValidator},
         };
@@ -106,12 +117,12 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
-    void
+    static void
     addLine(
         std::vector<LineResponse>& lines,
         ripple::SLE const& lineSle,
         ripple::AccountID const& account,
-        std::optional<ripple::AccountID> const& peerAccount) const;
+        std::optional<ripple::AccountID> const& peerAccount);
 
 private:
     friend void
@@ -124,4 +135,4 @@ private:
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LineResponse const& line);
 };
 
-}  // namespace RPC
+}  // namespace rpc

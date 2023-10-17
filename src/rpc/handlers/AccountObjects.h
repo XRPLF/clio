@@ -19,14 +19,15 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
 #include <set>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The account_objects command returns the raw ledger format for all objects owned by an account.
@@ -45,26 +46,30 @@ class AccountObjectsHandler
     static std::unordered_map<std::string, ripple::LedgerEntryType> const TYPESMAP;
 
 public:
+    static auto constexpr LIMIT_MIN = 10;
+    static auto constexpr LIMIT_MAX = 400;
+    static auto constexpr LIMIT_DEFAULT = 200;
+
     struct Output
     {
         std::string account;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::optional<std::string> marker;
-        uint32_t limit;
+        uint32_t limit{};
         std::vector<ripple::SLE> accountObjects;
         bool validated = true;
     };
 
-    // Clio does not implement deletion_blockers_only
     struct Input
     {
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        uint32_t limit = 200;  // [10,400]
+        uint32_t limit = LIMIT_DEFAULT;  // [10,400]
         std::optional<std::string> marker;
         std::optional<ripple::LedgerEntryType> type;
+        bool deletionBlockersOnly = false;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -74,14 +79,17 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Between(10, 400)},
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             validation::Min(1u),
+             modifiers::Clamp<int32_t>(LIMIT_MIN, LIMIT_MAX)},
             {JS(type),
              validation::Type<std::string>{},
              validation::OneOf<std::string>{
@@ -97,6 +105,7 @@ public:
                  "nft_offer",
              }},
             {JS(marker), validation::AccountMarkerValidator},
+            {JS(deletion_blockers_only), validation::Type<bool>{}},
         };
 
         return rpcSpec;
@@ -113,4 +122,4 @@ private:
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
-}  // namespace RPC
+}  // namespace rpc

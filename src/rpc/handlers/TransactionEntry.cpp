@@ -19,7 +19,7 @@
 
 #include <rpc/handlers/TransactionEntry.h>
 
-namespace RPC {
+namespace rpc {
 
 TransactionEntryHandler::Result
 TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context const& ctx) const
@@ -31,7 +31,7 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context c
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const dbRet = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
@@ -82,12 +82,16 @@ tag_invoke(boost::json::value_to_tag<TransactionEntryHandler::Input>, boost::jso
     if (jsonObject.contains(JS(ledger_index)))
     {
         if (!jsonObject.at(JS(ledger_index)).is_string())
+        {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        }
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc

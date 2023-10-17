@@ -19,14 +19,15 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
 #include <set>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The account_currencies command retrieves a list of currencies that an account can send or receive,
@@ -43,14 +44,13 @@ public:
     struct Output
     {
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::set<std::string> receiveCurrencies;
         std::set<std::string> sendCurrencies;
         // validated should be sent via framework
         bool validated = true;
     };
 
-    // TODO: We did not implement the "strict" field (can't be implemented?)
     struct Input
     {
         std::string account;
@@ -65,14 +65,13 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
-        };
+            {JS(ledger_index), validation::LedgerIndexValidator}};
 
         return rpcSpec;
     }
@@ -88,4 +87,4 @@ private:
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
-}  // namespace RPC
+}  // namespace rpc

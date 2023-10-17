@@ -19,12 +19,16 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace feed {
+class SubscriptionManager;
+}  // namespace feed
+
+namespace rpc {
 
 template <typename SubscriptionManagerType>
 class BaseUnsubscribeHandler
@@ -58,7 +62,7 @@ public:
     }
 
     RpcSpecConstRef
-    spec() const
+    spec([[maybe_unused]] uint32_t apiVersion) const
     {
         static auto const booksValidator =
             validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
@@ -111,29 +115,45 @@ public:
 
 private:
     void
-    unsubscribeFromStreams(std::vector<std::string> const& streams, std::shared_ptr<WsBase> const& session) const
+    unsubscribeFromStreams(std::vector<std::string> const& streams, std::shared_ptr<web::ConnectionBase> const& session)
+        const
     {
         for (auto const& stream : streams)
         {
             if (stream == "ledger")
+            {
                 subscriptions_->unsubLedger(session);
+            }
             else if (stream == "transactions")
+            {
                 subscriptions_->unsubTransactions(session);
+            }
             else if (stream == "transactions_proposed")
+            {
                 subscriptions_->unsubProposedTransactions(session);
+            }
             else if (stream == "validations")
+            {
                 subscriptions_->unsubValidation(session);
+            }
             else if (stream == "manifests")
+            {
                 subscriptions_->unsubManifest(session);
+            }
             else if (stream == "book_changes")
+            {
                 subscriptions_->unsubBookChanges(session);
+            }
             else
+            {
                 assert(false);
+            }
         }
     }
 
     void
-    unsubscribeFromAccounts(std::vector<std::string> accounts, std::shared_ptr<WsBase> const& session) const
+    unsubscribeFromAccounts(std::vector<std::string> accounts, std::shared_ptr<web::ConnectionBase> const& session)
+        const
     {
         for (auto const& account : accounts)
         {
@@ -143,8 +163,9 @@ private:
     }
 
     void
-    unsubscribeFromProposedAccounts(std::vector<std::string> accountsProposed, std::shared_ptr<WsBase> const& session)
-        const
+    unsubscribeFromProposedAccounts(
+        std::vector<std::string> accountsProposed,
+        std::shared_ptr<web::ConnectionBase> const& session) const
     {
         for (auto const& account : accountsProposed)
         {
@@ -154,7 +175,7 @@ private:
     }
 
     void
-    unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<WsBase> const& session) const
+    unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<web::ConnectionBase> const& session) const
     {
         for (auto const& orderBook : books)
         {
@@ -216,6 +237,6 @@ private:
  *
  * For more details see: https://xrpl.org/unsubscribe.html
  */
-using UnsubscribeHandler = BaseUnsubscribeHandler<SubscriptionManager>;
+using UnsubscribeHandler = BaseUnsubscribeHandler<feed::SubscriptionManager>;
 
-}  // namespace RPC
+}  // namespace rpc

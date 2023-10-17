@@ -19,13 +19,15 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
-#include <log/Logger.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/MetaProcessors.h>
+#include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
+#include <util/log/Logger.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The nft_history command asks the Clio server for past transaction metadata for the NFT being queried.
@@ -34,10 +36,14 @@ namespace RPC {
  */
 class NFTHistoryHandler
 {
-    clio::Logger log_{"RPC"};
+    util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    static auto constexpr LIMIT_MIN = 1;
+    static auto constexpr LIMIT_MAX = 100;
+    static auto constexpr LIMIT_DEFAULT = 50;
+
     // TODO: this marker is same as account_tx, reuse in future
     struct Marker
     {
@@ -48,8 +54,8 @@ public:
     struct Output
     {
         std::string nftID;
-        uint32_t ledgerIndexMin;
-        uint32_t ledgerIndexMax;
+        uint32_t ledgerIndexMin{0};
+        uint32_t ledgerIndexMax{0};
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
         // TODO: use a better type than json
@@ -58,7 +64,6 @@ public:
         bool validated = true;
     };
 
-    // TODO: We did not implement the "strict" field
     struct Input
     {
         std::string nftID;
@@ -80,8 +85,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(nft_id), validation::Required{}, validation::Uint256HexStringValidator},
@@ -91,11 +96,14 @@ public:
             {JS(ledger_index_max), validation::Type<int32_t>{}},
             {JS(binary), validation::Type<bool>{}},
             {JS(forward), validation::Type<bool>{}},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, 100}},
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             validation::Min(1u),
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(marker),
-             validation::WithCustomError{
+             meta::WithCustomError{
                  validation::Type<boost::json::object>{}, Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}},
-             validation::Section{
+             meta::Section{
                  {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
                  {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},
              }},
@@ -118,4 +126,4 @@ private:
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Marker const& marker);
 };
 
-}  // namespace RPC
+}  // namespace rpc

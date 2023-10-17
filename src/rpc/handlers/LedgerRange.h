@@ -19,14 +19,14 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/common/Types.h>
 
 #include <boost/json.hpp>
 
 #include <memory>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The ledger_range command returns the index number of the earliest and latest ledgers that the server has.
@@ -40,7 +40,7 @@ class LedgerRangeHandler
 public:
     struct Output
     {
-        Backend::LedgerRange range;
+        data::LedgerRange range;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -50,10 +50,10 @@ public:
     }
 
     Result
-    process() const;
+    process(Context const& ctx) const;
 
 private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 };
-}  // namespace RPC
+}  // namespace rpc

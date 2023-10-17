@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/handlers/NFTOffersCommon.h>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief The nft_sell_offers method returns a list of sell offers for a given NFToken object.
@@ -41,4 +41,4 @@ public:
     process(Input input, Context const& ctx) const;
 };
 
-}  // namespace RPC
+}  // namespace rpc

@@ -17,13 +17,14 @@
 */
 //==============================================================================
 
+/** @file */
 #pragma once
 
 #include <rpc/RPCHelpers.h>
 
 #include <set>
 
-namespace RPC {
+namespace rpc {
 
 /**
  * @brief Represents an entry in the book_changes' changes array.
@@ -53,7 +54,7 @@ public:
      * @return std::vector<BookChange> Book changes
      */
     [[nodiscard]] static std::vector<BookChange>
-    compute(std::vector<Backend::TransactionAndMetadata> const& transactions)
+    compute(std::vector<data::TransactionAndMetadata> const& transactions)
     {
         return HandlerImpl{}(transactions);
     }
@@ -66,7 +67,7 @@ private:
 
     public:
         [[nodiscard]] std::vector<BookChange>
-        operator()(std::vector<Backend::TransactionAndMetadata> const& transactions)
+        operator()(std::vector<data::TransactionAndMetadata> const& transactions)
         {
             for (auto const& tx : transactions)
                 handleBookChange(tx);
@@ -164,22 +165,21 @@ private:
             }
             else
             {
-                // TODO: use paranthesized initialization when clang catches up
                 tally_[key] = {
-                    first,   // sideAVolume
-                    second,  // sideBVolume
-                    rate,    // highRate
-                    rate,    // lowRate
-                    rate,    // openRate
-                    rate,    // closeRate
+                    .sideAVolume = first,
+                    .sideBVolume = second,
+                    .highRate = rate,
+                    .lowRate = rate,
+                    .openRate = rate,
+                    .closeRate = rate,
                 };
             }
         }
 
         void
-        handleBookChange(Backend::TransactionAndMetadata const& blob)
+        handleBookChange(data::TransactionAndMetadata const& blob)
         {
-            auto const [tx, meta] = RPC::deserializeTxPlusMeta(blob);
+            auto const [tx, meta] = rpc::deserializeTxPlusMeta(blob);
             if (!tx || !meta || !tx->isFieldPresent(ripple::sfTransactionType))
                 return;
 
@@ -188,8 +188,8 @@ private:
                 handleAffectedNode(node);
         }
 
-        std::optional<uint32_t>
-        shouldCancelOffer(std::shared_ptr<ripple::STTx const> const& tx) const
+        static std::optional<uint32_t>
+        shouldCancelOffer(std::shared_ptr<ripple::STTx const> const& tx)
         {
             switch (tx->getFieldU16(ripple::sfTransactionType))
             {
@@ -199,6 +199,7 @@ private:
                 case ripple::ttOFFER_CREATE:
                     if (tx->isFieldPresent(ripple::sfOfferSequence))
                         return tx->getFieldU32(ripple::sfOfferSequence);
+                    [[fallthrough]];
                 default:
                     return std::nullopt;
             }
@@ -206,6 +207,12 @@ private:
     };
 };
 
+/**
+ * @brief Implementation of value_from for BookChange type.
+ *
+ * @param jv The JSON value to populate
+ * @param change The BookChange to serialize
+ */
 inline void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const& change)
 {
@@ -229,7 +236,13 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
     };
 }
 
-[[nodiscard]] boost::json::object const
-computeBookChanges(ripple::LedgerInfo const& lgrInfo, std::vector<Backend::TransactionAndMetadata> const& transactions);
+/**
+ * @brief Computes all book changes for the given ledger header and transactions.
+ *
+ * @param lgrInfo The ledger header
+ * @param transactions The vector of transactions with heir metadata
+ */
+[[nodiscard]] boost::json::object
+computeBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions);
 
-}  // namespace RPC
+}  // namespace rpc

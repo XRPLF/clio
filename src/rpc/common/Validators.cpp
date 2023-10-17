@@ -26,32 +26,10 @@
 #include <charconv>
 #include <string_view>
 
-namespace RPC::validation {
+namespace rpc::validation {
 
 [[nodiscard]] MaybeError
-Section::verify(boost::json::value const& value, std::string_view key) const
-{
-    if (not value.is_object() or not value.as_object().contains(key.data()))
-        return {};  // ignore. field does not exist, let 'required' fail
-                    // instead
-
-    auto const& res = value.at(key.data());
-
-    // if it is not a json object, let other validators fail
-    if (!res.is_object())
-        return {};
-
-    for (auto const& spec : specs)
-    {
-        if (auto const ret = spec.validate(res); not ret)
-            return Error{ret.error()};
-    }
-
-    return {};
-}
-
-[[nodiscard]] MaybeError
-Required::verify(boost::json::value const& value, std::string_view key) const
+Required::verify(boost::json::value const& value, std::string_view key)
 {
     if (not value.is_object() or not value.as_object().contains(key.data()))
         return Error{Status{RippledError::rpcINVALID_PARAMS, "Required field '" + std::string{key} + "' missing"}};
@@ -60,33 +38,10 @@ Required::verify(boost::json::value const& value, std::string_view key) const
 }
 
 [[nodiscard]] MaybeError
-ValidateArrayAt::verify(boost::json::value const& value, std::string_view key) const
-{
-    if (not value.is_object() or not value.as_object().contains(key.data()))
-        return {};  // ignore. field does not exist, let 'required' fail
-                    // instead
-
-    if (not value.as_object().at(key.data()).is_array())
-        return Error{Status{RippledError::rpcINVALID_PARAMS}};
-
-    auto const& arr = value.as_object().at(key.data()).as_array();
-    if (idx_ >= arr.size())
-        return Error{Status{RippledError::rpcINVALID_PARAMS}};
-
-    auto const& res = arr.at(idx_);
-    for (auto const& spec : specs_)
-        if (auto const ret = spec.validate(res); not ret)
-            return Error{ret.error()};
-
-    return {};
-}
-
-[[nodiscard]] MaybeError
 CustomValidator::verify(boost::json::value const& value, std::string_view key) const
 {
     if (not value.is_object() or not value.as_object().contains(key.data()))
-        return {};  // ignore. field does not exist, let 'required' fail
-                    // instead
+        return {};  // ignore. field does not exist, let 'required' fail instead
 
     return validator_(value.as_object().at(key.data()), key);
 }
@@ -94,7 +49,7 @@ CustomValidator::verify(boost::json::value const& value, std::string_view key) c
 [[nodiscard]] bool
 checkIsU32Numeric(std::string_view sv)
 {
-    uint32_t unused;
+    uint32_t unused = 0;
     auto [_, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), unused);
 
     return ec == std::errc();
@@ -113,7 +68,7 @@ CustomValidator Uint256HexStringValidator =
     }};
 
 CustomValidator LedgerIndexValidator =
-    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+    CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
         auto err = Error{Status{RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}};
 
         if (!value.is_string() && !(value.is_uint64() || value.is_int64()))
@@ -160,7 +115,7 @@ CustomValidator AccountMarkerValidator =
         if (!parseAccountCursor(value.as_string().c_str()))
         {
             // align with the current error message
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "Malformed cursor"}};
+            return Error{Status{RippledError::rpcINVALID_PARAMS, "Malformed cursor."}};
         }
 
         return MaybeError{};
@@ -190,27 +145,31 @@ CustomValidator IssuerValidator =
             return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer.", key)}};
 
         if (issuer == ripple::noAccount())
+        {
             return Error{Status{
-                RippledError::rpcINVALID_PARAMS,
-                fmt::format(
-                    "Invalid field '{}', bad issuer account "
-                    "one.",
-                    key)}};
+                RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer account one.", key)}};
+        }
 
         return MaybeError{};
     }};
 
 CustomValidator SubscribeStreamValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        static std::unordered_set<std::string> const validStreams = {
-            "ledger", "transactions", "transactions_proposed", "book_changes", "manifests", "validations"};
         if (!value.is_array())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
 
+        static std::unordered_set<std::string> const validStreams = {
+            "ledger", "transactions", "transactions_proposed", "book_changes", "manifests", "validations"};
+
+        static std::unordered_set<std::string> const reportingNotSupportStreams = {
+            "peer_status", "consensus", "server"};
         for (auto const& v : value.as_array())
         {
             if (!v.is_string())
                 return Error{Status{RippledError::rpcINVALID_PARAMS, "streamNotString"}};
+
+            if (reportingNotSupportStreams.contains(v.as_string().c_str()))
+                return Error{Status{RippledError::rpcREPORTING_UNSUPPORTED}};
 
             if (not validStreams.contains(v.as_string().c_str()))
                 return Error{Status{RippledError::rpcSTREAM_MALFORMED}};
@@ -224,7 +183,7 @@ CustomValidator SubscribeAccountsValidator =
         if (!value.is_array())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
 
-        if (value.as_array().size() == 0)
+        if (value.as_array().empty())
             return Error{Status{RippledError::rpcACT_MALFORMED, std::string(key) + " malformed."}};
 
         for (auto const& v : value.as_array())
@@ -234,11 +193,11 @@ CustomValidator SubscribeAccountsValidator =
 
             obj[keyItem] = v;
 
-            if (auto const err = AccountValidator.verify(obj, keyItem); !err)
+            if (auto err = AccountValidator.verify(obj, keyItem); !err)
                 return err;
         }
 
         return MaybeError{};
     }};
 
-}  // namespace RPC::validation
+}  // namespace rpc::validation
