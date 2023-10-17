@@ -18,8 +18,20 @@ static std::uint32_t const MAX_RETRIES = 5;
 static std::chrono::seconds const WAIT_TIME = std::chrono::seconds(60);
 static std::uint32_t const NFT_WRITE_BATCH_SIZE = 10000;
 
+static void
+wait(
+    boost::asio::steady_timer& timer,
+    std::string const& reason,
+    std::chrono::seconds timeout = WAIT_TIME)
+{
+    BOOST_LOG_TRIVIAL(info) << reason << ". Waiting then retrying";
+    timer.expires_after(timeout);
+    timer.wait();
+    BOOST_LOG_TRIVIAL(info) << "Done waiting";
+}
+
 static std::optional<boost::json::object>
-requestFromRippled(
+doRequestFromRippled(
     clio::Config const& config,
     boost::json::object const& request)
 {
@@ -32,11 +44,11 @@ requestFromRippled(
 
     boost::json::object response;
 
-    namespace beast = boost::beast;          // from <boost/beast.hpp>
-    namespace http = beast::http;            // from <boost/beast/http.hpp>
-    namespace websocket = beast::websocket;  // from
-    namespace net = boost::asio;             // from
-    using tcp = boost::asio::ip::tcp;        // from
+    namespace beast = boost::beast;
+    namespace http = beast::http;
+    namespace websocket = beast::websocket;
+    namespace net = boost::asio;
+    using tcp = boost::asio::ip::tcp;
 
     try
     {
@@ -75,6 +87,24 @@ requestFromRippled(
     }
 }
 
+static std::optional<boost::json::object>
+requestFromRippled(
+    boost::asio::steady_timer& timer,
+    clio::Config const& config,
+    boost::json::object const& request,
+    std::uint32_t const attempts = 0)
+{
+    auto response = doRequestFromRippled(config, request);
+    if (response.has_value())
+        return response;
+
+    if (attempts >= MAX_RETRIES)
+        return std::nullopt;
+
+    wait(timer, "Failed to request from rippled", std::chrono::seconds{1});
+    return requestFromRippled(timer, config, request, attempts + 1);
+}
+
 static std::string
 hexStringToBinaryString(std::string hex)
 {
@@ -93,7 +123,12 @@ maybeWriteTransaction(
     if (!tx.has_value())
         throw std::runtime_error("Could not repair transaction");
 
-    auto data = tx.value().at("result").as_object();
+    auto package = tx.value();
+    if (!package.contains("result") || !package.at("result").is_object())
+        throw std::runtime_error("Received non-success response from rippled");
+
+    auto data = package.at("result").as_object();
+
     auto const date = data.at("date").as_int64();
     auto const ledgerIndex = data.at("ledger_index").as_int64();
     auto hashStr = hexStringToBinaryString(data.at("hash").as_string().c_str());
@@ -111,12 +146,14 @@ maybeWriteTransaction(
 
 static void
 repairCorruptedTx(
+    boost::asio::steady_timer& timer,
     clio::Config const& config,
     Backend::CassandraBackend& backend,
     ripple::uint256 const& hash)
 {
     BOOST_LOG_TRIVIAL(info) << " - repairing " << hash;
     auto const data = requestFromRippled(
+        timer,
         config,
         {
             {"method", "tx"},
@@ -125,15 +162,6 @@ repairCorruptedTx(
         });
 
     maybeWriteTransaction(backend, data);
-}
-
-static void
-wait(boost::asio::steady_timer& timer, std::string const& reason)
-{
-    BOOST_LOG_TRIVIAL(info) << reason << ". Waiting then retrying";
-    timer.expires_after(WAIT_TIME);
-    timer.wait();
-    BOOST_LOG_TRIVIAL(info) << "Done waiting";
 }
 
 static std::vector<NFTsData>
@@ -289,9 +317,12 @@ doMigrationStepOne(
         }
 
         auto txs = doTryFetchTransactions(timer, backend, txHashes, yield);
-        assert(txs.size() == txHashes.size());
+        if (txs.size() != txHashes.size())
+            throw std::runtime_error(
+                "Amount of hashes does not match amount of retrieved "
+                "transactions");
 
-        for (std::size_t idx = 0; idx < txHashes.size(); ++idx)
+        for (int32_t idx = 0; idx < txHashes.size(); ++idx)
         {
             auto const& tx = txs.at(idx);
             auto const& hash = txHashes.at(idx);
@@ -324,7 +355,7 @@ doMigrationStepOne(
                     exit(-1);
                 }
 
-                repairCorruptedTx(config, backend, hash);
+                repairCorruptedTx(timer, config, backend, hash);
 
                 auto maybeTx = backend.fetchTransaction(hash, yield);
 
