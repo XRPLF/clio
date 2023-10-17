@@ -39,7 +39,7 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType>
      * @param impl The implementation of the counter inside the gauge
      */
     template <impl::SomeCounterImpl ImplType = impl::CounterImpl<ValueType>>
-    requires std::same_as<ValueType, typename ImplType::ValueType>
+    requires std::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
     AnyGauge(std::string name, std::string labelsString, ImplType&& impl = ImplType{})
         : MetricBase(std::move(name), std::move(labelsString))
         , impl::AnyCounterBase<ValueType>(std::forward<ImplType>(impl))
@@ -52,7 +52,7 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType>
     AnyGauge&
     operator++()
     {
-        this->pimpl_->change(ValueType{1});
+        this->pimpl_->add(ValueType{1});
         return *this;
     }
 
@@ -62,7 +62,7 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType>
     AnyGauge&
     operator--()
     {
-        this->pimpl_->change(ValueType{-1});
+        this->pimpl_->add(ValueType{-1});
         return *this;
     }
 
@@ -74,7 +74,7 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType>
     AnyGauge&
     operator+=(ValueType const value)
     {
-        this->pimpl_->change(value);
+        this->pimpl_->add(value);
         return *this;
     }
 
@@ -86,7 +86,7 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType>
     AnyGauge&
     operator-=(ValueType const value)
     {
-        this->pimpl_->change(-value);
+        this->pimpl_->add(-value);
         return *this;
     }
 
