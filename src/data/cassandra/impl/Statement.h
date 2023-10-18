@@ -22,6 +22,7 @@
 #include <data/cassandra/Types.h>
 #include <data/cassandra/impl/ManagedObject.h>
 #include <data/cassandra/impl/Tuple.h>
+#include <data/cassandra/impl/Collection.h>
 #include <util/Expected.h>
 
 #include <ripple/basics/base_uint.h>
@@ -100,6 +101,8 @@ public:
         using DecayedType = std::decay_t<Type>;
         using UCharVectorType = std::vector<unsigned char>;
         using UintTupleType = std::tuple<uint32_t, uint32_t>;
+        using UintByteTupleType = std::tuple<uint32_t, ripple::uint256>;
+        using ByteVectorType = std::vector<ripple::uint256>;
 
         if constexpr (std::is_same_v<DecayedType, ripple::uint256>)
         {
@@ -122,11 +125,16 @@ public:
             auto const rc = bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
         }
-        else if constexpr (std::is_same_v<DecayedType, UintTupleType>)
+        else if constexpr (std::is_same_v<DecayedType, UintTupleType> || std::is_same_v<DecayedType, UintByteTupleType>)
         {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32>");
         }
+         else if constexpr (std::is_same_v<DecayedType, ByteVectorType>)
+        {
+            auto const rc = cass_statement_bind_collection(*this, idx, Collection{std::move(value)});
+            throwErrorIfNeeded(rc, "Bind collection");
+        }       
         else if constexpr (std::is_same_v<DecayedType, bool>)
         {
             auto const rc = cass_statement_bind_bool(*this, idx, value ? cass_true : cass_false);

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <backend/cassandra/impl/ManagedObject.h>
+#include <data/cassandra/impl/ManagedObject.h>
 
 #include <ripple/basics/base_uint.h>
 #include <cassandra.h>
@@ -27,7 +27,7 @@
 #include <string>
 #include <string_view>
 
-namespace Backend::Cassandra::detail {
+namespace data::cassandra::detail {
 
 class Collection : public ManagedObject<CassCollection>
 {

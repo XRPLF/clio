@@ -106,7 +106,7 @@ struct MockBackend : public BackendInterface
          std::uint32_t const ledgerSequence,
          std::uint32_t const limit,
          std::optional<ripple::uint256> const& cursorIn,
-         boost::asio::yield_context& yield),
+         boost::asio::yield_context yield),
         (const, override));
 
     MOCK_METHOD(

@@ -19,13 +19,14 @@
 
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/NFTsByIssuer.h>
+#include <ripple/protocol/nft.h>
 
-#include <ripple/app/tx/impl/details/NFTokenUtils.h>
+// #include <ripple/app/tx/impl/details/NFTokenUtils.h>
 
 using namespace ripple;
-using namespace ::RPC;
+using namespace ::rpc;
 
-namespace RPC {
+namespace rpc {
 
 NFTsByIssuerHandler::Result
 NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ctx) const

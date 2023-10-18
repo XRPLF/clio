@@ -82,7 +82,7 @@ public:
             auto const rc = cass_tuple_set_int64(*this, idx, value);
             throwErrorIfNeeded(rc, "Bind int64");
         }
-        else if constexpr (std::is_same_v<decayed_t, ripple::uint256>)
+        else if constexpr (std::is_same_v<DecayedType, ripple::uint256>)
         {
             auto const rc = cass_tuple_set_bytes(
                 *this,
@@ -145,6 +145,15 @@ private:
             auto const rc = cass_value_get_int64(cass_iterator_get_value(*this), &out);
             throwErrorIfNeeded(rc, "Extract int64 from tuple");
             output = static_cast<DecayedType>(out);
+        }
+        else if constexpr (std::is_convertible_v<DecayedType, ripple::uint256>)
+        {
+            ripple::uint256 out;
+            cass_byte_t const* buf = nullptr;
+            std::size_t bufSize = 0;
+            auto const rc = cass_value_get_bytes(cass_iterator_get_value(*this), &buf, &bufSize);
+            throwErrorIfNeeded(rc, "Extract ripple::uint256");
+            out = ripple::uint256::fromVoid(buf);
         }
         else
         {

@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include <backend/BackendInterface.h>
+#include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 
-namespace RPC {
+namespace rpc {
 class NFTsByIssuerHandler
 {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
@@ -54,14 +54,14 @@ public:
 
     static auto constexpr LIMIT_DEFAULT = 50;
 
-    using Result = RPC::HandlerReturnType<Output>;
+    using Result = HandlerReturnType<Output>;
 
     NFTsByIssuerHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
-    RpcSpecConstRef
-    spec() const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {"nft_issuer", validation::Required{}, validation::AccountValidator},
@@ -85,4 +85,4 @@ private:
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-}  // namespace RPC
+}  // namespace rpc
