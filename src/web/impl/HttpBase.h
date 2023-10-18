@@ -201,8 +201,8 @@ public:
             return sender_(httpResponse(http::status::too_many_requests, "text/html", "Too many requests"));
         }
 
-        if (util::prometheus::isPrometheusRequest(req_, isAdmin()))
-            return sender_(util::prometheus::handlePrometheusRequest(req_));
+        if (auto response = util::prometheus::handlePrometheusRequest(req_, isAdmin()); response.has_value())
+            return sender_(std::move(response.value()));
 
         if (req_.method() != http::verb::post)
         {

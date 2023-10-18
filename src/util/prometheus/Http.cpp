@@ -22,15 +22,36 @@ namespace util::prometheus {
 
 namespace http = boost::beast::http;
 
+namespace {
+
 bool
-isPrometheusRequest(const boost::beast::http::request<boost::beast::http::string_body>& req, bool isAdmin)
+isPrometheusRequest(const http::request<http::string_body>& req)
 {
-    return req.method() == http::verb::get && req.target() == "/metrics" && isAdmin;
+    return req.method() == http::verb::get && req.target() == "/metrics";
 }
 
-boost::beast::http::response<boost::beast::http::string_body>
-handlePrometheusRequest(boost::beast::http::request<boost::beast::http::string_body> const& req)
+}  // namespace
+
+std::optional<http::response<http::string_body>>
+handlePrometheusRequest(http::request<http::string_body> const& req, bool const isAdmin)
 {
+    bool const prometheusRequest = isPrometheusRequest(req);
+
+    if (!prometheusRequest)
+        return std::nullopt;
+
+    if (!isAdmin)
+    {
+        return http::response<http::string_body>(
+            http::status::unauthorized, req.version(), "Only admin is allowd to collect metrics");
+    }
+
+    if (!PROMETHEUS().isEnabled())
+    {
+        return http::response<http::string_body>(
+            http::status::forbidden, req.version(), "Prometheus is disabled in clio config");
+    }
+
     auto response = http::response<http::string_body>(http::status::ok, req.version());
     response.set(http::field::content_type, "text/plain; version=0.0.4");
     response.body() = PROMETHEUS().collectMetrics();  // TODO(#932): add gzip compression

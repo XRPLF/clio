@@ -18,6 +18,7 @@
 //==============================================================================
 #pragma once
 
+#include <util/config/Config.h>
 #include <util/prometheus/Counter.h>
 #include <util/prometheus/Gauge.h>
 
@@ -77,6 +78,14 @@ public:
      */
     virtual std::string
     collectMetrics() = 0;
+
+    /**
+     * @brief Whether prometheus is enabled
+     *
+     * @return true if prometheus is enabled
+     */
+    virtual bool
+    isEnabled() const = 0;
 };
 
 class PrometheusImpl : public PrometheusInterface
@@ -97,6 +106,9 @@ public:
     std::string
     collectMetrics() override;
 
+    bool
+    isEnabled() const override;
+
 private:
     MetricBase&
     getMetric(std::string name, Labels labels, std::optional<std::string> description, MetricType type);
@@ -104,12 +116,41 @@ private:
     std::unordered_map<std::string, MetricsFamily> metrics_;
 };
 
+class PromeseusDisabled : public PrometheusInterface
+{
+public:
+    CounterInt&
+    counterInt(std::string name, Labels labels, std::optional<std::string> description) override;
+
+    CounterDouble&
+    counterDouble(std::string name, Labels labels, std::optional<std::string> description) override;
+
+    GaugeInt&
+    gaugeInt(std::string name, Labels labels, std::optional<std::string> description) override;
+
+    GaugeDouble&
+    gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) override;
+
+    std::string
+    collectMetrics() override;
+
+    bool
+    isEnabled() const override;
+};
+
 class PrometheusSingleton
 {
 public:
-    void static init()
+    void static init(Config const& config)
     {
-        instance_ = std::make_unique<PrometheusImpl>();
+        if (config.valueOr("prometheus_enabled", true))
+        {
+            instance_ = std::make_unique<PrometheusImpl>();
+        }
+        else
+        {
+            instance_ = std::make_unique<PromeseusDisabled>();
+        }
     }
 
     static PrometheusInterface&

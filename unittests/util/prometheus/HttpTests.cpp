@@ -29,6 +29,7 @@ struct PrometheusCheckRequestTestsParams
     http::verb method;
     std::string target;
     bool isAdmin;
+    bool prometheusEnabled;
     bool expected;
 };
 
@@ -48,20 +49,52 @@ struct PrometheusCheckRequestTests : public ::testing::TestWithParam<PrometheusC
 
 TEST_P(PrometheusCheckRequestTests, isPrometheusRequest)
 {
+    PrometheusSingleton::init(util::Config{{{"prometheus_enabled", GetParam().prometheusEnabled}}});
     boost::beast::http::request<boost::beast::http::string_body> req;
     req.method(GetParam().method);
     req.target(GetParam().target);
-    EXPECT_EQ(isPrometheusRequest(req, GetParam().isAdmin), GetParam().expected);
+    EXPECT_EQ(handlePrometheusRequest(req, GetParam().isAdmin).has_value(), GetParam().expected);
 }
 
 INSTANTIATE_TEST_CASE_P(
     PrometheusHttpTests,
     PrometheusCheckRequestTests,
     ::testing::ValuesIn({
-        PrometheusCheckRequestTestsParams{"validRequest", http::verb::get, "/metrics", true, true},
-        PrometheusCheckRequestTestsParams{"notAdmin", http::verb::get, "/metrics", false, false},
-        PrometheusCheckRequestTestsParams{"wrongMethod", http::verb::post, "/metrics", true, false},
-        PrometheusCheckRequestTestsParams{"wrongTarget", http::verb::get, "/", true, false},
+        PrometheusCheckRequestTestsParams{
+            .testName = "validRequest",
+            .method = http::verb::get,
+            .target = "/metrics",
+            .isAdmin = true,
+            .prometheusEnabled = true,
+            .expected = true},
+        PrometheusCheckRequestTestsParams{
+            .testName = "validRequestPrometheusDisabled",
+            .method = http::verb::get,
+            .target = "/metrics",
+            .isAdmin = true,
+            .prometheusEnabled = false,
+            .expected = true},
+        PrometheusCheckRequestTestsParams{
+            .testName = "notAdmin",
+            .method = http::verb::get,
+            .target = "/metrics",
+            .isAdmin = false,
+            .prometheusEnabled = true,
+            .expected = true},
+        PrometheusCheckRequestTestsParams{
+            .testName = "wrongMethod",
+            .method = http::verb::post,
+            .target = "/metrics",
+            .isAdmin = true,
+            .prometheusEnabled = true,
+            .expected = false},
+        PrometheusCheckRequestTestsParams{
+            .testName = "wrongTarget",
+            .method = http::verb::get,
+            .target = "/",
+            .isAdmin = true,
+            .prometheusEnabled = true,
+            .expected = false},
     }),
     PrometheusCheckRequestTests::NameGenerator());
 
@@ -69,17 +102,33 @@ struct PrometheusHandleRequestTests : ::testing::Test
 {
     PrometheusHandleRequestTests()
     {
-        PrometheusSingleton::init();
+        PrometheusSingleton::init(util::Config{});
     }
     http::request<http::string_body> const req{http::verb::get, "/metrics", 11};
 };
 
 TEST_F(PrometheusHandleRequestTests, emptyResponse)
 {
-    auto response = handlePrometheusRequest(req);
-    EXPECT_EQ(response.result(), http::status::ok);
-    EXPECT_EQ(response[http::field::content_type], "text/plain; version=0.0.4");
-    EXPECT_EQ(response.body(), "");
+    auto response = handlePrometheusRequest(req, true);
+    ASSERT_TRUE(response.has_value());
+    EXPECT_EQ(response->result(), http::status::ok);
+    EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
+    EXPECT_EQ(response->body(), "");
+}
+
+TEST_F(PrometheusHandleRequestTests, prometheusDisabled)
+{
+    PrometheusSingleton::init(util::Config({{"prometheus_enabled", false}}));
+    auto response = handlePrometheusRequest(req, true);
+    ASSERT_TRUE(response.has_value());
+    EXPECT_EQ(response->result(), http::status::forbidden);
+}
+
+TEST_F(PrometheusHandleRequestTests, notAdmin)
+{
+    auto response = handlePrometheusRequest(req, false);
+    ASSERT_TRUE(response.has_value());
+    EXPECT_EQ(response->result(), http::status::unauthorized);
 }
 
 TEST_F(PrometheusHandleRequestTests, responseWithCounter)
@@ -92,12 +141,13 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounter)
     ++counter;
     counter += 3;
 
-    auto response = handlePrometheusRequest(req);
-    EXPECT_EQ(response.result(), http::status::ok);
-    EXPECT_EQ(response[http::field::content_type], "text/plain; version=0.0.4");
+    auto response = handlePrometheusRequest(req, true);
+    ASSERT_TRUE(response.has_value());
+    EXPECT_EQ(response->result(), http::status::ok);
+    EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
     const auto expectedBody =
         fmt::format("# HELP {0} {1}\n# TYPE {0} counter\n{0}{2} 4\n\n", counterName, description, labels.serialize());
-    EXPECT_EQ(response.body(), expectedBody);
+    EXPECT_EQ(response->body(), expectedBody);
 }
 
 TEST_F(PrometheusHandleRequestTests, responseWithGauge)
@@ -110,12 +160,13 @@ TEST_F(PrometheusHandleRequestTests, responseWithGauge)
     ++gauge;
     gauge -= 3;
 
-    auto response = handlePrometheusRequest(req);
-    EXPECT_EQ(response.result(), http::status::ok);
-    EXPECT_EQ(response[http::field::content_type], "text/plain; version=0.0.4");
+    auto response = handlePrometheusRequest(req, true);
+    ASSERT_TRUE(response.has_value());
+    EXPECT_EQ(response->result(), http::status::ok);
+    EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
     const auto expectedBody =
         fmt::format("# HELP {0} {1}\n# TYPE {0} gauge\n{0}{2} -2\n\n", gaugeName, description, labels.serialize());
-    EXPECT_EQ(response.body(), expectedBody);
+    EXPECT_EQ(response->body(), expectedBody);
 }
 
 TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
@@ -136,10 +187,10 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
     ++gauge;
     gauge -= 3;
 
-    auto response = handlePrometheusRequest(req);
+    auto response = handlePrometheusRequest(req, true);
 
-    EXPECT_EQ(response.result(), http::status::ok);
-    EXPECT_EQ(response[http::field::content_type], "text/plain; version=0.0.4");
+    EXPECT_EQ(response->result(), http::status::ok);
+    EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
     const auto expectedBody = fmt::format(
         "# HELP {3} {4}\n# TYPE {3} gauge\n{3}{5} -2\n\n"
         "# HELP {0} {1}\n# TYPE {0} counter\n{0}{2} 4\n\n",
@@ -158,5 +209,5 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
         gaugeName,
         gaugeDescription,
         gaugeLabels.serialize());
-    EXPECT_TRUE(response.body() == expectedBody || response.body() == anotherExpectedBody);
+    EXPECT_TRUE(response->body() == expectedBody || response->body() == anotherExpectedBody);
 }

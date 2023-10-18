@@ -99,4 +99,26 @@ private:
     std::atomic<ValueType> value_{0};
 };
 
+template <impl::SomeNumberType NumberType>
+class CounterDisabledImpl
+{
+public:
+    using ValueType = NumberType;
+
+    void add(ValueType)
+    {
+    }
+
+    void set(ValueType)
+    {
+    }
+
+    ValueType
+    value() const
+    {
+        assert(false);
+        return 0;
+    }
+};
+
 }  // namespace util::prometheus::impl

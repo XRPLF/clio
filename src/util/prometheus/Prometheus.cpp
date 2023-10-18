@@ -75,6 +75,12 @@ PrometheusImpl::collectMetrics()
     return result;
 }
 
+bool
+PrometheusImpl::isEnabled() const
+{
+    return true;
+}
+
 MetricBase&
 PrometheusImpl::getMetric(
     std::string name,
@@ -89,6 +95,42 @@ PrometheusImpl::getMetric(
         it = metrics_.emplace(std::move(nameCopy), MetricsFamily(std::move(name), std::move(description), type)).first;
     }
     return it->second.getMetric(std::move(labels));
+}
+
+CounterInt& PromeseusDisabled::counterInt(std::string, Labels, std::optional<std::string>)
+{
+    static CounterInt dummy("", "", impl::CounterDisabledImpl<std::uint64_t>{});
+    return dummy;
+}
+
+CounterDouble& PromeseusDisabled::counterDouble(std::string, Labels, std::optional<std::string>)
+{
+    static CounterDouble dummy("", "", impl::CounterDisabledImpl<double>{});
+    return dummy;
+}
+
+GaugeInt& PromeseusDisabled::gaugeInt(std::string, Labels, std::optional<std::string>)
+{
+    static GaugeInt dummy("", "", impl::CounterDisabledImpl<std::int64_t>{});
+    return dummy;
+}
+
+GaugeDouble& PromeseusDisabled::gaugeDouble(std::string, Labels, std::optional<std::string>)
+{
+    static GaugeDouble dummy("", "", impl::CounterDisabledImpl<double>{});
+    return dummy;
+}
+
+std::string
+PromeseusDisabled::collectMetrics()
+{
+    return "";
+}
+
+bool
+PromeseusDisabled::isEnabled() const
+{
+    return false;
 }
 
 std::unique_ptr<PrometheusInterface> PrometheusSingleton::instance_{};

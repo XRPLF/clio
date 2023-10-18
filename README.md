@@ -250,6 +250,13 @@ If the password is presented in the config, clio will check the Authorization he
 The Authorization header should contain type `Password` and the password from the config, e.g. `Password secret`.
 Exactly equal password gains admin rights for the request or a websocket connection.
 
+## Prometheus metrics collection
+
+Clio supports Prometheus metrics collection. It accepts Prometheus requests on the port configured in `server` section of config.
+Prometheus metrics are enabled by default. To disable it add `"prometheus_enabled": false` to the config.
+It is important to know that clio responds to Prometheus request only if they are admin requests, so Prometheus should be configured to send password in header.
+There an example of docker-compose file, Prometheus and Grafana configs in `examples/prometheus`.
+
 ## Using clang-tidy for static analysis
 
 Minimum clang-tidy version required is 16.0.
