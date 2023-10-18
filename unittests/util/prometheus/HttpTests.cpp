@@ -118,8 +118,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithGauge)
     EXPECT_EQ(response.body(), expectedBody);
 }
 
-// This test is disabled because the order of the metrics in the response is not guaranteed (because of unordered_map).
-TEST_F(PrometheusHandleRequestTests, DISABLED_responseWithCounterAndGauge)
+TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
 {
     const auto counterName = "test_counter";
     const Labels counterLabels{{{"label1", "value1"}, Label{"label2", "value2"}}};
@@ -150,5 +149,14 @@ TEST_F(PrometheusHandleRequestTests, DISABLED_responseWithCounterAndGauge)
         gaugeName,
         gaugeDescription,
         gaugeLabels.serialize());
-    EXPECT_EQ(response.body(), expectedBody);
+    const auto anotherExpectedBody = fmt::format(
+        "# HELP {0} {1}\n# TYPE {0} counter\n{0}{2} 4\n\n"
+        "# HELP {3} {4}\n# TYPE {3} gauge\n{3}{5} -2\n\n",
+        counterName,
+        counterDescription,
+        counterLabels.serialize(),
+        gaugeName,
+        gaugeDescription,
+        gaugeLabels.serialize());
+    EXPECT_TRUE(response.body() == expectedBody || response.body() == anotherExpectedBody);
 }

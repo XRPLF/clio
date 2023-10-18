@@ -26,6 +26,9 @@
 
 namespace util::prometheus {
 
+/**
+ * @brief Base class for a Prometheus metric containing a name and labels
+ */
 class MetricBase
 {
 public:
@@ -39,16 +42,32 @@ public:
     operator=(MetricBase&&) = default;
     virtual ~MetricBase() = default;
 
+    /**
+     * @brief Serialize the metric to a string in Prometheus format
+     *
+     * @param s The string to serialize into
+     */
     void
     serialize(std::string& s) const;
 
+    /**
+     * @brief Get the name of the metric
+     */
     const std::string&
     name() const;
 
+    /**
+     * @brief Get the labels of the metric in serialized format, e.g. {name="value",name2="value2"}
+     */
     const std::string&
     labelsString() const;
 
 protected:
+    /**
+     * @brief Interface to serialize the value of the metric
+     *
+     * @param result The string to serialize into
+     */
     virtual void
     serializeValue(std::string& result) const = 0;
 
@@ -62,24 +81,42 @@ enum class MetricType { COUNTER_INT, COUNTER_DOUBLE, GAUGE_INT, GAUGE_DOUBLE, HI
 const char*
 toString(MetricType type);
 
-template <typename T>
-concept SomeMetric = std::is_base_of_v<T, MetricBase>;
-
+/**
+ * @brief Class representing a collection of Prometheus metric with the same name and type
+ */
 class MetricsFamily
 {
 public:
-    MetricsFamily(std::string name, std::optional<std::string> description, MetricType type);
+    using MetricBuilder = std::function<std::unique_ptr<MetricBase>(std::string, std::string, MetricType)>;
+    static MetricBuilder defaultMetricBuilder;
+
+    MetricsFamily(
+        std::string name,
+        std::optional<std::string> description,
+        MetricType type,
+        MetricBuilder& builder = defaultMetricBuilder);
 
     MetricsFamily(const MetricsFamily&) = delete;
     MetricsFamily(MetricsFamily&&) = default;
     MetricsFamily&
     operator=(const MetricsFamily&) = delete;
     MetricsFamily&
-    operator=(MetricsFamily&&) = default;
+    operator=(MetricsFamily&&) = delete;
 
+    /**
+     * @brief Get the metric with the given labels. If it does not exist, it will be created
+     *
+     * @param labels The labels of the metric
+     * @return Reference to the metric
+     */
     MetricBase&
     getMetric(Labels labels);
 
+    /**
+     * @brief Serialize all the containing metrics to a string in Prometheus format as one block
+     *
+     * @param result The string to serialize into
+     */
     void
     serialize(std::string& result) const;
 
@@ -94,6 +131,7 @@ private:
     std::optional<std::string> description_;
     std::unordered_map<std::string, std::unique_ptr<MetricBase>> metrics_;
     MetricType type_;
+    MetricBuilder& metricBuilder_;
 };
 
 }  // namespace util::prometheus

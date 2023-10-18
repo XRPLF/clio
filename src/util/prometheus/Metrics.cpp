@@ -69,8 +69,34 @@ MetricBase::labelsString() const
     return labelsString_;
 }
 
-MetricsFamily::MetricsFamily(std::string name, std::optional<std::string> description, MetricType type)
-    : name_(std::move(name)), description_(std::move(description)), type_(type)
+MetricsFamily::MetricBuilder MetricsFamily::defaultMetricBuilder =
+    [](std::string name, std::string labelsString, MetricType type) -> std::unique_ptr<MetricBase> {
+    switch (type)
+    {
+        case MetricType::COUNTER_INT:
+            return std::make_unique<CounterInt>(name, labelsString);
+        case MetricType::COUNTER_DOUBLE:
+            return std::make_unique<CounterDouble>(name, labelsString);
+        case MetricType::GAUGE_INT:
+            return std::make_unique<GaugeInt>(name, labelsString);
+        case MetricType::GAUGE_DOUBLE:
+            return std::make_unique<GaugeDouble>(name, labelsString);
+        case MetricType::SUMMARY:
+            [[fallthrough]];
+        case MetricType::HISTOGRAM:
+            [[fallthrough]];
+        default:
+            assert(false);
+    }
+    return nullptr;
+};
+
+MetricsFamily::MetricsFamily(
+    std::string name,
+    std::optional<std::string> description,
+    MetricType type,
+    MetricBuilder& metricBuilder)
+    : name_(std::move(name)), description_(std::move(description)), type_(type), metricBuilder_(metricBuilder)
 {
 }
 
@@ -81,26 +107,7 @@ MetricsFamily::getMetric(Labels labels)
     auto it = metrics_.find(labelsString);
     if (it == metrics_.end())
     {
-        auto metric = [&labelsString, this]() -> std::unique_ptr<MetricBase> {
-            switch (type())
-            {
-                case MetricType::COUNTER_INT:
-                    return std::make_unique<CounterInt>(name(), labelsString);
-                case MetricType::COUNTER_DOUBLE:
-                    return std::make_unique<CounterDouble>(name(), labelsString);
-                case MetricType::GAUGE_INT:
-                    return std::make_unique<GaugeInt>(name(), labelsString);
-                case MetricType::GAUGE_DOUBLE:
-                    return std::make_unique<GaugeDouble>(name(), labelsString);
-                case MetricType::SUMMARY:
-                    [[fallthrough]];
-                case MetricType::HISTOGRAM:
-                    [[fallthrough]];
-                default:
-                    assert(false);
-            }
-            return nullptr;
-        }();
+        auto metric = metricBuilder_(name(), labelsString, type());
         auto [it2, success] = metrics_.emplace(std::move(labelsString), std::move(metric));
         it = it2;
     }

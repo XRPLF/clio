@@ -36,11 +36,28 @@ struct AnyCounterTests : ::testing::Test
     };
 
     ::testing::StrictMock<MockCounterImpl> mockCounterImpl;
-    CounterInt counter{
-        "test_counter",
-        R"(label1="value1",label2="value2")",
-        static_cast<MockCounterImpl&>(mockCounterImpl)};
+    const std::string name = "test_counter";
+    const std::string labelsString = R"({label1="value1",label2="value2"})";
+    CounterInt counter{name, labelsString, static_cast<MockCounterImpl&>(mockCounterImpl)};
 };
+
+TEST_F(AnyCounterTests, name)
+{
+    EXPECT_EQ(counter.name(), name);
+}
+
+TEST_F(AnyCounterTests, labelsString)
+{
+    EXPECT_EQ(counter.labelsString(), labelsString);
+}
+
+TEST_F(AnyCounterTests, serialize)
+{
+    EXPECT_CALL(mockCounterImpl, value()).WillOnce(::testing::Return(42));
+    std::string serialized;
+    counter.serialize(serialized);
+    EXPECT_EQ(serialized, R"(test_counter{label1="value1",label2="value2"} 42)");
+}
 
 TEST_F(AnyCounterTests, operatorAdd)
 {
