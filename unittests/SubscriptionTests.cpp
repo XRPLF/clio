@@ -53,6 +53,8 @@ TEST_F(SubscriptionTest, SubscriptionCount)
     ctx.restart();
     ctx.run();
     EXPECT_EQ(sub.count(), 2);
+    EXPECT_TRUE(sub.hasSession(session1));
+    EXPECT_TRUE(sub.hasSession(session2));
     EXPECT_FALSE(sub.empty());
     sub.unsubscribe(session1);
     ctx.restart();
@@ -67,6 +69,8 @@ TEST_F(SubscriptionTest, SubscriptionCount)
     ctx.run();
     EXPECT_EQ(sub.count(), 0);
     EXPECT_TRUE(sub.empty());
+    EXPECT_FALSE(sub.hasSession(session1));
+    EXPECT_FALSE(sub.hasSession(session2));
 }
 
 // send interface will be called when publish called
@@ -131,6 +135,9 @@ TEST_F(SubscriptionMapTest, SubscriptionMapCount)
     ctx.restart();
     ctx.run();
     EXPECT_EQ(subMap.count(), 3);
+    EXPECT_TRUE(subMap.hasSession(session1, "topic1"));
+    EXPECT_TRUE(subMap.hasSession(session2, "topic1"));
+    EXPECT_TRUE(subMap.hasSession(session3, "topic2"));
     subMap.unsubscribe(session1, "topic1");
     ctx.restart();
     ctx.run();
@@ -139,6 +146,9 @@ TEST_F(SubscriptionMapTest, SubscriptionMapCount)
     subMap.unsubscribe(session3, "topic2");
     ctx.restart();
     ctx.run();
+    EXPECT_FALSE(subMap.hasSession(session1, "topic1"));
+    EXPECT_FALSE(subMap.hasSession(session2, "topic1"));
+    EXPECT_FALSE(subMap.hasSession(session3, "topic2"));
     EXPECT_EQ(subMap.count(), 0);
     subMap.unsubscribe(session3, "topic2");
     subMap.unsubscribe(session3, "no exist");

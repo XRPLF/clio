@@ -35,6 +35,12 @@ Subscription::unsubscribe(SessionPtrType const& session)
     boost::asio::post(strand_, [this, session]() { removeSession(session, subscribers_, subCount_); });
 }
 
+bool
+Subscription::hasSession(SessionPtrType const& session)
+{
+    return subscribers_.contains(session);
+}
+
 void
 Subscription::publish(std::shared_ptr<std::string> const& message)
 {
@@ -334,6 +340,8 @@ SubscriptionManager::unsubProposedTransactions(SessionPtrType session)
 void
 SubscriptionManager::subscribeHelper(SessionPtrType const& session, Subscription& subs, CleanupFunction&& func)
 {
+    if (subs.hasSession(session))
+        return;
     subs.subscribe(session);
     std::scoped_lock lk(cleanupMtx_);
     cleanupFuncs_[session].push_back(std::move(func));
@@ -347,6 +355,8 @@ SubscriptionManager::subscribeHelper(
     SubscriptionMap<Key>& subs,
     CleanupFunction&& func)
 {
+    if (subs.hasSession(session, k))
+        return;
     subs.subscribe(session, k);
     std::scoped_lock lk(cleanupMtx_);
     cleanupFuncs_[session].push_back(std::move(func));
