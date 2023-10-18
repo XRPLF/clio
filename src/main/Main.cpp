@@ -163,7 +163,6 @@ try
         std::cerr << "Couldnt parse config '" << configPath << "'." << std::endl;
         return EXIT_FAILURE;
     }
-    util::prometheus::PrometheusSingleton::init();
 
     LogService::init(config);
     LOG(LogService::info()) << "Clio version: " << Build::getClioFullVersionString();

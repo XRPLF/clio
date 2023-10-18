@@ -30,16 +30,51 @@ class PrometheusInterface
 public:
     virtual ~PrometheusInterface() = default;
 
+    /**
+     * @brief Get a integer based counter metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     */
     virtual CounterInt&
     counterInt(std::string name, Labels labels, std::optional<std::string> description) = 0;
+
+    /**
+     * @brief Get a double based counter metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     */
     virtual CounterDouble&
     counterDouble(std::string name, Labels labels, std::optional<std::string> description) = 0;
 
+    /**
+     * @brief Get a integer based gauge metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     */
     virtual GaugeInt&
     gaugeInt(std::string name, Labels labels, std::optional<std::string> description) = 0;
+
+    /**
+     * @brief Get a double based gauge metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     */
     virtual GaugeDouble&
     gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) = 0;
 
+    /**
+     * @brief Collect all metrics and return them as a string in Prometheus format
+     *
+     * @return The serialized metrics
+     */
     virtual std::string
     collectMetrics() = 0;
 };
@@ -49,11 +84,13 @@ class PrometheusImpl : public PrometheusInterface
 public:
     CounterInt&
     counterInt(std::string name, Labels labels, std::optional<std::string> description) override;
+
     CounterDouble&
     counterDouble(std::string name, Labels labels, std::optional<std::string> description) override;
 
     GaugeInt&
     gaugeInt(std::string name, Labels labels, std::optional<std::string> description) override;
+
     GaugeDouble&
     gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) override;
 
