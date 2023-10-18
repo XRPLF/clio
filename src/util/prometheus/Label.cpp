@@ -64,7 +64,7 @@ Label::serialize() const
                 break;
         }
     }
-    return fmt::format("{}=\"{}\"", name_, value_);
+    return fmt::format("{}=\"{}\"", name_, std::move(escapedValue));
 }
 
 Labels::Labels(std::vector<Label> labels) : labels_(std::move(labels))
