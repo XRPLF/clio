@@ -162,7 +162,6 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
         EXPECT_EQ(reportReturn["books"], result);
     };
     checkResult(subManagerPtr->report(), 1);
-    subManagerPtr->cleanup(session2);
     subManagerPtr->cleanup(session2);  // clean a removed session
     std::this_thread::sleep_for(20ms);
     checkResult(subManagerPtr->report(), 0);
