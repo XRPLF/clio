@@ -57,6 +57,18 @@ so:
 ./clio_migrator <config path>
 ```
 
+#### Repair and Resume modes
+The migrator will fail if some transactions are corrupted or missing from the cassandra DB. To battle this the migrator can be ran in `repair` mode. 
+If enabled via the `-repair host:port` argument the migrator will attempt to download the transaction from the specified Clio/`rippled` server and write it to the DB.
+```bash
+./clio_migrator path/to/config --repair 127.0.0.1:6006 # repair from `rippled` serving on 127.0.0.1:6006
+```
+
+If the migrator failed and exit (or crashed) you can resume from where it stopped by using the `--resume` option.
+```bash
+./clio_migrator path/to/config --resume # can be used together with --repair option
+```
+
 ### OPTIONAL: running the verifier
 After the migration completes, it is optional to perform a database verification to ensure the URIs are migrated correctly.
 Again, use the old config file you copied in Step 0 above.
