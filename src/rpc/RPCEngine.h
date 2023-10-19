@@ -59,8 +59,7 @@ namespace rpc {
 /**
  * @brief The RPC engine that ties all RPC-related functionality together.
  */
-class RPCEngine
-{
+class RPCEngine {
     util::Logger perfLog_{"Performance"};
     util::Logger log_{"RPC"};
 
@@ -124,22 +123,19 @@ public:
         if (forwardingProxy_.shouldForward(ctx))
             return forwardingProxy_.forward(ctx);
 
-        if (backend_->isTooBusy())
-        {
+        if (backend_->isTooBusy()) {
             LOG(log_.error()) << "Database is too busy. Rejecting request";
             notifyTooBusy();  // TODO: should we add ctx.method if we have it?
             return Status{RippledError::rpcTOO_BUSY};
         }
 
         auto const method = handlerProvider_->getHandler(ctx.method);
-        if (!method)
-        {
+        if (!method) {
             notifyUnknownCommand();
             return Status{RippledError::rpcUNKNOWN_COMMAND};
         }
 
-        try
-        {
+        try {
             LOG(perfLog_.debug()) << ctx.tag() << " start executing rpc `" << ctx.method << '`';
 
             auto const context = Context{ctx.yield, ctx.session, ctx.isAdmin, ctx.clientIp, ctx.apiVersion};
@@ -152,16 +148,12 @@ public:
 
             notifyErrored(ctx.method);
             return Status{v.error()};
-        }
-        catch (data::DatabaseTimeout const& t)
-        {
+        } catch (data::DatabaseTimeout const& t) {
             LOG(log_.error()) << "Database timeout";
             notifyTooBusy();
 
             return Status{RippledError::rpcTOO_BUSY};
-        }
-        catch (std::exception const& ex)
-        {
+        } catch (std::exception const& ex) {
             LOG(log_.error()) << ctx.tag() << "Caught exception: " << ex.what();
             notifyInternalError();
 

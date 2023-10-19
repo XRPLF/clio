@@ -31,8 +31,7 @@ namespace rpc {
 /**
  * @brief Represents a Specification for one field of an RPC command.
  */
-struct FieldSpec final
-{
+struct FieldSpec final {
     /**
      * @brief Construct a field specification out of a set of processors.
      *
@@ -65,8 +64,7 @@ private:
  * Note: this should really be all constexpr and handlers would expose
  * static constexpr RpcSpec spec instead. Maybe some day in the future.
  */
-struct RpcSpec final
-{
+struct RpcSpec final {
     /**
      * @brief Construct a full RPC request specification.
      *

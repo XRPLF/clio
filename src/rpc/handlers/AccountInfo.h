@@ -33,13 +33,11 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_info.html
  */
-class AccountInfoHandler
-{
+class AccountInfoHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    struct Output
-    {
+    struct Output {
         uint32_t ledgerIndex;
         std::string ledgerHash;
         ripple::STLedgerEntry accountData;
@@ -72,8 +70,7 @@ public:
 
     // "queue" is not available in Reporting mode
     // "ident" is deprecated, keep it for now, in line with rippled
-    struct Input
-    {
+    struct Input {
         std::optional<std::string> account;
         std::optional<std::string> ident;
         std::optional<std::string> ledgerHash;

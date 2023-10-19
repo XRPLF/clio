@@ -30,8 +30,7 @@
 
 namespace etl::detail {
 
-struct AmendmentBlockAction
-{
+struct AmendmentBlockAction {
     void
     operator()()
     {
@@ -42,8 +41,7 @@ struct AmendmentBlockAction
 };
 
 template <typename ActionCallableType = AmendmentBlockAction>
-class AmendmentBlockHandler
-{
+class AmendmentBlockHandler {
     std::reference_wrapper<boost::asio::io_context> ctx_;
     std::reference_wrapper<SystemState> state_;
     boost::asio::steady_timer timer_;

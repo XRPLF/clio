@@ -40,12 +40,9 @@ constexpr static auto TOKENID = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679
 constexpr static auto MAXSEQ = 30;
 constexpr static auto MINSEQ = 10;
 
-class RPCAccountObjectsHandlerTest : public HandlerBaseTest
-{
-};
+class RPCAccountObjectsHandlerTest : public HandlerBaseTest {};
 
-struct AccountObjectsParamTestCaseBundle
-{
+struct AccountObjectsParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -54,10 +51,8 @@ struct AccountObjectsParamTestCaseBundle
 
 // parameterized test cases for parameters check
 struct AccountObjectsParameterTest : public RPCAccountObjectsHandlerTest,
-                                     public WithParamInterface<AccountObjectsParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+                                     public WithParamInterface<AccountObjectsParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const
@@ -388,8 +383,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    while (count-- != 0)
-    {
+    while (count-- != 0) {
         auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }
@@ -438,8 +432,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    while (count-- != 0)
-    {
+    while (count-- != 0) {
         auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }
@@ -501,8 +494,7 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
     std::vector<Blob> bbs;
     // 10 items per page, 2 pages
     cc = count * 2;
-    while (cc-- != 0)
-    {
+    while (cc-- != 0) {
         auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }
@@ -1039,8 +1031,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
     auto current = ripple::keylet::nftpage_max(account).key;
     std::string first{INDEX1};
     sort(first.begin(), first.end());
-    for (auto i = 0; i < 10; i++)
-    {
+    for (auto i = 0; i < 10; i++) {
         std::next_permutation(first.begin(), first.end());
         auto previous =
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
@@ -1091,8 +1082,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
     auto current = ripple::keylet::nftpage_max(account).key;
     std::string first{INDEX1};
     sort(first.begin(), first.end());
-    for (auto i = 0; i < 10; i++)
-    {
+    for (auto i = 0; i < 10; i++) {
         std::next_permutation(first.begin(), first.end());
         auto previous =
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
@@ -1149,8 +1139,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
     auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
     auto const marker = current;
     sort(first.begin(), first.end());
-    for (auto i = 0; i < 10; i++)
-    {
+    for (auto i = 0; i < 10; i++) {
         std::next_permutation(first.begin(), first.end());
         auto previous =
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
@@ -1368,8 +1357,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
     auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
     auto const marker = current;
     sort(first.begin(), first.end());
-    for (auto i = 0; i < 10; i++)
-    {
+    for (auto i = 0; i < 10; i++) {
         std::next_permutation(first.begin(), first.end());
         auto previous =
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
@@ -1556,8 +1544,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     std::vector<Blob> bbs;
-    while (count-- != 0)
-    {
+    while (count-- != 0) {
         auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }

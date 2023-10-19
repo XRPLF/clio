@@ -41,8 +41,7 @@ template <SomeSettingsProvider SettingsProviderType>
  * @brief Manages the DB schema and provides access to prepared statements.
  */
 template <SomeSettingsProvider SettingsProviderType>
-class Schema
-{
+class Schema {
     util::Logger log_{"Backend"};
     std::reference_wrapper<SettingsProviderType const> settingsProvider_;
 
@@ -272,8 +271,7 @@ public:
     /**
      * @brief Prepared statements holder.
      */
-    class Statements
-    {
+    class Statements {
         std::reference_wrapper<SettingsProviderType const> settingsProvider_;
         std::reference_wrapper<Handle const> handle_;
 

@@ -38,8 +38,7 @@ static auto constexpr LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A
 static auto constexpr SEQ = 30;
 static auto constexpr AGE = 800;
 
-class ETLLedgerPublisherTest : public MockBackendTest, public SyncAsioContextTest, public MockSubscriptionManagerTest
-{
+class ETLLedgerPublisherTest : public MockBackendTest, public SyncAsioContextTest, public MockSubscriptionManagerTest {
     void
     SetUp() override
     {

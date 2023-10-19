@@ -25,8 +25,7 @@
 #include <boost/json.hpp>
 #include <gmock/gmock.h>
 
-struct MockSubscriptionManager
-{
+struct MockSubscriptionManager {
 public:
     using session_ptr = std::shared_ptr<web::ConnectionBase>;
     MockSubscriptionManager()

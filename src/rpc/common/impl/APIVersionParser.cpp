@@ -40,8 +40,7 @@ ProductionAPIVersionParser::parse(boost::json::object const& request) const
 {
     using Error = util::Unexpected<std::string>;
 
-    if (request.contains("api_version"))
-    {
+    if (request.contains("api_version")) {
         if (!request.at("api_version").is_int64())
             return Error{"API version must be an integer"};
 

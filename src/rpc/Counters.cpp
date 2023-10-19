@@ -112,8 +112,7 @@ Counters::report() const
     obj[JS(rpc)] = boost::json::object{};
     auto& rpc = obj[JS(rpc)].as_object();
 
-    for (auto const& [method, info] : methodInfo_)
-    {
+    for (auto const& [method, info] : methodInfo_) {
         auto counters = boost::json::object{};
         counters[JS(started)] = std::to_string(info.started);
         counters[JS(finished)] = std::to_string(info.finished);

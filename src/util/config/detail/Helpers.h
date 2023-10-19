@@ -29,8 +29,7 @@ namespace util::detail {
 /**
  * @brief Thrown when a KeyPath related error occurs
  */
-struct KeyException : public ::std::logic_error
-{
+struct KeyException : public ::std::logic_error {
     KeyException(::std::string msg) : ::std::logic_error{msg}
     {
     }
@@ -39,8 +38,7 @@ struct KeyException : public ::std::logic_error
 /**
  * @brief Thrown when a Store (config's storage) related error occurs.
  */
-struct StoreException : public ::std::logic_error
-{
+struct StoreException : public ::std::logic_error {
     StoreException(::std::string msg) : ::std::logic_error{msg}
     {
     }
@@ -53,8 +51,7 @@ struct StoreException : public ::std::logic_error
  * @tparam Separator The separator character
  */
 template <typename KeyType, char Separator>
-class Tokenizer final
-{
+class Tokenizer final {
     using opt_key_t = std::optional<KeyType>;
     KeyType key_;
     KeyType token_{};
@@ -66,14 +63,10 @@ public:
         if (key.empty())
             throw KeyException("Empty key");
 
-        for (auto const& c : key)
-        {
-            if (c == Separator)
-            {
+        for (auto const& c : key) {
+            if (c == Separator) {
                 saveToken();
-            }
-            else
-            {
+            } else {
                 token_ += c;
             }
         }

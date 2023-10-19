@@ -37,12 +37,9 @@ make_WsContext(
 )
 {
     boost::json::value commandValue = nullptr;
-    if (!request.contains("command") && request.contains("method"))
-    {
+    if (!request.contains("command") && request.contains("method")) {
         commandValue = request.at("method");
-    }
-    else if (request.contains("command") && !request.contains("method"))
-    {
+    } else if (request.contains("command") && !request.contains("method")) {
         commandValue = request.at("command");
     }
 

@@ -97,8 +97,7 @@ Handle::asyncExecuteEach(std::vector<Statement> const& statements) const
 Handle::MaybeErrorType
 Handle::executeEach(std::vector<Statement> const& statements) const
 {
-    for (auto futures = asyncExecuteEach(statements); auto const& future : futures)
-    {
+    for (auto futures = asyncExecuteEach(statements); auto const& future : futures) {
         if (auto rc = future.await(); not rc)
             return rc;
     }

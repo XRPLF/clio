@@ -38,8 +38,7 @@ namespace data {
 /**
  * @brief Represents a database timeout error.
  */
-class DatabaseTimeout : public std::exception
-{
+class DatabaseTimeout : public std::exception {
 public:
     char const*
     what() const throw() override
@@ -63,14 +62,10 @@ retryOnTimeout(FnType func, size_t waitMs = DEFAULT_WAIT_BETWEEN_RETRY)
 {
     static util::Logger const log{"Backend"};
 
-    while (true)
-    {
-        try
-        {
+    while (true) {
+        try {
             return func();
-        }
-        catch (DatabaseTimeout const&)
-        {
+        } catch (DatabaseTimeout const&) {
             LOG(log.error()) << "Database request timed out. Sleeping and retrying ... ";
             std::this_thread::sleep_for(std::chrono::milliseconds(waitMs));
         }
@@ -91,8 +86,7 @@ synchronous(FnType&& func)
     boost::asio::io_context ctx;
 
     using R = typename boost::result_of<FnType(boost::asio::yield_context)>::type;
-    if constexpr (!std::is_same<R, void>::value)
-    {
+    if constexpr (!std::is_same<R, void>::value) {
         R res;
         boost::asio::spawn(ctx, [_ = boost::asio::make_work_guard(ctx), &func, &res](auto yield) {
             res = func(yield);
@@ -100,9 +94,7 @@ synchronous(FnType&& func)
 
         ctx.run();
         return res;
-    }
-    else
-    {
+    } else {
         boost::asio::spawn(ctx, [_ = boost::asio::make_work_guard(ctx), &func](auto yield) { func(yield); });
         ctx.run();
     }
@@ -125,8 +117,7 @@ synchronousAndRetryOnTimeout(FnType&& func)
 /**
  * @brief The interface to the database used by Clio.
  */
-class BackendInterface
-{
+class BackendInterface {
 protected:
     mutable std::shared_mutex rngMtx_;
     std::optional<LedgerRange> range;

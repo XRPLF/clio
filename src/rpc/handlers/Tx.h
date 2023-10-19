@@ -28,14 +28,12 @@
 namespace rpc {
 
 template <typename ETLServiceType>
-class BaseTxHandler
-{
+class BaseTxHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<ETLServiceType const> etl_;
 
 public:
-    struct Output
-    {
+    struct Output {
         uint32_t date = 0u;
         std::string hash{};
         uint32_t ledgerIndex = 0u;
@@ -48,8 +46,7 @@ public:
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::optional<std::string> transaction;
         std::optional<std::string> ctid;
         bool binary = false;
@@ -93,8 +90,7 @@ public:
         static auto constexpr maxLedgerRange = 1000u;
         auto const rangeSupplied = input.minLedger && input.maxLedger;
 
-        if (rangeSupplied)
-        {
+        if (rangeSupplied) {
             if (*input.minLedger > *input.maxLedger)
                 return Error{Status{RippledError::rpcINVALID_LGR_RANGE}};
 
@@ -106,16 +102,14 @@ public:
 
         std::optional<data::TransactionAndMetadata> dbResponse;
 
-        if (input.ctid)
-        {
+        if (input.ctid) {
             auto const ctid = rpc::decodeCTID(*input.ctid);
             if (!ctid)
                 return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
             auto const [lgrSeq, txnIdx, netId] = *ctid;
             // when current network id is available, let us check the network id from parameter
-            if (currentNetId && netId != *currentNetId)
-            {
+            if (currentNetId && netId != *currentNetId) {
                 return Error{Status{
                     RippledError::rpcWRONG_NETWORK,
                     fmt::format(
@@ -124,16 +118,13 @@ public:
             }
 
             dbResponse = fetchTxViaCtid(lgrSeq, txnIdx, ctx.yield);
-        }
-        else
-        {
+        } else {
             dbResponse = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.transaction->c_str()}, ctx.yield);
         }
 
         auto output = BaseTxHandler::Output{.apiVersion = ctx.apiVersion};
 
-        if (!dbResponse)
-        {
+        if (!dbResponse) {
             if (rangeSupplied && input.transaction)  // ranges not for ctid
             {
                 auto const range = sharedPtrBackend_->fetchLedgerRange();
@@ -150,13 +141,10 @@ public:
 
         auto const [txn, meta] = toExpandedJson(*dbResponse, NFTokenjson::ENABLE, currentNetId);
 
-        if (!input.binary)
-        {
+        if (!input.binary) {
             output.tx = txn;
             output.meta = meta;
-        }
-        else
-        {
+        } else {
             output.txStr = ripple::strHex(dbResponse->transaction);
             output.metaStr = ripple::strHex(dbResponse->metadata);
 
@@ -165,11 +153,11 @@ public:
                 output.hash = txn.at(JS(hash)).as_string();
 
             // append ctid here to mimic rippled 1.12 behavior: return ctid even binary=true
-            // rippled will change it in the future, ctid should be part of tx json which not available in binary mode
+            // rippled will change it in the future, ctid should be part of tx json which not available in binary
+            // mode
             auto const txnIdx = boost::json::value_to<uint64_t>(meta.at("TransactionIndex"));
             if (txnIdx <= 0xFFFFU && dbResponse->ledgerSequence < 0x0FFF'FFFFUL && currentNetId &&
-                *currentNetId <= 0xFFFFU)
-            {
+                *currentNetId <= 0xFFFFU) {
                 output.ctid = rpc::encodeCTID(
                     dbResponse->ledgerSequence, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*currentNetId)
                 );
@@ -188,8 +176,7 @@ private:
     {
         auto const txs = sharedPtrBackend_->fetchAllTransactionsInLedger(ledgerSeq, yield);
 
-        for (auto const& tx : txs)
-        {
+        for (auto const& tx : txs) {
             auto const [txn, meta] = deserializeTxPlusMeta(tx, ledgerSeq);
 
             if (meta->getIndex() == txId)
@@ -204,13 +191,10 @@ private:
     {
         auto obj = boost::json::object{};
 
-        if (output.tx)
-        {
+        if (output.tx) {
             obj = *output.tx;
             obj[JS(meta)] = *output.meta;
-        }
-        else
-        {
+        } else {
             obj[JS(meta)] = *output.metaStr;
             obj[JS(tx)] = *output.txStr;
             obj[JS(hash)] = output.hash;

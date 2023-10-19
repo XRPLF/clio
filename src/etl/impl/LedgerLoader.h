@@ -35,8 +35,7 @@
 /**
  * @brief Account transactions, NFT transactions and NFT data bundled togeher.
  */
-struct FormattedTransactionsData
-{
+struct FormattedTransactionsData {
     std::vector<AccountTransactionsData> accountTxData;
     std::vector<NFTTransactionsData> nfTokenTxData;
     std::vector<NFTsData> nfTokensData;
@@ -48,8 +47,7 @@ namespace etl::detail {
  * @brief Loads ledger data into the DB
  */
 template <typename LoadBalancerType, typename LedgerFetcherType>
-class LedgerLoader
-{
+class LedgerLoader {
 public:
     using GetLedgerResponseType = typename LoadBalancerType::GetLedgerResponseType;
     using OptionalGetLedgerResponseType = typename LoadBalancerType::OptionalGetLedgerResponseType;
@@ -96,8 +94,7 @@ public:
     {
         FormattedTransactionsData result;
 
-        for (auto& txn : *(data.mutable_transactions_list()->mutable_transactions()))
-        {
+        for (auto& txn : *(data.mutable_transactions_list()->mutable_transactions())) {
             std::string* raw = txn.mutable_transaction_blob();
 
             ripple::SerialIter it{raw->data(), raw->size()};
@@ -154,8 +151,7 @@ public:
     {
         // check that database is actually empty
         auto rng = backend_->hardFetchLedgerRangeNoThrow();
-        if (rng)
-        {
+        if (rng) {
             LOG(log_.fatal()) << "Database is not empty";
             assert(false);
             return {};
@@ -189,15 +185,13 @@ public:
             // into the queue
             auto [edgeKeys, success] = loadBalancer_->loadInitialLedger(sequence);
 
-            if (success)
-            {
+            if (success) {
                 size_t numWrites = 0;
                 backend_->cache().setFull();
 
                 auto seconds =
                     ::util::timed<std::chrono::seconds>([this, edgeKeys = &edgeKeys, sequence, &numWrites]() {
-                        for (auto& key : *edgeKeys)
-                        {
+                        for (auto& key : *edgeKeys) {
                             LOG(log_.debug()) << "Writing edge key = " << ripple::strHex(key);
                             auto succ =
                                 backend_->cache().getSuccessor(*ripple::uint256::fromVoidChecked(key), sequence);
@@ -206,22 +200,18 @@ public:
                         }
 
                         ripple::uint256 prev = data::firstKey;
-                        while (auto cur = backend_->cache().getSuccessor(prev, sequence))
-                        {
+                        while (auto cur = backend_->cache().getSuccessor(prev, sequence)) {
                             assert(cur);
                             if (prev == data::firstKey)
                                 backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(cur->key));
 
-                            if (isBookDir(cur->key, cur->blob))
-                            {
+                            if (isBookDir(cur->key, cur->blob)) {
                                 auto base = getBookBase(cur->key);
                                 // make sure the base is not an actual object
-                                if (!backend_->cache().get(cur->key, sequence))
-                                {
+                                if (!backend_->cache().get(cur->key, sequence)) {
                                     auto succ = backend_->cache().getSuccessor(base, sequence);
                                     assert(succ);
-                                    if (succ->key == cur->key)
-                                    {
+                                    if (succ->key == cur->key) {
                                         LOG(log_.debug()) << "Writing book successor = " << ripple::strHex(base)
                                                           << " - " << ripple::strHex(cur->key);
 
@@ -250,8 +240,7 @@ public:
 
             LOG(log_.debug()) << "Loaded initial ledger";
 
-            if (not state_.get().isStopping)
-            {
+            if (not state_.get().isStopping) {
                 backend_->writeAccountTransactions(std::move(insertTxResult.accountTxData));
                 backend_->writeNFTs(std::move(insertTxResult.nfTokensData));
                 backend_->writeNFTTransactions(std::move(insertTxResult.nfTokenTxData));

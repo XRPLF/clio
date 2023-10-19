@@ -31,13 +31,11 @@ namespace rpc {
  * @brief The version command returns the min,max and current api Version we are using
  *
  */
-class VersionHandler
-{
+class VersionHandler {
     rpc::detail::ProductionAPIVersionParser apiVersionParser_;
 
 public:
-    struct Output
-    {
+    struct Output {
         uint32_t minVersion;
         uint32_t maxVersion;
         uint32_t currVersion;

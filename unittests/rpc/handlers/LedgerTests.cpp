@@ -38,12 +38,9 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-class RPCLedgerHandlerTest : public HandlerBaseTest
-{
-};
+class RPCLedgerHandlerTest : public HandlerBaseTest {};
 
-struct LedgerParamTestCaseBundle
-{
+struct LedgerParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -51,10 +48,8 @@ struct LedgerParamTestCaseBundle
 };
 
 // parameterized test cases for parameters check
-struct LedgerParameterTest : public RPCLedgerHandlerTest, public WithParamInterface<LedgerParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+struct LedgerParameterTest : public RPCLedgerHandlerTest, public WithParamInterface<LedgerParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const

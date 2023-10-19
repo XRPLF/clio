@@ -36,8 +36,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/ledger_data.html
  */
-class LedgerDataHandler
-{
+class LedgerDataHandler {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     util::Logger log_{"RPC"};
@@ -51,8 +50,7 @@ public:
     static uint32_t constexpr LIMITBINARY = 2048;
     static uint32_t constexpr LIMITJSON = 256;
 
-    struct Output
-    {
+    struct Output {
         uint32_t ledgerIndex{};
         std::string ledgerHash;
         std::optional<boost::json::object> header;
@@ -66,8 +64,7 @@ public:
     // TODO: Clio does not implement "type" filter
     // outOfOrder only for clio, there is no document, traverse via seq diff
     // outOfOrder implementation is copied from old rpc handler
-    struct Input
-    {
+    struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         bool binary = false;

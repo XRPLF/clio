@@ -42,9 +42,7 @@ using namespace rpc::modifiers;
 
 namespace json = boost::json;
 
-class RPCBaseTest : public NoLoggerFixture
-{
-};
+class RPCBaseTest : public NoLoggerFixture {};
 
 TEST_F(RPCBaseTest, CheckType)
 {
@@ -475,8 +473,7 @@ TEST_F(RPCBaseTest, CurrencyValidator)
     passingInput = json::parse(R"({ "currency": "0158415500000000c1f76ff6ecb0bac600000000"})");
     ASSERT_TRUE(spec.process(passingInput));
 
-    for (auto const& currency : {"[]<", ">()", "{}|", "?!@", "#$%", "^&*"})
-    {
+    for (auto const& currency : {"[]<", ">()", "{}|", "?!@", "#$%", "^&*"}) {
         passingInput = json::parse(fmt::format(R"({{ "currency" : "{}" }})", currency));
         ASSERT_TRUE(spec.process(passingInput));
     }

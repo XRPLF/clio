@@ -23,8 +23,7 @@
 #include <filesystem>
 #include <fstream>
 
-struct TmpFile
-{
+struct TmpFile {
     std::string const path;
 
     TmpFile(std::string_view content) : path{std::tmpnam(nullptr)}

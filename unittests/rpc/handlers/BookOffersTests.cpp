@@ -42,22 +42,17 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-class RPCBookOffersHandlerTest : public HandlerBaseTest
-{
-};
+class RPCBookOffersHandlerTest : public HandlerBaseTest {};
 
-struct ParameterTestBundle
-{
+struct ParameterTestBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
     std::string expectedErrorMessage;
 };
 
-struct RPCBookOffersParameterTest : public RPCBookOffersHandlerTest, public WithParamInterface<ParameterTestBundle>
-{
-    struct NameGenerator
-    {
+struct RPCBookOffersParameterTest : public RPCBookOffersHandlerTest, public WithParamInterface<ParameterTestBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const
@@ -455,8 +450,7 @@ INSTANTIATE_TEST_SUITE_P(
     RPCBookOffersParameterTest::NameGenerator()
 );
 
-struct BookOffersNormalTestBundle
-{
+struct BookOffersNormalTestBundle {
     std::string testName;
     std::string inputJson;
     std::map<ripple::uint256, std::optional<ripple::uint256>> mockedSuccessors;
@@ -467,10 +461,8 @@ struct BookOffersNormalTestBundle
 };
 
 struct RPCBookOffersNormalPathTest : public RPCBookOffersHandlerTest,
-                                     public WithParamInterface<BookOffersNormalTestBundle>
-{
-    struct NameGenerator
-    {
+                                     public WithParamInterface<BookOffersNormalTestBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const
@@ -496,15 +488,13 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
 
     // return valid book dir
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(bundle.mockedSuccessors.size());
-    for (auto const& [key, value] : bundle.mockedSuccessors)
-    {
+    for (auto const& [key, value] : bundle.mockedSuccessors) {
         ON_CALL(*rawBackendPtr, doFetchSuccessorKey(key, seq, _)).WillByDefault(Return(value));
     }
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(bundle.ledgerObjectCalls);
 
-    for (auto const& [key, value] : bundle.mockedLedgerObjects)
-    {
+    for (auto const& [key, value] : bundle.mockedLedgerObjects) {
         ON_CALL(*rawBackendPtr, doFetchLedgerObject(key, seq, _)).WillByDefault(Return(value));
     }
 

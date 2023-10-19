@@ -40,12 +40,9 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-class RPCAccountNFTsHandlerTest : public HandlerBaseTest
-{
-};
+class RPCAccountNFTsHandlerTest : public HandlerBaseTest {};
 
-struct AccountNFTParamTestCaseBundle
-{
+struct AccountNFTParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -54,10 +51,8 @@ struct AccountNFTParamTestCaseBundle
 
 // parameterized test cases for parameters check
 struct AccountNFTParameterTest : public RPCAccountNFTsHandlerTest,
-                                 public WithParamInterface<AccountNFTParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+                                 public WithParamInterface<AccountNFTParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const

@@ -30,8 +30,7 @@ using namespace std;
 
 using namespace data::cassandra;
 
-class BackendCassandraBaseTest : public NoLoggerFixture
-{
+class BackendCassandraBaseTest : public NoLoggerFixture {
 protected:
     static Handle
     createHandle(std::string_view contactPoints, std::string_view keyspace)
@@ -263,8 +262,7 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
             futures.push_back(handle.asyncExecute(insert, entry, idx++));
 
         ASSERT_EQ(futures.size(), entries.size());
-        for (auto const& f : futures)
-        {
+        for (auto const& f : futures) {
             auto const rc = f.await();
             ASSERT_TRUE(rc) << rc.error();
         }
@@ -444,8 +442,7 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
     ASSERT_TRUE(res);
 
     auto const& results = res.value();
-    for (auto [hash, seq] : extract<std::string, int64_t>(results))
-    {
+    for (auto [hash, seq] : extract<std::string, int64_t>(results)) {
         static_assert(std::is_same_v<decltype(hash), std::string>);
         static_assert(std::is_same_v<decltype(seq), int64_t>);
         migrationStatements.push_back(migrationInsert.bind(hash, seq, seq + 1u));
@@ -459,8 +456,7 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
     auto const& resultsV2 = resV2.value();
 
     EXPECT_EQ(results.numRows(), resultsV2.numRows());
-    for (auto [seq, tmp] : extract<int64_t, int64_t>(resultsV2))
-    {
+    for (auto [seq, tmp] : extract<int64_t, int64_t>(resultsV2)) {
         static_assert(std::is_same_v<decltype(seq), int64_t>);
         static_assert(std::is_same_v<decltype(tmp), int64_t>);
         EXPECT_EQ(seq + 1, tmp);

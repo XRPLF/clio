@@ -122,8 +122,7 @@ PAMNb1i80cMsjK98xXDdr+7Uvy5M4COMwA5XHmMZDEW8Jw==
     return ctx;
 }
 
-class WebServerTest : public NoLoggerFixture
-{
+class WebServerTest : public NoLoggerFixture {
 public:
     ~WebServerTest() override
     {
@@ -165,8 +164,7 @@ private:
     std::optional<std::thread> runner;
 };
 
-class EchoExecutor
-{
+class EchoExecutor {
 public:
     void
     operator()(std::string const& reqStr, std::shared_ptr<web::ConnectionBase> const& ws)
@@ -180,8 +178,7 @@ public:
     }
 };
 
-class ExceptionExecutor
-{
+class ExceptionExecutor {
 public:
     void
     operator()(std::string const& /* req */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
@@ -379,13 +376,10 @@ TEST_F(WebServerTest, WsTooManyConnection)
     WebSocketSyncClient wsClient2;
     wsClient2.connect("localhost", "8888");
     bool exceptionThrown = false;
-    try
-    {
+    try {
         WebSocketSyncClient wsClient3;
         wsClient3.connect("localhost", "8888");
-    }
-    catch (boost::system::system_error const& ex)
-    {
+    } catch (boost::system::system_error const& ex) {
         exceptionThrown = true;
         EXPECT_EQ(ex.code(), boost::beast::websocket::error::upgrade_declined);
     }
@@ -404,8 +398,7 @@ static auto constexpr JSONServerConfigWithAdminPassword = R"JSON(
     }
 )JSON";
 
-class AdminCheckExecutor
-{
+class AdminCheckExecutor {
 public:
     void
     operator()(std::string const& reqStr, std::shared_ptr<web::ConnectionBase> const& ws)
@@ -420,15 +413,12 @@ public:
     }
 };
 
-struct WebServerAdminTestParams
-{
+struct WebServerAdminTestParams {
     std::vector<WebHeader> headers;
     std::string expectedResponse;
 };
 
-class WebServerAdminTest : public WebServerTest, public ::testing::WithParamInterface<WebServerAdminTestParams>
-{
-};
+class WebServerAdminTest : public WebServerTest, public ::testing::WithParamInterface<WebServerAdminTestParams> {};
 
 TEST_P(WebServerAdminTest, WsAdminCheck)
 {

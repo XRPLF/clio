@@ -34,9 +34,7 @@ constexpr static auto NFTID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875
 constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 
-class RPCNFTBuyOffersHandlerTest : public HandlerBaseTest
-{
-};
+class RPCNFTBuyOffersHandlerTest : public HandlerBaseTest {};
 
 TEST_F(RPCNFTBuyOffersHandlerTest, NonHexLedgerHash)
 {
@@ -465,8 +463,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
     auto repetitions = 500;
     auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
     auto idx = ripple::uint256{INDEX1};
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.push_back(idx++);
         bbs.push_back(offer.getSerializer().peekData());
     }
@@ -515,8 +512,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
     auto repetitions = 500;
     auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
     auto idx = ripple::uint256{INDEX1};
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.push_back(idx++);
         bbs.push_back(offer.getSerializer().peekData());
     }
@@ -580,8 +576,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimi
     auto repetitions = 100;
     auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
     auto idx = ripple::uint256{INDEX1};
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.push_back(idx++);
         bbs.push_back(offer.getSerializer().peekData());
     }

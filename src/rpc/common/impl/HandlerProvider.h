@@ -41,10 +41,8 @@ class SubscriptionManager;
 
 namespace rpc::detail {
 
-class ProductionHandlerProvider final : public HandlerProvider
-{
-    struct Handler
-    {
+class ProductionHandlerProvider final : public HandlerProvider {
+    struct Handler {
         AnyHandler handler;
         bool isClioOnly = false;
     };

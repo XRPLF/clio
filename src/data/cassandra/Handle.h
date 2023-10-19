@@ -42,8 +42,7 @@ namespace data::cassandra {
 /**
  * @brief Represents a handle to the cassandra database cluster
  */
-class Handle
-{
+class Handle {
     detail::Cluster cluster_;
     detail::Session session_;
 

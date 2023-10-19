@@ -66,8 +66,7 @@ namespace etl {
  * the others will fall back to monitoring/publishing. In this sense, this class dynamically transitions from monitoring
  * to writing and from writing to monitoring, based on the activity of other processes running on different machines.
  */
-class ETLService
-{
+class ETLService {
     // TODO: make these template parameters in ETLService
     using SubscriptionManagerType = feed::SubscriptionManager;
     using LoadBalancerType = LoadBalancer;

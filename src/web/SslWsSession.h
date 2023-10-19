@@ -33,8 +33,7 @@ namespace web {
  * Majority of the operations are handled by the base class.
  */
 template <SomeServerHandler HandlerType>
-class SslWsSession : public detail::WsBase<SslWsSession, HandlerType>
-{
+class SslWsSession : public detail::WsBase<SslWsSession, HandlerType> {
     using StreamType = boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>;
     StreamType ws_;
 
@@ -79,8 +78,7 @@ public:
  * Pass the stream to the session class after upgrade.
  */
 template <SomeServerHandler HandlerType>
-class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<HandlerType>>
-{
+class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<HandlerType>> {
     using std::enable_shared_from_this<SslWsUpgrader<HandlerType>>::shared_from_this;
 
     boost::beast::ssl_stream<boost::beast::tcp_stream> https_;

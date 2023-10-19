@@ -36,9 +36,7 @@ namespace json = boost::json;
 
 using namespace data::cassandra;
 
-class SettingsProviderTest : public NoLoggerFixture
-{
-};
+class SettingsProviderTest : public NoLoggerFixture {};
 
 TEST_F(SettingsProviderTest, Defaults)
 {

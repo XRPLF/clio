@@ -22,8 +22,7 @@
 
 #include <gmock/gmock.h>
 
-class MockSource : public etl::Source
-{
+class MockSource : public etl::Source {
 public:
     MOCK_METHOD(bool, isConnected, (), (const, override));
     MOCK_METHOD(boost::json::object, toJson, (), (const override));

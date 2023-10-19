@@ -41,8 +41,7 @@ constexpr static auto RAW_HEADER =
     "3E2232B33EF57CECAC2816E3122816E31A0A00F8377CD95DFA484CFAE282656A58"
     "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
 
-class ETLTransformerTest : public MockBackendTest
-{
+class ETLTransformerTest : public MockBackendTest {
 protected:
     using DataType = FakeFetchResponse;
     using ExtractionDataPipeType = MockExtractionDataPipe;

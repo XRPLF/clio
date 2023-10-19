@@ -49,9 +49,7 @@ constexpr static auto JSONDataIPV6 = R"JSON(
     }
 )JSON";
 
-class WhitelistHandlerTest : public NoLoggerFixture
-{
-};
+class WhitelistHandlerTest : public NoLoggerFixture {};
 
 TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
 {

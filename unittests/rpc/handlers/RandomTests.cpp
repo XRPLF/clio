@@ -24,9 +24,7 @@
 
 using namespace rpc;
 
-class RPCRandomHandlerTest : public HandlerBaseTest
-{
-};
+class RPCRandomHandlerTest : public HandlerBaseTest {};
 
 TEST_F(RPCRandomHandlerTest, Default)
 {

@@ -35,8 +35,7 @@ namespace util {
  * Any custom data type can be supported by implementing the right `tag_invoke`
  * for `boost::json::value_to`.
  */
-class Config final
-{
+class Config final {
     boost::json::value store_;
     static constexpr char Separator = '.';
 
@@ -147,12 +146,9 @@ public:
     [[nodiscard]] Result
     valueOr(KeyType key, Result fallback) const
     {
-        try
-        {
+        try {
             return maybeValue<Result>(key).value_or(fallback);
-        }
-        catch (detail::StoreException const&)
-        {
+        } catch (detail::StoreException const&) {
             return fallback;
         }
     }
@@ -177,12 +173,9 @@ public:
     [[nodiscard]] Result
     valueOrThrow(KeyType key, std::string_view err) const
     {
-        try
-        {
+        try {
             return maybeValue<Result>(key).value();
-        }
-        catch (std::exception const&)
-        {
+        } catch (std::exception const&) {
             throw std::runtime_error(err.data());
         }
     }
@@ -336,12 +329,9 @@ public:
     [[nodiscard]] Result
     valueOrThrow(std::string_view err) const
     {
-        try
-        {
+        try {
             return maybeValue<Result>().value();
-        }
-        catch (std::exception const&)
-        {
+        } catch (std::exception const&) {
             throw std::runtime_error(err.data());
         }
     }
@@ -363,29 +353,21 @@ private:
         using boost::json::value_to;
 
         auto has_error = false;
-        if constexpr (std::is_same_v<Return, bool>)
-        {
+        if constexpr (std::is_same_v<Return, bool>) {
             if (not value.is_bool())
                 has_error = true;
-        }
-        else if constexpr (std::is_same_v<Return, std::string>)
-        {
+        } else if constexpr (std::is_same_v<Return, std::string>) {
             if (not value.is_string())
                 has_error = true;
-        }
-        else if constexpr (std::is_same_v<Return, double>)
-        {
+        } else if constexpr (std::is_same_v<Return, double>) {
             if (not value.is_number())
                 has_error = true;
-        }
-        else if constexpr (std::is_convertible_v<Return, uint64_t> || std::is_convertible_v<Return, int64_t>)
-        {
+        } else if constexpr (std::is_convertible_v<Return, uint64_t> || std::is_convertible_v<Return, int64_t>) {
             if (not value.is_int64() && not value.is_uint64())
                 has_error = true;
         }
 
-        if (has_error)
-        {
+        if (has_error) {
             throw std::runtime_error(
                 "Type for key '" + key + "' is '" + std::string{to_string(value.kind())} + "' in JSON but requested '" +
                 detail::typeName<Return>() + "'"
@@ -408,8 +390,7 @@ private:
  * Reads the JSON file under specified path and creates a @ref Config object
  * from its contents.
  */
-class ConfigReader final
-{
+class ConfigReader final {
 public:
     static Config
     open(std::filesystem::path path);

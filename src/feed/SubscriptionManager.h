@@ -46,16 +46,12 @@ template <class T>
 inline void
 sendToSubscribers(std::shared_ptr<std::string> const& message, T& subscribers, std::atomic_uint64_t& counter)
 {
-    for (auto it = subscribers.begin(); it != subscribers.end();)
-    {
+    for (auto it = subscribers.begin(); it != subscribers.end();) {
         auto& session = *it;
-        if (session->dead())
-        {
+        if (session->dead()) {
             it = subscribers.erase(it);
             --counter;
-        }
-        else
-        {
+        } else {
             session->send(message);
             ++it;
         }
@@ -73,8 +69,7 @@ template <class T>
 inline void
 addSession(SessionPtrType session, T& subscribers, std::atomic_uint64_t& counter)
 {
-    if (!subscribers.contains(session))
-    {
+    if (!subscribers.contains(session)) {
         subscribers.insert(session);
         ++counter;
     }
@@ -91,8 +86,7 @@ template <class T>
 inline void
 removeSession(SessionPtrType session, T& subscribers, std::atomic_uint64_t& counter)
 {
-    if (subscribers.contains(session))
-    {
+    if (subscribers.contains(session)) {
         subscribers.erase(session);
         --counter;
     }
@@ -101,8 +95,7 @@ removeSession(SessionPtrType session, T& subscribers, std::atomic_uint64_t& coun
 /**
  * @brief Represents a subscription stream.
  */
-class Subscription
-{
+class Subscription {
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     std::unordered_set<SessionPtrType> subscribers_ = {};
     std::atomic_uint64_t subCount_ = 0;
@@ -170,8 +163,7 @@ public:
  * @brief Represents a collection of subscriptions where each stream is mapped to a key.
  */
 template <class Key>
-class SubscriptionMap
-{
+class SubscriptionMap {
     using SubscribersType = std::set<SessionPtrType>;
 
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
@@ -225,8 +217,7 @@ public:
             --subCount_;
             subscribers_[key].erase(session);
 
-            if (subscribers_[key].size() == 0)
-            {
+            if (subscribers_[key].size() == 0) {
                 subscribers_.erase(key);
             }
         });
@@ -262,8 +253,7 @@ public:
 /**
  * @brief Manages subscriptions.
  */
-class SubscriptionManager
-{
+class SubscriptionManager {
     util::Logger log_{"Subscriptions"};
 
     std::vector<std::thread> workers_;

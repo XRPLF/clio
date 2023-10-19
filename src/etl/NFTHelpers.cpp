@@ -45,16 +45,14 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
     // that were changed.
     std::optional<ripple::AccountID> owner;
 
-    for (ripple::STObject const& node : txMeta.getNodes())
-    {
+    for (ripple::STObject const& node : txMeta.getNodes()) {
         if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_PAGE)
             continue;
 
         if (!owner)
             owner = ripple::AccountID::fromVoid(node.getFieldH256(ripple::sfLedgerIndex).data());
 
-        if (node.getFName() == ripple::sfCreatedNode)
-        {
+        if (node.getFName() == ripple::sfCreatedNode) {
             ripple::STArray const& toAddNFTs =
                 node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>().getFieldArray(ripple::sfNFTokens);
             std::transform(
@@ -66,8 +64,7 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         }
         // Else it's modified, as there should never be a deleted NFToken page
         // as a result of a mint.
-        else
-        {
+        else {
             // When a mint results in splitting an existing page,
             // it results in a created page and a modified node. Sometimes,
             // the created node needs to be linked to a third page, resulting
@@ -110,8 +107,7 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 
     // There should always be a difference so the returned finalIDs
     // iterator should never be end().  But better safe than sorry.
-    if (finalIDs.size() != prevIDs.size() + 1 || diff.first == finalIDs.end() || !owner)
-    {
+    if (finalIDs.size() != prevIDs.size() + 1 || diff.first == finalIDs.end() || !owner) {
         throw std::runtime_error(fmt::format(" - unexpected NFTokenMint data in tx {}", strHex(sttx.getTransactionID()))
         );
     }
@@ -130,8 +126,7 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
     // Determine who owned the token when it was burned by finding an
     // NFTokenPage that was deleted or modified that contains this
     // tokenID.
-    for (ripple::STObject const& node : txMeta.getNodes())
-    {
+    for (ripple::STObject const& node : txMeta.getNodes()) {
         if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_PAGE ||
             node.getFName() == ripple::sfCreatedNode)
             continue;
@@ -146,15 +141,12 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         // need to look in the FinalFields.
         std::optional<ripple::STArray> prevNFTs;
 
-        if (node.isFieldPresent(ripple::sfPreviousFields))
-        {
+        if (node.isFieldPresent(ripple::sfPreviousFields)) {
             ripple::STObject const& previousFields =
                 node.peekAtField(ripple::sfPreviousFields).downcast<ripple::STObject>();
             if (previousFields.isFieldPresent(ripple::sfNFTokens))
                 prevNFTs = previousFields.getFieldArray(ripple::sfNFTokens);
-        }
-        else if (!prevNFTs && node.getFName() == ripple::sfDeletedNode)
-        {
+        } else if (!prevNFTs && node.getFName() == ripple::sfDeletedNode) {
             prevNFTs =
                 node.peekAtField(ripple::sfFinalFields).downcast<ripple::STObject>().getFieldArray(ripple::sfNFTokens);
         }
@@ -166,8 +158,7 @@ getNFTokenBurnData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
             std::find_if(prevNFTs->begin(), prevNFTs->end(), [&tokenID](ripple::STObject const& candidate) {
                 return candidate.getFieldH256(ripple::sfNFTokenID) == tokenID;
             });
-        if (nft != prevNFTs->end())
-        {
+        if (nft != prevNFTs->end()) {
             return std::make_pair(
                 txs,
                 NFTsData(
@@ -188,14 +179,12 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
     // If we have the buy offer from this tx, we can determine the owner
     // more easily by just looking at the owner of the accepted NFTokenOffer
     // object.
-    if (sttx.isFieldPresent(ripple::sfNFTokenBuyOffer))
-    {
+    if (sttx.isFieldPresent(ripple::sfNFTokenBuyOffer)) {
         auto const affectedBuyOffer =
             std::find_if(txMeta.getNodes().begin(), txMeta.getNodes().end(), [&sttx](ripple::STObject const& node) {
                 return node.getFieldH256(ripple::sfLedgerIndex) == sttx.getFieldH256(ripple::sfNFTokenBuyOffer);
             });
-        if (affectedBuyOffer == txMeta.getNodes().end())
-        {
+        if (affectedBuyOffer == txMeta.getNodes().end()) {
             std::stringstream msg;
             msg << " - unexpected NFTokenAcceptOffer data in tx " << sttx.getTransactionID();
             throw std::runtime_error(msg.str());
@@ -217,8 +206,7 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
         std::find_if(txMeta.getNodes().begin(), txMeta.getNodes().end(), [&sttx](ripple::STObject const& node) {
             return node.getFieldH256(ripple::sfLedgerIndex) == sttx.getFieldH256(ripple::sfNFTokenSellOffer);
         });
-    if (affectedSellOffer == txMeta.getNodes().end())
-    {
+    if (affectedSellOffer == txMeta.getNodes().end()) {
         std::stringstream msg;
         msg << " - unexpected NFTokenAcceptOffer data in tx " << sttx.getTransactionID();
         throw std::runtime_error(msg.str());
@@ -232,8 +220,7 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
                                          .downcast<ripple::STObject>()
                                          .getAccountID(ripple::sfOwner);
 
-    for (ripple::STObject const& node : txMeta.getNodes())
-    {
+    for (ripple::STObject const& node : txMeta.getNodes()) {
         if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_PAGE ||
             node.getFName() == ripple::sfDeletedNode)
             continue;
@@ -244,8 +231,7 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
             continue;
 
         ripple::STArray const& nfts = [&node] {
-            if (node.getFName() == ripple::sfCreatedNode)
-            {
+            if (node.getFName() == ripple::sfCreatedNode) {
                 return node.peekAtField(ripple::sfNewFields)
                     .downcast<ripple::STObject>()
                     .getFieldArray(ripple::sfNFTokens);
@@ -258,8 +244,7 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
         auto const nft = std::find_if(nfts.begin(), nfts.end(), [&tokenID](ripple::STObject const& candidate) {
             return candidate.getFieldH256(ripple::sfNFTokenID) == tokenID;
         });
-        if (nft != nfts.end())
-        {
+        if (nft != nfts.end()) {
             return {
                 {NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())},
                 NFTsData(tokenID, nodeOwner, txMeta, false)};
@@ -279,8 +264,7 @@ std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
 getNFTokenCancelOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     std::vector<NFTTransactionsData> txs;
-    for (ripple::STObject const& node : txMeta.getNodes())
-    {
+    for (ripple::STObject const& node : txMeta.getNodes()) {
         if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_OFFER)
             continue;
 
@@ -316,8 +300,7 @@ getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
     if (txMeta.getResultTER() != ripple::tesSUCCESS)
         return {{}, {}};
 
-    switch (sttx.getTxnType())
-    {
+    switch (sttx.getTxnType()) {
         case ripple::TxType::ttNFTOKEN_MINT:
             return getNFTokenMintData(txMeta, sttx);
 

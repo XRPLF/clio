@@ -80,8 +80,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     auto cursor = uint256{};
     auto startHint = uint64_t{0ul};
 
-    if (input.marker)
-    {
+    if (input.marker) {
         cursor = uint256(input.marker->c_str());
 
         // We have a start point. Use limit - 1 from the result and use the very last one for the resume.
@@ -95,17 +94,14 @@ NFTOffersHandlerBase::iterateOfferDirectory(
         }();
 
         if (!sle || sle->getFieldU16(ripple::sfLedgerEntryType) != ripple::ltNFTOKEN_OFFER ||
-            tokenID != sle->getFieldH256(ripple::sfNFTokenID))
-        {
+            tokenID != sle->getFieldH256(ripple::sfNFTokenID)) {
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
         }
 
         startHint = sle->getFieldU64(ripple::sfNFTokenOfferNode);
         output.offers.push_back(*sle);
         offers.reserve(reserve);
-    }
-    else
-    {
+    } else {
         // We have no start point, limit should be one higher than requested.
         offers.reserve(++reserve);
     }
@@ -119,8 +115,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
         reserve,
         yield,
         [&offers](ripple::SLE&& offer) {
-            if (offer.getType() == ripple::ltNFTOKEN_OFFER)
-            {
+            if (offer.getType() == ripple::ltNFTOKEN_OFFER) {
                 offers.push_back(std::move(offer));
                 return true;
             }
@@ -132,8 +127,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     if (auto status = std::get_if<Status>(&result))
         return Error{*status};
 
-    if (offers.size() == reserve)
-    {
+    if (offers.size() == reserve) {
         output.limit = input.limit;
         output.marker = to_string(offers.back().key());
         offers.pop_back();
@@ -175,14 +169,10 @@ tag_invoke(boost::json::value_to_tag<NFTOffersHandlerBase::Input>, boost::json::
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        }
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }
     }

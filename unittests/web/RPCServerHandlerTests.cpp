@@ -31,8 +31,7 @@ using namespace web;
 constexpr static auto MINSEQ = 10;
 constexpr static auto MAXSEQ = 30;
 
-struct MockWsBase : public web::ConnectionBase
-{
+struct MockWsBase : public web::ConnectionBase {
     std::string message;
     boost::beast::http::status lastStatus = boost::beast::http::status::unknown;
 
@@ -55,8 +54,7 @@ struct MockWsBase : public web::ConnectionBase
     }
 };
 
-class WebRPCServerHandlerTest : public MockBackendTest
-{
+class WebRPCServerHandlerTest : public MockBackendTest {
 protected:
     void
     SetUp() override

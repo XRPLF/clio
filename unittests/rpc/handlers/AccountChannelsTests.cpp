@@ -36,9 +36,7 @@ constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B25
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 
-class RPCAccountChannelsHandlerTest : public HandlerBaseTest
-{
-};
+class RPCAccountChannelsHandlerTest : public HandlerBaseTest {};
 
 TEST_F(RPCAccountChannelsHandlerTest, LimitNotInt)
 {
@@ -521,8 +519,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
     std::vector<Blob> bbs;
 
     auto repetitions = 50;
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.emplace_back(INDEX1);
         ripple::STObject const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
         bbs.push_back(channel.getSerializer().peekData());
@@ -604,8 +601,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
 
     // 10 pay channel to ACCOUNT2
     auto repetitions = 10;
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.emplace_back(INDEX1);
         ripple::STObject const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
         bbs.push_back(channel.getSerializer().peekData());
@@ -613,8 +609,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
 
     // 20 pay channel to ACCOUNT3
     repetitions = 20;
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.emplace_back(INDEX1);
         ripple::STObject const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT3, 100, 10, 32, TXNID, 28);
         bbs.push_back(channel.getSerializer().peekData());
@@ -797,16 +792,14 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
     // owner dir contains 10 indexes
     int objectsCount = 10;
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     // return 15 objects
     objectsCount = 15;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         bbs.push_back(channel1.getSerializer().peekData());
         objectsCount--;
     }
@@ -866,8 +859,7 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
     ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     int objectsCount = limit;
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(INDEX1);
         bbs.push_back(channel1.getSerializer().peekData());

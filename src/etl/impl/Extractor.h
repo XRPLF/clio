@@ -36,8 +36,7 @@ namespace etl::detail {
  * @brief Extractor thread that is fetching GRPC data and enqueue it on the DataPipeType
  */
 template <typename DataPipeType, typename NetworkValidatedLedgersType, typename LedgerFetcherType>
-class Extractor
-{
+class Extractor {
     util::Logger log_{"ETL"};
 
     std::reference_wrapper<DataPipeType> pipe_;
@@ -90,17 +89,17 @@ private:
         double totalTime = 0.0;
         auto currentSequence = startSequence_;
 
-        while (!shouldFinish(currentSequence) && networkValidatedLedgers_->waitUntilValidatedByNetwork(currentSequence))
-        {
+        while (!shouldFinish(currentSequence) && networkValidatedLedgers_->waitUntilValidatedByNetwork(currentSequence)
+        ) {
             auto [fetchResponse, time] = ::util::timed<std::chrono::duration<double>>([this, currentSequence]() {
                 return ledgerFetcher_.get().fetchDataAndDiff(currentSequence);
             });
             totalTime += time;
 
-            // if the fetch is unsuccessful, stop. fetchLedger only returns false if the server is shutting down, or if
-            // the ledger was found in the database (which means another process already wrote the ledger that this
-            // process was trying to extract; this is a form of a write conflict).
-            // Otherwise, fetchDataAndDiff will keep trying to fetch the specified ledger until successful.
+            // if the fetch is unsuccessful, stop. fetchLedger only returns false if the server is shutting down, or
+            // if the ledger was found in the database (which means another process already wrote the ledger that
+            // this process was trying to extract; this is a form of a write conflict). Otherwise, fetchDataAndDiff
+            // will keep trying to fetch the specified ledger until successful.
             if (!fetchResponse)
                 break;
 

@@ -52,8 +52,7 @@ using Batch = detail::Batch;
  * because clio uses bigint (int64) everywhere except for when one need
  * to specify LIMIT, which needs an int32 :-/
  */
-struct Limit
-{
+struct Limit {
     int32_t limit;
 };
 

@@ -259,8 +259,7 @@ inline std::optional<std::tuple<uint32_t, uint16_t, uint16_t>>
 decodeCTID(T const ctid) noexcept
 {
     auto const getCTID64 = [](T const ctid) noexcept -> std::optional<uint64_t> {
-        if constexpr (std::is_convertible_v<T, std::string>)
-        {
+        if constexpr (std::is_convertible_v<T, std::string>) {
             std::string const ctidString(ctid);
             static std::size_t constexpr CTID_STRING_LENGTH = 16;
             if (ctidString.length() != CTID_STRING_LENGTH)
@@ -307,15 +306,11 @@ logDuration(web::Context const& ctx, T const& dur)
         "Request processing duration = {} milliseconds. request = {}", millis, serialize(util::removeSecret(ctx.params))
     );
 
-    if (seconds > DURATION_ERROR_THRESHOLD_SECONDS)
-    {
+    if (seconds > DURATION_ERROR_THRESHOLD_SECONDS) {
         LOG(log.error()) << ctx.tag() << msg;
-    }
-    else if (seconds > 1)
-    {
+    } else if (seconds > 1) {
         LOG(log.warn()) << ctx.tag() << msg;
-    }
-    else
+    } else
         LOG(log.info()) << ctx.tag() << msg;
 }
 

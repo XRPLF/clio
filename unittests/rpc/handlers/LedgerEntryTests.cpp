@@ -36,12 +36,9 @@ constexpr static auto RANGEMAX = 30;
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto TOKENID = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA";
 
-class RPCLedgerEntryTest : public HandlerBaseTest
-{
-};
+class RPCLedgerEntryTest : public HandlerBaseTest {};
 
-struct ParamTestCaseBundle
-{
+struct ParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -49,10 +46,8 @@ struct ParamTestCaseBundle
 };
 
 // parameterized test cases for parameters check
-struct LedgerEntryParameterTest : public RPCLedgerEntryTest, public WithParamInterface<ParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+struct LedgerEntryParameterTest : public RPCLedgerEntryTest, public WithParamInterface<ParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const
@@ -575,10 +570,8 @@ TEST_P(LedgerEntryParameterTest, InvalidParams)
 }
 
 // parameterized test cases for index
-struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string>
-{
-    struct NameGenerator
-    {
+struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const
@@ -667,18 +660,15 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
     });
 }
 
-struct NormalPathTestBundle
-{
+struct NormalPathTestBundle {
     std::string testName;
     std::string testJson;
     ripple::uint256 expectedIndex;
     ripple::STObject mockedEntity;
 };
 
-struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithParamInterface<NormalPathTestBundle>
-{
-    struct NameGenerator
-    {
+struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithParamInterface<NormalPathTestBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const

@@ -36,8 +36,7 @@ using tcp = boost::asio::ip::tcp;
  */
 template <SomeServerHandler HandlerType>
 class HttpSession : public detail::HttpBase<HttpSession, HandlerType>,
-                    public std::enable_shared_from_this<HttpSession<HandlerType>>
-{
+                    public std::enable_shared_from_this<HttpSession<HandlerType>> {
     boost::beast::tcp_stream stream_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
 

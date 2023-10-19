@@ -75,9 +75,7 @@ auto constexpr static DEFAULT_OUT = R"({
     "validated": true
 })";
 
-class RPCTxTest : public HandlerBaseTest
-{
-};
+class RPCTxTest : public HandlerBaseTest {};
 
 TEST_F(RPCTxTest, ExcessiveLgrRange)
 {
@@ -550,8 +548,7 @@ TEST_F(RPCTxTest, NFTCancelOffer)
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
 
-        for (auto const& id : output->at("meta").at("nftoken_ids").as_array())
-        {
+        for (auto const& id : output->at("meta").at("nftoken_ids").as_array()) {
             auto const idStr = id.as_string();
             const auto it = std::find(ids.begin(), ids.end(), idStr);
             ASSERT_NE(it, ids.end()) << "Unexpected NFT ID: " << idStr;

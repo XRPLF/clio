@@ -39,8 +39,7 @@ namespace etl {
  * First to connect pauses the other and the probing is considered done at this point.
  * If however the connected source loses connection the probing is kickstarted again.
  */
-class ProbingSource : public Source
-{
+class ProbingSource : public Source {
 public:
     // TODO: inject when unit tests will be written for ProbingSource
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;

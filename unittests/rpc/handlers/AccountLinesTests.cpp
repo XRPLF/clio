@@ -36,9 +36,7 @@ constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B25
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 
-class RPCAccountLinesHandlerTest : public HandlerBaseTest
-{
-};
+class RPCAccountLinesHandlerTest : public HandlerBaseTest {};
 
 // TODO: a lot of the tests are copy-pasted from AccountChannelsTest
 // because the logic is mostly the same but currently implemented in
@@ -569,8 +567,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     std::vector<Blob> bbs;
 
     auto repetitions = 50;
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.emplace_back(INDEX1);
         auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
@@ -652,8 +649,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
 
     // 10 lines to ACCOUNT2
     auto repetitions = 10;
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.emplace_back(INDEX1);
         auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
@@ -661,8 +657,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
 
     // 20 lines to ACCOUNT3
     repetitions = 20;
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.emplace_back(INDEX1);
         auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT3, 10, ACCOUNT, 100, ACCOUNT3, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
@@ -849,16 +844,14 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
     // owner dir contains 10 indexes
     int objectsCount = 10;
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     // return 15 objects
     objectsCount = 15;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         bbs.push_back(line.getSerializer().peekData());
         objectsCount--;
     }
@@ -918,8 +911,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
     auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 0);
     int objectsCount = limit;
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(INDEX1);
         bbs.push_back(line.getSerializer().peekData());

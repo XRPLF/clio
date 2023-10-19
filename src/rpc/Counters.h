@@ -33,13 +33,11 @@ namespace rpc {
 /**
  * @brief Holds information about successful, failed, forwarded, etc. RPC handler calls.
  */
-class Counters
-{
+class Counters {
     /**
      * @brief All counters the system keeps track of for each RPC method.
      */
-    struct MethodInfo
-    {
+    struct MethodInfo {
         std::uint64_t started = 0u;
         std::uint64_t finished = 0u;
         std::uint64_t failed = 0u;

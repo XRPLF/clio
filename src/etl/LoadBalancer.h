@@ -48,8 +48,7 @@ namespace etl {
  * which ledgers have been validated by the network, and the range of ledgers each etl source has). This class also
  * allows requests for ledger data to be load balanced across all possible ETL sources.
  */
-class LoadBalancer
-{
+class LoadBalancer {
 public:
     using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;

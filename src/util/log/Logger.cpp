@@ -80,13 +80,11 @@ LogService::init(util::Config const& config)
     auto const defaultFormat = "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%";
     std::string format = config.valueOr<std::string>("log_format", defaultFormat);
 
-    if (config.valueOr("log_to_console", false))
-    {
+    if (config.valueOr("log_to_console", false)) {
         boost::log::add_console_log(std::cout, keywords::format = format);
     }
 
-    if (auto logDir = config.maybeValue<std::string>("log_directory"); logDir)
-    {
+    if (auto logDir = config.maybeValue<std::string>("log_directory"); logDir) {
         boost::filesystem::path dirPath{logDir.value()};
         if (!boost::filesystem::exists(dirPath))
             boost::filesystem::create_directories(dirPath);
@@ -128,8 +126,7 @@ LogService::init(util::Config const& config)
         min_severity[channel] = defaultSeverity;
     min_severity["Alert"] = Severity::WRN;  // Channel for alerts, always warning severity
 
-    for (auto const overrides = config.arrayOr("log_channels", {}); auto const& cfg : overrides)
-    {
+    for (auto const overrides = config.arrayOr("log_channels", {}); auto const& cfg : overrides) {
         auto name = cfg.valueOrThrow<std::string>("channel", "Channel name is required");
         if (std::count(std::begin(channels), std::end(channels), name) == 0)
             throw std::runtime_error("Can't override settings for log channel " + name + ": invalid channel");
@@ -177,8 +174,7 @@ Logger::Pump::pretty_path(SourceLocationType const& loc, size_t max_depth)
 {
     auto const file_path = std::string{loc.file_name()};
     auto idx = file_path.size();
-    while (max_depth-- > 0)
-    {
+    while (max_depth-- > 0) {
         idx = file_path.rfind('/', idx - 1);
         if (idx == std::string::npos || idx == 0)
             break;

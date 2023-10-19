@@ -33,8 +33,7 @@ namespace http = boost::beast::http;
  *
  * This class is used to represent a connection in RPC executor and subscription manager.
  */
-struct ConnectionBase : public util::Taggable
-{
+struct ConnectionBase : public util::Taggable {
 protected:
     boost::system::error_code ec_;
 

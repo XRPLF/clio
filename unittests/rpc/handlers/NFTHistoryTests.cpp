@@ -35,12 +35,9 @@ constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto NFTID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
 
-class RPCNFTHistoryHandlerTest : public HandlerBaseTest
-{
-};
+class RPCNFTHistoryHandlerTest : public HandlerBaseTest {};
 
-struct NFTHistoryParamTestCaseBundle
-{
+struct NFTHistoryParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -49,10 +46,8 @@ struct NFTHistoryParamTestCaseBundle
 
 // parameterized test cases for parameters check
 struct NFTHistoryParameterTest : public RPCNFTHistoryHandlerTest,
-                                 public WithParamInterface<NFTHistoryParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+                                 public WithParamInterface<NFTHistoryParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const

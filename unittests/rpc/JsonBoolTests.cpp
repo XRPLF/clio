@@ -25,18 +25,15 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-struct JsonBoolTestsCaseBundle
-{
+struct JsonBoolTestsCaseBundle {
     std::string testName;
     std::string json;
     bool expectedBool;
 };
 
-class JsonBoolTests : public TestWithParam<JsonBoolTestsCaseBundle>
-{
+class JsonBoolTests : public TestWithParam<JsonBoolTestsCaseBundle> {
 public:
-    struct NameGenerator
-    {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const

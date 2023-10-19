@@ -31,8 +31,7 @@
 using namespace testing;
 using namespace etl;
 
-class ETLExtractorTest : public NoLoggerFixture
-{
+class ETLExtractorTest : public NoLoggerFixture {
 protected:
     using ExtractionDataPipeType = MockExtractionDataPipe;
     using LedgerFetcherType = MockLedgerFetcher;

@@ -24,8 +24,7 @@
 
 using namespace data;
 
-struct MockBackend : public BackendInterface
-{
+struct MockBackend : public BackendInterface {
     MockBackend(util::Config)
     {
     }

@@ -34,9 +34,7 @@ constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
 
-class RPCTransactionEntryHandlerTest : public HandlerBaseTest
-{
-};
+class RPCTransactionEntryHandlerTest : public HandlerBaseTest {};
 
 TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
 {

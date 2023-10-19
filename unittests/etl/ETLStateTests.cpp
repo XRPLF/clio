@@ -28,8 +28,7 @@ namespace json = boost::json;
 using namespace util;
 using namespace testing;
 
-struct ETLStateTest : public NoLoggerFixture
-{
+struct ETLStateTest : public NoLoggerFixture {
     MockSource const source = MockSource{};
 };
 

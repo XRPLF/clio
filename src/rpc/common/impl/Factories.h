@@ -45,18 +45,13 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
                 if (firstFailure)
                     return;  // already failed earlier - skip
 
-                if constexpr (SomeRequirement<decltype(*req)>)
-                {
+                if constexpr (SomeRequirement<decltype(*req)>) {
                     if (auto const res = req->verify(j, key); not res)
                         firstFailure = res.error();
-                }
-                else if constexpr (SomeModifier<decltype(*req)>)
-                {
+                } else if constexpr (SomeModifier<decltype(*req)>) {
                     if (auto const res = req->modify(j, key); not res)
                         firstFailure = res.error();
-                }
-                else
-                {
+                } else {
                     static_assert(unsupported_v<decltype(*req)>);
                 }
             }(),

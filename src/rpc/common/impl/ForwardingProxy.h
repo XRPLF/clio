@@ -33,8 +33,7 @@
 namespace rpc::detail {
 
 template <typename LoadBalancerType, typename CountersType, typename HandlerProviderType>
-class ForwardingProxy
-{
+class ForwardingProxy {
     util::Logger log_{"RPC"};
 
     std::shared_ptr<LoadBalancerType> balancer_;
@@ -91,8 +90,7 @@ public:
         toForward["command"] = ctx.method;
 
         auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
-        if (not res)
-        {
+        if (not res) {
             notifyFailedToForward(ctx.method);
             return Status{RippledError::rpcFAILED_TO_FORWARD};
         }

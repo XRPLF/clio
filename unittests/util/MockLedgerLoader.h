@@ -25,8 +25,7 @@
 
 #include <optional>
 
-struct MockLedgerLoader
-{
+struct MockLedgerLoader {
     using GetLedgerResponseType = FakeFetchResponse;
     using RawLedgerObjectType = FakeLedgerObject;
 

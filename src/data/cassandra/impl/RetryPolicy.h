@@ -35,8 +35,7 @@ namespace data::cassandra::detail {
 /**
  * @brief A retry policy that employs exponential backoff
  */
-class ExponentialBackoffRetryPolicy
-{
+class ExponentialBackoffRetryPolicy {
     util::Logger log_{"Backend"};
 
     boost::asio::steady_timer timer_;

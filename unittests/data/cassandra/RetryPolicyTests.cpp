@@ -28,9 +28,7 @@ using namespace data::cassandra;
 using namespace data::cassandra::detail;
 using namespace testing;
 
-class BackendCassandraRetryPolicyTest : public SyncAsioContextTest
-{
-};
+class BackendCassandraRetryPolicyTest : public SyncAsioContextTest {};
 
 TEST_F(BackendCassandraRetryPolicyTest, ShouldRetryAlwaysTrue)
 {
@@ -41,8 +39,7 @@ TEST_F(BackendCassandraRetryPolicyTest, ShouldRetryAlwaysTrue)
 
     // this policy actually always returns true
     auto const err = CassandraError{"ok", CASS_OK};
-    for (auto i = 0; i < 1024; ++i)
-    {
+    for (auto i = 0; i < 1024; ++i) {
         EXPECT_TRUE(retryPolicy.shouldRetry(err));
     }
 }

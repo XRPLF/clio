@@ -27,8 +27,7 @@
 
 namespace rpc {
 
-class NFTOffersHandlerBase
-{
+class NFTOffersHandlerBase {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
@@ -36,8 +35,7 @@ public:
     static auto constexpr LIMIT_MAX = 500;
     static auto constexpr LIMIT_DEFAULT = 250;
 
-    struct Output
-    {
+    struct Output {
         std::string nftID = {};
         std::vector<ripple::SLE> offers = {};
 
@@ -47,8 +45,7 @@ public:
         std::optional<std::string> marker = {};
     };
 
-    struct Input
-    {
+    struct Input {
         std::string nftID;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;

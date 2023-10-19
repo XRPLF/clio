@@ -35,8 +35,7 @@ namespace etl::detail {
  * @brief GRPC Ledger data fetcher
  */
 template <typename LoadBalancerType>
-class LedgerFetcher
-{
+class LedgerFetcher {
 public:
     using OptionalGetLedgerResponseType = typename LoadBalancerType::OptionalGetLedgerResponseType;
 

@@ -28,8 +28,7 @@ namespace rpc {
  *
  * For more details see https://xrpl.org/ping.html
  */
-class PingHandler
-{
+class PingHandler {
 public:
     using Output = VoidOutput;
     using Result = HandlerReturnType<Output>;

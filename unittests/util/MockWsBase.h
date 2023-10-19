@@ -21,8 +21,7 @@
 
 #include <web/interface/ConnectionBase.h>
 
-struct MockSession : public web::ConnectionBase
-{
+struct MockSession : public web::ConnectionBase {
     std::string message;
     void
     send(std::shared_ptr<std::string> msg_type) override
@@ -41,8 +40,7 @@ struct MockSession : public web::ConnectionBase
     }
 };
 
-struct MockDeadSession : public web::ConnectionBase
-{
+struct MockDeadSession : public web::ConnectionBase {
     void
     send(std::shared_ptr<std::string>) override
     {

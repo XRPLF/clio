@@ -37,12 +37,9 @@ constexpr static auto NFTID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C9
 constexpr static auto NFTID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
 constexpr static auto NFTID3 = "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
 
-class RPCAccountTxHandlerTest : public HandlerBaseTest
-{
-};
+class RPCAccountTxHandlerTest : public HandlerBaseTest {};
 
-struct AccountTxParamTestCaseBundle
-{
+struct AccountTxParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::optional<std::string> expectedError;
@@ -51,10 +48,9 @@ struct AccountTxParamTestCaseBundle
 };
 
 // parameterized test cases for parameters check
-struct AccountTxParameterTest : public RPCAccountTxHandlerTest, public WithParamInterface<AccountTxParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
+                                public WithParamInterface<AccountTxParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const
@@ -359,8 +355,7 @@ TEST_P(AccountTxParameterTest, CheckParams)
     auto* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
     auto const req = json::parse(testBundle.testJson);
-    if (testBundle.expectedError.has_value())
-    {
+    if (testBundle.expectedError.has_value()) {
         ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());
 
         runSpawn([&, this](auto yield) {
@@ -371,9 +366,7 @@ TEST_P(AccountTxParameterTest, CheckParams)
             EXPECT_EQ(err.at("error").as_string(), *testBundle.expectedError);
             EXPECT_EQ(err.at("error_message").as_string(), *testBundle.expectedErrorMessage);
         });
-    }
-    else
-    {
+    } else {
         EXPECT_CALL(*rawBackendPtr, fetchAccountTransactions);
 
         runSpawn([&, this](auto yield) {
@@ -1468,8 +1461,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
     });
 }
 
-struct AccountTxTransactionBundle
-{
+struct AccountTxTransactionBundle {
     std::string testName;
     std::string testJson;
     std::string result;
@@ -1478,10 +1470,8 @@ struct AccountTxTransactionBundle
 
 // parameterized test cases for parameters check
 struct AccountTxTransactionTypeTest : public RPCAccountTxHandlerTest,
-                                      public WithParamInterface<AccountTxTransactionBundle>
-{
-    struct NameGenerator
-    {
+                                      public WithParamInterface<AccountTxTransactionBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const

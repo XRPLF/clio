@@ -30,9 +30,7 @@ using namespace testing;
 constexpr static auto RANGEMIN = 10;
 constexpr static auto RANGEMAX = 30;
 
-class RPCLedgerRangeTest : public HandlerBaseTest
-{
-};
+class RPCLedgerRangeTest : public HandlerBaseTest {};
 
 TEST_F(RPCLedgerRangeTest, LedgerRangeMinMaxSame)
 {

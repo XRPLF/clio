@@ -26,8 +26,7 @@
 
 namespace http = boost::beast::http;
 
-class IPAdminVerificationStrategyTest : public NoLoggerFixture
-{
+class IPAdminVerificationStrategyTest : public NoLoggerFixture {
 protected:
     web::detail::IPAdminVerificationStrategy strat_;
     http::request<http::string_body> request_ = {};
@@ -42,8 +41,7 @@ TEST_F(IPAdminVerificationStrategyTest, IsAdminOnlyForIP_127_0_0_1)
     EXPECT_FALSE(strat_.isAdmin(request_, "localhost"));
 }
 
-class PasswordAdminVerificationStrategyTest : public NoLoggerFixture
-{
+class PasswordAdminVerificationStrategyTest : public NoLoggerFixture {
 protected:
     const std::string password_ = "secret";
     web::detail::PasswordAdminVerificationStrategy strat_{password_};
@@ -75,8 +73,7 @@ TEST_F(PasswordAdminVerificationStrategyTest, IsAdminReturnsTrueOnlyForValidPass
     EXPECT_FALSE(strat_.isAdmin(makeRequest(password_, http::field::authentication_info), ""));
 }
 
-struct MakeAdminVerificationStrategyTestParams
-{
+struct MakeAdminVerificationStrategyTestParams {
     MakeAdminVerificationStrategyTestParams(
         std::optional<std::string> passwordOpt,
         bool expectIpStrategy,
@@ -92,9 +89,7 @@ struct MakeAdminVerificationStrategyTestParams
     bool expectPasswordStrategy;
 };
 
-class MakeAdminVerificationStrategyTest : public testing::TestWithParam<MakeAdminVerificationStrategyTestParams>
-{
-};
+class MakeAdminVerificationStrategyTest : public testing::TestWithParam<MakeAdminVerificationStrategyTestParams> {};
 
 TEST_P(MakeAdminVerificationStrategyTest, ChoosesStrategyCorrectly)
 {

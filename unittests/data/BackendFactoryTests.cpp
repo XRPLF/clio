@@ -29,8 +29,7 @@ constexpr auto contactPoints = "127.0.0.1";
 constexpr auto keyspace = "factory_test";
 }  // namespace
 
-class BackendCassandraFactoryTest : public SyncAsioContextTest
-{
+class BackendCassandraFactoryTest : public SyncAsioContextTest {
 protected:
     void
     SetUp() override
@@ -45,8 +44,7 @@ protected:
     }
 };
 
-class BackendCassandraFactoryTestWithDB : public BackendCassandraFactoryTest
-{
+class BackendCassandraFactoryTestWithDB : public BackendCassandraFactoryTest {
 protected:
     void
     SetUp() override

@@ -75,8 +75,7 @@ ProbingSource::hasLedger(uint32_t sequence) const
 boost::json::object
 ProbingSource::toJson() const
 {
-    if (!currentSrc_)
-    {
+    if (!currentSrc_) {
         boost::json::object sourcesJson = {
             {"ws", plainSrc_->toJson()},
             {"wss", sslSrc_->toJson()},
@@ -159,8 +158,7 @@ ProbingSource::make_SSLHooks() noexcept
                 if (currentSrc_)
                     return SourceHooks::Action::STOP;
 
-                if (!ec)
-                {
+                if (!ec) {
                     plainSrc_->pause();
                     currentSrc_ = sslSrc_;
                     LOG(log_.info()) << "Selected WSS as the main source: " << currentSrc_->toString();
@@ -170,8 +168,7 @@ ProbingSource::make_SSLHooks() noexcept
             // onDisconnected
             [this](auto /* ec */) {
                 std::lock_guard const lck(mtx_);
-                if (currentSrc_)
-                {
+                if (currentSrc_) {
                     currentSrc_ = nullptr;
                     plainSrc_->resume();
                 }
@@ -188,8 +185,7 @@ ProbingSource::make_PlainHooks() noexcept
                 if (currentSrc_)
                     return SourceHooks::Action::STOP;
 
-                if (!ec)
-                {
+                if (!ec) {
                     sslSrc_->pause();
                     currentSrc_ = plainSrc_;
                     LOG(log_.info()) << "Selected Plain WS as the main source: " << currentSrc_->toString();
@@ -199,8 +195,7 @@ ProbingSource::make_PlainHooks() noexcept
             // onDisconnected
             [this](auto /* ec */) {
                 std::lock_guard const lck(mtx_);
-                if (currentSrc_)
-                {
+                if (currentSrc_) {
                     currentSrc_ = nullptr;
                     sslSrc_->resume();
                 }

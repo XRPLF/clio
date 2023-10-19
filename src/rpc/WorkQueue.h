@@ -37,8 +37,7 @@ namespace rpc {
 /**
  * @brief An asynchronous, thread-safe queue for RPC requests.
  */
-class WorkQueue
-{
+class WorkQueue {
     // these are cumulative for the lifetime of the process
     std::atomic_uint64_t queued_ = 0;
     std::atomic_uint64_t durationUs_ = 0;
@@ -90,8 +89,7 @@ public:
     bool
     postCoro(FnType&& func, bool isWhiteListed)
     {
-        if (curSize_ >= maxSize_ && !isWhiteListed)
-        {
+        if (curSize_ >= maxSize_ && !isWhiteListed) {
             LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << curSize_
                              << "; max size = " << maxSize_;
             return false;

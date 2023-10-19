@@ -33,8 +33,7 @@
 /**
  * @brief Struct used to keep track of what to write to account_transactions/account_tx tables.
  */
-struct AccountTransactionsData
-{
+struct AccountTransactionsData {
     boost::container::flat_set<ripple::AccountID> accounts;
     std::uint32_t ledgerSequence{};
     std::uint32_t transactionIndex{};
@@ -56,8 +55,7 @@ struct AccountTransactionsData
  *
  * Gets written to nf_token_transactions table and the like.
  */
-struct NFTTransactionsData
-{
+struct NFTTransactionsData {
     ripple::uint256 tokenID;
     std::uint32_t ledgerSequence;
     std::uint32_t transactionIndex;
@@ -74,8 +72,7 @@ struct NFTTransactionsData
  *
  * Gets written to nf_tokens table and the like.
  */
-struct NFTsData
-{
+struct NFTsData {
     ripple::uint256 tokenID;
     std::uint32_t ledgerSequence;
 

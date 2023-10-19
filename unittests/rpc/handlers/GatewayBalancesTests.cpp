@@ -37,22 +37,17 @@ constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B2501
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 constexpr static auto TXNID = "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879";
 
-class RPCGatewayBalancesHandlerTest : public HandlerBaseTest
-{
-};
+class RPCGatewayBalancesHandlerTest : public HandlerBaseTest {};
 
-struct ParameterTestBundle
-{
+struct ParameterTestBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
     std::string expectedErrorMessage;
 };
 
-struct ParameterTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<ParameterTestBundle>
-{
-    struct NameGenerator
-    {
+struct ParameterTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<ParameterTestBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const
@@ -365,8 +360,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
     });
 }
 
-struct NormalTestBundle
-{
+struct NormalTestBundle {
     std::string testName;
     ripple::STObject mockedDir;
     std::vector<ripple::STObject> mockedObjects;
@@ -374,10 +368,8 @@ struct NormalTestBundle
     std::string hotwallet;
 };
 
-struct NormalPathTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<NormalTestBundle>
-{
-    struct NameGenerator
-    {
+struct NormalPathTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<NormalTestBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const

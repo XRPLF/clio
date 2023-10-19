@@ -28,8 +28,7 @@
 
 #include <optional>
 
-struct MockLoadBalancer
-{
+struct MockLoadBalancer {
     using RawLedgerObjectType = FakeLedgerObject;
 
     MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());

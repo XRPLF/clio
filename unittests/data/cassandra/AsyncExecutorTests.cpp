@@ -29,11 +29,9 @@ using namespace data::cassandra;
 using namespace data::cassandra::detail;
 using namespace testing;
 
-class BackendCassandraAsyncExecutorTest : public SyncAsioContextTest
-{
+class BackendCassandraAsyncExecutorTest : public SyncAsioContextTest {
 protected:
-    struct CallbackMock
-    {
+    struct CallbackMock {
         MOCK_METHOD(void, onComplete, (FakeResultOrError));
         MOCK_METHOD(void, onRetry, ());
     };
@@ -79,12 +77,9 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;
-            if (callCount >= 3)
-            {
+            if (callCount >= 3) {
                 cb({});
-            }
-            else
-            {
+            } else {
                 cb({CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}});
             }
 
@@ -125,12 +120,9 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
     ON_CALL(handle, asyncExecute(An<FakeStatement const&>(), An<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([&callCount](auto const&, auto&& cb) {
             ++callCount;
-            if (callCount >= 3)
-            {
+            if (callCount >= 3) {
                 cb({});
-            }
-            else
-            {
+            } else {
                 cb({CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}});
             }
 

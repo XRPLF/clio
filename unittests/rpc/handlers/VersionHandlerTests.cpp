@@ -30,9 +30,7 @@ constexpr static auto MAX_API_VERSION = 10u;
 using namespace rpc;
 namespace json = boost::json;
 
-class RPCVersionHandlerTest : public HandlerBaseTest
-{
-};
+class RPCVersionHandlerTest : public HandlerBaseTest {};
 
 TEST_F(RPCVersionHandlerTest, Default)
 {

@@ -35,12 +35,9 @@ constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 
-class RPCAccountInfoHandlerTest : public HandlerBaseTest
-{
-};
+class RPCAccountInfoHandlerTest : public HandlerBaseTest {};
 
-struct AccountInfoParamTestCaseBundle
-{
+struct AccountInfoParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -49,10 +46,8 @@ struct AccountInfoParamTestCaseBundle
 
 // parameterized test cases for parameters check
 struct AccountInfoParameterTest : public RPCAccountInfoHandlerTest,
-                                  public WithParamInterface<AccountInfoParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+                                  public WithParamInterface<AccountInfoParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const

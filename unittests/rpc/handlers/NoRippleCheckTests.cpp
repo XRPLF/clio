@@ -36,12 +36,9 @@ constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B25
 constexpr static auto ISSUER = "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD";
 constexpr static auto TXNID = "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879";
 
-class RPCNoRippleCheckTest : public HandlerBaseTest
-{
-};
+class RPCNoRippleCheckTest : public HandlerBaseTest {};
 
-struct NoRippleParamTestCaseBundle
-{
+struct NoRippleParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -49,10 +46,9 @@ struct NoRippleParamTestCaseBundle
 };
 
 // parameterized test cases for parameters check
-struct NoRippleCheckParameterTest : public RPCNoRippleCheckTest, public WithParamInterface<NoRippleParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+struct NoRippleCheckParameterTest : public RPCNoRippleCheckTest,
+                                    public WithParamInterface<NoRippleParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const
@@ -799,8 +795,7 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
 
     std::vector<Blob> bbs;
     bbs.reserve(NoRippleCheckHandler::LIMIT_MAX + 1);
-    for (auto i = 0; i < NoRippleCheckHandler::LIMIT_MAX + 1; i++)
-    {
+    for (auto i = 0; i < NoRippleCheckHandler::LIMIT_MAX + 1; i++) {
         bbs.push_back(line1.getSerializer().peekData());
     }
 

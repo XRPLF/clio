@@ -26,8 +26,7 @@ using namespace std;
 
 namespace {
 template <class... Ts>
-struct overloadSet : Ts...
-{
+struct overloadSet : Ts... {
     using Ts::operator()...;
 };
 
@@ -145,8 +144,7 @@ makeError(Status const& status)
         status.code
     );
 
-    if (status.extraInfo)
-    {
+    if (status.extraInfo) {
         for (auto& [key, value] : status.extraInfo.value())
             res[key] = value;
     }

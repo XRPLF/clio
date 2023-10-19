@@ -30,8 +30,7 @@ namespace data::cassandra {
 /**
  * @brief Provides settings for @ref BasicCassandraBackend.
  */
-class SettingsProvider
-{
+class SettingsProvider {
     util::Config config_;
 
     std::string keyspace_;

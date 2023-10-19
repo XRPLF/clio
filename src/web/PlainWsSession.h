@@ -31,8 +31,7 @@ namespace web {
  * Majority of the operations are handled by the base class.
  */
 template <SomeServerHandler HandlerType>
-class PlainWsSession : public detail::WsBase<PlainWsSession, HandlerType>
-{
+class PlainWsSession : public detail::WsBase<PlainWsSession, HandlerType> {
     using StreamType = boost::beast::websocket::stream<boost::beast::tcp_stream>;
     StreamType ws_;
 
@@ -79,8 +78,7 @@ public:
  * Pass the socket to the session class after upgrade.
  */
 template <SomeServerHandler HandlerType>
-class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<HandlerType>>
-{
+class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<HandlerType>> {
     using std::enable_shared_from_this<WsUpgrader<HandlerType>>::shared_from_this;
 
     boost::beast::tcp_stream http_;

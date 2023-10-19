@@ -33,12 +33,9 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-class RPCAccountOffersHandlerTest : public HandlerBaseTest
-{
-};
+class RPCAccountOffersHandlerTest : public HandlerBaseTest {};
 
-struct AccountOfferParamTestCaseBundle
-{
+struct AccountOfferParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -47,10 +44,8 @@ struct AccountOfferParamTestCaseBundle
 
 // parameterized test cases for parameters check
 struct AccountOfferParameterTest : public RPCAccountOffersHandlerTest,
-                                   public WithParamInterface<AccountOfferParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+                                   public WithParamInterface<AccountOfferParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
         operator()(testing::TestParamInfo<ParamType> const& info) const
@@ -372,8 +367,7 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
     std::vector<Blob> bbs;
-    for (auto i = 0; i < 20; i++)
-    {
+    for (auto i = 0; i < 20; i++) {
         auto const offer = CreateOfferLedgerObject(
             ACCOUNT,
             10,
@@ -430,8 +424,7 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
-    for (auto i = 0; i < 20; i++)
-    {
+    for (auto i = 0; i < 20; i++) {
         auto const offer = CreateOfferLedgerObject(
             ACCOUNT,
             10,

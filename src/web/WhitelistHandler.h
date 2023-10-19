@@ -33,8 +33,7 @@ namespace web {
 /**
  * @brief A whitelist to remove rate limits of certain IP addresses.
  */
-class Whitelist
-{
+class Whitelist {
     std::vector<boost::asio::ip::network_v4> subnetsV4_;
     std::vector<boost::asio::ip::network_v6> subnetsV6_;
     std::vector<boost::asio::ip::address> ips_;
@@ -51,22 +50,16 @@ public:
     {
         using namespace boost::asio;
 
-        if (not isMask(net))
-        {
+        if (not isMask(net)) {
             ips_.push_back(ip::make_address(net));
             return;
         }
 
-        if (isV4(net))
-        {
+        if (isV4(net)) {
             subnetsV4_.push_back(ip::make_network_v4(net));
-        }
-        else if (isV6(net))
-        {
+        } else if (isV6(net)) {
             subnetsV6_.push_back(ip::make_network_v6(net));
-        }
-        else
-        {
+        } else {
             throw std::runtime_error(fmt::format("malformed network: {}", net.data()));
         }
     }
@@ -86,15 +79,13 @@ public:
         if (std::find(std::begin(ips_), std::end(ips_), addr) != std::end(ips_))
             return true;
 
-        if (addr.is_v4())
-        {
+        if (addr.is_v4()) {
             return std::find_if(
                        std::begin(subnetsV4_), std::end(subnetsV4_), std::bind_front(&isInV4Subnet, std::cref(addr))
                    ) != std::end(subnetsV4_);
         }
 
-        if (addr.is_v6())
-        {
+        if (addr.is_v6()) {
             return std::find_if(
                        std::begin(subnetsV6_), std::end(subnetsV6_), std::bind_front(&isInV6Subnet, std::cref(addr))
                    ) != std::end(subnetsV6_);
@@ -142,8 +133,7 @@ private:
 /**
  * @brief A simple handler to add/check elements in a whitelist.
  */
-class WhitelistHandler
-{
+class WhitelistHandler {
     Whitelist whitelist_;
 
 public:

@@ -28,11 +28,9 @@ using namespace data::cassandra;
 using namespace data::cassandra::detail;
 using namespace testing;
 
-class BackendCassandraExecutionStrategyTest : public SyncAsioContextTest
-{
+class BackendCassandraExecutionStrategyTest : public SyncAsioContextTest {
 protected:
-    class MockBackendCounters
-    {
+    class MockBackendCounters {
     public:
         using PtrType = std::shared_ptr<StrictMock<MockBackendCounters>>;
         static PtrType
@@ -295,12 +293,9 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineThrowsOnFailure
 
     ON_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([&callCount](auto const&, auto&& cb) {
-            if (callCount == 1)
-            {  // error happens on one of the entries
+            if (callCount == 1) {  // error happens on one of the entries
                 cb({CassandraError{"invalid data", CASS_ERROR_LIB_INVALID_DATA}});
-            }
-            else
-            {
+            } else {
                 cb({});  // pretend we got data
             }
             ++callCount;
