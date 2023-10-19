@@ -45,6 +45,7 @@ TEST(LabelTests, serialize)
 
 TEST(LabelsTest, serialize)
 {
+    EXPECT_EQ(Labels().serialize(), "");
     EXPECT_EQ(Labels({Label("name", "value")}).serialize(), R"({name="value"})");
     EXPECT_EQ(
         Labels({Label("name", "value"), Label("name2", "value2")}).serialize(), R"({name="value",name2="value2"})");

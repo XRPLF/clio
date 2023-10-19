@@ -23,11 +23,72 @@
 
 namespace rpc {
 
+using util::prometheus::Labels;
+
+Counters::MethodInfo::MethodInfo(std::string method)
+    : started(PROMETHEUS().counterInt(
+          fmt::format("rpc_{}_method_total_number", method),
+          Labels{{{"status", "started"}}},
+          fmt::format("Total number of started calls to the method {}", method)))
+    , finished(PROMETHEUS().counterInt(
+          fmt::format("rpc_{}_method_total_number", method),
+          Labels{{{"status", "finished"}}},
+          fmt::format("Total number of finished calls to the method {}", method)))
+    , failed(PROMETHEUS().counterInt(
+          fmt::format("rpc_{}_method_total_number", method),
+          Labels{{{"status", "failed"}}},
+          fmt::format("Total number of failed calls to the method {}", method)))
+    , errored(PROMETHEUS().counterInt(
+          fmt::format("rpc_{}_method_total_number", method),
+          Labels{{{"status", "errored"}}},
+          fmt::format("Total number of errored calls to the method {}", method)))
+    , forwarded(PROMETHEUS().counterInt(
+          fmt::format("rpc_{}_method_total_number", method),
+          Labels{{{"status", "forwarded"}}},
+          fmt::format("Total number of forwarded calls to the method {}", method)))
+    , failedForward(PROMETHEUS().counterInt(
+          fmt::format("rpc_{}_method_total_number", method),
+          Labels{{{"status", "failed_forward"}}},
+          fmt::format("Total number of failed forwarded calls to the method {}", method)))
+    , duration(PROMETHEUS().counterInt(
+          fmt::format("rpc_{}_method_duration_us", method),
+          Labels(),
+          fmt::format("Total duration of calls to the method {}", method)))
+{
+}
+
+Counters::MethodInfo&
+Counters::getMethodInfo(std::string const& method)
+{
+    auto it = methodInfo_.find(method);
+    if (it == methodInfo_.end())
+    {
+        it = methodInfo_.emplace(method, MethodInfo(method)).first;
+    }
+    return it->second;
+}
+
+Counters::Counters(WorkQueue const& wq)
+    : tooBusyCounter_(
+          PROMETHEUS().counterInt("rpc_too_busy_errors_total_number", Labels(), "Total number of too busy errors"))
+    , notReadyCounter_(
+          PROMETHEUS().counterInt("rpc_not_ready_total_number", Labels(), "Total number of not ready replyes"))
+    , badSyntaxCounter_(
+          PROMETHEUS().counterInt("rpc_bad_syntax_total_number", Labels(), "Total number of bad syntax replyes"))
+    , unknownCommandCounter_(PROMETHEUS().counterInt(
+          "rpc_unknown_command_total_number",
+          Labels(),
+          "Total number of unknown command replyes"))
+    , internalErrorCounter_(
+          PROMETHEUS().counterInt("rpc_internal_error_total_number", Labels(), "Total number of internal errors"))
+    , workQueue_(std::cref(wq))
+    , startupTime_{std::chrono::system_clock::now()} {};
+
 void
 Counters::rpcFailed(std::string const& method)
 {
     std::scoped_lock const lk(mutex_);
-    MethodInfo& counters = methodInfo_[method];
+    MethodInfo& counters = getMethodInfo(method);
     ++counters.started;
     ++counters.failed;
 }
@@ -36,7 +97,7 @@ void
 Counters::rpcErrored(std::string const& method)
 {
     std::scoped_lock const lk(mutex_);
-    MethodInfo& counters = methodInfo_[method];
+    MethodInfo& counters = getMethodInfo(method);
     ++counters.started;
     ++counters.errored;
 }
@@ -45,7 +106,7 @@ void
 Counters::rpcComplete(std::string const& method, std::chrono::microseconds const& rpcDuration)
 {
     std::scoped_lock const lk(mutex_);
-    MethodInfo& counters = methodInfo_[method];
+    MethodInfo& counters = getMethodInfo(method);
     ++counters.started;
     ++counters.finished;
     counters.duration += rpcDuration.count();
@@ -55,7 +116,7 @@ void
 Counters::rpcForwarded(std::string const& method)
 {
     std::scoped_lock const lk(mutex_);
-    MethodInfo& counters = methodInfo_[method];
+    MethodInfo& counters = getMethodInfo(method);
     ++counters.forwarded;
 }
 
@@ -63,7 +124,7 @@ void
 Counters::rpcFailedToForward(std::string const& method)
 {
     std::scoped_lock const lk(mutex_);
-    MethodInfo& counters = methodInfo_[method];
+    MethodInfo& counters = getMethodInfo(method);
     ++counters.failedForward;
 }
 
@@ -115,22 +176,22 @@ Counters::report() const
     for (auto const& [method, info] : methodInfo_)
     {
         auto counters = boost::json::object{};
-        counters[JS(started)] = std::to_string(info.started);
-        counters[JS(finished)] = std::to_string(info.finished);
-        counters[JS(errored)] = std::to_string(info.errored);
-        counters[JS(failed)] = std::to_string(info.failed);
-        counters["forwarded"] = std::to_string(info.forwarded);
-        counters["failed_forward"] = std::to_string(info.failedForward);
-        counters[JS(duration_us)] = std::to_string(info.duration);
+        counters[JS(started)] = std::to_string(info.started.value());
+        counters[JS(started)] = std::to_string(info.started.value());
+        counters[JS(started)] = std::to_string(info.started.value());
+        counters[JS(failed)] = std::to_string(info.failed.value());
+        counters[JS(failed)] = std::to_string(info.failed.value());
+        counters["failed_forward"] = std::to_string(info.failedForward.value());
+        counters[JS(duration_us)] = std::to_string(info.duration.value());
 
         rpc[method] = std::move(counters);
     }
 
-    obj["too_busy_errors"] = std::to_string(tooBusyCounter_);
-    obj["not_ready_errors"] = std::to_string(notReadyCounter_);
-    obj["bad_syntax_errors"] = std::to_string(badSyntaxCounter_);
-    obj["unknown_command_errors"] = std::to_string(unknownCommandCounter_);
-    obj["internal_errors"] = std::to_string(internalErrorCounter_);
+    obj["too_busy_errors"] = std::to_string(tooBusyCounter_.value());
+    obj["too_busy_errors"] = std::to_string(tooBusyCounter_.value());
+    obj["bad_syntax_errors"] = std::to_string(badSyntaxCounter_.value());
+    obj["unknown_command_errors"] = std::to_string(unknownCommandCounter_.value());
+    obj["internal_errors"] = std::to_string(internalErrorCounter_.value());
 
     obj["work_queue"] = workQueue_.get().report();
 

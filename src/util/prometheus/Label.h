@@ -55,6 +55,7 @@ private:
 class Labels
 {
 public:
+    Labels() = default;
     explicit Labels(std::vector<Label> labels);
 
     /**

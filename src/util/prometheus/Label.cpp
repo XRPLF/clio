@@ -75,7 +75,11 @@ Labels::Labels(std::vector<Label> labels) : labels_(std::move(labels))
 std::string
 Labels::serialize() const
 {
-    std::string result{"{"};
+    std::string result;
+
+    if (!labels_.empty())
+        result.push_back('{');
+
     for (auto& label : labels_)
     {
         result += label.serialize();

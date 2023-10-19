@@ -39,7 +39,7 @@ public:
      * @param description The description of the metric
      */
     virtual CounterInt&
-    counterInt(std::string name, Labels labels, std::optional<std::string> description) = 0;
+    counterInt(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
 
     /**
      * @brief Get a double based counter metric. It will be created if it doesn't exist
@@ -49,7 +49,7 @@ public:
      * @param description The description of the metric
      */
     virtual CounterDouble&
-    counterDouble(std::string name, Labels labels, std::optional<std::string> description) = 0;
+    counterDouble(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
 
     /**
      * @brief Get a integer based gauge metric. It will be created if it doesn't exist
@@ -59,7 +59,7 @@ public:
      * @param description The description of the metric
      */
     virtual GaugeInt&
-    gaugeInt(std::string name, Labels labels, std::optional<std::string> description) = 0;
+    gaugeInt(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
 
     /**
      * @brief Get a double based gauge metric. It will be created if it doesn't exist
@@ -69,7 +69,7 @@ public:
      * @param description The description of the metric
      */
     virtual GaugeDouble&
-    gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) = 0;
+    gaugeDouble(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
 
     /**
      * @brief Collect all metrics and return them as a string in Prometheus format
