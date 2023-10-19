@@ -19,14 +19,14 @@
 
 #pragma once
 
+#include <data/BackendInterface.h>
+
 #include <boost/json.hpp>
 
 #include <cstdint>
 #include <optional>
 
 namespace etl {
-
-class Source;
 
 /**
  * @brief This class is responsible for fetching and storing the state of the ETL information, such as the network id
@@ -36,9 +36,22 @@ struct ETLState {
 
     /**
      * @brief Fetch the ETL state from the rippled server
+     * @param source The source to fetch the state from
+     * @return The ETL state, nullopt if source not available
      */
-    static ETLState
-    fetchETLStateFromSource(Source const& source) noexcept;
+    template <typename Forward>
+    static std::optional<ETLState>
+    fetchETLStateFromSource(Forward const& source) noexcept
+    {
+        auto const serverInfoRippled = data::synchronous([&source](auto yield) {
+            return source.forwardToRippled({{"command", "server_info"}}, std::nullopt, yield);
+        });
+
+        if (serverInfoRippled)
+            return boost::json::value_to<ETLState>(boost::json::value(*serverInfoRippled));
+
+        return std::nullopt;
+    }
 };
 
 ETLState

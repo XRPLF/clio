@@ -98,7 +98,9 @@ public:
                 return Error{Status{RippledError::rpcEXCESSIVE_LGR_RANGE}};
         }
 
-        auto const currentNetId = etl_->getETLState().networkID;
+        std::optional<uint32_t> currentNetId = std::nullopt;
+        if (auto const& etlState = etl_->getETLState())
+            currentNetId = etlState->networkID;
 
         std::optional<data::TransactionAndMetadata> dbResponse;
 

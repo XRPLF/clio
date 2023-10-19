@@ -209,7 +209,7 @@ public:
     /**
      * @brief Get the etl nodes' state
      */
-    etl::ETLState
+    std::optional<etl::ETLState>
     getETLState() const noexcept
     {
         return loadBalancer_->getETLState();
