@@ -242,7 +242,8 @@ TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})",
-            CTID));
+            CTID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -356,7 +357,8 @@ TEST_F(RPCTxTest, ReturnBinary)
                 "transaction": "{}",
                 "binary": true
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
@@ -599,7 +601,8 @@ TEST_F(RPCTxTest, CTIDAndTransactionBothProvided)
                 "ctid": "{}"
             }})",
             TXNID,
-            CTID));
+            CTID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -668,7 +671,8 @@ TEST_F(RPCTxTest, CTIDNotMatch)
                 "command": "tx",
                 "ctid": "{}"
             }})",
-            CTID));
+            CTID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -676,7 +680,8 @@ TEST_F(RPCTxTest, CTIDNotMatch)
         EXPECT_EQ(err.at("error_code").as_uint64(), 4);
         EXPECT_EQ(
             err.at("error_message").as_string(),
-            "Wrong network. You should submit this request to a node running on NetworkID: 2");
+            "Wrong network. You should submit this request to a node running on NetworkID: 2"
+        );
     });
 }
 
@@ -746,7 +751,8 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
@@ -802,7 +808,8 @@ TEST_F(RPCTxTest, ViaCTID)
     }})",
         CTID,
         SEQ_FROM_CTID,
-        SEQ_FROM_CTID);
+        SEQ_FROM_CTID
+    );
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     TransactionAndMetadata tx1;
     tx1.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 1, 200, 300).getSerializer().peekData();
@@ -829,7 +836,8 @@ TEST_F(RPCTxTest, ViaCTID)
                 "command": "tx",
                 "ctid": "{}"
             }})",
-            CTID));
+            CTID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));

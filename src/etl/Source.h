@@ -133,7 +133,8 @@ public:
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledclientIp,
-        boost::asio::yield_context yield) const = 0;
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @return A token that uniquely identifies this source instance.
@@ -166,7 +167,8 @@ private:
     requestFromRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
-        boost::asio::yield_context yield) const = 0;
+        boost::asio::yield_context yield
+    ) const = 0;
 };
 
 /**
@@ -248,7 +250,8 @@ public:
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
         LoadBalancer& balancer,
-        SourceHooks hooks)
+        SourceHooks hooks
+    )
         : networkValidatedLedgers_(std::move(validatedLedgers))
         , backend_(std::move(backend))
         , subscriptions_(std::move(subscriptions))
@@ -276,7 +279,8 @@ public:
                 grpc::ChannelArguments chArgs;
                 chArgs.SetMaxReceiveMessageSize(-1);
                 stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
-                    grpc::CreateCustomChannel(ss.str(), grpc::InsecureChannelCredentials(), chArgs));
+                    grpc::CreateCustomChannel(ss.str(), grpc::InsecureChannelCredentials(), chArgs)
+                );
                 LOG(log_.debug()) << "Made stub for remote = " << toString();
             }
             catch (std::exception const& e)
@@ -307,7 +311,8 @@ public:
     requestFromRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
-        boost::asio::yield_context yield) const override
+        boost::asio::yield_context yield
+    ) const override
     {
         LOG(log_.trace()) << "Attempting to forward request to tx. Request = " << boost::json::serialize(request);
 
@@ -425,9 +430,9 @@ public:
 
         if (status.ok() && !response.is_unlimited())
         {
-            log_.warn()
-                << "is_unlimited is false. Make sure secure_gateway is set correctly on the ETL source. source = "
-                << toString() << "; status = " << status.error_message();
+            log_.warn(
+            ) << "is_unlimited is false. Make sure secure_gateway is set correctly on the ETL source. source = "
+              << toString() << "; status = " << status.error_message();
         }
 
         return {status, std::move(response)};
@@ -456,7 +461,8 @@ public:
         {
             res["last_msg_age_seconds"] = std::to_string(
                 std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - getLastMsgTime())
-                    .count());
+                    .count()
+            );
         }
 
         return res;
@@ -539,7 +545,8 @@ public:
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
-        boost::asio::yield_context yield) const override
+        boost::asio::yield_context yield
+    ) const override
     {
         if (auto resp = forwardCache_.get(request); resp)
         {
@@ -617,10 +624,11 @@ public:
             derived().ws().set_option(
                 boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
                     req.set(
-                        boost::beast::http::field::user_agent,
-                        std::string(BOOST_BEAST_VERSION_STRING) + " clio-client");
+                        boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " clio-client"
+                    );
                     req.set("X-User", "coro-client");
-                }));
+                })
+            );
 
             // Send subscription message
             derived().ws().async_write(boost::asio::buffer(s), [this](auto ec, size_t size) { onWrite(ec, size); });
@@ -895,7 +903,8 @@ public:
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
         LoadBalancer& balancer,
-        SourceHooks hooks)
+        SourceHooks hooks
+    )
         : SourceImpl(config, ioc, backend, subscriptions, validatedLedgers, balancer, std::move(hooks))
         , ws_(std::make_unique<StreamType>(strand_))
     {
@@ -956,7 +965,8 @@ public:
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
         LoadBalancer& balancer,
-        SourceHooks hooks)
+        SourceHooks hooks
+    )
         : SourceImpl(config, ioc, backend, subscriptions, validatedLedgers, balancer, std::move(hooks))
         , sslCtx_(sslCtx)
         , ws_(std::make_unique<StreamType>(strand_, *sslCtx_))

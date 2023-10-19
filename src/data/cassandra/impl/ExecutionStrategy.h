@@ -89,7 +89,8 @@ public:
     DefaultExecutionStrategy(
         Settings const& settings,
         HandleType const& handle,
-        typename BackendCountersType::PtrType counters = BackendCountersType::make())
+        typename BackendCountersType::PtrType counters = BackendCountersType::make()
+    )
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
         , maxReadRequestsOutstanding_{settings.maxReadRequestsOutstanding}
         , work_{ioc_}
@@ -194,7 +195,8 @@ public:
 
                 counters_->registerWriteFinished();
             },
-            [this]() { counters_->registerWriteRetry(); });
+            [this]() { counters_->registerWriteRetry(); }
+        );
     }
 
     /**
@@ -223,7 +225,8 @@ public:
                 decrementOutstandingRequestCount();
                 counters_->registerWriteFinished();
             },
-            [this]() { counters_->registerWriteRetry(); });
+            [this]() { counters_->registerWriteRetry(); }
+        );
     }
 
     /**
@@ -272,12 +275,14 @@ public:
                 future.emplace(handle_.get().asyncExecute(statements, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); });
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); }
+                    );
                 }));
             };
 
             auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(
-                init, token, boost::asio::get_associated_executor(token));
+                init, token, boost::asio::get_associated_executor(token)
+            );
             numReadRequestsOutstanding_ -= numStatements;
 
             if (res)
@@ -326,12 +331,14 @@ public:
                 future.emplace(handle_.get().asyncExecute(statement, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); });
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); }
+                    );
                 }));
             };
 
             auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(
-                init, token, boost::asio::get_associated_executor(token));
+                init, token, boost::asio::get_associated_executor(token)
+            );
             --numReadRequestsOutstanding_;
 
             if (res)
@@ -385,8 +392,9 @@ public:
                 // when all async operations complete unblock the result
                 if (--numOutstanding == 0)
                 {
-                    boost::asio::post(
-                        boost::asio::get_associated_executor(*sself), [sself]() mutable { sself->complete(); });
+                    boost::asio::post(boost::asio::get_associated_executor(*sself), [sself]() mutable {
+                        sself->complete();
+                    });
                 }
             };
 
@@ -396,11 +404,13 @@ public:
                 std::back_inserter(futures),
                 [this, &executionHandler](auto const& statement) {
                     return handle_.get().asyncExecute(statement, executionHandler);
-                });
+                }
+            );
         };
 
         boost::asio::async_compose<CompletionTokenType, void()>(
-            init, token, boost::asio::get_associated_executor(token));
+            init, token, boost::asio::get_associated_executor(token)
+        );
         numReadRequestsOutstanding_ -= statements.size();
 
         if (errorsCount > 0)
@@ -424,7 +434,8 @@ public:
                 auto entry = future.get();
                 auto&& res = entry.value();
                 return std::move(res);
-            });
+            }
+        );
 
         assert(futures.size() == statements.size());
         assert(results.size() == statements.size());

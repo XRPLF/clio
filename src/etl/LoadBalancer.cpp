@@ -47,7 +47,8 @@ LoadBalancer::make_Source(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-    LoadBalancer& balancer)
+    LoadBalancer& balancer
+)
 {
     auto src = std::make_unique<ProbingSource>(config, ioc, backend, subscriptions, validatedLedgers, balancer);
     src->run();
@@ -61,7 +62,8 @@ LoadBalancer::make_LoadBalancer(
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
+    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+)
 {
     return std::make_shared<LoadBalancer>(config, ioc, backend, subscriptions, validatedLedgers);
 }
@@ -71,7 +73,8 @@ LoadBalancer::LoadBalancer(
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
+    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+)
 {
     static constexpr std::uint32_t MAX_DOWNLOAD = 256;
     if (auto value = config.maybeValue<uint32_t>("num_markers"); value)
@@ -141,7 +144,8 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
 
             return res;
         },
-        sequence);
+        sequence
+    );
     return {std::move(response), success};
 }
 
@@ -165,7 +169,8 @@ LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObje
                             << ", source = " << source->toString();
             return false;
         },
-        ledgerSequence);
+        ledgerSequence
+    );
     if (success)
     {
         return response;
@@ -177,7 +182,8 @@ std::optional<boost::json::object>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
-    boost::asio::yield_context yield) const
+    boost::asio::yield_context yield
+) const
 {
     srand(static_cast<unsigned>(time(0)));
     auto sourceIdx = rand() % sources_.size();

@@ -83,7 +83,8 @@ public:
                 boost::asio::io_context& ioc,
                 StatementType&& data,
                 CallbackType&& onComplete,
-                RetryCallbackType&& onRetry)
+                RetryCallbackType&& onRetry
+            )
                 : AsyncExecutor(ioc, std::move(data), std::move(onComplete), std::move(onRetry))
             {
             }
@@ -98,7 +99,8 @@ private:
         boost::asio::io_context& ioc,
         StatementType&& data,
         CallbackType&& onComplete,
-        RetryCallbackType&& onRetry)
+        RetryCallbackType&& onRetry
+    )
         : data_{std::move(data)}, retryPolicy_{ioc}, onComplete_{std::move(onComplete)}, onRetry_{std::move(onRetry)}
     {
     }

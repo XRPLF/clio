@@ -64,7 +64,8 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnSuccess)
             callbackMock_.onComplete(std::move(resultOrError));
             work.reset();
         },
-        std::move(onRetry_));
+        std::move(onRetry_)
+    );
 
     ctx.run();
 }
@@ -104,7 +105,8 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnMa
             callbackMock_.onComplete(std::move(resultOrError));
             work.reset();
         },
-        std::move(onRetry_));
+        std::move(onRetry_)
+    );
 
     ctx.run();
     ASSERT_EQ(callCount, 3);
@@ -150,7 +152,8 @@ TEST_F(BackendCassandraAsyncExecutorTest, ExecutedMultipleTimesByRetryPolicyOnOt
             work.reset();
             work2.reset();
         },
-        std::move(onRetry_));
+        std::move(onRetry_)
+    );
 
     ctx.run();
     EXPECT_EQ(callCount, 3);
@@ -187,7 +190,8 @@ TEST_F(BackendCassandraAsyncExecutorTest, CompletionCalledOnFailureAfterRetryCou
             callbackMock_.onComplete(std::move(res));
             work.reset();
         },
-        std::move(onRetry_));
+        std::move(onRetry_)
+    );
 
     ctx.run();
 }

@@ -73,7 +73,8 @@ public:
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> nwvl,
         LoadBalancer& balancer,
-        boost::asio::ssl::context sslCtx = boost::asio::ssl::context{boost::asio::ssl::context::tlsv12});
+        boost::asio::ssl::context sslCtx = boost::asio::ssl::context{boost::asio::ssl::context::tlsv12}
+    );
 
     ~ProbingSource() override = default;
 
@@ -108,7 +109,8 @@ public:
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
-        boost::asio::yield_context yield) const override;
+        boost::asio::yield_context yield
+    ) const override;
 
     boost::uuids::uuid
     token() const override;
@@ -118,7 +120,8 @@ private:
     requestFromRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
-        boost::asio::yield_context yield) const override;
+        boost::asio::yield_context yield
+    ) const override;
 
     SourceHooks
     make_SSLHooks() noexcept;

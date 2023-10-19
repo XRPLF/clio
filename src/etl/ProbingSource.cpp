@@ -28,7 +28,8 @@ ProbingSource::ProbingSource(
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> nwvl,
     LoadBalancer& balancer,
-    boost::asio::ssl::context sslCtx)
+    boost::asio::ssl::context sslCtx
+)
     : sslCtx_{std::move(sslCtx)}
     , sslSrc_{make_shared<
           SslSource>(config, ioc, std::ref(sslCtx_), backend, subscriptions, nwvl, balancer, make_SSLHooks())}
@@ -124,7 +125,8 @@ std::optional<boost::json::object>
 ProbingSource::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
-    boost::asio::yield_context yield) const
+    boost::asio::yield_context yield
+) const
 {
     if (!currentSrc_)  // Source may connect to rippled before the connection built to check the validity
     {
@@ -140,7 +142,8 @@ std::optional<boost::json::object>
 ProbingSource::requestFromRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
-    boost::asio::yield_context yield) const
+    boost::asio::yield_context yield
+) const
 {
     if (!currentSrc_)
         return {};

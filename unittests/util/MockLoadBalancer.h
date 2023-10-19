@@ -40,5 +40,6 @@ struct MockLoadBalancer
         std::optional<boost::json::object>,
         forwardToRippled,
         (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
-        (const));
+        (const)
+    );
 };

@@ -177,7 +177,8 @@ public:
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
-        boost::asio::yield_context yield) const;
+        boost::asio::yield_context yield
+    ) const;
 
     /**
      * @brief Return state of ETL nodes.

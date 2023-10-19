@@ -74,7 +74,8 @@ std::pair<boost::json::object, boost::json::object>
 toExpandedJson(
     data::TransactionAndMetadata const& blobs,
     NFTokenjson nftEnabled = NFTokenjson::DISABLE,
-    std::optional<uint16_t> networkId = std::nullopt);
+    std::optional<uint16_t> networkId = std::nullopt
+);
 
 bool
 insertDeliveredAmount(

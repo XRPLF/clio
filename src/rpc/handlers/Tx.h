@@ -61,7 +61,8 @@ public:
 
     BaseTxHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<ETLServiceType const> const& etl)
+        std::shared_ptr<ETLServiceType const> const& etl
+    )
         : sharedPtrBackend_(sharedPtrBackend), etl_(etl)
     {
     }
@@ -118,7 +119,8 @@ public:
                 return Error{Status{
                     RippledError::rpcWRONG_NETWORK,
                     fmt::format(
-                        "Wrong network. You should submit this request to a node running on NetworkID: {}", netId)}};
+                        "Wrong network. You should submit this request to a node running on NetworkID: {}", netId
+                    )}};
             }
 
             dbResponse = fetchTxViaCtid(lgrSeq, txnIdx, ctx.yield);
@@ -169,7 +171,8 @@ public:
                 *currentNetId <= 0xFFFFU)
             {
                 output.ctid = rpc::encodeCTID(
-                    dbResponse->ledgerSequence, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*currentNetId));
+                    dbResponse->ledgerSequence, static_cast<uint16_t>(txnIdx), static_cast<uint16_t>(*currentNetId)
+                );
             }
         }
 
