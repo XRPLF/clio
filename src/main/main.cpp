@@ -154,7 +154,7 @@ public:
                     if (not repairAddress_.has_value())
                     {
                         clio::LogService::fatal()
-                            << "Not attempting to repair. Rerun with `-repair "
+                            << "Not attempting to repair. Rerun with `--repair "
                                "[host:port]` to repair corrupted transactions.";
                         exit(-1);
                     }
@@ -187,10 +187,14 @@ public:
                 cass_result_paging_state_token(result, &state, &sz);
                 cass_statement_set_paging_state_token(nftTxQuery, state, sz);
 
-                resumeProvider_.get().write(
-                    {tag_,
-                     {{"token",
-                       ripple::base64_encode(std::string{state, sz})}}});
+                // only update resume token if data was actually written to DB
+                if (toWrite.empty())
+                {
+                    resumeProvider_.get().write(
+                        {tag_,
+                         {{"token",
+                           ripple::base64_encode(std::string{state, sz})}}});
+                }
             }
 
             cass_iterator_free(txPageIterator);
@@ -274,7 +278,8 @@ public:
             toWrite = maybeDoNFTWrite(toWrite, backend_, tag_);
             cursor = page.cursor;
 
-            if (cursor.has_value())
+            // only update resume token if data was actually written to DB
+            if (cursor.has_value() && toWrite.empty())
                 resumeProvider_.get().write(
                     {tag_, {{"cursor", std::string{ripple::strHex(*cursor)}}}});
 
@@ -288,12 +293,16 @@ class Step3Impl
 {
     std::string tag_;
     std::shared_ptr<Backend::CassandraBackend> backend_;
+    std::reference_wrapper<ResumeContextProvider> resumeProvider_;
 
 public:
     Step3Impl(
         std::string tag,
-        std::shared_ptr<Backend::CassandraBackend> backend)
-        : tag_{std::move(tag)}, backend_{backend}
+        std::shared_ptr<Backend::CassandraBackend> backend,
+        ResumeContextProvider& resumeProvider)
+        : tag_{std::move(tag)}
+        , backend_{backend}
+        , resumeProvider_{std::ref(resumeProvider)}
     {
     }
 
@@ -307,6 +316,7 @@ public:
          * yet being used to serve any data anyway.
          */
         clio::LogService::info() << "Running " << tag_;
+        resumeProvider_.get().write({tag_, {}});  // at the start of step3
 
         std::stringstream query;
         query << "DROP TABLE " << backend_->tablePrefix() << "issuer_nf_tokens";
@@ -458,7 +468,9 @@ try
                 [&](auto tag,
                     auto yield,
                     auto const& ledgerRange,
-                    auto resumeData) { Step3Impl(tag, backend).perform(); }),
+                    auto resumeData) {
+                    Step3Impl(tag, backend, resumeProvider).perform();
+                }),
         }};
 
     ioc.run();
