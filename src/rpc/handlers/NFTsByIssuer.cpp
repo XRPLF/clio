@@ -56,13 +56,8 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
     output.limit = limit;
     output.ledgerIndex = lgrInfo.seq;
     output.nftTaxon = input.nftTaxon;
-
-    std::transform(dbResponse.nfts.begin(), dbResponse.nfts.end(), output.nfts.begin(), [](auto const& nft) {
-        // TODO - this formatting is exactly the same and SHOULD REMAIN THE SAME
-        // for each element of the `nfts_by_issuer` API. We should factor this out
-        // so that the formats don't diverge. In the mean time, do not make any
-        // changes to this formatting without making the same changes to that
-        // formatting.
+    
+    for(auto const& nft: dbResponse.nfts){
         boost::json::object nftJson;
 
         nftJson[JS(nft_id)] = strHex(nft.tokenID);
@@ -77,8 +72,8 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
         nftJson["nft_taxon"] = nft::toUInt32(nft::getTaxon(nft.tokenID));
         nftJson[JS(nft_serial)] = nft::getSerial(nft.tokenID);
 
-        return nftJson;
-    });
+        output.nfts.push_back(nftJson);
+    }
 
     if (dbResponse.cursor.has_value())
         output.marker = strHex(*dbResponse.cursor);
