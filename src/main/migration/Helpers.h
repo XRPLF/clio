@@ -24,6 +24,7 @@
 #include <log/Logger.h>
 
 #include <ripple/basics/base64.h>
+#include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/http.hpp>
@@ -51,17 +52,29 @@ wait(
     clio::LogService::info() << "Done waiting";
 }
 
+static std::pair<std::string, std::string>
+parseHostPort(std::string input)
+{
+    std::vector<std::string> components;
+    boost::split(components, input, boost::is_any_of(":"));
+
+    if (components.size() != 2)
+        throw std::logic_error(
+            "Host and port must be specified as `host:port` string. Got "
+            "instead: `" +
+            input + "`");
+
+    return std::make_pair(components.at(0), components.at(1));
+}
+
 static std::optional<boost::json::object>
 doRequestFromRippled(
-    clio::Config const& config,
+    std::string repairAddress,
     boost::json::object const& request)
 {
-    auto source = config.array("etl_sources").at(0);
-    auto const ip = source.value<std::string>("ip");
-    auto const wsPort = source.value<std::string>("ws_port");
-
+    auto const [ip, wsPort] = parseHostPort(repairAddress);
     clio::LogService::debug()
-        << "Attempting to forward request to tx. "
+        << "Attempting to forward request to repair server. "
         << "request = " << boost::json::serialize(request);
 
     boost::json::object response;
@@ -112,11 +125,11 @@ doRequestFromRippled(
 static std::optional<boost::json::object>
 requestFromRippled(
     boost::asio::steady_timer& timer,
-    clio::Config const& config,
+    std::string repairAddress,
     boost::json::object const& request,
     std::uint32_t const attempts = 0)
 {
-    auto response = doRequestFromRippled(config, request);
+    auto response = doRequestFromRippled(repairAddress, request);
     if (response.has_value())
         return response;
 
@@ -124,7 +137,7 @@ requestFromRippled(
         return std::nullopt;
 
     wait(timer, "Failed to request from rippled", std::chrono::seconds{1});
-    return requestFromRippled(timer, config, request, attempts + 1);
+    return requestFromRippled(timer, repairAddress, request, attempts + 1);
 }
 
 static std::string
@@ -170,14 +183,14 @@ maybeWriteTransaction(
 static void
 repairCorruptedTx(
     boost::asio::steady_timer& timer,
-    clio::Config const& config,
+    std::string repairAddress,
     std::shared_ptr<Backend::CassandraBackend> const& backend,
     ripple::uint256 const& hash)
 {
     clio::LogService::info() << " - repairing " << hash;
     auto const data = requestFromRippled(
         timer,
-        config,
+        repairAddress,
         {
             {"method", "tx"},
             {"transaction", to_string(hash)},

@@ -44,16 +44,23 @@ struct ResumeContext
 class ResumeContextProvider
 {
     std::filesystem::path path_;
+    bool enable_ = false;
 
 public:
-    ResumeContextProvider(std::filesystem::path path) : path_{path}
+    ResumeContextProvider(std::filesystem::path path, bool enable)
+        : path_{path}, enable_{enable}
     {
-        clio::LogService::info() << "Resume context path: " << path_.string();
+        if (enable)
+            clio::LogService::info()
+                << "Resume context path: " << path_.string();
     }
 
     std::optional<ResumeContext>
     load()
     {
+        if (not enable_)
+            return std::nullopt;
+
         if (not std::filesystem::exists(path_))
             return std::nullopt;
 

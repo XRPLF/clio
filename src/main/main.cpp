@@ -9,6 +9,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/json.hpp>
+#include <boost/program_options.hpp>
 #include <cassandra.h>
 
 #include <iostream>
@@ -16,30 +17,27 @@
 class Step1Impl
 {
     std::string tag_;
-    std::reference_wrapper<clio::Config const> config_;
     std::shared_ptr<Backend::CassandraBackend> backend_;
     std::reference_wrapper<ResumeContextProvider> resumeProvider_;
     boost::json::object resumeData_;
 
     boost::asio::steady_timer timer_;
-    bool repairEnabled_ = false;
+    std::optional<std::string> repairAddress_;
 
 public:
     Step1Impl(
         std::string tag,
         boost::asio::io_context& ioc,
-        clio::Config const& config,
         std::shared_ptr<Backend::CassandraBackend> backend,
         ResumeContextProvider& resumeProvider,
         boost::json::object resumeData,
-        bool repairEnabled)
+        std::optional<std::string> repairAddress)
         : tag_{std::move(tag)}
-        , config_{std::cref(config)}
         , backend_{backend}
         , resumeProvider_{std::ref(resumeProvider)}
         , resumeData_{std::move(resumeData)}
         , timer_{ioc}
-        , repairEnabled_{repairEnabled}
+        , repairAddress_{repairAddress}
     {
     }
 
@@ -153,15 +151,15 @@ public:
                         << "Corrupted tx detected: " << hash;
                     std::cerr << "Corrupted tx detected: " << hash << std::endl;
 
-                    if (not repairEnabled_)
+                    if (not repairAddress_.has_value())
                     {
                         clio::LogService::fatal()
-                            << "Not attempting to repair. Rerun with -repair "
-                               "to repair corrupted transactions.";
+                            << "Not attempting to repair. Rerun with `-repair "
+                               "[host:port]` to repair corrupted transactions.";
                         exit(-1);
                     }
 
-                    repairCorruptedTx(timer_, config_.get(), backend_, hash);
+                    repairCorruptedTx(timer_, *repairAddress_, backend_, hash);
 
                     auto maybeTx = backend_->fetchTransaction(hash, yield);
 
@@ -332,37 +330,59 @@ static void
 usage()
 {
     std::cerr << "\nUsage:\n"
-              << "    with repair: clio_migrator path/to/config -repair 2> "
-                 "repair.log\n"
-              << " without repair: clio_migrator path/to/config" << std::endl;
+              << "     without repair: clio_migrator path/to/config\n"
+              << "        with repair: clio_migrator path/to/config --repair "
+                 "127.0.0.1:6006 2> repair.log\n"
+              << "resume previous run: clio_migrator path/to/config --resume\n"
+              << "  use both together: clio_migrator path/to/config -Rr "
+                 "192.168.0.10:51233"
+              << std::endl;
 }
 
 int
 main(int argc, char* argv[])
+try
 {
-    if (argc < 2)
+    namespace po = boost::program_options;
+    auto repairAddress = std::optional<std::string>{};
+    auto resumeEnabled = false;
+
+    // clang-format off
+    po::options_description description("Options");
+    description.add_options()
+        ("help,h", "print help message and exit")
+        ("resume,R", "attempt to resume with previous progress")
+        ("repair,r", po::value<std::string>(), "specify repair server. format: `host:port`")
+        ("conf,c", po::value<std::string>(), "specify a configuration file")
+    ;
+    // clang-format on
+    po::positional_options_description positional;
+    positional.add("conf", 1);
+
+    po::variables_map parsed;
+    po::store(
+        po::command_line_parser(argc, argv)
+            .options(description)
+            .positional(positional)
+            .run(),
+        parsed);
+    po::notify(parsed);
+
+    if (parsed.count("conf") == 0u)
     {
-        std::cerr << "Didn't provide config path." << std::endl;
+        std::cout << description << std::endl;
         usage();
-        return EXIT_FAILURE;
+        std::exit(EXIT_FAILURE);
     }
 
-    auto repairEnabled = false;
-    if (argc >= 3)
+    if (parsed.count("help") != 0u)
     {
-        if (not boost::iequals(argv[2], "-repair"))
-        {
-            std::cerr << "Final argument must be `-repair`." << std::endl;
-            usage();
-            return EXIT_FAILURE;
-        }
-        clio::LogService::info()
-            << "Enabling REPAIR mode. Missing/broken transactions will be "
-               "downloaded from rippled and overwritten.";
-        repairEnabled = true;
+        std::cout << description << std::endl;
+        usage();
+        std::exit(EXIT_SUCCESS);
     }
 
-    std::string const configPath = argv[1];
+    std::string const configPath = parsed["conf"].as<std::string>();
     auto const config = clio::ConfigReader::open(configPath);
     if (!config)
     {
@@ -380,10 +400,29 @@ main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    if (parsed.count("repair") != 0u)
+    {
+        repairAddress = parsed["repair"].as<std::string>();
+        parseHostPort(*repairAddress);  // throws on wrong format
+
+        clio::LogService::info()
+            << "Enabling REPAIR mode. Missing/broken transactions will be "
+               "downloaded from Clio/rippled at "
+            << *repairAddress << " and overwritten.";
+    }
+
+    if (parsed.count("resume") != 0u)
+    {
+        resumeEnabled = true;
+        clio::LogService::info()
+            << "Enabling RESUME mode. Will attempt to restore previously saved "
+               "state from `resume.json`.";
+    }
+
     boost::asio::io_context ioc;
     auto backend = Backend::make_Backend(ioc, config);
-    auto resumeProvider =
-        ResumeContextProvider(std::filesystem::current_path() / "resume.json");
+    auto resumeProvider = ResumeContextProvider(
+        std::filesystem::current_path() / "resume.json", resumeEnabled);
     auto migrator = Migrator{
         ioc,
         config,
@@ -399,11 +438,10 @@ main(int argc, char* argv[])
                     Step1Impl(
                         tag,
                         ioc,
-                        config,
                         backend,
                         resumeProvider,
                         resumeData,
-                        repairEnabled)
+                        repairAddress)
                         .perform(yield, ledgerRange);
                 }),
             Step(
@@ -427,4 +465,8 @@ main(int argc, char* argv[])
 
     clio::LogService::info() << "SUCCESS!";
     return EXIT_SUCCESS;
+}
+catch (std::exception const& ex)
+{
+    std::cerr << ex.what() << std::endl;
 }
