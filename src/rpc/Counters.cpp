@@ -177,10 +177,10 @@ Counters::report() const
     {
         auto counters = boost::json::object{};
         counters[JS(started)] = std::to_string(info.started.value());
-        counters[JS(started)] = std::to_string(info.started.value());
-        counters[JS(started)] = std::to_string(info.started.value());
+        counters[JS(finished)] = std::to_string(info.finished.value());
+        counters[JS(errored)] = std::to_string(info.errored.value());
         counters[JS(failed)] = std::to_string(info.failed.value());
-        counters[JS(failed)] = std::to_string(info.failed.value());
+        counters["forwarded"] = std::to_string(info.forwarded.value());
         counters["failed_forward"] = std::to_string(info.failedForward.value());
         counters[JS(duration_us)] = std::to_string(info.duration.value());
 
@@ -188,7 +188,7 @@ Counters::report() const
     }
 
     obj["too_busy_errors"] = std::to_string(tooBusyCounter_.value());
-    obj["too_busy_errors"] = std::to_string(tooBusyCounter_.value());
+    obj["not_ready_errors"] = std::to_string(notReadyCounter_.value());
     obj["bad_syntax_errors"] = std::to_string(badSyntaxCounter_.value());
     obj["unknown_command_errors"] = std::to_string(unknownCommandCounter_.value());
     obj["internal_errors"] = std::to_string(internalErrorCounter_.value());

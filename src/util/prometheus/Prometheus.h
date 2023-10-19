@@ -29,6 +29,10 @@ namespace util::prometheus {
 class PrometheusInterface
 {
 public:
+    PrometheusInterface(bool isEnabled) : isEnabled_(isEnabled)
+    {
+    }
+
     virtual ~PrometheusInterface() = default;
 
     /**
@@ -84,13 +88,34 @@ public:
      *
      * @return true if prometheus is enabled
      */
+    bool
+    isEnabled() const
+    {
+        return isEnabled_;
+    }
+
+    /**
+     * @brief Whether prometheus has registered metrics
+     *
+     * @return true if prometheus has already registered some metrics
+     */
     virtual bool
-    isEnabled() const = 0;
+    hasMetrics() const = 0;
+
+private:
+    bool isEnabled_;
 };
 
+/**
+ * @brief Implemetation of PrometheusInterface
+ *
+ * @note When prometheus is disabled, all metrics will still counted but collection is disabled
+ */
 class PrometheusImpl : public PrometheusInterface
 {
 public:
+    using PrometheusInterface::PrometheusInterface;
+
     CounterInt&
     counterInt(std::string name, Labels labels, std::optional<std::string> description) override;
 
@@ -107,50 +132,23 @@ public:
     collectMetrics() override;
 
     bool
-    isEnabled() const override;
+    hasMetrics() const override;
 
 private:
     MetricBase&
     getMetric(std::string name, Labels labels, std::optional<std::string> description, MetricType type);
 
     std::unordered_map<std::string, MetricsFamily> metrics_;
-};
-
-class PromeseusDisabled : public PrometheusInterface
-{
-public:
-    CounterInt&
-    counterInt(std::string name, Labels labels, std::optional<std::string> description) override;
-
-    CounterDouble&
-    counterDouble(std::string name, Labels labels, std::optional<std::string> description) override;
-
-    GaugeInt&
-    gaugeInt(std::string name, Labels labels, std::optional<std::string> description) override;
-
-    GaugeDouble&
-    gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) override;
-
-    std::string
-    collectMetrics() override;
-
-    bool
-    isEnabled() const override;
+    friend class PrometheusSingleton;
 };
 
 class PrometheusSingleton
 {
 public:
-    void static init(Config const& config)
+    void static init(Config const& config = Config{})
     {
-        if (config.valueOr("prometheus_enabled", true))
-        {
-            instance_ = std::make_unique<PrometheusImpl>();
-        }
-        else
-        {
-            instance_ = std::make_unique<PromeseusDisabled>();
-        }
+        bool const enabled = config.valueOr("prometheus_enabled", true);
+        instance_ = std::make_unique<PrometheusImpl>(enabled);
     }
 
     static PrometheusInterface&
@@ -163,6 +161,9 @@ public:
     static void
     replaceInstance(std::unique_ptr<PrometheusInterface> instance)
     {
+        if (instance_)
+            assert(!instance_->hasMetrics());
+
         instance_ = std::move(instance);
     }
 
@@ -173,3 +174,4 @@ private:
 }  // namespace util::prometheus
 
 #define PROMETHEUS util::prometheus::PrometheusSingleton::instance
+#define PROMETHEUS_INIT util::prometheus::PrometheusSingleton::init

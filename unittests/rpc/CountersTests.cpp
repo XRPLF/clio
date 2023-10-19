@@ -27,9 +27,16 @@
 
 using namespace rpc;
 
-class RPCCountersTest : public NoLoggerFixture
+struct BaseRPCCountersTest : NoLoggerFixture
 {
-protected:
+    BaseRPCCountersTest()
+    {
+        PROMETHEUS_INIT();
+    }
+};
+
+struct RPCCountersTest : BaseRPCCountersTest
+{
     WorkQueue queue{4u, 1024u};  // todo: mock instead
     Counters counters{queue};
 };
