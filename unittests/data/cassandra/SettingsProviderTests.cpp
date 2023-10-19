@@ -36,9 +36,7 @@ namespace json = boost::json;
 
 using namespace data::cassandra;
 
-class SettingsProviderTest : public NoLoggerFixture
-{
-};
+class SettingsProviderTest : public NoLoggerFixture {};
 
 TEST_F(SettingsProviderTest, Defaults)
 {
@@ -125,7 +123,8 @@ TEST_F(SettingsProviderTest, CertificateConfig)
             "contact_points": "127.0.0.1",
             "certfile": "{}"
         }})",
-        file.path))};
+        file.path
+    ))};
     SettingsProvider const provider{cfg};
 
     auto const settings = provider.getSettings();

@@ -40,38 +40,26 @@ template <typename Expected>
 [[nodiscard]] bool static checkType(boost::json::value const& value)
 {
     auto hasError = false;
-    if constexpr (std::is_same_v<Expected, bool>)
-    {
+    if constexpr (std::is_same_v<Expected, bool>) {
         if (not value.is_bool())
             hasError = true;
-    }
-    else if constexpr (std::is_same_v<Expected, std::string>)
-    {
+    } else if constexpr (std::is_same_v<Expected, std::string>) {
         if (not value.is_string())
             hasError = true;
-    }
-    else if constexpr (std::is_same_v<Expected, double> or std::is_same_v<Expected, float>)
-    {
+    } else if constexpr (std::is_same_v<Expected, double> or std::is_same_v<Expected, float>) {
         if (not value.is_double())
             hasError = true;
-    }
-    else if constexpr (std::is_same_v<Expected, boost::json::array>)
-    {
+    } else if constexpr (std::is_same_v<Expected, boost::json::array>) {
         if (not value.is_array())
             hasError = true;
-    }
-    else if constexpr (std::is_same_v<Expected, boost::json::object>)
-    {
+    } else if constexpr (std::is_same_v<Expected, boost::json::object>) {
         if (not value.is_object())
             hasError = true;
-    }
-    else if constexpr (std::is_convertible_v<Expected, uint64_t> or std::is_convertible_v<Expected, int64_t>)
-    {
+    } else if constexpr (std::is_convertible_v<Expected, uint64_t> or std::is_convertible_v<Expected, int64_t>) {
         if (not value.is_int64() && not value.is_uint64())
             hasError = true;
         // specify the type is unsigened, it can not be negative
-        if constexpr (std::is_unsigned_v<Expected>)
-        {
+        if constexpr (std::is_unsigned_v<Expected>) {
             if (value.is_int64() and value.as_int64() < 0)
                 hasError = true;
         }
@@ -83,8 +71,7 @@ template <typename Expected>
 /**
  * @brief A validator that simply requires a field to be present.
  */
-struct Required final
-{
+struct Required final {
     [[nodiscard]] static MaybeError
     verify(boost::json::value const& value, std::string_view key);
 };
@@ -102,8 +89,7 @@ class NotSupported;
  * @brief A specialized NotSupported validator that forbids a field to be present when the value equals the given value.
  */
 template <typename T>
-class NotSupported<T> final
-{
+class NotSupported<T> final {
     T value_;
 
 public:
@@ -126,12 +112,10 @@ public:
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
-        if (value.is_object() and value.as_object().contains(key.data()))
-        {
+        if (value.is_object() and value.as_object().contains(key.data())) {
             using boost::json::value_to;
             auto const res = value_to<T>(value.as_object().at(key.data()));
-            if (value_ == res)
-            {
+            if (value_ == res) {
                 return Error{Status{
                     RippledError::rpcNOT_SUPPORTED,
                     fmt::format("Not supported field '{}'s value '{}'", std::string{key}, res)}};
@@ -145,8 +129,7 @@ public:
  * @brief A specialized NotSupported validator that forbids a field to be present.
  */
 template <>
-class NotSupported<> final
-{
+class NotSupported<> final {
 public:
     /**
      * @brief Verify whether the field is supported or not.
@@ -175,8 +158,7 @@ NotSupported(T&&... t) -> NotSupported<T...>;
  * @brief Validates that the type of the value is one of the given types.
  */
 template <typename... Types>
-struct Type final
-{
+struct Type final {
     /**
      * @brief Verify that the JSON value is (one) of specified type(s).
      *
@@ -204,8 +186,7 @@ struct Type final
  * @brief Validate that value is between specified min and max.
  */
 template <typename Type>
-class Between final
-{
+class Between final {
     Type min_;
     Type max_;
 
@@ -250,8 +231,7 @@ public:
  * @brief Validate that value is equal or greater than the specified min.
  */
 template <typename Type>
-class Min final
-{
+class Min final {
     Type min_;
 
 public:
@@ -292,8 +272,7 @@ public:
  * @brief Validate that value is not greater than max.
  */
 template <typename Type>
-class Max final
-{
+class Max final {
     Type max_;
 
 public:
@@ -334,8 +313,7 @@ public:
  * @brief Validates that the value is equal to the one passed in.
  */
 template <typename Type>
-class EqualTo final
-{
+class EqualTo final {
     Type original_;
 
 public:
@@ -374,14 +352,13 @@ public:
 /**
  * @brief Deduction guide to help disambiguate what it means to EqualTo a "string" without specifying the type.
  */
-EqualTo(char const*)->EqualTo<std::string>;
+EqualTo(char const*) -> EqualTo<std::string>;
 
 /**
  * @brief Validates that the value is one of the values passed in.
  */
 template <typename Type>
-class OneOf final
-{
+class OneOf final {
     std::vector<Type> options_;
 
 public:
@@ -430,13 +407,12 @@ public:
 /**
  * @brief Deduction guide to help disambiguate what it means to OneOf a few "strings" without specifying the type.
  */
-OneOf(std::initializer_list<char const*>)->OneOf<std::string>;
+OneOf(std::initializer_list<char const*>) -> OneOf<std::string>;
 
 /**
  * @brief A meta-validator that allows to specify a custom validation function.
  */
-class CustomValidator final
-{
+class CustomValidator final {
     std::function<MaybeError(boost::json::value const&, std::string_view)> validator_;
 
 public:

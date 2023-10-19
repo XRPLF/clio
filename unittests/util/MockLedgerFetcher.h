@@ -25,8 +25,7 @@
 
 #include <optional>
 
-struct MockLedgerFetcher
-{
+struct MockLedgerFetcher {
     MOCK_METHOD(std::optional<FakeFetchResponse>, fetchData, (uint32_t), ());
     MOCK_METHOD(std::optional<FakeFetchResponse>, fetchDataAndDiff, (uint32_t), ());
 };

@@ -54,21 +54,16 @@ Config::lookup(KeyType key) const
     std::string subkey{};
 
     auto maybeSection = tokenized.next();
-    while (maybeSection.has_value())
-    {
+    while (maybeSection.has_value()) {
         auto section = maybeSection.value();
         subkey += section;
 
-        if (not hasBrokenPath)
-        {
+        if (not hasBrokenPath) {
             if (not cur.get().is_object())
                 throw detail::StoreException("Not an object at '" + subkey + "'");
-            if (not cur.get().as_object().contains(section))
-            {
+            if (not cur.get().as_object().contains(section)) {
                 hasBrokenPath = true;
-            }
-            else
-            {
+            } else {
                 cur = std::cref(cur.get().as_object().at(section));
             }
         }
@@ -85,11 +80,9 @@ Config::lookup(KeyType key) const
 std::optional<Config::ArrayType>
 Config::maybeArray(KeyType key) const
 {
-    try
-    {
+    try {
         auto maybe_arr = lookup(key);
-        if (maybe_arr && maybe_arr->is_array())
-        {
+        if (maybe_arr && maybe_arr->is_array()) {
             auto& arr = maybe_arr->as_array();
             ArrayType out;
             out.reserve(arr.size());
@@ -99,9 +92,7 @@ Config::maybeArray(KeyType key) const
             });
             return std::make_optional<ArrayType>(std::move(out));
         }
-    }
-    catch (detail::StoreException const&)
-    {
+    } catch (detail::StoreException const&) {
         // ignore store error, but rethrow key errors
     }
 
@@ -127,12 +118,9 @@ Config::arrayOr(KeyType key, ArrayType fallback) const
 Config::ArrayType
 Config::arrayOrThrow(KeyType key, std::string_view err) const
 {
-    try
-    {
+    try {
         return maybeArray(key).value();
-    }
-    catch (std::exception const&)
-    {
+    } catch (std::exception const&) {
         throw std::runtime_error(err.data());
     }
 }
@@ -165,28 +153,25 @@ Config::array() const
     auto const& arr = store_.as_array();
     out.reserve(arr.size());
 
-    std::transform(
-        std::cbegin(arr), std::cend(arr), std::back_inserter(out), [](auto const& element) { return Config{element}; });
+    std::transform(std::cbegin(arr), std::cend(arr), std::back_inserter(out), [](auto const& element) {
+        return Config{element};
+    });
     return out;
 }
 
 Config
 ConfigReader::open(std::filesystem::path path)
 {
-    try
-    {
+    try {
         std::ifstream const in(path, std::ios::in | std::ios::binary);
-        if (in)
-        {
+        if (in) {
             std::stringstream contents;
             contents << in.rdbuf();
             auto opts = boost::json::parse_options{};
             opts.allow_comments = true;
             return Config{boost::json::parse(contents.str(), {}, opts)};
         }
-    }
-    catch (std::exception const& e)
-    {
+    } catch (std::exception const& e) {
         LOG(util::LogService::error()) << "Could not read configuration file from '" << path.string()
                                        << "': " << e.what();
     }

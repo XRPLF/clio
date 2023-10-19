@@ -29,8 +29,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/nft_sell_offers.html
  */
-class NFTSellOffersHandler : public NFTOffersHandlerBase
-{
+class NFTSellOffersHandler : public NFTOffersHandlerBase {
 public:
     NFTSellOffersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : NFTOffersHandlerBase(sharedPtrBackend)

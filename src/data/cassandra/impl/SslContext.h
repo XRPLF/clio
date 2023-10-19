@@ -27,8 +27,7 @@
 
 namespace data::cassandra::detail {
 
-struct SslContext : public ManagedObject<CassSsl>
-{
+struct SslContext : public ManagedObject<CassSsl> {
     explicit SslContext(std::string const& certificate);
 };
 

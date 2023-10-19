@@ -47,8 +47,7 @@ namespace util {
 */
 
 // Exception thrown by an invalid access to Expected.
-struct bad_expected_access : public std::runtime_error
-{
+struct bad_expected_access : public std::runtime_error {
     bad_expected_access() : runtime_error("bad expected access")
     {
     }
@@ -57,8 +56,7 @@ struct bad_expected_access : public std::runtime_error
 namespace detail {
 
 // Custom policy for Expected.  Always throw on an invalid access.
-struct throw_policy : public boost::outcome_v2::policy::base
-{
+struct throw_policy : public boost::outcome_v2::policy::base {
     template <class Impl>
     static constexpr void
     wide_value_check(Impl&& self)
@@ -89,8 +87,7 @@ struct throw_policy : public boost::outcome_v2::policy::base
 // Definition of Unexpected, which is used to construct the unexpected
 // return type of an Expected.
 template <class E>
-class Unexpected
-{
+class Unexpected {
 public:
     static_assert(!std::is_same<E, void>::value, "E must not be void");
 
@@ -104,7 +101,7 @@ public:
     {
     }
 
-    constexpr const E&
+    constexpr E const&
     value() const&
     {
         return val_;
@@ -122,7 +119,7 @@ public:
         return std::move(val_);
     }
 
-    constexpr const E&&
+    constexpr E const&&
     value() const&&
     {
         return std::move(val_);
@@ -138,8 +135,7 @@ Unexpected(E (&)[N]) -> Unexpected<E const*>;
 
 // Definition of Expected.  All of the machinery comes from boost::result.
 template <class T, class E>
-class Expected : private boost::outcome_v2::result<T, E, detail::throw_policy>
-{
+class Expected : private boost::outcome_v2::result<T, E, detail::throw_policy> {
     using Base = boost::outcome_v2::result<T, E, detail::throw_policy>;
 
 public:
@@ -219,8 +215,7 @@ public:
 // Specialization of Expected<void, E>.  Allows returning either success
 // (without a value) or the reason for the failure.
 template <class E>
-class [[nodiscard]] Expected<void, E> : private boost::outcome_v2::result<void, E, detail::throw_policy>
-{
+class [[nodiscard]] Expected<void, E> : private boost::outcome_v2::result<void, E, detail::throw_policy> {
     using Base = boost::outcome_v2::result<void, E, detail::throw_policy>;
 
 public:

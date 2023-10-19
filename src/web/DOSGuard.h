@@ -37,8 +37,7 @@ namespace web {
 /**
  * @brief The interface of a denial of service guard.
  */
-class BaseDOSGuard
-{
+class BaseDOSGuard {
 public:
     virtual ~BaseDOSGuard() = default;
 
@@ -56,11 +55,9 @@ public:
  * @tparam SweepHandlerType The type of the sweep handler
  */
 template <typename WhitelistHandlerType, typename SweepHandlerType>
-class BasicDOSGuard : public BaseDOSGuard
-{
+class BasicDOSGuard : public BaseDOSGuard {
     // Accumulated state per IP, state will be reset accordingly
-    struct ClientState
-    {
+    struct ClientState {
         // accumulated transfered byte
         std::uint32_t transferedByte = 0;
         // accumulated served requests count
@@ -92,7 +89,8 @@ public:
     BasicDOSGuard(
         util::Config const& config,
         WhitelistHandlerType const& whitelistHandler,
-        SweepHandlerType& sweepHandler)
+        SweepHandlerType& sweepHandler
+    )
         : whitelistHandler_{std::cref(whitelistHandler)}
         , maxFetches_{config.valueOr("dos_guard.max_fetches", DEFAULT_MAX_FETCHES)}
         , maxConnCount_{config.valueOr("dos_guard.max_connections", DEFAULT_MAX_CONNECTIONS)}
@@ -129,21 +127,17 @@ public:
 
         {
             std::scoped_lock const lck(mtx_);
-            if (ipState_.find(ip) != ipState_.end())
-            {
+            if (ipState_.find(ip) != ipState_.end()) {
                 auto [transferedByte, requests] = ipState_.at(ip);
-                if (transferedByte > maxFetches_ || requests > maxRequestCount_)
-                {
+                if (transferedByte > maxFetches_ || requests > maxRequestCount_) {
                     LOG(log_.warn()) << "Dosguard: Client surpassed the rate limit. ip = " << ip
                                      << " Transfered Byte: " << transferedByte << "; Requests: " << requests;
                     return false;
                 }
             }
             auto it = ipConnCount_.find(ip);
-            if (it != ipConnCount_.end())
-            {
-                if (it->second > maxConnCount_)
-                {
+            if (it != ipConnCount_.end()) {
+                if (it->second > maxConnCount_) {
                     LOG(log_.warn()) << "Dosguard: Client surpassed the rate limit. ip = " << ip
                                      << " Concurrent connection: " << it->second;
                     return false;

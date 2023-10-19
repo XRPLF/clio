@@ -36,12 +36,9 @@ constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A
 constexpr static auto MAXSEQ = 30;
 constexpr static auto MINSEQ = 10;
 
-class RPCBookChangesHandlerTest : public HandlerBaseTest
-{
-};
+class RPCBookChangesHandlerTest : public HandlerBaseTest {};
 
-struct BookChangesParamTestCaseBundle
-{
+struct BookChangesParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -50,13 +47,11 @@ struct BookChangesParamTestCaseBundle
 
 // parameterized test cases for parameters check
 struct BookChangesParameterTest : public RPCBookChangesHandlerTest,
-                                  public WithParamInterface<BookChangesParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+                                  public WithParamInterface<BookChangesParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<BookChangesParamTestCaseBundle>(info.param);
             return bundle.testName;
@@ -81,7 +76,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCBookChangesGroup1,
     BookChangesParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    BookChangesParameterTest::NameGenerator{});
+    BookChangesParameterTest::NameGenerator{}
+);
 
 TEST_P(BookChangesParameterTest, InvalidParams)
 {
@@ -155,7 +151,8 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
         R"({{
             "ledger_hash":"{}"
         }})",
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});

@@ -37,8 +37,7 @@ namespace data::cassandra::detail {
 MaybeError
 Future::await() const
 {
-    if (auto const rc = cass_future_error_code(*this); rc)
-    {
+    if (auto const rc = cass_future_error_code(*this); rc) {
         auto errMsg = [this](std::string const& label) {
             char const* message = nullptr;
             std::size_t len = 0;
@@ -53,8 +52,7 @@ Future::await() const
 ResultOrError
 Future::get() const
 {
-    if (auto const rc = cass_future_error_code(*this); rc)
-    {
+    if (auto const rc = cass_future_error_code(*this); rc) {
         auto const errMsg = [this](std::string const& label) {
             char const* message = nullptr;
             std::size_t len = 0;
@@ -75,8 +73,7 @@ invokeHelper(CassFuture* ptr, void* cbPtr)
     // stackoverflow.com/questions/77004137/boost-asio-async-compose-gets-stuck-under-load
     auto* cb = static_cast<FutureWithCallback::FnType*>(cbPtr);
     auto local = std::make_unique<FutureWithCallback::FnType>(std::move(*cb));
-    if (auto const rc = cass_future_error_code(ptr); rc)
-    {
+    if (auto const rc = cass_future_error_code(ptr); rc) {
         auto const errMsg = [&ptr](std::string const& label) {
             char const* message = nullptr;
             std::size_t len = 0;
@@ -84,9 +81,7 @@ invokeHelper(CassFuture* ptr, void* cbPtr)
             return label + ": " + std::string{message, len};
         }("invokeHelper");
         (*local)(Error{CassandraError{errMsg, rc}});
-    }
-    else
-    {
+    } else {
         (*local)(Result{cass_future_get_result(ptr)});
     }
 }

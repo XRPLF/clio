@@ -36,12 +36,9 @@ constexpr static auto RANGEMAX = 30;
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto TOKENID = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA";
 
-class RPCLedgerEntryTest : public HandlerBaseTest
-{
-};
+class RPCLedgerEntryTest : public HandlerBaseTest {};
 
-struct ParamTestCaseBundle
-{
+struct ParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -49,13 +46,11 @@ struct ParamTestCaseBundle
 };
 
 // parameterized test cases for parameters check
-struct LedgerEntryParameterTest : public RPCLedgerEntryTest, public WithParamInterface<ParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+struct LedgerEntryParameterTest : public RPCLedgerEntryTest, public WithParamInterface<ParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<ParamTestCaseBundle>(info.param);
             return bundle.testName;
@@ -160,7 +155,8 @@ generateTestValuesForParametersTest()
                         "authorized": 123
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "authorizedNotString"},
 
@@ -219,7 +215,8 @@ generateTestValuesForParametersTest()
                         "ticket_seq": "123"
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "malformedRequest",
             "Malformed request."},
 
@@ -278,7 +275,8 @@ generateTestValuesForParametersTest()
                         "seq": "123"
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "malformedRequest",
             "Malformed request."},
 
@@ -337,7 +335,8 @@ generateTestValuesForParametersTest()
                         "seq": "123"
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "malformedRequest",
             "Malformed request."},
 
@@ -375,7 +374,8 @@ generateTestValuesForParametersTest()
                         "accounts" : ["{}"]
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "malformedAccounts"},
 
@@ -389,7 +389,8 @@ generateTestValuesForParametersTest()
                     }}
                 }})",
                 ACCOUNT,
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "malformedAccounts"},
 
@@ -402,7 +403,8 @@ generateTestValuesForParametersTest()
                         "currency": "USD"
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "malformedAccounts"},
 
@@ -415,7 +417,8 @@ generateTestValuesForParametersTest()
                         "currency": "USD"
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             "malformedAddress",
             "malformedAddresses"},
 
@@ -429,7 +432,8 @@ generateTestValuesForParametersTest()
                     }}
                 }})",
                 ACCOUNT,
-                ACCOUNT2),
+                ACCOUNT2
+            ),
             "malformedCurrency",
             "malformedCurrency"},
 
@@ -443,7 +447,8 @@ generateTestValuesForParametersTest()
                     }}
                 }})",
                 ACCOUNT,
-                ACCOUNT2),
+                ACCOUNT2
+            ),
             "invalidParams",
             "currencyNotString"},
 
@@ -521,7 +526,8 @@ generateTestValuesForParametersTest()
                     }}
                 }})",
                 INDEX1,
-                ACCOUNT),
+                ACCOUNT
+            ),
             "invalidParams",
             "mayNotSpecifyBothDirRootAndOwner"},
 
@@ -534,7 +540,8 @@ generateTestValuesForParametersTest()
                         "sub_index": "not int"
                     }}
                 }})",
-                INDEX1),
+                INDEX1
+            ),
             "malformedRequest",
             "Malformed request."},
     };
@@ -544,7 +551,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup1,
     LedgerEntryParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    LedgerEntryParameterTest::NameGenerator{});
+    LedgerEntryParameterTest::NameGenerator{}
+);
 
 TEST_P(LedgerEntryParameterTest, InvalidParams)
 {
@@ -562,13 +570,11 @@ TEST_P(LedgerEntryParameterTest, InvalidParams)
 }
 
 // parameterized test cases for index
-struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string>
-{
-    struct NameGenerator
-    {
+struct IndexTest : public HandlerBaseTest, public WithParamInterface<std::string> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             return static_cast<std::string>(info.param);
         }
@@ -580,7 +586,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup3,
     IndexTest,
     Values("index", "nft_page", "payment_channel", "check"),
-    IndexTest::NameGenerator{});
+    IndexTest::NameGenerator{}
+);
 
 TEST_P(IndexTest, InvalidIndexUint256)
 {
@@ -591,7 +598,8 @@ TEST_P(IndexTest, InvalidIndexUint256)
             R"({{
                 "{}": "invalid"
             }})",
-            index));
+            index
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -610,7 +618,8 @@ TEST_P(IndexTest, InvalidIndexNotString)
             R"({{
                 "{}": 123
             }})",
-            index));
+            index
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -642,7 +651,8 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
             R"({{
                 "account_root": "{}"
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -650,21 +660,18 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
     });
 }
 
-struct NormalPathTestBundle
-{
+struct NormalPathTestBundle {
     std::string testName;
     std::string testJson;
     ripple::uint256 expectedIndex;
     ripple::STObject mockedEntity;
 };
 
-struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithParamInterface<NormalPathTestBundle>
-{
-    struct NameGenerator
-    {
+struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithParamInterface<NormalPathTestBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<NormalPathTestBundle>(info.param);
             return bundle.testName;
@@ -688,7 +695,8 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "index": "{}"
                 }})",
-                INDEX1),
+                INDEX1
+            ),
             ripple::uint256{INDEX1},
             CreateAccountRootObject(ACCOUNT2, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3)},
         NormalPathTestBundle{
@@ -698,7 +706,8 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "payment_channel": "{}"
                 }})",
-                INDEX1),
+                INDEX1
+            ),
             ripple::uint256{INDEX1},
             CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400)},
         NormalPathTestBundle{
@@ -708,10 +717,12 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "nft_page": "{}"
                 }})",
-                INDEX1),
+                INDEX1
+            ),
             ripple::uint256{INDEX1},
             CreateNFTTokenPage(
-                std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt)},
+                std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt
+            )},
         NormalPathTestBundle{
             "Check",
             fmt::format(
@@ -719,7 +730,8 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "check": "{}"
                 }})",
-                INDEX1),
+                INDEX1
+            ),
             ripple::uint256{INDEX1},
             CreateCheckLedgerObject(ACCOUNT, ACCOUNT2)},
         NormalPathTestBundle{
@@ -729,7 +741,8 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "directory": "{}"
                 }})",
-                INDEX1),
+                INDEX1
+            ),
             ripple::uint256{INDEX1},
             CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
         NormalPathTestBundle{
@@ -739,10 +752,12 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "offer": "{}"
                 }})",
-                INDEX1),
+                INDEX1
+            ),
             ripple::uint256{INDEX1},
             CreateOfferLedgerObject(
-                ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1)},
+                ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1
+            )},
         NormalPathTestBundle{
             "EscrowIndex",
             fmt::format(
@@ -750,7 +765,8 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "escrow": "{}"
                 }})",
-                INDEX1),
+                INDEX1
+            ),
             ripple::uint256{INDEX1},
             CreateEscrowLedgerObject(ACCOUNT, ACCOUNT2)},
         NormalPathTestBundle{
@@ -760,7 +776,8 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "ticket": "{}"
                 }})",
-                INDEX1),
+                INDEX1
+            ),
             ripple::uint256{INDEX1},
             CreateTicketLedgerObject(ACCOUNT, 0)},
         NormalPathTestBundle{
@@ -770,7 +787,8 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "deposit_preauth": "{}"
                 }})",
-                INDEX1),
+                INDEX1
+            ),
             ripple::uint256{INDEX1},
             CreateDepositPreauthLedgerObject(ACCOUNT, ACCOUNT2)},
         NormalPathTestBundle{
@@ -780,7 +798,8 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "account_root": "{}"
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key,
             CreateAccountRootObject(ACCOUNT, 0, 1, 1, 1, INDEX1, 1)},
         NormalPathTestBundle{
@@ -793,7 +812,8 @@ generateTestValuesForNormalPathTest()
                         "sub_index": 2
                     }}
                 }})",
-                INDEX1),
+                INDEX1
+            ),
             ripple::keylet::page(ripple::uint256{INDEX1}, 2).key,
             CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
         NormalPathTestBundle{
@@ -806,7 +826,8 @@ generateTestValuesForNormalPathTest()
                         "sub_index": 2
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             ripple::keylet::page(ripple::keylet::ownerDir(account1), 2).key,
             CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
         NormalPathTestBundle{
@@ -818,7 +839,8 @@ generateTestValuesForNormalPathTest()
                         "owner": "{}"
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             // default sub_index is 0
             ripple::keylet::page(ripple::keylet::ownerDir(account1), 0).key,
             CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
@@ -832,7 +854,8 @@ generateTestValuesForNormalPathTest()
                         "seq": 1
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             ripple::keylet::escrow(account1, 1).key,
             CreateEscrowLedgerObject(ACCOUNT, ACCOUNT2)},
         NormalPathTestBundle{
@@ -846,7 +869,8 @@ generateTestValuesForNormalPathTest()
                     }}
                 }})",
                 ACCOUNT,
-                ACCOUNT2),
+                ACCOUNT2
+            ),
             ripple::keylet::depositPreauth(account1, account2).key,
             CreateDepositPreauthLedgerObject(ACCOUNT, ACCOUNT2)},
         NormalPathTestBundle{
@@ -860,7 +884,8 @@ generateTestValuesForNormalPathTest()
                     }}
                 }})",
                 ACCOUNT,
-                ACCOUNT2),
+                ACCOUNT2
+            ),
             ripple::keylet::line(account1, account2, currency).key,
             CreateRippleStateLedgerObject("USD", ACCOUNT2, 100, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123, 0)},
         NormalPathTestBundle{
@@ -873,7 +898,8 @@ generateTestValuesForNormalPathTest()
                         "ticket_seq": 2
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             ripple::getTicketIndex(account1, 2),
             CreateTicketLedgerObject(ACCOUNT, 0)},
         NormalPathTestBundle{
@@ -886,17 +912,20 @@ generateTestValuesForNormalPathTest()
                         "seq": 2
                     }}
                 }})",
-                ACCOUNT),
+                ACCOUNT
+            ),
             ripple::keylet::offer(account1, 2).key,
             CreateOfferLedgerObject(
-                ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1)}};
+                ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1
+            )}};
 }
 
 INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup2,
     RPCLedgerEntryNormalPathTest,
     ValuesIn(generateTestValuesForNormalPathTest()),
-    RPCLedgerEntryNormalPathTest::NameGenerator{});
+    RPCLedgerEntryNormalPathTest::NameGenerator{}
+);
 
 // Test for normal path
 // Check the index in response matches the computed index accordingly
@@ -925,7 +954,8 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
         EXPECT_EQ(output.value().at("ledger_index").as_uint64(), RANGEMAX);
         EXPECT_EQ(
             output.value().at("node_binary").as_string(),
-            ripple::strHex(testBundle.mockedEntity.getSerializer().peekData()));
+            ripple::strHex(testBundle.mockedEntity.getSerializer().peekData())
+        );
         EXPECT_EQ(ripple::uint256(output.value().at("index").as_string().c_str()), testBundle.expectedIndex);
     });
 }
@@ -974,7 +1004,8 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
             R"({{
                 "payment_channel": "{}"
             }})",
-            INDEX1));
+            INDEX1
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
@@ -1004,7 +1035,8 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
             R"({{
                 "check": "{}"
             }})",
-            INDEX1));
+            INDEX1
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -1030,7 +1062,8 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
                 "ledger_index": {}
             }})",
             INDEX1,
-            RANGEMAX));
+            RANGEMAX
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -1057,7 +1090,8 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
                 "ledger_index": "{}"
             }})",
             INDEX1,
-            RANGEMAX));
+            RANGEMAX
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -1084,7 +1118,8 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
                 "ledger_hash": "{}"
             }})",
             INDEX1,
-            LEDGERHASH));
+            LEDGERHASH
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());

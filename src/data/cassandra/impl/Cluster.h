@@ -38,16 +38,14 @@ namespace data::cassandra::detail {
 /**
  * @brief Bundles all cassandra settings in one place.
  */
-struct Settings
-{
+struct Settings {
     static constexpr std::size_t DEFAULT_CONNECTION_TIMEOUT = 10000;
     static constexpr uint32_t DEFAULT_MAX_WRITE_REQUESTS_OUTSTANDING = 10'000;
     static constexpr uint32_t DEFAULT_MAX_READ_REQUESTS_OUTSTANDING = 100'000;
     /**
      * @brief Represents the configuration of contact points for cassandra.
      */
-    struct ContactPoints
-    {
+    struct ContactPoints {
         std::string contactPoints = "127.0.0.1";  // defaults to localhost
         std::optional<uint16_t> port = {};
     };
@@ -55,8 +53,7 @@ struct Settings
     /**
      * @brief Represents the configuration of a secure connection bundle.
      */
-    struct SecureConnectionBundle
-    {
+    struct SecureConnectionBundle {
         std::string bundle;  // no meaningful default
     };
 
@@ -117,8 +114,7 @@ struct Settings
     }
 };
 
-class Cluster : public ManagedObject<CassCluster>
-{
+class Cluster : public ManagedObject<CassCluster> {
     util::Logger log_{"Backend"};
 
 public:

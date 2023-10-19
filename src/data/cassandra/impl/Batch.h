@@ -26,8 +26,7 @@
 
 namespace data::cassandra::detail {
 
-struct Batch : public ManagedObject<CassBatch>
-{
+struct Batch : public ManagedObject<CassBatch> {
     Batch(std::vector<Statement> const& statements);
 
     MaybeError

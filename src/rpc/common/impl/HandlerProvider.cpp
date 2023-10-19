@@ -61,7 +61,8 @@ ProductionHandlerProvider::ProductionHandlerProvider(
     std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
     std::shared_ptr<etl::LoadBalancer> const& balancer,
     std::shared_ptr<etl::ETLService const> const& etl,
-    Counters const& counters)
+    Counters const& counters
+)
     : handlerMap_{
           {"account_channels", {AccountChannelsHandler{backend}}},
           {"account_currencies", {AccountCurrenciesHandler{backend}}},

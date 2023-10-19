@@ -23,8 +23,7 @@
 
 #include <optional>
 
-struct MockLedgerPublisher
-{
+struct MockLedgerPublisher {
     MOCK_METHOD(bool, publish, (uint32_t, std::optional<uint32_t>), ());
     MOCK_METHOD(void, publish, (ripple::LedgerInfo const&), ());
     MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));

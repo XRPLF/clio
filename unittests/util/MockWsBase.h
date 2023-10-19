@@ -21,8 +21,7 @@
 
 #include <web/interface/ConnectionBase.h>
 
-struct MockSession : public web::ConnectionBase
-{
+struct MockSession : public web::ConnectionBase {
     std::string message;
     void
     send(std::shared_ptr<std::string> msg_type) override
@@ -41,9 +40,9 @@ struct MockSession : public web::ConnectionBase
     }
 };
 
-struct MockDeadSession : public web::ConnectionBase
-{
-    void send(std::shared_ptr<std::string>) override
+struct MockDeadSession : public web::ConnectionBase {
+    void
+    send(std::shared_ptr<std::string>) override
     {
         // err happen, the session should remove from subscribers
         ec_.assign(2, boost::system::system_category());

@@ -27,8 +27,7 @@
 
 using namespace rpc;
 
-class RPCCountersTest : public NoLoggerFixture
-{
+class RPCCountersTest : public NoLoggerFixture {
 protected:
     WorkQueue queue{4u, 1024u};  // todo: mock instead
     Counters counters{queue};
@@ -36,8 +35,7 @@ protected:
 
 TEST_F(RPCCountersTest, CheckThatCountersAddUp)
 {
-    for (auto i = 0u; i < 512u; ++i)
-    {
+    for (auto i = 0u; i < 512u; ++i) {
         counters.rpcErrored("error");
         counters.rpcComplete("complete", std::chrono::milliseconds{1u});
         counters.rpcForwarded("forward");

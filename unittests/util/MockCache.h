@@ -23,8 +23,7 @@
 
 #include <gmock/gmock.h>
 
-struct MockCache
-{
+struct MockCache {
     virtual ~MockCache() = default;
 
     MOCK_METHOD(void, updateImp, (std::vector<data::LedgerObject> const& a, uint32_t b, bool c), ());

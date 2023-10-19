@@ -31,9 +31,7 @@ using namespace unittests::detail;
 
 namespace json = boost::json;
 
-class RPCTestHandlerTest : public HandlerBaseTest
-{
-};
+class RPCTestHandlerTest : public HandlerBaseTest {};
 
 // example handler tests
 TEST_F(RPCTestHandlerTest, HandlerSuccess)

@@ -49,8 +49,7 @@ static constexpr uint32_t API_VERSION_MAX = 2u;
 /**
  * @brief A baseclass for API version helper
  */
-class APIVersionParser
-{
+class APIVersionParser {
 public:
     virtual ~APIVersionParser() = default;
 

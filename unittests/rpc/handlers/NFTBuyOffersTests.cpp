@@ -34,9 +34,7 @@ constexpr static auto NFTID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875
 constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 
-class RPCNFTBuyOffersHandlerTest : public HandlerBaseTest
-{
-};
+class RPCNFTBuyOffersHandlerTest : public HandlerBaseTest {};
 
 TEST_F(RPCNFTBuyOffersHandlerTest, NonHexLedgerHash)
 {
@@ -47,7 +45,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonHexLedgerHash)
                 "nft_id": "{}", 
                 "ledger_hash": "xxx"
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -66,7 +65,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, LimitNotInt)
                 "nft_id": "{}", 
                 "limit": "xxx"
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -84,7 +84,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, LimitNegative)
                 "nft_id": "{}", 
                 "limit": -1
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -102,7 +103,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, LimitZero)
                 "nft_id": "{}", 
                 "limit": 0
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -120,7 +122,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonStringLedgerHash)
                 "nft_id": "{}", 
                 "ledger_hash": 123
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -139,7 +142,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, InvalidLedgerIndexString)
                 "nft_id": "{}", 
                 "ledger_index": "notvalidated"
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -198,7 +202,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerHash)
             "ledger_hash": "{}"
         }})",
         NFTID,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -225,7 +230,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerIndex)
             "nft_id": "{}",
             "ledger_index": "4"
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -254,7 +260,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerHash2)
             "ledger_hash": "{}"
         }})",
         NFTID,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -280,7 +287,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
             "nft_id": "{}",
             "ledger_index": "31"
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -309,7 +317,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NoNFT)
             "ledger_hash": "{}"
         }})",
         NFTID,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTBuyOffersHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -329,7 +338,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, MarkerNotString)
                 "nft_id": "{}", 
                 "marker": 9
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -350,7 +360,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, InvalidMarker)
                 "nft_id": "{}",
                 "marker": "123invalid"
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -365,7 +376,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, InvalidMarker)
                 "nft_id": "{}", 
                 "marker": 250
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -423,7 +435,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, DefaultParameters)
         R"({{
             "nft_id": "{}"
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTBuyOffersHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -450,8 +463,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
     auto repetitions = 500;
     auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
     auto idx = ripple::uint256{INDEX1};
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.push_back(idx++);
         bbs.push_back(offer.getSerializer().peekData());
     }
@@ -468,7 +480,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
             "nft_id": "{}",
             "limit": 50
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTBuyOffersHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -477,8 +490,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
         EXPECT_EQ(output->at("offers").as_array().size(), 50);
         EXPECT_EQ(output->at("limit").as_uint64(), 50);
         EXPECT_STREQ(
-            output->at("marker").as_string().c_str(),
-            "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353");
+            output->at("marker").as_string().c_str(), "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"
+        );
     });
 }
 
@@ -499,8 +512,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
     auto repetitions = 500;
     auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
     auto idx = ripple::uint256{INDEX1};
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.push_back(idx++);
         bbs.push_back(offer.getSerializer().peekData());
     }
@@ -530,7 +542,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
             "marker": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353",
             "limit": 50
         }})",
-        NFTID));
+        NFTID
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTBuyOffersHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -540,8 +553,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
         EXPECT_EQ(output->at("limit").as_uint64(), 50);
         // marker also progressed by 50
         EXPECT_STREQ(
-            output->at("marker").as_string().c_str(),
-            "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC385");
+            output->at("marker").as_string().c_str(), "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC385"
+        );
     });
 }
 
@@ -563,8 +576,7 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimi
     auto repetitions = 100;
     auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
     auto idx = ripple::uint256{INDEX1};
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.push_back(idx++);
         bbs.push_back(offer.getSerializer().peekData());
     }
@@ -596,7 +608,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimi
                 "marker": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353",
                 "limit": 50
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -613,7 +626,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimi
                 "nft_id": "{}", 
                 "limit": 49
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit somehow?
     });
@@ -625,7 +639,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimi
                 "nft_id": "{}", 
                 "limit": 501
             }})",
-            NFTID));
+            NFTID
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit somehow?
     });
@@ -665,7 +680,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, LimitLessThanMin)
             "limit": {}
         }})",
         NFTID,
-        NFTBuyOffersHandler::LIMIT_MIN - 1));
+        NFTBuyOffersHandler::LIMIT_MIN - 1
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTBuyOffersHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -710,7 +726,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, LimitMoreThanMax)
             "limit": {}
         }})",
         NFTID,
-        NFTBuyOffersHandler::LIMIT_MAX + 1));
+        NFTBuyOffersHandler::LIMIT_MAX + 1
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{NFTBuyOffersHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});

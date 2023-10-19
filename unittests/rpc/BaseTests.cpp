@@ -42,9 +42,7 @@ using namespace rpc::modifiers;
 
 namespace json = boost::json;
 
-class RPCBaseTest : public NoLoggerFixture
-{
-};
+class RPCBaseTest : public NoLoggerFixture {};
 
 TEST_F(RPCBaseTest, CheckType)
 {
@@ -246,14 +244,21 @@ TEST_F(RPCBaseTest, EqualToValidator)
 
 TEST_F(RPCBaseTest, ArrayAtValidator)
 {
-    // clang-format off
     auto spec = RpcSpec{
-        {"arr", Required{}, Type<json::array>{}, ValidateArrayAt{0, {
-            {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
-        }}},
-        {"arr2", ValidateArrayAt{0, {
-            {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
-        }}},
+        {"arr",
+         Required{},
+         Type<json::array>{},
+         ValidateArrayAt{
+             0,
+             {
+                 {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
+             }}},
+        {"arr2",
+         ValidateArrayAt{
+             0,
+             {
+                 {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
+             }}},
     };
     // clang-format on
 
@@ -274,20 +279,16 @@ TEST_F(RPCBaseTest, IfTypeValidator)
 {
     // clang-format off
     auto spec = RpcSpec{
-        {"mix", 
-            Required{}, Type<std::string, json::object>{},
-            IfType<json::object>{
-                Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
-                Section{{"limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
-            },
-            IfType<std::string>{
-                Uint256HexStringValidator
-            }
-        },
+        {"mix",
+         Required{},
+         Type<std::string, json::object>{},
+         IfType<json::object>{
+             Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
+             Section{{"limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}},
+         IfType<std::string>{Uint256HexStringValidator}},
         {"mix2",
-            Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}, 
-            Type<std::string, json::object>{}
-        },
+         Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
+         Type<std::string, json::object>{}},
     };
     // clang-format on
 
@@ -325,7 +326,8 @@ TEST_F(RPCBaseTest, WithCustomError)
         {"other", WithCustomError{Type<std::string>{}, rpc::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}}}};
 
     auto passingInput = json::parse(
-        R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC", "other": "1"})");
+        R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC", "other": "1"})"
+    );
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput =
@@ -344,14 +346,9 @@ TEST_F(RPCBaseTest, WithCustomError)
 
 TEST_F(RPCBaseTest, CustomValidator)
 {
-    // clang-format off
-    auto customFormatCheck = CustomValidator{
-        [](json::value const& value, std::string_view /* key */) -> MaybeError {
-            return value.as_string().size() == 34 ? 
-                MaybeError{} : Error{rpc::Status{"Uh oh"}};
-        }
-    };
-    // clang-format on
+    auto customFormatCheck = CustomValidator{[](json::value const& value, std::string_view /* key */) -> MaybeError {
+        return value.as_string().size() == 34 ? MaybeError{} : Error{rpc::Status{"Uh oh"}};
+    }};
 
     auto spec = RpcSpec{
         {"taker", customFormatCheck},
@@ -476,8 +473,7 @@ TEST_F(RPCBaseTest, CurrencyValidator)
     passingInput = json::parse(R"({ "currency": "0158415500000000c1f76ff6ecb0bac600000000"})");
     ASSERT_TRUE(spec.process(passingInput));
 
-    for (const auto& currency : {"[]<", ">()", "{}|", "?!@", "#$%", "^&*"})
-    {
+    for (auto const& currency : {"[]<", ">()", "{}|", "?!@", "#$%", "^&*"}) {
         passingInput = json::parse(fmt::format(R"({{ "currency" : "{}" }})", currency));
         ASSERT_TRUE(spec.process(passingInput));
     }
@@ -524,7 +520,8 @@ TEST_F(RPCBaseTest, SubscribeStreamValidator)
                 "transactions",
                 "book_changes"
             ]
-        })");
+        })"
+    );
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput = json::parse(R"({ "streams": 256})");

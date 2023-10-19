@@ -22,8 +22,7 @@
 
 #include <gmock/gmock.h>
 
-class MockSource : public etl::Source
-{
+class MockSource : public etl::Source {
 public:
     MOCK_METHOD(bool, isConnected, (), (const, override));
     MOCK_METHOD(boost::json::object, toJson, (), (const override));
@@ -36,17 +35,20 @@ public:
         (std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>),
         fetchLedger,
         (uint32_t, bool, bool),
-        (override));
+        (override)
+    );
     MOCK_METHOD((std::pair<std::vector<std::string>, bool>), loadInitialLedger, (uint32_t, uint32_t, bool), (override));
     MOCK_METHOD(
         std::optional<boost::json::object>,
         forwardToRippled,
         (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
     MOCK_METHOD(
         std::optional<boost::json::object>,
         requestFromRippled,
         (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
     MOCK_METHOD(boost::uuids::uuid, token, (), (const, override));
 };

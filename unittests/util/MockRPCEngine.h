@@ -26,8 +26,7 @@
 
 #include <string>
 
-struct MockAsyncRPCEngine
-{
+struct MockAsyncRPCEngine {
     template <typename Fn>
     bool
     post(Fn&& func, [[maybe_unused]] std::string const& ip = "")
@@ -57,8 +56,7 @@ struct MockAsyncRPCEngine
     MOCK_METHOD(rpc::Result, buildResponse, (web::Context const&), ());
 };
 
-struct MockRPCEngine
-{
+struct MockRPCEngine {
     MOCK_METHOD(bool, post, (std::function<void(boost::asio::yield_context)>&&, std::string const&), ());
     MOCK_METHOD(void, notifyComplete, (std::string const&, std::chrono::microseconds const&), ());
     MOCK_METHOD(void, notifyErrored, (std::string const&), ());

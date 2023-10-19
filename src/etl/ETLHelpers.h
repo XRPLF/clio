@@ -36,8 +36,7 @@ namespace etl {
  * Any later calls to methods of this datastructure will not wait. Once the datastructure is stopped, the datastructure
  * remains stopped for the rest of its lifetime.
  */
-class NetworkValidatedLedgers
-{
+class NetworkValidatedLedgers {
     // max sequence validated by network
     std::optional<uint32_t> max_;
 
@@ -95,12 +94,9 @@ public:
     {
         std::unique_lock lck(m_);
         auto pred = [sequence, this]() -> bool { return (max_ && sequence <= *max_); };
-        if (maxWaitMs)
-        {
+        if (maxWaitMs) {
             cv_.wait_for(lck, std::chrono::milliseconds(*maxWaitMs));
-        }
-        else
-        {
+        } else {
             cv_.wait(lck, pred);
         }
         return pred();
@@ -115,8 +111,7 @@ public:
  * added or removed from the queue. These waits are blocking calls.
  */
 template <class T>
-class ThreadSafeQueue
-{
+class ThreadSafeQueue {
     std::queue<T> queue_;
 
     mutable std::mutex m_;
@@ -221,8 +216,7 @@ getMarkers(size_t numMarkers)
     std::vector<ripple::uint256> markers;
     markers.reserve(numMarkers);
     ripple::uint256 base{0};
-    for (size_t i = 0; i < numMarkers; ++i)
-    {
+    for (size_t i = 0; i < numMarkers; ++i) {
         markers.push_back(base);
         base.data()[0] += incr;
     }

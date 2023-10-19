@@ -40,8 +40,7 @@ namespace etl::detail {
 /**
  * @brief Cache for rippled responses
  */
-class ForwardCache
-{
+class ForwardCache {
     using ResponseType = std::optional<boost::json::object>;
     static constexpr std::uint32_t DEFAULT_DURATION = 10;
 
@@ -60,15 +59,13 @@ public:
     ForwardCache(util::Config const& config, boost::asio::io_context& ioc, Source const& source)
         : strand_(boost::asio::make_strand(ioc)), source_(source)
     {
-        if (config.contains("cache"))
-        {
+        if (config.contains("cache")) {
             auto commands = config.arrayOrThrow("cache", "Source cache must be array");
 
             if (config.contains("cache_duration"))
                 duration_ = config.valueOrThrow<uint32_t>("cache_duration", "Source cache_duration must be a number");
 
-            for (auto const& command : commands)
-            {
+            for (auto const& command : commands) {
                 auto key = command.valueOrThrow<std::string>("Source forward command must be array of strings");
                 latestForwarded_[key] = {};
             }

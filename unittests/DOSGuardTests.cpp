@@ -49,15 +49,13 @@ constexpr auto JSONData = R"JSON(
 
 constexpr auto IP = "127.0.0.2";
 
-struct MockWhitelistHandler
-{
+struct MockWhitelistHandler {
     MOCK_METHOD(bool, isWhiteListed, (std::string_view ip), (const));
 };
 
 using MockWhitelistHandlerType = NiceMock<MockWhitelistHandler>;
 
-class FakeSweepHandler
-{
+class FakeSweepHandler {
 private:
     using guardType = BasicDOSGuard<MockWhitelistHandlerType, FakeSweepHandler>;
     guardType* dosGuard_;
@@ -77,8 +75,7 @@ public:
 };
 };  // namespace
 
-class DOSGuardTest : public NoLoggerFixture
-{
+class DOSGuardTest : public NoLoggerFixture {
 protected:
     Config cfg{json::parse(JSONData)};
     FakeSweepHandler sweepHandler{};

@@ -35,14 +35,12 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_currencies.html
  */
-class AccountCurrenciesHandler
-{
+class AccountCurrenciesHandler {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    struct Output
-    {
+    struct Output {
         std::string ledgerHash;
         uint32_t ledgerIndex{};
         std::set<std::string> receiveCurrencies;
@@ -51,8 +49,7 @@ public:
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;

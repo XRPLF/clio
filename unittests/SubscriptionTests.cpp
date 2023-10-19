@@ -28,16 +28,13 @@
 using namespace feed;
 
 // io_context
-class SubscriptionTest : public SyncAsioContextTest
-{
+class SubscriptionTest : public SyncAsioContextTest {
 protected:
     util::Config cfg;
     util::TagDecoratorFactory tagDecoratorFactory{cfg};
 };
 
-class SubscriptionMapTest : public SubscriptionTest
-{
-};
+class SubscriptionMapTest : public SubscriptionTest {};
 
 // subscribe/unsubscribe the same session would not change the count
 TEST_F(SubscriptionTest, SubscriptionCount)

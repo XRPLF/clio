@@ -33,8 +33,7 @@
 /**
  * @brief Struct used to keep track of what to write to account_transactions/account_tx tables.
  */
-struct AccountTransactionsData
-{
+struct AccountTransactionsData {
     boost::container::flat_set<ripple::AccountID> accounts;
     std::uint32_t ledgerSequence{};
     std::uint32_t transactionIndex{};
@@ -56,8 +55,7 @@ struct AccountTransactionsData
  *
  * Gets written to nf_token_transactions table and the like.
  */
-struct NFTTransactionsData
-{
+struct NFTTransactionsData {
     ripple::uint256 tokenID;
     std::uint32_t ledgerSequence;
     std::uint32_t transactionIndex;
@@ -74,8 +72,7 @@ struct NFTTransactionsData
  *
  * Gets written to nf_tokens table and the like.
  */
-struct NFTsData
-{
+struct NFTsData {
     ripple::uint256 tokenID;
     std::uint32_t ledgerSequence;
 
@@ -107,7 +104,8 @@ struct NFTsData
         ripple::uint256 const& tokenID,
         ripple::AccountID const& owner,
         ripple::Blob const& uri,
-        ripple::TxMeta const& meta)
+        ripple::TxMeta const& meta
+    )
         : tokenID(tokenID), ledgerSequence(meta.getLgrSeq()), transactionIndex(meta.getIndex()), owner(owner), uri(uri)
     {
     }
@@ -133,7 +131,8 @@ struct NFTsData
         ripple::uint256 const& tokenID,
         std::uint32_t const ledgerSequence,
         ripple::AccountID const& owner,
-        ripple::Blob const& uri)
+        ripple::Blob const& uri
+    )
         : tokenID(tokenID), ledgerSequence(ledgerSequence), owner(owner), uri(uri)
     {
     }
@@ -252,7 +251,7 @@ getBookBase(T const& key)
 inline std::string
 uint256ToString(ripple::uint256 const& input)
 {
-    return {reinterpret_cast<const char*>(input.data()), ripple::uint256::size()};
+    return {reinterpret_cast<char const*>(input.data()), ripple::uint256::size()};
 }
 
 /** @brief The ripple epoch start timestamp. Midnight on 1st January 2000. */

@@ -33,10 +33,8 @@ namespace data {
 /**
  * @brief Cache for an entire ledger.
  */
-class LedgerCache
-{
-    struct CacheEntry
-    {
+class LedgerCache {
+    struct CacheEntry {
         uint32_t seq = 0;
         Blob blob;
     };

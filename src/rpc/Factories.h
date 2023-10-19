@@ -60,7 +60,8 @@ make_WsContext(
     util::TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
     std::string const& clientIp,
-    std::reference_wrapper<APIVersionParser const> apiVersionParser);
+    std::reference_wrapper<APIVersionParser const> apiVersionParser
+);
 
 /**
  * @brief A factory function that creates a HTTP context.
@@ -81,6 +82,7 @@ make_HttpContext(
     data::LedgerRange const& range,
     std::string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser,
-    bool isAdmin);
+    bool isAdmin
+);
 
 }  // namespace rpc
