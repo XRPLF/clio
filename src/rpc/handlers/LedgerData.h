@@ -41,9 +41,9 @@ class LedgerDataHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     util::Logger log_{"RPC"};
 
-    static const std::unordered_map<std::string, ripple::LedgerEntryType> TYPES_MAP;
+    static std::unordered_map<std::string, ripple::LedgerEntryType> const TYPES_MAP;
 
-    static const std::unordered_set<std::string> TYPES_KEYS;
+    static std::unordered_set<std::string> const TYPES_KEYS;
 
 public:
     // constants
@@ -95,8 +95,8 @@ public:
              meta::IfType<std::string>{validation::Uint256HexStringValidator}},
             {JS(type),
              meta::WithCustomError{
-                 validation::Type<std::string>{},
-                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}},
+                 validation::Type<std::string>{}, Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}
+             },
              validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend())},
 
         };
