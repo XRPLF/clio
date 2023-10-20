@@ -84,7 +84,7 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTsByIssuerHandler::Output const& output)
 {
-    auto object = boost::json::object{
+    jv = {
         {"nft_issuer", output.nftIssuer},
         {JS(limit), output.limit},
         {JS(ledger_index), output.ledgerIndex},
@@ -93,12 +93,11 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTsByIssuerHand
     };
 
     if (output.marker.has_value())
-        object[JS(marker)] = *output.marker;
+        jv.as_object()[JS(marker)] = *(output.marker);
 
     if (output.nftTaxon.has_value())
-        object["nft_taxon"] = *output.nftTaxon;
+        jv.as_object()["nft_taxon"] = *(output.nftTaxon);
 
-    jv = std::move(object);
 }
 
 NFTsByIssuerHandler::Input
@@ -109,8 +108,25 @@ tag_invoke(boost::json::value_to_tag<NFTsByIssuerHandler::Input>, boost::json::v
 
     input.nftIssuer = jsonObject.at("nft_issuer").as_string().c_str();
 
+    if (jsonObject.contains(JS(ledger_hash)))
+        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
+
+    if (jsonObject.contains(JS(ledger_index)))
+    {
+        if (!jsonObject.at(JS(ledger_index)).is_string())
+            input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
+        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+    }
+
+    if (jsonObject.contains(JS(limit)))
+        input.limit = jsonObject.at(JS(limit)).as_int64();
+
     if (jsonObject.contains("nft_taxon"))
         input.nftTaxon = jsonObject.at("nft_taxon").as_int64();
+    
+    if (jsonObject.contains(JS(marker)))
+        input.marker = jsonObject.at(JS(marker)).as_string().c_str();;
 
     return input;
 }
