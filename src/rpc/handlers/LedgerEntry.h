@@ -56,6 +56,8 @@ public:
         ripple::LedgerEntryType expectedType = ripple::ltANY;
         // account id to address account root object
         std::optional<std::string> accountRoot;
+        // account id to address did object
+        std::optional<std::string> did;
         // TODO: extract into custom objects, remove json from Input
         std::optional<boost::json::object> directory;
         std::optional<boost::json::object> offer;
@@ -128,6 +130,7 @@ public:
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(index), malformedRequestHexStringValidator},
             {JS(account_root), validation::AccountBase58Validator},
+            {JS(did), validation::AccountBase58Validator},
             {JS(check), malformedRequestHexStringValidator},
             {JS(deposit_preauth),
              validation::Type<std::string, boost::json::object>{},
@@ -146,7 +149,8 @@ public:
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(owner), validation::AccountBase58Validator},
                  {JS(dir_root), validation::Uint256HexStringValidator},
-                 {JS(sub_index), malformedRequestIntValidator}}}},
+                 {JS(sub_index), malformedRequestIntValidator}
+             }}},
             {JS(escrow),
              validation::Type<std::string, boost::json::object>{},
              meta::IfType<std::string>{malformedRequestHexStringValidator},
