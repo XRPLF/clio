@@ -410,7 +410,7 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
 TEST_F(RPCTxTest, MintNFT)
 {
     // Note: `inLedger` is API v1 only. See DefaultOutput_*
-    auto const static OUT = fmt::format(
+    auto static const OUT = fmt::format(
         R"({{
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee": "50",
@@ -821,7 +821,8 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvaiable)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
@@ -830,7 +831,7 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvaiable)
 
 TEST_F(RPCTxTest, ViaCTID)
 {
-    auto const static OUT = fmt::format(
+    auto static const OUT = fmt::format(
         R"({{
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee":"2",

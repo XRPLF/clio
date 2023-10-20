@@ -88,36 +88,30 @@ LoadBalancer::LoadBalancer(
     auto const checkOnETLFailure = [this, allowNoEtl](std::string const& log) {
         LOG(log_.error()) << log;
 
-        if (!allowNoEtl)
-        {
+        if (!allowNoEtl) {
             LOG(log_.error()) << "Set allow_no_etl as true in config to allow clio run without valid ETL sources.";
             throw std::logic_error("ETL configuration error.");
         }
     };
 
-    for (auto const& entry : config.array("etl_sources"))
-    {
+    for (auto const& entry : config.array("etl_sources")) {
         std::unique_ptr<Source> source = make_Source(entry, ioc, backend, subscriptions, validatedLedgers, *this);
 
         // checking etl node validity
         auto const stateOpt = ETLState::fetchETLStateFromSource(*source);
 
-        if (!stateOpt)
-        {
+        if (!stateOpt) {
             checkOnETLFailure(fmt::format(
                 "Failed to fetch ETL state from source = {} Please check the configuration and network",
-                source->toString()));
-        }
-        else if (
-            etlState_ && etlState_->networkID && stateOpt->networkID && etlState_->networkID != stateOpt->networkID)
-        {
+                source->toString()
+            ));
+        } else if (etlState_ && etlState_->networkID && stateOpt->networkID && etlState_->networkID != stateOpt->networkID) {
             checkOnETLFailure(fmt::format(
                 "ETL sources must be on the same network. Source network id = {} does not match others network id = {}",
                 *(stateOpt->networkID),
-                *(etlState_->networkID)));
-        }
-        else
-        {
+                *(etlState_->networkID)
+            ));
+        } else {
             etlState_ = stateOpt;
         }
 
@@ -127,7 +121,6 @@ LoadBalancer::LoadBalancer(
 
     if (sources_.empty())
         checkOnETLFailure("No ETL sources configured. Please check the configuration");
-    
 }
 
 LoadBalancer::~LoadBalancer()
@@ -277,8 +270,7 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
 std::optional<ETLState>
 LoadBalancer::getETLState() noexcept
 {
-    if (!etlState_)
-    {
+    if (!etlState_) {
         // retry ETLState fetch
         etlState_ = ETLState::fetchETLStateFromSource(*this);
     }
