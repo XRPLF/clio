@@ -208,8 +208,9 @@ public:
 
     /**
      * @brief Get the etl nodes' state
+     * @return the etl nodes' state, nullopt if etl nodes are not connected
      */
-    etl::ETLState
+    std::optional<etl::ETLState>
     getETLState() const noexcept
     {
         return loadBalancer_->getETLState();

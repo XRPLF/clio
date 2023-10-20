@@ -410,7 +410,7 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
 TEST_F(RPCTxTest, MintNFT)
 {
     // Note: `inLedger` is API v1 only. See DefaultOutput_*
-    auto const static OUT = fmt::format(
+    auto static const OUT = fmt::format(
         R"({{
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee": "50",
@@ -756,9 +756,82 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
     });
 }
 
+TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvaiable)
+{
+    auto constexpr static OUT = R"({
+            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Fee":"2",
+            "Sequence":100,
+            "SigningPubKey":"74657374",
+            "TakerGets":
+            {
+                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "value":"200"
+            },
+            "TakerPays":"300",
+            "TransactionType":"OfferCreate",
+            "hash":"2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
+            "meta":
+            {
+                "AffectedNodes":
+                [
+                    {
+                        "CreatedNode":
+                        {
+                            "LedgerEntryType":"Offer",
+                            "NewFields":
+                            {
+                                "TakerGets":"200",
+                                "TakerPays":
+                                {
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "value":"300"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "TransactionIndex":100,
+                "TransactionResult":"tesSUCCESS"
+            },
+            "date":123456,
+            "ledger_index":100,
+            "inLedger":100,
+            "validated": true
+    })";
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    TransactionAndMetadata tx;
+    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.transaction =
+        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+    tx.date = 123456;
+    tx.ledgerSequence = 100;
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ASSERT_NE(rawETLPtr, nullptr);
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(std::nullopt));
+
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}"
+            }})",
+            TXNID
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(OUT));
+    });
+}
+
 TEST_F(RPCTxTest, ViaCTID)
 {
-    auto const static OUT = fmt::format(
+    auto static const OUT = fmt::format(
         R"({{
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee":"2",
