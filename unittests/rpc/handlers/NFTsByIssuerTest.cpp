@@ -24,7 +24,7 @@
 
 #include <fmt/core.h>
 
-using namespace RPC;
+using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
@@ -50,14 +50,14 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonHexLedgerHash)
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashMalformed");
     });
 }
 
 TEST_F(RPCNFTsByIssuerHandlerTest, NonStringLedgerHash)
-{
+{ 
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
@@ -69,7 +69,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonStringLedgerHash)
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashNotString");
     });
@@ -88,7 +88,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, InvalidLedgerIndexString)
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
     });
@@ -104,8 +104,8 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerInvalidFormat)
         })");
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "actMalformed");
         EXPECT_EQ(err.at("error_message").as_string(), "nft_issuerMalformed");
     });
 }
@@ -118,7 +118,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerMissing)
         auto const input = json::parse(R"({})");
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Required field 'nft_issuer' missing");
     });
@@ -135,7 +135,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerNotString)
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "nft_issuerNotString");
     });
@@ -162,7 +162,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash)
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -187,7 +187,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerStringIndex)
         auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -211,7 +211,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIntIndex)
         auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -239,7 +239,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash2)
         auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -264,7 +264,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIndex2)
         auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
-        auto const err = RPC::makeError(output.error());
+        auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -276,6 +276,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, IssuerNotExistOrHasNoNFTs)
     auto const currentOutput = fmt::format(
         R"({{
             "nft_issuer": "{}",
+            "limit":50,
             "ledger_index": 30,
             "nfts": [],
             "validated": true
@@ -315,6 +316,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
     auto const currentOutput = fmt::format(
         R"({{
         "nft_issuer": "{}",
+        "limit":50,
         "ledger_index": 30,
         "nfts": [{{
             "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
@@ -340,8 +342,8 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
 
     // fetch nfts return something
     std::vector<NFT> const nfts = {CreateNFT(NFTID, ACCOUNT, 29)};
-    auto const account = GetAccountIDWithString(ACCOUNT);
-    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer(account, Ref(Const(std::nullopt)), 30, _, Ref(Const(std::nullopt)), _))
+    //auto const account = GetAccountIDWithString(ACCOUNT);
+    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer)
         .WillByDefault(Return(NFTsAndCursor{nfts, {}}));
     EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer).Times(1);
 
@@ -352,7 +354,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
         ACCOUNT));
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{NFTsByIssuerHandler{this->mockBackendPtr}};
-        auto const output = handler.process(input, Context{std::ref(yield)});
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(currentOutput), *output);
     });

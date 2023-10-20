@@ -32,7 +32,6 @@ class NFTsByIssuerHandler
 public:
     struct Output
     {
-        // TODO use a better type than json
         boost::json::array nfts;
         uint32_t ledgerIndex;
         std::string nftIssuer;

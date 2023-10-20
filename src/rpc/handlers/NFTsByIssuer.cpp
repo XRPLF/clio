@@ -130,4 +130,4 @@ tag_invoke(boost::json::value_to_tag<NFTsByIssuerHandler::Input>, boost::json::v
 
     return input;
 }
-}  // namespace RPC
+}  // namespace rpc

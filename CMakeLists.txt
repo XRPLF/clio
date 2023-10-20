@@ -205,6 +205,7 @@ if (tests)
     unittests/rpc/handlers/RandomTests.cpp
     unittests/rpc/handlers/NFTInfoTests.cpp
     unittests/rpc/handlers/NFTBuyOffersTests.cpp
+    unittests/rpc/handlers/NFTsByIssuerTest.cpp
     unittests/rpc/handlers/NFTSellOffersTests.cpp
     unittests/rpc/handlers/NFTHistoryTests.cpp
     unittests/rpc/handlers/SubscribeTests.cpp
