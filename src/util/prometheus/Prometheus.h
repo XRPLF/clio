@@ -94,14 +94,6 @@ public:
         return isEnabled_;
     }
 
-    /**
-     * @brief Whether prometheus has registered metrics
-     *
-     * @return true if prometheus has already registered some metrics
-     */
-    virtual bool
-    hasMetrics() const = 0;
-
 private:
     bool isEnabled_;
 };
@@ -131,9 +123,6 @@ public:
     std::string
     collectMetrics() override;
 
-    bool
-    hasMetrics() const override;
-
 private:
     MetricBase&
     getMetric(std::string name, Labels labels, std::optional<std::string> description, MetricType type);
@@ -158,12 +147,10 @@ public:
         return *instance_;
     }
 
+    // Be careful with this method because there could be hanging references to counters
     static void
     replaceInstance(std::unique_ptr<PrometheusInterface> instance)
     {
-        if (instance_)
-            assert(!instance_->hasMetrics());
-
         instance_ = std::move(instance);
     }
 

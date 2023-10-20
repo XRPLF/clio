@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <util/Fixtures.h>
+#include <util/MockPrometheus.h>
 
 #include <rpc/Counters.h>
 #include <rpc/JS.h>
@@ -26,6 +27,9 @@
 #include <gtest/gtest.h>
 
 using namespace rpc;
+
+using util::prometheus::CounterInt;
+using util::prometheus::WithMockPrometheus;
 
 struct BaseRPCCountersTest : NoLoggerFixture
 {
@@ -103,4 +107,88 @@ TEST_F(RPCCountersTest, CheckThatCountersAddUp)
     EXPECT_STREQ(report.at("internal_errors").as_string().c_str(), "512");
 
     EXPECT_EQ(report.at("work_queue"), queue.report());  // Counters report includes queue report
+}
+
+struct RPCCountersMockPrometheusTests : WithMockPrometheus
+{
+    WorkQueue queue{4u, 1024u};  // todo: mock instead
+    Counters counters{queue};
+};
+
+TEST_F(RPCCountersMockPrometheusTests, rpcFailed)
+{
+    auto& startedMock = makeMock<CounterInt>("rpc_test_method_total_number", "{status=\"started\"}");
+    auto& failedMock = makeMock<CounterInt>("rpc_test_method_total_number", "{status=\"failed\"}");
+    EXPECT_CALL(startedMock, add(1));
+    EXPECT_CALL(failedMock, add(1));
+    counters.rpcFailed("test");
+}
+
+TEST_F(RPCCountersMockPrometheusTests, rpcErrored)
+{
+    auto& startedMock = makeMock<CounterInt>("rpc_test_method_total_number", "{status=\"started\"}");
+    auto& erroredMock = makeMock<CounterInt>("rpc_test_method_total_number", "{status=\"errored\"}");
+    EXPECT_CALL(startedMock, add(1));
+    EXPECT_CALL(erroredMock, add(1));
+    counters.rpcErrored("test");
+}
+
+TEST_F(RPCCountersMockPrometheusTests, rpcComplete)
+{
+    auto& startedMock = makeMock<CounterInt>("rpc_test_method_total_number", "{status=\"started\"}");
+    auto& finishedMock = makeMock<CounterInt>("rpc_test_method_total_number", "{status=\"finished\"}");
+    auto& durationMock = makeMock<CounterInt>("rpc_test_method_duration_us", "");
+    EXPECT_CALL(startedMock, add(1));
+    EXPECT_CALL(finishedMock, add(1));
+    EXPECT_CALL(durationMock, add(123));
+    counters.rpcComplete("test", std::chrono::microseconds(123));
+}
+
+TEST_F(RPCCountersMockPrometheusTests, rpcForwarded)
+{
+    auto& forwardedMock = makeMock<CounterInt>("rpc_test_method_total_number", "{status=\"forwarded\"}");
+    EXPECT_CALL(forwardedMock, add(1));
+    counters.rpcForwarded("test");
+}
+
+TEST_F(RPCCountersMockPrometheusTests, rpcFailedToForwarded)
+{
+    auto& failedForwadMock = makeMock<CounterInt>("rpc_test_method_total_number", "{status=\"failed_forward\"}");
+    EXPECT_CALL(failedForwadMock, add(1));
+    counters.rpcFailedToForward("test");
+}
+
+TEST_F(RPCCountersMockPrometheusTests, onTooBusy)
+{
+    auto& tooBusyMock = makeMock<CounterInt>("rpc_too_busy_total_number", "");
+    EXPECT_CALL(tooBusyMock, add(1));
+    counters.onTooBusy();
+}
+
+TEST_F(RPCCountersMockPrometheusTests, onNotReady)
+{
+    auto& notReadyMock = makeMock<CounterInt>("rpc_not_ready_total_number", "");
+    EXPECT_CALL(notReadyMock, add(1));
+    counters.onNotReady();
+}
+
+TEST_F(RPCCountersMockPrometheusTests, onBadSyntax)
+{
+    auto& badSyntaxMock = makeMock<CounterInt>("rpc_bad_syntax_total_number", "");
+    EXPECT_CALL(badSyntaxMock, add(1));
+    counters.onBadSyntax();
+}
+
+TEST_F(RPCCountersMockPrometheusTests, onUnknownCommand)
+{
+    auto& unknownCommandMock = makeMock<CounterInt>("rpc_unknown_command_total_number", "");
+    EXPECT_CALL(unknownCommandMock, add(1));
+    counters.onUnknownCommand();
+}
+
+TEST_F(RPCCountersMockPrometheusTests, onInternalError)
+{
+    auto& internalErrorMock = makeMock<CounterInt>("rpc_internal_error_total_number", "");
+    EXPECT_CALL(internalErrorMock, add(1));
+    counters.onInternalError();
 }

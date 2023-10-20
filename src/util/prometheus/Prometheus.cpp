@@ -79,12 +79,6 @@ PrometheusImpl::collectMetrics()
     return result;
 }
 
-bool
-PrometheusImpl::hasMetrics() const
-{
-    return !metrics_.empty();
-}
-
 MetricBase&
 PrometheusImpl::getMetric(
     std::string name,

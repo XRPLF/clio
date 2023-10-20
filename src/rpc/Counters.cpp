@@ -69,8 +69,7 @@ Counters::getMethodInfo(std::string const& method)
 }
 
 Counters::Counters(WorkQueue const& wq)
-    : tooBusyCounter_(
-          PROMETHEUS().counterInt("rpc_too_busy_errors_total_number", Labels(), "Total number of too busy errors"))
+    : tooBusyCounter_(PROMETHEUS().counterInt("rpc_too_busy_total_number", Labels(), "Total number of too busy errors"))
     , notReadyCounter_(
           PROMETHEUS().counterInt("rpc_not_ready_total_number", Labels(), "Total number of not ready replyes"))
     , badSyntaxCounter_(
@@ -82,7 +81,9 @@ Counters::Counters(WorkQueue const& wq)
     , internalErrorCounter_(
           PROMETHEUS().counterInt("rpc_internal_error_total_number", Labels(), "Total number of internal errors"))
     , workQueue_(std::cref(wq))
-    , startupTime_{std::chrono::system_clock::now()} {};
+    , startupTime_{std::chrono::system_clock::now()}
+{
+}
 
 void
 Counters::rpcFailed(std::string const& method)
