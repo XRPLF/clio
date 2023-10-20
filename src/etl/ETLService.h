@@ -208,6 +208,7 @@ public:
 
     /**
      * @brief Get the etl nodes' state
+     * @return the etl nodes' state, nullopt if etl nodes are not connected
      */
     std::optional<etl::ETLState>
     getETLState() const noexcept

@@ -181,6 +181,7 @@ public:
 
     /**
      * @brief Return state of ETL nodes.
+     * @return ETL state, nullopt if etl nodes not available
      */
     std::optional<ETLState>
     getETLState() noexcept;

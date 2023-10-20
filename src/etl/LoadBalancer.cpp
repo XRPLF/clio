@@ -126,9 +126,8 @@ LoadBalancer::LoadBalancer(
     }
 
     if (sources_.empty())
-    {
         checkOnETLFailure("No ETL sources configured. Please check the configuration");
-    }
+    
 }
 
 LoadBalancer::~LoadBalancer()
