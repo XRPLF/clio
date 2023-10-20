@@ -149,8 +149,7 @@ public:
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(owner), validation::AccountBase58Validator},
                  {JS(dir_root), validation::Uint256HexStringValidator},
-                 {JS(sub_index), malformedRequestIntValidator}
-             }}},
+                 {JS(sub_index), malformedRequestIntValidator}}}},
             {JS(escrow),
              validation::Type<std::string, boost::json::object>{},
              meta::IfType<std::string>{malformedRequestHexStringValidator},

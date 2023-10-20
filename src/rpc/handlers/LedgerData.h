@@ -95,8 +95,8 @@ public:
              meta::IfType<std::string>{validation::Uint256HexStringValidator}},
             {JS(type),
              meta::WithCustomError{
-                 validation::Type<std::string>{}, Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}
-             },
+                 validation::Type<std::string>{},
+                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}},
              validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend())},
 
         };
