@@ -28,10 +28,12 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr static auto ACCOUNT = "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67";
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr static auto NFTID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
-// constexpr static auto NFTID2 = "00081388319F12E15BCA13E1B933BF4C99C8E1BBC36BD4910A85D52F00000022";
+constexpr static auto NFTID1 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000"; // taxon 0
+constexpr static auto NFTID2 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F16E5DA9C00000001"; // taxon 0
+constexpr static auto NFTID3 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004"; // taxon 1
+
 
 class RPCNFTsByIssuerHandlerTest : public HandlerBaseTest
 {
@@ -319,15 +321,15 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
         "limit":50,
         "ledger_index": 30,
         "nfts": [{{
-            "nft_id": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
+            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000",
             "ledger_index": 29,
-            "owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
             "is_burned": false,
-            "flags": 1,
+            "flags": 8,
             "transfer_fee": 0,
-            "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
+            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
             "nft_taxon": 0,
-            "nft_serial": 4,
+            "nft_serial": 0,
             "uri": "757269"
         }}],
         "validated": true
@@ -341,11 +343,191 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
     // fetch nfts return something
-    std::vector<NFT> const nfts = {CreateNFT(NFTID, ACCOUNT, 29)};
-    //auto const account = GetAccountIDWithString(ACCOUNT);
+    std::vector<NFT> const nfts = {CreateNFT(NFTID1, ACCOUNT, 29)};
+    auto const account = GetAccountIDWithString(ACCOUNT);
     ON_CALL(*rawBackendPtr, fetchNFTsByIssuer)
         .WillByDefault(Return(NFTsAndCursor{nfts, {}}));
-    EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer(account, testing::Eq(std::nullopt), Const(30), testing::_, testing::Eq(std::nullopt), testing::_ )).Times(1);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "nft_issuer": "{}"
+        }})",
+        ACCOUNT));
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{NFTsByIssuerHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(currentOutput), *output);
+    });
+}
+
+// normal case when input has taxon
+TEST_F(RPCNFTsByIssuerHandlerTest, Taxon)
+{
+    auto const currentOutput = fmt::format(
+        R"({{
+        "nft_issuer": "{}",
+        "limit":50,
+        "ledger_index": 30,
+        "nfts": [{{
+            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000",
+            "ledger_index": 29,
+            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+            "is_burned": false,
+            "uri": "757269",
+            "flags": 8,
+            "transfer_fee": 0,
+            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+            "nft_taxon": 0,
+            "nft_serial": 0
+        }}],
+        "validated": true,
+        "nft_taxon": 0
+    }})",
+        ACCOUNT);
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    // fetch nfts return something
+    std::vector<NFT> const nfts = {CreateNFT(NFTID1, ACCOUNT, 29)};
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer)
+        .WillByDefault(Return(NFTsAndCursor{nfts, {}}));
+    EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer(account, testing::Optional(0), Const(30), testing::_, testing::Eq(std::nullopt), testing::_ )).Times(1);
+
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "nft_issuer": "{}",
+            "nft_taxon": 0
+        }})",
+        ACCOUNT));
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{NFTsByIssuerHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(currentOutput), *output);
+    });
+}
+
+// normal case when input has marker
+TEST_F(RPCNFTsByIssuerHandlerTest, Marker)
+{
+    auto const currentOutput = fmt::format(
+        R"({{
+        "nft_issuer": "{}",
+        "limit":50,
+        "ledger_index": 30,
+        "nfts": [{{
+            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004",
+            "ledger_index": 29,
+            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+            "is_burned": false,
+            "uri": "757269",
+            "flags": 8,
+            "transfer_fee": 0,
+            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+            "nft_taxon": 1,
+            "nft_serial": 4
+        }}],
+        "validated": true,
+        "marker":"00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004"
+    }})",
+        ACCOUNT);
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    // fetch nfts return something
+    std::vector<NFT> const nfts = {CreateNFT(NFTID3, ACCOUNT, 29)};
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer)
+        .WillByDefault(Return(NFTsAndCursor{nfts, ripple::uint256{NFTID3}}));
+    EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer(account, testing::_, Const(30), testing::_, testing::Eq(ripple::uint256{NFTID1}), testing::_ )).Times(1);
+
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "nft_issuer": "{}",
+            "marker": "{}"
+        }})",
+        ACCOUNT, NFTID1));
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{NFTsByIssuerHandler{this->mockBackendPtr}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(currentOutput), *output);
+    });
+}
+
+// normal case when input has marker
+TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
+{
+    auto const currentOutput = fmt::format(
+        R"({{
+        "nft_issuer": "{}",
+        "limit":50,
+        "ledger_index": 30,
+        "nfts": [{{
+            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000",
+            "ledger_index": 29,
+            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+            "is_burned": false,
+            "uri": "757269",
+            "flags": 8,
+            "transfer_fee": 0,
+            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+            "nft_taxon": 0,
+            "nft_serial": 0
+        }},
+        {{
+            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F16E5DA9C00000001",
+            "ledger_index": 29,
+            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+            "is_burned": false,
+            "uri": "757269",
+            "flags": 8,
+            "transfer_fee": 0,
+            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+            "nft_taxon": 0,
+            "nft_serial": 1
+        }},
+        {{
+            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004",
+            "ledger_index": 29,
+            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+            "is_burned": false,
+            "uri": "757269",
+            "flags": 8,
+            "transfer_fee": 0,
+            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+            "nft_taxon": 1,
+            "nft_serial": 4
+        }}],
+        "validated": true
+    }})",
+        ACCOUNT);
+    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    mockBackendPtr->updateRange(10);  // min
+    mockBackendPtr->updateRange(30);  // max
+    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    // fetch nfts return something
+    std::vector<NFT> const nfts = {CreateNFT(NFTID1, ACCOUNT, 29), CreateNFT(NFTID2, ACCOUNT, 29), CreateNFT(NFTID3, ACCOUNT, 29)};
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer)
+        .WillByDefault(Return(NFTsAndCursor{nfts, {}}));
+    EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer(account, testing::Eq(std::nullopt), Const(30), testing::_, testing::Eq(std::nullopt), testing::_ )).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
