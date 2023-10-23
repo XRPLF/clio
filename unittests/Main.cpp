@@ -16,12 +16,14 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+#include <util/prometheus/Prometheus.h>
 
 #include <gtest/gtest.h>
 
 int
 main(int argc, char** argv)
 {
+    PROMETHEUS_INIT();
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

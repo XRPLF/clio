@@ -38,10 +38,14 @@ constexpr auto JSONConfig = R"JSON({
     })JSON";
 }  // namespace
 
-struct RPCWorkQueueTest : NoLoggerFixture
+struct RPCWorkQueueTestBase : NoLoggerFixture
 {
     Config cfg = Config{boost::json::parse(JSONConfig)};
     WorkQueue queue = WorkQueue::make_WorkQueue(cfg);
+};
+
+struct RPCWorkQueueTest : WithPrometheus, RPCWorkQueueTestBase
+{
 };
 
 TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
@@ -109,7 +113,7 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
     EXPECT_TRUE(unblocked);
 }
 
-struct RPCWorkQueueMockPrometheusTest : WithMockPrometheus, RPCWorkQueueTest
+struct RPCWorkQueueMockPrometheusTest : WithMockPrometheus, RPCWorkQueueTestBase
 {
 };
 

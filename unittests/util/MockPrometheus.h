@@ -120,6 +120,9 @@ struct MockPrometheusImpl : PrometheusInterface
     std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplDouble>> counterDoubleImpls;
 };
 
+/**
+ * @note this class should be the first in the inheritance list
+ */
 struct WithMockPrometheus : virtual ::testing::Test
 {
     WithMockPrometheus()
@@ -129,7 +132,16 @@ struct WithMockPrometheus : virtual ::testing::Test
 
     ~WithMockPrometheus() override
     {
-        PrometheusSingleton::replaceInstance(std::make_unique<PrometheusImpl>(true));
+        if (HasFailure())
+        {
+            std::cerr << "Registered metrics:\n";
+            for (auto const& [key, metric] : mockPrometheus().metrics)
+            {
+                std::cout << key << "\n";
+            }
+            std::cerr << "\n";
+        }
+        PROMETHEUS_INIT();
     }
 
     static MockPrometheusImpl&
@@ -164,6 +176,22 @@ struct WithMockPrometheus : virtual ::testing::Test
             return mockPrometheusPtr->counterDoubleImpls[key];
         }
         throw std::runtime_error("Wrong metric type");
+    }
+};
+
+/**
+ * @note this class should be the first in the inheritance list
+ */
+struct WithPrometheus : virtual ::testing::Test
+{
+    WithPrometheus()
+    {
+        PROMETHEUS_INIT();
+    }
+
+    ~WithPrometheus() override
+    {
+        PROMETHEUS_INIT();
     }
 };
 

@@ -27,6 +27,9 @@ MetricType&
 convertBaseTo(MetricBase& metricBase)
 {
     auto result = dynamic_cast<MetricType*>(&metricBase);
+    assert(result != nullptr);
+    if (result == nullptr)
+        throw std::runtime_error("Failed to convert metric type");
     return *result;
 }
 
@@ -91,6 +94,10 @@ PrometheusImpl::getMetric(
     {
         auto nameCopy = name;
         it = metrics_.emplace(std::move(nameCopy), MetricsFamily(std::move(name), std::move(description), type)).first;
+    }
+    else if (it->second.type() != type)
+    {
+        throw std::runtime_error("Metrics of different type can't have the same name: " + name);
     }
     return it->second.getMetric(std::move(labels));
 }

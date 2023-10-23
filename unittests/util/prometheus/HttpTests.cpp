@@ -49,7 +49,7 @@ struct PrometheusCheckRequestTests : public ::testing::TestWithParam<PrometheusC
 
 TEST_P(PrometheusCheckRequestTests, isPrometheusRequest)
 {
-    PrometheusSingleton::init(util::Config{{{"prometheus_enabled", GetParam().prometheusEnabled}}});
+    PROMETHEUS_INIT(util::Config{{{"prometheus_enabled", GetParam().prometheusEnabled}}});
     boost::beast::http::request<boost::beast::http::string_body> req;
     req.method(GetParam().method);
     req.target(GetParam().target);
@@ -102,7 +102,7 @@ struct PrometheusHandleRequestTests : ::testing::Test
 {
     PrometheusHandleRequestTests()
     {
-        PrometheusSingleton::init(util::Config{});
+        PROMETHEUS_INIT();
     }
     http::request<http::string_body> const req{http::verb::get, "/metrics", 11};
 };
@@ -118,7 +118,7 @@ TEST_F(PrometheusHandleRequestTests, emptyResponse)
 
 TEST_F(PrometheusHandleRequestTests, prometheusDisabled)
 {
-    PrometheusSingleton::init(util::Config({{"prometheus_enabled", false}}));
+    PROMETHEUS_INIT(util::Config({{"prometheus_enabled", false}}));
     auto response = handlePrometheusRequest(req, true);
     ASSERT_TRUE(response.has_value());
     EXPECT_EQ(response->result(), http::status::forbidden);

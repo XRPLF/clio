@@ -167,7 +167,7 @@ try
     LogService::init(config);
     LOG(LogService::info()) << "Clio version: " << Build::getClioFullVersionString();
 
-    util::prometheus::PrometheusSingleton::init(config);
+    PROMETHEUS_INIT(config);
 
     auto const threads = config.valueOr("io_threads", 2);
     if (threads <= 0)
