@@ -34,6 +34,47 @@ constexpr static auto NFTID1 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F
 constexpr static auto NFTID2 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F16E5DA9C00000001"; // taxon 0
 constexpr static auto NFTID3 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004"; // taxon 1
 
+static std::string NFT1OUT = 
+    R"({
+        "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000",
+        "ledger_index": 29,
+        "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+        "is_burned": false,
+        "uri": "757269",
+        "flags": 8,
+        "transfer_fee": 0,
+        "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+        "nft_taxon": 0,
+        "nft_serial": 0
+    })";
+static std::string NFT2OUT = 
+    R"({
+        "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F16E5DA9C00000001",
+        "ledger_index": 29,
+        "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+        "is_burned": false,
+        "uri": "757269",
+        "flags": 8,
+        "transfer_fee": 0,
+        "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+        "nft_taxon": 0,
+        "nft_serial": 1
+    })";
+static std::string NFT3OUT = 
+    R"({
+        "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004",
+        "ledger_index": 29,
+        "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+        "is_burned": false,
+        "uri": "757269",
+        "flags": 8,
+        "transfer_fee": 0,
+        "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
+        "nft_taxon": 1,
+        "nft_serial": 4
+    })";
+
+
 
 class RPCNFTsByIssuerHandlerTest : public HandlerBaseTest
 {
@@ -320,21 +361,11 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
         "nft_issuer": "{}",
         "limit":50,
         "ledger_index": 30,
-        "nfts": [{{
-            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000",
-            "ledger_index": 29,
-            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "is_burned": false,
-            "flags": 8,
-            "transfer_fee": 0,
-            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "nft_taxon": 0,
-            "nft_serial": 0,
-            "uri": "757269"
-        }}],
+        "nfts": [{}],
         "validated": true
     }})",
-        ACCOUNT);
+        ACCOUNT,
+        NFT1OUT);
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -362,7 +393,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
     });
 }
 
-// normal case when input has taxon
 TEST_F(RPCNFTsByIssuerHandlerTest, Taxon)
 {
     auto const currentOutput = fmt::format(
@@ -370,22 +400,12 @@ TEST_F(RPCNFTsByIssuerHandlerTest, Taxon)
         "nft_issuer": "{}",
         "limit":50,
         "ledger_index": 30,
-        "nfts": [{{
-            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000",
-            "ledger_index": 29,
-            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "is_burned": false,
-            "uri": "757269",
-            "flags": 8,
-            "transfer_fee": 0,
-            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "nft_taxon": 0,
-            "nft_serial": 0
-        }}],
+        "nfts": [{}],
         "validated": true,
         "nft_taxon": 0
     }})",
-        ACCOUNT);
+        ACCOUNT,
+        NFT1OUT);
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -415,7 +435,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, Taxon)
     });
 }
 
-// normal case when input has marker
 TEST_F(RPCNFTsByIssuerHandlerTest, Marker)
 {
     auto const currentOutput = fmt::format(
@@ -423,22 +442,12 @@ TEST_F(RPCNFTsByIssuerHandlerTest, Marker)
         "nft_issuer": "{}",
         "limit":50,
         "ledger_index": 30,
-        "nfts": [{{
-            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004",
-            "ledger_index": 29,
-            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "is_burned": false,
-            "uri": "757269",
-            "flags": 8,
-            "transfer_fee": 0,
-            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "nft_taxon": 1,
-            "nft_serial": 4
-        }}],
+        "nfts": [{}],
         "validated": true,
         "marker":"00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004"
     }})",
-        ACCOUNT);
+        ACCOUNT,
+        NFT3OUT);
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
@@ -468,7 +477,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, Marker)
     });
 }
 
-// normal case when input has marker
 TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
 {
     auto const currentOutput = fmt::format(
@@ -476,45 +484,13 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
         "nft_issuer": "{}",
         "limit":50,
         "ledger_index": 30,
-        "nfts": [{{
-            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000",
-            "ledger_index": 29,
-            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "is_burned": false,
-            "uri": "757269",
-            "flags": 8,
-            "transfer_fee": 0,
-            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "nft_taxon": 0,
-            "nft_serial": 0
-        }},
-        {{
-            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F16E5DA9C00000001",
-            "ledger_index": 29,
-            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "is_burned": false,
-            "uri": "757269",
-            "flags": 8,
-            "transfer_fee": 0,
-            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "nft_taxon": 0,
-            "nft_serial": 1
-        }},
-        {{
-            "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004",
-            "ledger_index": 29,
-            "owner": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "is_burned": false,
-            "uri": "757269",
-            "flags": 8,
-            "transfer_fee": 0,
-            "issuer": "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67",
-            "nft_taxon": 1,
-            "nft_serial": 4
-        }}],
+        "nfts": [{}, {}, {}],
         "validated": true
     }})",
-        ACCOUNT);
+        ACCOUNT,
+        NFT1OUT,
+        NFT2OUT,
+        NFT3OUT);
     MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
