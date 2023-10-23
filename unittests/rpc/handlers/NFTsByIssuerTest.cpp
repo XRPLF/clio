@@ -30,11 +30,11 @@ using namespace testing;
 
 constexpr static auto ACCOUNT = "r4X6JLsBfhNK4UnquNkCxhVHKPkvbQff67";
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr static auto NFTID1 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000"; // taxon 0
-constexpr static auto NFTID2 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F16E5DA9C00000001"; // taxon 0
-constexpr static auto NFTID3 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004"; // taxon 1
+constexpr static auto NFTID1 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000";  // taxon 0
+constexpr static auto NFTID2 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F16E5DA9C00000001";  // taxon 0
+constexpr static auto NFTID3 = "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004";  // taxon 1
 
-static std::string NFT1OUT = 
+static std::string NFT1OUT =
     R"({
         "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F0000099B00000000",
         "ledger_index": 29,
@@ -47,7 +47,7 @@ static std::string NFT1OUT =
         "nft_taxon": 0,
         "nft_serial": 0
     })";
-static std::string NFT2OUT = 
+static std::string NFT2OUT =
     R"({
         "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F16E5DA9C00000001",
         "ledger_index": 29,
@@ -60,7 +60,7 @@ static std::string NFT2OUT =
         "nft_taxon": 0,
         "nft_serial": 1
     })";
-static std::string NFT3OUT = 
+static std::string NFT3OUT =
     R"({
         "nft_id": "00080000EC28C2910FD1C454A51598AAB91C8876286B2E7F5B974D9E00000004",
         "ledger_index": 29,
@@ -73,8 +73,6 @@ static std::string NFT3OUT =
         "nft_taxon": 1,
         "nft_serial": 4
     })";
-
-
 
 class RPCNFTsByIssuerHandlerTest : public HandlerBaseTest
 {
@@ -100,7 +98,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonHexLedgerHash)
 }
 
 TEST_F(RPCNFTsByIssuerHandlerTest, NonStringLedgerHash)
-{ 
+{
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
@@ -376,9 +374,12 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
     // fetch nfts return something
     std::vector<NFT> const nfts = {CreateNFT(NFTID1, ACCOUNT, 29)};
     auto const account = GetAccountIDWithString(ACCOUNT);
-    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer)
-        .WillByDefault(Return(NFTsAndCursor{nfts, {}}));
-    EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer(account, testing::Eq(std::nullopt), Const(30), testing::_, testing::Eq(std::nullopt), testing::_ )).Times(1);
+    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{nfts, {}}));
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchNFTsByIssuer(
+            account, testing::Eq(std::nullopt), Const(30), testing::_, testing::Eq(std::nullopt), testing::_))
+        .Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -416,10 +417,11 @@ TEST_F(RPCNFTsByIssuerHandlerTest, Taxon)
     // fetch nfts return something
     std::vector<NFT> const nfts = {CreateNFT(NFTID1, ACCOUNT, 29)};
     auto const account = GetAccountIDWithString(ACCOUNT);
-    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer)
-        .WillByDefault(Return(NFTsAndCursor{nfts, {}}));
-    EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer(account, testing::Optional(0), Const(30), testing::_, testing::Eq(std::nullopt), testing::_ )).Times(1);
-
+    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{nfts, {}}));
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchNFTsByIssuer(account, testing::Optional(0), Const(30), testing::_, testing::Eq(std::nullopt), testing::_))
+        .Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -458,17 +460,19 @@ TEST_F(RPCNFTsByIssuerHandlerTest, Marker)
     // fetch nfts return something
     std::vector<NFT> const nfts = {CreateNFT(NFTID3, ACCOUNT, 29)};
     auto const account = GetAccountIDWithString(ACCOUNT);
-    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer)
-        .WillByDefault(Return(NFTsAndCursor{nfts, ripple::uint256{NFTID3}}));
-    EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer(account, testing::_, Const(30), testing::_, testing::Eq(ripple::uint256{NFTID1}), testing::_ )).Times(1);
-
+    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{nfts, ripple::uint256{NFTID3}}));
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchNFTsByIssuer(account, testing::_, Const(30), testing::_, testing::Eq(ripple::uint256{NFTID1}), testing::_))
+        .Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
             "nft_issuer": "{}",
             "marker": "{}"
         }})",
-        ACCOUNT, NFTID1));
+        ACCOUNT,
+        NFTID1));
     runSpawn([&, this](auto& yield) {
         auto handler = AnyHandler{NFTsByIssuerHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -499,11 +503,15 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
     // fetch nfts return something
-    std::vector<NFT> const nfts = {CreateNFT(NFTID1, ACCOUNT, 29), CreateNFT(NFTID2, ACCOUNT, 29), CreateNFT(NFTID3, ACCOUNT, 29)};
+    std::vector<NFT> const nfts = {
+        CreateNFT(NFTID1, ACCOUNT, 29), CreateNFT(NFTID2, ACCOUNT, 29), CreateNFT(NFTID3, ACCOUNT, 29)};
     auto const account = GetAccountIDWithString(ACCOUNT);
-    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer)
-        .WillByDefault(Return(NFTsAndCursor{nfts, {}}));
-    EXPECT_CALL(*rawBackendPtr, fetchNFTsByIssuer(account, testing::Eq(std::nullopt), Const(30), testing::_, testing::Eq(std::nullopt), testing::_ )).Times(1);
+    ON_CALL(*rawBackendPtr, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{nfts, {}}));
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchNFTsByIssuer(
+            account, testing::Eq(std::nullopt), Const(30), testing::_, testing::Eq(std::nullopt), testing::_))
+        .Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{

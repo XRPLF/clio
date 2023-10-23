@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
+#include <ripple/protocol/nft.h>
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/NFTsByIssuer.h>
-#include <ripple/protocol/nft.h>
 
 // #include <ripple/app/tx/impl/details/NFTokenUtils.h>
 
@@ -56,8 +56,9 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
     output.limit = limit;
     output.ledgerIndex = lgrInfo.seq;
     output.nftTaxon = input.nftTaxon;
-    
-    for(auto const& nft: dbResponse.nfts){
+
+    for (auto const& nft : dbResponse.nfts)
+    {
         boost::json::object nftJson;
 
         nftJson[JS(nft_id)] = strHex(nft.tokenID);
@@ -97,7 +98,6 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTsByIssuerHand
 
     if (output.nftTaxon.has_value())
         jv.as_object()["nft_taxon"] = *(output.nftTaxon);
-
 }
 
 NFTsByIssuerHandler::Input
@@ -124,9 +124,9 @@ tag_invoke(boost::json::value_to_tag<NFTsByIssuerHandler::Input>, boost::json::v
 
     if (jsonObject.contains("nft_taxon"))
         input.nftTaxon = jsonObject.at("nft_taxon").as_int64();
-    
+
     if (jsonObject.contains(JS(marker)))
-        input.marker = jsonObject.at(JS(marker)).as_string().c_str();;
+        input.marker = jsonObject.at(JS(marker)).as_string().c_str();
 
     return input;
 }
