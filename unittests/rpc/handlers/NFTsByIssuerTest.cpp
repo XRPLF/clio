@@ -430,7 +430,12 @@ TEST_F(RPCNFTsByIssuerHandlerTest, SpecificLedgerIndex)
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTsByIssuer(
-            account, testing::Eq(std::nullopt), Const(specificLedger), testing::_, testing::Eq(std::nullopt), testing::_))
+            account,
+            testing::Eq(std::nullopt),
+            Const(specificLedger),
+            testing::_,
+            testing::Eq(std::nullopt),
+            testing::_))
         .Times(1);
 
     auto const input = json::parse(fmt::format(
@@ -602,7 +607,12 @@ TEST_F(RPCNFTsByIssuerHandlerTest, LimitMoreThanMAx)
     EXPECT_CALL(
         *rawBackendPtr,
         fetchNFTsByIssuer(
-            account, testing::Eq(std::nullopt), Const(30), Const(NFTsByIssuerHandler::LIMIT_MAX), testing::Eq(std::nullopt), testing::_))
+            account,
+            testing::Eq(std::nullopt),
+            Const(30),
+            Const(NFTsByIssuerHandler::LIMIT_MAX),
+            testing::Eq(std::nullopt),
+            testing::_))
         .Times(1);
 
     auto const input = json::parse(fmt::format(
