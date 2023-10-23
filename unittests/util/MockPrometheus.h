@@ -74,7 +74,6 @@ struct MockPrometheusImpl : PrometheusInterface
     {
         const auto labelsString = labels.serialize();
         const auto key = name + labels.serialize();
-        std::cout << "getMetric: " << key << std::endl;
         auto it = metrics.find(key);
         if (it == metrics.end())
         {
@@ -146,7 +145,6 @@ struct WithMockPrometheus : virtual ::testing::Test
     static auto&
     makeMock(std::string name, std::string labelsString)
     {
-        std::cout << "makeMock:  " << name + labelsString << std::endl;
         auto* mockPrometheusPtr = dynamic_cast<MockPrometheusImpl*>(&PROMETHEUS());
         if (mockPrometheusPtr == nullptr)
             throw std::runtime_error("Wrong prometheus type");

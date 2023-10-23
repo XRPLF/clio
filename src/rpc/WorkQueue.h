@@ -21,6 +21,7 @@
 
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
+#include <util/prometheus/Prometheus.h>
 
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
@@ -40,10 +41,10 @@ namespace rpc {
 class WorkQueue
 {
     // these are cumulative for the lifetime of the process
-    std::atomic_uint64_t queued_ = 0;
-    std::atomic_uint64_t durationUs_ = 0;
+    util::prometheus::CounterInt& queued_;
+    util::prometheus::CounterInt& durationUs_;
 
-    std::atomic_uint64_t curSize_ = 0;
+    util::prometheus::GaugeInt& curSize_;
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
 
     util::Logger log_{"RPC"};
@@ -90,9 +91,9 @@ public:
     bool
     postCoro(FnType&& func, bool isWhiteListed)
     {
-        if (curSize_ >= maxSize_ && !isWhiteListed)
+        if (curSize_.value() >= maxSize_ && !isWhiteListed)
         {
-            LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << curSize_
+            LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << curSize_.value()
                              << "; max size = " << maxSize_;
             return false;
         }
@@ -109,7 +110,7 @@ public:
 
                 ++queued_;
                 durationUs_ += wait;
-                LOG(log_.info()) << "WorkQueue wait time = " << wait << " queue size = " << curSize_;
+                LOG(log_.info()) << "WorkQueue wait time = " << wait << " queue size = " << curSize_.value();
 
                 func(yield);
                 --curSize_;
@@ -128,13 +129,19 @@ public:
     {
         auto obj = boost::json::object{};
 
-        obj["queued"] = queued_;
-        obj["queued_duration_us"] = durationUs_;
-        obj["current_queue_size"] = curSize_;
+        obj["queued"] = queued_.value();
+        obj["queued_duration_us"] = durationUs_.value();
+        obj["current_queue_size"] = curSize_.value();
         obj["max_queue_size"] = maxSize_;
 
         return obj;
     }
+
+    /**
+     * @brief Wait untill all the jobs in the queue are finished.
+     */
+    void
+    join();
 };
 
 }  // namespace rpc
