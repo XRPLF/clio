@@ -39,7 +39,7 @@ public:
     {
         boost::json::array nfts;
         uint32_t ledgerIndex;
-        std::string nftIssuer;
+        std::string issuer;
         bool validated = true;
         std::optional<uint32_t> nftTaxon;
         uint32_t limit;
@@ -48,7 +48,7 @@ public:
 
     struct Input
     {
-        std::string nftIssuer;
+        std::string issuer;
         std::optional<uint32_t> nftTaxon;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
@@ -66,7 +66,7 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
-            {"nft_issuer", validation::Required{}, validation::AccountValidator},
+            {JS(issuer), validation::Required{}, validation::AccountValidator},
             {"nft_taxon", validation::Type<uint32_t>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},

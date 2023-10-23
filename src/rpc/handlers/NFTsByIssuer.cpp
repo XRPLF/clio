@@ -39,7 +39,7 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
 
     auto const limit = input.limit.value_or(NFTsByIssuerHandler::LIMIT_DEFAULT);
 
-    auto const issuer = accountFromStringStrict(input.nftIssuer);
+    auto const issuer = accountFromStringStrict(input.issuer);
 
     std::optional<uint256> cursor;
     if (input.marker)
@@ -50,7 +50,7 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
 
     auto output = NFTsByIssuerHandler::Output{};
 
-    output.nftIssuer = toBase58(*issuer);
+    output.issuer = toBase58(*issuer);
     output.limit = limit;
     output.ledgerIndex = lgrInfo.seq;
     output.nftTaxon = input.nftTaxon;
@@ -84,7 +84,7 @@ void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTsByIssuerHandler::Output const& output)
 {
     jv = {
-        {"nft_issuer", output.nftIssuer},
+        {JS(issuer), output.issuer},
         {JS(limit), output.limit},
         {JS(ledger_index), output.ledgerIndex},
         {"nfts", output.nfts},
@@ -104,7 +104,7 @@ tag_invoke(boost::json::value_to_tag<NFTsByIssuerHandler::Input>, boost::json::v
     auto const& jsonObject = jv.as_object();
     NFTsByIssuerHandler::Input input;
 
-    input.nftIssuer = jsonObject.at("nft_issuer").as_string().c_str();
+    input.issuer = jsonObject.at(JS(issuer)).as_string().c_str();
 
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();

@@ -84,7 +84,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonHexLedgerHash)
         auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
-                "nft_issuer": "{}", 
+                "issuer": "{}", 
                 "ledger_hash": "xxx"
             }})",
             ACCOUNT));
@@ -103,7 +103,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonStringLedgerHash)
         auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{
-                "nft_issuer": "{}", 
+                "issuer": "{}", 
                 "ledger_hash": 123
             }})",
             ACCOUNT));
@@ -122,7 +122,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, InvalidLedgerIndexString)
         auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(fmt::format(
             R"({{ 
-                "nft_issuer": "{}", 
+                "issuer": "{}", 
                 "ledger_index": "notvalidated"
             }})",
             ACCOUNT));
@@ -135,23 +135,23 @@ TEST_F(RPCNFTsByIssuerHandlerTest, InvalidLedgerIndexString)
     });
 }
 
-// error case: nft_issuer invalid format, length is incorrect
+// error case: issuer invalid format, length is incorrect
 TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerInvalidFormat)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(R"({ 
-            "nft_issuer": "xxx"
+            "issuer": "xxx"
         })");
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
-        EXPECT_EQ(err.at("error_message").as_string(), "nft_issuerMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "issuerMalformed");
     });
 }
 
-// error case: nft_issuer missing
+// error case: issuer missing
 TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerMissing)
 {
     runSpawn([this](boost::asio::yield_context yield) {
@@ -161,24 +161,24 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerMissing)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "Required field 'nft_issuer' missing");
+        EXPECT_EQ(err.at("error_message").as_string(), "Required field 'issuer' missing");
     });
 }
 
-// error case: nft_issuer invalid format
+// error case: issuer invalid format
 TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerNotString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTsByIssuerHandler{mockBackendPtr}};
         auto const input = json::parse(R"({ 
-            "nft_issuer": 12
+            "issuer": 12
         })");
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "nft_issuerNotString");
+        EXPECT_EQ(err.at("error_message").as_string(), "issuerNotString");
     });
 }
 
@@ -193,7 +193,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash)
 
     auto const input = json::parse(fmt::format(
         R"({{
-            "nft_issuer": "{}",
+            "issuer": "{}",
             "ledger_hash": "{}"
         }})",
         ACCOUNT,
@@ -220,7 +220,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerStringIndex)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
-            "nft_issuer": "{}",
+            "issuer": "{}",
             "ledger_index": "4"
         }})",
         ACCOUNT));
@@ -244,7 +244,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIntIndex)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
-            "nft_issuer": "{}",
+            "issuer": "{}",
             "ledger_index": 4
         }})",
         ACCOUNT));
@@ -271,7 +271,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash2)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
-            "nft_issuer": "{}",
+            "issuer": "{}",
             "ledger_hash": "{}"
         }})",
         ACCOUNT,
@@ -297,7 +297,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIndex2)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(0);
     auto const input = json::parse(fmt::format(
         R"({{ 
-            "nft_issuer": "{}",
+            "issuer": "{}",
             "ledger_index": "31"
         }})",
         ACCOUNT));
@@ -316,7 +316,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, IssuerNotExistOrHasNoNFTs)
 {
     auto const currentOutput = fmt::format(
         R"({{
-            "nft_issuer": "{}",
+            "issuer": "{}",
             "limit":50,
             "ledger_index": 30,
             "nfts": [],
@@ -338,7 +338,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, IssuerNotExistOrHasNoNFTs)
 
     auto const input = json::parse(fmt::format(
         R"({{
-            "nft_issuer": "{}",
+            "issuer": "{}",
             "ledger_hash": "{}"
         }})",
         ACCOUNT,
@@ -356,7 +356,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
 {
     auto const currentOutput = fmt::format(
         R"({{
-        "nft_issuer": "{}",
+        "issuer": "{}",
         "limit":50,
         "ledger_index": 30,
         "nfts": [{}],
@@ -382,7 +382,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
 
     auto const input = json::parse(fmt::format(
         R"({{
-            "nft_issuer": "{}"
+            "issuer": "{}"
         }})",
         ACCOUNT));
     runSpawn([&, this](auto& yield) {
@@ -398,7 +398,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, SpecificLedgerIndex)
     auto const specificLedger = 20;
     auto const currentOutput = fmt::format(
         R"({{
-        "nft_issuer": "{}",
+        "issuer": "{}",
         "limit":50,
         "ledger_index": {},
         "nfts": [{{
@@ -440,7 +440,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, SpecificLedgerIndex)
 
     auto const input = json::parse(fmt::format(
         R"({{
-            "nft_issuer": "{}",
+            "issuer": "{}",
             "ledger_index": {}
         }})",
         ACCOUNT,
@@ -457,7 +457,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, TaxonParameter)
 {
     auto const currentOutput = fmt::format(
         R"({{
-        "nft_issuer": "{}",
+        "issuer": "{}",
         "limit":50,
         "ledger_index": 30,
         "nfts": [{}],
@@ -483,7 +483,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, TaxonParameter)
 
     auto const input = json::parse(fmt::format(
         R"({{
-            "nft_issuer": "{}",
+            "issuer": "{}",
             "nft_taxon": 0
         }})",
         ACCOUNT));
@@ -499,7 +499,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MarkerParameter)
 {
     auto const currentOutput = fmt::format(
         R"({{
-        "nft_issuer": "{}",
+        "issuer": "{}",
         "limit":50,
         "ledger_index": 30,
         "nfts": [{}],
@@ -525,7 +525,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MarkerParameter)
 
     auto const input = json::parse(fmt::format(
         R"({{
-            "nft_issuer": "{}",
+            "issuer": "{}",
             "marker": "{}"
         }})",
         ACCOUNT,
@@ -542,7 +542,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
 {
     auto const currentOutput = fmt::format(
         R"({{
-        "nft_issuer": "{}",
+        "issuer": "{}",
         "limit":50,
         "ledger_index": 30,
         "nfts": [{}, {}, {}],
@@ -571,7 +571,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
 
     auto const input = json::parse(fmt::format(
         R"({{
-            "nft_issuer": "{}"
+            "issuer": "{}"
         }})",
         ACCOUNT));
     runSpawn([&, this](auto& yield) {
@@ -586,7 +586,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, LimitMoreThanMAx)
 {
     auto const currentOutput = fmt::format(
         R"({{
-        "nft_issuer": "{}",
+        "issuer": "{}",
         "limit":100,
         "ledger_index": 30,
         "nfts": [{}],
@@ -617,7 +617,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, LimitMoreThanMAx)
 
     auto const input = json::parse(fmt::format(
         R"({{
-            "nft_issuer": "{}",
+            "issuer": "{}",
             "limit": {}
         }})",
         ACCOUNT,
