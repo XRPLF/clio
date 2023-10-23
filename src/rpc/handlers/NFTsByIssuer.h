@@ -23,6 +23,7 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
+#include <rpc/common/Modifiers.h>
 
 namespace rpc {
 class NFTsByIssuerHandler
@@ -30,6 +31,10 @@ class NFTsByIssuerHandler
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    static auto constexpr LIMIT_MIN = 1;
+    static auto constexpr LIMIT_MAX = 100;
+    static auto constexpr LIMIT_DEFAULT = 50;
+
     struct Output
     {
         boost::json::array nfts;
@@ -51,8 +56,6 @@ public:
         std::optional<uint32_t> limit;
     };
 
-    static auto constexpr LIMIT_DEFAULT = 50;
-
     using Result = HandlerReturnType<Output>;
 
     NFTsByIssuerHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
@@ -67,7 +70,10 @@ public:
             {"nft_taxon", validation::Type<uint32_t>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(limit), validation::Type<uint32_t>{}, validation::Between{1, 100}},
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             validation::Min(1u),
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(marker), validation::Uint256HexStringValidator},
         };
 
