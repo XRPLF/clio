@@ -128,7 +128,7 @@ public:
         else if constexpr (std::is_same_v<DecayedType, UintTupleType> || std::is_same_v<DecayedType, UintByteTupleType>)
         {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
-            throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32>");
+            throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, ripple::uint256>");
         }
          else if constexpr (std::is_same_v<DecayedType, ByteVectorType>)
         {
