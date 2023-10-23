@@ -515,6 +515,7 @@ public:
             return r;
         }();
 
+        // Query for all the NFTs issued by the account, potentially filtered by the taxon
         auto const res = executor_.read(yield, idQueryStatement);
 
         auto const& idQueryResults = res.value();
@@ -534,10 +535,10 @@ public:
         if (nftIDs.size() == limit)
             ret.cursor = nftIDs.back();
 
-        // TODO these two queries should happen in parallel
         auto nftQueryStatement = schema_->selectNFTBulk.bind(nftIDs);
         nftQueryStatement.bindAt(1, ledgerSequence);
 
+        // Fetch all the NFT data, meanwhile filtering out the NFTs that are not within the ledger range
         auto const nftRes = executor_.read(yield, nftQueryStatement);
         auto const& nftQueryResults = nftRes.value();
 
@@ -550,6 +551,7 @@ public:
         auto nftURIQueryStatement = schema_->selectNFTURIBulk.bind(nftIDs);
         nftURIQueryStatement.bindAt(1, ledgerSequence);
 
+        // Get the URI for each NFT, but it's possible that URI doesn't exist
         auto const uriRes = executor_.read(yield, nftURIQueryStatement);
         auto const& nftURIQueryResults = uriRes.value();
 

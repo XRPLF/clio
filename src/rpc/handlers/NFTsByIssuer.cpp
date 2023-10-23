@@ -21,8 +21,6 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/NFTsByIssuer.h>
 
-// #include <ripple/app/tx/impl/details/NFTokenUtils.h>
-
 using namespace ripple;
 using namespace ::rpc;
 
