@@ -72,7 +72,8 @@ generateTestValuesForParametersTest()
                 "binary": "invalid"
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
 
         ParamTestCaseBundle{
             "InvalidAccountRootFormat",
@@ -80,7 +81,8 @@ generateTestValuesForParametersTest()
                 "account_root": "invalid"
             })",
             "malformedAddress",
-            "Malformed address."},
+            "Malformed address."
+        },
 
         ParamTestCaseBundle{
             "InvalidAccountRootNotString",
@@ -88,7 +90,8 @@ generateTestValuesForParametersTest()
                 "account_root": 123
             })",
             "invalidParams",
-            "account_rootNotString"},
+            "account_rootNotString"
+        },
 
         ParamTestCaseBundle{
             "InvalidLedgerIndex",
@@ -96,7 +99,8 @@ generateTestValuesForParametersTest()
                 "ledger_index": "wrong"
             })",
             "invalidParams",
-            "ledgerIndexMalformed"},
+            "ledgerIndexMalformed"
+        },
 
         ParamTestCaseBundle{"UnknownOption", R"({})", "invalidParams", "Invalid parameters."},
 
@@ -106,7 +110,8 @@ generateTestValuesForParametersTest()
                 "deposit_preauth": 123
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthString",
@@ -114,7 +119,8 @@ generateTestValuesForParametersTest()
                 "deposit_preauth": "invalid"
             })",
             "malformedRequest",
-            "Malformed request."},
+            "Malformed request."
+        },
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthEmtpyJson",
@@ -122,7 +128,8 @@ generateTestValuesForParametersTest()
                 "deposit_preauth": {}
             })",
             "invalidParams",
-            "Required field 'owner' missing"},
+            "Required field 'owner' missing"
+        },
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthJsonWrongAccount",
@@ -133,7 +140,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "malformedOwner",
-            "Malformed owner."},
+            "Malformed owner."
+        },
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthJsonOwnerNotString",
@@ -144,7 +152,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "malformedOwner",
-            "Malformed owner."},
+            "Malformed owner."
+        },
 
         ParamTestCaseBundle{
             "InvalidDepositPreauthJsonAuthorizedNotString",
@@ -158,7 +167,8 @@ generateTestValuesForParametersTest()
                 ACCOUNT
             ),
             "invalidParams",
-            "authorizedNotString"},
+            "authorizedNotString"
+        },
 
         ParamTestCaseBundle{
             "InvalidTicketType",
@@ -166,7 +176,8 @@ generateTestValuesForParametersTest()
                 "ticket": 123
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
 
         ParamTestCaseBundle{
             "InvalidTicketIndex",
@@ -174,7 +185,8 @@ generateTestValuesForParametersTest()
                 "ticket": "invalid"
             })",
             "malformedRequest",
-            "Malformed request."},
+            "Malformed request."
+        },
 
         ParamTestCaseBundle{
             "InvalidTicketEmptyJson",
@@ -182,7 +194,8 @@ generateTestValuesForParametersTest()
                 "ticket": {}
             })",
             "invalidParams",
-            "Required field 'account' missing"},
+            "Required field 'account' missing"
+        },
 
         ParamTestCaseBundle{
             "InvalidTicketJsonAccountNotString",
@@ -193,7 +206,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "invalidParams",
-            "accountNotString"},
+            "accountNotString"
+        },
 
         ParamTestCaseBundle{
             "InvalidTicketJsonAccountInvalid",
@@ -204,7 +218,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "malformedAddress",
-            "Malformed address."},
+            "Malformed address."
+        },
 
         ParamTestCaseBundle{
             "InvalidTicketJsonSeqNotInt",
@@ -218,7 +233,8 @@ generateTestValuesForParametersTest()
                 ACCOUNT
             ),
             "malformedRequest",
-            "Malformed request."},
+            "Malformed request."
+        },
 
         ParamTestCaseBundle{
             "InvalidOfferType",
@@ -226,7 +242,8 @@ generateTestValuesForParametersTest()
                 "offer": 123
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
 
         ParamTestCaseBundle{
             "InvalidOfferIndex",
@@ -234,7 +251,8 @@ generateTestValuesForParametersTest()
                 "offer": "invalid"
             })",
             "malformedRequest",
-            "Malformed request."},
+            "Malformed request."
+        },
 
         ParamTestCaseBundle{
             "InvalidOfferEmptyJson",
@@ -242,7 +260,8 @@ generateTestValuesForParametersTest()
                 "offer": {}
             })",
             "invalidParams",
-            "Required field 'account' missing"},
+            "Required field 'account' missing"
+        },
 
         ParamTestCaseBundle{
             "InvalidOfferJsonAccountNotString",
@@ -253,7 +272,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "invalidParams",
-            "accountNotString"},
+            "accountNotString"
+        },
 
         ParamTestCaseBundle{
             "InvalidOfferJsonAccountInvalid",
@@ -264,7 +284,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "malformedAddress",
-            "Malformed address."},
+            "Malformed address."
+        },
 
         ParamTestCaseBundle{
             "InvalidOfferJsonSeqNotInt",
@@ -278,7 +299,8 @@ generateTestValuesForParametersTest()
                 ACCOUNT
             ),
             "malformedRequest",
-            "Malformed request."},
+            "Malformed request."
+        },
 
         ParamTestCaseBundle{
             "InvalidEscrowType",
@@ -286,7 +308,8 @@ generateTestValuesForParametersTest()
                 "escrow": 123
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
 
         ParamTestCaseBundle{
             "InvalidEscrowIndex",
@@ -294,7 +317,8 @@ generateTestValuesForParametersTest()
                 "escrow": "invalid"
             })",
             "malformedRequest",
-            "Malformed request."},
+            "Malformed request."
+        },
 
         ParamTestCaseBundle{
             "InvalidEscrowEmptyJson",
@@ -302,7 +326,8 @@ generateTestValuesForParametersTest()
                 "escrow": {}
             })",
             "invalidParams",
-            "Required field 'owner' missing"},
+            "Required field 'owner' missing"
+        },
 
         ParamTestCaseBundle{
             "InvalidEscrowJsonAccountNotString",
@@ -313,7 +338,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "malformedOwner",
-            "Malformed owner."},
+            "Malformed owner."
+        },
 
         ParamTestCaseBundle{
             "InvalidEscrowJsonAccountInvalid",
@@ -324,7 +350,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "malformedOwner",
-            "Malformed owner."},
+            "Malformed owner."
+        },
 
         ParamTestCaseBundle{
             "InvalidEscrowJsonSeqNotInt",
@@ -338,7 +365,8 @@ generateTestValuesForParametersTest()
                 ACCOUNT
             ),
             "malformedRequest",
-            "Malformed request."},
+            "Malformed request."
+        },
 
         ParamTestCaseBundle{
             "InvalidRippleStateType",
@@ -346,7 +374,8 @@ generateTestValuesForParametersTest()
                 "ripple_state": "123"
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
 
         ParamTestCaseBundle{
             "InvalidRippleStateMissField",
@@ -356,7 +385,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "invalidParams",
-            "Required field 'accounts' missing"},
+            "Required field 'accounts' missing"
+        },
 
         ParamTestCaseBundle{
             "InvalidRippleStateEmtpyJson",
@@ -364,7 +394,8 @@ generateTestValuesForParametersTest()
                 "ripple_state": {}
             })",
             "invalidParams",
-            "Required field 'accounts' missing"},
+            "Required field 'accounts' missing"
+        },
 
         ParamTestCaseBundle{
             "InvalidRippleStateOneAccount",
@@ -377,7 +408,8 @@ generateTestValuesForParametersTest()
                 ACCOUNT
             ),
             "invalidParams",
-            "malformedAccounts"},
+            "malformedAccounts"
+        },
 
         ParamTestCaseBundle{
             "InvalidRippleStateSameAccounts",
@@ -392,7 +424,8 @@ generateTestValuesForParametersTest()
                 ACCOUNT
             ),
             "invalidParams",
-            "malformedAccounts"},
+            "malformedAccounts"
+        },
 
         ParamTestCaseBundle{
             "InvalidRippleStateWrongAccountsNotString",
@@ -406,7 +439,8 @@ generateTestValuesForParametersTest()
                 ACCOUNT
             ),
             "invalidParams",
-            "malformedAccounts"},
+            "malformedAccounts"
+        },
 
         ParamTestCaseBundle{
             "InvalidRippleStateWrongAccountsFormat",
@@ -420,7 +454,8 @@ generateTestValuesForParametersTest()
                 ACCOUNT
             ),
             "malformedAddress",
-            "malformedAddresses"},
+            "malformedAddresses"
+        },
 
         ParamTestCaseBundle{
             "InvalidRippleStateWrongCurrency",
@@ -435,7 +470,8 @@ generateTestValuesForParametersTest()
                 ACCOUNT2
             ),
             "malformedCurrency",
-            "malformedCurrency"},
+            "malformedCurrency"
+        },
 
         ParamTestCaseBundle{
             "InvalidRippleStateWrongCurrencyNotString",
@@ -450,7 +486,8 @@ generateTestValuesForParametersTest()
                 ACCOUNT2
             ),
             "invalidParams",
-            "currencyNotString"},
+            "currencyNotString"
+        },
 
         ParamTestCaseBundle{
             "InvalidDirectoryType",
@@ -458,7 +495,8 @@ generateTestValuesForParametersTest()
                 "directory": 123
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
 
         ParamTestCaseBundle{
             "InvalidDirectoryIndex",
@@ -466,7 +504,8 @@ generateTestValuesForParametersTest()
                 "directory": "123"
             })",
             "malformedRequest",
-            "Malformed request."},
+            "Malformed request."
+        },
 
         ParamTestCaseBundle{
             "InvalidDirectoryEmtpyJson",
@@ -474,7 +513,8 @@ generateTestValuesForParametersTest()
                 "directory": {}
             })",
             "invalidParams",
-            "missingOwnerOrDirRoot"},
+            "missingOwnerOrDirRoot"
+        },
 
         ParamTestCaseBundle{
             "InvalidDirectoryWrongOwnerNotString",
@@ -484,7 +524,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "invalidParams",
-            "ownerNotString"},
+            "ownerNotString"
+        },
 
         ParamTestCaseBundle{
             "InvalidDirectoryWrongOwnerFormat",
@@ -494,7 +535,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "malformedAddress",
-            "Malformed address."},
+            "Malformed address."
+        },
 
         ParamTestCaseBundle{
             "InvalidDirectoryWrongDirFormat",
@@ -504,7 +546,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "invalidParams",
-            "dir_rootMalformed"},
+            "dir_rootMalformed"
+        },
 
         ParamTestCaseBundle{
             "InvalidDirectoryWrongDirNotString",
@@ -514,7 +557,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "invalidParams",
-            "dir_rootNotString"},
+            "dir_rootNotString"
+        },
 
         ParamTestCaseBundle{
             "InvalidDirectoryDirOwnerConflict",
@@ -529,7 +573,8 @@ generateTestValuesForParametersTest()
                 ACCOUNT
             ),
             "invalidParams",
-            "mayNotSpecifyBothDirRootAndOwner"},
+            "mayNotSpecifyBothDirRootAndOwner"
+        },
 
         ParamTestCaseBundle{
             "InvalidDirectoryDirSubIndexNotInt",
@@ -543,7 +588,260 @@ generateTestValuesForParametersTest()
                 INDEX1
             ),
             "malformedRequest",
-            "Malformed request."},
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "InvalidAMMStringIndex",
+            R"({
+                "amm": "invalid"
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "EmptyAMMJson",
+            R"({
+                "amm": {}
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "EmptyAMMAssetJson",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset":{{}},
+                        "asset2":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "EmptyAMMAsset2Json",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":{{}},
+                        "asset":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "MissingAMMAsset2Json",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "MissingAMMAssetJson",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "AMMAssetNotJson",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset": "invalid",
+                        "asset2":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "AMMAsset2NotJson",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2": "invalid",
+                        "asset":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "WrongAMMAssetCurrency",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency":"XRP"
+                        }},
+                        "asset":
+                        {{
+                            "currency" : "USD2",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "WrongAMMAssetIssuer",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency":"XRP"
+                        }},
+                        "asset":
+                        {{
+                            "currency" : "USD2",
+                            "issuer" : "aa{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "MissingAMMAssetIssuerForNonXRP",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency":"JPY"
+                        }},
+                        "asset":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "AMMAssetHasIssuerForXRP",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency":"XRP",
+                            "issuer":"{}"
+                        }},
+                        "asset":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
+            "MissingAMMAssetCurrency",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency":"XRP"
+                        }},
+                        "asset":
+                        {{
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
     };
 }
 
@@ -698,7 +996,8 @@ generateTestValuesForNormalPathTest()
                 INDEX1
             ),
             ripple::uint256{INDEX1},
-            CreateAccountRootObject(ACCOUNT2, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3)},
+            CreateAccountRootObject(ACCOUNT2, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3)
+        },
         NormalPathTestBundle{
             "Payment_channel",
             fmt::format(
@@ -709,7 +1008,8 @@ generateTestValuesForNormalPathTest()
                 INDEX1
             ),
             ripple::uint256{INDEX1},
-            CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400)},
+            CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400)
+        },
         NormalPathTestBundle{
             "Nft_page",
             fmt::format(
@@ -722,7 +1022,8 @@ generateTestValuesForNormalPathTest()
             ripple::uint256{INDEX1},
             CreateNFTTokenPage(
                 std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt
-            )},
+            )
+        },
         NormalPathTestBundle{
             "Check",
             fmt::format(
@@ -733,7 +1034,8 @@ generateTestValuesForNormalPathTest()
                 INDEX1
             ),
             ripple::uint256{INDEX1},
-            CreateCheckLedgerObject(ACCOUNT, ACCOUNT2)},
+            CreateCheckLedgerObject(ACCOUNT, ACCOUNT2)
+        },
         NormalPathTestBundle{
             "DirectoryIndex",
             fmt::format(
@@ -744,7 +1046,8 @@ generateTestValuesForNormalPathTest()
                 INDEX1
             ),
             ripple::uint256{INDEX1},
-            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
+            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)
+        },
         NormalPathTestBundle{
             "OfferIndex",
             fmt::format(
@@ -757,7 +1060,8 @@ generateTestValuesForNormalPathTest()
             ripple::uint256{INDEX1},
             CreateOfferLedgerObject(
                 ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1
-            )},
+            )
+        },
         NormalPathTestBundle{
             "EscrowIndex",
             fmt::format(
@@ -768,7 +1072,8 @@ generateTestValuesForNormalPathTest()
                 INDEX1
             ),
             ripple::uint256{INDEX1},
-            CreateEscrowLedgerObject(ACCOUNT, ACCOUNT2)},
+            CreateEscrowLedgerObject(ACCOUNT, ACCOUNT2)
+        },
         NormalPathTestBundle{
             "TicketIndex",
             fmt::format(
@@ -779,7 +1084,8 @@ generateTestValuesForNormalPathTest()
                 INDEX1
             ),
             ripple::uint256{INDEX1},
-            CreateTicketLedgerObject(ACCOUNT, 0)},
+            CreateTicketLedgerObject(ACCOUNT, 0)
+        },
         NormalPathTestBundle{
             "DepositPreauthIndex",
             fmt::format(
@@ -790,7 +1096,8 @@ generateTestValuesForNormalPathTest()
                 INDEX1
             ),
             ripple::uint256{INDEX1},
-            CreateDepositPreauthLedgerObject(ACCOUNT, ACCOUNT2)},
+            CreateDepositPreauthLedgerObject(ACCOUNT, ACCOUNT2)
+        },
         NormalPathTestBundle{
             "AccountRoot",
             fmt::format(
@@ -801,7 +1108,8 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT
             ),
             ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key,
-            CreateAccountRootObject(ACCOUNT, 0, 1, 1, 1, INDEX1, 1)},
+            CreateAccountRootObject(ACCOUNT, 0, 1, 1, 1, INDEX1, 1)
+        },
         NormalPathTestBundle{
             "DirectoryViaDirRoot",
             fmt::format(
@@ -815,7 +1123,8 @@ generateTestValuesForNormalPathTest()
                 INDEX1
             ),
             ripple::keylet::page(ripple::uint256{INDEX1}, 2).key,
-            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
+            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)
+        },
         NormalPathTestBundle{
             "DirectoryViaOwner",
             fmt::format(
@@ -829,7 +1138,8 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT
             ),
             ripple::keylet::page(ripple::keylet::ownerDir(account1), 2).key,
-            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
+            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)
+        },
         NormalPathTestBundle{
             "DirectoryViaDefaultSubIndex",
             fmt::format(
@@ -843,7 +1153,8 @@ generateTestValuesForNormalPathTest()
             ),
             // default sub_index is 0
             ripple::keylet::page(ripple::keylet::ownerDir(account1), 0).key,
-            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)},
+            CreateOwnerDirLedgerObject(std::vector<ripple::uint256>{ripple::uint256{INDEX1}}, INDEX1)
+        },
         NormalPathTestBundle{
             "Escrow",
             fmt::format(
@@ -857,7 +1168,8 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT
             ),
             ripple::keylet::escrow(account1, 1).key,
-            CreateEscrowLedgerObject(ACCOUNT, ACCOUNT2)},
+            CreateEscrowLedgerObject(ACCOUNT, ACCOUNT2)
+        },
         NormalPathTestBundle{
             "DepositPreauth",
             fmt::format(
@@ -872,7 +1184,8 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT2
             ),
             ripple::keylet::depositPreauth(account1, account2).key,
-            CreateDepositPreauthLedgerObject(ACCOUNT, ACCOUNT2)},
+            CreateDepositPreauthLedgerObject(ACCOUNT, ACCOUNT2)
+        },
         NormalPathTestBundle{
             "RippleState",
             fmt::format(
@@ -887,7 +1200,8 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT2
             ),
             ripple::keylet::line(account1, account2, currency).key,
-            CreateRippleStateLedgerObject("USD", ACCOUNT2, 100, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123, 0)},
+            CreateRippleStateLedgerObject("USD", ACCOUNT2, 100, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123, 0)
+        },
         NormalPathTestBundle{
             "Ticket",
             fmt::format(
@@ -901,7 +1215,8 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT
             ),
             ripple::getTicketIndex(account1, 2),
-            CreateTicketLedgerObject(ACCOUNT, 0)},
+            CreateTicketLedgerObject(ACCOUNT, 0)
+        },
         NormalPathTestBundle{
             "Offer",
             fmt::format(
@@ -917,7 +1232,9 @@ generateTestValuesForNormalPathTest()
             ripple::keylet::offer(account1, 2).key,
             CreateOfferLedgerObject(
                 ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1
-            )}};
+            )
+        }
+    };
 }
 
 INSTANTIATE_TEST_CASE_P(

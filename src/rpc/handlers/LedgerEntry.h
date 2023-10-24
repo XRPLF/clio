@@ -100,6 +100,42 @@ public:
         static auto const malformedRequestIntValidator =
             meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_REQUEST)};
 
+        static auto const ammAssetValidator =
+            validation::CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
+                if (!value.is_object()) {
+                    return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
+                }
+
+                //"currency" must be present
+                if (!value.as_object().contains(JS(currency))) {
+                    return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
+                }
+
+                ripple::Currency currency;
+                if (!ripple::to_currency(currency, value.as_object().at(JS(currency)).as_string().c_str()))
+                    return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
+
+                if (ripple::isXRP(currency)) {
+                    // XRP must not have issuer
+                    if (value.as_object().contains(JS(issuer))) {
+                        return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
+                    }
+                } else {
+                    // non-XRP must have issuer
+                    if (!value.as_object().contains(JS(issuer))) {
+                        return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
+                    } else {
+                        auto const id =
+                            ripple::parseBase58<ripple::AccountID>(value.as_object().at(JS(issuer)).as_string().c_str()
+                            );
+                        if (!id)
+                            return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
+                    }
+                }
+
+                return MaybeError{};
+            }};
+
         static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
@@ -124,7 +160,8 @@ public:
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(owner), validation::AccountBase58Validator},
                  {JS(dir_root), validation::Uint256HexStringValidator},
-                 {JS(sub_index), malformedRequestIntValidator}}}},
+                 {JS(sub_index), malformedRequestIntValidator}
+             }}},
             {JS(escrow),
              validation::Type<std::string, boost::json::object>{},
              meta::IfType<std::string>{malformedRequestHexStringValidator},
@@ -162,6 +199,25 @@ public:
                  },
              }},
             {JS(nft_page), malformedRequestHexStringValidator},
+            {JS(amm),
+             validation::Type<std::string, boost::json::object>{},
+             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             meta::IfType<boost::json::object>{
+                 meta::Section{
+                     {JS(asset),
+                      meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                      meta::WithCustomError{
+                          validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
+                      },
+                      ammAssetValidator},
+                     {JS(asset2),
+                      meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                      meta::WithCustomError{
+                          validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
+                      },
+                      ammAssetValidator},
+                 },
+             }}
         };
 
         return rpcSpec;
