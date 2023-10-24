@@ -9,11 +9,12 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
   grafana:
     image: grafana/grafana
-    container_name: grafana
     ports:
       - 3000:3000
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=grafana
     volumes:
-      - ./grafana.yaml:/etc/grafana/provisioning/datasources/datasource.yaml
+      - ./grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./grafana/dashboard_local.yaml:/etc/grafana/provisioning/dashboards/local.yaml
+      - ./grafana/clio_dashboard.json:/var/lib/grafana/dashboards/clio_dashboard.json
