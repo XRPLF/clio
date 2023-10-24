@@ -23,8 +23,7 @@
 
 #include <chrono>
 
-struct MockExtractionDataPipe
-{
+struct MockExtractionDataPipe {
     MOCK_METHOD(void, push, (uint32_t, std::optional<FakeFetchResponse>&&), ());
     MOCK_METHOD(std::optional<FakeFetchResponse>, popNext, (uint32_t), ());
     MOCK_METHOD(uint32_t, getStride, (), (const));

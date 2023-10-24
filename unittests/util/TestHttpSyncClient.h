@@ -31,8 +31,7 @@ namespace net = boost::asio;
 namespace ssl = boost::asio::ssl;
 using tcp = boost::asio::ip::tcp;
 
-struct WebHeader
-{
+struct WebHeader {
     WebHeader(http::field name, std::string value) : name(name), value(std::move(value))
     {
     }
@@ -40,14 +39,14 @@ struct WebHeader
     std::string value;
 };
 
-struct HttpSyncClient
-{
+struct HttpSyncClient {
     static std::string
     syncPost(
         std::string const& host,
         std::string const& port,
         std::string const& body,
-        std::vector<WebHeader> additionalHeaders = {})
+        std::vector<WebHeader> additionalHeaders = {}
+    )
     {
         boost::asio::io_context ioc;
 
@@ -61,8 +60,7 @@ struct HttpSyncClient
         req.set(http::field::host, host);
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
-        for (auto& header : additionalHeaders)
-        {
+        for (auto& header : additionalHeaders) {
             req.set(header.name, std::move(header.value));
         }
 
@@ -81,8 +79,7 @@ struct HttpSyncClient
     }
 };
 
-class WebSocketSyncClient
-{
+class WebSocketSyncClient {
     net::io_context ioc_;
     tcp::resolver resolver_{ioc_};
     boost::beast::websocket::stream<tcp::socket> ws_{ioc_};
@@ -99,14 +96,13 @@ public:
         // See https://tools.ietf.org/html/rfc7230#section-5.4
         auto const hostPort = host + ':' + std::to_string(ep.port());
 
-        ws_.set_option(boost::beast::websocket::stream_base::decorator(
-            [additionalHeaders = std::move(additionalHeaders)](boost::beast::websocket::request_type& req) {
-                req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
-                for (auto& header : additionalHeaders)
-                {
-                    req.set(header.name, std::move(header.value));
-                }
-            }));
+        ws_.set_option(boost::beast::websocket::stream_base::decorator([additionalHeaders = std::move(additionalHeaders
+                                                                        )](boost::beast::websocket::request_type& req) {
+            req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
+            for (auto& header : additionalHeaders) {
+                req.set(header.name, std::move(header.value));
+            }
+        }));
 
         ws_.handshake(hostPort, "/");
     }
@@ -129,8 +125,7 @@ public:
     }
 };
 
-struct HttpsSyncClient
-{
+struct HttpsSyncClient {
     static bool
     verify_certificate(bool /* preverified */, boost::asio::ssl::verify_context& /* ctx */)
     {
@@ -180,8 +175,7 @@ struct HttpsSyncClient
     }
 };
 
-class WebServerSslSyncClient
-{
+class WebServerSslSyncClient {
     net::io_context ioc_;
     std::optional<boost::beast::websocket::stream<boost::beast::ssl_stream<tcp::socket>>> ws_;
 

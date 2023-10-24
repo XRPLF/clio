@@ -36,26 +36,20 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
 
     {
         std::scoped_lock const lck{mtx_};
-        if (seq > latestSeq_)
-        {
+        if (seq > latestSeq_) {
             assert(seq == latestSeq_ + 1 || latestSeq_ == 0);
             latestSeq_ = seq;
         }
-        for (auto const& obj : objs)
-        {
-            if (!obj.blob.empty())
-            {
+        for (auto const& obj : objs) {
+            if (!obj.blob.empty()) {
                 if (isBackground && deletes_.contains(obj.key))
                     continue;
 
                 auto& e = map_[obj.key];
-                if (seq > e.seq)
-                {
+                if (seq > e.seq) {
                     e = {seq, obj.blob};
                 }
-            }
-            else
-            {
+            } else {
                 map_.erase(obj.key);
                 if (!full_ && !isBackground)
                     deletes_.insert(obj.key);

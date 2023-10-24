@@ -32,7 +32,7 @@ Logger LogService::alert_log_ = Logger{"Alert"};
 std::ostream&
 operator<<(std::ostream& stream, Severity sev)
 {
-    static constexpr std::array<const char*, 6> labels = {
+    static constexpr std::array<char const*, 6> labels = {
         "TRC",
         "DBG",
         "NFO",
@@ -65,8 +65,8 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
         return Severity::FTL;
 
     throw std::runtime_error(
-        "Could not parse `log_level`: expected `trace`, `debug`, `info`, "
-        "`warning`, `error` or `fatal`");
+        "Could not parse `log_level`: expected `trace`, `debug`, `info`, `warning`, `error` or `fatal`"
+    );
 }
 
 void
@@ -77,18 +77,14 @@ LogService::init(util::Config const& config)
 
     boost::log::add_common_attributes();
     boost::log::register_simple_formatter_factory<Severity, char>("Severity");
-    auto const defaultFormat =
-        "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% "
-        "%Message%";
+    auto const defaultFormat = "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%";
     std::string format = config.valueOr<std::string>("log_format", defaultFormat);
 
-    if (config.valueOr("log_to_console", false))
-    {
+    if (config.valueOr("log_to_console", false)) {
         boost::log::add_console_log(std::cout, keywords::format = format);
     }
 
-    if (auto logDir = config.maybeValue<std::string>("log_directory"); logDir)
-    {
+    if (auto logDir = config.maybeValue<std::string>("log_directory"); logDir) {
         boost::filesystem::path dirPath{logDir.value()};
         if (!boost::filesystem::exists(dirPath))
             boost::filesystem::create_directories(dirPath);
@@ -103,15 +99,17 @@ LogService::init(util::Config const& config)
             keywords::open_mode = std::ios_base::app,
             keywords::rotation_size = rotationSize,
             keywords::time_based_rotation =
-                sinks::file::rotation_at_time_interval(boost::posix_time::hours(rotationPeriod)));
+                sinks::file::rotation_at_time_interval(boost::posix_time::hours(rotationPeriod))
+        );
         fileSink->locked_backend()->set_file_collector(
-            sinks::file::make_collector(keywords::target = dirPath, keywords::max_size = dirSize));
+            sinks::file::make_collector(keywords::target = dirPath, keywords::max_size = dirSize)
+        );
         fileSink->locked_backend()->scan_for_files();
     }
 
     // get default severity, can be overridden per channel using the `log_channels` array
     auto defaultSeverity = config.valueOr<Severity>("log_level", Severity::NFO);
-    static constexpr std::array<const char*, 7> channels = {
+    static constexpr std::array<char const*, 7> channels = {
         "General",
         "WebServer",
         "Backend",
@@ -128,8 +126,7 @@ LogService::init(util::Config const& config)
         min_severity[channel] = defaultSeverity;
     min_severity["Alert"] = Severity::WRN;  // Channel for alerts, always warning severity
 
-    for (auto const overrides = config.arrayOr("log_channels", {}); auto const& cfg : overrides)
-    {
+    for (auto const overrides = config.arrayOr("log_channels", {}); auto const& cfg : overrides) {
         auto name = cfg.valueOrThrow<std::string>("channel", "Channel name is required");
         if (std::count(std::begin(channels), std::end(channels), name) == 0)
             throw std::runtime_error("Can't override settings for log channel " + name + ": invalid channel");
@@ -177,8 +174,7 @@ Logger::Pump::pretty_path(SourceLocationType const& loc, size_t max_depth)
 {
     auto const file_path = std::string{loc.file_name()};
     auto idx = file_path.size();
-    while (max_depth-- > 0)
-    {
+    while (max_depth-- > 0) {
         idx = file_path.rfind('/', idx - 1);
         if (idx == std::string::npos || idx == 0)
             break;

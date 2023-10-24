@@ -24,8 +24,7 @@
 namespace data::cassandra::detail {
 
 template <typename Managed>
-class ManagedObject
-{
+class ManagedObject {
 protected:
     std::unique_ptr<Managed, void (*)(Managed*)> ptr_;
 

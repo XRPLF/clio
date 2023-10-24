@@ -32,13 +32,11 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/ledger_entry.html
  */
-class LedgerEntryHandler
-{
+class LedgerEntryHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    struct Output
-    {
+    struct Output {
         std::string index;
         uint32_t ledgerIndex;
         std::string ledgerHash;
@@ -47,8 +45,7 @@ public:
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         bool binary = false;
@@ -84,8 +81,7 @@ public:
             validation::CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
                 if (!value.is_array() || value.as_array().size() != 2 || !value.as_array()[0].is_string() ||
                     !value.as_array()[1].is_string() ||
-                    value.as_array()[0].as_string() == value.as_array()[1].as_string())
-                {
+                    value.as_array()[0].as_string() == value.as_array()[1].as_string()) {
                     return Error{Status{RippledError::rpcINVALID_PARAMS, "malformedAccounts"}};
                 }
 

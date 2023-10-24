@@ -30,8 +30,7 @@ using namespace std;
 
 using namespace data::cassandra;
 
-class BackendCassandraBaseTest : public NoLoggerFixture
-{
+class BackendCassandraBaseTest : public NoLoggerFixture {
 protected:
     static Handle
     createHandle(std::string_view contactPoints, std::string_view keyspace)
@@ -44,7 +43,8 @@ protected:
                   WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}} 
                    AND durable_writes = true
             )",
-            keyspace);
+            keyspace
+        );
         EXPECT_TRUE(handle.execute(query));
         EXPECT_TRUE(handle.reconnect(keyspace));
         return handle;
@@ -73,7 +73,8 @@ protected:
                 CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint)
                   WITH default_time_to_live = {}
             )",
-            to_string(5000));
+            to_string(5000)
+        );
 
         auto const f1 = handle.asyncExecute(q1);
         auto const rc = f1.await();
@@ -195,13 +196,14 @@ TEST_F(BackendCassandraBaseTest, KeyspaceManipulation)
         ASSERT_TRUE(rc);  // expect that we can still connect without keyspace
     }
     {
-        const auto query = fmt::format(
+        auto const query = fmt::format(
             R"(
                 CREATE KEYSPACE {} 
                   WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': '1'}} 
                    AND durable_writes = true
             )",
-            keyspace);
+            keyspace
+        );
         auto const f = handle.asyncExecute(query);
         auto const rc = f.await();
         ASSERT_TRUE(rc);  // keyspace created
@@ -238,7 +240,8 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
             WITH default_time_to_live = {}
         )",
-        5000);
+        5000
+    );
 
     {
         auto const f1 = handle.asyncExecute(q1);
@@ -259,8 +262,7 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
             futures.push_back(handle.asyncExecute(insert, entry, idx++));
 
         ASSERT_EQ(futures.size(), entries.size());
-        for (auto const& f : futures)
-        {
+        for (auto const& f : futures) {
             auto const rc = f.await();
             ASSERT_TRUE(rc) << rc.error();
         }
@@ -303,7 +305,8 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
               WITH default_time_to_live = {}
         )",
-        5000);
+        5000
+    );
     {
         auto const f1 = handle.asyncExecute(q1);
         auto const rc = f1.await();
@@ -361,7 +364,8 @@ TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
               WITH default_time_to_live = {}
         )",
-        5000);
+        5000
+    );
     auto const f1 = handle.asyncExecute(q1);
     auto const rc = f1.await();
     ASSERT_TRUE(rc) << rc.error();
@@ -406,7 +410,8 @@ TEST_F(BackendCassandraBaseTest, AlterTableAddColumn)
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
               WITH default_time_to_live = {}
         )",
-        5000);
+        5000
+    );
     ASSERT_TRUE(handle.execute(q1));
 
     std::string const update = "ALTER TABLE strings ADD tmp blob";
@@ -425,7 +430,8 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
             CREATE TABLE IF NOT EXISTS strings_v2 (hash blob PRIMARY KEY, sequence bigint, tmp bigint) 
               WITH default_time_to_live = {}
         )",
-        5000);
+        5000
+    );
     ASSERT_TRUE(handle.execute(newTable));
 
     // now migrate data; tmp column will just get the sequence number + 1 stored
@@ -436,8 +442,7 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
     ASSERT_TRUE(res);
 
     auto const& results = res.value();
-    for (auto [hash, seq] : extract<std::string, int64_t>(results))
-    {
+    for (auto [hash, seq] : extract<std::string, int64_t>(results)) {
         static_assert(std::is_same_v<decltype(hash), std::string>);
         static_assert(std::is_same_v<decltype(seq), int64_t>);
         migrationStatements.push_back(migrationInsert.bind(hash, seq, seq + 1u));
@@ -451,8 +456,7 @@ TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
     auto const& resultsV2 = resV2.value();
 
     EXPECT_EQ(results.numRows(), resultsV2.numRows());
-    for (auto [seq, tmp] : extract<int64_t, int64_t>(resultsV2))
-    {
+    for (auto [seq, tmp] : extract<int64_t, int64_t>(resultsV2)) {
         static_assert(std::is_same_v<decltype(seq), int64_t>);
         static_assert(std::is_same_v<decltype(tmp), int64_t>);
         EXPECT_EQ(seq + 1, tmp);

@@ -30,9 +30,7 @@ constexpr static auto MAX_API_VERSION = 10u;
 using namespace rpc;
 namespace json = boost::json;
 
-class RPCVersionHandlerTest : public HandlerBaseTest
-{
-};
+class RPCVersionHandlerTest : public HandlerBaseTest {};
 
 TEST_F(RPCVersionHandlerTest, Default)
 {
@@ -44,7 +42,8 @@ TEST_F(RPCVersionHandlerTest, Default)
         }})",
         MIN_API_VERSION,
         MAX_API_VERSION,
-        DEFAULT_API_VERSION))};
+        DEFAULT_API_VERSION
+    ))};
 
     runSpawn([&](auto yield) {
         auto const handler = AnyHandler{VersionHandler{cfg}};

@@ -48,8 +48,7 @@ namespace etl {
  * which ledgers have been validated by the network, and the range of ledgers each etl source has). This class also
  * allows requests for ledger data to be load balanced across all possible ETL sources.
  */
-class LoadBalancer
-{
+class LoadBalancer {
 public:
     using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
@@ -79,7 +78,8 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers);
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+    );
 
     /**
      * @brief A factory function for the load balancer.
@@ -96,7 +96,8 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers);
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+    );
 
     /**
      * @brief A factory function for the ETL source.
@@ -115,7 +116,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-        LoadBalancer& balancer);
+        LoadBalancer& balancer
+    );
 
     ~LoadBalancer();
 
@@ -174,13 +176,15 @@ public:
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
-        boost::asio::yield_context yield) const;
+        boost::asio::yield_context yield
+    ) const;
 
     /**
      * @brief Return state of ETL nodes.
+     * @return ETL state, nullopt if etl nodes not available
      */
-    ETLState
-    getETLState() const noexcept;
+    std::optional<ETLState>
+    getETLState() noexcept;
 
 private:
     /**

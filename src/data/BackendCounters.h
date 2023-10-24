@@ -52,8 +52,7 @@ concept SomeBackendCounters = requires(T a) {
  * @brief Holds statistics about the backend.
  * @note This class is thread-safe.
  */
-class BackendCounters
-{
+class BackendCounters {
 public:
     using PtrType = std::shared_ptr<BackendCounters>;
 
@@ -96,8 +95,7 @@ public:
 private:
     BackendCounters() = default;
 
-    class AsyncOperationCounters
-    {
+    class AsyncOperationCounters {
     public:
         AsyncOperationCounters(std::string name);
 

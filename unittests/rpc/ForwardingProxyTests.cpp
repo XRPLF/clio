@@ -34,8 +34,7 @@ namespace json = boost::json;
 
 constexpr static auto CLIENT_IP = "127.0.0.1";
 
-class RPCForwardingProxyTest : public HandlerBaseTest
-{
+class RPCForwardingProxyTest : public HandlerBaseTest {
 protected:
     std::shared_ptr<MockLoadBalancer> loadBalancer = std::make_shared<MockLoadBalancer>();
     std::shared_ptr<MockHandlerProvider> handlerProvider = std::make_shared<MockHandlerProvider>();

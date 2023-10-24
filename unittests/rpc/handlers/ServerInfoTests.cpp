@@ -35,8 +35,7 @@ constexpr static auto CLIENTIP = "1.1.1.1";
 class RPCServerInfoHandlerTest : public HandlerBaseTest,
                                  public MockLoadBalancerTest,
                                  public MockSubscriptionManagerTest,
-                                 public MockCountersTest
-{
+                                 public MockCountersTest {
 protected:
     void
     SetUp() override
@@ -107,8 +106,7 @@ protected:
         auto const& info = result.at("info").as_object();
         EXPECT_TRUE(info.contains("etl"));
         EXPECT_TRUE(info.contains("counters"));
-        if (shouldHaveBackendCounters)
-        {
+        if (shouldHaveBackendCounters) {
             ASSERT_TRUE(info.contains("backend_counters")) << boost::json::serialize(info);
             EXPECT_TRUE(info.at("backend_counters").is_object());
             EXPECT_TRUE(!info.at("backend_counters").as_object().empty());

@@ -50,27 +50,22 @@ PlainSource::close(bool startAgain)
         if (closing_)
             return;
 
-        if (derived().ws().is_open())
-        {
+        if (derived().ws().is_open()) {
             // onStop() also calls close(). If the async_close is called twice,
             // an assertion fails. Using closing_ makes sure async_close is only
             // called once
             closing_ = true;
             derived().ws().async_close(boost::beast::websocket::close_code::normal, [this, startAgain](auto ec) {
-                if (ec)
-                {
+                if (ec) {
                     LOG(log_.error()) << "async_close: error code = " << ec << " - " << toString();
                 }
                 closing_ = false;
-                if (startAgain)
-                {
+                if (startAgain) {
                     ws_ = std::make_unique<StreamType>(strand_);
                     run();
                 }
             });
-        }
-        else if (startAgain)
-        {
+        } else if (startAgain) {
             ws_ = std::make_unique<StreamType>(strand_);
             run();
         }
@@ -85,26 +80,21 @@ SslSource::close(bool startAgain)
         if (closing_)
             return;
 
-        if (derived().ws().is_open())
-        {
-            // onStop() also calls close(). If the async_close is called twice, an assertion fails. Using closing_ makes
-            // sure async_close is only called once
+        if (derived().ws().is_open()) {
+            // onStop() also calls close(). If the async_close is called twice, an assertion fails. Using closing_
+            // makes sure async_close is only called once
             closing_ = true;
             derived().ws().async_close(boost::beast::websocket::close_code::normal, [this, startAgain](auto ec) {
-                if (ec)
-                {
+                if (ec) {
                     LOG(log_.error()) << "async_close: error code = " << ec << " - " << toString();
                 }
                 closing_ = false;
-                if (startAgain)
-                {
+                if (startAgain) {
                     ws_ = std::make_unique<StreamType>(strand_, *sslCtx_);
                     run();
                 }
             });
-        }
-        else if (startAgain)
-        {
+        } else if (startAgain) {
             ws_ = std::make_unique<StreamType>(strand_, *sslCtx_);
             run();
         }
@@ -114,15 +104,13 @@ SslSource::close(bool startAgain)
 void
 PlainSource::onConnect(
     boost::beast::error_code ec,
-    boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
+    boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint
+)
 {
-    if (ec)
-    {
+    if (ec) {
         // start over
         reconnect(ec);
-    }
-    else
-    {
+    } else {
         connected_ = true;
         numFailures_ = 0;
 
@@ -134,7 +122,8 @@ PlainSource::onConnect(
             boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
                 req.set(boost::beast::http::field::user_agent, "clio-client");
                 req.set("X-User", "clio-client");
-            }));
+            })
+        );
 
         // Update the host_ string. This will provide the value of the
         // Host HTTP header during the WebSocket handshake.
@@ -147,13 +136,10 @@ PlainSource::onConnect(
 void
 SslSource::onConnect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
 {
-    if (ec)
-    {
+    if (ec) {
         // start over
         reconnect(ec);
-    }
-    else
-    {
+    } else {
         connected_ = true;
         numFailures_ = 0;
 
@@ -165,28 +151,28 @@ SslSource::onConnect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver
             boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
                 req.set(boost::beast::http::field::user_agent, "clio-client");
                 req.set("X-User", "clio-client");
-            }));
+            })
+        );
 
         // Update the host_ string. This will provide the value of the
         // Host HTTP header during the WebSocket handshake.
         // See https://tools.ietf.org/html/rfc7230#section-5.4
         auto host = ip_ + ':' + std::to_string(endpoint.port());
-        ws().next_layer().async_handshake(
-            boost::asio::ssl::stream_base::client, [this, endpoint](auto ec) { onSslHandshake(ec, endpoint); });
+        ws().next_layer().async_handshake(boost::asio::ssl::stream_base::client, [this, endpoint](auto ec) {
+            onSslHandshake(ec, endpoint);
+        });
     }
 }
 
 void
 SslSource::onSslHandshake(
     boost::beast::error_code ec,
-    boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
+    boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint
+)
 {
-    if (ec)
-    {
+    if (ec) {
         reconnect(ec);
-    }
-    else
-    {
+    } else {
         auto host = ip_ + ':' + std::to_string(endpoint.port());
         ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
     }

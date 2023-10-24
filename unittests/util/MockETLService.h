@@ -26,12 +26,11 @@
 
 #include <chrono>
 
-struct MockETLService
-{
+struct MockETLService {
     MOCK_METHOD(boost::json::object, getInfo, (), (const));
     MOCK_METHOD(std::chrono::time_point<std::chrono::system_clock>, getLastPublish, (), (const));
     MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
     MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const));
     MOCK_METHOD(bool, isAmendmentBlocked, (), (const));
-    MOCK_METHOD(etl::ETLState, getETLState, (), (const));
+    MOCK_METHOD(std::optional<etl::ETLState>, getETLState, (), (const));
 };

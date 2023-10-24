@@ -26,6 +26,7 @@
             // ---
         }
     },
+    "allow_no_etl": false, // Allow Clio to run without valid ETL source, otherwise Clio will stop if ETL check fails
     "etl_sources": [
         {
             "ip": "127.0.0.1",

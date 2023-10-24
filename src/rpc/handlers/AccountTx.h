@@ -35,8 +35,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_tx.html
  */
-class AccountTxHandler
-{
+class AccountTxHandler {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
@@ -48,14 +47,12 @@ public:
     static auto constexpr LIMIT_MIN = 1;
     static auto constexpr LIMIT_DEFAULT = 200;
 
-    struct Marker
-    {
+    struct Marker {
         uint32_t ledger;
         uint32_t seq;
     };
 
-    struct Output
-    {
+    struct Output {
         std::string account;
         uint32_t ledgerIndexMin{0};
         uint32_t ledgerIndexMax{0};
@@ -67,8 +64,7 @@ public:
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         // You must use at least one of the following fields in your request:
         // ledger_index, ledger_hash, ledger_index_min, or ledger_index_max.

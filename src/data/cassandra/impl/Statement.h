@@ -36,8 +36,7 @@
 
 namespace data::cassandra::detail {
 
-class Statement : public ManagedObject<CassStatement>
-{
+class Statement : public ManagedObject<CassStatement> {
     static constexpr auto deleter = [](CassStatement* ptr) { cass_statement_free(ptr); };
 
     template <typename>
@@ -104,55 +103,37 @@ public:
         using UintByteTupleType = std::tuple<uint32_t, ripple::uint256>;
         using ByteVectorType = std::vector<ripple::uint256>;
 
-        if constexpr (std::is_same_v<DecayedType, ripple::uint256>)
-        {
+        if constexpr (std::is_same_v<DecayedType, ripple::uint256>) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind ripple::uint256");
-        }
-        else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>)
-        {
+        } else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind ripple::AccountID");
-        }
-        else if constexpr (std::is_same_v<DecayedType, UCharVectorType>)
-        {
+        } else if constexpr (std::is_same_v<DecayedType, UCharVectorType>) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind vector<unsigned char>");
-        }
-        else if constexpr (std::is_convertible_v<DecayedType, std::string>)
-        {
+        } else if constexpr (std::is_convertible_v<DecayedType, std::string>) {
             // reinterpret_cast is needed here :'(
             auto const rc = bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
-        }
-        else if constexpr (std::is_same_v<DecayedType, UintTupleType> || std::is_same_v<DecayedType, UintByteTupleType>)
-        {
+        } else if constexpr (std::is_same_v<DecayedType, UintTupleType> || std::is_same_v<DecayedType, UintByteTupleType>) {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, ripple::uint256>");
-        }
-         else if constexpr (std::is_same_v<DecayedType, ByteVectorType>)
-        {
+        } else if constexpr (std::is_same_v<DecayedType, ByteVectorType>) {
             auto const rc = cass_statement_bind_collection(*this, idx, Collection{std::move(value)});
             throwErrorIfNeeded(rc, "Bind collection");
-        }       
-        else if constexpr (std::is_same_v<DecayedType, bool>)
-        {
+        } else if constexpr (std::is_same_v<DecayedType, bool>) {
             auto const rc = cass_statement_bind_bool(*this, idx, value ? cass_true : cass_false);
             throwErrorIfNeeded(rc, "Bind bool");
-        }
-        else if constexpr (std::is_same_v<DecayedType, Limit>)
-        {
+        } else if constexpr (std::is_same_v<DecayedType, Limit>) {
             auto const rc = cass_statement_bind_int32(*this, idx, value.limit);
             throwErrorIfNeeded(rc, "Bind limit (int32)");
         }
         // clio only uses bigint (int64_t) so we convert any incoming type
-        else if constexpr (std::is_convertible_v<DecayedType, int64_t>)
-        {
+        else if constexpr (std::is_convertible_v<DecayedType, int64_t>) {
             auto const rc = cass_statement_bind_int64(*this, idx, value);
             throwErrorIfNeeded(rc, "Bind int64");
-        }
-        else
-        {
+        } else {
             // type not supported for binding
             static_assert(unsupported_v<DecayedType>);
         }
@@ -164,8 +145,7 @@ public:
  *
  * This is used to produce Statement objects that can be executed.
  */
-class PreparedStatement : public ManagedObject<CassPrepared const>
-{
+class PreparedStatement : public ManagedObject<CassPrepared const> {
     static constexpr auto deleter = [](CassPrepared const* ptr) { cass_prepared_free(ptr); };
 
 public:

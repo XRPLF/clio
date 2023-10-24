@@ -28,8 +28,7 @@
 
 namespace etl::detail {
 
-class AsyncCallData
-{
+class AsyncCallData {
     util::Logger log_{"ETL"};
 
     std::unique_ptr<org::xrpl::rpc::v1::GetLedgerDataResponse> cur_;
@@ -47,8 +46,7 @@ public:
     AsyncCallData(uint32_t seq, ripple::uint256 const& marker, std::optional<ripple::uint256> const& nextMarker)
     {
         request_.mutable_ledger()->set_sequence(seq);
-        if (marker.isNonZero())
-        {
+        if (marker.isNonZero()) {
             request_.set_marker(marker.data(), ripple::uint256::size());
         }
         request_.set_user("ETL");
@@ -77,25 +75,23 @@ public:
         grpc::CompletionQueue& cq,
         BackendInterface& backend,
         bool abort,
-        bool cacheOnly = false)
+        bool cacheOnly = false
+    )
     {
         LOG(log_.trace()) << "Processing response. "
                           << "Marker prefix = " << getMarkerPrefix();
-        if (abort)
-        {
+        if (abort) {
             LOG(log_.error()) << "AsyncCallData aborted";
             return CallStatus::ERRORED;
         }
-        if (!status_.ok())
-        {
+        if (!status_.ok()) {
             LOG(log_.error()) << "AsyncCallData status_ not ok: "
                               << " code = " << status_.error_code() << " message = " << status_.error_message();
             return CallStatus::ERRORED;
         }
-        if (!next_->is_unlimited())
-        {
-            LOG(log_.warn()) << "AsyncCallData is_unlimited is false. Make sure "
-                                "secure_gateway is set correctly at the ETL source";
+        if (!next_->is_unlimited()) {
+            LOG(log_.warn()) << "AsyncCallData is_unlimited is false. "
+                             << "Make sure secure_gateway is set correctly at the ETL source";
         }
 
         std::swap(cur_, next_);
@@ -112,8 +108,7 @@ public:
             more = false;
 
         // if we are not done, make the next async call
-        if (more)
-        {
+        if (more) {
             request_.set_marker(cur_->marker());
             call(stub, cq);
         }
@@ -124,25 +119,23 @@ public:
         std::vector<data::LedgerObject> cacheUpdates;
         cacheUpdates.reserve(numObjects);
 
-        for (int i = 0; i < numObjects; ++i)
-        {
+        for (int i = 0; i < numObjects; ++i) {
             auto& obj = *(cur_->mutable_ledger_objects()->mutable_objects(i));
-            if (!more && nextPrefix_ != 0x00)
-            {
+            if (!more && nextPrefix_ != 0x00) {
                 if (static_cast<unsigned char>(obj.key()[0]) >= nextPrefix_)
                     continue;
             }
             cacheUpdates.push_back(
-                {*ripple::uint256::fromVoidChecked(obj.key()),
-                 {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
-            if (!cacheOnly)
-            {
+                {*ripple::uint256::fromVoidChecked(obj.key()), {obj.mutable_data()->begin(), obj.mutable_data()->end()}}
+            );
+            if (!cacheOnly) {
                 if (!lastKey_.empty())
                     backend.writeSuccessor(std::move(lastKey_), request_.ledger().sequence(), std::string{obj.key()});
                 lastKey_ = obj.key();
                 backend.writeNFTs(getNFTDataFromObj(request_.ledger().sequence(), obj.key(), obj.data()));
                 backend.writeLedgerObject(
-                    std::move(*obj.mutable_key()), request_.ledger().sequence(), std::move(*obj.mutable_data()));
+                    std::move(*obj.mutable_key()), request_.ledger().sequence(), std::move(*obj.mutable_data())
+                );
             }
         }
         backend.cache().update(cacheUpdates, request_.ledger().sequence(), cacheOnly);
@@ -157,7 +150,8 @@ public:
         context_ = std::make_unique<grpc::ClientContext>();
 
         std::unique_ptr<grpc::ClientAsyncResponseReader<org::xrpl::rpc::v1::GetLedgerDataResponse>> rpc(
-            stub->PrepareAsyncGetLedgerData(context_.get(), request_, &cq));
+            stub->PrepareAsyncGetLedgerData(context_.get(), request_, &cq)
+        );
 
         rpc->StartCall();
 
@@ -167,8 +161,7 @@ public:
     std::string
     getMarkerPrefix()
     {
-        if (next_->marker().empty())
-        {
+        if (next_->marker().empty()) {
             return "";
         }
         return ripple::strHex(std::string{next_->marker().data()[0]});

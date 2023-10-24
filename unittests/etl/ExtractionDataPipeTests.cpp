@@ -26,8 +26,7 @@
 constexpr static auto STRIDE = 4;
 constexpr static auto START_SEQ = 1234;
 
-class ETLExtractionDataPipeTest : public NoLoggerFixture
-{
+class ETLExtractionDataPipeTest : public NoLoggerFixture {
 protected:
     etl::detail::ExtractionDataPipe<uint32_t> pipe_{STRIDE, START_SEQ};
 };
@@ -42,8 +41,7 @@ TEST_F(ETLExtractionDataPipeTest, PushedDataCanBeRetrievedAndMatchesOriginal)
     for (std::size_t i = 0; i < 8; ++i)
         pipe_.push(START_SEQ + i, START_SEQ + i);
 
-    for (std::size_t i = 0; i < 8; ++i)
-    {
+    for (std::size_t i = 0; i < 8; ++i) {
         auto const data = pipe_.popNext(START_SEQ + i);
         EXPECT_EQ(data.value(), START_SEQ + i);
     }
@@ -54,8 +52,7 @@ TEST_F(ETLExtractionDataPipeTest, CallingFinishPushesAnEmptyOptional)
     for (std::size_t i = 0; i < 4; ++i)
         pipe_.finish(START_SEQ + i);
 
-    for (std::size_t i = 0; i < 4; ++i)
-    {
+    for (std::size_t i = 0; i < 4; ++i) {
         auto const data = pipe_.popNext(START_SEQ + i);
         EXPECT_FALSE(data.has_value());
     }

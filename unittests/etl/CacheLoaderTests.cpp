@@ -34,8 +34,7 @@ using namespace testing;
 constexpr static auto SEQ = 30;
 constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
-struct CacheLoaderTest : public MockBackendTest
-{
+struct CacheLoaderTest : public MockBackendTest {
     void
     SetUp() override
     {
@@ -49,8 +48,7 @@ struct CacheLoaderTest : public MockBackendTest
     TearDown() override
     {
         work.reset();
-        for (auto& optThread : optThreads)
-        {
+        for (auto& optThread : optThreads) {
             if (optThread.joinable())
                 optThread.join();
         }
@@ -109,12 +107,10 @@ TEST_F(CacheLoaderTest, FromCache)
             std::lock_guard<std::mutex> const guard(keysMutex);
             threadKeysMap[std::this_thread::get_id()]++;
 
-            if (threadKeysMap[std::this_thread::get_id()] == keysSize - 1)
-            {
+            if (threadKeysMap[std::this_thread::get_id()] == keysSize - 1) {
                 return lastKey;
             }
-            if (threadKeysMap[std::this_thread::get_id()] == keysSize)
-            {
+            if (threadKeysMap[std::this_thread::get_id()] == keysSize) {
                 threadKeysMap[std::this_thread::get_id()] = 0;
                 return std::nullopt;
             }

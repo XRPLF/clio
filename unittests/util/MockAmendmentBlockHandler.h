@@ -21,7 +21,6 @@
 
 #include <gmock/gmock.h>
 
-struct MockAmendmentBlockHandler
-{
+struct MockAmendmentBlockHandler {
     MOCK_METHOD(void, onAmendmentBlock, (), ());
 };

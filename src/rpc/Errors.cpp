@@ -26,8 +26,7 @@ using namespace std;
 
 namespace {
 template <class... Ts>
-struct overloadSet : Ts...
-{
+struct overloadSet : Ts... {
     using Ts::operator()...;
 };
 
@@ -44,9 +43,8 @@ getWarningInfo(WarningCode code)
     constexpr static WarningInfo infos[]{
         {warnUNKNOWN, "Unknown warning"},
         {warnRPC_CLIO,
-         "This is a clio server. clio only serves validated data. If you "
-         "want to talk to rippled, include 'ledger_index':'current' in your "
-         "request"},
+         "This is a clio server. clio only serves validated data. If you want to talk to rippled, include "
+         "'ledger_index':'current' in your request"},
         {warnRPC_OUTDATED, "This server may be out of date"},
         {warnRPC_RATE_LIMIT, "You are about to be rate limited"},
     };
@@ -143,10 +141,10 @@ makeError(Status const& status)
                 return makeError(err, wrapOptional(status.error), wrapOptional(status.message));
             },
         },
-        status.code);
+        status.code
+    );
 
-    if (status.extraInfo)
-    {
+    if (status.extraInfo) {
         for (auto& [key, value] : status.extraInfo.value())
             res[key] = value;
     }

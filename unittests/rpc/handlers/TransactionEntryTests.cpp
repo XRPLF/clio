@@ -34,9 +34,7 @@ constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
 
-class RPCTransactionEntryHandlerTest : public HandlerBaseTest
-{
-};
+class RPCTransactionEntryHandlerTest : public HandlerBaseTest {};
 
 TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
 {
@@ -77,7 +75,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
             "tx_hash": "{}"
         }})",
         INDEX,
-        TXNID));
+        TXNID
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -103,7 +102,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
             "ledger_index": "4",
             "tx_hash": "{}"
         }})",
-        TXNID));
+        TXNID
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -131,7 +131,8 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
             R"({{ 
                 "tx_hash": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -165,7 +166,8 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
                 "tx_hash": "{}",
                 "ledger_index": "30"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -244,7 +246,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
                 "ledger_index": {}
             }})",
             TXNID,
-            tx.ledgerSequence));
+            tx.ledgerSequence
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(OUTPUT), *output);

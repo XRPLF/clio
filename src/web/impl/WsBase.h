@@ -43,8 +43,7 @@ namespace web::detail {
  * @tparam HandlerType The handler type, will be called when a request is received.
  */
 template <template <class> class Derived, SomeServerHandler HandlerType>
-class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, HandlerType>>
-{
+class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, HandlerType>> {
     using std::enable_shared_from_this<WsBase<Derived, HandlerType>>::shared_from_this;
 
     boost::beast::flat_buffer buffer_;
@@ -61,8 +60,7 @@ protected:
     wsFail(boost::beast::error_code ec, char const* what)
     {
         LOG(perfLog_.error()) << tag() << ": " << what << ": " << ec.message();
-        if (!ec_ && ec != boost::asio::error::operation_aborted)
-        {
+        if (!ec_ && ec != boost::asio::error::operation_aborted) {
             ec_ = ec;
             boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);
             (*handler_)(ec, derived().shared_from_this());
@@ -75,7 +73,8 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer&& buffer)
+        boost::beast::flat_buffer&& buffer
+    )
         : ConnectionBase(tagFactory, ip), buffer_(std::move(buffer)), dosGuard_(dosGuard), handler_(handler)
     {
         upgraded = true;  // NOLINT (cppcoreguidelines-pro-type-member-init)
@@ -100,7 +99,8 @@ public:
         sending_ = true;
         derived().ws().async_write(
             boost::asio::buffer(messages_.front()->data(), messages_.front()->size()),
-            boost::beast::bind_front_handler(&WsBase::onWrite, derived().shared_from_this()));
+            boost::beast::bind_front_handler(&WsBase::onWrite, derived().shared_from_this())
+        );
     }
 
     void
@@ -108,12 +108,9 @@ public:
     {
         messages_.pop();
         sending_ = false;
-        if (ec)
-        {
+        if (ec) {
             wsFail(ec, "Failed to write");
-        }
-        else
-        {
+        } else {
             maybeSendNext();
         }
     }
@@ -141,10 +138,12 @@ public:
     send(std::shared_ptr<std::string> msg) override
     {
         boost::asio::dispatch(
-            derived().ws().get_executor(), [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
+            derived().ws().get_executor(),
+            [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
                 messages_.push(msg);
                 maybeSendNext();
-            });
+            }
+        );
     }
 
     /**
@@ -156,17 +155,13 @@ public:
     void
     send(std::string&& msg, http::status = http::status::ok) override
     {
-        if (!dosGuard_.get().add(clientIp, msg.size()))
-        {
+        if (!dosGuard_.get().add(clientIp, msg.size())) {
             auto jsonResponse = boost::json::parse(msg).as_object();
             jsonResponse["warning"] = "load";
 
-            if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array())
-            {
+            if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
                 jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
-            }
-            else
-            {
+            } else {
                 jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::warnRPC_RATE_LIMIT)};
             }
 
@@ -231,15 +226,12 @@ public:
         auto sendError = [this](auto error, std::string&& requestStr) {
             auto e = rpc::makeError(error);
 
-            try
-            {
+            try {
                 auto request = boost::json::parse(requestStr);
                 if (request.is_object() && request.as_object().contains("id"))
                     e["id"] = request.as_object().at("id");
                 e["request"] = std::move(request);
-            }
-            catch (std::exception const&)
-            {
+            } catch (std::exception const&) {
                 e["request"] = std::move(requestStr);
             }
 
@@ -249,19 +241,13 @@ public:
         std::string requestStr{static_cast<char const*>(buffer_.data().data()), buffer_.size()};
 
         // dosGuard served request++ and check ip address
-        if (!dosGuard_.get().request(clientIp))
-        {
+        if (!dosGuard_.get().request(clientIp)) {
             // TODO: could be useful to count in counters in the future too
             sendError(rpc::RippledError::rpcSLOW_DOWN, std::move(requestStr));
-        }
-        else
-        {
-            try
-            {
+        } else {
+            try {
                 (*handler_)(requestStr, shared_from_this());
-            }
-            catch (std::exception const&)
-            {
+            } catch (std::exception const&) {
                 sendError(rpc::RippledError::rpcINTERNAL, std::move(requestStr));
             }
         }

@@ -36,9 +36,7 @@ constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B25
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 
-class RPCAccountChannelsHandlerTest : public HandlerBaseTest
-{
-};
+class RPCAccountChannelsHandlerTest : public HandlerBaseTest {};
 
 TEST_F(RPCAccountChannelsHandlerTest, LimitNotInt)
 {
@@ -49,7 +47,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitNotInt)
                 "account": "{}", 
                 "limit": "t"
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -67,7 +66,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitNagetive)
                 "account": "{}", 
                 "limit": -1
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -85,7 +85,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitZero)
                 "account": "{}", 
                 "limit": 0
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -104,7 +105,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonHexLedgerHash)
                 "limit": 10,
                 "ledger_hash": "xxx"
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -124,7 +126,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonStringLedgerHash)
                 "limit": 10,
                 "ledger_hash": 123
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -144,7 +147,8 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidLedgerIndexString)
                 "limit": 10,
                 "ledger_index": "notvalidated"
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -163,7 +167,8 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerNotString)
                 "account": "{}", 
                 "marker": 9
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -185,7 +190,8 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidMarker)
                 "account": "{}",
                 "marker": "123invalid"
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -200,7 +206,8 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidMarker)
                 "account": "{}", 
                 "marker": 401
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -258,7 +265,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash)
             "ledger_hash": "{}"
         }})",
         ACCOUNT,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -285,7 +293,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerStringIndex)
             "account": "{}",
             "ledger_index": "4"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -310,7 +319,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIntIndex)
                 "account": "{}",
                 "ledger_index": 4
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -339,7 +349,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash2)
             "ledger_hash": "{}"
         }})",
         ACCOUNT,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -365,7 +376,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIndex2)
             "account": "{}",
             "ledger_index": "31"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -395,7 +407,8 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistAccount)
             "ledger_hash": "{}"
         }})",
         ACCOUNT,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountChannelsHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -473,7 +486,8 @@ TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
         R"({{
             "account": "{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -505,8 +519,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
     std::vector<Blob> bbs;
 
     auto repetitions = 50;
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.emplace_back(INDEX1);
         ripple::STObject const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
         bbs.push_back(channel.getSerializer().peekData());
@@ -528,7 +541,8 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
                 "account": "{}",
                 "limit": 20
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
@@ -543,7 +557,8 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
                 "account": "{}", 
                 "limit": 9
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit?
     });
@@ -555,7 +570,8 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
                 "account": "{}", 
                 "limit": 401
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);  // todo: check limit?
     });
@@ -585,8 +601,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
 
     // 10 pay channel to ACCOUNT2
     auto repetitions = 10;
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.emplace_back(INDEX1);
         ripple::STObject const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
         bbs.push_back(channel.getSerializer().peekData());
@@ -594,8 +609,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
 
     // 20 pay channel to ACCOUNT3
     repetitions = 20;
-    while ((repetitions--) != 0)
-    {
+    while ((repetitions--) != 0) {
         indexes.emplace_back(INDEX1);
         ripple::STObject const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT3, 100, 10, 32, TXNID, 28);
         bbs.push_back(channel.getSerializer().peekData());
@@ -616,7 +630,8 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
             "destination_account":"{}"
         }})",
         ACCOUNT,
-        ACCOUNT3));
+        ACCOUNT3
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -653,7 +668,8 @@ TEST_F(RPCAccountChannelsHandlerTest, EmptyChannel)
         R"({{ 
             "account": "{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -740,7 +756,8 @@ TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
         R"({{ 
             "account": "{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -775,16 +792,14 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
     // owner dir contains 10 indexes
     int objectsCount = 10;
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     // return 15 objects
     objectsCount = 15;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         bbs.push_back(channel1.getSerializer().peekData());
         objectsCount--;
     }
@@ -809,7 +824,8 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
             "limit": {}
         }})",
         ACCOUNT,
-        limit));
+        limit
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -843,8 +859,7 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
     ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     int objectsCount = limit;
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(INDEX1);
         bbs.push_back(channel1.getSerializer().peekData());
@@ -868,7 +883,8 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
         ACCOUNT,
         limit,
         INDEX1,
-        nextPage));
+        nextPage
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -919,7 +935,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
             "limit": {}
         }})",
         ACCOUNT,
-        AccountChannelsHandler::LIMIT_MIN - 1));
+        AccountChannelsHandler::LIMIT_MIN - 1
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -968,7 +985,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
             "limit": {}
         }})",
         ACCOUNT,
-        AccountChannelsHandler::LIMIT_MAX + 1));
+        AccountChannelsHandler::LIMIT_MAX + 1
+    ));
     runSpawn([&, this](auto yield) {
         auto handler = AnyHandler{AccountChannelsHandler{this->mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});

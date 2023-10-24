@@ -75,15 +75,12 @@ using RpcSpecConstRef = RpcSpec const&;
 /**
  * @brief An empty type used as Output for handlers than don't actually produce output.
  */
-struct VoidOutput
-{
-};
+struct VoidOutput {};
 
 /**
  * @brief Context of an RPC call.
  */
-struct Context
-{
+struct Context {
     boost::asio::yield_context yield;
     std::shared_ptr<web::ConnectionBase> session = {};
     bool isAdmin = false;
@@ -99,8 +96,7 @@ using Result = std::variant<Status, boost::json::object>;
 /**
  * @brief A cursor object used to traverse nodes owned by an account.
  */
-struct AccountCursor
-{
+struct AccountCursor {
     ripple::uint256 index;
     std::uint32_t hint{};
 
@@ -120,8 +116,7 @@ struct AccountCursor
 /**
  * @brief Interface for the provider of RPC handlers.
  */
-class HandlerProvider
-{
+class HandlerProvider {
 public:
     virtual ~HandlerProvider() = default;
 

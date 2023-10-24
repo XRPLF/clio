@@ -41,13 +41,10 @@ timed(FnType&& func)
 {
     auto start = std::chrono::system_clock::now();
 
-    if constexpr (std::is_same_v<decltype(func()), void>)
-    {
+    if constexpr (std::is_same_v<decltype(func()), void>) {
         func();
         return std::chrono::duration_cast<U>(std::chrono::system_clock::now() - start).count();
-    }
-    else
-    {
+    } else {
         auto ret = func();
         auto elapsed = std::chrono::duration_cast<U>(std::chrono::system_clock::now() - start).count();
         return std::make_pair(std::move(ret), std::move(elapsed));

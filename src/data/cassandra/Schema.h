@@ -41,8 +41,7 @@ template <SomeSettingsProvider SettingsProviderType>
  * @brief Manages the DB schema and provides access to prepared statements.
  */
 template <SomeSettingsProvider SettingsProviderType>
-class Schema
-{
+class Schema {
     util::Logger log_{"Backend"};
     std::reference_wrapper<SettingsProviderType const> settingsProvider_;
 
@@ -62,7 +61,8 @@ public:
                AND durable_writes = true
             )",
             settingsProvider_.get().getKeyspace(),
-            settingsProvider_.get().getReplicationFactor());
+            settingsProvider_.get().getReplicationFactor()
+        );
     }();
 
     // =======================
@@ -85,7 +85,8 @@ public:
               AND default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "objects"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -100,7 +101,8 @@ public:
              WITH default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "transactions"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -113,7 +115,8 @@ public:
              WITH default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "ledger_transactions"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -127,7 +130,8 @@ public:
              WITH default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "successor"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -140,7 +144,8 @@ public:
              WITH default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "diff"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -155,7 +160,8 @@ public:
               AND default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "account_tx"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -167,7 +173,8 @@ public:
              WITH default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "ledgers"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -179,7 +186,8 @@ public:
              WITH default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "ledger_hashes"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -189,7 +197,8 @@ public:
                      sequence bigint
                   )
             )",
-            qualifiedTableName(settingsProvider_.get(), "ledger_range")));
+            qualifiedTableName(settingsProvider_.get(), "ledger_range")
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -205,7 +214,8 @@ public:
               AND default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "nf_tokens"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -220,7 +230,8 @@ public:
               AND default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -235,7 +246,8 @@ public:
               AND default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "nf_token_uris"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         statements.emplace_back(fmt::format(
             R"(
@@ -250,7 +262,8 @@ public:
               AND default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "nf_token_transactions"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         return statements;
     }();
@@ -258,8 +271,7 @@ public:
     /**
      * @brief Prepared statements holder.
      */
-    class Statements
-    {
+    class Statements {
         std::reference_wrapper<SettingsProviderType const> settingsProvider_;
         std::reference_wrapper<Handle const> handle_;
 
@@ -280,7 +292,8 @@ public:
                        (key, sequence, object)
                 VALUES (?, ?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "objects")));
+                qualifiedTableName(settingsProvider_.get(), "objects")
+            ));
         }();
 
         PreparedStatement insertTransaction = [this]() {
@@ -290,7 +303,8 @@ public:
                        (hash, ledger_sequence, date, transaction, metadata)
                 VALUES (?, ?, ?, ?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "transactions")));
+                qualifiedTableName(settingsProvider_.get(), "transactions")
+            ));
         }();
 
         PreparedStatement insertLedgerTransaction = [this]() {
@@ -300,7 +314,8 @@ public:
                        (ledger_sequence, hash)
                 VALUES (?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_transactions")));
+                qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
+            ));
         }();
 
         PreparedStatement insertSuccessor = [this]() {
@@ -310,7 +325,8 @@ public:
                        (key, seq, next)
                 VALUES (?, ?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "successor")));
+                qualifiedTableName(settingsProvider_.get(), "successor")
+            ));
         }();
 
         PreparedStatement insertDiff = [this]() {
@@ -320,7 +336,8 @@ public:
                        (seq, key)
                 VALUES (?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "diff")));
+                qualifiedTableName(settingsProvider_.get(), "diff")
+            ));
         }();
 
         PreparedStatement insertAccountTx = [this]() {
@@ -330,7 +347,8 @@ public:
                        (account, seq_idx, hash)
                 VALUES (?, ?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "account_tx")));
+                qualifiedTableName(settingsProvider_.get(), "account_tx")
+            ));
         }();
 
         PreparedStatement insertNFT = [this]() {
@@ -340,7 +358,8 @@ public:
                        (token_id, sequence, owner, is_burned)
                 VALUES (?, ?, ?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "nf_tokens")));
+                qualifiedTableName(settingsProvider_.get(), "nf_tokens")
+            ));
         }();
 
         PreparedStatement insertIssuerNFT = [this]() {
@@ -350,7 +369,8 @@ public:
                        (issuer, taxon, token_id)
                 VALUES (?, ?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")));
+                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+            ));
         }();
 
         PreparedStatement insertNFTURI = [this]() {
@@ -360,7 +380,8 @@ public:
                        (token_id, sequence, uri)
                 VALUES (?, ?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")));
+                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
+            ));
         }();
 
         PreparedStatement insertNFTTx = [this]() {
@@ -370,7 +391,8 @@ public:
                        (token_id, seq_idx, hash)
                 VALUES (?, ?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")));
+                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+            ));
         }();
 
         PreparedStatement insertLedgerHeader = [this]() {
@@ -380,7 +402,8 @@ public:
                        (sequence, header)
                 VALUES (?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "ledgers")));
+                qualifiedTableName(settingsProvider_.get(), "ledgers")
+            ));
         }();
 
         PreparedStatement insertLedgerHash = [this]() {
@@ -390,7 +413,8 @@ public:
                        (hash, sequence)
                 VALUES (?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_hashes")));
+                qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
+            ));
         }();
 
         //
@@ -405,7 +429,8 @@ public:
                  WHERE is_latest = ? 
                     IF sequence IN (?, null)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_range")));
+                qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
         }();
 
         PreparedStatement deleteLedgerRange = [this]() {
@@ -415,7 +440,8 @@ public:
                    SET sequence = ?
                  WHERE is_latest = false
                 )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_range")));
+                qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
         }();
 
         //
@@ -432,7 +458,8 @@ public:
               ORDER BY seq DESC 
                  LIMIT 1
                 )",
-                qualifiedTableName(settingsProvider_.get(), "successor")));
+                qualifiedTableName(settingsProvider_.get(), "successor")
+            ));
         }();
 
         PreparedStatement selectDiff = [this]() {
@@ -442,7 +469,8 @@ public:
                   FROM {}
                  WHERE seq = ?
                 )",
-                qualifiedTableName(settingsProvider_.get(), "diff")));
+                qualifiedTableName(settingsProvider_.get(), "diff")
+            ));
         }();
 
         PreparedStatement selectObject = [this]() {
@@ -455,7 +483,8 @@ public:
               ORDER BY sequence DESC 
                  LIMIT 1
                 )",
-                qualifiedTableName(settingsProvider_.get(), "objects")));
+                qualifiedTableName(settingsProvider_.get(), "objects")
+            ));
         }();
 
         PreparedStatement selectTransaction = [this]() {
@@ -465,7 +494,8 @@ public:
                   FROM {}
                  WHERE hash = ?
                 )",
-                qualifiedTableName(settingsProvider_.get(), "transactions")));
+                qualifiedTableName(settingsProvider_.get(), "transactions")
+            ));
         }();
 
         PreparedStatement selectAllTransactionHashesInLedger = [this]() {
@@ -475,7 +505,8 @@ public:
                   FROM {}               
                  WHERE ledger_sequence = ?               
                 )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_transactions")));
+                qualifiedTableName(settingsProvider_.get(), "ledger_transactions")
+            ));
         }();
 
         PreparedStatement selectLedgerPageKeys = [this]() {
@@ -489,7 +520,8 @@ public:
                  LIMIT ?
                  ALLOW FILTERING
                 )",
-                qualifiedTableName(settingsProvider_.get(), "objects")));
+                qualifiedTableName(settingsProvider_.get(), "objects")
+            ));
         }();
 
         PreparedStatement selectLedgerPage = [this]() {
@@ -503,7 +535,8 @@ public:
                  LIMIT ?
                  ALLOW FILTERING
                 )",
-                qualifiedTableName(settingsProvider_.get(), "objects")));
+                qualifiedTableName(settingsProvider_.get(), "objects")
+            ));
         }();
 
         PreparedStatement getToken = [this]() {
@@ -514,7 +547,8 @@ public:
                  WHERE key = ?               
                  LIMIT 1
                 )",
-                qualifiedTableName(settingsProvider_.get(), "objects")));
+                qualifiedTableName(settingsProvider_.get(), "objects")
+            ));
         }();
 
         PreparedStatement selectAccountTx = [this]() {
@@ -526,7 +560,8 @@ public:
                    AND seq_idx < ?
                  LIMIT ?
                 )",
-                qualifiedTableName(settingsProvider_.get(), "account_tx")));
+                qualifiedTableName(settingsProvider_.get(), "account_tx")
+            ));
         }();
 
         PreparedStatement selectAccountTxForward = [this]() {
@@ -539,7 +574,8 @@ public:
               ORDER BY seq_idx ASC 
                  LIMIT ?
                 )",
-                qualifiedTableName(settingsProvider_.get(), "account_tx")));
+                qualifiedTableName(settingsProvider_.get(), "account_tx")
+            ));
         }();
 
         PreparedStatement selectNFT = [this]() {
@@ -552,7 +588,8 @@ public:
               ORDER BY sequence DESC
                  LIMIT 1
                 )",
-                qualifiedTableName(settingsProvider_.get(), "nf_tokens")));
+                qualifiedTableName(settingsProvider_.get(), "nf_tokens")
+            ));
         }();
 
         PreparedStatement selectNFTBulk = [this]() {
@@ -578,7 +615,8 @@ public:
               ORDER BY sequence DESC
                  LIMIT 1
                 )",
-                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")));
+                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
+            ));
         }();
 
         PreparedStatement selectNFTURIBulk = [this]() {
@@ -604,7 +642,8 @@ public:
               ORDER BY seq_idx DESC
                  LIMIT ?
                 )",
-                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")));
+                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+            ));
         }();
 
         PreparedStatement selectNFTTxForward = [this]() {
@@ -617,7 +656,8 @@ public:
               ORDER BY seq_idx ASC
                  LIMIT ?
                 )",
-                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")));
+                qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+            ));
         }();
 
         PreparedStatement selectNFTIDsByIssuer = [this]() {
@@ -655,7 +695,8 @@ public:
                  WHERE hash = ?     
                  LIMIT 1
                 )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_hashes")));
+                qualifiedTableName(settingsProvider_.get(), "ledger_hashes")
+            ));
         }();
 
         PreparedStatement selectLedgerBySeq = [this]() {
@@ -665,7 +706,8 @@ public:
                   FROM {}
                  WHERE sequence = ?
                 )",
-                qualifiedTableName(settingsProvider_.get(), "ledgers")));
+                qualifiedTableName(settingsProvider_.get(), "ledgers")
+            ));
         }();
 
         PreparedStatement selectLatestLedger = [this]() {
@@ -675,7 +717,8 @@ public:
                   FROM {}    
                  WHERE is_latest = true               
                 )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_range")));
+                qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
         }();
 
         PreparedStatement selectLedgerRange = [this]() {
@@ -684,7 +727,8 @@ public:
                 SELECT sequence
                   FROM {}
                 )",
-                qualifiedTableName(settingsProvider_.get(), "ledger_range")));
+                qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
         }();
     };
 

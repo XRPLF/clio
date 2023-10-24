@@ -15,6 +15,10 @@ To access non-validated data for *any* request, simply add `ledger_index: "curre
 Clio does not connect to the peer-to-peer network. Instead, Clio extracts data from a group of specified rippled nodes. Running Clio requires access to at least one rippled node
 from which data can be extracted. The rippled node does not need to be running on the same machine as Clio.
 
+## Help
+Feel free to open an [issue](https://github.com/XRPLF/clio/issues) if you have a feature request or something doesn't work as expected.
+If you have any questions about building, running, contributing, using clio or any other, you could always start a new [discussion](https://github.com/XRPLF/clio/discussions).
+
 ## Requirements
 1. Access to a Cassandra cluster or ScyllaDB cluster. Can be local or remote.
 2. Access to one or more rippled nodes. Can be local or remote.

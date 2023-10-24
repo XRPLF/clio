@@ -49,8 +49,7 @@ namespace data::cassandra::detail {
  * This is ok for now because we are hopefully going to be getting rid of it entirely later on.
  */
 template <typename HandleType = Handle, SomeBackendCounters BackendCountersType = BackendCounters>
-class DefaultExecutionStrategy
-{
+class DefaultExecutionStrategy {
     util::Logger log_{"Backend"};
 
     std::uint32_t maxWriteRequestsOutstanding_;
@@ -89,7 +88,8 @@ public:
     DefaultExecutionStrategy(
         Settings const& settings,
         HandleType const& handle,
-        typename BackendCountersType::PtrType counters = BackendCountersType::make())
+        typename BackendCountersType::PtrType counters = BackendCountersType::make()
+    )
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
         , maxReadRequestsOutstanding_{settings.maxReadRequestsOutstanding}
         , work_{ioc_}
@@ -141,11 +141,9 @@ public:
     writeSync(StatementType const& statement)
     {
         counters_->registerWriteSync();
-        while (true)
-        {
+        while (true) {
             auto res = handle_.get().execute(statement);
-            if (res)
-            {
+            if (res) {
                 return res;
             }
 
@@ -194,7 +192,8 @@ public:
 
                 counters_->registerWriteFinished();
             },
-            [this]() { counters_->registerWriteRetry(); });
+            [this]() { counters_->registerWriteRetry(); }
+        );
     }
 
     /**
@@ -223,7 +222,8 @@ public:
                 decrementOutstandingRequestCount();
                 counters_->registerWriteFinished();
             },
-            [this]() { counters_->registerWriteRetry(); });
+            [this]() { counters_->registerWriteRetry(); }
+        );
     }
 
     /**
@@ -262,8 +262,7 @@ public:
         counters_->registerReadStarted(numStatements);
 
         // todo: perhaps use policy instead
-        while (true)
-        {
+        while (true) {
             numReadRequestsOutstanding_ += numStatements;
 
             auto init = [this, &statements, &future]<typename Self>(Self& self) {
@@ -272,27 +271,25 @@ public:
                 future.emplace(handle_.get().asyncExecute(statements, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); });
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); }
+                    );
                 }));
             };
 
             auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(
-                init, token, boost::asio::get_associated_executor(token));
+                init, token, boost::asio::get_associated_executor(token)
+            );
             numReadRequestsOutstanding_ -= numStatements;
 
-            if (res)
-            {
+            if (res) {
                 counters_->registerReadFinished(numStatements);
                 return res;
             }
 
             LOG(log_.error()) << "Failed batch read in coroutine: " << res.error();
-            try
-            {
+            try {
                 throwErrorIfNeeded(res.error());
-            }
-            catch (...)
-            {
+            } catch (...) {
                 counters_->registerReadError(numStatements);
                 throw;
             }
@@ -317,8 +314,7 @@ public:
         counters_->registerReadStarted();
 
         // todo: perhaps use policy instead
-        while (true)
-        {
+        while (true) {
             ++numReadRequestsOutstanding_;
             auto init = [this, &statement, &future]<typename Self>(Self& self) {
                 auto sself = std::make_shared<Self>(std::move(self));
@@ -326,27 +322,25 @@ public:
                 future.emplace(handle_.get().asyncExecute(statement, [sself](auto&& res) mutable {
                     boost::asio::post(
                         boost::asio::get_associated_executor(*sself),
-                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); });
+                        [sself, res = std::forward<decltype(res)>(res)]() mutable { sself->complete(std::move(res)); }
+                    );
                 }));
             };
 
             auto res = boost::asio::async_compose<CompletionTokenType, void(ResultOrErrorType)>(
-                init, token, boost::asio::get_associated_executor(token));
+                init, token, boost::asio::get_associated_executor(token)
+            );
             --numReadRequestsOutstanding_;
 
-            if (res)
-            {
+            if (res) {
                 counters_->registerReadFinished();
                 return res;
             }
 
             LOG(log_.error()) << "Failed read in coroutine: " << res.error();
-            try
-            {
+            try {
                 throwErrorIfNeeded(res.error());
-            }
-            catch (...)
-            {
+            } catch (...) {
                 counters_->registerReadError();
                 throw;
             }
@@ -383,10 +377,10 @@ public:
                     ++errorsCount;
 
                 // when all async operations complete unblock the result
-                if (--numOutstanding == 0)
-                {
-                    boost::asio::post(
-                        boost::asio::get_associated_executor(*sself), [sself]() mutable { sself->complete(); });
+                if (--numOutstanding == 0) {
+                    boost::asio::post(boost::asio::get_associated_executor(*sself), [sself]() mutable {
+                        sself->complete();
+                    });
                 }
             };
 
@@ -396,15 +390,16 @@ public:
                 std::back_inserter(futures),
                 [this, &executionHandler](auto const& statement) {
                     return handle_.get().asyncExecute(statement, executionHandler);
-                });
+                }
+            );
         };
 
         boost::asio::async_compose<CompletionTokenType, void()>(
-            init, token, boost::asio::get_associated_executor(token));
+            init, token, boost::asio::get_associated_executor(token)
+        );
         numReadRequestsOutstanding_ -= statements.size();
 
-        if (errorsCount > 0)
-        {
+        if (errorsCount > 0) {
             assert(errorsCount <= statements.size());
             counters_->registerReadError(errorsCount);
             counters_->registerReadFinished(statements.size() - errorsCount);
@@ -424,7 +419,8 @@ public:
                 auto entry = future.get();
                 auto&& res = entry.value();
                 return std::move(res);
-            });
+            }
+        );
 
         assert(futures.size() == statements.size());
         assert(results.size() == statements.size());
@@ -446,8 +442,7 @@ private:
     {
         {
             std::unique_lock<std::mutex> lck(throttleMutex_);
-            if (!canAddWriteRequest())
-            {
+            if (!canAddWriteRequest()) {
                 LOG(log_.trace()) << "Max outstanding requests reached. "
                                   << "Waiting for other requests to finish";
                 throttleCv_.wait(lck, [this]() { return canAddWriteRequest(); });
@@ -460,8 +455,7 @@ private:
     decrementOutstandingRequestCount()
     {
         // sanity check
-        if (numWriteRequestsOutstanding_ == 0)
-        {
+        if (numWriteRequestsOutstanding_ == 0) {
             assert(false);
             throw std::runtime_error("decrementing num outstanding below 0");
         }
@@ -472,8 +466,7 @@ private:
             std::lock_guard const lck(throttleMutex_);
             throttleCv_.notify_one();
         }
-        if (cur == 0)
-        {
+        if (cur == 0) {
             // mutex lock required to prevent race condition around spurious
             // wakeup
             std::lock_guard const lck(syncMutex_);

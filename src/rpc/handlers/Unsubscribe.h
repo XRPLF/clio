@@ -31,20 +31,17 @@ class SubscriptionManager;
 namespace rpc {
 
 template <typename SubscriptionManagerType>
-class BaseUnsubscribeHandler
-{
+class BaseUnsubscribeHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<SubscriptionManagerType> subscriptions_;
 
 public:
-    struct OrderBook
-    {
+    struct OrderBook {
         ripple::Book book;
         bool both = false;
     };
 
-    struct Input
-    {
+    struct Input {
         std::optional<std::vector<std::string>> accounts;
         std::optional<std::vector<std::string>> streams;
         std::optional<std::vector<std::string>> accountsProposed;
@@ -56,7 +53,8 @@ public:
 
     BaseUnsubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<SubscriptionManagerType> const& subscriptions)
+        std::shared_ptr<SubscriptionManagerType> const& subscriptions
+    )
         : sharedPtrBackend_(sharedPtrBackend), subscriptions_(subscriptions)
     {
     }
@@ -69,8 +67,7 @@ public:
                 if (!value.is_array())
                     return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
 
-                for (auto const& book : value.as_array())
-                {
+                for (auto const& book : value.as_array()) {
                     if (!book.is_object())
                         return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}};
 
@@ -118,34 +115,20 @@ private:
     unsubscribeFromStreams(std::vector<std::string> const& streams, std::shared_ptr<web::ConnectionBase> const& session)
         const
     {
-        for (auto const& stream : streams)
-        {
-            if (stream == "ledger")
-            {
+        for (auto const& stream : streams) {
+            if (stream == "ledger") {
                 subscriptions_->unsubLedger(session);
-            }
-            else if (stream == "transactions")
-            {
+            } else if (stream == "transactions") {
                 subscriptions_->unsubTransactions(session);
-            }
-            else if (stream == "transactions_proposed")
-            {
+            } else if (stream == "transactions_proposed") {
                 subscriptions_->unsubProposedTransactions(session);
-            }
-            else if (stream == "validations")
-            {
+            } else if (stream == "validations") {
                 subscriptions_->unsubValidation(session);
-            }
-            else if (stream == "manifests")
-            {
+            } else if (stream == "manifests") {
                 subscriptions_->unsubManifest(session);
-            }
-            else if (stream == "book_changes")
-            {
+            } else if (stream == "book_changes") {
                 subscriptions_->unsubBookChanges(session);
-            }
-            else
-            {
+            } else {
                 assert(false);
             }
         }
@@ -155,8 +138,7 @@ private:
     unsubscribeFromAccounts(std::vector<std::string> accounts, std::shared_ptr<web::ConnectionBase> const& session)
         const
     {
-        for (auto const& account : accounts)
-        {
+        for (auto const& account : accounts) {
             auto const accountID = accountFromStringStrict(account);
             subscriptions_->unsubAccount(*accountID, session);
         }
@@ -165,10 +147,10 @@ private:
     void
     unsubscribeFromProposedAccounts(
         std::vector<std::string> accountsProposed,
-        std::shared_ptr<web::ConnectionBase> const& session) const
+        std::shared_ptr<web::ConnectionBase> const& session
+    ) const
     {
-        for (auto const& account : accountsProposed)
-        {
+        for (auto const& account : accountsProposed) {
             auto const accountID = accountFromStringStrict(account);
             subscriptions_->unsubProposedAccount(*accountID, session);
         }
@@ -177,8 +159,7 @@ private:
     void
     unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<web::ConnectionBase> const& session) const
     {
-        for (auto const& orderBook : books)
-        {
+        for (auto const& orderBook : books) {
             subscriptions_->unsubBook(orderBook.book, session);
 
             if (orderBook.both)
@@ -192,29 +173,25 @@ private:
         auto input = Input{};
         auto const& jsonObject = jv.as_object();
 
-        if (auto const& streams = jsonObject.find(JS(streams)); streams != jsonObject.end())
-        {
+        if (auto const& streams = jsonObject.find(JS(streams)); streams != jsonObject.end()) {
             input.streams = std::vector<std::string>();
             for (auto const& stream : streams->value().as_array())
                 input.streams->push_back(stream.as_string().c_str());
         }
-        if (auto const& accounts = jsonObject.find(JS(accounts)); accounts != jsonObject.end())
-        {
+        if (auto const& accounts = jsonObject.find(JS(accounts)); accounts != jsonObject.end()) {
             input.accounts = std::vector<std::string>();
             for (auto const& account : accounts->value().as_array())
                 input.accounts->push_back(account.as_string().c_str());
         }
-        if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed)); accountsProposed != jsonObject.end())
-        {
+        if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed));
+            accountsProposed != jsonObject.end()) {
             input.accountsProposed = std::vector<std::string>();
             for (auto const& account : accountsProposed->value().as_array())
                 input.accountsProposed->push_back(account.as_string().c_str());
         }
-        if (auto const& books = jsonObject.find(JS(books)); books != jsonObject.end())
-        {
+        if (auto const& books = jsonObject.find(JS(books)); books != jsonObject.end()) {
             input.books = std::vector<OrderBook>();
-            for (auto const& book : books->value().as_array())
-            {
+            for (auto const& book : books->value().as_array()) {
                 auto internalBook = OrderBook{};
                 auto const& bookObject = book.as_object();
 

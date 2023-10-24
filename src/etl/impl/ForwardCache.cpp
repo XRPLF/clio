@@ -33,10 +33,10 @@ ForwardCache::freshen()
 
     auto numOutstanding = std::make_shared<std::atomic_uint>(latestForwarded_.size());
 
-    for (auto const& cacheEntry : latestForwarded_)
-    {
+    for (auto const& cacheEntry : latestForwarded_) {
         boost::asio::spawn(
-            strand_, [this, numOutstanding, command = cacheEntry.first](boost::asio::yield_context yield) {
+            strand_,
+            [this, numOutstanding, command = cacheEntry.first](boost::asio::yield_context yield) {
                 boost::json::object const request = {{"command", command}};
                 auto resp = source_.requestFromRippled(request, std::nullopt, yield);
 
@@ -47,7 +47,8 @@ ForwardCache::freshen()
                     std::scoped_lock const lk(mtx_);
                     latestForwarded_[command] = resp;
                 }
-            });
+            }
+        );
     }
 }
 
@@ -63,12 +64,9 @@ std::optional<boost::json::object>
 ForwardCache::get(boost::json::object const& request) const
 {
     std::optional<std::string> command = {};
-    if (request.contains("command") && !request.contains("method") && request.at("command").is_string())
-    {
+    if (request.contains("command") && !request.contains("method") && request.at("command").is_string()) {
         command = request.at("command").as_string().c_str();
-    }
-    else if (request.contains("method") && !request.contains("command") && request.at("method").is_string())
-    {
+    } else if (request.contains("method") && !request.contains("command") && request.at("method").is_string()) {
         command = request.at("method").as_string().c_str();
     }
 

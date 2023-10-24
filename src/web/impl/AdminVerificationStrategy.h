@@ -26,8 +26,7 @@
 
 namespace web::detail {
 
-class AdminVerificationStrategy
-{
+class AdminVerificationStrategy {
 public:
     using RequestType = boost::beast::http::request<boost::beast::http::string_body>;
     virtual ~AdminVerificationStrategy() = default;
@@ -43,8 +42,7 @@ public:
     isAdmin(RequestType const& request, std::string_view ip) const = 0;
 };
 
-class IPAdminVerificationStrategy : public AdminVerificationStrategy
-{
+class IPAdminVerificationStrategy : public AdminVerificationStrategy {
 public:
     /**
      * @brief Checks whether request is from a host that is considered authorized as admin
@@ -57,8 +55,7 @@ public:
     isAdmin(RequestType const&, std::string_view ip) const override;
 };
 
-class PasswordAdminVerificationStrategy : public AdminVerificationStrategy
-{
+class PasswordAdminVerificationStrategy : public AdminVerificationStrategy {
 private:
     std::string password_;
 

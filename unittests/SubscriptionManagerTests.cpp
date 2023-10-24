@@ -69,11 +69,9 @@ CheckSubscriberMessage(std::string out, std::shared_ptr<web::ConnectionBase> ses
 {
     auto sessionPtr = dynamic_cast<MockSession*>(session.get());
     ASSERT_NE(sessionPtr, nullptr);
-    while (retry-- != 0)
-    {
+    while (retry-- != 0) {
         std::this_thread::sleep_for(20ms);
-        if ((!sessionPtr->message.empty()) && json::parse(sessionPtr->message) == json::parse(out))
-        {
+        if ((!sessionPtr->message.empty()) && json::parse(sessionPtr->message) == json::parse(out)) {
             return;
         }
     }
@@ -81,8 +79,7 @@ CheckSubscriberMessage(std::string out, std::shared_ptr<web::ConnectionBase> ses
 }
 
 // Fixture contains test target and mock backend
-class SubscriptionManagerSimpleBackendTest : public MockBackendTest
-{
+class SubscriptionManagerSimpleBackendTest : public MockBackendTest {
 protected:
     util::Config cfg;
     std::shared_ptr<feed::SubscriptionManager> subManagerPtr;
@@ -162,7 +159,6 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
         EXPECT_EQ(reportReturn["books"], result);
     };
     checkResult(subManagerPtr->report(), 1);
-    subManagerPtr->cleanup(session2);
     subManagerPtr->cleanup(session2);  // clean a removed session
     std::this_thread::sleep_for(20ms);
     checkResult(subManagerPtr->report(), 0);

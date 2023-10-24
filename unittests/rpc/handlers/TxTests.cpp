@@ -75,9 +75,7 @@ auto constexpr static DEFAULT_OUT = R"({
     "validated": true
 })";
 
-class RPCTxTest : public HandlerBaseTest
-{
-};
+class RPCTxTest : public HandlerBaseTest {};
 
 TEST_F(RPCTxTest, ExcessiveLgrRange)
 {
@@ -90,7 +88,8 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
                 "min_ledger": 1,
                 "max_ledger": 1002
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -111,7 +110,8 @@ TEST_F(RPCTxTest, InvalidLgrRange)
                 "max_ledger": 1,
                 "min_ledger": 10
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -139,7 +139,8 @@ TEST_F(RPCTxTest, TxnNotFound)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -171,7 +172,8 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -204,7 +206,8 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -237,7 +240,8 @@ TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
                 "min_ledger": 1,
                 "max_ledger": 1000
             }})",
-            CTID));
+            CTID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -273,7 +277,8 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
 
@@ -308,7 +313,8 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(DEFAULT_OUT));
@@ -349,7 +355,8 @@ TEST_F(RPCTxTest, ReturnBinary)
                 "transaction": "{}",
                 "binary": true
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
@@ -392,7 +399,8 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
                 "transaction": "{}",
                 "binary": true
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
@@ -402,7 +410,7 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
 TEST_F(RPCTxTest, MintNFT)
 {
     // Note: `inLedger` is API v1 only. See DefaultOutput_*
-    auto const static OUT = fmt::format(
+    auto static const OUT = fmt::format(
         R"({{
             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee": "50",
@@ -458,7 +466,8 @@ TEST_F(RPCTxTest, MintNFT)
             "validated": true
         }})",
         NFTID,
-        NFTID);
+        NFTID
+    );
     TransactionAndMetadata tx = CreateMintNFTTxWithMetadata(ACCOUNT, 1, 50, 123, NFTID);
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
@@ -477,7 +486,8 @@ TEST_F(RPCTxTest, MintNFT)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
@@ -504,7 +514,8 @@ TEST_F(RPCTxTest, NFTAcceptOffer)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("meta").at("nftoken_id").as_string(), NFTID);
@@ -532,12 +543,12 @@ TEST_F(RPCTxTest, NFTCancelOffer)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
 
-        for (auto const& id : output->at("meta").at("nftoken_ids").as_array())
-        {
+        for (auto const& id : output->at("meta").at("nftoken_ids").as_array()) {
             auto const idStr = id.as_string();
             const auto it = std::find(ids.begin(), ids.end(), idStr);
             ASSERT_NE(it, ids.end()) << "Unexpected NFT ID: " << idStr;
@@ -568,7 +579,8 @@ TEST_F(RPCTxTest, NFTCreateOffer)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->at("meta").at("offer_id").as_string() == NFTID2);
@@ -586,7 +598,8 @@ TEST_F(RPCTxTest, CTIDAndTransactionBothProvided)
                 "ctid": "{}"
             }})",
             TXNID,
-            CTID));
+            CTID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -655,7 +668,8 @@ TEST_F(RPCTxTest, CTIDNotMatch)
                 "command": "tx",
                 "ctid": "{}"
             }})",
-            CTID));
+            CTID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
@@ -663,7 +677,8 @@ TEST_F(RPCTxTest, CTIDNotMatch)
         EXPECT_EQ(err.at("error_code").as_uint64(), 4);
         EXPECT_EQ(
             err.at("error_message").as_string(),
-            "Wrong network. You should submit this request to a node running on NetworkID: 2");
+            "Wrong network. You should submit this request to a node running on NetworkID: 2"
+        );
     });
 }
 
@@ -733,7 +748,81 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
                 "command": "tx",
                 "transaction": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(OUT));
+    });
+}
+
+TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvaiable)
+{
+    auto constexpr static OUT = R"({
+            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Fee":"2",
+            "Sequence":100,
+            "SigningPubKey":"74657374",
+            "TakerGets":
+            {
+                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "value":"200"
+            },
+            "TakerPays":"300",
+            "TransactionType":"OfferCreate",
+            "hash":"2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
+            "meta":
+            {
+                "AffectedNodes":
+                [
+                    {
+                        "CreatedNode":
+                        {
+                            "LedgerEntryType":"Offer",
+                            "NewFields":
+                            {
+                                "TakerGets":"200",
+                                "TakerPays":
+                                {
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "value":"300"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "TransactionIndex":100,
+                "TransactionResult":"tesSUCCESS"
+            },
+            "date":123456,
+            "ledger_index":100,
+            "inLedger":100,
+            "validated": true
+    })";
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    TransactionAndMetadata tx;
+    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.transaction =
+        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+    tx.date = 123456;
+    tx.ledgerSequence = 100;
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ASSERT_NE(rawETLPtr, nullptr);
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(std::nullopt));
+
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}"
+            }})",
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
@@ -742,7 +831,7 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
 
 TEST_F(RPCTxTest, ViaCTID)
 {
-    auto const static OUT = fmt::format(
+    auto static const OUT = fmt::format(
         R"({{
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee":"2",
@@ -789,7 +878,8 @@ TEST_F(RPCTxTest, ViaCTID)
     }})",
         CTID,
         SEQ_FROM_CTID,
-        SEQ_FROM_CTID);
+        SEQ_FROM_CTID
+    );
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     TransactionAndMetadata tx1;
     tx1.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 1, 200, 300).getSerializer().peekData();
@@ -816,7 +906,8 @@ TEST_F(RPCTxTest, ViaCTID)
                 "command": "tx",
                 "ctid": "{}"
             }})",
-            CTID));
+            CTID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));

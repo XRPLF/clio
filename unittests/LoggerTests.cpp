@@ -21,14 +21,10 @@
 using namespace util;
 
 // Used as a fixture for tests with enabled logging
-class LoggerTest : public LoggerFixture
-{
-};
+class LoggerTest : public LoggerFixture {};
 
 // Used as a fixture for tests with disabled logging
-class NoLoggerTest : public NoLoggerFixture
-{
-};
+class NoLoggerTest : public NoLoggerFixture {};
 
 TEST_F(LoggerTest, Basic)
 {

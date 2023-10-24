@@ -37,12 +37,9 @@ constexpr static auto NFTID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C9
 constexpr static auto NFTID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
 constexpr static auto NFTID3 = "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
 
-class RPCAccountTxHandlerTest : public HandlerBaseTest
-{
-};
+class RPCAccountTxHandlerTest : public HandlerBaseTest {};
 
-struct AccountTxParamTestCaseBundle
-{
+struct AccountTxParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::optional<std::string> expectedError;
@@ -51,13 +48,12 @@ struct AccountTxParamTestCaseBundle
 };
 
 // parameterized test cases for parameters check
-struct AccountTxParameterTest : public RPCAccountTxHandlerTest, public WithParamInterface<AccountTxParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
+                                public WithParamInterface<AccountTxParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             return info.param.testName;
         }
@@ -311,7 +307,8 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest, public WithParam
                 "ledger_index_min": 11,
                 "ledger_hash": "{}"
             }})",
-                    LEDGERHASH),
+                    LEDGERHASH
+                ),
                 "invalidParams",
                 "containsLedgerSpecifierAndRange"},
             AccountTxParamTestCaseBundle{
@@ -323,7 +320,8 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest, public WithParam
                 "ledger_index_min": 11,
                 "ledger_hash": "{}"
             }})",
-                    LEDGERHASH),
+                    LEDGERHASH
+                ),
                 std::nullopt,
                 std::nullopt,
                 1u},
@@ -346,7 +344,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountTxGroup1,
     AccountTxParameterTest,
     ValuesIn(AccountTxParameterTest::generateTestValuesForParametersTest()),
-    AccountTxParameterTest::NameGenerator{});
+    AccountTxParameterTest::NameGenerator{}
+);
 
 TEST_P(AccountTxParameterTest, CheckParams)
 {
@@ -356,8 +355,7 @@ TEST_P(AccountTxParameterTest, CheckParams)
     auto* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
     auto const req = json::parse(testBundle.testJson);
-    if (testBundle.expectedError.has_value())
-    {
+    if (testBundle.expectedError.has_value()) {
         ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());
 
         runSpawn([&, this](auto yield) {
@@ -368,9 +366,7 @@ TEST_P(AccountTxParameterTest, CheckParams)
             EXPECT_EQ(err.at("error").as_string(), *testBundle.expectedError);
             EXPECT_EQ(err.at("error_message").as_string(), *testBundle.expectedErrorMessage);
         });
-    }
-    else
-    {
+    } else {
         EXPECT_CALL(*rawBackendPtr, fetchAccountTransactions);
 
         runSpawn([&, this](auto yield) {
@@ -451,7 +447,9 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
             testing::_,
             true,
             testing::Optional(testing::Eq(TransactionsCursor{MINSEQ, INT32_MAX})),
-            testing::_))
+            testing::_
+        )
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -465,7 +463,8 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
             }})",
             ACCOUNT,
             MINSEQ + 1,
-            MAXSEQ - 1));
+            MAXSEQ - 1
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
@@ -493,7 +492,9 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
-            testing::_))
+            testing::_
+        )
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -507,7 +508,8 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
             }})",
             ACCOUNT,
             MINSEQ + 1,
-            MAXSEQ - 1));
+            MAXSEQ - 1
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
@@ -535,7 +537,9 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
             testing::_,
             true,
             testing::Optional(testing::Eq(TransactionsCursor{MINSEQ - 1, INT32_MAX})),
-            testing::_))
+            testing::_
+        )
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -549,7 +553,8 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
             }})",
             ACCOUNT,
             -1,
-            -1));
+            -1
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
@@ -577,7 +582,9 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
-            testing::_))
+            testing::_
+        )
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -591,7 +598,8 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
             }})",
             ACCOUNT,
             -1,
-            -1));
+            -1
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
@@ -619,7 +627,9 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
-            testing::_))
+            testing::_
+        )
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -633,7 +643,8 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
             }})",
             ACCOUNT,
             -1,
-            -1));
+            -1
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
@@ -645,12 +656,14 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
             output->at("transactions").as_array()[0].as_object().at("meta").as_string(),
             "201C00000000F8E5110061E762400000000000001681144B4E9C06F24296074F7B"
             "C48F92A97916C6DC5EA9E1E1E5110061E76240000000000000178114D31252CF90"
-            "2EF8DD8451243869B38667CBD89DF3E1E1F1031000");
+            "2EF8DD8451243869B38667CBD89DF3E1E1F1031000"
+        );
         EXPECT_EQ(
             output->at("transactions").as_array()[0].as_object().at("tx_blob").as_string(),
             "120000240000002061400000000000000168400000000000000173047465737481"
             "144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451"
-            "243869B38667CBD89DF3");
+            "243869B38667CBD89DF3"
+        );
         EXPECT_FALSE(output->at("transactions").as_array()[0].as_object().contains("date"));
         EXPECT_FALSE(output->at("transactions").as_array()[0].as_object().contains("inLedger"));
         EXPECT_FALSE(output->as_object().contains("limit"));
@@ -669,7 +682,9 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
     EXPECT_CALL(
         *rawBackendPtr,
         fetchAccountTransactions(
-            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_))
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
+        )
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -685,7 +700,8 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
             }})",
             ACCOUNT,
             -1,
-            -1));
+            -1
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
@@ -714,7 +730,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
-            testing::_))
+            testing::_
+        )
+    )
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
@@ -729,7 +747,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
                 "ledger_index": {}
             }})",
             ACCOUNT,
-            MAXSEQ - 1));
+            MAXSEQ - 1
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
@@ -759,7 +778,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
                 "ledger_index": {}
             }})",
             ACCOUNT,
-            MAXSEQ - 1));
+            MAXSEQ - 1
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -786,7 +806,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
                 "ledger_index": "{}"
             }})",
             ACCOUNT,
-            MAXSEQ - 1));
+            MAXSEQ - 1
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -812,7 +833,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
-            testing::_))
+            testing::_
+        )
+    )
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
@@ -827,7 +850,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
                 "ledger_hash": "{}"
             }})",
             ACCOUNT,
-            LEDGERHASH));
+            LEDGERHASH
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
@@ -856,7 +880,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
-            testing::_))
+            testing::_
+        )
+    )
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -870,7 +896,8 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
                 "account": "{}",
                 "ledger_index": "validated"
             }})",
-            ACCOUNT));
+            ACCOUNT
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
@@ -898,7 +925,9 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 1, INT32_MAX})),
-            testing::_))
+            testing::_
+        )
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -912,7 +941,8 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
             }})",
             ACCOUNT,
             MINSEQ + 2,
-            MAXSEQ - 1));
+            MAXSEQ - 1
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
@@ -940,7 +970,9 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
             testing::_,
             false,
             testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ - 2, INT32_MAX})),
-            testing::_))
+            testing::_
+        )
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -954,7 +986,8 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
             }})",
             ACCOUNT,
             MINSEQ + 1,
-            MAXSEQ - 2));
+            MAXSEQ - 2
+        ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
@@ -1174,7 +1207,9 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
     EXPECT_CALL(
         *rawBackendPtr,
         fetchAccountTransactions(
-            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_))
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
+        )
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -1189,7 +1224,8 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
             }})",
             ACCOUNT,
             -1,
-            -1));
+            -1
+        ));
         auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
@@ -1400,7 +1436,9 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
     EXPECT_CALL(
         *rawBackendPtr,
         fetchAccountTransactions(
-            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_))
+            testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
+        )
+    )
         .Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -1415,15 +1453,15 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
             }})",
             ACCOUNT,
             -1,
-            -1));
+            -1
+        ));
         auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
     });
 }
 
-struct AccountTxTransactionBundle
-{
+struct AccountTxTransactionBundle {
     std::string testName;
     std::string testJson;
     std::string result;
@@ -1432,13 +1470,11 @@ struct AccountTxTransactionBundle
 
 // parameterized test cases for parameters check
 struct AccountTxTransactionTypeTest : public RPCAccountTxHandlerTest,
-                                      public WithParamInterface<AccountTxTransactionBundle>
-{
-    struct NameGenerator
-    {
+                                      public WithParamInterface<AccountTxTransactionBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<AccountTxTransactionBundle>(info.param);
             return bundle.testName;
@@ -1748,7 +1784,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountTxTransactionTypeTest,
     AccountTxTransactionTypeTest,
     ValuesIn(generateTransactionTypeTestValues()),
-    AccountTxTransactionTypeTest::NameGenerator{});
+    AccountTxTransactionTypeTest::NameGenerator{}
+);
 
 TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
 {
@@ -1761,7 +1798,8 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{MAXSEQ, INT32_MAX})), _))
+        *rawBackendPtr, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{MAXSEQ, INT32_MAX})), _)
+    )
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);

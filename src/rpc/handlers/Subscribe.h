@@ -31,14 +31,12 @@ class SubscriptionManager;
 
 namespace rpc {
 template <typename SubscriptionManagerType>
-class BaseSubscribeHandler
-{
+class BaseSubscribeHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<SubscriptionManagerType> subscriptions_;
 
 public:
-    struct Output
-    {
+    struct Output {
         // response of stream "ledger"
         // TODO: use better type than json, this type will be used in the stream as well
         std::optional<boost::json::object> ledger;
@@ -51,16 +49,14 @@ public:
         std::optional<boost::json::array> bids;
     };
 
-    struct OrderBook
-    {
+    struct OrderBook {
         ripple::Book book;
         std::optional<std::string> taker;
         bool snapshot = false;
         bool both = false;
     };
 
-    struct Input
-    {
+    struct Input {
         std::optional<std::vector<std::string>> accounts;
         std::optional<std::vector<std::string>> streams;
         std::optional<std::vector<std::string>> accountsProposed;
@@ -71,7 +67,8 @@ public:
 
     BaseSubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<SubscriptionManagerType> const& subscriptions)
+        std::shared_ptr<SubscriptionManagerType> const& subscriptions
+    )
         : sharedPtrBackend_(sharedPtrBackend), subscriptions_(subscriptions)
     {
     }
@@ -84,8 +81,7 @@ public:
                 if (!value.is_array())
                     return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
 
-                for (auto const& book : value.as_array())
-                {
+                for (auto const& book : value.as_array()) {
                     if (!book.is_object())
                         return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}};
 
@@ -95,11 +91,11 @@ public:
                     if (book.as_object().contains("snapshot") && !book.as_object().at("snapshot").is_bool())
                         return Error{Status{RippledError::rpcINVALID_PARAMS, "snapshotNotBool"}};
 
-                    if (book.as_object().contains("taker"))
-                    {
+                    if (book.as_object().contains("taker")) {
                         if (auto err = meta::WithCustomError(
                                            validation::AccountValidator,
-                                           Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."})
+                                           Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."}
+                            )
                                            .verify(book.as_object(), "taker");
                             !err)
                             return err;
@@ -128,8 +124,7 @@ public:
     {
         auto output = Output{};
 
-        if (input.streams)
-        {
+        if (input.streams) {
             auto const ledger = subscribeToStreams(ctx.yield, *(input.streams), ctx.session);
             if (!ledger.empty())
                 output.ledger = ledger;
@@ -141,8 +136,7 @@ public:
         if (input.accountsProposed)
             subscribeToAccountsProposed(*(input.accountsProposed), ctx.session);
 
-        if (input.books)
-        {
+        if (input.books) {
             subscribeToBooks(*(input.books), ctx.session, ctx.yield, output);
         };
 
@@ -154,34 +148,23 @@ private:
     subscribeToStreams(
         boost::asio::yield_context yield,
         std::vector<std::string> const& streams,
-        std::shared_ptr<web::ConnectionBase> const& session) const
+        std::shared_ptr<web::ConnectionBase> const& session
+    ) const
     {
         auto response = boost::json::object{};
 
-        for (auto const& stream : streams)
-        {
-            if (stream == "ledger")
-            {
+        for (auto const& stream : streams) {
+            if (stream == "ledger") {
                 response = subscriptions_->subLedger(yield, session);
-            }
-            else if (stream == "transactions")
-            {
+            } else if (stream == "transactions") {
                 subscriptions_->subTransactions(session);
-            }
-            else if (stream == "transactions_proposed")
-            {
+            } else if (stream == "transactions_proposed") {
                 subscriptions_->subProposedTransactions(session);
-            }
-            else if (stream == "validations")
-            {
+            } else if (stream == "validations") {
                 subscriptions_->subValidation(session);
-            }
-            else if (stream == "manifests")
-            {
+            } else if (stream == "manifests") {
                 subscriptions_->subManifest(session);
-            }
-            else if (stream == "book_changes")
-            {
+            } else if (stream == "book_changes") {
                 subscriptions_->subBookChanges(session);
             }
         }
@@ -193,8 +176,7 @@ private:
     subscribeToAccounts(std::vector<std::string> const& accounts, std::shared_ptr<web::ConnectionBase> const& session)
         const
     {
-        for (auto const& account : accounts)
-        {
+        for (auto const& account : accounts) {
             auto const accountID = accountFromStringStrict(account);
             subscriptions_->subAccount(*accountID, session);
         }
@@ -203,10 +185,10 @@ private:
     void
     subscribeToAccountsProposed(
         std::vector<std::string> const& accounts,
-        std::shared_ptr<web::ConnectionBase> const& session) const
+        std::shared_ptr<web::ConnectionBase> const& session
+    ) const
     {
-        for (auto const& account : accounts)
-        {
+        for (auto const& account : accounts) {
             auto const accountID = accountFromStringStrict(account);
             subscriptions_->subProposedAccount(*accountID, session);
         }
@@ -217,16 +199,15 @@ private:
         std::vector<OrderBook> const& books,
         std::shared_ptr<web::ConnectionBase> const& session,
         boost::asio::yield_context yield,
-        Output& output) const
+        Output& output
+    ) const
     {
         static auto constexpr fetchLimit = 200;
 
         std::optional<data::LedgerRange> rng;
 
-        for (auto const& internalBook : books)
-        {
-            if (internalBook.snapshot)
-            {
+        for (auto const& internalBook : books) {
+            if (internalBook.snapshot) {
                 if (!rng)
                     rng = sharedPtrBackend_->fetchLedgerRange();
 
@@ -245,17 +226,14 @@ private:
                     std::copy(orderBook.begin(), orderBook.end(), std::back_inserter(snapshots));
                 };
 
-                if (internalBook.both)
-                {
+                if (internalBook.both) {
                     if (!output.bids)
                         output.bids = boost::json::array();
                     if (!output.asks)
                         output.asks = boost::json::array();
                     getOrderBook(internalBook.book, *(output.bids));
                     getOrderBook(ripple::reversed(internalBook.book), *(output.asks));
-                }
-                else
-                {
+                } else {
                     if (!output.offers)
                         output.offers = boost::json::array();
                     getOrderBook(internalBook.book, *(output.offers));
@@ -288,32 +266,28 @@ private:
         auto input = Input{};
         auto const& jsonObject = jv.as_object();
 
-        if (auto const& streams = jsonObject.find(JS(streams)); streams != jsonObject.end())
-        {
+        if (auto const& streams = jsonObject.find(JS(streams)); streams != jsonObject.end()) {
             input.streams = std::vector<std::string>();
             for (auto const& stream : streams->value().as_array())
                 input.streams->push_back(stream.as_string().c_str());
         }
 
-        if (auto const& accounts = jsonObject.find(JS(accounts)); accounts != jsonObject.end())
-        {
+        if (auto const& accounts = jsonObject.find(JS(accounts)); accounts != jsonObject.end()) {
             input.accounts = std::vector<std::string>();
             for (auto const& account : accounts->value().as_array())
                 input.accounts->push_back(account.as_string().c_str());
         }
 
-        if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed)); accountsProposed != jsonObject.end())
-        {
+        if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed));
+            accountsProposed != jsonObject.end()) {
             input.accountsProposed = std::vector<std::string>();
             for (auto const& account : accountsProposed->value().as_array())
                 input.accountsProposed->push_back(account.as_string().c_str());
         }
 
-        if (auto const& books = jsonObject.find(JS(books)); books != jsonObject.end())
-        {
+        if (auto const& books = jsonObject.find(JS(books)); books != jsonObject.end()) {
             input.books = std::vector<OrderBook>();
-            for (auto const& book : books->value().as_array())
-            {
+            for (auto const& book : books->value().as_array()) {
                 auto internalBook = OrderBook{};
                 auto const& bookObject = book.as_object();
 

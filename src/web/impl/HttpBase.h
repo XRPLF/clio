@@ -45,8 +45,7 @@ using tcp = boost::asio::ip::tcp;
  * @tparam HandlerType The handler class, will be called when a request is received.
  */
 template <template <class> class Derived, SomeServerHandler HandlerType>
-class HttpBase : public ConnectionBase
-{
+class HttpBase : public ConnectionBase {
     Derived<HandlerType>&
     derived()
     {
@@ -54,8 +53,7 @@ class HttpBase : public ConnectionBase
     }
 
     // TODO: this should be rewritten using http::message_generator instead
-    struct SendLambda
-    {
+    struct SendLambda {
         HttpBase& self_;
 
         explicit SendLambda(HttpBase& self) : self_(self)
@@ -80,8 +78,8 @@ class HttpBase : public ConnectionBase
             http::async_write(
                 self_.derived().stream(),
                 *sp,
-                boost::beast::bind_front_handler(
-                    &HttpBase::onWrite, self_.derived().shared_from_this(), sp->need_eof()));
+                boost::beast::bind_front_handler(&HttpBase::onWrite, self_.derived().shared_from_this(), sp->need_eof())
+            );
         }
     };
 
@@ -120,8 +118,7 @@ protected:
         if (ec == boost::asio::ssl::error::stream_truncated)
             return;
 
-        if (!ec_ && ec != boost::asio::error::operation_aborted)
-        {
+        if (!ec_ && ec != boost::asio::error::operation_aborted) {
             ec_ = ec;
             LOG(perfLog_.info()) << tag() << ": " << what << ": " << ec.message();
             boost::beast::get_lowest_layer(derived().stream()).socket().close(ec);
@@ -135,7 +132,8 @@ public:
         std::optional<std::string> adminPassword,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer buffer)
+        boost::beast::flat_buffer buffer
+    )
         : ConnectionBase(tagFactory, ip)
         , sender_(*this)
         , adminVerification_(make_AdminVerificationStrategy(std::move(adminPassword)))
@@ -170,7 +168,8 @@ public:
             derived().stream(),
             buffer_,
             req_,
-            boost::beast::bind_front_handler(&HttpBase::onRead, derived().shared_from_this()));
+            boost::beast::bind_front_handler(&HttpBase::onRead, derived().shared_from_this())
+        );
     }
 
     void
@@ -185,10 +184,8 @@ public:
         // Update isAdmin property of the connection
         ConnectionBase::isAdmin_ = adminVerification_->isAdmin(req_, this->clientIp);
 
-        if (boost::beast::websocket::is_upgrade(req_))
-        {
-            if (dosGuard_.get().isOk(this->clientIp))
-            {
+        if (boost::beast::websocket::is_upgrade(req_)) {
+            if (dosGuard_.get().isOk(this->clientIp)) {
                 // Disable the timeout. The websocket::stream uses its own timeout settings.
                 boost::beast::get_lowest_layer(derived().stream()).expires_never();
 
@@ -199,35 +196,32 @@ public:
             return sender_(httpResponse(http::status::too_many_requests, "text/html", "Too many requests"));
         }
 
-        if (req_.method() != http::verb::post)
-        {
+        if (req_.method() != http::verb::post) {
             return sender_(httpResponse(http::status::bad_request, "text/html", "Expected a POST request"));
         }
 
         // to avoid overwhelm work queue, the request limit check should be
         // before posting to queue the web socket creation will be guarded via
         // connection limit
-        if (!dosGuard_.get().request(clientIp))
-        {
+        if (!dosGuard_.get().request(clientIp)) {
             // TODO: this looks like it could be useful to count too in the future
             return sender_(httpResponse(
                 http::status::service_unavailable,
                 "text/plain",
-                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcSLOW_DOWN))));
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcSLOW_DOWN))
+            ));
         }
 
         LOG(log_.info()) << tag() << "Received request from ip = " << clientIp << " - posting to WorkQueue";
 
-        try
-        {
+        try {
             (*handler_)(req_.body(), derived().shared_from_this());
-        }
-        catch (std::exception const&)
-        {
+        } catch (std::exception const&) {
             return sender_(httpResponse(
                 http::status::internal_server_error,
                 "application/json",
-                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcINTERNAL))));
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcINTERNAL))
+            ));
         }
     }
 
@@ -239,16 +233,12 @@ public:
     void
     send(std::string&& msg, http::status status = http::status::ok) override
     {
-        if (!dosGuard_.get().add(clientIp, msg.size()))
-        {
+        if (!dosGuard_.get().add(clientIp, msg.size())) {
             auto jsonResponse = boost::json::parse(msg).as_object();
             jsonResponse["warning"] = "load";
-            if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array())
-            {
+            if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
                 jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
-            }
-            else
-            {
+            } else {
                 jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::warnRPC_RATE_LIMIT)};
             }
 

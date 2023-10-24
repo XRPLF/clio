@@ -24,9 +24,7 @@ namespace data {
 BackendCounters::PtrType
 BackendCounters::make()
 {
-    struct EnableMakeShared : public BackendCounters
-    {
-    };
+    struct EnableMakeShared : public BackendCounters {};
     return std::make_shared<EnableMakeShared>();
 }
 

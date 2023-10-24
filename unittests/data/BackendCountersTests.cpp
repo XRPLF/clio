@@ -25,8 +25,7 @@
 
 using namespace data;
 
-class BackendCountersTest : public ::testing::Test
-{
+class BackendCountersTest : public ::testing::Test {
 protected:
     static boost::json::object
     emptyReport()

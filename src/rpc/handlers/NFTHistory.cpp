@@ -32,16 +32,14 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto [minIndex, maxIndex] = *range;
 
-    if (input.ledgerIndexMin)
-    {
+    if (input.ledgerIndexMin) {
         if (range->maxSequence < input.ledgerIndexMin || range->minSequence > input.ledgerIndexMin)
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"}};
 
         minIndex = *input.ledgerIndexMin;
     }
 
-    if (input.ledgerIndexMax)
-    {
+    if (input.ledgerIndexMax) {
         if (range->maxSequence < input.ledgerIndexMax || range->minSequence > input.ledgerIndexMax)
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"}};
 
@@ -51,14 +49,14 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     if (minIndex > maxIndex)
         return Error{Status{RippledError::rpcLGR_IDXS_INVALID}};
 
-    if (input.ledgerHash || input.ledgerIndex)
-    {
+    if (input.ledgerHash || input.ledgerIndex) {
         // rippled does not have this check
         if (input.ledgerIndexMax || input.ledgerIndexMin)
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
 
         auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+        );
 
         if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
             return Error{*status};
@@ -69,18 +67,12 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     std::optional<data::TransactionsCursor> cursor;
 
     // if marker exists
-    if (input.marker)
-    {
+    if (input.marker) {
         cursor = {input.marker->ledger, input.marker->seq};
-    }
-    else
-    {
-        if (input.forward)
-        {
+    } else {
+        if (input.forward) {
             cursor = {minIndex, 0};
-        }
-        else
-        {
+        } else {
             cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
         }
     }
@@ -88,8 +80,9 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     auto const limit = input.limit.value_or(LIMIT_DEFAULT);
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
 
-    auto const [txnsAndCursor, timeDiff] = util::timed(
-        [&]() { return sharedPtrBackend_->fetchNFTTransactions(tokenID, limit, input.forward, cursor, ctx.yield); });
+    auto const [txnsAndCursor, timeDiff] = util::timed([&]() {
+        return sharedPtrBackend_->fetchNFTTransactions(tokenID, limit, input.forward, cursor, ctx.yield);
+    });
     LOG(log_.info()) << "db fetch took " << timeDiff << " milliseconds - num blobs = " << txnsAndCursor.txns.size();
 
     Output response;
@@ -98,33 +91,27 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
     if (retCursor)
         response.marker = {retCursor->ledgerSequence, retCursor->transactionIndex};
 
-    for (auto const& txnPlusMeta : blobs)
-    {
+    for (auto const& txnPlusMeta : blobs) {
         // over the range
         if ((txnPlusMeta.ledgerSequence < minIndex && !input.forward) ||
-            (txnPlusMeta.ledgerSequence > maxIndex && input.forward))
-        {
+            (txnPlusMeta.ledgerSequence > maxIndex && input.forward)) {
             response.marker = std::nullopt;
             break;
         }
-        if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward)
-        {
+        if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward) {
             LOG(log_.debug()) << "Skipping over transactions from incomplete ledger";
             continue;
         }
 
         boost::json::object obj;
 
-        if (!input.binary)
-        {
+        if (!input.binary) {
             auto [txn, meta] = toExpandedJson(txnPlusMeta);
             obj[JS(meta)] = std::move(meta);
             obj[JS(tx)] = std::move(txn);
             obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
             obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
-        }
-        else
-        {
+        } else {
             obj[JS(meta)] = ripple::strHex(txnPlusMeta.metadata);
             obj[JS(tx_blob)] = ripple::strHex(txnPlusMeta.transaction);
             obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
@@ -188,14 +175,10 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        }
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }
     }
@@ -209,8 +192,7 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
     if (jsonObject.contains(JS(limit)))
         input.limit = jsonObject.at(JS(limit)).as_int64();
 
-    if (jsonObject.contains(JS(marker)))
-    {
+    if (jsonObject.contains(JS(marker))) {
         input.marker = NFTHistoryHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
             jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};

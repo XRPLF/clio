@@ -23,8 +23,7 @@
 #include <string>
 #include <vector>
 
-class FakeBook
-{
+class FakeBook {
     std::string base_;
     std::string first_;
 
@@ -48,8 +47,7 @@ public:
     }
 };
 
-class FakeBookSuccessors
-{
+class FakeBookSuccessors {
     std::vector<FakeBook> books_;
 
 public:
@@ -66,8 +64,7 @@ public:
     }
 };
 
-class FakeLedgerObject
-{
+class FakeLedgerObject {
 public:
     enum ModType : int { MODIFIED, DELETED };
 
@@ -122,8 +119,7 @@ public:
     }
 };
 
-class FakeLedgerObjects
-{
+class FakeLedgerObjects {
     std::vector<FakeLedgerObject> objects;
 
 public:
@@ -134,8 +130,7 @@ public:
     }
 };
 
-class FakeTransactionsList
-{
+class FakeTransactionsList {
     std::size_t size_ = 0;
 
 public:
@@ -146,8 +141,7 @@ public:
     }
 };
 
-class FakeObjectsList
-{
+class FakeObjectsList {
     std::size_t size_ = 0;
 
 public:
@@ -158,8 +152,7 @@ public:
     }
 };
 
-struct FakeFetchResponse
-{
+struct FakeFetchResponse {
     uint32_t id;
     bool objectNeighborsIncluded;
     FakeLedgerObjects ledgerObjects;

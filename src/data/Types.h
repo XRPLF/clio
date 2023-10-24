@@ -34,13 +34,12 @@ using Blob = std::vector<unsigned char>;
 /**
  * @brief Represents an object in the ledger.
  */
-struct LedgerObject
-{
+struct LedgerObject {
     ripple::uint256 key;
     Blob blob;
 
     bool
-    operator==(const LedgerObject& other) const
+    operator==(LedgerObject const& other) const
     {
         return key == other.key && blob == other.blob;
     }
@@ -49,8 +48,7 @@ struct LedgerObject
 /**
  * @brief Represents a page of LedgerObjects.
  */
-struct LedgerPage
-{
+struct LedgerPage {
     std::vector<LedgerObject> objects;
     std::optional<ripple::uint256> cursor;
 };
@@ -58,8 +56,7 @@ struct LedgerPage
 /**
  * @brief Represents a page of book offer objects.
  */
-struct BookOffersPage
-{
+struct BookOffersPage {
     std::vector<LedgerObject> offers;
     std::optional<ripple::uint256> cursor;
 };
@@ -67,8 +64,7 @@ struct BookOffersPage
 /**
  * @brief Represents a transaction and its metadata bundled together.
  */
-struct TransactionAndMetadata
-{
+struct TransactionAndMetadata {
     Blob transaction;
     Blob metadata;
     std::uint32_t ledgerSequence = 0;
@@ -89,7 +85,7 @@ struct TransactionAndMetadata
     }
 
     bool
-    operator==(const TransactionAndMetadata& other) const
+    operator==(TransactionAndMetadata const& other) const
     {
         return transaction == other.transaction && metadata == other.metadata &&
             ledgerSequence == other.ledgerSequence && date == other.date;
@@ -99,8 +95,7 @@ struct TransactionAndMetadata
 /**
  * @brief Represents a cursor into the transactions table.
  */
-struct TransactionsCursor
-{
+struct TransactionsCursor {
     std::uint32_t ledgerSequence = 0;
     std::uint32_t transactionIndex = 0;
 
@@ -128,8 +123,7 @@ struct TransactionsCursor
 /**
  * @brief Represests a bundle of transactions with metadata and a cursor to the next page.
  */
-struct TransactionsAndCursor
-{
+struct TransactionsAndCursor {
     std::vector<TransactionAndMetadata> txns;
     std::optional<TransactionsCursor> cursor;
 };
@@ -137,8 +131,7 @@ struct TransactionsAndCursor
 /**
  * @brief Represents a NFToken.
  */
-struct NFT
-{
+struct NFT {
     ripple::uint256 tokenID;
     std::uint32_t ledgerSequence{};
     ripple::AccountID owner;
@@ -178,8 +171,7 @@ struct NFTsAndCursor
 /**
  * @brief Stores a range of sequences as a min and max pair.
  */
-struct LedgerRange
-{
+struct LedgerRange {
     std::uint32_t minSequence = 0;
     std::uint32_t maxSequence = 0;
 };

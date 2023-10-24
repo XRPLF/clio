@@ -53,8 +53,7 @@ namespace util {
 std::unique_ptr<BaseTagDecorator>
 TagDecoratorFactory::make() const
 {
-    switch (type_)
-    {
+    switch (type_) {
         case Type::UINT:
             return std::make_unique<TagDecorator<detail::UIntTagGenerator>>(parent_);
         case Type::UUID:

@@ -62,8 +62,7 @@ using SourceLocationType = std::experimental::source_location;
 #else
 // A workaround for AppleClang that is lacking source_location atm.
 // TODO: remove this workaround when all compilers catch up to c++20
-class SourceLocation
-{
+class SourceLocation {
     std::string_view file_;
     std::size_t line_;
 
@@ -94,11 +93,9 @@ using SourceLocationType = SourceLocation;
  * Note: Currently this introduces potential shadowing (unlikely).
  */
 #ifndef COVERAGE_ENABLED
-#define LOG(x)                                 \
-    if (auto clio_pump__ = x; not clio_pump__) \
-    {                                          \
-    }                                          \
-    else                                       \
+#define LOG(x)                                   \
+    if (auto clio_pump__ = x; not clio_pump__) { \
+    } else                                       \
         clio_pump__
 #else
 #define LOG(x) x
@@ -137,8 +134,7 @@ operator<<(std::ostream& stream, Severity sev);
  * otherwise. See @ref LogService::init() for setup of the logging core and
  * severity levels for each channel.
  */
-class Logger final
-{
+class Logger final {
     using LoggerType = boost::log::sources::severity_channel_logger_mt<Severity, std::string>;
     mutable LoggerType logger_;
 
@@ -147,8 +143,7 @@ class Logger final
     /**
      * @brief Helper that pumps data into a log record via `operator<<`.
      */
-    class Pump final
-    {
+    class Pump final {
         using PumpOptType = std::optional<boost::log::aux::record_pump<LoggerType>>;
 
         boost::log::record rec_;
@@ -159,8 +154,7 @@ class Logger final
         Pump(LoggerType& logger, Severity sev, SourceLocationType const& loc)
             : rec_{logger.open_record(boost::log::keywords::severity = sev)}
         {
-            if (rec_)
-            {
+            if (rec_) {
                 pump_.emplace(boost::log::aux::make_record_pump(logger, rec_));
                 pump_->stream() << boost::log::add_value("SourceLocation", pretty_path(loc));
             }
@@ -264,8 +258,7 @@ public:
  * Used to initialize and setup the logging core as well as a globally available
  * entrypoint for logging into the `General` channel as well as raising alerts.
  */
-class LogService
-{
+class LogService {
     static Logger general_log_; /*< Global logger for General channel */
     static Logger alert_log_;   /*< Global logger for Alerts channel */
 

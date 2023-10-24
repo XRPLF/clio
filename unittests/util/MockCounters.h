@@ -24,8 +24,7 @@
 
 #include <chrono>
 
-struct MockCounters
-{
+struct MockCounters {
     MOCK_METHOD(void, rpcFailed, (std::string const&), ());
     MOCK_METHOD(void, rpcErrored, (std::string const&), ());
     MOCK_METHOD(void, rpcComplete, (std::string const&, std::chrono::microseconds const&), ());

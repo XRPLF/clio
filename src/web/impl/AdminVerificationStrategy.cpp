@@ -36,8 +36,7 @@ bool
 PasswordAdminVerificationStrategy::isAdmin(RequestType const& request, std::string_view) const
 {
     auto it = request.find(boost::beast::http::field::authorization);
-    if (it == request.end())
-    {
+    if (it == request.end()) {
         // No Authorization header
         return false;
     }
@@ -48,8 +47,7 @@ PasswordAdminVerificationStrategy::isAdmin(RequestType const& request, std::stri
 std::unique_ptr<AdminVerificationStrategy>
 make_AdminVerificationStrategy(std::optional<std::string> password)
 {
-    if (password.has_value())
-    {
+    if (password.has_value()) {
         return std::make_unique<PasswordAdminVerificationStrategy>(std::move(*password));
     }
     return std::make_unique<IPAdminVerificationStrategy>();

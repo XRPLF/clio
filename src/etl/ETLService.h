@@ -66,8 +66,7 @@ namespace etl {
  * the others will fall back to monitoring/publishing. In this sense, this class dynamically transitions from monitoring
  * to writing and from writing to monitoring, based on the activity of other processes running on different machines.
  */
-class ETLService
-{
+class ETLService {
     // TODO: make these template parameters in ETLService
     using SubscriptionManagerType = feed::SubscriptionManager;
     using LoadBalancerType = LoadBalancer;
@@ -122,7 +121,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManagerType> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
-        std::shared_ptr<NetworkValidatedLedgersType> ledgers);
+        std::shared_ptr<NetworkValidatedLedgersType> ledgers
+    );
 
     /**
      * @brief A factory function to spawn new ETLService instances.
@@ -143,7 +143,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManagerType> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
-        std::shared_ptr<NetworkValidatedLedgersType> ledgers)
+        std::shared_ptr<NetworkValidatedLedgersType> ledgers
+    )
     {
         auto etl = std::make_shared<ETLService>(config, ioc, backend, subscriptions, balancer, ledgers);
         etl->run();
@@ -207,8 +208,9 @@ public:
 
     /**
      * @brief Get the etl nodes' state
+     * @return the etl nodes' state, nullopt if etl nodes are not connected
      */
-    etl::ETLState
+    std::optional<etl::ETLState>
     getETLState() const noexcept
     {
         return loadBalancer_->getETLState();

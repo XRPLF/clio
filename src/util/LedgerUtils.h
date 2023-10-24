@@ -56,7 +56,8 @@ toString(ripple::LedgerHeader const& info)
         ripple::strHex(info.hash),
         strHex(info.txHash),
         ripple::strHex(info.accountHash),
-        strHex(info.parentHash));
+        strHex(info.parentHash)
+    );
 }
 
 }  // namespace util

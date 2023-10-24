@@ -47,8 +47,7 @@ class Counters;
 namespace rpc {
 
 template <typename SubscriptionManagerType, typename LoadBalancerType, typename ETLServiceType, typename CountersType>
-class BaseServerInfoHandler
-{
+class BaseServerInfoHandler {
     static constexpr auto BACKEND_COUNTERS_KEY = "backend_counters";
 
     std::shared_ptr<BackendInterface> backend_;
@@ -58,29 +57,25 @@ class BaseServerInfoHandler
     std::reference_wrapper<CountersType const> counters_;
 
 public:
-    struct Input
-    {
+    struct Input {
         bool backendCounters = false;
     };
 
-    struct AdminSection
-    {
+    struct AdminSection {
         boost::json::object counters = {};
         std::optional<boost::json::object> backendCounters = {};
         boost::json::object subscriptions = {};
         boost::json::object etl = {};
     };
 
-    struct ValidatedLedgerSection
-    {
+    struct ValidatedLedgerSection {
         uint32_t age = 0;
         std::string hash = {};
         ripple::LedgerIndex seq = {};
         std::optional<ripple::Fees> fees = std::nullopt;
     };
 
-    struct CacheSection
-    {
+    struct CacheSection {
         std::size_t size = 0;
         bool isFull = false;
         ripple::LedgerIndex latestLedgerSeq = {};
@@ -88,8 +83,7 @@ public:
         float successorHitRate = 1.0;
     };
 
-    struct InfoSection
-    {
+    struct InfoSection {
         std::optional<AdminSection> adminSection = std::nullopt;
         std::string completeLedgers = {};
         uint32_t loadFactor = 1u;
@@ -103,8 +97,7 @@ public:
         bool isAmendmentBlocked = false;
     };
 
-    struct Output
-    {
+    struct Output {
         InfoSection info = {};
 
         // validated should be sent via framework
@@ -118,7 +111,8 @@ public:
         std::shared_ptr<SubscriptionManagerType> const& subscriptions,
         std::shared_ptr<LoadBalancerType> const& balancer,
         std::shared_ptr<ETLServiceType const> const& etl,
-        CountersType const& counters)
+        CountersType const& counters
+    )
         : backend_(backend)
         , subscriptions_(subscriptions)
         , balancer_(balancer)
@@ -157,8 +151,7 @@ public:
 
         output.info.completeLedgers = fmt::format("{}-{}", range->minSequence, range->maxSequence);
 
-        if (ctx.isAdmin)
-        {
+        if (ctx.isAdmin) {
             output.info.adminSection = {
                 .counters = counters_.get().report(),
                 .backendCounters = input.backendCounters ? std::make_optional(backend_->stats()) : std::nullopt,
@@ -169,11 +162,9 @@ public:
         auto const serverInfoRippled =
             balancer_->forwardToRippled({{"command", "server_info"}}, ctx.clientIp, ctx.yield);
 
-        if (serverInfoRippled && !serverInfoRippled->contains(JS(error)))
-        {
+        if (serverInfoRippled && !serverInfoRippled->contains(JS(error))) {
             if (serverInfoRippled->contains(JS(result)) &&
-                serverInfoRippled->at(JS(result)).as_object().contains(JS(info)))
-            {
+                serverInfoRippled->at(JS(result)).as_object().contains(JS(info))) {
                 output.info.rippledInfo = serverInfoRippled->at(JS(result)).as_object().at(JS(info)).as_object();
             }
         }
@@ -225,8 +216,7 @@ private:
         if (info.isAmendmentBlocked)
             jv.as_object()[JS(amendment_blocked)] = true;
 
-        if (info.rippledInfo)
-        {
+        if (info.rippledInfo) {
             auto const& rippledInfo = info.rippledInfo.value();
 
             if (rippledInfo.contains(JS(load_factor)))
@@ -239,13 +229,11 @@ private:
                 jv.as_object()[JS(network_id)] = rippledInfo.at(JS(network_id));
         }
 
-        if (info.adminSection)
-        {
+        if (info.adminSection) {
             jv.as_object()["etl"] = info.adminSection->etl;
             jv.as_object()[JS(counters)] = info.adminSection->counters;
             jv.as_object()[JS(counters)].as_object()["subscriptions"] = info.adminSection->subscriptions;
-            if (info.adminSection->backendCounters.has_value())
-            {
+            if (info.adminSection->backendCounters.has_value()) {
                 jv.as_object()[BACKEND_COUNTERS_KEY] = *info.adminSection->backendCounters;
             }
         }

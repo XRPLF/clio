@@ -17,25 +17,10 @@
 */
 //==============================================================================
 
-#include <data/BackendInterface.h>
 #include <etl/ETLState.h>
-#include <etl/Source.h>
 #include <rpc/JS.h>
 
 namespace etl {
-
-ETLState
-ETLState::fetchETLStateFromSource(Source const& source) noexcept
-{
-    auto const serverInfoRippled = data::synchronous([&source](auto yield) {
-        return source.forwardToRippled({{"command", "server_info"}}, std::nullopt, yield);
-    });
-
-    if (serverInfoRippled)
-        return boost::json::value_to<ETLState>(boost::json::value(*serverInfoRippled));
-
-    return ETLState{};
-}
 
 ETLState
 tag_invoke(boost::json::value_to_tag<ETLState>, boost::json::value const& jv)
@@ -43,10 +28,8 @@ tag_invoke(boost::json::value_to_tag<ETLState>, boost::json::value const& jv)
     ETLState state;
     auto const& jsonObject = jv.as_object();
 
-    if (!jsonObject.contains(JS(error)))
-    {
-        if (jsonObject.contains(JS(result)) && jsonObject.at(JS(result)).as_object().contains(JS(info)))
-        {
+    if (!jsonObject.contains(JS(error))) {
+        if (jsonObject.contains(JS(result)) && jsonObject.at(JS(result)).as_object().contains(JS(info))) {
             auto const rippledInfo = jsonObject.at(JS(result)).as_object().at(JS(info)).as_object();
             if (rippledInfo.contains(JS(network_id)))
                 state.networkID.emplace(boost::json::value_to<int64_t>(rippledInfo.at(JS(network_id))));

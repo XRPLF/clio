@@ -22,7 +22,7 @@ class Clio(ConanFile):
     requires = [
         'boost/1.82.0',
         'cassandra-cpp-driver/2.17.0',
-        'fmt/10.0.0',
+        'fmt/10.1.1',
         'grpc/1.50.1',
         'openssl/1.1.1u',
         'xrpl/2.0.0-b2',

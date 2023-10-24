@@ -36,8 +36,7 @@ constexpr auto JSONConfig = R"JSON({
     })JSON";
 }  // namespace
 
-class RPCWorkQueueTest : public NoLoggerFixture
-{
+class RPCWorkQueueTest : public NoLoggerFixture {
 protected:
     Config cfg = Config{boost::json::parse(JSONConfig)};
 };
@@ -52,15 +51,15 @@ TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
     std::binary_semaphore sem{0};
     std::mutex mtx;
 
-    for (auto i = 0u; i < TOTAL; ++i)
-    {
+    for (auto i = 0u; i < TOTAL; ++i) {
         queue.postCoro(
             [&executeCount, &sem, &mtx](auto /* yield */) {
                 std::lock_guard const lk(mtx);
                 if (++executeCount; executeCount == TOTAL)
                     sem.release();  // 1) note we are still in user function
             },
-            true);
+            true
+        );
     }
 
     sem.acquire();
@@ -88,8 +87,7 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
     std::mutex mtx;
     std::condition_variable cv;
 
-    for (auto i = 0u; i < TOTAL; ++i)
-    {
+    for (auto i = 0u; i < TOTAL; ++i) {
         auto res = queue.postCoro(
             [&](auto /* yield */) {
                 std::unique_lock lk{mtx};
@@ -98,18 +96,16 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
                 if (--expectedCount; expectedCount == 0)
                     sem.release();
             },
-            false);
+            false
+        );
 
-        if (i == TOTAL - 1)
-        {
+        if (i == TOTAL - 1) {
             EXPECT_FALSE(res);
 
             std::unique_lock const lk{mtx};
             unblocked = true;
             cv.notify_all();
-        }
-        else
-        {
+        } else {
             EXPECT_TRUE(res);
         }
     }

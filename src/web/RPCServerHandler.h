@@ -37,8 +37,7 @@ namespace web {
  * Note: see @ref web::SomeServerHandler concept
  */
 template <class RPCEngineType, class ETLType>
-class RPCServerHandler
-{
+class RPCServerHandler {
     std::shared_ptr<BackendInterface const> const backend_;
     std::shared_ptr<RPCEngineType> const rpcEngine_;
     std::shared_ptr<ETLType const> const etl_;
@@ -65,7 +64,8 @@ public:
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
         std::shared_ptr<ETLType const> const& etl,
-        std::shared_ptr<feed::SubscriptionManager> const& subscriptions)
+        std::shared_ptr<feed::SubscriptionManager> const& subscriptions
+    )
         : backend_(backend)
         , rpcEngine_(rpcEngine)
         , etl_(etl)
@@ -84,8 +84,7 @@ public:
     void
     operator()(std::string const& request, std::shared_ptr<web::ConnectionBase> const& connection)
     {
-        try
-        {
+        try {
             auto req = boost::json::parse(request).as_object();
             LOG(perfLog_.debug()) << connection->tag() << "Adding to work queue";
 
@@ -96,26 +95,20 @@ public:
                     [this, request = std::move(req), connection](boost::asio::yield_context yield) mutable {
                         handleRequest(yield, std::move(request), connection);
                     },
-                    connection->clientIp))
-            {
+                    connection->clientIp
+                )) {
                 rpcEngine_->notifyTooBusy();
                 web::detail::ErrorHelper(connection).sendTooBusyError();
             }
-        }
-        catch (boost::system::system_error const& ex)
-        {
+        } catch (boost::system::system_error const& ex) {
             // system_error thrown when json parsing failed
             rpcEngine_->notifyBadSyntax();
             web::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
-        }
-        catch (std::invalid_argument const& ex)
-        {
+        } catch (std::invalid_argument const& ex) {
             // thrown when json parses something that is not an object at top level
             rpcEngine_->notifyBadSyntax();
             web::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
-        }
-        catch (std::exception const& ex)
-        {
+        } catch (std::exception const& ex) {
             LOG(perfLog_.error()) << connection->tag() << "Caught exception: " << ex.what();
             rpcEngine_->notifyInternalError();
             throw;
@@ -142,25 +135,23 @@ private:
     handleRequest(
         boost::asio::yield_context yield,
         boost::json::object&& request,
-        std::shared_ptr<web::ConnectionBase> const& connection)
+        std::shared_ptr<web::ConnectionBase> const& connection
+    )
     {
         LOG(log_.info()) << connection->tag() << (connection->upgraded ? "ws" : "http")
                          << " received request from work queue: " << util::removeSecret(request)
                          << " ip = " << connection->clientIp;
 
-        try
-        {
+        try {
             auto const range = backend_->fetchLedgerRange();
-            if (!range)
-            {
+            if (!range) {
                 // for error that happened before the handler, we don't attach any warnings
                 rpcEngine_->notifyNotReady();
                 return web::detail::ErrorHelper(connection, request).sendNotReadyError();
             }
 
             auto const context = [&] {
-                if (connection->upgraded)
-                {
+                if (connection->upgraded) {
                     return rpc::make_WsContext(
                         yield,
                         request,
@@ -168,7 +159,8 @@ private:
                         tagFactory_.with(connection->tag()),
                         *range,
                         connection->clientIp,
-                        std::cref(apiVersionParser_));
+                        std::cref(apiVersionParser_)
+                    );
                 }
                 return rpc::make_HttpContext(
                     yield,
@@ -177,11 +169,11 @@ private:
                     *range,
                     connection->clientIp,
                     std::cref(apiVersionParser_),
-                    connection->isAdmin());
+                    connection->isAdmin()
+                );
             }();
 
-            if (!context)
-            {
+            if (!context) {
                 auto const err = context.error();
                 LOG(perfLog_.warn()) << connection->tag() << "Could not create Web context: " << err;
                 LOG(log_.warn()) << connection->tag() << "Could not create Web context: " << err;
@@ -198,17 +190,14 @@ private:
             rpc::logDuration(*context, us);
 
             boost::json::object response;
-            if (auto const status = std::get_if<rpc::Status>(&result))
-            {
+            if (auto const status = std::get_if<rpc::Status>(&result)) {
                 // note: error statuses are counted/notified in buildResponse itself
                 response = web::detail::ErrorHelper(connection, request).composeError(*status);
                 auto const responseStr = boost::json::serialize(response);
 
                 LOG(perfLog_.debug()) << context->tag() << "Encountered error: " << responseStr;
                 LOG(log_.debug()) << context->tag() << "Encountered error: " << responseStr;
-            }
-            else
-            {
+            } else {
                 // This can still technically be an error. Clio counts forwarded requests as successful.
                 rpcEngine_->notifyComplete(context->method, us);
 
@@ -217,21 +206,18 @@ private:
                     json.contains("forwarded") && json.at("forwarded").is_bool() && json.at("forwarded").as_bool();
 
                 // if the result is forwarded - just use it as is
-                // if forwarded request has error, for http, error should be in "result"; for ws, error should be at top
-                if (isForwarded && (json.contains("result") || connection->upgraded))
-                {
+                // if forwarded request has error, for http, error should be in "result"; for ws, error should
+                // be at top
+                if (isForwarded && (json.contains("result") || connection->upgraded)) {
                     for (auto const& [k, v] : json)
                         response.insert_or_assign(k, v);
-                }
-                else
-                {
+                } else {
                     response["result"] = json;
                 }
 
                 // for ws there is an additional field "status" in the response,
                 // otherwise the "status" is in the "result" field
-                if (connection->upgraded)
-                {
+                if (connection->upgraded) {
                     auto const id = request.contains("id") ? request.at("id") : nullptr;
 
                     if (not id.is_null())
@@ -241,9 +227,7 @@ private:
                         response["status"] = "success";
 
                     response["type"] = "response";
-                }
-                else
-                {
+                } else {
                     if (response.contains("result") && !response["result"].as_object().contains("error"))
                         response["result"].as_object()["status"] = "success";
                 }
@@ -257,9 +241,7 @@ private:
 
             response["warnings"] = warnings;
             connection->send(boost::json::serialize(response));
-        }
-        catch (std::exception const& ex)
-        {
+        } catch (std::exception const& ex) {
             // note: while we are catching this in buildResponse too, this is here to make sure
             // that any other code that may throw is outside of buildResponse is also worked around.
             LOG(perfLog_.error()) << connection->tag() << "Caught exception: " << ex.what();

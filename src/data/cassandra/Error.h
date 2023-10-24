@@ -29,8 +29,7 @@ namespace data::cassandra {
 /**
  * @brief A simple container for both error message and error code.
  */
-class CassandraError
-{
+class CassandraError {
     std::string message_;
     uint32_t code_{};
 
@@ -42,14 +41,16 @@ public:
 
     template <typename T>
     friend std::string
-    operator+(T const& lhs, CassandraError const& rhs) requires std::is_convertible_v<T, std::string>
+    operator+(T const& lhs, CassandraError const& rhs)
+        requires std::is_convertible_v<T, std::string>
     {
         return lhs + rhs.message();
     }
 
     template <typename T>
     friend bool
-    operator==(T const& lhs, CassandraError const& rhs) requires std::is_convertible_v<T, std::string>
+    operator==(T const& lhs, CassandraError const& rhs)
+        requires std::is_convertible_v<T, std::string>
     {
         return lhs == rhs.message();
     }
