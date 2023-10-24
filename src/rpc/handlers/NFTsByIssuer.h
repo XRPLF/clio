@@ -21,13 +21,12 @@
 
 #include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
-#include <rpc/common/Modifiers.h>
 
 namespace rpc {
-class NFTsByIssuerHandler
-{
+class NFTsByIssuerHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
@@ -35,8 +34,7 @@ public:
     static auto constexpr LIMIT_MAX = 100;
     static auto constexpr LIMIT_DEFAULT = 50;
 
-    struct Output
-    {
+    struct Output {
         boost::json::array nfts;
         uint32_t ledgerIndex;
         std::string issuer;
@@ -46,8 +44,7 @@ public:
         std::optional<std::string> marker;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string issuer;
         std::optional<uint32_t> nftTaxon;
         std::optional<std::string> ledgerHash;

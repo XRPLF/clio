@@ -309,7 +309,8 @@ public:
         std::uint32_t const ledgerSequence,
         std::uint32_t const limit,
         std::optional<ripple::uint256> const& cursorIn,
-        boost::asio::yield_context yield) const = 0;
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief Fetches a specific ledger object.

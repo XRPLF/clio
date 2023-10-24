@@ -29,8 +29,7 @@
 
 namespace data::cassandra::detail {
 
-class Collection : public ManagedObject<CassCollection>
-{
+class Collection : public ManagedObject<CassCollection> {
     static constexpr auto deleter = [](CassCollection* ptr) { cass_collection_free(ptr); };
 
     template <typename>
@@ -81,8 +80,9 @@ public:
     append(ripple::uint256 const& value) const
     {
         auto const rc = cass_collection_append_bytes(
-            *this, static_cast<cass_byte_t const*>(static_cast<const unsigned char*>(value.data())), value.size());
+            *this, static_cast<cass_byte_t const*>(static_cast<unsigned char const*>(value.data())), value.size()
+        );
         throwErrorIfNeeded(rc, "Bind ripple::uint256");
     }
 };
-}  // namespace Backend::Cassandra::detail
+}  // namespace data::cassandra::detail

@@ -31,7 +31,8 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
@@ -55,8 +56,7 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
     output.ledgerIndex = lgrInfo.seq;
     output.nftTaxon = input.nftTaxon;
 
-    for (auto const& nft : dbResponse.nfts)
-    {
+    for (auto const& nft : dbResponse.nfts) {
         boost::json::object nftJson;
 
         nftJson[JS(nft_id)] = strHex(nft.tokenID);
@@ -109,8 +109,7 @@ tag_invoke(boost::json::value_to_tag<NFTsByIssuerHandler::Input>, boost::json::v
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
+    if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string())
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")

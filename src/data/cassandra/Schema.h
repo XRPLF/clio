@@ -602,7 +602,8 @@ public:
               ORDER BY sequence DESC
    PER PARTITION LIMIT 1
                 )",
-                qualifiedTableName(settingsProvider_.get(), "nf_tokens")));
+                qualifiedTableName(settingsProvider_.get(), "nf_tokens")
+            ));
         }();
 
         PreparedStatement selectNFTURI = [this]() {
@@ -629,7 +630,8 @@ public:
               ORDER BY sequence DESC
    PER PARTITION LIMIT 1
                 )",
-                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")));
+                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
+            ));
         }();
 
         PreparedStatement selectNFTTx = [this]() {
@@ -670,7 +672,8 @@ public:
               ORDER BY taxon ASC, token_id ASC
                  LIMIT ?
                 )",
-                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")));
+                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+            ));
         }();
 
         PreparedStatement selectNFTIDsByIssuerTaxon = [this]() {
@@ -684,7 +687,8 @@ public:
               ORDER BY taxon ASC, token_id ASC
                  LIMIT ?
                 )",
-                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")));
+                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+            ));
         }();
 
         PreparedStatement selectLedgerByHash = [this]() {
