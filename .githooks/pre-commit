@@ -5,15 +5,15 @@ exec 1>&2
 # paths to check and re-format
 sources="src unittests"
 formatter="clang-format -i"
-version=$($formatter --version | awk -F'[[:space:]]' '{print $4}')
+version=$($formatter --version | awk -F'[[:space:]]' '{print $NF}')
 
 if [[ "16.0.0" > "$version" ]]; then
     cat <<\EOF
 
                                     ERROR
 -----------------------------------------------------------------------------
-            A minimum of version 16 of `clang-format` is required. 
-            Please fix paths and run again. 
+            A minimum of version 16 of `clang-format` is required.
+            Please fix paths and run again.
 -----------------------------------------------------------------------------
 
 EOF

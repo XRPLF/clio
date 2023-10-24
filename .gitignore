@@ -5,5 +5,5 @@
 .vscode
 .python-version
 CMakeUserPresets.json
-config.json
 src/main/impl/Build.cpp
+.env

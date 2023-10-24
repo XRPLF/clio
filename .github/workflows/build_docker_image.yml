@@ -1,0 +1,90 @@
+name: Deploy docker images
+on:
+  push:
+       branches: [master, develop, release]
+  workflow_dispatch:
+
+jobs:
+  deploy_image:
+    runs-on: [self-hosted]
+    name: Publish docker images
+    env:
+      # The repo on Docker Hub the image will get pushed to. GHCR will be set by repo owner
+      DOCKERHUB_REPO: rippleci
+      # The branch that will be used to tag an image with "latest"
+      LATEST_BRANCH: develop
+      IMAGE_NAME: ${{ github.event.repository.name }} # repo name in ghcr should  probably be the same
+
+    steps:
+      - name: Set tags
+        id: tag_name
+        run: |
+          SHA=${GITHUB_SHA::7}
+          echo "SHA_SHORT=${SHA}" >> $GITHUB_OUTPUT
+
+          BASE_IMAGE_NAME=${IMAGE_NAME}:${SHA}
+          echo "BASE_IMAGE_NAME=${BASE_IMAGE_NAME}" >> $GITHUB_OUTPUT
+
+          BRANCH=${GITHUB_REF#refs/heads/}
+          DH_TAGS="${SHA} ${BRANCH}"
+          GH_TAGS="${SHA} ${BRANCH}"
+
+          DH_IMAGE_NAME=${DOCKERHUB_REPO}/${IMAGE_NAME}
+          echo "DH_IMAGE_NAME: ${DH_IMAGE_NAME}"
+          echo "DH_IMAGE_NAME=${DH_IMAGE_NAME}" >> $GITHUB_OUTPUT
+
+          GH_IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}"
+          echo "GH_IMAGE_NAME: ${GH_IMAGE_NAME}"
+          echo "GH_IMAGE_NAME=${GH_IMAGE_NAME}" >> $GITHUB_OUTPUT
+
+          if [[ $BRANCH == $LATEST_BRANCH ]]; then
+            echo "Tagging $BRANCH as 'latest'"
+            DH_TAGS+=" latest"
+            GH_TAGS+=" latest"
+          fi
+
+          echo "DH_TAGS=${DH_TAGS}" >> $GITHUB_OUTPUT
+          echo "GH_TAGS=${GH_TAGS}" >> $GITHUB_OUTPUT
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build image
+        run: |
+          IMAGE=${{ steps.tag_name.outputs.BASE_IMAGE_NAME }}
+          git config --global --add safe.directory $PWD
+          ./docker/build_image.sh ${IMAGE}
+          docker run --rm ${IMAGE} /test.sh
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PW }}
+
+      - name: Push to Docker Hub
+        continue-on-error: true
+        run: |
+          for tag in ${{ steps.tag_name.outputs.DH_TAGS }}; do
+            echo "Tagging ${{ steps.tag_name.outputs.BASE_IMAGE_NAME}} to ${{ steps.tag_name.outputs.DH_IMAGE_NAME }}:${tag} for Docker Hub"
+            docker tag ${{ steps.tag_name.outputs.BASE_IMAGE_NAME}} ${{ steps.tag_name.outputs.DH_IMAGE_NAME }}:${tag}
+            echo "Pushing ${{ steps.tag_name.outputs.DH_IMAGE_NAME}}:${tag} to Docker Hub"
+            docker push ${{ steps.tag_name.outputs.DH_IMAGE_NAME}}:${tag}
+          done
+
+      - name: Login to Git Hub Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push to Git Hub Container registry
+        continue-on-error: true
+        run: |
+          for tag in ${{ steps.tag_name.outputs.GH_TAGS }}; do
+            echo "Tagging ${{ steps.tag_name.outputs.BASE_IMAGE_NAME}} to ${{ steps.tag_name.outputs.GH_IMAGE_NAME }}:${tag} for GHCR"
+            docker tag ${{ steps.tag_name.outputs.BASE_IMAGE_NAME}} ${{ steps.tag_name.outputs.GH_IMAGE_NAME }}:${tag}
+            echo "Pushing ${{ steps.tag_name.outputs.GH_IMAGE_NAME }}:${tag} to GHCR"
+            docker push ${{ steps.tag_name.outputs.GH_IMAGE_NAME }}:${tag}
+          done
