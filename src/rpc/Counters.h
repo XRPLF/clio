@@ -42,7 +42,7 @@ class Counters
      */
     struct MethodInfo
     {
-        MethodInfo(std::string method);
+        MethodInfo(std::string const& method);
 
         CounterType& started;
         CounterType& finished;

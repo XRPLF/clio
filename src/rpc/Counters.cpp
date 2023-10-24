@@ -25,34 +25,34 @@ namespace rpc {
 
 using util::prometheus::Labels;
 
-Counters::MethodInfo::MethodInfo(std::string method)
+Counters::MethodInfo::MethodInfo(std::string const& method)
     : started(PROMETHEUS().counterInt(
-          fmt::format("rpc_{}_method_total_number", method),
-          Labels{{{"status", "started"}}},
+          "rpc_method_total_number",
+          Labels{{{"status", "started"}, {"method", method}}},
           fmt::format("Total number of started calls to the method {}", method)))
     , finished(PROMETHEUS().counterInt(
-          fmt::format("rpc_{}_method_total_number", method),
-          Labels{{{"status", "finished"}}},
+          "rpc_method_total_number",
+          Labels{{{"status", "finished"}, {"method", method}}},
           fmt::format("Total number of finished calls to the method {}", method)))
     , failed(PROMETHEUS().counterInt(
-          fmt::format("rpc_{}_method_total_number", method),
-          Labels{{{"status", "failed"}}},
+          "rpc_method_total_number",
+          Labels{{{"status", "failed"}, {"method", method}}},
           fmt::format("Total number of failed calls to the method {}", method)))
     , errored(PROMETHEUS().counterInt(
-          fmt::format("rpc_{}_method_total_number", method),
-          Labels{{{"status", "errored"}}},
+          "rpc_method_total_number",
+          Labels{{{"status", "errored"}, {"method", method}}},
           fmt::format("Total number of errored calls to the method {}", method)))
     , forwarded(PROMETHEUS().counterInt(
-          fmt::format("rpc_{}_method_total_number", method),
-          Labels{{{"status", "forwarded"}}},
+          "rpc_method_total_number",
+          Labels{{{"status", "forwarded"}, {"method", method}}},
           fmt::format("Total number of forwarded calls to the method {}", method)))
     , failedForward(PROMETHEUS().counterInt(
-          fmt::format("rpc_{}_method_total_number", method),
-          Labels{{{"status", "failed_forward"}}},
+          "rpc_method_total_number",
+          Labels{{{"status", "failed_forward"}, {"method", method}}},
           fmt::format("Total number of failed forwarded calls to the method {}", method)))
     , duration(PROMETHEUS().counterInt(
-          fmt::format("rpc_{}_method_duration_us", method),
-          Labels(),
+          "rpc_method_duration_us",
+          Labels({{"method", method}}),
           fmt::format("Total duration of calls to the method {}", method)))
 {
 }
@@ -69,17 +69,26 @@ Counters::getMethodInfo(std::string const& method)
 }
 
 Counters::Counters(WorkQueue const& wq)
-    : tooBusyCounter_(PROMETHEUS().counterInt("rpc_too_busy_total_number", Labels(), "Total number of too busy errors"))
-    , notReadyCounter_(
-          PROMETHEUS().counterInt("rpc_not_ready_total_number", Labels(), "Total number of not ready replyes"))
-    , badSyntaxCounter_(
-          PROMETHEUS().counterInt("rpc_bad_syntax_total_number", Labels(), "Total number of bad syntax replyes"))
+    : tooBusyCounter_(PROMETHEUS().counterInt(
+          "rpc_error_total_number",
+          Labels({{"error_type", "too_busy"}}),
+          "Total number of too busy errors"))
+    , notReadyCounter_(PROMETHEUS().counterInt(
+          "rpc_error_total_number",
+          Labels({{"error_type", "not_ready"}}),
+          "Total number of not ready replyes"))
+    , badSyntaxCounter_(PROMETHEUS().counterInt(
+          "rpc_error_total_number",
+          Labels({{"error_type", "bad_syntax"}}),
+          "Total number of bad syntax replyes"))
     , unknownCommandCounter_(PROMETHEUS().counterInt(
-          "rpc_unknown_command_total_number",
-          Labels(),
+          "rpc_error_total_number",
+          Labels({{"error_type", "unknown_command"}}),
           "Total number of unknown command replyes"))
-    , internalErrorCounter_(
-          PROMETHEUS().counterInt("rpc_internal_error_total_number", Labels(), "Total number of internal errors"))
+    , internalErrorCounter_(PROMETHEUS().counterInt(
+          "rpc_error_total_number",
+          Labels({{"error_type", "internal_error"}}),
+          "Total number of internal errors"))
     , workQueue_(std::cref(wq))
     , startupTime_{std::chrono::system_clock::now()}
 {
