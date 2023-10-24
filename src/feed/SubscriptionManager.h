@@ -22,6 +22,7 @@
 #include <data/BackendInterface.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
+#include <util/prometheus/Prometheus.h>
 #include <web/interface/ConnectionBase.h>
 
 #include <ripple/protocol/LedgerHeader.h>
@@ -44,7 +45,7 @@ using SessionPtrType = std::shared_ptr<web::ConnectionBase>;
  */
 template <class T>
 inline void
-sendToSubscribers(std::shared_ptr<std::string> const& message, T& subscribers, std::atomic_uint64_t& counter)
+sendToSubscribers(std::shared_ptr<std::string> const& message, T& subscribers, util::prometheus::GaugeInt& counter)
 {
     for (auto it = subscribers.begin(); it != subscribers.end();)
     {
@@ -71,7 +72,7 @@ sendToSubscribers(std::shared_ptr<std::string> const& message, T& subscribers, s
  */
 template <class T>
 inline void
-addSession(SessionPtrType session, T& subscribers, std::atomic_uint64_t& counter)
+addSession(SessionPtrType session, T& subscribers, util::prometheus::GaugeInt& counter)
 {
     if (!subscribers.contains(session))
     {
@@ -89,7 +90,7 @@ addSession(SessionPtrType session, T& subscribers, std::atomic_uint64_t& counter
  */
 template <class T>
 inline void
-removeSession(SessionPtrType session, T& subscribers, std::atomic_uint64_t& counter)
+removeSession(SessionPtrType session, T& subscribers, util::prometheus::GaugeInt& counter)
 {
     if (subscribers.contains(session))
     {
@@ -105,7 +106,7 @@ class Subscription
 {
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     std::unordered_set<SessionPtrType> subscribers_ = {};
-    std::atomic_uint64_t subCount_ = 0;
+    util::prometheus::GaugeInt& subCount_;
 
 public:
     Subscription() = delete;
@@ -117,7 +118,12 @@ public:
      *
      * @param ioc The io_context to run on
      */
-    explicit Subscription(boost::asio::io_context& ioc) : strand_(boost::asio::make_strand(ioc))
+    explicit Subscription(boost::asio::io_context& ioc, const std::string& name)
+        : strand_(boost::asio::make_strand(ioc))
+        , subCount_(PROMETHEUS().gaugeInt(
+              "subscriptions_current_number",
+              util::prometheus::Labels({{"stream", name}}),
+              fmt::format("Current subscribers number on the {} stream", name)))
     {
     }
 
@@ -153,7 +159,7 @@ public:
     std::uint64_t
     count() const
     {
-        return subCount_.load();
+        return subCount_.value();
     }
 
     /**
@@ -176,7 +182,7 @@ class SubscriptionMap
 
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     std::unordered_map<Key, SubscribersType> subscribers_ = {};
-    std::atomic_uint64_t subCount_ = 0;
+    util::prometheus::GaugeInt& subCount_;
 
 public:
     SubscriptionMap() = delete;
@@ -188,7 +194,12 @@ public:
      *
      * @param ioc The io_context to run on
      */
-    explicit SubscriptionMap(boost::asio::io_context& ioc) : strand_(boost::asio::make_strand(ioc))
+    explicit SubscriptionMap(boost::asio::io_context& ioc, const std::string& name)
+        : strand_(boost::asio::make_strand(ioc))
+        , subCount_(PROMETHEUS().gaugeInt(
+              "subscriptions_current_number",
+              util::prometheus::Labels({{"collection", name}}),
+              fmt::format("Current subscribers number on the {} collection", name)))
     {
     }
 
@@ -255,7 +266,7 @@ public:
     std::uint64_t
     count() const
     {
-        return subCount_.load();
+        return subCount_.value();
     }
 };
 
@@ -304,15 +315,15 @@ public:
      * @param backend The backend to use
      */
     SubscriptionManager(std::uint64_t numThreads, std::shared_ptr<data::BackendInterface const> const& backend)
-        : ledgerSubscribers_(ioc_)
-        , txSubscribers_(ioc_)
-        , txProposedSubscribers_(ioc_)
-        , manifestSubscribers_(ioc_)
-        , validationsSubscribers_(ioc_)
-        , bookChangesSubscribers_(ioc_)
-        , accountSubscribers_(ioc_)
-        , accountProposedSubscribers_(ioc_)
-        , bookSubscribers_(ioc_)
+        : ledgerSubscribers_(ioc_, "ledger")
+        , txSubscribers_(ioc_, "tx")
+        , txProposedSubscribers_(ioc_, "tx_proposed")
+        , manifestSubscribers_(ioc_, "manifest")
+        , validationsSubscribers_(ioc_, "validations")
+        , bookChangesSubscribers_(ioc_, "book_changes")
+        , accountSubscribers_(ioc_, "account")
+        , accountProposedSubscribers_(ioc_, "account_proposed")
+        , bookSubscribers_(ioc_, "book")
         , backend_(backend)
     {
         work_.emplace(ioc_);
