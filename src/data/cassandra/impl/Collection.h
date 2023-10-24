@@ -51,6 +51,13 @@ public:
     explicit Collection(std::vector<Type>&& value)
         : ManagedObject{cass_collection_new(CASS_COLLECTION_TYPE_LIST, value.size()), deleter}
     {
+        bind(value);
+    }
+
+    template <typename Type>
+    explicit Collection(std::vector<Type>& value)
+        : ManagedObject{cass_collection_new(CASS_COLLECTION_TYPE_LIST, value.size()), deleter}
+    {
         bind(std::move(value));
     }
 

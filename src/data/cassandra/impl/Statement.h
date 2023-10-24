@@ -120,7 +120,7 @@ public:
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, ripple::uint256>");
         } else if constexpr (std::is_same_v<DecayedType, ByteVectorType>) {
-            auto const rc = cass_statement_bind_collection(*this, idx, Collection{std::move(value)});
+            auto const rc = cass_statement_bind_collection(*this, idx, Collection{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind collection");
         } else if constexpr (std::is_same_v<DecayedType, bool>) {
             auto const rc = cass_statement_bind_bool(*this, idx, value ? cass_true : cass_false);
