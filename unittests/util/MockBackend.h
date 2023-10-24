@@ -116,7 +116,8 @@ struct MockBackend : public BackendInterface {
          std::uint32_t const limit,
          std::optional<ripple::uint256> const& cursorIn,
          boost::asio::yield_context yield),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::vector<Blob>,
@@ -159,11 +160,11 @@ struct MockBackend : public BackendInterface {
         (override)
     );
 
-    MOCK_METHOD(void, writeNFTs, (std::vector<NFTsData>&&), (override));
+    MOCK_METHOD(void, writeNFTs, (std::vector<NFTsData> &&), (override));
 
-    MOCK_METHOD(void, writeAccountTransactions, (std::vector<AccountTransactionsData>&&), (override));
+    MOCK_METHOD(void, writeAccountTransactions, (std::vector<AccountTransactionsData> &&), (override));
 
-    MOCK_METHOD(void, writeNFTTransactions, (std::vector<NFTTransactionsData>&&), (override));
+    MOCK_METHOD(void, writeNFTTransactions, (std::vector<NFTTransactionsData> &&), (override));
 
     MOCK_METHOD(void, writeSuccessor, (std::string && key, std::uint32_t const, std::string&&), (override));
 

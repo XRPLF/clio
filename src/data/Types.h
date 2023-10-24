@@ -162,8 +162,7 @@ struct NFT {
     }
 };
 
-struct NFTsAndCursor
-{
+struct NFTsAndCursor {
     std::vector<NFT> nfts;
     std::optional<ripple::uint256> cursor;
 };
