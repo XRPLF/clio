@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <util/Fixtures.h>
+#include <util/MockPrometheus.h>
 #include <util/TestHttpSyncClient.h>
 #include <web/Server.h>
 
@@ -461,3 +462,50 @@ INSTANTIATE_TEST_CASE_P(
             .expectedResponse = "user"}
     )
 );
+
+struct WebServerPrometheusTest : util::prometheus::WithPrometheus, WebServerTest {};
+
+TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
+{
+    auto e = std::make_shared<EchoExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
+    auto const res = HttpSyncClient::syncGet("localhost", "8888", "", "/metrics");
+    EXPECT_EQ(res, "Only admin is allowed to collect metrics");
+}
+
+TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
+{
+    static auto constexpr JSONServerConfigWithDisabledPrometheus = R"JSON(
+        {
+            "server":{
+                "ip": "0.0.0.0",
+                "port": 8888,
+                "admin_password": "secret"
+            },
+            "prometheus_enabled": false
+        }
+    )JSON";
+
+    auto e = std::make_shared<EchoExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithDisabledPrometheus)};
+    PROMETHEUS_INIT(serverConfig);
+    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
+    auto const res = HttpSyncClient::syncGet(
+        "localhost", "8888", "", "/metrics", {WebHeader(http::field::authorization, "Password secret")}
+    );
+    EXPECT_EQ(res, "Prometheus is disabled in clio config");
+}
+
+TEST_F(WebServerPrometheusTest, validResponse)
+{
+    auto& testCounter = PROMETHEUS().counterInt("test_counter", util::prometheus::Labels());
+    ++testCounter;
+    auto e = std::make_shared<EchoExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
+    auto const res = HttpSyncClient::syncGet(
+        "localhost", "8888", "", "/metrics", {WebHeader(http::field::authorization, "Password secret")}
+    );
+    EXPECT_EQ(res, "# TYPE test_counter counter\ntest_counter 1\n\n");
+}

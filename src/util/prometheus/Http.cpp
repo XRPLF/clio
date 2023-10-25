@@ -42,7 +42,7 @@ handlePrometheusRequest(http::request<http::string_body> const& req, bool const 
 
     if (!isAdmin) {
         return http::response<http::string_body>(
-            http::status::unauthorized, req.version(), "Only admin is allowd to collect metrics"
+            http::status::unauthorized, req.version(), "Only admin is allowed to collect metrics"
         );
     }
 
