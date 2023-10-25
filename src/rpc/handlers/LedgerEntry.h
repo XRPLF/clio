@@ -112,7 +112,7 @@ public:
                     jvAsset["issuer"] = value.at(JS(issuer)).as_string().c_str();
                 if (value.as_object().contains(JS(currency)))
                     jvAsset["currency"] = value.at(JS(currency)).as_string().c_str();
-
+                // same as rippled
                 try {
                     ripple::issueFromJson(jvAsset);
                 } catch (std::runtime_error const&) {

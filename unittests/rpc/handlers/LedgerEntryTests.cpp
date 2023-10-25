@@ -762,7 +762,7 @@ generateTestValuesForParametersTest()
                         }},
                         "asset":
                         {{
-                            "currency" : "USD2",
+                            "currency" : "USD",
                             "issuer" : "aa{}"
                         }}
                     }}

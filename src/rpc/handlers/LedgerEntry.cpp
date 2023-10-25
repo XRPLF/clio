@@ -66,7 +66,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 
         key = ripple::getTicketIndex(*id, input.ticket->at(JS(ticket_seq)).as_int64());
     } else if (input.amm) {
-        auto const getIssuerFromJson = [](auto const assetJson) {
+        auto const getIssuerFromJson = [](auto const& assetJson) {
             // the field check has been done in validator
             auto const currency = ripple::to_currency(assetJson.at(JS(currency)).as_string().c_str());
             if (ripple::isXRP(currency)) {
