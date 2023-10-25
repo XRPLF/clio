@@ -22,7 +22,6 @@
 #include <rpc/handlers/NFTsByIssuer.h>
 
 using namespace ripple;
-using namespace ::rpc;
 
 namespace rpc {
 
@@ -41,6 +40,11 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
     auto const limit = input.limit.value_or(NFTsByIssuerHandler::LIMIT_DEFAULT);
 
     auto const issuer = accountFromStringStrict(input.issuer);
+    auto const accountLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::account(*issuer).key, lgrInfo.seq, ctx.yield);
+
+    if (!accountLedgerObject)
+        return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
     std::optional<uint256> cursor;
     if (input.marker)

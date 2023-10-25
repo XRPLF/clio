@@ -306,8 +306,8 @@ public:
     fetchNFTsByIssuer(
         ripple::AccountID const& issuer,
         std::optional<std::uint32_t> const& taxon,
-        std::uint32_t const ledgerSequence,
-        std::uint32_t const limit,
+        std::uint32_t ledgerSequence,
+        std::uint32_t limit,
         std::optional<ripple::uint256> const& cursorIn,
         boost::asio::yield_context yield
     ) const = 0;

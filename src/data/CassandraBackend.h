@@ -453,7 +453,7 @@ public:
     {
         NFTsAndCursor ret;
 
-        Statement idQueryStatement = [&taxon, &issuer, &cursorIn, &limit, this]() {
+        Statement const idQueryStatement = [&taxon, &issuer, &cursorIn, &limit, this]() {
             if (taxon.has_value()) {
                 auto r = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
                 r.bindAt(1, *taxon);
@@ -493,7 +493,7 @@ public:
         if (nftIDs.size() == limit)
             ret.cursor = nftIDs.back();
 
-        auto nftQueryStatement = schema_->selectNFTBulk.bind(nftIDs);
+        auto const nftQueryStatement = schema_->selectNFTBulk.bind(nftIDs);
         nftQueryStatement.bindAt(1, ledgerSequence);
 
         // Fetch all the NFT data, meanwhile filtering out the NFTs that are not within the ledger range
@@ -505,7 +505,7 @@ public:
             return {};
         }
 
-        auto nftURIQueryStatement = schema_->selectNFTURIBulk.bind(std::move(nftIDs));
+        auto const nftURIQueryStatement = schema_->selectNFTURIBulk.bind(nftIDs);
         nftURIQueryStatement.bindAt(1, ledgerSequence);
 
         // Get the URI for each NFT, but it's possible that URI doesn't exist
