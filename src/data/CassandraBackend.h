@@ -505,7 +505,7 @@ public:
             return {};
         }
 
-        auto nftURIQueryStatement = schema_->selectNFTURIBulk.bind(nftIDs);
+        auto nftURIQueryStatement = schema_->selectNFTURIBulk.bind(std::move(nftIDs));
         nftURIQueryStatement.bindAt(1, ledgerSequence);
 
         // Get the URI for each NFT, but it's possible that URI doesn't exist

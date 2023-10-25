@@ -48,6 +48,13 @@ public:
     /* implicit */ Collection(CassCollection* ptr);
 
     template <typename Type>
+    explicit Collection(std::vector<Type> const& value)
+        : ManagedObject{cass_collection_new(CASS_COLLECTION_TYPE_LIST, value.size()), deleter}
+    {
+        bind(value);
+    }
+
+    template <typename Type>
     explicit Collection(std::vector<Type>&& value)
         : ManagedObject{cass_collection_new(CASS_COLLECTION_TYPE_LIST, value.size()), deleter}
     {
@@ -55,15 +62,8 @@ public:
     }
 
     template <typename Type>
-    explicit Collection(std::vector<Type>& value)
-        : ManagedObject{cass_collection_new(CASS_COLLECTION_TYPE_LIST, value.size()), deleter}
-    {
-        bind(std::move(value));
-    }
-
-    template <typename Type>
     void
-    bind(std::vector<Type>&& values) const
+    bind(std::vector<Type> const& values) const
     {
         for (auto const& value : values)
             append(value);
