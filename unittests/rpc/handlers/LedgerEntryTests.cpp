@@ -1233,6 +1233,39 @@ generateTestValuesForNormalPathTest()
             CreateOfferLedgerObject(
                 ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1
             )
+        },
+        NormalPathTestBundle{
+            "AMMViaIndex",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "amm": "{}"
+                }})",
+                INDEX1
+            ),
+            ripple::uint256{INDEX1},
+            CreateAMMObject(ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", ACCOUNT2)
+        },
+        NormalPathTestBundle{
+            "AMMViaJson",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "amm": {{
+                        "asset": {{
+                            "currency": "XRP"
+                        }},
+                        "asset2": {{
+                            "currency": "{}",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                "JPY",
+                ACCOUNT2
+            ),
+            ripple::keylet::amm(GetIssue("XRP", ripple::toBase58(ripple::xrpAccount())), GetIssue("JPY", ACCOUNT2)).key,
+            CreateAMMObject(ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", ACCOUNT2)
         }
     };
 }

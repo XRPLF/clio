@@ -63,6 +63,7 @@ public:
         std::optional<boost::json::object> escrow;
         std::optional<boost::json::object> depositPreauth;
         std::optional<boost::json::object> ticket;
+        std::optional<boost::json::object> amm;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -106,31 +107,16 @@ public:
                     return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
                 }
 
-                //"currency" must be present
-                if (!value.as_object().contains(JS(currency))) {
-                    return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
-                }
+                Json::Value jvAsset;
+                if (value.as_object().contains(JS(issuer)))
+                    jvAsset["issuer"] = value.at(JS(issuer)).as_string().c_str();
+                if (value.as_object().contains(JS(currency)))
+                    jvAsset["currency"] = value.at(JS(currency)).as_string().c_str();
 
-                ripple::Currency currency;
-                if (!ripple::to_currency(currency, value.as_object().at(JS(currency)).as_string().c_str()))
+                try {
+                    ripple::issueFromJson(jvAsset);
+                } catch (std::runtime_error const&) {
                     return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
-
-                if (ripple::isXRP(currency)) {
-                    // XRP must not have issuer
-                    if (value.as_object().contains(JS(issuer))) {
-                        return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
-                    }
-                } else {
-                    // non-XRP must have issuer
-                    if (!value.as_object().contains(JS(issuer))) {
-                        return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
-                    } else {
-                        auto const id =
-                            ripple::parseBase58<ripple::AccountID>(value.as_object().at(JS(issuer)).as_string().c_str()
-                            );
-                        if (!id)
-                            return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
-                    }
                 }
 
                 return MaybeError{};

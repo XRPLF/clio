@@ -27,6 +27,7 @@
 #include <chrono>
 
 constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
+constexpr static auto CURRENCY = "03930D02208264E2E40EC1B0C09E4DB96EE197B1";
 
 ripple::AccountID
 GetAccountIDWithString(std::string_view id)
@@ -748,4 +749,28 @@ CreateAmendmentsObject(std::vector<ripple::uint256> const& enabledAmendments)
     ripple::STVector256 const list(enabledAmendments);
     amendments.setFieldV256(ripple::sfAmendments, list);
     return amendments;
+}
+
+ripple::STObject
+CreateAMMObject(
+    std::string_view accountId,
+    std::string_view assetCurrency,
+    std::string_view assetIssuer,
+    std::string_view asset2Currency,
+    std::string_view asset2Issuer
+)
+{
+    auto amm = ripple::STObject(ripple::sfLedgerEntry);
+    amm.setFieldU16(ripple::sfLedgerEntryType, ripple::ltAMM);
+    amm.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId));
+    amm.setFieldU16(ripple::sfTradingFee, 5);
+    amm.setFieldU64(ripple::sfOwnerNode, 0);
+    amm.setFieldIssue(ripple::sfAsset, ripple::STIssue{ripple::sfAsset, GetIssue(assetCurrency, assetIssuer)});
+    amm.setFieldIssue(ripple::sfAsset2, ripple::STIssue{ripple::sfAsset2, GetIssue(asset2Currency, asset2Issuer)});
+    ripple::Issue const issue1(
+        ripple::Currency{CURRENCY}, ripple::parseBase58<ripple::AccountID>(std::string(accountId)).value()
+    );
+    amm.setFieldAmount(ripple::sfLPTokenBalance, ripple::STAmount(issue1, 100));
+    amm.setFieldU32(ripple::sfFlags, 0);
+    return amm;
 }

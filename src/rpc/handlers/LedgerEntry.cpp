@@ -65,6 +65,23 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         auto const id = ripple::parseBase58<ripple::AccountID>(input.ticket->at(JS(account)).as_string().c_str());
 
         key = ripple::getTicketIndex(*id, input.ticket->at(JS(ticket_seq)).as_int64());
+    } else if (input.amm) {
+        auto const getIssuerFromJson = [](auto const assetJson) {
+            // the field check has been done in validator
+            auto const currency = ripple::to_currency(assetJson.at(JS(currency)).as_string().c_str());
+            if (ripple::isXRP(currency)) {
+                return ripple::xrpIssue();
+            } else {
+                auto const issuer =
+                    ripple::parseBase58<ripple::AccountID>(assetJson.at(JS(issuer)).as_string().c_str());
+                return ripple::Issue{currency, *issuer};
+            }
+        };
+
+        key = ripple::keylet::amm(
+                  getIssuerFromJson(input.amm->at(JS(asset))), getIssuerFromJson(input.amm->at(JS(asset2)))
+        )
+                  .key;
     } else {
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
@@ -179,6 +196,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
         {JS(ticket), ripple::ltTICKET},
         {JS(nft_page), ripple::ltNFTOKEN_PAGE},
+        {JS(amm), ripple::ltAMM}
     };
 
     auto const indexFieldType =
@@ -208,6 +226,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.depositPreauth = jv.at(JS(deposit_preauth)).as_object();
     } else if (jsonObject.contains(JS(ticket))) {
         input.ticket = jv.at(JS(ticket)).as_object();
+    } else if (jsonObject.contains(JS(amm))) {
+        input.amm = jv.at(JS(amm)).as_object();
     }
 
     return input;
