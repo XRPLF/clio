@@ -66,7 +66,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
     if (bDefaultRipple && !input.roleGateway) {
         output.problems.emplace_back(
             "You appear to have set your default ripple flag even though you are not a gateway. This is not "
-            "recommended unless you are experimenting   
+            "recommended unless you are experimenting"
         );
     } else if (input.roleGateway && !bDefaultRipple) {
         output.problems.emplace_back("You should immediately set your default ripple flag");

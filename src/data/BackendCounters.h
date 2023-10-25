@@ -100,7 +100,7 @@ private:
 
     class AsyncOperationCounters {
     public:
-        AsyncOperationCounters(std::string const& name);
+        AsyncOperationCounters(std::string name);
 
         void
         registerStarted(std::uint64_t count);

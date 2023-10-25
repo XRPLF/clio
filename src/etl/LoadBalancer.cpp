@@ -119,15 +119,8 @@ LoadBalancer::LoadBalancer(
         LOG(log_.info()) << "Added etl source - " << sources_.back()->toString();
     }
 
-<<<<<<< HEAD
-    if (sources_.empty()) {
-        LOG(log_.error()) << "No ETL sources configured. Please check the configuration";
-        throw std::logic_error("No ETL sources configured");
-    }
-=======
     if (sources_.empty())
         checkOnETLFailure("No ETL sources configured. Please check the configuration");
->>>>>>> upstream/develop
 }
 
 LoadBalancer::~LoadBalancer()

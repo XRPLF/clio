@@ -125,8 +125,8 @@ BackendCounters::report() const
     return result;
 }
 
-BackendCounters::AsyncOperationCounters::AsyncOperationCounters(std::string const& name)
-    : name_(name)
+BackendCounters::AsyncOperationCounters::AsyncOperationCounters(std::string name)
+    : name_(std::move(name))
     , pendingCounter_{PROMETHEUS().gaugeInt(
           "backend_operations_current_number",
           util::prometheus::Labels({{"operation", name_}, {"status", "pending"}}),

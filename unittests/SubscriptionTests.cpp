@@ -35,13 +35,9 @@ struct SubscriptionTestBase {
     util::TagDecoratorFactory tagDecoratorFactory{cfg};
 };
 
-<<<<<<< HEAD
 struct SubscriptionTest : WithPrometheus, SyncAsioContextTest, SubscriptionTestBase {
     Subscription sub{ctx, "test"};
 };
-=======
-class SubscriptionMapTest : public SubscriptionTest {};
->>>>>>> upstream/develop
 
 // subscribe/unsubscribe the same session would not change the count
 TEST_F(SubscriptionTest, SubscriptionCount)
