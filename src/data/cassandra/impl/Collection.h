@@ -32,8 +32,8 @@ namespace data::cassandra::detail {
 class Collection : public ManagedObject<CassCollection> {
     static constexpr auto deleter = [](CassCollection* ptr) { cass_collection_free(ptr); };
 
-    void
-    throwErrorIfNeeded(CassError const rc, std::string_view const label) const
+    static void
+    throwErrorIfNeeded(CassError const rc, std::string_view const label)
     {
         if (rc == CASS_OK)
             return;

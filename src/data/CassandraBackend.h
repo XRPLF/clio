@@ -487,7 +487,7 @@ public:
         for (auto const [nftID] : extract<ripple::uint256>(idQueryResults))
             nftIDs.push_back(nftID);
 
-        if (nftIDs.size() == 0)
+        if (nftIDs.empty())
             return ret;
 
         if (nftIDs.size() == limit)
