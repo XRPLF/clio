@@ -32,8 +32,7 @@ namespace rpc {
  * Support for copying was added in order to allow storing in a
  * map/unordered_map using the initializer_list constructor.
  */
-class AnyHandler final
-{
+class AnyHandler final {
 public:
     /**
      * @brief Type-erases any handler class.
@@ -79,8 +78,7 @@ public:
     }
 
 private:
-    struct Concept
-    {
+    struct Concept {
         virtual ~Concept() = default;
 
         [[nodiscard]] virtual ReturnType
@@ -91,8 +89,7 @@ private:
     };
 
     template <typename HandlerType, typename ProcessorType>
-    struct Model : Concept
-    {
+    struct Model : Concept {
         HandlerType handler;
         ProcessorType processor;
 

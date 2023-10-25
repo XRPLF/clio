@@ -28,8 +28,7 @@ namespace json = boost::json;
 using namespace util;
 using namespace testing;
 
-struct ETLStateTest : public NoLoggerFixture
-{
+struct ETLStateTest : public NoLoggerFixture {
     MockSource const source = MockSource{};
 };
 
@@ -49,7 +48,8 @@ TEST_F(ETLStateTest, NetworkIdValid)
                     "network_id": 12
                 }
             }
-        })JSON");
+        })JSON"
+    );
     EXPECT_CALL(source, forwardToRippled).WillOnce(Return(json.as_object()));
     auto const state = etl::ETLState::fetchETLStateFromSource(source);
     ASSERT_TRUE(state.networkID.has_value());
@@ -65,7 +65,8 @@ TEST_F(ETLStateTest, NetworkIdInvalid)
                     "network_id2": 12
                 }
             }
-        })JSON");
+        })JSON"
+    );
     EXPECT_CALL(source, forwardToRippled).WillOnce(Return(json.as_object()));
     auto const state = etl::ETLState::fetchETLStateFromSource(source);
     EXPECT_FALSE(state.networkID.has_value());

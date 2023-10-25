@@ -32,8 +32,7 @@ namespace rpc::modifiers {
  * @brief Clamp value between min and max.
  */
 template <typename Type>
-class Clamp final
-{
+class Clamp final {
     Type min_;
     Type max_;
 
@@ -76,8 +75,7 @@ public:
  *
  * Note: the conversion is only performed if the input value is a string.
  */
-struct ToLower final
-{
+struct ToLower final {
     /**
      * @brief Update the input string to lower case.
      *

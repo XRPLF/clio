@@ -6,8 +6,7 @@ namespace rpc {
 /**
  * @brief A wrapper around bool that allows to convert from any JSON value
  */
-struct JsonBool
-{
+struct JsonBool {
     bool value = false;
 
     operator bool() const
@@ -19,8 +18,7 @@ struct JsonBool
 inline JsonBool
 tag_invoke(boost::json::value_to_tag<JsonBool> const&, boost::json::value const& jsonValue)
 {
-    switch (jsonValue.kind())
-    {
+    switch (jsonValue.kind()) {
         case boost::json::kind::null:
             return JsonBool{false};
         case boost::json::kind::bool_:

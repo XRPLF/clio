@@ -38,15 +38,12 @@ constexpr auto JSONConfig = R"JSON({
     })JSON";
 }  // namespace
 
-struct RPCWorkQueueTestBase : NoLoggerFixture
-{
+struct RPCWorkQueueTestBase : NoLoggerFixture {
     Config cfg = Config{boost::json::parse(JSONConfig)};
     WorkQueue queue = WorkQueue::make_WorkQueue(cfg);
 };
 
-struct RPCWorkQueueTest : WithPrometheus, RPCWorkQueueTestBase
-{
-};
+struct RPCWorkQueueTest : WithPrometheus, RPCWorkQueueTestBase {};
 
 TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
 {
@@ -55,14 +52,14 @@ TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
 
     std::mutex mtx;
 
-    for (auto i = 0u; i < TOTAL; ++i)
-    {
+    for (auto i = 0u; i < TOTAL; ++i) {
         queue.postCoro(
             [&executeCount, &mtx](auto /* yield */) {
                 std::lock_guard const lk(mtx);
                 ++executeCount;
             },
-            true);
+            true
+        );
     }
 
     queue.join();
@@ -84,8 +81,7 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
     std::mutex mtx;
     std::condition_variable cv;
 
-    for (auto i = 0u; i < TOTAL; ++i)
-    {
+    for (auto i = 0u; i < TOTAL; ++i) {
         auto res = queue.postCoro(
             [&](auto /* yield */) {
                 std::unique_lock lk{mtx};
@@ -93,18 +89,16 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
 
                 --expectedCount;
             },
-            false);
+            false
+        );
 
-        if (i == TOTAL - 1)
-        {
+        if (i == TOTAL - 1) {
             EXPECT_FALSE(res);
 
             std::unique_lock const lk{mtx};
             unblocked = true;
             cv.notify_all();
-        }
-        else
-        {
+        } else {
             EXPECT_TRUE(res);
         }
     }
@@ -113,9 +107,7 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
     EXPECT_TRUE(unblocked);
 }
 
-struct RPCWorkQueueMockPrometheusTest : WithMockPrometheus, RPCWorkQueueTestBase
-{
-};
+struct RPCWorkQueueMockPrometheusTest : WithMockPrometheus, RPCWorkQueueTestBase {};
 
 TEST_F(RPCWorkQueueMockPrometheusTest, postCoroCouhters)
 {
@@ -142,7 +134,8 @@ TEST_F(RPCWorkQueueMockPrometheusTest, postCoroCouhters)
             std::unique_lock lk{mtx};
             cv.wait(lk, [&]() { return canContinue; });
         },
-        false);
+        false
+    );
 
     ASSERT_TRUE(res);
     queue.join();

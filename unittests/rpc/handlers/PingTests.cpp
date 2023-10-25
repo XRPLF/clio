@@ -23,9 +23,7 @@
 
 using namespace rpc;
 
-class RPCPingHandlerTest : public HandlerBaseTest
-{
-};
+class RPCPingHandlerTest : public HandlerBaseTest {};
 
 // example handler tests
 TEST_F(RPCPingHandlerTest, Default)

@@ -30,14 +30,12 @@ using namespace feed;
 using namespace util::prometheus;
 
 // io_context
-struct SubscriptionTestBase
-{
+struct SubscriptionTestBase {
     util::Config cfg;
     util::TagDecoratorFactory tagDecoratorFactory{cfg};
 };
 
-struct SubscriptionTest : WithPrometheus, SyncAsioContextTest, SubscriptionTestBase
-{
+struct SubscriptionTest : WithPrometheus, SyncAsioContextTest, SubscriptionTestBase {
     Subscription sub{ctx, "test"};
 };
 
@@ -116,8 +114,7 @@ TEST_F(SubscriptionTest, SubscriptionDeadRemoveSubscriber)
     EXPECT_EQ(sub.count(), 0);
 }
 
-struct SubscriptionMockPrometheusTest : WithMockPrometheus, SubscriptionTestBase, SyncAsioContextTest
-{
+struct SubscriptionMockPrometheusTest : WithMockPrometheus, SubscriptionTestBase, SyncAsioContextTest {
     Subscription sub{ctx, "test"};
     std::shared_ptr<web::ConnectionBase> const session = std::make_shared<MockSession>(tagDecoratorFactory);
 };
@@ -163,8 +160,7 @@ TEST_F(SubscriptionMockPrometheusTest, count)
     sub.count();
 }
 
-struct SubscriptionMapTest : SubscriptionTest
-{
+struct SubscriptionMapTest : SubscriptionTest {
     SubscriptionMap<std::string> subMap{ctx, "test"};
 };
 
@@ -253,8 +249,7 @@ TEST_F(SubscriptionMapTest, SubscriptionMapDeadRemoveSubscriber)
     EXPECT_EQ(subMap.count(), 1);
 }
 
-struct SubscriptionMapMockPrometheusTest : SubscriptionMockPrometheusTest
-{
+struct SubscriptionMapMockPrometheusTest : SubscriptionMockPrometheusTest {
     SubscriptionMap<std::string> subMap{ctx, "test"};
     std::shared_ptr<web::ConnectionBase> const session = std::make_shared<MockSession>(tagDecoratorFactory);
 };
@@ -289,7 +284,8 @@ TEST_F(SubscriptionMapMockPrometheusTest, publish)
     EXPECT_CALL(counter, add(-1));
     subMap.publish(std::make_shared<std::string>("message"), "topic");
     subMap.publish(
-        std::make_shared<std::string>("message"), "topic");  // Dead session is detected only after failed send
+        std::make_shared<std::string>("message"), "topic"
+    );  // Dead session is detected only after failed send
     ctx.restart();
     ctx.run();
 }

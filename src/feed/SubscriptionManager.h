@@ -47,16 +47,12 @@ template <class T>
 inline void
 sendToSubscribers(std::shared_ptr<std::string> const& message, T& subscribers, util::prometheus::GaugeInt& counter)
 {
-    for (auto it = subscribers.begin(); it != subscribers.end();)
-    {
+    for (auto it = subscribers.begin(); it != subscribers.end();) {
         auto& session = *it;
-        if (session->dead())
-        {
+        if (session->dead()) {
             it = subscribers.erase(it);
             --counter;
-        }
-        else
-        {
+        } else {
             session->send(message);
             ++it;
         }
@@ -74,8 +70,7 @@ template <class T>
 inline void
 addSession(SessionPtrType session, T& subscribers, util::prometheus::GaugeInt& counter)
 {
-    if (!subscribers.contains(session))
-    {
+    if (!subscribers.contains(session)) {
         subscribers.insert(session);
         ++counter;
     }
@@ -92,8 +87,7 @@ template <class T>
 inline void
 removeSession(SessionPtrType session, T& subscribers, util::prometheus::GaugeInt& counter)
 {
-    if (subscribers.contains(session))
-    {
+    if (subscribers.contains(session)) {
         subscribers.erase(session);
         --counter;
     }
@@ -102,8 +96,7 @@ removeSession(SessionPtrType session, T& subscribers, util::prometheus::GaugeInt
 /**
  * @brief Represents a subscription stream.
  */
-class Subscription
-{
+class Subscription {
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     std::unordered_set<SessionPtrType> subscribers_ = {};
     util::prometheus::GaugeInt& subCount_;
@@ -118,12 +111,13 @@ public:
      *
      * @param ioc The io_context to run on
      */
-    explicit Subscription(boost::asio::io_context& ioc, const std::string& name)
+    explicit Subscription(boost::asio::io_context& ioc, std::string const& name)
         : strand_(boost::asio::make_strand(ioc))
         , subCount_(PROMETHEUS().gaugeInt(
               "subscriptions_current_number",
               util::prometheus::Labels({{"stream", name}}),
-              fmt::format("Current subscribers number on the {} stream", name)))
+              fmt::format("Current subscribers number on the {} stream", name)
+          ))
     {
     }
 
@@ -176,8 +170,7 @@ public:
  * @brief Represents a collection of subscriptions where each stream is mapped to a key.
  */
 template <class Key>
-class SubscriptionMap
-{
+class SubscriptionMap {
     using SubscribersType = std::set<SessionPtrType>;
 
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
@@ -194,12 +187,13 @@ public:
      *
      * @param ioc The io_context to run on
      */
-    explicit SubscriptionMap(boost::asio::io_context& ioc, const std::string& name)
+    explicit SubscriptionMap(boost::asio::io_context& ioc, std::string const& name)
         : strand_(boost::asio::make_strand(ioc))
         , subCount_(PROMETHEUS().gaugeInt(
               "subscriptions_current_number",
               util::prometheus::Labels({{"collection", name}}),
-              fmt::format("Current subscribers number on the {} collection", name)))
+              fmt::format("Current subscribers number on the {} collection", name)
+          ))
     {
     }
 
@@ -236,8 +230,7 @@ public:
             --subCount_;
             subscribers_[key].erase(session);
 
-            if (subscribers_[key].size() == 0)
-            {
+            if (subscribers_[key].size() == 0) {
                 subscribers_.erase(key);
             }
         });
@@ -273,8 +266,7 @@ public:
 /**
  * @brief Manages subscriptions.
  */
-class SubscriptionManager
-{
+class SubscriptionManager {
     util::Logger log_{"Subscriptions"};
 
     std::vector<std::thread> workers_;
@@ -371,7 +363,8 @@ public:
         ripple::LedgerHeader const& lgrInfo,
         ripple::Fees const& fees,
         std::string const& ledgerRange,
-        std::uint32_t txnCount);
+        std::uint32_t txnCount
+    );
 
     /**
      * @brief Publish to the book changes stream.

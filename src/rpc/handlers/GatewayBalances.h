@@ -33,13 +33,11 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/gateway_balances.html#gateway_balances
  */
-class GatewayBalancesHandler
-{
+class GatewayBalancesHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    struct Output
-    {
+    struct Output {
         std::string ledgerHash;
         uint32_t ledgerIndex;
         std::string accountID;
@@ -52,8 +50,7 @@ public:
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         std::set<ripple::AccountID> hotWallets;
         std::optional<std::string> ledgerHash;
@@ -78,10 +75,10 @@ public:
                 // wallet needs to be an valid accountID or public key
                 auto const wallets = value.is_array() ? value.as_array() : boost::json::array{value};
                 auto const getAccountID = [](auto const& j) -> std::optional<ripple::AccountID> {
-                    if (j.is_string())
-                    {
+                    if (j.is_string()) {
                         auto const pk = ripple::parseBase58<ripple::PublicKey>(
-                            ripple::TokenType::AccountPublic, j.as_string().c_str());
+                            ripple::TokenType::AccountPublic, j.as_string().c_str()
+                        );
 
                         if (pk)
                             return ripple::calcAccountID(*pk);
@@ -92,8 +89,7 @@ public:
                     return {};
                 };
 
-                for (auto const& wallet : wallets)
-                {
+                for (auto const& wallet : wallets) {
                     if (!getAccountID(wallet))
                         return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
                 }

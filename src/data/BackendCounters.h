@@ -55,8 +55,7 @@ concept SomeBackendCounters = requires(T a) {
  *
  * @note This class is thread-safe.
  */
-class BackendCounters
-{
+class BackendCounters {
 public:
     using PtrType = std::shared_ptr<BackendCounters>;
 
@@ -99,8 +98,7 @@ public:
 private:
     BackendCounters();
 
-    class AsyncOperationCounters
-    {
+    class AsyncOperationCounters {
     public:
         AsyncOperationCounters(std::string const& name);
 

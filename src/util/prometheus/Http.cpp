@@ -25,7 +25,7 @@ namespace http = boost::beast::http;
 namespace {
 
 bool
-isPrometheusRequest(const http::request<http::string_body>& req)
+isPrometheusRequest(http::request<http::string_body> const& req)
 {
     return req.method() == http::verb::get && req.target() == "/metrics";
 }
@@ -40,16 +40,16 @@ handlePrometheusRequest(http::request<http::string_body> const& req, bool const 
     if (!prometheusRequest)
         return std::nullopt;
 
-    if (!isAdmin)
-    {
+    if (!isAdmin) {
         return http::response<http::string_body>(
-            http::status::unauthorized, req.version(), "Only admin is allowd to collect metrics");
+            http::status::unauthorized, req.version(), "Only admin is allowd to collect metrics"
+        );
     }
 
-    if (!PROMETHEUS().isEnabled())
-    {
+    if (!PROMETHEUS().isEnabled()) {
         return http::response<http::string_body>(
-            http::status::forbidden, req.version(), "Prometheus is disabled in clio config");
+            http::status::forbidden, req.version(), "Prometheus is disabled in clio config"
+        );
     }
 
     auto response = http::response<http::string_body>(http::status::ok, req.version());

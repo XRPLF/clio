@@ -29,8 +29,7 @@ namespace rpc {
 /**
  * @brief Represents an entry in the book_changes' changes array.
  */
-struct BookChange
-{
+struct BookChange {
     ripple::STAmount sideAVolume;
     ripple::STAmount sideBVolume;
     ripple::STAmount highRate;
@@ -42,8 +41,7 @@ struct BookChange
 /**
  * @brief Encapsulates the book_changes computations and transformations.
  */
-class BookChanges final
-{
+class BookChanges final {
 public:
     BookChanges() = delete;  // only accessed via static handle function
 
@@ -60,8 +58,7 @@ public:
     }
 
 private:
-    class HandlerImpl final
-    {
+    class HandlerImpl final {
         std::map<std::string, BookChange> tally_ = {};
         std::optional<uint32_t> offerCancel_ = {};
 
@@ -78,7 +75,8 @@ private:
                 std::make_move_iterator(std::begin(tally_)),
                 std::make_move_iterator(std::end(tally_)),
                 std::back_inserter(changes),
-                [](auto obj) { return obj.second; });
+                [](auto obj) { return obj.second; }
+            );
             return changes;
         }
 
@@ -148,8 +146,7 @@ private:
                 second = -second;
 
             auto const key = noswap ? (g + '|' + p) : (p + '|' + g);
-            if (tally_.contains(key))
-            {
+            if (tally_.contains(key)) {
                 auto& entry = tally_.at(key);
 
                 entry.sideAVolume += first;
@@ -162,9 +159,7 @@ private:
                     entry.lowRate = rate;
 
                 entry.closeRate = rate;
-            }
-            else
-            {
+            } else {
                 tally_[key] = {
                     .sideAVolume = first,
                     .sideBVolume = second,
@@ -191,8 +186,7 @@ private:
         static std::optional<uint32_t>
         shouldCancelOffer(std::shared_ptr<ripple::STTx const> const& tx)
         {
-            switch (tx->getFieldU16(ripple::sfTransactionType))
-            {
+            switch (tx->getFieldU16(ripple::sfTransactionType)) {
                 // in future if any other ways emerge to cancel an offer
                 // this switch makes them easy to add
                 case ripple::ttOFFER_CANCEL:

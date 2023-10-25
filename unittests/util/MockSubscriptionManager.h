@@ -25,8 +25,7 @@
 #include <boost/json.hpp>
 #include <gmock/gmock.h>
 
-struct MockSubscriptionManager
-{
+struct MockSubscriptionManager {
 public:
     using session_ptr = std::shared_ptr<web::ConnectionBase>;
     MockSubscriptionManager()
@@ -39,13 +38,15 @@ public:
         void,
         pubLedger,
         (ripple::LedgerInfo const&, ripple::Fees const&, std::string const&, std::uint32_t),
-        ());
+        ()
+    );
 
     MOCK_METHOD(
         void,
         pubBookChanges,
         (ripple::LedgerInfo const&, std::vector<data::TransactionAndMetadata> const&),
-        ());
+        ()
+    );
 
     MOCK_METHOD(void, unsubLedger, (session_ptr), ());
 

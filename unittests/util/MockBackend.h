@@ -24,8 +24,7 @@
 
 using namespace data;
 
-struct MockBackend : public BackendInterface
-{
+struct MockBackend : public BackendInterface {
     MockBackend(util::Config)
     {
     }
@@ -34,31 +33,36 @@ struct MockBackend : public BackendInterface
         std::optional<ripple::LedgerInfo>,
         fetchLedgerBySequence,
         (std::uint32_t const, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::optional<ripple::LedgerInfo>,
         fetchLedgerByHash,
         (ripple::uint256 const&, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::optional<std::uint32_t>,
         fetchLatestLedgerSequence,
         (boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::optional<TransactionAndMetadata>,
         fetchTransaction,
         (ripple::uint256 const&, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::vector<TransactionAndMetadata>,
         fetchTransactions,
         (std::vector<ripple::uint256> const&, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         TransactionsAndCursor,
@@ -68,25 +72,29 @@ struct MockBackend : public BackendInterface
          bool,
          std::optional<TransactionsCursor> const&,
          boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::vector<TransactionAndMetadata>,
         fetchAllTransactionsInLedger,
         (std::uint32_t const, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::vector<ripple::uint256>,
         fetchAllTransactionHashesInLedger,
         (std::uint32_t const, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::optional<NFT>,
         fetchNFT,
         (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         TransactionsAndCursor,
@@ -96,31 +104,36 @@ struct MockBackend : public BackendInterface
          bool const,
          std::optional<TransactionsCursor> const&,
          boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::vector<Blob>,
         doFetchLedgerObjects,
         (std::vector<ripple::uint256> const&, std::uint32_t const, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::optional<Blob>,
         doFetchLedgerObject,
         (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::vector<LedgerObject>,
         fetchLedgerDiff,
         (std::uint32_t const, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(
         std::optional<ripple::uint256>,
         doFetchSuccessorKey,
         (ripple::uint256, std::uint32_t const, boost::asio::yield_context),
-        (const, override));
+        (const, override)
+    );
 
     MOCK_METHOD(std::optional<LedgerRange>, hardFetchLedgerRange, (boost::asio::yield_context), (const, override));
 
@@ -132,13 +145,14 @@ struct MockBackend : public BackendInterface
         void,
         writeTransaction,
         (std::string&&, std::uint32_t const, std::uint32_t const, std::string&&, std::string&&),
-        (override));
+        (override)
+    );
 
-    MOCK_METHOD(void, writeNFTs, (std::vector<NFTsData> &&), (override));
+    MOCK_METHOD(void, writeNFTs, (std::vector<NFTsData>&&), (override));
 
-    MOCK_METHOD(void, writeAccountTransactions, (std::vector<AccountTransactionsData> &&), (override));
+    MOCK_METHOD(void, writeAccountTransactions, (std::vector<AccountTransactionsData>&&), (override));
 
-    MOCK_METHOD(void, writeNFTTransactions, (std::vector<NFTTransactionsData> &&), (override));
+    MOCK_METHOD(void, writeNFTTransactions, (std::vector<NFTTransactionsData>&&), (override));
 
     MOCK_METHOD(void, writeSuccessor, (std::string && key, std::uint32_t const, std::string&&), (override));
 

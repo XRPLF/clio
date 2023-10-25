@@ -32,8 +32,7 @@ class BaseDOSGuard;
 /**
  * @brief Sweep handler using a steady_timer and boost::asio::io_context.
  */
-class IntervalSweepHandler
-{
+class IntervalSweepHandler {
     std::chrono::milliseconds sweepInterval_;
     std::reference_wrapper<boost::asio::io_context> ctx_;
     boost::asio::steady_timer timer_;

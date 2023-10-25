@@ -26,7 +26,8 @@ AccountLinesHandler::addLine(
     std::vector<LineResponse>& lines,
     ripple::SLE const& lineSle,
     ripple::AccountID const& account,
-    std::optional<ripple::AccountID> const& peerAccount)
+    std::optional<ripple::AccountID> const& peerAccount
+)
 {
     auto const flags = lineSle.getFieldU32(ripple::sfFlags);
     auto const lowLimit = lineSle.getFieldAmount(ripple::sfLowLimit);
@@ -94,7 +95,8 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -113,17 +115,12 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
     response.lines.reserve(input.limit);
 
     auto const addToResponse = [&](ripple::SLE&& sle) {
-        if (sle.getType() == ripple::ltRIPPLE_STATE)
-        {
+        if (sle.getType() == ripple::ltRIPPLE_STATE) {
             auto ignore = false;
-            if (input.ignoreDefault)
-            {
-                if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() == accountID)
-                {
+            if (input.ignoreDefault) {
+                if (sle.getFieldAmount(ripple::sfLowLimit).getIssuer() == accountID) {
                     ignore = ((sle.getFieldU32(ripple::sfFlags) & ripple::lsfLowReserve) == 0u);
-                }
-                else
-                {
+                } else {
                     ignore = ((sle.getFieldU32(ripple::sfFlags) & ripple::lsfHighReserve) == 0u);
                 }
             }
@@ -134,7 +131,8 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
     };
 
     auto const next = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
+    );
 
     if (auto status = std::get_if<Status>(&next))
         return Error{*status};
@@ -175,14 +173,10 @@ tag_invoke(boost::json::value_to_tag<AccountLinesHandler::Input>, boost::json::v
     if (jsonObject.contains(JS(ignore_default)))
         input.ignoreDefault = jv.at(JS(ignore_default)).as_bool();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        }
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
         }
     }
@@ -214,7 +208,8 @@ void
 tag_invoke(
     boost::json::value_from_tag,
     boost::json::value& jv,
-    [[maybe_unused]] AccountLinesHandler::LineResponse const& line)
+    [[maybe_unused]] AccountLinesHandler::LineResponse const& line
+)
 {
     auto obj = boost::json::object{
         {JS(account), line.account},

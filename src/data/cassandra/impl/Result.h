@@ -44,8 +44,7 @@ extractColumn(CassRow const* row, std::size_t idx)
     Type output;
 
     auto throwErrorIfNeeded = [](CassError rc, std::string_view label) {
-        if (rc != CASS_OK)
-        {
+        if (rc != CASS_OK) {
             auto const tag = '[' + std::string{label} + ']';
             throw std::logic_error(tag + ": " + cass_error_desc(rc));
         }
@@ -55,60 +54,46 @@ extractColumn(CassRow const* row, std::size_t idx)
     using UintTupleType = std::tuple<uint32_t, uint32_t>;
     using UCharVectorType = std::vector<unsigned char>;
 
-    if constexpr (std::is_same_v<DecayedType, ripple::uint256>)
-    {
+    if constexpr (std::is_same_v<DecayedType, ripple::uint256>) {
         cass_byte_t const* buf = nullptr;
         std::size_t bufSize = 0;
         auto const rc = cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
         throwErrorIfNeeded(rc, "Extract ripple::uint256");
         output = ripple::uint256::fromVoid(buf);
-    }
-    else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>)
-    {
+    } else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>) {
         cass_byte_t const* buf = nullptr;
         std::size_t bufSize = 0;
         auto const rc = cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
         throwErrorIfNeeded(rc, "Extract ripple::AccountID");
         output = ripple::AccountID::fromVoid(buf);
-    }
-    else if constexpr (std::is_same_v<DecayedType, UCharVectorType>)
-    {
+    } else if constexpr (std::is_same_v<DecayedType, UCharVectorType>) {
         cass_byte_t const* buf = nullptr;
         std::size_t bufSize = 0;
         auto const rc = cass_value_get_bytes(cass_row_get_column(row, idx), &buf, &bufSize);
         throwErrorIfNeeded(rc, "Extract vector<unsigned char>");
         output = UCharVectorType{buf, buf + bufSize};
-    }
-    else if constexpr (std::is_same_v<DecayedType, UintTupleType>)
-    {
+    } else if constexpr (std::is_same_v<DecayedType, UintTupleType>) {
         auto const* tuple = cass_row_get_column(row, idx);
         output = TupleIterator::fromTuple(tuple).extract<uint32_t, uint32_t>();
-    }
-    else if constexpr (std::is_convertible_v<DecayedType, std::string>)
-    {
+    } else if constexpr (std::is_convertible_v<DecayedType, std::string>) {
         char const* value = nullptr;
         std::size_t len = 0;
         auto const rc = cass_value_get_string(cass_row_get_column(row, idx), &value, &len);
         throwErrorIfNeeded(rc, "Extract string");
         output = std::string{value, len};
-    }
-    else if constexpr (std::is_same_v<DecayedType, bool>)
-    {
+    } else if constexpr (std::is_same_v<DecayedType, bool>) {
         cass_bool_t flag = cass_bool_t::cass_false;
         auto const rc = cass_value_get_bool(cass_row_get_column(row, idx), &flag);
         throwErrorIfNeeded(rc, "Extract bool");
         output = flag != cass_bool_t::cass_false;
     }
     // clio only uses bigint (int64_t) so we convert any incoming type
-    else if constexpr (std::is_convertible_v<DecayedType, int64_t>)
-    {
+    else if constexpr (std::is_convertible_v<DecayedType, int64_t>) {
         int64_t out = 0;
         auto const rc = cass_value_get_int64(cass_row_get_column(row, idx), &out);
         throwErrorIfNeeded(rc, "Extract int64");
         output = static_cast<DecayedType>(out);
-    }
-    else
-    {
+    } else {
         // type not supported for extraction
         static_assert(unsupported_v<DecayedType>);
     }
@@ -116,8 +101,7 @@ extractColumn(CassRow const* row, std::size_t idx)
     return output;
 }
 
-struct Result : public ManagedObject<CassResult const>
-{
+struct Result : public ManagedObject<CassResult const> {
     /* implicit */ Result(CassResult const* ptr);
 
     [[nodiscard]] std::size_t
@@ -128,7 +112,8 @@ struct Result : public ManagedObject<CassResult const>
 
     template <typename... RowTypes>
     std::optional<std::tuple<RowTypes...>>
-    get() const requires(std::tuple_size<std::tuple<RowTypes...>>{} > 1)
+    get() const
+        requires(std::tuple_size<std::tuple<RowTypes...>>{} > 1)
     {
         // row managed internally by cassandra driver, hence no ManagedObject.
         auto const* row = cass_result_first_row(*this);
@@ -153,8 +138,7 @@ struct Result : public ManagedObject<CassResult const>
     }
 };
 
-class ResultIterator : public ManagedObject<CassIterator>
-{
+class ResultIterator : public ManagedObject<CassIterator> {
     bool hasMore_ = false;
 
 public:
@@ -185,17 +169,13 @@ public:
 };
 
 template <typename... Types>
-class ResultExtractor
-{
+class ResultExtractor {
     std::reference_wrapper<Result const> ref_;
 
 public:
-    struct Sentinel
-    {
-    };
+    struct Sentinel {};
 
-    struct Iterator
-    {
+    struct Iterator {
         using iterator_category = std::input_iterator_tag;
         using difference_type = std::size_t;  // rows count
         using value_type = std::tuple<Types...>;

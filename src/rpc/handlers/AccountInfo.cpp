@@ -30,7 +30,8 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -57,8 +58,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
         rpc::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, rpc::Amendments::Clawback);
 
     // Return SignerList(s) if that is requested.
-    if (input.signerLists)
-    {
+    if (input.signerLists) {
         // We put the SignerList in an array because of an anticipated
         // future when we support multiple signer lists on one account.
         auto const signersKey = ripple::keylet::signers(*accountID);
@@ -68,8 +68,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
         auto const signers = sharedPtrBackend_->fetchLedgerObject(signersKey.key, lgrInfo.seq, ctx.yield);
         std::vector<ripple::STLedgerEntry> signerList;
 
-        if (signers)
-        {
+        if (signers) {
             ripple::STLedgerEntry const sleSigners{
                 ripple::SerialIter{signers->data(), signers->size()}, signersKey.key};
 
@@ -86,11 +85,13 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
             isDisallowIncomingEnabled,
             isClawbackEnabled,
             ctx.apiVersion,
-            signerList);
+            signerList
+        );
     }
 
     return Output(
-        lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled, ctx.apiVersion);
+        lgrInfo.seq, ripple::strHex(lgrInfo.hash), sle, isDisallowIncomingEnabled, isClawbackEnabled, ctx.apiVersion
+    );
 }
 
 void
@@ -115,8 +116,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         {"requireDestinationTag", ripple::lsfRequireDestTag},
     }};
 
-    if (output.isDisallowIncomingEnabled)
-    {
+    if (output.isDisallowIncomingEnabled) {
         std::vector<std::pair<std::string_view, ripple::LedgerSpecificFlags>> const disallowIncomingFlags = {
             {"disallowIncomingNFTokenOffer", ripple::lsfDisallowIncomingNFTokenOffer},
             {"disallowIncomingCheck", ripple::lsfDisallowIncomingCheck},
@@ -126,8 +126,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         lsFlags.insert(lsFlags.end(), disallowIncomingFlags.begin(), disallowIncomingFlags.end());
     }
 
-    if (output.isClawbackEnabled)
-    {
+    if (output.isClawbackEnabled) {
         lsFlags.emplace_back("allowTrustLineClawback", ripple::lsfAllowTrustLineClawback);
     }
 
@@ -137,20 +136,17 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
 
     jv.as_object()[JS(account_flags)] = std::move(acctFlags);
 
-    if (output.signerLists)
-    {
+    if (output.signerLists) {
         auto signers = boost::json::array();
         std::transform(
             std::cbegin(output.signerLists.value()),
             std::cend(output.signerLists.value()),
             std::back_inserter(signers),
-            [](auto const& signerList) { return toJson(signerList); });
-        if (output.apiVersion == 1)
-        {
+            [](auto const& signerList) { return toJson(signerList); }
+        );
+        if (output.apiVersion == 1) {
             jv.as_object()[JS(account_data)].as_object()[JS(signer_lists)] = std::move(signers);
-        }
-        else
-        {
+        } else {
             jv.as_object()[JS(signer_lists)] = signers;
         }
     }
@@ -171,14 +167,10 @@ tag_invoke(boost::json::value_to_tag<AccountInfoHandler::Input>, boost::json::va
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        }
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }
     }

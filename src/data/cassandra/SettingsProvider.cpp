@@ -35,11 +35,11 @@ namespace detail {
 inline Settings::ContactPoints
 tag_invoke(boost::json::value_to_tag<Settings::ContactPoints>, boost::json::value const& value)
 {
-    if (not value.is_object())
-    {
+    if (not value.is_object()) {
         throw std::runtime_error(
             "Feed entire Cassandra section to parse "
-            "Settings::ContactPoints instead");
+            "Settings::ContactPoints instead"
+        );
     }
 
     util::Config const obj{value};
@@ -79,18 +79,15 @@ SettingsProvider::getSettings() const
 std::optional<std::string>
 SettingsProvider::parseOptionalCertificate() const
 {
-    if (auto const certPath = config_.maybeValue<std::string>("certfile"); certPath)
-    {
+    if (auto const certPath = config_.maybeValue<std::string>("certfile"); certPath) {
         auto const path = std::filesystem::path(*certPath);
         std::ifstream fileStream(path.string(), std::ios::in);
-        if (!fileStream)
-        {
+        if (!fileStream) {
             throw std::system_error(errno, std::generic_category(), "Opening certificate " + path.string());
         }
 
         std::string contents(std::istreambuf_iterator<char>{fileStream}, std::istreambuf_iterator<char>{});
-        if (fileStream.bad())
-        {
+        if (fileStream.bad()) {
             throw std::system_error(errno, std::generic_category(), "Reading certificate " + path.string());
         }
 
@@ -104,12 +101,9 @@ Settings
 SettingsProvider::parseSettings() const
 {
     auto settings = Settings::defaultSettings();
-    if (auto const bundle = config_.maybeValue<Settings::SecureConnectionBundle>("secure_connect_bundle"); bundle)
-    {
+    if (auto const bundle = config_.maybeValue<Settings::SecureConnectionBundle>("secure_connect_bundle"); bundle) {
         settings.connectionInfo = *bundle;
-    }
-    else
-    {
+    } else {
         settings.connectionInfo =
             config_.valueOrThrow<Settings::ContactPoints>("Missing contact_points in Cassandra config");
     }

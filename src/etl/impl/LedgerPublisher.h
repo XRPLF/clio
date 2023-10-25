@@ -44,8 +44,7 @@ namespace etl::detail {
  * strand is used to ensure ledgers are published in order.
  */
 template <typename SubscriptionManagerType, typename CacheType>
-class LedgerPublisher
-{
+class LedgerPublisher {
     util::Logger log_{"ETL"};
 
     boost::asio::strand<boost::asio::io_context::executor_type> publishStrand_;
@@ -73,7 +72,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         CacheType& cache,
         std::shared_ptr<SubscriptionManagerType> subscriptions,
-        SystemState const& state)
+        SystemState const& state
+    )
         : publishStrand_{boost::asio::make_strand(ioc)}
         , backend_{std::move(backend)}
         , cache_{cache}
@@ -95,20 +95,17 @@ public:
     {
         LOG(log_.info()) << "Attempting to publish ledger = " << ledgerSequence;
         size_t numAttempts = 0;
-        while (not state_.get().isStopping)
-        {
+        while (not state_.get().isStopping) {
             auto range = backend_->hardFetchLedgerRangeNoThrow();
 
-            if (!range || range->maxSequence < ledgerSequence)
-            {
+            if (!range || range->maxSequence < ledgerSequence) {
                 ++numAttempts;
                 LOG(log_.debug()) << "Trying to publish. Could not find "
                                      "ledger with sequence = "
                                   << ledgerSequence;
 
                 // We try maxAttempts times to publish the ledger, waiting one second in between each attempt.
-                if (maxAttempts && numAttempts >= maxAttempts)
-                {
+                if (maxAttempts && numAttempts >= maxAttempts) {
                     LOG(log_.debug()) << "Failed to publish ledger after " << numAttempts << " attempts.";
                     return false;
                 }
@@ -116,8 +113,9 @@ public:
                 continue;
             }
 
-            auto lgr = data::synchronousAndRetryOnTimeout(
-                [&](auto yield) { return backend_->fetchLedgerBySequence(ledgerSequence, yield); });
+            auto lgr = data::synchronousAndRetryOnTimeout([&](auto yield) {
+                return backend_->fetchLedgerBySequence(ledgerSequence, yield);
+            });
 
             assert(lgr);
             publish(*lgr);
@@ -140,12 +138,12 @@ public:
         boost::asio::post(publishStrand_, [this, lgrInfo = lgrInfo]() {
             LOG(log_.info()) << "Publishing ledger " << std::to_string(lgrInfo.seq);
 
-            if (!state_.get().isWriting)
-            {
+            if (!state_.get().isWriting) {
                 LOG(log_.info()) << "Updating cache";
 
-                std::vector<data::LedgerObject> const diff = data::synchronousAndRetryOnTimeout(
-                    [&](auto yield) { return backend_->fetchLedgerDiff(lgrInfo.seq, yield); });
+                std::vector<data::LedgerObject> const diff = data::synchronousAndRetryOnTimeout([&](auto yield) {
+                    return backend_->fetchLedgerDiff(lgrInfo.seq, yield);
+                });
 
                 cache_.get().update(diff, lgrInfo.seq);
                 backend_->updateRange(lgrInfo.seq);
@@ -157,14 +155,16 @@ public:
             // if the ledger closed over MAX_LEDGER_AGE_SECONDS ago, assume we are still catching up and don't publish
             // TODO: this probably should be a strategy
             static constexpr std::uint32_t MAX_LEDGER_AGE_SECONDS = 600;
-            if (age < MAX_LEDGER_AGE_SECONDS)
-            {
-                std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout(
-                    [&](auto yield) { return backend_->fetchFees(lgrInfo.seq, yield); });
+            if (age < MAX_LEDGER_AGE_SECONDS) {
+                std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout([&](auto yield) {
+                    return backend_->fetchFees(lgrInfo.seq, yield);
+                });
                 assert(fees);
 
-                std::vector<data::TransactionAndMetadata> transactions = data::synchronousAndRetryOnTimeout(
-                    [&](auto yield) { return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield); });
+                std::vector<data::TransactionAndMetadata> transactions =
+                    data::synchronousAndRetryOnTimeout([&](auto yield) {
+                        return backend_->fetchAllTransactionsInLedger(lgrInfo.seq, yield);
+                    });
 
                 auto const ledgerRange = backend_->fetchLedgerRange();
                 assert(ledgerRange);
@@ -191,8 +191,7 @@ public:
 
                 setLastPublishTime();
                 LOG(log_.info()) << "Published ledger " << std::to_string(lgrInfo.seq);
-            }
-            else
+            } else
                 LOG(log_.info()) << "Skipping publishing ledger " << std::to_string(lgrInfo.seq);
         });
 

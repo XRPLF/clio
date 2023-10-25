@@ -25,16 +25,15 @@ namespace util::prometheus {
 /**
  * @brief Class representing a Prometheus label
  */
-class Label
-{
+class Label {
 public:
     Label(std::string name, std::string value);
 
     bool
-    operator<(const Label& rhs) const;
+    operator<(Label const& rhs) const;
 
     bool
-    operator==(const Label& rhs) const;
+    operator==(Label const& rhs) const;
 
     /**
      * @brief Serialize the label to a string in Prometheus format (e.g. name="value"). The value is escaped
@@ -52,8 +51,7 @@ private:
 /**
  * @brief Class representing a collection of Prometheus labels
  */
-class Labels
-{
+class Labels {
 public:
     Labels() = default;
     explicit Labels(std::vector<Label> labels);

@@ -48,8 +48,7 @@ template <
     typename StatementType,
     typename HandleType = Handle,
     SomeRetryPolicy RetryPolicyType = ExponentialBackoffRetryPolicy>
-class AsyncExecutor : public std::enable_shared_from_this<AsyncExecutor<StatementType, HandleType, RetryPolicyType>>
-{
+class AsyncExecutor : public std::enable_shared_from_this<AsyncExecutor<StatementType, HandleType, RetryPolicyType>> {
     using FutureWithCallbackType = typename HandleType::FutureWithCallbackType;
     using CallbackType = std::function<void(typename HandleType::ResultOrErrorType)>;
     using RetryCallbackType = std::function<void()>;
@@ -77,13 +76,13 @@ public:
         RetryCallbackType&& onRetry)
     {
         // this is a helper that allows us to use std::make_shared below
-        struct EnableMakeShared : public AsyncExecutor<StatementType, HandleType, RetryPolicyType>
-        {
+        struct EnableMakeShared : public AsyncExecutor<StatementType, HandleType, RetryPolicyType> {
             EnableMakeShared(
                 boost::asio::io_context& ioc,
                 StatementType&& data,
                 CallbackType&& onComplete,
-                RetryCallbackType&& onRetry)
+                RetryCallbackType&& onRetry
+            )
                 : AsyncExecutor(ioc, std::move(data), std::move(onComplete), std::move(onRetry))
             {
             }
@@ -98,7 +97,8 @@ private:
         boost::asio::io_context& ioc,
         StatementType&& data,
         CallbackType&& onComplete,
-        RetryCallbackType&& onRetry)
+        RetryCallbackType&& onRetry
+    )
         : data_{std::move(data)}, retryPolicy_{ioc}, onComplete_{std::move(onComplete)}, onRetry_{std::move(onRetry)}
     {
     }
@@ -110,19 +110,13 @@ private:
 
         // lifetime is extended by capturing self ptr
         auto handler = [this, &handle, self](auto&& res) mutable {
-            if (res)
-            {
+            if (res) {
                 onComplete_(std::forward<decltype(res)>(res));
-            }
-            else
-            {
-                if (retryPolicy_.shouldRetry(res.error()))
-                {
+            } else {
+                if (retryPolicy_.shouldRetry(res.error())) {
                     onRetry_();
                     retryPolicy_.retry([self, &handle]() { self->execute(handle); });
-                }
-                else
-                {
+                } else {
                     onComplete_(std::forward<decltype(res)>(res));  // report error
                 }
             }

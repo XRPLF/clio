@@ -27,8 +27,7 @@
 using namespace data;
 using namespace util::prometheus;
 
-struct BackendCountersTest : WithPrometheus
-{
+struct BackendCountersTest : WithPrometheus {
     static boost::json::object
     emptyReport()
     {
@@ -187,8 +186,7 @@ TEST_F(BackendCountersTest, RegisterReadError)
     EXPECT_EQ(counters->report(), expectedReport);
 }
 
-struct BackendCountersMockPrometheusTest : WithMockPrometheus
-{
+struct BackendCountersMockPrometheusTest : WithMockPrometheus {
     BackendCounters::PtrType const counters = BackendCounters::make();
 };
 

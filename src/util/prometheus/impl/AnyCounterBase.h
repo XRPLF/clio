@@ -25,21 +25,19 @@
 namespace util::prometheus::impl {
 
 template <SomeNumberType NumberType>
-class AnyCounterBase
-{
+class AnyCounterBase {
 public:
     using ValueType = NumberType;
 
     template <SomeCounterImpl ImplType = CounterImpl<ValueType>>
-    requires std::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
+        requires std::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
     AnyCounterBase(ImplType&& impl = ImplType{})
         : pimpl_(std::make_unique<Model<ImplType>>(std::forward<ImplType>(impl)))
     {
     }
 
 protected:
-    struct Concept
-    {
+    struct Concept {
         virtual ~Concept() = default;
 
         virtual void add(ValueType) = 0;
@@ -51,8 +49,7 @@ protected:
     };
 
     template <SomeCounterImpl ImplType>
-    struct Model : Concept
-    {
+    struct Model : Concept {
         Model(ImplType impl) : impl_(std::forward<ImplType>(impl))
         {
         }

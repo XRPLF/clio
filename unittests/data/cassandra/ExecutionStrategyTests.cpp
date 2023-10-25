@@ -28,11 +28,9 @@ using namespace data::cassandra;
 using namespace data::cassandra::detail;
 using namespace testing;
 
-class BackendCassandraExecutionStrategyTest : public SyncAsioContextTest
-{
+class BackendCassandraExecutionStrategyTest : public SyncAsioContextTest {
 protected:
-    class MockBackendCounters
-    {
+    class MockBackendCounters {
     public:
         using PtrType = std::shared_ptr<StrictMock<MockBackendCounters>>;
         static PtrType
@@ -173,7 +171,8 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineSuccessful)
             return FakeFutureWithCallback{};
         });
     EXPECT_CALL(
-        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>()))
+        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
+    )
         .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadFinishedImpl(NUM_STATEMENTS));
@@ -196,7 +195,8 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineThrowsOnTimeou
             return FakeFutureWithCallback{res};
         });
     EXPECT_CALL(
-        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>()))
+        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
+    )
         .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadErrorImpl(NUM_STATEMENTS));
@@ -219,7 +219,8 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineThrowsOnInvali
             return FakeFutureWithCallback{res};
         });
     EXPECT_CALL(
-        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>()))
+        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
+    )
         .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadErrorImpl(NUM_STATEMENTS));
@@ -244,7 +245,8 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineMarksBusyIfReq
             return FakeFutureWithCallback{};
         });
     EXPECT_CALL(
-        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>()))
+        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
+    )
         .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadFinishedImpl(NUM_STATEMENTS));
@@ -270,7 +272,9 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineSuccessful)
         handle,
         asyncExecute(
             A<FakeStatement const&>(),
-            A<std::function<void(FakeResultOrError)>&&>()))
+            A<std::function<void(FakeResultOrError)>&&>()
+        )
+    )
         .Times(NUM_STATEMENTS);  // once per statement
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadFinishedImpl(NUM_STATEMENTS));
@@ -289,12 +293,9 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineThrowsOnFailure
 
     ON_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
         .WillByDefault([&callCount](auto const&, auto&& cb) {
-            if (callCount == 1)
-            {  // error happens on one of the entries
+            if (callCount == 1) {  // error happens on one of the entries
                 cb({CassandraError{"invalid data", CASS_ERROR_LIB_INVALID_DATA}});
-            }
-            else
-            {
+            } else {
                 cb({});  // pretend we got data
             }
             ++callCount;
@@ -304,7 +305,9 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineThrowsOnFailure
         handle,
         asyncExecute(
             A<FakeStatement const&>(),
-            A<std::function<void(FakeResultOrError)>&&>()))
+            A<std::function<void(FakeResultOrError)>&&>()
+        )
+    )
         .Times(NUM_STATEMENTS);  // once per statement
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadErrorImpl(1));
@@ -368,7 +371,9 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteMultipleAndCallSyncSucceeds)
         handle,
         asyncExecute(
             A<std::vector<FakeStatement> const&>(),
-            A<std::function<void(FakeResultOrError)>&&>()))
+            A<std::function<void(FakeResultOrError)>&&>()
+        )
+    )
         .Times(totalRequests);  // one per write call
     EXPECT_CALL(*counters, registerWriteStarted()).Times(totalRequests);
     EXPECT_CALL(*counters, registerWriteFinished()).Times(totalRequests);

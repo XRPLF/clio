@@ -34,10 +34,8 @@ namespace data {
 /**
  * @brief Cache for an entire ledger.
  */
-class LedgerCache
-{
-    struct CacheEntry
-    {
+class LedgerCache {
+    struct CacheEntry {
         uint32_t seq = 0;
         Blob blob;
     };
@@ -46,19 +44,23 @@ class LedgerCache
     util::prometheus::CounterInt& objectReqCounter_{PROMETHEUS().counterInt(
         "ledger_cache_counter_total_number",
         util::prometheus::Labels({{"type", "request"}, {"fetch", "ledger_objects"}}),
-        "LedgerCache statistics")};
+        "LedgerCache statistics"
+    )};
     util::prometheus::CounterInt& objectHitCounter_{PROMETHEUS().counterInt(
         "ledger_cache_counter_total_number",
-        util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "ledger_objects"}}))};
+        util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "ledger_objects"}})
+    )};
 
     // counters for fetchSuccessorKey hit rate
     util::prometheus::CounterInt& successorReqCounter_{PROMETHEUS().counterInt(
         "ledger_cache_counter_total_number",
         util::prometheus::Labels({{"type", "request"}, {"fetch", "successor_key"}}),
-        "ledgerCache")};
+        "ledgerCache"
+    )};
     util::prometheus::CounterInt& successorHitCounter_{PROMETHEUS().counterInt(
         "ledger_cache_counter_total_number",
-        util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "successor_key"}}))};
+        util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "successor_key"}})
+    )};
 
     std::map<ripple::uint256, CacheEntry> map_;
 

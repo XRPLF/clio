@@ -52,8 +52,7 @@ enum class ClioError {
 };
 
 /** @brief Holds info about a particular @ref ClioError. */
-struct ClioErrorInfo
-{
+struct ClioErrorInfo {
     ClioError const code;
     std::string_view const error;
     std::string_view const message;
@@ -71,8 +70,7 @@ using RippledError = ripple::error_code_i;
 using CombinedError = std::variant<RippledError, ClioError>;
 
 /** @brief A status returned from any RPC handler. */
-struct Status
-{
+struct Status {
     CombinedError code = RippledError::rpcSUCCESS;
     std::string error;
     std::string message;
@@ -141,8 +139,7 @@ struct Status
 enum WarningCode { warnUNKNOWN = -1, warnRPC_CLIO = 2001, warnRPC_OUTDATED = 2002, warnRPC_RATE_LIMIT = 2003 };
 
 /** @brief Holds information about a clio warning. */
-struct WarningInfo
-{
+struct WarningInfo {
     constexpr WarningInfo() = default;
     constexpr WarningInfo(WarningCode code, char const* message) : code(code), message(message)
     {
@@ -153,8 +150,7 @@ struct WarningInfo
 };
 
 /** @brief Invalid parameters error. */
-class InvalidParamsError : public std::exception
-{
+class InvalidParamsError : public std::exception {
     std::string msg;
 
 public:
@@ -162,7 +158,7 @@ public:
     {
     }
 
-    const char*
+    char const*
     what() const throw() override
     {
         return msg.c_str();
@@ -170,8 +166,7 @@ public:
 };
 
 /** @brief Account not found error. */
-class AccountNotFoundError : public std::exception
-{
+class AccountNotFoundError : public std::exception {
     std::string account;
 
 public:
@@ -179,7 +174,7 @@ public:
     {
     }
 
-    const char*
+    char const*
     what() const throw() override
     {
         return account.c_str();
@@ -235,7 +230,8 @@ boost::json::object
 makeError(
     RippledError err,
     std::optional<std::string_view> customError = std::nullopt,
-    std::optional<std::string_view> customMessage = std::nullopt);
+    std::optional<std::string_view> customMessage = std::nullopt
+);
 
 /**
  * @brief Generate JSON from a @ref rpc::ClioError.
@@ -247,6 +243,7 @@ boost::json::object
 makeError(
     ClioError err,
     std::optional<std::string_view> customError = std::nullopt,
-    std::optional<std::string_view> customMessage = std::nullopt);
+    std::optional<std::string_view> customMessage = std::nullopt
+);
 
 }  // namespace rpc

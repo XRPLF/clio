@@ -34,11 +34,10 @@ MetricBase::serialize(std::string& s) const
     serializeValue(s);
 }
 
-const char*
+char const*
 toString(MetricType type)
 {
-    switch (type)
-    {
+    switch (type) {
         case MetricType::COUNTER_INT:
             [[fallthrough]];
         case MetricType::COUNTER_DOUBLE:
@@ -57,13 +56,13 @@ toString(MetricType type)
     return "";
 }
 
-const std::string&
+std::string const&
 MetricBase::name() const
 {
     return name_;
 }
 
-const std::string&
+std::string const&
 MetricBase::labelsString() const
 {
     return labelsString_;
@@ -71,8 +70,7 @@ MetricBase::labelsString() const
 
 MetricsFamily::MetricBuilder MetricsFamily::defaultMetricBuilder =
     [](std::string name, std::string labelsString, MetricType type) -> std::unique_ptr<MetricBase> {
-    switch (type)
-    {
+    switch (type) {
         case MetricType::COUNTER_INT:
             return std::make_unique<CounterInt>(name, labelsString);
         case MetricType::COUNTER_DOUBLE:
@@ -95,7 +93,8 @@ MetricsFamily::MetricsFamily(
     std::string name,
     std::optional<std::string> description,
     MetricType type,
-    MetricBuilder& metricBuilder)
+    MetricBuilder& metricBuilder
+)
     : name_(std::move(name)), description_(std::move(description)), type_(type), metricBuilder_(metricBuilder)
 {
 }
@@ -105,8 +104,7 @@ MetricsFamily::getMetric(Labels labels)
 {
     auto labelsString = labels.serialize();
     auto it = metrics_.find(labelsString);
-    if (it == metrics_.end())
-    {
+    if (it == metrics_.end()) {
         auto metric = metricBuilder_(name(), labelsString, type());
         auto [it2, success] = metrics_.emplace(std::move(labelsString), std::move(metric));
         it = it2;
@@ -121,15 +119,14 @@ MetricsFamily::serialize(std::string& result) const
         fmt::format_to(std::back_inserter(result), "# HELP {} {}\n", name_, *description_);
     fmt::format_to(std::back_inserter(result), "# TYPE {} {}\n", name_, toString(type()));
 
-    for (const auto& [labelsString, metric] : metrics_)
-    {
+    for (auto const& [labelsString, metric] : metrics_) {
         metric->serialize(result);
         result.push_back('\n');
     }
     result.push_back('\n');
 }
 
-const std::string&
+std::string const&
 MetricsFamily::name() const
 {
     return name_;

@@ -38,8 +38,7 @@ namespace rpc {
 /**
  * @brief An asynchronous, thread-safe queue for RPC requests.
  */
-class WorkQueue
-{
+class WorkQueue {
     // these are cumulative for the lifetime of the process
     util::prometheus::CounterInt& queued_;
     util::prometheus::CounterInt& durationUs_;
@@ -91,8 +90,7 @@ public:
     bool
     postCoro(FnType&& func, bool isWhiteListed)
     {
-        if (curSize_.value() >= maxSize_ && !isWhiteListed)
-        {
+        if (curSize_.value() >= maxSize_ && !isWhiteListed) {
             LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << curSize_.value()
                              << "; max size = " << maxSize_;
             return false;
@@ -114,7 +112,8 @@ public:
 
                 func(yield);
                 --curSize_;
-            });
+            }
+        );
 
         return true;
     }

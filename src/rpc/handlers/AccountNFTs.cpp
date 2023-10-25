@@ -29,7 +29,8 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -59,12 +60,10 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
     std::optional<ripple::SLE const> page{ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}};
     auto numPages = 0u;
 
-    while (page)
-    {
+    while (page) {
         auto const arr = page->getFieldArray(ripple::sfNFTokens);
 
-        for (auto const& nft : arr)
-        {
+        for (auto const& nft : arr) {
             auto const nftokenID = nft[ripple::sfNFTokenID];
 
             response.nfts.push_back(toBoostJson(nft.getJson(ripple::JsonOptions::none)));
@@ -81,20 +80,16 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
         }
 
         ++numPages;
-        if (auto const npm = (*page)[~ripple::sfPreviousPageMin])
-        {
+        if (auto const npm = (*page)[~ripple::sfPreviousPageMin]) {
             auto const nextKey = ripple::Keylet(ripple::ltNFTOKEN_PAGE, *npm);
-            if (numPages == input.limit)
-            {
+            if (numPages == input.limit) {
                 response.marker = to_string(nextKey.key);
                 return response;
             }
 
             auto const nextBlob = sharedPtrBackend_->fetchLedgerObject(nextKey.key, lgrInfo.seq, ctx.yield);
             page.emplace(ripple::SLE{ripple::SerialIter{nextBlob->data(), nextBlob->size()}, nextKey.key});
-        }
-        else
-        {
+        } else {
             page.reset();
         }
     }
@@ -129,14 +124,10 @@ tag_invoke(boost::json::value_to_tag<AccountNFTsHandler::Input>, boost::json::va
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        }
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
         }
     }

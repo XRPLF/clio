@@ -25,10 +25,8 @@
 
 using namespace util::prometheus;
 
-struct AnyGaugeTests : ::testing::Test
-{
-    struct MockGaugeImpl
-    {
+struct AnyGaugeTests : ::testing::Test {
+    struct MockGaugeImpl {
         using ValueType = std::int64_t;
         MOCK_METHOD(void, add, (ValueType));
         MOCK_METHOD(void, set, (ValueType));
@@ -67,8 +65,7 @@ TEST_F(AnyGaugeTests, value)
     EXPECT_EQ(gauge.value(), 42);
 }
 
-struct GaugeIntTests : ::testing::Test
-{
+struct GaugeIntTests : ::testing::Test {
     GaugeInt gauge{"test_Gauge", R"(label1="value1",label2="value2")"};
 };
 
@@ -100,26 +97,22 @@ TEST_F(GaugeIntTests, multithreadAddAndSubstract)
     static constexpr auto numNumberSubstractions = 300;
     static constexpr auto numberToSubstract = 300;
     std::thread thread1([&] {
-        for (int i = 0; i < numAdditions; ++i)
-        {
+        for (int i = 0; i < numAdditions; ++i) {
             ++gauge;
         }
     });
     std::thread thread2([&] {
-        for (int i = 0; i < numNumberAdditions; ++i)
-        {
+        for (int i = 0; i < numNumberAdditions; ++i) {
             gauge += numberToAdd;
         }
     });
     std::thread thread3([&] {
-        for (int i = 0; i < numSubstractions; ++i)
-        {
+        for (int i = 0; i < numSubstractions; ++i) {
             --gauge;
         }
     });
     std::thread thread4([&] {
-        for (int i = 0; i < numNumberSubstractions; ++i)
-        {
+        for (int i = 0; i < numNumberSubstractions; ++i) {
             gauge -= numberToSubstract;
         }
     });
@@ -129,12 +122,11 @@ TEST_F(GaugeIntTests, multithreadAddAndSubstract)
     thread4.join();
     EXPECT_EQ(
         gauge.value(),
-        numAdditions + numNumberAdditions * numberToAdd - numSubstractions -
-            numNumberSubstractions * numberToSubstract);
+        numAdditions + numNumberAdditions * numberToAdd - numSubstractions - numNumberSubstractions * numberToSubstract
+    );
 }
 
-struct GaugeDoubleTests : ::testing::Test
-{
+struct GaugeDoubleTests : ::testing::Test {
     GaugeDouble gauge{"test_Gauge", R"(label1="value1",label2="value2")"};
 };
 
@@ -166,26 +158,22 @@ TEST_F(GaugeDoubleTests, multithreadAddAndSubstract)
     static constexpr auto numNumberSubstractions = 300;
     static constexpr auto numberToSubstract = 300.321;
     std::thread thread1([&] {
-        for (int i = 0; i < numAdditions; ++i)
-        {
+        for (int i = 0; i < numAdditions; ++i) {
             ++gauge;
         }
     });
     std::thread thread2([&] {
-        for (int i = 0; i < numNumberAdditions; ++i)
-        {
+        for (int i = 0; i < numNumberAdditions; ++i) {
             gauge += numberToAdd;
         }
     });
     std::thread thread3([&] {
-        for (int i = 0; i < numSubstractions; ++i)
-        {
+        for (int i = 0; i < numSubstractions; ++i) {
             --gauge;
         }
     });
     std::thread thread4([&] {
-        for (int i = 0; i < numNumberSubstractions; ++i)
-        {
+        for (int i = 0; i < numNumberSubstractions; ++i) {
             gauge -= numberToSubstract;
         }
     });
@@ -196,5 +184,6 @@ TEST_F(GaugeDoubleTests, multithreadAddAndSubstract)
     EXPECT_NEAR(
         gauge.value(),
         numAdditions + numNumberAdditions * numberToAdd - numSubstractions - numNumberSubstractions * numberToSubstract,
-        1e-9);
+        1e-9
+    );
 }

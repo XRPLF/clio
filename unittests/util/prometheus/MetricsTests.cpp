@@ -30,11 +30,9 @@ TEST(DefaultMetricBuilderTest, build)
     std::string const name = "name";
     std::string const labelsString = "{label1=\"value1\"}";
     for (auto const type :
-         {MetricType::COUNTER_INT, MetricType::COUNTER_DOUBLE, MetricType::GAUGE_INT, MetricType::GAUGE_DOUBLE})
-    {
+         {MetricType::COUNTER_INT, MetricType::COUNTER_DOUBLE, MetricType::GAUGE_INT, MetricType::GAUGE_DOUBLE}) {
         auto metric = MetricsFamily::defaultMetricBuilder(name, labelsString, type);
-        switch (type)
-        {
+        switch (type) {
             case MetricType::COUNTER_INT:
                 EXPECT_NE(dynamic_cast<CounterInt*>(metric.get()), nullptr);
                 break;
@@ -50,25 +48,21 @@ TEST(DefaultMetricBuilderTest, build)
             default:
                 EXPECT_EQ(metric, nullptr);
         }
-        if (metric != nullptr)
-        {
+        if (metric != nullptr) {
             EXPECT_EQ(metric->name(), name);
             EXPECT_EQ(metric->labelsString(), labelsString);
         }
     }
 }
 
-struct MetricsFamilyTest : ::testing::Test
-{
-    struct MetricMock : MetricBase
-    {
+struct MetricsFamilyTest : ::testing::Test {
+    struct MetricMock : MetricBase {
         using MetricBase::MetricBase;
         MOCK_METHOD(void, serializeValue, (std::string&), (const));
     };
     using MetricStrictMock = ::testing::StrictMock<MetricMock>;
 
-    struct MetricBuilderImplMock
-    {
+    struct MetricBuilderImplMock {
         MOCK_METHOD(std::unique_ptr<MetricBase>, build, (std::string, std::string, MetricType));
     };
 

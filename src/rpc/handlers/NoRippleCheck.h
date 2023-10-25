@@ -37,8 +37,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/noripple_check.html
  */
-class NoRippleCheckHandler
-{
+class NoRippleCheckHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
@@ -46,8 +45,7 @@ public:
     static auto constexpr LIMIT_MAX = 500;
     static auto constexpr LIMIT_DEFAULT = 300;
 
-    struct Output
-    {
+    struct Output {
         std::string ledgerHash;
         uint32_t ledgerIndex{};
         std::vector<std::string> problems;
@@ -56,8 +54,7 @@ public:
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         bool roleGateway = false;
         std::optional<std::string> ledgerHash;

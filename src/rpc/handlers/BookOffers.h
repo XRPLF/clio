@@ -32,8 +32,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/book_offers.html
  */
-class BookOffersHandler
-{
+class BookOffersHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
@@ -41,8 +40,7 @@ public:
     static auto constexpr LIMIT_MAX = 100;
     static auto constexpr LIMIT_DEFAULT = 60;
 
-    struct Output
-    {
+    struct Output {
         std::string ledgerHash;
         uint32_t ledgerIndex;
         boost::json::array offers;
@@ -51,8 +49,7 @@ public:
 
     // the taker is not really used in both clio and rippled, both of them return all the offers regardless the funding
     // status
-    struct Input
-    {
+    struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         uint32_t limit = LIMIT_DEFAULT;

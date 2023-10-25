@@ -33,8 +33,7 @@
 namespace rpc::detail {
 
 template <typename LoadBalancerType, typename CountersType, typename HandlerProviderType>
-class ForwardingProxy
-{
+class ForwardingProxy {
     util::Logger log_{"RPC"};
 
     std::shared_ptr<LoadBalancerType> balancer_;
@@ -45,7 +44,8 @@ public:
     ForwardingProxy(
         std::shared_ptr<LoadBalancerType> const& balancer,
         CountersType& counters,
-        std::shared_ptr<HandlerProviderType const> const& handlerProvider)
+        std::shared_ptr<HandlerProviderType const> const& handlerProvider
+    )
         : balancer_{balancer}, counters_{std::ref(counters)}, handlerProvider_{handlerProvider}
     {
     }
@@ -76,8 +76,8 @@ public:
             return ctx.method == "ledger" and
                 ((request.contains("queue") and request.at("queue").is_bool() and request.at("queue").as_bool()) or
                  (request.contains("full") and request.at("full").is_bool() and request.at("full").as_bool()) or
-                 (request.contains("accounts") and request.at("accounts").is_bool() and
-                  request.at("accounts").as_bool()));
+                 (request.contains("accounts") and request.at("accounts").is_bool() and request.at("accounts").as_bool()
+                 ));
         };
 
         return static_cast<bool>(checkAccountInfoForward() or checkLedgerForward());
@@ -90,8 +90,7 @@ public:
         toForward["command"] = ctx.method;
 
         auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
-        if (not res)
-        {
+        if (not res) {
             notifyFailedToForward(ctx.method);
             return Status{RippledError::rpcFAILED_TO_FORWARD};
         }

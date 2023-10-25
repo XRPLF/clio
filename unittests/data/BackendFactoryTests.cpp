@@ -29,8 +29,7 @@ constexpr auto contactPoints = "127.0.0.1";
 constexpr auto keyspace = "factory_test";
 }  // namespace
 
-class BackendCassandraFactoryTest : public SyncAsioContextTest
-{
+class BackendCassandraFactoryTest : public SyncAsioContextTest {
 protected:
     void
     SetUp() override
@@ -45,8 +44,7 @@ protected:
     }
 };
 
-class BackendCassandraFactoryTestWithDB : public BackendCassandraFactoryTest
-{
+class BackendCassandraFactoryTestWithDB : public BackendCassandraFactoryTest {
 protected:
     void
     SetUp() override
@@ -73,7 +71,8 @@ TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
             {
                 "type":"unknown"
             }
-        })")};
+        })"
+    )};
     EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
@@ -93,7 +92,8 @@ TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
             }}
         }})",
         "127.0.0.2",
-        keyspace))};
+        keyspace
+    ))};
     EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
@@ -112,7 +112,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
 
     {
         auto backend = make_Backend(cfg);
@@ -154,7 +155,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmpt
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
     EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
@@ -174,7 +176,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
 
     util::Config const cfgWrite{boost::json::parse(fmt::format(
         R"({{
@@ -190,7 +193,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
 
     EXPECT_TRUE(make_Backend(cfgWrite));
     EXPECT_TRUE(make_Backend(cfgReadOnly));

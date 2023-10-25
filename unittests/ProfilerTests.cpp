@@ -41,8 +41,7 @@ TEST(TimedTest, ReturnVoid)
     ASSERT_NE(time, 0);
 }
 
-struct FunctorTest
-{
+struct FunctorTest {
     void
     operator()() const
     {

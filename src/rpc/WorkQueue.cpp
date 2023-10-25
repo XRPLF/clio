@@ -25,15 +25,18 @@ WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
     : queued_{PROMETHEUS().counterInt(
           "work_queue_queued_total_number",
           util::prometheus::Labels(),
-          "The total number of tasks queued for processing")}
+          "The total number of tasks queued for processing"
+      )}
     , durationUs_{PROMETHEUS().counterInt(
           "work_queue_cumulitive_tasks_duration_us",
           util::prometheus::Labels(),
-          "The total number of microseconds tasks were waiting to be executed")}
+          "The total number of microseconds tasks were waiting to be executed"
+      )}
     , curSize_{PROMETHEUS().gaugeInt(
           "work_queue_current_size",
           util::prometheus::Labels(),
-          "The current number of tasks in the queue")}
+          "The current number of tasks in the queue"
+      )}
     , ioc_{numWorkers}
 {
     if (maxSize != 0)

@@ -33,8 +33,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_offers.html
  */
-class AccountOffersHandler
-{
+class AccountOffersHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
@@ -42,8 +41,7 @@ public:
     static auto constexpr LIMIT_MAX = 400;
     static auto constexpr LIMIT_DEFAULT = 200;
 
-    struct Offer
-    {
+    struct Offer {
         uint32_t flags{};
         uint32_t seq{};
         ripple::STAmount takerGets;
@@ -52,8 +50,7 @@ public:
         std::optional<uint32_t> expiration;
     };
 
-    struct Output
-    {
+    struct Output {
         std::string account;
         std::string ledgerHash;
         uint32_t ledgerIndex{};
@@ -63,8 +60,7 @@ public:
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;

@@ -26,8 +26,7 @@
 
 namespace util::prometheus {
 
-class PrometheusInterface
-{
+class PrometheusInterface {
 public:
     PrometheusInterface(bool isEnabled) : isEnabled_(isEnabled)
     {
@@ -103,8 +102,7 @@ private:
  *
  * @note When prometheus is disabled, all metrics will still counted but collection is disabled
  */
-class PrometheusImpl : public PrometheusInterface
-{
+class PrometheusImpl : public PrometheusInterface {
 public:
     using PrometheusInterface::PrometheusInterface;
 
@@ -131,8 +129,7 @@ private:
     friend class PrometheusSingleton;
 };
 
-class PrometheusSingleton
-{
+class PrometheusSingleton {
 public:
     void static init(Config const& config = Config{})
     {

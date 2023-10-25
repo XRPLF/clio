@@ -37,8 +37,7 @@ Batch::Batch(std::vector<Statement> const& statements)
 {
     cass_batch_set_is_idempotent(*this, cass_true);
 
-    for (auto const& statement : statements)
-    {
+    for (auto const& statement : statements) {
         if (auto const res = add(statement); not res)
             throw std::runtime_error("Failed to add statement to batch: " + res.error());
     }
@@ -47,8 +46,7 @@ Batch::Batch(std::vector<Statement> const& statements)
 MaybeError
 Batch::add(Statement const& statement)
 {
-    if (auto const rc = cass_batch_add_statement(*this, statement); rc != CASS_OK)
-    {
+    if (auto const rc = cass_batch_add_statement(*this, statement); rc != CASS_OK) {
         return Error{CassandraError{cass_error_desc(rc), rc}};
     }
     return {};

@@ -29,15 +29,14 @@ namespace util::prometheus {
 /**
  * @brief Base class for a Prometheus metric containing a name and labels
  */
-class MetricBase
-{
+class MetricBase {
 public:
     MetricBase(std::string name, std::string labelsString);
 
-    MetricBase(const MetricBase&) = delete;
+    MetricBase(MetricBase const&) = delete;
     MetricBase(MetricBase&&) = default;
     MetricBase&
-    operator=(const MetricBase&) = delete;
+    operator=(MetricBase const&) = delete;
     MetricBase&
     operator=(MetricBase&&) = default;
     virtual ~MetricBase() = default;
@@ -53,13 +52,13 @@ public:
     /**
      * @brief Get the name of the metric
      */
-    const std::string&
+    std::string const&
     name() const;
 
     /**
      * @brief Get the labels of the metric in serialized format, e.g. {name="value",name2="value2"}
      */
-    const std::string&
+    std::string const&
     labelsString() const;
 
 protected:
@@ -78,14 +77,13 @@ private:
 
 enum class MetricType { COUNTER_INT, COUNTER_DOUBLE, GAUGE_INT, GAUGE_DOUBLE, HISTOGRAM, SUMMARY };
 
-const char*
+char const*
 toString(MetricType type);
 
 /**
  * @brief Class representing a collection of Prometheus metric with the same name and type
  */
-class MetricsFamily
-{
+class MetricsFamily {
 public:
     using MetricBuilder = std::function<std::unique_ptr<MetricBase>(std::string, std::string, MetricType)>;
     static MetricBuilder defaultMetricBuilder;
@@ -94,12 +92,13 @@ public:
         std::string name,
         std::optional<std::string> description,
         MetricType type,
-        MetricBuilder& builder = defaultMetricBuilder);
+        MetricBuilder& builder = defaultMetricBuilder
+    );
 
-    MetricsFamily(const MetricsFamily&) = delete;
+    MetricsFamily(MetricsFamily const&) = delete;
     MetricsFamily(MetricsFamily&&) = default;
     MetricsFamily&
-    operator=(const MetricsFamily&) = delete;
+    operator=(MetricsFamily const&) = delete;
     MetricsFamily&
     operator=(MetricsFamily&&) = delete;
 
@@ -120,7 +119,7 @@ public:
     void
     serialize(std::string& result) const;
 
-    const std::string&
+    std::string const&
     name() const;
 
     MetricType

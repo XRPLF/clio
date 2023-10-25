@@ -29,31 +29,38 @@ Counters::MethodInfo::MethodInfo(std::string const& method)
     : started(PROMETHEUS().counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "started"}, {"method", method}}},
-          fmt::format("Total number of started calls to the method {}", method)))
+          fmt::format("Total number of started calls to the method {}", method)
+      ))
     , finished(PROMETHEUS().counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "finished"}, {"method", method}}},
-          fmt::format("Total number of finished calls to the method {}", method)))
+          fmt::format("Total number of finished calls to the method {}", method)
+      ))
     , failed(PROMETHEUS().counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "failed"}, {"method", method}}},
-          fmt::format("Total number of failed calls to the method {}", method)))
+          fmt::format("Total number of failed calls to the method {}", method)
+      ))
     , errored(PROMETHEUS().counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "errored"}, {"method", method}}},
-          fmt::format("Total number of errored calls to the method {}", method)))
+          fmt::format("Total number of errored calls to the method {}", method)
+      ))
     , forwarded(PROMETHEUS().counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "forwarded"}, {"method", method}}},
-          fmt::format("Total number of forwarded calls to the method {}", method)))
+          fmt::format("Total number of forwarded calls to the method {}", method)
+      ))
     , failedForward(PROMETHEUS().counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "failed_forward"}, {"method", method}}},
-          fmt::format("Total number of failed forwarded calls to the method {}", method)))
+          fmt::format("Total number of failed forwarded calls to the method {}", method)
+      ))
     , duration(PROMETHEUS().counterInt(
           "rpc_method_duration_us",
           Labels({{"method", method}}),
-          fmt::format("Total duration of calls to the method {}", method)))
+          fmt::format("Total duration of calls to the method {}", method)
+      ))
 {
 }
 
@@ -61,8 +68,7 @@ Counters::MethodInfo&
 Counters::getMethodInfo(std::string const& method)
 {
     auto it = methodInfo_.find(method);
-    if (it == methodInfo_.end())
-    {
+    if (it == methodInfo_.end()) {
         it = methodInfo_.emplace(method, MethodInfo(method)).first;
     }
     return it->second;
@@ -72,23 +78,28 @@ Counters::Counters(WorkQueue const& wq)
     : tooBusyCounter_(PROMETHEUS().counterInt(
           "rpc_error_total_number",
           Labels({{"error_type", "too_busy"}}),
-          "Total number of too busy errors"))
+          "Total number of too busy errors"
+      ))
     , notReadyCounter_(PROMETHEUS().counterInt(
           "rpc_error_total_number",
           Labels({{"error_type", "not_ready"}}),
-          "Total number of not ready replyes"))
+          "Total number of not ready replyes"
+      ))
     , badSyntaxCounter_(PROMETHEUS().counterInt(
           "rpc_error_total_number",
           Labels({{"error_type", "bad_syntax"}}),
-          "Total number of bad syntax replyes"))
+          "Total number of bad syntax replyes"
+      ))
     , unknownCommandCounter_(PROMETHEUS().counterInt(
           "rpc_error_total_number",
           Labels({{"error_type", "unknown_command"}}),
-          "Total number of unknown command replyes"))
+          "Total number of unknown command replyes"
+      ))
     , internalErrorCounter_(PROMETHEUS().counterInt(
           "rpc_error_total_number",
           Labels({{"error_type", "internal_error"}}),
-          "Total number of internal errors"))
+          "Total number of internal errors"
+      ))
     , workQueue_(std::cref(wq))
     , startupTime_{std::chrono::system_clock::now()}
 {
@@ -183,8 +194,7 @@ Counters::report() const
     obj[JS(rpc)] = boost::json::object{};
     auto& rpc = obj[JS(rpc)].as_object();
 
-    for (auto const& [method, info] : methodInfo_)
-    {
+    for (auto const& [method, info] : methodInfo_) {
         auto counters = boost::json::object{};
         counters[JS(started)] = std::to_string(info.started.value());
         counters[JS(finished)] = std::to_string(info.finished.value());

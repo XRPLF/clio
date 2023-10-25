@@ -75,8 +75,7 @@ PrometheusImpl::collectMetrics()
     if (!isEnabled())
         return result;
 
-    for (auto& [name, family] : metrics_)
-    {
+    for (auto& [name, family] : metrics_) {
         family.serialize(result);
     }
     return result;
@@ -87,16 +86,14 @@ PrometheusImpl::getMetric(
     std::string name,
     Labels labels,
     std::optional<std::string> description,
-    MetricType const type)
+    MetricType const type
+)
 {
     auto it = metrics_.find(name);
-    if (it == metrics_.end())
-    {
+    if (it == metrics_.end()) {
         auto nameCopy = name;
         it = metrics_.emplace(std::move(nameCopy), MetricsFamily(std::move(name), std::move(description), type)).first;
-    }
-    else if (it->second.type() != type)
-    {
+    } else if (it->second.type() != type) {
         throw std::runtime_error("Metrics of different type can't have the same name: " + name);
     }
     return it->second.getMetric(std::move(labels));

@@ -27,12 +27,9 @@
 using namespace data::cassandra;
 using namespace data::cassandra::detail;
 
-struct FakeResult
-{
-};
+struct FakeResult {};
 
-struct FakeResultOrError
-{
+struct FakeResultOrError {
     CassandraError err{"<default>", CASS_OK};
 
     operator bool() const
@@ -53,20 +50,13 @@ struct FakeResultOrError
     }
 };
 
-struct FakeMaybeError
-{
-};
+struct FakeMaybeError {};
 
-struct FakeStatement
-{
-};
+struct FakeStatement {};
 
-struct FakePreparedStatement
-{
-};
+struct FakePreparedStatement {};
 
-struct FakeFuture
-{
+struct FakeFuture {
     FakeResultOrError data;
 
     FakeResultOrError
@@ -82,12 +72,9 @@ struct FakeFuture
     }
 };
 
-struct FakeFutureWithCallback : public FakeFuture
-{
-};
+struct FakeFutureWithCallback : public FakeFuture {};
 
-struct MockHandle
-{
+struct MockHandle {
     using ResultOrErrorType = FakeResultOrError;
     using MaybeErrorType = FakeMaybeError;
     using FutureWithCallbackType = FakeFutureWithCallback;
@@ -100,27 +87,30 @@ struct MockHandle
         FutureWithCallbackType,
         asyncExecute,
         (StatementType const&, std::function<void(ResultOrErrorType)>&&),
-        (const));
+        (const)
+    );
 
     MOCK_METHOD(
         FutureWithCallbackType,
         asyncExecute,
         (std::vector<StatementType> const&, std::function<void(ResultOrErrorType)>&&),
-        (const));
+        (const)
+    );
 
     MOCK_METHOD(ResultOrErrorType, execute, (StatementType const&), (const));
 };
 
-struct FakeRetryPolicy
-{
+struct FakeRetryPolicy {
     FakeRetryPolicy(boost::asio::io_context&){};  // required by concept
 
-    std::chrono::milliseconds calculateDelay(uint32_t /* attempt */)
+    std::chrono::milliseconds
+    calculateDelay(uint32_t /* attempt */)
     {
         return std::chrono::milliseconds{1};
     }
 
-    bool shouldRetry(CassandraError) const
+    bool
+    shouldRetry(CassandraError) const
     {
         return false;
     }

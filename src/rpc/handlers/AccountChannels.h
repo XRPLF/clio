@@ -36,8 +36,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_channels.html
  */
-class AccountChannelsHandler
-{
+class AccountChannelsHandler {
     // dependencies
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
@@ -47,8 +46,7 @@ public:
     static constexpr auto LIMIT_DEFAULT = 200;
 
     // type align with SField.h
-    struct ChannelResponse
-    {
+    struct ChannelResponse {
         std::string channelID;
         std::string account;
         std::string accountDestination;
@@ -63,8 +61,7 @@ public:
         std::optional<uint32_t> destinationTag;
     };
 
-    struct Output
-    {
+    struct Output {
         std::vector<ChannelResponse> channels;
         std::string account;
         std::string ledgerHash;
@@ -75,8 +72,7 @@ public:
         std::optional<std::string> marker;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         std::optional<std::string> destinationAccount;
         std::optional<std::string> ledgerHash;

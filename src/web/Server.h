@@ -47,8 +47,7 @@ namespace web {
  * @tparam HandlerType The executor to handle the requests
  */
 template <template <class> class PlainSessionType, template <class> class SslSessionType, SomeServerHandler HandlerType>
-class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>>
-{
+class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>> {
     using std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
 
     util::Logger log_{"WebServer"};
@@ -77,7 +76,8 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        std::optional<std::string> adminPassword)
+        std::optional<std::string> adminPassword
+    )
         : stream_(std::move(socket))
         , ctx_(ctx)
         , tagFactory_(std::cref(tagFactory))
@@ -123,17 +123,13 @@ public:
             return fail(ec, "detect");
 
         std::string ip;
-        try
-        {
+        try {
             ip = stream_.socket().remote_endpoint().address().to_string();
-        }
-        catch (std::exception const&)
-        {
+        } catch (std::exception const&) {
             return fail(ec, "cannot get remote endpoint");
         }
 
-        if (result)
-        {
+        if (result) {
             if (!ctx_)
                 return fail(ec, "SSL is not supported by this server");
 
@@ -145,13 +141,15 @@ public:
                 tagFactory_,
                 dosGuard_,
                 handler_,
-                std::move(buffer_))
+                std::move(buffer_)
+            )
                 ->run();
             return;
         }
 
         std::make_shared<PlainSessionType<HandlerType>>(
-            stream_.release_socket(), ip, adminPassword_, tagFactory_, dosGuard_, handler_, std::move(buffer_))
+            stream_.release_socket(), ip, adminPassword_, tagFactory_, dosGuard_, handler_, std::move(buffer_)
+        )
             ->run();
     }
 };
@@ -166,8 +164,7 @@ public:
  * @tparam HandlerType The handler to process the request and return response.
  */
 template <template <class> class PlainSessionType, template <class> class SslSessionType, SomeServerHandler HandlerType>
-class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>>
-{
+class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>> {
     using std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
 
     util::Logger log_{"WebServer"};
@@ -198,7 +195,8 @@ public:
         util::TagDecoratorFactory tagFactory,
         web::DOSGuard& dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        std::optional<std::string> adminPassword)
+        std::optional<std::string> adminPassword
+    )
         : ioc_(std::ref(ioc))
         , ctx_(ctx)
         , tagFactory_(tagFactory)
@@ -218,19 +216,19 @@ public:
             return;
 
         acceptor_.bind(endpoint, ec);
-        if (ec)
-        {
+        if (ec) {
             LOG(log_.error()) << "Failed to bind to endpoint: " << endpoint << ". message: " << ec.message();
             throw std::runtime_error(
-                fmt::format("Failed to bind to endpoint: {}:{}", endpoint.address().to_string(), endpoint.port()));
+                fmt::format("Failed to bind to endpoint: {}:{}", endpoint.address().to_string(), endpoint.port())
+            );
         }
 
         acceptor_.listen(boost::asio::socket_base::max_listen_connections, ec);
-        if (ec)
-        {
+        if (ec) {
             LOG(log_.error()) << "Failed to listen at endpoint: " << endpoint << ". message: " << ec.message();
             throw std::runtime_error(
-                fmt::format("Failed to listen at endpoint: {}:{}", endpoint.address().to_string(), endpoint.port()));
+                fmt::format("Failed to listen at endpoint: {}:{}", endpoint.address().to_string(), endpoint.port())
+            );
         }
     }
 
@@ -247,19 +245,20 @@ private:
     {
         acceptor_.async_accept(
             boost::asio::make_strand(ioc_.get()),
-            boost::beast::bind_front_handler(&Server::onAccept, shared_from_this()));
+            boost::beast::bind_front_handler(&Server::onAccept, shared_from_this())
+        );
     }
 
     void
     onAccept(boost::beast::error_code ec, tcp::socket socket)
     {
-        if (!ec)
-        {
+        if (!ec) {
             auto ctxRef =
                 ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;
 
             std::make_shared<Detector<PlainSessionType, SslSessionType, HandlerType>>(
-                std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_, adminPassword_)
+                std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_, adminPassword_
+            )
                 ->run();
         }
 
@@ -288,7 +287,8 @@ make_HttpServer(
     boost::asio::io_context& ioc,
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> const& ctx,
     web::DOSGuard& dosGuard,
-    std::shared_ptr<HandlerType> const& handler)
+    std::shared_ptr<HandlerType> const& handler
+)
 {
     static util::Logger const log{"WebServer"};
     if (!config.contains("server"))
@@ -306,7 +306,8 @@ make_HttpServer(
         util::TagDecoratorFactory(config),
         dosGuard,
         handler,
-        std::move(adminPassword));
+        std::move(adminPassword)
+    );
 
     server->run();
     return server;

@@ -26,8 +26,7 @@ namespace etl {
 /**
  * @brief Represents the state of the ETL subsystem.
  */
-struct SystemState
-{
+struct SystemState {
     /**
      * @brief Whether the process is in strict read-only mode.
      *

@@ -33,9 +33,7 @@ using namespace unittests::detail;
 
 namespace json = boost::json;
 
-class RPCDefaultProcessorTest : public HandlerBaseTest
-{
-};
+class RPCDefaultProcessorTest : public HandlerBaseTest {};
 
 TEST_F(RPCDefaultProcessorTest, ValidInput)
 {

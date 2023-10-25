@@ -41,8 +41,7 @@ constexpr auto contactPoints = "127.0.0.1";
 constexpr auto keyspace = "clio_test";
 }  // namespace
 
-class BackendCassandraTest : public SyncAsioContextTest
-{
+class BackendCassandraTest : public SyncAsioContextTest {
 protected:
     Config cfg{json::parse(fmt::format(
         R"JSON({{
@@ -51,7 +50,8 @@ protected:
             "replication_factor": 1
         }})JSON",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
     SettingsProvider settingsProvider{cfg, 0};
 
     // recreated for each test
@@ -327,7 +327,8 @@ TEST_F(BackendCassandraTest, Basic)
         ripple::uint256 nftID;
         EXPECT_TRUE(
             nftID.parseHex("000800006203F49C21D5D6E022CB16DE3538F248662"
-                           "FC73CEF7FF5C60000002C"));
+                           "FC73CEF7FF5C60000002C")
+        );
 
         std::string metaBlob = hexStringToBinaryString(metaHex);
         std::string txnBlob = hexStringToBinaryString(txnHex);
@@ -350,8 +351,7 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_TRUE(hash256.parseHex(hashHex));
             ripple::TxMeta txMeta{hash256, lgrInfoNext.seq, metaBlob};
             auto accountsSet = txMeta.getAffectedAccounts();
-            for (auto& a : accountsSet)
-            {
+            for (auto& a : accountsSet) {
                 affectedAccounts.push_back(a);
             }
             std::vector<AccountTransactionsData> accountTxData;
@@ -378,7 +378,8 @@ TEST_F(BackendCassandraTest, Basic)
                 lgrInfoNext.seq,
                 lgrInfoNext.closeTime.time_since_epoch().count(),
                 std::string{txnBlob},
-                std::string{metaBlob});
+                std::string{metaBlob}
+            );
             backend->writeAccountTransactions(std::move(accountTxData));
             backend->writeNFTs(std::move(nftData));
             backend->writeNFTTransactions(std::move(parsedNFTTxs));
@@ -402,15 +403,16 @@ TEST_F(BackendCassandraTest, Basic)
             ASSERT_EQ(allTransactions.size(), 1);
             EXPECT_STREQ(
                 reinterpret_cast<const char*>(allTransactions[0].transaction.data()),
-                static_cast<const char*>(txnBlob.data()));
+                static_cast<const char*>(txnBlob.data())
+            );
             EXPECT_STREQ(
                 reinterpret_cast<const char*>(allTransactions[0].metadata.data()),
-                static_cast<const char*>(metaBlob.data()));
+                static_cast<const char*>(metaBlob.data())
+            );
             auto hashes = backend->fetchAllTransactionHashesInLedger(lgrInfoNext.seq, yield);
             EXPECT_EQ(hashes.size(), 1);
             EXPECT_EQ(ripple::strHex(hashes[0]), hashHex);
-            for (auto& a : affectedAccounts)
-            {
+            for (auto& a : affectedAccounts) {
                 auto [accountTransactions, cursor] = backend->fetchAccountTransactions(a, 100, true, {}, yield);
                 EXPECT_EQ(accountTransactions.size(), 1);
                 EXPECT_EQ(accountTransactions[0], accountTransactions[0]);
@@ -518,8 +520,7 @@ TEST_F(BackendCassandraTest, Basic)
             ripple::uint256 key;
             key = ledgerSequence * 100000ul;
 
-            for (auto& blob : res)
-            {
+            for (auto& blob : res) {
                 ++key;
                 std::string const keyStr{reinterpret_cast<const char*>(key.data()), ripple::uint256::size()};
                 blob.first = keyStr;
@@ -528,8 +529,7 @@ TEST_F(BackendCassandraTest, Basic)
             return res;
         };
         auto updateObjects = [](uint32_t ledgerSequence, auto objs) {
-            for (auto& [key, obj] : objs)
-            {
+            for (auto& [key, obj] : objs) {
                 obj = std::to_string(ledgerSequence) + obj;
             }
             return objs;
@@ -538,8 +538,7 @@ TEST_F(BackendCassandraTest, Basic)
             std::vector<std::tuple<std::string, std::string, std::string>> res{numTxns};
             ripple::uint256 base;
             base = ledgerSequence * 100000ul;
-            for (auto& blob : res)
-            {
+            for (auto& blob : res) {
                 ++base;
                 std::string const hashStr{reinterpret_cast<const char*>(base.data()), ripple::uint256::size()};
                 std::string const txnStr = "tx" + std::to_string(ledgerSequence) + hashStr;
@@ -552,8 +551,7 @@ TEST_F(BackendCassandraTest, Basic)
             std::vector<ripple::AccountID> accounts;
             ripple::AccountID base;
             base = ledgerSequence * 998765ul;
-            for (size_t i = 0; i < numAccounts; ++i)
-            {
+            for (size_t i = 0; i < numAccounts; ++i) {
                 ++base;
                 accounts.push_back(base);
             }
@@ -564,14 +562,12 @@ TEST_F(BackendCassandraTest, Basic)
             auto accounts = generateAccounts(ledgerSequence, 10);
             std::srand(std::time(nullptr));
             uint32_t idx = 0;
-            for (auto& [hash, txn, meta] : txns)
-            {
+            for (auto& [hash, txn, meta] : txns) {
                 AccountTransactionsData data;
                 data.ledgerSequence = ledgerSequence;
                 data.transactionIndex = idx;
                 data.txHash = hash;
-                for (size_t i = 0; i < 3; ++i)
-                {
+                for (size_t i = 0; i < 3; ++i) {
                     data.accounts.insert(accounts[std::rand() % accounts.size()]);
                 }
                 ++idx;
@@ -592,44 +588,38 @@ TEST_F(BackendCassandraTest, Basic)
             backend->startWrites();
 
             backend->writeLedger(lgrInfo, ledgerInfoToBinaryString(lgrInfo));
-            for (auto [hash, txn, meta] : txns)
-            {
+            for (auto [hash, txn, meta] : txns) {
                 backend->writeTransaction(
                     std::move(hash),
                     lgrInfo.seq,
                     lgrInfo.closeTime.time_since_epoch().count(),
                     std::move(txn),
-                    std::move(meta));
+                    std::move(meta)
+                );
             }
-            for (auto [key, obj] : objs)
-            {
+            for (auto [key, obj] : objs) {
                 backend->writeLedgerObject(std::string{key}, lgrInfo.seq, std::string{obj});
             }
             if (state.count(lgrInfo.seq - 1) == 0 ||
                 std::find_if(state[lgrInfo.seq - 1].begin(), state[lgrInfo.seq - 1].end(), [&](auto obj) {
                     return obj.first == objs[0].first;
-                }) == state[lgrInfo.seq - 1].end())
-            {
-                for (size_t i = 0; i < objs.size(); ++i)
-                {
-                    if (i + 1 < objs.size())
-                    {
+                }) == state[lgrInfo.seq - 1].end()) {
+                for (size_t i = 0; i < objs.size(); ++i) {
+                    if (i + 1 < objs.size()) {
                         backend->writeSuccessor(
-                            std::string{objs[i].first}, lgrInfo.seq, std::string{objs[i + 1].first});
-                    }
-                    else
-                    {
+                            std::string{objs[i].first}, lgrInfo.seq, std::string{objs[i + 1].first}
+                        );
+                    } else {
                         backend->writeSuccessor(
-                            std::string{objs[i].first}, lgrInfo.seq, uint256ToString(data::lastKey));
+                            std::string{objs[i].first}, lgrInfo.seq, uint256ToString(data::lastKey)
+                        );
                     }
                 }
-                if (state.contains(lgrInfo.seq - 1))
-                {
+                if (state.contains(lgrInfo.seq - 1)) {
                     backend->writeSuccessor(
-                        std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first});
-                }
-                else
-                {
+                        std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first}
+                    );
+                } else {
                     backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfo.seq, std::string{objs[0].first});
                 }
             }
@@ -648,29 +638,27 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_TRUE(retLgr);
             EXPECT_EQ(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfo));
             auto retTxns = backend->fetchAllTransactionsInLedger(seq, yield);
-            for (auto [hash, txn, meta] : txns)
-            {
+            for (auto [hash, txn, meta] : txns) {
                 bool found = false;
-                for (auto [retTxn, retMeta, retSeq, retDate] : retTxns)
-                {
+                for (auto [retTxn, retMeta, retSeq, retDate] : retTxns) {
                     if (std::strncmp(
                             reinterpret_cast<const char*>(retTxn.data()),
                             static_cast<const char*>(txn.data()),
-                            txn.size()) == 0 &&
+                            txn.size()
+                        ) == 0 &&
                         std::strncmp(
                             reinterpret_cast<const char*>(retMeta.data()),
                             static_cast<const char*>(meta.data()),
-                            meta.size()) == 0)
+                            meta.size()
+                        ) == 0)
                         found = true;
                 }
                 ASSERT_TRUE(found);
             }
-            for (auto [account, data] : accountTx)
-            {
+            for (auto [account, data] : accountTx) {
                 std::vector<data::TransactionAndMetadata> retData;
                 std::optional<data::TransactionsCursor> cursor;
-                do
-                {
+                do {
                     uint32_t const limit = 10;
                     auto [accountTransactions, retCursor] =
                         backend->fetchAccountTransactions(account, limit, false, cursor, yield);
@@ -680,8 +668,7 @@ TEST_F(BackendCassandraTest, Basic)
                     cursor = retCursor;
                 } while (cursor);
                 EXPECT_EQ(retData.size(), data.size());
-                for (size_t i = 0; i < retData.size(); ++i)
-                {
+                for (size_t i = 0; i < retData.size(); ++i) {
                     auto [txn, meta, _, __] = retData[i];
                     auto [___, expTxn, expMeta] = data[i];
                     EXPECT_STREQ(reinterpret_cast<const char*>(txn.data()), static_cast<const char*>(expTxn.data()));
@@ -689,16 +676,12 @@ TEST_F(BackendCassandraTest, Basic)
                 }
             }
             std::vector<ripple::uint256> keys;
-            for (auto [key, obj] : objs)
-            {
+            for (auto [key, obj] : objs) {
                 auto retObj = backend->fetchLedgerObject(binaryStringToUint256(key), seq, yield);
-                if (obj.size())
-                {
+                if (obj.size()) {
                     ASSERT_TRUE(retObj.has_value());
                     EXPECT_STREQ(static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj->data()));
-                }
-                else
-                {
+                } else {
                     ASSERT_FALSE(retObj.has_value());
                 }
                 keys.push_back(binaryStringToUint256(key));
@@ -708,18 +691,15 @@ TEST_F(BackendCassandraTest, Basic)
                 auto retObjs = backend->fetchLedgerObjects(keys, seq, yield);
                 ASSERT_EQ(retObjs.size(), objs.size());
 
-                for (size_t i = 0; i < keys.size(); ++i)
-                {
+                for (size_t i = 0; i < keys.size(); ++i) {
                     auto [key, obj] = objs[i];
                     auto retObj = retObjs[i];
-                    if (obj.size())
-                    {
+                    if (obj.size()) {
                         ASSERT_TRUE(retObj.size());
                         EXPECT_STREQ(
-                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data()));
-                    }
-                    else
-                    {
+                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data())
+                        );
+                    } else {
                         ASSERT_FALSE(retObj.size());
                     }
                 }
@@ -727,20 +707,16 @@ TEST_F(BackendCassandraTest, Basic)
 
             data::LedgerPage page;
             std::vector<data::LedgerObject> retObjs;
-            do
-            {
+            do {
                 uint32_t const limit = 10;
                 page = backend->fetchLedgerPage(page.cursor, seq, limit, false, yield);
                 retObjs.insert(retObjs.end(), page.objects.begin(), page.objects.end());
             } while (page.cursor);
 
-            for (const auto& obj : objs)
-            {
+            for (const auto& obj : objs) {
                 bool found = false;
-                for (const auto& retObj : retObjs)
-                {
-                    if (ripple::strHex(obj.first) == ripple::strHex(retObj.key))
-                    {
+                for (const auto& retObj : retObjs) {
+                    if (ripple::strHex(obj.first) == ripple::strHex(retObj.key)) {
                         found = true;
                         ASSERT_EQ(ripple::strHex(obj.second), ripple::strHex(retObj.blob));
                     }
@@ -755,18 +731,16 @@ TEST_F(BackendCassandraTest, Basic)
         std::unordered_map<std::string, std::pair<std::string, std::string>> allTxnsMap;
         std::map<uint32_t, std::map<ripple::AccountID, std::vector<std::string>>> allAccountTx;
         std::map<uint32_t, ripple::LedgerInfo> lgrInfos;
-        for (size_t i = 0; i < 10; ++i)
-        {
+        for (size_t i = 0; i < 10; ++i) {
             lgrInfoNext = generateNextLedger(lgrInfoNext);
             auto objs = generateObjects(25, lgrInfoNext.seq);
             auto txns = generateTxns(10, lgrInfoNext.seq);
             auto accountTx = generateAccountTx(lgrInfoNext.seq, txns);
-            for (auto rec : accountTx)
-            {
-                for (auto account : rec.accounts)
-                {
+            for (auto rec : accountTx) {
+                for (auto account : rec.accounts) {
                     allAccountTx[lgrInfoNext.seq][account].emplace_back(
-                        reinterpret_cast<const char*>(rec.txHash.data()), ripple::uint256::size());
+                        reinterpret_cast<const char*>(rec.txHash.data()), ripple::uint256::size()
+                    );
                 }
             }
             EXPECT_EQ(objs.size(), 25);
@@ -778,32 +752,26 @@ TEST_F(BackendCassandraTest, Basic)
             writeLedger(lgrInfoNext, txns, objs, accountTx, state);
             allTxns[lgrInfoNext.seq] = txns;
             lgrInfos[lgrInfoNext.seq] = lgrInfoNext;
-            for (auto& [hash, txn, meta] : txns)
-            {
+            for (auto& [hash, txn, meta] : txns) {
                 allTxnsMap[hash] = std::make_pair(txn, meta);
             }
         }
 
         std::vector<std::pair<std::string, std::string>> objs;
-        for (size_t i = 0; i < 10; ++i)
-        {
+        for (size_t i = 0; i < 10; ++i) {
             lgrInfoNext = generateNextLedger(lgrInfoNext);
-            if (objs.empty())
-            {
+            if (objs.empty()) {
                 objs = generateObjects(25, lgrInfoNext.seq);
-            }
-            else
-            {
+            } else {
                 objs = updateObjects(lgrInfoNext.seq, objs);
             }
             auto txns = generateTxns(10, lgrInfoNext.seq);
             auto accountTx = generateAccountTx(lgrInfoNext.seq, txns);
-            for (auto rec : accountTx)
-            {
-                for (auto account : rec.accounts)
-                {
+            for (auto rec : accountTx) {
+                for (auto account : rec.accounts) {
                     allAccountTx[lgrInfoNext.seq][account].emplace_back(
-                        reinterpret_cast<const char*>(rec.txHash.data()), ripple::uint256::size());
+                        reinterpret_cast<const char*>(rec.txHash.data()), ripple::uint256::size()
+                    );
                 }
             }
             EXPECT_EQ(objs.size(), 25);
@@ -815,8 +783,7 @@ TEST_F(BackendCassandraTest, Basic)
             writeLedger(lgrInfoNext, txns, objs, accountTx, state);
             allTxns[lgrInfoNext.seq] = txns;
             lgrInfos[lgrInfoNext.seq] = lgrInfoNext;
-            for (auto& [hash, txn, meta] : txns)
-            {
+            for (auto& [hash, txn, meta] : txns) {
                 allTxnsMap[hash] = std::make_pair(txn, meta);
             }
         }
@@ -824,24 +791,18 @@ TEST_F(BackendCassandraTest, Basic)
         auto flatten = [&](uint32_t max) {
             std::vector<std::pair<std::string, std::string>> flat;
             std::map<std::string, std::string> objs;
-            for (auto [seq, diff] : state)
-            {
-                for (auto [k, v] : diff)
-                {
-                    if (seq > max)
-                    {
+            for (auto [seq, diff] : state) {
+                for (auto [k, v] : diff) {
+                    if (seq > max) {
                         if (!objs.contains(k))
                             objs[k] = "";
-                    }
-                    else
-                    {
+                    } else {
                         objs[k] = v;
                     }
                 }
             }
             flat.reserve(objs.size());
-            for (auto [key, value] : objs)
-            {
+            for (auto [key, value] : objs) {
                 flat.emplace_back(key, value);
             }
             return flat;
@@ -850,14 +811,11 @@ TEST_F(BackendCassandraTest, Basic)
         auto flattenAccountTx = [&](uint32_t max) {
             std::unordered_map<ripple::AccountID, std::vector<std::tuple<std::string, std::string, std::string>>>
                 accountTx;
-            for (auto [seq, map] : allAccountTx)
-            {
+            for (auto [seq, map] : allAccountTx) {
                 if (seq > max)
                     break;
-                for (auto& [account, hashes] : map)
-                {
-                    for (auto& hash : hashes)
-                    {
+                for (auto& [account, hashes] : map) {
+                    for (auto& hash : hashes) {
                         auto& [txn, meta] = allTxnsMap[hash];
                         accountTx[account].emplace_back(hash, txn, meta);
                     }
@@ -868,8 +826,7 @@ TEST_F(BackendCassandraTest, Basic)
             return accountTx;
         };
 
-        for (auto [seq, diff] : state)
-        {
+        for (auto [seq, diff] : state) {
             auto flat = flatten(seq);
             checkLedger(lgrInfos[seq], allTxns[seq], flat, flattenAccountTx(seq));
         }
@@ -1093,8 +1050,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             ripple::uint256 key;
             key = ledgerSequence * 100000;
 
-            for (auto& blob : res)
-            {
+            for (auto& blob : res) {
                 ++key;
                 std::string const keyStr{reinterpret_cast<const char*>(key.data()), ripple::uint256::size()};
                 blob.first = keyStr;
@@ -1103,8 +1059,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             return res;
         };
         auto updateObjects = [](uint32_t ledgerSequence, auto objs) {
-            for (auto& [key, obj] : objs)
-            {
+            for (auto& [key, obj] : objs) {
                 obj = std::to_string(ledgerSequence) + obj;
             }
             return objs;
@@ -1124,8 +1079,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
 
             backend->writeLedger(lgrInfo, std::move(ledgerInfoToBinaryString(lgrInfo)));
             std::vector<data::LedgerObject> cacheUpdates;
-            for (auto [key, obj] : objs)
-            {
+            for (auto [key, obj] : objs) {
                 backend->writeLedgerObject(std::string{key}, lgrInfo.seq, std::string{obj});
                 auto key256 = ripple::uint256::fromVoidChecked(key);
                 cacheUpdates.push_back({*key256, {obj.begin(), obj.end()}});
@@ -1134,28 +1088,23 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             if (state.count(lgrInfo.seq - 1) == 0 ||
                 std::find_if(state[lgrInfo.seq - 1].begin(), state[lgrInfo.seq - 1].end(), [&](auto obj) {
                     return obj.first == objs[0].first;
-                }) == state[lgrInfo.seq - 1].end())
-            {
-                for (size_t i = 0; i < objs.size(); ++i)
-                {
-                    if (i + 1 < objs.size())
-                    {
+                }) == state[lgrInfo.seq - 1].end()) {
+                for (size_t i = 0; i < objs.size(); ++i) {
+                    if (i + 1 < objs.size()) {
                         backend->writeSuccessor(
-                            std::string{objs[i].first}, lgrInfo.seq, std::string{objs[i + 1].first});
-                    }
-                    else
-                    {
+                            std::string{objs[i].first}, lgrInfo.seq, std::string{objs[i + 1].first}
+                        );
+                    } else {
                         backend->writeSuccessor(
-                            std::string{objs[i].first}, lgrInfo.seq, uint256ToString(data::lastKey));
+                            std::string{objs[i].first}, lgrInfo.seq, uint256ToString(data::lastKey)
+                        );
                     }
                 }
-                if (state.contains(lgrInfo.seq - 1))
-                {
+                if (state.contains(lgrInfo.seq - 1)) {
                     backend->writeSuccessor(
-                        std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first});
-                }
-                else
-                {
+                        std::string{state[lgrInfo.seq - 1].back().first}, lgrInfo.seq, std::string{objs[0].first}
+                    );
+                } else {
                     backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfo.seq, std::string{objs[0].first});
                 }
             }
@@ -1180,16 +1129,12 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                 << "; lgr Info parentHash:" << lgrInfo.parentHash;
 
             std::vector<ripple::uint256> keys;
-            for (auto [key, obj] : objs)
-            {
+            for (auto [key, obj] : objs) {
                 auto retObj = backend->fetchLedgerObject(binaryStringToUint256(key), seq, yield);
-                if (obj.size())
-                {
+                if (obj.size()) {
                     ASSERT_TRUE(retObj.has_value());
                     EXPECT_STREQ(static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj->data()));
-                }
-                else
-                {
+                } else {
                     ASSERT_FALSE(retObj.has_value());
                 }
                 keys.push_back(binaryStringToUint256(key));
@@ -1199,37 +1144,30 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                 auto retObjs = backend->fetchLedgerObjects(keys, seq, yield);
                 ASSERT_EQ(retObjs.size(), objs.size());
 
-                for (size_t i = 0; i < keys.size(); ++i)
-                {
+                for (size_t i = 0; i < keys.size(); ++i) {
                     auto [key, obj] = objs[i];
                     auto retObj = retObjs[i];
-                    if (obj.size())
-                    {
+                    if (obj.size()) {
                         ASSERT_TRUE(retObj.size());
                         EXPECT_STREQ(
-                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data()));
-                    }
-                    else
-                    {
+                            static_cast<const char*>(obj.data()), reinterpret_cast<const char*>(retObj.data())
+                        );
+                    } else {
                         ASSERT_FALSE(retObj.size());
                     }
                 }
             }
             data::LedgerPage page;
             std::vector<data::LedgerObject> retObjs;
-            do
-            {
+            do {
                 uint32_t const limit = 10;
                 page = backend->fetchLedgerPage(page.cursor, seq, limit, false, yield);
                 retObjs.insert(retObjs.end(), page.objects.begin(), page.objects.end());
             } while (page.cursor);
-            for (const auto& obj : objs)
-            {
+            for (const auto& obj : objs) {
                 bool found = false;
-                for (const auto& retObj : retObjs)
-                {
-                    if (ripple::strHex(obj.first) == ripple::strHex(retObj.key))
-                    {
+                for (const auto& retObj : retObjs) {
+                    if (ripple::strHex(obj.first) == ripple::strHex(retObj.key)) {
                         found = true;
                         ASSERT_EQ(ripple::strHex(obj.second), ripple::strHex(retObj.blob));
                     }
@@ -1241,8 +1179,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
 
         std::map<uint32_t, std::vector<std::pair<std::string, std::string>>> state;
         std::map<uint32_t, ripple::LedgerInfo> lgrInfos;
-        for (size_t i = 0; i < 10; ++i)
-        {
+        for (size_t i = 0; i < 10; ++i) {
             lgrInfoNext = generateNextLedger(lgrInfoNext);
             auto objs = generateObjects(25, lgrInfoNext.seq);
             EXPECT_EQ(objs.size(), 25);
@@ -1254,15 +1191,11 @@ TEST_F(BackendCassandraTest, CacheIntegration)
         }
 
         std::vector<std::pair<std::string, std::string>> objs;
-        for (size_t i = 0; i < 10; ++i)
-        {
+        for (size_t i = 0; i < 10; ++i) {
             lgrInfoNext = generateNextLedger(lgrInfoNext);
-            if (objs.empty())
-            {
+            if (objs.empty()) {
                 objs = generateObjects(25, lgrInfoNext.seq);
-            }
-            else
-            {
+            } else {
                 objs = updateObjects(lgrInfoNext.seq, objs);
             }
             EXPECT_EQ(objs.size(), 25);
@@ -1276,31 +1209,24 @@ TEST_F(BackendCassandraTest, CacheIntegration)
         auto flatten = [&](uint32_t max) {
             std::vector<std::pair<std::string, std::string>> flat;
             std::map<std::string, std::string> objs;
-            for (auto [seq, diff] : state)
-            {
-                for (auto [k, v] : diff)
-                {
-                    if (seq > max)
-                    {
+            for (auto [seq, diff] : state) {
+                for (auto [k, v] : diff) {
+                    if (seq > max) {
                         if (!objs.contains(k))
                             objs[k] = "";
-                    }
-                    else
-                    {
+                    } else {
                         objs[k] = v;
                     }
                 }
             }
             flat.reserve(objs.size());
-            for (auto [key, value] : objs)
-            {
+            for (auto [key, value] : objs) {
                 flat.emplace_back(key, value);
             }
             return flat;
         };
 
-        for (auto [seq, diff] : state)
-        {
+        for (auto [seq, diff] : state) {
             auto flat = flatten(seq);
             checkLedger(lgrInfos[seq], flat);
         }

@@ -28,13 +28,13 @@ Label::Label(std::string name_, std::string value_) : name_(std::move(name_)), v
 }
 
 bool
-Label::operator<(const Label& rhs) const
+Label::operator<(Label const& rhs) const
 {
     return std::tie(name_, value_) < std::tie(rhs.name_, rhs.value_);
 }
 
 bool
-Label::operator==(const Label& rhs) const
+Label::operator==(Label const& rhs) const
 {
     return std::tie(name_, value_) == std::tie(rhs.name_, rhs.value_);
 }
@@ -44,10 +44,8 @@ Label::serialize() const
 {
     std::string escapedValue;
     escapedValue.reserve(value_.size());
-    for (const auto c : value_)
-    {
-        switch (c)
-        {
+    for (auto const c : value_) {
+        switch (c) {
             case '\n': {
                 escapedValue.push_back('\\');
                 escapedValue.push_back('n');
@@ -80,8 +78,7 @@ Labels::serialize() const
     if (!labels_.empty())
         result.push_back('{');
 
-    for (auto& label : labels_)
-    {
+    for (auto& label : labels_) {
         result += label.serialize();
         result.push_back(',');
     }

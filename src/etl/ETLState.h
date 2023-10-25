@@ -31,8 +31,7 @@ class Source;
 /**
  * @brief This class is responsible for fetching and storing the state of the ETL information, such as the network id
  */
-struct ETLState
-{
+struct ETLState {
     std::optional<uint32_t> networkID;
 
     /**

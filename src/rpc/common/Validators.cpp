@@ -112,8 +112,7 @@ CustomValidator AccountMarkerValidator =
 
         // TODO: we are using parseAccountCursor from RPCHelpers, after we
         // remove all old handler, this function can be moved to here
-        if (!parseAccountCursor(value.as_string().c_str()))
-        {
+        if (!parseAccountCursor(value.as_string().c_str())) {
             // align with the current error message
             return Error{Status{RippledError::rpcINVALID_PARAMS, "Malformed cursor."}};
         }
@@ -144,8 +143,7 @@ CustomValidator IssuerValidator =
         if (!ripple::to_issuer(issuer, value.as_string().c_str()))
             return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer.", key)}};
 
-        if (issuer == ripple::noAccount())
-        {
+        if (issuer == ripple::noAccount()) {
             return Error{Status{
                 RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer account one.", key)}};
         }
@@ -163,8 +161,7 @@ CustomValidator SubscribeStreamValidator =
 
         static std::unordered_set<std::string> const reportingNotSupportStreams = {
             "peer_status", "consensus", "server"};
-        for (auto const& v : value.as_array())
-        {
+        for (auto const& v : value.as_array()) {
             if (!v.is_string())
                 return Error{Status{RippledError::rpcINVALID_PARAMS, "streamNotString"}};
 
@@ -186,8 +183,7 @@ CustomValidator SubscribeAccountsValidator =
         if (value.as_array().empty())
             return Error{Status{RippledError::rpcACT_MALFORMED, std::string(key) + " malformed."}};
 
-        for (auto const& v : value.as_array())
-        {
+        for (auto const& v : value.as_array()) {
             auto obj = boost::json::object();
             auto const keyItem = std::string(key) + "'sItem";
 

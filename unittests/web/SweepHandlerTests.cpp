@@ -40,8 +40,7 @@ constexpr static auto JSONData = R"JSON(
     }
 )JSON";
 
-class DOSGuardIntervalSweepHandlerTest : public SyncAsioContextTest
-{
+class DOSGuardIntervalSweepHandlerTest : public SyncAsioContextTest {
 protected:
     Config cfg{boost::json::parse(JSONData)};
     IntervalSweepHandler sweepHandler{cfg, ctx};

@@ -36,8 +36,7 @@ namespace web {
 /**
  * @brief Context that is used by the Webserver to pass around information about an incoming request.
  */
-struct Context : util::Taggable
-{
+struct Context : util::Taggable {
     boost::asio::yield_context yield;
     std::string method;
     std::uint32_t apiVersion;
@@ -69,7 +68,8 @@ struct Context : util::Taggable
         util::TagDecoratorFactory const& tagFactory,
         data::LedgerRange const& range,
         std::string clientIp,
-        bool isAdmin)
+        bool isAdmin
+    )
         : Taggable(tagFactory)
         , yield(std::move(yield))
         , method(std::move(command))

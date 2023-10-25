@@ -25,10 +25,8 @@
 
 using namespace util::prometheus;
 
-struct AnyCounterTests : ::testing::Test
-{
-    struct MockCounterImpl
-    {
+struct AnyCounterTests : ::testing::Test {
+    struct MockCounterImpl {
         using ValueType = std::uint64_t;
         MOCK_METHOD(void, add, (ValueType));
         MOCK_METHOD(void, set, (ValueType));
@@ -79,8 +77,7 @@ TEST_F(AnyCounterTests, value)
     EXPECT_EQ(counter.value(), 42);
 }
 
-struct CounterIntTests : ::testing::Test
-{
+struct CounterIntTests : ::testing::Test {
     CounterInt counter{"test_counter", R"(label1="value1",label2="value2")"};
 };
 
@@ -105,14 +102,12 @@ TEST_F(CounterIntTests, multithreadAdd)
     static constexpr auto numNumberAdditions = 100;
     static constexpr auto numberToAdd = 11;
     std::thread thread1([&] {
-        for (int i = 0; i < numAdditions; ++i)
-        {
+        for (int i = 0; i < numAdditions; ++i) {
             ++counter;
         }
     });
     std::thread thread2([&] {
-        for (int i = 0; i < numNumberAdditions; ++i)
-        {
+        for (int i = 0; i < numNumberAdditions; ++i) {
             counter += numberToAdd;
         }
     });
@@ -121,8 +116,7 @@ TEST_F(CounterIntTests, multithreadAdd)
     EXPECT_EQ(counter.value(), numAdditions + numNumberAdditions * numberToAdd);
 }
 
-struct CounterDoubleTests : ::testing::Test
-{
+struct CounterDoubleTests : ::testing::Test {
     CounterDouble counter{"test_counter", R"(label1="value1",label2="value2")"};
 };
 
@@ -147,14 +141,12 @@ TEST_F(CounterDoubleTests, multithreadAdd)
     static constexpr auto numNumberAdditions = 100;
     static constexpr auto numberToAdd = 11.1234;
     std::thread thread1([&] {
-        for (int i = 0; i < numAdditions; ++i)
-        {
+        for (int i = 0; i < numAdditions; ++i) {
             ++counter;
         }
     });
     std::thread thread2([&] {
-        for (int i = 0; i < numNumberAdditions; ++i)
-        {
+        for (int i = 0; i < numNumberAdditions; ++i) {
             counter += numberToAdd;
         }
     });

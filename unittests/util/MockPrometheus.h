@@ -27,8 +27,7 @@
 namespace util::prometheus {
 
 template <impl::SomeNumberType NumberType>
-struct MockCounterImpl
-{
+struct MockCounterImpl {
     using ValueType = NumberType;
 
     MOCK_METHOD(void, add, (NumberType), ());
@@ -40,8 +39,7 @@ using MockCounterImplInt = MockCounterImpl<std::int64_t>;
 using MockCounterImplUint = MockCounterImpl<std::uint64_t>;
 using MockCounterImplDouble = MockCounterImpl<double>;
 
-struct MockPrometheusImpl : PrometheusInterface
-{
+struct MockPrometheusImpl : PrometheusInterface {
     MockPrometheusImpl() : PrometheusInterface(true)
     {
         EXPECT_CALL(*this, counterInt)
@@ -72,11 +70,10 @@ struct MockPrometheusImpl : PrometheusInterface
     MetricType&
     getMetric(std::string name, Labels labels)
     {
-        const auto labelsString = labels.serialize();
-        const auto key = name + labels.serialize();
+        auto const labelsString = labels.serialize();
+        auto const key = name + labels.serialize();
         auto it = metrics.find(key);
-        if (it == metrics.end())
-        {
+        if (it == metrics.end()) {
             return makeMetric<MetricType>(std::move(name), labels.serialize());
         }
         auto* basePtr = it->second.get();
@@ -91,19 +88,14 @@ struct MockPrometheusImpl : PrometheusInterface
     makeMetric(std::string name, std::string labelsString)
     {
         std::unique_ptr<MetricBase> metric;
-        const auto key = name + labelsString;
-        if constexpr (std::is_same_v<typename MetricType::ValueType, std::int64_t>)
-        {
+        auto const key = name + labelsString;
+        if constexpr (std::is_same_v<typename MetricType::ValueType, std::int64_t>) {
             auto& impl = counterIntImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
-        }
-        else if constexpr (std::is_same_v<typename MetricType::ValueType, std::uint64_t>)
-        {
+        } else if constexpr (std::is_same_v<typename MetricType::ValueType, std::uint64_t>) {
             auto& impl = counterUintImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
-        }
-        else
-        {
+        } else {
             auto& impl = counterDoubleImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
         }
@@ -123,8 +115,7 @@ struct MockPrometheusImpl : PrometheusInterface
 /**
  * @note this class should be the first in the inheritance list
  */
-struct WithMockPrometheus : virtual ::testing::Test
-{
+struct WithMockPrometheus : virtual ::testing::Test {
     WithMockPrometheus()
     {
         PrometheusSingleton::replaceInstance(std::make_unique<MockPrometheusImpl>());
@@ -132,11 +123,9 @@ struct WithMockPrometheus : virtual ::testing::Test
 
     ~WithMockPrometheus() override
     {
-        if (HasFailure())
-        {
+        if (HasFailure()) {
             std::cerr << "Registered metrics:\n";
-            for (auto const& [key, metric] : mockPrometheus().metrics)
-            {
+            for (auto const& [key, metric] : mockPrometheus().metrics) {
                 std::cout << key << "\n";
             }
             std::cerr << "\n";
@@ -163,16 +152,11 @@ struct WithMockPrometheus : virtual ::testing::Test
 
         std::string const key = name + labelsString;
         mockPrometheusPtr->makeMetric<MetricType>(std::move(name), std::move(labelsString));
-        if constexpr (std::is_same_v<typename MetricType::ValueType, std::int64_t>)
-        {
+        if constexpr (std::is_same_v<typename MetricType::ValueType, std::int64_t>) {
             return mockPrometheusPtr->counterIntImpls[key];
-        }
-        else if constexpr (std::is_same_v<typename MetricType::ValueType, std::uint64_t>)
-        {
+        } else if constexpr (std::is_same_v<typename MetricType::ValueType, std::uint64_t>) {
             return mockPrometheusPtr->counterUintImpls[key];
-        }
-        else if constexpr (std::is_same_v<typename MetricType::ValueType, double>)
-        {
+        } else if constexpr (std::is_same_v<typename MetricType::ValueType, double>) {
             return mockPrometheusPtr->counterDoubleImpls[key];
         }
         throw std::runtime_error("Wrong metric type");
@@ -182,8 +166,7 @@ struct WithMockPrometheus : virtual ::testing::Test
 /**
  * @note this class should be the first in the inheritance list
  */
-struct WithPrometheus : virtual ::testing::Test
-{
+struct WithPrometheus : virtual ::testing::Test {
     WithPrometheus()
     {
         PROMETHEUS_INIT();

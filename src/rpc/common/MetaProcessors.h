@@ -33,8 +33,7 @@ namespace rpc::meta {
 /**
  * @brief A meta-processor that acts as a spec for a sub-object/section.
  */
-class Section final
-{
+class Section final {
     std::vector<FieldSpec> specs;
 
 public:
@@ -61,8 +60,7 @@ public:
 /**
  * @brief A meta-processor that specifies a list of specs to run against the object at the given index in the array.
  */
-class ValidateArrayAt final
-{
+class ValidateArrayAt final {
     std::size_t idx_;
     std::vector<FieldSpec> specs_;
 
@@ -93,8 +91,7 @@ public:
  * parameter.
  */
 template <typename Type>
-class IfType final
-{
+class IfType final {
 public:
     /**
      * @brief Constructs a validator that validates the specs if the type matches.
@@ -103,8 +100,8 @@ public:
     template <SomeRequirement... Requirements>
     IfType(Requirements&&... requirements)
         : processor_(
-              [... r = std::forward<Requirements>(
-                   requirements)](boost::json::value& j, std::string_view key) -> MaybeError {
+              [... r = std::forward<Requirements>(requirements
+               )](boost::json::value& j, std::string_view key) -> MaybeError {
                   std::optional<Status> firstFailure = std::nullopt;
 
                   // the check logic is the same as fieldspec
@@ -122,7 +119,8 @@ public:
                       return Error{firstFailure.value()};
 
                   return {};
-              })
+              }
+          )
     {
     }
 
@@ -153,8 +151,7 @@ private:
  * @brief A meta-processor that wraps a validator and produces a custom error in case the wrapped validator fails.
  */
 template <typename SomeRequirement>
-class WithCustomError final
-{
+class WithCustomError final {
     SomeRequirement requirement;
     Status error;
 

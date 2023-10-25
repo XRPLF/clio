@@ -34,8 +34,7 @@ constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B25
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr static auto TXNID = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
-class RPCHelpersTest : public MockBackendTest, public SyncAsioContextTest
-{
+class RPCHelpersTest : public MockBackendTest, public SyncAsioContextTest {
     void
     SetUp() override
     {
@@ -113,7 +112,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
         EXPECT_EQ(
             cursor->toString(),
             "0000000000000000000000000000000000000000000000000000000000000000,"
-            "0");
+            "0"
+        );
     });
     ctx.run();
 }
@@ -133,8 +133,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
     int objectsCount = 11;
     ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(INDEX1);
         bbs.push_back(channel1.getSerializer().peekData());
@@ -179,15 +178,13 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
     int objectsCount = 10;
     ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     objectsCount = 15;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         bbs.push_back(channel1.getSerializer().peekData());
         objectsCount--;
     }
@@ -234,15 +231,13 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
     int objectsCount = 10;
     ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     objectsCount = 10;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         bbs.push_back(channel1.getSerializer().peekData());
         objectsCount--;
     }
@@ -259,7 +254,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX1, pageNum), yield, [&](auto) { count++; });
+            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX1, pageNum), yield, [&](auto) { count++; }
+        );
         auto cursor = std::get_if<AccountCursor>(&ret);
         EXPECT_TRUE(cursor != nullptr);
         EXPECT_EQ(count, limit);
@@ -284,8 +280,7 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
     int objectsCount = 10;
     ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
         indexes.emplace_back(INDEX1);
         objectsCount--;
@@ -299,7 +294,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX2, pageNum), yield, [&](auto) { count++; });
+            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX2, pageNum), yield, [&](auto) { count++; }
+        );
         auto status = std::get_if<Status>(&ret);
         EXPECT_TRUE(status != nullptr);
         EXPECT_EQ(*status, ripple::rpcINVALID_PARAMS);

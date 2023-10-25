@@ -35,15 +35,13 @@
 namespace unittests::detail {
 
 // input data for the test handlers below
-struct TestInput
-{
+struct TestInput {
     std::string hello;
     std::optional<uint32_t> limit;
 };
 
 // output data produced by the test handlers below
-struct TestOutput
-{
+struct TestOutput {
     std::string computed;
 };
 
@@ -66,8 +64,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TestOutput const
 }
 
 // example handler
-class HandlerFake
-{
+class HandlerFake {
 public:
     using Input = TestInput;
     using Output = TestOutput;
@@ -78,7 +75,7 @@ public:
     {
         using namespace rpc::validation;
 
-        static const auto rpcSpec = rpc::RpcSpec{
+        static auto const rpcSpec = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0, 100}},  // optional field
         };
@@ -93,8 +90,7 @@ public:
     }
 };
 
-class NoInputHandlerFake
-{
+class NoInputHandlerFake {
 public:
     using Output = TestOutput;
     using Result = rpc::HandlerReturnType<Output>;
@@ -107,8 +103,7 @@ public:
 };
 
 // example handler that returns custom error
-class FailingHandlerFake
-{
+class FailingHandlerFake {
 public:
     using Input = TestInput;
     using Output = TestOutput;
@@ -119,7 +114,7 @@ public:
     {
         using namespace rpc::validation;
 
-        static const auto rpcSpec = rpc::RpcSpec{
+        static auto const rpcSpec = rpc::RpcSpec{
             {"hello", Required{}, Type<std::string>{}, EqualTo{"world"}},
             {"limit", Type<uint32_t>{}, Between<uint32_t>{0u, 100u}},  // optional field
         };
@@ -135,8 +130,7 @@ public:
     }
 };
 
-struct InOutFake
-{
+struct InOutFake {
     std::string something;
 
     // Note: no spaceship comparison possible for std::string
@@ -158,8 +152,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, InOutFake const&
     jv = {{"something", output.something}};
 }
 
-struct HandlerMock
-{
+struct HandlerMock {
     using Input = InOutFake;
     using Output = InOutFake;
     using Result = rpc::HandlerReturnType<Output>;
@@ -168,8 +161,7 @@ struct HandlerMock
     MOCK_METHOD(Result, process, (Input, rpc::Context const&), (const));
 };
 
-struct HandlerWithoutInputMock
-{
+struct HandlerWithoutInputMock {
     using Output = InOutFake;
     using Result = rpc::HandlerReturnType<Output>;
 
@@ -178,8 +170,7 @@ struct HandlerWithoutInputMock
 
 // testing sweep handler by mocking dos guard
 template <typename SweepHandler>
-struct BasicDOSGuardMock : public web::BaseDOSGuard
-{
+struct BasicDOSGuardMock : public web::BaseDOSGuard {
     BasicDOSGuardMock(SweepHandler& handler)
     {
         handler.setup(this);

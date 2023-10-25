@@ -23,8 +23,7 @@
 using namespace util::prometheus;
 namespace http = boost::beast::http;
 
-struct PrometheusCheckRequestTestsParams
-{
+struct PrometheusCheckRequestTestsParams {
     std::string testName;
     http::verb method;
     std::string target;
@@ -33,13 +32,11 @@ struct PrometheusCheckRequestTestsParams
     bool expected;
 };
 
-struct PrometheusCheckRequestTests : public ::testing::TestWithParam<PrometheusCheckRequestTestsParams>
-{
-    struct NameGenerator
-    {
+struct PrometheusCheckRequestTests : public ::testing::TestWithParam<PrometheusCheckRequestTestsParams> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<PrometheusCheckRequestTestsParams>(info.param);
             return bundle.testName;
@@ -96,10 +93,10 @@ INSTANTIATE_TEST_CASE_P(
             .prometheusEnabled = true,
             .expected = false},
     }),
-    PrometheusCheckRequestTests::NameGenerator());
+    PrometheusCheckRequestTests::NameGenerator()
+);
 
-struct PrometheusHandleRequestTests : ::testing::Test
-{
+struct PrometheusHandleRequestTests : ::testing::Test {
     PrometheusHandleRequestTests()
     {
         PROMETHEUS_INIT();
@@ -133,9 +130,9 @@ TEST_F(PrometheusHandleRequestTests, notAdmin)
 
 TEST_F(PrometheusHandleRequestTests, responseWithCounter)
 {
-    const auto counterName = "test_counter";
+    auto const counterName = "test_counter";
     const Labels labels{{{"label1", "value1"}, Label{"label2", "value2"}}};
-    const auto description = "test_description";
+    auto const description = "test_description";
 
     auto& counter = PROMETHEUS().counterInt(counterName, labels, description);
     ++counter;
@@ -145,16 +142,16 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounter)
     ASSERT_TRUE(response.has_value());
     EXPECT_EQ(response->result(), http::status::ok);
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
-    const auto expectedBody =
+    auto const expectedBody =
         fmt::format("# HELP {0} {1}\n# TYPE {0} counter\n{0}{2} 4\n\n", counterName, description, labels.serialize());
     EXPECT_EQ(response->body(), expectedBody);
 }
 
 TEST_F(PrometheusHandleRequestTests, responseWithGauge)
 {
-    const auto gaugeName = "test_gauge";
+    auto const gaugeName = "test_gauge";
     const Labels labels{{{"label2", "value2"}, Label{"label3", "value3"}}};
-    const auto description = "test_description_gauge";
+    auto const description = "test_description_gauge";
 
     auto& gauge = PROMETHEUS().gaugeInt(gaugeName, labels, description);
     ++gauge;
@@ -164,24 +161,24 @@ TEST_F(PrometheusHandleRequestTests, responseWithGauge)
     ASSERT_TRUE(response.has_value());
     EXPECT_EQ(response->result(), http::status::ok);
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
-    const auto expectedBody =
+    auto const expectedBody =
         fmt::format("# HELP {0} {1}\n# TYPE {0} gauge\n{0}{2} -2\n\n", gaugeName, description, labels.serialize());
     EXPECT_EQ(response->body(), expectedBody);
 }
 
 TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
 {
-    const auto counterName = "test_counter";
+    auto const counterName = "test_counter";
     const Labels counterLabels{{{"label1", "value1"}, Label{"label2", "value2"}}};
-    const auto counterDescription = "test_description";
+    auto const counterDescription = "test_description";
 
     auto& counter = PROMETHEUS().counterInt(counterName, counterLabels, counterDescription);
     ++counter;
     counter += 3;
 
-    const auto gaugeName = "test_gauge";
+    auto const gaugeName = "test_gauge";
     const Labels gaugeLabels{{{"label2", "value2"}, Label{"label3", "value3"}}};
-    const auto gaugeDescription = "test_description_gauge";
+    auto const gaugeDescription = "test_description_gauge";
 
     auto& gauge = PROMETHEUS().gaugeInt(gaugeName, gaugeLabels, gaugeDescription);
     ++gauge;
@@ -191,7 +188,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
 
     EXPECT_EQ(response->result(), http::status::ok);
     EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
-    const auto expectedBody = fmt::format(
+    auto const expectedBody = fmt::format(
         "# HELP {3} {4}\n# TYPE {3} gauge\n{3}{5} -2\n\n"
         "# HELP {0} {1}\n# TYPE {0} counter\n{0}{2} 4\n\n",
         counterName,
@@ -199,8 +196,9 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
         counterLabels.serialize(),
         gaugeName,
         gaugeDescription,
-        gaugeLabels.serialize());
-    const auto anotherExpectedBody = fmt::format(
+        gaugeLabels.serialize()
+    );
+    auto const anotherExpectedBody = fmt::format(
         "# HELP {0} {1}\n# TYPE {0} counter\n{0}{2} 4\n\n"
         "# HELP {3} {4}\n# TYPE {3} gauge\n{3}{5} -2\n\n",
         counterName,
@@ -208,6 +206,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
         counterLabels.serialize(),
         gaugeName,
         gaugeDescription,
-        gaugeLabels.serialize());
+        gaugeLabels.serialize()
+    );
     EXPECT_TRUE(response->body() == expectedBody || response->body() == anotherExpectedBody);
 }

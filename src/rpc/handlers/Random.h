@@ -33,11 +33,9 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/random.html
  */
-class RandomHandler
-{
+class RandomHandler {
 public:
-    struct Output
-    {
+    struct Output {
         std::string random;
     };
 

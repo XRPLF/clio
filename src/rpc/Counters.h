@@ -34,14 +34,12 @@ namespace rpc {
 /**
  * @brief Holds information about successful, failed, forwarded, etc. RPC handler calls.
  */
-class Counters
-{
+class Counters {
     using CounterType = util::prometheus::CounterInt;
     /**
      * @brief All counters the system keeps track of for each RPC method.
      */
-    struct MethodInfo
-    {
+    struct MethodInfo {
         MethodInfo(std::string const& method);
 
         CounterType& started;
@@ -66,7 +64,7 @@ class Counters
     CounterType& unknownCommandCounter_;
     CounterType& internalErrorCounter_;
 
-    std::reference_wrapper<const WorkQueue> workQueue_;
+    std::reference_wrapper<WorkQueue const> workQueue_;
     std::chrono::time_point<std::chrono::system_clock> startupTime_;
 
 public:

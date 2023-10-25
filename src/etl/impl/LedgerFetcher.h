@@ -35,8 +35,7 @@ namespace etl::detail {
  * @brief GRPC Ledger data fetcher
  */
 template <typename LoadBalancerType>
-class LedgerFetcher
-{
+class LedgerFetcher {
 public:
     using OptionalGetLedgerResponseType = typename LoadBalancerType::OptionalGetLedgerResponseType;
 
@@ -91,7 +90,8 @@ public:
         LOG(log_.debug()) << "Attempting to fetch ledger with sequence = " << sequence;
 
         auto response = loadBalancer_->fetchLedger(
-            sequence, true, !backend_->cache().isFull() || backend_->cache().latestLedgerSequence() >= sequence);
+            sequence, true, !backend_->cache().isFull() || backend_->cache().latestLedgerSequence() >= sequence
+        );
         if (response)
             LOG(log_.trace()) << "GetLedger reply = " << response->DebugString();
 

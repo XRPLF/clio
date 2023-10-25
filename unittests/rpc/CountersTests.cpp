@@ -31,24 +31,21 @@ using namespace rpc;
 using util::prometheus::CounterInt;
 using util::prometheus::WithMockPrometheus;
 
-struct BaseRPCCountersTest : NoLoggerFixture
-{
+struct BaseRPCCountersTest : NoLoggerFixture {
     BaseRPCCountersTest()
     {
         PROMETHEUS_INIT();
     }
 };
 
-struct RPCCountersTest : BaseRPCCountersTest
-{
+struct RPCCountersTest : BaseRPCCountersTest {
     WorkQueue queue{4u, 1024u};  // todo: mock instead
     Counters counters{queue};
 };
 
 TEST_F(RPCCountersTest, CheckThatCountersAddUp)
 {
-    for (auto i = 0u; i < 512u; ++i)
-    {
+    for (auto i = 0u; i < 512u; ++i) {
         counters.rpcErrored("error");
         counters.rpcComplete("complete", std::chrono::milliseconds{1u});
         counters.rpcForwarded("forward");
@@ -109,8 +106,7 @@ TEST_F(RPCCountersTest, CheckThatCountersAddUp)
     EXPECT_EQ(report.at("work_queue"), queue.report());  // Counters report includes queue report
 }
 
-struct RPCCountersMockPrometheusTests : WithMockPrometheus
-{
+struct RPCCountersMockPrometheusTests : WithMockPrometheus {
     WorkQueue queue{4u, 1024u};  // todo: mock instead
     Counters counters{queue};
 };

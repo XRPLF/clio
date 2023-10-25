@@ -36,8 +36,7 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     state_.isWriting = true;
 
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
-    if (!rng || rng->maxSequence < startSequence - 1)
-    {
+    if (!rng || rng->maxSequence < startSequence - 1) {
         assert(false);
         throw std::runtime_error("runETLPipeline: parent ledger is null");
     }
@@ -46,10 +45,10 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     auto extractors = std::vector<std::unique_ptr<ExtractorType>>{};
     auto pipe = DataPipeType{numExtractors, startSequence};
 
-    for (auto i = 0u; i < numExtractors; ++i)
-    {
+    for (auto i = 0u; i < numExtractors; ++i) {
         extractors.push_back(std::make_unique<ExtractorType>(
-            pipe, networkValidatedLedgers_, ledgerFetcher_, startSequence + i, finishSequence_, state_));
+            pipe, networkValidatedLedgers_, ledgerFetcher_, startSequence + i, finishSequence_, state_
+        ));
     }
 
     auto transformer =
@@ -85,54 +84,39 @@ void
 ETLService::monitor()
 {
     auto rng = backend_->hardFetchLedgerRangeNoThrow();
-    if (!rng)
-    {
+    if (!rng) {
         LOG(log_.info()) << "Database is empty. Will download a ledger from the network.";
         std::optional<ripple::LedgerHeader> ledger;
 
-        try
-        {
-            if (startSequence_)
-            {
+        try {
+            if (startSequence_) {
                 LOG(log_.info()) << "ledger sequence specified in config. "
                                  << "Will begin ETL process starting with ledger " << *startSequence_;
                 ledger = ledgerLoader_.loadInitialLedger(*startSequence_);
-            }
-            else
-            {
+            } else {
                 LOG(log_.info()) << "Waiting for next ledger to be validated by network...";
                 std::optional<uint32_t> mostRecentValidated = networkValidatedLedgers_->getMostRecent();
 
-                if (mostRecentValidated)
-                {
+                if (mostRecentValidated) {
                     LOG(log_.info()) << "Ledger " << *mostRecentValidated << " has been validated. Downloading...";
                     ledger = ledgerLoader_.loadInitialLedger(*mostRecentValidated);
-                }
-                else
-                {
+                } else {
                     LOG(log_.info()) << "The wait for the next validated ledger has been aborted. Exiting monitor loop";
                     return;
                 }
             }
-        }
-        catch (std::runtime_error const& e)
-        {
+        } catch (std::runtime_error const& e) {
             LOG(log_.fatal()) << "Failed to load initial ledger: " << e.what();
             return amendmentBlockHandler_.onAmendmentBlock();
         }
 
-        if (ledger)
-        {
+        if (ledger) {
             rng = backend_->hardFetchLedgerRangeNoThrow();
-        }
-        else
-        {
+        } else {
             LOG(log_.error()) << "Failed to load initial ledger. Exiting monitor loop";
             return;
         }
-    }
-    else
-    {
+    } else {
         if (startSequence_)
             LOG(log_.warn()) << "start sequence specified but db is already populated";
 
@@ -146,8 +130,7 @@ ETLService::monitor()
     LOG(log_.debug()) << "Database is populated. "
                       << "Starting monitor loop. sequence = " << nextSequence;
 
-    while (true)
-    {
+    while (true) {
         nextSequence = publishNextSequence(nextSequence);
     }
 }
@@ -155,13 +138,10 @@ ETLService::monitor()
 uint32_t
 ETLService::publishNextSequence(uint32_t nextSequence)
 {
-    if (auto rng = backend_->hardFetchLedgerRangeNoThrow(); rng && rng->maxSequence >= nextSequence)
-    {
+    if (auto rng = backend_->hardFetchLedgerRangeNoThrow(); rng && rng->maxSequence >= nextSequence) {
         ledgerPublisher_.publish(nextSequence, {});
         ++nextSequence;
-    }
-    else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, util::MILLISECONDS_PER_SECOND))
-    {
+    } else if (networkValidatedLedgers_->waitUntilValidatedByNetwork(nextSequence, util::MILLISECONDS_PER_SECOND)) {
         LOG(log_.info()) << "Ledger with sequence = " << nextSequence << " has been validated by the network. "
                          << "Attempting to find in database and publish";
 
@@ -174,8 +154,7 @@ ETLService::publishNextSequence(uint32_t nextSequence)
         constexpr size_t timeoutSeconds = 10;
         bool const success = ledgerPublisher_.publish(nextSequence, timeoutSeconds);
 
-        if (!success)
-        {
+        if (!success) {
             LOG(log_.warn()) << "Failed to publish ledger with sequence = " << nextSequence << " . Beginning ETL";
 
             // returns the most recent sequence published empty optional if no sequence was published
@@ -185,9 +164,7 @@ ETLService::publishNextSequence(uint32_t nextSequence)
             // if no ledger was published, don't increment nextSequence
             if (lastPublished)
                 nextSequence = *lastPublished + 1;
-        }
-        else
-        {
+        } else {
             ++nextSequence;
         }
     }
@@ -199,13 +176,11 @@ ETLService::monitorReadOnly()
 {
     LOG(log_.debug()) << "Starting reporting in strict read only mode";
 
-    const auto latestSequenceOpt = [this]() -> std::optional<uint32_t> {
+    auto const latestSequenceOpt = [this]() -> std::optional<uint32_t> {
         auto rng = backend_->hardFetchLedgerRangeNoThrow();
 
-        if (!rng)
-        {
-            if (auto net = networkValidatedLedgers_->getMostRecent())
-            {
+        if (!rng) {
+            if (auto net = networkValidatedLedgers_->getMostRecent()) {
                 return *net;
             }
             return std::nullopt;
@@ -214,8 +189,7 @@ ETLService::monitorReadOnly()
         return rng->maxSequence;
     }();
 
-    if (!latestSequenceOpt.has_value())
-    {
+    if (!latestSequenceOpt.has_value()) {
         return;
     }
 
@@ -224,15 +198,11 @@ ETLService::monitorReadOnly()
     cacheLoader_.load(latestSequence);
     latestSequence++;
 
-    while (true)
-    {
-        if (auto rng = backend_->hardFetchLedgerRangeNoThrow(); rng && rng->maxSequence >= latestSequence)
-        {
+    while (true) {
+        if (auto rng = backend_->hardFetchLedgerRangeNoThrow(); rng && rng->maxSequence >= latestSequence) {
             ledgerPublisher_.publish(latestSequence, {});
             latestSequence = latestSequence + 1;
-        }
-        else
-        {
+        } else {
             // if we can't, wait until it's validated by the network, or 1 second passes, whichever occurs first.
             // Even if we don't hear from rippled, if ledgers are being written to the db, we publish them.
             networkValidatedLedgers_->waitUntilValidatedByNetwork(latestSequence, util::MILLISECONDS_PER_SECOND);
@@ -255,12 +225,9 @@ ETLService::doWork()
     worker_ = std::thread([this]() {
         beast::setCurrentThreadName("ETLService worker");
 
-        if (state_.isReadOnly)
-        {
+        if (state_.isReadOnly) {
             monitorReadOnly();
-        }
-        else
-        {
+        } else {
             monitor();
         }
     });
@@ -272,7 +239,8 @@ ETLService::ETLService(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<SubscriptionManagerType> subscriptions,
     std::shared_ptr<LoadBalancerType> balancer,
-    std::shared_ptr<NetworkValidatedLedgersType> ledgers)
+    std::shared_ptr<NetworkValidatedLedgersType> ledgers
+)
     : backend_(backend)
     , loadBalancer_(balancer)
     , networkValidatedLedgers_(std::move(ledgers))

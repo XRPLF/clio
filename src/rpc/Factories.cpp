@@ -33,15 +33,13 @@ make_WsContext(
     TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
     string const& clientIp,
-    std::reference_wrapper<APIVersionParser const> apiVersionParser)
+    std::reference_wrapper<APIVersionParser const> apiVersionParser
+)
 {
     boost::json::value commandValue = nullptr;
-    if (!request.contains("command") && request.contains("method"))
-    {
+    if (!request.contains("command") && request.contains("method")) {
         commandValue = request.at("method");
-    }
-    else if (request.contains("command") && !request.contains("method"))
-    {
+    } else if (request.contains("command") && !request.contains("method")) {
         commandValue = request.at("command");
     }
 
@@ -64,7 +62,8 @@ make_HttpContext(
     data::LedgerRange const& range,
     string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser,
-    bool const isAdmin)
+    bool const isAdmin
+)
 {
     if (!request.contains("method"))
         return Error{{ClioError::rpcCOMMAND_IS_MISSING}};
@@ -93,7 +92,8 @@ make_HttpContext(
         return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
 
     return web::Context(
-        yc, command, *apiVersion, array.at(0).as_object(), nullptr, tagFactory, range, clientIp, isAdmin);
+        yc, command, *apiVersion, array.at(0).as_object(), nullptr, tagFactory, range, clientIp, isAdmin
+    );
 }
 
 }  // namespace rpc

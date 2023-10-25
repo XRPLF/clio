@@ -27,7 +27,8 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -44,8 +45,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
     auto output = GatewayBalancesHandler::Output{};
 
     auto const addToResponse = [&](ripple::SLE&& sle) {
-        if (sle.getType() == ripple::ltRIPPLE_STATE)
-        {
+        if (sle.getType() == ripple::ltRIPPLE_STATE) {
             ripple::STAmount balance = sle.getFieldAmount(ripple::sfBalance);
             auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
             auto const highLimit = sle.getFieldAmount(ripple::sfHighLimit);
@@ -67,38 +67,25 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
             // Here, a negative balance means the cold wallet owes (normal)
             // A positive balance means the cold wallet has an asset (unusual)
 
-            if (input.hotWallets.contains(peer))
-            {
+            if (input.hotWallets.contains(peer)) {
                 // This is a specified hot wallet
                 output.hotBalances[peer].push_back(-balance);
-            }
-            else if (balSign > 0)
-            {
+            } else if (balSign > 0) {
                 // This is a gateway asset
                 output.assets[peer].push_back(balance);
-            }
-            else if (freeze != 0u)
-            {
+            } else if (freeze != 0u) {
                 // An obligation the gateway has frozen
                 output.frozenBalances[peer].push_back(-balance);
-            }
-            else
-            {
+            } else {
                 // normal negative balance, obligation to customer
                 auto& bal = output.sums[balance.getCurrency()];
-                if (bal == beast::zero)
-                {
+                if (bal == beast::zero) {
                     // This is needed to set the currency code correctly
                     bal = -balance;
-                }
-                else
-                {
-                    try
-                    {
+                } else {
+                    try {
                         bal -= balance;
-                    }
-                    catch (std::runtime_error const& e)
-                    {
+                    } catch (std::runtime_error const& e) {
                         bal = ripple::STAmount(bal.issue(), ripple::STAmount::cMaxValue, ripple::STAmount::cMaxOffset);
                     }
                 }
@@ -116,7 +103,8 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
         std::numeric_limits<std::uint32_t>::max(),
         {},
         ctx.yield,
-        addToResponse);
+        addToResponse
+    );
 
     if (auto status = std::get_if<Status>(&ret))
         return Error{*status};
@@ -136,8 +124,7 @@ void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesHandler::Output const& output)
 {
     boost::json::object obj;
-    if (!output.sums.empty())
-    {
+    if (!output.sums.empty()) {
         boost::json::object obligations;
         for (auto const& [k, v] : output.sums)
             obligations[ripple::to_string(k)] = v.getText();
@@ -148,13 +135,10 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesH
     auto const toJson = [](std::map<ripple::AccountID, std::vector<ripple::STAmount>> const& balances) {
         boost::json::object balancesObj;
 
-        if (not balances.empty())
-        {
-            for (auto const& [accId, accBalances] : balances)
-            {
+        if (not balances.empty()) {
+            for (auto const& [accId, accBalances] : balances) {
                 boost::json::array arr;
-                for (auto const& balance : accBalances)
-                {
+                for (auto const& balance : accBalances) {
                     boost::json::object entry;
                     entry[JS(currency)] = ripple::to_string(balance.issue().currency);
                     entry[JS(value)] = balance.getText();
@@ -200,32 +184,25 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
-        {
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        }
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
-        {
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
         }
     }
 
-    if (jsonObject.contains(JS(hotwallet)))
-    {
-        if (jsonObject.at(JS(hotwallet)).is_string())
-        {
+    if (jsonObject.contains(JS(hotwallet))) {
+        if (jsonObject.at(JS(hotwallet)).is_string()) {
             input.hotWallets.insert(*accountFromStringStrict(jv.at(JS(hotwallet)).as_string().c_str()));
-        }
-        else
-        {
+        } else {
             auto const& hotWallets = jv.at(JS(hotwallet)).as_array();
             std::transform(
                 hotWallets.begin(),
                 hotWallets.end(),
                 std::inserter(input.hotWallets, input.hotWallets.begin()),
-                [](auto const& hotWallet) { return *accountFromStringStrict(hotWallet.as_string().c_str()); });
+                [](auto const& hotWallet) { return *accountFromStringStrict(hotWallet.as_string().c_str()); }
+            );
         }
     }
 

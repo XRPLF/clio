@@ -36,8 +36,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_lines.html
  */
-class AccountLinesHandler
-{
+class AccountLinesHandler {
     // dependencies
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
@@ -46,8 +45,7 @@ public:
     static auto constexpr LIMIT_MAX = 400;
     static auto constexpr LIMIT_DEFAULT = 200;
 
-    struct LineResponse
-    {
+    struct LineResponse {
         std::string account;
         std::string balance;
         std::string currency;
@@ -63,8 +61,7 @@ public:
         std::optional<bool> freezePeer;
     };
 
-    struct Output
-    {
+    struct Output {
         std::string account;
         std::vector<LineResponse> lines;
         std::string ledgerHash;
@@ -74,8 +71,7 @@ public:
         uint32_t limit{};
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
@@ -122,7 +118,8 @@ private:
         std::vector<LineResponse>& lines,
         ripple::SLE const& lineSle,
         ripple::AccountID const& account,
-        std::optional<ripple::AccountID> const& peerAccount);
+        std::optional<ripple::AccountID> const& peerAccount
+    );
 
 private:
     friend void

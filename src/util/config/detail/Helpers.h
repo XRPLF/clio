@@ -29,8 +29,7 @@ namespace util::detail {
 /**
  * @brief Thrown when a KeyPath related error occurs
  */
-struct KeyException : public ::std::logic_error
-{
+struct KeyException : public ::std::logic_error {
     KeyException(::std::string msg) : ::std::logic_error{msg}
     {
     }
@@ -39,8 +38,7 @@ struct KeyException : public ::std::logic_error
 /**
  * @brief Thrown when a Store (config's storage) related error occurs.
  */
-struct StoreException : public ::std::logic_error
-{
+struct StoreException : public ::std::logic_error {
     StoreException(::std::string msg) : ::std::logic_error{msg}
     {
     }
@@ -53,8 +51,7 @@ struct StoreException : public ::std::logic_error
  * @tparam Separator The separator character
  */
 template <typename KeyType, char Separator>
-class Tokenizer final
-{
+class Tokenizer final {
     using opt_key_t = std::optional<KeyType>;
     KeyType key_;
     KeyType token_{};
@@ -66,14 +63,10 @@ public:
         if (key.empty())
             throw KeyException("Empty key");
 
-        for (auto const& c : key)
-        {
-            if (c == Separator)
-            {
+        for (auto const& c : key) {
+            if (c == Separator) {
                 saveToken();
-            }
-            else
-            {
+            } else {
                 token_ += c;
             }
         }
@@ -103,63 +96,63 @@ private:
 };
 
 template <typename T>
-static constexpr const char*
+static constexpr char const*
 typeName()
 {
     return typeid(T).name();
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<uint64_t>()
 {
     return "uint64_t";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<int64_t>()
 {
     return "int64_t";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<uint32_t>()
 {
     return "uint32_t";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<int32_t>()
 {
     return "int32_t";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<bool>()
 {
     return "bool";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<std::string>()
 {
     return "std::string";
 }
 
 template <>
-constexpr const char*
-typeName<const char*>()
+constexpr char const*
+typeName<char const*>()
 {
     return "const char*";
 }
 
 template <>
-constexpr const char*
+constexpr char const*
 typeName<double>()
 {
     return "double";

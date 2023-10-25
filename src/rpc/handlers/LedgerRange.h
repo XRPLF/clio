@@ -33,13 +33,11 @@ namespace rpc {
  *
  * Not documented in the official rippled API docs.
  */
-class LedgerRangeHandler
-{
+class LedgerRangeHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    struct Output
-    {
+    struct Output {
         data::LedgerRange range;
     };
 
