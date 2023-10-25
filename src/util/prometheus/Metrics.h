@@ -22,6 +22,9 @@
 
 #include <fmt/format.h>
 
+#include <functional>
+#include <memory>
+#include <optional>
 #include <unordered_map>
 
 namespace util::prometheus {

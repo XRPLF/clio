@@ -23,6 +23,7 @@
 
 namespace rpc {
 
+using util::prometheus::Label;
 using util::prometheus::Labels;
 
 Counters::MethodInfo::MethodInfo(std::string const& method)
@@ -58,7 +59,7 @@ Counters::MethodInfo::MethodInfo(std::string const& method)
       ))
     , duration(PROMETHEUS().counterInt(
           "rpc_method_duration_us",
-          Labels({{"method", method}}),
+          Labels({util::prometheus::Label{"method", method}}),
           fmt::format("Total duration of calls to the method {}", method)
       ))
 {
@@ -77,27 +78,27 @@ Counters::getMethodInfo(std::string const& method)
 Counters::Counters(WorkQueue const& wq)
     : tooBusyCounter_(PROMETHEUS().counterInt(
           "rpc_error_total_number",
-          Labels({{"error_type", "too_busy"}}),
+          Labels({Label{"error_type", "too_busy"}}),
           "Total number of too busy errors"
       ))
     , notReadyCounter_(PROMETHEUS().counterInt(
           "rpc_error_total_number",
-          Labels({{"error_type", "not_ready"}}),
+          Labels({Label{"error_type", "not_ready"}}),
           "Total number of not ready replyes"
       ))
     , badSyntaxCounter_(PROMETHEUS().counterInt(
           "rpc_error_total_number",
-          Labels({{"error_type", "bad_syntax"}}),
+          Labels({Label{"error_type", "bad_syntax"}}),
           "Total number of bad syntax replyes"
       ))
     , unknownCommandCounter_(PROMETHEUS().counterInt(
           "rpc_error_total_number",
-          Labels({{"error_type", "unknown_command"}}),
+          Labels({Label{"error_type", "unknown_command"}}),
           "Total number of unknown command replyes"
       ))
     , internalErrorCounter_(PROMETHEUS().counterInt(
           "rpc_error_total_number",
-          Labels({{"error_type", "internal_error"}}),
+          Labels({Label{"error_type", "internal_error"}}),
           "Total number of internal errors"
       ))
     , workQueue_(std::cref(wq))

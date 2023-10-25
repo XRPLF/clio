@@ -67,9 +67,10 @@ struct MetricsFamilyTest : ::testing::Test {
     };
 
     ::testing::StrictMock<MetricBuilderImplMock> metricBuilderMock;
-    MetricsFamily::MetricBuilder metricBuilder = [this](std::string name, std::string labels, MetricType type) {
-        return metricBuilderMock.build(std::move(name), std::move(labels), type);
-    };
+    MetricsFamily::MetricBuilder metricBuilder =
+        [this](std::string metricName, std::string labels, MetricType metricType) {
+            return metricBuilderMock.build(std::move(metricName), std::move(labels), metricType);
+        };
 
     std::string const name{"name"};
     std::string const description{"description"};

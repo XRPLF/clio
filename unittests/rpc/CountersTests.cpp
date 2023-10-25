@@ -30,15 +30,9 @@ using namespace rpc;
 
 using util::prometheus::CounterInt;
 using util::prometheus::WithMockPrometheus;
+using util::prometheus::WithPrometheus;
 
-struct BaseRPCCountersTest : NoLoggerFixture {
-    BaseRPCCountersTest()
-    {
-        PROMETHEUS_INIT();
-    }
-};
-
-struct RPCCountersTest : BaseRPCCountersTest {
+struct RPCCountersTest : WithPrometheus, NoLoggerFixture {
     WorkQueue queue{4u, 1024u};  // todo: mock instead
     Counters counters{queue};
 };

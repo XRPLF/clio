@@ -115,7 +115,7 @@ public:
         : strand_(boost::asio::make_strand(ioc))
         , subCount_(PROMETHEUS().gaugeInt(
               "subscriptions_current_number",
-              util::prometheus::Labels({{"stream", name}}),
+              util::prometheus::Labels({util::prometheus::Label{"stream", name}}),
               fmt::format("Current subscribers number on the {} stream", name)
           ))
     {
@@ -200,7 +200,7 @@ public:
         : strand_(boost::asio::make_strand(ioc))
         , subCount_(PROMETHEUS().gaugeInt(
               "subscriptions_current_number",
-              util::prometheus::Labels({{"collection", name}}),
+              util::prometheus::Labels({util::prometheus::Label{"collection", name}}),
               fmt::format("Current subscribers number on the {} collection", name)
           ))
     {

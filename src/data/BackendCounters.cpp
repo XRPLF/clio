@@ -23,22 +23,24 @@
 
 namespace data {
 
+using namespace util::prometheus;
+
 BackendCounters::BackendCounters()
-    : tooBusyCounter_{PROMETHEUS().counterInt(
+    : tooBusyCounter_(PROMETHEUS().counterInt(
           "backend_too_busy_total_number",
-          util::prometheus::Labels(),
+          Labels(),
           "The total number of times the backend was too busy to process a request"
-      )}
-    , writeSyncCounter_{PROMETHEUS().counterInt(
+      ))
+    , writeSyncCounter_(PROMETHEUS().counterInt(
           "backend_operations_total_number",
-          util::prometheus::Labels({{"operation", "write_sync"}}),
+          Labels({Label{"operation", "write_sync"}}),
           "The total number of times the backend had to write synchronously"
-      )}
-    , writeSyncRetryCounter_{PROMETHEUS().counterInt(
+      ))
+    , writeSyncRetryCounter_(PROMETHEUS().counterInt(
           "backend_operations_total_number",
-          util::prometheus::Labels({{"operation", "write_sync_retry"}}),
+          Labels({Label{"operation", "write_sync_retry"}}),
           "The total number of times the backend had to retry a synchronous write"
-      )}
+      ))
     , asyncWriteCounters_{"write_async"}
     , asyncReadCounters_{"read_async"}
 {
@@ -127,26 +129,26 @@ BackendCounters::report() const
 
 BackendCounters::AsyncOperationCounters::AsyncOperationCounters(std::string name)
     : name_(std::move(name))
-    , pendingCounter_{PROMETHEUS().gaugeInt(
+    , pendingCounter_(PROMETHEUS().gaugeInt(
           "backend_operations_current_number",
-          util::prometheus::Labels({{"operation", name_}, {"status", "pending"}}),
+          Labels({{"operation", name_}, {"status", "pending"}}),
           "The current number of pending " + name_ + " operations"
-      )}
-    , completedCounter_{PROMETHEUS().counterInt(
+      ))
+    , completedCounter_(PROMETHEUS().counterInt(
           "backend_operations_total_number",
-          util::prometheus::Labels({{"operation", name_}, {"status", "completed"}}),
+          Labels({{"operation", name_}, {"status", "completed"}}),
           "The total number of completed " + name_ + " operations"
-      )}
-    , retryCounter_{PROMETHEUS().counterInt(
+      ))
+    , retryCounter_(PROMETHEUS().counterInt(
           "backend_operations_total_number",
-          util::prometheus::Labels({{"operation", name_}, {"status", "retry"}}),
+          Labels({{"operation", name_}, {"status", "retry"}}),
           "The total number of retried " + name_ + " operations"
-      )}
-    , errorCounter_{PROMETHEUS().counterInt(
+      ))
+    , errorCounter_(PROMETHEUS().counterInt(
           "backend_operations_total_number",
-          util::prometheus::Labels({{"operation", name_}, {"status", "error"}}),
+          Labels({{"operation", name_}, {"status", "error"}}),
           "The total number of errored " + name_ + " operations"
-      )}
+      ))
 {
 }
 
