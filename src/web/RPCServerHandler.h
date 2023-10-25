@@ -206,7 +206,8 @@ private:
                     json.contains("forwarded") && json.at("forwarded").is_bool() && json.at("forwarded").as_bool();
 
                 // if the result is forwarded - just use it as is
-                // if forwarded request has error, for http, error should be in "result"; for ws, error should be at top
+                // if forwarded request has error, for http, error should be in "result"; for ws, error should
+                // be at top
                 if (isForwarded && (json.contains("result") || connection->upgraded)) {
                     for (auto const& [k, v] : json)
                         response.insert_or_assign(k, v);

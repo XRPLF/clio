@@ -35,9 +35,8 @@ struct AmendmentBlockAction {
     operator()()
     {
         static util::Logger const log{"ETL"};
-        LOG(log.fatal()
-        ) << "Can't process new ledgers: The current ETL source is not compatible with the version of the "
-             "libxrpl Clio is currently using. Please upgrade Clio to a newer version.";
+        LOG(log.fatal()) << "Can't process new ledgers: The current ETL source is not compatible with the version of "
+                         << "the libxrpl Clio is currently using. Please upgrade Clio to a newer version.";
     }
 };
 

@@ -244,14 +244,21 @@ TEST_F(RPCBaseTest, EqualToValidator)
 
 TEST_F(RPCBaseTest, ArrayAtValidator)
 {
-    // clang-format off
     auto spec = RpcSpec{
-        {"arr", Required{}, Type<json::array>{}, ValidateArrayAt{0, {
-            {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
-        }}},
-        {"arr2", ValidateArrayAt{0, {
-            {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
-        }}},
+        {"arr",
+         Required{},
+         Type<json::array>{},
+         ValidateArrayAt{
+             0,
+             {
+                 {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
+             }}},
+        {"arr2",
+         ValidateArrayAt{
+             0,
+             {
+                 {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
+             }}},
     };
     // clang-format on
 
@@ -272,20 +279,16 @@ TEST_F(RPCBaseTest, IfTypeValidator)
 {
     // clang-format off
     auto spec = RpcSpec{
-        {"mix", 
-            Required{}, Type<std::string, json::object>{},
-            IfType<json::object>{
-                Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
-                Section{{"limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
-            },
-            IfType<std::string>{
-                Uint256HexStringValidator
-            }
-        },
+        {"mix",
+         Required{},
+         Type<std::string, json::object>{},
+         IfType<json::object>{
+             Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
+             Section{{"limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}},
+         IfType<std::string>{Uint256HexStringValidator}},
         {"mix2",
-            Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}, 
-            Type<std::string, json::object>{}
-        },
+         Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
+         Type<std::string, json::object>{}},
     };
     // clang-format on
 
@@ -343,14 +346,9 @@ TEST_F(RPCBaseTest, WithCustomError)
 
 TEST_F(RPCBaseTest, CustomValidator)
 {
-    // clang-format off
-    auto customFormatCheck = CustomValidator{
-        [](json::value const& value, std::string_view /* key */) -> MaybeError {
-            return value.as_string().size() == 34 ? 
-                MaybeError{} : Error{rpc::Status{"Uh oh"}};
-        }
-    };
-    // clang-format on
+    auto customFormatCheck = CustomValidator{[](json::value const& value, std::string_view /* key */) -> MaybeError {
+        return value.as_string().size() == 34 ? MaybeError{} : Error{rpc::Status{"Uh oh"}};
+    }};
 
     auto spec = RpcSpec{
         {"taker", customFormatCheck},

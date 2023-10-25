@@ -105,15 +105,16 @@ public:
                   std::optional<Status> firstFailure = std::nullopt;
 
                   // the check logic is the same as fieldspec
-                  // clang-format off
-            ([&j, &key, &firstFailure, req = &r]() {
-                if (firstFailure)
-                    return;
+                  (
+                      [&j, &key, &firstFailure, req = &r]() {
+                          if (firstFailure)
+                              return;
 
-                if (auto const res = req->verify(j, key); not res)
-                    firstFailure = res.error();
-            }(), ...);
-                  // clang-format on
+                          if (auto const res = req->verify(j, key); not res)
+                              firstFailure = res.error();
+                      }(),
+                      ...
+                  );
 
                   if (firstFailure)
                       return Error{firstFailure.value()};

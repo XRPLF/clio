@@ -65,8 +65,7 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
         return Severity::FTL;
 
     throw std::runtime_error(
-        "Could not parse `log_level`: expected `trace`, `debug`, `info`, "
-        "`warning`, `error` or `fatal`"
+        "Could not parse `log_level`: expected `trace`, `debug`, `info`, `warning`, `error` or `fatal`"
     );
 }
 
@@ -78,9 +77,7 @@ LogService::init(util::Config const& config)
 
     boost::log::add_common_attributes();
     boost::log::register_simple_formatter_factory<Severity, char>("Severity");
-    auto const defaultFormat =
-        "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% "
-        "%Message%";
+    auto const defaultFormat = "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%";
     std::string format = config.valueOr<std::string>("log_format", defaultFormat);
 
     if (config.valueOr("log_to_console", false)) {

@@ -727,8 +727,7 @@ keypairFromRequst(boost::json::object const& request)
     if (count > 1) {
         return Status{
             RippledError::rpcINVALID_PARAMS,
-            "Exactly one of the following must be specified: "
-            " passphrase, secret, seed, or seed_hex"};
+            "Exactly one of the following must be specified: passphrase, secret, seed, or seed_hex"};
     }
 
     std::optional<ripple::KeyType> keyType;

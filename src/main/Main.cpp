@@ -18,12 +18,6 @@
 //==============================================================================
 
 #include <grpc/impl/codegen/port_platform.h>
-#ifdef GRPC_TSAN_ENABLED
-#undef GRPC_TSAN_ENABLED
-#endif
-#ifdef GRPC_ASAN_ENABLED
-#undef GRPC_ASAN_ENABLED
-#endif
 
 #include <data/BackendFactory.h>
 #include <etl/ETLService.h>

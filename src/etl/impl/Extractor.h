@@ -96,10 +96,10 @@ private:
             });
             totalTime += time;
 
-            // if the fetch is unsuccessful, stop. fetchLedger only returns false if the server is shutting down, or if
-            // the ledger was found in the database (which means another process already wrote the ledger that this
-            // process was trying to extract; this is a form of a write conflict).
-            // Otherwise, fetchDataAndDiff will keep trying to fetch the specified ledger until successful.
+            // if the fetch is unsuccessful, stop. fetchLedger only returns false if the server is shutting down, or
+            // if the ledger was found in the database (which means another process already wrote the ledger that
+            // this process was trying to extract; this is a form of a write conflict). Otherwise, fetchDataAndDiff
+            // will keep trying to fetch the specified ledger until successful.
             if (!fetchResponse)
                 break;
 

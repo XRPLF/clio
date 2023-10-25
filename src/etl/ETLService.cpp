@@ -101,7 +101,8 @@ ETLService::monitor()
                     LOG(log_.info()) << "Ledger " << *mostRecentValidated << " has been validated. Downloading...";
                     ledger = ledgerLoader_.loadInitialLedger(*mostRecentValidated);
                 } else {
-                    LOG(log_.info()) << "The wait for the next validated ledger has been aborted. Exiting monitor loop";
+                    LOG(log_.info()) << "The wait for the next validated ledger has been aborted. "
+                                        "Exiting monitor loop";
                     return;
                 }
             }
@@ -203,8 +204,9 @@ ETLService::monitorReadOnly()
             ledgerPublisher_.publish(latestSequence, {});
             latestSequence = latestSequence + 1;
         } else {
-            // if we can't, wait until it's validated by the network, or 1 second passes, whichever occurs first.
-            // Even if we don't hear from rippled, if ledgers are being written to the db, we publish them.
+            // if we can't, wait until it's validated by the network, or 1 second passes, whichever occurs
+            // first. Even if we don't hear from rippled, if ledgers are being written to the db, we publish
+            // them.
             networkValidatedLedgers_->waitUntilValidatedByNetwork(latestSequence, util::MILLISECONDS_PER_SECOND);
         }
     }

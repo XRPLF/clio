@@ -91,7 +91,7 @@ The button for that is near the bottom of the PR's page on GitHub.
 This is a non-exhaustive list of recommended style guidelines. These are not always strictly enforced and serve as a way to keep the codebase coherent.
 
 ## Formatting
-Code must conform to `clang-format` version 10, unless the result would be unreasonably difficult to read or maintain.
+Code must conform to `clang-format` version 16, unless the result would be unreasonably difficult to read or maintain.
 To change your code to conform use `clang-format -i <your changed files>`.
 
 ## Avoid

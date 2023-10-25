@@ -65,10 +65,8 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
 
     if (bDefaultRipple && !input.roleGateway) {
         output.problems.emplace_back(
-            "You appear to have set your default ripple flag even though "
-            "you "
-            "are not a gateway. This is not recommended unless you are "
-            "experimenting"
+            "You appear to have set your default ripple flag even though you are not a gateway. This is not "
+            "recommended unless you are experimenting   
         );
     } else if (input.roleGateway && !bDefaultRipple) {
         output.problems.emplace_back("You should immediately set your default ripple flag");
@@ -104,9 +102,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
                     problem = "You should clear the no ripple flag on your ";
                     needFix = true;
                 } else if (!bNoRipple && !input.roleGateway) {
-                    problem =
-                        "You should probably set the no ripple flag on "
-                        "your ";
+                    problem = "You should probably set the no ripple flag on your ";
                     needFix = true;
                 }
                 if (needFix) {

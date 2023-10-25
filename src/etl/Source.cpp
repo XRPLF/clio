@@ -81,8 +81,8 @@ SslSource::close(bool startAgain)
             return;
 
         if (derived().ws().is_open()) {
-            // onStop() also calls close(). If the async_close is called twice, an assertion fails. Using closing_ makes
-            // sure async_close is only called once
+            // onStop() also calls close(). If the async_close is called twice, an assertion fails. Using closing_
+            // makes sure async_close is only called once
             closing_ = true;
             derived().ws().async_close(boost::beast::websocket::close_code::normal, [this, startAgain](auto ec) {
                 if (ec) {

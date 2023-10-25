@@ -333,8 +333,8 @@ public:
             if (ec)
                 return {};
 
-            // if client ip is know, change the User-Agent of the handshake and to tell rippled to charge the client IP
-            // for RPC resources. See "secure_gateway" in
+            // if client ip is know, change the User-Agent of the handshake and to tell rippled to charge the client
+            // IP for RPC resources. See "secure_gateway" in
             // https://github.com/ripple/rippled/blob/develop/cfg/rippled-example.cfg
 
             // TODO: user-agent can be clio-[version]

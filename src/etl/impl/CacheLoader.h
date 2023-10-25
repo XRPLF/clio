@@ -260,10 +260,9 @@ private:
                         static constexpr size_t MAX_ATTEMPTS = 5;
                         ++numAttempts;
                         if (numAttempts >= MAX_ATTEMPTS) {
-                            LOG(log_.error()) << " ledger not found at peer after 5 attempts. "
-                                                 "peer = "
-                                              << ip << " ledger = " << ledgerIndex
-                                              << ". Check your config and the health of the peer";
+                            LOG(log_.error())
+                                << " ledger not found at peer after 5 attempts. peer = " << ip
+                                << " ledger = " << ledgerIndex << ". Check your config and the health of the peer";
                             return false;
                         }
                         LOG(log_.warn()) << "Ledger not found. ledger = " << ledgerIndex

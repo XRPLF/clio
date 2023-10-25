@@ -98,7 +98,9 @@ public:
                 return Error{Status{RippledError::rpcEXCESSIVE_LGR_RANGE}};
         }
 
-        auto const currentNetId = etl_->getETLState().networkID;
+        std::optional<uint32_t> currentNetId = std::nullopt;
+        if (auto const& etlState = etl_->getETLState(); etlState.has_value())
+            currentNetId = etlState->networkID;
 
         std::optional<data::TransactionAndMetadata> dbResponse;
 
@@ -153,7 +155,8 @@ public:
                 output.hash = txn.at(JS(hash)).as_string();
 
             // append ctid here to mimic rippled 1.12 behavior: return ctid even binary=true
-            // rippled will change it in the future, ctid should be part of tx json which not available in binary mode
+            // rippled will change it in the future, ctid should be part of tx json which not available in binary
+            // mode
             auto const txnIdx = boost::json::value_to<uint64_t>(meta.at("TransactionIndex"));
             if (txnIdx <= 0xFFFFU && dbResponse->ledgerSequence < 0x0FFF'FFFFUL && currentNetId &&
                 *currentNetId <= 0xFFFFU) {

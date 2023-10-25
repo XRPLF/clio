@@ -36,7 +36,7 @@ TEST_F(ETLStateTest, Error)
 {
     EXPECT_CALL(source, forwardToRippled).WillOnce(Return(std::nullopt));
     auto const state = etl::ETLState::fetchETLStateFromSource(source);
-    EXPECT_FALSE(state.networkID.has_value());
+    EXPECT_FALSE(state);
 }
 
 TEST_F(ETLStateTest, NetworkIdValid)
@@ -52,8 +52,9 @@ TEST_F(ETLStateTest, NetworkIdValid)
     );
     EXPECT_CALL(source, forwardToRippled).WillOnce(Return(json.as_object()));
     auto const state = etl::ETLState::fetchETLStateFromSource(source);
-    ASSERT_TRUE(state.networkID.has_value());
-    EXPECT_EQ(state.networkID.value(), 12);
+    ASSERT_TRUE(state.has_value());
+    ASSERT_TRUE(state->networkID.has_value());
+    EXPECT_EQ(state->networkID.value(), 12);
 }
 
 TEST_F(ETLStateTest, NetworkIdInvalid)
@@ -69,5 +70,6 @@ TEST_F(ETLStateTest, NetworkIdInvalid)
     );
     EXPECT_CALL(source, forwardToRippled).WillOnce(Return(json.as_object()));
     auto const state = etl::ETLState::fetchETLStateFromSource(source);
-    EXPECT_FALSE(state.networkID.has_value());
+    ASSERT_TRUE(state.has_value());
+    EXPECT_FALSE(state->networkID.has_value());
 }

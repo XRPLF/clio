@@ -181,9 +181,10 @@ public:
 
     /**
      * @brief Return state of ETL nodes.
+     * @return ETL state, nullopt if etl nodes not available
      */
-    ETLState
-    getETLState() const noexcept;
+    std::optional<ETLState>
+    getETLState() noexcept;
 
 private:
     /**

@@ -17,25 +17,10 @@
 */
 //==============================================================================
 
-#include <data/BackendInterface.h>
 #include <etl/ETLState.h>
-#include <etl/Source.h>
 #include <rpc/JS.h>
 
 namespace etl {
-
-ETLState
-ETLState::fetchETLStateFromSource(Source const& source) noexcept
-{
-    auto const serverInfoRippled = data::synchronous([&source](auto yield) {
-        return source.forwardToRippled({{"command", "server_info"}}, std::nullopt, yield);
-    });
-
-    if (serverInfoRippled)
-        return boost::json::value_to<ETLState>(boost::json::value(*serverInfoRippled));
-
-    return ETLState{};
-}
 
 ETLState
 tag_invoke(boost::json::value_to_tag<ETLState>, boost::json::value const& jv)

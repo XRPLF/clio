@@ -258,7 +258,8 @@ private:
                     auto const oldFirstDir = backend_->cache().getSuccessor(bookBase, lgrInfo.seq - 1);
                     assert(oldFirstDir);
 
-                    // We deleted the first directory, or we added a directory prior to the old first directory
+                    // We deleted the first directory, or we added a directory prior to the old first
+                    // directory
                     if ((isDeleted && key == oldFirstDir->key) || (!isDeleted && key < oldFirstDir->key)) {
                         LOG(log_.debug())
                             << "Need to recalculate book base successor. base = " << ripple::strHex(bookBase)

@@ -140,6 +140,15 @@ public:
     unsubscribe(SessionPtrType const& session);
 
     /**
+     * @brief Check if a session has been in subscribers list.
+     *
+     * @param session The session to check
+     * @return true if the session is in the subscribers list; false otherwise
+     */
+    bool
+    hasSession(SessionPtrType const& session);
+
+    /**
      * @brief Sends the given message to all subscribers.
      *
      * @param message The message to send
@@ -234,6 +243,22 @@ public:
                 subscribers_.erase(key);
             }
         });
+    }
+
+    /**
+     * @brief Check if a session has been in subscribers list.
+     *
+     * @param session The session to check
+     * @param key The key for the subscription to check
+     * @return true if the session is in the subscribers list; false otherwise
+     */
+    bool
+    hasSession(SessionPtrType const& session, Key const& key)
+    {
+        if (!subscribers_.contains(key))
+            return false;
+
+        return subscribers_[key].contains(session);
     }
 
     /**

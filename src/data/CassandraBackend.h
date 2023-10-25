@@ -74,8 +74,8 @@ public:
 
         if (not readOnly) {
             if (auto const res = handle_.execute(schema_.createKeyspace); not res) {
-                // on datastax, creation of keyspaces can be configured to only be done thru the admin interface.
-                // this does not mean that the keyspace does not already exist tho.
+                // on datastax, creation of keyspaces can be configured to only be done thru the admin
+                // interface. this does not mean that the keyspace does not already exist tho.
                 if (res.error().code() != CASS_ERROR_SERVER_UNAUTHORIZED)
                     throw std::runtime_error("Could not create keyspace: " + res.error());
             }
