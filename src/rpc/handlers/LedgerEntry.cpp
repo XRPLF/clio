@@ -196,8 +196,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
         {JS(ticket), ripple::ltTICKET},
         {JS(nft_page), ripple::ltNFTOKEN_PAGE},
-        {JS(amm), ripple::ltAMM}
-    };
+        {JS(amm), ripple::ltAMM}};
 
     auto const indexFieldType =
         std::find_if(indexFieldTypeMap.begin(), indexFieldTypeMap.end(), [&jsonObject](auto const& pair) {
