@@ -218,8 +218,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerStringIndex)
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
     auto const input = json::parse(fmt::format(
         R"({{ 
             "issuer": "{}",
@@ -240,11 +239,11 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerStringIndex)
 TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
     auto const input = json::parse(fmt::format(
         R"({{ 
             "issuer": "{}",
@@ -267,6 +266,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIntIndex)
 TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
@@ -295,6 +295,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash2)
 TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIndex2)
 {
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // no need to check from db,call fetchLedgerBySequence 0 time
@@ -331,6 +332,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, AccountNotFound)
         ACCOUNT
     );
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
@@ -372,11 +374,11 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
         NFT1OUT
     );
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -431,6 +433,7 @@ TEST_F(RPCNFTsByIssuerHandlerTest, SpecificLedgerIndex)
         specificLedger
     );
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, specificLedger);
@@ -482,11 +485,11 @@ TEST_F(RPCNFTsByIssuerHandlerTest, TaxonParameter)
         NFT1OUT
     );
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -529,11 +532,11 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MarkerParameter)
         NFT3OUT
     );
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -578,11 +581,11 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
         NFT3OUT
     );
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
@@ -626,11 +629,11 @@ TEST_F(RPCNFTsByIssuerHandlerTest, LimitMoreThanMAx)
         NFT1OUT
     );
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
