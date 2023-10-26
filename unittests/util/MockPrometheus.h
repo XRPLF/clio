@@ -126,7 +126,7 @@ struct WithMockPrometheus : virtual ::testing::Test {
         if (HasFailure()) {
             std::cerr << "Registered metrics:\n";
             for (auto const& [key, metric] : mockPrometheus().metrics) {
-                std::cout << key << "\n";
+                std::cerr << key << "\n";
             }
             std::cerr << "\n";
         }

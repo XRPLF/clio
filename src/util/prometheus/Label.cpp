@@ -82,7 +82,10 @@ Labels::serialize() const
         result += label.serialize();
         result.push_back(',');
     }
-    result.back() = '}';
+
+    if (!result.empty())
+        result.back() = '}';
+
     return result;
 }
 

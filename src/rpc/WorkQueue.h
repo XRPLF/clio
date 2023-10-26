@@ -137,7 +137,7 @@ public:
     }
 
     /**
-     * @brief Wait untill all the jobs in the queue are finished.
+     * @brief Wait until all the jobs in the queue are finished.
      */
     void
     join();

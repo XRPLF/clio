@@ -259,7 +259,7 @@ Exactly equal password gains admin rights for the request or a websocket connect
 Clio natively supports Prometheus metrics collection. It accepts Prometheus requests on the port configured in `server` section of config.
 Prometheus metrics are enabled by default. To disable it add `"prometheus_enabled": false` to the config.
 It is important to know that clio responds to Prometheus request only if they are admin requests, so Prometheus should be configured to send admin password in header.
-There is an example of docker-compose file, Prometheus and Grafana configs in [examples/infrastructure](exaples/infrastructure).
+There is an example of docker-compose file, Prometheus and Grafana configs in [examples/infrastructure](examples/infrastructure).
 
 ## Using clang-tidy for static analysis
 

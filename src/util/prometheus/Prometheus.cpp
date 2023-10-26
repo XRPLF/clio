@@ -75,7 +75,7 @@ PrometheusImpl::collectMetrics()
     if (!isEnabled())
         return result;
 
-    for (auto& [name, family] : metrics_) {
+    for (auto const& [name, family] : metrics_) {
         family.serialize(result);
     }
     return result;
