@@ -24,6 +24,7 @@
 #include <boost/json/object.hpp>
 
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <utility>
 
@@ -119,16 +120,16 @@ private:
 
     private:
         std::string name_;
-        util::prometheus::GaugeInt& pendingCounter_;
-        util::prometheus::CounterInt& completedCounter_;
-        util::prometheus::CounterInt& retryCounter_;
-        util::prometheus::CounterInt& errorCounter_;
+        std::reference_wrapper<util::prometheus::GaugeInt> pendingCounter_;
+        std::reference_wrapper<util::prometheus::CounterInt> completedCounter_;
+        std::reference_wrapper<util::prometheus::CounterInt> retryCounter_;
+        std::reference_wrapper<util::prometheus::CounterInt> errorCounter_;
     };
 
-    util::prometheus::CounterInt& tooBusyCounter_;
+    std::reference_wrapper<util::prometheus::CounterInt> tooBusyCounter_;
 
-    util::prometheus::CounterInt& writeSyncCounter_;
-    util::prometheus::CounterInt& writeSyncRetryCounter_;
+    std::reference_wrapper<util::prometheus::CounterInt> writeSyncCounter_;
+    std::reference_wrapper<util::prometheus::CounterInt> writeSyncRetryCounter_;
 
     AsyncOperationCounters asyncWriteCounters_{"write_async"};
     AsyncOperationCounters asyncReadCounters_{"read_async"};

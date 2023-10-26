@@ -56,19 +56,19 @@ BackendCounters::make()
 void
 BackendCounters::registerTooBusy()
 {
-    ++tooBusyCounter_;
+    ++tooBusyCounter_.get();
 }
 
 void
 BackendCounters::registerWriteSync()
 {
-    ++writeSyncCounter_;
+    ++writeSyncCounter_.get();
 }
 
 void
 BackendCounters::registerWriteSyncRetry()
 {
-    ++writeSyncRetryCounter_;
+    ++writeSyncRetryCounter_.get();
 }
 
 void
@@ -117,9 +117,9 @@ boost::json::object
 BackendCounters::report() const
 {
     boost::json::object result;
-    result["too_busy"] = tooBusyCounter_.value();
-    result["write_sync"] = writeSyncCounter_.value();
-    result["write_sync_retry"] = writeSyncRetryCounter_.value();
+    result["too_busy"] = tooBusyCounter_.get().value();
+    result["write_sync"] = writeSyncCounter_.get().value();
+    result["write_sync_retry"] = writeSyncRetryCounter_.get().value();
     for (auto const& [key, value] : asyncWriteCounters_.report())
         result[key] = value;
     for (auto const& [key, value] : asyncReadCounters_.report())
@@ -155,39 +155,39 @@ BackendCounters::AsyncOperationCounters::AsyncOperationCounters(std::string name
 void
 BackendCounters::AsyncOperationCounters::registerStarted(std::uint64_t const count)
 {
-    pendingCounter_ += count;
+    pendingCounter_.get() += count;
 }
 
 void
 BackendCounters::AsyncOperationCounters::registerFinished(std::uint64_t const count)
 {
     assert(pendingCounter_.value() >= count);
-    pendingCounter_ -= count;
-    completedCounter_ += count;
+    pendingCounter_.get() -= count;
+    completedCounter_.get() += count;
 }
 
 void
 BackendCounters::AsyncOperationCounters::registerRetry(std::uint64_t count)
 {
-    retryCounter_ += count;
+    retryCounter_.get() += count;
 }
 
 void
 BackendCounters::AsyncOperationCounters::registerError(std::uint64_t count)
 {
     assert(pendingCounter_.value() >= count);
-    pendingCounter_ -= count;
-    errorCounter_ += count;
+    pendingCounter_.get() -= count;
+    errorCounter_.get() += count;
 }
 
 boost::json::object
 BackendCounters::AsyncOperationCounters::report() const
 {
     return boost::json::object{
-        {name_ + "_pending", pendingCounter_.value()},
-        {name_ + "_completed", completedCounter_.value()},
-        {name_ + "_retry", retryCounter_.value()},
-        {name_ + "_error", errorCounter_.value()}};
+        {name_ + "_pending", pendingCounter_.get().value()},
+        {name_ + "_completed", completedCounter_.get().value()},
+        {name_ + "_retry", retryCounter_.get().value()},
+        {name_ + "_error", errorCounter_.get().value()}};
 }
 
 }  // namespace data

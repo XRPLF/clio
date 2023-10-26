@@ -40,10 +40,10 @@ namespace rpc {
  */
 class WorkQueue {
     // these are cumulative for the lifetime of the process
-    util::prometheus::CounterInt& queued_;
-    util::prometheus::CounterInt& durationUs_;
+    std::reference_wrapper<util::prometheus::CounterInt> queued_;
+    std::reference_wrapper<util::prometheus::CounterInt> durationUs_;
 
-    util::prometheus::GaugeInt& curSize_;
+    std::reference_wrapper<util::prometheus::GaugeInt> curSize_;
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
 
     util::Logger log_{"RPC"};
@@ -90,13 +90,13 @@ public:
     bool
     postCoro(FnType&& func, bool isWhiteListed)
     {
-        if (curSize_.value() >= maxSize_ && !isWhiteListed) {
-            LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << curSize_.value()
+        if (curSize_.get().value() >= maxSize_ && !isWhiteListed) {
+            LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << curSize_.get().value()
                              << "; max size = " << maxSize_;
             return false;
         }
 
-        ++curSize_;
+        ++curSize_.get();
 
         // Each time we enqueue a job, we want to post a symmetrical job that will dequeue and run the job at the front
         // of the job queue.
@@ -106,12 +106,12 @@ public:
                 auto const run = std::chrono::system_clock::now();
                 auto const wait = std::chrono::duration_cast<std::chrono::microseconds>(run - start).count();
 
-                ++queued_;
-                durationUs_ += wait;
-                LOG(log_.info()) << "WorkQueue wait time = " << wait << " queue size = " << curSize_.value();
+                ++queued_.get();
+                durationUs_.get() += wait;
+                LOG(log_.info()) << "WorkQueue wait time = " << wait << " queue size = " << curSize_.get().value();
 
                 func(yield);
-                --curSize_;
+                --curSize_.get();
             }
         );
 
@@ -128,9 +128,9 @@ public:
     {
         auto obj = boost::json::object{};
 
-        obj["queued"] = queued_.value();
-        obj["queued_duration_us"] = durationUs_.value();
-        obj["current_queue_size"] = curSize_.value();
+        obj["queued"] = queued_.get().value();
+        obj["queued_duration_us"] = durationUs_.get().value();
+        obj["current_queue_size"] = curSize_.get().value();
         obj["max_queue_size"] = maxSize_;
 
         return obj;

@@ -64,13 +64,13 @@ LedgerCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
     if (!full_)
         return {};
     std::shared_lock const lck{mtx_};
-    ++successorReqCounter_;
+    ++successorReqCounter_.get();
     if (seq != latestSeq_)
         return {};
     auto e = map_.upper_bound(key);
     if (e == map_.end())
         return {};
-    ++successorHitCounter_;
+    ++successorHitCounter_.get();
     return {{e->first, e->second.blob}};
 }
 
@@ -95,13 +95,13 @@ LedgerCache::get(ripple::uint256 const& key, uint32_t seq) const
     std::shared_lock const lck{mtx_};
     if (seq > latestSeq_)
         return {};
-    ++objectReqCounter_;
+    ++objectReqCounter_.get();
     auto e = map_.find(key);
     if (e == map_.end())
         return {};
     if (seq < e->second.seq)
         return {};
-    ++objectHitCounter_;
+    ++objectHitCounter_.get();
     return {e->second.blob};
 }
 
@@ -138,17 +138,17 @@ LedgerCache::size() const
 float
 LedgerCache::getObjectHitRate() const
 {
-    if (objectReqCounter_.value() == 0u)
+    if (objectReqCounter_.get().value() == 0u)
         return 1;
-    return static_cast<float>(objectHitCounter_.value()) / objectReqCounter_.value();
+    return static_cast<float>(objectHitCounter_.get().value()) / objectReqCounter_.get().value();
 }
 
 float
 LedgerCache::getSuccessorHitRate() const
 {
-    if (successorReqCounter_.value() == 0u)
+    if (successorReqCounter_.get().value() == 0u)
         return 1;
-    return static_cast<float>(successorHitCounter_.value()) / successorReqCounter_.value();
+    return static_cast<float>(successorHitCounter_.get().value()) / successorReqCounter_.get().value();
 }
 
 }  // namespace data
