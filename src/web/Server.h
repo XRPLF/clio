@@ -298,6 +298,20 @@ make_HttpServer(
     auto const address = boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
     auto const port = serverConfig.value<unsigned short>("port");
     auto adminPassword = serverConfig.maybeValue<std::string>("admin_password");
+    auto const localAdmin = serverConfig.maybeValue<bool>("local_admin");
+
+    // Throw config error when localAdmin is true and admin_password is also set
+    if (localAdmin && localAdmin.value() && adminPassword) {
+        LOG(log.error()) << "local_admin is true but admin_password is also set, please only specify only one method "
+                            "to authorize admin";
+        throw std::logic_error("Admin config error, local_admin and admin_password can not be set together.");
+    }
+    // Throw config error when localAdmin is false but admin_password is not set
+    if (localAdmin && !localAdmin.value() && !adminPassword) {
+        LOG(log.error()) << "local_admin is false but admin_password is not set, please specify one method "
+                            "to authorize admin";
+        throw std::logic_error("Admin config error, one method must be specified to authorize admin.");
+    }
 
     auto server = std::make_shared<HttpServer<HandlerType>>(
         ioc,

@@ -19,6 +19,8 @@
 
 #include <web/impl/AdminVerificationStrategy.h>
 
+#include <ripple/protocol/digest.h>
+
 namespace web::detail {
 
 bool
@@ -27,9 +29,14 @@ IPAdminVerificationStrategy::isAdmin(RequestType const&, std::string_view ip) co
     return ip == "127.0.0.1";
 }
 
-PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string password)
-    : password_(std::move(password))
+PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string const& password)
 {
+    ripple::sha256_hasher hasher;
+    hasher(password.data(), password.size());
+    auto const d = static_cast<ripple::sha256_hasher::result_type>(hasher);
+    ripple::uint256 sha256;
+    std::memcpy(sha256.data(), d.data(), d.size());
+    passwordSha256_ = ripple::to_string(sha256);
 }
 
 bool
@@ -40,8 +47,9 @@ PasswordAdminVerificationStrategy::isAdmin(RequestType const& request, std::stri
         // No Authorization header
         return false;
     }
-
-    return it->value() == password_;
+    std::string userAuth(it->value());
+    std::transform(userAuth.begin(), userAuth.end(), userAuth.begin(), ::toupper);
+    return passwordSha256_ == userAuth;
 }
 
 std::unique_ptr<AdminVerificationStrategy>
