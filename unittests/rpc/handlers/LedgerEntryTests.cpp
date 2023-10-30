@@ -544,6 +544,245 @@ generateTestValuesForParametersTest()
             ),
             "malformedRequest",
             "Malformed request."},
+
+        ParamTestCaseBundle{
+            "InvalidAMMStringIndex",
+            R"({
+                "amm": "invalid"
+            })",
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "EmptyAMMJson",
+            R"({
+                "amm": {}
+            })",
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "EmptyAMMAssetJson",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset":{{}},
+                        "asset2":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "EmptyAMMAsset2Json",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":{{}},
+                        "asset":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "MissingAMMAsset2Json",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "MissingAMMAssetJson",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "AMMAssetNotJson",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset": "invalid",
+                        "asset2":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "AMMAsset2NotJson",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2": "invalid",
+                        "asset":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "WrongAMMAssetCurrency",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency":"XRP"
+                        }},
+                        "asset":
+                        {{
+                            "currency" : "USD2",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "WrongAMMAssetIssuer",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency":"XRP"
+                        }},
+                        "asset":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "aa{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "MissingAMMAssetIssuerForNonXRP",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency":"JPY"
+                        }},
+                        "asset":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "AMMAssetHasIssuerForXRP",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency":"XRP",
+                            "issuer":"{}"
+                        }},
+                        "asset":
+                        {{
+                            "currency" : "USD",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."},
+
+        ParamTestCaseBundle{
+            "MissingAMMAssetCurrency",
+            fmt::format(
+                R"({{
+                    "amm": 
+                    {{
+                        "asset2":
+                        {{
+                            "currency":"XRP"
+                        }},
+                        "asset":
+                        {{
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."},
     };
 }
 
@@ -917,7 +1156,38 @@ generateTestValuesForNormalPathTest()
             ripple::keylet::offer(account1, 2).key,
             CreateOfferLedgerObject(
                 ACCOUNT, 100, 200, "USD", "XRP", ACCOUNT2, ripple::toBase58(ripple::xrpAccount()), INDEX1
-            )}};
+            )},
+        NormalPathTestBundle{
+            "AMMViaIndex",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "amm": "{}"
+                }})",
+                INDEX1
+            ),
+            ripple::uint256{INDEX1},
+            CreateAMMObject(ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", ACCOUNT2)},
+        NormalPathTestBundle{
+            "AMMViaJson",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "amm": {{
+                        "asset": {{
+                            "currency": "XRP"
+                        }},
+                        "asset2": {{
+                            "currency": "{}",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                "JPY",
+                ACCOUNT2
+            ),
+            ripple::keylet::amm(GetIssue("XRP", ripple::toBase58(ripple::xrpAccount())), GetIssue("JPY", ACCOUNT2)).key,
+            CreateAMMObject(ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", ACCOUNT2)}};
 }
 
 INSTANTIATE_TEST_CASE_P(

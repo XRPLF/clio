@@ -277,3 +277,12 @@ CreateCreateNFTOfferTxWithMetadata(
 
 [[nodiscard]] ripple::STObject
 CreateAmendmentsObject(std::vector<ripple::uint256> const& enabledAmendments);
+
+[[nodiscard]] ripple::STObject
+CreateAMMObject(
+    std::string_view accountId,
+    std::string_view assetCurrency,
+    std::string_view assetIssuer,
+    std::string_view asset2Currency,
+    std::string_view asset2Issuer
+);
