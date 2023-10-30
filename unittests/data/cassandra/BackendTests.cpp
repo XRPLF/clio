@@ -23,6 +23,7 @@
 #include <data/CassandraBackend.h>
 #include <etl/NFTHelpers.h>
 #include <rpc/RPCHelpers.h>
+#include <util/Random.h>
 #include <util/config/Config.h>
 
 #include <boost/json/parse.hpp>
@@ -73,6 +74,8 @@ protected:
         EXPECT_TRUE(handle.connect());
         handle.execute("DROP KEYSPACE " + std::string{keyspace});
     }
+
+    std::default_random_engine randomEngine{0};
 };
 
 TEST_F(BackendCassandraTest, Basic)
@@ -437,8 +440,6 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_FALSE(obj);
         }
 
-        // obtain a time-based seed:
-        auto const seed = std::chrono::system_clock::now().time_since_epoch().count();
         std::string accountBlobOld = accountBlob;
         {
             lgrInfoNext.seq = lgrInfoNext.seq + 1;
@@ -448,7 +449,7 @@ TEST_F(BackendCassandraTest, Basic)
             lgrInfoNext.accountHash = ~(lgrInfoNext.accountHash ^ lgrInfoNext.txHash);
 
             backend->writeLedger(lgrInfoNext, ledgerInfoToBinaryString(lgrInfoNext));
-            std::shuffle(accountBlob.begin(), accountBlob.end(), std::default_random_engine(seed));
+            std::shuffle(accountBlob.begin(), accountBlob.end(), randomEngine);
             backend->writeLedgerObject(std::string{accountIndexBlob}, lgrInfoNext.seq, std::string{accountBlob});
 
             ASSERT_TRUE(backend->finishWrites(lgrInfoNext.seq));
@@ -560,7 +561,6 @@ TEST_F(BackendCassandraTest, Basic)
         auto generateAccountTx = [&](uint32_t ledgerSequence, auto txns) {
             std::vector<AccountTransactionsData> ret;
             auto accounts = generateAccounts(ledgerSequence, 10);
-            std::srand(std::time(nullptr));
             uint32_t idx = 0;
             for (auto& [hash, txn, meta] : txns) {
                 AccountTransactionsData data;
@@ -568,17 +568,16 @@ TEST_F(BackendCassandraTest, Basic)
                 data.transactionIndex = idx;
                 data.txHash = hash;
                 for (size_t i = 0; i < 3; ++i) {
-                    data.accounts.insert(accounts[std::rand() % accounts.size()]);
+                    data.accounts.insert(accounts[util::Random::uniform(0ul, accounts.size() - 1)]);
                 }
                 ++idx;
                 ret.push_back(data);
             }
             return ret;
         };
-        auto generateNextLedger = [seed](auto lgrInfo) {
+        auto generateNextLedger = [this](auto lgrInfo) {
             ++lgrInfo.seq;
             lgrInfo.parentHash = lgrInfo.hash;
-            static auto randomEngine = std::default_random_engine(seed);
             std::shuffle(lgrInfo.txHash.begin(), lgrInfo.txHash.end(), randomEngine);
             std::shuffle(lgrInfo.accountHash.begin(), lgrInfo.accountHash.end(), randomEngine);
             std::shuffle(lgrInfo.hash.begin(), lgrInfo.hash.end(), randomEngine);
@@ -967,8 +966,6 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             obj = backend->fetchLedgerObject(key256, lgrInfoOld.seq - 1, yield);
             EXPECT_FALSE(obj);
         }
-        // obtain a time-based seed:
-        unsigned const seed = std::chrono::system_clock::now().time_since_epoch().count();
         std::string accountBlobOld = accountBlob;
         {
             backend->startWrites();
@@ -979,7 +976,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             lgrInfoNext.accountHash = ~(lgrInfoNext.accountHash ^ lgrInfoNext.txHash);
 
             backend->writeLedger(lgrInfoNext, ledgerInfoToBinaryString(lgrInfoNext));
-            std::shuffle(accountBlob.begin(), accountBlob.end(), std::default_random_engine(seed));
+            std::shuffle(accountBlob.begin(), accountBlob.end(), randomEngine);
             auto key = ripple::uint256::fromVoidChecked(accountIndexBlob);
             backend->cache().update({{*key, {accountBlob.begin(), accountBlob.end()}}}, lgrInfoNext.seq);
             backend->writeLedgerObject(std::string{accountIndexBlob}, lgrInfoNext.seq, std::string{accountBlob});
@@ -1065,10 +1062,9 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             return objs;
         };
 
-        auto generateNextLedger = [seed](auto lgrInfo) {
+        auto generateNextLedger = [this](auto lgrInfo) {
             ++lgrInfo.seq;
             lgrInfo.parentHash = lgrInfo.hash;
-            static auto randomEngine = std::default_random_engine(seed);
             std::shuffle(lgrInfo.txHash.begin(), lgrInfo.txHash.end(), randomEngine);
             std::shuffle(lgrInfo.accountHash.begin(), lgrInfo.accountHash.end(), randomEngine);
             std::shuffle(lgrInfo.hash.begin(), lgrInfo.hash.end(), randomEngine);
