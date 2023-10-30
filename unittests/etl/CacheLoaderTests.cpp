@@ -34,8 +34,7 @@ using namespace testing;
 constexpr static auto SEQ = 30;
 constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
-struct CacheLoaderTest : public MockBackendTest
-{
+struct CacheLoaderTest : public MockBackendTest {
     void
     SetUp() override
     {
@@ -49,9 +48,10 @@ struct CacheLoaderTest : public MockBackendTest
     TearDown() override
     {
         work.reset();
-        for (auto& optThread : optThreads)
+        for (auto& optThread : optThreads) {
             if (optThread.joinable())
                 optThread.join();
+        }
         ctx.stop();
         MockBackendTest::TearDown();
     }
@@ -88,7 +88,7 @@ getLatestDiff()
 
 TEST_F(CacheLoaderTest, FromCache)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     CacheLoader loader{cfg, ctx, mockBackendPtr, cache};
 
     auto const diffs = getLatestDiff();
@@ -104,22 +104,17 @@ TEST_F(CacheLoaderTest, FromCache)
         .WillByDefault(Invoke([&]() -> std::optional<ripple::uint256> {
             // mock the result from doFetchSuccessorKey, be aware this function will be called from multiple threads
             // for each thread, the last 2 items must be end flag and nullopt, otherwise it will loop forever
-            std::lock_guard<std::mutex> guard(keysMutex);
+            std::lock_guard<std::mutex> const guard(keysMutex);
             threadKeysMap[std::this_thread::get_id()]++;
 
-            if (threadKeysMap[std::this_thread::get_id()] == keysSize - 1)
-            {
+            if (threadKeysMap[std::this_thread::get_id()] == keysSize - 1) {
                 return lastKey;
             }
-            else if (threadKeysMap[std::this_thread::get_id()] == keysSize)
-            {
+            if (threadKeysMap[std::this_thread::get_id()] == keysSize) {
                 threadKeysMap[std::this_thread::get_id()] = 0;
                 return std::nullopt;
             }
-            else
-            {
-                return ripple::uint256{INDEX1};
-            }
+            return ripple::uint256{INDEX1};
         }));
     EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(keysSize * loops);
 
@@ -127,7 +122,7 @@ TEST_F(CacheLoaderTest, FromCache)
         .WillByDefault(Return(std::vector<Blob>{keysSize - 1, Blob{'s'}}));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(loops);
 
-    EXPECT_CALL(cache, update).Times(loops);
+    EXPECT_CALL(cache, updateImp).Times(loops);
     EXPECT_CALL(cache, isFull).Times(1);
 
     std::mutex m;
@@ -135,7 +130,7 @@ TEST_F(CacheLoaderTest, FromCache)
     bool cacheReady = false;
     ON_CALL(cache, setFull).WillByDefault(Invoke([&]() {
         {
-            std::lock_guard lk(m);
+            std::lock_guard const lk(m);
             cacheReady = true;
         }
         cv.notify_one();

@@ -34,8 +34,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/nft_history.html#nft_history
  */
-class NFTHistoryHandler
-{
+class NFTHistoryHandler {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
@@ -45,17 +44,15 @@ public:
     static auto constexpr LIMIT_DEFAULT = 50;
 
     // TODO: this marker is same as account_tx, reuse in future
-    struct Marker
-    {
+    struct Marker {
         uint32_t ledger;
         uint32_t seq;
     };
 
-    struct Output
-    {
+    struct Output {
         std::string nftID;
-        uint32_t ledgerIndexMin;
-        uint32_t ledgerIndexMax;
+        uint32_t ledgerIndexMin{0};
+        uint32_t ledgerIndexMax{0};
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
         // TODO: use a better type than json
@@ -64,8 +61,7 @@ public:
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string nftID;
         // You must use at least one of the following fields in your request:
         // ledger_index, ledger_hash, ledger_index_min, or ledger_index_max.
@@ -85,8 +81,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(nft_id), validation::Required{}, validation::Uint256HexStringValidator},

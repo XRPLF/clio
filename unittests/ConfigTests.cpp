@@ -52,8 +52,7 @@ constexpr static auto JSONData = R"JSON(
     }
 )JSON";
 
-class ConfigTest : public NoLoggerFixture
-{
+class ConfigTest : public NoLoggerFixture {
 protected:
     Config cfg{json::parse(JSONData)};
 };
@@ -106,38 +105,29 @@ TEST_F(ConfigTest, Access)
 
 TEST_F(ConfigTest, ErrorHandling)
 {
-    try
-    {
+    try {
         (void)cfg.valueOrThrow<bool>("section.test.int", "msg");
         ASSERT_FALSE(true);  // should not get here
-    }
-    catch (std::runtime_error const& e)
-    {
+    } catch (std::runtime_error const& e) {
         ASSERT_STREQ(e.what(), "msg");
     }
 
     ASSERT_EQ(cfg.valueOrThrow<bool>("section.test.bool", ""), true);
 
     auto arr = cfg.array("arr");
-    try
-    {
+    try {
         (void)arr[3].array()[1].valueOrThrow<int>("msg");  // wrong type
         ASSERT_FALSE(true);                                // should not get here
-    }
-    catch (std::runtime_error const& e)
-    {
+    } catch (std::runtime_error const& e) {
         ASSERT_STREQ(e.what(), "msg");
     }
 
     ASSERT_EQ(arr[3].array()[1].valueOrThrow<string>(""), "192.168.0.255");
 
-    try
-    {
+    try {
         (void)cfg.arrayOrThrow("nonexisting.key", "msg");
         ASSERT_FALSE(true);  // should not get here
-    }
-    catch (std::runtime_error const& e)
-    {
+    } catch (std::runtime_error const& e) {
         ASSERT_STREQ(e.what(), "msg");
     }
 
@@ -183,8 +173,7 @@ TEST_F(ConfigTest, Array)
     ASSERT_EQ(arr[3].array()[1].value<string>(), "192.168.0.255");
 
     vector exp{"192.168.0.255", "127.0.0.1"};
-    for (auto inner = arr[3].array(); auto const& el : inner)
-    {
+    for (auto inner = arr[3].array(); auto const& el : inner) {
         ASSERT_EQ(el.value<string>(), exp.back());
         exp.pop_back();
     }
@@ -195,8 +184,7 @@ TEST_F(ConfigTest, Array)
 /**
  * @brief Simple custom data type with json parsing support
  */
-struct Custom
-{
+struct Custom {
     string a;
     int b;
     bool c;
@@ -222,8 +210,7 @@ TEST_F(ConfigTest, Extend)
 /**
  * @brief Simple temporary file util
  */
-class TmpFile
-{
+class TmpFile {
 public:
     TmpFile(std::string const& data) : tmpPath_{boost::filesystem::unique_path().string()}
     {

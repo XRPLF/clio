@@ -26,7 +26,6 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/common/Types.h>
-#include <rpc/common/impl/AdminVerificationStrategy.h>
 #include <rpc/common/impl/ForwardingProxy.h>
 #include <util/Taggable.h>
 #include <util/config/Config.h>
@@ -46,7 +45,7 @@
 // forward declarations
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 namespace etl {
 class LoadBalancer;
 class ETLService;
@@ -60,9 +59,7 @@ namespace rpc {
 /**
  * @brief The RPC engine that ties all RPC-related functionality together.
  */
-template <typename AdminVerificationStrategyType>
-class RPCEngineBase
-{
+class RPCEngine {
     util::Logger perfLog_{"Performance"};
     util::Logger log_{"RPC"};
 
@@ -76,18 +73,17 @@ class RPCEngineBase
     std::shared_ptr<HandlerProvider const> handlerProvider_;
 
     detail::ForwardingProxy<etl::LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
-    AdminVerificationStrategyType adminVerifier_;
 
 public:
-    RPCEngineBase(
+    RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
-        std::shared_ptr<etl::ETLService> const& etl,
         web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
-        std::shared_ptr<HandlerProvider const> const& handlerProvider)
+        std::shared_ptr<HandlerProvider const> const& handlerProvider
+    )
         : backend_{backend}
         , subscriptions_{subscriptions}
         , balancer_{balancer}
@@ -99,20 +95,20 @@ public:
     {
     }
 
-    static std::shared_ptr<RPCEngineBase>
+    static std::shared_ptr<RPCEngine>
     make_RPCEngine(
-        util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
-        std::shared_ptr<etl::ETLService> const& etl,
         web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
-        std::shared_ptr<HandlerProvider const> const& handlerProvider)
+        std::shared_ptr<HandlerProvider const> const& handlerProvider
+    )
     {
-        return std::make_shared<RPCEngineBase>(
-            backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
+        return std::make_shared<RPCEngine>(
+            backend, subscriptions, balancer, dosGuard, workQueue, counters, handlerProvider
+        );
     }
 
     /**
@@ -127,47 +123,37 @@ public:
         if (forwardingProxy_.shouldForward(ctx))
             return forwardingProxy_.forward(ctx);
 
-        if (backend_->isTooBusy())
-        {
+        if (backend_->isTooBusy()) {
             LOG(log_.error()) << "Database is too busy. Rejecting request";
             notifyTooBusy();  // TODO: should we add ctx.method if we have it?
             return Status{RippledError::rpcTOO_BUSY};
         }
 
         auto const method = handlerProvider_->getHandler(ctx.method);
-        if (!method)
-        {
+        if (!method) {
             notifyUnknownCommand();
             return Status{RippledError::rpcUNKNOWN_COMMAND};
         }
 
-        try
-        {
+        try {
             LOG(perfLog_.debug()) << ctx.tag() << " start executing rpc `" << ctx.method << '`';
 
-            auto const isAdmin = adminVerifier_.isAdmin(ctx.clientIp);
-            auto const context = Context{ctx.yield, ctx.session, isAdmin, ctx.clientIp, ctx.apiVersion};
+            auto const context = Context{ctx.yield, ctx.session, ctx.isAdmin, ctx.clientIp, ctx.apiVersion};
             auto const v = (*method).process(ctx.params, context);
 
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
             if (v)
                 return v->as_object();
-            else
-            {
-                notifyErrored(ctx.method);
-                return Status{v.error()};
-            }
-        }
-        catch (data::DatabaseTimeout const& t)
-        {
+
+            notifyErrored(ctx.method);
+            return Status{v.error()};
+        } catch (data::DatabaseTimeout const& t) {
             LOG(log_.error()) << "Database timeout";
             notifyTooBusy();
 
             return Status{RippledError::rpcTOO_BUSY};
-        }
-        catch (std::exception const& ex)
-        {
+        } catch (std::exception const& ex) {
             LOG(log_.error()) << ctx.tag() << "Caught exception: " << ex.what();
             notifyInternalError();
 
@@ -285,7 +271,5 @@ private:
         return handlerProvider_->contains(method) || forwardingProxy_.isProxied(method);
     }
 };
-
-using RPCEngine = RPCEngineBase<detail::IPAdminVerificationStrategy>;
 
 }  // namespace rpc

@@ -35,8 +35,7 @@ namespace data::cassandra::detail {
 /**
  * @brief A retry policy that employs exponential backoff
  */
-class ExponentialBackoffRetryPolicy
-{
+class ExponentialBackoffRetryPolicy {
     util::Logger log_{"Backend"};
 
     boost::asio::steady_timer timer_;
@@ -75,7 +74,7 @@ public:
     retry(Fn&& fn)
     {
         timer_.expires_after(calculateDelay(attempt_++));
-        timer_.async_wait([fn = std::forward<Fn>(fn)]([[maybe_unused]] const auto& err) {
+        timer_.async_wait([fn = std::forward<Fn>(fn)]([[maybe_unused]] auto const& err) {
             // todo: deal with cancellation (thru err)
             fn();
         });
@@ -84,7 +83,7 @@ public:
     /**
      * @brief Calculates the wait time before attempting another retry
      */
-    std::chrono::milliseconds
+    static std::chrono::milliseconds
     calculateDelay(uint32_t attempt)
     {
         return std::chrono::milliseconds{lround(std::pow(2, std::min(10u, attempt)))};

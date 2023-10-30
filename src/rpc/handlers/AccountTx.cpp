@@ -70,55 +70,64 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto [minIndex, maxIndex] = *range;
 
-    if (input.ledgerIndexMin)
-    {
-        if (range->maxSequence < input.ledgerIndexMin || range->minSequence > input.ledgerIndexMin)
+    if (input.ledgerIndexMin) {
+        if (ctx.apiVersion > 1u &&
+            (input.ledgerIndexMin > range->maxSequence || input.ledgerIndexMin < range->minSequence)) {
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMinOutOfRange"}};
+        }
 
-        minIndex = *input.ledgerIndexMin;
+        if (static_cast<std::uint32_t>(*input.ledgerIndexMin) > minIndex)
+            minIndex = *input.ledgerIndexMin;
     }
 
-    if (input.ledgerIndexMax)
-    {
-        if (range->maxSequence < input.ledgerIndexMax || range->minSequence > input.ledgerIndexMax)
+    if (input.ledgerIndexMax) {
+        if (ctx.apiVersion > 1u &&
+            (input.ledgerIndexMax > range->maxSequence || input.ledgerIndexMax < range->minSequence)) {
             return Error{Status{RippledError::rpcLGR_IDX_MALFORMED, "ledgerSeqMaxOutOfRange"}};
+        }
 
-        maxIndex = *input.ledgerIndexMax;
+        if (static_cast<std::uint32_t>(*input.ledgerIndexMax) < maxIndex)
+            maxIndex = *input.ledgerIndexMax;
     }
 
-    if (minIndex > maxIndex)
-        return Error{Status{RippledError::rpcINVALID_LGR_RANGE}};
+    if (minIndex > maxIndex) {
+        if (ctx.apiVersion == 1u)
+            return Error{Status{RippledError::rpcLGR_IDXS_INVALID}};
 
-    if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger)
-    {
-        // rippled does not have this check
-        if (input.ledgerIndexMax || input.ledgerIndexMin)
+        return Error{Status{RippledError::rpcINVALID_LGR_RANGE}};
+    }
+
+    if (input.ledgerHash || input.ledgerIndex || input.usingValidatedLedger) {
+        if (ctx.apiVersion > 1u && (input.ledgerIndexMax || input.ledgerIndexMin))
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
 
-        auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-            *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        if (!input.ledgerIndexMax && !input.ledgerIndexMin) {
+            // mimic rippled, when both range and index specified, respect the range.
+            // take ledger from ledgerHash or ledgerIndex only when range is not specified
+            auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+                *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+            );
 
-        if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
-            return Error{*status};
+            if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
+                return Error{*status};
 
-        maxIndex = minIndex = std::get<ripple::LedgerHeader>(lgrInfoOrStatus).seq;
+            maxIndex = minIndex = std::get<ripple::LedgerHeader>(lgrInfoOrStatus).seq;
+        }
     }
 
     std::optional<data::TransactionsCursor> cursor;
 
     // if marker exists
-    if (input.marker)
-    {
+    if (input.marker) {
         cursor = {input.marker->ledger, input.marker->seq};
-    }
-    else
-    {
-        // if forward, start at minIndex - 1, because the SQL query is exclusive, we need to include the 0 transaction
-        // index of minIndex
-        if (input.forward)
+    } else {
+        // if forward, start at minIndex - 1, because the SQL query is exclusive, we need to include the 0
+        // transaction index of minIndex
+        if (input.forward) {
             cursor = {minIndex - 1, std::numeric_limits<int32_t>::max()};
-        else
+        } else {
             cursor = {maxIndex, std::numeric_limits<int32_t>::max()};
+        }
     }
 
     auto const limit = input.limit.value_or(LIMIT_DEFAULT);
@@ -135,30 +144,25 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
     if (retCursor)
         response.marker = {retCursor->ledgerSequence, retCursor->transactionIndex};
 
-    for (auto const& txnPlusMeta : blobs)
-    {
+    for (auto const& txnPlusMeta : blobs) {
         // over the range
         if ((txnPlusMeta.ledgerSequence < minIndex && !input.forward) ||
-            (txnPlusMeta.ledgerSequence > maxIndex && input.forward))
-        {
+            (txnPlusMeta.ledgerSequence > maxIndex && input.forward)) {
             response.marker = std::nullopt;
             break;
         }
-        else if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward)
-        {
+        if (txnPlusMeta.ledgerSequence > maxIndex && !input.forward) {
             LOG(log_.debug()) << "Skipping over transactions from incomplete ledger";
             continue;
         }
 
         boost::json::object obj;
-        if (!input.binary)
-        {
+        if (!input.binary) {
             auto [txn, meta] = toExpandedJson(txnPlusMeta, NFTokenjson::ENABLE);
             obj[JS(meta)] = std::move(meta);
             obj[JS(tx)] = std::move(txn);
 
-            if (obj[JS(tx)].as_object().contains(JS(TransactionType)))
-            {
+            if (obj[JS(tx)].as_object().contains(JS(TransactionType))) {
                 auto const objTransactionType = obj[JS(tx)].as_object()[JS(TransactionType)];
                 auto const strType = util::toLower(objTransactionType.as_string().c_str());
 
@@ -168,11 +172,12 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
                     continue;
             }
 
-            obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
             obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
-        }
-        else
-        {
+            obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+
+            if (ctx.apiVersion < 2u)
+                obj[JS(tx)].as_object()[JS(inLedger)] = txnPlusMeta.ledgerSequence;
+        } else {
             obj[JS(meta)] = ripple::strHex(txnPlusMeta.metadata);
             obj[JS(tx_blob)] = ripple::strHex(txnPlusMeta.transaction);
             obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
@@ -235,33 +240,33 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
-        else
+        } else {
             // could not get the latest validated ledger seq here, using this flag to indicate that
             input.usingValidatedLedger = true;
+        }
     }
 
     if (jsonObject.contains(JS(binary)))
-        input.binary = jsonObject.at(JS(binary)).as_bool();
+        input.binary = boost::json::value_to<JsonBool>(jsonObject.at(JS(binary)));
 
     if (jsonObject.contains(JS(forward)))
-        input.forward = jsonObject.at(JS(forward)).as_bool();
+        input.forward = boost::json::value_to<JsonBool>(jsonObject.at(JS(forward)));
 
     if (jsonObject.contains(JS(limit)))
         input.limit = jsonObject.at(JS(limit)).as_int64();
 
-    if (jsonObject.contains(JS(marker)))
+    if (jsonObject.contains(JS(marker))) {
         input.marker = AccountTxHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
             jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
+    }
 
-    if (jsonObject.contains("tx_type"))
-    {
+    if (jsonObject.contains("tx_type")) {
         auto objTransactionType = jsonObject.at("tx_type");
         input.transactionType = AccountTxHandler::TYPESMAP.at(objTransactionType.as_string().c_str());
     }

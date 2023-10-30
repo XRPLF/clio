@@ -38,12 +38,9 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-class RPCLedgerHandlerTest : public HandlerBaseTest
-{
-};
+class RPCLedgerHandlerTest : public HandlerBaseTest {};
 
-struct LedgerParamTestCaseBundle
-{
+struct LedgerParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -51,13 +48,11 @@ struct LedgerParamTestCaseBundle
 };
 
 // parameterized test cases for parameters check
-struct LedgerParameterTest : public RPCLedgerHandlerTest, public WithParamInterface<LedgerParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+struct LedgerParameterTest : public RPCLedgerHandlerTest, public WithParamInterface<LedgerParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<LedgerParamTestCaseBundle>(info.param);
             return bundle.testName;
@@ -160,7 +155,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerGroup1,
     LedgerParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    LedgerParameterTest::NameGenerator{});
+    LedgerParameterTest::NameGenerator{}
+);
 
 TEST_P(LedgerParameterTest, InvalidParams)
 {
@@ -178,7 +174,8 @@ TEST_P(LedgerParameterTest, InvalidParams)
 
 TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -191,7 +188,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
             R"({{
                 "ledger_index": {}
             }})",
-            RANGEMAX));
+            RANGEMAX
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -202,7 +200,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -215,7 +214,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
             R"({{
                 "ledger_index": "{}"
             }})",
-            RANGEMAX));
+            RANGEMAX
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -226,7 +226,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -239,7 +240,8 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
             R"({{
                 "ledger_hash": "{}"
             }})",
-            LEDGERHASH));
+            LEDGERHASH
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -269,7 +271,8 @@ TEST_F(RPCLedgerHandlerTest, Default)
                 "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000"
             }
         })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -291,7 +294,8 @@ TEST_F(RPCLedgerHandlerTest, Default)
 // not supported fields can be set to its default value
 TEST_F(RPCLedgerHandlerTest, NotSupportedFieldsDefaultValue)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -306,7 +310,8 @@ TEST_F(RPCLedgerHandlerTest, NotSupportedFieldsDefaultValue)
                 "full": false,
                 "accounts": false,
                 "queue": false
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
     });
@@ -314,7 +319,8 @@ TEST_F(RPCLedgerHandlerTest, NotSupportedFieldsDefaultValue)
 
 TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -333,7 +339,8 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
 
 TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -362,7 +369,8 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
                 "closed":true
             }
         })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -375,7 +383,8 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
         auto const req = json::parse(
             R"({
                 "binary": true
-            })");
+            })"
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -404,7 +413,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
                 ]
             }
         })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -427,7 +437,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
                 "binary": true,
                 "expand": true,
                 "transactions": true
-            })");
+            })"
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -492,7 +503,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
                 ]
             }
         })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -515,7 +527,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
                 "binary": false,
                 "expand": true,
                 "transactions": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
@@ -526,7 +539,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
 
 TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -543,12 +557,14 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
         auto const req = json::parse(
             R"({
                 "transactions": true
-            })");
+            })"
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
             output->as_object().at("ledger").at("transactions"),
-            json::parse(fmt::format(R"(["{}","{}"])", INDEX1, INDEX2)));
+            json::parse(fmt::format(R"(["{}","{}"])", INDEX1, INDEX2))
+        );
     });
 }
 
@@ -576,7 +592,8 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
                 }
             }
         ])";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -600,7 +617,8 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
         auto const req = json::parse(
             R"({
                 "diff": true
-            })");
+            })"
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("ledger").at("diff"), json::parse(expectedOut));
@@ -620,7 +638,8 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
                 "object":"1100612200400000240000000125000000032B000000002D00000002551B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC62400000000000000A81144B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
             }
         ])";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -645,7 +664,8 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
             R"({
                 "diff": true,
                 "binary": true
-            })");
+            })"
+        );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("ledger").at("diff"), json::parse(expectedOut));
@@ -710,7 +730,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
                 ]
             }
         })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -734,7 +755,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
@@ -800,7 +822,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
             "ledger_index": 30,
             "validated": true
         })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -842,7 +865,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
@@ -870,7 +894,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
             "ledger_index": 30,
             "validated": true
         })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -912,7 +937,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -921,7 +947,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
 
 TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -948,11 +975,13 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_FALSE(output->as_object()["ledger"].as_object()["transactions"].as_array()[0].as_object().contains(
-            "owner_funds"));
+        EXPECT_FALSE(
+            output->as_object()["ledger"].as_object()["transactions"].as_array()[0].as_object().contains("owner_funds")
+        );
     });
 }
 
@@ -975,7 +1004,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
             "ledger_index": 30,
             "validated": true
         })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -1017,7 +1047,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(expectedOut));
@@ -1026,7 +1057,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
 
 TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -1035,12 +1067,13 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
 
     // mock line
-    auto const line = CreateRippleStateLedgerObject(
-        ACCOUNT, CURRENCY, ACCOUNT2, 50 /*balance*/, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123);
+    auto const line =
+        CreateRippleStateLedgerObject(CURRENCY, ACCOUNT2, 50 /*balance*/, ACCOUNT, 10, ACCOUNT2, 20, INDEX1, 123);
     auto lineKey = ripple::keylet::line(
                        GetAccountIDWithString(ACCOUNT),
                        GetAccountIDWithString(ACCOUNT2),
-                       ripple::to_currency(std::string(CURRENCY)))
+                       ripple::to_currency(std::string(CURRENCY))
+    )
                        .key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(lineKey, RANGEMAX, _))
         .WillByDefault(Return(line.getSerializer().peekData()));
@@ -1065,7 +1098,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
@@ -1074,13 +1108,15 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
                 .as_array()[0]
                 .as_object()["owner_funds"]
                 .as_string(),
-            "50");
+            "50"
+        );
     });
 }
 
 TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(RANGEMIN);
     mockBackendPtr->updateRange(RANGEMAX);
 
@@ -1090,7 +1126,6 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
 
     // mock line freeze
     auto const line = CreateRippleStateLedgerObject(
-        ACCOUNT,
         CURRENCY,
         ACCOUNT2,
         50 /*balance*/,
@@ -1100,11 +1135,13 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
         20,
         INDEX1,
         123,
-        ripple::lsfLowFreeze | ripple::lsfHighFreeze);
+        ripple::lsfLowFreeze | ripple::lsfHighFreeze
+    );
     auto lineKey = ripple::keylet::line(
                        GetAccountIDWithString(ACCOUNT),
                        GetAccountIDWithString(ACCOUNT2),
-                       ripple::to_currency(std::string(CURRENCY)))
+                       ripple::to_currency(std::string(CURRENCY))
+    )
                        .key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(lineKey, RANGEMAX, _))
         .WillByDefault(Return(line.getSerializer().peekData()));
@@ -1129,7 +1166,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
                 "expand": true,
                 "transactions": true,
                 "owner_funds": true
-            })");
+            })"
+        );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
@@ -1138,6 +1176,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
                 .as_array()[0]
                 .as_object()["owner_funds"]
                 .as_string(),
-            "50");
+            "50"
+        );
     });
 }

@@ -37,8 +37,7 @@ namespace rpc {
 /**
  * @brief An asynchronous, thread-safe queue for RPC requests.
  */
-class WorkQueue
-{
+class WorkQueue {
     // these are cumulative for the lifetime of the process
     std::atomic_uint64_t queued_ = 0;
     std::atomic_uint64_t durationUs_ = 0;
@@ -67,7 +66,7 @@ public:
     static WorkQueue
     make_WorkQueue(util::Config const& config)
     {
-        static util::Logger log{"RPC"};
+        static util::Logger const log{"RPC"};
         auto const serverConfig = config.section("server");
         auto const numThreads = config.valueOr<uint32_t>("workers", std::thread::hardware_concurrency());
         auto const maxQueueSize = serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
@@ -90,8 +89,7 @@ public:
     bool
     postCoro(FnType&& func, bool isWhiteListed)
     {
-        if (curSize_ >= maxSize_ && !isWhiteListed)
-        {
+        if (curSize_ >= maxSize_ && !isWhiteListed) {
             LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << curSize_
                              << "; max size = " << maxSize_;
             return false;
@@ -113,7 +111,8 @@ public:
 
                 func(yield);
                 --curSize_;
-            });
+            }
+        );
 
         return true;
     }

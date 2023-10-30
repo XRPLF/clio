@@ -21,8 +21,7 @@
 
 #include <functional>
 
-struct FakeAmendmentBlockAction
-{
+struct FakeAmendmentBlockAction {
     std::reference_wrapper<std::size_t> callCount;
 
     void

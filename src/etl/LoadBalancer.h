@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <etl/ETLHelpers.h>
+#include <etl/ETLState.h>
 #include <feed/SubscriptionManager.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
@@ -47,17 +48,20 @@ namespace etl {
  * which ledgers have been validated by the network, and the range of ledgers each etl source has). This class also
  * allows requests for ledger data to be load balanced across all possible ETL sources.
  */
-class LoadBalancer
-{
+class LoadBalancer {
 public:
     using RawLedgerObjectType = org::xrpl::rpc::v1::RawLedgerObject;
     using GetLedgerResponseType = org::xrpl::rpc::v1::GetLedgerResponse;
     using OptionalGetLedgerResponseType = std::optional<GetLedgerResponseType>;
 
 private:
+    static constexpr std::uint32_t DEFAULT_DOWNLOAD_RANGES = 16;
+
     util::Logger log_{"ETL"};
     std::vector<std::unique_ptr<Source>> sources_;
-    std::uint32_t downloadRanges_ = 16; /*< The number of markers to use when downloading intial ledger */
+    std::optional<ETLState> etlState_;
+    std::uint32_t downloadRanges_ =
+        DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading intial ledger */
 
 public:
     /**
@@ -74,7 +78,8 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers);
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+    );
 
     /**
      * @brief A factory function for the load balancer.
@@ -91,7 +96,8 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers);
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+    );
 
     /**
      * @brief A factory function for the ETL source.
@@ -110,7 +116,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-        LoadBalancer& balancer);
+        LoadBalancer& balancer
+    );
 
     ~LoadBalancer();
 
@@ -161,13 +168,22 @@ public:
      * @brief Forward a JSON RPC request to a randomly selected rippled node.
      *
      * @param request JSON-RPC request to forward
-     * @param clientIp The IP address of the peer
+     * @param clientIp The IP address of the peer, if known
      * @param yield The coroutine context
      * @return Response received from rippled node as JSON object on success; nullopt on failure
      */
     std::optional<boost::json::object>
-    forwardToRippled(boost::json::object const& request, std::string const& clientIp, boost::asio::yield_context yield)
-        const;
+    forwardToRippled(
+        boost::json::object const& request,
+        std::optional<std::string> const& clientIp,
+        boost::asio::yield_context yield
+    ) const;
+
+    /**
+     * @brief Return state of ETL nodes.
+     */
+    ETLState
+    getETLState() const noexcept;
 
 private:
     /**

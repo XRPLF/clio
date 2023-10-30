@@ -41,8 +41,7 @@ constexpr static auto RAW_HEADER =
     "3E2232B33EF57CECAC2816E3122816E31A0A00F8377CD95DFA484CFAE282656A58"
     "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
 
-class ETLTransformerTest : public MockBackendTest
-{
+class ETLTransformerTest : public MockBackendTest {
 protected:
     using DataType = FakeFetchResponse;
     using ExtractionDataPipeType = MockExtractionDataPipe;
@@ -87,14 +86,16 @@ TEST_F(ETLTransformerTest, StopsOnWriteConflict)
     EXPECT_CALL(ledgerPublisher_, publish(_)).Times(0);
 
     transformer_ = std::make_unique<TransformerType>(
-        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_);
+        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_
+    );
 
     transformer_->waitTillFinished();  // explicitly joins the thread
 }
 
 TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->cache().setFull();  // to avoid throwing exception in updateCache
 
     auto const blob = hexStringToBinaryString(RAW_HEADER);
@@ -103,7 +104,7 @@ TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
     ON_CALL(dataPipe_, popNext).WillByDefault([this, &response](auto) -> std::optional<FakeFetchResponse> {
         if (state_.isStopping)
             return std::nullopt;
-        return response;
+        return response;  // NOLINT (performance-no-automatic-move)
     });
     ON_CALL(*rawBackendPtr, doFinishWrites).WillByDefault(Return(true));
 
@@ -119,7 +120,8 @@ TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
     EXPECT_CALL(ledgerPublisher_, publish(_)).Times(AtLeast(1));
 
     transformer_ = std::make_unique<TransformerType>(
-        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_);
+        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_
+    );
 
     // after 10ms we start spitting out empty responses which means the extractor is finishing up
     // this is normally combined with stopping the entire thing by setting the isStopping flag.
@@ -129,7 +131,8 @@ TEST_F(ETLTransformerTest, StopsOnEmptyFetchResponse)
 
 TEST_F(ETLTransformerTest, DoesNotPublishIfCanNotBuildNextLedger)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->cache().setFull();  // to avoid throwing exception in updateCache
 
     auto const blob = hexStringToBinaryString(RAW_HEADER);
@@ -152,7 +155,8 @@ TEST_F(ETLTransformerTest, DoesNotPublishIfCanNotBuildNextLedger)
     EXPECT_CALL(ledgerPublisher_, publish(_)).Times(0);
 
     transformer_ = std::make_unique<TransformerType>(
-        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_);
+        dataPipe_, mockBackendPtr, ledgerLoader_, ledgerPublisher_, amendmentBlockHandler_, 0, state_
+    );
 }
 
 // TODO: implement tests for amendment block. requires more refactoring

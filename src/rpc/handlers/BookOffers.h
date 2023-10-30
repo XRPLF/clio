@@ -32,8 +32,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/book_offers.html
  */
-class BookOffersHandler
-{
+class BookOffersHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
@@ -41,8 +40,7 @@ public:
     static auto constexpr LIMIT_MAX = 100;
     static auto constexpr LIMIT_DEFAULT = 60;
 
-    struct Output
-    {
+    struct Output {
         std::string ledgerHash;
         uint32_t ledgerIndex;
         boost::json::array offers;
@@ -51,8 +49,7 @@ public:
 
     // the taker is not really used in both clio and rippled, both of them return all the offers regardless the funding
     // status
-    struct Input
-    {
+    struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         uint32_t limit = LIMIT_DEFAULT;
@@ -70,8 +67,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(taker_gets),
@@ -95,7 +92,7 @@ public:
             // return INVALID_PARAMS if account format is wrong for "taker"
             {JS(taker),
              meta::WithCustomError{
-                 validation::AccountValidator, Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'")}},
+                 validation::AccountValidator, Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'.")}},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),

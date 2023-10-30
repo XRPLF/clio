@@ -35,8 +35,7 @@
 
 namespace data::cassandra::detail {
 
-class Statement : public ManagedObject<CassStatement>
-{
+class Statement : public ManagedObject<CassStatement> {
     static constexpr auto deleter = [](CassStatement* ptr) { cass_statement_free(ptr); };
 
     template <typename>
@@ -64,8 +63,6 @@ public:
         cass_statement_set_is_idempotent(*this, cass_true);
     }
 
-    Statement(Statement&&) = default;
-
     /**
      * @brief Binds the given arguments to the statement.
      *
@@ -75,7 +72,7 @@ public:
     void
     bind(Args&&... args) const
     {
-        std::size_t idx = 0;
+        std::size_t idx = 0;  // NOLINT(misc-const-correctness)
         (this->bindAt<Args>(idx++, std::forward<Args>(args)), ...);
     }
 
@@ -103,50 +100,34 @@ public:
         using UCharVectorType = std::vector<unsigned char>;
         using UintTupleType = std::tuple<uint32_t, uint32_t>;
 
-        if constexpr (std::is_same_v<DecayedType, ripple::uint256>)
-        {
+        if constexpr (std::is_same_v<DecayedType, ripple::uint256>) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind ripple::uint256");
-        }
-        else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>)
-        {
+        } else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind ripple::AccountID");
-        }
-        else if constexpr (std::is_same_v<DecayedType, UCharVectorType>)
-        {
+        } else if constexpr (std::is_same_v<DecayedType, UCharVectorType>) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind vector<unsigned char>");
-        }
-        else if constexpr (std::is_convertible_v<DecayedType, std::string>)
-        {
+        } else if constexpr (std::is_convertible_v<DecayedType, std::string>) {
             // reinterpret_cast is needed here :'(
             auto const rc = bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
-        }
-        else if constexpr (std::is_same_v<DecayedType, UintTupleType>)
-        {
-            auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::move(value)});
+        } else if constexpr (std::is_same_v<DecayedType, UintTupleType>) {
+            auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32>");
-        }
-        else if constexpr (std::is_same_v<DecayedType, bool>)
-        {
+        } else if constexpr (std::is_same_v<DecayedType, bool>) {
             auto const rc = cass_statement_bind_bool(*this, idx, value ? cass_true : cass_false);
             throwErrorIfNeeded(rc, "Bind bool");
-        }
-        else if constexpr (std::is_same_v<DecayedType, Limit>)
-        {
+        } else if constexpr (std::is_same_v<DecayedType, Limit>) {
             auto const rc = cass_statement_bind_int32(*this, idx, value.limit);
             throwErrorIfNeeded(rc, "Bind limit (int32)");
         }
         // clio only uses bigint (int64_t) so we convert any incoming type
-        else if constexpr (std::is_convertible_v<DecayedType, int64_t>)
-        {
+        else if constexpr (std::is_convertible_v<DecayedType, int64_t>) {
             auto const rc = cass_statement_bind_int64(*this, idx, value);
             throwErrorIfNeeded(rc, "Bind int64");
-        }
-        else
-        {
+        } else {
             // type not supported for binding
             static_assert(unsupported_v<DecayedType>);
         }
@@ -158,8 +139,7 @@ public:
  *
  * This is used to produce Statement objects that can be executed.
  */
-class PreparedStatement : public ManagedObject<CassPrepared const>
-{
+class PreparedStatement : public ManagedObject<CassPrepared const> {
     static constexpr auto deleter = [](CassPrepared const* ptr) { cass_prepared_free(ptr); };
 
 public:

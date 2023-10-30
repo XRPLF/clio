@@ -33,8 +33,7 @@
 namespace rpc::detail {
 
 template <typename LoadBalancerType, typename CountersType, typename HandlerProviderType>
-class ForwardingProxy
-{
+class ForwardingProxy {
     util::Logger log_{"RPC"};
 
     std::shared_ptr<LoadBalancerType> balancer_;
@@ -45,7 +44,8 @@ public:
     ForwardingProxy(
         std::shared_ptr<LoadBalancerType> const& balancer,
         CountersType& counters,
-        std::shared_ptr<HandlerProviderType const> const& handlerProvider)
+        std::shared_ptr<HandlerProviderType const> const& handlerProvider
+    )
         : balancer_{balancer}, counters_{std::ref(counters)}, handlerProvider_{handlerProvider}
     {
     }
@@ -55,10 +55,6 @@ public:
     {
         if (ctx.method == "subscribe" || ctx.method == "unsubscribe")
             return false;
-
-        // TODO: if needed, make configurable with json config option
-        if (ctx.apiVersion == 1)
-            return true;
 
         if (handlerProvider_->isClioOnly(ctx.method))
             return false;
@@ -80,14 +76,11 @@ public:
             return ctx.method == "ledger" and
                 ((request.contains("queue") and request.at("queue").is_bool() and request.at("queue").as_bool()) or
                  (request.contains("full") and request.at("full").is_bool() and request.at("full").as_bool()) or
-                 (request.contains("accounts") and request.at("accounts").is_bool() and
-                  request.at("accounts").as_bool()));
+                 (request.contains("accounts") and request.at("accounts").is_bool() and request.at("accounts").as_bool()
+                 ));
         };
 
-        if (checkAccountInfoForward() or checkLedgerForward())
-            return true;
-
-        return false;
+        return static_cast<bool>(checkAccountInfoForward() or checkLedgerForward());
     }
 
     Result
@@ -96,16 +89,14 @@ public:
         auto toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        if (auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield); not res)
-        {
+        auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
+        if (not res) {
             notifyFailedToForward(ctx.method);
             return Status{RippledError::rpcFAILED_TO_FORWARD};
         }
-        else
-        {
-            notifyForwarded(ctx.method);
-            return *res;
-        }
+
+        notifyForwarded(ctx.method);
+        return *res;
     }
 
     bool

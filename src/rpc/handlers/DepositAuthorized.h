@@ -34,26 +34,23 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/deposit_authorized.html
  */
-class DepositAuthorizedHandler
-{
+class DepositAuthorizedHandler {
     // dependencies
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
 public:
     // Note: `ledger_current_index` is omitted because it only makes sense for rippled
-    struct Output
-    {
+    struct Output {
         bool depositAuthorized = true;
         std::string sourceAccount;
         std::string destinationAccount;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         // validated should be sent via framework
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string sourceAccount;
         std::string destinationAccount;
         std::optional<std::string> ledgerHash;
@@ -67,8 +64,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(source_account), validation::Required{}, validation::AccountValidator},

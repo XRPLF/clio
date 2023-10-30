@@ -33,18 +33,16 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/random.html
  */
-class RandomHandler
-{
+class RandomHandler {
 public:
-    struct Output
-    {
+    struct Output {
         std::string random;
     };
 
     using Result = HandlerReturnType<Output>;
 
-    Result
-    process(Context const& ctx) const;
+    static Result
+    process(Context const& ctx);
 
 private:
     friend void

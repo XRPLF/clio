@@ -30,13 +30,12 @@ namespace rpc {
 /**
  * @brief Represents a list of amendments in the XRPL.
  */
-struct Amendments
-{
+struct Amendments {
     /**
      * @param name The name of the amendment
      * @return The corresponding amendment Id
      */
-    static ripple::uint256 const
+    static ripple::uint256
     GetAmendmentId(std::string_view const name)
     {
         return ripple::sha512Half(ripple::Slice(name.data(), name.size()));

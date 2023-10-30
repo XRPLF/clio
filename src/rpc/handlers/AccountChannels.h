@@ -36,8 +36,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_channels.html
  */
-class AccountChannelsHandler
-{
+class AccountChannelsHandler {
     // dependencies
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
@@ -47,8 +46,7 @@ public:
     static constexpr auto LIMIT_DEFAULT = 200;
 
     // type align with SField.h
-    struct ChannelResponse
-    {
+    struct ChannelResponse {
         std::string channelID;
         std::string account;
         std::string accountDestination;
@@ -56,27 +54,25 @@ public:
         std::string balance;
         std::optional<std::string> publicKey;
         std::optional<std::string> publicKeyHex;
-        uint32_t settleDelay;
+        uint32_t settleDelay{};
         std::optional<uint32_t> expiration;
         std::optional<uint32_t> cancelAfter;
         std::optional<uint32_t> sourceTag;
         std::optional<uint32_t> destinationTag;
     };
 
-    struct Output
-    {
+    struct Output {
         std::vector<ChannelResponse> channels;
         std::string account;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         // validated should be sent via framework
         bool validated = true;
-        uint32_t limit;
+        uint32_t limit{};
         std::optional<std::string> marker;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         std::optional<std::string> destinationAccount;
         std::optional<std::string> ledgerHash;
@@ -92,8 +88,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
@@ -114,8 +110,8 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
-    void
-    addChannel(std::vector<ChannelResponse>& jsonLines, ripple::SLE const& line) const;
+    static void
+    addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle);
 
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);

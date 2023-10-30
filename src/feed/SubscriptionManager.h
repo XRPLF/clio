@@ -46,16 +46,12 @@ template <class T>
 inline void
 sendToSubscribers(std::shared_ptr<std::string> const& message, T& subscribers, std::atomic_uint64_t& counter)
 {
-    for (auto it = subscribers.begin(); it != subscribers.end();)
-    {
+    for (auto it = subscribers.begin(); it != subscribers.end();) {
         auto& session = *it;
-        if (session->dead())
-        {
+        if (session->dead()) {
             it = subscribers.erase(it);
             --counter;
-        }
-        else
-        {
+        } else {
             session->send(message);
             ++it;
         }
@@ -73,8 +69,7 @@ template <class T>
 inline void
 addSession(SessionPtrType session, T& subscribers, std::atomic_uint64_t& counter)
 {
-    if (!subscribers.contains(session))
-    {
+    if (!subscribers.contains(session)) {
         subscribers.insert(session);
         ++counter;
     }
@@ -91,8 +86,7 @@ template <class T>
 inline void
 removeSession(SessionPtrType session, T& subscribers, std::atomic_uint64_t& counter)
 {
-    if (subscribers.contains(session))
-    {
+    if (subscribers.contains(session)) {
         subscribers.erase(session);
         --counter;
     }
@@ -101,8 +95,7 @@ removeSession(SessionPtrType session, T& subscribers, std::atomic_uint64_t& coun
 /**
  * @brief Represents a subscription stream.
  */
-class Subscription
-{
+class Subscription {
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     std::unordered_set<SessionPtrType> subscribers_ = {};
     std::atomic_uint64_t subCount_ = 0;
@@ -140,6 +133,15 @@ public:
     unsubscribe(SessionPtrType const& session);
 
     /**
+     * @brief Check if a session has been in subscribers list.
+     *
+     * @param session The session to check
+     * @return true if the session is in the subscribers list; false otherwise
+     */
+    bool
+    hasSession(SessionPtrType const& session);
+
+    /**
      * @brief Sends the given message to all subscribers.
      *
      * @param message The message to send
@@ -170,8 +172,7 @@ public:
  * @brief Represents a collection of subscriptions where each stream is mapped to a key.
  */
 template <class Key>
-class SubscriptionMap
-{
+class SubscriptionMap {
     using SubscribersType = std::set<SessionPtrType>;
 
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
@@ -225,11 +226,26 @@ public:
             --subCount_;
             subscribers_[key].erase(session);
 
-            if (subscribers_[key].size() == 0)
-            {
+            if (subscribers_[key].size() == 0) {
                 subscribers_.erase(key);
             }
         });
+    }
+
+    /**
+     * @brief Check if a session has been in subscribers list.
+     *
+     * @param session The session to check
+     * @param key The key for the subscription to check
+     * @return true if the session is in the subscribers list; false otherwise
+     */
+    bool
+    hasSession(SessionPtrType const& session, Key const& key)
+    {
+        if (!subscribers_.contains(key))
+            return false;
+
+        return subscribers_[key].contains(session);
     }
 
     /**
@@ -262,8 +278,7 @@ public:
 /**
  * @brief Manages subscriptions.
  */
-class SubscriptionManager
-{
+class SubscriptionManager {
     util::Logger log_{"Subscriptions"};
 
     std::vector<std::thread> workers_;
@@ -360,7 +375,8 @@ public:
         ripple::LedgerHeader const& lgrInfo,
         ripple::Fees const& fees,
         std::string const& ledgerRange,
-        std::uint32_t txnCount);
+        std::uint32_t txnCount
+    );
 
     /**
      * @brief Publish to the book changes stream.

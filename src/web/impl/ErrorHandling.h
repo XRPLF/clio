@@ -34,15 +34,15 @@ namespace web::detail {
 /**
  * @brief A helper that attempts to match rippled reporting mode HTTP errors as close as possible.
  */
-class ErrorHelper
-{
+class ErrorHelper {
     std::shared_ptr<web::ConnectionBase> connection_;
     std::optional<boost::json::object> request_;
 
 public:
     ErrorHelper(
         std::shared_ptr<web::ConnectionBase> const& connection,
-        std::optional<boost::json::object> request = std::nullopt)
+        std::optional<boost::json::object> request = std::nullopt
+    )
         : connection_{connection}, request_{std::move(request)}
     {
     }
@@ -50,20 +50,16 @@ public:
     void
     sendError(rpc::Status const& err) const
     {
-        if (connection_->upgraded)
-        {
+        if (connection_->upgraded) {
             connection_->send(boost::json::serialize(composeError(err)));
-        }
-        else
-        {
+        } else {
             // Note: a collection of crutches to match rippled output follows
-            if (auto const clioCode = std::get_if<rpc::ClioError>(&err.code))
-            {
-                switch (*clioCode)
-                {
+            if (auto const clioCode = std::get_if<rpc::ClioError>(&err.code)) {
+                switch (*clioCode) {
                     case rpc::ClioError::rpcINVALID_API_VERSION:
                         connection_->send(
-                            std::string{rpc::getErrorInfo(*clioCode).error}, boost::beast::http::status::bad_request);
+                            std::string{rpc::getErrorInfo(*clioCode).error}, boost::beast::http::status::bad_request
+                        );
                         break;
                     case rpc::ClioError::rpcCOMMAND_IS_MISSING:
                         connection_->send("Null method", boost::beast::http::status::bad_request);
@@ -89,9 +85,7 @@ public:
                         assert(false);  // this should never happen
                         break;
                 }
-            }
-            else
-            {
+            } else {
                 connection_->send(boost::json::serialize(composeError(err)), boost::beast::http::status::bad_request);
             }
         }
@@ -102,38 +96,45 @@ public:
     {
         connection_->send(
             boost::json::serialize(composeError(rpc::RippledError::rpcINTERNAL)),
-            boost::beast::http::status::internal_server_error);
+            boost::beast::http::status::internal_server_error
+        );
     }
 
     void
     sendNotReadyError() const
     {
         connection_->send(
-            boost::json::serialize(composeError(rpc::RippledError::rpcNOT_READY)), boost::beast::http::status::ok);
+            boost::json::serialize(composeError(rpc::RippledError::rpcNOT_READY)), boost::beast::http::status::ok
+        );
     }
 
     void
     sendTooBusyError() const
     {
-        if (connection_->upgraded)
+        if (connection_->upgraded) {
             connection_->send(
-                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)), boost::beast::http::status::ok);
-        else
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)), boost::beast::http::status::ok
+            );
+        } else {
             connection_->send(
                 boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)),
-                boost::beast::http::status::service_unavailable);
+                boost::beast::http::status::service_unavailable
+            );
+        }
     }
 
     void
     sendJsonParsingError(std::string_view reason) const
     {
-        if (connection_->upgraded)
+        if (connection_->upgraded) {
             connection_->send(
-                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX)),
-                boost::beast::http::status::ok);
-        else
+                boost::json::serialize(rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX)), boost::beast::http::status::ok
+            );
+        } else {
             connection_->send(
-                fmt::format("Unable to parse request: {}", reason), boost::beast::http::status::bad_request);
+                fmt::format("Unable to parse request: {}", reason), boost::beast::http::status::bad_request
+            );
+        }
     }
 
     boost::json::object
@@ -141,8 +142,7 @@ public:
     {
         auto e = rpc::makeError(error);
 
-        if (request_)
-        {
+        if (request_) {
             auto const& req = request_.value();
             auto const id = req.contains("id") ? req.at("id") : nullptr;
             if (not id.is_null())
@@ -151,10 +151,10 @@ public:
             e["request"] = req;
         }
 
-        if (connection_->upgraded)
+        if (connection_->upgraded) {
             return e;
-        else
-            return {{"result", e}};
+        }
+        return {{"result", e}};
     }
 };
 

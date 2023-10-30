@@ -26,8 +26,7 @@
 
 namespace data::cassandra::detail {
 
-struct Future : public ManagedObject<CassFuture>
-{
+struct Future : public ManagedObject<CassFuture> {
     /* implicit */ Future(CassFuture* ptr);
 
     MaybeError
@@ -38,10 +37,9 @@ struct Future : public ManagedObject<CassFuture>
 };
 
 void
-invokeHelper(CassFuture* ptr, void* self);
+invokeHelper(CassFuture* ptr, void* cbPtr);
 
-class FutureWithCallback : public Future
-{
+class FutureWithCallback : public Future {
 public:
     using FnType = std::function<void(ResultOrError)>;
     using FnPtrType = std::unique_ptr<FnType>;

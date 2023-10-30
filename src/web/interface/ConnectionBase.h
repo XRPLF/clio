@@ -22,6 +22,7 @@
 #include <util/Taggable.h>
 
 #include <boost/beast/http.hpp>
+#include <utility>
 
 namespace web {
 
@@ -32,14 +33,14 @@ namespace http = boost::beast::http;
  *
  * This class is used to represent a connection in RPC executor and subscription manager.
  */
-struct ConnectionBase : public util::Taggable
-{
+struct ConnectionBase : public util::Taggable {
 protected:
     boost::system::error_code ec_;
 
 public:
     std::string const clientIp;
     bool upgraded = false;
+    bool isAdmin_ = false;
 
     /**
      * @brief Create a new connection base.
@@ -47,11 +48,12 @@ public:
      * @param tagFactory The factory that generates tags to track sessions and requests
      * @param ip The IP address of the connected peer
      */
-    ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip) : Taggable(tagFactory), clientIp(ip)
+    ConnectionBase(util::TagDecoratorFactory const& tagFactory, std::string ip)
+        : Taggable(tagFactory), clientIp(std::move(ip))
     {
     }
 
-    virtual ~ConnectionBase() = default;
+    ~ConnectionBase() override = default;
 
     /**
      * @brief Send the response to the client.
@@ -69,7 +71,7 @@ public:
      * @throws Not supported unless implemented in child classes. Will always throw std::logic_error.
      */
     virtual void
-    send(std::shared_ptr<std::string> msg)
+    send(std::shared_ptr<std::string> /* msg */)
     {
         throw std::logic_error("web server can not send the shared payload");
     }
@@ -83,6 +85,17 @@ public:
     dead()
     {
         return ec_ != boost::system::error_code{};
+    }
+
+    /**
+     * @brief Indicates whether the connection has admin privileges
+     *
+     * @return true if the connection is from admin user
+     */
+    [[nodiscard]] bool
+    isAdmin() const
+    {
+        return isAdmin_;
     }
 };
 }  // namespace web

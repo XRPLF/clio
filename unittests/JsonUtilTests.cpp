@@ -53,7 +53,7 @@ TEST(JsonUtils, RemoveSecrets)
     json2 = util::removeSecret(json);
     EXPECT_TRUE(json2.contains("params"));
     EXPECT_TRUE(json2.at("params").is_array());
-    EXPECT_TRUE(json2.at("params").as_array().size() > 0);
+    EXPECT_TRUE(!json2.at("params").as_array().empty());
     json2 = json2.at("params").as_array()[0].as_object();
     EXPECT_EQ(json2.at("secret").as_string(), "*");
     EXPECT_EQ(json2.at("seed").as_string(), "*");

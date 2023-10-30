@@ -33,8 +33,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_offers.html
  */
-class AccountOffersHandler
-{
+class AccountOffersHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
@@ -42,29 +41,26 @@ public:
     static auto constexpr LIMIT_MAX = 400;
     static auto constexpr LIMIT_DEFAULT = 200;
 
-    struct Offer
-    {
-        uint32_t flags;
-        uint32_t seq;
+    struct Offer {
+        uint32_t flags{};
+        uint32_t seq{};
         ripple::STAmount takerGets;
         ripple::STAmount takerPays;
         std::string quality;
         std::optional<uint32_t> expiration;
     };
 
-    struct Output
-    {
+    struct Output {
         std::string account;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::vector<Offer> offers;
         std::optional<std::string> marker;
         // validated should be sent via framework
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
@@ -79,8 +75,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
@@ -99,8 +95,8 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
-    void
-    addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle) const;
+    static void
+    addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle);
 
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);

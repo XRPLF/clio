@@ -36,8 +36,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_lines.html
  */
-class AccountLinesHandler
-{
+class AccountLinesHandler {
     // dependencies
     std::shared_ptr<BackendInterface> const sharedPtrBackend_;
 
@@ -46,36 +45,33 @@ public:
     static auto constexpr LIMIT_MAX = 400;
     static auto constexpr LIMIT_DEFAULT = 200;
 
-    struct LineResponse
-    {
+    struct LineResponse {
         std::string account;
         std::string balance;
         std::string currency;
         std::string limit;
         std::string limitPeer;
-        uint32_t qualityIn;
-        uint32_t qualityOut;
-        bool noRipple;
-        bool noRipplePeer;
+        uint32_t qualityIn{};
+        uint32_t qualityOut{};
+        bool noRipple{};
+        bool noRipplePeer{};
         std::optional<bool> authorized;
         std::optional<bool> peerAuthorized;
         std::optional<bool> freeze;
         std::optional<bool> freezePeer;
     };
 
-    struct Output
-    {
+    struct Output {
         std::string account;
         std::vector<LineResponse> lines;
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         bool validated = true;  // should be sent via framework
         std::optional<std::string> marker;
-        uint32_t limit;
+        uint32_t limit{};
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
@@ -92,8 +88,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account),
@@ -117,12 +113,13 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
-    void
+    static void
     addLine(
         std::vector<LineResponse>& lines,
         ripple::SLE const& lineSle,
         ripple::AccountID const& account,
-        std::optional<ripple::AccountID> const& peerAccount) const;
+        std::optional<ripple::AccountID> const& peerAccount
+    );
 
 private:
     friend void

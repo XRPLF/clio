@@ -24,8 +24,7 @@
 namespace data::cassandra::detail {
 
 template <typename Managed>
-class ManagedObject
-{
+class ManagedObject {
 protected:
     std::unique_ptr<Managed, void (*)(Managed*)> ptr_;
 
@@ -36,9 +35,8 @@ public:
         if (rawPtr == nullptr)
             throw std::runtime_error("Could not create DB object - got nullptr");
     }
-    ManagedObject(ManagedObject&&) = default;
 
-    operator Managed* const() const
+    operator Managed*() const
     {
         return ptr_.get();
     }

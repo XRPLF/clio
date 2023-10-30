@@ -27,7 +27,8 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -56,15 +57,13 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
     response.ledgerIndex = lgrInfo.seq;
 
     // If the two accounts are the same, then the deposit should be fine.
-    if (sourceAccountID != destinationAccountID)
-    {
+    if (sourceAccountID != destinationAccountID) {
         auto it = ripple::SerialIter{dstAccountLedgerObject->data(), dstAccountLedgerObject->size()};
         auto sle = ripple::SLE{it, dstKeylet};
 
         // Check destination for the DepositAuth flag.
         // If that flag is not set then a deposit should be just fine.
-        if (sle.getFieldU32(ripple::sfFlags) & ripple::lsfDepositAuth)
-        {
+        if ((sle.getFieldU32(ripple::sfFlags) & ripple::lsfDepositAuth) != 0u) {
             // See if a preauthorization entry is in the ledger.
             auto const depositPreauthKeylet = ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID);
             auto const sleDepositAuth =
@@ -88,12 +87,12 @@ tag_invoke(boost::json::value_to_tag<DepositAuthorizedHandler::Input>, boost::js
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;

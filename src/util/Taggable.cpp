@@ -42,7 +42,7 @@ UUIDTagGenerator::next()
     static boost::uuids::random_generator gen{};
     static std::mutex mtx{};
 
-    std::lock_guard lk(mtx);
+    std::lock_guard const lk(mtx);
     return gen();
 }
 
@@ -53,8 +53,7 @@ namespace util {
 std::unique_ptr<BaseTagDecorator>
 TagDecoratorFactory::make() const
 {
-    switch (type_)
-    {
+    switch (type_) {
         case Type::UINT:
             return std::make_unique<TagDecorator<detail::UIntTagGenerator>>(parent_);
         case Type::UUID:

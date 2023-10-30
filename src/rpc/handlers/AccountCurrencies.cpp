@@ -25,7 +25,8 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -40,8 +41,7 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
 
     Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
-        if (sle.getType() == ripple::ltRIPPLE_STATE)
-        {
+        if (sle.getType() == ripple::ltRIPPLE_STATE) {
             auto balance = sle.getFieldAmount(ripple::sfBalance);
             auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
             auto const highLimit = sle.getFieldAmount(ripple::sfHighLimit);
@@ -70,7 +70,8 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
         std::numeric_limits<std::uint32_t>::max(),
         {},
         ctx.yield,
-        addToResponse);
+        addToResponse
+    );
 
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
@@ -103,12 +104,12 @@ tag_invoke(boost::json::value_to_tag<AccountCurrenciesHandler::Input>, boost::js
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;

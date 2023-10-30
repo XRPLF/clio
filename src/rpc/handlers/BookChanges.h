@@ -32,23 +32,20 @@ namespace rpc {
  *
  * This API is not documented in the rippled API documentation.
  */
-class BookChangesHandler
-{
+class BookChangesHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    struct Output
-    {
+    struct Output {
         std::string ledgerHash;
-        uint32_t ledgerIndex;
-        uint32_t ledgerTime;
+        uint32_t ledgerIndex{};
+        uint32_t ledgerTime{};
         std::vector<BookChange> bookChanges;
         bool validated = true;
     };
 
     // Clio does not implement deletion_blockers_only
-    struct Input
-    {
+    struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
     };
@@ -59,8 +56,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(ledger_hash), validation::Uint256HexStringValidator},

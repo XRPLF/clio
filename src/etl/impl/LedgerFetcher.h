@@ -27,6 +27,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include <optional>
+#include <utility>
 
 namespace etl::detail {
 
@@ -34,8 +35,7 @@ namespace etl::detail {
  * @brief GRPC Ledger data fetcher
  */
 template <typename LoadBalancerType>
-class LedgerFetcher
-{
+class LedgerFetcher {
 public:
     using OptionalGetLedgerResponseType = typename LoadBalancerType::OptionalGetLedgerResponseType;
 
@@ -50,7 +50,7 @@ public:
      * @brief Create an instance of the fetcher
      */
     LedgerFetcher(std::shared_ptr<BackendInterface> backend, std::shared_ptr<LoadBalancerType> balancer)
-        : backend_(backend), loadBalancer_(balancer)
+        : backend_(std::move(backend)), loadBalancer_(std::move(balancer))
     {
     }
 
@@ -90,7 +90,8 @@ public:
         LOG(log_.debug()) << "Attempting to fetch ledger with sequence = " << sequence;
 
         auto response = loadBalancer_->fetchLedger(
-            sequence, true, !backend_->cache().isFull() || backend_->cache().latestLedgerSequence() >= sequence);
+            sequence, true, !backend_->cache().isFull() || backend_->cache().latestLedgerSequence() >= sequence
+        );
         if (response)
             LOG(log_.trace()) << "GetLedger reply = " << response->DebugString();
 

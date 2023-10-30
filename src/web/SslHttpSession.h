@@ -36,8 +36,7 @@ using tcp = boost::asio::ip::tcp;
  */
 template <SomeServerHandler HandlerType>
 class SslHttpSession : public detail::HttpBase<SslHttpSession, HandlerType>,
-                       public std::enable_shared_from_this<SslHttpSession<HandlerType>>
-{
+                       public std::enable_shared_from_this<SslHttpSession<HandlerType>> {
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
 
@@ -47,6 +46,7 @@ public:
      *
      * @param socket The socket. Ownership is transferred to HttpSession
      * @param ip Client's IP address
+     * @param adminPassword The optional password to verify admin role in requests
      * @param ctx The SSL context
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
@@ -56,18 +56,27 @@ public:
     explicit SslHttpSession(
         tcp::socket&& socket,
         std::string const& ip,
+        std::optional<std::string> adminPassword,
         boost::asio::ssl::context& ctx,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer buffer)
-        : detail::HttpBase<SslHttpSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
+        boost::beast::flat_buffer buffer
+    )
+        : detail::HttpBase<SslHttpSession, HandlerType>(
+              ip,
+              tagFactory,
+              std::move(adminPassword),
+              dosGuard,
+              handler,
+              std::move(buffer)
+          )
         , stream_(std::move(socket), ctx)
         , tagFactory_(tagFactory)
     {
     }
 
-    ~SslHttpSession() = default;
+    ~SslHttpSession() override = default;
 
     /** @return The SSL stream. */
     boost::beast::ssl_stream<boost::beast::tcp_stream>&
@@ -90,7 +99,8 @@ public:
             self->stream_.async_handshake(
                 boost::asio::ssl::stream_base::server,
                 self->buffer_.data(),
-                boost::beast::bind_front_handler(&SslHttpSession<HandlerType>::onHandshake, self));
+                boost::beast::bind_front_handler(&SslHttpSession<HandlerType>::onHandshake, self)
+            );
         });
     }
 
@@ -142,7 +152,9 @@ public:
             this->dosGuard_,
             this->handler_,
             std::move(this->buffer_),
-            std::move(this->req_))
+            std::move(this->req_),
+            ConnectionBase::isAdmin()
+        )
             ->run();
     }
 };

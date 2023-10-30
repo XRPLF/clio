@@ -25,7 +25,8 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -33,12 +34,9 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     Output output;
 
-    if (input.binary)
-    {
+    if (input.binary) {
         output.header[JS(ledger_data)] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
-    }
-    else
-    {
+    } else {
         output.header[JS(account_hash)] = ripple::strHex(lgrInfo.accountHash);
         output.header[JS(close_flags)] = lgrInfo.closeFlags;
         output.header[JS(close_time)] = lgrInfo.closeTime.time_since_epoch().count();
@@ -55,13 +53,11 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
 
     output.header[JS(closed)] = true;
 
-    if (input.transactions)
-    {
+    if (input.transactions) {
         output.header[JS(transactions)] = boost::json::value(boost::json::array_kind);
         boost::json::array& jsonTxs = output.header.at(JS(transactions)).as_array();
 
-        if (input.expand)
-        {
+        if (input.expand) {
             auto txns = sharedPtrBackend_->fetchAllTransactionsInLedger(lgrInfo.seq, ctx.yield);
 
             std::transform(
@@ -70,32 +66,26 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                 std::back_inserter(jsonTxs),
                 [&](auto obj) {
                     boost::json::object entry;
-                    if (!input.binary)
-                    {
+                    if (!input.binary) {
                         auto [txn, meta] = toExpandedJson(obj);
                         entry = std::move(txn);
                         entry[JS(metaData)] = std::move(meta);
-                    }
-                    else
-                    {
+                    } else {
                         entry[JS(tx_blob)] = ripple::strHex(obj.transaction);
                         entry[JS(meta)] = ripple::strHex(obj.metadata);
                     }
 
-                    if (input.ownerFunds)
-                    {
+                    if (input.ownerFunds) {
                         // check the type of tx
                         auto const [tx, meta] = rpc::deserializeTxPlusMeta(obj);
                         if (tx and tx->isFieldPresent(ripple::sfTransactionType) and
-                            tx->getTxnType() == ripple::ttOFFER_CREATE)
-                        {
+                            tx->getTxnType() == ripple::ttOFFER_CREATE) {
                             auto const account = tx->getAccountID(ripple::sfAccount);
                             auto const amount = tx->getFieldAmount(ripple::sfTakerGets);
 
                             // If the offer create is not self funded then add the
                             // owner balance
-                            if (account != amount.getIssuer())
-                            {
+                            if (account != amount.getIssuer()) {
                                 auto const ownerFunds = accountHolds(
                                     *sharedPtrBackend_,
                                     lgrInfo.seq,
@@ -103,48 +93,42 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                                     amount.getCurrency(),
                                     amount.getIssuer(),
                                     false,  // fhIGNORE_FREEZE from rippled
-                                    ctx.yield);
+                                    ctx.yield
+                                );
                                 entry[JS(owner_funds)] = ownerFunds.getText();
                             }
                         }
                     }
                     return entry;
-                });
-        }
-        else
-        {
+                }
+            );
+        } else {
             auto hashes = sharedPtrBackend_->fetchAllTransactionHashesInLedger(lgrInfo.seq, ctx.yield);
             std::transform(
                 std::move_iterator(hashes.begin()),
                 std::move_iterator(hashes.end()),
                 std::back_inserter(jsonTxs),
-                [](auto hash) { return boost::json::string(ripple::strHex(hash)); });
+                [](auto hash) { return boost::json::string(ripple::strHex(hash)); }
+            );
         }
     }
 
-    if (input.diff)
-    {
+    if (input.diff) {
         output.header["diff"] = boost::json::value(boost::json::array_kind);
 
         boost::json::array& jsonDiff = output.header.at("diff").as_array();
         auto diff = sharedPtrBackend_->fetchLedgerDiff(lgrInfo.seq, ctx.yield);
 
-        for (auto const& obj : diff)
-        {
+        for (auto const& obj : diff) {
             boost::json::object entry;
             entry["object_id"] = ripple::strHex(obj.key);
 
-            if (input.binary)
-            {
+            if (input.binary) {
                 entry["object"] = ripple::strHex(obj.blob);
-            }
-            else if (obj.blob.size())
-            {
+            } else if (!obj.blob.empty()) {
                 ripple::STLedgerEntry const sle{ripple::SerialIter{obj.blob.data(), obj.blob.size()}, obj.key};
                 entry["object"] = toJson(sle);
-            }
-            else
-            {
+            } else {
                 entry["object"] = "";
             }
 
@@ -178,12 +162,12 @@ tag_invoke(boost::json::value_to_tag<LedgerHandler::Input>, boost::json::value c
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(transactions)))

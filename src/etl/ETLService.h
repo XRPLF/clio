@@ -46,7 +46,7 @@ struct NFTTransactionsData;
 struct NFTsData;
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 
 /**
  * @brief This namespace contains everything to do with the ETL and ETL sources.
@@ -66,18 +66,18 @@ namespace etl {
  * the others will fall back to monitoring/publishing. In this sense, this class dynamically transitions from monitoring
  * to writing and from writing to monitoring, based on the activity of other processes running on different machines.
  */
-class ETLService
-{
+class ETLService {
     // TODO: make these template parameters in ETLService
     using SubscriptionManagerType = feed::SubscriptionManager;
     using LoadBalancerType = LoadBalancer;
     using NetworkValidatedLedgersType = NetworkValidatedLedgers;
     using DataPipeType = etl::detail::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
-    using CacheLoaderType = etl::detail::CacheLoader<data::LedgerCache>;
+    using CacheType = data::LedgerCache;
+    using CacheLoaderType = etl::detail::CacheLoader<CacheType>;
     using LedgerFetcherType = etl::detail::LedgerFetcher<LoadBalancerType>;
     using ExtractorType = etl::detail::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
     using LedgerLoaderType = etl::detail::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
-    using LedgerPublisherType = etl::detail::LedgerPublisher<SubscriptionManagerType>;
+    using LedgerPublisherType = etl::detail::LedgerPublisher<SubscriptionManagerType, CacheType>;
     using AmendmentBlockHandlerType = etl::detail::AmendmentBlockHandler<>;
     using TransformerType =
         etl::detail::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;
@@ -121,7 +121,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManagerType> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
-        std::shared_ptr<NetworkValidatedLedgersType> ledgers);
+        std::shared_ptr<NetworkValidatedLedgersType> ledgers
+    );
 
     /**
      * @brief A factory function to spawn new ETLService instances.
@@ -142,7 +143,8 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<SubscriptionManagerType> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
-        std::shared_ptr<NetworkValidatedLedgersType> ledgers)
+        std::shared_ptr<NetworkValidatedLedgersType> ledgers
+    )
     {
         auto etl = std::make_shared<ETLService>(config, ioc, backend, subscriptions, balancer, ledgers);
         etl->run();
@@ -204,6 +206,15 @@ public:
         return result;
     }
 
+    /**
+     * @brief Get the etl nodes' state
+     */
+    etl::ETLState
+    getETLState() const noexcept
+    {
+        return loadBalancer_->getETLState();
+    }
+
 private:
     /**
      * @brief Run the ETL pipeline.
@@ -231,6 +242,15 @@ private:
     monitor();
 
     /**
+     * @brief Monitor the network for newly validated ledgers and publish them to the ledgers stream
+     *
+     * @param nextSequence the ledger sequence to publish
+     * @return the next ledger sequence to publish
+     */
+    uint32_t
+    publishNextSequence(uint32_t nextSequence);
+
+    /**
      * @brief Monitor the database for newly written ledgers.
      *
      * Similar to the monitor(), except this function will never call runETLPipeline() or loadInitialLedger().
@@ -243,7 +263,7 @@ private:
      * @return true if stopping; false otherwise
      */
     bool
-    isStopping()
+    isStopping() const
     {
         return state_.isStopping;
     }
@@ -256,7 +276,7 @@ private:
      * @return the number of markers
      */
     std::uint32_t
-    getNumMarkers()
+    getNumMarkers() const
     {
         return numMarkers_;
     }

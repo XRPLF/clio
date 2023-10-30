@@ -21,8 +21,7 @@
 
 #include <web/interface/ConnectionBase.h>
 
-struct MockSession : public web::ConnectionBase
-{
+struct MockSession : public web::ConnectionBase {
     std::string message;
     void
     send(std::shared_ptr<std::string> msg_type) override
@@ -31,7 +30,7 @@ struct MockSession : public web::ConnectionBase
     }
 
     void
-    send(std::string&& msg, boost::beast::http::status status = boost::beast::http::status::ok) override
+    send(std::string&& msg, boost::beast::http::status = boost::beast::http::status::ok) override
     {
         message += msg;
     }
@@ -41,17 +40,16 @@ struct MockSession : public web::ConnectionBase
     }
 };
 
-struct MockDeadSession : public web::ConnectionBase
-{
+struct MockDeadSession : public web::ConnectionBase {
     void
-    send(std::shared_ptr<std::string> _) override
+    send(std::shared_ptr<std::string>) override
     {
         // err happen, the session should remove from subscribers
         ec_.assign(2, boost::system::system_category());
     }
 
     void
-    send(std::string&& _, boost::beast::http::status __ = boost::beast::http::status::ok) override
+    send(std::string&&, boost::beast::http::status = boost::beast::http::status::ok) override
     {
     }
 

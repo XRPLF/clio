@@ -31,8 +31,7 @@ namespace etl::detail {
  * @brief A collection of thread safe async queues used by Extractor and Transformer to communicate
  */
 template <typename RawDataType>
-class ExtractionDataPipe
-{
+class ExtractionDataPipe {
 public:
     using DataType = std::optional<RawDataType>;
     using QueueType = ThreadSafeQueue<DataType>;  // TODO: probably should use boost::lockfree::queue instead?

@@ -27,8 +27,7 @@
 
 namespace rpc {
 
-class NFTOffersHandlerBase
-{
+class NFTOffersHandlerBase {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
@@ -36,19 +35,17 @@ public:
     static auto constexpr LIMIT_MAX = 500;
     static auto constexpr LIMIT_DEFAULT = 250;
 
-    struct Output
-    {
-        std::string nftID;
-        std::vector<ripple::SLE> offers;
+    struct Output {
+        std::string nftID = {};
+        std::vector<ripple::SLE> offers = {};
 
         // validated should be sent via framework
         bool validated = true;
-        std::optional<uint32_t> limit;
-        std::optional<std::string> marker;
+        std::optional<uint32_t> limit = {};
+        std::optional<std::string> marker = {};
     };
 
-    struct Input
-    {
+    struct Input {
         std::string nftID;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
@@ -63,8 +60,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(nft_id), validation::Required{}, validation::Uint256HexStringValidator},
@@ -86,7 +83,8 @@ protected:
         Input input,
         ripple::uint256 const& tokenID,
         ripple::Keylet const& directory,
-        boost::asio::yield_context yield) const;
+        boost::asio::yield_context yield
+    ) const;
 
 private:
     friend void

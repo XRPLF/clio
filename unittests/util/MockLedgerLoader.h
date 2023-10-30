@@ -25,8 +25,7 @@
 
 #include <optional>
 
-struct MockLedgerLoader
-{
+struct MockLedgerLoader {
     using GetLedgerResponseType = FakeFetchResponse;
     using RawLedgerObjectType = FakeLedgerObject;
 
@@ -34,6 +33,7 @@ struct MockLedgerLoader
         FormattedTransactionsData,
         insertTransactions,
         (ripple::LedgerInfo const&, GetLedgerResponseType& data),
-        ());
+        ()
+    );
     MOCK_METHOD(std::optional<ripple::LedgerInfo>, loadInitialLedger, (uint32_t sequence), ());
 };

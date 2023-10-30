@@ -88,17 +88,17 @@ std::vector<Handle::FutureType>
 Handle::asyncExecuteEach(std::vector<Statement> const& statements) const
 {
     std::vector<Handle::FutureType> futures;
+    futures.reserve(statements.size());
     for (auto const& statement : statements)
-        futures.push_back(cass_session_execute(session_, statement));
+        futures.emplace_back(cass_session_execute(session_, statement));
     return futures;
 }
 
 Handle::MaybeErrorType
 Handle::executeEach(std::vector<Statement> const& statements) const
 {
-    for (auto futures = asyncExecuteEach(statements); auto const& future : futures)
-    {
-        if (auto const rc = future.await(); not rc)
+    for (auto futures = asyncExecuteEach(statements); auto const& future : futures) {
+        if (auto rc = future.await(); not rc)
             return rc;
     }
 
@@ -145,11 +145,12 @@ Handle::asyncExecute(std::vector<Statement> const& statements, std::function<voi
 Handle::PreparedStatementType
 Handle::prepare(std::string_view query) const
 {
-    Handle::FutureType future = cass_session_prepare(session_, query.data());
-    if (auto const rc = future.await(); rc)
+    Handle::FutureType const future = cass_session_prepare(session_, query.data());
+    auto const rc = future.await();
+    if (rc)
         return cass_future_get_prepared(future);
-    else
-        throw std::runtime_error(rc.error().message());
+
+    throw std::runtime_error(rc.error().message());
 }
 
 }  // namespace data::cassandra

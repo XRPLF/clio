@@ -49,14 +49,12 @@ constexpr static auto JSONDataIPV6 = R"JSON(
     }
 )JSON";
 
-class WhitelistHandlerTest : public NoLoggerFixture
-{
-};
+class WhitelistHandlerTest : public NoLoggerFixture {};
 
 TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
 {
-    Config cfg{boost::json::parse(JSONDataIPV4)};
-    WhitelistHandler whitelistHandler{cfg};
+    Config const cfg{boost::json::parse(JSONDataIPV4)};
+    WhitelistHandler const whitelistHandler{cfg};
 
     EXPECT_TRUE(whitelistHandler.isWhiteListed("192.168.1.10"));
     EXPECT_FALSE(whitelistHandler.isWhiteListed("193.168.0.123"));
@@ -66,8 +64,8 @@ TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
 
 TEST_F(WhitelistHandlerTest, TestWhiteListIPV6)
 {
-    Config cfg{boost::json::parse(JSONDataIPV6)};
-    WhitelistHandler whitelistHandler{cfg};
+    Config const cfg{boost::json::parse(JSONDataIPV6)};
+    WhitelistHandler const whitelistHandler{cfg};
 
     EXPECT_TRUE(whitelistHandler.isWhiteListed("2002:1dd8:85a7:0000:0000:8a6e:0000:1111"));
     EXPECT_FALSE(whitelistHandler.isWhiteListed("2002:1dd8:85a7:1101:0000:8a6e:0000:1111"));

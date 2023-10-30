@@ -26,7 +26,7 @@ namespace rpc {
 void
 Counters::rpcFailed(std::string const& method)
 {
-    std::scoped_lock lk(mutex_);
+    std::scoped_lock const lk(mutex_);
     MethodInfo& counters = methodInfo_[method];
     ++counters.started;
     ++counters.failed;
@@ -35,7 +35,7 @@ Counters::rpcFailed(std::string const& method)
 void
 Counters::rpcErrored(std::string const& method)
 {
-    std::scoped_lock lk(mutex_);
+    std::scoped_lock const lk(mutex_);
     MethodInfo& counters = methodInfo_[method];
     ++counters.started;
     ++counters.errored;
@@ -44,7 +44,7 @@ Counters::rpcErrored(std::string const& method)
 void
 Counters::rpcComplete(std::string const& method, std::chrono::microseconds const& rpcDuration)
 {
-    std::scoped_lock lk(mutex_);
+    std::scoped_lock const lk(mutex_);
     MethodInfo& counters = methodInfo_[method];
     ++counters.started;
     ++counters.finished;
@@ -54,7 +54,7 @@ Counters::rpcComplete(std::string const& method, std::chrono::microseconds const
 void
 Counters::rpcForwarded(std::string const& method)
 {
-    std::scoped_lock lk(mutex_);
+    std::scoped_lock const lk(mutex_);
     MethodInfo& counters = methodInfo_[method];
     ++counters.forwarded;
 }
@@ -62,7 +62,7 @@ Counters::rpcForwarded(std::string const& method)
 void
 Counters::rpcFailedToForward(std::string const& method)
 {
-    std::scoped_lock lk(mutex_);
+    std::scoped_lock const lk(mutex_);
     MethodInfo& counters = methodInfo_[method];
     ++counters.failedForward;
 }
@@ -106,14 +106,13 @@ Counters::uptime() const
 boost::json::object
 Counters::report() const
 {
-    std::scoped_lock lk(mutex_);
+    std::scoped_lock const lk(mutex_);
     auto obj = boost::json::object{};
 
     obj[JS(rpc)] = boost::json::object{};
     auto& rpc = obj[JS(rpc)].as_object();
 
-    for (auto const& [method, info] : methodInfo_)
-    {
+    for (auto const& [method, info] : methodInfo_) {
         auto counters = boost::json::object{};
         counters[JS(started)] = std::to_string(info.started);
         counters[JS(finished)] = std::to_string(info.finished);

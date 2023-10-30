@@ -34,10 +34,10 @@ namespace data {
  * @param config The clio config to use
  * @return A shared_ptr<BackendInterface> with the selected implementation
  */
-std::shared_ptr<BackendInterface>
+inline std::shared_ptr<BackendInterface>
 make_Backend(util::Config const& config)
 {
-    static util::Logger log{"Backend"};
+    static util::Logger const log{"Backend"};
     LOG(log.info()) << "Constructing BackendInterface";
 
     auto const readOnly = config.valueOr("read_only", false);
@@ -46,8 +46,7 @@ make_Backend(util::Config const& config)
     std::shared_ptr<BackendInterface> backend = nullptr;
 
     // TODO: retire `cassandra-new` by next release after 2.0
-    if (boost::iequals(type, "cassandra") or boost::iequals(type, "cassandra-new"))
-    {
+    if (boost::iequals(type, "cassandra") or boost::iequals(type, "cassandra-new")) {
         auto cfg = config.section("database." + type);
         backend = std::make_shared<data::cassandra::CassandraBackend>(data::cassandra::SettingsProvider{cfg}, readOnly);
     }
@@ -56,8 +55,7 @@ make_Backend(util::Config const& config)
         throw std::runtime_error("Invalid database type");
 
     auto const rng = backend->hardFetchLedgerRangeNoThrow();
-    if (rng)
-    {
+    if (rng) {
         backend->updateRange(rng->minSequence);
         backend->updateRange(rng->maxSequence);
     }

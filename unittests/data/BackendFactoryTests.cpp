@@ -25,12 +25,11 @@
 #include <gtest/gtest.h>
 
 namespace {
-constexpr static auto contactPoints = "127.0.0.1";
-constexpr static auto keyspace = "factory_test";
+constexpr auto contactPoints = "127.0.0.1";
+constexpr auto keyspace = "factory_test";
 }  // namespace
 
-class BackendCassandraFactoryTest : public SyncAsioContextTest
-{
+class BackendCassandraFactoryTest : public SyncAsioContextTest {
 protected:
     void
     SetUp() override
@@ -45,8 +44,7 @@ protected:
     }
 };
 
-class BackendCassandraFactoryTestWithDB : public BackendCassandraFactoryTest
-{
+class BackendCassandraFactoryTestWithDB : public BackendCassandraFactoryTest {
 protected:
     void
     SetUp() override
@@ -59,7 +57,7 @@ protected:
     {
         BackendCassandraFactoryTest::TearDown();
         // drop the keyspace for next test
-        data::cassandra::Handle handle{contactPoints};
+        data::cassandra::Handle const handle{contactPoints};
         EXPECT_TRUE(handle.connect());
         handle.execute("DROP KEYSPACE " + std::string{keyspace});
     }
@@ -67,19 +65,20 @@ protected:
 
 TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
 {
-    util::Config cfg{boost::json::parse(
+    util::Config const cfg{boost::json::parse(
         R"({
             "database":
             {
                 "type":"unknown"
             }
-        })")};
+        })"
+    )};
     EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
 {
-    util::Config cfg{boost::json::parse(fmt::format(
+    util::Config const cfg{boost::json::parse(fmt::format(
         R"({{
             "database":
             {{
@@ -93,13 +92,14 @@ TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
             }}
         }})",
         "127.0.0.2",
-        keyspace))};
+        keyspace
+    ))};
     EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 {
-    util::Config cfg{boost::json::parse(fmt::format(
+    util::Config const cfg{boost::json::parse(fmt::format(
         R"({{
             "database":
             {{
@@ -112,7 +112,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
 
     {
         auto backend = make_Backend(cfg);
@@ -122,7 +123,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
         EXPECT_FALSE(backend->fetchLedgerRange());
 
         // insert range table
-        data::cassandra::Handle handle{contactPoints};
+        data::cassandra::Handle const handle{contactPoints};
         EXPECT_TRUE(handle.connect());
         handle.execute(fmt::format("INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (False, 100)", keyspace));
         handle.execute(fmt::format("INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (True, 500)", keyspace));
@@ -140,7 +141,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmptyDB)
 {
-    util::Config cfg{boost::json::parse(fmt::format(
+    util::Config const cfg{boost::json::parse(fmt::format(
         R"({{
             "read_only": true,
             "database":
@@ -154,13 +155,14 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmpt
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
     EXPECT_THROW(make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBReady)
 {
-    util::Config cfgReadOnly{boost::json::parse(fmt::format(
+    util::Config const cfgReadOnly{boost::json::parse(fmt::format(
         R"({{
             "read_only": true,
             "database":
@@ -174,9 +176,10 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
 
-    util::Config cfgWrite{boost::json::parse(fmt::format(
+    util::Config const cfgWrite{boost::json::parse(fmt::format(
         R"({{
             "read_only": false,
             "database":
@@ -190,7 +193,8 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
             }}
         }})",
         contactPoints,
-        keyspace))};
+        keyspace
+    ))};
 
     EXPECT_TRUE(make_Backend(cfgWrite));
     EXPECT_TRUE(make_Backend(cfgReadOnly));

@@ -31,14 +31,12 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/ledger.html
  */
-class LedgerHandler
-{
+class LedgerHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    struct Output
-    {
-        uint32_t ledgerIndex;
+    struct Output {
+        uint32_t ledgerIndex{};
         std::string ledgerHash;
         // TODO: use better type
         boost::json::object header;
@@ -48,8 +46,7 @@ public:
     // clio not support : accounts/full/owner_finds/queue/type
     // clio will throw error when accounts/full/owner_funds/queue is set to true
     // https://github.com/XRPLF/clio/issues/603
-    struct Input
-    {
+    struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         bool binary = false;
@@ -65,8 +62,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(full), validation::Type<bool>{}, validation::NotSupported{true}},

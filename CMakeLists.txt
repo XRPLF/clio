@@ -9,6 +9,7 @@ option (tests     "Build tests"                                       FALSE)
 option (docs      "Generate doxygen docs"                             FALSE)
 option (coverage  "Build test coverage report"                        FALSE)
 option (packaging "Create distribution packages"                      FALSE)
+option (lint      "Run clang-tidy checks during compilation"          FALSE)
 # ========================================================================== #
 set (san "" CACHE STRING "Add sanitizer instrumentation")
 set (CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -16,7 +17,9 @@ set_property (CACHE san PROPERTY STRINGS ";undefined;memory;address;thread")
 # ========================================================================== #
 
 # Include required modules
+include (CMake/Ccache.cmake)
 include (CheckCXXCompilerFlag)
+include (CMake/ClangTidy.cmake)
 
 if (verbose)
   set (CMAKE_VERBOSE_MAKEFILE TRUE)
@@ -71,6 +74,7 @@ target_sources (clio PRIVATE
   ## Main
   src/main/impl/Build.cpp
   ## Backend
+  src/data/BackendCounters.cpp
   src/data/BackendInterface.cpp
   src/data/LedgerCache.cpp
   src/data/cassandra/impl/Future.cpp
@@ -86,11 +90,13 @@ target_sources (clio PRIVATE
   src/etl/ProbingSource.cpp
   src/etl/NFTHelpers.cpp
   src/etl/ETLService.cpp
+  src/etl/ETLState.cpp
   src/etl/LoadBalancer.cpp
   src/etl/impl/ForwardCache.cpp
   ## Feed
   src/feed/SubscriptionManager.cpp
   ## Web
+  src/web/impl/AdminVerificationStrategy.cpp
   src/web/IntervalSweepHandler.cpp
   ## RPC
   src/rpc/Errors.cpp
@@ -130,7 +136,6 @@ target_sources (clio PRIVATE
   src/rpc/handlers/NoRippleCheck.cpp
   src/rpc/handlers/Random.cpp
   src/rpc/handlers/TransactionEntry.cpp
-  src/rpc/handlers/Tx.cpp
   ## Util
   src/util/config/Config.cpp
   src/util/log/Logger.cpp
@@ -166,16 +171,18 @@ if (tests)
     unittests/etl/TransformerTests.cpp
     unittests/etl/CacheLoaderTests.cpp
     unittests/etl/AmendmentBlockHandlerTests.cpp
+    unittests/etl/LedgerPublisherTests.cpp
+    unittests/etl/ETLStateTests.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
     unittests/rpc/RPCHelpersTests.cpp
     unittests/rpc/CountersTests.cpp
-    unittests/rpc/AdminVerificationTests.cpp
     unittests/rpc/APIVersionTests.cpp
     unittests/rpc/ForwardingProxyTests.cpp
     unittests/rpc/WorkQueueTests.cpp
     unittests/rpc/AmendmentsTests.cpp
+    unittests/rpc/JsonBoolTests.cpp
     ## RPC handlers
     unittests/rpc/handlers/DefaultProcessorTests.cpp
     unittests/rpc/handlers/TestHandlerTests.cpp
@@ -210,6 +217,7 @@ if (tests)
     unittests/rpc/handlers/VersionHandlerTests.cpp
     # Backend
     unittests/data/BackendFactoryTests.cpp
+    unittests/data/BackendCountersTests.cpp
     unittests/data/cassandra/BaseTests.cpp
     unittests/data/cassandra/BackendTests.cpp
     unittests/data/cassandra/RetryPolicyTests.cpp
@@ -217,6 +225,7 @@ if (tests)
     unittests/data/cassandra/ExecutionStrategyTests.cpp
     unittests/data/cassandra/AsyncExecutorTests.cpp
     # Webserver
+    unittests/web/AdminVerificationTests.cpp
     unittests/web/ServerTests.cpp
     unittests/web/RPCServerHandlerTests.cpp
     unittests/web/WhitelistHandlerTests.cpp

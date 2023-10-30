@@ -27,8 +27,7 @@
 using namespace testing;
 using namespace etl;
 
-class AmendmentBlockHandlerTest : public NoLoggerFixture
-{
+class AmendmentBlockHandlerTest : public NoLoggerFixture {
 protected:
     using AmendmentBlockHandlerType = detail::AmendmentBlockHandler<FakeAmendmentBlockAction>;
 

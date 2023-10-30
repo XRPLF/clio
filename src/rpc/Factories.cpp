@@ -33,15 +33,15 @@ make_WsContext(
     TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
     string const& clientIp,
-    std::reference_wrapper<APIVersionParser const> apiVersionParser)
+    std::reference_wrapper<APIVersionParser const> apiVersionParser
+)
 {
-    using Error = Unexpected<Status>;
-
     boost::json::value commandValue = nullptr;
-    if (!request.contains("command") && request.contains("method"))
+    if (!request.contains("command") && request.contains("method")) {
         commandValue = request.at("method");
-    else if (request.contains("command") && !request.contains("method"))
+    } else if (request.contains("command") && !request.contains("method")) {
         commandValue = request.at("command");
+    }
 
     if (!commandValue.is_string())
         return Error{{ClioError::rpcCOMMAND_IS_MISSING, "Method/Command is not specified or is not a string."}};
@@ -50,8 +50,8 @@ make_WsContext(
     if (!apiVersion)
         return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
 
-    string command = commandValue.as_string().c_str();
-    return web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp);
+    string const command = commandValue.as_string().c_str();
+    return web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp, session->isAdmin());
 }
 
 Expected<web::Context, Status>
@@ -61,10 +61,10 @@ make_HttpContext(
     TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
     string const& clientIp,
-    std::reference_wrapper<APIVersionParser const> apiVersionParser)
+    std::reference_wrapper<APIVersionParser const> apiVersionParser,
+    bool const isAdmin
+)
 {
-    using Error = Unexpected<Status>;
-
     if (!request.contains("method"))
         return Error{{ClioError::rpcCOMMAND_IS_MISSING}};
 
@@ -74,7 +74,7 @@ make_HttpContext(
     if (request.at("method").as_string().empty())
         return Error{{ClioError::rpcCOMMAND_IS_EMPTY}};
 
-    string command = request.at("method").as_string().c_str();
+    string const command = request.at("method").as_string().c_str();
 
     if (command == "subscribe" || command == "unsubscribe")
         return Error{{RippledError::rpcBAD_SYNTAX, "Subscribe and unsubscribe are only allowed or websocket."}};
@@ -91,7 +91,9 @@ make_HttpContext(
     if (!apiVersion)
         return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
 
-    return web::Context(yc, command, *apiVersion, array.at(0).as_object(), nullptr, tagFactory, range, clientIp);
+    return web::Context(
+        yc, command, *apiVersion, array.at(0).as_object(), nullptr, tagFactory, range, clientIp, isAdmin
+    );
 }
 
 }  // namespace rpc

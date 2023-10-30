@@ -34,8 +34,7 @@ constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B25
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr static auto TXNID = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
-class RPCHelpersTest : public MockBackendTest, public SyncAsioContextTest
-{
+class RPCHelpersTest : public MockBackendTest, public SyncAsioContextTest {
     void
     SetUp() override
     {
@@ -83,20 +82,22 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesMarkerInvalidPageNotInt)
 // limit = 10, return 2 objects
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     // return owner index
-    ripple::STObject ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
+    ripple::STObject const ownerDir =
+        CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     bbs.push_back(channel1.getSerializer().peekData());
     bbs.push_back(channel1.getSerializer().peekData());
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -111,7 +112,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
         EXPECT_EQ(
             cursor->toString(),
             "0000000000000000000000000000000000000000000000000000000000000000,"
-            "0");
+            "0"
+        );
     });
     ctx.run();
 }
@@ -119,7 +121,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarker)
 // limit = 10, return 10 objects and marker
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
@@ -128,12 +131,11 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
     std::vector<Blob> bbs;
 
     int objectsCount = 11;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
-        indexes.push_back(ripple::uint256{INDEX1});
+        indexes.emplace_back(INDEX1);
         bbs.push_back(channel1.getSerializer().peekData());
         objectsCount--;
     }
@@ -160,7 +162,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnSamePageMarker)
 // 10 objects per page, limit is 15, return the second page as marker
 TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto ownerDirKk = ripple::keylet::ownerDir(account).key;
@@ -173,17 +176,15 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
     std::vector<Blob> bbs;
 
     int objectsCount = 10;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
-        indexes.push_back(ripple::uint256{INDEX1});
+        indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     objectsCount = 15;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         bbs.push_back(channel1.getSerializer().peekData());
         objectsCount--;
     }
@@ -216,7 +217,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesNoInputMarkerReturnOtherPageMarker)
 // Send a valid marker
 TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), 99).key;
@@ -227,17 +229,15 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
     std::vector<Blob> bbs;
 
     int objectsCount = 10;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
-        indexes.push_back(ripple::uint256{INDEX1});
+        indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     objectsCount = 10;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         bbs.push_back(channel1.getSerializer().peekData());
         objectsCount--;
     }
@@ -254,7 +254,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX1, pageNum), yield, [&](auto) { count++; });
+            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX1, pageNum), yield, [&](auto) { count++; }
+        );
         auto cursor = std::get_if<AccountCursor>(&ret);
         EXPECT_TRUE(cursor != nullptr);
         EXPECT_EQ(count, limit);
@@ -267,7 +268,8 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithMarkerReturnSamePageMarker)
 // return invalid params error
 TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
 
     auto account = GetAccountIDWithString(ACCOUNT);
     auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), 99).key;
@@ -276,12 +278,11 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     int objectsCount = 10;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     std::vector<ripple::uint256> indexes;
-    while (objectsCount != 0)
-    {
+    while (objectsCount != 0) {
         // return owner index
-        indexes.push_back(ripple::uint256{INDEX1});
+        indexes.emplace_back(INDEX1);
         objectsCount--;
     }
     ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
@@ -293,11 +294,46 @@ TEST_F(RPCHelpersTest, TraverseOwnedNodesWithUnexistingIndexMarker)
     boost::asio::spawn(ctx, [&, this](boost::asio::yield_context yield) {
         auto count = 0;
         auto ret = traverseOwnedNodes(
-            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX2, pageNum), yield, [&](auto) { count++; });
+            *mockBackendPtr, account, 9, limit, fmt::format("{},{}", INDEX2, pageNum), yield, [&](auto) { count++; }
+        );
         auto status = std::get_if<Status>(&ret);
         EXPECT_TRUE(status != nullptr);
         EXPECT_EQ(*status, ripple::rpcINVALID_PARAMS);
         EXPECT_EQ(status->message, "Invalid marker.");
     });
     ctx.run();
+}
+
+TEST_F(RPCHelpersTest, EncodeCTID)
+{
+    auto const ctid = encodeCTID(0x1234, 0x67, 0x89);
+    ASSERT_TRUE(ctid);
+    EXPECT_EQ(*ctid, "C000123400670089");
+    EXPECT_FALSE(encodeCTID(0x1FFFFFFF, 0x67, 0x89));
+}
+
+TEST_F(RPCHelpersTest, DecodeCTIDString)
+{
+    auto const ctid = decodeCTID("C000123400670089");
+    ASSERT_TRUE(ctid);
+    EXPECT_EQ(*ctid, std::make_tuple(0x1234, 0x67, 0x89));
+    EXPECT_FALSE(decodeCTID("F000123400670089"));
+    EXPECT_FALSE(decodeCTID("F0001234006700"));
+    EXPECT_FALSE(decodeCTID("F000123400*700"));
+}
+
+TEST_F(RPCHelpersTest, DecodeCTIDInt)
+{
+    uint64_t ctidStr = 0xC000123400670089;
+    auto const ctid = decodeCTID(ctidStr);
+    ASSERT_TRUE(ctid);
+    EXPECT_EQ(*ctid, std::make_tuple(0x1234, 0x67, 0x89));
+    ctidStr = 0xF000123400670089;
+    EXPECT_FALSE(decodeCTID(ctidStr));
+}
+
+TEST_F(RPCHelpersTest, DecodeInvalidCTID)
+{
+    EXPECT_FALSE(decodeCTID('c'));
+    EXPECT_FALSE(decodeCTID(true));
 }

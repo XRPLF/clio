@@ -35,24 +35,21 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_currencies.html
  */
-class AccountCurrenciesHandler
-{
+class AccountCurrenciesHandler {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    struct Output
-    {
+    struct Output {
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         std::set<std::string> receiveCurrencies;
         std::set<std::string> sendCurrencies;
         // validated should be sent via framework
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
@@ -65,8 +62,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},

@@ -18,12 +18,6 @@
 //==============================================================================
 
 #include <grpc/impl/codegen/port_platform.h>
-#ifdef GRPC_TSAN_ENABLED
-#undef GRPC_TSAN_ENABLED
-#endif
-#ifdef GRPC_ASAN_ENABLED
-#undef GRPC_ASAN_ENABLED
-#endif
 
 #include <data/BackendFactory.h>
 #include <etl/ETLService.h>
@@ -79,14 +73,12 @@ parseCli(int argc, char* argv[])
     po::store(po::command_line_parser(argc, argv).options(description).positional(positional).run(), parsed);
     po::notify(parsed);
 
-    if (parsed.count("version"))
-    {
+    if (parsed.count("version") != 0u) {
         std::cout << Build::getClioFullVersionString() << '\n';
         std::exit(EXIT_SUCCESS);
     }
 
-    if (parsed.count("help"))
-    {
+    if (parsed.count("help") != 0u) {
         std::cout << "Clio server " << Build::getClioFullVersionString() << "\n\n" << description;
         std::exit(EXIT_SUCCESS);
     }
@@ -109,7 +101,7 @@ parseCerts(Config const& config)
     auto certFilename = config.value<std::string>("ssl_cert_file");
     auto keyFilename = config.value<std::string>("ssl_key_file");
 
-    std::ifstream readCert(certFilename, std::ios::in | std::ios::binary);
+    std::ifstream const readCert(certFilename, std::ios::in | std::ios::binary);
     if (!readCert)
         return {};
 
@@ -153,12 +145,10 @@ start(io_context& ioc, std::uint32_t numThreads)
 
 int
 main(int argc, char* argv[])
-try
-{
+try {
     auto const configPath = parseCli(argc, argv);
     auto const config = ConfigReader::open(configPath);
-    if (!config)
-    {
+    if (!config) {
         std::cerr << "Couldnt parse config '" << configPath << "'." << std::endl;
         return EXIT_FAILURE;
     }
@@ -167,8 +157,7 @@ try
     LOG(LogService::info()) << "Clio version: " << Build::getClioFullVersionString();
 
     auto const threads = config.valueOr("io_threads", 2);
-    if (threads <= 0)
-    {
+    if (threads <= 0) {
         LOG(LogService::fatal()) << "io_threads is less than 1";
         return EXIT_FAILURE;
     }
@@ -204,13 +193,16 @@ try
     auto workQueue = rpc::WorkQueue::make_WorkQueue(config);
     auto counters = rpc::Counters::make_Counters(workQueue);
     auto const handlerProvider = std::make_shared<rpc::detail::ProductionHandlerProvider const>(
-        config, backend, subscriptions, balancer, etl, counters);
+        config, backend, subscriptions, balancer, etl, counters
+    );
     auto const rpcEngine = rpc::RPCEngine::make_RPCEngine(
-        config, backend, subscriptions, balancer, etl, dosGuard, workQueue, counters, handlerProvider);
+        backend, subscriptions, balancer, dosGuard, workQueue, counters, handlerProvider
+    );
 
     // Init the web server
     auto handler = std::make_shared<web::RPCServerHandler<rpc::RPCEngine, etl::ETLService>>(
-        config, backend, rpcEngine, etl, subscriptions);
+        config, backend, rpcEngine, etl, subscriptions
+    );
     auto ctx = parseCerts(config);
     auto const ctxRef = ctx ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()} : std::nullopt;
     auto const httpServer = web::make_HttpServer(config, ioc, ctxRef, dosGuard, handler);
@@ -221,8 +213,6 @@ try
     start(ioc, threads);
 
     return EXIT_SUCCESS;
-}
-catch (std::exception const& e)
-{
+} catch (std::exception const& e) {
     LOG(LogService::fatal()) << "Exit on exception: " << e.what();
 }

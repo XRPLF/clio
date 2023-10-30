@@ -32,8 +32,7 @@ namespace rpc::modifiers {
  * @brief Clamp value between min and max.
  */
 template <typename Type>
-class Clamp final
-{
+class Clamp final {
     Type min_;
     Type max_;
 
@@ -76,8 +75,7 @@ public:
  *
  * Note: the conversion is only performed if the input value is a string.
  */
-struct ToLower final
-{
+struct ToLower final {
     /**
      * @brief Update the input string to lower case.
      *
@@ -85,8 +83,8 @@ struct ToLower final
      * @param key The key used to retrieve the modified value from the outer object
      * @return Possibly an error
      */
-    [[nodiscard]] MaybeError
-    modify(boost::json::value& value, std::string_view key) const
+    [[nodiscard]] static MaybeError
+    modify(boost::json::value& value, std::string_view key)
     {
         if (not value.is_object() or not value.as_object().contains(key.data()))
             return {};  // ignore. field does not exist, let 'required' fail instead

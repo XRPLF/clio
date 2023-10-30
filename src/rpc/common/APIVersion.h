@@ -31,7 +31,7 @@ namespace rpc {
 /**
  * @brief Default API version to use if no version is specified by clients
  */
-static constexpr uint32_t API_VERSION_DEFAULT = 2u;
+static constexpr uint32_t API_VERSION_DEFAULT = 1u;
 
 /**
  * @brief Minimum API version supported by this build
@@ -49,8 +49,7 @@ static constexpr uint32_t API_VERSION_MAX = 2u;
 /**
  * @brief A baseclass for API version helper
  */
-class APIVersionParser
-{
+class APIVersionParser {
 public:
     virtual ~APIVersionParser() = default;
 

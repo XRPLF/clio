@@ -34,9 +34,7 @@ constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
 
-class RPCTransactionEntryHandlerTest : public HandlerBaseTest
-{
-};
+class RPCTransactionEntryHandlerTest : public HandlerBaseTest {};
 
 TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
 {
@@ -64,7 +62,8 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     // mock fetchLedgerByHash return empty
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{INDEX}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
@@ -76,7 +75,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
             "tx_hash": "{}"
         }})",
         INDEX,
-        TXNID));
+        TXNID
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -90,7 +90,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 // error case ledger non exist via index
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     // mock fetchLedgerBySequence return empty
@@ -101,7 +102,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
             "ledger_index": "4",
             "tx_hash": "{}"
         }})",
-        TXNID));
+        TXNID
+    ));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
         auto const output = handler.process(input, Context{yield});
@@ -114,7 +116,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 
 TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, 30)));
@@ -128,7 +131,8 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
             R"({{ 
                 "tx_hash": "{}"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -139,7 +143,8 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
 
 TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
@@ -161,7 +166,8 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
                 "tx_hash": "{}",
                 "ledger_index": "30"
             }})",
-            TXNID));
+            TXNID
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -216,7 +222,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
                                         "ledger_hash":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
                                         "validated":true
                                     })";
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
@@ -239,7 +246,8 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
                 "ledger_index": {}
             }})",
             TXNID,
-            tx.ledgerSequence));
+            tx.ledgerSequence
+        ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(OUTPUT), *output);

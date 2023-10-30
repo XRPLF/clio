@@ -58,7 +58,7 @@ TEST(SubscriptionManagerTest, InitAndReport)
         "books":0,
         "book_changes":0
     })";
-    util::Config cfg;
+    util::Config const cfg;
     auto backend = std::make_shared<MockBackend>(cfg);
     auto subManager = feed::SubscriptionManager::make_SubscriptionManager(cfg, backend);
     EXPECT_EQ(subManager->report(), json::parse(ReportReturn));
@@ -67,12 +67,11 @@ TEST(SubscriptionManagerTest, InitAndReport)
 void
 CheckSubscriberMessage(std::string out, std::shared_ptr<web::ConnectionBase> session, int retry = 10)
 {
-    auto sessionPtr = static_cast<MockSession*>(session.get());
-    while (retry-- != 0)
-    {
+    auto sessionPtr = dynamic_cast<MockSession*>(session.get());
+    ASSERT_NE(sessionPtr, nullptr);
+    while (retry-- != 0) {
         std::this_thread::sleep_for(20ms);
-        if ((!sessionPtr->message.empty()) && json::parse(sessionPtr->message) == json::parse(out))
-        {
+        if ((!sessionPtr->message.empty()) && json::parse(sessionPtr->message) == json::parse(out)) {
             return;
         }
     }
@@ -80,8 +79,7 @@ CheckSubscriberMessage(std::string out, std::shared_ptr<web::ConnectionBase> ses
 }
 
 // Fixture contains test target and mock backend
-class SubscriptionManagerSimpleBackendTest : public MockBackendTest
-{
+class SubscriptionManagerSimpleBackendTest : public MockBackendTest {
 protected:
     util::Config cfg;
     std::shared_ptr<feed::SubscriptionManager> subManagerPtr;
@@ -118,8 +116,8 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
         "books":2,
         "book_changes":2
     })";
-    std::shared_ptr<web::ConnectionBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     subManagerPtr->subBookChanges(session1);
     subManagerPtr->subBookChanges(session2);
     subManagerPtr->subManifest(session1);
@@ -136,7 +134,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
     subManagerPtr->subProposedAccount(account, session1);
     subManagerPtr->subProposedAccount(account, session2);
     auto issue1 = GetIssue(CURRENCY, ISSUER);
-    ripple::Book book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1};
     subManagerPtr->subBook(book, session1);
     subManagerPtr->subBook(book, session2);
     std::this_thread::sleep_for(20ms);
@@ -161,7 +159,6 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
         EXPECT_EQ(reportReturn["books"], result);
     };
     checkResult(subManagerPtr->report(), 1);
-    subManagerPtr->cleanup(session2);
     subManagerPtr->cleanup(session2);  // clean a removed session
     std::this_thread::sleep_for(20ms);
     checkResult(subManagerPtr->report(), 0);
@@ -169,7 +166,8 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
 
 TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerLedgerUnSub)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     boost::asio::io_context ctx;
@@ -258,7 +256,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccountProposedT
     auto account = GetAccountIDWithString(ACCOUNT1);
     subManagerPtr->subProposedAccount(account, session);
 
-    std::shared_ptr<web::ConnectionBase> sessionIdle = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const sessionIdle = std::make_shared<MockSession>(tagDecoratorFactory);
     auto accountIdle = GetAccountIDWithString(ACCOUNT2);
     subManagerPtr->subProposedAccount(accountIdle, sessionIdle);
 
@@ -270,7 +268,8 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccountProposedT
     })";
     subManagerPtr->forwardProposedTransaction(json::parse(dummyTransaction).get_object());
     CheckSubscriberMessage(dummyTransaction, session);
-    auto rawIdle = (MockSession*)(sessionIdle.get());
+    auto rawIdle = dynamic_cast<MockSession*>(sessionIdle.get());
+    ASSERT_NE(rawIdle, nullptr);
     EXPECT_EQ("", rawIdle->message);
 }
 
@@ -281,7 +280,8 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccountProposedT
  */
 TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerLedger)
 {
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     boost::asio::io_context ctx;
@@ -344,10 +344,10 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerBookChange)
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 32);
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
+    ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STObject metaObj = CreateMetaDataForBookChange(CURRENCY, ISSUER, 22, 1, 3, 3, 1);
+    ripple::STObject const metaObj = CreateMetaDataForBookChange(CURRENCY, ISSUER, 22, 1, 3, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
     subManagerPtr->pubBookChanges(ledgerinfo, transactions);
@@ -382,11 +382,11 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransaction)
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH2, 33);
 
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
+    ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     // create an empty meta object
-    ripple::STArray metaArray{0};
+    ripple::STArray const metaArray{0};
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
     metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
@@ -434,10 +434,10 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
 
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH2, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject obj = CreateCreateOfferTransactionObject(ACCOUNT1, 1, 32, CURRENCY, ISSUER, 1, 3);
+    ripple::STObject const obj = CreateCreateOfferTransactionObject(ACCOUNT1, 1, 32, CURRENCY, ISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STArray metaArray{0};
+    ripple::STArray const metaArray{0};
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
     metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
@@ -453,7 +453,8 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
     line.setFieldU32(ripple::sfFlags, 0);
     auto issue2 = GetIssue(CURRENCY, ISSUER);
     line.setFieldAmount(ripple::sfBalance, ripple::STAmount(issue2, 100));
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(line.getSerializer().peekData()));
     subManagerPtr->pubTransaction(trans1, ledgerinfo);
@@ -534,10 +535,10 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
 
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH2, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject obj = CreateCreateOfferTransactionObject(ACCOUNT1, 1, 32, CURRENCY, ISSUER, 1, 3);
+    ripple::STObject const obj = CreateCreateOfferTransactionObject(ACCOUNT1, 1, 32, CURRENCY, ISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STArray metaArray{0};
+    ripple::STArray const metaArray{0};
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
     metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
@@ -552,7 +553,8 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
     line.setFieldU32(ripple::sfPreviousTxnLgrSeq, 3);
     line.setFieldU32(ripple::sfFlags, ripple::lsfHighFreeze);
     line.setFieldAmount(ripple::sfBalance, ripple::STAmount(GetIssue(CURRENCY, ISSUER), 100));
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(line.getSerializer().peekData()));
     subManagerPtr->pubTransaction(trans1, ledgerinfo);
@@ -570,10 +572,10 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
 
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH2, 33);
     auto trans1 = TransactionAndMetadata();
-    ripple::STObject obj = CreateCreateOfferTransactionObject(ACCOUNT1, 1, 32, CURRENCY, ISSUER, 1, 3);
+    ripple::STObject const obj = CreateCreateOfferTransactionObject(ACCOUNT1, 1, 32, CURRENCY, ISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
-    ripple::STArray metaArray{0};
+    ripple::STArray const metaArray{0};
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
     metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
@@ -589,12 +591,13 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
     line.setFieldU32(ripple::sfFlags, ripple::lsfHighFreeze);
     auto issueAccount = GetAccountIDWithString(ISSUER);
     line.setFieldAmount(ripple::sfBalance, ripple::STAmount(GetIssue(CURRENCY, ISSUER), 100));
-    MockBackend* rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
     auto kk = ripple::keylet::account(issueAccount).key;
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(testing::_, testing::_, testing::_))
         .WillByDefault(Return(line.getSerializer().peekData()));
-    ripple::STObject accountRoot = CreateAccountRootObject(ISSUER, ripple::lsfGlobalFreeze, 1, 10, 2, TXNID, 3);
+    ripple::STObject const accountRoot = CreateAccountRootObject(ISSUER, ripple::lsfGlobalFreeze, 1, 10, 2, TXNID, 3);
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     subManagerPtr->pubTransaction(trans1, ledgerinfo);
@@ -610,7 +613,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccount)
     subManagerPtr->subAccount(account, session);
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH2, 33);
 
-    ripple::STObject obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
+    ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     auto trans1 = TransactionAndMetadata();
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
@@ -675,7 +678,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccount)
 TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerOrderBook)
 {
     auto issue1 = GetIssue(CURRENCY, ISSUER);
-    ripple::Book book{ripple::xrpIssue(), issue1};
+    ripple::Book const book{ripple::xrpIssue(), issue1};
     subManagerPtr->subBook(book, session);
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH2, 33);
 
@@ -740,7 +743,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerOrderBook)
     CheckSubscriberMessage(OrderbookPublish, session);
 
     // trigger by offer cancel meta data
-    std::shared_ptr<web::ConnectionBase> session1 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
     subManagerPtr->subBook(book, session1);
     metaObj = CreateMetaDataForCancelOffer(CURRENCY, ISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
@@ -829,7 +832,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerOrderBook)
         "engine_result":"tesSUCCESS",
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
     })";
-    std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     subManagerPtr->subBook(book, session2);
     metaObj = CreateMetaDataForCreateOffer(CURRENCY, ISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();

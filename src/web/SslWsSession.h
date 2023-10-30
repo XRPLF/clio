@@ -21,6 +21,10 @@
 
 #include <web/impl/WsBase.h>
 
+#include <boost/beast/ssl.hpp>
+
+#include <utility>
+
 namespace web {
 
 /**
@@ -29,8 +33,7 @@ namespace web {
  * Majority of the operations are handled by the base class.
  */
 template <SomeServerHandler HandlerType>
-class SslWsSession : public detail::WsBase<SslWsSession, HandlerType>
-{
+class SslWsSession : public detail::WsBase<SslWsSession, HandlerType> {
     using StreamType = boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>;
     StreamType ws_;
 
@@ -44,6 +47,7 @@ public:
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
      * @param buffer Buffer with initial data received from the peer
+     * @param isAdmin Whether the connection has admin privileges
      */
     explicit SslWsSession(
         boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
@@ -51,10 +55,13 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer&& buffer)
+        boost::beast::flat_buffer&& buffer,
+        bool isAdmin
+    )
         : detail::WsBase<SslWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
         , ws_(std::move(stream))
     {
+        ConnectionBase::isAdmin_ = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
     }
 
     /** @return The secure websocket stream. */
@@ -71,8 +78,7 @@ public:
  * Pass the stream to the session class after upgrade.
  */
 template <SomeServerHandler HandlerType>
-class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<HandlerType>>
-{
+class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<HandlerType>> {
     using std::enable_shared_from_this<SslWsUpgrader<HandlerType>>::shared_from_this;
 
     boost::beast::ssl_stream<boost::beast::tcp_stream> https_;
@@ -83,6 +89,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<HandlerT
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
     http::request<http::string_body> req_;
+    bool isAdmin_;
 
 public:
     /**
@@ -95,6 +102,7 @@ public:
      * @param handler The server handler to use
      * @param buffer Buffer with initial data received from the peer. Ownership is transferred
      * @param request The request. Ownership is transferred
+     * @param isAdmin Whether the connection has admin privileges
      */
     SslWsUpgrader(
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
@@ -103,14 +111,17 @@ public:
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer,
-        http::request<http::string_body> request)
+        http::request<http::string_body> request,
+        bool isAdmiin
+    )
         : https_(std::move(stream))
         , buffer_(std::move(buffer))
-        , ip_(ip)
+        , ip_(std::move(ip))
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
         , handler_(handler)
         , req_(std::move(request))
+        , isAdmin_(isAdmiin)
     {
     }
 
@@ -124,7 +135,8 @@ public:
 
         boost::asio::dispatch(
             https_.get_executor(),
-            boost::beast::bind_front_handler(&SslWsUpgrader<HandlerType>::doUpgrade, shared_from_this()));
+            boost::beast::bind_front_handler(&SslWsUpgrader<HandlerType>::doUpgrade, shared_from_this())
+        );
     }
 
 private:
@@ -151,7 +163,8 @@ private:
         boost::beast::get_lowest_layer(https_).expires_never();
 
         std::make_shared<SslWsSession<HandlerType>>(
-            std::move(https_), ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_))
+            std::move(https_), ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_), isAdmin_
+        )
             ->run(std::move(req_));
     }
 };

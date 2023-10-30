@@ -34,17 +34,15 @@ class LoadBalancer;
 }  // namespace etl
 namespace rpc {
 class Counters;
-}
+}  // namespace rpc
 namespace feed {
 class SubscriptionManager;
-}
+}  // namespace feed
 
 namespace rpc::detail {
 
-class ProductionHandlerProvider final : public HandlerProvider
-{
-    struct Handler
-    {
+class ProductionHandlerProvider final : public HandlerProvider {
+    struct Handler {
         AnyHandler handler;
         bool isClioOnly = false;
     };
@@ -58,7 +56,8 @@ public:
         std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
         std::shared_ptr<etl::ETLService const> const& etl,
-        Counters const& counters);
+        Counters const& counters
+    );
 
     bool
     contains(std::string const& method) const override;

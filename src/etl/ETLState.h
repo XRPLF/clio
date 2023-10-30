@@ -19,24 +19,29 @@
 
 #pragma once
 
-#include <string_view>
+#include <boost/json.hpp>
 
-namespace rpc::detail {
+#include <cstdint>
+#include <optional>
 
-class IPAdminVerificationStrategy final
-{
-public:
+namespace etl {
+
+class Source;
+
+/**
+ * @brief This class is responsible for fetching and storing the state of the ETL information, such as the network id
+ */
+struct ETLState {
+    std::optional<uint32_t> networkID;
+
     /**
-     * @brief Checks whether request is from a host that is considered authorized as admin.
-     *
-     * @param ip The ip addr of the client
-     * @return true if authorized; false otherwise
+     * @brief Fetch the ETL state from the rippled server
      */
-    bool
-    isAdmin(std::string_view ip) const
-    {
-        return ip == "127.0.0.1";
-    }
+    static ETLState
+    fetchETLStateFromSource(Source const& source) noexcept;
 };
 
-}  // namespace rpc::detail
+ETLState
+tag_invoke(boost::json::value_to_tag<ETLState>, boost::json::value const& jv);
+
+}  // namespace etl

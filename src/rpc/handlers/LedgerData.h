@@ -36,8 +36,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/ledger_data.html
  */
-class LedgerDataHandler
-{
+class LedgerDataHandler {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     util::Logger log_{"RPC"};
@@ -51,9 +50,8 @@ public:
     static uint32_t constexpr LIMITBINARY = 2048;
     static uint32_t constexpr LIMITJSON = 256;
 
-    struct Output
-    {
-        uint32_t ledgerIndex;
+    struct Output {
+        uint32_t ledgerIndex{};
         std::string ledgerHash;
         std::optional<boost::json::object> header;
         boost::json::array states;
@@ -66,8 +64,7 @@ public:
     // TODO: Clio does not implement "type" filter
     // outOfOrder only for clio, there is no document, traverse via seq diff
     // outOfOrder implementation is copied from old rpc handler
-    struct Input
-    {
+    struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         bool binary = false;
@@ -84,10 +81,10 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static const auto rpcSpec = RpcSpec{
+        static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {"out_of_order", validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
@@ -100,9 +97,7 @@ public:
              meta::WithCustomError{
                  validation::Type<std::string>{},
                  Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}},
-             meta::WithCustomError{
-                 validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend()),
-                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type'."}}},
+             validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend())},
 
         };
         return rpcSpec;

@@ -33,8 +33,7 @@ namespace web {
 /**
  * @brief A whitelist to remove rate limits of certain IP addresses.
  */
-class Whitelist
-{
+class Whitelist {
     std::vector<boost::asio::ip::network_v4> subnetsV4_;
     std::vector<boost::asio::ip::network_v6> subnetsV6_;
     std::vector<boost::asio::ip::address> ips_;
@@ -51,18 +50,18 @@ public:
     {
         using namespace boost::asio;
 
-        if (not isMask(net))
-        {
+        if (not isMask(net)) {
             ips_.push_back(ip::make_address(net));
             return;
         }
 
-        if (isV4(net))
+        if (isV4(net)) {
             subnetsV4_.push_back(ip::make_network_v4(net));
-        else if (isV6(net))
+        } else if (isV6(net)) {
             subnetsV6_.push_back(ip::make_network_v6(net));
-        else
+        } else {
             throw std::runtime_error(fmt::format("malformed network: {}", net.data()));
+        }
     }
 
     /**
@@ -80,15 +79,17 @@ public:
         if (std::find(std::begin(ips_), std::end(ips_), addr) != std::end(ips_))
             return true;
 
-        if (addr.is_v4())
+        if (addr.is_v4()) {
             return std::find_if(
-                       std::begin(subnetsV4_), std::end(subnetsV4_), std::bind_front(&isInV4Subnet, std::cref(addr))) !=
-                std::end(subnetsV4_);
+                       std::begin(subnetsV4_), std::end(subnetsV4_), std::bind_front(&isInV4Subnet, std::cref(addr))
+                   ) != std::end(subnetsV4_);
+        }
 
-        if (addr.is_v6())
+        if (addr.is_v6()) {
             return std::find_if(
-                       std::begin(subnetsV6_), std::end(subnetsV6_), std::bind_front(&isInV6Subnet, std::cref(addr))) !=
-                std::end(subnetsV6_);
+                       std::begin(subnetsV6_), std::end(subnetsV6_), std::bind_front(&isInV6Subnet, std::cref(addr))
+                   ) != std::end(subnetsV6_);
+        }
 
         return false;
     }
@@ -108,22 +109,22 @@ private:
         return range.find(addr.to_v6()) != range.end();
     }
 
-    bool
-    isV4(std::string_view net) const
+    static bool
+    isV4(std::string_view net)
     {
         static const std::regex ipv4CidrRegex(R"(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$)");
         return std::regex_match(std::string(net), ipv4CidrRegex);
     }
 
-    bool
-    isV6(std::string_view net) const
+    static bool
+    isV6(std::string_view net)
     {
         static const std::regex ipv6CidrRegex(R"(^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}/\d{1,3}$)");
         return std::regex_match(std::string(net), ipv6CidrRegex);
     }
 
-    bool
-    isMask(std::string_view net) const
+    static bool
+    isMask(std::string_view net)
     {
         return net.find('/') != std::string_view::npos;
     }
@@ -132,8 +133,7 @@ private:
 /**
  * @brief A simple handler to add/check elements in a whitelist.
  */
-class WhitelistHandler
-{
+class WhitelistHandler {
     Whitelist whitelist_;
 
 public:
@@ -144,7 +144,7 @@ public:
      */
     WhitelistHandler(util::Config const& config)
     {
-        std::unordered_set<std::string> arr = getWhitelist(config);
+        std::unordered_set<std::string> const arr = getWhitelist(config);
         for (auto const& net : arr)
             whitelist_.add(net);
     }
@@ -159,8 +159,8 @@ public:
     }
 
 private:
-    [[nodiscard]] std::unordered_set<std::string> const
-    getWhitelist(util::Config const& config) const
+    [[nodiscard]] static std::unordered_set<std::string>
+    getWhitelist(util::Config const& config)
     {
         using SetType = std::unordered_set<std::string> const;
 

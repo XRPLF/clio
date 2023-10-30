@@ -23,7 +23,7 @@
 namespace rpc {
 
 void
-AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle) const
+AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle)
 {
     ChannelResponse channel;
     channel.channelID = ripple::to_string(channelSle.key());
@@ -33,8 +33,7 @@ AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, r
     channel.balance = channelSle[ripple::sfBalance].getText();
     channel.settleDelay = channelSle[ripple::sfSettleDelay];
 
-    if (publicKeyType(channelSle[ripple::sfPublicKey]))
-    {
+    if (publicKeyType(channelSle[ripple::sfPublicKey])) {
         ripple::PublicKey const pk(channelSle[ripple::sfPublicKey]);
         channel.publicKey = toBase58(ripple::TokenType::AccountPublic, pk);
         channel.publicKeyHex = strHex(pk);
@@ -60,7 +59,8 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -79,8 +79,7 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
     Output response;
     auto const addToResponse = [&](ripple::SLE&& sle) {
         if (sle.getType() == ripple::ltPAYCHAN && sle.getAccountID(ripple::sfAccount) == accountID &&
-            (!destAccountID || *destAccountID == sle.getAccountID(ripple::sfDestination)))
-        {
+            (!destAccountID || *destAccountID == sle.getAccountID(ripple::sfDestination))) {
             addChannel(response.channels, sle);
         }
 
@@ -88,7 +87,8 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
     };
 
     auto const next = traverseOwnedNodes(
-        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse);
+        *sharedPtrBackend_, *accountID, lgrInfo.seq, input.limit, input.marker, ctx.yield, addToResponse
+    );
 
     if (auto status = std::get_if<Status>(&next))
         return Error{*status};
@@ -125,12 +125,12 @@ tag_invoke(boost::json::value_to_tag<AccountChannelsHandler::Input>, boost::json
     if (jsonObject.contains(JS(destination_account)))
         input.destinationAccount = jv.at(JS(destination_account)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     return input;

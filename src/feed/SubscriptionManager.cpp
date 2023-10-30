@@ -35,6 +35,12 @@ Subscription::unsubscribe(SessionPtrType const& session)
     boost::asio::post(strand_, [this, session]() { removeSession(session, subscribers_, subCount_); });
 }
 
+bool
+Subscription::hasSession(SessionPtrType const& session)
+{
+    return subscribers_.contains(session);
+}
+
 void
 Subscription::publish(std::shared_ptr<std::string> const& message)
 {
@@ -46,7 +52,8 @@ getLedgerPubMessage(
     ripple::LedgerHeader const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
-    std::uint32_t txnCount)
+    std::uint32_t txnCount
+)
 {
     boost::json::object pubMsg;
 
@@ -78,7 +85,7 @@ SubscriptionManager::subLedger(boost::asio::yield_context yield, SessionPtrType 
     fees = backend_->fetchFees(lgrInfo->seq, yield);
     assert(fees);
 
-    std::string range = std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
+    std::string const range = std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
 
     auto pubMsg = getLedgerPubMessage(*lgrInfo, *fees, range, 0);
     pubMsg.erase("txn_count");
@@ -121,8 +128,9 @@ SubscriptionManager::unsubAccount(ripple::AccountID const& account, SessionPtrTy
 void
 SubscriptionManager::subBook(ripple::Book const& book, SessionPtrType session)
 {
-    subscribeHelper(
-        session, book, bookSubscribers_, [this, book](SessionPtrType session) { unsubBook(book, session); });
+    subscribeHelper(session, book, bookSubscribers_, [this, book](SessionPtrType session) {
+        unsubBook(book, session);
+    });
 }
 
 void
@@ -148,10 +156,12 @@ SubscriptionManager::pubLedger(
     ripple::LedgerHeader const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
-    std::uint32_t txnCount)
+    std::uint32_t txnCount
+)
 {
-    auto message = std::make_shared<std::string>(
-        boost::json::serialize(getLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount)));
+    auto message =
+        std::make_shared<std::string>(boost::json::serialize(getLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount))
+        );
 
     ledgerSubscribers_.publish(message);
 }
@@ -178,12 +188,10 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
     ripple::transResultInfo(meta->getResultTER(), token, human);
     pubObj["engine_result"] = token;
     pubObj["engine_result_message"] = human;
-    if (tx->getTxnType() == ripple::ttOFFER_CREATE)
-    {
+    if (tx->getTxnType() == ripple::ttOFFER_CREATE) {
         auto account = tx->getAccountID(ripple::sfAccount);
         auto amount = tx->getFieldAmount(ripple::sfTakerGets);
-        if (account != amount.issue().account)
-        {
+        if (account != amount.issue().account) {
             ripple::STAmount ownerFunds;
             auto fetchFundsSynchronous = [&]() {
                 data::synchronous([&](boost::asio::yield_context yield) {
@@ -207,33 +215,30 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
 
     std::unordered_set<ripple::Book> alreadySent;
 
-    for (auto const& node : meta->getNodes())
-    {
-        if (node.getFieldU16(ripple::sfLedgerEntryType) == ripple::ltOFFER)
-        {
+    for (auto const& node : meta->getNodes()) {
+        if (node.getFieldU16(ripple::sfLedgerEntryType) == ripple::ltOFFER) {
             ripple::SField const* field = nullptr;
 
             // We need a field that contains the TakerGets and TakerPays
             // parameters.
-            if (node.getFName() == ripple::sfModifiedNode)
+            if (node.getFName() == ripple::sfModifiedNode) {
                 field = &ripple::sfPreviousFields;
-            else if (node.getFName() == ripple::sfCreatedNode)
+            } else if (node.getFName() == ripple::sfCreatedNode) {
                 field = &ripple::sfNewFields;
-            else if (node.getFName() == ripple::sfDeletedNode)
+            } else if (node.getFName() == ripple::sfDeletedNode) {
                 field = &ripple::sfFinalFields;
+            }
 
-            if (field)
-            {
-                auto data = dynamic_cast<const ripple::STObject*>(node.peekAtPField(*field));
+            if (field != nullptr) {
+                auto data = dynamic_cast<ripple::STObject const*>(node.peekAtPField(*field));
 
-                if (data && data->isFieldPresent(ripple::sfTakerPays) && data->isFieldPresent(ripple::sfTakerGets))
-                {
+                if ((data != nullptr) && data->isFieldPresent(ripple::sfTakerPays) &&
+                    data->isFieldPresent(ripple::sfTakerGets)) {
                     // determine the OrderBook
-                    ripple::Book book{
+                    ripple::Book const book{
                         data->getFieldAmount(ripple::sfTakerGets).issue(),
                         data->getFieldAmount(ripple::sfTakerPays).issue()};
-                    if (alreadySent.find(book) == alreadySent.end())
-                    {
+                    if (alreadySent.find(book) == alreadySent.end()) {
                         bookSubscribers_.publish(pubMsg, book);
                         alreadySent.insert(book);
                     }
@@ -246,7 +251,8 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
 void
 SubscriptionManager::pubBookChanges(
     ripple::LedgerHeader const& lgrInfo,
-    std::vector<data::TransactionAndMetadata> const& transactions)
+    std::vector<data::TransactionAndMetadata> const& transactions
+)
 {
     auto const json = rpc::computeBookChanges(lgrInfo, transactions);
     auto const bookChangesMsg = std::make_shared<std::string>(boost::json::serialize(json));
@@ -321,8 +327,9 @@ SubscriptionManager::unsubProposedAccount(ripple::AccountID const& account, Sess
 void
 SubscriptionManager::subProposedTransactions(SessionPtrType session)
 {
-    subscribeHelper(
-        session, txProposedSubscribers_, [this](SessionPtrType session) { unsubProposedTransactions(session); });
+    subscribeHelper(session, txProposedSubscribers_, [this](SessionPtrType session) {
+        unsubProposedTransactions(session);
+    });
 }
 
 void
@@ -334,8 +341,10 @@ SubscriptionManager::unsubProposedTransactions(SessionPtrType session)
 void
 SubscriptionManager::subscribeHelper(SessionPtrType const& session, Subscription& subs, CleanupFunction&& func)
 {
+    if (subs.hasSession(session))
+        return;
     subs.subscribe(session);
-    std::scoped_lock lk(cleanupMtx_);
+    std::scoped_lock const lk(cleanupMtx_);
     cleanupFuncs_[session].push_back(std::move(func));
 }
 
@@ -345,22 +354,24 @@ SubscriptionManager::subscribeHelper(
     SessionPtrType const& session,
     Key const& k,
     SubscriptionMap<Key>& subs,
-    CleanupFunction&& func)
+    CleanupFunction&& func
+)
 {
+    if (subs.hasSession(session, k))
+        return;
     subs.subscribe(session, k);
-    std::scoped_lock lk(cleanupMtx_);
+    std::scoped_lock const lk(cleanupMtx_);
     cleanupFuncs_[session].push_back(std::move(func));
 }
 
 void
 SubscriptionManager::cleanup(SessionPtrType session)
 {
-    std::scoped_lock lk(cleanupMtx_);
+    std::scoped_lock const lk(cleanupMtx_);
     if (!cleanupFuncs_.contains(session))
         return;
 
-    for (auto f : cleanupFuncs_[session])
-    {
+    for (auto const& f : cleanupFuncs_[session]) {
         f(session);
     }
 

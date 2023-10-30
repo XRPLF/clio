@@ -29,15 +29,13 @@ template <typename>
 static constexpr bool unsupported_handler_v = false;
 
 template <SomeHandler HandlerType>
-struct DefaultProcessor final
-{
+struct DefaultProcessor final {
     [[nodiscard]] ReturnType
     operator()(HandlerType const& handler, boost::json::value const& value, Context const& ctx) const
     {
         using boost::json::value_from;
         using boost::json::value_to;
-        if constexpr (SomeHandlerWithInput<HandlerType>)
-        {
+        if constexpr (SomeHandlerWithInput<HandlerType>) {
             // first we run validation against specified API version
             auto const spec = handler.spec(ctx.apiVersion);
             auto input = value;  // copy here, spec require mutable data
@@ -49,21 +47,18 @@ struct DefaultProcessor final
             auto const ret = handler.process(inData, ctx);
 
             // real handler is given expected Input, not json
-            if (!ret)
+            if (!ret) {
                 return Error{ret.error()};  // forward Status
-            else
-                return value_from(ret.value());
-        }
-        else if constexpr (SomeHandlerWithoutInput<HandlerType>)
-        {
+            }
+            return value_from(ret.value());
+        } else if constexpr (SomeHandlerWithoutInput<HandlerType>) {
             // no input to pass, ignore the value
-            if (auto const ret = handler.process(ctx); not ret)
+            auto const ret = handler.process(ctx);
+            if (not ret) {
                 return Error{ret.error()};  // forward Status
-            else
-                return value_from(ret.value());
-        }
-        else
-        {
+            }
+            return value_from(ret.value());
+        } else {
             // when concept SomeHandlerWithInput and SomeHandlerWithoutInput not cover all Handler case
             static_assert(unsupported_handler_v<HandlerType>);
         }

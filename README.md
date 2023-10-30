@@ -15,6 +15,10 @@ To access non-validated data for *any* request, simply add `ledger_index: "curre
 Clio does not connect to the peer-to-peer network. Instead, Clio extracts data from a group of specified rippled nodes. Running Clio requires access to at least one rippled node
 from which data can be extracted. The rippled node does not need to be running on the same machine as Clio.
 
+## Help
+Feel free to open an [issue](https://github.com/XRPLF/clio/issues) if you have a feature request or something doesn't work as expected.
+If you have any questions about building, running, contributing, using clio or any other, you could always start a new [discussion](https://github.com/XRPLF/clio/discussions).
+
 ## Requirements
 1. Access to a Cassandra cluster or ScyllaDB cluster. Can be local or remote.
 2. Access to one or more rippled nodes. Can be local or remote.
@@ -80,7 +84,6 @@ Now you should be able to download prebuilt `xrpl` package on some platforms.
 2. Remove old packages you may have cached: 
 ```sh 
 conan remove -f xrpl
-conan remove -f cassandra-cpp-driver
 ```
 
 ## Building Clio
@@ -224,18 +227,46 @@ a database in each region, and the Clio nodes in each region use their region's 
 This is effectively two systems.
 
 Clio supports API versioning as [described here](https://xrpl.org/request-formatting.html#api-versioning).
-It's possible to configure `minimum`, `maximum` and `default` version like so: 
+It's possible to configure `minimum`, `maximum` and `default` version like so:
 ```json
 "api_version": {
     "min": 1,
     "max": 2,
-    "default": 2 
+    "default": 1
 }
 ```
-All of the above are optional. 
-Clio will fallback to hardcoded defaults when not specified in the config file or configured values are outside 
+All of the above are optional.
+Clio will fallback to hardcoded defaults when not specified in the config file or configured values are outside
 of the minimum and maximum supported versions hardcoded in `src/rpc/common/APIVersion.h`.
 > **Note:** See `example-config.json` for more details. 
+
+## Admin rights for requests
+
+By default clio checks admin privileges by IP address from request (only `127.0.0.1` is considered to be an admin).
+It is not very secure because the IP could be spoofed.
+For a better security `admin_password` could be provided in the `server` section of clio's config:
+```json
+"server": {
+    "admin_password": "secret"
+}
+```
+If the password is presented in the config, clio will check the Authorization header (if any) in each request for the password.
+Exactly equal password gains admin rights for the request or a websocket connection.
+
+## Using clang-tidy for static analysis
+
+Minimum clang-tidy version required is 16.0.
+Clang-tidy could be run by cmake during building the project.
+For that provide the option `-o lint=True` for `conan install` command:
+```sh
+conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True -o lint=True
+```
+By default cmake will try to find clang-tidy automatically in your system.
+To force cmake use desired binary set `CLIO_CLANG_TIDY_BIN` environment variable as path to clang-tidy binary.
+E.g.:
+```sh
+export CLIO_CLANG_TIDY_BIN=/opt/homebrew/opt/llvm@16/bin/clang-tidy
+```
 
 ## Developing against `rippled` in standalone mode
 

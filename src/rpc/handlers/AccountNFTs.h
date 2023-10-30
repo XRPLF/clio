@@ -32,8 +32,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_nfts.html
  */
-class AccountNFTsHandler
-{
+class AccountNFTsHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
@@ -41,8 +40,7 @@ public:
     static auto constexpr LIMIT_MAX = 400;
     static auto constexpr LIMIT_DEFAULT = 100;
 
-    struct Output
-    {
+    struct Output {
         std::string account;
         std::string ledgerHash;
         uint32_t ledgerIndex;
@@ -53,8 +51,7 @@ public:
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
@@ -68,8 +65,8 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},

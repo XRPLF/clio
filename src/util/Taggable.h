@@ -37,15 +37,12 @@ namespace detail {
 /**
  * @brief A `null` tag generator - does nothing.
  */
-struct NullTagGenerator final
-{
-};
+struct NullTagGenerator final {};
 
 /**
  * @brief This strategy uses an `atomic_uint64_t` to remain lock free.
  */
-struct UIntTagGenerator final
-{
+struct UIntTagGenerator final {
     using TagType = std::atomic_uint64_t;
 
     static TagType
@@ -55,8 +52,7 @@ struct UIntTagGenerator final
 /**
  * @brief This strategy uses `boost::uuids::uuid` with a static random generator and a mutex.
  */
-struct UUIDTagGenerator final
-{
+struct UUIDTagGenerator final {
     using TagType = boost::uuids::uuid;
 
     static TagType
@@ -68,8 +64,7 @@ struct UUIDTagGenerator final
 /**
  * @brief Represents any tag decorator.
  */
-class BaseTagDecorator
-{
+class BaseTagDecorator {
 public:
     virtual ~BaseTagDecorator() = default;
 
@@ -102,8 +97,7 @@ public:
  * @tparam Generator The strategy used to generate the tag.
  */
 template <typename Generator>
-class TagDecorator final : public BaseTagDecorator
-{
+class TagDecorator final : public BaseTagDecorator {
     using ParentType = std::optional<std::reference_wrapper<BaseTagDecorator const>>;
     using TagType = typename Generator::TagType;
 
@@ -148,8 +142,7 @@ public:
  * This generates a pass-thru decorate member function which can be optimized away by the compiler.
  */
 template <>
-class TagDecorator<detail::NullTagGenerator> final : public BaseTagDecorator
-{
+class TagDecorator<detail::NullTagGenerator> final : public BaseTagDecorator {
 public:
     /**
      * @brief Nop implementation for the decorator.
@@ -166,8 +159,7 @@ public:
 /**
  * @brief A factory for TagDecorator instantiation.
  */
-class TagDecoratorFactory final
-{
+class TagDecoratorFactory final {
     using ParentType = std::optional<std::reference_wrapper<BaseTagDecorator const>>;
 
     /**
@@ -227,22 +219,21 @@ private:
 
         if (boost::iequals(style, "int") || boost::iequals(style, "uint"))
             return TagDecoratorFactory::Type::UINT;
-        else if (boost::iequals(style, "null") || boost::iequals(style, "none"))
+
+        if (boost::iequals(style, "null") || boost::iequals(style, "none"))
             return TagDecoratorFactory::Type::NONE;
-        else if (boost::iequals(style, "uuid"))
+
+        if (boost::iequals(style, "uuid"))
             return TagDecoratorFactory::Type::UUID;
-        else
-            throw std::runtime_error(
-                "Could not parse `log_tag_style`: expected `uint`, `uuid` or "
-                "`null`");
+
+        throw std::runtime_error("Could not parse `log_tag_style`: expected `uint`, `uuid` or `null`");
     }
 };
 
 /**
  * @brief A base class that allows attaching a tag decorator to a subclass.
  */
-class Taggable
-{
+class Taggable {
     using DecoratorType = std::unique_ptr<BaseTagDecorator>;
     DecoratorType tagDecorator_;
 

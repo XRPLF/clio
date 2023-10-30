@@ -33,10 +33,8 @@ namespace data {
 /**
  * @brief Cache for an entire ledger.
  */
-class LedgerCache
-{
-    struct CacheEntry
-    {
+class LedgerCache {
+    struct CacheEntry {
         uint32_t seq = 0;
         Blob blob;
     };
@@ -68,7 +66,7 @@ public:
      * @param isBackground Should be set to true when writing old data from a background thread
      */
     void
-    update(std::vector<LedgerObject> const& blobs, uint32_t seq, bool isBackground = false);
+    update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground = false);
 
     /**
      * @brief Fetch a cached object by its key and sequence number.

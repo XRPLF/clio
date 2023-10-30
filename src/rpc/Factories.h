@@ -60,7 +60,8 @@ make_WsContext(
     util::TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
     std::string const& clientIp,
-    std::reference_wrapper<APIVersionParser const> apiVersionParser);
+    std::reference_wrapper<APIVersionParser const> apiVersionParser
+);
 
 /**
  * @brief A factory function that creates a HTTP context.
@@ -71,6 +72,7 @@ make_WsContext(
  * @param range The ledger range that is available at request time
  * @param clientIp The IP address of the connected client
  * @param apiVersionParser A parser that is used to parse out the "api_version" field
+ * @param isAdmin Whether the connection has admin privileges
  */
 util::Expected<web::Context, Status>
 make_HttpContext(
@@ -79,6 +81,8 @@ make_HttpContext(
     util::TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
     std::string const& clientIp,
-    std::reference_wrapper<APIVersionParser const> apiVersionParser);
+    std::reference_wrapper<APIVersionParser const> apiVersionParser,
+    bool isAdmin
+);
 
 }  // namespace rpc

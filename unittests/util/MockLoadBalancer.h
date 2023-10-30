@@ -28,17 +28,17 @@
 
 #include <optional>
 
-struct MockLoadBalancer
-{
+struct MockLoadBalancer {
     using RawLedgerObjectType = FakeLedgerObject;
 
     MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
     MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(bool, shouldPropagateTxnStream, (Source*), (const));
+    MOCK_METHOD(bool, shouldPropagateTxnStream, (etl::Source*), (const));
     MOCK_METHOD(boost::json::value, toJson, (), (const));
     MOCK_METHOD(
         std::optional<boost::json::object>,
         forwardToRippled,
-        (boost::json::object const&, std::string const&, boost::asio::yield_context),
-        (const));
+        (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
+        (const)
+    );
 };

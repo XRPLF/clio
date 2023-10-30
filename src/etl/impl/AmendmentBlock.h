@@ -30,21 +30,18 @@
 
 namespace etl::detail {
 
-struct AmendmentBlockAction
-{
+struct AmendmentBlockAction {
     void
     operator()()
     {
-        static util::Logger log{"ETL"};
-        LOG(log.fatal())
-            << "Can't process new ledgers: The current ETL source is not compatible with the version of the "
-               "libxrpl Clio is currently using. Please upgrade Clio to a newer version.";
+        static util::Logger const log{"ETL"};
+        LOG(log.fatal()) << "Can't process new ledgers: The current ETL source is not compatible with the version of "
+                         << "the libxrpl Clio is currently using. Please upgrade Clio to a newer version.";
     }
 };
 
 template <typename ActionCallableType = AmendmentBlockAction>
-class AmendmentBlockHandler
-{
+class AmendmentBlockHandler {
     std::reference_wrapper<boost::asio::io_context> ctx_;
     std::reference_wrapper<SystemState> state_;
     boost::asio::steady_timer timer_;
@@ -58,7 +55,8 @@ public:
         boost::asio::io_context& ioc,
         SystemState& state,
         DurationType interval = DurationType{1},
-        ActionCallableType&& action = ActionCallableType())
+        ActionCallableType&& action = ActionCallableType()
+    )
         : ctx_{std::ref(ioc)}
         , state_{std::ref(state)}
         , timer_{ioc}

@@ -47,7 +47,8 @@ LoadBalancer::make_Source(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-    LoadBalancer& balancer)
+    LoadBalancer& balancer
+)
 {
     auto src = std::make_unique<ProbingSource>(config, ioc, backend, subscriptions, validatedLedgers, balancer);
     src->run();
@@ -61,7 +62,8 @@ LoadBalancer::make_LoadBalancer(
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
+    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+)
 {
     return std::make_shared<LoadBalancer>(config, ioc, backend, subscriptions, validatedLedgers);
 }
@@ -71,19 +73,42 @@ LoadBalancer::LoadBalancer(
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers)
+    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+)
 {
-    if (auto value = config.maybeValue<uint32_t>("num_markers"); value)
-        downloadRanges_ = std::clamp(*value, 1u, 256u);
-    else if (backend->fetchLedgerRange())
+    static constexpr std::uint32_t MAX_DOWNLOAD = 256;
+    if (auto value = config.maybeValue<uint32_t>("num_markers"); value) {
+        downloadRanges_ = std::clamp(*value, 1u, MAX_DOWNLOAD);
+    } else if (backend->fetchLedgerRange()) {
         downloadRanges_ = 4;
+    }
 
-    for (auto const& entry : config.array("etl_sources"))
-    {
+    for (auto const& entry : config.array("etl_sources")) {
         std::unique_ptr<Source> source = make_Source(entry, ioc, backend, subscriptions, validatedLedgers, *this);
 
+        // checking etl node validity
+        auto const state = ETLState::fetchETLStateFromSource(*source);
+
+        if (!state.networkID) {
+            LOG(log_.error()) << "Failed to fetch ETL state from source = " << source->toString()
+                              << " Please check the configuration and network";
+            throw std::logic_error("ETL node not available");
+        }
+
+        if (etlState_ && etlState_->networkID != state.networkID) {
+            LOG(log_.error()) << "ETL sources must be on the same network. "
+                              << "Source network id = " << *(state.networkID)
+                              << " does not match others network id = " << *(etlState_->networkID);
+            throw std::logic_error("ETL nodes are not in the same network");
+        }
+        etlState_ = state;
         sources_.push_back(std::move(source));
         LOG(log_.info()) << "Added etl source - " << sources_.back()->toString();
+    }
+
+    if (sources_.empty()) {
+        LOG(log_.error()) << "No ETL sources configured. Please check the configuration";
+        throw std::logic_error("No ETL sources configured");
     }
 }
 
@@ -100,15 +125,17 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
         [this, &response, &sequence, cacheOnly](auto& source) {
             auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
 
-            if (!res)
+            if (!res) {
                 LOG(log_.error()) << "Failed to download initial ledger."
                                   << " Sequence = " << sequence << " source = " << source->toString();
-            else
+            } else {
                 response = std::move(data);
+            }
 
             return res;
         },
-        sequence);
+        sequence
+    );
     return {std::move(response), success};
 }
 
@@ -116,43 +143,41 @@ LoadBalancer::OptionalGetLedgerResponseType
 LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
 {
     GetLedgerResponseType response;
-    bool success = execute(
+    bool const success = execute(
         [&response, ledgerSequence, getObjects, getObjectNeighbors, log = log_](auto& source) {
             auto [status, data] = source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
             response = std::move(data);
-            if (status.ok() && response.validated())
-            {
+            if (status.ok() && response.validated()) {
                 LOG(log.info()) << "Successfully fetched ledger = " << ledgerSequence
                                 << " from source = " << source->toString();
                 return true;
             }
-            else
-            {
-                LOG(log.warn()) << "Could not fetch ledger " << ledgerSequence << ", Reply: " << response.DebugString()
-                                << ", error_code: " << status.error_code() << ", error_msg: " << status.error_message()
-                                << ", source = " << source->toString();
-                return false;
-            }
+
+            LOG(log.warn()) << "Could not fetch ledger " << ledgerSequence << ", Reply: " << response.DebugString()
+                            << ", error_code: " << status.error_code() << ", error_msg: " << status.error_message()
+                            << ", source = " << source->toString();
+            return false;
         },
-        ledgerSequence);
-    if (success)
+        ledgerSequence
+    );
+    if (success) {
         return response;
-    else
-        return {};
+    }
+    return {};
 }
 
 std::optional<boost::json::object>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
-    std::string const& clientIp,
-    boost::asio::yield_context yield) const
+    std::optional<std::string> const& clientIp,
+    boost::asio::yield_context yield
+) const
 {
-    srand((unsigned)time(0));
+    srand(static_cast<unsigned>(time(0)));
     auto sourceIdx = rand() % sources_.size();
     auto numAttempts = 0u;
 
-    while (numAttempts < sources_.size())
-    {
+    while (numAttempts < sources_.size()) {
         if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, yield))
             return res;
 
@@ -166,8 +191,7 @@ LoadBalancer::forwardToRippled(
 bool
 LoadBalancer::shouldPropagateTxnStream(Source* in) const
 {
-    for (auto& src : sources_)
-    {
+    for (auto& src : sources_) {
         assert(src);
 
         // We pick the first Source encountered that is connected
@@ -193,12 +217,11 @@ template <class Func>
 bool
 LoadBalancer::execute(Func f, uint32_t ledgerSequence)
 {
-    srand((unsigned)time(0));
+    srand(static_cast<unsigned>(time(0)));
     auto sourceIdx = rand() % sources_.size();
     auto numAttempts = 0;
 
-    while (true)
-    {
+    while (true) {
         auto& source = sources_[sourceIdx];
 
         LOG(log_.debug()) << "Attempting to execute func. ledger sequence = " << ledgerSequence
@@ -207,30 +230,23 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
         /* Sometimes rippled has ledger but doesn't actually know. However,
         but this does NOT happen in the normal case and is safe to remove
         This || true is only needed when loading full history standalone */
-        if (source->hasLedger(ledgerSequence))
-        {
-            bool res = f(source);
-            if (res)
-            {
+        if (source->hasLedger(ledgerSequence)) {
+            bool const res = f(source);
+            if (res) {
                 LOG(log_.debug()) << "Successfully executed func at source = " << source->toString()
                                   << " - ledger sequence = " << ledgerSequence;
                 break;
             }
-            else
-            {
-                LOG(log_.warn()) << "Failed to execute func at source = " << source->toString()
-                                 << " - ledger sequence = " << ledgerSequence;
-            }
-        }
-        else
-        {
+
+            LOG(log_.warn()) << "Failed to execute func at source = " << source->toString()
+                             << " - ledger sequence = " << ledgerSequence;
+        } else {
             LOG(log_.warn()) << "Ledger not present at source = " << source->toString()
                              << " - ledger sequence = " << ledgerSequence;
         }
         sourceIdx = (sourceIdx + 1) % sources_.size();
         numAttempts++;
-        if (numAttempts % sources_.size() == 0)
-        {
+        if (numAttempts % sources_.size() == 0) {
             LOG(log_.info()) << "Ledger sequence " << ledgerSequence
                              << " is not yet available from any configured sources. "
                              << "Sleeping and trying again";
@@ -239,4 +255,12 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
     }
     return true;
 }
+
+ETLState
+LoadBalancer::getETLState() const noexcept
+{
+    assert(etlState_);  // etlState_ is set in the constructor
+    return *etlState_;
+}
+
 }  // namespace etl

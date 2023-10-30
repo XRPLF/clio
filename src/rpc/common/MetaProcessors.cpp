@@ -38,8 +38,7 @@ Section::verify(boost::json::value& value, std::string_view key) const
     if (!res.is_object())
         return {};
 
-    for (auto const& spec : specs)
-    {
+    for (auto const& spec : specs) {
         if (auto const ret = spec.process(res); not ret)
             return Error{ret.error()};
     }
@@ -61,9 +60,10 @@ ValidateArrayAt::verify(boost::json::value& value, std::string_view key) const
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
     auto& res = arr.at(idx_);
-    for (auto const& spec : specs_)
+    for (auto const& spec : specs_) {
         if (auto const ret = spec.process(res); not ret)
             return Error{ret.error()};
+    }
 
     return {};
 }

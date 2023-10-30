@@ -122,21 +122,21 @@ PAMNb1i80cMsjK98xXDdr+7Uvy5M4COMwA5XHmMZDEW8Jw==
     return ctx;
 }
 
-class WebServerTest : public NoLoggerFixture
-{
-protected:
-    WebServerTest()
-    {
-        work.emplace(ctx);  // make sure ctx does not stop on its own
-        runner.emplace([this] { ctx.run(); });
-    }
-
-    ~WebServerTest()
+class WebServerTest : public NoLoggerFixture {
+public:
+    ~WebServerTest() override
     {
         work.reset();
         ctx.stop();
         if (runner->joinable())
             runner->join();
+    }
+
+protected:
+    WebServerTest()
+    {
+        work.emplace(ctx);  // make sure ctx does not stop on its own
+        runner.emplace([this] { ctx.run(); });
     }
 
     void
@@ -164,8 +164,7 @@ private:
     std::optional<std::thread> runner;
 };
 
-class EchoExecutor
-{
+class EchoExecutor {
 public:
     void
     operator()(std::string const& reqStr, std::shared_ptr<web::ConnectionBase> const& ws)
@@ -174,22 +173,21 @@ public:
     }
 
     void
-    operator()(boost::beast::error_code ec, std::shared_ptr<web::ConnectionBase> const& ws)
+    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
     {
     }
 };
 
-class ExceptionExecutor
-{
+class ExceptionExecutor {
 public:
     void
-    operator()(std::string const& req, std::shared_ptr<web::ConnectionBase> const& ws)
+    operator()(std::string const& /* req */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
     {
         throw std::runtime_error("MyError");
     }
 
     void
-    operator()(boost::beast::error_code ec, std::shared_ptr<web::ConnectionBase> const& ws)
+    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
     {
     }
 };
@@ -197,13 +195,14 @@ public:
 namespace {
 
 template <class Executor>
-static std::shared_ptr<web::HttpServer<Executor>>
+std::shared_ptr<web::HttpServer<Executor>>
 makeServerSync(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> const& sslCtx,
     web::DOSGuard& dosGuard,
-    std::shared_ptr<Executor> const& handler)
+    std::shared_ptr<Executor> const& handler
+)
 {
     auto server = std::shared_ptr<web::HttpServer<Executor>>();
     std::mutex m;
@@ -212,7 +211,7 @@ makeServerSync(
     boost::asio::dispatch(ioc.get_executor(), [&]() mutable {
         server = web::make_HttpServer(config, ioc, sslCtx, dosGuard, handler);
         {
-            std::lock_guard lk(m);
+            std::lock_guard const lk(m);
             ready = true;
         }
         cv.notify_one();
@@ -252,7 +251,8 @@ TEST_F(WebServerTest, HttpInternalError)
     auto const res = HttpSyncClient::syncPost("localhost", "8888", R"({})");
     EXPECT_EQ(
         res,
-        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"})");
+        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"})"
+    );
 }
 
 TEST_F(WebServerTest, WsInternalError)
@@ -265,7 +265,8 @@ TEST_F(WebServerTest, WsInternalError)
     wsClient.disconnect();
     EXPECT_EQ(
         res,
-        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":"id1","request":{"id":"id1"}})");
+        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":"id1","request":{"id":"id1"}})"
+    );
 }
 
 TEST_F(WebServerTest, WsInternalErrorNotJson)
@@ -278,7 +279,8 @@ TEST_F(WebServerTest, WsInternalErrorNotJson)
     wsClient.disconnect();
     EXPECT_EQ(
         res,
-        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","request":"not json"})");
+        R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","request":"not json"})"
+    );
 }
 
 TEST_F(WebServerTest, Https)
@@ -314,7 +316,8 @@ TEST_F(WebServerTest, HttpRequestOverload)
     res = HttpSyncClient::syncPost("localhost", "8888", R"({})");
     EXPECT_EQ(
         res,
-        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response"})");
+        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response"})"
+    );
 }
 
 TEST_F(WebServerTest, WsRequestOverload)
@@ -332,7 +335,8 @@ TEST_F(WebServerTest, WsRequestOverload)
     wsClient2.disconnect();
     EXPECT_EQ(
         res,
-        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response","request":{}})");
+        R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response","request":{}})"
+    );
 }
 
 TEST_F(WebServerTest, HttpPayloadOverload)
@@ -343,7 +347,8 @@ TEST_F(WebServerTest, HttpPayloadOverload)
     auto const res = HttpSyncClient::syncPost("localhost", "8888", fmt::format(R"({{"payload":"{}"}})", s100));
     EXPECT_EQ(
         res,
-        R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})");
+        R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})"
+    );
 }
 
 TEST_F(WebServerTest, WsPayloadOverload)
@@ -357,5 +362,99 @@ TEST_F(WebServerTest, WsPayloadOverload)
     wsClient.disconnect();
     EXPECT_EQ(
         res,
-        R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})");
+        R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})"
+    );
 }
+
+TEST_F(WebServerTest, WsTooManyConnection)
+{
+    auto e = std::make_shared<EchoExecutor>();
+    auto server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
+    // max connection is 2, exception should happen when the third connection is made
+    WebSocketSyncClient wsClient1;
+    wsClient1.connect("localhost", "8888");
+    WebSocketSyncClient wsClient2;
+    wsClient2.connect("localhost", "8888");
+    bool exceptionThrown = false;
+    try {
+        WebSocketSyncClient wsClient3;
+        wsClient3.connect("localhost", "8888");
+    } catch (boost::system::system_error const& ex) {
+        exceptionThrown = true;
+        EXPECT_EQ(ex.code(), boost::beast::websocket::error::upgrade_declined);
+    }
+    wsClient1.disconnect();
+    wsClient2.disconnect();
+    EXPECT_TRUE(exceptionThrown);
+}
+
+static auto constexpr JSONServerConfigWithAdminPassword = R"JSON(
+    {
+        "server":{
+            "ip": "0.0.0.0",
+            "port": 8888,
+            "admin_password": "secret"
+        }
+    }
+)JSON";
+
+class AdminCheckExecutor {
+public:
+    void
+    operator()(std::string const& reqStr, std::shared_ptr<web::ConnectionBase> const& ws)
+    {
+        auto response = fmt::format("{} {}", reqStr, ws->isAdmin() ? "admin" : "user");
+        ws->send(std::move(response), http::status::ok);
+    }
+
+    void
+    operator()(boost::beast::error_code /* ec */, std::shared_ptr<web::ConnectionBase> const& /* ws */)
+    {
+    }
+};
+
+struct WebServerAdminTestParams {
+    std::vector<WebHeader> headers;
+    std::string expectedResponse;
+};
+
+class WebServerAdminTest : public WebServerTest, public ::testing::WithParamInterface<WebServerAdminTestParams> {};
+
+TEST_P(WebServerAdminTest, WsAdminCheck)
+{
+    auto e = std::make_shared<AdminCheckExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
+    WebSocketSyncClient wsClient;
+    wsClient.connect("localhost", "8888", GetParam().headers);
+    std::string const request = "Why hello";
+    auto const res = wsClient.syncPost(request);
+    wsClient.disconnect();
+    EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
+}
+
+TEST_P(WebServerAdminTest, HttpAdminCheck)
+{
+    auto e = std::make_shared<AdminCheckExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
+    std::string const request = "Why hello";
+    auto const res = HttpSyncClient::syncPost("localhost", "8888", request, GetParam().headers);
+    EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
+}
+
+INSTANTIATE_TEST_CASE_P(
+    WebServerAdminTestsSuit,
+    WebServerAdminTest,
+    ::testing::Values(
+        WebServerAdminTestParams{.headers = {}, .expectedResponse = "user"},
+        WebServerAdminTestParams{.headers = {WebHeader(http::field::authorization, "")}, .expectedResponse = "user"},
+        WebServerAdminTestParams{.headers = {WebHeader(http::field::authorization, "s")}, .expectedResponse = "user"},
+        WebServerAdminTestParams{
+            .headers = {WebHeader(http::field::authorization, "secret")},
+            .expectedResponse = "admin"},
+        WebServerAdminTestParams{
+            .headers = {WebHeader(http::field::authentication_info, "secret")},
+            .expectedResponse = "user"}
+    )
+);

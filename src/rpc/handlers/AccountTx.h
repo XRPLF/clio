@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/JsonBool.h>
 #include <rpc/common/MetaProcessors.h>
 #include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
@@ -34,8 +35,7 @@ namespace rpc {
  *
  * For more details see: https://xrpl.org/account_tx.html
  */
-class AccountTxHandler
-{
+class AccountTxHandler {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
@@ -47,17 +47,15 @@ public:
     static auto constexpr LIMIT_MIN = 1;
     static auto constexpr LIMIT_DEFAULT = 200;
 
-    struct Marker
-    {
+    struct Marker {
         uint32_t ledger;
         uint32_t seq;
     };
 
-    struct Output
-    {
+    struct Output {
         std::string account;
-        uint32_t ledgerIndexMin;
-        uint32_t ledgerIndexMax;
+        uint32_t ledgerIndexMin{0};
+        uint32_t ledgerIndexMax{0};
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
         // TODO: use a better type than json
@@ -66,8 +64,7 @@ public:
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::string account;
         // You must use at least one of the following fields in your request:
         // ledger_index, ledger_hash, ledger_index_min, or ledger_index_max.
@@ -76,8 +73,8 @@ public:
         std::optional<int32_t> ledgerIndexMin;
         std::optional<int32_t> ledgerIndexMax;
         bool usingValidatedLedger = false;
-        bool binary = false;
-        bool forward = false;
+        JsonBool binary{false};
+        JsonBool forward{false};
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
         std::optional<ripple::TxType> transactionType;
@@ -89,17 +86,15 @@ public:
     {
     }
 
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto const rpcSpec = RpcSpec{
+        static auto const rpcSpecForV1 = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(ledger_index_min), validation::Type<int32_t>{}},
             {JS(ledger_index_max), validation::Type<int32_t>{}},
-            {JS(binary), validation::Type<bool>{}},
-            {JS(forward), validation::Type<bool>{}},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
@@ -121,7 +116,14 @@ public:
             },
         };
 
-        return rpcSpec;
+        static auto const rpcSpec = RpcSpec{
+            rpcSpecForV1,
+            {
+                {JS(binary), validation::Type<bool>{}},
+                {JS(forward), validation::Type<bool>{}},
+            }};
+
+        return apiVersion == 1 ? rpcSpecForV1 : rpcSpec;
     }
 
     Result

@@ -1,5 +1,5 @@
 *clio*.log
-build*/
+/build*/
 .build
 .cache
 .vscode

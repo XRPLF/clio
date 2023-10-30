@@ -28,11 +28,10 @@
 #include <vector>
 
 namespace {
-static constexpr auto clusterDeleter = [](CassCluster* ptr) { cass_cluster_free(ptr); };
+constexpr auto clusterDeleter = [](CassCluster* ptr) { cass_cluster_free(ptr); };
 
 template <class... Ts>
-struct overloadSet : Ts...
-{
+struct overloadSet : Ts... {
     using Ts::operator()...;
 };
 
@@ -48,16 +47,15 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
     using std::to_string;
 
     cass_cluster_set_token_aware_routing(*this, cass_true);
-    if (auto const rc = cass_cluster_set_protocol_version(*this, CASS_PROTOCOL_VERSION_V4); rc != CASS_OK)
-    {
-        throw std::runtime_error(
-            fmt::format("Error setting cassandra protocol version to v4: {}", cass_error_desc(rc)));
+    if (auto const rc = cass_cluster_set_protocol_version(*this, CASS_PROTOCOL_VERSION_V4); rc != CASS_OK) {
+        throw std::runtime_error(fmt::format("Error setting cassandra protocol version to v4: {}", cass_error_desc(rc))
+        );
     }
 
-    if (auto const rc = cass_cluster_set_num_threads_io(*this, settings.threads); rc != CASS_OK)
-    {
+    if (auto const rc = cass_cluster_set_num_threads_io(*this, settings.threads); rc != CASS_OK) {
         throw std::runtime_error(
-            fmt::format("Error setting cassandra io threads to {}: {}", settings.threads, cass_error_desc(rc)));
+            fmt::format("Error setting cassandra io threads to {}: {}", settings.threads, cass_error_desc(rc))
+        );
     }
 
     cass_log_set_level(settings.enableLog ? CASS_LOG_TRACE : CASS_LOG_DISABLED);
@@ -65,15 +63,13 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
     cass_cluster_set_request_timeout(*this, settings.requestTimeout.count());
 
     if (auto const rc = cass_cluster_set_core_connections_per_host(*this, settings.coreConnectionsPerHost);
-        rc != CASS_OK)
-    {
+        rc != CASS_OK) {
         throw std::runtime_error(fmt::format("Could not set core connections per host: {}", cass_error_desc(rc)));
     }
 
     auto const queueSize =
         settings.queueSizeIO.value_or(settings.maxWriteRequestsOutstanding + settings.maxReadRequestsOutstanding);
-    if (auto const rc = cass_cluster_set_queue_size_io(*this, queueSize); rc != CASS_OK)
-    {
+    if (auto const rc = cass_cluster_set_queue_size_io(*this, queueSize); rc != CASS_OK) {
         throw std::runtime_error(fmt::format("Could not set queue size for IO per host: {}", cass_error_desc(rc)));
     }
 
@@ -93,7 +89,8 @@ Cluster::setupConnection(Settings const& settings)
         overloadSet{
             [this](Settings::ContactPoints const& points) { setupContactPoints(points); },
             [this](Settings::SecureConnectionBundle const& bundle) { setupSecureBundle(bundle); }},
-        settings.connectionInfo);
+        settings.connectionInfo
+    );
 }
 
 void
@@ -101,9 +98,11 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
 {
     using std::to_string;
     auto throwErrorIfNeeded = [](CassError rc, std::string const& label, std::string const& value) {
-        if (rc != CASS_OK)
+        if (rc != CASS_OK) {
             throw std::runtime_error(
-                fmt::format("Cassandra: Error setting {} [{}]: {}", label, value, cass_error_desc(rc)));
+                fmt::format("Cassandra: Error setting {} [{}]: {}", label, value, cass_error_desc(rc))
+            );
+        }
     };
 
     {
@@ -112,8 +111,7 @@ Cluster::setupContactPoints(Settings::ContactPoints const& points)
         throwErrorIfNeeded(rc, "contact_points", points.contactPoints);
     }
 
-    if (points.port)
-    {
+    if (points.port) {
         auto const rc = cass_cluster_set_port(*this, points.port.value());
         throwErrorIfNeeded(rc, "port", to_string(points.port.value()));
     }
@@ -123,8 +121,7 @@ void
 Cluster::setupSecureBundle(Settings::SecureConnectionBundle const& bundle)
 {
     LOG(log_.debug()) << "Attempt connection using secure bundle";
-    if (auto const rc = cass_cluster_set_cloud_secure_connection_bundle(*this, bundle.bundle.data()); rc != CASS_OK)
-    {
+    if (auto const rc = cass_cluster_set_cloud_secure_connection_bundle(*this, bundle.bundle.data()); rc != CASS_OK) {
         throw std::runtime_error("Failed to connect using secure connection bundle " + bundle.bundle);
     }
 }
@@ -136,7 +133,7 @@ Cluster::setupCertificate(Settings const& settings)
         return;
 
     LOG(log_.debug()) << "Configure SSL context";
-    SslContext context = SslContext(*settings.certificate);
+    SslContext const context = SslContext(*settings.certificate);
     cass_cluster_set_ssl(*this, context);
 }
 

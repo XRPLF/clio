@@ -17,24 +17,40 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
+#include <web/impl/AdminVerificationStrategy.h>
 
-#include <rpc/common/impl/AdminVerificationStrategy.h>
+namespace web::detail {
 
-#include <boost/json.hpp>
-#include <gtest/gtest.h>
-
-class RPCAdminVerificationTest : public NoLoggerFixture
+bool
+IPAdminVerificationStrategy::isAdmin(RequestType const&, std::string_view ip) const
 {
-protected:
-    rpc::detail::IPAdminVerificationStrategy strat_;
-};
-
-TEST_F(RPCAdminVerificationTest, IsAdminOnlyForIP_127_0_0_1)
-{
-    EXPECT_TRUE(strat_.isAdmin("127.0.0.1"));
-    EXPECT_FALSE(strat_.isAdmin("127.0.0.2"));
-    EXPECT_FALSE(strat_.isAdmin("127"));
-    EXPECT_FALSE(strat_.isAdmin(""));
-    EXPECT_FALSE(strat_.isAdmin("localhost"));
+    return ip == "127.0.0.1";
 }
+
+PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string password)
+    : password_(std::move(password))
+{
+}
+
+bool
+PasswordAdminVerificationStrategy::isAdmin(RequestType const& request, std::string_view) const
+{
+    auto it = request.find(boost::beast::http::field::authorization);
+    if (it == request.end()) {
+        // No Authorization header
+        return false;
+    }
+
+    return it->value() == password_;
+}
+
+std::unique_ptr<AdminVerificationStrategy>
+make_AdminVerificationStrategy(std::optional<std::string> password)
+{
+    if (password.has_value()) {
+        return std::make_unique<PasswordAdminVerificationStrategy>(std::move(*password));
+    }
+    return std::make_unique<IPAdminVerificationStrategy>();
+}
+
+}  // namespace web::detail

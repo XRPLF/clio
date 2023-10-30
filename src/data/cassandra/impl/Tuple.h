@@ -30,8 +30,7 @@
 
 namespace data::cassandra::detail {
 
-class Tuple : public ManagedObject<CassTuple>
-{
+class Tuple : public ManagedObject<CassTuple> {
     static constexpr auto deleter = [](CassTuple* ptr) { cass_tuple_free(ptr); };
 
     template <typename>
@@ -61,8 +60,7 @@ public:
     {
         using std::to_string;
         auto throwErrorIfNeeded = [idx](CassError rc, std::string_view label) {
-            if (rc != CASS_OK)
-            {
+            if (rc != CASS_OK) {
                 auto const tag = '[' + std::string{label} + ']';
                 throw std::logic_error(tag + " at idx " + to_string(idx) + ": " + cass_error_desc(rc));
             }
@@ -70,27 +68,22 @@ public:
 
         using DecayedType = std::decay_t<Type>;
 
-        if constexpr (std::is_same_v<DecayedType, bool>)
-        {
+        if constexpr (std::is_same_v<DecayedType, bool>) {
             auto const rc = cass_tuple_set_bool(*this, idx, value ? cass_true : cass_false);
             throwErrorIfNeeded(rc, "Bind bool");
         }
         // clio only uses bigint (int64_t) so we convert any incoming type
-        else if constexpr (std::is_convertible_v<DecayedType, int64_t>)
-        {
+        else if constexpr (std::is_convertible_v<DecayedType, int64_t>) {
             auto const rc = cass_tuple_set_int64(*this, idx, value);
             throwErrorIfNeeded(rc, "Bind int64");
-        }
-        else
-        {
+        } else {
             // type not supported for binding
             static_assert(unsupported_v<DecayedType>);
         }
     }
 };
 
-class TupleIterator : public ManagedObject<CassIterator>
-{
+class TupleIterator : public ManagedObject<CassIterator> {
     template <typename>
     static constexpr bool unsupported_v = false;
 
@@ -119,8 +112,7 @@ private:
             throw std::logic_error("Could not extract next value from tuple iterator");
 
         auto throwErrorIfNeeded = [](CassError rc, std::string_view label) {
-            if (rc != CASS_OK)
-            {
+            if (rc != CASS_OK) {
                 auto const tag = '[' + std::string{label} + ']';
                 throw std::logic_error(tag + ": " + cass_error_desc(rc));
             }
@@ -129,15 +121,12 @@ private:
         using DecayedType = std::decay_t<Type>;
 
         // clio only uses bigint (int64_t) so we convert any incoming type
-        if constexpr (std::is_convertible_v<DecayedType, int64_t>)
-        {
-            int64_t out;
+        if constexpr (std::is_convertible_v<DecayedType, int64_t>) {
+            int64_t out = 0;
             auto const rc = cass_value_get_int64(cass_iterator_get_value(*this), &out);
             throwErrorIfNeeded(rc, "Extract int64 from tuple");
             output = static_cast<DecayedType>(out);
-        }
-        else
-        {
+        } else {
             // type not supported for extraction
             static_assert(unsupported_v<DecayedType>);
         }

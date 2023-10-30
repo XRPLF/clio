@@ -37,12 +37,9 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-class RPCDepositAuthorizedTest : public HandlerBaseTest
-{
-};
+class RPCDepositAuthorizedTest : public HandlerBaseTest {};
 
-struct DepositAuthorizedTestCaseBundle
-{
+struct DepositAuthorizedTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -51,13 +48,11 @@ struct DepositAuthorizedTestCaseBundle
 
 // parameterized test cases for parameters check
 struct DepositAuthorizedParameterTest : public RPCDepositAuthorizedTest,
-                                        public WithParamInterface<DepositAuthorizedTestCaseBundle>
-{
-    struct NameGenerator
-    {
+                                        public WithParamInterface<DepositAuthorizedTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<DepositAuthorizedTestCaseBundle>(info.param);
             return bundle.testName;
@@ -164,7 +159,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCDepositAuthorizedGroup,
     DepositAuthorizedParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    DepositAuthorizedParameterTest::NameGenerator{});
+    DepositAuthorizedParameterTest::NameGenerator{}
+);
 
 TEST_P(DepositAuthorizedParameterTest, InvalidParams)
 {
@@ -184,7 +180,7 @@ TEST_P(DepositAuthorizedParameterTest, InvalidParams)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -201,7 +197,8 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
             }})",
             ACCOUNT,
             ACCOUNT2,
-            RANGEMAX));
+            RANGEMAX
+        ));
 
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -214,7 +211,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -231,7 +228,8 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
             }})",
             ACCOUNT,
             ACCOUNT2,
-            RANGEMAX));
+            RANGEMAX
+        ));
 
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -244,7 +242,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(RANGEMIN);  // min
     mockBackendPtr->updateRange(RANGEMAX);  // max
 
@@ -261,7 +259,8 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
             }})",
             ACCOUNT,
             ACCOUNT2,
-            LEDGERHASH));
+            LEDGERHASH
+        ));
 
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -274,7 +273,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
 
 TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
 
@@ -294,7 +293,8 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
         }})",
         ACCOUNT,
         ACCOUNT2,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
@@ -310,7 +310,7 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 
 TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
 
@@ -334,7 +334,8 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
         }})",
         ACCOUNT,
         ACCOUNT2,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
@@ -360,7 +361,7 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
             "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
         })";
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
 
@@ -381,7 +382,8 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
         }})",
         ACCOUNT,
         ACCOUNT,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
@@ -404,7 +406,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
 
@@ -430,7 +432,8 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
         }})",
         ACCOUNT,
         ACCOUNT2,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
@@ -453,7 +456,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
 
@@ -480,7 +483,8 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
         }})",
         ACCOUNT,
         ACCOUNT2,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
@@ -503,7 +507,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
 
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
 
@@ -530,7 +534,8 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
         }})",
         ACCOUNT,
         ACCOUNT2,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};

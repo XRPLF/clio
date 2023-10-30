@@ -32,7 +32,8 @@ BookOffersHandler::process(Input input, Context const& ctx) const
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
@@ -48,7 +49,8 @@ BookOffersHandler::process(Input input, Context const& ctx) const
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
     output.ledgerIndex = lgrInfo.seq;
     output.offers = postProcessOrderBook(
-        offers, book, input.taker ? *(input.taker) : beast::zero, *sharedPtrBackend_, lgrInfo.seq, ctx.yield);
+        offers, book, input.taker ? *(input.taker) : beast::zero, *sharedPtrBackend_, lgrInfo.seq, ctx.yield
+    );
 
     return output;
 }
@@ -81,12 +83,12 @@ tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::val
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     if (jsonObject.contains(JS(taker)))

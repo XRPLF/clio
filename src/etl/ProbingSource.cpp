@@ -28,7 +28,8 @@ ProbingSource::ProbingSource(
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> nwvl,
     LoadBalancer& balancer,
-    boost::asio::ssl::context sslCtx)
+    boost::asio::ssl::context sslCtx
+)
     : sslCtx_{std::move(sslCtx)}
     , sslSrc_{make_shared<
           SslSource>(config, ioc, std::ref(sslCtx_), backend, subscriptions, nwvl, balancer, make_SSLHooks())}
@@ -74,8 +75,7 @@ ProbingSource::hasLedger(uint32_t sequence) const
 boost::json::object
 ProbingSource::toJson() const
 {
-    if (!currentSrc_)
-    {
+    if (!currentSrc_) {
         boost::json::object sourcesJson = {
             {"ws", plainSrc_->toJson()},
             {"wss", sslSrc_->toJson()},
@@ -123,19 +123,26 @@ ProbingSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNei
 std::optional<boost::json::object>
 ProbingSource::forwardToRippled(
     boost::json::object const& request,
-    std::string const& clientIp,
-    boost::asio::yield_context yield) const
+    std::optional<std::string> const& clientIp,
+    boost::asio::yield_context yield
+) const
 {
-    if (!currentSrc_)
-        return {};
+    if (!currentSrc_)  // Source may connect to rippled before the connection built to check the validity
+    {
+        if (auto res = plainSrc_->forwardToRippled(request, clientIp, yield))
+            return res;
+
+        return sslSrc_->forwardToRippled(request, clientIp, yield);
+    }
     return currentSrc_->forwardToRippled(request, clientIp, yield);
 }
 
 std::optional<boost::json::object>
 ProbingSource::requestFromRippled(
     boost::json::object const& request,
-    std::string const& clientIp,
-    boost::asio::yield_context yield) const
+    std::optional<std::string> const& clientIp,
+    boost::asio::yield_context yield
+) const
 {
     if (!currentSrc_)
         return {};
@@ -147,12 +154,11 @@ ProbingSource::make_SSLHooks() noexcept
 {
     return {// onConnected
             [this](auto ec) {
-                std::lock_guard lck(mtx_);
+                std::lock_guard const lck(mtx_);
                 if (currentSrc_)
                     return SourceHooks::Action::STOP;
 
-                if (!ec)
-                {
+                if (!ec) {
                     plainSrc_->pause();
                     currentSrc_ = sslSrc_;
                     LOG(log_.info()) << "Selected WSS as the main source: " << currentSrc_->toString();
@@ -160,10 +166,9 @@ ProbingSource::make_SSLHooks() noexcept
                 return SourceHooks::Action::PROCEED;
             },
             // onDisconnected
-            [this](auto ec) {
-                std::lock_guard lck(mtx_);
-                if (currentSrc_)
-                {
+            [this](auto /* ec */) {
+                std::lock_guard const lck(mtx_);
+                if (currentSrc_) {
                     currentSrc_ = nullptr;
                     plainSrc_->resume();
                 }
@@ -176,12 +181,11 @@ ProbingSource::make_PlainHooks() noexcept
 {
     return {// onConnected
             [this](auto ec) {
-                std::lock_guard lck(mtx_);
+                std::lock_guard const lck(mtx_);
                 if (currentSrc_)
                     return SourceHooks::Action::STOP;
 
-                if (!ec)
-                {
+                if (!ec) {
                     sslSrc_->pause();
                     currentSrc_ = plainSrc_;
                     LOG(log_.info()) << "Selected Plain WS as the main source: " << currentSrc_->toString();
@@ -189,10 +193,9 @@ ProbingSource::make_PlainHooks() noexcept
                 return SourceHooks::Action::PROCEED;
             },
             // onDisconnected
-            [this](auto ec) {
-                std::lock_guard lck(mtx_);
-                if (currentSrc_)
-                {
+            [this](auto /* ec */) {
+                std::lock_guard const lck(mtx_);
+                if (currentSrc_) {
                     currentSrc_ = nullptr;
                     sslSrc_->resume();
                 }

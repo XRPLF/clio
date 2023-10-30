@@ -25,8 +25,7 @@
 
 namespace data::cassandra::detail {
 
-class Session : public ManagedObject<CassSession>
-{
+class Session : public ManagedObject<CassSession> {
     static constexpr auto deleter = [](CassSession* ptr) { cass_session_free(ptr); };
 
 public:

@@ -40,12 +40,9 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-class RPCAccountNFTsHandlerTest : public HandlerBaseTest
-{
-};
+class RPCAccountNFTsHandlerTest : public HandlerBaseTest {};
 
-struct AccountNFTParamTestCaseBundle
-{
+struct AccountNFTParamTestCaseBundle {
     std::string testName;
     std::string testJson;
     std::string expectedError;
@@ -54,13 +51,11 @@ struct AccountNFTParamTestCaseBundle
 
 // parameterized test cases for parameters check
 struct AccountNFTParameterTest : public RPCAccountNFTsHandlerTest,
-                                 public WithParamInterface<AccountNFTParamTestCaseBundle>
-{
-    struct NameGenerator
-    {
+                                 public WithParamInterface<AccountNFTParamTestCaseBundle> {
+    struct NameGenerator {
         template <class ParamType>
         std::string
-        operator()(const testing::TestParamInfo<ParamType>& info) const
+        operator()(testing::TestParamInfo<ParamType> const& info) const
         {
             auto bundle = static_cast<AccountNFTParamTestCaseBundle>(info.param);
             return bundle.testName;
@@ -145,7 +140,8 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountNFTsGroup1,
     AccountNFTParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    AccountNFTParameterTest::NameGenerator{});
+    AccountNFTParameterTest::NameGenerator{}
+);
 
 TEST_P(AccountNFTParameterTest, InvalidParams)
 {
@@ -163,7 +159,8 @@ TEST_P(AccountNFTParameterTest, InvalidParams)
 
 TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
@@ -177,7 +174,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
             "ledger_hash":"{}"
         }})",
         ACCOUNT,
-        LEDGERHASH));
+        LEDGERHASH
+    ));
     auto const handler = AnyHandler{AccountNFTsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -191,7 +189,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
 TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
 {
     auto constexpr seq = 12;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -204,7 +203,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
             "ledger_index":"{}"
         }})",
         ACCOUNT,
-        seq));
+        seq
+    ));
     auto const handler = AnyHandler{AccountNFTsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -218,7 +218,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
 TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
 {
     auto constexpr seq = 12;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
@@ -231,7 +232,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
             "ledger_index":{}
         }})",
         ACCOUNT,
-        seq));
+        seq
+    ));
     auto const handler = AnyHandler{AccountNFTsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -244,7 +246,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
 
 TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -258,7 +261,8 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
         R"({{
             "account":"{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountNFTsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -296,8 +300,10 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
         FLAG,
         ISSUER,
         TAXON,
-        SERIAL);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+        SERIAL
+    );
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -320,7 +326,8 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
         R"({{
             "account":"{}"
         }})",
-        ACCOUNT));
+        ACCOUNT
+    ));
     auto const handler = AnyHandler{AccountNFTsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -332,7 +339,8 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
 TEST_F(RPCAccountNFTsHandlerTest, Limit)
 {
     static auto constexpr limit = 20;
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -357,7 +365,8 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
             "limit":{}
         }})",
         ACCOUNT,
-        limit));
+        limit
+    ));
     auto const handler = AnyHandler{AccountNFTsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -369,7 +378,8 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
 
 TEST_F(RPCAccountNFTsHandlerTest, Marker)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -393,7 +403,8 @@ TEST_F(RPCAccountNFTsHandlerTest, Marker)
             "marker":"{}"
         }})",
         ACCOUNT,
-        PAGE));
+        PAGE
+    ));
     auto const handler = AnyHandler{AccountNFTsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -430,8 +441,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
         ISSUER,
         TAXON,
         SERIAL,
-        AccountNFTsHandler::LIMIT_MIN);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+        AccountNFTsHandler::LIMIT_MIN
+    );
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -456,7 +469,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
             "limit":{}
         }})",
         ACCOUNT,
-        AccountNFTsHandler::LIMIT_MIN - 1));
+        AccountNFTsHandler::LIMIT_MIN - 1
+    ));
     auto const handler = AnyHandler{AccountNFTsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -493,8 +507,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
         ISSUER,
         TAXON,
         SERIAL,
-        AccountNFTsHandler::LIMIT_MAX);
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
+        AccountNFTsHandler::LIMIT_MAX
+    );
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);
     mockBackendPtr->updateRange(MAXSEQ);
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
@@ -519,7 +535,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
             "limit":{}
         }})",
         ACCOUNT,
-        AccountNFTsHandler::LIMIT_MAX + 1));
+        AccountNFTsHandler::LIMIT_MAX + 1
+    ));
     auto const handler = AnyHandler{AccountNFTsHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});

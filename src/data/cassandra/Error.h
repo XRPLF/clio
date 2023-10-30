@@ -22,33 +22,35 @@
 #include <cassandra.h>
 
 #include <string>
+#include <utility>
 
 namespace data::cassandra {
 
 /**
  * @brief A simple container for both error message and error code.
  */
-class CassandraError
-{
+class CassandraError {
     std::string message_;
-    uint32_t code_;
+    uint32_t code_{};
 
 public:
     CassandraError() = default;  // default constructible required by Expected
-    CassandraError(std::string message, uint32_t code) : message_{message}, code_{code}
+    CassandraError(std::string message, uint32_t code) : message_{std::move(message)}, code_{code}
     {
     }
 
     template <typename T>
     friend std::string
-    operator+(T const& lhs, CassandraError const& rhs) requires std::is_convertible_v<T, std::string>
+    operator+(T const& lhs, CassandraError const& rhs)
+        requires std::is_convertible_v<T, std::string>
     {
         return lhs + rhs.message();
     }
 
     template <typename T>
     friend bool
-    operator==(T const& lhs, CassandraError const& rhs) requires std::is_convertible_v<T, std::string>
+    operator==(T const& lhs, CassandraError const& rhs)
+        requires std::is_convertible_v<T, std::string>
     {
         return lhs == rhs.message();
     }
@@ -91,11 +93,9 @@ public:
     bool
     isTimeout() const
     {
-        if (code_ == CASS_ERROR_LIB_NO_HOSTS_AVAILABLE or code_ == CASS_ERROR_LIB_REQUEST_TIMED_OUT or
+        return code_ == CASS_ERROR_LIB_NO_HOSTS_AVAILABLE or code_ == CASS_ERROR_LIB_REQUEST_TIMED_OUT or
             code_ == CASS_ERROR_SERVER_UNAVAILABLE or code_ == CASS_ERROR_SERVER_OVERLOADED or
-            code_ == CASS_ERROR_SERVER_READ_TIMEOUT)
-            return true;
-        return false;
+            code_ == CASS_ERROR_SERVER_READ_TIMEOUT;
     }
 
     /**

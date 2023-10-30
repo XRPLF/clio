@@ -33,14 +33,13 @@
 /**
  * @brief Struct used to keep track of what to write to account_transactions/account_tx tables.
  */
-struct AccountTransactionsData
-{
+struct AccountTransactionsData {
     boost::container::flat_set<ripple::AccountID> accounts;
-    std::uint32_t ledgerSequence;
-    std::uint32_t transactionIndex;
+    std::uint32_t ledgerSequence{};
+    std::uint32_t transactionIndex{};
     ripple::uint256 txHash;
 
-    AccountTransactionsData(ripple::TxMeta& meta, ripple::uint256 const& txHash, beast::Journal& j)
+    AccountTransactionsData(ripple::TxMeta& meta, ripple::uint256 const& txHash)
         : accounts(meta.getAffectedAccounts())
         , ledgerSequence(meta.getLgrSeq())
         , transactionIndex(meta.getIndex())
@@ -56,8 +55,7 @@ struct AccountTransactionsData
  *
  * Gets written to nf_token_transactions table and the like.
  */
-struct NFTTransactionsData
-{
+struct NFTTransactionsData {
     ripple::uint256 tokenID;
     std::uint32_t ledgerSequence;
     std::uint32_t transactionIndex;
@@ -74,8 +72,7 @@ struct NFTTransactionsData
  *
  * Gets written to nf_tokens table and the like.
  */
-struct NFTsData
-{
+struct NFTsData {
     ripple::uint256 tokenID;
     std::uint32_t ledgerSequence;
 
@@ -107,7 +104,8 @@ struct NFTsData
         ripple::uint256 const& tokenID,
         ripple::AccountID const& owner,
         ripple::Blob const& uri,
-        ripple::TxMeta const& meta)
+        ripple::TxMeta const& meta
+    )
         : tokenID(tokenID), ledgerSequence(meta.getLgrSeq()), transactionIndex(meta.getIndex()), owner(owner), uri(uri)
     {
     }
@@ -133,7 +131,8 @@ struct NFTsData
         ripple::uint256 const& tokenID,
         std::uint32_t const ledgerSequence,
         ripple::AccountID const& owner,
-        ripple::Blob const& uri)
+        ripple::Blob const& uri
+    )
         : tokenID(tokenID), ledgerSequence(ledgerSequence), owner(owner), uri(uri)
     {
     }
@@ -149,8 +148,11 @@ template <class T>
 inline bool
 isOffer(T const& object)
 {
-    short offer_bytes = (object[1] << 8) | object[2];
-    return offer_bytes == 0x006f;
+    static constexpr short OFFER_OFFSET = 0x006f;
+    static constexpr short SHIFT = 8;
+
+    short offer_bytes = (object[1] << SHIFT) | object[2];
+    return offer_bytes == OFFER_OFFSET;
 }
 
 /**
@@ -179,8 +181,9 @@ template <class T>
 inline bool
 isDirNode(T const& object)
 {
-    short spaceKey = (object.data()[1] << 8) | object.data()[2];
-    return spaceKey == 0x0064;
+    static constexpr short DIR_NODE_SPACE_KEY = 0x0064;
+    short const spaceKey = (object.data()[1] << 8) | object.data()[2];
+    return spaceKey == DIR_NODE_SPACE_KEY;
 }
 
 /**
@@ -212,7 +215,7 @@ inline ripple::uint256
 getBook(T const& offer)
 {
     ripple::SerialIter it{offer.data(), offer.size()};
-    ripple::SLE sle{it, {}};
+    ripple::SLE const sle{it, {}};
     ripple::uint256 book = sle.getFieldH256(ripple::sfBookDirectory);
 
     return book;
@@ -228,10 +231,12 @@ template <class T>
 inline ripple::uint256
 getBookBase(T const& key)
 {
+    static constexpr size_t KEY_SIZE = 24;
+
     assert(key.size() == ripple::uint256::size());
 
     ripple::uint256 ret;
-    for (size_t i = 0; i < 24; ++i)
+    for (size_t i = 0; i < KEY_SIZE; ++i)
         ret.data()[i] = key.data()[i];
 
     return ret;
@@ -246,7 +251,7 @@ getBookBase(T const& key)
 inline std::string
 uint256ToString(ripple::uint256 const& input)
 {
-    return {reinterpret_cast<const char*>(input.data()), input.size()};
+    return {reinterpret_cast<char const*>(input.data()), ripple::uint256::size()};
 }
 
 /** @brief The ripple epoch start timestamp. Midnight on 1st January 2000. */

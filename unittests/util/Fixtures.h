@@ -36,14 +36,12 @@
 /**
  * @brief Fixture with util::Logger support.
  */
-class LoggerFixture : virtual public ::testing::Test
-{
+class LoggerFixture : virtual public ::testing::Test {
     /**
      * @brief A simple string buffer that can be used to mock std::cout for
      * console logging.
      */
-    class FakeBuffer final : public std::stringbuf
-    {
+    class FakeBuffer final : public std::stringbuf {
     public:
         std::string
         getStrAndReset()
@@ -68,9 +66,7 @@ protected:
             boost::log::register_simple_formatter_factory<util::Severity, char>("Severity");
         });
 
-        namespace src = boost::log::sources;
         namespace keywords = boost::log::keywords;
-        namespace sinks = boost::log::sinks;
         namespace expr = boost::log::expressions;
         auto core = boost::log::core::get();
 
@@ -102,8 +98,7 @@ protected:
  *
  * This is meant to be used as a base for other fixtures.
  */
-class NoLoggerFixture : virtual public LoggerFixture
-{
+class NoLoggerFixture : virtual public LoggerFixture {
 protected:
     void
     SetUp() override
@@ -118,15 +113,14 @@ protected:
  *
  * This is meant to be used as a base for other fixtures.
  */
-struct AsyncAsioContextTest : virtual public NoLoggerFixture
-{
+struct AsyncAsioContextTest : virtual public NoLoggerFixture {
     AsyncAsioContextTest()
     {
         work.emplace(ctx);  // make sure ctx does not stop on its own
         runner.emplace([&] { ctx.run(); });
     }
 
-    ~AsyncAsioContextTest()
+    ~AsyncAsioContextTest() override
     {
         work.reset();
         if (runner->joinable())
@@ -158,8 +152,7 @@ private:
  * Use `run_for(duration)` etc. directly on `ctx`.
  * This is meant to be used as a base for other fixtures.
  */
-struct SyncAsioContextTest : virtual public NoLoggerFixture
-{
+struct SyncAsioContextTest : virtual public NoLoggerFixture {
     template <typename F>
     void
     runSpawn(F&& f)
@@ -184,8 +177,7 @@ protected:
 /**
  * @brief Fixture with a mock backend
  */
-struct MockBackendTest : virtual public NoLoggerFixture
-{
+struct MockBackendTest : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
@@ -206,8 +198,7 @@ protected:
 /**
  * @brief Fixture with a mock subscription manager
  */
-struct MockSubscriptionManagerTest : virtual public NoLoggerFixture
-{
+struct MockSubscriptionManagerTest : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
@@ -227,8 +218,7 @@ protected:
 /**
  * @brief Fixture with a mock etl balancer
  */
-struct MockLoadBalancerTest : virtual public NoLoggerFixture
-{
+struct MockLoadBalancerTest : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
@@ -248,8 +238,7 @@ protected:
 /**
  * @brief Fixture with a mock subscription manager
  */
-struct MockETLServiceTest : virtual public NoLoggerFixture
-{
+struct MockETLServiceTest : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
@@ -269,8 +258,7 @@ protected:
 /**
  * @brief Fixture with mock counters
  */
-struct MockCountersTest : virtual public NoLoggerFixture
-{
+struct MockCountersTest : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
@@ -291,18 +279,20 @@ protected:
  * @brief Fixture with an mock backend and an embedded boost::asio context
  * Handler unittest base class
  */
-struct HandlerBaseTest : public MockBackendTest, public SyncAsioContextTest
-{
+struct HandlerBaseTest : public MockBackendTest, public SyncAsioContextTest, public MockETLServiceTest {
 protected:
     void
     SetUp() override
     {
         MockBackendTest::SetUp();
         SyncAsioContextTest::SetUp();
+        MockETLServiceTest::SetUp();
     }
+
     void
     TearDown() override
     {
+        MockETLServiceTest::TearDown();
         SyncAsioContextTest::TearDown();
         MockBackendTest::TearDown();
     }
