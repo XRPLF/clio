@@ -34,7 +34,7 @@ public:
      *
      * @param isEnabled Whether prometheus is enabled
      */
-    PrometheusInterface(bool isEnabled) : isEnabled_(isEnabled)
+    PrometheusInterface(bool isEnabled, bool compressReply) : isEnabled_(isEnabled), compressReply_(compressReply)
     {
     }
 
@@ -99,8 +99,20 @@ public:
         return isEnabled_;
     }
 
+    /**
+     * @brief Whether to compress the reply
+     *
+     * @return true if the reply should be compressed
+     */
+    bool
+    compressReply() const
+    {
+        return compressReply_;
+    }
+
 private:
     bool isEnabled_;
+    bool compressReply_;
 };
 
 /**

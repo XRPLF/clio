@@ -101,7 +101,10 @@
             "log_level": "trace"
         }
     ],
-    "prometheus_enabled": true,
+    "prometheus": {
+        "enabled": true,
+        "compress_reply": true,
+    },
     "log_level": "info",
     // Log format (this is the default format)
     "log_format": "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%",

@@ -583,12 +583,12 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
 {
     static auto constexpr JSONServerConfigWithDisabledPrometheus = R"JSON(
         {
-            "server":{
+            "server": {
                 "ip": "0.0.0.0",
                 "port": 8888,
                 "admin_password": "secret"
             },
-            "prometheus_enabled": false
+            "prometheus": { "enabled": false }
         }
     )JSON";
 

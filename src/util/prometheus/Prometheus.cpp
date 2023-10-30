@@ -105,8 +105,10 @@ PrometheusImpl::getMetric(
 void
 PrometheusService::init(util::Config const& config)
 {
-    bool const enabled = config.valueOr("prometheus_enabled", true);
-    instance_ = std::make_unique<util::prometheus::PrometheusImpl>(enabled);
+    bool const enabled = config.valueOr("prometheus.enabled", true);
+    bool const compressReply = config.valueOr("prometheus.compress_reply", true);
+
+    instance_ = std::make_unique<util::prometheus::PrometheusImpl>(enabled, compressReply);
 }
 
 util::prometheus::CounterInt&

@@ -40,7 +40,7 @@ using MockCounterImplUint = MockCounterImpl<std::uint64_t>;
 using MockCounterImplDouble = MockCounterImpl<double>;
 
 struct MockPrometheusImpl : PrometheusInterface {
-    MockPrometheusImpl() : PrometheusInterface(true)
+    MockPrometheusImpl() : PrometheusInterface(true, true)
     {
         EXPECT_CALL(*this, counterInt)
             .WillRepeatedly([this](std::string name, Labels labels, std::optional<std::string>) -> CounterInt& {
