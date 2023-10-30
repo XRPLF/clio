@@ -948,7 +948,7 @@ accountHolds(
 )
 {
     ripple::STAmount amount;
-    if (ripple::isXRP(currency)) {
+    if (ripple::isXRP(currency))
         return {xrpLiquid(backend, sequence, account, yield)};
 
     auto key = ripple::keylet::line(account, issuer, currency).key;
