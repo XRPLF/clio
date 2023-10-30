@@ -351,7 +351,7 @@ TEST_P(AccountTxParameterTest, CheckParams)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    auto const testBundle = GetParam();
+    auto const& testBundle = GetParam();
     auto* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
     auto const req = json::parse(testBundle.testJson);
@@ -1500,6 +1500,46 @@ generateTransactionTypeTestValues()
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
                 "tx_type": "AccountDelete"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "AMMBid",
+            R"({
+                "account": "rLNaPoKeeBjZe2qs6x52yVPZpZ8td4dc6w",
+                "ledger_index": "validated",
+                "tx_type": "AMMBid"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "AMMCreate",
+            R"({
+                "account": "rLNaPoKeeBjZe2qs6x52yVPZpZ8td4dc6w",
+                "ledger_index": "validated",
+                "tx_type": "AMMCreate"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "AMMDelete",
+            R"({
+                "account": "rLNaPoKeeBjZe2qs6x52yVPZpZ8td4dc6w",
+                "ledger_index": "validated",
+                "tx_type": "AMMDelete"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "AMMDeposit",
+            R"({
+                "account": "rLNaPoKeeBjZe2qs6x52yVPZpZ8td4dc6w",
+                "ledger_index": "validated",
+                "tx_type": "AMMDeposit"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "AMMVote",
+            R"({
+                "account": "rLNaPoKeeBjZe2qs6x52yVPZpZ8td4dc6w",
+                "ledger_index": "validated",
+                "tx_type": "AMMVote"
             })",
             "[]"},
         AccountTxTransactionBundle{

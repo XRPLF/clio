@@ -138,6 +138,7 @@ target_sources (clio PRIVATE
   ## Util
   src/util/config/Config.cpp
   src/util/log/Logger.cpp
+  src/util/Random.cpp
   src/util/Taggable.cpp)
 
 # Clio server
