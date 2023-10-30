@@ -16,21 +16,29 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-
 #pragma once
 
-#include <etl/ETLState.h>
+#include <random>
 
-#include <boost/json.hpp>
-#include <gmock/gmock.h>
+namespace util {
 
-#include <chrono>
+class Random {
+public:
+    template <typename T>
+    static T
+    uniform(T min, T max)
+    {
+        assert(min <= max);
+        if constexpr (std::is_floating_point_v<T>) {
+            std::uniform_real_distribution<T> distribution(min, max);
+            return distribution(generator_);
+        }
+        std::uniform_int_distribution<T> distribution(min, max);
+        return distribution(generator_);
+    }
 
-struct MockETLService {
-    MOCK_METHOD(boost::json::object, getInfo, (), (const));
-    MOCK_METHOD(std::chrono::time_point<std::chrono::system_clock>, getLastPublish, (), (const));
-    MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
-    MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const));
-    MOCK_METHOD(bool, isAmendmentBlocked, (), (const));
-    MOCK_METHOD(std::optional<etl::ETLState>, getETLState, (), (const));
+private:
+    static std::mt19937_64 generator_;
 };
+
+}  // namespace util

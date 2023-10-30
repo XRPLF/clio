@@ -46,6 +46,11 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
     if (not maybeNft.has_value())
         return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "NFT not found"}};
 
+    // TODO - this formatting is exactly the same and SHOULD REMAIN THE SAME
+    // for each element of the `nfts_by_issuer` API. We should factor this out
+    // so that the formats don't diverge. In the mean time, do not make any
+    // changes to this formatting without making the same changes to that
+    // formatting.
     auto const& nft = *maybeNft;
     auto output = NFTInfoHandler::Output{};
 

@@ -162,6 +162,11 @@ struct NFT {
     }
 };
 
+struct NFTsAndCursor {
+    std::vector<NFT> nfts;
+    std::optional<ripple::uint256> cursor;
+};
+
 /**
  * @brief Stores a range of sequences as a min and max pair.
  */

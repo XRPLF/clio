@@ -16,21 +16,12 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-
-#pragma once
-
-#include <etl/ETLState.h>
-
-#include <boost/json.hpp>
-#include <gmock/gmock.h>
+#include <util/Random.h>
 
 #include <chrono>
 
-struct MockETLService {
-    MOCK_METHOD(boost::json::object, getInfo, (), (const));
-    MOCK_METHOD(std::chrono::time_point<std::chrono::system_clock>, getLastPublish, (), (const));
-    MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
-    MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const));
-    MOCK_METHOD(bool, isAmendmentBlocked, (), (const));
-    MOCK_METHOD(std::optional<etl::ETLState>, getETLState, (), (const));
-};
+namespace util {
+
+std::mt19937_64 Random::generator_{std::chrono::system_clock::now().time_since_epoch().count()};
+
+}  // namespace util

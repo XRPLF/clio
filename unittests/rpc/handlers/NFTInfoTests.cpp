@@ -385,7 +385,7 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
     });
 }
 
-// nft is not burned and uri is not available -> should specify null
+// uri is not available -> should specify an empty string
 TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
 {
     constexpr static auto currentOutput = R"({

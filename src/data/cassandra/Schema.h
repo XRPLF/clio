@@ -592,6 +592,20 @@ public:
             ));
         }();
 
+        PreparedStatement selectNFTBulk = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT token_id, sequence, owner, is_burned
+                  FROM {}    
+                 WHERE token_id IN ?
+                   AND sequence <= ?
+              ORDER BY sequence DESC
+   PER PARTITION LIMIT 1
+                )",
+                qualifiedTableName(settingsProvider_.get(), "nf_tokens")
+            ));
+        }();
+
         PreparedStatement selectNFTURI = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
@@ -601,6 +615,20 @@ public:
                    AND sequence <= ?
               ORDER BY sequence DESC
                  LIMIT 1
+                )",
+                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
+            ));
+        }();
+
+        PreparedStatement selectNFTURIBulk = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT token_id, uri
+                  FROM {}    
+                 WHERE token_id IN ?
+                   AND sequence <= ?
+              ORDER BY sequence DESC
+   PER PARTITION LIMIT 1
                 )",
                 qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
             ));
@@ -631,6 +659,35 @@ public:
                  LIMIT ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+            ));
+        }();
+
+        PreparedStatement selectNFTIDsByIssuer = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT token_id
+                  FROM {}    
+                 WHERE issuer = ?
+                   AND (taxon, token_id) > ?
+              ORDER BY taxon ASC, token_id ASC
+                 LIMIT ?
+                )",
+                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+            ));
+        }();
+
+        PreparedStatement selectNFTIDsByIssuerTaxon = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT token_id
+                  FROM {}    
+                 WHERE issuer = ?
+                   AND taxon = ?
+                   AND token_id > ?
+              ORDER BY taxon ASC, token_id ASC
+                 LIMIT ?
+                )",
+                qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
             ));
         }();
 

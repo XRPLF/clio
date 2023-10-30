@@ -441,6 +441,96 @@ public:
         return {txns, {}};
     }
 
+    NFTsAndCursor
+    fetchNFTsByIssuer(
+        ripple::AccountID const& issuer,
+        std::optional<std::uint32_t> const& taxon,
+        std::uint32_t const ledgerSequence,
+        std::uint32_t const limit,
+        std::optional<ripple::uint256> const& cursorIn,
+        boost::asio::yield_context yield
+    ) const override
+    {
+        NFTsAndCursor ret;
+
+        Statement const idQueryStatement = [&taxon, &issuer, &cursorIn, &limit, this]() {
+            if (taxon.has_value()) {
+                auto r = schema_->selectNFTIDsByIssuerTaxon.bind(issuer);
+                r.bindAt(1, *taxon);
+                r.bindAt(2, cursorIn.value_or(ripple::uint256(0)));
+                r.bindAt(3, Limit{limit});
+                return r;
+            }
+
+            auto r = schema_->selectNFTIDsByIssuer.bind(issuer);
+            r.bindAt(
+                1,
+                std::make_tuple(
+                    cursorIn.has_value() ? ripple::nft::toUInt32(ripple::nft::getTaxon(*cursorIn)) : 0,
+                    cursorIn.value_or(ripple::uint256(0))
+                )
+            );
+            r.bindAt(2, Limit{limit});
+            return r;
+        }();
+
+        // Query for all the NFTs issued by the account, potentially filtered by the taxon
+        auto const res = executor_.read(yield, idQueryStatement);
+
+        auto const& idQueryResults = res.value();
+        if (not idQueryResults.hasRows()) {
+            LOG(log_.debug()) << "No rows returned";
+            return {};
+        }
+
+        std::vector<ripple::uint256> nftIDs;
+        for (auto const [nftID] : extract<ripple::uint256>(idQueryResults))
+            nftIDs.push_back(nftID);
+
+        if (nftIDs.empty())
+            return ret;
+
+        if (nftIDs.size() == limit)
+            ret.cursor = nftIDs.back();
+
+        auto const nftQueryStatement = schema_->selectNFTBulk.bind(nftIDs);
+        nftQueryStatement.bindAt(1, ledgerSequence);
+
+        // Fetch all the NFT data, meanwhile filtering out the NFTs that are not within the ledger range
+        auto const nftRes = executor_.read(yield, nftQueryStatement);
+        auto const& nftQueryResults = nftRes.value();
+
+        if (not nftQueryResults.hasRows()) {
+            LOG(log_.debug()) << "No rows returned";
+            return {};
+        }
+
+        auto const nftURIQueryStatement = schema_->selectNFTURIBulk.bind(nftIDs);
+        nftURIQueryStatement.bindAt(1, ledgerSequence);
+
+        // Get the URI for each NFT, but it's possible that URI doesn't exist
+        auto const uriRes = executor_.read(yield, nftURIQueryStatement);
+        auto const& nftURIQueryResults = uriRes.value();
+
+        std::unordered_map<std::string, Blob> nftURIMap;
+        for (auto const [nftID, uri] : extract<ripple::uint256, Blob>(nftURIQueryResults))
+            nftURIMap.insert({ripple::strHex(nftID), uri});
+
+        for (auto const [nftID, seq, owner, isBurned] :
+             extract<ripple::uint256, std::uint32_t, ripple::AccountID, bool>(nftQueryResults)) {
+            NFT nft;
+            nft.tokenID = nftID;
+            nft.ledgerSequence = seq;
+            nft.owner = owner;
+            nft.isBurned = isBurned;
+            if (nftURIMap.contains(ripple::strHex(nft.tokenID)))
+                nft.uri = nftURIMap.at(ripple::strHex(nft.tokenID));
+            ret.nfts.push_back(nft);
+        }
+
+        return ret;
+    }
+
     std::optional<Blob>
     doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
         const override
