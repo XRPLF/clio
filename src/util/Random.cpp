@@ -18,6 +18,8 @@
 //==============================================================================
 #include <util/Random.h>
 
+#include <chrono>
+
 namespace util {
 
 std::mt19937_64 Random::generator_{std::chrono::system_clock::now().time_since_epoch().count()};
