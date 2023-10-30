@@ -71,11 +71,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             auto const currency = ripple::to_currency(assetJson.at(JS(currency)).as_string().c_str());
             if (ripple::isXRP(currency)) {
                 return ripple::xrpIssue();
-            } else {
-                auto const issuer =
-                    ripple::parseBase58<ripple::AccountID>(assetJson.at(JS(issuer)).as_string().c_str());
-                return ripple::Issue{currency, *issuer};
             }
+            auto const issuer = ripple::parseBase58<ripple::AccountID>(assetJson.at(JS(issuer)).as_string().c_str());
+            return ripple::Issue{currency, *issuer};
         };
 
         key = ripple::keylet::amm(
