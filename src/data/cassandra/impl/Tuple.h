@@ -21,6 +21,7 @@
 
 #include <data/cassandra/impl/ManagedObject.h>
 
+#include <ripple/basics/base_uint.h>
 #include <cassandra.h>
 
 #include <functional>
@@ -76,6 +77,14 @@ public:
         else if constexpr (std::is_convertible_v<DecayedType, int64_t>) {
             auto const rc = cass_tuple_set_int64(*this, idx, value);
             throwErrorIfNeeded(rc, "Bind int64");
+        } else if constexpr (std::is_same_v<DecayedType, ripple::uint256>) {
+            auto const rc = cass_tuple_set_bytes(
+                *this,
+                idx,
+                static_cast<cass_byte_t const*>(static_cast<unsigned char const*>(value.data())),
+                value.size()
+            );
+            throwErrorIfNeeded(rc, "Bind ripple::uint256");
         } else {
             // type not supported for binding
             static_assert(unsupported_v<DecayedType>);
