@@ -16,30 +16,34 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
 
 #include <atomic>
 #include <cassert>
 #include <concepts>
 
-namespace util::prometheus::impl {
+namespace util::prometheus::detail {
 
 template <typename T>
 concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_const_v<T>;
 
-// clang-format off
 template <typename T>
-concept SomeCounterImpl = requires(T a)
-{
+concept SomeCounterImpl = requires(T a) {
     typename std::remove_cvref_t<T>::ValueType;
     SomeNumberType<typename std::remove_cvref_t<T>::ValueType>;
-    { a.add(typename std::remove_cvref_t<T>::ValueType{1}) } -> std::same_as<void>;
-    { a.set(typename std::remove_cvref_t<T>::ValueType{1}) } -> std::same_as<void>;
-    { a.value() } -> SomeNumberType;
+    {
+        a.add(typename std::remove_cvref_t<T>::ValueType{1})
+    } -> std::same_as<void>;
+    {
+        a.set(typename std::remove_cvref_t<T>::ValueType{1})
+    } -> std::same_as<void>;
+    {
+        a.value()
+    } -> SomeNumberType;
 };
-// clang-format on
 
-template <impl::SomeNumberType NumberType>
+template <SomeNumberType NumberType>
 class CounterImpl {
 public:
     using ValueType = NumberType;
@@ -94,4 +98,4 @@ private:
     std::atomic<ValueType> value_{0};
 };
 
-}  // namespace util::prometheus::impl
+}  // namespace util::prometheus::detail

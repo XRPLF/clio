@@ -16,8 +16,9 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include "util/prometheus/Counter.h"
-#include "util/prometheus/Gauge.h"
+
+#include <util/prometheus/Counter.h>
+#include <util/prometheus/Gauge.h>
 #include <util/prometheus/Metrics.h>
 
 #include <gmock/gmock.h>

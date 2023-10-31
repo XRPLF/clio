@@ -16,6 +16,7 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #include <util/prometheus/Counter.h>
 
 #include <gmock/gmock.h>
@@ -34,8 +35,8 @@ struct AnyCounterTests : ::testing::Test {
     };
 
     ::testing::StrictMock<MockCounterImpl> mockCounterImpl;
-    const std::string name = "test_counter";
-    const std::string labelsString = R"({label1="value1",label2="value2"})";
+    std::string const name = "test_counter";
+    std::string labelsString = R"({label1="value1",label2="value2"})";
     CounterInt counter{name, labelsString, static_cast<MockCounterImpl&>(mockCounterImpl)};
 };
 
@@ -98,9 +99,9 @@ TEST_F(CounterIntTests, reset)
 
 TEST_F(CounterIntTests, multithreadAdd)
 {
-    static constexpr auto numAdditions = 1000;
-    static constexpr auto numNumberAdditions = 100;
-    static constexpr auto numberToAdd = 11;
+    static auto constexpr numAdditions = 1000;
+    static auto constexpr numNumberAdditions = 100;
+    static auto constexpr numberToAdd = 11;
     std::thread thread1([&] {
         for (int i = 0; i < numAdditions; ++i) {
             ++counter;
@@ -137,9 +138,9 @@ TEST_F(CounterDoubleTests, reset)
 
 TEST_F(CounterDoubleTests, multithreadAdd)
 {
-    static constexpr auto numAdditions = 1000;
-    static constexpr auto numNumberAdditions = 100;
-    static constexpr auto numberToAdd = 11.1234;
+    static auto constexpr numAdditions = 1000;
+    static auto constexpr numNumberAdditions = 100;
+    static auto constexpr numberToAdd = 11.1234;
     std::thread thread1([&] {
         for (int i = 0; i < numAdditions; ++i) {
             ++counter;

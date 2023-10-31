@@ -16,13 +16,14 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
 
 #include <util/prometheus/impl/CounterImpl.h>
 
 #include <memory>
 
-namespace util::prometheus::impl {
+namespace util::prometheus::detail {
 
 template <SomeNumberType NumberType>
 class AnyCounterBase {
@@ -78,4 +79,4 @@ protected:
     std::unique_ptr<Concept> pimpl_;
 };
 
-}  // namespace util::prometheus::impl
+}  // namespace util::prometheus::detail

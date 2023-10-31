@@ -16,6 +16,7 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
 
 #include <util/config/Config.h>
@@ -28,6 +29,11 @@ namespace util::prometheus {
 
 class PrometheusInterface {
 public:
+    /**
+     * @brief Construct a new Prometheus Interface object
+     *
+     * @param isEnabled Whether prometheus is enabled
+     */
     PrometheusInterface(bool isEnabled) : isEnabled_(isEnabled)
     {
     }
@@ -129,14 +135,27 @@ private:
     friend class PrometheusSingleton;
 };
 
+/**
+ * @brief Singleton class to access the PrometheusInterface
+ */
 class PrometheusSingleton {
 public:
+    /**
+     * @brief Initialize the singleton with the given configuration
+     *
+     * @param config The configuration to use
+     */
     void static init(Config const& config = Config{})
     {
         bool const enabled = config.valueOr("prometheus_enabled", true);
         instance_ = std::make_unique<PrometheusImpl>(enabled);
     }
 
+    /**
+     * @brief Get the prometheus object stored in the singleton
+     *
+     * @return Reference to the prometheus object
+     */
     static PrometheusInterface&
     instance()
     {
@@ -144,7 +163,13 @@ public:
         return *instance_;
     }
 
-    // Be careful with this method because there could be hanging references to counters
+    /**
+     * @brief Replace the prometheus object stored in the singleton
+     *
+     * @note Be careful with this method because there could be hanging references to counters
+     *
+     * @param instance The new prometheus object
+     */
     static void
     replaceInstance(std::unique_ptr<PrometheusInterface> instance)
     {

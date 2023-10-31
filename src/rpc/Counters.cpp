@@ -110,74 +110,74 @@ void
 Counters::rpcFailed(std::string const& method)
 {
     std::scoped_lock const lk(mutex_);
-    MethodInfo& counters = getMethodInfo(method);
-    ++counters.started;
-    ++counters.failed;
+    MethodInfo const& counters = getMethodInfo(method);
+    ++counters.started.get();
+    ++counters.failed.get();
 }
 
 void
 Counters::rpcErrored(std::string const& method)
 {
     std::scoped_lock const lk(mutex_);
-    MethodInfo& counters = getMethodInfo(method);
-    ++counters.started;
-    ++counters.errored;
+    MethodInfo const& counters = getMethodInfo(method);
+    ++counters.started.get();
+    ++counters.errored.get();
 }
 
 void
 Counters::rpcComplete(std::string const& method, std::chrono::microseconds const& rpcDuration)
 {
     std::scoped_lock const lk(mutex_);
-    MethodInfo& counters = getMethodInfo(method);
-    ++counters.started;
-    ++counters.finished;
-    counters.duration += rpcDuration.count();
+    MethodInfo const& counters = getMethodInfo(method);
+    ++counters.started.get();
+    ++counters.finished.get();
+    counters.duration.get() += rpcDuration.count();
 }
 
 void
 Counters::rpcForwarded(std::string const& method)
 {
     std::scoped_lock const lk(mutex_);
-    MethodInfo& counters = getMethodInfo(method);
-    ++counters.forwarded;
+    MethodInfo const& counters = getMethodInfo(method);
+    ++counters.forwarded.get();
 }
 
 void
 Counters::rpcFailedToForward(std::string const& method)
 {
     std::scoped_lock const lk(mutex_);
-    MethodInfo& counters = getMethodInfo(method);
-    ++counters.failedForward;
+    MethodInfo const& counters = getMethodInfo(method);
+    ++counters.failedForward.get();
 }
 
 void
 Counters::onTooBusy()
 {
-    ++tooBusyCounter_;
+    ++tooBusyCounter_.get();
 }
 
 void
 Counters::onNotReady()
 {
-    ++notReadyCounter_;
+    ++notReadyCounter_.get();
 }
 
 void
 Counters::onBadSyntax()
 {
-    ++badSyntaxCounter_;
+    ++badSyntaxCounter_.get();
 }
 
 void
 Counters::onUnknownCommand()
 {
-    ++unknownCommandCounter_;
+    ++unknownCommandCounter_.get();
 }
 
 void
 Counters::onInternalError()
 {
-    ++internalErrorCounter_;
+    ++internalErrorCounter_.get();
 }
 
 std::chrono::seconds
@@ -197,22 +197,22 @@ Counters::report() const
 
     for (auto const& [method, info] : methodInfo_) {
         auto counters = boost::json::object{};
-        counters[JS(started)] = std::to_string(info.started.value());
-        counters[JS(finished)] = std::to_string(info.finished.value());
-        counters[JS(errored)] = std::to_string(info.errored.value());
-        counters[JS(failed)] = std::to_string(info.failed.value());
-        counters["forwarded"] = std::to_string(info.forwarded.value());
-        counters["failed_forward"] = std::to_string(info.failedForward.value());
-        counters[JS(duration_us)] = std::to_string(info.duration.value());
+        counters[JS(started)] = std::to_string(info.started.get().value());
+        counters[JS(finished)] = std::to_string(info.finished.get().value());
+        counters[JS(errored)] = std::to_string(info.errored.get().value());
+        counters[JS(failed)] = std::to_string(info.failed.get().value());
+        counters["forwarded"] = std::to_string(info.forwarded.get().value());
+        counters["failed_forward"] = std::to_string(info.failedForward.get().value());
+        counters[JS(duration_us)] = std::to_string(info.duration.get().value());
 
         rpc[method] = std::move(counters);
     }
 
-    obj["too_busy_errors"] = std::to_string(tooBusyCounter_.value());
-    obj["not_ready_errors"] = std::to_string(notReadyCounter_.value());
-    obj["bad_syntax_errors"] = std::to_string(badSyntaxCounter_.value());
-    obj["unknown_command_errors"] = std::to_string(unknownCommandCounter_.value());
-    obj["internal_errors"] = std::to_string(internalErrorCounter_.value());
+    obj["too_busy_errors"] = std::to_string(tooBusyCounter_.get().value());
+    obj["not_ready_errors"] = std::to_string(notReadyCounter_.get().value());
+    obj["bad_syntax_errors"] = std::to_string(badSyntaxCounter_.get().value());
+    obj["unknown_command_errors"] = std::to_string(unknownCommandCounter_.get().value());
+    obj["internal_errors"] = std::to_string(internalErrorCounter_.get().value());
 
     obj["work_queue"] = workQueue_.get().report();
 

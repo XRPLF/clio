@@ -16,6 +16,7 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #include <util/prometheus/Http.h>
 
 namespace util::prometheus {
@@ -46,7 +47,7 @@ handlePrometheusRequest(http::request<http::string_body> const& req, bool const 
         );
     }
 
-    if (!PROMETHEUS().isEnabled()) {
+    if (not PROMETHEUS().isEnabled()) {
         return http::response<http::string_body>(
             http::status::forbidden, req.version(), "Prometheus is disabled in clio config"
         );
