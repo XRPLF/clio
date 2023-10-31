@@ -66,11 +66,11 @@
         // Max number of requests to queue up before rejecting further requests.
         // Defaults to 0, which disables the limit.
         "max_queue_size": 500,
-        //if request contains header with authorization, clio will check if it matches this value's hash
-        //if matches, the request will be considered as admin request
+        // If request contains header with authorization, Clio will check if it matches this value's hash
+        // If matches, the request will be considered as admin request
         "admin_password": "xrp",
-        //if local_admin is true, clio will consider requests come from 127.0.0.1 as admin requests
-        //it's true by default unless admin_password is set,'local_admin':true and 'admin_password' can not be set at the same time
+        // If local_admin is true, Clio will consider requests come from 127.0.0.1 as admin requests
+        // It's true by default unless admin_password is set,'local_admin' : true and 'admin_password' can not be set at the same time
         "local_amdin": false
     },
     // Overrides log level on a per logging channel.

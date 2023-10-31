@@ -302,7 +302,7 @@ make_HttpServer(
 
     // Throw config error when localAdmin is true and admin_password is also set
     if (localAdmin && localAdmin.value() && adminPassword) {
-        LOG(log.error()) << "local_admin is true but admin_password is also set, please only specify only one method "
+        LOG(log.error()) << "local_admin is true but admin_password is also set, please specify only one method "
                             "to authorize admin";
         throw std::logic_error("Admin config error, local_admin and admin_password can not be set together.");
     }
