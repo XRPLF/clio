@@ -34,7 +34,8 @@ to_iso8601(ripple::NetClock::time_point tp)
 
     return date::format(
         "%Y-%Om-%dT%H:%M:%OS%z",
-        date::sys_time<system_clock::duration>(system_clock::time_point{tp.time_since_epoch() + rippleEpochOffset}));
+        date::sys_time<system_clock::duration>(system_clock::time_point{tp.time_since_epoch() + rippleEpochOffset})
+    );
 };
 
 }  // namespace
@@ -47,15 +48,15 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
-        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
 
-    if (input.accountID)
-    {
+    if (input.accountID) {
         auto keylet = keylet::account(*input.accountID);
         if (not sharedPtrBackend_->fetchLedgerObject(keylet.key, lgrInfo.seq, ctx.yield))
             return Error{Status{RippledError::rpcACT_NOT_FOUND}};
@@ -87,10 +88,8 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     response.tradingFee = amm[sfTradingFee];
     response.ammAccount = to_string(accID);
 
-    if (amm.isFieldPresent(sfVoteSlots))
-    {
-        for (auto const& voteEntry : amm.getFieldArray(sfVoteSlots))
-        {
+    if (amm.isFieldPresent(sfVoteSlots)) {
+        for (auto const& voteEntry : amm.getFieldArray(sfVoteSlots)) {
             boost::json::object vote;
             vote[JS(account)] = to_string(voteEntry.getAccountID(sfAccount));
             vote[JS(trading_fee)] = voteEntry[sfTradingFee];
@@ -100,11 +99,9 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         }
     }
 
-    if (amm.isFieldPresent(sfAuctionSlot))
-    {
+    if (amm.isFieldPresent(sfAuctionSlot)) {
         auto const& auctionSlot = static_cast<STObject const&>(amm.peekAtField(sfAuctionSlot));
-        if (auctionSlot.isFieldPresent(sfAccount))
-        {
+        if (auctionSlot.isFieldPresent(sfAccount)) {
             boost::json::object auction;
             auto const timeSlot = ammAuctionTimeSlot(lgrInfo.parentCloseTime.time_since_epoch().count(), auctionSlot);
 
@@ -114,8 +111,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
             auction[JS(account)] = to_string(auctionSlot.getAccountID(sfAccount));
             auction[JS(expiration)] = to_iso8601(NetClock::time_point{NetClock::duration{auctionSlot[sfExpiration]}});
 
-            if (auctionSlot.isFieldPresent(sfAuthAccounts))
-            {
+            if (auctionSlot.isFieldPresent(sfAuthAccounts)) {
                 boost::json::array auth;
                 for (auto const& acct : auctionSlot.getFieldArray(sfAuthAccounts))
                     auth.push_back({
@@ -180,8 +176,7 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
 
-    if (jsonObject.contains(JS(ledger_index)))
-    {
+    if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string())
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
         else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
@@ -206,4 +201,4 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
     return input;
 }
 
-}  // namespace RPC
+}  // namespace rpc
