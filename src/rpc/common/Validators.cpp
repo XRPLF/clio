@@ -196,7 +196,7 @@ CustomValidator SubscribeAccountsValidator =
         return MaybeError{};
     }};
 
-    CustomValidator AssetValidator =
+CustomValidator AssetValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_object())
             return Error{Status{RippledError::rpcISSUE_MALFORMED, std::string(key) + "NotObject"}};
