@@ -187,7 +187,7 @@ LoadBalancer::forwardToRippled(
 {
     std::size_t sourceIdx = 0;
     if (!sources_.empty())
-        sourceIdx = util::Random::uniform(0ul, sources_.size());
+        sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
 
     auto numAttempts = 0u;
 
@@ -233,7 +233,7 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
 {
     std::size_t sourceIdx = 0;
     if (!sources_.empty())
-        sourceIdx = util::Random::uniform(0ul, sources_.size());
+        sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
 
     auto numAttempts = 0;
 
