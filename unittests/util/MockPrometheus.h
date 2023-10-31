@@ -169,7 +169,8 @@ struct WithMockPrometheus : virtual ::testing::Test {
 struct WithPrometheus : virtual ::testing::Test {
     WithPrometheus()
     {
-        PrometheusService::init();
+        boost::json::value const config{{"prometheus", boost::json::object{{"compress_reply", false}}}};
+        PrometheusService::init(Config{config});
     }
 
     ~WithPrometheus() override

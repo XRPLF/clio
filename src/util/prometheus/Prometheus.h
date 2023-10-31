@@ -229,6 +229,14 @@ public:
     isEnabled();
 
     /**
+     * @brief Whether to compress the reply
+     *
+     * @return true if the reply should be compressed
+     */
+    static bool
+    compressReply();
+
+    /**
      * @brief Replace the prometheus object stored in the singleton
      *
      * @note Be careful with this method because there could be hanging references to counters

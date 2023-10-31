@@ -16,8 +16,9 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-
 #include <util/prometheus/Http.h>
+
+#include <util/MockPrometheus.h>
 
 #include <gtest/gtest.h>
 
@@ -98,11 +99,7 @@ INSTANTIATE_TEST_CASE_P(
     PrometheusCheckRequestTests::NameGenerator()
 );
 
-struct PrometheusHandleRequestTests : ::testing::Test {
-    PrometheusHandleRequestTests()
-    {
-        PrometheusService::init();
-    }
+struct PrometheusHandleRequestTests : util::prometheus::WithPrometheus {
     http::request<http::string_body> const req{http::verb::get, "/metrics", 11};
 };
 

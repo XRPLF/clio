@@ -19,6 +19,10 @@
 
 #include <util/prometheus/Prometheus.h>
 
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+
 namespace util::prometheus {
 
 namespace {
@@ -78,6 +82,16 @@ PrometheusImpl::collectMetrics()
 
     for (auto const& [name, family] : metrics_) {
         family.serialize(result);
+    }
+    if (compressReply()) {
+        std::string compressed;
+        boost::iostreams::filtering_stream<boost::iostreams::output> gzip;
+        gzip.push(boost::iostreams::gzip_compressor{
+            boost::iostreams::gzip_params{boost::iostreams::gzip::best_compression}});
+        gzip.push(boost::iostreams::back_inserter(compressed));
+        boost::iostreams::copy(boost::make_iterator_range(result), gzip);
+        boost::iostreams::close(gzip);
+        return compressed;
     }
     return result;
 }
@@ -153,6 +167,12 @@ bool
 PrometheusService::isEnabled()
 {
     return instance().isEnabled();
+}
+
+bool
+PrometheusService::compressReply()
+{
+    return instance().compressReply();
 }
 
 void
