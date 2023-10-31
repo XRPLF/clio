@@ -32,13 +32,11 @@ namespace rpc {
  *
  * This API is not documented in the rippled API documentation.
  */
-class AMMInfoHandler
-{
+class AMMInfoHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    struct Output
-    {
+    struct Output {
         // todo: use better type than json types
         boost::json::value amount1;
         boost::json::value amount2;
@@ -55,8 +53,7 @@ public:
         bool validated = true;
     };
 
-    struct Input
-    {
+    struct Input {
         std::optional<ripple::AccountID> accountID = std::nullopt;
         ripple::Issue issue1 = ripple::noIssue();
         ripple::Issue issue2 = ripple::noIssue();
@@ -95,4 +92,4 @@ private:
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
-}  // namespace RPC
+}  // namespace rpc
