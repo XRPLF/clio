@@ -46,12 +46,3 @@ The sequence in `True` should match `rippled`'s latest ledger.
 
 
  
-### TODO
-- All the Conan dependencies need to be build with this CentOS container so they have an older GLIBC.
-- Add the `rippled` dockerfile for `docker compose`
-
-- Configurable versions for Git/CMake/Conan/GCC (use config file)
-- Script that uploads Conan dependencies to remote for CI step
-- Run in user-defined bridge network (how to point `rippled` to Clio container without IP?)
-- Target for building packages
-- Tag image from release/-b/-rc git tags

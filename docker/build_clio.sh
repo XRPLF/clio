@@ -16,6 +16,7 @@ conan install . \
     --build missing \
     --output-folder ${BUILD_DIR} \
     --options tests=${TESTS} \
+    --options lint=False \
     --settings build_type=${BUILD_CONFIG}
 
 cmake . -B ${BUILD_DIR} \
