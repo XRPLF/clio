@@ -57,7 +57,7 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, 
     std::reference_wrapper<web::DOSGuard> const dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
     boost::beast::flat_buffer buffer_;
-    std::optional<std::string> adminPassword_;
+    std::shared_ptr<detail::AdminVerificationStrategy> const adminVerification_;
 
 public:
     /**
@@ -76,14 +76,14 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        std::optional<std::string> adminPassword
+        std::shared_ptr<detail::AdminVerificationStrategy> const& adminVerification
     )
         : stream_(std::move(socket))
         , ctx_(ctx)
         , tagFactory_(std::cref(tagFactory))
         , dosGuard_(dosGuard)
         , handler_(handler)
-        , adminPassword_(std::move(adminPassword))
+        , adminVerification_(std::move(adminVerification))
     {
     }
 
@@ -136,7 +136,7 @@ public:
             std::make_shared<SslSessionType<HandlerType>>(
                 stream_.release_socket(),
                 ip,
-                adminPassword_,
+                adminVerification_,
                 *ctx_,
                 tagFactory_,
                 dosGuard_,
@@ -148,7 +148,7 @@ public:
         }
 
         std::make_shared<PlainSessionType<HandlerType>>(
-            stream_.release_socket(), ip, adminPassword_, tagFactory_, dosGuard_, handler_, std::move(buffer_)
+            stream_.release_socket(), ip, adminVerification_, tagFactory_, dosGuard_, handler_, std::move(buffer_)
         )
             ->run();
     }
@@ -174,7 +174,7 @@ class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslS
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     std::shared_ptr<HandlerType> handler_;
     tcp::acceptor acceptor_;
-    std::optional<std::string> adminPassword_;
+    std::shared_ptr<detail::AdminVerificationStrategy> adminVerification_;
 
 public:
     /**
@@ -203,7 +203,7 @@ public:
         , dosGuard_(std::ref(dosGuard))
         , handler_(handler)
         , acceptor_(boost::asio::make_strand(ioc))
-        , adminPassword_(std::move(adminPassword))
+        , adminVerification_(detail::make_AdminVerificationStrategy(std::move(adminPassword)))
     {
         boost::beast::error_code ec;
 
@@ -257,7 +257,7 @@ private:
                 ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;
 
             std::make_shared<Detector<PlainSessionType, SslSessionType, HandlerType>>(
-                std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_, adminPassword_
+                std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_, adminVerification_
             )
                 ->run();
         }

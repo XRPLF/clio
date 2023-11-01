@@ -56,7 +56,7 @@ public:
     explicit SslHttpSession(
         tcp::socket&& socket,
         std::string const& ip,
-        std::optional<std::string> adminPassword,
+        std::shared_ptr<detail::AdminVerificationStrategy> const& adminVerification,
         boost::asio::ssl::context& ctx,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
@@ -66,7 +66,7 @@ public:
         : detail::HttpBase<SslHttpSession, HandlerType>(
               ip,
               tagFactory,
-              std::move(adminPassword),
+              adminVerification,
               dosGuard,
               handler,
               std::move(buffer)

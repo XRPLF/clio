@@ -73,7 +73,7 @@ public:
     isAdmin(RequestType const& request, std::string_view) const override;
 };
 
-std::unique_ptr<AdminVerificationStrategy>
+std::shared_ptr<AdminVerificationStrategy>
 make_AdminVerificationStrategy(std::optional<std::string> password);
 
 }  // namespace web::detail

@@ -85,7 +85,7 @@ class HttpBase : public ConnectionBase {
 
     std::shared_ptr<void> res_;
     SendLambda sender_;
-    std::unique_ptr<AdminVerificationStrategy> adminVerification_;
+    std::shared_ptr<AdminVerificationStrategy> adminVerification_;
 
 protected:
     boost::beast::flat_buffer buffer_;
@@ -129,14 +129,14 @@ public:
     HttpBase(
         std::string const& ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::optional<std::string> adminPassword,
+        std::shared_ptr<AdminVerificationStrategy> const& adminVerification,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer buffer
     )
         : ConnectionBase(tagFactory, ip)
         , sender_(*this)
-        , adminVerification_(make_AdminVerificationStrategy(std::move(adminPassword)))
+        , adminVerification_(adminVerification)
         , buffer_(std::move(buffer))
         , dosGuard_(dosGuard)
         , handler_(handler)
