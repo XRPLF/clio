@@ -2,7 +2,7 @@ version: "3"
 
 services:
   clio:
-    image: ${CLIO_IMAGE}
+    image: rippleci/clio:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -20,7 +20,7 @@ services:
         condition: service_healthy
 
   rippled:
-    image: ${RIPPLED_IMAGE}
+    image: rippleci/rippled:2.0.0-b4
     network_mode: host
     volumes:
       - ./rippled_config/devnet/:/opt/ripple/etc
@@ -34,7 +34,7 @@ services:
       start_period: 90s
 
   cassandra:
-    image: ${CASSANDRA_IMAGE}
+    image: cassandra:4.0.4
     container_name: cassandra
     network_mode: host
     healthcheck:

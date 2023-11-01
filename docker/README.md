@@ -1,8 +1,3 @@
-
-Set images by `.env` file or as environment variables. 
-``` bash
-cp env.example .env
-```
 Start with `docker compose up -d`
 
 Edit `docker-compose.yml` with a volume containing your `config.json` for Clio.
