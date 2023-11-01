@@ -83,7 +83,7 @@ public:
         , tagFactory_(std::cref(tagFactory))
         , dosGuard_(dosGuard)
         , handler_(handler)
-        , adminVerification_(std::move(adminVerification))
+        , adminVerification_(adminVerification)
     {
     }
 
