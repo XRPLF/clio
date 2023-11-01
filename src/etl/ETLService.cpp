@@ -131,7 +131,7 @@ ETLService::monitor()
     LOG(log_.debug()) << "Database is populated. "
                       << "Starting monitor loop. sequence = " << nextSequence;
 
-    while (true) {
+    while (not isStopping()) {
         nextSequence = publishNextSequence(nextSequence);
     }
 }
@@ -199,7 +199,7 @@ ETLService::monitorReadOnly()
     cacheLoader_.load(latestSequence);
     latestSequence++;
 
-    while (true) {
+    while (not isStopping()) {
         if (auto rng = backend_->hardFetchLedgerRangeNoThrow(); rng && rng->maxSequence >= latestSequence) {
             ledgerPublisher_.publish(latestSequence, {});
             latestSequence = latestSequence + 1;
