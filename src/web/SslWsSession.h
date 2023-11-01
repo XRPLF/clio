@@ -109,19 +109,19 @@ public:
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<HandlerType> const& handler,
+        std::shared_ptr<HandlerType> handler,
         boost::beast::flat_buffer&& buffer,
         http::request<http::string_body> request,
-        bool isAdmiin
+        bool isAdmin
     )
         : https_(std::move(stream))
         , buffer_(std::move(buffer))
         , ip_(std::move(ip))
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
-        , handler_(handler)
+        , handler_(std::move(handler))
         , req_(std::move(request))
-        , isAdmin_(isAdmiin)
+        , isAdmin_(isAdmin)
     {
     }
 

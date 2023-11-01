@@ -129,17 +129,17 @@ public:
     HttpBase(
         std::string const& ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::shared_ptr<AdminVerificationStrategy> const& adminVerification,
+        std::shared_ptr<AdminVerificationStrategy> adminVerification,
         std::reference_wrapper<web::DOSGuard> dosGuard,
-        std::shared_ptr<HandlerType> const& handler,
+        std::shared_ptr<HandlerType> handler,
         boost::beast::flat_buffer buffer
     )
         : ConnectionBase(tagFactory, ip)
         , sender_(*this)
-        , adminVerification_(adminVerification)
+        , adminVerification_(std::move(adminVerification))
         , buffer_(std::move(buffer))
         , dosGuard_(dosGuard)
-        , handler_(handler)
+        , handler_(std::move(handler))
     {
         LOG(perfLog_.debug()) << tag() << "http session created";
         dosGuard_.get().increment(ip);
