@@ -85,7 +85,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     response.amount1 = toBoostJson(asset1Balance.getJson(JsonOptions::none));
     response.amount2 = toBoostJson(asset2Balance.getJson(JsonOptions::none));
     response.lpToken = toBoostJson(lptAMMBalance.getJson(JsonOptions::none));
-    response.tradingFee = amm[sfTradingFee];
+    response.tradingFee = to_string(amm[sfTradingFee]);
     response.ammAccount = to_string(accID);
 
     if (amm.isFieldPresent(sfVoteSlots)) {
@@ -113,10 +113,11 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
 
             if (auctionSlot.isFieldPresent(sfAuthAccounts)) {
                 boost::json::array auth;
-                for (auto const& acct : auctionSlot.getFieldArray(sfAuthAccounts))
+                for (auto const& acct : auctionSlot.getFieldArray(sfAuthAccounts)) {
                     auth.push_back({
                         {JS(account), to_string(acct.getAccountID(sfAccount))},
                     });
+                }
 
                 auction[JS(auth_accounts)] = std::move(auth);
             }
@@ -125,13 +126,14 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         }
     }
 
-    if (!isXRP(asset1Balance))
+    if (!isXRP(asset1Balance)) {
         response.asset1Frozen =
             isFrozen(*sharedPtrBackend_, lgrInfo.seq, accID, input.issue1.currency, input.issue1.account, ctx.yield);
-
-    if (!isXRP(asset2Balance))
+    }
+    if (!isXRP(asset2Balance)) {
         response.asset2Frozen =
             isFrozen(*sharedPtrBackend_, lgrInfo.seq, accID, input.issue2.currency, input.issue2.account, ctx.yield);
+    }
 
     response.ammID = to_string(ammKeylet.key);
     return response;
@@ -177,10 +179,11 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
         input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
 
     if (jsonObject.contains(JS(ledger_index))) {
-        if (!jsonObject.at(JS(ledger_index)).is_string())
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
-        else if (jsonObject.at(JS(ledger_index)).as_string() != "validated")
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
             input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+        }
     }
 
     auto getIssue = [](boost::json::value const& request) {

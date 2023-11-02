@@ -905,9 +905,9 @@ xrpLiquid(
 
     std::uint32_t const ownerCount = sle.getFieldU32(ripple::sfOwnerCount);
     auto const reserve = backend.fetchFees(sequence, yield)->accountReserve(ownerCount);
-    auto const balance = sle.getFieldAmount(ripple::sfBalance);
+    auto balance = sle.getFieldAmount(ripple::sfBalance);
 
-    ripple::STAmount amount = [&]() {
+    ripple::STAmount const amount = [&]() {
         // AMM doesn't require the reserves
         if (sle.getFlags() & ripple::lsfAMMNode)
             return balance;
