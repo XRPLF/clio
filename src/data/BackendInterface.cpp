@@ -200,7 +200,7 @@ BackendInterface::fetchBookOffers(
     for (size_t i = 0; i < keys.size() && i < limit; ++i) {
         LOG(gLog.trace()) << "Key = " << ripple::strHex(keys[i]) << " blob = " << ripple::strHex(objs[i])
                           << " ledgerSequence = " << ledgerSequence;
-        assert(objs[i].size());
+        assert(!objs[i].empty());
         page.offers.push_back({keys[i], objs[i]});
     }
     auto end = std::chrono::system_clock::now();
