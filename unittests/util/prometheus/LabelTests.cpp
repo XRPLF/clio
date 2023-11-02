@@ -16,14 +16,39 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include <util/prometheus/Prometheus.h>
+
+#include <util/prometheus/Label.h>
 
 #include <gtest/gtest.h>
 
-int
-main(int argc, char** argv)
+using namespace util::prometheus;
+
+TEST(LabelTests, operatorLower)
 {
-    PrometheusService::init();
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    EXPECT_LT(Label("aaa", "b"), Label("bbb", "a"));
+    EXPECT_LT(Label("name", "a"), Label("name", "b"));
+}
+
+TEST(LabelTests, operatorEquals)
+{
+    EXPECT_EQ(Label("aaa", "b"), Label("aaa", "b"));
+    EXPECT_NE(Label("aaa", "b"), Label("aaa", "c"));
+    EXPECT_NE(Label("aaa", "b"), Label("bbb", "b"));
+}
+
+TEST(LabelTests, serialize)
+{
+    EXPECT_EQ(Label("name", "value").serialize(), R"(name="value")");
+    EXPECT_EQ(Label("name", "value\n").serialize(), R"(name="value\n")");
+    EXPECT_EQ(Label("name", "value\\").serialize(), R"(name="value\\")");
+    EXPECT_EQ(Label("name", "value\"").serialize(), R"(name="value\"")");
+}
+
+TEST(LabelsTest, serialize)
+{
+    EXPECT_EQ(Labels().serialize(), "");
+    EXPECT_EQ(Labels({Label("name", "value")}).serialize(), R"({name="value"})");
+    EXPECT_EQ(
+        Labels({Label("name", "value"), Label("name2", "value2")}).serialize(), R"({name="value",name2="value2"})"
+    );
 }

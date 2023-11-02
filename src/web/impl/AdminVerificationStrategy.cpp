@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include <fmt/format.h>
 #include <web/impl/AdminVerificationStrategy.h>
 
 #include <ripple/protocol/digest.h>
@@ -49,9 +50,16 @@ PasswordAdminVerificationStrategy::isAdmin(RequestType const& request, std::stri
         // No Authorization header
         return false;
     }
-    std::string userAuth(it->value());
-    std::transform(userAuth.begin(), userAuth.end(), userAuth.begin(), ::toupper);
-    return passwordSha256_ == userAuth;
+    auto userAuth = it->value();
+    if (!userAuth.starts_with(passwordPrefix)) {
+        // Invalid Authorization header
+        return false;
+    }
+    userAuth.remove_prefix(passwordPrefix.size());
+    std::string userPasswordHash;
+    userPasswordHash.reserve(userAuth.size());
+    std::transform(userAuth.begin(), userAuth.end(), std::back_inserter(userPasswordHash), ::toupper);
+    return passwordSha256_ == userPasswordHash;
 }
 
 std::shared_ptr<AdminVerificationStrategy>

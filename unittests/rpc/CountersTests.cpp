@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <util/Fixtures.h>
+#include <util/MockPrometheus.h>
 
 #include <rpc/Counters.h>
 #include <rpc/JS.h>
@@ -27,8 +28,11 @@
 
 using namespace rpc;
 
-class RPCCountersTest : public NoLoggerFixture {
-protected:
+using util::prometheus::CounterInt;
+using util::prometheus::WithMockPrometheus;
+using util::prometheus::WithPrometheus;
+
+struct RPCCountersTest : WithPrometheus, NoLoggerFixture {
     WorkQueue queue{4u, 1024u};  // todo: mock instead
     Counters counters{queue};
 };
@@ -94,4 +98,88 @@ TEST_F(RPCCountersTest, CheckThatCountersAddUp)
     EXPECT_STREQ(report.at("internal_errors").as_string().c_str(), "512");
 
     EXPECT_EQ(report.at("work_queue"), queue.report());  // Counters report includes queue report
+}
+
+struct RPCCountersMockPrometheusTests : WithMockPrometheus {
+    WorkQueue queue{4u, 1024u};  // todo: mock instead
+    Counters counters{queue};
+};
+
+TEST_F(RPCCountersMockPrometheusTests, rpcFailed)
+{
+    auto& startedMock = makeMock<CounterInt>("rpc_method_total_number", "{method=\"test\",status=\"started\"}");
+    auto& failedMock = makeMock<CounterInt>("rpc_method_total_number", "{method=\"test\",status=\"failed\"}");
+    EXPECT_CALL(startedMock, add(1));
+    EXPECT_CALL(failedMock, add(1));
+    counters.rpcFailed("test");
+}
+
+TEST_F(RPCCountersMockPrometheusTests, rpcErrored)
+{
+    auto& startedMock = makeMock<CounterInt>("rpc_method_total_number", "{method=\"test\",status=\"started\"}");
+    auto& erroredMock = makeMock<CounterInt>("rpc_method_total_number", "{method=\"test\",status=\"errored\"}");
+    EXPECT_CALL(startedMock, add(1));
+    EXPECT_CALL(erroredMock, add(1));
+    counters.rpcErrored("test");
+}
+
+TEST_F(RPCCountersMockPrometheusTests, rpcComplete)
+{
+    auto& startedMock = makeMock<CounterInt>("rpc_method_total_number", "{method=\"test\",status=\"started\"}");
+    auto& finishedMock = makeMock<CounterInt>("rpc_method_total_number", "{method=\"test\",status=\"finished\"}");
+    auto& durationMock = makeMock<CounterInt>("rpc_method_duration_us", "{method=\"test\"}");
+    EXPECT_CALL(startedMock, add(1));
+    EXPECT_CALL(finishedMock, add(1));
+    EXPECT_CALL(durationMock, add(123));
+    counters.rpcComplete("test", std::chrono::microseconds(123));
+}
+
+TEST_F(RPCCountersMockPrometheusTests, rpcForwarded)
+{
+    auto& forwardedMock = makeMock<CounterInt>("rpc_method_total_number", "{method=\"test\",status=\"forwarded\"}");
+    EXPECT_CALL(forwardedMock, add(1));
+    counters.rpcForwarded("test");
+}
+
+TEST_F(RPCCountersMockPrometheusTests, rpcFailedToForwarded)
+{
+    auto& failedForwadMock =
+        makeMock<CounterInt>("rpc_method_total_number", "{method=\"test\",status=\"failed_forward\"}");
+    EXPECT_CALL(failedForwadMock, add(1));
+    counters.rpcFailedToForward("test");
+}
+
+TEST_F(RPCCountersMockPrometheusTests, onTooBusy)
+{
+    auto& tooBusyMock = makeMock<CounterInt>("rpc_error_total_number", "{error_type=\"too_busy\"}");
+    EXPECT_CALL(tooBusyMock, add(1));
+    counters.onTooBusy();
+}
+
+TEST_F(RPCCountersMockPrometheusTests, onNotReady)
+{
+    auto& notReadyMock = makeMock<CounterInt>("rpc_error_total_number", "{error_type=\"not_ready\"}");
+    EXPECT_CALL(notReadyMock, add(1));
+    counters.onNotReady();
+}
+
+TEST_F(RPCCountersMockPrometheusTests, onBadSyntax)
+{
+    auto& badSyntaxMock = makeMock<CounterInt>("rpc_error_total_number", "{error_type=\"bad_syntax\"}");
+    EXPECT_CALL(badSyntaxMock, add(1));
+    counters.onBadSyntax();
+}
+
+TEST_F(RPCCountersMockPrometheusTests, onUnknownCommand)
+{
+    auto& unknownCommandMock = makeMock<CounterInt>("rpc_error_total_number", "{error_type=\"unknown_command\"}");
+    EXPECT_CALL(unknownCommandMock, add(1));
+    counters.onUnknownCommand();
+}
+
+TEST_F(RPCCountersMockPrometheusTests, onInternalError)
+{
+    auto& internalErrorMock = makeMock<CounterInt>("rpc_error_total_number", "{error_type=\"internal_error\"}");
+    EXPECT_CALL(internalErrorMock, add(1));
+    counters.onInternalError();
 }

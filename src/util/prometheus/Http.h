@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,41 +17,22 @@
 */
 //==============================================================================
 
-#include <rpc/WorkQueue.h>
+#pragma once
 
-namespace rpc {
+#include <util/prometheus/Prometheus.h>
 
-WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
-    : queued_{PrometheusService::counterInt(
-          "work_queue_queued_total_number",
-          util::prometheus::Labels(),
-          "The total number of tasks queued for processing"
-      )}
-    , durationUs_{PrometheusService::counterInt(
-          "work_queue_cumulitive_tasks_duration_us",
-          util::prometheus::Labels(),
-          "The total number of microseconds tasks were waiting to be executed"
-      )}
-    , curSize_{PrometheusService::gaugeInt(
-          "work_queue_current_size",
-          util::prometheus::Labels(),
-          "The current number of tasks in the queue"
-      )}
-    , ioc_{numWorkers}
-{
-    if (maxSize != 0)
-        maxSize_ = maxSize;
-}
+#include <boost/beast/http.hpp>
 
-WorkQueue::~WorkQueue()
-{
-    join();
-}
+namespace util::prometheus {
 
-void
-WorkQueue::join()
-{
-    ioc_.join();
-}
+/**
+ * @brief Handles a prometheus request
+ *
+ * @param req The http request from primetheus (required only to reply with the same http version)
+ * @param isAdmin Whether the request is from an admin
+ * @return nullopt if the request shouldn't be handled, respoce for Prometheus otherwise
+ */
+std::optional<boost::beast::http::response<boost::beast::http::string_body>>
+handlePrometheusRequest(boost::beast::http::request<boost::beast::http::string_body> const& req, bool isAdmin);
 
-}  // namespace rpc
+}  // namespace util::prometheus

@@ -21,6 +21,7 @@
 #include <rpc/common/AnyHandler.h>
 #include <rpc/handlers/Subscribe.h>
 #include <util/Fixtures.h>
+#include <util/MockPrometheus.h>
 #include <util/MockWsBase.h>
 #include <util/TestObject.h>
 
@@ -43,7 +44,7 @@ constexpr static auto PAYS20XRPGETS10USDBOOKDIR = "7B1767D41DBCE79D9585CF9D0262A
 constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
-class RPCSubscribeHandlerTest : public HandlerBaseTest {
+class RPCSubscribeHandlerTest : public util::prometheus::WithPrometheus, public HandlerBaseTest {
 protected:
     void
     SetUp() override

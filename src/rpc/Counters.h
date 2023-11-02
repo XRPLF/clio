@@ -20,6 +20,7 @@
 #pragma once
 
 #include <rpc/WorkQueue.h>
+#include <util/prometheus/Prometheus.h>
 
 #include <boost/json.hpp>
 
@@ -34,28 +35,34 @@ namespace rpc {
  * @brief Holds information about successful, failed, forwarded, etc. RPC handler calls.
  */
 class Counters {
+    using CounterType = std::reference_wrapper<util::prometheus::CounterInt>;
     /**
      * @brief All counters the system keeps track of for each RPC method.
      */
     struct MethodInfo {
-        std::uint64_t started = 0u;
-        std::uint64_t finished = 0u;
-        std::uint64_t failed = 0u;
-        std::uint64_t errored = 0u;
-        std::uint64_t forwarded = 0u;
-        std::uint64_t failedForward = 0u;
-        std::uint64_t duration = 0u;
+        MethodInfo(std::string const& method);
+
+        CounterType started;
+        CounterType finished;
+        CounterType failed;
+        CounterType errored;
+        CounterType forwarded;
+        CounterType failedForward;
+        CounterType duration;
     };
+
+    MethodInfo&
+    getMethodInfo(std::string const& method);
 
     mutable std::mutex mutex_;
     std::unordered_map<std::string, MethodInfo> methodInfo_;
 
     // counters that don't carry RPC method information
-    std::atomic_uint64_t tooBusyCounter_;
-    std::atomic_uint64_t notReadyCounter_;
-    std::atomic_uint64_t badSyntaxCounter_;
-    std::atomic_uint64_t unknownCommandCounter_;
-    std::atomic_uint64_t internalErrorCounter_;
+    CounterType tooBusyCounter_;
+    CounterType notReadyCounter_;
+    CounterType badSyntaxCounter_;
+    CounterType unknownCommandCounter_;
+    CounterType internalErrorCounter_;
 
     std::reference_wrapper<WorkQueue const> workQueue_;
     std::chrono::time_point<std::chrono::system_clock> startupTime_;
@@ -66,7 +73,7 @@ public:
      *
      * @param wq The work queue to operate on
      */
-    Counters(WorkQueue const& wq) : workQueue_(std::cref(wq)), startupTime_{std::chrono::system_clock::now()} {};
+    Counters(WorkQueue const& wq);
 
     /**
      * @brief A factory function that creates a new counters instance.
