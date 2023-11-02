@@ -20,7 +20,6 @@
 #pragma once
 
 #include <data/BackendInterface.h>
-#include <rpc/RPC.h>
 #include <rpc/RPCHelpers.h>
 
 namespace rpc {
