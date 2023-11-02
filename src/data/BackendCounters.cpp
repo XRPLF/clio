@@ -161,7 +161,7 @@ BackendCounters::AsyncOperationCounters::registerStarted(std::uint64_t const cou
 void
 BackendCounters::AsyncOperationCounters::registerFinished(std::uint64_t const count)
 {
-    assert(pendingCounter_.value() >= count);
+    assert(pendingCounter_.get().value() >= static_cast<std::int64_t>(count));
     pendingCounter_.get() -= count;
     completedCounter_.get() += count;
 }
@@ -175,7 +175,7 @@ BackendCounters::AsyncOperationCounters::registerRetry(std::uint64_t count)
 void
 BackendCounters::AsyncOperationCounters::registerError(std::uint64_t count)
 {
-    assert(pendingCounter_.value() >= count);
+    assert(pendingCounter_.get().value() >= static_cast<std::int64_t>(count));
     pendingCounter_.get() -= count;
     errorCounter_.get() += count;
 }
