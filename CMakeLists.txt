@@ -126,6 +126,7 @@ target_sources (clio PRIVATE
   src/rpc/handlers/LedgerData.cpp
   src/rpc/handlers/LedgerEntry.cpp
   src/rpc/handlers/LedgerRange.cpp
+  src/rpc/handlers/NFTsByIssuer.cpp
   src/rpc/handlers/NFTBuyOffers.cpp
   src/rpc/handlers/NFTHistory.cpp
   src/rpc/handlers/NFTInfo.cpp
@@ -141,6 +142,7 @@ target_sources (clio PRIVATE
   src/util/prometheus/Label.cpp
   src/util/prometheus/Metrics.cpp
   src/util/prometheus/Prometheus.cpp
+  src/util/Random.cpp
   src/util/Taggable.cpp)
 
 # Clio server
@@ -213,6 +215,7 @@ if (tests)
     unittests/rpc/handlers/RandomTests.cpp
     unittests/rpc/handlers/NFTInfoTests.cpp
     unittests/rpc/handlers/NFTBuyOffersTests.cpp
+    unittests/rpc/handlers/NFTsByIssuerTest.cpp
     unittests/rpc/handlers/NFTSellOffersTests.cpp
     unittests/rpc/handlers/NFTHistoryTests.cpp
     unittests/rpc/handlers/SubscribeTests.cpp

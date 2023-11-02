@@ -24,6 +24,7 @@
 #include <etl/Source.h>
 #include <rpc/RPCHelpers.h>
 #include <util/Profiler.h>
+#include <util/Random.h>
 #include <util/log/Logger.h>
 
 #include <ripple/beast/net/IPEndpoint.h>
@@ -184,8 +185,10 @@ LoadBalancer::forwardToRippled(
     boost::asio::yield_context yield
 ) const
 {
-    srand(static_cast<unsigned>(time(0)));
-    auto sourceIdx = rand() % sources_.size();
+    std::size_t sourceIdx = 0;
+    if (!sources_.empty())
+        sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
+
     auto numAttempts = 0u;
 
     while (numAttempts < sources_.size()) {
@@ -228,8 +231,10 @@ template <class Func>
 bool
 LoadBalancer::execute(Func f, uint32_t ledgerSequence)
 {
-    srand(static_cast<unsigned>(time(0)));
-    auto sourceIdx = rand() % sources_.size();
+    std::size_t sourceIdx = 0;
+    if (!sources_.empty())
+        sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
+
     auto numAttempts = 0;
 
     while (true) {

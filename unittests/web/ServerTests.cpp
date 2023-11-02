@@ -22,6 +22,7 @@
 #include <util/TestHttpSyncClient.h>
 #include <web/Server.h>
 
+#include <ripple/protocol/digest.h>
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
@@ -399,6 +400,39 @@ static auto constexpr JSONServerConfigWithAdminPassword = R"JSON(
     }
 )JSON";
 
+static auto constexpr JSONServerConfigWithLocalAdmin = R"JSON(
+    {
+        "server":{
+            "ip": "0.0.0.0",
+            "port": 8888,
+            "local_admin": true
+        }
+    }
+)JSON";
+
+static auto constexpr JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse = R"JSON(
+    {
+        "server":{
+            "ip": "0.0.0.0",
+            "port": 8888,
+            "admin_password": "secret",
+            "local_admin": false
+        }
+    }
+)JSON";
+
+static auto constexpr JSONServerConfigWithNoSpecifiedAdmin = R"JSON(
+    {
+        "server":{
+            "ip": "0.0.0.0",
+            "port": 8888
+        }
+    }
+)JSON";
+
+// get this value from online sha256 generator
+static auto constexpr SecertSha256 = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
+
 class AdminCheckExecutor {
 public:
     void
@@ -415,6 +449,7 @@ public:
 };
 
 struct WebServerAdminTestParams {
+    std::string config;
     std::vector<WebHeader> headers;
     std::string expectedResponse;
 };
@@ -424,7 +459,7 @@ class WebServerAdminTest : public WebServerTest, public ::testing::WithParamInte
 TEST_P(WebServerAdminTest, WsAdminCheck)
 {
     auto e = std::make_shared<AdminCheckExecutor>();
-    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    Config const serverConfig{boost::json::parse(GetParam().config)};
     auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", "8888", GetParam().headers);
@@ -437,7 +472,7 @@ TEST_P(WebServerAdminTest, WsAdminCheck)
 TEST_P(WebServerAdminTest, HttpAdminCheck)
 {
     auto e = std::make_shared<AdminCheckExecutor>();
-    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    Config const serverConfig{boost::json::parse(GetParam().config)};
     auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
     std::string const request = "Why hello";
     auto const res = HttpSyncClient::syncPost("localhost", "8888", request, GetParam().headers);
@@ -448,20 +483,81 @@ INSTANTIATE_TEST_CASE_P(
     WebServerAdminTestsSuit,
     WebServerAdminTest,
     ::testing::Values(
-        WebServerAdminTestParams{.headers = {}, .expectedResponse = "user"},
-        WebServerAdminTestParams{.headers = {WebHeader(http::field::authorization, "")}, .expectedResponse = "user"},
-        WebServerAdminTestParams{.headers = {WebHeader(http::field::authorization, "s")}, .expectedResponse = "user"},
         WebServerAdminTestParams{
-            .headers = {WebHeader(http::field::authorization, "secret")},
+            .config = JSONServerConfigWithAdminPassword,
+            .headers = {},
             .expectedResponse = "user"},
         WebServerAdminTestParams{
-            .headers = {WebHeader(http::field::authorization, "Password secret")},
+            .config = JSONServerConfigWithAdminPassword,
+            .headers = {WebHeader(http::field::authorization, "")},
+            .expectedResponse = "user"},
+        WebServerAdminTestParams{
+            .config = JSONServerConfigWithAdminPassword,
+            .headers = {WebHeader(http::field::authorization, "s")},
+            .expectedResponse = "user"},
+        WebServerAdminTestParams{
+            .config = JSONServerConfigWithAdminPassword,
+            .headers = {WebHeader(http::field::authorization, SecertSha256)},
+            .expectedResponse = "user"},
+        WebServerAdminTestParams{
+            .config = JSONServerConfigWithAdminPassword,
+            .headers = {WebHeader(http::field::authorization, fmt::format("Password {}", SecertSha256))},
             .expectedResponse = "admin"},
         WebServerAdminTestParams{
-            .headers = {WebHeader(http::field::authentication_info, "Password secret")},
-            .expectedResponse = "user"}
+            .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse,
+            .headers = {WebHeader(http::field::authorization, SecertSha256)},
+            .expectedResponse = "user"},
+        WebServerAdminTestParams{
+            .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse,
+            .headers = {WebHeader(http::field::authorization, fmt::format("Password {}", SecertSha256))},
+            .expectedResponse = "admin"},
+        WebServerAdminTestParams{
+            .config = JSONServerConfigWithAdminPassword,
+            .headers = {WebHeader(http::field::authentication_info, fmt::format("Password {}", SecertSha256))},
+            .expectedResponse = "user"},
+        WebServerAdminTestParams{.config = JSONServerConfigWithLocalAdmin, .headers = {}, .expectedResponse = "admin"},
+        WebServerAdminTestParams{
+            .config = JSONServerConfigWithNoSpecifiedAdmin,
+            .headers = {},
+            .expectedResponse = "admin"}
+
     )
 );
+
+TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminSet)
+{
+    static auto constexpr JSONServerConfigWithBothAdminPasswordAndLocalAdmin = R"JSON(
+        {
+            "server":{
+                "ip": "0.0.0.0",
+                "port": 8888,
+                "admin_password": "secret",
+                "local_admin": true
+            }
+        }
+    )JSON";
+
+    auto e = std::make_shared<AdminCheckExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithBothAdminPasswordAndLocalAdmin)};
+    EXPECT_THROW(web::make_HttpServer(serverConfig, ctx, std::nullopt, dosGuardOverload, e), std::logic_error);
+}
+
+TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
+{
+    static auto constexpr JSONServerConfigWithNoAdminPasswordAndLocalAdminFalse = R"JSON(
+        {
+            "server":{
+                "ip": "0.0.0.0",
+                "port": 8888,
+                "local_admin": false
+            }
+        }
+    )JSON";
+
+    auto e = std::make_shared<AdminCheckExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithNoAdminPasswordAndLocalAdminFalse)};
+    EXPECT_THROW(web::make_HttpServer(serverConfig, ctx, std::nullopt, dosGuardOverload, e), std::logic_error);
+}
 
 struct WebServerPrometheusTest : util::prometheus::WithPrometheus, WebServerTest {};
 

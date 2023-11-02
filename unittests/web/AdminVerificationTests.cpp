@@ -44,6 +44,8 @@ TEST_F(IPAdminVerificationStrategyTest, IsAdminOnlyForIP_127_0_0_1)
 class PasswordAdminVerificationStrategyTest : public NoLoggerFixture {
 protected:
     const std::string password_ = "secret";
+    const std::string passwordHash_ = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
+
     web::detail::PasswordAdminVerificationStrategy strat_{password_};
 
     static http::request<http::string_body>
@@ -57,8 +59,8 @@ protected:
 
 TEST_F(PasswordAdminVerificationStrategyTest, IsAdminReturnsTrueOnlyForValidPasswordInAuthHeader)
 {
-    EXPECT_TRUE(strat_.isAdmin(makeRequest(password_), ""));
-    EXPECT_TRUE(strat_.isAdmin(makeRequest(password_), "123"));
+    EXPECT_TRUE(strat_.isAdmin(makeRequest(passwordHash_), ""));
+    EXPECT_TRUE(strat_.isAdmin(makeRequest(passwordHash_), "123"));
 
     // Wrong password
     EXPECT_FALSE(strat_.isAdmin(makeRequest("SECRET"), ""));
@@ -70,7 +72,7 @@ TEST_F(PasswordAdminVerificationStrategyTest, IsAdminReturnsTrueOnlyForValidPass
     EXPECT_FALSE(strat_.isAdmin(makeRequest("a"), "127.0.0.1"));
 
     // Wrong header
-    EXPECT_FALSE(strat_.isAdmin(makeRequest(password_, http::field::authentication_info), ""));
+    EXPECT_FALSE(strat_.isAdmin(makeRequest(passwordHash_, http::field::authentication_info), ""));
 }
 
 struct MakeAdminVerificationStrategyTestParams {

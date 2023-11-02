@@ -20,6 +20,8 @@
 #include <fmt/format.h>
 #include <web/impl/AdminVerificationStrategy.h>
 
+#include <ripple/protocol/digest.h>
+
 namespace web::detail {
 
 bool
@@ -28,9 +30,17 @@ IPAdminVerificationStrategy::isAdmin(RequestType const&, std::string_view ip) co
     return ip == "127.0.0.1";
 }
 
-PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string password)
-    : password_(fmt::format("Password {}", std::move(password)))
+PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string const& password)
 {
+    ripple::sha256_hasher hasher;
+    hasher(password.data(), password.size());
+    auto const d = static_cast<ripple::sha256_hasher::result_type>(hasher);
+    ripple::uint256 sha256;
+    std::memcpy(sha256.data(), d.data(), d.size());
+    auto sha256Str = ripple::to_string(sha256);
+    // make sure it's uppercase
+    std::transform(sha256Str.begin(), sha256Str.end(), sha256Str.begin(), ::toupper);
+    passwordSha256_ = fmt::format("Password {}", std::move(sha256Str));
 }
 
 bool
@@ -41,17 +51,18 @@ PasswordAdminVerificationStrategy::isAdmin(RequestType const& request, std::stri
         // No Authorization header
         return false;
     }
-
-    return it->value() == password_;
+    std::string userAuth(it->value());
+    std::transform(userAuth.begin(), userAuth.end(), userAuth.begin(), ::toupper);
+    return passwordSha256_ == userAuth;
 }
 
-std::unique_ptr<AdminVerificationStrategy>
+std::shared_ptr<AdminVerificationStrategy>
 make_AdminVerificationStrategy(std::optional<std::string> password)
 {
     if (password.has_value()) {
-        return std::make_unique<PasswordAdminVerificationStrategy>(std::move(*password));
+        return std::make_shared<PasswordAdminVerificationStrategy>(std::move(*password));
     }
-    return std::make_unique<IPAdminVerificationStrategy>();
+    return std::make_shared<IPAdminVerificationStrategy>();
 }
 
 }  // namespace web::detail

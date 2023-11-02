@@ -108,6 +108,18 @@ struct MockBackend : public BackendInterface {
     );
 
     MOCK_METHOD(
+        NFTsAndCursor,
+        fetchNFTsByIssuer,
+        (ripple::AccountID const& issuer,
+         std::optional<std::uint32_t> const& taxon,
+         std::uint32_t const ledgerSequence,
+         std::uint32_t const limit,
+         std::optional<ripple::uint256> const& cursorIn,
+         boost::asio::yield_context yield),
+        (const, override)
+    );
+
+    MOCK_METHOD(
         std::vector<Blob>,
         doFetchLedgerObjects,
         (std::vector<ripple::uint256> const&, std::uint32_t const, boost::asio::yield_context),

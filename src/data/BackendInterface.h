@@ -291,6 +291,28 @@ public:
     ) const = 0;
 
     /**
+     * @brief Fetches all NFTs issued by a given address.
+     *
+     * @param issuer AccountID of issuer you wish you query.
+     * @param taxon Optional taxon of NFTs by which you wish to filter.
+     * @param limit Paging limit.
+     * @param cursorIn Optional cursor to allow us to pick up from where we
+     * last left off.
+     * @param yield Currently executing coroutine.
+     * @return std::vector<NFT> of NFTs issued by this account, or
+     * this issuer/taxon combination if taxon is passed and an optional marker
+     */
+    virtual NFTsAndCursor
+    fetchNFTsByIssuer(
+        ripple::AccountID const& issuer,
+        std::optional<std::uint32_t> const& taxon,
+        std::uint32_t ledgerSequence,
+        std::uint32_t limit,
+        std::optional<ripple::uint256> const& cursorIn,
+        boost::asio::yield_context yield
+    ) const = 0;
+
+    /**
      * @brief Fetches a specific ledger object.
      *
      * Currently the real fetch happens in doFetchLedgerObject and fetchLedgerObject attempts to fetch from Cache first
