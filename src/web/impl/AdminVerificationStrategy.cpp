@@ -54,13 +54,13 @@ PasswordAdminVerificationStrategy::isAdmin(RequestType const& request, std::stri
     return passwordSha256_ == userAuth;
 }
 
-std::unique_ptr<AdminVerificationStrategy>
+std::shared_ptr<AdminVerificationStrategy>
 make_AdminVerificationStrategy(std::optional<std::string> password)
 {
     if (password.has_value()) {
-        return std::make_unique<PasswordAdminVerificationStrategy>(std::move(*password));
+        return std::make_shared<PasswordAdminVerificationStrategy>(std::move(*password));
     }
-    return std::make_unique<IPAdminVerificationStrategy>();
+    return std::make_shared<IPAdminVerificationStrategy>();
 }
 
 }  // namespace web::detail

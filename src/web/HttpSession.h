@@ -55,7 +55,7 @@ public:
     explicit HttpSession(
         tcp::socket&& socket,
         std::string const& ip,
-        std::optional<std::string> adminPassword,
+        std::shared_ptr<detail::AdminVerificationStrategy> const& adminVerification,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
@@ -64,7 +64,7 @@ public:
         : detail::HttpBase<HttpSession, HandlerType>(
               ip,
               tagFactory,
-              std::move(adminPassword),
+              adminVerification,
               dosGuard,
               handler,
               std::move(buffer)
