@@ -60,6 +60,8 @@ private:
     std::string passwordSha256_;
 
 public:
+    static constexpr std::string_view passwordPrefix = "Password ";
+
     PasswordAdminVerificationStrategy(std::string const& password);
 
     /**

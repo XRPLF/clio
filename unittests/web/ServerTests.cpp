@@ -501,7 +501,10 @@ INSTANTIATE_TEST_CASE_P(
             .expectedResponse = "user"},
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
-            .headers = {WebHeader(http::field::authorization, fmt::format("Password {}", SecertSha256))},
+            .headers = {WebHeader(
+                http::field::authorization,
+                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+            )},
             .expectedResponse = "admin"},
         WebServerAdminTestParams{
             .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse,
@@ -509,11 +512,17 @@ INSTANTIATE_TEST_CASE_P(
             .expectedResponse = "user"},
         WebServerAdminTestParams{
             .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse,
-            .headers = {WebHeader(http::field::authorization, fmt::format("Password {}", SecertSha256))},
+            .headers = {WebHeader(
+                http::field::authorization,
+                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+            )},
             .expectedResponse = "admin"},
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
-            .headers = {WebHeader(http::field::authentication_info, fmt::format("Password {}", SecertSha256))},
+            .headers = {WebHeader(
+                http::field::authentication_info,
+                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+            )},
             .expectedResponse = "user"},
         WebServerAdminTestParams{.config = JSONServerConfigWithLocalAdmin, .headers = {}, .expectedResponse = "admin"},
         WebServerAdminTestParams{
@@ -588,7 +597,14 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
     PrometheusService::init(serverConfig);
     auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
     auto const res = HttpSyncClient::syncGet(
-        "localhost", "8888", "", "/metrics", {WebHeader(http::field::authorization, "Password secret")}
+        "localhost",
+        "8888",
+        "",
+        "/metrics",
+        {WebHeader(
+            http::field::authorization,
+            fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+        )}
     );
     EXPECT_EQ(res, "Prometheus is disabled in clio config");
 }
@@ -601,7 +617,14 @@ TEST_F(WebServerPrometheusTest, validResponse)
     Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
     auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
     auto const res = HttpSyncClient::syncGet(
-        "localhost", "8888", "", "/metrics", {WebHeader(http::field::authorization, "Password secret")}
+        "localhost",
+        "8888",
+        "",
+        "/metrics",
+        {WebHeader(
+            http::field::authorization,
+            fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+        )}
     );
     EXPECT_EQ(res, "# TYPE test_counter counter\ntest_counter 1\n\n");
 }

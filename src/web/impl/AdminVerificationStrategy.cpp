@@ -37,10 +37,9 @@ PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string
     auto const d = static_cast<ripple::sha256_hasher::result_type>(hasher);
     ripple::uint256 sha256;
     std::memcpy(sha256.data(), d.data(), d.size());
-    auto sha256Str = ripple::to_string(sha256);
+    passwordSha256_ = ripple::to_string(sha256);
     // make sure it's uppercase
-    std::transform(sha256Str.begin(), sha256Str.end(), sha256Str.begin(), ::toupper);
-    passwordSha256_ = fmt::format("Password {}", std::move(sha256Str));
+    std::transform(passwordSha256_.begin(), passwordSha256_.end(), passwordSha256_.begin(), ::toupper);
 }
 
 bool
@@ -51,9 +50,16 @@ PasswordAdminVerificationStrategy::isAdmin(RequestType const& request, std::stri
         // No Authorization header
         return false;
     }
-    std::string userAuth(it->value());
-    std::transform(userAuth.begin(), userAuth.end(), userAuth.begin(), ::toupper);
-    return passwordSha256_ == userAuth;
+    auto userAuth = it->value();
+    if (!userAuth.starts_with(passwordPrefix)) {
+        // Invalid Authorization header
+        return false;
+    }
+    userAuth.remove_prefix(passwordPrefix.size());
+    std::string userPasswordHash;
+    userPasswordHash.reserve(userAuth.size());
+    std::transform(userAuth.begin(), userAuth.end(), std::back_inserter(userPasswordHash), ::toupper);
+    return passwordSha256_ == userPasswordHash;
 }
 
 std::shared_ptr<AdminVerificationStrategy>
