@@ -57,10 +57,10 @@ public:
 
 class PasswordAdminVerificationStrategy : public AdminVerificationStrategy {
 private:
-    std::string password_;
+    std::string passwordSha256_;
 
 public:
-    PasswordAdminVerificationStrategy(std::string password);
+    PasswordAdminVerificationStrategy(std::string const& password);
 
     /**
      * @brief Checks whether request is from a host that is considered authorized as admin using
@@ -73,7 +73,7 @@ public:
     isAdmin(RequestType const& request, std::string_view) const override;
 };
 
-std::unique_ptr<AdminVerificationStrategy>
+std::shared_ptr<AdminVerificationStrategy>
 make_AdminVerificationStrategy(std::optional<std::string> password);
 
 }  // namespace web::detail
