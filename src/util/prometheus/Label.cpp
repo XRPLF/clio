@@ -23,7 +23,7 @@
 
 namespace util::prometheus {
 
-Label::Label(std::string name_, std::string value_) : name_(std::move(name_)), value_(std::move(value_))
+Label::Label(std::string name, std::string value) : name_(std::move(name)), value_(std::move(value))
 {
 }
 
