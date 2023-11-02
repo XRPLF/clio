@@ -90,6 +90,7 @@ public:
             {JS(type),
              validation::Type<std::string>{},
              validation::OneOf<std::string>{
+                 "amm",
                  "state",
                  "ticket",
                  "signer_list",
