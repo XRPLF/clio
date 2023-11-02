@@ -735,8 +735,8 @@ public:
     {
         LOG(log_.trace()) << "Writing successor. key = " << key.size() << " bytes. "
                           << " seq = " << std::to_string(seq) << " successor = " << successor.size() << " bytes.";
-        assert(key.size() != 0);
-        assert(successor.size() != 0);
+        assert(!key.empty());
+        assert(!successor.size());
 
         executor_.write(schema_->insertSuccessor, std::move(key), seq, std::move(successor));
     }
