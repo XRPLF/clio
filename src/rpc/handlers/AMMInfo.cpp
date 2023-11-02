@@ -185,11 +185,12 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
 
     auto getIssue = [](boost::json::value const& request) {
         // Note: no checks needed as we already validated the input if we made it here
-        ripple::Issue issue = ripple::xrpIssue();
-        auto const& currency = request.at(JS(currency));
-        ripple::to_currency(issue.currency, currency.as_string().c_str());
-
-        return issue;
+        auto const currency = ripple::to_currency(request.at(JS(currency)).as_string().c_str());
+        if (ripple::isXRP(currency)) {
+            return ripple::xrpIssue();
+        }
+        auto const issuer = ripple::parseBase58<ripple::AccountID>(request.at(JS(issuer)).as_string().c_str());
+        return ripple::Issue{currency, *issuer};
     };
 
     input.issue1 = getIssue(jsonObject.at(JS(asset)));
