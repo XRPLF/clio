@@ -132,36 +132,89 @@ private:
     getMetric(std::string name, Labels labels, std::optional<std::string> description, MetricType type);
 
     std::unordered_map<std::string, MetricsFamily> metrics_;
-    friend class PrometheusSingleton;
 };
+
+}  // namespace util::prometheus
 
 /**
  * @brief Singleton class to access the PrometheusInterface
  */
-class PrometheusSingleton {
+class PrometheusService {
 public:
     /**
      * @brief Initialize the singleton with the given configuration
      *
      * @param config The configuration to use
      */
-    void static init(Config const& config = Config{})
-    {
-        bool const enabled = config.valueOr("prometheus_enabled", true);
-        instance_ = std::make_unique<PrometheusImpl>(enabled);
-    }
+    void static init(util::Config const& config = util::Config{});
 
     /**
-     * @brief Get the prometheus object stored in the singleton
+     * @brief Get a integer based counter metric. It will be created if it doesn't exist
      *
-     * @return Reference to the prometheus object
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
      */
-    static PrometheusInterface&
-    instance()
-    {
-        assert(instance_);
-        return *instance_;
-    }
+    static util::prometheus::CounterInt&
+    counterInt(
+        std::string name,
+        util::prometheus::Labels labels,
+        std::optional<std::string> description = std::nullopt
+    );
+
+    /**
+     * @brief Get a double based counter metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     */
+    static util::prometheus::CounterDouble&
+    counterDouble(
+        std::string name,
+        util::prometheus::Labels labels,
+        std::optional<std::string> description = std::nullopt
+    );
+
+    /**
+     * @brief Get a integer based gauge metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     */
+    static util::prometheus::GaugeInt&
+    gaugeInt(std::string name, util::prometheus::Labels labels, std::optional<std::string> description = std::nullopt);
+
+    /**
+     * @brief Get a double based gauge metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     */
+    static util::prometheus::GaugeDouble&
+    gaugeDouble(
+        std::string name,
+        util::prometheus::Labels labels,
+        std::optional<std::string> description = std::nullopt
+    );
+
+    /**
+     * @brief Collect all metrics and return them as a string in Prometheus format
+     *
+     * @return The serialized metrics
+     */
+    static std::string
+    collectMetrics();
+
+    /**
+     * @brief Whether prometheus is enabled
+     *
+     * @return true if prometheus is enabled
+     */
+    static bool
+    isEnabled();
 
     /**
      * @brief Replace the prometheus object stored in the singleton
@@ -171,16 +224,16 @@ public:
      * @param instance The new prometheus object
      */
     static void
-    replaceInstance(std::unique_ptr<PrometheusInterface> instance)
-    {
-        instance_ = std::move(instance);
-    }
+    replaceInstance(std::unique_ptr<util::prometheus::PrometheusInterface> instance);
+
+    /**
+     * @brief Get the prometheus object stored in the singleton
+     *
+     * @return The prometheus object reference
+     */
+    static util::prometheus::PrometheusInterface&
+    instance();
 
 private:
-    static std::unique_ptr<PrometheusInterface> instance_;
+    static std::unique_ptr<util::prometheus::PrometheusInterface> instance_;
 };
-
-}  // namespace util::prometheus
-
-#define PROMETHEUS util::prometheus::PrometheusSingleton::instance
-#define PROMETHEUS_INIT util::prometheus::PrometheusSingleton::init

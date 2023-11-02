@@ -47,7 +47,7 @@ struct PrometheusCheckRequestTests : public ::testing::TestWithParam<PrometheusC
 
 TEST_P(PrometheusCheckRequestTests, isPrometheusRequest)
 {
-    PROMETHEUS_INIT(util::Config{boost::json::value{{"prometheus_enabled", GetParam().prometheusEnabled}}});
+    PrometheusService::init(util::Config{boost::json::value{{"prometheus_enabled", GetParam().prometheusEnabled}}});
     boost::beast::http::request<boost::beast::http::string_body> req;
     req.method(GetParam().method);
     req.target(GetParam().target);
@@ -100,7 +100,7 @@ INSTANTIATE_TEST_CASE_P(
 struct PrometheusHandleRequestTests : ::testing::Test {
     PrometheusHandleRequestTests()
     {
-        PROMETHEUS_INIT();
+        PrometheusService::init();
     }
     http::request<http::string_body> const req{http::verb::get, "/metrics", 11};
 };
@@ -116,7 +116,7 @@ TEST_F(PrometheusHandleRequestTests, emptyResponse)
 
 TEST_F(PrometheusHandleRequestTests, prometheusDisabled)
 {
-    PROMETHEUS_INIT(util::Config(boost::json::value{{"prometheus_enabled", false}}));
+    PrometheusService::init(util::Config(boost::json::value{{"prometheus_enabled", false}}));
     auto response = handlePrometheusRequest(req, true);
     ASSERT_TRUE(response.has_value());
     EXPECT_EQ(response->result(), http::status::forbidden);
@@ -135,7 +135,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounter)
     const Labels labels{{{"label1", "value1"}, Label{"label2", "value2"}}};
     auto const description = "test_description";
 
-    auto& counter = PROMETHEUS().counterInt(counterName, labels, description);
+    auto& counter = PrometheusService::counterInt(counterName, labels, description);
     ++counter;
     counter += 3;
 
@@ -154,7 +154,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithGauge)
     const Labels labels{{{"label2", "value2"}, Label{"label3", "value3"}}};
     auto const description = "test_description_gauge";
 
-    auto& gauge = PROMETHEUS().gaugeInt(gaugeName, labels, description);
+    auto& gauge = PrometheusService::gaugeInt(gaugeName, labels, description);
     ++gauge;
     gauge -= 3;
 
@@ -173,7 +173,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
     const Labels counterLabels{{{"label1", "value1"}, Label{"label2", "value2"}}};
     auto const counterDescription = "test_description";
 
-    auto& counter = PROMETHEUS().counterInt(counterName, counterLabels, counterDescription);
+    auto& counter = PrometheusService::counterInt(counterName, counterLabels, counterDescription);
     ++counter;
     counter += 3;
 
@@ -181,7 +181,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
     const Labels gaugeLabels{{{"label2", "value2"}, Label{"label3", "value3"}}};
     auto const gaugeDescription = "test_description_gauge";
 
-    auto& gauge = PROMETHEUS().gaugeInt(gaugeName, gaugeLabels, gaugeDescription);
+    auto& gauge = PrometheusService::gaugeInt(gaugeName, gaugeLabels, gaugeDescription);
     ++gauge;
     gauge -= 3;
 

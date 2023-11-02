@@ -41,23 +41,23 @@ class LedgerCache {
     };
 
     // counters for fetchLedgerObject(s) hit rate
-    std::reference_wrapper<util::prometheus::CounterInt> objectReqCounter_{PROMETHEUS().counterInt(
+    std::reference_wrapper<util::prometheus::CounterInt> objectReqCounter_{PrometheusService::counterInt(
         "ledger_cache_counter_total_number",
         util::prometheus::Labels({{"type", "request"}, {"fetch", "ledger_objects"}}),
         "LedgerCache statistics"
     )};
-    std::reference_wrapper<util::prometheus::CounterInt> objectHitCounter_{PROMETHEUS().counterInt(
+    std::reference_wrapper<util::prometheus::CounterInt> objectHitCounter_{PrometheusService::counterInt(
         "ledger_cache_counter_total_number",
         util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "ledger_objects"}})
     )};
 
     // counters for fetchSuccessorKey hit rate
-    std::reference_wrapper<util::prometheus::CounterInt> successorReqCounter_{PROMETHEUS().counterInt(
+    std::reference_wrapper<util::prometheus::CounterInt> successorReqCounter_{PrometheusService::counterInt(
         "ledger_cache_counter_total_number",
         util::prometheus::Labels({{"type", "request"}, {"fetch", "successor_key"}}),
         "ledgerCache"
     )};
-    std::reference_wrapper<util::prometheus::CounterInt> successorHitCounter_{PROMETHEUS().counterInt(
+    std::reference_wrapper<util::prometheus::CounterInt> successorHitCounter_{PrometheusService::counterInt(
         "ledger_cache_counter_total_number",
         util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "successor_key"}})
     )};

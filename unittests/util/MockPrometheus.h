@@ -118,7 +118,7 @@ struct MockPrometheusImpl : PrometheusInterface {
 struct WithMockPrometheus : virtual ::testing::Test {
     WithMockPrometheus()
     {
-        PrometheusSingleton::replaceInstance(std::make_unique<MockPrometheusImpl>());
+        PrometheusService::replaceInstance(std::make_unique<MockPrometheusImpl>());
     }
 
     ~WithMockPrometheus() override
@@ -130,13 +130,13 @@ struct WithMockPrometheus : virtual ::testing::Test {
             }
             std::cerr << "\n";
         }
-        PROMETHEUS_INIT();
+        PrometheusService::init();
     }
 
     static MockPrometheusImpl&
     mockPrometheus()
     {
-        auto* ptr = dynamic_cast<MockPrometheusImpl*>(&PROMETHEUS());
+        auto* ptr = dynamic_cast<MockPrometheusImpl*>(&PrometheusService::instance());
         if (ptr == nullptr)
             throw std::runtime_error("Wrong prometheus type");
         return *ptr;
@@ -146,7 +146,7 @@ struct WithMockPrometheus : virtual ::testing::Test {
     static auto&
     makeMock(std::string name, std::string labelsString)
     {
-        auto* mockPrometheusPtr = dynamic_cast<MockPrometheusImpl*>(&PROMETHEUS());
+        auto* mockPrometheusPtr = dynamic_cast<MockPrometheusImpl*>(&PrometheusService::instance());
         if (mockPrometheusPtr == nullptr)
             throw std::runtime_error("Wrong prometheus type");
 
@@ -169,12 +169,12 @@ struct WithMockPrometheus : virtual ::testing::Test {
 struct WithPrometheus : virtual ::testing::Test {
     WithPrometheus()
     {
-        PROMETHEUS_INIT();
+        PrometheusService::init();
     }
 
     ~WithPrometheus() override
     {
-        PROMETHEUS_INIT();
+        PrometheusService::init();
     }
 };
 

@@ -27,37 +27,37 @@ using util::prometheus::Label;
 using util::prometheus::Labels;
 
 Counters::MethodInfo::MethodInfo(std::string const& method)
-    : started(PROMETHEUS().counterInt(
+    : started(PrometheusService::counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "started"}, {"method", method}}},
           fmt::format("Total number of started calls to the method {}", method)
       ))
-    , finished(PROMETHEUS().counterInt(
+    , finished(PrometheusService::counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "finished"}, {"method", method}}},
           fmt::format("Total number of finished calls to the method {}", method)
       ))
-    , failed(PROMETHEUS().counterInt(
+    , failed(PrometheusService::counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "failed"}, {"method", method}}},
           fmt::format("Total number of failed calls to the method {}", method)
       ))
-    , errored(PROMETHEUS().counterInt(
+    , errored(PrometheusService::counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "errored"}, {"method", method}}},
           fmt::format("Total number of errored calls to the method {}", method)
       ))
-    , forwarded(PROMETHEUS().counterInt(
+    , forwarded(PrometheusService::counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "forwarded"}, {"method", method}}},
           fmt::format("Total number of forwarded calls to the method {}", method)
       ))
-    , failedForward(PROMETHEUS().counterInt(
+    , failedForward(PrometheusService::counterInt(
           "rpc_method_total_number",
           Labels{{{"status", "failed_forward"}, {"method", method}}},
           fmt::format("Total number of failed forwarded calls to the method {}", method)
       ))
-    , duration(PROMETHEUS().counterInt(
+    , duration(PrometheusService::counterInt(
           "rpc_method_duration_us",
           Labels({util::prometheus::Label{"method", method}}),
           fmt::format("Total duration of calls to the method {}", method)
@@ -76,27 +76,27 @@ Counters::getMethodInfo(std::string const& method)
 }
 
 Counters::Counters(WorkQueue const& wq)
-    : tooBusyCounter_(PROMETHEUS().counterInt(
+    : tooBusyCounter_(PrometheusService::counterInt(
           "rpc_error_total_number",
           Labels({Label{"error_type", "too_busy"}}),
           "Total number of too busy errors"
       ))
-    , notReadyCounter_(PROMETHEUS().counterInt(
+    , notReadyCounter_(PrometheusService::counterInt(
           "rpc_error_total_number",
           Labels({Label{"error_type", "not_ready"}}),
           "Total number of not ready replyes"
       ))
-    , badSyntaxCounter_(PROMETHEUS().counterInt(
+    , badSyntaxCounter_(PrometheusService::counterInt(
           "rpc_error_total_number",
           Labels({Label{"error_type", "bad_syntax"}}),
           "Total number of bad syntax replyes"
       ))
-    , unknownCommandCounter_(PROMETHEUS().counterInt(
+    , unknownCommandCounter_(PrometheusService::counterInt(
           "rpc_error_total_number",
           Labels({Label{"error_type", "unknown_command"}}),
           "Total number of unknown command replyes"
       ))
-    , internalErrorCounter_(PROMETHEUS().counterInt(
+    , internalErrorCounter_(PrometheusService::counterInt(
           "rpc_error_total_number",
           Labels({Label{"error_type", "internal_error"}}),
           "Total number of internal errors"

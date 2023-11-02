@@ -100,6 +100,70 @@ PrometheusImpl::getMetric(
     return it->second.getMetric(std::move(labels));
 }
 
-std::unique_ptr<PrometheusInterface> PrometheusSingleton::instance_;
-
 }  // namespace util::prometheus
+
+void
+PrometheusService::init(util::Config const& config)
+{
+    bool const enabled = config.valueOr("prometheus_enabled", true);
+    instance_ = std::make_unique<util::prometheus::PrometheusImpl>(enabled);
+}
+
+util::prometheus::CounterInt&
+PrometheusService::counterInt(std::string name, util::prometheus::Labels labels, std::optional<std::string> description)
+{
+    return instance().counterInt(std::move(name), std::move(labels), std::move(description));
+}
+
+util::prometheus::CounterDouble&
+PrometheusService::counterDouble(
+    std::string name,
+    util::prometheus::Labels labels,
+    std::optional<std::string> description
+)
+{
+    return instance().counterDouble(std::move(name), std::move(labels), std::move(description));
+}
+
+util::prometheus::GaugeInt&
+PrometheusService::gaugeInt(std::string name, util::prometheus::Labels labels, std::optional<std::string> description)
+{
+    return instance().gaugeInt(std::move(name), std::move(labels), std::move(description));
+}
+
+util::prometheus::GaugeDouble&
+PrometheusService::gaugeDouble(
+    std::string name,
+    util::prometheus::Labels labels,
+    std::optional<std::string> description
+)
+{
+    return instance().gaugeDouble(std::move(name), std::move(labels), std::move(description));
+}
+
+std::string
+PrometheusService::collectMetrics()
+{
+    return instance().collectMetrics();
+}
+
+bool
+PrometheusService::isEnabled()
+{
+    return instance().isEnabled();
+}
+
+void
+PrometheusService::replaceInstance(std::unique_ptr<util::prometheus::PrometheusInterface> instance)
+{
+    instance_ = std::move(instance);
+}
+
+util::prometheus::PrometheusInterface&
+PrometheusService::instance()
+{
+    assert(instance_);
+    return *instance_;
+}
+
+std::unique_ptr<util::prometheus::PrometheusInterface> PrometheusService::instance_;

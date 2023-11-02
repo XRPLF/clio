@@ -489,7 +489,7 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
 
     auto e = std::make_shared<EchoExecutor>();
     Config const serverConfig{boost::json::parse(JSONServerConfigWithDisabledPrometheus)};
-    PROMETHEUS_INIT(serverConfig);
+    PrometheusService::init(serverConfig);
     auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
     auto const res = HttpSyncClient::syncGet(
         "localhost", "8888", "", "/metrics", {WebHeader(http::field::authorization, "Password secret")}
@@ -499,7 +499,7 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
 
 TEST_F(WebServerPrometheusTest, validResponse)
 {
-    auto& testCounter = PROMETHEUS().counterInt("test_counter", util::prometheus::Labels());
+    auto& testCounter = PrometheusService::counterInt("test_counter", util::prometheus::Labels());
     ++testCounter;
     auto e = std::make_shared<EchoExecutor>();
     Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};

@@ -113,7 +113,7 @@ public:
      */
     explicit Subscription(boost::asio::io_context& ioc, std::string const& name)
         : strand_(boost::asio::make_strand(ioc))
-        , subCount_(PROMETHEUS().gaugeInt(
+        , subCount_(PrometheusService::gaugeInt(
               "subscriptions_current_number",
               util::prometheus::Labels({util::prometheus::Label{"stream", name}}),
               fmt::format("Current subscribers number on the {} stream", name)
@@ -198,7 +198,7 @@ public:
      */
     explicit SubscriptionMap(boost::asio::io_context& ioc, std::string const& name)
         : strand_(boost::asio::make_strand(ioc))
-        , subCount_(PROMETHEUS().gaugeInt(
+        , subCount_(PrometheusService::gaugeInt(
               "subscriptions_current_number",
               util::prometheus::Labels({util::prometheus::Label{"collection", name}}),
               fmt::format("Current subscribers number on the {} collection", name)
