@@ -1,0 +1,19 @@
+scrape_configs:
+- job_name: clio
+  scrape_interval: 5s
+  scrape_timeout: 5s
+  authorization:
+    type: Password
+    # sha256sum from password `xrp`
+    # use echo -n 'your_password' | shasum -a 256 to get hash
+    credentials: 0e1dcf1ff020cceabf8f4a60a32e814b5b46ee0bb8cd4af5c814e4071bd86a18
+  static_configs:
+  - targets:
+    -  host.docker.internal:51233
+- job_name: prometheus
+  honor_timestamps: true
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  static_configs:
+  - targets:
+    - localhost:9090

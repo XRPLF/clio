@@ -25,6 +25,7 @@
 #include <map>
 #include <mutex>
 #include <shared_mutex>
+#include <util/prometheus/Prometheus.h>
 #include <utility>
 #include <vector>
 
@@ -40,12 +41,26 @@ class LedgerCache {
     };
 
     // counters for fetchLedgerObject(s) hit rate
-    mutable std::atomic_uint32_t objectReqCounter_ = 0;
-    mutable std::atomic_uint32_t objectHitCounter_ = 0;
+    std::reference_wrapper<util::prometheus::CounterInt> objectReqCounter_{PrometheusService::counterInt(
+        "ledger_cache_counter_total_number",
+        util::prometheus::Labels({{"type", "request"}, {"fetch", "ledger_objects"}}),
+        "LedgerCache statistics"
+    )};
+    std::reference_wrapper<util::prometheus::CounterInt> objectHitCounter_{PrometheusService::counterInt(
+        "ledger_cache_counter_total_number",
+        util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "ledger_objects"}})
+    )};
 
     // counters for fetchSuccessorKey hit rate
-    mutable std::atomic_uint32_t successorReqCounter_ = 0;
-    mutable std::atomic_uint32_t successorHitCounter_ = 0;
+    std::reference_wrapper<util::prometheus::CounterInt> successorReqCounter_{PrometheusService::counterInt(
+        "ledger_cache_counter_total_number",
+        util::prometheus::Labels({{"type", "request"}, {"fetch", "successor_key"}}),
+        "ledgerCache"
+    )};
+    std::reference_wrapper<util::prometheus::CounterInt> successorHitCounter_{PrometheusService::counterInt(
+        "ledger_cache_counter_total_number",
+        util::prometheus::Labels({{"type", "cache_hit"}, {"fetch", "successor_key"}})
+    )};
 
     std::map<ripple::uint256, CacheEntry> map_;
 

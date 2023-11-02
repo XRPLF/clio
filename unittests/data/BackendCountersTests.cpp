@@ -18,15 +18,16 @@
 //==============================================================================
 
 #include <data/BackendCounters.h>
+#include <util/MockPrometheus.h>
 
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 #include <gtest/gtest.h>
 
 using namespace data;
+using namespace util::prometheus;
 
-class BackendCountersTest : public ::testing::Test {
-protected:
+struct BackendCountersTest : WithPrometheus {
     static boost::json::object
     emptyReport()
     {
@@ -45,20 +46,21 @@ protected:
         })")
             .as_object();
     }
+
+    BackendCounters::PtrType const counters = BackendCounters::make();
 };
 
 TEST_F(BackendCountersTest, EmptyByDefault)
 {
-    auto const counters = BackendCounters::make();
     EXPECT_EQ(counters->report(), emptyReport());
 }
 
 TEST_F(BackendCountersTest, RegisterTooBusy)
 {
-    auto const counters = BackendCounters::make();
     counters->registerTooBusy();
     counters->registerTooBusy();
     counters->registerTooBusy();
+
     auto expectedReport = emptyReport();
     expectedReport["too_busy"] = 3;
     EXPECT_EQ(counters->report(), expectedReport);
@@ -66,9 +68,9 @@ TEST_F(BackendCountersTest, RegisterTooBusy)
 
 TEST_F(BackendCountersTest, RegisterWriteSync)
 {
-    auto const counters = BackendCounters::make();
     counters->registerWriteSync();
     counters->registerWriteSync();
+
     auto expectedReport = emptyReport();
     expectedReport["write_sync"] = 2;
     EXPECT_EQ(counters->report(), expectedReport);
@@ -76,10 +78,10 @@ TEST_F(BackendCountersTest, RegisterWriteSync)
 
 TEST_F(BackendCountersTest, RegisterWriteSyncRetry)
 {
-    auto const counters = BackendCounters::make();
     counters->registerWriteSyncRetry();
     counters->registerWriteSyncRetry();
     counters->registerWriteSyncRetry();
+
     auto expectedReport = emptyReport();
     expectedReport["write_sync_retry"] = 3;
     EXPECT_EQ(counters->report(), expectedReport);
@@ -87,9 +89,9 @@ TEST_F(BackendCountersTest, RegisterWriteSyncRetry)
 
 TEST_F(BackendCountersTest, RegisterWriteStarted)
 {
-    auto const counters = BackendCounters::make();
     counters->registerWriteStarted();
     counters->registerWriteStarted();
+
     auto expectedReport = emptyReport();
     expectedReport["write_async_pending"] = 2;
     EXPECT_EQ(counters->report(), expectedReport);
@@ -97,12 +99,12 @@ TEST_F(BackendCountersTest, RegisterWriteStarted)
 
 TEST_F(BackendCountersTest, RegisterWriteFinished)
 {
-    auto const counters = BackendCounters::make();
     counters->registerWriteStarted();
     counters->registerWriteStarted();
     counters->registerWriteStarted();
     counters->registerWriteFinished();
     counters->registerWriteFinished();
+
     auto expectedReport = emptyReport();
     expectedReport["write_async_pending"] = 1;
     expectedReport["write_async_completed"] = 2;
@@ -111,9 +113,9 @@ TEST_F(BackendCountersTest, RegisterWriteFinished)
 
 TEST_F(BackendCountersTest, RegisterWriteRetry)
 {
-    auto const counters = BackendCounters::make();
     counters->registerWriteRetry();
     counters->registerWriteRetry();
+
     auto expectedReport = emptyReport();
     expectedReport["write_async_retry"] = 2;
     EXPECT_EQ(counters->report(), expectedReport);
@@ -121,9 +123,9 @@ TEST_F(BackendCountersTest, RegisterWriteRetry)
 
 TEST_F(BackendCountersTest, RegisterReadStarted)
 {
-    auto const counters = BackendCounters::make();
     counters->registerReadStarted();
     counters->registerReadStarted();
+
     auto expectedReport = emptyReport();
     expectedReport["read_async_pending"] = 2;
     EXPECT_EQ(counters->report(), expectedReport);
@@ -131,12 +133,12 @@ TEST_F(BackendCountersTest, RegisterReadStarted)
 
 TEST_F(BackendCountersTest, RegisterReadFinished)
 {
-    auto const counters = BackendCounters::make();
     counters->registerReadStarted();
     counters->registerReadStarted();
     counters->registerReadStarted();
     counters->registerReadFinished();
     counters->registerReadFinished();
+
     auto expectedReport = emptyReport();
     expectedReport["read_async_pending"] = 1;
     expectedReport["read_async_completed"] = 2;
@@ -147,9 +149,10 @@ TEST_F(BackendCountersTest, RegisterReadStartedFinishedWithCounters)
 {
     static constexpr auto OPERATIONS_STARTED = 7u;
     static constexpr auto OPERATIONS_COMPLETED = 4u;
-    auto const counters = BackendCounters::make();
+
     counters->registerReadStarted(OPERATIONS_STARTED);
     counters->registerReadFinished(OPERATIONS_COMPLETED);
+
     auto expectedReport = emptyReport();
     expectedReport["read_async_pending"] = OPERATIONS_STARTED - OPERATIONS_COMPLETED;
     expectedReport["read_async_completed"] = OPERATIONS_COMPLETED;
@@ -171,13 +174,104 @@ TEST_F(BackendCountersTest, RegisterReadError)
     static constexpr auto OPERATIONS_STARTED = 7u;
     static constexpr auto OPERATIONS_ERROR = 2u;
     static constexpr auto OPERATIONS_COMPLETED = 1u;
-    auto const counters = BackendCounters::make();
+
     counters->registerReadStarted(OPERATIONS_STARTED);
     counters->registerReadError(OPERATIONS_ERROR);
     counters->registerReadFinished(OPERATIONS_COMPLETED);
+
     auto expectedReport = emptyReport();
     expectedReport["read_async_pending"] = OPERATIONS_STARTED - OPERATIONS_COMPLETED - OPERATIONS_ERROR;
     expectedReport["read_async_completed"] = OPERATIONS_COMPLETED;
     expectedReport["read_async_error"] = OPERATIONS_ERROR;
     EXPECT_EQ(counters->report(), expectedReport);
+}
+
+struct BackendCountersMockPrometheusTest : WithMockPrometheus {
+    BackendCounters::PtrType const counters = BackendCounters::make();
+};
+
+TEST_F(BackendCountersMockPrometheusTest, registerTooBusy)
+{
+    auto& counter = makeMock<CounterInt>("backend_too_busy_total_number", "");
+    EXPECT_CALL(counter, add(1));
+    counters->registerTooBusy();
+}
+
+TEST_F(BackendCountersMockPrometheusTest, registerWriteSync)
+{
+    auto& counter = makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_sync\"}");
+    EXPECT_CALL(counter, add(1));
+    counters->registerWriteSync();
+}
+
+TEST_F(BackendCountersMockPrometheusTest, registerWriteSyncRetry)
+{
+    auto& counter = makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_sync_retry\"}");
+    EXPECT_CALL(counter, add(1));
+    counters->registerWriteSyncRetry();
+}
+
+TEST_F(BackendCountersMockPrometheusTest, registerWriteStarted)
+{
+    auto& counter =
+        makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"write_async\",status=\"pending\"}");
+    EXPECT_CALL(counter, add(1));
+    counters->registerWriteStarted();
+}
+
+TEST_F(BackendCountersMockPrometheusTest, registerWriteFinished)
+{
+    auto& pendingCounter =
+        makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"write_async\",status=\"pending\"}");
+    auto& completedCounter =
+        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_async\",status=\"completed\"}");
+    EXPECT_CALL(pendingCounter, add(-1));
+    EXPECT_CALL(completedCounter, add(1));
+    counters->registerWriteFinished();
+}
+
+TEST_F(BackendCountersMockPrometheusTest, registerWriteRetry)
+{
+    auto& counter =
+        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_async\",status=\"retry\"}");
+    EXPECT_CALL(counter, add(1));
+    counters->registerWriteRetry();
+}
+
+TEST_F(BackendCountersMockPrometheusTest, registerReadStarted)
+{
+    auto& counter =
+        makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}");
+    EXPECT_CALL(counter, add(1));
+    counters->registerReadStarted();
+}
+
+TEST_F(BackendCountersMockPrometheusTest, registerReadFinished)
+{
+    auto& pendingCounter =
+        makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}");
+    auto& completedCounter =
+        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"read_async\",status=\"completed\"}");
+    EXPECT_CALL(pendingCounter, add(-1));
+    EXPECT_CALL(completedCounter, add(1));
+    counters->registerReadFinished();
+}
+
+TEST_F(BackendCountersMockPrometheusTest, registerReadRetry)
+{
+    auto& counter =
+        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"read_async\",status=\"retry\"}");
+    EXPECT_CALL(counter, add(1));
+    counters->registerReadRetry();
+}
+
+TEST_F(BackendCountersMockPrometheusTest, registerReadError)
+{
+    auto& pendingCounter =
+        makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}");
+    auto& errorCounter =
+        makeMock<CounterInt>("backend_operations_total_number", "{operation=\"read_async\",status=\"error\"}");
+    EXPECT_CALL(pendingCounter, add(-1));
+    EXPECT_CALL(errorCounter, add(1));
+    counters->registerReadError();
 }

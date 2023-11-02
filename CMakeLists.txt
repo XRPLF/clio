@@ -140,6 +140,10 @@ target_sources (clio PRIVATE
   ## Util
   src/util/config/Config.cpp
   src/util/log/Logger.cpp
+  src/util/prometheus/Http.cpp
+  src/util/prometheus/Label.cpp
+  src/util/prometheus/Metrics.cpp
+  src/util/prometheus/Prometheus.cpp
   src/util/Random.cpp
   src/util/Taggable.cpp)
 
@@ -167,6 +171,11 @@ if (tests)
     unittests/SubscriptionManagerTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
+    unittests/util/prometheus/CounterTests.cpp
+    unittests/util/prometheus/GaugeTests.cpp
+    unittests/util/prometheus/HttpTests.cpp
+    unittests/util/prometheus/LabelTests.cpp
+    unittests/util/prometheus/MetricsTests.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp

@@ -19,9 +19,12 @@
 
 #pragma once
 
+#include <util/prometheus/Prometheus.h>
+
 #include <boost/json/object.hpp>
 
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <utility>
 
@@ -50,6 +53,7 @@ concept SomeBackendCounters = requires(T a) {
 
 /**
  * @brief Holds statistics about the backend.
+ *
  * @note This class is thread-safe.
  */
 class BackendCounters {
@@ -93,7 +97,7 @@ public:
     report() const;
 
 private:
-    BackendCounters() = default;
+    BackendCounters();
 
     class AsyncOperationCounters {
     public:
@@ -116,16 +120,16 @@ private:
 
     private:
         std::string name_;
-        std::atomic_uint64_t pendingCounter_ = 0u;
-        std::atomic_uint64_t completedCounter_ = 0u;
-        std::atomic_uint64_t retryCounter_ = 0u;
-        std::atomic_uint64_t errorCounter_ = 0u;
+        std::reference_wrapper<util::prometheus::GaugeInt> pendingCounter_;
+        std::reference_wrapper<util::prometheus::CounterInt> completedCounter_;
+        std::reference_wrapper<util::prometheus::CounterInt> retryCounter_;
+        std::reference_wrapper<util::prometheus::CounterInt> errorCounter_;
     };
 
-    std::atomic_uint64_t tooBusyCounter_ = 0u;
+    std::reference_wrapper<util::prometheus::CounterInt> tooBusyCounter_;
 
-    std::atomic_uint64_t writeSyncCounter_ = 0u;
-    std::atomic_uint64_t writeSyncRetryCounter_ = 0u;
+    std::reference_wrapper<util::prometheus::CounterInt> writeSyncCounter_;
+    std::reference_wrapper<util::prometheus::CounterInt> writeSyncRetryCounter_;
 
     AsyncOperationCounters asyncWriteCounters_{"write_async"};
     AsyncOperationCounters asyncReadCounters_{"read_async"};

@@ -48,6 +48,32 @@ struct HttpSyncClient {
         std::vector<WebHeader> additionalHeaders = {}
     )
     {
+        return syncRequest(host, port, body, std::move(additionalHeaders), http::verb::post);
+    }
+
+    static std::string
+    syncGet(
+        std::string const& host,
+        std::string const& port,
+        std::string const& body,
+        std::string const& target,
+        std::vector<WebHeader> additionalHeaders = {}
+    )
+    {
+        return syncRequest(host, port, body, std::move(additionalHeaders), http::verb::get, target);
+    }
+
+private:
+    static std::string
+    syncRequest(
+        std::string const& host,
+        std::string const& port,
+        std::string const& body,
+        std::vector<WebHeader> additionalHeaders,
+        http::verb method,
+        std::string target = "/"
+    )
+    {
         boost::asio::io_context ioc;
 
         net::ip::tcp::resolver resolver(ioc);
@@ -56,14 +82,15 @@ struct HttpSyncClient {
         auto const results = resolver.resolve(host, port);
         stream.connect(results);
 
-        http::request<http::string_body> req{http::verb::post, "/", 10};
+        http::request<http::string_body> req{method, "/", 10};
         req.set(http::field::host, host);
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
         for (auto& header : additionalHeaders) {
-            req.set(header.name, std::move(header.value));
+            req.set(header.name, header.value);
         }
 
+        req.target(target);
         req.body() = std::string(body);
         req.prepare_payload();
         http::write(stream, req);

@@ -20,26 +20,28 @@
 #include <feed/SubscriptionManager.h>
 
 #include <util/Fixtures.h>
+#include <util/MockPrometheus.h>
 #include <util/MockWsBase.h>
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 
 using namespace feed;
+using namespace util::prometheus;
 
 // io_context
-class SubscriptionTest : public SyncAsioContextTest {
-protected:
+struct SubscriptionTestBase {
     util::Config cfg;
     util::TagDecoratorFactory tagDecoratorFactory{cfg};
 };
 
-class SubscriptionMapTest : public SubscriptionTest {};
+struct SubscriptionTest : WithPrometheus, SyncAsioContextTest, SubscriptionTestBase {
+    Subscription sub{ctx, "test"};
+};
 
 // subscribe/unsubscribe the same session would not change the count
 TEST_F(SubscriptionTest, SubscriptionCount)
 {
-    Subscription sub(ctx);
     std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
     std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     sub.subscribe(session1);
@@ -73,7 +75,6 @@ TEST_F(SubscriptionTest, SubscriptionCount)
 // send interface will be called when publish called
 TEST_F(SubscriptionTest, SubscriptionPublish)
 {
-    Subscription sub(ctx);
     std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
     std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     sub.subscribe(session1);
@@ -102,7 +103,6 @@ TEST_F(SubscriptionTest, SubscriptionPublish)
 // when error happen during send(), the subsciber will be removed after
 TEST_F(SubscriptionTest, SubscriptionDeadRemoveSubscriber)
 {
-    Subscription sub(ctx);
     std::shared_ptr<web::ConnectionBase> const session1(new MockDeadSession(tagDecoratorFactory));
     sub.subscribe(session1);
     ctx.run();
@@ -118,12 +118,61 @@ TEST_F(SubscriptionTest, SubscriptionDeadRemoveSubscriber)
     EXPECT_EQ(sub.count(), 0);
 }
 
+struct SubscriptionMockPrometheusTest : WithMockPrometheus, SubscriptionTestBase, SyncAsioContextTest {
+    Subscription sub{ctx, "test"};
+    std::shared_ptr<web::ConnectionBase> const session = std::make_shared<MockSession>(tagDecoratorFactory);
+};
+
+TEST_F(SubscriptionMockPrometheusTest, subscribe)
+{
+    auto& counter = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"test\"}");
+    EXPECT_CALL(counter, add(1));
+    sub.subscribe(session);
+    ctx.run();
+}
+
+TEST_F(SubscriptionMockPrometheusTest, unsubscribe)
+{
+    auto& counter = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"test\"}");
+    EXPECT_CALL(counter, add(1));
+    sub.subscribe(session);
+    ctx.run();
+    EXPECT_CALL(counter, add(-1));
+    sub.unsubscribe(session);
+    ctx.restart();
+    ctx.run();
+}
+
+TEST_F(SubscriptionMockPrometheusTest, publish)
+{
+    auto deadSession = std::make_shared<MockDeadSession>(tagDecoratorFactory);
+    auto& counter = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"test\"}");
+    EXPECT_CALL(counter, add(1));
+    sub.subscribe(deadSession);
+    ctx.run();
+    EXPECT_CALL(counter, add(-1));
+    sub.publish(std::make_shared<std::string>("message"));
+    sub.publish(std::make_shared<std::string>("message"));  // Dead session is detected only after failed send
+    ctx.restart();
+    ctx.run();
+}
+
+TEST_F(SubscriptionMockPrometheusTest, count)
+{
+    auto& counter = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"test\"}");
+    EXPECT_CALL(counter, value());
+    sub.count();
+}
+
+struct SubscriptionMapTest : SubscriptionTest {
+    SubscriptionMap<std::string> subMap{ctx, "test"};
+};
+
 TEST_F(SubscriptionMapTest, SubscriptionMapCount)
 {
     std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
     std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     std::shared_ptr<web::ConnectionBase> const session3 = std::make_shared<MockSession>(tagDecoratorFactory);
-    SubscriptionMap<std::string> subMap(ctx);
     subMap.subscribe(session1, "topic1");
     subMap.subscribe(session2, "topic1");
     subMap.subscribe(session3, "topic2");
@@ -160,7 +209,6 @@ TEST_F(SubscriptionMapTest, SubscriptionMapPublish)
 {
     std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
     std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
-    SubscriptionMap<std::string> subMap(ctx);
     const std::string topic1 = "topic1";
     const std::string topic2 = "topic2";
     const std::string topic1Message = "topic1Message";
@@ -186,7 +234,6 @@ TEST_F(SubscriptionMapTest, SubscriptionMapDeadRemoveSubscriber)
 {
     std::shared_ptr<web::ConnectionBase> const session1(new MockDeadSession(tagDecoratorFactory));
     std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
-    SubscriptionMap<std::string> subMap(ctx);
     const std::string topic1 = "topic1";
     const std::string topic2 = "topic2";
     const std::string topic1Message = "topic1Message";
@@ -210,4 +257,52 @@ TEST_F(SubscriptionMapTest, SubscriptionMapDeadRemoveSubscriber)
     ctx.restart();
     ctx.run();
     EXPECT_EQ(subMap.count(), 1);
+}
+
+struct SubscriptionMapMockPrometheusTest : SubscriptionMockPrometheusTest {
+    SubscriptionMap<std::string> subMap{ctx, "test"};
+    std::shared_ptr<web::ConnectionBase> const session = std::make_shared<MockSession>(tagDecoratorFactory);
+};
+
+TEST_F(SubscriptionMapMockPrometheusTest, subscribe)
+{
+    auto& counter = makeMock<GaugeInt>("subscriptions_current_number", "{collection=\"test\"}");
+    EXPECT_CALL(counter, add(1));
+    subMap.subscribe(session, "topic");
+    ctx.run();
+}
+
+TEST_F(SubscriptionMapMockPrometheusTest, unsubscribe)
+{
+    auto& counter = makeMock<GaugeInt>("subscriptions_current_number", "{collection=\"test\"}");
+    EXPECT_CALL(counter, add(1));
+    subMap.subscribe(session, "topic");
+    ctx.run();
+    EXPECT_CALL(counter, add(-1));
+    subMap.unsubscribe(session, "topic");
+    ctx.restart();
+    ctx.run();
+}
+
+TEST_F(SubscriptionMapMockPrometheusTest, publish)
+{
+    auto deadSession = std::make_shared<MockDeadSession>(tagDecoratorFactory);
+    auto& counter = makeMock<GaugeInt>("subscriptions_current_number", "{collection=\"test\"}");
+    EXPECT_CALL(counter, add(1));
+    subMap.subscribe(deadSession, "topic");
+    ctx.run();
+    EXPECT_CALL(counter, add(-1));
+    subMap.publish(std::make_shared<std::string>("message"), "topic");
+    subMap.publish(
+        std::make_shared<std::string>("message"), "topic"
+    );  // Dead session is detected only after failed send
+    ctx.restart();
+    ctx.run();
+}
+
+TEST_F(SubscriptionMapMockPrometheusTest, count)
+{
+    auto& counter = makeMock<GaugeInt>("subscriptions_current_number", "{collection=\"test\"}");
+    EXPECT_CALL(counter, value());
+    subMap.count();
 }

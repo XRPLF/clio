@@ -20,7 +20,9 @@
 #pragma once
 
 #include <main/Build.h>
+#include <rpc/Errors.h>
 #include <util/log/Logger.h>
+#include <util/prometheus/Http.h>
 #include <web/DOSGuard.h>
 #include <web/impl/AdminVerificationStrategy.h>
 #include <web/interface/Concepts.h>
@@ -195,6 +197,9 @@ public:
 
             return sender_(httpResponse(http::status::too_many_requests, "text/html", "Too many requests"));
         }
+
+        if (auto response = util::prometheus::handlePrometheusRequest(req_, isAdmin()); response.has_value())
+            return sender_(std::move(response.value()));
 
         if (req_.method() != http::verb::post) {
             return sender_(httpResponse(http::status::bad_request, "text/html", "Expected a POST request"));
