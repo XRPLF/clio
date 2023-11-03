@@ -286,3 +286,6 @@ CreateAMMObject(
     std::string_view asset2Currency,
     std::string_view asset2Issuer
 );
+
+[[nodiscard]] ripple::STObject
+CreateDidObject(std::string_view accountId, std::string_view didDoc, std::string_view uri, std::string_view data);

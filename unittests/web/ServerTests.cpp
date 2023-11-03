@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <util/Fixtures.h>
+#include <util/MockPrometheus.h>
 #include <util/TestHttpSyncClient.h>
 #include <web/Server.h>
 
@@ -399,16 +400,6 @@ static auto constexpr JSONServerConfigWithAdminPassword = R"JSON(
     }
 )JSON";
 
-static auto constexpr JSONServerConfigWithAdminPasswordWithFalseLocalAdmin = R"JSON(
-    {
-        "server":{
-            "ip": "0.0.0.0",
-            "port": 8888,
-            "admin_password": "secret"
-        }
-    }
-)JSON";
-
 static auto constexpr JSONServerConfigWithLocalAdmin = R"JSON(
     {
         "server":{
@@ -507,18 +498,31 @@ INSTANTIATE_TEST_CASE_P(
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {WebHeader(http::field::authorization, SecertSha256)},
-            .expectedResponse = "admin"},
+            .expectedResponse = "user"},
         WebServerAdminTestParams{
-            .config = JSONServerConfigWithAdminPasswordWithFalseLocalAdmin,
-            .headers = {WebHeader(http::field::authorization, SecertSha256)},
+            .config = JSONServerConfigWithAdminPassword,
+            .headers = {WebHeader(
+                http::field::authorization,
+                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+            )},
             .expectedResponse = "admin"},
         WebServerAdminTestParams{
             .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse,
             .headers = {WebHeader(http::field::authorization, SecertSha256)},
+            .expectedResponse = "user"},
+        WebServerAdminTestParams{
+            .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse,
+            .headers = {WebHeader(
+                http::field::authorization,
+                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+            )},
             .expectedResponse = "admin"},
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
-            .headers = {WebHeader(http::field::authentication_info, SecertSha256)},
+            .headers = {WebHeader(
+                http::field::authentication_info,
+                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+            )},
             .expectedResponse = "user"},
         WebServerAdminTestParams{.config = JSONServerConfigWithLocalAdmin, .headers = {}, .expectedResponse = "admin"},
         WebServerAdminTestParams{
@@ -562,4 +566,65 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
     auto e = std::make_shared<AdminCheckExecutor>();
     Config const serverConfig{boost::json::parse(JSONServerConfigWithNoAdminPasswordAndLocalAdminFalse)};
     EXPECT_THROW(web::make_HttpServer(serverConfig, ctx, std::nullopt, dosGuardOverload, e), std::logic_error);
+}
+
+struct WebServerPrometheusTest : util::prometheus::WithPrometheus, WebServerTest {};
+
+TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
+{
+    auto e = std::make_shared<EchoExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
+    auto const res = HttpSyncClient::syncGet("localhost", "8888", "", "/metrics");
+    EXPECT_EQ(res, "Only admin is allowed to collect metrics");
+}
+
+TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
+{
+    static auto constexpr JSONServerConfigWithDisabledPrometheus = R"JSON(
+        {
+            "server":{
+                "ip": "0.0.0.0",
+                "port": 8888,
+                "admin_password": "secret"
+            },
+            "prometheus_enabled": false
+        }
+    )JSON";
+
+    auto e = std::make_shared<EchoExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithDisabledPrometheus)};
+    PrometheusService::init(serverConfig);
+    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
+    auto const res = HttpSyncClient::syncGet(
+        "localhost",
+        "8888",
+        "",
+        "/metrics",
+        {WebHeader(
+            http::field::authorization,
+            fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+        )}
+    );
+    EXPECT_EQ(res, "Prometheus is disabled in clio config");
+}
+
+TEST_F(WebServerPrometheusTest, validResponse)
+{
+    auto& testCounter = PrometheusService::counterInt("test_counter", util::prometheus::Labels());
+    ++testCounter;
+    auto e = std::make_shared<EchoExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword)};
+    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
+    auto const res = HttpSyncClient::syncGet(
+        "localhost",
+        "8888",
+        "",
+        "/metrics",
+        {WebHeader(
+            http::field::authorization,
+            fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+        )}
+    );
+    EXPECT_EQ(res, "# TYPE test_counter counter\ntest_counter 1\n\n");
 }

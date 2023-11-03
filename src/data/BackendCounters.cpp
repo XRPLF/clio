@@ -19,7 +19,32 @@
 
 #include <data/BackendCounters.h>
 
+#include <util/prometheus/Prometheus.h>
+
 namespace data {
+
+using namespace util::prometheus;
+
+BackendCounters::BackendCounters()
+    : tooBusyCounter_(PrometheusService::counterInt(
+          "backend_too_busy_total_number",
+          Labels(),
+          "The total number of times the backend was too busy to process a request"
+      ))
+    , writeSyncCounter_(PrometheusService::counterInt(
+          "backend_operations_total_number",
+          Labels({Label{"operation", "write_sync"}}),
+          "The total number of times the backend had to write synchronously"
+      ))
+    , writeSyncRetryCounter_(PrometheusService::counterInt(
+          "backend_operations_total_number",
+          Labels({Label{"operation", "write_sync_retry"}}),
+          "The total number of times the backend had to retry a synchronous write"
+      ))
+    , asyncWriteCounters_{"write_async"}
+    , asyncReadCounters_{"read_async"}
+{
+}
 
 BackendCounters::PtrType
 BackendCounters::make()
@@ -31,19 +56,19 @@ BackendCounters::make()
 void
 BackendCounters::registerTooBusy()
 {
-    ++tooBusyCounter_;
+    ++tooBusyCounter_.get();
 }
 
 void
 BackendCounters::registerWriteSync()
 {
-    ++writeSyncCounter_;
+    ++writeSyncCounter_.get();
 }
 
 void
 BackendCounters::registerWriteSyncRetry()
 {
-    ++writeSyncRetryCounter_;
+    ++writeSyncRetryCounter_.get();
 }
 
 void
@@ -92,9 +117,9 @@ boost::json::object
 BackendCounters::report() const
 {
     boost::json::object result;
-    result["too_busy"] = tooBusyCounter_;
-    result["write_sync"] = writeSyncCounter_;
-    result["write_sync_retry"] = writeSyncRetryCounter_;
+    result["too_busy"] = tooBusyCounter_.get().value();
+    result["write_sync"] = writeSyncCounter_.get().value();
+    result["write_sync_retry"] = writeSyncRetryCounter_.get().value();
     for (auto const& [key, value] : asyncWriteCounters_.report())
         result[key] = value;
     for (auto const& [key, value] : asyncReadCounters_.report())
@@ -102,46 +127,67 @@ BackendCounters::report() const
     return result;
 }
 
-BackendCounters::AsyncOperationCounters::AsyncOperationCounters(std::string name) : name_(std::move(name))
+BackendCounters::AsyncOperationCounters::AsyncOperationCounters(std::string name)
+    : name_(std::move(name))
+    , pendingCounter_(PrometheusService::gaugeInt(
+          "backend_operations_current_number",
+          Labels({{"operation", name_}, {"status", "pending"}}),
+          "The current number of pending " + name_ + " operations"
+      ))
+    , completedCounter_(PrometheusService::counterInt(
+          "backend_operations_total_number",
+          Labels({{"operation", name_}, {"status", "completed"}}),
+          "The total number of completed " + name_ + " operations"
+      ))
+    , retryCounter_(PrometheusService::counterInt(
+          "backend_operations_total_number",
+          Labels({{"operation", name_}, {"status", "retry"}}),
+          "The total number of retried " + name_ + " operations"
+      ))
+    , errorCounter_(PrometheusService::counterInt(
+          "backend_operations_total_number",
+          Labels({{"operation", name_}, {"status", "error"}}),
+          "The total number of errored " + name_ + " operations"
+      ))
 {
 }
 
 void
 BackendCounters::AsyncOperationCounters::registerStarted(std::uint64_t const count)
 {
-    pendingCounter_ += count;
+    pendingCounter_.get() += count;
 }
 
 void
 BackendCounters::AsyncOperationCounters::registerFinished(std::uint64_t const count)
 {
-    assert(pendingCounter_ >= count);
-    pendingCounter_ -= count;
-    completedCounter_ += count;
+    assert(pendingCounter_.get().value() >= static_cast<std::int64_t>(count));
+    pendingCounter_.get() -= count;
+    completedCounter_.get() += count;
 }
 
 void
 BackendCounters::AsyncOperationCounters::registerRetry(std::uint64_t count)
 {
-    retryCounter_ += count;
+    retryCounter_.get() += count;
 }
 
 void
 BackendCounters::AsyncOperationCounters::registerError(std::uint64_t count)
 {
-    assert(pendingCounter_ >= count);
-    pendingCounter_ -= count;
-    errorCounter_ += count;
+    assert(pendingCounter_.get().value() >= static_cast<std::int64_t>(count));
+    pendingCounter_.get() -= count;
+    errorCounter_.get() += count;
 }
 
 boost::json::object
 BackendCounters::AsyncOperationCounters::report() const
 {
     return boost::json::object{
-        {name_ + "_pending", pendingCounter_},
-        {name_ + "_completed", completedCounter_},
-        {name_ + "_retry", retryCounter_},
-        {name_ + "_error", errorCounter_}};
+        {name_ + "_pending", pendingCounter_.get().value()},
+        {name_ + "_completed", completedCounter_.get().value()},
+        {name_ + "_retry", retryCounter_.get().value()},
+        {name_ + "_error", errorCounter_.get().value()}};
 }
 
 }  // namespace data

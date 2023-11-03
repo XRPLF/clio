@@ -27,6 +27,7 @@ namespace rpc {
 
 std::unordered_map<std::string, ripple::LedgerEntryType> const LedgerDataHandler::TYPES_MAP{
     {JS(account), ripple::ltACCOUNT_ROOT},
+    {JS(did), ripple::ltDID},
     {JS(amendments), ripple::ltAMENDMENTS},
     {JS(check), ripple::ltCHECK},
     {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
@@ -40,7 +41,8 @@ std::unordered_map<std::string, ripple::LedgerEntryType> const LedgerDataHandler
     {JS(state), ripple::ltRIPPLE_STATE},
     {JS(ticket), ripple::ltTICKET},
     {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
-    {JS(nft_page), ripple::ltNFTOKEN_PAGE}};
+    {JS(nft_page), ripple::ltNFTOKEN_PAGE},
+    {JS(amm), ripple::ltAMM}};
 
 // TODO: should be std::views::keys when clang supports it
 std::unordered_set<std::string> const LedgerDataHandler::TYPES_KEYS = [] {

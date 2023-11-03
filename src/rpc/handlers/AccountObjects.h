@@ -33,7 +33,7 @@ namespace rpc {
  * @brief The account_objects command returns the raw ledger format for all objects owned by an account.
  * The results can be filtered by the type.
  * The valid types are: check, deposit_preauth, escrow, nft_offer, offer, payment_channel, signer_list, state (trust
- * line), and ticket.
+ * line), did and ticket.
  *
  * For more details see: https://xrpl.org/account_objects.html
  */
@@ -42,7 +42,8 @@ class AccountObjectsHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
     // constants
-    static std::unordered_map<std::string, ripple::LedgerEntryType> const TYPESMAP;
+    static std::unordered_map<std::string, ripple::LedgerEntryType> const TYPES_MAP;
+    static std::unordered_set<std::string> const TYPES_KEYS;
 
 public:
     static auto constexpr LIMIT_MIN = 10;
@@ -89,19 +90,7 @@ public:
              modifiers::Clamp<int32_t>(LIMIT_MIN, LIMIT_MAX)},
             {JS(type),
              validation::Type<std::string>{},
-             validation::OneOf<std::string>{
-                 "amm",
-                 "state",
-                 "ticket",
-                 "signer_list",
-                 "payment_channel",
-                 "offer",
-                 "escrow",
-                 "deposit_preauth",
-                 "check",
-                 "nft_page",
-                 "nft_offer",
-             }},
+             validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend())},
             {JS(marker), validation::AccountMarkerValidator},
             {JS(deletion_blockers_only), validation::Type<bool>{}},
         };

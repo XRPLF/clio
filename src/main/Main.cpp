@@ -25,6 +25,7 @@
 #include <rpc/RPCEngine.h>
 #include <rpc/common/impl/HandlerProvider.h>
 #include <util/config/Config.h>
+#include <util/prometheus/Prometheus.h>
 #include <web/RPCServerHandler.h>
 #include <web/Server.h>
 
@@ -155,6 +156,8 @@ try {
 
     LogService::init(config);
     LOG(LogService::info()) << "Clio version: " << Build::getClioFullVersionString();
+
+    PrometheusService::init(config);
 
     auto const threads = config.valueOr("io_threads", 2);
     if (threads <= 0) {
