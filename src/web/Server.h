@@ -313,6 +313,12 @@ make_HttpServer(
         throw std::logic_error("Admin config error, one method must be specified to authorize admin.");
     }
 
+    if (!localAdmin && !adminPassword) {
+        LOG(log.error()) << "Neither local_admin nor admin_password is set, please specify one method "
+                            "to authorize admin";
+        throw std::logic_error("Admin config error, at least one method must be specified to authorize admin.");
+    }
+
     auto server = std::make_shared<HttpServer<HandlerType>>(
         ioc,
         ctx,

@@ -35,9 +35,10 @@ using namespace web;
 
 constexpr static auto JSONData = R"JSON(
     {
-        "server":{
-            "ip":"0.0.0.0",
-            "port":8888
+        "server": {
+            "ip": "0.0.0.0",
+            "port": 8888,
+            "local_admin": true
         },
         "dos_guard": {
             "max_fetches": 100,
@@ -51,9 +52,10 @@ constexpr static auto JSONData = R"JSON(
 
 constexpr static auto JSONDataOverload = R"JSON(
     {
-        "server":{
-            "ip":"0.0.0.0",
-            "port":8888
+        "server": {
+            "ip": "0.0.0.0",
+            "port": 8888,
+            "local_admin": true
         },
         "dos_guard": {
             "max_fetches": 100,
@@ -421,15 +423,6 @@ static auto constexpr JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse = 
     }
 )JSON";
 
-static auto constexpr JSONServerConfigWithNoSpecifiedAdmin = R"JSON(
-    {
-        "server":{
-            "ip": "0.0.0.0",
-            "port": 8888
-        }
-    }
-)JSON";
-
 // get this value from online sha256 generator
 static auto constexpr SecertSha256 = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
 
@@ -524,12 +517,7 @@ INSTANTIATE_TEST_CASE_P(
                 fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
             )},
             .expectedResponse = "user"},
-        WebServerAdminTestParams{.config = JSONServerConfigWithLocalAdmin, .headers = {}, .expectedResponse = "admin"},
-        WebServerAdminTestParams{
-            .config = JSONServerConfigWithNoSpecifiedAdmin,
-            .headers = {},
-            .expectedResponse = "admin"}
-
+        WebServerAdminTestParams{.config = JSONServerConfigWithLocalAdmin, .headers = {}, .expectedResponse = "admin"}
     )
 );
 
@@ -565,6 +553,22 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
 
     auto e = std::make_shared<AdminCheckExecutor>();
     Config const serverConfig{boost::json::parse(JSONServerConfigWithNoAdminPasswordAndLocalAdminFalse)};
+    EXPECT_THROW(web::make_HttpServer(serverConfig, ctx, std::nullopt, dosGuardOverload, e), std::logic_error);
+}
+
+TEST_F(WebServerTest, AdminErrorCfgTestNoSpecifiedAdmin)
+{
+    static auto constexpr JSONServerConfigWithNoSpecifiedAdmin = R"JSON(
+        {
+            "server":{
+                "ip": "0.0.0.0",
+                "port": 8888
+            }
+        }
+    )JSON";
+
+    auto e = std::make_shared<AdminCheckExecutor>();
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithNoSpecifiedAdmin)};
     EXPECT_THROW(web::make_HttpServer(serverConfig, ctx, std::nullopt, dosGuardOverload, e), std::logic_error);
 }
 
