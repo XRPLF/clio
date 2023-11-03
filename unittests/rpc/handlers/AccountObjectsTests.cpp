@@ -169,10 +169,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
     ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     // return empty ledgerinfo
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -197,9 +195,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
     ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     // return empty ledgerinfo
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillOnce(Return(std::nullopt));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -224,10 +221,9 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
     ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
     // return empty ledgerinfo
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
+        .WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -254,11 +250,9 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).WillOnce(Return(std::optional<Blob>{}));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -315,29 +309,26 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
     std::vector<Blob> bbs;
     auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -361,34 +352,30 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     static auto constexpr limit = 10;
     auto count = limit * 2;
     // put 20 items in owner dir, but only return 10
     auto const ownerDir = CreateOwnerDirLedgerObject(std::vector(count, ripple::uint256{INDEX1}), INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
-
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     while (count-- != 0) {
         auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -415,11 +402,10 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     static auto constexpr limit = 20;
     static auto constexpr page = 2;
@@ -427,17 +413,16 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
     auto const ownerDir = CreateOwnerDirLedgerObject(std::vector(count, ripple::uint256{INDEX1}), INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(GetAccountIDWithString(ACCOUNT)).key;
     auto const hintIndex = ripple::keylet::page(ownerDirKk, page).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(hintIndex, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(hintIndex, 30, _))
+        .Times(2)
+        .WillRepeatedly(Return(ownerDir.getSerializer().peekData()));
 
     std::vector<Blob> bbs;
     while (count-- != 0) {
         auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -465,12 +450,11 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     static auto constexpr count = 10;
     static auto constexpr nextpage = 1;
@@ -480,16 +464,14 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
     ownerDir.setFieldU64(ripple::sfIndexNext, nextpage);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
     auto const page1 = ripple::keylet::page(ownerDirKk, nextpage).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(page1, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(page1, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
-
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(4);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     // 10 items per page, 2 pages
@@ -498,8 +480,7 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
         auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -526,22 +507,20 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     // put 1 state and 1 offer
@@ -559,8 +538,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(offer.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -585,22 +563,20 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     // put 1 state and 1 amm
@@ -610,8 +586,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
     auto const ammObject = CreateAMMObject(ACCOUNT, "XRP", toBase58(ripple::xrpAccount()), "JPY", ACCOUNT2);
     bbs.push_back(ammObject.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -638,22 +613,20 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     std::vector<Blob> bbs;
     auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
@@ -670,8 +643,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(offer.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -698,24 +670,21 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
     mockBackendPtr->updateRange(MAXSEQ);  // max
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
 
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
-
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     auto const line = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
@@ -735,8 +704,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
     bbs.push_back(channel.getSerializer().peekData());
     bbs.push_back(offer.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -763,22 +731,20 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
     mockBackendPtr->updateRange(MAXSEQ);  // max
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     auto const line = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
@@ -787,8 +753,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
     bbs.push_back(line.getSerializer().peekData());
     bbs.push_back(channel.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -816,23 +781,20 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
     mockBackendPtr->updateRange(MAXSEQ);  // max
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
-
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     auto const offer1 = CreateOfferLedgerObject(
         ACCOUNT,
@@ -859,8 +821,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
     bbs.push_back(offer1.getSerializer().peekData());
     bbs.push_back(offer2.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -887,21 +848,19 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
     mockBackendPtr->updateRange(MAXSEQ);  // max
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
     auto const offer1 = CreateOfferLedgerObject(
         ACCOUNT,
@@ -928,8 +887,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
     bbs.push_back(offer1.getSerializer().peekData());
     bbs.push_back(offer2.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1018,39 +976,36 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft page 1
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
     auto const nftPage2KK = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{INDEX1}).key;
     auto const nftpage1 =
         CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, nftPage2KK);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _))
-        .WillByDefault(Return(nftpage1.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _))
+        .WillOnce(Return(nftpage1.getSerializer().peekData()));
 
     // nft page 2 , end
     auto const nftpage2 =
         CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftPage2KK, 30, _))
-        .WillByDefault(Return(nftpage2.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftPage2KK, 30, _))
+        .WillOnce(Return(nftpage2.getSerializer().peekData()));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(4);
     std::vector<Blob> bbs;
     auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1074,12 +1029,11 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto current = ripple::keylet::nftpage_max(account).key;
     std::string first{INDEX1};
@@ -1090,12 +1044,10 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
-        ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
-            .WillByDefault(Return(nftpage.getSerializer().peekData()));
+        EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
+            .WillOnce(Return(nftpage.getSerializer().peekData()));
         current = previous;
     }
-
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(11);
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1125,12 +1077,11 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto current = ripple::keylet::nftpage_max(account).key;
     std::string first{INDEX1};
@@ -1141,16 +1092,14 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
-        ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
-            .WillByDefault(Return(nftpage.getSerializer().peekData()));
+        EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
+            .WillOnce(Return(nftpage.getSerializer().peekData()));
         current = previous;
     }
     auto const nftpage11 =
         CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
-        .WillByDefault(Return(nftpage11.getSerializer().peekData()));
-
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(12);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
+        .WillOnce(Return(nftpage11.getSerializer().peekData()));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1181,12 +1130,11 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     std::string first{INDEX1};
     auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
@@ -1198,20 +1146,20 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
-        ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
-            .WillByDefault(Return(nftpage.getSerializer().peekData()));
+        EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
+            .WillOnce(Return(nftpage.getSerializer().peekData()));
         current = previous;
     }
     auto const nftpage11 =
         CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
-        .WillByDefault(Return(nftpage11.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
+        .WillOnce(Return(nftpage11.getSerializer().peekData()));
 
     auto const ownerDir =
         CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const line = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
@@ -1231,10 +1179,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
     bbs.push_back(channel.getSerializer().peekData());
     bbs.push_back(offer.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
-
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(13);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1263,18 +1208,17 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir =
         CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const line = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
@@ -1294,10 +1238,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
     bbs.push_back(channel.getSerializer().peekData());
     bbs.push_back(offer.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
-
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1325,13 +1266,11 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1360,17 +1299,15 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     // return null for this marker
     auto const accountNftMax = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountNftMax, MAXSEQ, _)).WillByDefault(Return(std::nullopt));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountNftMax, MAXSEQ, _)).WillOnce(Return(std::nullopt));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1399,12 +1336,11 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     std::string first{INDEX1};
     auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
@@ -1416,19 +1352,19 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =
             CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, previous);
-        ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
-            .WillByDefault(Return(nftpage.getSerializer().peekData()));
+        EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
+            .WillOnce(Return(nftpage.getSerializer().peekData()));
         current = previous;
     }
     auto const nftpage11 =
         CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
-        .WillByDefault(Return(nftpage11.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
+        .WillOnce(Return(nftpage11.getSerializer().peekData()));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     auto const line = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     auto const channel = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
@@ -1448,10 +1384,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
     bbs.push_back(channel.getSerializer().peekData());
     bbs.push_back(offer.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
-
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(13);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1522,39 +1455,36 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft page 1
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
     auto const nftPage2KK = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{INDEX1}).key;
     auto const nftpage1 =
         CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, nftPage2KK);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _))
-        .WillByDefault(Return(nftpage1.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _))
+        .WillOnce(Return(nftpage1.getSerializer().peekData()));
 
     // nft page 2 , end
     auto const nftpage2 =
         CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftPage2KK, 30, _))
-        .WillByDefault(Return(nftpage2.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftPage2KK, 30, _))
+        .WillOnce(Return(nftpage2.getSerializer().peekData()));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(4);
     std::vector<Blob> bbs;
     auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1579,30 +1509,26 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     static auto constexpr limit = 10;
     auto count = limit * 2;
     // put 20 items in owner dir, but only return 10
     auto const ownerDir = CreateOwnerDirLedgerObject(std::vector(count, ripple::uint256{INDEX1}), INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     std::vector<Blob> bbs;
     while (count-- != 0) {
         auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
         bbs.push_back(line1.getSerializer().peekData());
     }
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1667,29 +1593,26 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
     std::vector<Blob> bbs;
     auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
@@ -1750,29 +1673,26 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
     mockBackendPtr->updateRange(MINSEQ);  // min
     mockBackendPtr->updateRange(MAXSEQ);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
     auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
-        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillOnce(Return(ownerDir.getSerializer().peekData()));
 
     // nft null
     auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
     std::vector<Blob> bbs;
     auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
     bbs.push_back(line1.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
     auto const static input = json::parse(fmt::format(
         R"({{
