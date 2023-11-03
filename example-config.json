@@ -66,7 +66,7 @@
         // Max number of requests to queue up before rejecting further requests.
         // Defaults to 0, which disables the limit.
         "max_queue_size": 500,
-        // If request contains header with authorization, Clio will check if it matches this value's hash
+        // If request contains header with authorization, Clio will check if it matches this value's sha256 hash
         // If matches, the request will be considered as admin request
         "admin_password": "xrp",
         // If local_admin is true, Clio will consider requests come from 127.0.0.1 as admin requests

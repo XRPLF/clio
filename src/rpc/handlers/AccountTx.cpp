@@ -56,6 +56,8 @@ std::unordered_map<std::string, ripple::TxType> const AccountTxHandler::TYPESMAP
     {JSL(SignerListSet), ripple::ttSIGNER_LIST_SET},
     {JSL(TicketCreate), ripple::ttTICKET_CREATE},
     {JSL(TrustSet), ripple::ttTRUST_SET},
+    {JSL(DIDSet), ripple::ttDID_SET},
+    {JSL(DIDDelete), ripple::ttDID_DELETE},
 };
 
 // TODO: should be std::views::keys when clang supports it

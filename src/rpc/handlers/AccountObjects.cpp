@@ -22,18 +22,27 @@
 namespace rpc {
 
 // found here : https://xrpl.org/ledger_entry.html#:~:text=valid%20fields%20are%3A-,index,-account_root
-std::unordered_map<std::string, ripple::LedgerEntryType> const AccountObjectsHandler::TYPESMAP{
-    {"state", ripple::ltRIPPLE_STATE},
-    {"ticket", ripple::ltTICKET},
-    {"signer_list", ripple::ltSIGNER_LIST},
-    {"payment_channel", ripple::ltPAYCHAN},
-    {"offer", ripple::ltOFFER},
-    {"escrow", ripple::ltESCROW},
-    {"deposit_preauth", ripple::ltDEPOSIT_PREAUTH},
-    {"check", ripple::ltCHECK},
-    {"nft_page", ripple::ltNFTOKEN_PAGE},
-    {"nft_offer", ripple::ltNFTOKEN_OFFER},
+std::unordered_map<std::string, ripple::LedgerEntryType> const AccountObjectsHandler::TYPES_MAP{
+    {JS(state), ripple::ltRIPPLE_STATE},
+    {JS(ticket), ripple::ltTICKET},
+    {JS(signer_list), ripple::ltSIGNER_LIST},
+    {JS(payment_channel), ripple::ltPAYCHAN},
+    {JS(offer), ripple::ltOFFER},
+    {JS(escrow), ripple::ltESCROW},
+    {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
+    {JS(check), ripple::ltCHECK},
+    {JS(nft_page), ripple::ltNFTOKEN_PAGE},
+    {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
+    {JS(did), ripple::ltDID},
 };
+
+std::unordered_set<std::string> const AccountObjectsHandler::TYPES_KEYS = [] {
+    std::unordered_set<std::string> keys;
+    std::transform(TYPES_MAP.begin(), TYPES_MAP.end(), std::inserter(keys, keys.begin()), [](auto const& pair) {
+        return pair.first;
+    });
+    return keys;
+}();
 
 AccountObjectsHandler::Result
 AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const& ctx) const
@@ -153,7 +162,7 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     }
 
     if (jsonObject.contains(JS(type)))
-        input.type = AccountObjectsHandler::TYPESMAP.at(jv.at(JS(type)).as_string().c_str());
+        input.type = AccountObjectsHandler::TYPES_MAP.at(jv.at(JS(type)).as_string().c_str());
 
     if (jsonObject.contains(JS(limit)))
         input.limit = jv.at(JS(limit)).as_int64();

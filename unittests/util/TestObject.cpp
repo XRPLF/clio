@@ -137,6 +137,25 @@ CreatePaymentTransactionMetaObject(
 }
 
 ripple::STObject
+CreateDidObject(std::string_view accountId, std::string_view didDoc, std::string_view uri, std::string_view data)
+{
+    ripple::STObject did(ripple::sfLedgerEntry);
+    did.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId));
+    did.setFieldU16(ripple::sfLedgerEntryType, ripple::ltDID);
+    did.setFieldU32(ripple::sfFlags, 0);
+    did.setFieldU64(ripple::sfOwnerNode, 0);
+    did.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    did.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    ripple::Slice const sliceDoc(didDoc.data(), didDoc.size());
+    did.setFieldVL(ripple::sfDIDDocument, sliceDoc);
+    ripple::Slice const sliceUri(uri.data(), uri.size());
+    did.setFieldVL(ripple::sfURI, sliceUri);
+    ripple::Slice const sliceData(data.data(), data.size());
+    did.setFieldVL(ripple::sfData, sliceData);
+    return did;
+}
+
+ripple::STObject
 CreateAccountRootObject(
     std::string_view accountId,
     uint32_t flag,

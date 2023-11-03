@@ -1487,6 +1487,22 @@ generateTransactionTypeTestValues()
 {
     return std::vector<AccountTxTransactionBundle>{
         AccountTxTransactionBundle{
+            "DIDSet",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "DIDSet"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "DIDDelete",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "DIDDelete"
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
             "AccountSet",
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",

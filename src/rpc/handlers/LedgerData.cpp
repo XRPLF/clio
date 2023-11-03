@@ -27,6 +27,7 @@ namespace rpc {
 
 std::unordered_map<std::string, ripple::LedgerEntryType> const LedgerDataHandler::TYPES_MAP{
     {JS(account), ripple::ltACCOUNT_ROOT},
+    {JS(did), ripple::ltDID},
     {JS(amendments), ripple::ltAMENDMENTS},
     {JS(check), ripple::ltCHECK},
     {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
