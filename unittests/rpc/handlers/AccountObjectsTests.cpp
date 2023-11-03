@@ -578,6 +578,59 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
     });
 }
 
+TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
+{
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, 30, _))
+        .WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+
+    // nft null
+    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    ON_CALL(*rawBackendPtr, doFetchLedgerObject(nftMaxKK, 30, _)).WillByDefault(Return(std::nullopt));
+
+    std::vector<Blob> bbs;
+    // put 1 state and 1 amm
+    auto const line1 = CreateRippleStateLedgerObject("USD", ISSUER, 100, ACCOUNT, 10, ACCOUNT2, 20, TXNID, 123, 0);
+    bbs.push_back(line1.getSerializer().peekData());
+
+    auto const ammObject = CreateAMMObject(ACCOUNT, "XRP", toBase58(ripple::xrpAccount()), "JPY", ACCOUNT2);
+    bbs.push_back(ammObject.getSerializer().peekData());
+
+    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+
+    auto const static input = json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "type": "amm"
+        }})",
+        ACCOUNT
+    ));
+
+    auto const handler = AnyHandler{AccountObjectsHandler{mockBackendPtr}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        auto const& accountObjects = output->as_object().at("account_objects").as_array();
+        ASSERT_EQ(accountObjects.size(), 1);
+        EXPECT_EQ(accountObjects.front().at("LedgerEntryType").as_string(), "AMM");
+    });
+}
+
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
