@@ -27,7 +27,8 @@
     },
     "server":{
         "ip":"127.0.0.1",
-        "port":51233
+        "port":51233,
+        "admin_password": "secret"
     },
     "log_level":"warning",
     "log_to_console": true,
