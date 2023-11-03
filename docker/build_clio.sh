@@ -13,7 +13,7 @@ pip install "conan<2"
 conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod || true
 
 conan install . \
-    --build missing \
+    --build \
     --output-folder ${BUILD_DIR} \
     --options tests=${TESTS} \
     --options lint=False \
