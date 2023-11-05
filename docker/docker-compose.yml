@@ -3,6 +3,7 @@ version: "3"
 services:
   clio:
     image: rippleci/clio:latest
+    container_name: clio_server
     restart: always
     build:
       context: ..
@@ -17,11 +18,12 @@ services:
     depends_on:
       rippled:
         condition: service_healthy
-      cassandra:
+      clio_db:
         condition: service_healthy
 
   rippled:
     image: rippleci/rippled:2.0.0-b4
+    container_name: clio_rippled
     restart: always
     network_mode: host
     volumes:
@@ -35,12 +37,13 @@ services:
       retries: 10
       start_period: 180s
 
-  cassandra:
-    image: cassandra:4.0.4
-    container_name: cassandra
+  clio_db:
+    image: scylladb/scylla
+    container_name: clio_db
     network_mode: host
+    command: --listen-address 127.0.0.1
     healthcheck:
-      test: ["CMD", "/opt/cassandra/bin/cqlsh", "-e", "SHOW VERSION"]
+      test: ["CMD", "/usr/bin/cqlsh", "-e", "SHOW VERSION"]
       interval: 20s
       timeout: 5m
       retries: 5
