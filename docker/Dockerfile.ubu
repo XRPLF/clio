@@ -1,0 +1,27 @@
+FROM gcc:11.3.0 AS deps
+RUN apt-get update && \
+    apt-get install -y \
+    autoconf \
+    bison \
+    build-essential \
+    curl \
+    flex \
+    git \
+    gpg \
+    libssl-dev \
+    pkg-config \
+    software-properties-common \
+    zlib1g-dev
+
+FROM gcc:11.3.0 AS build_clio
+COPY . /clio
+WORKDIR /clio
+ARG CMAKE_VERSION=3.27.7
+COPY docker/install_cmake.sh .
+RUN ./install_cmake.sh ${CMAKE_VERSION}
+
+COPY docker/build_clio.sh /tmp/build_clio.sh
+RUN /tmp/build_clio.sh
+
+FROM ubuntu:20.04 AS clio
+COPY --from=build_clio /opt/clio /opt/clio

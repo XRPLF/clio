@@ -5,18 +5,26 @@ BUILD_DIR=build
 BUILD_CONFIG=Release
 TESTS=False
 NPROC=$(($(nproc) - 2))
+. /etc/os-release
 
-source /opt/rh/devtoolset-11/enable
-source /opt/rh/rh-python38/enable
+if [ $ID = 'centos' ]; then
+    source /opt/rh/devtoolset-11/enable
+    source /opt/rh/rh-python38/enable
+elif [ $ID = 'debian' ]; then
+    apt-get update
+    apt-get install --yes python-is-python3 python3-pip
+fi
 
 pip install "conan<2"
 conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod || true
 
+conan profile update settings.compiler.cppstd=20 default
+conan profile update settings.compiler.libcxx=libstdc++11 default
+
 conan install . \
-    --build \
+    --build missing \
     --output-folder ${BUILD_DIR} \
     --options tests=${TESTS} \
-    --options lint=False \
     --settings build_type=${BUILD_CONFIG}
 
 cmake . -B ${BUILD_DIR} \
