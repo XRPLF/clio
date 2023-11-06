@@ -114,9 +114,9 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
             if (auctionSlot.isFieldPresent(sfAuthAccounts)) {
                 boost::json::array auth;
                 for (auto const& acct : auctionSlot.getFieldArray(sfAuthAccounts)) {
-                    auth.push_back({
-                        {JS(account), to_string(acct.getAccountID(sfAccount))},
-                    });
+                    boost::json::object accountData;
+                    accountData[JS(account)] = to_string(acct.getAccountID(sfAccount));
+                    auth.push_back(accountData);
                 }
 
                 auction[JS(auth_accounts)] = std::move(auth);
