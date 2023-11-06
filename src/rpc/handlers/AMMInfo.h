@@ -73,8 +73,8 @@ public:
         static auto const rpcSpec = RpcSpec{
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(asset), validation::Required{}, validation::AssetValidator},
-            {JS(asset2), validation::Required{}, validation::AssetValidator},
+            {JS(asset), validation::Required{}, validation::ammAssetValidator},
+            {JS(asset2), validation::Required{}, validation::ammAssetValidator},
             {JS(account), validation::AccountValidator},
         };
 

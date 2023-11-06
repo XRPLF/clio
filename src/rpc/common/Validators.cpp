@@ -196,32 +196,20 @@ CustomValidator SubscribeAccountsValidator =
         return MaybeError{};
     }};
 
-CustomValidator AssetValidator =
-    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        if (!value.is_object())
-            return Error{Status{RippledError::rpcISSUE_MALFORMED, std::string(key) + "NotObject"}};
-
-        auto const& obj = value.as_object();
-        ripple::Issue issue = ripple::xrpIssue();
-
-        if (!obj.contains(JS(currency)))
-            return Error{Status{RippledError::rpcISSUE_MALFORMED}};
-
-        auto const& currency = value.at(JS(currency));
-        if (!ripple::to_currency(issue.currency, currency.as_string().c_str()))
-            return Error{Status{RippledError::rpcISSUE_MALFORMED}};
-
-        if (isXRP(issue.currency) && obj.contains(JS(issuer)))
-            return Error{Status{RippledError::rpcISSUE_MALFORMED}};
-
-        if (!obj.contains(JS(issuer)))
-            return Error{Status{RippledError::rpcISSUE_MALFORMED}};
-
-        if (auto const& issuer = obj.at(JS(issuer));
-            !issuer.is_string() || !ripple::to_issuer(issue.account, issuer.as_string().c_str()))
-            return Error{Status{RippledError::rpcISSUE_MALFORMED}};
+CustomValidator ammAssetValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
+        Json::Value jvAsset;
+        if (value.as_object().contains(JS(issuer)))
+            jvAsset["issuer"] = value.at(JS(issuer)).as_string().c_str();
+        if (value.as_object().contains(JS(currency)))
+            jvAsset["currency"] = value.at(JS(currency)).as_string().c_str();
+        // same as rippled
+        try {
+            ripple::issueFromJson(jvAsset);
+        } catch (std::runtime_error const&) {
+            return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
+        }
 
         return MaybeError{};
     }};
-
 }  // namespace rpc::validation
