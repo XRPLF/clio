@@ -909,7 +909,7 @@ xrpLiquid(
 
     ripple::STAmount const amount = [&]() {
         // AMM doesn't require the reserves
-        if (sle.getFlags() & ripple::lsfAMMNode)
+        if ((sle.getFlags() & ripple::lsfAMMNode) != 0u)
             return balance;
         ripple::STAmount amount = balance - reserve;
         if (balance < reserve)

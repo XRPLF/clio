@@ -100,7 +100,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     }
 
     if (amm.isFieldPresent(sfAuctionSlot)) {
-        auto const& auctionSlot = static_cast<STObject const&>(amm.peekAtField(sfAuctionSlot));
+        auto const& auctionSlot = amm.peekAtField(sfAuctionSlot).downcast<STObject>();
         if (auctionSlot.isFieldPresent(sfAccount)) {
             boost::json::object auction;
             auto const timeSlot = ammAuctionTimeSlot(lgrInfo.parentCloseTime.time_since_epoch().count(), auctionSlot);
