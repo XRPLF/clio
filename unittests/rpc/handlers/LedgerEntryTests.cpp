@@ -83,6 +83,14 @@ generateTestValuesForParametersTest()
             "Malformed address."},
 
         ParamTestCaseBundle{
+            "InvalidDidFormat",
+            R"({
+                "did": "invalid"
+            })",
+            "malformedAddress",
+            "Malformed address."},
+
+        ParamTestCaseBundle{
             "InvalidAccountRootNotString",
             R"({
                 "account_root": 123
@@ -1041,6 +1049,17 @@ generateTestValuesForNormalPathTest()
             ),
             ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key,
             CreateAccountRootObject(ACCOUNT, 0, 1, 1, 1, INDEX1, 1)},
+        NormalPathTestBundle{
+            "DID",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "did": "{}"
+                }})",
+                ACCOUNT
+            ),
+            ripple::keylet::did(GetAccountIDWithString(ACCOUNT)).key,
+            CreateDidObject(ACCOUNT, "mydocument", "myURI", "mydata")},
         NormalPathTestBundle{
             "DirectoryViaDirRoot",
             fmt::format(

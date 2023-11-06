@@ -32,6 +32,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         key = ripple::uint256{std::string_view(*(input.index))};
     } else if (input.accountRoot) {
         key = ripple::keylet::account(*ripple::parseBase58<ripple::AccountID>(*(input.accountRoot))).key;
+    } else if (input.did) {
+        key = ripple::keylet::did(*ripple::parseBase58<ripple::AccountID>(*(input.did))).key;
     } else if (input.directory) {
         auto const keyOrStatus = composeKeyFromDirectory(*input.directory);
         if (auto const status = std::get_if<Status>(&keyOrStatus))
@@ -209,6 +211,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
     // check if request for account root
     else if (jsonObject.contains(JS(account_root))) {
         input.accountRoot = jv.at(JS(account_root)).as_string().c_str();
+    } else if (jsonObject.contains(JS(did))) {
+        input.did = jv.at(JS(did)).as_string().c_str();
     }
     // no need to check if_object again, validator only allows string or object
     else if (jsonObject.contains(JS(directory))) {
