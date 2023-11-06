@@ -59,7 +59,7 @@ TEST(DefaultMetricBuilderTest, build)
 struct MetricsFamilyTest : ::testing::Test {
     struct MetricMock : MetricBase {
         using MetricBase::MetricBase;
-        MOCK_METHOD(void, serializeValue, (std::string&), (const));
+        MOCK_METHOD(void, serializeValue, (OStream&), (const));
     };
     using MetricStrictMock = ::testing::StrictMock<MetricMock>;
 
@@ -116,11 +116,12 @@ TEST_F(MetricsFamilyTest, getMetric)
     EXPECT_EQ(&metricsFamily.getMetric(labels2), &metric2);
     EXPECT_NE(&metric, &metric2);
 
-    EXPECT_CALL(*metricMock, serializeValue(::testing::_)).WillOnce([](std::string& s) { s += "metric"; });
-    EXPECT_CALL(*metric2Mock, serializeValue(::testing::_)).WillOnce([](std::string& s) { s += "metric2"; });
+    EXPECT_CALL(*metricMock, serializeValue(::testing::_)).WillOnce([](OStream& s) { s << "metric"; });
+    EXPECT_CALL(*metric2Mock, serializeValue(::testing::_)).WillOnce([](OStream& s) { s << "metric2"; });
 
-    std::string serialized;
-    metricsFamily.serialize(serialized);
+    OStream stream{false};
+    stream << metricsFamily;
+    auto const serialized = std::move(stream).data();
 
     auto const expected =
         fmt::format("# HELP {0} {1}\n# TYPE {0} {2}\nmetric\nmetric2\n\n", name, description, toString(type));

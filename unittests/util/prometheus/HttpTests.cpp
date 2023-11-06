@@ -150,7 +150,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounter)
 TEST_F(PrometheusHandleRequestTests, responseWithGauge)
 {
     auto const gaugeName = "test_gauge";
-    const Labels labels{{{"label2", "value2"}, Label{"label3", "value3"}}};
+    const Labels labels{{{"label2", "value2"}, {"label3", "value3"}}};
     auto const description = "test_description_gauge";
 
     auto& gauge = PrometheusService::gaugeInt(gaugeName, labels, description);
@@ -169,7 +169,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithGauge)
 TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
 {
     auto const counterName = "test_counter";
-    const Labels counterLabels{{{"label1", "value1"}, Label{"label2", "value2"}}};
+    const Labels counterLabels{{{"label1", "value1"}, {"label2", "value2"}}};
     auto const counterDescription = "test_description";
 
     auto& counter = PrometheusService::counterInt(counterName, counterLabels, counterDescription);
@@ -177,7 +177,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
     counter += 3;
 
     auto const gaugeName = "test_gauge";
-    const Labels gaugeLabels{{{"label2", "value2"}, Label{"label3", "value3"}}};
+    const Labels gaugeLabels{{{"label2", "value2"}, {"label3", "value3"}}};
     auto const gaugeDescription = "test_description_gauge";
 
     auto& gauge = PrometheusService::gaugeInt(gaugeName, gaugeLabels, gaugeDescription);
@@ -209,4 +209,19 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
         gaugeLabels.serialize()
     );
     EXPECT_TRUE(response->body() == expectedBody || response->body() == anotherExpectedBody);
+}
+
+TEST_F(PrometheusHandleRequestTests, compressReply)
+{
+    PrometheusService::init(util::Config({{"prometheus", boost::json::object{{"compress_reply", true}}}}));
+
+    auto& gauge = PrometheusService::gaugeInt("test_gauge", Labels{});
+    ++gauge;
+
+    auto response = handlePrometheusRequest(req, true);
+    ASSERT_TRUE(response.has_value());
+    EXPECT_EQ(response->result(), http::status::ok);
+    EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
+    EXPECT_EQ(response->operator[](http::field::content_encoding), "gzip");
+    EXPECT_GT(response->body().size(), 0ul);
 }

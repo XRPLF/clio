@@ -141,6 +141,7 @@ target_sources (clio PRIVATE
   src/util/prometheus/Http.cpp
   src/util/prometheus/Label.cpp
   src/util/prometheus/Metrics.cpp
+  src/util/prometheus/OStream.cpp
   src/util/prometheus/Prometheus.cpp
   src/util/Random.cpp
   src/util/Taggable.cpp)
@@ -174,6 +175,7 @@ if (tests)
     unittests/util/prometheus/HttpTests.cpp
     unittests/util/prometheus/LabelTests.cpp
     unittests/util/prometheus/MetricsTests.cpp
+    unittests/util/prometheus/OStreamTests.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp

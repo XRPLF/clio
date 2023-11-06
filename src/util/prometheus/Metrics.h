@@ -20,6 +20,7 @@
 #pragma once
 
 #include <util/prometheus/Label.h>
+#include <util/prometheus/OStream.h>
 
 #include <fmt/format.h>
 
@@ -48,10 +49,11 @@ public:
     /**
      * @brief Serialize the metric to a string in Prometheus format
      *
-     * @param s The string to serialize into
+     * @param stream The stream to serialize into
+     * @param metricBase The metric to serialize
      */
-    void
-    serialize(std::string& s) const;
+    friend OStream&
+    operator<<(OStream& stream, MetricBase const& metricBase);
 
     /**
      * @brief Get the name of the metric
@@ -69,10 +71,10 @@ protected:
     /**
      * @brief Interface to serialize the value of the metric
      *
-     * @param result The string to serialize into
+     * @return The serialized value
      */
     virtual void
-    serializeValue(std::string& result) const = 0;
+    serializeValue(OStream& stream) const = 0;
 
 private:
     std::string name_;
@@ -116,12 +118,13 @@ public:
     getMetric(Labels labels);
 
     /**
-     * @brief Serialize all the containing metrics to a string in Prometheus format as one block
+     * @brief Serialize the metrics to a string in Prometheus format as one block
      *
-     * @param result The string to serialize into
+     * @param stream The stream to serialize into
+     * @param metricsFamily The metrics to serialize
      */
-    void
-    serialize(std::string& result) const;
+    friend OStream&
+    operator<<(OStream& stream, MetricsFamily const& metricsFamily);
 
     std::string const&
     name() const;

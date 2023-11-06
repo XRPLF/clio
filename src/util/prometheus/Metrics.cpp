@@ -29,10 +29,11 @@ MetricBase::MetricBase(std::string name, std::string labelsString)
 {
 }
 
-void
-MetricBase::serialize(std::string& s) const
+OStream&
+operator<<(OStream& stream, MetricBase const& metricBase)
 {
-    serializeValue(s);
+    metricBase.serializeValue(stream);
+    return stream;
 }
 
 char const*
@@ -113,18 +114,19 @@ MetricsFamily::getMetric(Labels labels)
     return *it->second;
 }
 
-void
-MetricsFamily::serialize(std::string& result) const
+OStream&
+operator<<(OStream& stream, MetricsFamily const& metricsFamily)
 {
-    if (description_)
-        fmt::format_to(std::back_inserter(result), "# HELP {} {}\n", name_, *description_);
-    fmt::format_to(std::back_inserter(result), "# TYPE {} {}\n", name_, toString(type()));
+    if (metricsFamily.description_)
+        stream << "# HELP " << metricsFamily.name_ << ' ' << *metricsFamily.description_ << '\n';
+    stream << "# TYPE " << metricsFamily.name_ << ' ' << toString(metricsFamily.type()) << '\n';
 
-    for (auto const& [labelsString, metric] : metrics_) {
-        metric->serialize(result);
-        result.push_back('\n');
+    for (auto const& [labelsString, metric] : metricsFamily.metrics_) {
+        stream << *metric << '\n';
     }
-    result.push_back('\n');
+    stream << '\n';
+
+    return stream;
 }
 
 std::string const&

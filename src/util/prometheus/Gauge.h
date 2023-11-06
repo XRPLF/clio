@@ -113,12 +113,12 @@ struct AnyGauge : MetricBase, detail::AnyCounterBase<NumberType> {
     /**
      * @brief Serialize the counter to a string in prometheus format (i.e. name{labels} value)
      *
-     * @param result The string to serialize into
+     * @param stream The stream to serialize into
      */
     void
-    serializeValue(std::string& result) const override
+    serializeValue(OStream& stream) const override
     {
-        fmt::format_to(std::back_inserter(result), "{}{} {}", this->name(), this->labelsString(), value());
+        stream << name() << labelsString() << ' ' << value();
     }
 };
 
