@@ -224,8 +224,10 @@ private:
         if (jsonObject.contains(JS(transaction)))
             input.transaction = jv.at(JS(transaction)).as_string().c_str();
 
-        if (jsonObject.contains(JS(ctid)))
+        if (jsonObject.contains(JS(ctid))) {
             input.ctid = jv.at(JS(ctid)).as_string().c_str();
+            std::transform(input.ctid->begin(), input.ctid->end(), input.ctid->begin(), ::toupper);
+        }
 
         if (jsonObject.contains(JS(binary)))
             input.binary = jv.at(JS(binary)).as_bool();
