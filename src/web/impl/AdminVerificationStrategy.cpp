@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <fmt/format.h>
+#include <util/JsonUtils.h>
 #include <web/impl/AdminVerificationStrategy.h>
 
 #include <ripple/protocol/digest.h>
@@ -39,7 +40,7 @@ PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string
     std::memcpy(sha256.data(), d.data(), d.size());
     passwordSha256_ = ripple::to_string(sha256);
     // make sure it's uppercase
-    std::transform(passwordSha256_.begin(), passwordSha256_.end(), passwordSha256_.begin(), ::toupper);
+    passwordSha256_ = util::toUpper(std::move(passwordSha256_));
 }
 
 bool
@@ -55,11 +56,9 @@ PasswordAdminVerificationStrategy::isAdmin(RequestType const& request, std::stri
         // Invalid Authorization header
         return false;
     }
+
     userAuth.remove_prefix(passwordPrefix.size());
-    std::string userPasswordHash;
-    userPasswordHash.reserve(userAuth.size());
-    std::transform(userAuth.begin(), userAuth.end(), std::back_inserter(userPasswordHash), ::toupper);
-    return passwordSha256_ == userPasswordHash;
+    return passwordSha256_ == util::toUpper(userAuth);
 }
 
 std::shared_ptr<AdminVerificationStrategy>

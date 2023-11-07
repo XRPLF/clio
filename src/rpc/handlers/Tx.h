@@ -24,6 +24,7 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
+#include <util/JsonUtils.h>
 
 namespace rpc {
 
@@ -224,8 +225,10 @@ private:
         if (jsonObject.contains(JS(transaction)))
             input.transaction = jv.at(JS(transaction)).as_string().c_str();
 
-        if (jsonObject.contains(JS(ctid)))
+        if (jsonObject.contains(JS(ctid))) {
             input.ctid = jv.at(JS(ctid)).as_string().c_str();
+            input.ctid = util::toUpper(*input.ctid);
+        }
 
         if (jsonObject.contains(JS(binary)))
             input.binary = jv.at(JS(binary)).as_bool();
