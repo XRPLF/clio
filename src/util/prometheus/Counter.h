@@ -27,7 +27,7 @@ namespace util::prometheus {
 /**
  * @brief A prometheus counter metric implementation. It can only be increased or be reset to zero.
  */
-template <detail::SomeNumberType NumberType>
+template <SomeNumberType NumberType>
 struct AnyCounter : MetricBase, detail::AnyCounterBase<NumberType> {
     using ValueType = NumberType;
 

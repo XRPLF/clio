@@ -27,7 +27,7 @@ namespace util::prometheus {
 /**
  * @brief A prometheus gauge metric implementation. It can be increased, decreased or set to a value.
  */
-template <detail::SomeNumberType NumberType>
+template <SomeNumberType NumberType>
 struct AnyGauge : MetricBase, detail::AnyCounterBase<NumberType> {
     using ValueType = NumberType;
 

@@ -19,14 +19,13 @@
 
 #pragma once
 
+#include <util/Atomic.h>
+
 #include <atomic>
 #include <cassert>
 #include <concepts>
 
 namespace util::prometheus::detail {
-
-template <typename T>
-concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_const_v<T>;
 
 template <typename T>
 concept SomeCounterImpl = requires(T a) {
@@ -67,35 +66,23 @@ public:
     void
     add(ValueType const value)
     {
-        if constexpr (std::is_integral_v<ValueType>) {
-            value_.fetch_add(value);
-        } else {
-#if __cpp_lib_atomic_float >= 201711L
-            value_.fetch_add(value);
-#else
-            // Workaround for atomic float not being supported by the standard library
-            // cimpares_exchange_weak returns false if the value is not exchanged and updates the current value
-            auto current = value_.load();
-            while (!value_.compare_exchange_weak(current, current + value)) {
-            }
-#endif
-        }
+        value_.add(value);
     }
 
     void
     set(ValueType const value)
     {
-        value_ = value;
+        value.set(value);
     }
 
     ValueType
     value() const
     {
-        return value_;
+        return value_.value();
     }
 
 private:
-    std::atomic<ValueType> value_{0};
+    Atomic<ValueType> value_{0};
 };
 
 }  // namespace util::prometheus::detail
