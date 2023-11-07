@@ -19,24 +19,25 @@
 
 #include <util/prometheus/OStream.h>
 
+#include <boost/iostreams/filter/gzip.hpp>
 #include <gtest/gtest.h>
 
 using namespace util::prometheus;
 
-TEST(OSTream, empty)
+TEST(OStreamTests, empty)
 {
     OStream stream{false};
     EXPECT_EQ(std::move(stream).data(), "");
 }
 
-TEST(OSTream, string)
+TEST(OStreamTests, string)
 {
     OStream stream{false};
     stream << "hello";
     EXPECT_EQ(std::move(stream).data(), "hello");
 }
 
-TEST(OSTream, useAfterData)
+TEST(OStreamTests, useAfterData)
 {
     OStream stream{false};
     stream << "hello";
@@ -45,11 +46,21 @@ TEST(OSTream, useAfterData)
     EXPECT_EQ(std::move(stream).data(), "world");
 }
 
-TEST(OSTream, compression)
+TEST(OStreamTests, compression)
 {
     OStream stream{true};
-    std::string const s = "helloooooooooooooooooooooooooooooooooo";
-    stream << s;
+    std::string const str = "helloooooooooooooooooooooooooooooooooo";
+    stream << str;
     auto const compressed = std::move(stream).data();
-    EXPECT_LT(compressed.size(), s.size());
+    EXPECT_LT(compressed.size(), str.size());
+
+    const std::string decompressed = [&compressed]() {
+        std::string result;
+        boost::iostreams::filtering_istream stream;
+        stream.push(boost::iostreams::gzip_decompressor{});
+        stream.push(boost::iostreams::array_source{compressed.data(), compressed.size()});
+        stream >> result;
+        return result;
+    }();
+    EXPECT_EQ(decompressed, str);
 }

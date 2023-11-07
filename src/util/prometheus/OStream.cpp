@@ -22,23 +22,29 @@
 #include <boost/iostreams/filter/gzip.hpp>
 
 namespace util::prometheus {
-OStream::OStream(bool const compressionEnabled)
+OStream::OStream(bool const compressionEnabled) : compressionEnabled_(compressionEnabled)
 {
-    if (compressionEnabled) {
-        stream_.push(boost::iostreams::gzip_compressor{
-            boost::iostreams::gzip_params{boost::iostreams::gzip::best_compression}});
-    }
-
-    stream_.push(boost::iostreams::back_inserter(buffer_));
+    pushFilters();
 }
 
 std::string
 OStream::data() &&
 {
-    stream_.flush();
+    stream_.reset();
     auto result = std::move(buffer_);
     buffer_.clear();
+    pushFilters();
     return result;
+}
+
+void
+OStream::pushFilters()
+{
+    if (compressionEnabled_) {
+        stream_.push(boost::iostreams::gzip_compressor{
+            boost::iostreams::gzip_params{boost::iostreams::gzip::best_compression}});
+    }
+    stream_.push(boost::iostreams::back_inserter(buffer_));
 }
 
 }  // namespace util::prometheus

@@ -44,8 +44,12 @@ public:
     data() &&;
 
 private:
+    bool compressionEnabled_;
     std::string buffer_;
     boost::iostreams::filtering_stream<boost::iostreams::output> stream_;
+
+    void
+    pushFilters();
 };
 
 }  // namespace util::prometheus

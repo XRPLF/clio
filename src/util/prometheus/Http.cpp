@@ -56,11 +56,11 @@ handlePrometheusRequest(http::request<http::string_body> const& req, bool const 
     auto response = http::response<http::string_body>(http::status::ok, req.version());
 
     response.set(http::field::content_type, "text/plain; version=0.0.4");
-    if (PrometheusService::compressReply()) {
-        response.set(http::field::content_encoding, "gzip");
-    }
 
     response.body() = PrometheusService::collectMetrics();
+
+    if (PrometheusService::compressReply())
+        response.set(http::field::content_encoding, "gzip");
 
     return response;
 }
