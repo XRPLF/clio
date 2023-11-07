@@ -40,7 +40,7 @@ PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string
     std::memcpy(sha256.data(), d.data(), d.size());
     passwordSha256_ = ripple::to_string(sha256);
     // make sure it's uppercase
-    util::toUpper(passwordSha256_);
+    passwordSha256_ = util::toUpper(passwordSha256_);
 }
 
 bool

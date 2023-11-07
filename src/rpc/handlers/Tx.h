@@ -227,7 +227,7 @@ private:
 
         if (jsonObject.contains(JS(ctid))) {
             input.ctid = jv.at(JS(ctid)).as_string().c_str();
-            util::toUpper(*input.ctid);
+            input.ctid = util::toUpper(*input.ctid);
         }
 
         if (jsonObject.contains(JS(binary)))
