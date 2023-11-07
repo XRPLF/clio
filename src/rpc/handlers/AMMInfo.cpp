@@ -21,13 +21,12 @@
 #include <rpc/AMMHelpers.h>
 #include <rpc/handlers/AMMInfo.h>
 
-// #include <ripple/app/misc/AMMUtils.h>
 #include <ripple/protocol/AMMCore.h>
 
 namespace {
 
 std::string
-to_iso8601(ripple::NetClock::time_point tp)
+toIso8601(ripple::NetClock::time_point tp)
 {
     using namespace std::chrono;
     static auto constexpr rippleEpochOffset = seconds{rippleEpochStart};
@@ -109,7 +108,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
             auction[JS(price)] = toBoostJson(auctionSlot[sfPrice].getJson(JsonOptions::none));
             auction[JS(discounted_fee)] = auctionSlot[sfDiscountedFee];
             auction[JS(account)] = to_string(auctionSlot.getAccountID(sfAccount));
-            auction[JS(expiration)] = to_iso8601(NetClock::time_point{NetClock::duration{auctionSlot[sfExpiration]}});
+            auction[JS(expiration)] = toIso8601(NetClock::time_point{NetClock::duration{auctionSlot[sfExpiration]}});
 
             if (auctionSlot.isFieldPresent(sfAuthAccounts)) {
                 boost::json::array auth;

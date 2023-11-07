@@ -21,7 +21,6 @@
 #include <rpc/AMMHelpers.h>
 #include <util/log/Logger.h>
 
-// #include <ripple/app/misc/AMMUtils.h>
 #include <ripple/protocol/AMMCore.h>
 
 namespace rpc {
