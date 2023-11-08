@@ -19,87 +19,10 @@
 
 #pragma once
 
-#include <util/Atomic.h>
 #include <util/prometheus/Metrics.h>
+#include <util/prometheus/impl/HistogramImpl.h>
 
 namespace util::prometheus {
-
-namespace detail {
-
-template <typename T>
-concept SomeHistogramImpl = requires(T t) {
-    typename std::remove_cvref_t<T>::ValueType;
-    SomeNumberType<typename std::remove_cvref_t<T>::ValueType>;
-    {
-        t.observe(typename std::remove_cvref_t<T>::ValueType{1})
-    } -> std::same_as<void>;
-    {
-        t.setBuckets(std::vector<typename std::remove_cvref_t<T>::ValueType>{})
-    } -> std::same_as<void>;
-    {
-        t.serializeValue(std::string{}, std::declval<OStream&>())
-    } -> std::same_as<void>;
-};
-
-template <SomeNumberType NumberType>
-class HistogramImpl {
-public:
-    using ValueType = NumberType;
-
-    void
-    setBuckets(std::vector<ValueType> const& bounds)
-    {
-        assert(buckets_.empty());
-        buckets_.reserve(bounds.size());
-        for (auto const& bound : bounds) {
-            buckets_.emplace_back(bound);
-        }
-    }
-
-    void
-    observe(ValueType const value)
-    {
-        auto const bucket =
-            std::lower_bound(buckets_.begin(), buckets_.end(), value, [](Bucket const& bucket, ValueType const& value) {
-                return bucket.upperBound < value;
-            });
-        if (bucket != buckets_.end()) {
-            bucket->count.add(1);
-        } else {
-            lastBucket_.count.add(1);
-        }
-        sum_ += value;
-    }
-
-    void
-    serializeValue(std::string const& name, OStream& stream) const
-    {
-        std::uint64_t cumulativeCount = 0;
-        for (auto const& bucket : buckets_) {
-            cumulativeCount += bucket.count;
-            stream << name << "_bucket{le=\"" << bucket.upperBound << "\"} " << cumulativeCount << '\n';
-        }
-        cumulativeCount += lastBucket_.count;
-        stream << name << "_bucket{le=\"+Inf\"} " << cumulativeCount << '\n';
-        stream << name << "_sum " << sum_ << '\n';
-        stream << name << "_count " << cumulativeCount << '\n';
-    }
-
-private:
-    struct Bucket {
-        Bucket(ValueType upperBound) : upperBound(upperBound)
-        {
-        }
-
-        ValueType upperBound;
-        Atomic<std::uint64_t> count = 0;
-    };
-    std::vector<Bucket> buckets_;
-    Bucket lastBucket_{std::numeric_limits<ValueType>::max()};
-    Atomic<ValueType> sum_ = 0;
-};
-
-}  // namespace detail
 
 template <SomeNumberType NumberType>
 class AnyHistogram : public MetricBase {
@@ -113,6 +36,8 @@ public:
         : MetricBase(std::move(name), std::move(labelsString))
         , pimpl_(std::make_unique<Model<ImplType>>(std::forward<ImplType>(impl)))
     {
+        assert(!buckets.empty());
+        assert(std::is_sorted(buckets.begin(), buckets.end()));
         pimpl_->setBuckets(buckets);
     }
 
