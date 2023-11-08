@@ -55,7 +55,8 @@ public:
     CounterImpl(CounterImpl&& other)
     {
         assert(other.value_ == 0);
-        value_ = other.value_.exchange(0);
+        value_.set(0);
+        other.value_.set(0);
     }
 
     CounterImpl&
@@ -72,7 +73,7 @@ public:
     void
     set(ValueType const value)
     {
-        value.set(value);
+        value_.set(value);
     }
 
     ValueType

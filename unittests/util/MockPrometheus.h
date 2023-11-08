@@ -26,7 +26,7 @@
 
 namespace util::prometheus {
 
-template <detail::SomeNumberType NumberType>
+template <SomeNumberType NumberType>
 struct MockCounterImpl {
     using ValueType = NumberType;
 

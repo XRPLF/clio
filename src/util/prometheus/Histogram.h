@@ -36,6 +36,9 @@ concept SomeHistogramImpl = requires(T t) {
     {
         t.setBuckets(std::vector<typename std::remove_cvref_t<T>::ValueType>{})
     } -> std::same_as<void>;
+    {
+        t.serializeValue(std::string{}, std::declval<OStream&>())
+    } -> std::same_as<void>;
 };
 
 template <SomeNumberType NumberType>
@@ -44,26 +47,42 @@ public:
     using ValueType = NumberType;
 
     void
-    setBuckets(std::vector<ValueType> const& buckets)
+    setBuckets(std::vector<ValueType> const& bounds)
     {
-        assert(bickets.empty());
-        buckets_.reserve(buckets.size());
-        for (auto const& bucket : buckets) {
-            buckets_.emplace_back(bucket);
+        assert(buckets_.empty());
+        buckets_.reserve(bounds.size());
+        for (auto const& bound : bounds) {
+            buckets_.emplace_back(bound);
         }
-        buckets_.emplace_back(std::numeric_limits<ValueType>::max());
     }
 
     void
-    observe(ValueType value)
+    observe(ValueType const value)
     {
         auto const bucket =
             std::lower_bound(buckets_.begin(), buckets_.end(), value, [](Bucket const& bucket, ValueType const& value) {
                 return bucket.upperBound < value;
             });
-        assert(bucket != buckets_.end());
-        bucket->count.add(1);
+        if (bucket != buckets_.end()) {
+            bucket->count.add(1);
+        } else {
+            lastBucket_.count.add(1);
+        }
         sum_ += value;
+    }
+
+    void
+    serializeValue(std::string const& name, OStream& stream) const
+    {
+        std::uint64_t cumulativeCount = 0;
+        for (auto const& bucket : buckets_) {
+            cumulativeCount += bucket.count;
+            stream << name << "_bucket{le=\"" << bucket.upperBound << "\"} " << cumulativeCount << '\n';
+        }
+        cumulativeCount += lastBucket_.count;
+        stream << name << "_bucket{le=\"+Inf\"} " << cumulativeCount << '\n';
+        stream << name << "_sum " << sum_ << '\n';
+        stream << name << "_count " << cumulativeCount << '\n';
     }
 
 private:
@@ -76,6 +95,7 @@ private:
         Atomic<std::uint64_t> count = 0;
     };
     std::vector<Bucket> buckets_;
+    Bucket lastBucket_{std::numeric_limits<ValueType>::max()};
     Atomic<ValueType> sum_ = 0;
 };
 
@@ -96,12 +116,29 @@ public:
         pimpl_->setBuckets(buckets);
     }
 
+    void
+    observe(ValueType const value)
+    {
+        pimpl_->observe(value);
+    }
+
+    void
+    serializeValue(OStream& stream) const override
+    {
+        pimpl_->serializeValue(name(), stream);
+    }
+
 private:
     struct Concept {
         virtual ~Concept() = default;
+
         virtual void observe(NumberType) = 0;
+
         virtual void
         setBuckets(Buckets const&) = 0;
+
+        virtual void
+        serializeValue(std::string const&, OStream&) const = 0;
     };
 
     template <detail::SomeHistogramImpl ImplType>
@@ -123,11 +160,20 @@ private:
             impl_.setBuckets(buckets);
         }
 
+        void
+        serializeValue(std::string const& name, OStream& stream) const override
+        {
+            impl_.serializeValue(name, stream);
+        }
+
     private:
         ImplType impl_;
     };
 
     std::unique_ptr<Concept> pimpl_;
 };
+
+using HistogramInt = AnyHistogram<std::int64_t>;
+using HistogramDouble = AnyHistogram<double>;
 
 }  // namespace util::prometheus

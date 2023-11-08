@@ -22,6 +22,7 @@
 #include <util/config/Config.h>
 #include <util/prometheus/Counter.h>
 #include <util/prometheus/Gauge.h>
+#include <util/prometheus/Histogram.h>
 
 #include <cassert>
 
