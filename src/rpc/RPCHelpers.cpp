@@ -473,7 +473,8 @@ traverseNFTObjects(
     if (!page) {
         if (nextPage == beast::zero) {  // no nft objects in lastNFTPage
             return AccountCursor{beast::zero, 0};
-        }                               // marker is in the right range, but still invalid
+        }
+        // marker is in the right range, but still invalid
         return Status{RippledError::rpcINVALID_PARAMS, "Invalid marker."};
     }
 

@@ -79,8 +79,8 @@ toExpandedJson(
 );
 
 /**
- * @brief Add "DeliverMax" which is the alias of "Amount" for "Payment" transaction. Remove the "Amount" field when
- * version is greater than 1
+ * @brief Add "DeliverMax" which is the alias of "Amount" for "Payment" transaction to transaction json. Remove the
+ * "Amount" field when version is greater than 1
  * @param txJson The transaction json object
  * @param apiVersion The api version
  */
