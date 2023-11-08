@@ -21,6 +21,7 @@
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
+#include <boost/json.hpp>
 #include <fmt/core.h>
 
 #include <variant>
@@ -336,4 +337,71 @@ TEST_F(RPCHelpersTest, DecodeInvalidCTID)
 {
     EXPECT_FALSE(decodeCTID('c'));
     EXPECT_FALSE(decodeCTID(true));
+}
+
+TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
+{
+    // add alias for payment
+    auto req = boost::json::parse(
+                   R"({
+                        "TransactionType": "Payment",
+                        "Amount": {
+                            "test": "test"
+                        }
+                    })"
+    )
+                   .as_object();
+
+    insertDeliverMaxAlias(req, 1);
+    EXPECT_EQ(
+        req,
+        boost::json::parse(
+            R"({
+                "TransactionType": "Payment",
+                "Amount": {
+                    "test": "test"
+                },
+                "DeliverMax": {
+                    "test": "test"
+                }
+            })"
+        )
+    );
+
+    // not add alias for other tx
+    auto constexpr static str = R"({
+                    "TransactionType": "OfferCreate",
+                    "Amount": {
+                        "test": "test"
+                    }
+                })";
+    req = boost::json::parse(str).as_object();
+    insertDeliverMaxAlias(req, 1);
+    EXPECT_EQ(req, boost::json::parse(str));
+}
+
+TEST_F(RPCHelpersTest, DeliverMaxAliasV2)
+{
+    auto req = boost::json::parse(
+                   R"({
+                        "TransactionType": "Payment",
+                        "Amount": {
+                            "test": "test"
+                        }
+                    })"
+    )
+                   .as_object();
+
+    insertDeliverMaxAlias(req, 2);
+    EXPECT_EQ(
+        req,
+        boost::json::parse(
+            R"({
+                "TransactionType": "Payment",
+                "DeliverMax": {
+                    "test": "test"
+                }
+            })"
+        )
+    );
 }

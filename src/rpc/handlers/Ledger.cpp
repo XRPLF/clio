@@ -67,7 +67,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                 [&](auto obj) {
                     boost::json::object entry;
                     if (!input.binary) {
-                        auto [txn, meta] = toExpandedJson(obj);
+                        auto [txn, meta] = toExpandedJson(obj, ctx.apiVersion);
                         entry = std::move(txn);
                         entry[JS(metaData)] = std::move(meta);
                     } else {
