@@ -42,7 +42,7 @@ public:
         boost::json::value amount2;
         boost::json::value lpToken;
         boost::json::array voteSlots;
-        boost::json::value auctionSlot = nullptr;
+        boost::json::value auctionSlot;
         std::string tradingFee;
         std::string ammAccount;
         std::string ammID;
@@ -54,7 +54,7 @@ public:
     };
 
     struct Input {
-        std::optional<ripple::AccountID> accountID = std::nullopt;
+        std::optional<ripple::AccountID> accountID;
         ripple::Issue issue1 = ripple::noIssue();
         ripple::Issue issue2 = ripple::noIssue();
         std::optional<std::string> ledgerHash;
