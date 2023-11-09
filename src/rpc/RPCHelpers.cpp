@@ -185,12 +185,18 @@ toJson(ripple::STBase const& obj)
 }
 
 std::pair<boost::json::object, boost::json::object>
-toExpandedJson(data::TransactionAndMetadata const& blobs, NFTokenjson nftEnabled, std::optional<uint16_t> networkId)
+toExpandedJson(
+    data::TransactionAndMetadata const& blobs,
+    std::uint32_t const apiVersion,
+    NFTokenjson nftEnabled,
+    std::optional<uint16_t> networkId
+)
 {
     auto [txn, meta] = deserializeTxPlusMeta(blobs, blobs.ledgerSequence);
     auto txnJson = toJson(*txn);
     auto metaJson = toJson(*meta);
     insertDeliveredAmount(metaJson, txn, meta, blobs.date);
+    insertDeliverMaxAlias(txnJson, apiVersion);
 
     if (nftEnabled == NFTokenjson::ENABLE) {
         Json::Value nftJson;
@@ -244,6 +250,17 @@ insertDeliveredAmount(
         return true;
     }
     return false;
+}
+
+void
+insertDeliverMaxAlias(boost::json::object& txJson, std::uint32_t const apiVersion)
+{
+    if (txJson.contains(JS(TransactionType)) and txJson.at(JS(TransactionType)).is_string() and
+        txJson.at(JS(TransactionType)).as_string() == JS(Payment) and txJson.contains(JS(Amount))) {
+        txJson[JS(DeliverMax)] = txJson[JS(Amount)];
+        if (apiVersion > 1)
+            txJson.erase(JS(Amount));
+    }
 }
 
 boost::json::object
@@ -456,7 +473,8 @@ traverseNFTObjects(
     if (!page) {
         if (nextPage == beast::zero) {  // no nft objects in lastNFTPage
             return AccountCursor{beast::zero, 0};
-        }  // marker is in the right range, but still invalid
+        }
+        // marker is in the right range, but still invalid
         return Status{RippledError::rpcINVALID_PARAMS, "Invalid marker."};
     }
 
