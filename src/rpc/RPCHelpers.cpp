@@ -187,7 +187,7 @@ toJson(ripple::STBase const& obj)
 std::pair<boost::json::object, boost::json::object>
 toExpandedJson(
     data::TransactionAndMetadata const& blobs,
-    std::uint32_t apiVersion,
+    std::uint32_t const apiVersion,
     NFTokenjson nftEnabled,
     std::optional<uint16_t> networkId
 )
@@ -253,7 +253,7 @@ insertDeliveredAmount(
 }
 
 void
-insertDeliverMaxAlias(boost::json::object& txJson, std::uint32_t apiVersion)
+insertDeliverMaxAlias(boost::json::object& txJson, std::uint32_t const apiVersion)
 {
     if (txJson.contains(JS(TransactionType)) and txJson.at(JS(TransactionType)).is_string() and
         txJson.at(JS(TransactionType)).as_string() == JS(Payment) and txJson.contains(JS(Amount))) {
