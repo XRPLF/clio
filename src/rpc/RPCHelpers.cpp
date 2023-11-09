@@ -904,7 +904,7 @@ xrpLiquid(
     ripple::SLE const sle{it, key};
 
     std::uint32_t const ownerCount = sle.getFieldU32(ripple::sfOwnerCount);
-    
+
     auto balance = sle.getFieldAmount(ripple::sfBalance);
 
     ripple::STAmount const amount = [&]() {
