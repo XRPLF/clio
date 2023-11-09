@@ -47,7 +47,7 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context c
         return Error{Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."}};
 
     auto output = TransactionEntryHandler::Output{};
-    auto [txn, meta] = toExpandedJson(*dbRet);
+    auto [txn, meta] = toExpandedJson(*dbRet, ctx.apiVersion);
 
     output.tx = std::move(txn);
     output.metadata = std::move(meta);

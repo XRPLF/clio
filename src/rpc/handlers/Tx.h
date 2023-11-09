@@ -142,7 +142,7 @@ public:
             return Error{Status{RippledError::rpcTXN_NOT_FOUND}};
         }
 
-        auto const [txn, meta] = toExpandedJson(*dbResponse, NFTokenjson::ENABLE, currentNetId);
+        auto const [txn, meta] = toExpandedJson(*dbResponse, ctx.apiVersion, NFTokenjson::ENABLE, currentNetId);
 
         if (!input.binary) {
             output.tx = txn;

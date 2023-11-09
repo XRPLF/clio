@@ -106,7 +106,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
         boost::json::object obj;
 
         if (!input.binary) {
-            auto [txn, meta] = toExpandedJson(txnPlusMeta);
+            auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion);
             obj[JS(meta)] = std::move(meta);
             obj[JS(tx)] = std::move(txn);
             obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
