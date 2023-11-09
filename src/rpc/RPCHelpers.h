@@ -73,7 +73,7 @@ deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs, std::uint32_t s
 std::pair<boost::json::object, boost::json::object>
 toExpandedJson(
     data::TransactionAndMetadata const& blobs,
-    uint32_t apiVersion,
+    std::uint32_t apiVersion,
     NFTokenjson nftEnabled = NFTokenjson::DISABLE,
     std::optional<uint16_t> networkId = std::nullopt
 );
@@ -85,7 +85,7 @@ toExpandedJson(
  * @param apiVersion The api version
  */
 void
-insertDeliverMaxAlias(boost::json::object& txJson, uint32_t apiVersion);
+insertDeliverMaxAlias(boost::json::object& txJson, std::uint32_t apiVersion);
 
 bool
 insertDeliveredAmount(
