@@ -951,7 +951,7 @@ accountHolds(
     if (ripple::isXRP(currency))
         return {xrpLiquid(backend, sequence, account, yield)};
 
-    auto key = ripple::keylet::line(account, issuer, currency).key;
+    auto const key = ripple::keylet::line(account, issuer, currency).key;
     auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob) {
