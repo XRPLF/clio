@@ -69,7 +69,9 @@ private:
     template <detail::SomeHistogramImpl ImplType>
         requires std::same_as<NumberType, typename std::remove_cvref_t<ImplType>::ValueType>
     struct Model : Concept {
-        Model(ImplType impl) : impl_(std::forward<ImplType>(impl))
+        template <typename SomeImplType>
+            requires std::same_as<SomeImplType, ImplType>
+        Model(SomeImplType&& impl) : impl_(std::forward<SomeImplType>(impl))
         {
         }
 

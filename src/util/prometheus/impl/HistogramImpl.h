@@ -19,8 +19,7 @@
 
 #pragma once
 
-#include <util/Atomic.h>
-
+#include <util/Concepts.h>
 #include <util/prometheus/OStream.h>
 
 namespace util::prometheus::detail {
@@ -45,9 +44,18 @@ class HistogramImpl {
 public:
     using ValueType = NumberType;
 
+    HistogramImpl() = default;
+    HistogramImpl(HistogramImpl const&) = delete;
+    HistogramImpl(HistogramImpl&&) = default;
+    HistogramImpl&
+    operator=(HistogramImpl const&) = delete;
+    HistogramImpl&
+    operator=(HistogramImpl&&) = default;
+
     void
     setBuckets(std::vector<ValueType> const& bounds)
     {
+        std::scoped_lock lock{*mutex_};
         assert(buckets_.empty());
         buckets_.reserve(bounds.size());
         for (auto const& bound : bounds) {
@@ -62,10 +70,11 @@ public:
             std::lower_bound(buckets_.begin(), buckets_.end(), value, [](Bucket const& bucket, ValueType const& value) {
                 return bucket.upperBound < value;
             });
+        std::scoped_lock lock{*mutex_};
         if (bucket != buckets_.end()) {
-            bucket->count.add(1);
+            ++bucket->count;
         } else {
-            lastBucket_.count.add(1);
+            ++lastBucket_.count;
         }
         sum_ += value;
     }
@@ -73,6 +82,7 @@ public:
     void
     serializeValue(std::string const& name, OStream& stream) const
     {
+        std::scoped_lock lock{*mutex_};
         std::uint64_t cumulativeCount = 0;
         for (auto const& bucket : buckets_) {
             cumulativeCount += bucket.count;
@@ -91,12 +101,13 @@ private:
         }
 
         ValueType upperBound;
-        Atomic<std::uint64_t> count = 0;
+        std::uint64_t count = 0;
     };
 
     std::vector<Bucket> buckets_;
     Bucket lastBucket_{std::numeric_limits<ValueType>::max()};
-    Atomic<ValueType> sum_ = 0;
+    ValueType sum_ = 0;
+    mutable std::unique_ptr<std::mutex> mutex_ = std::make_unique<std::mutex>();
 };
 
 }  // namespace util::prometheus::detail

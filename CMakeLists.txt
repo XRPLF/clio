@@ -172,6 +172,7 @@ if (tests)
     unittests/util/StringUtils.cpp
     unittests/util/prometheus/CounterTests.cpp
     unittests/util/prometheus/GaugeTests.cpp
+    unittests/util/prometheus/HistogramTests.cpp
     unittests/util/prometheus/HttpTests.cpp
     unittests/util/prometheus/LabelTests.cpp
     unittests/util/prometheus/MetricsTests.cpp

@@ -52,38 +52,33 @@ public:
     CounterImpl(CounterImpl const&) = delete;
 
     // Move constructor should be used only used during initialization
-    CounterImpl(CounterImpl&& other)
-    {
-        assert(other.value_ == 0);
-        value_.set(0);
-        other.value_.set(0);
-    }
+    CounterImpl(CounterImpl&& other) = default;
 
     CounterImpl&
     operator=(CounterImpl const&) = delete;
     CounterImpl&
-    operator=(CounterImpl&&) = delete;
+    operator=(CounterImpl&&) = default;
 
     void
     add(ValueType const value)
     {
-        value_.add(value);
+        value_->add(value);
     }
 
     void
     set(ValueType const value)
     {
-        value_.set(value);
+        value_->set(value);
     }
 
     ValueType
     value() const
     {
-        return value_.value();
+        return value_->value();
     }
 
 private:
-    Atomic<ValueType> value_{0};
+    AtomicPtr<ValueType> value_ = std::make_unique<Atomic<ValueType>>(0);
 };
 
 }  // namespace util::prometheus::detail

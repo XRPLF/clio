@@ -19,13 +19,12 @@
 
 #pragma once
 
+#include <util/Concepts.h>
+
 #include <atomic>
-#include <concepts>
+#include <memory>
 
 namespace util {
-
-template <typename T>
-concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_const_v<T>;
 
 /**
  * @brief Atomic wrapper for integral and floating point types
@@ -44,7 +43,11 @@ public:
 
     // Copy and move constructors and assignment operators are not allowed for atomics
     Atomic(Atomic const&) = delete;
-    Atomic(Atomic&& other) = delete;
+    Atomic(Atomic&& other) : value_(0)
+    {
+        assert(other.value_ == 0);
+        other.value_ = 0;
+    }
     Atomic&
     operator=(Atomic const&) = delete;
     Atomic&
@@ -98,5 +101,8 @@ public:
 private:
     std::atomic<ValueType> value_{0};
 };
+
+template <SomeNumberType NumberType>
+using AtomicPtr = std::unique_ptr<Atomic<NumberType>>;
 
 }  // namespace util

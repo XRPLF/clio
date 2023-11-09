@@ -51,7 +51,9 @@ protected:
 
     template <SomeCounterImpl ImplType>
     struct Model : Concept {
-        Model(ImplType impl) : impl_(std::forward<ImplType>(impl))
+        template <SomeCounterImpl SomeImplType>
+            requires std::same_as<ImplType, SomeImplType>
+        Model(SomeImplType&& impl) : impl_(std::forward<SomeImplType>(impl))
         {
         }
 
