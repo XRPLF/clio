@@ -31,6 +31,7 @@ getAmmPoolHolds(
     ripple::AccountID const& ammAccountID,
     ripple::Issue const& issue1,
     ripple::Issue const& issue2,
+    bool freezeHandling,
     boost::asio::yield_context yield
 );
 

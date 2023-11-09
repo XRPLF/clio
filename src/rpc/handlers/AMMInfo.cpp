@@ -74,7 +74,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     auto const [asset1Balance, asset2Balance] =
-        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, accID, input.issue1, input.issue2, ctx.yield);
+        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, accID, input.issue1, input.issue2, false, ctx.yield);
     auto const lptAMMBalance = input.accountID
         ? getAmmLpHolds(*sharedPtrBackend_, lgrInfo.seq, amm, *input.accountID, ctx.yield)
         : amm[sfLPTokenBalance];

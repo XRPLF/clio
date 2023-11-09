@@ -32,13 +32,14 @@ getAmmPoolHolds(
     ripple::AccountID const& ammAccountID,
     ripple::Issue const& issue1,
     ripple::Issue const& issue2,
+    bool freezeHandling,
     boost::asio::yield_context yield
 )
 {
     auto const assetInBalance =
-        accountHolds(backend, sequence, ammAccountID, issue1.currency, issue1.account, true, yield);
+        accountHolds(backend, sequence, ammAccountID, issue1.currency, issue1.account, freezeHandling, yield);
     auto const assetOutBalance =
-        accountHolds(backend, sequence, ammAccountID, issue2.currency, issue2.account, true, yield);
+        accountHolds(backend, sequence, ammAccountID, issue2.currency, issue2.account, freezeHandling, yield);
     return std::make_pair(assetInBalance, assetOutBalance);
 }
 
