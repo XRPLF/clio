@@ -418,3 +418,53 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV2)
         )
     );
 }
+
+TEST_F(RPCHelpersTest, LedgerHeaderJson)
+{
+    auto const ledgerHeader = CreateLedgerInfo(INDEX1, 30);
+    auto const binJson = toJson(ledgerHeader, true);
+
+    auto constexpr EXPECTBIN = R"({
+                                    "ledger_data": "0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                                    "closed": true
+                                })";
+    EXPECT_EQ(binJson, boost::json::parse(EXPECTBIN));
+
+    auto const EXPECTJSON = fmt::format(
+        R"({{
+            "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "close_flags": 0,
+            "close_time": 0,
+            "close_time_human": "2000-Jan-01 00:00:00.000000 UTC",
+            "close_time_resolution": 0,
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "ledger_hash": "{}",
+            "ledger_index": "{}",
+            "parent_close_time": 0,
+            "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "total_coins": "0",
+            "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "closed": true
+        }})",
+        INDEX1,
+        30
+    );
+    auto const json = toJson(ledgerHeader, false);
+    EXPECT_EQ(json, boost::json::parse(EXPECTJSON));
+}
+
+TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV1)
+{
+    auto const txMeta = CreateAcceptNFTOfferTxWithMetadata(ACCOUNT, 30, 1, INDEX1);
+    auto const json = toJsonWithBinaryTx(txMeta, 1);
+    EXPECT_TRUE(json.contains(JS(tx_blob)));
+    EXPECT_TRUE(json.contains(JS(meta)));
+}
+
+TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV2)
+{
+    auto const txMeta = CreateAcceptNFTOfferTxWithMetadata(ACCOUNT, 30, 1, INDEX1);
+    auto const json = toJsonWithBinaryTx(txMeta, 2);
+    EXPECT_TRUE(json.contains(JS(tx_blob)));
+    EXPECT_TRUE(json.contains(JS(meta_blob)));
+}

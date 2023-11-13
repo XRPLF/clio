@@ -179,48 +179,49 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
 TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
 {
     static auto constexpr OUTPUT = R"({
-                                        "metadata":{
+                                        "metadata":
+                                        {
                                             "AffectedNodes":
                                             [
                                                 {
                                                     "CreatedNode":
                                                     {
-                                                        "LedgerEntryType":"Offer",
+                                                        "LedgerEntryType": "Offer",
                                                         "NewFields":
                                                         {
-                                                            "TakerGets":"200",
+                                                            "TakerGets": "200",
                                                             "TakerPays":
                                                             {
-                                                                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                                                "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                                                "value":"300"
+                                                                "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                                                "value": "300"
                                                             }
                                                         }
                                                     }
                                                 }
                                             ],
-                                            "TransactionIndex":100,
-                                            "TransactionResult":"tesSUCCESS"
+                                            "TransactionIndex": 100,
+                                            "TransactionResult": "tesSUCCESS"
                                         },
                                         "tx_json":
                                         {
-                                            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                                            "Fee":"2",
-                                            "Sequence":100,
-                                            "SigningPubKey":"74657374",
+                                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                            "Fee": "2",
+                                            "Sequence": 100,
+                                            "SigningPubKey": "74657374",
                                             "TakerGets":
                                             {
-                                                "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                                                "issuer":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                                "value":"200"
+                                                "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                                "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                                "value": "200"
                                             },
-                                            "TakerPays":"300",
-                                            "TransactionType":"OfferCreate",
-                                            "hash":"2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08"
+                                            "TakerPays": "300",
+                                            "TransactionType": "OfferCreate",
+                                            "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08"
                                         },
-                                        "ledger_index":30,
-                                        "ledger_hash":"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
-                                        "validated":true
+                                        "ledger_index": 30,
+                                        "ledger_hash": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
+                                        "validated": true
                                     })";
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
@@ -249,6 +250,84 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
             tx.ledgerSequence
         ));
         auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(OUTPUT), *output);
+    });
+}
+
+TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
+{
+    static auto constexpr OUTPUT = R"({
+                                        "meta":
+                                        {
+                                            "AffectedNodes":
+                                            [
+                                                {
+                                                    "CreatedNode":
+                                                    {
+                                                        "LedgerEntryType": "Offer",
+                                                        "NewFields":
+                                                        {
+                                                            "TakerGets": "200",
+                                                            "TakerPays":
+                                                            {
+                                                                "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                                                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                                                "value": "300"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ],
+                                            "TransactionIndex": 100,
+                                            "TransactionResult": "tesSUCCESS"
+                                        },
+                                        "tx_json":
+                                        {
+                                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                            "Fee": "2",
+                                            "Sequence": 100,
+                                            "SigningPubKey": "74657374",
+                                            "TakerGets":
+                                            {
+                                                "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                                                "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                                "value": "200"
+                                            },
+                                            "TakerPays": "300",
+                                            "TransactionType": "OfferCreate"
+                                        },
+                                        "ledger_index": 30,
+                                        "ledger_hash": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
+                                        "close_time_iso": "2000-01-01T00:00:00Z",
+                                        "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
+                                        "validated": true
+                                    })";
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    TransactionAndMetadata tx;
+    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.transaction =
+        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+    tx.date = 123456;
+    tx.ledgerSequence = 30;
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+
+    mockBackendPtr->updateRange(10);                 // min
+    mockBackendPtr->updateRange(tx.ledgerSequence);  // max
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(CreateLedgerInfo(INDEX, tx.ledgerSequence)));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "tx_hash": "{}",
+                "ledger_index": {}
+            }})",
+            TXNID,
+            tx.ledgerSequence
+        ));
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(OUTPUT), *output);
     });

@@ -32,7 +32,10 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context c
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+    auto output = TransactionEntryHandler::Output{};
+    output.apiVersion = ctx.apiVersion;
+
+    output.ledgerHeader = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const dbRet = sharedPtrBackend_->fetchTransaction(ripple::uint256{input.txHash.c_str()}, ctx.yield);
     // Note: transaction_entry is meant to only search a specified ledger for
     // the specified transaction. tx searches the entire range of history. For
@@ -43,16 +46,13 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context c
     // the API for transaction_entry says the method only searches the specified
     // ledger; we simulate that here by returning not found if the transaction
     // is in a different ledger than the one specified.
-    if (!dbRet || dbRet->ledgerSequence != lgrInfo.seq)
+    if (!dbRet || dbRet->ledgerSequence != output.ledgerHeader->seq)
         return Error{Status{RippledError::rpcTXN_NOT_FOUND, "transactionNotFound", "Transaction not found."}};
 
-    auto output = TransactionEntryHandler::Output{};
     auto [txn, meta] = toExpandedJson(*dbRet, ctx.apiVersion);
 
     output.tx = std::move(txn);
     output.metadata = std::move(meta);
-    output.ledgerIndex = lgrInfo.seq;
-    output.ledgerHash = ripple::strHex(lgrInfo.hash);
 
     return output;
 }
@@ -60,13 +60,22 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context c
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TransactionEntryHandler::Output const& output)
 {
+    auto const metaKey = output.apiVersion >= 2 ? JS(meta) : JS(metadata);
     jv = {
         {JS(validated), output.validated},
-        {JS(metadata), output.metadata},
+        {metaKey, output.metadata},
         {JS(tx_json), output.tx},
-        {JS(ledger_index), output.ledgerIndex},
-        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerHeader->seq},
+        {JS(ledger_hash), ripple::strHex(output.ledgerHeader->hash)},
     };
+
+    if (output.apiVersion >= 2) {
+        jv.as_object()[JS(close_time_iso)] = ripple::to_string_iso(output.ledgerHeader->closeTime);
+        if (output.tx.contains(JS(hash))) {
+            jv.as_object()[JS(hash)] = output.tx.at(JS(hash));
+            jv.as_object()[JS(tx_json)].as_object().erase(JS(hash));
+        }
+    }
 }
 
 TransactionEntryHandler::Input

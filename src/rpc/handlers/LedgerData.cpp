@@ -73,29 +73,11 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
 
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
 
-    // no marker -> first call, return header information
-    auto header = boost::json::object();
     Output output;
 
+    // no marker -> first call, return header information
     if ((!input.marker) && (!input.diffMarker)) {
-        if (input.binary) {
-            header[JS(ledger_data)] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
-        } else {
-            header[JS(account_hash)] = ripple::strHex(lgrInfo.accountHash);
-            header[JS(close_flags)] = lgrInfo.closeFlags;
-            header[JS(close_time)] = lgrInfo.closeTime.time_since_epoch().count();
-            header[JS(close_time_human)] = ripple::to_string(lgrInfo.closeTime);
-            header[JS(close_time_resolution)] = lgrInfo.closeTimeResolution.count();
-            header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-            header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
-            header[JS(parent_close_time)] = lgrInfo.parentCloseTime.time_since_epoch().count();
-            header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
-            header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
-            header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
-        }
-
-        header[JS(closed)] = true;
-        output.header = std::move(header);
+        output.header = toJson(lgrInfo, input.binary);
     } else {
         if (input.marker && !sharedPtrBackend_->fetchLedgerObject(*(input.marker), lgrInfo.seq, ctx.yield))
             return Error{Status{RippledError::rpcINVALID_PARAMS, "markerDoesNotExist"}};

@@ -166,11 +166,9 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
         boost::json::object obj;
         if (!input.binary) {
             auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion, NFTokenjson::ENABLE);
-            obj[JS(meta)] = std::move(meta);
-            obj[JS(tx)] = std::move(txn);
 
-            if (obj[JS(tx)].as_object().contains(JS(TransactionType))) {
-                auto const objTransactionType = obj[JS(tx)].as_object()[JS(TransactionType)];
+            if (txn.contains(JS(TransactionType))) {
+                auto const objTransactionType = txn[JS(TransactionType)];
                 auto const strType = util::toLower(objTransactionType.as_string().c_str());
 
                 // if transactionType does not match
@@ -179,14 +177,28 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
                     continue;
             }
 
-            obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
-            obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+            auto const txKey = ctx.apiVersion < 2 ? JS(tx) : JS(tx_json);
+            obj[JS(meta)] = std::move(meta);
+            obj[txKey] = std::move(txn);
+            obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
+            obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
 
-            if (ctx.apiVersion < 2u)
-                obj[JS(tx)].as_object()[JS(inLedger)] = txnPlusMeta.ledgerSequence;
+            if (ctx.apiVersion < 2u) {
+                obj[txKey].as_object()[JS(inLedger)] = txnPlusMeta.ledgerSequence;
+            } else {
+                auto const ledgerInfo = sharedPtrBackend_->fetchLedgerBySequence(txnPlusMeta.ledgerSequence, ctx.yield);
+                obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+                if (obj[txKey].as_object().contains(JS(hash))) {
+                    obj[JS(hash)] = obj[txKey].as_object()[JS(hash)];
+                    obj[txKey].as_object().erase(JS(hash));
+                }
+                if (ledgerInfo) {
+                    obj[JS(ledger_hash)] = ripple::strHex(ledgerInfo->hash);
+                    obj[JS(close_time_iso)] = ripple::to_string_iso(ledgerInfo->closeTime);
+                }
+            }
         } else {
-            obj[JS(meta)] = ripple::strHex(txnPlusMeta.metadata);
-            obj[JS(tx_blob)] = ripple::strHex(txnPlusMeta.transaction);
+            obj = toJsonWithBinaryTx(txnPlusMeta, ctx.apiVersion);
             obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
         }
 

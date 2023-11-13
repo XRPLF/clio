@@ -79,6 +79,16 @@ toExpandedJson(
 );
 
 /**
+ * @brief Convert a TransactionAndMetadata to JSON object containing tx and metadata data in hex format. According to
+ * the apiVersion, the key is "tx_blob" and "meta" or "meta_blob".
+ * @param txnPlusMeta The TransactionAndMetadata to convert.
+ * @param apiVersion The api version
+ * @return The JSON object containing tx and metadata data in hex format.
+ */
+boost::json::object
+toJsonWithBinaryTx(data::TransactionAndMetadata const& txnPlusMeta, std::uint32_t apiVersion);
+
+/**
  * @brief Add "DeliverMax" which is the alias of "Amount" for "Payment" transaction to transaction json. Remove the
  * "Amount" field when version is greater than 1
  * @param txJson The transaction json object
@@ -101,8 +111,15 @@ toJson(ripple::STBase const& obj);
 boost::json::object
 toJson(ripple::SLE const& sle);
 
+/**
+ * @brief Convert a LedgerEntry to JSON object.
+ *
+ * @param entry The LedgerEntry to convert.
+ * @param binary Whether to convert in hex format.
+ * @return The JSON object.
+ */
 boost::json::object
-toJson(ripple::LedgerHeader const& info);
+toJson(ripple::LedgerHeader const& info, bool binary);
 
 boost::json::object
 toJson(ripple::TxMeta const& meta);
