@@ -71,6 +71,32 @@ PrometheusImpl::gaugeDouble(std::string name, Labels labels, std::optional<std::
     return convertBaseTo<GaugeDouble>(metricBase);
 }
 
+HistogramInt&
+PrometheusImpl::histogramInt(
+    std::string name,
+    Labels labels,
+    std::vector<std::int64_t> const& buckets,
+    std::optional<std::string> description
+)
+{
+    MetricBase& metricBase =
+        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::HISTOGRAM_INT, buckets);
+    return convertBaseTo<HistogramInt>(metricBase);
+}
+
+HistogramDouble&
+PrometheusImpl::histogramDouble(
+    std::string name,
+    Labels labels,
+    std::vector<double> const& buckets,
+    std::optional<std::string> description
+)
+{
+    MetricBase& metricBase =
+        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::HISTOGRAM_DOUBLE, buckets);
+    return convertBaseTo<HistogramDouble>(metricBase);
+}
+
 std::string
 PrometheusImpl::collectMetrics()
 {
@@ -85,13 +111,8 @@ PrometheusImpl::collectMetrics()
     return std::move(stream).data();
 }
 
-MetricBase&
-PrometheusImpl::getMetric(
-    std::string name,
-    Labels labels,
-    std::optional<std::string> description,
-    MetricType const type
-)
+MetricsFamily&
+PrometheusImpl::getMetricsFamily(std::string name, std::optional<std::string> description, MetricType type)
 {
     auto it = metrics_.find(name);
     if (it == metrics_.end()) {
@@ -100,7 +121,34 @@ PrometheusImpl::getMetric(
     } else if (it->second.type() != type) {
         throw std::runtime_error("Metrics of different type can't have the same name: " + name);
     }
-    return it->second.getMetric(std::move(labels));
+    return it->second;
+}
+
+MetricBase&
+PrometheusImpl::getMetric(
+    std::string name,
+    Labels labels,
+    std::optional<std::string> description,
+    MetricType const type
+)
+{
+    auto& metricFamily = getMetricsFamily(std::move(name), std::move(description), type);
+    return metricFamily.getMetric(std::move(labels));
+}
+
+template <typename ValueType>
+    requires std::same_as<ValueType, std::int64_t> || std::same_as<ValueType, double>
+MetricBase&
+PrometheusImpl::getMetric(
+    std::string name,
+    Labels labels,
+    std::optional<std::string> description,
+    MetricType type,
+    std::vector<ValueType> const& buckets
+)
+{
+    auto& metricFamily = getMetricsFamily(std::move(name), std::move(description), type);
+    return metricFamily.getMetric(std::move(labels), buckets);
 }
 
 }  // namespace util::prometheus
@@ -144,6 +192,28 @@ PrometheusService::gaugeDouble(
 )
 {
     return instance().gaugeDouble(std::move(name), std::move(labels), std::move(description));
+}
+
+util::prometheus::HistogramInt&
+PrometheusService::histogramInt(
+    std::string name,
+    util::prometheus::Labels labels,
+    std::vector<std::int64_t> const& buckets,
+    std::optional<std::string> description
+)
+{
+    return instance().histogramInt(std::move(name), std::move(labels), buckets, std::move(description));
+}
+
+util::prometheus::HistogramDouble&
+PrometheusService::histogramDouble(
+    std::string name,
+    util::prometheus::Labels labels,
+    std::vector<double> const& buckets,
+    std::optional<std::string> description
+)
+{
+    return instance().histogramDouble(std::move(name), std::move(labels), buckets, std::move(description));
 }
 
 std::string

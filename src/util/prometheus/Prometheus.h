@@ -23,8 +23,7 @@
 #include <util/prometheus/Counter.h>
 #include <util/prometheus/Gauge.h>
 #include <util/prometheus/Histogram.h>
-
-#include <cassert>
+#include <util/prometheus/MetricsFamily.h>
 
 namespace util::prometheus {
 
@@ -47,6 +46,7 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
+     * @return CounterDouble& The reference to the counter object
      */
     virtual CounterInt&
     counterInt(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
@@ -57,6 +57,7 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
+     * @return The reference to the counter object
      */
     virtual CounterDouble&
     counterDouble(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
@@ -67,6 +68,7 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
+     * @return The reference to the gauge object
      */
     virtual GaugeInt&
     gaugeInt(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
@@ -77,9 +79,44 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
+     * @return The reference to the gauge object
      */
     virtual GaugeDouble&
     gaugeDouble(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
+
+    /**
+     * @brief Get a integer based histogram metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param buckets The buckets of the metric
+     * @param description The description of the metric
+     * @return The reference to the histogram object
+     */
+    virtual HistogramInt&
+    histogramInt(
+        std::string name,
+        Labels labels,
+        std::vector<std::int64_t> const& buckets,
+        std::optional<std::string> description = std::nullopt
+    ) = 0;
+
+    /**
+     * @brief Get a double based histogram metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param buckets The buckets of the metric
+     * @param description The description of the metric
+     * @return The reference to the histogram object
+     */
+    virtual HistogramDouble&
+    histogramDouble(
+        std::string name,
+        Labels labels,
+        std::vector<double> const& buckets,
+        std::optional<std::string> description = std::nullopt
+    ) = 0;
 
     /**
      * @brief Collect all metrics and return them as a string in Prometheus format
@@ -137,12 +174,42 @@ public:
     GaugeDouble&
     gaugeDouble(std::string name, Labels labels, std::optional<std::string> description) override;
 
+    HistogramInt&
+    histogramInt(
+        std::string name,
+        Labels labels,
+        std::vector<std::int64_t> const& buckets,
+        std::optional<std::string> description = std::nullopt
+    ) override;
+
+    HistogramDouble&
+    histogramDouble(
+        std::string name,
+        Labels labels,
+        std::vector<double> const& buckets,
+        std::optional<std::string> description = std::nullopt
+    ) override;
+
     std::string
     collectMetrics() override;
 
 private:
+    MetricsFamily&
+    getMetricsFamily(std::string name, std::optional<std::string> description, MetricType type);
+
     MetricBase&
     getMetric(std::string name, Labels labels, std::optional<std::string> description, MetricType type);
+
+    template <typename ValueType>
+        requires std::same_as<ValueType, std::int64_t> || std::same_as<ValueType, double>
+    MetricBase&
+    getMetric(
+        std::string name,
+        Labels labels,
+        std::optional<std::string> description,
+        MetricType type,
+        std::vector<ValueType> const& buckets
+    );
 
     std::unordered_map<std::string, MetricsFamily> metrics_;
 };
@@ -210,6 +277,40 @@ public:
     gaugeDouble(
         std::string name,
         util::prometheus::Labels labels,
+        std::optional<std::string> description = std::nullopt
+    );
+
+    /**
+     * @brief Get a integer based histogram metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param buckets The buckets of the metric
+     * @param description The description of the metric
+     * @return The reference to the histogram object
+     */
+    static util::prometheus::HistogramInt&
+    histogramInt(
+        std::string name,
+        util::prometheus::Labels labels,
+        std::vector<std::int64_t> const& buckets,
+        std::optional<std::string> description = std::nullopt
+    );
+
+    /**
+     * @brief Get a double based histogram metric. It will be created if it doesn't exist
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param buckets The buckets of the metric
+     * @param description The description of the metric
+     * @return The reference to the histogram object
+     */
+    static util::prometheus::HistogramDouble&
+    histogramDouble(
+        std::string name,
+        util::prometheus::Labels labels,
+        std::vector<double> const& buckets,
         std::optional<std::string> description = std::nullopt
     );
 

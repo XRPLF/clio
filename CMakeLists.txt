@@ -140,7 +140,9 @@ target_sources (clio PRIVATE
   src/util/log/Logger.cpp
   src/util/prometheus/Http.cpp
   src/util/prometheus/Label.cpp
-  src/util/prometheus/Metrics.cpp
+  src/util/prometheus/MetricBase.cpp
+  src/util/prometheus/MetricBuilder.cpp
+  src/util/prometheus/MetricsFamily.cpp
   src/util/prometheus/OStream.cpp
   src/util/prometheus/Prometheus.cpp
   src/util/Random.cpp

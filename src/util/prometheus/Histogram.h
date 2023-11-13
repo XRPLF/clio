@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <util/prometheus/Metrics.h>
+#include <util/prometheus/MetricBase.h>
 #include <util/prometheus/impl/HistogramImpl.h>
 
 namespace util::prometheus {

@@ -90,4 +90,26 @@ TEST_F(HistogramTests, observe)
         "t_sum 0\n"
         "t_count 1\n"
     );
+
+    histogram.observe(2);
+    EXPECT_EQ(
+        serialize(),
+        "t_bucket{le=\"1\"} 1\n"
+        "t_bucket{le=\"2\"} 2\n"
+        "t_bucket{le=\"3\"} 2\n"
+        "t_bucket{le=\"+Inf\"} 2\n"
+        "t_sum 2\n"
+        "t_count 2\n"
+    );
+
+    histogram.observe(123);
+    EXPECT_EQ(
+        serialize(),
+        "t_bucket{le=\"1\"} 1\n"
+        "t_bucket{le=\"2\"} 2\n"
+        "t_bucket{le=\"3\"} 2\n"
+        "t_bucket{le=\"+Inf\"} 3\n"
+        "t_sum 125\n"
+        "t_count 3\n"
+    );
 }
