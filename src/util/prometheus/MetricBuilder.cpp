@@ -87,10 +87,21 @@ MetricBuilder::makeHistogram(
 )
 {
     switch (type) {
-        case MetricType::HISTOGRAM_INT:
-            return std::make_unique<HistogramInt>(std::move(name), std::move(labelsString), buckets);
+        case MetricType::HISTOGRAM_INT: {
+            if constexpr (std::same_as<ValueType, std::int64_t>) {
+                return std::make_unique<HistogramInt>(std::move(name), std::move(labelsString), buckets);
+            } else {
+                assert(false);
+                break;
+            }
+        }
         case MetricType::HISTOGRAM_DOUBLE:
-            return std::make_unique<HistogramDouble>(std::move(name), std::move(labelsString), buckets);
+            if constexpr (std::same_as<ValueType, double>) {
+                return std::make_unique<HistogramDouble>(std::move(name), std::move(labelsString), buckets);
+            } else {
+                assert(false);
+                break;
+            }
         case MetricType::COUNTER_INT:
             [[fallthrough]];
         case MetricType::COUNTER_DOUBLE:
@@ -104,7 +115,7 @@ MetricBuilder::makeHistogram(
         default:
             assert(false);
     }
+    return nullptr;
 }
 
-}
 }  // namespace util::prometheus

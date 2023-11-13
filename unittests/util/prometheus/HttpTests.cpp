@@ -20,6 +20,7 @@
 
 #include <util/MockPrometheus.h>
 
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 
 using namespace util::prometheus;

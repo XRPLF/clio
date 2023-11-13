@@ -177,7 +177,8 @@ if (tests)
     unittests/util/prometheus/HistogramTests.cpp
     unittests/util/prometheus/HttpTests.cpp
     unittests/util/prometheus/LabelTests.cpp
-    unittests/util/prometheus/MetricsTests.cpp
+    unittests/util/prometheus/MetricBuilderTests.cpp
+    unittests/util/prometheus/MetricsFamilyTests.cpp
     unittests/util/prometheus/OStreamTests.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTests.cpp

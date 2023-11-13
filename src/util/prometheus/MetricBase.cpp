@@ -45,7 +45,9 @@ toString(MetricType type)
             [[fallthrough]];
         case MetricType::GAUGE_DOUBLE:
             return "gauge";
-        case MetricType::HISTOGRAM:
+        case MetricType::HISTOGRAM_INT:
+            [[fallthrough]];
+        case MetricType::HISTOGRAM_DOUBLE:
             return "histogram";
         case MetricType::SUMMARY:
             return "summary";
