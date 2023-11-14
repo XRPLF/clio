@@ -44,6 +44,11 @@ template <typename NumberType>
 struct MockHistogramImpl {
     using ValueType = NumberType;
 
+    MockHistogramImpl()
+    {
+        EXPECT_CALL(*this, setBuckets);
+    }
+
     MOCK_METHOD(void, observe, (ValueType), ());
     MOCK_METHOD(void, setBuckets, (std::vector<ValueType> const&), ());
     MOCK_METHOD(void, serializeValue, (std::string const&, OStream&), (const));
@@ -191,17 +196,25 @@ struct WithMockPrometheus : virtual ::testing::Test {
     static auto&
     makeMock(std::string name, std::string labelsString)
     {
-        auto& mockPrometheusPtr = mockPrometheus();
+        auto& prometheus = mockPrometheus();
 
         std::string const key = name + labelsString;
-        mockPrometheusPtr.makeMetric<MetricType>(std::move(name), std::move(labelsString));
-        if constexpr (std::is_same_v<typename MetricType::ValueType, std::int64_t>) {
-            return mockPrometheusPtr.counterIntImpls[key];
-        } else if constexpr (std::is_same_v<typename MetricType::ValueType, std::uint64_t>) {
-            return mockPrometheusPtr.counterUintImpls[key];
-        } else if constexpr (std::is_same_v<typename MetricType::ValueType, double>) {
-            return mockPrometheusPtr.counterDoubleImpls[key];
+
+        if (!prometheus.metrics.contains(key))
+            prometheus.makeMetric<MetricType>(std::move(name), std::move(labelsString));
+
+        if constexpr (std::is_same_v<MetricType, GaugeInt>) {
+            return prometheus.counterIntImpls[key];
+        } else if constexpr (std::is_same_v<MetricType, CounterInt>) {
+            return prometheus.counterUintImpls[key];
+        } else if constexpr (std::is_same_v<MetricType, GaugeDouble> || std::is_same_v<MetricType, CounterDouble>) {
+            return prometheus.counterDoubleImpls[key];
+        } else if constexpr (std::is_same_v<MetricType, HistogramInt>) {
+            return prometheus.histogramIntImpls[key];
+        } else if constexpr (std::is_same_v<MetricType, HistogramDouble>) {
+            return prometheus.histogramDoubleImpls[key];
         }
+
         throw std::runtime_error("Wrong metric type");
     }
 };
