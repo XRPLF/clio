@@ -36,20 +36,24 @@ struct MetricsFamilyTest : ::testing::Test {
     struct MetricBuilderImplMock : MetricBuilderInterface {
         std::unique_ptr<MetricBase>
         operator()(
-            std::string name,
+            std::string metricName,
             std::string labelsString,
-            MetricType type,
+            MetricType metricType,
             std::vector<std::int64_t> const& buckets
         ) override
         {
-            return buildInt(std::move(name), std::move(labelsString), type, buckets);
+            return buildInt(std::move(metricName), std::move(labelsString), metricType, buckets);
         }
 
         std::unique_ptr<MetricBase>
-        operator()(std::string name, std::string labelsString, MetricType type, std::vector<double> const& buckets)
-            override
+        operator()(
+            std::string metricName,
+            std::string labelsString,
+            MetricType metricType,
+            std::vector<double> const& buckets
+        ) override
         {
-            return buildDouble(std::move(name), std::move(labelsString), type, buckets);
+            return buildDouble(std::move(metricName), std::move(labelsString), metricType, buckets);
         }
 
         MOCK_METHOD(

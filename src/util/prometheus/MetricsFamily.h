@@ -21,6 +21,8 @@
 
 #include <util/prometheus/MetricBuilder.h>
 
+#include <unordered_map>
+
 namespace util::prometheus {
 
 /**
