@@ -50,7 +50,7 @@ public:
     void
     serializeValue(OStream& stream) const override
     {
-        pimpl_->serializeValue(name(), stream);
+        pimpl_->serializeValue(name(), labelsString(), stream);
     }
 
 private:
@@ -60,10 +60,10 @@ private:
         virtual void observe(NumberType) = 0;
 
         virtual void
-        setBuckets(Buckets const&) = 0;
+        setBuckets(Buckets const& buckets) = 0;
 
         virtual void
-        serializeValue(std::string const&, OStream&) const = 0;
+        serializeValue(std::string const& name, std::string const& labelsString, OStream&) const = 0;
     };
 
     template <detail::SomeHistogramImpl ImplType>
@@ -88,9 +88,9 @@ private:
         }
 
         void
-        serializeValue(std::string const& name, OStream& stream) const override
+        serializeValue(std::string const& name, std::string const& labelsString, OStream& stream) const override
         {
-            impl_.serializeValue(name, stream);
+            impl_.serializeValue(name, labelsString, stream);
         }
 
     private:

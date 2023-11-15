@@ -33,7 +33,7 @@ struct AnyHistogramTests : ::testing::Test {
         using ValueType = std::int64_t;
         MOCK_METHOD(void, observe, (ValueType));
         MOCK_METHOD(void, setBuckets, (std::vector<ValueType> const&));
-        MOCK_METHOD(void, serializeValue, (std::string const&, OStream&), (const));
+        MOCK_METHOD(void, serializeValue, (std::string const&, std::string, OStream&), (const));
     };
 
     ::testing::StrictMock<MockHistogramImpl> mockHistogramImpl;
@@ -61,13 +61,14 @@ TEST_F(AnyHistogramTests, observe)
 TEST_F(AnyHistogramTests, serializeValue)
 {
     OStream stream{false};
-    EXPECT_CALL(mockHistogramImpl, serializeValue(name, ::testing::_));
+    EXPECT_CALL(mockHistogramImpl, serializeValue(name, labelsString, ::testing::_));
     histogram.serializeValue(stream);
 }
 
 struct HistogramTests : ::testing::Test {
     std::vector<std::int64_t> const buckets{1, 2, 3};
-    HistogramInt histogram{"t", "", {1, 2, 3}};
+    std::string labelsString = R"({label1="value1",label2="value2"})";
+    HistogramInt histogram{"t", labelsString, {1, 2, 3}};
 
     std::string
     serialize() const
@@ -83,33 +84,33 @@ TEST_F(HistogramTests, observe)
     histogram.observe(0);
     EXPECT_EQ(
         serialize(),
-        "t_bucket{le=\"1\"} 1\n"
-        "t_bucket{le=\"2\"} 1\n"
-        "t_bucket{le=\"3\"} 1\n"
-        "t_bucket{le=\"+Inf\"} 1\n"
-        "t_sum 0\n"
-        "t_count 1\n"
-    );
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"1\"} 1\n"
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"2\"} 1\n"
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"3\"} 1\n"
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"+Inf\"} 1\n"
+        "t_sum{label1=\"value1\",label2=\"value2\"} 0\n"
+        "t_count{label1=\"value1\",label2=\"value2\"} 1\n"
+    ) << serialize();
 
     histogram.observe(2);
     EXPECT_EQ(
         serialize(),
-        "t_bucket{le=\"1\"} 1\n"
-        "t_bucket{le=\"2\"} 2\n"
-        "t_bucket{le=\"3\"} 2\n"
-        "t_bucket{le=\"+Inf\"} 2\n"
-        "t_sum 2\n"
-        "t_count 2\n"
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"1\"} 1\n"
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"2\"} 2\n"
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"3\"} 2\n"
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"+Inf\"} 2\n"
+        "t_sum{label1=\"value1\",label2=\"value2\"} 2\n"
+        "t_count{label1=\"value1\",label2=\"value2\"} 2\n"
     );
 
     histogram.observe(123);
     EXPECT_EQ(
         serialize(),
-        "t_bucket{le=\"1\"} 1\n"
-        "t_bucket{le=\"2\"} 2\n"
-        "t_bucket{le=\"3\"} 2\n"
-        "t_bucket{le=\"+Inf\"} 3\n"
-        "t_sum 125\n"
-        "t_count 3\n"
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"1\"} 1\n"
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"2\"} 2\n"
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"3\"} 2\n"
+        "t_bucket{label1=\"value1\",label2=\"value2\",le=\"+Inf\"} 3\n"
+        "t_sum{label1=\"value1\",label2=\"value2\"} 125\n"
+        "t_count{label1=\"value1\",label2=\"value2\"} 3\n"
     );
 }

@@ -51,7 +51,7 @@ struct MockHistogramImpl {
 
     MOCK_METHOD(void, observe, (ValueType), ());
     MOCK_METHOD(void, setBuckets, (std::vector<ValueType> const&), ());
-    MOCK_METHOD(void, serializeValue, (std::string const&, OStream&), (const));
+    MOCK_METHOD(void, serializeValue, (std::string const&, std::string, OStream&), (const));
 };
 
 using MockHistogramImplInt = MockHistogramImpl<std::int64_t>;

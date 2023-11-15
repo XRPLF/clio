@@ -35,7 +35,7 @@ concept SomeHistogramImpl = requires(T t) {
         t.setBuckets(std::vector<typename std::remove_cvref_t<T>::ValueType>{})
     } -> std::same_as<void>;
     {
-        t.serializeValue(std::string{}, std::declval<OStream&>())
+        t.serializeValue(std::string{}, std::string{}, std::declval<OStream&>())
     } -> std::same_as<void>;
 };
 
@@ -80,18 +80,32 @@ public:
     }
 
     void
-    serializeValue(std::string const& name, OStream& stream) const
+    serializeValue(std::string const& name, std::string labelsString, OStream& stream) const
     {
+        if (labelsString.empty()) {
+            labelsString = "{";
+        } else {
+            labelsString.back() = ',';
+        }
+
         std::scoped_lock lock{*mutex_};
         std::uint64_t cumulativeCount = 0;
+
         for (auto const& bucket : buckets_) {
             cumulativeCount += bucket.count;
-            stream << name << "_bucket{le=\"" << bucket.upperBound << "\"} " << cumulativeCount << '\n';
+            stream << name << "_bucket" << labelsString << "le=\"" << bucket.upperBound << "\"} " << cumulativeCount
+                   << '\n';
         }
         cumulativeCount += lastBucket_.count;
-        stream << name << "_bucket{le=\"+Inf\"} " << cumulativeCount << '\n';
-        stream << name << "_sum " << sum_ << '\n';
-        stream << name << "_count " << cumulativeCount << '\n';
+        stream << name << "_bucket" << labelsString << "le=\"+Inf\"} " << cumulativeCount << '\n';
+
+        if (labelsString.size() == 1) {
+            labelsString = "";
+        } else {
+            labelsString.back() = '}';
+        }
+        stream << name << "_sum" << labelsString << " " << sum_ << '\n';
+        stream << name << "_count" << labelsString << " " << cumulativeCount << '\n';
     }
 
 private:
