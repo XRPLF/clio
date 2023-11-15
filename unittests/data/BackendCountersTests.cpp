@@ -261,11 +261,11 @@ TEST_F(BackendCountersMockPrometheusTest, registerReadFinished)
     auto& completedCounter =
         makeMock<CounterInt>("backend_operations_total_number", "{operation=\"read_async\",status=\"completed\"}");
     auto& histogram = makeMock<HistogramInt>("backend_duration_milliseconds_histogram", "{operation=\"read\"}");
-    EXPECT_CALL(pendingCounter, add(-1));
-    EXPECT_CALL(completedCounter, add(1));
-    EXPECT_CALL(histogram, observe(testing::_));
+    EXPECT_CALL(pendingCounter, add(-2));
+    EXPECT_CALL(completedCounter, add(2));
+    EXPECT_CALL(histogram, observe(testing::_)).Times(2);
     std::chrono::steady_clock::time_point const startTime{};
-    counters->registerReadFinished(startTime);
+    counters->registerReadFinished(startTime, 2);
 }
 
 TEST_F(BackendCountersMockPrometheusTest, registerReadRetry)
