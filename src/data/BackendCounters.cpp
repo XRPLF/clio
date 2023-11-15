@@ -57,13 +57,13 @@ BackendCounters::BackendCounters()
     , asyncReadCounters_{"read_async"}
     , readDurationHistogram_(PrometheusService::histogramInt(
           "backend_duration_milliseconds_histogram",
-          Labels({{"operation", "read"}}),
+          Labels({Label{"operation", "read"}}),
           histogramBuckets,
           "The duration of backend read operations including retries"
       ))
     , writeDurationHistogram_(PrometheusService::histogramInt(
           "backend_duration_milliseconds_histogram",
-          Labels({{"operation", "write"}}),
+          Labels({Label{"operation", "write"}}),
           histogramBuckets,
           "The duration of backend write operations including retries"
       ))
