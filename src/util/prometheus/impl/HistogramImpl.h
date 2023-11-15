@@ -57,7 +57,7 @@ public:
     void
     setBuckets(std::vector<ValueType> const& bounds)
     {
-        std::scoped_lock lock{*mutex_};
+        std::scoped_lock const lock{*mutex_};
         assert(buckets_.empty());
         buckets_.reserve(bounds.size());
         for (auto const& bound : bounds) {
@@ -72,7 +72,7 @@ public:
             std::lower_bound(buckets_.begin(), buckets_.end(), value, [](Bucket const& bucket, ValueType const& value) {
                 return bucket.upperBound < value;
             });
-        std::scoped_lock lock{*mutex_};
+        std::scoped_lock const lock{*mutex_};
         if (bucket != buckets_.end()) {
             ++bucket->count;
         } else {
@@ -91,7 +91,7 @@ public:
             labelsString.back() = ',';
         }
 
-        std::scoped_lock lock{*mutex_};
+        std::scoped_lock const lock{*mutex_};
         std::uint64_t cumulativeCount = 0;
 
         for (auto const& bucket : buckets_) {
