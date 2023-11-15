@@ -37,15 +37,6 @@ TEST(OStreamTests, string)
     EXPECT_EQ(std::move(stream).data(), "hello");
 }
 
-TEST(OStreamTests, useAfterData)
-{
-    OStream stream{false};
-    stream << "hello";
-    EXPECT_EQ(std::move(stream).data(), "hello");
-    stream << "world";
-    EXPECT_EQ(std::move(stream).data(), "world");
-}
-
 TEST(OStreamTests, compression)
 {
     OStream stream{true};

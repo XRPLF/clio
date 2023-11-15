@@ -214,7 +214,8 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
 
 TEST_F(PrometheusHandleRequestTests, compressReply)
 {
-    PrometheusService::init(util::Config({{"prometheus", boost::json::object{{"compress_reply", true}}}}));
+    PrometheusService::init(util::Config(boost::json::value{
+        {"prometheus", boost::json::object{{"compress_reply", true}}}}));
 
     auto& gauge = PrometheusService::gaugeInt("test_gauge", Labels{});
     ++gauge;

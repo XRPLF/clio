@@ -22,6 +22,8 @@
 #include <util/Concepts.h>
 #include <util/prometheus/OStream.h>
 
+#include <mutex>
+
 namespace util::prometheus::detail {
 
 template <typename T>
