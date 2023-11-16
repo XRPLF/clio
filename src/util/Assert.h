@@ -38,14 +38,12 @@ assert_impl(
 )
 {
     if (!condition) {
-        fmt::println(stderr, "Assertion ({}) failed at {}: {}", expression, file, line);
-        if constexpr (sizeof...(args) > 0)
-            fmt::println(stderr, format, std::forward<Args>(args)...);
+        fmt::println(stderr, "Assertion '{}' failed at {}:{}", expression, file, line);
+        fmt::println(stderr, format, std::forward<Args>(args)...);
         std::abort();
     }
 }
 
 }  // namespace util
 
-#define ASSERT(condition, message, ...) \
-    util::assert_impl(__FILE__, __LINE__, #condition, (condition), (message), __VA_ARGS__);
+#define ASSERT(condition, ...) util::assert_impl(__FILE__, __LINE__, #condition, (condition), __VA_ARGS__)

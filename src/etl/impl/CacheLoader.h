@@ -134,10 +134,7 @@ public:
             return;
         }
 
-        if (cache_.get().isFull()) {
-            assert(false);
-            return;
-        }
+        ASSERT(!cache_.get().isFull(), "Cache must not be full. seq = {}", seq);
 
         if (!clioPeers_.empty()) {
             boost::asio::spawn(ioContext_.get(), [this, seq](boost::asio::yield_context yield) {

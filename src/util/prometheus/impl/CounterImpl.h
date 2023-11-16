@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <util/Assert.h>
+
 #include <atomic>
 #include <cassert>
 #include <concepts>
@@ -55,7 +57,7 @@ public:
     // Move constructor should be used only used during initialization
     CounterImpl(CounterImpl&& other)
     {
-        assert(other.value_ == 0);
+        ASSERT(other.value_ == 0, "Move constructor should only be used during initialization");
         value_ = other.value_.exchange(0);
     }
 

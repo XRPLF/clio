@@ -794,7 +794,7 @@ private:
                 uint32_t const sequence = std::stoll(minAndMax[0]);
                 pairs.emplace_back(sequence, sequence);
             } else {
-                assert(minAndMax.size() == 2);
+                ASSERT(minAndMax.size() == 2, "Min and max should be of size 2. Got size ={}", minAndMax.size());
                 uint32_t const min = std::stoll(minAndMax[0]);
                 uint32_t const max = std::stoll(minAndMax[1]);
                 pairs.emplace_back(min, max);

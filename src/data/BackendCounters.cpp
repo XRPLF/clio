@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <data/BackendCounters.h>
+#include <util/Assert.h>
 
 #include <util/prometheus/Prometheus.h>
 
@@ -161,7 +162,10 @@ BackendCounters::AsyncOperationCounters::registerStarted(std::uint64_t const cou
 void
 BackendCounters::AsyncOperationCounters::registerFinished(std::uint64_t const count)
 {
-    assert(pendingCounter_.get().value() >= static_cast<std::int64_t>(count));
+    ASSERT(
+        pendingCounter_.get().value() >= static_cast<std::int64_t>(count),
+        "Finished operations can't be more than pending"
+    );
     pendingCounter_.get() -= count;
     completedCounter_.get() += count;
 }
@@ -175,7 +179,9 @@ BackendCounters::AsyncOperationCounters::registerRetry(std::uint64_t count)
 void
 BackendCounters::AsyncOperationCounters::registerError(std::uint64_t count)
 {
-    assert(pendingCounter_.get().value() >= static_cast<std::int64_t>(count));
+    ASSERT(
+        pendingCounter_.get().value() >= static_cast<std::int64_t>(count), "Error operations can't be more than pending"
+    );
     pendingCounter_.get() -= count;
     errorCounter_.get() += count;
 }

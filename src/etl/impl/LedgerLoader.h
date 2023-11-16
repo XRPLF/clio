@@ -23,6 +23,7 @@
 #include <etl/NFTHelpers.h>
 #include <etl/SystemState.h>
 #include <etl/impl/LedgerFetcher.h>
+#include <util/Assert.h>
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
 #include <util/log/Logger.h>
@@ -152,8 +153,7 @@ public:
         // check that database is actually empty
         auto rng = backend_->hardFetchLedgerRangeNoThrow();
         if (rng) {
-            LOG(log_.fatal()) << "Database is not empty";
-            assert(false);
+            ASSERT(false, "Database is not empty");
             return {};
         }
 
@@ -189,50 +189,49 @@ public:
                 size_t numWrites = 0;
                 backend_->cache().setFull();
 
-                auto seconds =
-                    ::util::timed<std::chrono::seconds>([this, edgeKeys = &edgeKeys, sequence, &numWrites]() {
-                        for (auto& key : *edgeKeys) {
-                            LOG(log_.debug()) << "Writing edge key = " << ripple::strHex(key);
-                            auto succ =
-                                backend_->cache().getSuccessor(*ripple::uint256::fromVoidChecked(key), sequence);
-                            if (succ)
-                                backend_->writeSuccessor(std::move(key), sequence, uint256ToString(succ->key));
-                        }
+                auto seconds = ::util::timed<std::chrono::seconds>([this, edgeKeys = &edgeKeys, sequence, &numWrites](
+                                                                   ) {
+                    for (auto& key : *edgeKeys) {
+                        LOG(log_.debug()) << "Writing edge key = " << ripple::strHex(key);
+                        auto succ = backend_->cache().getSuccessor(*ripple::uint256::fromVoidChecked(key), sequence);
+                        if (succ)
+                            backend_->writeSuccessor(std::move(key), sequence, uint256ToString(succ->key));
+                    }
 
-                        ripple::uint256 prev = data::firstKey;
-                        while (auto cur = backend_->cache().getSuccessor(prev, sequence)) {
-                            assert(cur);
-                            if (prev == data::firstKey)
-                                backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(cur->key));
+                    ripple::uint256 prev = data::firstKey;
+                    while (auto cur = backend_->cache().getSuccessor(prev, sequence)) {
+                        ASSERT(cur.has_value(), "Succesor for key {} must exist", ripple::strHex(prev));
+                        if (prev == data::firstKey)
+                            backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(cur->key));
 
-                            if (isBookDir(cur->key, cur->blob)) {
-                                auto base = getBookBase(cur->key);
-                                // make sure the base is not an actual object
-                                if (!backend_->cache().get(cur->key, sequence)) {
-                                    auto succ = backend_->cache().getSuccessor(base, sequence);
-                                    assert(succ);
-                                    if (succ->key == cur->key) {
-                                        LOG(log_.debug()) << "Writing book successor = " << ripple::strHex(base)
-                                                          << " - " << ripple::strHex(cur->key);
+                        if (isBookDir(cur->key, cur->blob)) {
+                            auto base = getBookBase(cur->key);
+                            // make sure the base is not an actual object
+                            if (!backend_->cache().get(cur->key, sequence)) {
+                                auto succ = backend_->cache().getSuccessor(base, sequence);
+                                ASSERT(succ.has_value(), "Book base {} must have a successor", ripple::strHex(base));
+                                if (succ->key == cur->key) {
+                                    LOG(log_.debug()) << "Writing book successor = " << ripple::strHex(base) << " - "
+                                                      << ripple::strHex(cur->key);
 
-                                        backend_->writeSuccessor(
-                                            uint256ToString(base), sequence, uint256ToString(cur->key)
-                                        );
-                                    }
+                                    backend_->writeSuccessor(
+                                        uint256ToString(base), sequence, uint256ToString(cur->key)
+                                    );
                                 }
-
-                                ++numWrites;
                             }
 
-                            prev = cur->key;
-                            static constexpr std::size_t LOG_INTERVAL = 100000;
-                            if (numWrites % LOG_INTERVAL == 0 && numWrites != 0)
-                                LOG(log_.info()) << "Wrote " << numWrites << " book successors";
+                            ++numWrites;
                         }
 
-                        backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(data::lastKey));
-                        ++numWrites;
-                    });
+                        prev = cur->key;
+                        static constexpr std::size_t LOG_INTERVAL = 100000;
+                        if (numWrites % LOG_INTERVAL == 0 && numWrites != 0)
+                            LOG(log_.info()) << "Wrote " << numWrites << " book successors";
+                    }
+
+                    backend_->writeSuccessor(uint256ToString(prev), sequence, uint256ToString(data::lastKey));
+                    ++numWrites;
+                });
 
                 LOG(log_.info()) << "Looping through cache and submitting all writes took " << seconds
                                  << " seconds. numWrites = " << std::to_string(numWrites);

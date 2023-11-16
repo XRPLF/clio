@@ -18,6 +18,8 @@
 //==============================================================================
 #pragma once
 
+#include <util/Assert.h>
+
 #include <random>
 
 namespace util {
@@ -28,7 +30,7 @@ public:
     static T
     uniform(T min, T max)
     {
-        assert(min <= max);
+        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
         if constexpr (std::is_floating_point_v<T>) {
             std::uniform_real_distribution<T> distribution(min, max);
             return distribution(generator_);
