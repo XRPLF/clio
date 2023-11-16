@@ -22,7 +22,6 @@
 #include <util/Assert.h>
 
 #include <atomic>
-#include <cassert>
 #include <concepts>
 
 namespace util::prometheus::detail {

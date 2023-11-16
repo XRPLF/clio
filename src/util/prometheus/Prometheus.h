@@ -23,8 +23,6 @@
 #include <util/prometheus/Counter.h>
 #include <util/prometheus/Gauge.h>
 
-#include <cassert>
-
 namespace util::prometheus {
 
 class PrometheusInterface {

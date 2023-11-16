@@ -20,8 +20,6 @@
 #include <util/prometheus/Counter.h>
 #include <util/prometheus/Gauge.h>
 
-#include <cassert>
-
 namespace util::prometheus {
 
 MetricBase::MetricBase(std::string name, std::string labelsString)
