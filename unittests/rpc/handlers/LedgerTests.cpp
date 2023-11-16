@@ -468,6 +468,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
                     {
                         "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Amount":"100",
+                        "DeliverMax":"100",
                         "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                         "Fee":"3",
                         "Sequence":30,
@@ -695,6 +696,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
                     {
                         "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Amount":"100",
+                        "DeliverMax":"100",
                         "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                         "Fee":"3",
                         "Sequence":30,

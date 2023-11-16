@@ -37,6 +37,13 @@ toLower(std::string str)
     return str;
 }
 
+inline std::string
+toUpper(std::string str)
+{
+    std::transform(std::begin(str), std::end(str), std::begin(str), [](unsigned char c) { return std::toupper(c); });
+    return str;
+}
+
 /**
  * @brief Removes any detected secret information from a response JSON object.
  *

@@ -1714,6 +1714,7 @@ generateTransactionTypeTestValues()
                     "tx": {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Amount": "1",
+                        "DeliverMax": "1",
                         "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                         "Fee": "1",
                         "Sequence": 32,
@@ -1763,7 +1764,7 @@ generateTransactionTypeTestValues()
                 },
                 "tx": {
                     "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                    "Amount": "1",
+                    "DeliverMax": "1",
                     "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
                     "Fee": "1",
                     "Sequence": 32,

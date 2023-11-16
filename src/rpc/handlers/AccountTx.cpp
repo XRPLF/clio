@@ -165,7 +165,7 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
 
         boost::json::object obj;
         if (!input.binary) {
-            auto [txn, meta] = toExpandedJson(txnPlusMeta, NFTokenjson::ENABLE);
+            auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion, NFTokenjson::ENABLE);
             obj[JS(meta)] = std::move(meta);
             obj[JS(tx)] = std::move(txn);
 

@@ -288,6 +288,72 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
     });
 }
 
+TEST_F(RPCTxTest, PaymentTx_API_v1)
+{
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+
+    TransactionAndMetadata tx;
+    tx.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 2, 3, 300).getSerializer().peekData();
+    tx.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
+    tx.date = 123456;
+    tx.ledgerSequence = 100;
+
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ASSERT_NE(rawETLPtr, nullptr);
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
+
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}"
+            }})",
+            TXNID
+        ));
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
+        ASSERT_TRUE(output);
+        EXPECT_TRUE(output->as_object().contains("DeliverMax"));
+        EXPECT_EQ(output->at("Amount"), output->at("DeliverMax"));
+    });
+}
+
+TEST_F(RPCTxTest, PaymentTx_API_v2)
+{
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+
+    TransactionAndMetadata tx;
+    tx.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 2, 3, 300).getSerializer().peekData();
+    tx.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
+    tx.date = 123456;
+    tx.ledgerSequence = 100;
+
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ASSERT_NE(rawETLPtr, nullptr);
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
+
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}"
+            }})",
+            TXNID
+        ));
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        EXPECT_TRUE(output->as_object().contains("DeliverMax"));
+        EXPECT_FALSE(output->as_object().contains("Amount"));
+    });
+}
+
 TEST_F(RPCTxTest, DefaultParameter_API_v2)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
@@ -911,5 +977,44 @@ TEST_F(RPCTxTest, ViaCTID)
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(*output, json::parse(OUT));
+    });
+}
+
+TEST_F(RPCTxTest, ViaLowercaseCTID)
+{
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    TransactionAndMetadata tx1;
+    tx1.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 1, 200, 300).getSerializer().peekData();
+    tx1.transaction =
+        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+    tx1.date = 123456;
+    tx1.ledgerSequence = SEQ_FROM_CTID;
+
+    TransactionAndMetadata tx2;
+    tx2.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 2, 3, 300).getSerializer().peekData();
+    tx2.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
+    tx2.ledgerSequence = SEQ_FROM_CTID;
+
+    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(SEQ_FROM_CTID, _)).WillOnce(Return(std::vector{tx1, tx2}));
+
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ASSERT_NE(rawETLPtr, nullptr);
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 2}));
+
+    std::string ctid(CTID);
+    std::transform(ctid.begin(), ctid.end(), ctid.begin(), ::tolower);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "ctid": "{}"
+            }})",
+            ctid
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->at("ctid").as_string(), CTID);
     });
 }

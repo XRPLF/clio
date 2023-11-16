@@ -21,8 +21,11 @@
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
+#include <boost/json.hpp>
 #include <fmt/core.h>
 
+#include <array>
+#include <string>
 #include <variant>
 
 using namespace rpc;
@@ -336,4 +339,82 @@ TEST_F(RPCHelpersTest, DecodeInvalidCTID)
 {
     EXPECT_FALSE(decodeCTID('c'));
     EXPECT_FALSE(decodeCTID(true));
+}
+
+TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
+{
+    std::array<std::string, 3> const inputArray = {
+        R"({
+            "TransactionType": "Payment",
+            "Amount": {
+                "test": "test"
+            }
+        })",
+        R"({
+            "TransactionType": "OfferCreate",
+            "Amount": {
+                "test": "test"
+            }
+        })",
+        R"({
+            "TransactionType": "Payment",
+            "Amount1": {
+                "test": "test"
+            }
+        })"};
+
+    std::array<std::string, 3> outputArray = {
+        R"({
+            "TransactionType": "Payment",
+            "Amount": {
+                "test": "test"
+            },
+            "DeliverMax": {
+                "test": "test"
+            }
+        })",
+        R"({
+            "TransactionType": "OfferCreate",
+            "Amount": {
+                "test": "test"
+            }
+        })",
+        R"({
+            "TransactionType": "Payment",
+            "Amount1": {
+                "test": "test"
+            }
+        })"};
+
+    for (size_t i = 0; i < inputArray.size(); i++) {
+        auto req = boost::json::parse(inputArray[i]).as_object();
+        insertDeliverMaxAlias(req, 1);
+        EXPECT_EQ(req, boost::json::parse(outputArray[i]).as_object());
+    }
+}
+
+TEST_F(RPCHelpersTest, DeliverMaxAliasV2)
+{
+    auto req = boost::json::parse(
+                   R"({
+                        "TransactionType": "Payment",
+                        "Amount": {
+                            "test": "test"
+                        }
+                    })"
+    )
+                   .as_object();
+
+    insertDeliverMaxAlias(req, 2);
+    EXPECT_EQ(
+        req,
+        boost::json::parse(
+            R"({
+                "TransactionType": "Payment",
+                "DeliverMax": {
+                    "test": "test"
+                }
+            })"
+        )
+    );
 }
