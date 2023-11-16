@@ -24,12 +24,23 @@
 
 namespace util::prometheus {
 
+/**
+ * @brief A Prometheus histogram metric with a generic value type
+ */
 template <SomeNumberType NumberType>
 class AnyHistogram : public MetricBase {
 public:
     using ValueType = NumberType;
     using Buckets = std::vector<NumberType>;
 
+    /**
+     * @brief Construct a new Histogram object
+     *
+     * @param name The name of the metric
+     * @param labelsString The labels of the metric in serialized format, e.g. {name="value",name2="value2"}
+     * @param buckets The buckets of the histogram
+     * @param impl The implementation of the histogram (has default value and need to be specified only for testing)
+     */
     template <detail::SomeHistogramImpl ImplType = detail::HistogramImpl<ValueType>>
         requires std::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
     AnyHistogram(std::string name, std::string labelsString, Buckets const& buckets, ImplType&& impl = ImplType{})
@@ -41,12 +52,22 @@ public:
         pimpl_->setBuckets(buckets);
     }
 
+    /**
+     * @brief Add a value to the histogram
+     *
+     * @param value The value to add
+     */
     void
     observe(ValueType const value)
     {
         pimpl_->observe(value);
     }
 
+    /**
+     * @brief Serialize the metric to a string in Prometheus format
+     *
+     * @param stream The stream to serialize into
+     */
     void
     serializeValue(OStream& stream) const override
     {
