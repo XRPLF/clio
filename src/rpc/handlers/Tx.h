@@ -172,7 +172,7 @@ public:
         output.ledgerIndex = dbResponse->ledgerSequence;
 
         // fetch ledger hash
-        if (ctx.apiVersion >= 2u)
+        if (ctx.apiVersion > 1u)
             output.ledgerHeader = sharedPtrBackend_->fetchLedgerBySequence(dbResponse->ledgerSequence, ctx.yield);
 
         return output;
@@ -250,7 +250,7 @@ private:
             return obj;
         };
 
-        auto obj = output.apiVersion > 1 ? getJsonV2() : getJsonV1();
+        auto obj = output.apiVersion > 1u ? getJsonV2() : getJsonV1();
 
         if (output.ctid)
             obj[JS(ctid)] = *output.ctid;

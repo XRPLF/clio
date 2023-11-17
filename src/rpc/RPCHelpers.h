@@ -112,9 +112,9 @@ boost::json::object
 toJson(ripple::SLE const& sle);
 
 /**
- * @brief Convert a LedgerEntry to JSON object.
+ * @brief Convert a LedgerHeader to JSON object.
  *
- * @param entry The LedgerEntry to convert.
+ * @param entry The LedgerHeader to convert.
  * @param binary Whether to convert in hex format.
  * @return The JSON object.
  */

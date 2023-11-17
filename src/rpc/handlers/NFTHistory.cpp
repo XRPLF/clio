@@ -107,12 +107,12 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
 
         if (!input.binary) {
             auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion);
-            auto const txKey = ctx.apiVersion > 1 ? JS(tx_json) : JS(tx);
+            auto const txKey = ctx.apiVersion > 1u ? JS(tx_json) : JS(tx);
             obj[JS(meta)] = std::move(meta);
             obj[txKey] = std::move(txn);
             obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
             obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
-            if (ctx.apiVersion > 1) {
+            if (ctx.apiVersion > 1u) {
                 obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
                 if (obj[txKey].as_object().contains(JS(hash))) {
                     obj[JS(hash)] = obj[txKey].at(JS(hash));

@@ -44,22 +44,19 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
             auto txns = sharedPtrBackend_->fetchAllTransactionsInLedger(lgrInfo.seq, ctx.yield);
 
             auto const expandTxJsonV1 = [&](data::TransactionAndMetadata const& tx) {
-                boost::json::object entry;
                 if (!input.binary) {
                     auto [txn, meta] = toExpandedJson(tx, ctx.apiVersion);
-                    entry = std::move(txn);
-                    entry[JS(metaData)] = std::move(meta);
-                } else {
-                    entry = toJsonWithBinaryTx(tx, ctx.apiVersion);
+                    txn[JS(metaData)] = std::move(meta);
+                    return txn;
                 }
-                return entry;
+                return toJsonWithBinaryTx(tx, ctx.apiVersion);
             };
 
             auto const expandTxJsonV2 = [&](data::TransactionAndMetadata const& tx) {
-                boost::json::object entry;
                 static auto const isoTimeStr = ripple::to_string_iso(lgrInfo.closeTime);
                 auto [txn, meta] = toExpandedJson(tx, ctx.apiVersion);
                 if (!input.binary) {
+                    boost::json::object entry;
                     entry[JS(validated)] = true;
                     // same with rippled, ledger_index is a string here
                     entry[JS(ledger_index)] = std::to_string(lgrInfo.seq);
@@ -71,11 +68,12 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                     }
                     entry[JS(tx_json)] = std::move(txn);
                     entry[JS(meta)] = std::move(meta);
-                } else {
-                    entry = toJsonWithBinaryTx(tx, ctx.apiVersion);
-                    if (txn.contains(JS(hash)))
-                        entry[JS(hash)] = txn.at(JS(hash));
+                    return entry;
                 }
+
+                auto entry = toJsonWithBinaryTx(tx, ctx.apiVersion);
+                if (txn.contains(JS(hash)))
+                    entry[JS(hash)] = txn.at(JS(hash));
                 return entry;
             };
 
@@ -84,7 +82,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                 std::move_iterator(txns.end()),
                 std::back_inserter(jsonTxs),
                 [&](auto obj) {
-                    boost::json::object entry = ctx.apiVersion < 2 ? expandTxJsonV1(obj) : expandTxJsonV2(obj);
+                    boost::json::object entry = ctx.apiVersion < 2u ? expandTxJsonV1(obj) : expandTxJsonV2(obj);
 
                     if (input.ownerFunds) {
                         // check the type of tx

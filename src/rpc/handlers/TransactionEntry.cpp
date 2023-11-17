@@ -60,7 +60,7 @@ TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context c
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TransactionEntryHandler::Output const& output)
 {
-    auto const metaKey = output.apiVersion >= 2 ? JS(meta) : JS(metadata);
+    auto const metaKey = output.apiVersion > 1u ? JS(meta) : JS(metadata);
     jv = {
         {JS(validated), output.validated},
         {metaKey, output.metadata},
@@ -69,7 +69,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, TransactionEntry
         {JS(ledger_hash), ripple::strHex(output.ledgerHeader->hash)},
     };
 
-    if (output.apiVersion >= 2) {
+    if (output.apiVersion > 1u) {
         jv.as_object()[JS(close_time_iso)] = ripple::to_string_iso(output.ledgerHeader->closeTime);
         if (output.tx.contains(JS(hash))) {
             jv.as_object()[JS(hash)] = output.tx.at(JS(hash));
