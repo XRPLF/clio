@@ -40,8 +40,39 @@ using SourceLocationType = std::source_location;
 #elif defined(HAS_EXPERIMENTAL_SOURCE_LOCATION)
 using SourceLocationType = std::experimental::source_location;
 
+#else
+// A workaround for AppleClang that is lacking source_location atm.
+// TODO: remove this workaround when all compilers catch up to c++20
+class SourceLocation {
+    std::string_view file_;
+    std::size_t line_;
+
+public:
+    SourceLocation(std::string_view file, std::size_t line) : file_{file}, line_{line}
+    {
+    }
+
+    std::string_view
+    file_name() const
+    {
+        return file_;
+    }
+
+    std::size_t
+    line() const
+    {
+        return line_;
+    }
+};
+using SourceLocationType = SourceLocation;
+#define SOURCE_LOCATION_OLD_API
+
 #endif
 
 }  // namespace util
 
+#if defined(SOURCE_LOCATION_OLD_API)
+#define CURRENT_SRC_LOCATION util::SourceLocationType(__FILE__, __LINE__)
+#else
 #define CURRENT_SRC_LOCATION util::SourceLocationType::current()
+#endif
