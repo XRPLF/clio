@@ -16,16 +16,17 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include <util/TerminationHandler.h>
-#include <util/prometheus/Prometheus.h>
+
+#include <util/Assert.h>
 
 #include <gtest/gtest.h>
 
-int
-main(int argc, char** argv)
+TEST(AssertTests, assertTrue)
 {
-    util::setTerminationHandler();
-    PrometheusService::init();
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    EXPECT_NO_THROW(ASSERT(true, "Should not fail"));
+}
+
+TEST(AssertTests, assertFalse)
+{
+    EXPECT_DEATH({ ASSERT(false, "failure"); }, "failure");
 }

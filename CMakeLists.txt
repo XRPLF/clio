@@ -173,6 +173,7 @@ if (tests)
     unittests/DOSGuardTests.cpp
     unittests/SubscriptionTests.cpp
     unittests/SubscriptionManagerTests.cpp
+    unittests/util/AssertTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
     unittests/util/prometheus/CounterTests.cpp
