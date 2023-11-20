@@ -16,16 +16,12 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include <util/TerminationHandler.h>
-#include <util/prometheus/Prometheus.h>
 
-#include <gtest/gtest.h>
+#pragma once
 
-int
-main(int argc, char** argv)
-try {
-    util::setTerminationHandler();
-    PrometheusService::init();
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+namespace util {
+
+void
+setTerminationHandler();
+
+}  // namespace util

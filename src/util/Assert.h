@@ -40,7 +40,7 @@ assert_impl(
 )
 {
     if (!condition) {
-        fmt::println(stderr, "Assertion '{}' failed at {}:{}", expression, location.file_name(), location.line());
+        fmt::println(stderr, "Assertion '{}' failed at {}:{}:", expression, location.file_name(), location.line());
         fmt::println(stderr, format, std::forward<Args>(args)...);
         std::cerr << "Stacktrace:\n" << boost::stacktrace::stacktrace() << std::endl;
         std::abort();

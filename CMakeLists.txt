@@ -147,7 +147,9 @@ target_sources (clio PRIVATE
   src/util/prometheus/Metrics.cpp
   src/util/prometheus/Prometheus.cpp
   src/util/Random.cpp
-  src/util/Taggable.cpp)
+  src/util/Taggable.cpp
+  src/util/TerminationHandler.cpp
+)
 
 # Clio server
 add_executable (clio_server src/main/Main.cpp)

@@ -16,16 +16,35 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #include <util/TerminationHandler.h>
-#include <util/prometheus/Prometheus.h>
+#include <util/log/Logger.h>
 
-#include <gtest/gtest.h>
+#include <boost/stacktrace.hpp>
 
-int
-main(int argc, char** argv)
-try {
-    util::setTerminationHandler();
-    PrometheusService::init();
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+#include <iostream>
+
+namespace util {
+
+namespace {
+
+void
+terminationHandler()
+{
+    try {
+        LOG(LogService::fatal()) << "Exit on terminate. Backtrace:\n" << boost::stacktrace::stacktrace();
+    } catch (...) {
+        LOG(LogService::fatal()) << "Exit on terminate. Can't get backtrace.";
+    }
+    std::abort();
 }
+
+}  // namespace
+
+void
+setTerminationHandler()
+{
+    std::set_terminate(terminationHandler);
+}
+
+}  // namespace util
