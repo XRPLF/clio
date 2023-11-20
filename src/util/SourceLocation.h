@@ -44,21 +44,21 @@ using SourceLocationType = std::experimental::source_location;
 // A workaround for AppleClang that is lacking source_location atm.
 // TODO: remove this workaround when all compilers catch up to c++20
 class SourceLocation {
-    std::string_view file_;
+    char const* file_;
     std::size_t line_;
 
 public:
-    SourceLocation(std::string_view file, std::size_t line) : file_{file}, line_{line}
+    constexpr SourceLocation(char const* file, std::size_t line) : file_{file}, line_{line}
     {
     }
 
-    std::string_view
+    constexpr std::string_view
     file_name() const
     {
         return file_;
     }
 
-    std::size_t
+    constexpr std::size_t
     line() const
     {
         return line_;
