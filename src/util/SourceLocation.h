@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2022, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,34 +19,29 @@
 
 #pragma once
 
-#include <util/SourceLocation.h>
+#if defined(HAS_SOURCE_LOCATION) && __has_builtin(__builtin_source_location)
+// this is used by fully compatible compilers like gcc
+#include <source_location>
 
-#include <iostream>
-#include <string_view>
+#elif defined(HAS_EXPERIMENTAL_SOURCE_LOCATION)
+// this is used by clang on linux where source_location is still not out of
+// experimental headers
+#include <experimental/source_location>
+#endif
 
-#include <boost/stacktrace.hpp>
-#include <fmt/format.h>
+#include <optional>
+#include <string>
 
 namespace util {
 
-template <typename... Args>
-constexpr void
-assert_impl(
-    SourceLocationType const location,
-    char const* expression,
-    bool const condition,
-    fmt::format_string<Args...> format,
-    Args&&... args
-)
-{
-    if (!condition) {
-        fmt::println(stderr, "Assertion '{}' failed at {}:{}", expression, location.file_name(), location.line());
-        fmt::println(stderr, format, std::forward<Args>(args)...);
-        std::cerr << "Stacktrace:\n" << boost::stacktrace::stacktrace() << std::endl;
-        std::abort();
-    }
-}
+#if defined(HAS_SOURCE_LOCATION) && __has_builtin(__builtin_source_location)
+using SourceLocationType = std::source_location;
+
+#elif defined(HAS_EXPERIMENTAL_SOURCE_LOCATION)
+using SourceLocationType = std::experimental::source_location;
+
+#endif
 
 }  // namespace util
 
-#define ASSERT(condition, ...) util::assert_impl(CURRENT_SRC_LOCATION, #condition, (condition), __VA_ARGS__)
+#define CURRENT_SRC_LOCATION util::SourceLocationType::current()

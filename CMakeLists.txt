@@ -44,6 +44,7 @@ include (CMake/deps/OpenSSL.cmake)
 include (CMake/deps/Threads.cmake)
 include (CMake/deps/libfmt.cmake)
 include (CMake/deps/cassandra.cmake)
+include (CMake/deps/libbacktrace.cmake)
 
 # TODO: Include directory will be wrong when installed.
 target_include_directories (clio PUBLIC src)
@@ -56,11 +57,14 @@ target_link_libraries (clio
   PUBLIC Boost::system
   PUBLIC Boost::log
   PUBLIC Boost::log_setup
+  PUBLIC Boost::stacktrace_backtrace
   PUBLIC cassandra-cpp-driver::cassandra-cpp-driver
   PUBLIC fmt::fmt
   PUBLIC OpenSSL::Crypto
   PUBLIC OpenSSL::SSL
   PUBLIC xrpl::libxrpl
+  PUBLIC dl
+  PUBLIC libbacktrace::libbacktrace
 
   INTERFACE Threads::Threads
 )
