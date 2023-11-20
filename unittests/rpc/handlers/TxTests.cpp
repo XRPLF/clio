@@ -33,12 +33,13 @@ using TestTxHandler = BaseTxHandler<MockETLService>;
 auto constexpr static TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 auto constexpr static NFTID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
 auto constexpr static NFTID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
+constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 auto constexpr static ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 auto constexpr static ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 auto constexpr static CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
 constexpr static auto CTID = "C002807000010002";  // seq 163952 txindex 1 netid 2
 constexpr static auto SEQ_FROM_CTID = 163952;
-auto constexpr static DEFAULT_OUT = R"({
+auto constexpr static DEFAULT_OUT_1 = R"({
     "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
     "Fee": "2",
     "Sequence": 100,
@@ -72,6 +73,49 @@ auto constexpr static DEFAULT_OUT = R"({
     },
     "date": 123456,
     "ledger_index": 100,
+    "inLedger": 100,
+    "validated": true
+})";
+
+auto constexpr static DEFAULT_OUT_2 = R"({
+    "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
+    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+    "ledger_index": 100,
+    "meta": {
+        "AffectedNodes": [
+            {
+                "CreatedNode": {
+                    "LedgerEntryType": "Offer",
+                    "NewFields": {
+                        "TakerGets": "200",
+                        "TakerPays": {
+                            "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+                            "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                            "value": "300"
+                        }
+                    }
+                }
+            }
+        ],
+        "TransactionIndex": 100,
+        "TransactionResult": "tesSUCCESS"
+    },
+    "tx_json": {
+        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+        "date": 123456,
+        "Fee": "2",
+        "ledger_index": 100,
+        "Sequence": 100,
+        "SigningPubKey": "74657374",
+        "TakerGets": {
+            "currency": "0158415500000000C1F76FF6ECB0BAC600000000",
+            "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+            "value": "200"
+        },
+        "TakerPays": "300",
+        "TransactionType": "OfferCreate"
+    },
+    "close_time_iso": "2000-01-01T00:00:00Z",
     "validated": true
 })";
 
@@ -282,9 +326,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
 
-        auto v1Output = json::parse(DEFAULT_OUT);
-        v1Output.as_object()[JS(inLedger)] = v1Output.as_object()[JS(ledger_index)];
-        EXPECT_EQ(*output, v1Output);
+        EXPECT_EQ(*output, json::parse(DEFAULT_OUT_1));
     });
 }
 
@@ -333,6 +375,7 @@ TEST_F(RPCTxTest, PaymentTx_API_v2)
     tx.ledgerSequence = 100;
 
     EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(std::nullopt));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -349,8 +392,9 @@ TEST_F(RPCTxTest, PaymentTx_API_v2)
         ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("DeliverMax"));
-        EXPECT_FALSE(output->as_object().contains("Amount"));
+        EXPECT_TRUE(output->as_object().contains("tx_json"));
+        EXPECT_TRUE(output->as_object().at("tx_json").as_object().contains("DeliverMax"));
+        EXPECT_FALSE(output->as_object().at("tx_json").as_object().contains("Amount"));
     });
 }
 
@@ -367,6 +411,8 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
     tx.ledgerSequence = 100;
 
     EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, tx.ledgerSequence);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(ledgerinfo));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -383,7 +429,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
         ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(DEFAULT_OUT));
+        EXPECT_EQ(*output, json::parse(DEFAULT_OUT_2));
     });
 }
 

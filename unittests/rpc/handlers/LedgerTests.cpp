@@ -263,6 +263,7 @@ TEST_F(RPCLedgerHandlerTest, Default)
                 "close_time":0,
                 "close_time_resolution":0,
                 "closed":true,
+                "close_time_iso":"2000-01-01T00:00:00Z",
                 "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "ledger_index":"30",
                 "parent_close_time":0,
@@ -445,6 +446,60 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
     });
 }
 
+TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
+{
+    static auto constexpr expectedOut =
+        R"({
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "validated": true,
+            "ledger":{
+                "ledger_data": "0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                "closed": true,
+                "transactions": [
+                    {
+                        "hash": "70436A9332F7CD928FAEC1A41269A677739D8B11F108CE23AE23CBF0C9113F8C",
+                        "tx_blob": "120000240000001E61400000000000006468400000000000000373047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451243869B38667CBD89DF3",
+                        "meta_blob": "201C00000000F8E5110061E762400000000000006E81144B4E9C06F24296074F7BC48F92A97916C6DC5EA9E1E1E5110061E762400000000000001E8114D31252CF902EF8DD8451243869B38667CBD89DF3E1E1F1031000"
+                    },
+                    {
+                        "hash": "70436A9332F7CD928FAEC1A41269A677739D8B11F108CE23AE23CBF0C9113F8C",
+                        "tx_blob": "120000240000001E61400000000000006468400000000000000373047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451243869B38667CBD89DF3",
+                        "meta_blob": "201C00000000F8E5110061E762400000000000006E81144B4E9C06F24296074F7BC48F92A97916C6DC5EA9E1E1E5110061E762400000000000001E8114D31252CF902EF8DD8451243869B38667CBD89DF3E1E1F1031000"
+                    }
+                ]
+            }
+        })";
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    mockBackendPtr->updateRange(RANGEMIN);
+    mockBackendPtr->updateRange(RANGEMAX);
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerinfo));
+
+    TransactionAndMetadata t1;
+    t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, RANGEMAX).getSerializer().peekData();
+    t1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
+    t1.ledgerSequence = RANGEMAX;
+
+    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillOnce(Return(std::vector{t1, t1}));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
+        auto const req = json::parse(
+            R"({
+                "binary": true,
+                "expand": true,
+                "transactions": true
+            })"
+        );
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output, json::parse(expectedOut));
+    });
+}
+
 TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
 {
     static auto constexpr expectedOut =
@@ -461,6 +516,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
                 "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "ledger_index":"30",
                 "parent_close_time":0,
+                "close_time_iso":"2000-01-01T00:00:00Z",
                 "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
                 "total_coins":"0",
                 "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
@@ -531,6 +587,108 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
             })"
         );
         auto output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        // remove human readable time, it is sightly different cross the platform
+        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(*output, json::parse(expectedOut));
+    });
+}
+
+TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
+{
+    static auto constexpr expectedOut =
+        R"({
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "validated": true,
+            "ledger":{
+                "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "close_flags": 0,
+                "close_time": 0,
+                "close_time_resolution": 0,
+                "closed": true,
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "ledger_index": "30",
+                "parent_close_time": 0,
+                "close_time_iso": "2000-01-01T00:00:00Z",
+                "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "total_coins": "0",
+                "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "transactions":[
+                    {
+                        "validated": true,
+                        "close_time_iso": "2000-01-01T00:00:00Z",
+                        "hash": "70436A9332F7CD928FAEC1A41269A677739D8B11F108CE23AE23CBF0C9113F8C",
+                        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                        "ledger_index": "30",
+                        "tx_json":
+                        {
+                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                            "DeliverMax": "100",
+                            "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                            "Fee": "3",
+                            "Sequence": 30,
+                            "SigningPubKey": "74657374",
+                            "TransactionType": "Payment"
+                        },
+                        "meta":{
+                            "AffectedNodes":[
+                                {
+                                    "ModifiedNode":
+                                    {
+                                        "FinalFields":
+                                        {
+                                            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                            "Balance": "110"
+                                        },
+                                        "LedgerEntryType": "AccountRoot"
+                                    }
+                                },
+                                {
+                                    "ModifiedNode":
+                                    {
+                                        "FinalFields":
+                                        {
+                                            "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                            "Balance": "30"
+                                        },
+                                        "LedgerEntryType": "AccountRoot"
+                                    }
+                                }
+                            ],
+                            "TransactionIndex": 0,
+                            "TransactionResult": "tesSUCCESS",
+                            "delivered_amount": "unavailable"
+                        }
+                    }
+                ]
+            }
+        })";
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    mockBackendPtr->updateRange(RANGEMIN);
+    mockBackendPtr->updateRange(RANGEMAX);
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerinfo));
+
+    TransactionAndMetadata t1;
+    t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, RANGEMAX).getSerializer().peekData();
+    t1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
+    t1.ledgerSequence = RANGEMAX;
+
+    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillOnce(Return(std::vector{t1}));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
+        auto const req = json::parse(
+            R"({
+                "binary": false,
+                "expand": true,
+                "transactions": true
+            })"
+        );
+        auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
         EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
@@ -689,6 +847,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
                 "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "ledger_index":"30",
                 "parent_close_time":0,
+                "close_time_iso":"2000-01-01T00:00:00Z",
                 "parent_hash":"0000000000000000000000000000000000000000000000000000000000000000",
                 "total_coins":"0",
                 "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
@@ -780,6 +939,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "ledger_index": "30",
                 "parent_close_time": 0,
+                "close_time_iso": "2000-01-01T00:00:00Z",
                 "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
                 "total_coins": "0",
                 "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
