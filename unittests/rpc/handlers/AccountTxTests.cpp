@@ -1512,8 +1512,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
         .Times(1);
 
     auto const ledgerInfo = CreateLedgerInfo(LEDGERHASH, 11);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(transactions.size());
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(transactions.size()).WillRepeatedly(Return(ledgerInfo));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
