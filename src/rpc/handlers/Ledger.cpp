@@ -34,24 +34,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     Output output;
 
-    if (input.binary) {
-        output.header[JS(ledger_data)] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
-    } else {
-        output.header[JS(account_hash)] = ripple::strHex(lgrInfo.accountHash);
-        output.header[JS(close_flags)] = lgrInfo.closeFlags;
-        output.header[JS(close_time)] = lgrInfo.closeTime.time_since_epoch().count();
-        output.header[JS(close_time_human)] = ripple::to_string(lgrInfo.closeTime);
-        output.header[JS(close_time_resolution)] = lgrInfo.closeTimeResolution.count();
-        output.header[JS(closed)] = true;
-        output.header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-        output.header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
-        output.header[JS(parent_close_time)] = lgrInfo.parentCloseTime.time_since_epoch().count();
-        output.header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
-        output.header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
-        output.header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
-    }
-
-    output.header[JS(closed)] = true;
+    output.header = toJson(lgrInfo, input.binary);
 
     if (input.transactions) {
         output.header[JS(transactions)] = boost::json::value(boost::json::array_kind);
@@ -60,20 +43,46 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
         if (input.expand) {
             auto txns = sharedPtrBackend_->fetchAllTransactionsInLedger(lgrInfo.seq, ctx.yield);
 
+            auto const expandTxJsonV1 = [&](data::TransactionAndMetadata const& tx) {
+                if (!input.binary) {
+                    auto [txn, meta] = toExpandedJson(tx, ctx.apiVersion);
+                    txn[JS(metaData)] = std::move(meta);
+                    return txn;
+                }
+                return toJsonWithBinaryTx(tx, ctx.apiVersion);
+            };
+
+            auto const expandTxJsonV2 = [&](data::TransactionAndMetadata const& tx) {
+                static auto const isoTimeStr = ripple::to_string_iso(lgrInfo.closeTime);
+                auto [txn, meta] = toExpandedJson(tx, ctx.apiVersion);
+                if (!input.binary) {
+                    boost::json::object entry;
+                    entry[JS(validated)] = true;
+                    // same with rippled, ledger_index is a string here
+                    entry[JS(ledger_index)] = std::to_string(lgrInfo.seq);
+                    entry[JS(close_time_iso)] = isoTimeStr;
+                    entry[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+                    if (txn.contains(JS(hash))) {
+                        entry[JS(hash)] = txn.at(JS(hash));
+                        txn.erase(JS(hash));
+                    }
+                    entry[JS(tx_json)] = std::move(txn);
+                    entry[JS(meta)] = std::move(meta);
+                    return entry;
+                }
+
+                auto entry = toJsonWithBinaryTx(tx, ctx.apiVersion);
+                if (txn.contains(JS(hash)))
+                    entry[JS(hash)] = txn.at(JS(hash));
+                return entry;
+            };
+
             std::transform(
                 std::move_iterator(txns.begin()),
                 std::move_iterator(txns.end()),
                 std::back_inserter(jsonTxs),
                 [&](auto obj) {
-                    boost::json::object entry;
-                    if (!input.binary) {
-                        auto [txn, meta] = toExpandedJson(obj, ctx.apiVersion);
-                        entry = std::move(txn);
-                        entry[JS(metaData)] = std::move(meta);
-                    } else {
-                        entry[JS(tx_blob)] = ripple::strHex(obj.transaction);
-                        entry[JS(meta)] = ripple::strHex(obj.metadata);
-                    }
+                    boost::json::object entry = ctx.apiVersion < 2u ? expandTxJsonV1(obj) : expandTxJsonV2(obj);
 
                     if (input.ownerFunds) {
                         // check the type of tx

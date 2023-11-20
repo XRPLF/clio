@@ -42,7 +42,8 @@ public:
         std::optional<boost::json::object> tx{};
         std::optional<std::string> metaStr{};
         std::optional<std::string> txStr{};
-        std::optional<std::string> ctid{};  // ctid when binary=true
+        std::optional<std::string> ctid{};                   // ctid when binary=true
+        std::optional<ripple::LedgerHeader> ledgerHeader{};  // ledger hash when apiVersion >= 2
         uint32_t apiVersion = 0u;
         bool validated = true;
     };
@@ -170,6 +171,10 @@ public:
         output.date = dbResponse->date;
         output.ledgerIndex = dbResponse->ledgerSequence;
 
+        // fetch ledger hash
+        if (ctx.apiVersion > 1u)
+            output.ledgerHeader = sharedPtrBackend_->fetchLedgerBySequence(dbResponse->ledgerSequence, ctx.yield);
+
         return output;
     }
 
@@ -192,23 +197,60 @@ private:
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output)
     {
-        auto obj = boost::json::object{};
+        auto const getJsonV1 = [&]() {
+            auto obj = boost::json::object{};
 
-        if (output.tx) {
-            obj = *output.tx;
-            obj[JS(meta)] = *output.meta;
-        } else {
-            obj[JS(meta)] = *output.metaStr;
-            obj[JS(tx)] = *output.txStr;
-            obj[JS(hash)] = output.hash;
-        }
+            if (output.tx) {
+                obj = *output.tx;
+                obj[JS(meta)] = *output.meta;
+            } else {
+                obj[JS(meta)] = *output.metaStr;
+                obj[JS(tx)] = *output.txStr;
+                obj[JS(hash)] = output.hash;
+            }
 
-        obj[JS(validated)] = output.validated;
-        obj[JS(date)] = output.date;
-        obj[JS(ledger_index)] = output.ledgerIndex;
-
-        if (output.apiVersion < 2u)
+            obj[JS(validated)] = output.validated;
+            obj[JS(date)] = output.date;
+            obj[JS(ledger_index)] = output.ledgerIndex;
             obj[JS(inLedger)] = output.ledgerIndex;
+            return obj;
+        };
+
+        auto const getJsonV2 = [&]() {
+            auto obj = boost::json::object{};
+
+            if (output.tx) {
+                obj[JS(tx_json)] = *output.tx;
+                obj[JS(tx_json)].as_object()[JS(date)] = output.date;
+                obj[JS(tx_json)].as_object()[JS(ledger_index)] = output.ledgerIndex;
+                // move ctid from tx_json to root
+                if (obj[JS(tx_json)].as_object().contains(JS(ctid))) {
+                    obj[JS(ctid)] = obj[JS(tx_json)].as_object()[JS(ctid)];
+                    obj[JS(tx_json)].as_object().erase(JS(ctid));
+                }
+                // move hash from tx_json to root
+                if (obj[JS(tx_json)].as_object().contains(JS(hash))) {
+                    obj[JS(hash)] = obj[JS(tx_json)].as_object()[JS(hash)];
+                    obj[JS(tx_json)].as_object().erase(JS(hash));
+                }
+                obj[JS(meta)] = *output.meta;
+            } else {
+                obj[JS(meta_blob)] = *output.metaStr;
+                obj[JS(tx_blob)] = *output.txStr;
+                obj[JS(hash)] = output.hash;
+            }
+
+            obj[JS(validated)] = output.validated;
+            obj[JS(ledger_index)] = output.ledgerIndex;
+
+            if (output.ledgerHeader) {
+                obj[JS(ledger_hash)] = ripple::strHex(output.ledgerHeader->hash);
+                obj[JS(close_time_iso)] = ripple::to_string_iso(output.ledgerHeader->closeTime);
+            }
+            return obj;
+        };
+
+        auto obj = output.apiVersion > 1u ? getJsonV2() : getJsonV1();
 
         if (output.ctid)
             obj[JS(ctid)] = *output.ctid;
