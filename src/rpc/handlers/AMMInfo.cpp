@@ -80,13 +80,14 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     auto const amm = SLE{SerialIter{ammBlob->data(), ammBlob->size()}, ammKeylet.key};
-    auto const accID = amm.getAccountID(sfAccount);
-    auto const accBlob = sharedPtrBackend_->fetchLedgerObject(keylet::account(accID).key, lgrInfo.seq, ctx.yield);
+    auto const ammAccountID = amm.getAccountID(sfAccount);
+    auto const accBlob =
+        sharedPtrBackend_->fetchLedgerObject(keylet::account(ammAccountID).key, lgrInfo.seq, ctx.yield);
     if (not accBlob)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     auto const [asset1Balance, asset2Balance] =
-        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, accID, amm[sfAsset], amm[sfAsset2], false, ctx.yield);
+        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset], amm[sfAsset2], false, ctx.yield);
     auto const lptAMMBalance = input.accountID
         ? getAmmLpHolds(*sharedPtrBackend_, lgrInfo.seq, amm, *input.accountID, ctx.yield)
         : amm[sfLPTokenBalance];
@@ -97,7 +98,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     response.amount2 = toBoostJson(asset2Balance.getJson(JsonOptions::none));
     response.lpToken = toBoostJson(lptAMMBalance.getJson(JsonOptions::none));
     response.tradingFee = amm[sfTradingFee];
-    response.ammAccount = to_string(accID);
+    response.ammAccount = to_string(ammAccountID);
 
     if (amm.isFieldPresent(sfVoteSlots)) {
         for (auto const& voteEntry : amm.getFieldArray(sfVoteSlots)) {
@@ -138,15 +139,16 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     }
 
     if (!isXRP(asset1Balance)) {
-        response.asset1Frozen =
-            isFrozen(*sharedPtrBackend_, lgrInfo.seq, accID, amm[sfAsset].currency, amm[sfAsset].account, ctx.yield);
+        response.asset1Frozen = isFrozen(
+            *sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset].currency, amm[sfAsset].account, ctx.yield
+        );
     }
     if (!isXRP(asset2Balance)) {
-        response.asset2Frozen =
-            isFrozen(*sharedPtrBackend_, lgrInfo.seq, accID, amm[sfAsset2].currency, amm[sfAsset2].account, ctx.yield);
+        response.asset2Frozen = isFrozen(
+            *sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset2].currency, amm[sfAsset2].account, ctx.yield
+        );
     }
 
-    response.ammID = to_string(ammKeylet.key);
     return response;
 }
 
