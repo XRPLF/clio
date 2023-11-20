@@ -55,6 +55,7 @@ public:
 
     struct Input {
         std::optional<ripple::AccountID> accountID;
+        std::optional<ripple::AccountID> ammAccount;
         ripple::Issue issue1 = ripple::noIssue();
         ripple::Issue issue2 = ripple::noIssue();
         std::optional<std::string> ledgerHash;
@@ -73,8 +74,9 @@ public:
         static auto const rpcSpec = RpcSpec{
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(asset), validation::Required{}, validation::ammAssetValidator},
-            {JS(asset2), validation::Required{}, validation::ammAssetValidator},
+            {JS(asset), validation::ammAssetValidator},
+            {JS(asset2), validation::ammAssetValidator},
+            {JS(amm_account), validation::AccountValidator},
             {JS(account), validation::AccountValidator},
         };
 

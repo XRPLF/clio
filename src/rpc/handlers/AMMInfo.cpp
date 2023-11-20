@@ -45,6 +45,9 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
 {
     using namespace ripple;
 
+    if (!input.ammAccount && (input.issue1 == ripple::noIssue() || input.issue2 == ripple::noIssue()))
+        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
@@ -54,6 +57,15 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         return Error{*status};
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
+    ripple::uint256 ammID;
+    if (input.ammAccount) {
+        auto accountKeylet = ripple::keylet::account(*input.ammAccount);
+        auto const accountLedgerObject =
+            sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
+        ripple::STLedgerEntry const sle{
+            ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key};
+        ammID = sle.getFieldH256(ripple::sfAMMID);
+    }
 
     if (input.accountID) {
         auto keylet = keylet::account(*input.accountID);
@@ -61,7 +73,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
             return Error{Status{RippledError::rpcACT_NOT_FOUND}};
     }
 
-    auto ammKeylet = keylet::amm(input.issue1, input.issue2);
+    auto ammKeylet = ammID != 0 ? keylet::amm(ammID) : keylet::amm(input.issue1, input.issue2);
     auto const ammBlob = sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (not ammBlob)
@@ -74,7 +86,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     auto const [asset1Balance, asset2Balance] =
-        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, accID, input.issue1, input.issue2, false, ctx.yield);
+        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, accID, amm[sfAsset], amm[sfAsset2], false, ctx.yield);
     auto const lptAMMBalance = input.accountID
         ? getAmmLpHolds(*sharedPtrBackend_, lgrInfo.seq, amm, *input.accountID, ctx.yield)
         : amm[sfLPTokenBalance];
@@ -127,11 +139,11 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
 
     if (!isXRP(asset1Balance)) {
         response.asset1Frozen =
-            isFrozen(*sharedPtrBackend_, lgrInfo.seq, accID, input.issue1.currency, input.issue1.account, ctx.yield);
+            isFrozen(*sharedPtrBackend_, lgrInfo.seq, accID, amm[sfAsset].currency, amm[sfAsset].account, ctx.yield);
     }
     if (!isXRP(asset2Balance)) {
         response.asset2Frozen =
-            isFrozen(*sharedPtrBackend_, lgrInfo.seq, accID, input.issue2.currency, input.issue2.account, ctx.yield);
+            isFrozen(*sharedPtrBackend_, lgrInfo.seq, accID, amm[sfAsset2].currency, amm[sfAsset2].account, ctx.yield);
     }
 
     response.ammID = to_string(ammKeylet.key);
@@ -195,11 +207,15 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
         return ripple::Issue{currency, *issuer};
     };
 
-    input.issue1 = getIssue(jsonObject.at(JS(asset)));
-    input.issue2 = getIssue(jsonObject.at(JS(asset2)));
+    if (jsonObject.contains(JS(asset)) && jsonObject.contains(JS(asset2))) {
+        input.issue1 = getIssue(jsonObject.at(JS(asset)));
+        input.issue2 = getIssue(jsonObject.at(JS(asset2)));
+    }
 
     if (jsonObject.contains(JS(account)))
         input.accountID = accountFromStringStrict(jsonObject.at(JS(account)).as_string().c_str());
+    if (jsonObject.contains(JS(amm_account)))
+        input.ammAccount = accountFromStringStrict(jsonObject.at(JS(amm_account)).as_string().c_str());
 
     return input;
 }
