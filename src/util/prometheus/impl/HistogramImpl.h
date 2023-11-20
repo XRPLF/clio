@@ -87,7 +87,7 @@ public:
         if (labelsString.empty()) {
             labelsString = "{";
         } else {
-            assert(labelsString.size() > 1);
+            assert(labelsString.front() == '{' && labelsString.back() == '}');
             labelsString.back() = ',';
         }
 

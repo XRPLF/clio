@@ -66,7 +66,6 @@ TEST_F(AnyHistogramTests, serializeValue)
 }
 
 struct HistogramTests : ::testing::Test {
-    std::vector<std::int64_t> const buckets{1, 2, 3};
     std::string labelsString = R"({label1="value1",label2="value2"})";
     HistogramInt histogram{"t", labelsString, {1, 2, 3}};
 

@@ -34,14 +34,15 @@ public:
      *
      * @param isEnabled Whether prometheus is enabled
      */
-    PrometheusInterface(bool isEnabled, bool compressReply) : isEnabled_(isEnabled), compressReply_(compressReply)
+    PrometheusInterface(bool isEnabled, bool compressReply)
+        : isEnabled_(isEnabled), compressReplyEnabled_(compressReply)
     {
     }
 
     virtual ~PrometheusInterface() = default;
 
     /**
-     * @brief Get a integer based counter metric. It will be created if it doesn't exist
+     * @brief Get an integer based counter metric. It will be created if it doesn't exist
      *
      * @param name The name of the metric
      * @param labels The labels of the metric
@@ -63,7 +64,7 @@ public:
     counterDouble(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
 
     /**
-     * @brief Get a integer based gauge metric. It will be created if it doesn't exist
+     * @brief Get an integer based gauge metric. It will be created if it doesn't exist
      *
      * @param name The name of the metric
      * @param labels The labels of the metric
@@ -85,7 +86,7 @@ public:
     gaugeDouble(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
 
     /**
-     * @brief Get a integer based histogram metric. It will be created if it doesn't exist
+     * @brief Get an integer based histogram metric. It will be created if it doesn't exist
      *
      * @param name The name of the metric
      * @param labels The labels of the metric
@@ -143,14 +144,14 @@ public:
      * @return true if the reply should be compressed
      */
     bool
-    compressReply() const
+    compressReplyEnabled() const
     {
-        return compressReply_;
+        return compressReplyEnabled_;
     }
 
 private:
     bool isEnabled_;
-    bool compressReply_;
+    bool compressReplyEnabled_;
 };
 
 /**
@@ -229,7 +230,7 @@ public:
     void static init(util::Config const& config = util::Config{});
 
     /**
-     * @brief Get a integer based counter metric. It will be created if it doesn't exist
+     * @brief Get an integer based counter metric. It will be created if it doesn't exist
      *
      * @param name The name of the metric
      * @param labels The labels of the metric
@@ -257,7 +258,7 @@ public:
     );
 
     /**
-     * @brief Get a integer based gauge metric. It will be created if it doesn't exist
+     * @brief Get an integer based gauge metric. It will be created if it doesn't exist
      *
      * @param name The name of the metric
      * @param labels The labels of the metric
@@ -281,7 +282,7 @@ public:
     );
 
     /**
-     * @brief Get a integer based histogram metric. It will be created if it doesn't exist
+     * @brief Get an integer based histogram metric. It will be created if it doesn't exist
      *
      * @param name The name of the metric
      * @param labels The labels of the metric
@@ -336,7 +337,7 @@ public:
      * @return true if the reply should be compressed
      */
     static bool
-    compressReply();
+    compressReplyEnabled();
 
     /**
      * @brief Replace the prometheus object stored in the singleton

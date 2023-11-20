@@ -103,7 +103,7 @@ PrometheusImpl::collectMetrics()
     if (!isEnabled())
         return {};
 
-    OStream stream{compressReply()};
+    OStream stream{compressReplyEnabled()};
 
     for (auto const& [name, family] : metrics_) {
         stream << family;
@@ -229,9 +229,9 @@ PrometheusService::isEnabled()
 }
 
 bool
-PrometheusService::compressReply()
+PrometheusService::compressReplyEnabled()
 {
-    return instance().compressReply();
+    return instance().compressReplyEnabled();
 }
 
 void

@@ -45,7 +45,7 @@ TEST(OStreamTests, compression)
     auto const compressed = std::move(stream).data();
     EXPECT_LT(compressed.size(), str.size());
 
-    const std::string decompressed = [&compressed]() {
+    std::string const decompressed = [&compressed]() {
         std::string result;
         boost::iostreams::filtering_istream stream;
         stream.push(boost::iostreams::gzip_decompressor{});

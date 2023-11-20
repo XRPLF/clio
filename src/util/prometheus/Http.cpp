@@ -59,7 +59,7 @@ handlePrometheusRequest(http::request<http::string_body> const& req, bool const 
 
     response.body() = PrometheusService::collectMetrics();
 
-    if (PrometheusService::compressReply())
+    if (PrometheusService::compressReplyEnabled())
         response.set(http::field::content_encoding, "gzip");
 
     return response;
