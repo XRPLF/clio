@@ -43,7 +43,7 @@ public:
         boost::json::value lpToken;
         boost::json::array voteSlots;
         boost::json::value auctionSlot;
-        std::string tradingFee;
+        std::uint16_t tradingFee;
         std::string ammAccount;
         std::string ammID;
         std::optional<bool> asset1Frozen;

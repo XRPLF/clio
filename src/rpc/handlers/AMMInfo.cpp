@@ -96,7 +96,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     response.amount1 = toBoostJson(asset1Balance.getJson(JsonOptions::none));
     response.amount2 = toBoostJson(asset2Balance.getJson(JsonOptions::none));
     response.lpToken = toBoostJson(lptAMMBalance.getJson(JsonOptions::none));
-    response.tradingFee = to_string(amm[sfTradingFee]);
+    response.tradingFee = amm[sfTradingFee];
     response.ammAccount = to_string(accID);
 
     if (amm.isFieldPresent(sfVoteSlots)) {
