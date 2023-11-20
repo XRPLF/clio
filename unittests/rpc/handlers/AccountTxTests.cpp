@@ -670,6 +670,64 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
     });
 }
 
+TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
+{
+    mockBackendPtr->updateRange(MINSEQ);  // min
+    mockBackendPtr->updateRange(MAXSEQ);  // max
+    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
+    auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
+    EXPECT_CALL(
+        *rawBackendPtr,
+        fetchAccountTransactions(
+            testing::_,
+            testing::_,
+            false,
+            testing::Optional(testing::Eq(TransactionsCursor{MAXSEQ, INT32_MAX})),
+            testing::_
+        )
+    )
+        .WillOnce(Return(transCursor));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const static input = json::parse(fmt::format(
+            R"({{
+                "account": "{}",
+                "ledger_index_min": {},
+                "ledger_index_max": {},
+                "binary": true
+            }})",
+            ACCOUNT,
+            -1,
+            -1
+        ));
+        auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output->at("account").as_string(), ACCOUNT);
+        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
+        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
+        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger": 12, "seq": 34})"));
+        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
+        EXPECT_EQ(
+            output->at("transactions").as_array()[0].as_object().at("meta_blob").as_string(),
+            "201C00000000F8E5110061E762400000000000001681144B4E9C06F24296074F7B"
+            "C48F92A97916C6DC5EA9E1E1E5110061E76240000000000000178114D31252CF90"
+            "2EF8DD8451243869B38667CBD89DF3E1E1F1031000"
+        );
+        EXPECT_EQ(
+            output->at("transactions").as_array()[0].as_object().at("tx_blob").as_string(),
+            "120000240000002061400000000000000168400000000000000173047465737481"
+            "144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451"
+            "243869B38667CBD89DF3"
+        );
+        EXPECT_FALSE(output->at("transactions").as_array()[0].as_object().contains("date"));
+        EXPECT_FALSE(output->at("transactions").as_array()[0].as_object().contains("inLedger"));
+        EXPECT_FALSE(output->as_object().contains("limit"));
+    });
+}
+
 TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
 {
     mockBackendPtr->updateRange(MINSEQ);  // min
@@ -1287,7 +1345,11 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "TransactionResult": "tesSUCCESS",
                         "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                     },
-                    "tx": 
+                    "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
+                    "ledger_index": 11,
+                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                    "close_time_iso": "2000-01-01T00:00:00Z",
+                    "tx_json": 
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
@@ -1295,7 +1357,6 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "Sequence": 1,
                         "SigningPubKey": "74657374",
                         "TransactionType": "NFTokenMint",
-                        "hash": "C74463F49CFDCBEF3E9902672719918CDE5042DC7E7660BEBD1D1105C4B6DFF4",
                         "ledger_index": 11,
                         "date": 1
                     },
@@ -1321,7 +1382,11 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "TransactionResult": "tesSUCCESS",
                         "nftoken_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                     },
-                    "tx": 
+                    "hash": "7682BE6BCDE62F8142915DD852936623B68FC3839A8A424A6064B898702B0CDF",
+                    "ledger_index": 11,
+                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                    "close_time_iso": "2000-01-01T00:00:00Z",
+                    "tx_json": 
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
@@ -1329,7 +1394,6 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "Sequence": 1,
                         "SigningPubKey": "74657374",
                         "TransactionType": "NFTokenAcceptOffer",
-                        "hash": "7682BE6BCDE62F8142915DD852936623B68FC3839A8A424A6064B898702B0CDF",
                         "ledger_index": 11,
                         "date": 2
                     },
@@ -1368,7 +1432,11 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                             "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF"
                         ]
                     },
-                    "tx": 
+                    "hash": "9F82743EEB30065FB9CB92C61F0F064B5859C5A590FA811FAAAD9C988E5B47DB",
+                    "ledger_index": 11,
+                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                    "close_time_iso": "2000-01-01T00:00:00Z",
+                    "tx_json": 
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Fee": "50",
@@ -1380,7 +1448,6 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "Sequence": 1,
                         "SigningPubKey": "74657374",
                         "TransactionType": "NFTokenCancelOffer",
-                        "hash": "9F82743EEB30065FB9CB92C61F0F064B5859C5A590FA811FAAAD9C988E5B47DB",
                         "ledger_index": 11,
                         "date": 3
                     },
@@ -1403,7 +1470,11 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "TransactionResult": "tesSUCCESS",
                         "offer_id": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA"
                     },
-                    "tx": 
+                    "hash": "ECB1837EB7C7C0AC22ECDCCE59FDD4795C70E0B9D8F4E1C9A9408BB7EC75DA5C",
+                    "ledger_index": 11,
+                    "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                    "close_time_iso": "2000-01-01T00:00:00Z",
+                    "tx_json": 
                     {
                         "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                         "Amount": "123",
@@ -1412,7 +1483,6 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                         "Sequence": 1,
                         "SigningPubKey": "74657374",
                         "TransactionType": "NFTokenCreateOffer",
-                        "hash": "ECB1837EB7C7C0AC22ECDCCE59FDD4795C70E0B9D8F4E1C9A9408BB7EC75DA5C",
                         "ledger_index": 11,
                         "date": 4
                     },
@@ -1440,6 +1510,9 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
         )
     )
         .Times(1);
+
+    auto const ledgerInfo = CreateLedgerInfo(LEDGERHASH, 11);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(transactions.size()).WillRepeatedly(Return(ledgerInfo));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
@@ -1738,6 +1811,10 @@ generateTransactionTypeTestValues()
             })",
             R"([
                 {
+                "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "ledger_index": 30,
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "close_time_iso": "2000-01-01T00:00:00Z",
                 "meta": {
                     "AffectedNodes": [
                     {
@@ -1762,7 +1839,7 @@ generateTransactionTypeTestValues()
                     "TransactionResult": "tesSUCCESS",
                     "delivered_amount": "unavailable"
                 },
-                "tx": {
+                "tx_json": {
                     "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                     "DeliverMax": "1",
                     "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -1770,7 +1847,6 @@ generateTransactionTypeTestValues()
                     "Sequence": 32,
                     "SigningPubKey": "74657374",
                     "TransactionType": "Payment",
-                    "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
                     "ledger_index": 30,
                     "date": 1
                 },
@@ -1860,8 +1936,8 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).Times(Between(1, 2));
 
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {

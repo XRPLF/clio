@@ -107,15 +107,27 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
 
         if (!input.binary) {
             auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion);
+            auto const txKey = ctx.apiVersion > 1u ? JS(tx_json) : JS(tx);
             obj[JS(meta)] = std::move(meta);
-            obj[JS(tx)] = std::move(txn);
-            obj[JS(tx)].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
-            obj[JS(tx)].as_object()[JS(date)] = txnPlusMeta.date;
+            obj[txKey] = std::move(txn);
+            obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+            obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
+            if (ctx.apiVersion > 1u) {
+                obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+                if (obj[txKey].as_object().contains(JS(hash))) {
+                    obj[JS(hash)] = obj[txKey].at(JS(hash));
+                    obj[txKey].as_object().erase(JS(hash));
+                }
+                if (auto const lgrInfo =
+                        sharedPtrBackend_->fetchLedgerBySequence(txnPlusMeta.ledgerSequence, ctx.yield);
+                    lgrInfo) {
+                    obj[JS(close_time_iso)] = ripple::to_string_iso(lgrInfo->closeTime);
+                    obj[JS(ledger_hash)] = ripple::strHex(lgrInfo->hash);
+                }
+            }
         } else {
-            obj[JS(meta)] = ripple::strHex(txnPlusMeta.metadata);
-            obj[JS(tx_blob)] = ripple::strHex(txnPlusMeta.transaction);
+            obj = toJsonWithBinaryTx(txnPlusMeta, ctx.apiVersion);
             obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
-            // only clio has this field
             obj[JS(date)] = txnPlusMeta.date;
         }
 
