@@ -435,7 +435,6 @@ TEST_F(RPCHelpersTest, LedgerHeaderJson)
             "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
             "close_flags": 0,
             "close_time": 0,
-            "close_time_human": "2000-Jan-01 00:00:00.000000 UTC",
             "close_time_resolution": 0,
             "close_time_iso": "2000-01-01T00:00:00Z",
             "ledger_hash": "{}",
@@ -449,8 +448,9 @@ TEST_F(RPCHelpersTest, LedgerHeaderJson)
         INDEX1,
         30
     );
-    auto const json = toJson(ledgerHeader, false);
-    std::cout << boost::json::value(json) << std::endl;
+    auto json = toJson(ledgerHeader, false);
+    // remove platform-related close_time_human field
+    json.erase(JS(close_time_human));
     EXPECT_EQ(json, boost::json::parse(EXPECTJSON));
 }
 
