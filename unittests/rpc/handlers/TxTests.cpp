@@ -143,6 +143,58 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
     });
 }
 
+TEST_F(RPCTxTest, InvalidBinaryV1)
+{
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    TransactionAndMetadata tx;
+    tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
+    tx.transaction =
+        CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
+    tx.date = 123456;
+    tx.ledgerSequence = 100;
+    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+
+    auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
+    ASSERT_NE(rawETLPtr, nullptr);
+    EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
+
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}",
+                "binary": 12
+            }})",
+            TXNID
+        ));
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
+        ASSERT_TRUE(output);
+    });
+}
+
+TEST_F(RPCTxTest, InvalidBinaryV2)
+{
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const req = json::parse(fmt::format(
+            R"({{ 
+                "command": "tx",
+                "transaction": "{}",
+                "binary": 12
+            }})",
+            TXNID
+        ));
+        auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_FALSE(output);
+
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
+    });
+}
+
 TEST_F(RPCTxTest, InvalidLgrRange)
 {
     runSpawn([this](auto yield) {
