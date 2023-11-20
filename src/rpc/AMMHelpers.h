@@ -24,6 +24,9 @@
 
 namespace rpc {
 
+/**
+ * @brief getAmmPoolHolds returns the balances of the amm asset pair.
+ */
 std::pair<ripple::STAmount, ripple::STAmount>
 getAmmPoolHolds(
     BackendInterface const& backend,
@@ -35,6 +38,9 @@ getAmmPoolHolds(
     boost::asio::yield_context yield
 );
 
+/**
+ * @brief getAmmLpHolds returns the lp token balance.
+ */
 ripple::STAmount
 getAmmLpHolds(
     BackendInterface const& backend,
@@ -46,6 +52,9 @@ getAmmLpHolds(
     boost::asio::yield_context yield
 );
 
+/**
+ * @brief getAmmLpHolds returns the lp token balance.
+ */
 ripple::STAmount
 getAmmLpHolds(
     BackendInterface const& backend,

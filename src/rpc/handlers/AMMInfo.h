@@ -30,7 +30,7 @@ namespace rpc {
 /**
  * @brief AMMInfoHandler returns information about AMM pools.
  *
- * This API is not documented in the rippled API documentation.
+ * For more info see: https://xrpl.org/amm_info.html
  */
 class AMMInfoHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
