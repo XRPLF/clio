@@ -77,14 +77,14 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     auto const ammBlob = sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (not ammBlob)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND, "Amm account not found"}};
 
     auto const amm = SLE{SerialIter{ammBlob->data(), ammBlob->size()}, ammKeylet.key};
     auto const ammAccountID = amm.getAccountID(sfAccount);
     auto const accBlob =
         sharedPtrBackend_->fetchLedgerObject(keylet::account(ammAccountID).key, lgrInfo.seq, ctx.yield);
     if (not accBlob)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND, "Amm account not found"}};
 
     auto const [asset1Balance, asset2Balance] =
         getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset], amm[sfAsset2], false, ctx.yield);
