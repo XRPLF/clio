@@ -450,6 +450,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderJson)
         30
     );
     auto const json = toJson(ledgerHeader, false);
+    std::cout << boost::json::value(json) << std::endl;
     EXPECT_EQ(json, boost::json::parse(EXPECTJSON));
 }
 
