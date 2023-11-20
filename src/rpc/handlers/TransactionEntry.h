@@ -37,13 +37,13 @@ class TransactionEntryHandler {
 
 public:
     struct Output {
-        uint32_t ledgerIndex;
-        std::string ledgerHash;
+        std::optional<ripple::LedgerHeader> ledgerHeader;
         // TODO: use a better type for this
         boost::json::object metadata;
         boost::json::object tx;
         // validated should be sent via framework
         bool validated = true;
+        uint32_t apiVersion;
     };
 
     struct Input {

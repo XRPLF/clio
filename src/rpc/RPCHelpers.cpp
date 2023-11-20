@@ -295,21 +295,26 @@ toJson(ripple::SLE const& sle)
 }
 
 boost::json::object
-toJson(ripple::LedgerHeader const& lgrInfo)
+toJson(ripple::LedgerHeader const& lgrInfo, bool const binary)
 {
     boost::json::object header;
-    header["ledger_sequence"] = lgrInfo.seq;
-    header["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    header["txns_hash"] = ripple::strHex(lgrInfo.txHash);
-    header["state_hash"] = ripple::strHex(lgrInfo.accountHash);
-    header["parent_hash"] = ripple::strHex(lgrInfo.parentHash);
-    header["total_coins"] = ripple::to_string(lgrInfo.drops);
-    header["close_flags"] = lgrInfo.closeFlags;
-
-    // Always show fields that contribute to the ledger hash
-    header["parent_close_time"] = lgrInfo.parentCloseTime.time_since_epoch().count();
-    header["close_time"] = lgrInfo.closeTime.time_since_epoch().count();
-    header["close_time_resolution"] = lgrInfo.closeTimeResolution.count();
+    if (binary) {
+        header[JS(ledger_data)] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
+    } else {
+        header[JS(account_hash)] = ripple::strHex(lgrInfo.accountHash);
+        header[JS(close_flags)] = lgrInfo.closeFlags;
+        header[JS(close_time)] = lgrInfo.closeTime.time_since_epoch().count();
+        header[JS(close_time_human)] = ripple::to_string(lgrInfo.closeTime);
+        header[JS(close_time_resolution)] = lgrInfo.closeTimeResolution.count();
+        header[JS(close_time_iso)] = ripple::to_string_iso(lgrInfo.closeTime);
+        header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+        header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
+        header[JS(parent_close_time)] = lgrInfo.parentCloseTime.time_since_epoch().count();
+        header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
+        header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
+        header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
+    }
+    header[JS(closed)] = true;
     return header;
 }
 
@@ -1310,6 +1315,16 @@ isAmendmentEnabled(
 
     auto const listAmendments = amendmentsSLE.getFieldV256(ripple::sfAmendments);
     return std::find(listAmendments.begin(), listAmendments.end(), amendmentId) != listAmendments.end();
+}
+
+boost::json::object
+toJsonWithBinaryTx(data::TransactionAndMetadata const& txnPlusMeta, std::uint32_t const apiVersion)
+{
+    boost::json::object obj{};
+    auto const metaKey = apiVersion > 1 ? JS(meta_blob) : JS(meta);
+    obj[metaKey] = ripple::strHex(txnPlusMeta.metadata);
+    obj[JS(tx_blob)] = ripple::strHex(txnPlusMeta.transaction);
+    return obj;
 }
 
 }  // namespace rpc

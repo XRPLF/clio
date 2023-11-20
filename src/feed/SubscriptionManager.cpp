@@ -174,6 +174,8 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
     pubObj["transaction"] = rpc::toJson(*tx);
     pubObj["meta"] = rpc::toJson(*meta);
     rpc::insertDeliveredAmount(pubObj["meta"].as_object(), tx, meta, blobs.date);
+    // hardcode api_version to 1 for now, until https://github.com/XRPLF/clio/issues/978 fixed
+    rpc::insertDeliverMaxAlias(pubObj["transaction"].as_object(), 1);
     pubObj["type"] = "transaction";
     pubObj["validated"] = true;
     pubObj["status"] = "closed";

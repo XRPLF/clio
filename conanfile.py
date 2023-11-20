@@ -26,7 +26,7 @@ class Clio(ConanFile):
         'protobuf/3.21.12',
         'grpc/1.50.1',
         'openssl/1.1.1u',
-        'xrpl/2.0.0-b4',
+        'xrpl/2.0.0-rc1',
     ]
 
     default_options = {

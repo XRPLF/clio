@@ -397,6 +397,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransaction)
         "transaction":{
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Amount":"1",
+            "DeliverMax":"1",
             "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
             "Fee":"1",
             "Sequence":32,
@@ -636,6 +637,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccount)
         "transaction":{
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Amount":"1",
+            "DeliverMax":"1",
             "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
             "Fee":"1",
             "Sequence":32,
@@ -695,6 +697,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerOrderBook)
         "transaction":{
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Amount":"1",
+            "DeliverMax":"1",
             "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
             "Fee":"1",
             "Sequence":32,
@@ -752,6 +755,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerOrderBook)
         "transaction":{
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Amount":"1",
+            "DeliverMax":"1",
             "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
             "Fee":"1",
             "Sequence":32,
@@ -795,6 +799,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerOrderBook)
         "transaction":{
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Amount":"1",
+            "DeliverMax":"1",
             "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
             "Fee":"1",
             "Sequence":32,
