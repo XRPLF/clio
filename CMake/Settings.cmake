@@ -19,14 +19,15 @@ set(COMPILER_FLAGS
   -Wunused
 )
 
-if (is_gcc AND NOT lint)
-  list(APPEND COMPILER_FLAGS
-    -Wduplicated-branches
-    -Wduplicated-cond
-    -Wlogical-op
-    -Wuseless-cast
-  )
-endif ()
+#TODO: reenable when we change CI #884
+# if (is_gcc AND NOT lint)
+#   list(APPEND COMPILER_FLAGS
+#     -Wduplicated-branches
+#     -Wduplicated-cond
+#     -Wlogical-op
+#     -Wuseless-cast
+#   )
+# endif ()
 
 if (is_clang)
   list(APPEND COMPILER_FLAGS
