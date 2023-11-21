@@ -99,7 +99,6 @@
 // local to compilation unit loggers
 namespace {
 util::Logger gLog{"RPC"};
-
 }  // namespace
 
 namespace rpc {

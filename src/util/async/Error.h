@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
@@ -16,30 +17,45 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
 
-#include "util/Assert.h"
+#include "util/Expected.h"
+#include "util/async/Concepts.h"
 
-#include <random>
+#include <fmt/core.h>
+#include <fmt/std.h>
 
-namespace util {
+#include <exception>
+#include <string>
 
-class Random {
-public:
-    template <typename T>
-    static T constexpr uniform(T min, T max)
+namespace util::async {
+
+struct ExecutionContextException : std::exception {
+    ExecutionContextException(std::string tid, std::string msg)
+        : message{fmt::format("Thread {} exit with exception: {}", tid, msg)}
     {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
     }
 
-private:
-    static std::mt19937_64 generator_;
+    ExecutionContextException(ExecutionContextException const&) = default;
+    ExecutionContextException(ExecutionContextException&&) = default;
+    ExecutionContextException&
+    operator=(ExecutionContextException&&) = default;
+    ExecutionContextException&
+    operator=(ExecutionContextException const&) = default;
+
+    char const*
+    what() const noexcept override
+    {
+        return message.c_str();
+    }
+
+    operator char const*() const noexcept
+    {
+        return what();
+    }
+
+    std::string message;
 };
 
-}  // namespace util
+}  // namespace util::async

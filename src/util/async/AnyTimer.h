@@ -16,30 +16,63 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
 
-#include "util/Assert.h"
+#include <util/async/Concepts.h>
 
-#include <random>
+#include <memory>
 
-namespace util {
+namespace util::async {
 
-class Random {
+class AnyTimer {
 public:
-    template <typename T>
-    static T constexpr uniform(T min, T max)
+    template <typename TimerType>
+    /* implicit */ AnyTimer(TimerType&& timer)
+        : pimpl_{std::make_unique<Model<TimerType>>(std::forward<TimerType>(timer))}
     {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
+    }
+
+    ~AnyTimer() = default;
+
+    AnyTimer(AnyTimer const&) = delete;
+    AnyTimer(AnyTimer&&) = default;
+    AnyTimer&
+    operator=(AnyTimer const&) = delete;
+    AnyTimer&
+    operator=(AnyTimer&&) = default;
+
+    void
+    cancel() noexcept
+    {
+        pimpl_->cancel();
     }
 
 private:
-    static std::mt19937_64 generator_;
+    struct Concept {
+        virtual ~Concept() = default;
+
+        virtual void
+        cancel() = 0;
+    };
+
+    template <typename TimerType>
+    struct Model : Concept {
+        TimerType timer;
+
+        Model(TimerType&& timer) : timer{std::move(timer)}
+        {
+        }
+
+        void
+        cancel() override
+        {
+            timer.cancel();
+        }
+    };
+
+private:
+    std::unique_ptr<Concept> pimpl_;
 };
 
-}  // namespace util
+}  // namespace util::async

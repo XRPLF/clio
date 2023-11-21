@@ -16,30 +16,39 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
 
-#include "util/Assert.h"
+#include <util/Expected.h>
+#include <util/async/Concepts.h>
+#include <util/async/Error.h>
+#include <util/async/impl/Any.h>
 
-#include <random>
+#include <fmt/core.h>
+#include <fmt/std.h>
 
-namespace util {
+#include <any>
+#include <chrono>
+#include <exception>
 
-class Random {
+namespace util::async::detail {
+
+/**
+ * @brief A wrapper for std::any to workaround issues with boost.outcome
+ */
+class Any {
+    std::any value_;
+
 public:
-    template <typename T>
-    static T constexpr uniform(T min, T max)
+    Any() = default;
+    Any(std::any&& v) : value_{std::move(v)}
     {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
     }
 
-private:
-    static std::mt19937_64 generator_;
+    operator std::any&() noexcept
+    {
+        return value_;
+    }
 };
 
-}  // namespace util
+}  // namespace util::async::detail

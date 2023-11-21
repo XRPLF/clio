@@ -16,30 +16,36 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
 
-#include "util/Assert.h"
+#include <boost/asio.hpp>
 
-#include <random>
+namespace util::async::detail {
 
-namespace util {
+template <typename CtxType>
+struct SteadyTimer {
+    boost::asio::steady_timer timer_;
 
-class Random {
-public:
-    template <typename T>
-    static T constexpr uniform(T min, T max)
+    SteadyTimer(CtxType& ctx, auto delay, auto&& fn) : timer_{ctx.ioc_}
     {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
+        timer_.expires_after(delay);
+        timer_.async_wait(std::forward<decltype(fn)>(fn));
     }
 
-private:
-    static std::mt19937_64 generator_;
+    ~SteadyTimer()
+    {
+        cancel();
+    }
+
+    SteadyTimer(SteadyTimer&&) = default;
+    SteadyTimer(SteadyTimer const&) = delete;
+
+    void
+    cancel()
+    {
+        timer_.cancel();
+    }
 };
 
-}  // namespace util
+}  // namespace util::async::detail

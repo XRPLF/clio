@@ -16,30 +16,27 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
 
-#include "util/Assert.h"
+#include <util/async/context/BasicExecutionContext.h>
 
-#include <random>
+namespace util::async {
 
-namespace util {
-
-class Random {
+/**
+ * @brief A execution context that runs tasks on a system thread pool of 1 thread.
+ *
+ * This is useful for timers and system tasks that need to be scheduled on a exececution context that otherwise would
+ * not be able to support them (e.g. a synchronous execution context).
+ */
+class SystemExecutionContext {
 public:
-    template <typename T>
-    static T constexpr uniform(T min, T max)
+    static auto&
+    instance()
     {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
+        static util::async::PoolExecutionContext systemExecutionContext{};
+        return systemExecutionContext;
     }
-
-private:
-    static std::mt19937_64 generator_;
 };
 
-}  // namespace util
+}  // namespace util::async

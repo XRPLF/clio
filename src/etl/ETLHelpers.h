@@ -202,6 +202,12 @@ public:
         cv_.notify_all();
         return ret;
     }
+
+    auto
+    size() const
+    {
+        return queue_.size();
+    }
 };
 
 /**
