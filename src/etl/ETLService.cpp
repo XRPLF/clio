@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <etl/ETLService.h>
+#include <util/Assert.h>
 #include <util/Constants.h>
 
 #include <ripple/protocol/LedgerHeader.h>
@@ -125,7 +126,7 @@ ETLService::monitor()
         cacheLoader_.load(rng->maxSequence);
     }
 
-    assert(rng);
+    ASSERT(rng.has_value(), "Ledger range can't be null");
     uint32_t nextSequence = rng->maxSequence + 1;
 
     LOG(log_.debug()) << "Database is populated. "

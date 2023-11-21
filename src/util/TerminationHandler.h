@@ -16,31 +16,12 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
-
-#include <util/Assert.h>
-
-#include <random>
 
 namespace util {
 
-class Random {
-public:
-    template <typename T>
-    static T
-    uniform(T min, T max)
-    {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
-    }
-
-private:
-    static std::mt19937_64 generator_;
-};
+void
+setTerminationHandler();
 
 }  // namespace util

@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <util/SourceLocation.h>
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/json.hpp>
@@ -35,57 +37,9 @@
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/formatter_parser.hpp>
 
-#if defined(HAS_SOURCE_LOCATION) && __has_builtin(__builtin_source_location)
-// this is used by fully compatible compilers like gcc
-#include <source_location>
-
-#elif defined(HAS_EXPERIMENTAL_SOURCE_LOCATION)
-// this is used by clang on linux where source_location is still not out of
-// experimental headers
-#include <experimental/source_location>
-#endif
-
-#include <optional>
-#include <string>
-
 namespace util {
+
 class Config;
-
-#if defined(HAS_SOURCE_LOCATION) && __has_builtin(__builtin_source_location)
-using SourceLocationType = std::source_location;
-#define CURRENT_SRC_LOCATION SourceLocationType::current()
-
-#elif defined(HAS_EXPERIMENTAL_SOURCE_LOCATION)
-using SourceLocationType = std::experimental::source_location;
-#define CURRENT_SRC_LOCATION SourceLocationType::current()
-
-#else
-// A workaround for AppleClang that is lacking source_location atm.
-// TODO: remove this workaround when all compilers catch up to c++20
-class SourceLocation {
-    std::string_view file_;
-    std::size_t line_;
-
-public:
-    SourceLocation(std::string_view file, std::size_t line) : file_{file}, line_{line}
-    {
-    }
-
-    std::string_view
-    file_name() const
-    {
-        return file_;
-    }
-
-    std::size_t
-    line() const
-    {
-        return line_;
-    }
-};
-using SourceLocationType = SourceLocation;
-#define CURRENT_SRC_LOCATION SourceLocationType(__builtin_FILE(), __builtin_LINE())
-#endif
 
 /**
  * @brief Skips evaluation of expensive argument lists if the given logger is disabled for the required severity level.

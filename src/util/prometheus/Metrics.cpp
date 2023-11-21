@@ -20,8 +20,6 @@
 #include <util/prometheus/Counter.h>
 #include <util/prometheus/Gauge.h>
 
-#include <cassert>
-
 namespace util::prometheus {
 
 MetricBase::MetricBase(std::string name, std::string labelsString)
@@ -52,7 +50,7 @@ toString(MetricType type)
         case MetricType::SUMMARY:
             return "summary";
         default:
-            assert(false);
+            ASSERT(false, "Unknown metric type: {}", static_cast<int>(type));
     }
     return "";
 }
@@ -85,7 +83,7 @@ MetricsFamily::MetricBuilder MetricsFamily::defaultMetricBuilder =
         case MetricType::HISTOGRAM:
             [[fallthrough]];
         default:
-            assert(false);
+            ASSERT(false, "Unknown metric type: {}", static_cast<int>(type));
     }
     return nullptr;
 };

@@ -20,6 +20,8 @@
 /** @file */
 #pragma once
 
+#include <util/Assert.h>
+
 #include <ripple/basics/Log.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/SField.h>
@@ -233,7 +235,7 @@ getBookBase(T const& key)
 {
     static constexpr size_t KEY_SIZE = 24;
 
-    assert(key.size() == ripple::uint256::size());
+    ASSERT(key.size() == ripple::uint256::size(), "Invalid key size {}", key.size());
 
     ripple::uint256 ret;
     for (size_t i = 0; i < KEY_SIZE; ++i)

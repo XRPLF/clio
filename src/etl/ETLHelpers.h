@@ -26,6 +26,7 @@
 #include <optional>
 #include <queue>
 #include <sstream>
+#include <util/Assert.h>
 
 namespace etl {
 /**
@@ -209,7 +210,7 @@ public:
 inline std::vector<ripple::uint256>
 getMarkers(size_t numMarkers)
 {
-    assert(numMarkers <= 256);
+    ASSERT(numMarkers <= 256, "Number of markers must be <= 256. Got: {}", numMarkers);
 
     unsigned char const incr = 256 / numMarkers;
 

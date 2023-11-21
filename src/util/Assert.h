@@ -16,31 +16,38 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
 
-#include <util/Assert.h>
+#include <util/SourceLocation.h>
 
-#include <random>
+#include <boost/stacktrace.hpp>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+
+template <>
+struct fmt::formatter<boost::stacktrace::stacktrace> : ostream_formatter {};
 
 namespace util {
 
-class Random {
-public:
-    template <typename T>
-    static T
-    uniform(T min, T max)
-    {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
+template <typename... Args>
+constexpr void
+assertImpl(
+    SourceLocationType const location,
+    char const* expression,
+    bool const condition,
+    fmt::format_string<Args...> format,
+    Args&&... args
+)
+{
+    if (!condition) {
+        fmt::println(stderr, "Assertion '{}' failed at {}:{}:", expression, location.file_name(), location.line());
+        fmt::println(stderr, format, std::forward<Args>(args)...);
+        fmt::println(stderr, "Stacktrace:\n{}\n", boost::stacktrace::stacktrace());
+        std::abort();
     }
-
-private:
-    static std::mt19937_64 generator_;
-};
+}
 
 }  // namespace util
+
+#define ASSERT(condition, ...) util::assertImpl(CURRENT_SRC_LOCATION, #condition, (condition), __VA_ARGS__)

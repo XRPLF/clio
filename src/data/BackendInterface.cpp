@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <data/BackendInterface.h>
+#include <util/Assert.h>
 #include <util/log/Logger.h>
 
 #include <ripple/protocol/Indexes.h>
@@ -43,7 +44,7 @@ BackendInterface::finishWrites(std::uint32_t const ledgerSequence)
 void
 BackendInterface::writeLedgerObject(std::string&& key, std::uint32_t const seq, std::string&& blob)
 {
-    assert(key.size() == sizeof(ripple::uint256));
+    ASSERT(key.size() == sizeof(ripple::uint256), "Key must be 256 bits");
     doWriteLedgerObject(std::move(key), seq, std::move(blob));
 }
 
@@ -188,7 +189,7 @@ BackendInterface::fetchBookOffers(
             }
             auto nextKey = ripple::keylet::page(uTipIndex, next);
             auto nextDir = fetchLedgerObject(nextKey.key, ledgerSequence, yield);
-            assert(nextDir);
+            ASSERT(nextDir.has_value(), "Next dir must exist");
             offerDir->blob = *nextDir;
             offerDir->key = nextKey.key;
         }
@@ -200,7 +201,7 @@ BackendInterface::fetchBookOffers(
     for (size_t i = 0; i < keys.size() && i < limit; ++i) {
         LOG(gLog.trace()) << "Key = " << ripple::strHex(keys[i]) << " blob = " << ripple::strHex(objs[i])
                           << " ledgerSequence = " << ledgerSequence;
-        assert(!objs[i].empty());
+        ASSERT(!objs[i].empty(), "Ledger object can't be empty");
         page.offers.push_back({keys[i], objs[i]});
     }
     auto end = std::chrono::system_clock::now();
@@ -234,7 +235,14 @@ void
 BackendInterface::updateRange(uint32_t newMax)
 {
     std::scoped_lock const lck(rngMtx_);
-    assert(!range || newMax >= range->maxSequence);
+
+    ASSERT(
+        !range || newMax >= range->maxSequence,
+        "Range shouldn't exist yet or newMax should be greater. newMax = {}, range->maxSequence = {}",
+        newMax,
+        range->maxSequence
+    );
+
     if (!range) {
         range = {newMax, newMax};
     } else {

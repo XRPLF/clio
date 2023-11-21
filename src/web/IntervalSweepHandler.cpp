@@ -19,6 +19,7 @@
 
 #include <web/IntervalSweepHandler.h>
 
+#include <util/Assert.h>
 #include <util/Constants.h>
 #include <web/DOSGuard.h>
 
@@ -47,9 +48,9 @@ IntervalSweepHandler::~IntervalSweepHandler()
 void
 IntervalSweepHandler::setup(web::BaseDOSGuard* guard)
 {
-    assert(dosGuard_ == nullptr);
+    ASSERT(dosGuard_ == nullptr, "Cannot setup DOS guard more than once");
     dosGuard_ = guard;
-    assert(dosGuard_ != nullptr);
+    ASSERT(dosGuard_ != nullptr, "DOS guard must be not null");
 
     createTimer();
 }

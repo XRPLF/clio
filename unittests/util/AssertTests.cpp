@@ -16,31 +16,17 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#pragma once
 
 #include <util/Assert.h>
 
-#include <random>
+#include <gtest/gtest.h>
 
-namespace util {
+TEST(AssertTests, assertTrue)
+{
+    EXPECT_NO_THROW(ASSERT(true, "Should not fail"));
+}
 
-class Random {
-public:
-    template <typename T>
-    static T
-    uniform(T min, T max)
-    {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
-    }
-
-private:
-    static std::mt19937_64 generator_;
-};
-
-}  // namespace util
+TEST(AssertTests, assertFalse)
+{
+    EXPECT_DEATH({ ASSERT(false, "failure"); }, "failure");
+}

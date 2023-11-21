@@ -44,6 +44,7 @@ include (CMake/deps/OpenSSL.cmake)
 include (CMake/deps/Threads.cmake)
 include (CMake/deps/libfmt.cmake)
 include (CMake/deps/cassandra.cmake)
+include (CMake/deps/libbacktrace.cmake)
 
 # TODO: Include directory will be wrong when installed.
 target_include_directories (clio PUBLIC src)
@@ -56,11 +57,14 @@ target_link_libraries (clio
   PUBLIC Boost::system
   PUBLIC Boost::log
   PUBLIC Boost::log_setup
+  PUBLIC Boost::stacktrace_backtrace
   PUBLIC cassandra-cpp-driver::cassandra-cpp-driver
   PUBLIC fmt::fmt
   PUBLIC OpenSSL::Crypto
   PUBLIC OpenSSL::SSL
   PUBLIC xrpl::libxrpl
+  PUBLIC dl
+  PUBLIC libbacktrace::libbacktrace
 
   INTERFACE Threads::Threads
 )
@@ -143,7 +147,9 @@ target_sources (clio PRIVATE
   src/util/prometheus/Metrics.cpp
   src/util/prometheus/Prometheus.cpp
   src/util/Random.cpp
-  src/util/Taggable.cpp)
+  src/util/Taggable.cpp
+  src/util/TerminationHandler.cpp
+)
 
 # Clio server
 add_executable (clio_server src/main/Main.cpp)
@@ -167,6 +173,7 @@ if (tests)
     unittests/DOSGuardTests.cpp
     unittests/SubscriptionTests.cpp
     unittests/SubscriptionManagerTests.cpp
+    unittests/util/AssertTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
     unittests/util/prometheus/CounterTests.cpp

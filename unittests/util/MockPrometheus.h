@@ -78,8 +78,7 @@ struct MockPrometheusImpl : PrometheusInterface {
         }
         auto* basePtr = it->second.get();
         auto* metricPtr = dynamic_cast<MetricType*>(basePtr);
-        if (metricPtr == nullptr)
-            throw std::runtime_error("Wrong metric type");
+        ASSERT(metricPtr != nullptr, "Wrong metric type");
         return *metricPtr;
     }
 
@@ -101,8 +100,7 @@ struct MockPrometheusImpl : PrometheusInterface {
         }
         auto* ptr = metrics.emplace(key, std::move(metric)).first->second.get();
         auto metricPtr = dynamic_cast<MetricType*>(ptr);
-        if (metricPtr == nullptr)
-            throw std::runtime_error("Wrong metric type");
+        ASSERT(metricPtr != nullptr, "Wrong metric type");
         return *metricPtr;
     }
 
@@ -137,8 +135,7 @@ struct WithMockPrometheus : virtual ::testing::Test {
     mockPrometheus()
     {
         auto* ptr = dynamic_cast<MockPrometheusImpl*>(&PrometheusService::instance());
-        if (ptr == nullptr)
-            throw std::runtime_error("Wrong prometheus type");
+        ASSERT(ptr != nullptr, "Wrong prometheus type");
         return *ptr;
     }
 
@@ -147,8 +144,7 @@ struct WithMockPrometheus : virtual ::testing::Test {
     makeMock(std::string name, std::string labelsString)
     {
         auto* mockPrometheusPtr = dynamic_cast<MockPrometheusImpl*>(&PrometheusService::instance());
-        if (mockPrometheusPtr == nullptr)
-            throw std::runtime_error("Wrong prometheus type");
+        ASSERT(mockPrometheusPtr != nullptr, "Wrong prometheus type");
 
         std::string const key = name + labelsString;
         mockPrometheusPtr->makeMetric<MetricType>(std::move(name), std::move(labelsString));
@@ -159,7 +155,7 @@ struct WithMockPrometheus : virtual ::testing::Test {
         } else if constexpr (std::is_same_v<typename MetricType::ValueType, double>) {
             return mockPrometheusPtr->counterDoubleImpls[key];
         }
-        throw std::runtime_error("Wrong metric type");
+        ASSERT(false, "Wrong metric type");
     }
 };
 

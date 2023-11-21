@@ -23,6 +23,7 @@
 #include <etl/ProbingSource.h>
 #include <etl/Source.h>
 #include <rpc/RPCHelpers.h>
+#include <util/Assert.h>
 #include <util/Profiler.h>
 #include <util/Random.h>
 #include <util/log/Logger.h>
@@ -206,7 +207,7 @@ bool
 LoadBalancer::shouldPropagateTxnStream(Source* in) const
 {
     for (auto& src : sources_) {
-        assert(src);
+        ASSERT(src != nullptr, "Source is nullptr");
 
         // We pick the first Source encountered that is connected
         if (src->isConnected())

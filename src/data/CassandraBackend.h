@@ -25,6 +25,7 @@
 #include <data/cassandra/Schema.h>
 #include <data/cassandra/SettingsProvider.h>
 #include <data/cassandra/impl/ExecutionStrategy.h>
+#include <util/Assert.h>
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
 #include <util/log/Logger.h>
@@ -622,7 +623,7 @@ public:
             );
         });
 
-        assert(numHashes == results.size());
+        ASSERT(numHashes == results.size(), "Number of hashes and results must match");
         LOG(log_.debug()) << "Fetched " << numHashes << " transactions from Cassandra in " << timeDiff
                           << " milliseconds";
         return results;
@@ -735,8 +736,8 @@ public:
     {
         LOG(log_.trace()) << "Writing successor. key = " << key.size() << " bytes. "
                           << " seq = " << std::to_string(seq) << " successor = " << successor.size() << " bytes.";
-        assert(!key.empty());
-        assert(!successor.empty());
+        ASSERT(!key.empty(), "Key must not be empty");
+        ASSERT(!successor.empty(), "Successor must not be empty");
 
         executor_.write(schema_->insertSuccessor, std::move(key), seq, std::move(successor));
     }

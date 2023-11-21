@@ -225,6 +225,7 @@ TEST_F(BackendCountersMockPrometheusTest, registerWriteFinished)
         makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"write_async\",status=\"pending\"}");
     auto& completedCounter =
         makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_async\",status=\"completed\"}");
+    EXPECT_CALL(pendingCounter, value()).WillOnce(testing::Return(1));
     EXPECT_CALL(pendingCounter, add(-1));
     EXPECT_CALL(completedCounter, add(1));
     counters->registerWriteFinished();
@@ -252,6 +253,7 @@ TEST_F(BackendCountersMockPrometheusTest, registerReadFinished)
         makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}");
     auto& completedCounter =
         makeMock<CounterInt>("backend_operations_total_number", "{operation=\"read_async\",status=\"completed\"}");
+    EXPECT_CALL(pendingCounter, value()).WillOnce(testing::Return(1));
     EXPECT_CALL(pendingCounter, add(-1));
     EXPECT_CALL(completedCounter, add(1));
     counters->registerReadFinished();
@@ -271,6 +273,7 @@ TEST_F(BackendCountersMockPrometheusTest, registerReadError)
         makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}");
     auto& errorCounter =
         makeMock<CounterInt>("backend_operations_total_number", "{operation=\"read_async\",status=\"error\"}");
+    EXPECT_CALL(pendingCounter, value()).WillOnce(testing::Return(1));
     EXPECT_CALL(pendingCounter, add(-1));
     EXPECT_CALL(errorCounter, add(1));
     counters->registerReadError();
