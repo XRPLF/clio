@@ -23,7 +23,7 @@
 
 #include <boost/stacktrace.hpp>
 #include <fmt/format.h>
-#include <fmt/std.h>
+#include <fmt/ostream.h>
 
 template <>
 struct fmt::formatter<boost::stacktrace::stacktrace> : ostream_formatter {};
