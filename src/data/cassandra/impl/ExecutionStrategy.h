@@ -466,7 +466,7 @@ private:
     decrementOutstandingRequestCount()
     {
         // sanity check
-        ASSERT(numWriteRequestsOutstanding_ > 0, "decrementing num outstanding below 0");
+        ASSERT(numWriteRequestsOutstanding_ > 0, "Decrementing num outstanding below 0");
         size_t const cur = (--numWriteRequestsOutstanding_);
         {
             // mutex lock required to prevent race condition around spurious

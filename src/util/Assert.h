@@ -21,17 +21,18 @@
 
 #include <util/SourceLocation.h>
 
-#include <iostream>
-#include <string_view>
-
 #include <boost/stacktrace.hpp>
 #include <fmt/format.h>
+#include <fmt/std.h>
+
+template <>
+struct fmt::formatter<boost::stacktrace::stacktrace> : ostream_formatter {};
 
 namespace util {
 
 template <typename... Args>
 constexpr void
-assert_impl(
+assertImpl(
     SourceLocationType const location,
     char const* expression,
     bool const condition,
@@ -42,11 +43,11 @@ assert_impl(
     if (!condition) {
         fmt::println(stderr, "Assertion '{}' failed at {}:{}:", expression, location.file_name(), location.line());
         fmt::println(stderr, format, std::forward<Args>(args)...);
-        std::cerr << "Stacktrace:\n" << boost::stacktrace::stacktrace() << std::endl;
+        fmt::println(stderr, "Stacktrace:\n{}\n", boost::stacktrace::stacktrace());
         std::abort();
     }
 }
 
 }  // namespace util
 
-#define ASSERT(condition, ...) util::assert_impl(CURRENT_SRC_LOCATION, #condition, (condition), __VA_ARGS__)
+#define ASSERT(condition, ...) util::assertImpl(CURRENT_SRC_LOCATION, #condition, (condition), __VA_ARGS__)

@@ -63,7 +63,7 @@ public:
 
         ASSERT(
             nextPrefix_ > prefix || nextPrefix_ == 0x00,
-            "nextPrefix_ must be greater than prefix. Got: nextPrefix_ = {}, prefix = {} ",
+            "Next prefix must be greater than current prefix. Got: nextPrefix_ = {}, prefix = {}",
             nextPrefix_,
             prefix
         );
