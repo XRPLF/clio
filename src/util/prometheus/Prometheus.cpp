@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include <util/Assert.h>
 #include <util/prometheus/Prometheus.h>
 
 #include <boost/iostreams/filter/gzip.hpp>
@@ -31,9 +32,7 @@ MetricType&
 convertBaseTo(MetricBase& metricBase)
 {
     auto result = dynamic_cast<MetricType*>(&metricBase);
-    assert(result != nullptr);
-    if (result == nullptr)
-        throw std::runtime_error("Failed to convert metric type");
+    ASSERT(result != nullptr, "Failed to cast metric {} to the requested type", metricBase.name());
     return *result;
 }
 
@@ -243,7 +242,7 @@ PrometheusService::replaceInstance(std::unique_ptr<util::prometheus::PrometheusI
 util::prometheus::PrometheusInterface&
 PrometheusService::instance()
 {
-    assert(instance_);
+    ASSERT(instance_ != nullptr, "PrometheusService::instance() called before init()");
     return *instance_;
 }
 

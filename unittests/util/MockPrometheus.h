@@ -118,8 +118,7 @@ struct MockPrometheusImpl : PrometheusInterface {
         }
         auto* basePtr = it->second.get();
         auto* metricPtr = dynamic_cast<MetricType*>(basePtr);
-        if (metricPtr == nullptr)
-            throw std::runtime_error("Wrong metric type");
+        ASSERT(metricPtr != nullptr, "Wrong metric type");
         return *metricPtr;
     }
 
@@ -149,8 +148,7 @@ struct MockPrometheusImpl : PrometheusInterface {
         }
         auto* ptr = metrics.emplace(key, std::move(metric)).first->second.get();
         auto metricPtr = dynamic_cast<MetricType*>(ptr);
-        if (metricPtr == nullptr)
-            throw std::runtime_error("Wrong metric type");
+        ASSERT(metricPtr != nullptr, "Wrong metric type");
         return *metricPtr;
     }
 
@@ -187,8 +185,7 @@ struct WithMockPrometheus : virtual ::testing::Test {
     mockPrometheus()
     {
         auto* ptr = dynamic_cast<MockPrometheusImpl*>(&PrometheusService::instance());
-        if (ptr == nullptr)
-            throw std::runtime_error("Wrong prometheus type");
+        ASSERT(ptr != nullptr, "Wrong prometheus type");
         return *ptr;
     }
 
@@ -196,7 +193,8 @@ struct WithMockPrometheus : virtual ::testing::Test {
     static auto&
     makeMock(std::string name, std::string labelsString)
     {
-        auto& prometheus = mockPrometheus();
+        auto* mockPrometheusPtr = dynamic_cast<MockPrometheusImpl*>(&PrometheusService::instance());
+        ASSERT(mockPrometheusPtr != nullptr, "Wrong prometheus type");
 
         std::string const key = name + labelsString;
 
@@ -214,8 +212,7 @@ struct WithMockPrometheus : virtual ::testing::Test {
         } else if constexpr (std::is_same_v<MetricType, HistogramDouble>) {
             return prometheus.histogramDoubleImpls[key];
         }
-
-        throw std::runtime_error("Wrong metric type");
+        ASSERT(false, "Wrong metric type");
     }
 };
 

@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <util/Assert.h>
 #include <util/prometheus/MetricBase.h>
 #include <util/prometheus/impl/AnyCounterBase.h>
 
@@ -64,7 +65,7 @@ struct AnyCounter : MetricBase, detail::AnyCounterBase<NumberType> {
     AnyCounter&
     operator+=(ValueType const value)
     {
-        assert(value >= 0);
+        ASSERT(value >= 0, "Cannot decrease a counter");
         this->pimpl_->add(value);
         return *this;
     }

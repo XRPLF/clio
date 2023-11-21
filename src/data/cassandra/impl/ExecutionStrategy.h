@@ -24,6 +24,7 @@
 #include <data/cassandra/Handle.h>
 #include <data/cassandra/Types.h>
 #include <data/cassandra/impl/AsyncExecutor.h>
+#include <util/Assert.h>
 #include <util/Expected.h>
 #include <util/log/Logger.h>
 
@@ -411,7 +412,7 @@ public:
         numReadRequestsOutstanding_ -= statements.size();
 
         if (errorsCount > 0) {
-            assert(errorsCount <= statements.size());
+            ASSERT(errorsCount <= statements.size(), "Errors number cannot exceed statements number");
             counters_->registerReadError(errorsCount);
             counters_->registerReadFinished(startTime, statements.size() - errorsCount);
             throw DatabaseTimeout{};
@@ -433,8 +434,18 @@ public:
             }
         );
 
-        assert(futures.size() == statements.size());
-        assert(results.size() == statements.size());
+        ASSERT(
+            futures.size() == statements.size(),
+            "Futures size must be equal to statements size. Got {} and {}",
+            futures.size(),
+            statements.size()
+        );
+        ASSERT(
+            results.size() == statements.size(),
+            "Results size must be equal to statements size. Got {} and {}",
+            results.size(),
+            statements.size()
+        );
         return results;
     }
 
@@ -466,10 +477,7 @@ private:
     decrementOutstandingRequestCount()
     {
         // sanity check
-        if (numWriteRequestsOutstanding_ == 0) {
-            assert(false);
-            throw std::runtime_error("decrementing num outstanding below 0");
-        }
+        ASSERT(numWriteRequestsOutstanding_ > 0, "Decrementing num outstanding below 0");
         size_t const cur = (--numWriteRequestsOutstanding_);
         {
             // mutex lock required to prevent race condition around spurious

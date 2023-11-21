@@ -21,6 +21,7 @@
 
 #include <data/BackendInterface.h>
 #include <etl/NFTHelpers.h>
+#include <util/Assert.h>
 #include <util/log/Logger.h>
 
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
@@ -60,7 +61,12 @@ public:
                           << " . prefix = " << ripple::strHex(std::string(1, prefix))
                           << " . nextPrefix_ = " << ripple::strHex(std::string(1, nextPrefix_));
 
-        assert(nextPrefix_ > prefix || nextPrefix_ == 0x00);
+        ASSERT(
+            nextPrefix_ > prefix || nextPrefix_ == 0x00,
+            "Next prefix must be greater than current prefix. Got: nextPrefix_ = {}, prefix = {}",
+            nextPrefix_,
+            prefix
+        );
 
         cur_ = std::make_unique<org::xrpl::rpc::v1::GetLedgerDataResponse>();
         next_ = std::make_unique<org::xrpl::rpc::v1::GetLedgerDataResponse>();

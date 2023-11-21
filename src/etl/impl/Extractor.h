@@ -20,6 +20,7 @@
 #pragma once
 
 #include <etl/SystemState.h>
+#include <util/Assert.h>
 #include <util/Profiler.h>
 #include <util/log/Logger.h>
 
@@ -76,7 +77,7 @@ public:
     void
     waitTillFinished()
     {
-        assert(thread_.joinable());
+        ASSERT(thread_.joinable(), "Extractor thread must be joinable");
         thread_.join();
     }
 

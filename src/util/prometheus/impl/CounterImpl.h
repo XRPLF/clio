@@ -19,10 +19,10 @@
 
 #pragma once
 
+#include <util/Assert.h>
 #include <util/Atomic.h>
 
 #include <atomic>
-#include <cassert>
 #include <concepts>
 
 namespace util::prometheus::detail {
@@ -51,7 +51,6 @@ public:
 
     CounterImpl(CounterImpl const&) = delete;
 
-    // Move constructor should be used only used during initialization
     CounterImpl(CounterImpl&& other) = default;
 
     CounterImpl&

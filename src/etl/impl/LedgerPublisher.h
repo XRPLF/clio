@@ -22,6 +22,7 @@
 #include <data/BackendInterface.h>
 #include <etl/SystemState.h>
 #include <feed/SubscriptionManager.h>
+#include <util/Assert.h>
 #include <util/LedgerUtils.h>
 #include <util/log/Logger.h>
 
@@ -115,7 +116,7 @@ public:
                 return backend_->fetchLedgerBySequence(ledgerSequence, yield);
             });
 
-            assert(lgr);
+            ASSERT(lgr.has_value(), "Ledger must exist in database. Ledger sequence = {}", ledgerSequence);
             publish(*lgr);
 
             return true;
@@ -157,7 +158,7 @@ public:
                 std::optional<ripple::Fees> fees = data::synchronousAndRetryOnTimeout([&](auto yield) {
                     return backend_->fetchFees(lgrInfo.seq, yield);
                 });
-                assert(fees);
+                ASSERT(fees.has_value(), "Fees must exist for ledger {}", lgrInfo.seq);
 
                 std::vector<data::TransactionAndMetadata> transactions =
                     data::synchronousAndRetryOnTimeout([&](auto yield) {
@@ -165,7 +166,7 @@ public:
                     });
 
                 auto const ledgerRange = backend_->fetchLedgerRange();
-                assert(ledgerRange);
+                ASSERT(ledgerRange.has_value(), "Ledger range must exist");
 
                 std::string const range =
                     std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);

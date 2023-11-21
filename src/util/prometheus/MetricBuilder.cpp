@@ -32,11 +32,11 @@ MetricBuilder::operator()(
     std::vector<std::int64_t> const& buckets
 )
 {
-    assert(type != MetricType::HISTOGRAM_DOUBLE);
+    ASSERT(type != MetricType::HISTOGRAM_DOUBLE);
     if (type == MetricType::HISTOGRAM_INT) {
         return makeHistogram(std::move(name), std::move(labelsString), type, buckets);
     }
-    assert(buckets.empty());
+    ASSERT(buckets.empty());
     return makeMetric(std::move(name), std::move(labelsString), type);
 }
 
@@ -48,7 +48,7 @@ MetricBuilder::operator()(
     std::vector<double> const& buckets
 )
 {
-    assert(type == MetricType::HISTOGRAM_DDUBLE);
+    ASSERT(type == MetricType::HISTOGRAM_DDUBLE);
     return makeHistogram(std::move(name), std::move(labelsString), type, buckets);
 }
 
@@ -71,7 +71,7 @@ MetricBuilder::makeMetric(std::string name, std::string labelsString, MetricType
         case MetricType::SUMMARY:
             [[fallthrough]];
         default:
-            assert(false);
+            ASSERT(false, "Unknown metric type: {}", static_cast<int>(type));
     }
     return nullptr;
 }
@@ -91,7 +91,7 @@ MetricBuilder::makeHistogram(
             if constexpr (std::same_as<ValueType, std::int64_t>) {
                 return std::make_unique<HistogramInt>(std::move(name), std::move(labelsString), buckets);
             } else {
-                assert(false);
+                ASSERT(false);
                 break;
             }
         }
@@ -99,7 +99,7 @@ MetricBuilder::makeHistogram(
             if constexpr (std::same_as<ValueType, double>) {
                 return std::make_unique<HistogramDouble>(std::move(name), std::move(labelsString), buckets);
             } else {
-                assert(false);
+                ASSERT(false);
                 break;
             }
         case MetricType::COUNTER_INT:
@@ -113,7 +113,7 @@ MetricBuilder::makeHistogram(
         case MetricType::SUMMARY:
             [[fallthrough]];
         default:
-            assert(false);
+            ASSERT(false);
     }
     return nullptr;
 }

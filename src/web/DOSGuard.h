@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <util/Assert.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
 #include <web/IntervalSweepHandler.h>
@@ -172,7 +173,7 @@ public:
         if (whitelistHandler_.get().isWhiteListed(ip))
             return;
         std::scoped_lock const lck{mtx_};
-        assert(ipConnCount_[ip] > 0);
+        ASSERT(ipConnCount_[ip] > 0, "Connection count for ip {} can't be 0", ip);
         ipConnCount_[ip]--;
         if (ipConnCount_[ip] == 0)
             ipConnCount_.erase(ip);

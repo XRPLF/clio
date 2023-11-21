@@ -23,6 +23,7 @@
 #include <rpc/RPCHelpers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
+#include <util/Assert.h>
 
 namespace feed {
 class SubscriptionManager;
@@ -129,7 +130,7 @@ private:
             } else if (stream == "book_changes") {
                 subscriptions_->unsubBookChanges(session);
             } else {
-                assert(false);
+                ASSERT(false, "Unknown stream: {}", stream);
             }
         }
     }
