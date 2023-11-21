@@ -37,7 +37,7 @@ MetricBuilder::operator()(
     if (type == MetricType::HISTOGRAM_INT) {
         return makeHistogram(std::move(name), std::move(labelsString), type, buckets);
     }
-    ASSERT(buckets.empty(), "Histogram must have at least one bucket.");
+    ASSERT(buckets.empty(), "Buckets must be empty for non-histogram types.");
     return makeMetric(std::move(name), std::move(labelsString), type);
 }
 
