@@ -321,16 +321,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIndex2)
 // normal case when issuer does not exist or has no NFTs
 TEST_F(RPCNFTsByIssuerHandlerTest, AccountNotFound)
 {
-    auto const currentOutput = fmt::format(
-        R"({{
-            "issuer": "{}",
-            "limit":50,
-            "ledger_index": 30,
-            "nfts": [],
-            "validated": true
-        }})",
-        ACCOUNT
-    );
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     ASSERT_NE(rawBackendPtr, nullptr);
     mockBackendPtr->updateRange(10);  // min

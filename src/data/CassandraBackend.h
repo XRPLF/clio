@@ -505,15 +505,24 @@ public:
 
         auto const nftInfos = executor_.readEach(yield, selectNFTStatements);
 
+        std::vector<Statement> selectNFTURIStatements;
+        selectNFTURIStatements.reserve(nftIDs.size());
+
+        std::transform(
+            std::cbegin(nftIDs),
+            std::cend(nftIDs),
+            std::back_inserter(selectNFTURIStatements),
+            [&](auto const& nftID) { return schema_->selectNFTURI.bind(nftID, ledgerSequence); }
+        );
+
+        auto const nftUris = executor_.readEach(yield, selectNFTURIStatements);
+
         for (auto i = 0u; i < nftIDs.size(); i++) {
             if (auto const maybeRow = nftInfos[i].template get<uint32_t, ripple::AccountID, bool>(); maybeRow) {
                 auto [seq, owner, isBurned] = *maybeRow;
                 NFT nft(nftIDs[i], seq, owner, isBurned);
-                auto uriRes = executor_.read(yield, schema_->selectNFTURI, nftIDs[i], ledgerSequence);
-                if (uriRes) {
-                    if (auto const maybeUri = uriRes->template get<ripple::Blob>(); maybeUri)
-                        nft.uri = *maybeUri;
-                }
+                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri)
+                    nft.uri = *maybeUri;
                 ret.nfts.push_back(nft);
             }
         }
