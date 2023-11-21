@@ -22,6 +22,7 @@
 #include <data/BackendInterface.h>
 #include <etl/ETLService.h>
 #include <rpc/RPCHelpers.h>
+#include <rpc/common/JsonBool.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>
 #include <util/JsonUtils.h>
@@ -67,17 +68,18 @@ public:
     }
 
     static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
+    spec(uint32_t apiVersion)
     {
-        static const RpcSpec rpcSpec = {
+        static const RpcSpec rpcSpecForV1 = {
             {JS(transaction), validation::Uint256HexStringValidator},
-            {JS(binary), validation::Type<bool>{}},
             {JS(min_ledger), validation::Type<uint32_t>{}},
             {JS(max_ledger), validation::Type<uint32_t>{}},
             {JS(ctid), validation::Type<std::string>{}},
         };
 
-        return rpcSpec;
+        static auto const rpcSpec = RpcSpec{rpcSpecForV1, {{JS(binary), validation::Type<bool>{}}}};
+
+        return apiVersion == 1 ? rpcSpecForV1 : rpcSpec;
     }
 
     Result
@@ -273,7 +275,7 @@ private:
         }
 
         if (jsonObject.contains(JS(binary)))
-            input.binary = jv.at(JS(binary)).as_bool();
+            input.binary = boost::json::value_to<JsonBool>(jsonObject.at(JS(binary)));
 
         if (jsonObject.contains(JS(min_ledger)))
             input.minLedger = jv.at(JS(min_ledger)).as_int64();
