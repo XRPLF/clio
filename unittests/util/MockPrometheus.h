@@ -139,10 +139,10 @@ struct MockPrometheusImpl : PrometheusInterface {
             metric = std::make_unique<MetricType>(name, labelsString, impl);
         } else if constexpr (std::is_same_v<MetricType, HistogramInt>) {
             auto& impl = histogramIntImpls[key];
-            metric = std::make_unique<MetricType>(name, labelsString, std::vector<std::int64_t>{}, impl);
+            metric = std::make_unique<MetricType>(name, labelsString, std::vector<std::int64_t>{1}, impl);
         } else if constexpr (std::is_same_v<MetricType, HistogramDouble>) {
             auto& impl = histogramDoubleImpls[key];
-            metric = std::make_unique<MetricType>(name, labelsString, std::vector<double>{}, impl);
+            metric = std::make_unique<MetricType>(name, labelsString, std::vector<double>{1.}, impl);
         } else {
             throw std::runtime_error("Wrong metric type");
         }
@@ -198,21 +198,21 @@ struct WithMockPrometheus : virtual ::testing::Test {
 
         std::string const key = name + labelsString;
 
-        if (!prometheus.metrics.contains(key))
-            prometheus.makeMetric<MetricType>(std::move(name), std::move(labelsString));
+        if (!mockPrometheusPtr->metrics.contains(key))
+            mockPrometheusPtr->makeMetric<MetricType>(std::move(name), std::move(labelsString));
 
         if constexpr (std::is_same_v<MetricType, GaugeInt>) {
-            return prometheus.counterIntImpls[key];
+            return mockPrometheusPtr->counterIntImpls[key];
         } else if constexpr (std::is_same_v<MetricType, CounterInt>) {
-            return prometheus.counterUintImpls[key];
+            return mockPrometheusPtr->counterUintImpls[key];
         } else if constexpr (std::is_same_v<MetricType, GaugeDouble> || std::is_same_v<MetricType, CounterDouble>) {
-            return prometheus.counterDoubleImpls[key];
+            return mockPrometheusPtr->counterDoubleImpls[key];
         } else if constexpr (std::is_same_v<MetricType, HistogramInt>) {
-            return prometheus.histogramIntImpls[key];
+            return mockPrometheusPtr->histogramIntImpls[key];
         } else if constexpr (std::is_same_v<MetricType, HistogramDouble>) {
-            return prometheus.histogramDoubleImpls[key];
+            return mockPrometheusPtr->histogramDoubleImpls[key];
         }
-        ASSERT(false, "Wrong metric type");
+        ASSERT(false, "Wrong metric type for metric {} {}", name, labelsString);
     }
 };
 

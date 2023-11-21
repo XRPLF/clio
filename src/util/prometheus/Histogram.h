@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <util/Assert.h>
 #include <util/prometheus/MetricBase.h>
 #include <util/prometheus/impl/HistogramImpl.h>
 
@@ -47,8 +48,8 @@ public:
         : MetricBase(std::move(name), std::move(labelsString))
         , pimpl_(std::make_unique<Model<ImplType>>(std::forward<ImplType>(impl)))
     {
-        assert(!buckets.empty());
-        assert(std::is_sorted(buckets.begin(), buckets.end()));
+        ASSERT(!buckets.empty(), "Histogram must have at least one bucket.");
+        ASSERT(std::is_sorted(buckets.begin(), buckets.end()), "Buckets for histogra must be sorted.");
         pimpl_->setBuckets(buckets);
     }
 

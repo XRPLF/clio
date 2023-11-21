@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include <util/Assert.h>
 #include <util/prometheus/Counter.h>
 #include <util/prometheus/Gauge.h>
 #include <util/prometheus/Histogram.h>
@@ -32,11 +33,11 @@ MetricBuilder::operator()(
     std::vector<std::int64_t> const& buckets
 )
 {
-    ASSERT(type != MetricType::HISTOGRAM_DOUBLE);
+    ASSERT(type != MetricType::HISTOGRAM_DOUBLE, "Wrong metric type. Probably wrong bucket type was used.");
     if (type == MetricType::HISTOGRAM_INT) {
         return makeHistogram(std::move(name), std::move(labelsString), type, buckets);
     }
-    ASSERT(buckets.empty());
+    ASSERT(buckets.empty(), "Histogram must have at least one bucket.");
     return makeMetric(std::move(name), std::move(labelsString), type);
 }
 
@@ -48,7 +49,7 @@ MetricBuilder::operator()(
     std::vector<double> const& buckets
 )
 {
-    ASSERT(type == MetricType::HISTOGRAM_DDUBLE);
+    ASSERT(type == MetricType::HISTOGRAM_DOUBLE, "This method is for HISTOGRAM_DOUBLE only.");
     return makeHistogram(std::move(name), std::move(labelsString), type, buckets);
 }
 
@@ -91,7 +92,7 @@ MetricBuilder::makeHistogram(
             if constexpr (std::same_as<ValueType, std::int64_t>) {
                 return std::make_unique<HistogramInt>(std::move(name), std::move(labelsString), buckets);
             } else {
-                ASSERT(false);
+                ASSERT(false, "Wrong bucket type for HISTOGRAM_INT.)");
                 break;
             }
         }
@@ -99,7 +100,7 @@ MetricBuilder::makeHistogram(
             if constexpr (std::same_as<ValueType, double>) {
                 return std::make_unique<HistogramDouble>(std::move(name), std::move(labelsString), buckets);
             } else {
-                ASSERT(false);
+                ASSERT(false, "Wrong bucket type for HISTOGRAM_DOUBLE.");
                 break;
             }
         case MetricType::COUNTER_INT:
@@ -113,7 +114,7 @@ MetricBuilder::makeHistogram(
         case MetricType::SUMMARY:
             [[fallthrough]];
         default:
-            ASSERT(false);
+            ASSERT(false, "Unknown metric type: {}", static_cast<int>(type));
     }
     return nullptr;
 }

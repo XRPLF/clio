@@ -37,14 +37,13 @@ TEST(MetricBuilderTest, build)
           MetricType::GAUGE_INT,
           MetricType::GAUGE_DOUBLE,
           MetricType::HISTOGRAM_INT,
-          MetricType::HISTOGRAM_DOUBLE,
-          MetricType::SUMMARY}) {
+          MetricType::HISTOGRAM_DOUBLE}) {
         std::unique_ptr<MetricBase> metric = [&]() {
             if (type == MetricType::HISTOGRAM_INT)
-                return builder(name, labelsString, type, std::vector<std::int64_t>{});
+                return builder(name, labelsString, type, std::vector<std::int64_t>{1});
 
             if (type == MetricType::HISTOGRAM_DOUBLE)
-                return builder(name, labelsString, type, std::vector<double>{});
+                return builder(name, labelsString, type, std::vector<double>{1.});
 
             return builder(name, labelsString, type);
         }();
@@ -75,4 +74,5 @@ TEST(MetricBuilderTest, build)
             EXPECT_EQ(metric->labelsString(), labelsString);
         }
     }
+    EXPECT_DEATH({ builder(name, labelsString, MetricType::SUMMARY, std::vector<std::int64_t>{}); }, "");
 }

@@ -43,11 +43,7 @@ public:
 
     // Copy and move constructors and assignment operators are not allowed for atomics
     Atomic(Atomic const&) = delete;
-    Atomic(Atomic&& other) : value_(0)
-    {
-        assert(other.value_ == 0);
-        other.value_ = 0;
-    }
+    Atomic(Atomic&&) = delete;
     Atomic&
     operator=(Atomic const&) = delete;
     Atomic&

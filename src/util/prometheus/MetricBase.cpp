@@ -19,6 +19,8 @@
 
 #include <util/prometheus/MetricBase.h>
 
+#include <util/Assert.h>
+
 namespace util::prometheus {
 
 MetricBase::MetricBase(std::string name, std::string labelsString)
@@ -52,7 +54,7 @@ toString(MetricType type)
         case MetricType::SUMMARY:
             return "summary";
         default:
-            assert(false);
+            ASSERT(false, "Unknown metric {}.", static_cast<int>(type));
     }
     return "";
 }

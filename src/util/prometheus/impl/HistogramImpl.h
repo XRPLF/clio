@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <util/Assert.h>
 #include <util/Concepts.h>
 #include <util/prometheus/OStream.h>
 
@@ -58,7 +59,7 @@ public:
     setBuckets(std::vector<ValueType> const& bounds)
     {
         std::scoped_lock const lock{*mutex_};
-        assert(buckets_.empty());
+        ASSERT(buckets_.empty(), "Buckets can be set only once.");
         buckets_.reserve(bounds.size());
         for (auto const& bound : bounds) {
             buckets_.emplace_back(bound);
@@ -87,7 +88,10 @@ public:
         if (labelsString.empty()) {
             labelsString = "{";
         } else {
-            assert(labelsString.front() == '{' && labelsString.back() == '}');
+            ASSERT(
+                labelsString.front() == '{' && labelsString.back() == '}',
+                "Labels must be in Prometheus serialized format."
+            );
             labelsString.back() = ',';
         }
 

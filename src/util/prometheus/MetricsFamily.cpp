@@ -19,6 +19,8 @@
 
 #include <util/prometheus/MetricsFamily.h>
 
+#include <util/Assert.h>
+
 namespace util::prometheus {
 
 std::unique_ptr<MetricBuilderInterface> MetricsFamily::defaultMetricBuilder = std::make_unique<MetricBuilder>();
@@ -42,7 +44,7 @@ MetricsFamily::getMetric(Labels labels, std::vector<std::int64_t> const& buckets
 MetricBase&
 MetricsFamily::getMetric(Labels labels, std::vector<double> const& buckets)
 {
-    assert(type_ == MetricType::HISTOGRAM_DOUBLE);
+    ASSERT(type_ == MetricType::HISTOGRAM_DOUBLE, "This method is for HISTOGRAM_DOUBLE only.");
     return getMetricImpl(std::move(labels), buckets);
 }
 
