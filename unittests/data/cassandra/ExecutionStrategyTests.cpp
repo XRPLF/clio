@@ -40,10 +40,10 @@ protected:
         }
 
         MOCK_METHOD(void, registerTooBusy, (), ());
-        MOCK_METHOD(void, registerWriteSync, (), ());
+        MOCK_METHOD(void, registerWriteSync, (std::chrono::steady_clock::time_point), ());
         MOCK_METHOD(void, registerWriteSyncRetry, (), ());
         MOCK_METHOD(void, registerWriteStarted, (), ());
-        MOCK_METHOD(void, registerWriteFinished, (), ());
+        MOCK_METHOD(void, registerWriteFinished, (std::chrono::steady_clock::time_point), ());
         MOCK_METHOD(void, registerWriteRetry, (), ());
 
         void
@@ -54,11 +54,11 @@ protected:
         MOCK_METHOD(void, registerReadStartedImpl, (std::uint64_t), ());
 
         void
-        registerReadFinished(std::uint64_t count = 1)
+        registerReadFinished(std::chrono::steady_clock::time_point startTime, std::uint64_t count = 1)
         {
-            registerReadFinishedImpl(count);
+            registerReadFinishedImpl(startTime, count);
         }
-        MOCK_METHOD(void, registerReadFinishedImpl, (std::uint64_t), ());
+        MOCK_METHOD(void, registerReadFinishedImpl, (std::chrono::steady_clock::time_point, std::uint64_t), ());
 
         void
         registerReadRetry(std::uint64_t count = 1)
@@ -110,7 +110,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineSuccessful)
     EXPECT_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
         .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(1));
-    EXPECT_CALL(*counters, registerReadFinishedImpl(1));
+    EXPECT_CALL(*counters, registerReadFinishedImpl(testing::_, 1));
 
     runSpawn([&strat](boost::asio::yield_context yield) {
         auto statement = FakeStatement{};
@@ -175,7 +175,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineSuccessful)
     )
         .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
-    EXPECT_CALL(*counters, registerReadFinishedImpl(NUM_STATEMENTS));
+    EXPECT_CALL(*counters, registerReadFinishedImpl(testing::_, NUM_STATEMENTS));
 
     runSpawn([&strat](boost::asio::yield_context yield) {
         auto statements = std::vector<FakeStatement>(NUM_STATEMENTS);
@@ -249,7 +249,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineMarksBusyIfReq
     )
         .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
-    EXPECT_CALL(*counters, registerReadFinishedImpl(NUM_STATEMENTS));
+    EXPECT_CALL(*counters, registerReadFinishedImpl(testing::_, NUM_STATEMENTS));
 
     runSpawn([&strat](boost::asio::yield_context yield) {
         EXPECT_FALSE(strat.isTooBusy());  // 2 was the limit, 0 atm
@@ -277,7 +277,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineSuccessful)
     )
         .Times(NUM_STATEMENTS);  // once per statement
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
-    EXPECT_CALL(*counters, registerReadFinishedImpl(NUM_STATEMENTS));
+    EXPECT_CALL(*counters, registerReadFinishedImpl(testing::_, NUM_STATEMENTS));
 
     runSpawn([&strat](boost::asio::yield_context yield) {
         auto statements = std::vector<FakeStatement>(NUM_STATEMENTS);
@@ -311,7 +311,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineThrowsOnFailure
         .Times(NUM_STATEMENTS);  // once per statement
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadErrorImpl(1));
-    EXPECT_CALL(*counters, registerReadFinishedImpl(2));
+    EXPECT_CALL(*counters, registerReadFinishedImpl(testing::_, 2));
 
     runSpawn([&strat](boost::asio::yield_context yield) {
         auto statements = std::vector<FakeStatement>(NUM_STATEMENTS);
@@ -326,7 +326,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteSyncFirstTrySuccessful)
     ON_CALL(handle, execute(A<FakeStatement const&>())).WillByDefault([](auto const&) { return FakeResultOrError{}; });
     EXPECT_CALL(handle,
                 execute(A<FakeStatement const&>())).Times(1);  // first one will succeed
-    EXPECT_CALL(*counters, registerWriteSync());
+    EXPECT_CALL(*counters, registerWriteSync(testing::_));
 
     EXPECT_TRUE(strat.writeSync({}));
 }
@@ -344,7 +344,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteSyncRetrySuccessful)
     EXPECT_CALL(handle,
                 execute(A<FakeStatement const&>())).Times(2);  // first one will fail, second will succeed
     EXPECT_CALL(*counters, registerWriteSyncRetry());
-    EXPECT_CALL(*counters, registerWriteSync());
+    EXPECT_CALL(*counters, registerWriteSync(testing::_));
 
     EXPECT_TRUE(strat.writeSync({}));
 }
@@ -376,7 +376,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteMultipleAndCallSyncSucceeds)
     )
         .Times(totalRequests);  // one per write call
     EXPECT_CALL(*counters, registerWriteStarted()).Times(totalRequests);
-    EXPECT_CALL(*counters, registerWriteFinished()).Times(totalRequests);
+    EXPECT_CALL(*counters, registerWriteFinished(testing::_)).Times(totalRequests);
 
     auto makeStatements = [] { return std::vector<FakeStatement>(16); };
     for (auto i = 0u; i < totalRequests; ++i)

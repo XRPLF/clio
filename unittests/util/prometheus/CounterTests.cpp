@@ -19,6 +19,7 @@
 
 #include <util/prometheus/Counter.h>
 
+#include <boost/iostreams/device/back_inserter.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -53,9 +54,9 @@ TEST_F(AnyCounterTests, labelsString)
 TEST_F(AnyCounterTests, serialize)
 {
     EXPECT_CALL(mockCounterImpl, value()).WillOnce(::testing::Return(42));
-    std::string serialized;
-    counter.serialize(serialized);
-    EXPECT_EQ(serialized, R"(test_counter{label1="value1",label2="value2"} 42)");
+    OStream stream{false};
+    counter.serializeValue(stream);
+    EXPECT_EQ(std::move(stream).data(), R"(test_counter{label1="value1",label2="value2"} 42)");
 }
 
 TEST_F(AnyCounterTests, operatorAdd)

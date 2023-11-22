@@ -25,6 +25,7 @@
 #include <etl/impl/AsyncData.h>
 #include <etl/impl/ForwardCache.h>
 #include <feed/SubscriptionManager.h>
+#include <util/Assert.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
 
@@ -485,7 +486,7 @@ public:
         std::vector<std::string> edgeKeys;
 
         while (numFinished < calls.size() && cq.Next(&tag, &ok)) {
-            assert(tag);
+            ASSERT(tag != nullptr, "Tag can't be null.");
             auto ptr = static_cast<etl::detail::AsyncCallData*>(tag);
 
             if (!ok) {

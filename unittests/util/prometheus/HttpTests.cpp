@@ -16,9 +16,11 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-
 #include <util/prometheus/Http.h>
 
+#include <util/MockPrometheus.h>
+
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 
 using namespace util::prometheus;
@@ -47,7 +49,8 @@ struct PrometheusCheckRequestTests : public ::testing::TestWithParam<PrometheusC
 
 TEST_P(PrometheusCheckRequestTests, isPrometheusRequest)
 {
-    PrometheusService::init(util::Config{boost::json::value{{"prometheus_enabled", GetParam().prometheusEnabled}}});
+    boost::json::value const configJson{{"prometheus", boost::json::object{{"enabled", GetParam().prometheusEnabled}}}};
+    PrometheusService::init(util::Config{configJson});
     boost::beast::http::request<boost::beast::http::string_body> req;
     req.method(GetParam().method);
     req.target(GetParam().target);
@@ -97,11 +100,7 @@ INSTANTIATE_TEST_CASE_P(
     PrometheusCheckRequestTests::NameGenerator()
 );
 
-struct PrometheusHandleRequestTests : ::testing::Test {
-    PrometheusHandleRequestTests()
-    {
-        PrometheusService::init();
-    }
+struct PrometheusHandleRequestTests : util::prometheus::WithPrometheus {
     http::request<http::string_body> const req{http::verb::get, "/metrics", 11};
 };
 
@@ -116,7 +115,8 @@ TEST_F(PrometheusHandleRequestTests, emptyResponse)
 
 TEST_F(PrometheusHandleRequestTests, prometheusDisabled)
 {
-    PrometheusService::init(util::Config(boost::json::value{{"prometheus_enabled", false}}));
+    boost::json::value const configJson({{"prometheus", boost::json::object{{"enabled", false}}}});
+    PrometheusService::init(util::Config(configJson));
     auto response = handlePrometheusRequest(req, true);
     ASSERT_TRUE(response.has_value());
     EXPECT_EQ(response->result(), http::status::forbidden);
@@ -151,7 +151,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounter)
 TEST_F(PrometheusHandleRequestTests, responseWithGauge)
 {
     auto const gaugeName = "test_gauge";
-    const Labels labels{{{"label2", "value2"}, Label{"label3", "value3"}}};
+    const Labels labels{{{"label2", "value2"}, {"label3", "value3"}}};
     auto const description = "test_description_gauge";
 
     auto& gauge = PrometheusService::gaugeInt(gaugeName, labels, description);
@@ -170,7 +170,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithGauge)
 TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
 {
     auto const counterName = "test_counter";
-    const Labels counterLabels{{{"label1", "value1"}, Label{"label2", "value2"}}};
+    const Labels counterLabels{{{"label1", "value1"}, {"label2", "value2"}}};
     auto const counterDescription = "test_description";
 
     auto& counter = PrometheusService::counterInt(counterName, counterLabels, counterDescription);
@@ -178,7 +178,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
     counter += 3;
 
     auto const gaugeName = "test_gauge";
-    const Labels gaugeLabels{{{"label2", "value2"}, Label{"label3", "value3"}}};
+    const Labels gaugeLabels{{{"label2", "value2"}, {"label3", "value3"}}};
     auto const gaugeDescription = "test_description_gauge";
 
     auto& gauge = PrometheusService::gaugeInt(gaugeName, gaugeLabels, gaugeDescription);
@@ -210,4 +210,20 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
         gaugeLabels.serialize()
     );
     EXPECT_TRUE(response->body() == expectedBody || response->body() == anotherExpectedBody);
+}
+
+TEST_F(PrometheusHandleRequestTests, compressReply)
+{
+    PrometheusService::init(util::Config(boost::json::value{
+        {"prometheus", boost::json::object{{"compress_reply", true}}}}));
+
+    auto& gauge = PrometheusService::gaugeInt("test_gauge", Labels{});
+    ++gauge;
+
+    auto response = handlePrometheusRequest(req, true);
+    ASSERT_TRUE(response.has_value());
+    EXPECT_EQ(response->result(), http::status::ok);
+    EXPECT_EQ(response->operator[](http::field::content_type), "text/plain; version=0.0.4");
+    EXPECT_EQ(response->operator[](http::field::content_encoding), "gzip");
+    EXPECT_GT(response->body().size(), 0ul);
 }

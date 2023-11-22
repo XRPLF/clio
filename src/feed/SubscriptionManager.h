@@ -26,6 +26,7 @@
 #include <web/interface/ConnectionBase.h>
 
 #include <ripple/protocol/LedgerHeader.h>
+#include <fmt/format.h>
 
 #include <memory>
 

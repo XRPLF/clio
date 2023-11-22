@@ -141,10 +141,11 @@ public:
     ResultOrErrorType
     writeSync(StatementType const& statement)
     {
-        counters_->registerWriteSync();
+        auto const startTime = std::chrono::steady_clock::now();
         while (true) {
             auto res = handle_.get().execute(statement);
             if (res) {
+                counters_->registerWriteSync(startTime);
                 return res;
             }
 
@@ -179,6 +180,8 @@ public:
     void
     write(PreparedStatementType const& preparedStatement, Args&&... args)
     {
+        auto const startTime = std::chrono::steady_clock::now();
+
         auto statement = preparedStatement.bind(std::forward<Args>(args)...);
         incrementOutstandingRequestCount();
 
@@ -188,10 +191,10 @@ public:
             ioc_,
             handle_,
             std::move(statement),
-            [this](auto const&) {
+            [this, startTime](auto const&) {
                 decrementOutstandingRequestCount();
 
-                counters_->registerWriteFinished();
+                counters_->registerWriteFinished(startTime);
             },
             [this]() { counters_->registerWriteRetry(); }
         );
@@ -211,6 +214,8 @@ public:
         if (statements.empty())
             return;
 
+        auto const startTime = std::chrono::steady_clock::now();
+
         incrementOutstandingRequestCount();
 
         counters_->registerWriteStarted();
@@ -219,9 +224,9 @@ public:
             ioc_,
             handle_,
             std::move(statements),
-            [this](auto const&) {
+            [this, startTime](auto const&) {
                 decrementOutstandingRequestCount();
-                counters_->registerWriteFinished();
+                counters_->registerWriteFinished(startTime);
             },
             [this]() { counters_->registerWriteRetry(); }
         );
@@ -258,6 +263,8 @@ public:
     [[maybe_unused]] ResultOrErrorType
     read(CompletionTokenType token, std::vector<StatementType> const& statements)
     {
+        auto const startTime = std::chrono::steady_clock::now();
+
         auto const numStatements = statements.size();
         std::optional<FutureWithCallbackType> future;
         counters_->registerReadStarted(numStatements);
@@ -283,7 +290,7 @@ public:
             numReadRequestsOutstanding_ -= numStatements;
 
             if (res) {
-                counters_->registerReadFinished(numStatements);
+                counters_->registerReadFinished(startTime, numStatements);
                 return res;
             }
 
@@ -311,6 +318,8 @@ public:
     [[maybe_unused]] ResultOrErrorType
     read(CompletionTokenType token, StatementType const& statement)
     {
+        auto const startTime = std::chrono::steady_clock::now();
+
         std::optional<FutureWithCallbackType> future;
         counters_->registerReadStarted();
 
@@ -334,7 +343,7 @@ public:
             --numReadRequestsOutstanding_;
 
             if (res) {
-                counters_->registerReadFinished();
+                counters_->registerReadFinished(startTime);
                 return res;
             }
 
@@ -363,6 +372,8 @@ public:
     std::vector<ResultType>
     readEach(CompletionTokenType token, std::vector<StatementType> const& statements)
     {
+        auto const startTime = std::chrono::steady_clock::now();
+
         std::atomic_uint64_t errorsCount = 0u;
         std::atomic_int numOutstanding = statements.size();
         numReadRequestsOutstanding_ += statements.size();
@@ -403,10 +414,10 @@ public:
         if (errorsCount > 0) {
             ASSERT(errorsCount <= statements.size(), "Errors number cannot exceed statements number");
             counters_->registerReadError(errorsCount);
-            counters_->registerReadFinished(statements.size() - errorsCount);
+            counters_->registerReadFinished(startTime, statements.size() - errorsCount);
             throw DatabaseTimeout{};
         }
-        counters_->registerReadFinished(statements.size());
+        counters_->registerReadFinished(startTime, statements.size());
 
         std::vector<ResultType> results;
         results.reserve(futures.size());

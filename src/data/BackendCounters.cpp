@@ -24,6 +24,18 @@
 
 namespace data {
 
+namespace {
+
+std::vector<std::int64_t> const histogramBuckets{1, 2, 5, 10, 20, 50, 100, 200, 500, 700, 1000};
+
+std::int64_t
+durationInMillisecondsSince(std::chrono::steady_clock::time_point const startTime)
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
+}
+
+}  // namespace
+
 using namespace util::prometheus;
 
 BackendCounters::BackendCounters()
@@ -44,6 +56,18 @@ BackendCounters::BackendCounters()
       ))
     , asyncWriteCounters_{"write_async"}
     , asyncReadCounters_{"read_async"}
+    , readDurationHistogram_(PrometheusService::histogramInt(
+          "backend_duration_milliseconds_histogram",
+          Labels({Label{"operation", "read"}}),
+          histogramBuckets,
+          "The duration of backend read operations including retries"
+      ))
+    , writeDurationHistogram_(PrometheusService::histogramInt(
+          "backend_duration_milliseconds_histogram",
+          Labels({Label{"operation", "write"}}),
+          histogramBuckets,
+          "The duration of backend write operations including retries"
+      ))
 {
 }
 
@@ -61,9 +85,10 @@ BackendCounters::registerTooBusy()
 }
 
 void
-BackendCounters::registerWriteSync()
+BackendCounters::registerWriteSync(std::chrono::steady_clock::time_point const startTime)
 {
     ++writeSyncCounter_.get();
+    writeDurationHistogram_.get().observe(durationInMillisecondsSince(startTime));
 }
 
 void
@@ -79,9 +104,11 @@ BackendCounters::registerWriteStarted()
 }
 
 void
-BackendCounters::registerWriteFinished()
+BackendCounters::registerWriteFinished(std::chrono::steady_clock::time_point const startTime)
 {
     asyncWriteCounters_.registerFinished(1u);
+    auto const duration = durationInMillisecondsSince(startTime);
+    writeDurationHistogram_.get().observe(duration);
 }
 
 void
@@ -97,9 +124,12 @@ BackendCounters::registerReadStarted(std::uint64_t const count)
 }
 
 void
-BackendCounters::registerReadFinished(std::uint64_t const count)
+BackendCounters::registerReadFinished(std::chrono::steady_clock::time_point const startTime, std::uint64_t const count)
 {
     asyncReadCounters_.registerFinished(count);
+    auto const duration = durationInMillisecondsSince(startTime);
+    for (std::uint64_t i = 0; i < count; ++i)
+        readDurationHistogram_.get().observe(duration);
 }
 
 void

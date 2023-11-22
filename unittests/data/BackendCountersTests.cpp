@@ -48,6 +48,7 @@ struct BackendCountersTest : WithPrometheus {
     }
 
     BackendCounters::PtrType const counters = BackendCounters::make();
+    std::chrono::steady_clock::time_point startTime{};
 };
 
 TEST_F(BackendCountersTest, EmptyByDefault)
@@ -68,8 +69,9 @@ TEST_F(BackendCountersTest, RegisterTooBusy)
 
 TEST_F(BackendCountersTest, RegisterWriteSync)
 {
-    counters->registerWriteSync();
-    counters->registerWriteSync();
+    std::chrono::steady_clock::time_point const startTime{};
+    counters->registerWriteSync(startTime);
+    counters->registerWriteSync(startTime);
 
     auto expectedReport = emptyReport();
     expectedReport["write_sync"] = 2;
@@ -102,8 +104,8 @@ TEST_F(BackendCountersTest, RegisterWriteFinished)
     counters->registerWriteStarted();
     counters->registerWriteStarted();
     counters->registerWriteStarted();
-    counters->registerWriteFinished();
-    counters->registerWriteFinished();
+    counters->registerWriteFinished(startTime);
+    counters->registerWriteFinished(startTime);
 
     auto expectedReport = emptyReport();
     expectedReport["write_async_pending"] = 1;
@@ -136,8 +138,8 @@ TEST_F(BackendCountersTest, RegisterReadFinished)
     counters->registerReadStarted();
     counters->registerReadStarted();
     counters->registerReadStarted();
-    counters->registerReadFinished();
-    counters->registerReadFinished();
+    counters->registerReadFinished(startTime);
+    counters->registerReadFinished(startTime);
 
     auto expectedReport = emptyReport();
     expectedReport["read_async_pending"] = 1;
@@ -151,7 +153,7 @@ TEST_F(BackendCountersTest, RegisterReadStartedFinishedWithCounters)
     static constexpr auto OPERATIONS_COMPLETED = 4u;
 
     counters->registerReadStarted(OPERATIONS_STARTED);
-    counters->registerReadFinished(OPERATIONS_COMPLETED);
+    counters->registerReadFinished(startTime, OPERATIONS_COMPLETED);
 
     auto expectedReport = emptyReport();
     expectedReport["read_async_pending"] = OPERATIONS_STARTED - OPERATIONS_COMPLETED;
@@ -177,7 +179,7 @@ TEST_F(BackendCountersTest, RegisterReadError)
 
     counters->registerReadStarted(OPERATIONS_STARTED);
     counters->registerReadError(OPERATIONS_ERROR);
-    counters->registerReadFinished(OPERATIONS_COMPLETED);
+    counters->registerReadFinished(startTime, OPERATIONS_COMPLETED);
 
     auto expectedReport = emptyReport();
     expectedReport["read_async_pending"] = OPERATIONS_STARTED - OPERATIONS_COMPLETED - OPERATIONS_ERROR;
@@ -200,8 +202,11 @@ TEST_F(BackendCountersMockPrometheusTest, registerTooBusy)
 TEST_F(BackendCountersMockPrometheusTest, registerWriteSync)
 {
     auto& counter = makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_sync\"}");
+    auto& histogram = makeMock<HistogramInt>("backend_duration_milliseconds_histogram", "{operation=\"write\"}");
     EXPECT_CALL(counter, add(1));
-    counters->registerWriteSync();
+    EXPECT_CALL(histogram, observe(testing::_));
+    std::chrono::steady_clock::time_point const startTime{};
+    counters->registerWriteSync(startTime);
 }
 
 TEST_F(BackendCountersMockPrometheusTest, registerWriteSyncRetry)
@@ -225,10 +230,13 @@ TEST_F(BackendCountersMockPrometheusTest, registerWriteFinished)
         makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"write_async\",status=\"pending\"}");
     auto& completedCounter =
         makeMock<CounterInt>("backend_operations_total_number", "{operation=\"write_async\",status=\"completed\"}");
+    auto& histogram = makeMock<HistogramInt>("backend_duration_milliseconds_histogram", "{operation=\"write\"}");
     EXPECT_CALL(pendingCounter, value()).WillOnce(testing::Return(1));
     EXPECT_CALL(pendingCounter, add(-1));
     EXPECT_CALL(completedCounter, add(1));
-    counters->registerWriteFinished();
+    EXPECT_CALL(histogram, observe(testing::_));
+    std::chrono::steady_clock::time_point const startTime{};
+    counters->registerWriteFinished(startTime);
 }
 
 TEST_F(BackendCountersMockPrometheusTest, registerWriteRetry)
@@ -253,10 +261,13 @@ TEST_F(BackendCountersMockPrometheusTest, registerReadFinished)
         makeMock<GaugeInt>("backend_operations_current_number", "{operation=\"read_async\",status=\"pending\"}");
     auto& completedCounter =
         makeMock<CounterInt>("backend_operations_total_number", "{operation=\"read_async\",status=\"completed\"}");
-    EXPECT_CALL(pendingCounter, value()).WillOnce(testing::Return(1));
-    EXPECT_CALL(pendingCounter, add(-1));
-    EXPECT_CALL(completedCounter, add(1));
-    counters->registerReadFinished();
+    auto& histogram = makeMock<HistogramInt>("backend_duration_milliseconds_histogram", "{operation=\"read\"}");
+    EXPECT_CALL(pendingCounter, value()).WillOnce(testing::Return(2));
+    EXPECT_CALL(pendingCounter, add(-2));
+    EXPECT_CALL(completedCounter, add(2));
+    EXPECT_CALL(histogram, observe(testing::_)).Times(2);
+    std::chrono::steady_clock::time_point const startTime{};
+    counters->registerReadFinished(startTime, 2);
 }
 
 TEST_F(BackendCountersMockPrometheusTest, registerReadRetry)

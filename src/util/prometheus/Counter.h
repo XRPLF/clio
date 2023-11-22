@@ -20,7 +20,7 @@
 #pragma once
 
 #include <util/Assert.h>
-#include <util/prometheus/Metrics.h>
+#include <util/prometheus/MetricBase.h>
 #include <util/prometheus/impl/AnyCounterBase.h>
 
 namespace util::prometheus {
@@ -28,7 +28,7 @@ namespace util::prometheus {
 /**
  * @brief A prometheus counter metric implementation. It can only be increased or be reset to zero.
  */
-template <detail::SomeNumberType NumberType>
+template <SomeNumberType NumberType>
 struct AnyCounter : MetricBase, detail::AnyCounterBase<NumberType> {
     using ValueType = NumberType;
 
@@ -91,12 +91,12 @@ struct AnyCounter : MetricBase, detail::AnyCounterBase<NumberType> {
     /**
      * @brief Serialize the counter to a string in prometheus format (i.e. name{labels} value)
      *
-     * @param result The string to serialize into
+     * @param stream The stream to serialize into
      */
     void
-    serializeValue(std::string& result) const override
+    serializeValue(OStream& stream) const override
     {
-        fmt::format_to(std::back_inserter(result), "{}{} {}", this->name(), this->labelsString(), value());
+        stream << name() << labelsString() << ' ' << value();
     }
 };
 
