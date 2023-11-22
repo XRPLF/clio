@@ -20,7 +20,7 @@
 #pragma once
 
 #include <data/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
+#include <rpc/JS.h>
 #include <rpc/common/Modifiers.h>
 #include <rpc/common/Types.h>
 #include <rpc/common/Validators.h>

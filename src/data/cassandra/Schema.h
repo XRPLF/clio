@@ -592,20 +592,6 @@ public:
             ));
         }();
 
-        PreparedStatement selectNFTBulk = [this]() {
-            return handle_.get().prepare(fmt::format(
-                R"(
-                SELECT token_id, sequence, owner, is_burned
-                  FROM {}    
-                 WHERE token_id IN ?
-                   AND sequence <= ?
-              ORDER BY sequence DESC
-   PER PARTITION LIMIT 1
-                )",
-                qualifiedTableName(settingsProvider_.get(), "nf_tokens")
-            ));
-        }();
-
         PreparedStatement selectNFTURI = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
@@ -615,20 +601,6 @@ public:
                    AND sequence <= ?
               ORDER BY sequence DESC
                  LIMIT 1
-                )",
-                qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
-            ));
-        }();
-
-        PreparedStatement selectNFTURIBulk = [this]() {
-            return handle_.get().prepare(fmt::format(
-                R"(
-                SELECT token_id, uri
-                  FROM {}    
-                 WHERE token_id IN ?
-                   AND sequence <= ?
-              ORDER BY sequence DESC
-   PER PARTITION LIMIT 1
                 )",
                 qualifiedTableName(settingsProvider_.get(), "nf_token_uris")
             ));
