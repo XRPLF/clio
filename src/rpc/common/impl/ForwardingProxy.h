@@ -103,6 +103,7 @@ public:
     isProxied(std::string const& method) const
     {
         static std::unordered_set<std::string> const proxiedCommands{
+            "server_definitions",
             "submit",
             "submit_multisigned",
             "fee",
