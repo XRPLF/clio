@@ -23,6 +23,7 @@
 #include <etl/SystemState.h>
 #include <etl/impl/AmendmentBlock.h>
 #include <etl/impl/LedgerLoader.h>
+#include <util/Assert.h>
 #include <util/LedgerUtils.h>
 #include <util/Profiler.h>
 #include <util/log/Logger.h>
@@ -113,7 +114,7 @@ public:
     void
     waitTillFinished()
     {
-        assert(thread_.joinable());
+        ASSERT(thread_.joinable(), "Transformer thread must be joinable");
         thread_.join();
     }
 
@@ -228,7 +229,7 @@ private:
 
         for (auto& obj : *(rawData.mutable_ledger_objects()->mutable_objects())) {
             auto key = ripple::uint256::fromVoidChecked(obj.key());
-            assert(key);
+            ASSERT(key.has_value(), "Failed to deserialize key from void");
 
             cacheUpdates.push_back({*key, {obj.mutable_data()->begin(), obj.mutable_data()->end()}});
             LOG(log_.debug()) << "key = " << ripple::strHex(*key) << " - mod type = " << obj.mod_type();
@@ -245,7 +246,7 @@ private:
 
                 if (isDeleted) {
                     auto const old = backend_->cache().get(*key, lgrInfo.seq - 1);
-                    assert(old);
+                    ASSERT(old.has_value(), "Deleted object must be in cache");
                     checkBookBase = isBookDir(*key, *old);
                 } else {
                     checkBookBase = isBookDir(*key, *blob);
@@ -256,7 +257,11 @@ private:
 
                     auto const bookBase = getBookBase(*key);
                     auto const oldFirstDir = backend_->cache().getSuccessor(bookBase, lgrInfo.seq - 1);
-                    assert(oldFirstDir);
+                    ASSERT(
+                        oldFirstDir.has_value(),
+                        "Book base must have a successor for lgrInfo.seq - 1 = {}",
+                        lgrInfo.seq - 1
+                    );
 
                     // We deleted the first directory, or we added a directory prior to the old first
                     // directory

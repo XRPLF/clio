@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <data/LedgerCache.h>
+#include <util/Assert.h>
 
 namespace data {
 
@@ -37,7 +38,12 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
     {
         std::scoped_lock const lck{mtx_};
         if (seq > latestSeq_) {
-            assert(seq == latestSeq_ + 1 || latestSeq_ == 0);
+            ASSERT(
+                seq == latestSeq_ + 1 || latestSeq_ == 0,
+                "New sequense must be either next or first. seq = {}, latestSeq_ = {}",
+                seq,
+                latestSeq_
+            );
             latestSeq_ = seq;
         }
         for (auto const& obj : objs) {

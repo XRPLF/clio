@@ -17,7 +17,11 @@
 */
 //==============================================================================
 
+#include <util/Assert.h>
 #include <util/prometheus/Prometheus.h>
+
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 
 namespace util::prometheus {
 
@@ -28,9 +32,7 @@ MetricType&
 convertBaseTo(MetricBase& metricBase)
 {
     auto result = dynamic_cast<MetricType*>(&metricBase);
-    assert(result != nullptr);
-    if (result == nullptr)
-        throw std::runtime_error("Failed to convert metric type");
+    ASSERT(result != nullptr, "Failed to cast metric {} to the requested type", metricBase.name());
     return *result;
 }
 
@@ -68,18 +70,57 @@ PrometheusImpl::gaugeDouble(std::string name, Labels labels, std::optional<std::
     return convertBaseTo<GaugeDouble>(metricBase);
 }
 
+HistogramInt&
+PrometheusImpl::histogramInt(
+    std::string name,
+    Labels labels,
+    std::vector<std::int64_t> const& buckets,
+    std::optional<std::string> description
+)
+{
+    MetricBase& metricBase =
+        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::HISTOGRAM_INT, buckets);
+    return convertBaseTo<HistogramInt>(metricBase);
+}
+
+HistogramDouble&
+PrometheusImpl::histogramDouble(
+    std::string name,
+    Labels labels,
+    std::vector<double> const& buckets,
+    std::optional<std::string> description
+)
+{
+    MetricBase& metricBase =
+        getMetric(std::move(name), std::move(labels), std::move(description), MetricType::HISTOGRAM_DOUBLE, buckets);
+    return convertBaseTo<HistogramDouble>(metricBase);
+}
+
 std::string
 PrometheusImpl::collectMetrics()
 {
-    std::string result;
-
     if (!isEnabled())
-        return result;
+        return {};
+
+    OStream stream{compressReplyEnabled()};
 
     for (auto const& [name, family] : metrics_) {
-        family.serialize(result);
+        stream << family;
     }
-    return result;
+    return std::move(stream).data();
+}
+
+MetricsFamily&
+PrometheusImpl::getMetricsFamily(std::string name, std::optional<std::string> description, MetricType type)
+{
+    auto it = metrics_.find(name);
+    if (it == metrics_.end()) {
+        auto nameCopy = name;
+        it = metrics_.emplace(std::move(nameCopy), MetricsFamily(std::move(name), std::move(description), type)).first;
+    } else if (it->second.type() != type) {
+        throw std::runtime_error("Metrics of different type can't have the same name: " + name);
+    }
+    return it->second;
 }
 
 MetricBase&
@@ -90,14 +131,23 @@ PrometheusImpl::getMetric(
     MetricType const type
 )
 {
-    auto it = metrics_.find(name);
-    if (it == metrics_.end()) {
-        auto nameCopy = name;
-        it = metrics_.emplace(std::move(nameCopy), MetricsFamily(std::move(name), std::move(description), type)).first;
-    } else if (it->second.type() != type) {
-        throw std::runtime_error("Metrics of different type can't have the same name: " + name);
-    }
-    return it->second.getMetric(std::move(labels));
+    auto& metricFamily = getMetricsFamily(std::move(name), std::move(description), type);
+    return metricFamily.getMetric(std::move(labels));
+}
+
+template <typename ValueType>
+    requires std::same_as<ValueType, std::int64_t> || std::same_as<ValueType, double>
+MetricBase&
+PrometheusImpl::getMetric(
+    std::string name,
+    Labels labels,
+    std::optional<std::string> description,
+    MetricType type,
+    std::vector<ValueType> const& buckets
+)
+{
+    auto& metricFamily = getMetricsFamily(std::move(name), std::move(description), type);
+    return metricFamily.getMetric(std::move(labels), buckets);
 }
 
 }  // namespace util::prometheus
@@ -105,8 +155,10 @@ PrometheusImpl::getMetric(
 void
 PrometheusService::init(util::Config const& config)
 {
-    bool const enabled = config.valueOr("prometheus_enabled", true);
-    instance_ = std::make_unique<util::prometheus::PrometheusImpl>(enabled);
+    bool const enabled = config.valueOr("prometheus.enabled", true);
+    bool const compressReply = config.valueOr("prometheus.compress_reply", true);
+
+    instance_ = std::make_unique<util::prometheus::PrometheusImpl>(enabled, compressReply);
 }
 
 util::prometheus::CounterInt&
@@ -141,6 +193,28 @@ PrometheusService::gaugeDouble(
     return instance().gaugeDouble(std::move(name), std::move(labels), std::move(description));
 }
 
+util::prometheus::HistogramInt&
+PrometheusService::histogramInt(
+    std::string name,
+    util::prometheus::Labels labels,
+    std::vector<std::int64_t> const& buckets,
+    std::optional<std::string> description
+)
+{
+    return instance().histogramInt(std::move(name), std::move(labels), buckets, std::move(description));
+}
+
+util::prometheus::HistogramDouble&
+PrometheusService::histogramDouble(
+    std::string name,
+    util::prometheus::Labels labels,
+    std::vector<double> const& buckets,
+    std::optional<std::string> description
+)
+{
+    return instance().histogramDouble(std::move(name), std::move(labels), buckets, std::move(description));
+}
+
 std::string
 PrometheusService::collectMetrics()
 {
@@ -153,6 +227,12 @@ PrometheusService::isEnabled()
     return instance().isEnabled();
 }
 
+bool
+PrometheusService::compressReplyEnabled()
+{
+    return instance().compressReplyEnabled();
+}
+
 void
 PrometheusService::replaceInstance(std::unique_ptr<util::prometheus::PrometheusInterface> instance)
 {
@@ -162,7 +242,7 @@ PrometheusService::replaceInstance(std::unique_ptr<util::prometheus::PrometheusI
 util::prometheus::PrometheusInterface&
 PrometheusService::instance()
 {
-    assert(instance_);
+    ASSERT(instance_ != nullptr, "PrometheusService::instance() called before init()");
     return *instance_;
 }
 

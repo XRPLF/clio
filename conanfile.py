@@ -1,6 +1,6 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
-import re
+
 
 class Clio(ConanFile):
     name = 'clio'
@@ -11,7 +11,7 @@ class Clio(ConanFile):
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {
         'fPIC': [True, False],
-        'verbose': [True, False],   
+        'verbose': [True, False],
         'tests': [True, False],     # build unit tests; create `clio_tests` binary
         'docs': [True, False],      # doxygen API docs; create custom target 'docs'
         'packaging': [True, False], # create distribution packages
@@ -27,6 +27,7 @@ class Clio(ConanFile):
         'grpc/1.50.1',
         'openssl/1.1.1u',
         'xrpl/2.0.0-rc1',
+        'libbacktrace/cci.20210118'
     ]
 
     default_options = {

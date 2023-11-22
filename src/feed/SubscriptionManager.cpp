@@ -20,6 +20,7 @@
 #include <feed/SubscriptionManager.h>
 #include <rpc/BookChangesHelper.h>
 #include <rpc/RPCHelpers.h>
+#include <util/Assert.h>
 
 namespace feed {
 
@@ -77,13 +78,13 @@ SubscriptionManager::subLedger(boost::asio::yield_context yield, SessionPtrType 
     subscribeHelper(session, ledgerSubscribers_, [this](SessionPtrType session) { unsubLedger(session); });
 
     auto ledgerRange = backend_->fetchLedgerRange();
-    assert(ledgerRange);
+    ASSERT(ledgerRange.has_value(), "Ledger range must be valid");
     auto lgrInfo = backend_->fetchLedgerBySequence(ledgerRange->maxSequence, yield);
-    assert(lgrInfo);
+    ASSERT(lgrInfo.has_value(), "Ledger must be valid");
 
     std::optional<ripple::Fees> fees;
     fees = backend_->fetchFees(lgrInfo->seq, yield);
-    assert(fees);
+    ASSERT(fees.has_value(), "Fees must be valid");
 
     std::string const range = std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
 

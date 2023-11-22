@@ -20,6 +20,7 @@
 #pragma once
 
 #include <rpc/Errors.h>
+#include <util/Assert.h>
 #include <web/interface/ConnectionBase.h>
 
 #include <boost/beast/http.hpp>
@@ -82,7 +83,9 @@ public:
                     case rpc::ClioError::rpcMALFORMED_ADDRESS:
                     case rpc::ClioError::rpcINVALID_HOT_WALLET:
                     case rpc::ClioError::rpcFIELD_NOT_FOUND_TRANSACTION:
-                        assert(false);  // this should never happen
+                        ASSERT(
+                            false, "Unknown rpc error code {}", static_cast<int>(*clioCode)
+                        );  // this should never happen
                         break;
                 }
             } else {

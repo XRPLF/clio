@@ -25,6 +25,7 @@
 #include <etl/impl/AsyncData.h>
 #include <etl/impl/ForwardCache.h>
 #include <feed/SubscriptionManager.h>
+#include <util/Assert.h>
 #include <util/config/Config.h>
 #include <util/log/Logger.h>
 
@@ -485,7 +486,7 @@ public:
         std::vector<std::string> edgeKeys;
 
         while (numFinished < calls.size() && cq.Next(&tag, &ok)) {
-            assert(tag);
+            ASSERT(tag != nullptr, "Tag can't be null.");
             auto ptr = static_cast<etl::detail::AsyncCallData*>(tag);
 
             if (!ok) {
@@ -794,7 +795,7 @@ private:
                 uint32_t const sequence = std::stoll(minAndMax[0]);
                 pairs.emplace_back(sequence, sequence);
             } else {
-                assert(minAndMax.size() == 2);
+                ASSERT(minAndMax.size() == 2, "Min and max should be of size 2. Got size = {}", minAndMax.size());
                 uint32_t const min = std::stoll(minAndMax[0]);
                 uint32_t const max = std::stoll(minAndMax[1]);
                 pairs.emplace_back(min, max);

@@ -16,31 +16,26 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#pragma once
 
-#include <util/Assert.h>
+#include <util/prometheus/OStream.h>
 
-#include <random>
+#include <boost/iostreams/filter/gzip.hpp>
 
-namespace util {
-
-class Random {
-public:
-    template <typename T>
-    static T
-    uniform(T min, T max)
-    {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
+namespace util::prometheus {
+OStream::OStream(bool const compressionEnabled) : compressionEnabled_(compressionEnabled)
+{
+    if (compressionEnabled_) {
+        stream_.push(boost::iostreams::gzip_compressor{
+            boost::iostreams::gzip_params{boost::iostreams::gzip::best_compression}});
     }
+    stream_.push(boost::iostreams::back_inserter(buffer_));
+}
 
-private:
-    static std::mt19937_64 generator_;
-};
+std::string
+OStream::data() &&
+{
+    stream_.reset();
+    return std::move(buffer_);
+}
 
-}  // namespace util
+}  // namespace util::prometheus

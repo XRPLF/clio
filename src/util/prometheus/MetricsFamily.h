@@ -19,84 +19,25 @@
 
 #pragma once
 
-#include <util/prometheus/Label.h>
+#include <util/prometheus/MetricBuilder.h>
 
-#include <fmt/format.h>
-
-#include <functional>
-#include <memory>
 #include <optional>
 #include <unordered_map>
 
 namespace util::prometheus {
 
 /**
- * @brief Base class for a Prometheus metric containing a name and labels
- */
-class MetricBase {
-public:
-    MetricBase(std::string name, std::string labelsString);
-
-    MetricBase(MetricBase const&) = delete;
-    MetricBase(MetricBase&&) = default;
-    MetricBase&
-    operator=(MetricBase const&) = delete;
-    MetricBase&
-    operator=(MetricBase&&) = default;
-    virtual ~MetricBase() = default;
-
-    /**
-     * @brief Serialize the metric to a string in Prometheus format
-     *
-     * @param s The string to serialize into
-     */
-    void
-    serialize(std::string& s) const;
-
-    /**
-     * @brief Get the name of the metric
-     */
-    std::string const&
-    name() const;
-
-    /**
-     * @brief Get the labels of the metric in serialized format, e.g. {name="value",name2="value2"}
-     */
-    std::string const&
-    labelsString() const;
-
-protected:
-    /**
-     * @brief Interface to serialize the value of the metric
-     *
-     * @param result The string to serialize into
-     */
-    virtual void
-    serializeValue(std::string& result) const = 0;
-
-private:
-    std::string name_;
-    std::string labelsString_;
-};
-
-enum class MetricType { COUNTER_INT, COUNTER_DOUBLE, GAUGE_INT, GAUGE_DOUBLE, HISTOGRAM, SUMMARY };
-
-char const*
-toString(MetricType type);
-
-/**
  * @brief Class representing a collection of Prometheus metric with the same name and type
  */
 class MetricsFamily {
 public:
-    using MetricBuilder = std::function<std::unique_ptr<MetricBase>(std::string, std::string, MetricType)>;
-    static MetricBuilder defaultMetricBuilder;
+    static std::unique_ptr<MetricBuilderInterface> defaultMetricBuilder;
 
     MetricsFamily(
         std::string name,
         std::optional<std::string> description,
         MetricType type,
-        MetricBuilder& builder = defaultMetricBuilder
+        MetricBuilderInterface& builder = *defaultMetricBuilder
     );
 
     MetricsFamily(MetricsFamily const&) = delete;
@@ -110,18 +51,32 @@ public:
      * @brief Get the metric with the given labels. If it does not exist, it will be created
      *
      * @param labels The labels of the metric
+     * @param buckets The buckets of the histogram. It is ignored for other metric types or if the metric already exists
      * @return Reference to the metric
      */
     MetricBase&
-    getMetric(Labels labels);
+    getMetric(Labels labels, std::vector<std::int64_t> const& buckets = {});
 
     /**
-     * @brief Serialize all the containing metrics to a string in Prometheus format as one block
+     * @brief Get the metric with the given labels. If it does not exist, it will be created
      *
-     * @param result The string to serialize into
+     * @note This overload is only used for histograms with integer buckets
+     *
+     * @param labels The labels of the metric
+     * @param buckets The buckets of the histogram. It is ignored for other metric types or if the metric already exists
+     * @return Reference to the metric
      */
-    void
-    serialize(std::string& result) const;
+    MetricBase&
+    getMetric(Labels labels, std::vector<double> const& buckets);
+
+    /**
+     * @brief Serialize the metrics to a string in Prometheus format as one block
+     *
+     * @param stream The stream to serialize into
+     * @param metricsFamily The metrics to serialize
+     */
+    friend OStream&
+    operator<<(OStream& stream, MetricsFamily const& metricsFamily);
 
     std::string const&
     name() const;
@@ -134,7 +89,12 @@ private:
     std::optional<std::string> description_;
     std::unordered_map<std::string, std::unique_ptr<MetricBase>> metrics_;
     MetricType type_;
-    MetricBuilder& metricBuilder_;
+    MetricBuilderInterface& metricBuilder_;
+
+    template <typename ValueType>
+        requires std::same_as<ValueType, std::int64_t> || std::same_as<ValueType, double>
+    MetricBase&
+    getMetricImpl(Labels labels, std::vector<ValueType> const& buckets);
 };
 
 }  // namespace util::prometheus

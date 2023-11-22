@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include <etl/ETLService.h>
+#include <util/Assert.h>
 #include <util/Constants.h>
 
 #include <ripple/protocol/LedgerHeader.h>
@@ -35,11 +36,14 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     LOG(log_.debug()) << "Starting etl pipeline";
     state_.isWriting = true;
 
-    auto rng = backend_->hardFetchLedgerRangeNoThrow();
-    if (!rng || rng->maxSequence < startSequence - 1) {
-        assert(false);
-        throw std::runtime_error("runETLPipeline: parent ledger is null");
-    }
+    auto const rng = backend_->hardFetchLedgerRangeNoThrow();
+    ASSERT(rng.has_value(), "Parent ledger range can't be null");
+    ASSERT(
+        rng->maxSequence < startSequence - 1,
+        "Got not parent ledger. rnd->maxSequence = {}, startSequence = {}",
+        rng->maxSequence,
+        startSequence
+    );
 
     auto const begin = std::chrono::system_clock::now();
     auto extractors = std::vector<std::unique_ptr<ExtractorType>>{};
@@ -125,7 +129,7 @@ ETLService::monitor()
         cacheLoader_.load(rng->maxSequence);
     }
 
-    assert(rng);
+    ASSERT(rng.has_value(), "Ledger range can't be null");
     uint32_t nextSequence = rng->maxSequence + 1;
 
     LOG(log_.debug()) << "Database is populated. "

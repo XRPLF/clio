@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <util/prometheus/Metrics.h>
+#include <util/prometheus/MetricBase.h>
 #include <util/prometheus/impl/AnyCounterBase.h>
 
 namespace util::prometheus {
@@ -27,7 +27,7 @@ namespace util::prometheus {
 /**
  * @brief A prometheus gauge metric implementation. It can be increased, decreased or set to a value.
  */
-template <detail::SomeNumberType NumberType>
+template <SomeNumberType NumberType>
 struct AnyGauge : MetricBase, detail::AnyCounterBase<NumberType> {
     using ValueType = NumberType;
 
@@ -113,12 +113,12 @@ struct AnyGauge : MetricBase, detail::AnyCounterBase<NumberType> {
     /**
      * @brief Serialize the counter to a string in prometheus format (i.e. name{labels} value)
      *
-     * @param result The string to serialize into
+     * @param stream The stream to serialize into
      */
     void
-    serializeValue(std::string& result) const override
+    serializeValue(OStream& stream) const override
     {
-        fmt::format_to(std::back_inserter(result), "{}{} {}", this->name(), this->labelsString(), value());
+        stream << name() << labelsString() << ' ' << value();
     }
 };
 

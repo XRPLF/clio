@@ -33,23 +33,43 @@ namespace data {
 /**
  * @brief A concept for a class that can be used to count backend operations.
  */
-// clang-format off
 template <typename T>
 concept SomeBackendCounters = requires(T a) {
     typename T::PtrType;
-    { a.registerTooBusy() } -> std::same_as<void>;
-    { a.registerWriteSync() } -> std::same_as<void>;
-    { a.registerWriteSyncRetry() } -> std::same_as<void>;
-    { a.registerWriteStarted() } -> std::same_as<void>;
-    { a.registerWriteFinished() } -> std::same_as<void>;
-    { a.registerWriteRetry() } -> std::same_as<void>;
-    { a.registerReadStarted(std::uint64_t{}) } -> std::same_as<void>;
-    { a.registerReadFinished(std::uint64_t{}) } -> std::same_as<void>;
-    { a.registerReadRetry(std::uint64_t{}) } -> std::same_as<void>;
-    { a.registerReadError(std::uint64_t{}) } -> std::same_as<void>;
-    { a.report() } -> std::same_as<boost::json::object>;
+    {
+        a.registerTooBusy()
+    } -> std::same_as<void>;
+    {
+        a.registerWriteSync(std::chrono::steady_clock::time_point{})
+    } -> std::same_as<void>;
+    {
+        a.registerWriteSyncRetry()
+    } -> std::same_as<void>;
+    {
+        a.registerWriteStarted()
+    } -> std::same_as<void>;
+    {
+        a.registerWriteFinished(std::chrono::steady_clock::time_point{})
+    } -> std::same_as<void>;
+    {
+        a.registerWriteRetry()
+    } -> std::same_as<void>;
+    {
+        a.registerReadStarted(std::uint64_t{})
+    } -> std::same_as<void>;
+    {
+        a.registerReadFinished(std::chrono::steady_clock::time_point{}, std::uint64_t{})
+    } -> std::same_as<void>;
+    {
+        a.registerReadRetry(std::uint64_t{})
+    } -> std::same_as<void>;
+    {
+        a.registerReadError(std::uint64_t{})
+    } -> std::same_as<void>;
+    {
+        a.report()
+    } -> std::same_as<boost::json::object>;
 };
-// clang-format on
 
 /**
  * @brief Holds statistics about the backend.
@@ -67,7 +87,7 @@ public:
     registerTooBusy();
 
     void
-    registerWriteSync();
+    registerWriteSync(std::chrono::steady_clock::time_point startTime);
 
     void
     registerWriteSyncRetry();
@@ -76,7 +96,7 @@ public:
     registerWriteStarted();
 
     void
-    registerWriteFinished();
+    registerWriteFinished(std::chrono::steady_clock::time_point startTime);
 
     void
     registerWriteRetry();
@@ -85,7 +105,7 @@ public:
     registerReadStarted(std::uint64_t count = 1u);
 
     void
-    registerReadFinished(std::uint64_t count = 1u);
+    registerReadFinished(std::chrono::steady_clock::time_point startTime, std::uint64_t count = 1u);
 
     void
     registerReadRetry(std::uint64_t count = 1u);
@@ -133,6 +153,9 @@ private:
 
     AsyncOperationCounters asyncWriteCounters_{"write_async"};
     AsyncOperationCounters asyncReadCounters_{"read_async"};
+
+    std::reference_wrapper<util::prometheus::HistogramInt> readDurationHistogram_;
+    std::reference_wrapper<util::prometheus::HistogramInt> writeDurationHistogram_;
 };
 
 }  // namespace data

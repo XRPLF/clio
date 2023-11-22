@@ -16,31 +16,42 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#pragma once
 
-#include <util/Assert.h>
+#include <util/prometheus/OStream.h>
 
-#include <random>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <gtest/gtest.h>
 
-namespace util {
+using namespace util::prometheus;
 
-class Random {
-public:
-    template <typename T>
-    static T
-    uniform(T min, T max)
-    {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
-    }
+TEST(OStreamTests, empty)
+{
+    OStream stream{false};
+    EXPECT_EQ(std::move(stream).data(), "");
+}
 
-private:
-    static std::mt19937_64 generator_;
-};
+TEST(OStreamTests, string)
+{
+    OStream stream{false};
+    stream << "hello";
+    EXPECT_EQ(std::move(stream).data(), "hello");
+}
 
-}  // namespace util
+TEST(OStreamTests, compression)
+{
+    OStream stream{true};
+    std::string const str = "helloooooooooooooooooooooooooooooooooo";
+    stream << str;
+    auto const compressed = std::move(stream).data();
+    EXPECT_LT(compressed.size(), str.size());
+
+    std::string const decompressed = [&compressed]() {
+        std::string result;
+        boost::iostreams::filtering_istream stream;
+        stream.push(boost::iostreams::gzip_decompressor{});
+        stream.push(boost::iostreams::array_source{compressed.data(), compressed.size()});
+        stream >> result;
+        return result;
+    }();
+    EXPECT_EQ(decompressed, str);
+}

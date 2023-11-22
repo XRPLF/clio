@@ -24,6 +24,7 @@
 #include <rpc/Counters.h>
 #include <rpc/RPCEngine.h>
 #include <rpc/common/impl/HandlerProvider.h>
+#include <util/TerminationHandler.h>
 #include <util/config/Config.h>
 #include <util/prometheus/Prometheus.h>
 #include <web/RPCServerHandler.h>
@@ -147,6 +148,7 @@ start(io_context& ioc, std::uint32_t numThreads)
 int
 main(int argc, char* argv[])
 try {
+    util::setTerminationHandler();
     auto const configPath = parseCli(argc, argv);
     auto const config = ConfigReader::open(configPath);
     if (!config) {
@@ -218,4 +220,8 @@ try {
     return EXIT_SUCCESS;
 } catch (std::exception const& e) {
     LOG(LogService::fatal()) << "Exit on exception: " << e.what();
+    return EXIT_FAILURE;
+} catch (...) {
+    LOG(LogService::fatal()) << "Exit on exception: unknown";
+    return EXIT_FAILURE;
 }

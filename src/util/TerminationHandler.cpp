@@ -16,31 +16,35 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#pragma once
 
-#include <util/Assert.h>
+#include <util/TerminationHandler.h>
+#include <util/log/Logger.h>
 
-#include <random>
+#include <boost/stacktrace.hpp>
+
+#include <iostream>
 
 namespace util {
 
-class Random {
-public:
-    template <typename T>
-    static T
-    uniform(T min, T max)
-    {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
-    }
+namespace {
 
-private:
-    static std::mt19937_64 generator_;
-};
+void
+terminationHandler()
+{
+    try {
+        LOG(LogService::fatal()) << "Exit on terminate. Backtrace:\n" << boost::stacktrace::stacktrace();
+    } catch (...) {
+        LOG(LogService::fatal()) << "Exit on terminate. Can't get backtrace.";
+    }
+    std::abort();
+}
+
+}  // namespace
+
+void
+setTerminationHandler()
+{
+    std::set_terminate(terminationHandler);
+}
 
 }  // namespace util

@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include <util/Assert.h>
 #include <util/Fixtures.h>
 #include <util/config/Config.h>
 
@@ -192,7 +193,7 @@ struct Custom {
     friend Custom
     tag_invoke(json::value_to_tag<Custom>, json::value const& value)
     {
-        assert(value.is_object());
+        ASSERT(value.is_object(), "Value must be an object");
         auto const& obj = value.as_object();
         return {obj.at("str").as_string().c_str(), obj.at("int").as_int64(), obj.at("bool").as_bool()};
     }

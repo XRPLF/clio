@@ -16,31 +16,56 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
 
-#include <util/Assert.h>
+#include <boost/iostreams/filtering_stream.hpp>
 
-#include <random>
+#include <string>
 
-namespace util {
+namespace util::prometheus {
 
-class Random {
+/**
+ * @brief A stream that can optionally compress its data
+ */
+class OStream {
 public:
+    /**
+     * @brief Construct a new OStream object
+     *
+     * @param compressionEnabled Whether to compress the data
+     */
+    OStream(bool compressionEnabled);
+
+    OStream(OStream const&) = delete;
+    OStream(OStream&&) = delete;
+    ~OStream() = default;
+
+    /**
+     * @brief Write to the stream
+     */
     template <typename T>
-    static T
-    uniform(T min, T max)
+    OStream&
+    operator<<(T const& value)
     {
-        ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
-        if constexpr (std::is_floating_point_v<T>) {
-            std::uniform_real_distribution<T> distribution(min, max);
-            return distribution(generator_);
-        }
-        std::uniform_int_distribution<T> distribution(min, max);
-        return distribution(generator_);
+        stream_ << value;
+        return *this;
     }
 
+    /**
+     * @brief Get the data from the stream.
+     *
+     * @note This resets the stream and clears the buffer. Stream cannot be used after this.
+     *
+     * @return The data
+     */
+    std::string
+    data() &&;
+
 private:
-    static std::mt19937_64 generator_;
+    bool compressionEnabled_;
+    std::string buffer_;
+    boost::iostreams::filtering_ostream stream_;
 };
 
-}  // namespace util
+}  // namespace util::prometheus

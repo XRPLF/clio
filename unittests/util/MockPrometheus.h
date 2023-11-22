@@ -26,7 +26,7 @@
 
 namespace util::prometheus {
 
-template <detail::SomeNumberType NumberType>
+template <SomeNumberType NumberType>
 struct MockCounterImpl {
     using ValueType = NumberType;
 
@@ -39,8 +39,26 @@ using MockCounterImplInt = MockCounterImpl<std::int64_t>;
 using MockCounterImplUint = MockCounterImpl<std::uint64_t>;
 using MockCounterImplDouble = MockCounterImpl<double>;
 
+template <typename NumberType>
+    requires std::same_as<NumberType, std::int64_t> || std::same_as<NumberType, double>
+struct MockHistogramImpl {
+    using ValueType = NumberType;
+
+    MockHistogramImpl()
+    {
+        EXPECT_CALL(*this, setBuckets);
+    }
+
+    MOCK_METHOD(void, observe, (ValueType), ());
+    MOCK_METHOD(void, setBuckets, (std::vector<ValueType> const&), ());
+    MOCK_METHOD(void, serializeValue, (std::string const&, std::string, OStream&), (const));
+};
+
+using MockHistogramImplInt = MockHistogramImpl<std::int64_t>;
+using MockHistogramImplDouble = MockHistogramImpl<double>;
+
 struct MockPrometheusImpl : PrometheusInterface {
-    MockPrometheusImpl() : PrometheusInterface(true)
+    MockPrometheusImpl() : PrometheusInterface(true, true)
     {
         EXPECT_CALL(*this, counterInt)
             .WillRepeatedly([this](std::string name, Labels labels, std::optional<std::string>) -> CounterInt& {
@@ -58,12 +76,34 @@ struct MockPrometheusImpl : PrometheusInterface {
             .WillRepeatedly([this](std::string name, Labels labels, std::optional<std::string>) -> GaugeDouble& {
                 return getMetric<GaugeDouble>(std::move(name), std::move(labels));
             });
+        EXPECT_CALL(*this, histogramInt)
+            .WillRepeatedly(
+                [this](std::string name, Labels labels, std::vector<std::int64_t> const&, std::optional<std::string>)
+                    -> HistogramInt& { return getMetric<HistogramInt>(std::move(name), std::move(labels)); }
+            );
+        EXPECT_CALL(*this, histogramDouble)
+            .WillRepeatedly(
+                [this](std::string name, Labels labels, std::vector<double> const&, std::optional<std::string>)
+                    -> HistogramDouble& { return getMetric<HistogramDouble>(std::move(name), std::move(labels)); }
+            );
     }
 
     MOCK_METHOD(CounterInt&, counterInt, (std::string, Labels, std::optional<std::string>), (override));
     MOCK_METHOD(CounterDouble&, counterDouble, (std::string, Labels, std::optional<std::string>), (override));
     MOCK_METHOD(GaugeInt&, gaugeInt, (std::string, Labels, std::optional<std::string>), (override));
     MOCK_METHOD(GaugeDouble&, gaugeDouble, (std::string, Labels, std::optional<std::string>), (override));
+    MOCK_METHOD(
+        HistogramInt&,
+        histogramInt,
+        (std::string, Labels, std::vector<std::int64_t> const&, std::optional<std::string>),
+        (override)
+    );
+    MOCK_METHOD(
+        HistogramDouble&,
+        histogramDouble,
+        (std::string, Labels, std::vector<double> const&, std::optional<std::string>),
+        (override)
+    );
     MOCK_METHOD(std::string, collectMetrics, (), (override));
 
     template <typename MetricType>
@@ -78,8 +118,7 @@ struct MockPrometheusImpl : PrometheusInterface {
         }
         auto* basePtr = it->second.get();
         auto* metricPtr = dynamic_cast<MetricType*>(basePtr);
-        if (metricPtr == nullptr)
-            throw std::runtime_error("Wrong metric type");
+        ASSERT(metricPtr != nullptr, "Wrong metric type");
         return *metricPtr;
     }
 
@@ -89,20 +128,27 @@ struct MockPrometheusImpl : PrometheusInterface {
     {
         std::unique_ptr<MetricBase> metric;
         auto const key = name + labelsString;
-        if constexpr (std::is_same_v<typename MetricType::ValueType, std::int64_t>) {
+        if constexpr (std::is_same_v<MetricType, GaugeInt>) {
             auto& impl = counterIntImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
-        } else if constexpr (std::is_same_v<typename MetricType::ValueType, std::uint64_t>) {
+        } else if constexpr (std::is_same_v<MetricType, CounterInt>) {
             auto& impl = counterUintImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
-        } else {
+        } else if constexpr (std::is_same_v<MetricType, GaugeDouble> || std::is_same_v<MetricType, CounterDouble>) {
             auto& impl = counterDoubleImpls[key];
             metric = std::make_unique<MetricType>(name, labelsString, impl);
+        } else if constexpr (std::is_same_v<MetricType, HistogramInt>) {
+            auto& impl = histogramIntImpls[key];
+            metric = std::make_unique<MetricType>(name, labelsString, std::vector<std::int64_t>{1}, impl);
+        } else if constexpr (std::is_same_v<MetricType, HistogramDouble>) {
+            auto& impl = histogramDoubleImpls[key];
+            metric = std::make_unique<MetricType>(name, labelsString, std::vector<double>{1.}, impl);
+        } else {
+            throw std::runtime_error("Wrong metric type");
         }
         auto* ptr = metrics.emplace(key, std::move(metric)).first->second.get();
         auto metricPtr = dynamic_cast<MetricType*>(ptr);
-        if (metricPtr == nullptr)
-            throw std::runtime_error("Wrong metric type");
+        ASSERT(metricPtr != nullptr, "Wrong metric type");
         return *metricPtr;
     }
 
@@ -110,6 +156,8 @@ struct MockPrometheusImpl : PrometheusInterface {
     std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplInt>> counterIntImpls;
     std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplUint>> counterUintImpls;
     std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplDouble>> counterDoubleImpls;
+    std::unordered_map<std::string, ::testing::StrictMock<MockHistogramImplInt>> histogramIntImpls;
+    std::unordered_map<std::string, ::testing::StrictMock<MockHistogramImplDouble>> histogramDoubleImpls;
 };
 
 /**
@@ -137,8 +185,7 @@ struct WithMockPrometheus : virtual ::testing::Test {
     mockPrometheus()
     {
         auto* ptr = dynamic_cast<MockPrometheusImpl*>(&PrometheusService::instance());
-        if (ptr == nullptr)
-            throw std::runtime_error("Wrong prometheus type");
+        ASSERT(ptr != nullptr, "Wrong prometheus type");
         return *ptr;
     }
 
@@ -147,19 +194,25 @@ struct WithMockPrometheus : virtual ::testing::Test {
     makeMock(std::string name, std::string labelsString)
     {
         auto* mockPrometheusPtr = dynamic_cast<MockPrometheusImpl*>(&PrometheusService::instance());
-        if (mockPrometheusPtr == nullptr)
-            throw std::runtime_error("Wrong prometheus type");
+        ASSERT(mockPrometheusPtr != nullptr, "Wrong prometheus type");
 
         std::string const key = name + labelsString;
-        mockPrometheusPtr->makeMetric<MetricType>(std::move(name), std::move(labelsString));
-        if constexpr (std::is_same_v<typename MetricType::ValueType, std::int64_t>) {
+
+        if (!mockPrometheusPtr->metrics.contains(key))
+            mockPrometheusPtr->makeMetric<MetricType>(std::move(name), std::move(labelsString));
+
+        if constexpr (std::is_same_v<MetricType, GaugeInt>) {
             return mockPrometheusPtr->counterIntImpls[key];
-        } else if constexpr (std::is_same_v<typename MetricType::ValueType, std::uint64_t>) {
+        } else if constexpr (std::is_same_v<MetricType, CounterInt>) {
             return mockPrometheusPtr->counterUintImpls[key];
-        } else if constexpr (std::is_same_v<typename MetricType::ValueType, double>) {
+        } else if constexpr (std::is_same_v<MetricType, GaugeDouble> || std::is_same_v<MetricType, CounterDouble>) {
             return mockPrometheusPtr->counterDoubleImpls[key];
+        } else if constexpr (std::is_same_v<MetricType, HistogramInt>) {
+            return mockPrometheusPtr->histogramIntImpls[key];
+        } else if constexpr (std::is_same_v<MetricType, HistogramDouble>) {
+            return mockPrometheusPtr->histogramDoubleImpls[key];
         }
-        throw std::runtime_error("Wrong metric type");
+        ASSERT(false, "Wrong metric type for metric {} {}", name, labelsString);
     }
 };
 
@@ -169,7 +222,8 @@ struct WithMockPrometheus : virtual ::testing::Test {
 struct WithPrometheus : virtual ::testing::Test {
     WithPrometheus()
     {
-        PrometheusService::init();
+        boost::json::value const config{{"prometheus", boost::json::object{{"compress_reply", false}}}};
+        PrometheusService::init(Config{config});
     }
 
     ~WithPrometheus() override

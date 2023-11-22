@@ -44,6 +44,7 @@ include (CMake/deps/OpenSSL.cmake)
 include (CMake/deps/Threads.cmake)
 include (CMake/deps/libfmt.cmake)
 include (CMake/deps/cassandra.cmake)
+include (CMake/deps/libbacktrace.cmake)
 
 # TODO: Include directory will be wrong when installed.
 target_include_directories (clio PUBLIC src)
@@ -56,11 +57,14 @@ target_link_libraries (clio
   PUBLIC Boost::system
   PUBLIC Boost::log
   PUBLIC Boost::log_setup
+  PUBLIC Boost::stacktrace_backtrace
   PUBLIC cassandra-cpp-driver::cassandra-cpp-driver
   PUBLIC fmt::fmt
   PUBLIC OpenSSL::Crypto
   PUBLIC OpenSSL::SSL
   PUBLIC xrpl::libxrpl
+  PUBLIC dl
+  PUBLIC libbacktrace::libbacktrace
 
   INTERFACE Threads::Threads
 )
@@ -140,10 +144,15 @@ target_sources (clio PRIVATE
   src/util/log/Logger.cpp
   src/util/prometheus/Http.cpp
   src/util/prometheus/Label.cpp
-  src/util/prometheus/Metrics.cpp
+  src/util/prometheus/MetricBase.cpp
+  src/util/prometheus/MetricBuilder.cpp
+  src/util/prometheus/MetricsFamily.cpp
+  src/util/prometheus/OStream.cpp
   src/util/prometheus/Prometheus.cpp
   src/util/Random.cpp
-  src/util/Taggable.cpp)
+  src/util/Taggable.cpp
+  src/util/TerminationHandler.cpp
+)
 
 # Clio server
 add_executable (clio_server src/main/Main.cpp)
@@ -167,13 +176,17 @@ if (tests)
     unittests/DOSGuardTests.cpp
     unittests/SubscriptionTests.cpp
     unittests/SubscriptionManagerTests.cpp
+    unittests/util/AssertTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
     unittests/util/prometheus/CounterTests.cpp
     unittests/util/prometheus/GaugeTests.cpp
+    unittests/util/prometheus/HistogramTests.cpp
     unittests/util/prometheus/HttpTests.cpp
     unittests/util/prometheus/LabelTests.cpp
-    unittests/util/prometheus/MetricsTests.cpp
+    unittests/util/prometheus/MetricBuilderTests.cpp
+    unittests/util/prometheus/MetricsFamilyTests.cpp
+    unittests/util/prometheus/OStreamTests.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp
