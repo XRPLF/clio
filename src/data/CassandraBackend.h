@@ -494,41 +494,39 @@ public:
         if (nftIDs.size() == limit)
             ret.cursor = nftIDs.back();
 
-        auto const nftQueryStatement = schema_->selectNFTBulk.bind(nftIDs);
-        nftQueryStatement.bindAt(1, ledgerSequence);
+        std::vector<Statement> selectNFTStatements;
+        selectNFTStatements.reserve(nftIDs.size());
 
-        // Fetch all the NFT data, meanwhile filtering out the NFTs that are not within the ledger range
-        auto const nftRes = executor_.read(yield, nftQueryStatement);
-        auto const& nftQueryResults = nftRes.value();
+        std::transform(
+            std::cbegin(nftIDs),
+            std::cend(nftIDs),
+            std::back_inserter(selectNFTStatements),
+            [&](auto const& nftID) { return schema_->selectNFT.bind(nftID, ledgerSequence); }
+        );
 
-        if (not nftQueryResults.hasRows()) {
-            LOG(log_.debug()) << "No rows returned";
-            return {};
+        auto const nftInfos = executor_.readEach(yield, selectNFTStatements);
+
+        std::vector<Statement> selectNFTURIStatements;
+        selectNFTURIStatements.reserve(nftIDs.size());
+
+        std::transform(
+            std::cbegin(nftIDs),
+            std::cend(nftIDs),
+            std::back_inserter(selectNFTURIStatements),
+            [&](auto const& nftID) { return schema_->selectNFTURI.bind(nftID, ledgerSequence); }
+        );
+
+        auto const nftUris = executor_.readEach(yield, selectNFTURIStatements);
+
+        for (auto i = 0u; i < nftIDs.size(); i++) {
+            if (auto const maybeRow = nftInfos[i].template get<uint32_t, ripple::AccountID, bool>(); maybeRow) {
+                auto [seq, owner, isBurned] = *maybeRow;
+                NFT nft(nftIDs[i], seq, owner, isBurned);
+                if (auto const maybeUri = nftUris[i].template get<ripple::Blob>(); maybeUri)
+                    nft.uri = *maybeUri;
+                ret.nfts.push_back(nft);
+            }
         }
-
-        auto const nftURIQueryStatement = schema_->selectNFTURIBulk.bind(nftIDs);
-        nftURIQueryStatement.bindAt(1, ledgerSequence);
-
-        // Get the URI for each NFT, but it's possible that URI doesn't exist
-        auto const uriRes = executor_.read(yield, nftURIQueryStatement);
-        auto const& nftURIQueryResults = uriRes.value();
-
-        std::unordered_map<std::string, Blob> nftURIMap;
-        for (auto const [nftID, uri] : extract<ripple::uint256, Blob>(nftURIQueryResults))
-            nftURIMap.insert({ripple::strHex(nftID), uri});
-
-        for (auto const [nftID, seq, owner, isBurned] :
-             extract<ripple::uint256, std::uint32_t, ripple::AccountID, bool>(nftQueryResults)) {
-            NFT nft;
-            nft.tokenID = nftID;
-            nft.ledgerSequence = seq;
-            nft.owner = owner;
-            nft.isBurned = isBurned;
-            if (nftURIMap.contains(ripple::strHex(nft.tokenID)))
-                nft.uri = nftURIMap.at(ripple::strHex(nft.tokenID));
-            ret.nfts.push_back(nft);
-        }
-
         return ret;
     }
 
