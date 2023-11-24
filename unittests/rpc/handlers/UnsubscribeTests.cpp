@@ -86,50 +86,59 @@ generateTestValuesForParametersTest()
             "AccountsNotArray",
             R"({"accounts": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})",
             "invalidParams",
-            "accountsNotArray"},
+            "accountsNotArray"
+        },
         UnsubscribeParamTestCaseBundle{
-            "AccountsItemNotString", R"({"accounts": [123]})", "invalidParams", "accounts'sItemNotString"},
+            "AccountsItemNotString", R"({"accounts": [123]})", "invalidParams", "accounts'sItemNotString"
+        },
         UnsubscribeParamTestCaseBundle{
-            "AccountsItemInvalidString", R"({"accounts": ["123"]})", "actMalformed", "accounts'sItemMalformed"},
+            "AccountsItemInvalidString", R"({"accounts": ["123"]})", "actMalformed", "accounts'sItemMalformed"
+        },
         UnsubscribeParamTestCaseBundle{
-            "AccountsEmptyArray", R"({"accounts": []})", "actMalformed", "accounts malformed."},
+            "AccountsEmptyArray", R"({"accounts": []})", "actMalformed", "accounts malformed."
+        },
         UnsubscribeParamTestCaseBundle{
             "AccountsProposedNotArray",
             R"({"accounts_proposed": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})",
             "invalidParams",
-            "accounts_proposedNotArray"},
+            "accounts_proposedNotArray"
+        },
         UnsubscribeParamTestCaseBundle{
             "AccountsProposedItemNotString",
             R"({"accounts_proposed": [123]})",
             "invalidParams",
-            "accounts_proposed'sItemNotString"},
+            "accounts_proposed'sItemNotString"
+        },
         UnsubscribeParamTestCaseBundle{
             "AccountsProposedItemInvalidString",
             R"({"accounts_proposed": ["123"]})",
             "actMalformed",
-            "accounts_proposed'sItemMalformed"},
+            "accounts_proposed'sItemMalformed"
+        },
         UnsubscribeParamTestCaseBundle{
-            "AccountsProposedEmptyArray",
-            R"({"accounts_proposed": []})",
-            "actMalformed",
-            "accounts_proposed malformed."},
+            "AccountsProposedEmptyArray", R"({"accounts_proposed": []})", "actMalformed", "accounts_proposed malformed."
+        },
         UnsubscribeParamTestCaseBundle{"StreamsNotArray", R"({"streams": 1})", "invalidParams", "streamsNotArray"},
         UnsubscribeParamTestCaseBundle{"StreamNotString", R"({"streams": [1]})", "invalidParams", "streamNotString"},
         UnsubscribeParamTestCaseBundle{
-            "StreamNotValid", R"({"streams": ["1"]})", "malformedStream", "Stream malformed."},
+            "StreamNotValid", R"({"streams": ["1"]})", "malformedStream", "Stream malformed."
+        },
         UnsubscribeParamTestCaseBundle{"BooksNotArray", R"({"books": "1"})", "invalidParams", "booksNotArray"},
         UnsubscribeParamTestCaseBundle{
-            "BooksItemNotObject", R"({"books": ["1"]})", "invalidParams", "booksItemNotObject"},
+            "BooksItemNotObject", R"({"books": ["1"]})", "invalidParams", "booksItemNotObject"
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemMissingTakerPays",
             R"({"books": [{"taker_gets": {"currency": "XRP"}}]})",
             "invalidParams",
-            "Missing field 'taker_pays'"},
+            "Missing field 'taker_pays'"
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemMissingTakerGets",
             R"({"books": [{"taker_pays": {"currency": "XRP"}}]})",
             "invalidParams",
-            "Missing field 'taker_gets'"},
+            "Missing field 'taker_gets'"
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerGetsNotObject",
             R"({
@@ -145,7 +154,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "invalidParams",
-            "Field 'taker_gets' is not an object"},
+            "Field 'taker_gets' is not an object"
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerPaysNotObject",
             R"({
@@ -161,7 +171,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "invalidParams",
-            "Field 'taker_pays' is not an object"},
+            "Field 'taker_pays' is not an object"
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerPaysMissingCurrency",
             R"({
@@ -177,7 +188,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcCurMalformed",
-            "Source currency is malformed."},
+            "Source currency is malformed."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerGetsMissingCurrency",
             R"({
@@ -193,7 +205,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstAmtMalformed",
-            "Destination amount/currency/issuer is malformed."},
+            "Destination amount/currency/issuer is malformed."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerPaysCurrencyNotString",
             R"({
@@ -212,7 +225,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcCurMalformed",
-            "Source currency is malformed."},
+            "Source currency is malformed."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerGetsCurrencyNotString",
             R"({
@@ -231,7 +245,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstAmtMalformed",
-            "Destination amount/currency/issuer is malformed."},
+            "Destination amount/currency/issuer is malformed."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerPaysInvalidCurrency",
             R"({
@@ -250,7 +265,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcCurMalformed",
-            "Source currency is malformed."},
+            "Source currency is malformed."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerGetsInvalidCurrency",
             R"({
@@ -269,7 +285,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstAmtMalformed",
-            "Destination amount/currency/issuer is malformed."},
+            "Destination amount/currency/issuer is malformed."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerPaysMissingIssuer",
             R"({
@@ -287,7 +304,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcIsrMalformed",
-            "Invalid field 'taker_pays.issuer', expected non-XRP issuer."},
+            "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerGetsMissingIssuer",
             R"({
@@ -305,7 +323,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstIsrMalformed",
-            "Invalid field 'taker_gets.issuer', expected non-XRP issuer."},
+            "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerPaysIssuerNotString",
             R"({
@@ -324,7 +343,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "invalidParams",
-            "takerPaysIssuerNotString"},
+            "takerPaysIssuerNotString"
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerGetsIssuerNotString",
             R"({
@@ -343,7 +363,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "invalidParams",
-            "taker_gets.issuer should be string"},
+            "taker_gets.issuer should be string"
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerPaysInvalidIssuer",
             R"({
@@ -362,7 +383,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcIsrMalformed",
-            "Source issuer is malformed."},
+            "Source issuer is malformed."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerGetsInvalidIssuer",
             R"({
@@ -381,7 +403,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstIsrMalformed",
-            "Invalid field 'taker_gets.issuer', bad issuer."},
+            "Invalid field 'taker_gets.issuer', bad issuer."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerGetsXRPHasIssuer",
             R"({
@@ -401,7 +424,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstIsrMalformed",
-            "Unneeded field 'taker_gets.issuer' for XRP currency specification."},
+            "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemTakerPaysXRPHasIssuer",
             R"({
@@ -421,7 +445,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcIsrMalformed",
-            "Unneeded field 'taker_pays.issuer' for XRP currency specification."},
+            "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemBadMartket",
             R"({
@@ -439,7 +464,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "badMarket",
-            "badMarket"},
+            "badMarket"
+        },
         UnsubscribeParamTestCaseBundle{
             "BooksItemInvalidBoth",
             R"({
@@ -459,22 +485,26 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "invalidParams",
-            "bothNotBool"},
+            "bothNotBool"
+        },
         UnsubscribeParamTestCaseBundle{
             "StreamPeerStatusNotSupport",
             R"({"streams": ["peer_status"]})",
             "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"},
+            "Requested operation not supported by reporting mode server"
+        },
         UnsubscribeParamTestCaseBundle{
             "StreamConsensusNotSupport",
             R"({"streams": ["consensus"]})",
             "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"},
+            "Requested operation not supported by reporting mode server"
+        },
         UnsubscribeParamTestCaseBundle{
             "StreamServerNotSupport",
             R"({"streams": ["server"]})",
             "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"},
+            "Requested operation not supported by reporting mode server"
+        },
     };
 }
 

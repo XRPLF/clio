@@ -68,59 +68,70 @@ generateTestValuesForParametersTest()
 {
     return std::vector<AccountObjectsParamTestCaseBundle>{
         AccountObjectsParamTestCaseBundle{
-            "MissingAccount", R"({})", "invalidParams", "Required field 'account' missing"},
+            "MissingAccount", R"({})", "invalidParams", "Required field 'account' missing"
+        },
         AccountObjectsParamTestCaseBundle{"AccountNotString", R"({"account":1})", "invalidParams", "accountNotString"},
         AccountObjectsParamTestCaseBundle{"AccountInvalid", R"({"account":"xxx"})", "actMalformed", "accountMalformed"},
         AccountObjectsParamTestCaseBundle{
             "TypeNotString",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":1})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         AccountObjectsParamTestCaseBundle{
             "TypeInvalid",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":"wrong"})",
             "invalidParams",
-            "Invalid field 'type'."},
+            "Invalid field 'type'."
+        },
         AccountObjectsParamTestCaseBundle{
             "LedgerHashInvalid",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})",
             "invalidParams",
-            "ledger_hashMalformed"},
+            "ledger_hashMalformed"
+        },
         AccountObjectsParamTestCaseBundle{
             "LedgerHashNotString",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":1})",
             "invalidParams",
-            "ledger_hashNotString"},
+            "ledger_hashNotString"
+        },
         AccountObjectsParamTestCaseBundle{
             "LedgerIndexInvalid",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})",
             "invalidParams",
-            "ledgerIndexMalformed"},
+            "ledgerIndexMalformed"
+        },
         AccountObjectsParamTestCaseBundle{
             "LimitNotInt",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":"1"})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         AccountObjectsParamTestCaseBundle{
             "LimitNagetive",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":-1})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         AccountObjectsParamTestCaseBundle{
             "LimitZero",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":0})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         AccountObjectsParamTestCaseBundle{
             "MarkerNotString",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":9})",
             "invalidParams",
-            "markerNotString"},
+            "markerNotString"
+        },
         AccountObjectsParamTestCaseBundle{
             "MarkerInvalid",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":"xxxx"})",
             "invalidParams",
-            "Malformed cursor."},
+            "Malformed cursor."
+        },
         AccountObjectsParamTestCaseBundle{
             "NFTMarkerInvalid",
             fmt::format(
@@ -128,17 +139,20 @@ generateTestValuesForParametersTest()
                 std::numeric_limits<uint32_t>::max()
             ),
             "invalidParams",
-            "Malformed cursor."},
+            "Malformed cursor."
+        },
         AccountObjectsParamTestCaseBundle{
             "DeletionBlockersOnlyInvalidString",
             R"({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "deletion_blockers_only": "wrong"})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         AccountObjectsParamTestCaseBundle{
             "DeletionBlockersOnlyInvalidNull",
             R"({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "deletion_blockers_only": null})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
     };
 }
 
@@ -172,7 +186,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
     // return empty ledgerinfo
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":30
@@ -198,7 +212,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
     // return empty ledgerinfo
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillOnce(Return(std::nullopt));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":"30"
@@ -225,7 +239,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_hash":"{}"
@@ -254,7 +268,7 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).WillOnce(Return(std::optional<Blob>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -330,7 +344,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -377,7 +391,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
     }
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -424,7 +438,7 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
     }
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{},{}"
@@ -482,7 +496,7 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
     }
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -540,7 +554,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "type":"offer"
@@ -588,7 +602,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "type": "amm"
@@ -645,7 +659,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "type": "check"
@@ -706,7 +720,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "deletion_blockers_only": true
@@ -755,7 +769,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "deletion_blockers_only": true,
@@ -823,7 +837,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "deletion_blockers_only": true
@@ -889,7 +903,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "deletion_blockers_only": true,
@@ -1007,7 +1021,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -1049,7 +1063,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
         current = previous;
     }
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -1101,7 +1115,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(current, 30, _))
         .WillOnce(Return(nftpage11.getSerializer().peekData()));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -1181,7 +1195,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{},{}"
@@ -1240,7 +1254,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{},{}"
@@ -1272,7 +1286,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
     auto const accountKk = ripple::keylet::account(account).key;
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "marker" : "{},{}"
@@ -1309,7 +1323,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
     auto const accountNftMax = ripple::keylet::nftpage_max(account).key;
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(accountNftMax, MAXSEQ, _)).WillOnce(Return(std::nullopt));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "marker" : "{},{}"
@@ -1386,7 +1400,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{},{}",
@@ -1486,7 +1500,7 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "type": "nft_page"
@@ -1530,7 +1544,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
     }
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{},
@@ -1614,7 +1628,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit": {}
@@ -1694,7 +1708,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
 
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).WillOnce(Return(bbs));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit": {}

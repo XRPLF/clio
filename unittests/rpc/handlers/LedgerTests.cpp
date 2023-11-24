@@ -767,7 +767,8 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
     los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});
     los.push_back(LedgerObject{
         ripple::uint256{INDEX1},
-        CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()});
+        CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()
+    });
 
     ON_CALL(*rawBackendPtr, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));
 
@@ -813,7 +814,8 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
     los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});
     los.push_back(LedgerObject{
         ripple::uint256{INDEX1},
-        CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()});
+        CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()
+    });
 
     ON_CALL(*rawBackendPtr, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));
 

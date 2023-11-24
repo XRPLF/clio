@@ -173,7 +173,8 @@ ProbingSource::make_SSLHooks() noexcept
                     plainSrc_->resume();
                 }
                 return SourceHooks::Action::STOP;
-            }};
+            }
+    };
 }
 
 SourceHooks
@@ -200,6 +201,7 @@ ProbingSource::make_PlainHooks() noexcept
                     sslSrc_->resume();
                 }
                 return SourceHooks::Action::STOP;
-            }};
+            }
+    };
 };
 }  // namespace etl

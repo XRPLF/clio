@@ -486,49 +486,58 @@ INSTANTIATE_TEST_CASE_P(
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {WebHeader(http::field::authorization, "")},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {WebHeader(http::field::authorization, "s")},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {WebHeader(http::field::authorization, SecertSha256)},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {WebHeader(
                 http::field::authorization,
                 fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
             )},
-            .expectedResponse = "admin"},
+            .expectedResponse = "admin"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse,
             .headers = {WebHeader(http::field::authorization, SecertSha256)},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse,
             .headers = {WebHeader(
                 http::field::authorization,
                 fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
             )},
-            .expectedResponse = "admin"},
+            .expectedResponse = "admin"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {WebHeader(
                 http::field::authentication_info,
                 fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
             )},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{.config = JSONServerConfigWithLocalAdmin, .headers = {}, .expectedResponse = "admin"},
         WebServerAdminTestParams{
             .config = JSONServerConfigWithNoSpecifiedAdmin,
             .headers = {},
-            .expectedResponse = "admin"}
+            .expectedResponse = "admin"
+        }
 
     )
 );

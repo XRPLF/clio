@@ -90,7 +90,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "invalidParams",
-            "Required field 'taker_gets' missing"},
+            "Required field 'taker_gets' missing"
+        },
         ParameterTestBundle{
             "MissingTakerPays",
             R"({
@@ -101,7 +102,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "invalidParams",
-            "Required field 'taker_pays' missing"},
+            "Required field 'taker_pays' missing"
+        },
         ParameterTestBundle{
             "WrongTypeTakerPays",
             R"({
@@ -112,7 +114,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         ParameterTestBundle{
             "WrongTypeTakerGets",
             R"({
@@ -123,7 +126,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         ParameterTestBundle{
             "TakerPaysMissingCurrency",
             R"({
@@ -134,7 +138,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "invalidParams",
-            "Required field 'currency' missing"},
+            "Required field 'currency' missing"
+        },
         ParameterTestBundle{
             "TakerGetsMissingCurrency",
             R"({
@@ -145,7 +150,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "invalidParams",
-            "Required field 'currency' missing"},
+            "Required field 'currency' missing"
+        },
         ParameterTestBundle{
             "TakerGetsWrongCurrency",
             R"({
@@ -160,7 +166,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "dstAmtMalformed",
-            "Destination amount/currency/issuer is malformed."},
+            "Destination amount/currency/issuer is malformed."
+        },
         ParameterTestBundle{
             "TakerPaysWrongCurrency",
             R"({
@@ -175,7 +182,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "srcCurMalformed",
-            "Source currency is malformed."},
+            "Source currency is malformed."
+        },
         ParameterTestBundle{
             "TakerGetsCurrencyNotString",
             R"({
@@ -190,7 +198,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "dstAmtMalformed",
-            "Destination amount/currency/issuer is malformed."},
+            "Destination amount/currency/issuer is malformed."
+        },
         ParameterTestBundle{
             "TakerPaysCurrencyNotString",
             R"({
@@ -205,7 +214,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "srcCurMalformed",
-            "Source currency is malformed."},
+            "Source currency is malformed."
+        },
         ParameterTestBundle{
             "TakerGetsWrongIssuer",
             R"({
@@ -220,7 +230,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "dstIsrMalformed",
-            "Destination issuer is malformed."},
+            "Destination issuer is malformed."
+        },
         ParameterTestBundle{
             "TakerPaysWrongIssuer",
             R"({
@@ -235,7 +246,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "srcIsrMalformed",
-            "Source issuer is malformed."},
+            "Source issuer is malformed."
+        },
         ParameterTestBundle{
             "InvalidTaker",
             R"({
@@ -251,7 +263,8 @@ generateParameterBookOffersTestBundles()
                 "taker": "123"
             })",
             "invalidParams",
-            "Invalid field 'taker'."},
+            "Invalid field 'taker'."
+        },
         ParameterTestBundle{
             "TakerNotString",
             R"({
@@ -267,7 +280,8 @@ generateParameterBookOffersTestBundles()
                 "taker": 123
             })",
             "invalidParams",
-            "Invalid field 'taker'."},
+            "Invalid field 'taker'."
+        },
         ParameterTestBundle{
             "LimitNotInt",
             R"({
@@ -283,7 +297,8 @@ generateParameterBookOffersTestBundles()
                 "limit": "123"
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         ParameterTestBundle{
             "LimitNagetive",
             R"({
@@ -299,7 +314,8 @@ generateParameterBookOffersTestBundles()
                 "limit": -1
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         ParameterTestBundle{
             "LimitZero",
             R"({
@@ -315,7 +331,8 @@ generateParameterBookOffersTestBundles()
                 "limit": 0
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         ParameterTestBundle{
             "LedgerIndexInvalid",
             R"({
@@ -331,7 +348,8 @@ generateParameterBookOffersTestBundles()
                 "ledger_index": "xxx"
             })",
             "invalidParams",
-            "ledgerIndexMalformed"},
+            "ledgerIndexMalformed"
+        },
         ParameterTestBundle{
             "LedgerHashInvalid",
             R"({
@@ -347,7 +365,8 @@ generateParameterBookOffersTestBundles()
                 "ledger_hash": "xxx"
             })",
             "invalidParams",
-            "ledger_hashMalformed"},
+            "ledger_hashMalformed"
+        },
         ParameterTestBundle{
             "LedgerHashNotString",
             R"({
@@ -363,7 +382,8 @@ generateParameterBookOffersTestBundles()
                 "ledger_hash": 123
             })",
             "invalidParams",
-            "ledger_hashNotString"},
+            "ledger_hashNotString"
+        },
         ParameterTestBundle{
             "GetsPaysXRPWithIssuer",
             R"({
@@ -379,7 +399,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "srcIsrMalformed",
-            "Unneeded field 'taker_pays.issuer' for XRP currency specification."},
+            "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+        },
         ParameterTestBundle{
             "PaysCurrencyWithXRPIssuer",
             R"({
@@ -394,7 +415,8 @@ generateParameterBookOffersTestBundles()
                 }
             })",
             "srcIsrMalformed",
-            "Invalid field 'taker_pays.issuer', expected non-XRP issuer."},
+            "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
+        },
         ParameterTestBundle{
             "GetsCurrencyWithXRPIssuer",
             R"({
@@ -408,7 +430,8 @@ generateParameterBookOffersTestBundles()
                 }            
             })",
             "dstIsrMalformed",
-            "Invalid field 'taker_gets.issuer', expected non-XRP issuer."},
+            "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
+        },
         ParameterTestBundle{
             "GetsXRPWithIssuer",
             R"({
@@ -424,7 +447,8 @@ generateParameterBookOffersTestBundles()
                 }            
             })",
             "dstIsrMalformed",
-            "Unneeded field 'taker_gets.issuer' for XRP currency specification."},
+            "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+        },
         ParameterTestBundle{
             "BadMarket",
             R"({
@@ -440,7 +464,9 @@ generateParameterBookOffersTestBundles()
                 }            
             })",
             "badMarket",
-            "badMarket"}};
+            "badMarket"
+        }
+    };
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -611,7 +637,8 @@ generateNormalPathBookOffersTestBundles()
             // prepare offer dir index
             std::map<ripple::uint256, std::optional<ripple::uint256>>{
                 {getsXRPPaysUSDBook, ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}},
-                {ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, std::optional<ripple::uint256>{}}},
+                {ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, std::optional<ripple::uint256>{}}
+            },
             std::map<ripple::uint256, ripple::Blob>{
                 // book dir object
                 {ripple::uint256{PAYS20USDGETS10XRPBOOKDIR},
@@ -625,7 +652,8 @@ generateNormalPathBookOffersTestBundles()
                 // fee settings: base ->3 inc->2, account2 has 2 objects ,total
                 // reserve ->7
                 // owner_funds should be 193
-                {ripple::keylet::fees().key, feeLedgerObject}},
+                {ripple::keylet::fees().key, feeLedgerObject}
+            },
             5,
             std::vector<ripple::STObject>{gets10XRPPays20USDOffer},
             fmt::format(
@@ -659,14 +687,16 @@ generateNormalPathBookOffersTestBundles()
                 ACCOUNT2,
                 193,
                 2
-            )},
+            )
+        },
         BookOffersNormalTestBundle{
             "PaysUSDGetsXRPNoFrozenOwnerFundNotEnough",
             getsXRPPaysUSDInputJson,
             // prepare offer dir index
             std::map<ripple::uint256, std::optional<ripple::uint256>>{
                 {getsXRPPaysUSDBook, ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}},
-                {ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, std::optional<ripple::uint256>{}}},
+                {ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, std::optional<ripple::uint256>{}}
+            },
             std::map<ripple::uint256, ripple::Blob>{
                 // book dir object
                 {ripple::uint256{PAYS20USDGETS10XRPBOOKDIR},
@@ -680,7 +710,8 @@ generateNormalPathBookOffersTestBundles()
                 // fee settings: base ->3 inc->2, account2 has 2 objects
                 // ,total
                 // reserve ->7
-                {ripple::keylet::fees().key, feeLedgerObject}},
+                {ripple::keylet::fees().key, feeLedgerObject}
+            },
             5,
             std::vector<ripple::STObject>{gets10XRPPays20USDOffer},
             fmt::format(
@@ -721,14 +752,16 @@ generateNormalPathBookOffersTestBundles()
                 ACCOUNT2,
                 5,
                 2
-            )},
+            )
+        },
         BookOffersNormalTestBundle{
             "PaysUSDGetsXRPFrozen",
             getsXRPPaysUSDInputJson,
             // prepare offer dir index
             std::map<ripple::uint256, std::optional<ripple::uint256>>{
                 {getsXRPPaysUSDBook, ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}},
-                {ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, std::optional<ripple::uint256>{}}},
+                {ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, std::optional<ripple::uint256>{}}
+            },
             std::map<ripple::uint256, ripple::Blob>{
                 // book dir object
                 {ripple::uint256{PAYS20USDGETS10XRPBOOKDIR},
@@ -737,7 +770,8 @@ generateNormalPathBookOffersTestBundles()
                 {ripple::keylet::account(account).key,
                  CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 2, 200, 2, INDEX1, 2)
                      .getSerializer()
-                     .peekData()}},
+                     .peekData()}
+            },
             3,
             std::vector<ripple::STObject>{gets10XRPPays20USDOffer},
             fmt::format(
@@ -778,14 +812,16 @@ generateNormalPathBookOffersTestBundles()
                 ACCOUNT2,
                 0,
                 2
-            )},
+            )
+        },
         BookOffersNormalTestBundle{
             "GetsUSDPaysXRPFrozen",
             paysXRPGetsUSDInputJson,
             // prepare offer dir index
             std::map<ripple::uint256, std::optional<ripple::uint256>>{
                 {getsUSDPaysXRPBook, ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}},
-                {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, std::optional<ripple::uint256>{}}},
+                {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, std::optional<ripple::uint256>{}}
+            },
             std::map<ripple::uint256, ripple::Blob>{
                 // book dir object
                 {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR},
@@ -794,7 +830,8 @@ generateNormalPathBookOffersTestBundles()
                 {ripple::keylet::account(account).key,
                  CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 2, 200, 2, INDEX1, 2, TRANSFERRATEX2)
                      .getSerializer()
-                     .peekData()}},
+                     .peekData()}
+            },
             3,
             std::vector<ripple::STObject>{gets10USDPays20XRPOffer},
             fmt::format(
@@ -836,14 +873,16 @@ generateNormalPathBookOffersTestBundles()
                 PAYS20XRPGETS10USDBOOKDIR,
                 0,
                 2
-            )},
+            )
+        },
         BookOffersNormalTestBundle{
             "PaysXRPGetsUSDWithTransferFee",
             paysXRPGetsUSDInputJson,
             // prepare offer dir index
             std::map<ripple::uint256, std::optional<ripple::uint256>>{
                 {getsUSDPaysXRPBook, ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}},
-                {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, std::optional<ripple::uint256>{}}},
+                {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, std::optional<ripple::uint256>{}}
+            },
             std::map<ripple::uint256, ripple::Blob>{
                 // book dir object
                 {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR},
@@ -896,14 +935,16 @@ generateNormalPathBookOffersTestBundles()
                 PAYS20XRPGETS10USDBOOKDIR,
                 8,
                 2
-            )},
+            )
+        },
         BookOffersNormalTestBundle{
             "PaysXRPGetsUSDWithMultipleOffers",
             paysXRPGetsUSDInputJson,
             // prepare offer dir index
             std::map<ripple::uint256, std::optional<ripple::uint256>>{
                 {getsUSDPaysXRPBook, ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}},
-                {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, std::optional<ripple::uint256>{}}},
+                {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, std::optional<ripple::uint256>{}}
+            },
             std::map<ripple::uint256, ripple::Blob>{
                 // book dir object
                 {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR},
@@ -922,7 +963,8 @@ generateNormalPathBookOffersTestBundles()
                                           gets10USDPays20XRPOffer,
                                           // offer2 not fully funded, balance is 10, rate is 2, so only
                                           // gets 5
-                                          gets10USDPays20XRPOffer},
+                                          gets10USDPays20XRPOffer
+            },
             fmt::format(
                 R"({{
                     "ledger_hash":"{}",
@@ -984,14 +1026,16 @@ generateNormalPathBookOffersTestBundles()
                 ACCOUNT2,
                 PAYS20XRPGETS10USDBOOKDIR,
                 2
-            )},
+            )
+        },
         BookOffersNormalTestBundle{
             "PaysXRPGetsUSDSellingOwnCurrency",
             paysXRPGetsUSDInputJson,
             // prepare offer dir index
             std::map<ripple::uint256, std::optional<ripple::uint256>>{
                 {getsUSDPaysXRPBook, ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}},
-                {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, std::optional<ripple::uint256>{}}},
+                {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, std::optional<ripple::uint256>{}}
+            },
             std::map<ripple::uint256, ripple::Blob>{
                 // book dir object
                 {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR},
@@ -1035,14 +1079,16 @@ generateNormalPathBookOffersTestBundles()
                 PAYS20XRPGETS10USDBOOKDIR,
                 10,
                 2
-            )},
+            )
+        },
         BookOffersNormalTestBundle{
             "PaysXRPGetsUSDTrustLineFrozen",
             paysXRPGetsUSDInputJson,
             // prepare offer dir index
             std::map<ripple::uint256, std::optional<ripple::uint256>>{
                 {getsUSDPaysXRPBook, ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}},
-                {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, std::optional<ripple::uint256>{}}},
+                {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, std::optional<ripple::uint256>{}}
+            },
             std::map<ripple::uint256, ripple::Blob>{
                 // book dir object
                 {ripple::uint256{PAYS20XRPGETS10USDBOOKDIR},
@@ -1095,7 +1141,8 @@ generateNormalPathBookOffersTestBundles()
                 PAYS20XRPGETS10USDBOOKDIR,
                 0,
                 2
-            )},
+            )
+        },
     };
 }
 
@@ -1117,7 +1164,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "ledger_index": 30,
             "taker_gets": 
@@ -1152,7 +1199,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "ledger_index": "30",
             "taker_gets": 
@@ -1188,7 +1235,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "ledger_hash": "{}",
             "taker_gets": 
@@ -1267,7 +1314,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "taker_gets": 
             {{
@@ -1343,7 +1390,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "taker_gets": 
             {{

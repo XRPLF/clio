@@ -59,7 +59,8 @@ public:
             {"ArrayTrueValue", R"({ "test_bool": [0] })", true},
             {"ArrayFalseValue", R"({ "test_bool": [] })", false},
             {"ObjectTrueValue", R"({ "test_bool": { "key": null } })", true},
-            {"ObjectFalseValue", R"({ "test_bool": {} })", false}};
+            {"ObjectFalseValue", R"({ "test_bool": {} })", false}
+        };
     }
 };
 

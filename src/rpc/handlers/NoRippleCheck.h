@@ -78,20 +78,22 @@ public:
             {JS(role),
              validation::Required{},
              meta::WithCustomError{
-                 validation::OneOf{"gateway", "user"},
-                 Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"}}},
+                 validation::OneOf{"gateway", "user"}, Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"}
+             }},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(limit),
              validation::Type<uint32_t>(),
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}}};
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}}
+        };
 
         static auto const rpcSpec = RpcSpec{
             rpcSpecV1,
             {
                 {JS(transactions), validation::Type<bool>()},
-            }};
+            }
+        };
 
         return apiVersion == 1 ? rpcSpecV1 : rpcSpec;
     }

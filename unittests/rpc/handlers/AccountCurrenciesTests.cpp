@@ -51,7 +51,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -77,7 +77,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -104,7 +104,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(12, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":"{}"
@@ -133,7 +133,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_hash":"{}"
@@ -201,7 +201,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -240,7 +240,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_hash":"{}"
@@ -282,7 +282,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
 
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":{}

@@ -217,7 +217,8 @@ private:
                     {"ledger_index", ledgerIndex},
                     {"binary", true},
                     {"out_of_order", true},
-                    {"limit", LIMIT}};
+                    {"limit", LIMIT}
+                };
 
                 if (marker)
                     request["marker"] = *marker;

@@ -81,20 +81,23 @@ generateParameterTestBundles()
                 "account": 1213
             })",
             "invalidParams",
-            "accountNotString"},
+            "accountNotString"
+        },
         ParameterTestBundle{
             "AccountMissing",
             R"({
             })",
             "invalidParams",
-            "Required field 'account' missing"},
+            "Required field 'account' missing"
+        },
         ParameterTestBundle{
             "AccountInvalid",
             R"({
                 "account": "1213"
             })",
             "actMalformed",
-            "accountMalformed"},
+            "accountMalformed"
+        },
         ParameterTestBundle{
             "LedgerIndexInvalid",
             fmt::format(
@@ -105,7 +108,8 @@ generateParameterTestBundles()
                 ACCOUNT
             ),
             "invalidParams",
-            "ledgerIndexMalformed"},
+            "ledgerIndexMalformed"
+        },
         ParameterTestBundle{
             "LedgerHashInvalid",
             fmt::format(
@@ -116,7 +120,8 @@ generateParameterTestBundles()
                 ACCOUNT
             ),
             "invalidParams",
-            "ledger_hashMalformed"},
+            "ledger_hashMalformed"
+        },
         ParameterTestBundle{
             "LedgerHashNotString",
             fmt::format(
@@ -127,7 +132,8 @@ generateParameterTestBundles()
                 ACCOUNT
             ),
             "invalidParams",
-            "ledger_hashNotString"},
+            "ledger_hashNotString"
+        },
         ParameterTestBundle{
             "WalletsNotStringOrArray",
             fmt::format(
@@ -138,7 +144,8 @@ generateParameterTestBundles()
                 ACCOUNT
             ),
             "invalidParams",
-            "hotwalletNotStringOrArray"},
+            "hotwalletNotStringOrArray"
+        },
         ParameterTestBundle{
             "WalletsNotStringAccount",
             fmt::format(
@@ -149,7 +156,8 @@ generateParameterTestBundles()
                 ACCOUNT
             ),
             "invalidParams",
-            "hotwalletMalformed"},
+            "hotwalletMalformed"
+        },
         ParameterTestBundle{
             "WalletsInvalidAccount",
             fmt::format(
@@ -160,7 +168,8 @@ generateParameterTestBundles()
                 ACCOUNT
             ),
             "invalidParams",
-            "hotwalletMalformed"},
+            "hotwalletMalformed"
+        },
         ParameterTestBundle{
             "WalletInvalidAccount",
             fmt::format(
@@ -171,7 +180,8 @@ generateParameterTestBundles()
                 ACCOUNT
             ),
             "invalidParams",
-            "hotwalletMalformed"},
+            "hotwalletMalformed"
+        },
     };
 }
 
@@ -512,7 +522,8 @@ generateNormalPathTestBundles()
                 ACCOUNT3,
                 ACCOUNT
             ),
-            fmt::format(R"("hotwallet": "{}")", ACCOUNT2)},
+            fmt::format(R"("hotwallet": "{}")", ACCOUNT2)
+        },
         NormalTestBundle{
             "NoHotwallet",
             CreateOwnerDirLedgerObject({ripple::uint256{INDEX2}}, INDEX1),
@@ -528,7 +539,8 @@ generateNormalPathTestBundles()
                 }})",
                 ACCOUNT
             ),
-            R"("ledger_index" : "validated")"},
+            R"("ledger_index" : "validated")"
+        },
         NormalTestBundle{
             "ObligationOverflow",
             CreateOwnerDirLedgerObject({ripple::uint256{INDEX2}, ripple::uint256{INDEX2}}, INDEX1),
@@ -544,7 +556,8 @@ generateNormalPathTestBundles()
                 }})",
                 ACCOUNT
             ),
-            R"("ledger_index" : "validated")"},
+            R"("ledger_index" : "validated")"
+        },
         NormalTestBundle{
             "HighID",
             CreateOwnerDirLedgerObject(
@@ -556,7 +569,8 @@ generateNormalPathTestBundles()
                         // hotwallet
                         CreateRippleStateLedgerObject("CNY", ISSUER, 20, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123),
                         CreateRippleStateLedgerObject("EUR", ISSUER, 30, ACCOUNT3, 100, ACCOUNT, 200, TXNID, 123),
-                        CreateRippleStateLedgerObject("JPY", ISSUER, -50, ACCOUNT3, 10, ACCOUNT, 20, TXNID, 123)},
+                        CreateRippleStateLedgerObject("JPY", ISSUER, -50, ACCOUNT3, 10, ACCOUNT, 20, TXNID, 123)
+            },
             fmt::format(
                 R"({{
                     "obligations":{{
@@ -590,7 +604,8 @@ generateNormalPathTestBundles()
                 ACCOUNT3,
                 ACCOUNT
             ),
-            fmt::format(R"("hotwallet": "{}")", ACCOUNT2)},
+            fmt::format(R"("hotwallet": "{}")", ACCOUNT2)
+        },
         NormalTestBundle{
             "HotWalletArray",
             CreateOwnerDirLedgerObject(
@@ -630,7 +645,8 @@ generateNormalPathTestBundles()
                 ACCOUNT2,
                 ACCOUNT
             ),
-            fmt::format(R"("hotwallet": ["{}", "{}"])", ACCOUNT2, ACCOUNT3)},
+            fmt::format(R"("hotwallet": ["{}", "{}"])", ACCOUNT2, ACCOUNT3)
+        },
     };
 }
 

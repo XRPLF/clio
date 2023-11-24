@@ -144,8 +144,9 @@ CustomValidator IssuerValidator =
             return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer.", key)}};
 
         if (issuer == ripple::noAccount()) {
-            return Error{Status{
-                RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer account one.", key)}};
+            return Error{
+                Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer account one.", key)}
+            };
         }
 
         return MaybeError{};
@@ -157,10 +158,12 @@ CustomValidator SubscribeStreamValidator =
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
 
         static std::unordered_set<std::string> const validStreams = {
-            "ledger", "transactions", "transactions_proposed", "book_changes", "manifests", "validations"};
+            "ledger", "transactions", "transactions_proposed", "book_changes", "manifests", "validations"
+        };
 
         static std::unordered_set<std::string> const reportingNotSupportStreams = {
-            "peer_status", "consensus", "server"};
+            "peer_status", "consensus", "server"
+        };
         for (auto const& v : value.as_array()) {
             if (!v.is_string())
                 return Error{Status{RippledError::rpcINVALID_PARAMS, "streamNotString"}};

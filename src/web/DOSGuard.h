@@ -249,7 +249,8 @@ private:
         auto const transform = [](auto const& elem) { return elem.template value<std::string>(); };
         return T{
             boost::transform_iterator(std::begin(whitelist), transform),
-            boost::transform_iterator(std::end(whitelist), transform)};
+            boost::transform_iterator(std::end(whitelist), transform)
+        };
     }
 };
 

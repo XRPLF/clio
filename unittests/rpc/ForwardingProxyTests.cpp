@@ -46,7 +46,8 @@ protected:
     rpc::detail::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy{
         loadBalancer,
         counters,
-        handlerProvider};
+        handlerProvider
+    };
 };
 
 TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfClioOnly)

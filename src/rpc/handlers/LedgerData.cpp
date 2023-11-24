@@ -42,7 +42,8 @@ std::unordered_map<std::string, ripple::LedgerEntryType> const LedgerDataHandler
     {JS(ticket), ripple::ltTICKET},
     {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
     {JS(nft_page), ripple::ltNFTOKEN_PAGE},
-    {JS(amm), ripple::ltAMM}};
+    {JS(amm), ripple::ltAMM}
+};
 
 // TODO: should be std::views::keys when clang supports it
 std::unordered_set<std::string> const LedgerDataHandler::TYPES_KEYS = [] {

@@ -124,7 +124,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static const RpcSpec rpcSpec = {};
+        static RpcSpec const rpcSpec = {};
         return rpcSpec;
     }
 
@@ -156,7 +156,8 @@ public:
                 .counters = counters_.get().report(),
                 .backendCounters = input.backendCounters ? std::make_optional(backend_->stats()) : std::nullopt,
                 .subscriptions = subscriptions_->report(),
-                .etl = etl_->getInfo()};
+                .etl = etl_->getInfo()
+            };
         }
 
         auto const serverInfoRippled =

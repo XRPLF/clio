@@ -223,7 +223,8 @@ BackendCounters::AsyncOperationCounters::report() const
         {name_ + "_pending", pendingCounter_.get().value()},
         {name_ + "_completed", completedCounter_.get().value()},
         {name_ + "_retry", retryCounter_.get().value()},
-        {name_ + "_error", errorCounter_.get().value()}};
+        {name_ + "_error", errorCounter_.get().value()}
+    };
 }
 
 }  // namespace data

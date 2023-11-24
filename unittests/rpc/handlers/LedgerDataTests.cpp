@@ -65,11 +65,14 @@ generateTestValuesForParametersTest()
 {
     return std::vector<LedgerDataParamTestCaseBundle>{
         LedgerDataParamTestCaseBundle{
-            "ledger_indexInvalid", R"({"ledger_index": "x"})", "invalidParams", "ledgerIndexMalformed"},
+            "ledger_indexInvalid", R"({"ledger_index": "x"})", "invalidParams", "ledgerIndexMalformed"
+        },
         LedgerDataParamTestCaseBundle{
-            "ledger_hashInvalid", R"({"ledger_hash": "x"})", "invalidParams", "ledger_hashMalformed"},
+            "ledger_hashInvalid", R"({"ledger_hash": "x"})", "invalidParams", "ledger_hashMalformed"
+        },
         LedgerDataParamTestCaseBundle{
-            "ledger_hashNotString", R"({"ledger_hash": 123})", "invalidParams", "ledger_hashNotString"},
+            "ledger_hashNotString", R"({"ledger_hash": 123})", "invalidParams", "ledger_hashNotString"
+        },
         LedgerDataParamTestCaseBundle{"binaryNotBool", R"({"binary": 123})", "invalidParams", "Invalid parameters."},
         LedgerDataParamTestCaseBundle{"limitNotInt", R"({"limit": "xxx"})", "invalidParams", "Invalid parameters."},
         LedgerDataParamTestCaseBundle{"limitNagetive", R"({"limit": -1})", "invalidParams", "Invalid parameters."},
@@ -82,10 +85,12 @@ generateTestValuesForParametersTest()
                 "out_of_order": true
             })",
             "invalidParams",
-            "outOfOrderMarkerNotInt"},
+            "outOfOrderMarkerNotInt"
+        },
         LedgerDataParamTestCaseBundle{"markerNotString", R"({"marker": 123})", "invalidParams", "markerNotString"},
         LedgerDataParamTestCaseBundle{
-            "typeNotString", R"({"type": 123})", "invalidParams", "Invalid field 'type', not string."},
+            "typeNotString", R"({"type": 123})", "invalidParams", "Invalid field 'type', not string."
+        },
         LedgerDataParamTestCaseBundle{"typeNotValid", R"({"type": "xxx"})", "invalidParams", "Invalid field 'type'."},
     };
 }

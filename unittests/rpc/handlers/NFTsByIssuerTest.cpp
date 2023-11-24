@@ -580,7 +580,8 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     std::vector<NFT> const nfts = {
-        CreateNFT(NFTID1, ACCOUNT, 29), CreateNFT(NFTID2, ACCOUNT, 29), CreateNFT(NFTID3, ACCOUNT, 29)};
+        CreateNFT(NFTID1, ACCOUNT, 29), CreateNFT(NFTID2, ACCOUNT, 29), CreateNFT(NFTID3, ACCOUNT, 29)
+    };
     auto const account = GetAccountIDWithString(ACCOUNT);
     ON_CALL(*rawBackendPtr, fetchNFTsByIssuer).WillByDefault(Return(NFTsAndCursor{nfts, {}}));
     EXPECT_CALL(

@@ -91,7 +91,8 @@ public:
             {JS(account), validation::AccountValidator},
             {JS(ident), validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator}};
+            {JS(ledger_index), validation::LedgerIndexValidator}
+        };
 
         static auto const rpcSpec = RpcSpec{rpcSpecV1, {{JS(signer_lists), validation::Type<bool>{}}}};
 

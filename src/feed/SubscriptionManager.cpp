@@ -240,7 +240,8 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
                     // determine the OrderBook
                     ripple::Book const book{
                         data->getFieldAmount(ripple::sfTakerGets).issue(),
-                        data->getFieldAmount(ripple::sfTakerPays).issue()};
+                        data->getFieldAmount(ripple::sfTakerPays).issue()
+                    };
                     if (alreadySent.find(book) == alreadySent.end()) {
                         bookSubscribers_.publish(pubMsg, book);
                         alreadySent.insert(book);

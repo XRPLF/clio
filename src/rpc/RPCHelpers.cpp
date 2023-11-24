@@ -750,7 +750,8 @@ keypairFromRequst(boost::json::object const& request)
     if (count > 1) {
         return Status{
             RippledError::rpcINVALID_PARAMS,
-            "Exactly one of the following must be specified: passphrase, secret, seed, or seed_hex"};
+            "Exactly one of the following must be specified: passphrase, secret, seed, or seed_hex"
+        };
     }
 
     std::optional<ripple::KeyType> keyType;
@@ -1129,22 +1130,26 @@ parseBook(ripple::Currency pays, ripple::AccountID payIssuer, ripple::Currency g
 {
     if (isXRP(pays) && !isXRP(payIssuer)) {
         return Status{
-            RippledError::rpcSRC_ISR_MALFORMED, "Unneeded field 'taker_pays.issuer' for XRP currency specification."};
+            RippledError::rpcSRC_ISR_MALFORMED, "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+        };
     }
 
     if (!isXRP(pays) && isXRP(payIssuer)) {
         return Status{
-            RippledError::rpcSRC_ISR_MALFORMED, "Invalid field 'taker_pays.issuer', expected non-XRP issuer."};
+            RippledError::rpcSRC_ISR_MALFORMED, "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
+        };
     }
 
     if (ripple::isXRP(gets) && !ripple::isXRP(getIssuer)) {
         return Status{
-            RippledError::rpcDST_ISR_MALFORMED, "Unneeded field 'taker_gets.issuer' for XRP currency specification."};
+            RippledError::rpcDST_ISR_MALFORMED, "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+        };
     }
 
     if (!ripple::isXRP(gets) && ripple::isXRP(getIssuer)) {
         return Status{
-            RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
+            RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
+        };
     }
 
     if (pays == gets && payIssuer == getIssuer)
@@ -1209,12 +1214,14 @@ parseBook(boost::json::object const& request)
 
     if (isXRP(pay_currency) && !isXRP(pay_issuer)) {
         return Status{
-            RippledError::rpcSRC_ISR_MALFORMED, "Unneeded field 'taker_pays.issuer' for XRP currency specification."};
+            RippledError::rpcSRC_ISR_MALFORMED, "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+        };
     }
 
     if (!isXRP(pay_currency) && isXRP(pay_issuer)) {
         return Status{
-            RippledError::rpcSRC_ISR_MALFORMED, "Invalid field 'taker_pays.issuer', expected non-XRP issuer."};
+            RippledError::rpcSRC_ISR_MALFORMED, "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
+        };
     }
 
     if ((!isXRP(pay_currency)) && (!taker_pays.contains("issuer")))
@@ -1231,7 +1238,8 @@ parseBook(boost::json::object const& request)
 
         if (get_issuer == ripple::noAccount()) {
             return Status{
-                RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', bad issuer account one."};
+                RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', bad issuer account one."
+            };
         }
     } else {
         get_issuer = ripple::xrpAccount();
@@ -1239,12 +1247,14 @@ parseBook(boost::json::object const& request)
 
     if (ripple::isXRP(get_currency) && !ripple::isXRP(get_issuer)) {
         return Status{
-            RippledError::rpcDST_ISR_MALFORMED, "Unneeded field 'taker_gets.issuer' for XRP currency specification."};
+            RippledError::rpcDST_ISR_MALFORMED, "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+        };
     }
 
     if (!ripple::isXRP(get_currency) && ripple::isXRP(get_issuer)) {
         return Status{
-            RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
+            RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
+        };
     }
 
     if (pay_currency == get_currency && pay_issuer == get_issuer)
@@ -1307,7 +1317,8 @@ isAmendmentEnabled(
     auto const& amendments = backend->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
 
     ripple::SLE const amendmentsSLE{
-        ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key};
+        ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key
+    };
 
     auto const listAmendments = amendmentsSLE.getFieldV256(ripple::sfAmendments);
     return std::find(listAmendments.begin(), listAmendments.end(), amendmentId) != listAmendments.end();

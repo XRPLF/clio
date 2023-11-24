@@ -40,7 +40,7 @@ class AccountTxHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
     static std::unordered_map<std::string, ripple::TxType> const TYPESMAP;
-    static const std::unordered_set<std::string> TYPES_KEYS;
+    static std::unordered_set<std::string> const TYPES_KEYS;
 
 public:
     // no max limit
@@ -121,7 +121,8 @@ public:
             {
                 {JS(binary), validation::Type<bool>{}},
                 {JS(forward), validation::Type<bool>{}},
-            }};
+            }
+        };
 
         return apiVersion == 1 ? rpcSpecForV1 : rpcSpec;
     }

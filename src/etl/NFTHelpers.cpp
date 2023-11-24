@@ -114,7 +114,8 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 
     return {
         {NFTTransactionsData(*diff.first, txMeta, sttx.getTransactionID())},
-        NFTsData(*diff.first, *owner, sttx.getFieldVL(ripple::sfURI), txMeta)};
+        NFTsData(*diff.first, *owner, sttx.getFieldVL(ripple::sfURI), txMeta)
+    };
 }
 
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
@@ -198,7 +199,8 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
                                             .downcast<ripple::STObject>()
                                             .getAccountID(ripple::sfOwner);
         return {
-            {NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())}, NFTsData(tokenID, owner, txMeta, false)};
+            {NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())}, NFTsData(tokenID, owner, txMeta, false)
+        };
     }
 
     // Otherwise we have to infer the new owner from the affected nodes.
@@ -247,7 +249,8 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
         if (nft != nfts.end()) {
             return {
                 {NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())},
-                NFTsData(tokenID, nodeOwner, txMeta, false)};
+                NFTsData(tokenID, nodeOwner, txMeta, false)
+            };
         }
     }
 

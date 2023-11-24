@@ -98,7 +98,8 @@ public:
              modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(marker),
              meta::WithCustomError{
-                 validation::Type<boost::json::object>{}, Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}},
+                 validation::Type<boost::json::object>{}, Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}
+             },
              meta::Section{
                  {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
                  {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},

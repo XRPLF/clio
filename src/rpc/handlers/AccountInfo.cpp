@@ -46,7 +46,8 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     ripple::STLedgerEntry const sle{
-        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key};
+        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
+    };
 
     if (!accountKeylet.check(sle))
         return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
@@ -70,7 +71,8 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
 
         if (signers) {
             ripple::STLedgerEntry const sleSigners{
-                ripple::SerialIter{signers->data(), signers->size()}, signersKey.key};
+                ripple::SerialIter{signers->data(), signers->size()}, signersKey.key
+            };
 
             if (!signersKey.check(sleSigners))
                 return Error{Status{RippledError::rpcDB_DESERIALIZATION}};

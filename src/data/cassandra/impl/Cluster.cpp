@@ -88,7 +88,8 @@ Cluster::setupConnection(Settings const& settings)
     std::visit(
         overloadSet{
             [this](Settings::ContactPoints const& points) { setupContactPoints(points); },
-            [this](Settings::SecureConnectionBundle const& bundle) { setupSecureBundle(bundle); }},
+            [this](Settings::SecureConnectionBundle const& bundle) { setupSecureBundle(bundle); }
+        },
         settings.connectionInfo
     );
 }

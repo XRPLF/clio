@@ -161,7 +161,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaHash)
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_hash":"{}"
@@ -190,7 +190,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":"{}"
@@ -219,7 +219,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":{}
@@ -250,7 +250,7 @@ TEST_F(RPCAccountOffersHandlerTest, AccountNotFound)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -331,7 +331,7 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -383,7 +383,7 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":10
@@ -440,7 +440,7 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{},{}"
@@ -480,7 +480,7 @@ TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject(hintIndex, ledgerSeq, _)).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{},{}"
@@ -541,7 +541,7 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -599,7 +599,7 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
     ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}

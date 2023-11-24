@@ -179,7 +179,8 @@ public:
         return Base::error();
     }
 
-    constexpr explicit operator bool() const
+    constexpr explicit
+    operator bool() const
     {
         return has_value();
     }
@@ -242,7 +243,8 @@ public:
         return Base::error();
     }
 
-    constexpr explicit operator bool() const
+    constexpr explicit
+    operator bool() const
     {
         return Base::has_value();
     }

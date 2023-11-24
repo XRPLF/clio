@@ -67,35 +67,40 @@ INSTANTIATE_TEST_CASE_P(
             .target = "/metrics",
             .isAdmin = true,
             .prometheusEnabled = true,
-            .expected = true},
+            .expected = true
+        },
         PrometheusCheckRequestTestsParams{
             .testName = "validRequestPrometheusDisabled",
             .method = http::verb::get,
             .target = "/metrics",
             .isAdmin = true,
             .prometheusEnabled = false,
-            .expected = true},
+            .expected = true
+        },
         PrometheusCheckRequestTestsParams{
             .testName = "notAdmin",
             .method = http::verb::get,
             .target = "/metrics",
             .isAdmin = false,
             .prometheusEnabled = true,
-            .expected = true},
+            .expected = true
+        },
         PrometheusCheckRequestTestsParams{
             .testName = "wrongMethod",
             .method = http::verb::post,
             .target = "/metrics",
             .isAdmin = true,
             .prometheusEnabled = true,
-            .expected = false},
+            .expected = false
+        },
         PrometheusCheckRequestTestsParams{
             .testName = "wrongTarget",
             .method = http::verb::get,
             .target = "/",
             .isAdmin = true,
             .prometheusEnabled = true,
-            .expected = false},
+            .expected = false
+        },
     }),
     PrometheusCheckRequestTests::NameGenerator()
 );
@@ -132,7 +137,7 @@ TEST_F(PrometheusHandleRequestTests, notAdmin)
 TEST_F(PrometheusHandleRequestTests, responseWithCounter)
 {
     auto const counterName = "test_counter";
-    const Labels labels{{{"label1", "value1"}, Label{"label2", "value2"}}};
+    Labels const labels{{{"label1", "value1"}, Label{"label2", "value2"}}};
     auto const description = "test_description";
 
     auto& counter = PrometheusService::counterInt(counterName, labels, description);
@@ -151,7 +156,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounter)
 TEST_F(PrometheusHandleRequestTests, responseWithGauge)
 {
     auto const gaugeName = "test_gauge";
-    const Labels labels{{{"label2", "value2"}, {"label3", "value3"}}};
+    Labels const labels{{{"label2", "value2"}, {"label3", "value3"}}};
     auto const description = "test_description_gauge";
 
     auto& gauge = PrometheusService::gaugeInt(gaugeName, labels, description);
@@ -170,7 +175,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithGauge)
 TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
 {
     auto const counterName = "test_counter";
-    const Labels counterLabels{{{"label1", "value1"}, {"label2", "value2"}}};
+    Labels const counterLabels{{{"label1", "value1"}, {"label2", "value2"}}};
     auto const counterDescription = "test_description";
 
     auto& counter = PrometheusService::counterInt(counterName, counterLabels, counterDescription);
@@ -178,7 +183,7 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
     counter += 3;
 
     auto const gaugeName = "test_gauge";
-    const Labels gaugeLabels{{{"label2", "value2"}, {"label3", "value3"}}};
+    Labels const gaugeLabels{{{"label2", "value2"}, {"label3", "value3"}}};
     auto const gaugeDescription = "test_description_gauge";
 
     auto& gauge = PrometheusService::gaugeInt(gaugeName, gaugeLabels, gaugeDescription);
@@ -214,8 +219,9 @@ TEST_F(PrometheusHandleRequestTests, responseWithCounterAndGauge)
 
 TEST_F(PrometheusHandleRequestTests, compressReply)
 {
-    PrometheusService::init(util::Config(boost::json::value{
-        {"prometheus", boost::json::object{{"compress_reply", true}}}}));
+    PrometheusService::init(
+        util::Config(boost::json::value{{"prometheus", boost::json::object{{"compress_reply", true}}}})
+    );
 
     auto& gauge = PrometheusService::gaugeInt("test_gauge", Labels{});
     ++gauge;

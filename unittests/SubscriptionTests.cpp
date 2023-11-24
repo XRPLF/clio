@@ -209,10 +209,10 @@ TEST_F(SubscriptionMapTest, SubscriptionMapPublish)
 {
     std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
     std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
-    const std::string topic1 = "topic1";
-    const std::string topic2 = "topic2";
-    const std::string topic1Message = "topic1Message";
-    const std::string topic2Message = "topic2Message";
+    std::string const topic1 = "topic1";
+    std::string const topic2 = "topic2";
+    std::string const topic1Message = "topic1Message";
+    std::string const topic2Message = "topic2Message";
     subMap.subscribe(session1, topic1);
     subMap.subscribe(session2, topic2);
     ctx.run();
@@ -234,10 +234,10 @@ TEST_F(SubscriptionMapTest, SubscriptionMapDeadRemoveSubscriber)
 {
     std::shared_ptr<web::ConnectionBase> const session1(new MockDeadSession(tagDecoratorFactory));
     std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
-    const std::string topic1 = "topic1";
-    const std::string topic2 = "topic2";
-    const std::string topic1Message = "topic1Message";
-    const std::string topic2Message = "topic2Message";
+    std::string const topic1 = "topic1";
+    std::string const topic2 = "topic2";
+    std::string const topic1Message = "topic1Message";
+    std::string const topic2Message = "topic2Message";
     subMap.subscribe(session1, topic1);
     subMap.subscribe(session2, topic2);
     ctx.run();

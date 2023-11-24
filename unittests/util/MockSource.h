@@ -25,7 +25,7 @@
 class MockSource : public etl::Source {
 public:
     MOCK_METHOD(bool, isConnected, (), (const, override));
-    MOCK_METHOD(boost::json::object, toJson, (), (const override));
+    MOCK_METHOD(boost::json::object, toJson, (), (override const));
     MOCK_METHOD(void, run, (), (override));
     MOCK_METHOD(void, pause, (), (override));
     MOCK_METHOD(void, resume, (), (override));

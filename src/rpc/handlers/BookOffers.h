@@ -79,7 +79,8 @@ public:
                   validation::Required{},
                   meta::WithCustomError{validation::CurrencyValidator, Status(RippledError::rpcDST_AMT_MALFORMED)}},
                  {JS(issuer),
-                  meta::WithCustomError{validation::IssuerValidator, Status(RippledError::rpcDST_ISR_MALFORMED)}}}},
+                  meta::WithCustomError{validation::IssuerValidator, Status(RippledError::rpcDST_ISR_MALFORMED)}}
+             }},
             {JS(taker_pays),
              validation::Required{},
              validation::Type<boost::json::object>{},
@@ -88,11 +89,13 @@ public:
                   validation::Required{},
                   meta::WithCustomError{validation::CurrencyValidator, Status(RippledError::rpcSRC_CUR_MALFORMED)}},
                  {JS(issuer),
-                  meta::WithCustomError{validation::IssuerValidator, Status(RippledError::rpcSRC_ISR_MALFORMED)}}}},
+                  meta::WithCustomError{validation::IssuerValidator, Status(RippledError::rpcSRC_ISR_MALFORMED)}}
+             }},
             // return INVALID_PARAMS if account format is wrong for "taker"
             {JS(taker),
              meta::WithCustomError{
-                 validation::AccountValidator, Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'.")}},
+                 validation::AccountValidator, Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'.")
+             }},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),

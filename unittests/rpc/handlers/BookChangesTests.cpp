@@ -64,11 +64,14 @@ generateTestValuesForParametersTest()
 {
     return std::vector<BookChangesParamTestCaseBundle>{
         BookChangesParamTestCaseBundle{
-            "LedgerHashInvalid", R"({"ledger_hash":"1"})", "invalidParams", "ledger_hashMalformed"},
+            "LedgerHashInvalid", R"({"ledger_hash":"1"})", "invalidParams", "ledger_hashMalformed"
+        },
         BookChangesParamTestCaseBundle{
-            "LedgerHashNotString", R"({"ledger_hash":1})", "invalidParams", "ledger_hashNotString"},
+            "LedgerHashNotString", R"({"ledger_hash":1})", "invalidParams", "ledger_hashNotString"
+        },
         BookChangesParamTestCaseBundle{
-            "LedgerIndexInvalid", R"({"ledger_index":"a"})", "invalidParams", "ledgerIndexMalformed"},
+            "LedgerIndexInvalid", R"({"ledger_index":"a"})", "invalidParams", "ledgerIndexMalformed"
+        },
     };
 }
 
@@ -104,7 +107,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(R"({"ledger_index":30})");
+    auto static const input = json::parse(R"({"ledger_index":30})");
     auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -125,7 +128,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(std::nullopt));
 
-    auto const static input = json::parse(R"({"ledger_index":"30"})");
+    auto static const input = json::parse(R"({"ledger_index":"30"})");
     auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -147,7 +150,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "ledger_hash":"{}"
         }})",

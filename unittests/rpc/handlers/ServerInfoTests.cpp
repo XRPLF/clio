@@ -149,7 +149,8 @@ TEST_F(RPCServerInfoHandlerTest, NoLedgerInfoErrorsOutWithInternal)
     EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(std::nullopt));
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr
+    }};
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
@@ -169,7 +170,8 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).WillOnce(Return(std::nullopt));
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr
+    }};
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
@@ -202,7 +204,8 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
     EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).WillOnce(Return(false));
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr
+    }};
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
@@ -238,7 +241,8 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
     EXPECT_CALL(*rawETLServicePtr, isAmendmentBlocked).WillOnce(Return(true));
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr
+    }};
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
@@ -280,7 +284,8 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
     EXPECT_CALL(*rawETLServicePtr, getInfo).WillOnce(Return(empty));
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr
+    }};
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
@@ -321,7 +326,8 @@ TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
     EXPECT_CALL(*rawBackendPtr, stats).WillOnce(Return(boost::json::object{{"read_cout", 10}, {"write_count", 3}}));
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr
+    }};
 
     runSpawn([&](auto yield) {
         auto const req = json::parse(R"(
@@ -374,7 +380,8 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
     EXPECT_CALL(*rawETLServicePtr, getInfo).WillOnce(Return(empty));
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr
+    }};
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");
@@ -419,7 +426,8 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
     EXPECT_CALL(*rawETLServicePtr, getInfo).WillOnce(Return(empty));
 
     auto const handler = AnyHandler{TestServerInfoHandler{
-        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr}};
+        mockBackendPtr, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr
+    }};
 
     runSpawn([&](auto yield) {
         auto const req = json::parse("{}");

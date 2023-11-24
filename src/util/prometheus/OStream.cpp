@@ -25,8 +25,9 @@ namespace util::prometheus {
 OStream::OStream(bool const compressionEnabled) : compressionEnabled_(compressionEnabled)
 {
     if (compressionEnabled_) {
-        stream_.push(boost::iostreams::gzip_compressor{
-            boost::iostreams::gzip_params{boost::iostreams::gzip::best_compression}});
+        stream_.push(
+            boost::iostreams::gzip_compressor{boost::iostreams::gzip_params{boost::iostreams::gzip::best_compression}}
+        );
     }
     stream_.push(boost::iostreams::back_inserter(buffer_));
 }

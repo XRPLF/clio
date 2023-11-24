@@ -288,7 +288,8 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     if (jsonObject.contains(JS(marker))) {
         input.marker = AccountTxHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
-            jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
+            jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()
+        };
     }
 
     if (jsonObject.contains("tx_type")) {

@@ -207,7 +207,8 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
     if (jsonObject.contains(JS(marker))) {
         input.marker = NFTHistoryHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
-            jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
+            jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()
+        };
     }
 
     return input;

@@ -118,7 +118,8 @@ public:
             if (value_ == res) {
                 return Error{Status{
                     RippledError::rpcNOT_SUPPORTED,
-                    fmt::format("Not supported field '{}'s value '{}'", std::string{key}, res)}};
+                    fmt::format("Not supported field '{}'s value '{}'", std::string{key}, res)
+                }};
             }
         }
         return {};

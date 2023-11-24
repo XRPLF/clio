@@ -156,7 +156,7 @@ BackendInterface::fetchBookOffers(
     // TODO try to speed this up. This can take a few seconds. The goal is
     // to get it down to a few hundred milliseconds.
     BookOffersPage page;
-    const ripple::uint256 bookEnd = ripple::getQualityNext(book);
+    ripple::uint256 const bookEnd = ripple::getQualityNext(book);
     ripple::uint256 uTipIndex = book;
     std::vector<ripple::uint256> keys;
     auto getMillis = [](auto diff) { return std::chrono::duration_cast<std::chrono::milliseconds>(diff).count(); };
@@ -179,7 +179,8 @@ BackendInterface::fetchBookOffers(
         while (keys.size() < limit) {
             ++numPages;
             ripple::STLedgerEntry const sle{
-                ripple::SerialIter{offerDir->blob.data(), offerDir->blob.size()}, offerDir->key};
+                ripple::SerialIter{offerDir->blob.data(), offerDir->blob.size()}, offerDir->key
+            };
             auto indexes = sle.getFieldV256(ripple::sfIndexes);
             keys.insert(keys.end(), indexes.begin(), indexes.end());
             auto next = sle.getFieldU64(ripple::sfIndexNext);

@@ -361,7 +361,8 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
             "Amount1": {
                 "test": "test"
             }
-        })"};
+        })"
+    };
 
     std::array<std::string, 3> outputArray = {
         R"({
@@ -384,7 +385,8 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
             "Amount1": {
                 "test": "test"
             }
-        })"};
+        })"
+    };
 
     for (size_t i = 0; i < inputArray.size(); i++) {
         auto req = boost::json::parse(inputArray[i]).as_object();

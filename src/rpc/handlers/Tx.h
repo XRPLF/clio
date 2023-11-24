@@ -70,7 +70,7 @@ public:
     static RpcSpecConstRef
     spec(uint32_t apiVersion)
     {
-        static const RpcSpec rpcSpecForV1 = {
+        static RpcSpec const rpcSpecForV1 = {
             {JS(transaction), validation::Uint256HexStringValidator},
             {JS(min_ledger), validation::Type<uint32_t>{}},
             {JS(max_ledger), validation::Type<uint32_t>{}},
@@ -120,7 +120,8 @@ public:
                     RippledError::rpcWRONG_NETWORK,
                     fmt::format(
                         "Wrong network. You should submit this request to a node running on NetworkID: {}", netId
-                    )}};
+                    )
+                }};
             }
 
             dbResponse = fetchTxViaCtid(lgrSeq, txnIdx, ctx.yield);
