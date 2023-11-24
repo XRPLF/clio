@@ -102,6 +102,7 @@ target_sources (clio PRIVATE
   ## Web
   src/web/impl/AdminVerificationStrategy.cpp
   src/web/IntervalSweepHandler.cpp
+  src/web/Resolver.cpp
   ## RPC
   src/rpc/Errors.cpp
   src/rpc/Factories.cpp

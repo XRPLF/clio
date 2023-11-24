@@ -19,6 +19,9 @@
 
 #pragma once
 
+#include <util/config/Config.h>
+#include <web/Resolver.h>
+
 #include <boost/asio.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <fmt/core.h>
@@ -142,9 +145,10 @@ public:
      *
      * @param config The Clio config to use
      */
-    WhitelistHandler(util::Config const& config)
+    template <SomeResolver HostnameResolverType = Resolver>
+    WhitelistHandler(util::Config const& config, HostnameResolverType&& resolver = {})
     {
-        std::unordered_set<std::string> const arr = getWhitelist(config);
+        std::unordered_set<std::string> const arr = getWhitelist(config, std::forward<HostnameResolverType>(resolver));
         for (auto const& net : arr)
             whitelist_.add(net);
     }
@@ -159,17 +163,27 @@ public:
     }
 
 private:
+    template <SomeResolver HostnameResolverType>
     [[nodiscard]] static std::unordered_set<std::string>
-    getWhitelist(util::Config const& config)
+    getWhitelist(util::Config const& config, HostnameResolverType&& resolver)
     {
-        using SetType = std::unordered_set<std::string> const;
-
         auto whitelist = config.arrayOr("dos_guard.whitelist", {});
         auto const transform = [](auto const& elem) { return elem.template value<std::string>(); };
 
-        return SetType{
+        std::unordered_set<std::string> const hostnames{
             boost::transform_iterator(std::begin(whitelist), transform),
             boost::transform_iterator(std::end(whitelist), transform)};
+
+        // resolve hostnames to ips
+        std::unordered_set<std::string> ips;
+        for (auto const& hostname : hostnames) {
+            auto resolvedIps = resolver.resolve(hostname, "");
+            for (auto& ip : resolvedIps) {
+                ips.insert(std::move(ip));
+            }
+        };
+        return ips;
     }
 };
+
 }  // namespace web
