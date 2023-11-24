@@ -164,7 +164,9 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
         }
 
         boost::json::object obj;
-        if (!input.binary) {
+
+        // if binary is true or transactionType is specified, we need to expand the transaction
+        if (!input.binary || input.transactionType.has_value()) {
             auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion, NFTokenjson::ENABLE);
 
             if (txn.contains(JS(TransactionType))) {
@@ -177,35 +179,38 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
                     continue;
             }
 
-            auto const txKey = ctx.apiVersion < 2u ? JS(tx) : JS(tx_json);
-            obj[JS(meta)] = std::move(meta);
-            obj[txKey] = std::move(txn);
-            obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
-            obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+            if (!input.binary) {
+                auto const txKey = ctx.apiVersion < 2u ? JS(tx) : JS(tx_json);
+                obj[JS(meta)] = std::move(meta);
+                obj[txKey] = std::move(txn);
+                obj[txKey].as_object()[JS(date)] = txnPlusMeta.date;
+                obj[txKey].as_object()[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
 
-            if (ctx.apiVersion < 2u) {
-                obj[txKey].as_object()[JS(inLedger)] = txnPlusMeta.ledgerSequence;
-            } else {
-                obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
-                if (obj[txKey].as_object().contains(JS(hash))) {
-                    obj[JS(hash)] = obj[txKey].as_object()[JS(hash)];
-                    obj[txKey].as_object().erase(JS(hash));
+                if (ctx.apiVersion < 2u) {
+                    obj[txKey].as_object()[JS(inLedger)] = txnPlusMeta.ledgerSequence;
+                } else {
+                    obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+                    if (obj[txKey].as_object().contains(JS(hash))) {
+                        obj[JS(hash)] = obj[txKey].as_object()[JS(hash)];
+                        obj[txKey].as_object().erase(JS(hash));
+                    }
+                    if (auto const ledgerInfo =
+                            sharedPtrBackend_->fetchLedgerBySequence(txnPlusMeta.ledgerSequence, ctx.yield);
+                        ledgerInfo) {
+                        obj[JS(ledger_hash)] = ripple::strHex(ledgerInfo->hash);
+                        obj[JS(close_time_iso)] = ripple::to_string_iso(ledgerInfo->closeTime);
+                    }
                 }
-                if (auto const ledgerInfo =
-                        sharedPtrBackend_->fetchLedgerBySequence(txnPlusMeta.ledgerSequence, ctx.yield);
-                    ledgerInfo) {
-                    obj[JS(ledger_hash)] = ripple::strHex(ledgerInfo->hash);
-                    obj[JS(close_time_iso)] = ripple::to_string_iso(ledgerInfo->closeTime);
-                }
+                obj[JS(validated)] = true;
+                response.transactions.push_back(std::move(obj));
+                continue;
             }
-        } else {
-            obj = toJsonWithBinaryTx(txnPlusMeta, ctx.apiVersion);
-            obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
         }
-
+        // binary is true
+        obj = toJsonWithBinaryTx(txnPlusMeta, ctx.apiVersion);
         obj[JS(validated)] = true;
-
-        response.transactions.push_back(obj);
+        obj[JS(ledger_index)] = txnPlusMeta.ledgerSequence;
+        response.transactions.push_back(std::move(obj));
     }
 
     response.limit = input.limit;
