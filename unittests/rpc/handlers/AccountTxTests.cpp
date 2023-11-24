@@ -1855,7 +1855,31 @@ generateTransactionTypeTestValues()
             ])",
             2u},
         AccountTxTransactionBundle{
+            "FilterWhenBinaryTrue",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "Payment",
+                "binary": true
+            })",
+            R"([{
+                "meta": "201C00000000F8E5110061E762400000000000001681144B4E9C06F24296074F7BC48F92A97916C6DC5EA9E1E1E5110061E76240000000000000178114D31252CF902EF8DD8451243869B38667CBD89DF3E1E1F1031000",
+                "tx_blob": "120000240000002061400000000000000168400000000000000173047465737481144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451243869B38667CBD89DF3",
+                "ledger_index": 30,
+                "validated": true
+            }])",
+            1u},
+        AccountTxTransactionBundle{
             "PaymentChannelClaim",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "PaymentChannelClaim",
+                "binary": true
+            })",
+            "[]"},
+        AccountTxTransactionBundle{
+            "FilterWhenBinaryTrueEmptyResult",
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
