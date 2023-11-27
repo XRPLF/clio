@@ -17,13 +17,16 @@
 */
 //==============================================================================
 
+#include "util/prometheus/OStream.h"
+#include <cstdint>
+#include <string>
 #include <util/prometheus/Counter.h>
 
-#include <boost/iostreams/device/back_inserter.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <thread>
+#include <utility>
 
 using namespace util::prometheus;
 

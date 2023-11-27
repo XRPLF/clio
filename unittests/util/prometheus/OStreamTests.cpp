@@ -17,10 +17,14 @@
 */
 //==============================================================================
 
+#include <string>
 #include <util/prometheus/OStream.h>
 
+#include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 #include <gtest/gtest.h>
+#include <utility>
 
 using namespace util::prometheus;
 

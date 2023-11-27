@@ -17,12 +17,29 @@
 */
 //==============================================================================
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
+#include "data/BackendInterface.h"
+#include "data/cassandra/Error.h"
+#include "data/cassandra/Types.h"
+#include "gmock/gmock.h"
+#include <atomic>
+#include <cassandra.h>
+#include <chrono>
+#include <cstdint>
 #include <data/cassandra/impl/FakesAndMocks.h>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+#include <thread>
 #include <util/Fixtures.h>
 
 #include <data/cassandra/impl/ExecutionStrategy.h>
 
 #include <gtest/gtest.h>
+#include <vector>
 
 using namespace data::cassandra;
 using namespace data::cassandra::detail;

@@ -17,10 +17,36 @@
 */
 //==============================================================================
 
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Book.h>
+#include <ripple/protocol/Fees.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STAmount.h>
+#include <ripple/protocol/STObject.h>
+#include <ripple/protocol/TER.h>
+#include <ripple/protocol/TxFormats.h>
+#include <boost/asio/post.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/serialize.hpp>
+#include "data/BackendInterface.h"
+#include "data/Types.h"
+#include <cstdint>
 #include <feed/SubscriptionManager.h>
+#include <memory>
+#include <mutex>
+#include <optional>
 #include <rpc/BookChangesHelper.h>
 #include <rpc/RPCHelpers.h>
+#include <string>
+#include <unordered_set>
 #include <util/Assert.h>
+#include <utility>
+#include <vector>
 
 namespace feed {
 

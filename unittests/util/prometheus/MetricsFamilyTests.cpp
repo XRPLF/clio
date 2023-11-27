@@ -17,11 +17,20 @@
 */
 //==============================================================================
 
+#include "util/prometheus/Label.h"
+#include "util/prometheus/MetricBase.h"
+#include "util/prometheus/MetricBuilder.h"
+#include "util/prometheus/OStream.h"
+#include <cstdint>
+#include <fmt/core.h>
+#include <memory>
+#include <string>
 #include <util/prometheus/MetricsFamily.h>
 
-#include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <utility>
+#include <vector>
 
 using namespace util::prometheus;
 

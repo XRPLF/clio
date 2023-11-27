@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include <cstdint>
 #include <util/prometheus/Gauge.h>
 
 #include <gmock/gmock.h>

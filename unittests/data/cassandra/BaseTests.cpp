@@ -17,6 +17,16 @@
 */
 //==============================================================================
 
+#include "data/cassandra/Types.h"
+#include <algorithm>
+#include <cassandra.h>
+#include <chrono>
+#include <cstdint>
+#include <iterator>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <type_traits>
 #include <util/Fixtures.h>
 
 #include <data/cassandra/Handle.h>
@@ -25,6 +35,7 @@
 #include <gtest/gtest.h>
 
 #include <semaphore>
+#include <vector>
 
 using namespace std;
 

@@ -17,6 +17,11 @@
 */
 //==============================================================================
 
+#include "data/BackendInterface.h"
+#include "rpc/common/AnyHandler.h"
+#include "util/config/Config.h"
+#include <memory>
+#include <optional>
 #include <rpc/common/impl/HandlerProvider.h>
 
 #include <etl/ETLService.h>
@@ -53,6 +58,7 @@
 #include <rpc/handlers/Tx.h>
 #include <rpc/handlers/Unsubscribe.h>
 #include <rpc/handlers/VersionHandler.h>
+#include <string>
 
 namespace rpc::detail {
 

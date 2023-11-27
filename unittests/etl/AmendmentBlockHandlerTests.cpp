@@ -17,6 +17,11 @@
 */
 //==============================================================================
 
+#include <boost/asio/io_context.hpp>
+#include "etl/SystemState.h"
+#include <chrono>
+#include <cstddef>
+#include <functional>
 #include <util/FakeAmendmentBlockAction.h>
 #include <util/Fixtures.h>
 

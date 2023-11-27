@@ -17,10 +17,20 @@
 */
 //==============================================================================
 
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/jss.h>
+#include <boost/json/object.hpp>
+#include <cstdint>
+#include <iterator>
+#include <optional>
 #include <rpc/Errors.h>
 #include <rpc/JS.h>
 
 #include <algorithm>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <variant>
 
 using namespace std;
 

@@ -17,6 +17,9 @@
 */
 //==============================================================================
 
+#include "data/cassandra/Types.h"
+#include <chrono>
+#include <optional>
 #include <util/Fixtures.h>
 #include <util/TmpFile.h>
 

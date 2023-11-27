@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/config/Config.h"
 #include <util/Fixtures.h>
 
 #include <rpc/common/impl/APIVersionParser.h>

@@ -16,11 +16,22 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/status.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/verb.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include "util/config/Config.h"
+#include "util/prometheus/Label.h"
+#include "util/prometheus/Prometheus.h"
+#include <fmt/core.h>
+#include <string>
 #include <util/prometheus/Http.h>
 
 #include <util/MockPrometheus.h>
 
-#include <fmt/format.h>
 #include <gtest/gtest.h>
 
 using namespace util::prometheus;

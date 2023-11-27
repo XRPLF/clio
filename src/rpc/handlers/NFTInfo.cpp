@@ -17,11 +17,24 @@
 */
 //==============================================================================
 
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/common/Types.h"
 #include <rpc/RPCHelpers.h>
 #include <rpc/handlers/NFTInfo.h>
+#include <string>
+#include <variant>
 
-#include <ripple/protocol/Indexes.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/jss.h>
 #include <ripple/protocol/nft.h>
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
 
 using namespace ripple;
 using namespace ::rpc;

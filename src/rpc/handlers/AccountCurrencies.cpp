@@ -17,7 +17,26 @@
 */
 //==============================================================================
 
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/UintTypes.h>
+#include <ripple/protocol/jss.h>
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/Types.h"
+#include <cstdint>
+#include <limits>
 #include <rpc/handlers/AccountCurrencies.h>
+#include <string>
+#include <variant>
 
 namespace rpc {
 AccountCurrenciesHandler::Result

@@ -17,17 +17,23 @@
 */
 //==============================================================================
 
+#include <cstdint>
+#include <gtest/gtest.h>
+#include <optional>
+#include <stdexcept>
+#include <string>
 #include <util/Assert.h>
 #include <util/Fixtures.h>
 #include <util/config/Config.h>
 
-#include <boost/filesystem.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/json/conversion.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 
 #include <cstdio>
-#include <exception>
 #include <fstream>
-#include <iostream>
+#include <vector>
 
 using namespace util;
 using namespace boost::log;

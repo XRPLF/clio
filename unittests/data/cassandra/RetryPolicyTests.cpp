@@ -17,6 +17,10 @@
 */
 //==============================================================================
 
+#include <boost/asio/io_context.hpp>
+#include <atomic>
+#include <cassandra.h>
+#include <optional>
 #include <util/Fixtures.h>
 
 #include <data/cassandra/Error.h>

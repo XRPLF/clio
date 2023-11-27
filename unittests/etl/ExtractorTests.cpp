@@ -17,7 +17,10 @@
 */
 //==============================================================================
 
+#include "etl/SystemState.h"
+#include "gmock/gmock.h"
 #include <etl/impl/Extractor.h>
+#include <optional>
 #include <util/FakeFetchResponse.h>
 #include <util/Fixtures.h>
 #include <util/MockExtractionDataPipe.h>

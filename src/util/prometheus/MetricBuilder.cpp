@@ -17,11 +17,17 @@
 */
 //==============================================================================
 
+#include "util/prometheus/MetricBase.h"
+#include <cstdint>
+#include <memory>
+#include <string>
 #include <util/Assert.h>
 #include <util/prometheus/Counter.h>
 #include <util/prometheus/Gauge.h>
 #include <util/prometheus/Histogram.h>
 #include <util/prometheus/MetricBuilder.h>
+#include <utility>
+#include <vector>
 
 namespace util::prometheus {
 

@@ -17,15 +17,13 @@
 */
 //==============================================================================
 
+#include <memory>
 #include <util/Taggable.h>
 
-#include <boost/json.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/random_generator.hpp>
 
 #include <atomic>
 #include <mutex>
-#include <string>
 
 namespace util::detail {
 

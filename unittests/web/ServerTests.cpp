@@ -17,13 +17,38 @@
 */
 //==============================================================================
 
+#include "util/config/Config.h"
+#include "util/prometheus/Label.h"
+#include "util/prometheus/Prometheus.h"
+#include "web/DOSGuard.h"
+#include "web/IntervalSweepHandler.h"
+#include "web/WhitelistHandler.h"
+#include "web/impl/AdminVerificationStrategy.h"
+#include "web/interface/ConnectionBase.h"
+#include <condition_variable>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <stdexcept>
+#include <string>
+#include <thread>
 #include <util/Fixtures.h>
 #include <util/MockPrometheus.h>
 #include <util/TestHttpSyncClient.h>
+#include <utility>
+#include <vector>
 #include <web/Server.h>
 
-#include <ripple/protocol/digest.h>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/ssl/context.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/status.hpp>
+#include <boost/beast/websocket/error.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/system/system_error.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 

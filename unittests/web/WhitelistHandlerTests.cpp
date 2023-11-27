@@ -16,12 +16,12 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+#include "web/WhitelistHandler.h"
+#include <gtest/gtest.h>
 #include <util/Fixtures.h>
 #include <util/config/Config.h>
-#include <web/DOSGuard.h>
 
 #include <boost/json/parse.hpp>
-#include <gmock/gmock.h>
 
 using namespace util;
 using namespace web;

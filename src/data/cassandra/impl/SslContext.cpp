@@ -17,7 +17,11 @@
 */
 //==============================================================================
 
+#include "data/cassandra/impl/ManagedObject.h"
+#include <cassandra.h>
 #include <data/cassandra/impl/SslContext.h>
+#include <stdexcept>
+#include <string>
 
 namespace {
 constexpr auto contextDeleter = [](CassSsl* ptr) { cass_ssl_free(ptr); };

@@ -17,12 +17,26 @@
 */
 //==============================================================================
 
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/STObject.h>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/parse.hpp>
+#include "data/Types.h"
+#include "gmock/gmock.h"
+#include "rpc/Errors.h"
+#include "rpc/common/Types.h"
+#include "util/MockBackend.h"
+#include <gtest/gtest.h>
+#include <optional>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/handlers/NFTBuyOffers.h>
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
 #include <fmt/core.h>
+#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;

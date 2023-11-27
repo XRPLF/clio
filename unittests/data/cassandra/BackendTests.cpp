@@ -17,6 +17,33 @@
 */
 //==============================================================================
 
+#include <ripple/basics/Slice.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/STTx.h>
+#include <ripple/protocol/Serializer.h>
+#include <ripple/protocol/TxMeta.h>
+#include "data/BackendInterface.h"
+#include "data/DBHelpers.h"
+#include "data/Types.h"
+#include "data/cassandra/Handle.h"
+#include "data/cassandra/SettingsProvider.h"
+#include "util/LedgerUtils.h"
+#include <algorithm>
+#include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <fmt/core.h>
+#include <map>
+#include <memory>
+#include <optional>
+#include <random>
+#include <string>
+#include <tuple>
+#include <unordered_map>
 #include <util/Fixtures.h>
 #include <util/StringUtils.h>
 
@@ -26,9 +53,13 @@
 #include <util/Random.h>
 #include <util/config/Config.h>
 
+#include <boost/asio/impl/spawn.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/json/parse.hpp>
-#include <fmt/compile.h>
 #include <gtest/gtest.h>
+#include <utility>
+#include <vector>
 
 using namespace util;
 using namespace std;
@@ -668,8 +699,8 @@ TEST_F(BackendCassandraTest, Basic)
                 } while (cursor);
                 EXPECT_EQ(retData.size(), data.size());
                 for (size_t i = 0; i < retData.size(); ++i) {
-                    auto [txn, meta, _, __] = retData[i];
-                    auto [___, expTxn, expMeta] = data[i];
+                    auto [txn, meta, _, _2] = retData[i];
+                    auto [_3, expTxn, expMeta] = data[i];
                     EXPECT_STREQ(reinterpret_cast<const char*>(txn.data()), static_cast<const char*>(expTxn.data()));
                     EXPECT_STREQ(reinterpret_cast<const char*>(meta.data()), static_cast<const char*>(expMeta.data()));
                 }

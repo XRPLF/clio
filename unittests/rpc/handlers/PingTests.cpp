@@ -17,6 +17,9 @@
 */
 //==============================================================================
 
+#include <boost/json/parse.hpp>
+#include "rpc/common/Types.h"
+#include <gtest/gtest.h>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/handlers/Ping.h>
 #include <util/Fixtures.h>

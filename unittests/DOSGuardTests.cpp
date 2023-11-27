@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include <string_view>
 #include <util/Fixtures.h>
 
 #include <util/config/Config.h>

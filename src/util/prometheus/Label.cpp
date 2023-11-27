@@ -17,9 +17,14 @@
 */
 //==============================================================================
 
+#include <algorithm>
+#include <fmt/core.h>
+#include <string>
+#include <tuple>
 #include <util/prometheus/Label.h>
 
-#include <fmt/format.h>
+#include <utility>
+#include <vector>
 
 namespace util::prometheus {
 

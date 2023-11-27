@@ -17,10 +17,15 @@
 */
 //==============================================================================
 
+#include "util/prometheus/OStream.h"
+#include <cstdint>
+#include <string>
 #include <util/prometheus/Histogram.h>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <utility>
+#include <vector>
 
 using namespace util::prometheus;
 

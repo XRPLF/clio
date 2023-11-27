@@ -17,9 +17,10 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
+#include "rpc/common/Types.h"
 #include <rpc/handlers/NFTSellOffers.h>
 
+#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Indexes.h>
 
 using namespace ripple;

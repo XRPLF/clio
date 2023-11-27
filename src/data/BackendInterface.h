@@ -86,7 +86,7 @@ synchronous(FnType&& func)
     boost::asio::io_context ctx;
 
     using R = typename boost::result_of<FnType(boost::asio::yield_context)>::type;
-    if constexpr (!std::is_same<R, void>::value) {
+    if constexpr (!std::is_same_v<R, void>) {
         R res;
         boost::asio::spawn(ctx, [_ = boost::asio::make_work_guard(ctx), &func, &res](auto yield) {
             res = func(yield);

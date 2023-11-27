@@ -17,6 +17,11 @@
 */
 //==============================================================================
 
+#include <ripple/protocol/jss.h>
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
+#include <cstdint>
 #include <etl/ETLState.h>
 #include <rpc/JS.h>
 

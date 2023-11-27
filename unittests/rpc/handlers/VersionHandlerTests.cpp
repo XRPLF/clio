@@ -17,8 +17,13 @@
 */
 //==============================================================================
 
+#include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
+#include "rpc/common/Types.h"
+#include "util/config/Config.h"
+#include <fmt/core.h>
+#include <gtest/gtest.h>
 #include <util/Fixtures.h>
-#include <util/TestObject.h>
 
 #include <rpc/common/AnyHandler.h>
 #include <rpc/handlers/VersionHandler.h>

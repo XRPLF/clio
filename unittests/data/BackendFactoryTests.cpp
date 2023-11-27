@@ -17,10 +17,14 @@
 */
 //==============================================================================
 
+#include "data/cassandra/Handle.h"
+#include "util/config/Config.h"
 #include <data/BackendFactory.h>
+#include <stdexcept>
+#include <string>
 #include <util/Fixtures.h>
 
-#include <boost/json.hpp>
+#include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 

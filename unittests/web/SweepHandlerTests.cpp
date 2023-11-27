@@ -17,10 +17,12 @@
 */
 //==============================================================================
 
+#include "web/IntervalSweepHandler.h"
+#include <chrono>
+#include <gtest/gtest.h>
 #include <rpc/handlers/impl/FakesAndMocks.h>
 #include <util/Fixtures.h>
 #include <util/config/Config.h>
-#include <web/DOSGuard.h>
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>

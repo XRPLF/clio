@@ -17,12 +17,25 @@
 */
 //==============================================================================
 
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
+#include <boost/json/parse.hpp>
+#include "data/Types.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "rpc/Errors.h"
+#include "rpc/common/Types.h"
+#include "util/MockBackend.h"
+#include <gtest/gtest.h>
+#include <optional>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/handlers/LedgerData.h>
+#include <string>
 #include <util/Fixtures.h>
 #include <util/TestObject.h>
 
 #include <fmt/core.h>
+#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;
@@ -548,7 +561,7 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
     while ((limit--) != 0) {
         auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
-        los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});
+        los.emplace_back(ripple::uint256{INDEX2}, Blob{});
     }
     ON_CALL(*rawBackendPtr, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));
 

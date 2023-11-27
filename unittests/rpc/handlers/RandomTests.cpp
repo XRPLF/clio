@@ -17,7 +17,11 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
+#include <ripple/protocol/jss.h>
+#include <boost/json/parse.hpp>
+#include "rpc/JS.h"
+#include "rpc/common/Types.h"
+#include <gtest/gtest.h>
 #include <rpc/common/AnyHandler.h>
 #include <rpc/handlers/Random.h>
 #include <util/Fixtures.h>

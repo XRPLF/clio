@@ -17,15 +17,17 @@
 */
 //==============================================================================
 
+#include "data/cassandra/impl/ManagedObject.h"
+#include "util/log/Logger.h"
+#include <cassandra.h>
 #include <data/cassandra/impl/Cluster.h>
 #include <data/cassandra/impl/SslContext.h>
-#include <data/cassandra/impl/Statement.h>
-#include <util/Expected.h>
+#include <stdexcept>
+#include <string>
 
 #include <fmt/core.h>
 
-#include <exception>
-#include <vector>
+#include <variant>
 
 namespace {
 constexpr auto clusterDeleter = [](CassCluster* ptr) { cass_cluster_free(ptr); };

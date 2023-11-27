@@ -17,10 +17,12 @@
 */
 //==============================================================================
 
-#include <cmath>
+#include <chrono>
 #include <gtest/gtest.h>
+#include <limits>
 #include <thread>
 #include <util/Profiler.h>
+#include <utility>
 
 using namespace util;
 TEST(TimedTest, HasReturnValue)

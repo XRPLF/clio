@@ -17,9 +17,13 @@
 */
 //==============================================================================
 
+#include <string>
 #include <util/prometheus/OStream.h>
+#include <utility>
 
+#include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
 
 namespace util::prometheus {
 OStream::OStream(bool const compressionEnabled) : compressionEnabled_(compressionEnabled)

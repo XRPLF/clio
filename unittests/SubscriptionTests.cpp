@@ -17,13 +17,19 @@
 */
 //==============================================================================
 
+#include "util/Taggable.h"
+#include "util/config/Config.h"
+#include "util/prometheus/Gauge.h"
+#include "web/interface/ConnectionBase.h"
 #include <feed/SubscriptionManager.h>
 
+#include <gtest/gtest.h>
+#include <memory>
+#include <string>
 #include <util/Fixtures.h>
 #include <util/MockPrometheus.h>
 #include <util/MockWsBase.h>
 
-#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 
 using namespace feed;

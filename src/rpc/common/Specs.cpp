@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/common/Types.h"
 #include <rpc/common/Specs.h>
 
 #include <boost/json/value.hpp>

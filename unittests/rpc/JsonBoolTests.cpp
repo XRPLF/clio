@@ -19,7 +19,10 @@
 #include <rpc/common/JsonBool.h>
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value_to.hpp>
 #include <gtest/gtest.h>
+#include <string>
+#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;

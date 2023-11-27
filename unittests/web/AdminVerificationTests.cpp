@@ -17,11 +17,16 @@
 */
 //==============================================================================
 
+#include <optional>
+#include <string>
 #include <util/Fixtures.h>
 
+#include <utility>
 #include <web/impl/AdminVerificationStrategy.h>
 
-#include <boost/json.hpp>
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
 #include <gtest/gtest.h>
 
 namespace http = boost::beast::http;

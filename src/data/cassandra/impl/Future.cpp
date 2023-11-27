@@ -17,12 +17,17 @@
 */
 //==============================================================================
 
+#include "data/cassandra/Types.h"
+#include "data/cassandra/impl/ManagedObject.h"
+#include <cassandra.h>
+#include <cstddef>
 #include <data/cassandra/Error.h>
 #include <data/cassandra/impl/Future.h>
 #include <data/cassandra/impl/Result.h>
 
-#include <exception>
-#include <vector>
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace {
 constexpr auto futureDeleter = [](CassFuture* ptr) { cass_future_free(ptr); };

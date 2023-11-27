@@ -17,6 +17,14 @@
 */
 //==============================================================================
 
+#include <ripple/protocol/ErrorCodes.h>
+#include "gmock/gmock.h"
+#include "rpc/Errors.h"
+#include "util/Taggable.h"
+#include "web/Context.h"
+#include <memory>
+#include <optional>
+#include <string>
 #include <util/Fixtures.h>
 #include <util/MockCounters.h>
 #include <util/MockHandlerProvider.h>
@@ -25,8 +33,10 @@
 #include <rpc/common/impl/ForwardingProxy.h>
 #include <util/config/Config.h>
 
-#include <boost/json.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
+#include <variant>
 
 using namespace rpc;
 using namespace testing;
