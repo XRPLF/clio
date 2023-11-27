@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "util/config/Config.h"
 #include "util/prometheus/Counter.h"
 #include "util/prometheus/Gauge.h"

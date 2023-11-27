@@ -109,7 +109,7 @@ Config::maybeArray(KeyType key) const
             });
             return std::make_optional<ArrayType>(std::move(out));
         }
-    } catch (detail::StoreException const&) {
+    } catch (detail::StoreException const&) {  // NOLINT(bugprone-empty-catch)
         // ignore store error, but rethrow key errors
     }
 

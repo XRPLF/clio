@@ -75,7 +75,7 @@ public:
         }
         // clio only uses bigint (int64_t) so we convert any incoming type
         else if constexpr (std::is_convertible_v<DecayedType, int64_t>) {
-            auto const rc = cass_tuple_set_int64(*this, idx, value);
+            auto const rc = cass_tuple_set_int64(*this, idx, std::forward<Type>(value));
             throwErrorIfNeeded(rc, "Bind int64");
         } else if constexpr (std::is_same_v<DecayedType, ripple::uint256>) {
             auto const rc = cass_tuple_set_bytes(

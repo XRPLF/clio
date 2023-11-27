@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
+#include <cstdlib>
 #include <exception>
-#include <new>
 #include <util/TerminationHandler.h>
 #include <util/log/Logger.h>
 

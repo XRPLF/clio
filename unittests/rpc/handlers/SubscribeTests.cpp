@@ -25,7 +25,6 @@
 #include <boost/json/parse.hpp>
 #include "data/Types.h"
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "rpc/Errors.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"

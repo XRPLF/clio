@@ -85,7 +85,7 @@ AccountOffersHandler::process(AccountOffersHandler::Input input, Context const& 
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
-    auto const addToResponse = [&](ripple::SLE&& sle) {
+    auto const addToResponse = [&](ripple::SLE const sle) {
         if (sle.getType() == ripple::ltOFFER)
             addOffer(response.offers, sle);
 

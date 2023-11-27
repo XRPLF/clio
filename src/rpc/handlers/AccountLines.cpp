@@ -137,7 +137,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
     Output response;
     response.lines.reserve(input.limit);
 
-    auto const addToResponse = [&](ripple::SLE&& sle) {
+    auto const addToResponse = [&](ripple::SLE const sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE) {
             auto ignore = false;
             if (input.ignoreDefault) {

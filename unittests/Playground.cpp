@@ -17,8 +17,6 @@
 */
 //==============================================================================
 
-using namespace util;
-
 /*
  * Use this file for temporary tests and implementations.
  * Note: Please don't push your temporary work to the repo.

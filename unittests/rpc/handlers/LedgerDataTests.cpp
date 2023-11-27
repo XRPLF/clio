@@ -22,7 +22,6 @@
 #include <boost/json/parse.hpp>
 #include "data/Types.h"
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "rpc/Errors.h"
 #include "rpc/common/Types.h"
 #include "util/MockBackend.h"
@@ -561,7 +560,7 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
     while ((limit--) != 0) {
         auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
-        los.emplace_back(ripple::uint256{INDEX2}, Blob{});
+        los.emplace_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});  // NOLINT(modernize-use-emplace)
     }
     ON_CALL(*rawBackendPtr, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));
 

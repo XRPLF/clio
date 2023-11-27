@@ -240,8 +240,8 @@ public:
 
             if (not state_.get().isStopping) {
                 backend_->writeAccountTransactions(std::move(insertTxResult.accountTxData));
-                backend_->writeNFTs(std::move(insertTxResult.nfTokensData));
-                backend_->writeNFTTransactions(std::move(insertTxResult.nfTokenTxData));
+                backend_->writeNFTs(insertTxResult.nfTokensData);
+                backend_->writeNFTTransactions(insertTxResult.nfTokenTxData);
             }
 
             backend_->finishWrites(sequence);

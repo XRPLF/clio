@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "rpc/common/Specs.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"

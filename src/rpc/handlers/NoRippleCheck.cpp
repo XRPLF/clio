@@ -117,7 +117,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
         std::numeric_limits<std::uint32_t>::max(),
         {},
         ctx.yield,
-        [&](ripple::SLE&& ownedItem) {
+        [&](ripple::SLE const ownedItem) {
             // don't push to result if limit is reached
             if (limit != 0 && ownedItem.getType() == ripple::ltRIPPLE_STATE) {
                 bool const bLow = accountID == ownedItem.getFieldAmount(ripple::sfLowLimit).getIssuer();

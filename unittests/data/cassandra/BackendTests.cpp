@@ -415,8 +415,8 @@ TEST_F(BackendCassandraTest, Basic)
                 std::string{metaBlob}
             );
             backend->writeAccountTransactions(std::move(accountTxData));
-            backend->writeNFTs(std::move(nftData));
-            backend->writeNFTTransactions(std::move(parsedNFTTxs));
+            backend->writeNFTs(nftData);
+            backend->writeNFTTransactions(parsedNFTTxs);
 
             backend->writeLedgerObject(std::string{accountIndexBlob}, lgrInfoNext.seq, std::string{accountBlob});
             backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfoNext.seq, std::string{accountIndexBlob});

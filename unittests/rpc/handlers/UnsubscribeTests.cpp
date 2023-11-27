@@ -20,7 +20,6 @@
 #include <ripple/protocol/Book.h>
 #include <boost/json/parse.hpp>
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "rpc/Errors.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"

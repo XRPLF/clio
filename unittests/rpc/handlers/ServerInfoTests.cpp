@@ -21,7 +21,6 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "rpc/Errors.h"
 #include "rpc/common/Types.h"
 #include "util/MockBackend.h"

@@ -24,7 +24,6 @@
 #include <boost/json/parse.hpp>
 #include "data/Types.h"
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "rpc/Errors.h"
 #include "rpc/common/Types.h"
 #include "util/MockBackend.h"
@@ -779,7 +778,7 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff).Times(1);
 
-    los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});
+    los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});  // NOLINT(modernize-use-emplace)
     los.push_back(LedgerObject{
         ripple::uint256{INDEX1},
         CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()
@@ -826,7 +825,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff).Times(1);
 
-    los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});
+    los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});  // NOLINT(modernize-use-emplace)
     los.push_back(LedgerObject{
         ripple::uint256{INDEX1},
         CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()

@@ -100,7 +100,7 @@ AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context con
                                                         : std::optional<ripple::AccountID>{};
 
     Output response;
-    auto const addToResponse = [&](ripple::SLE&& sle) {
+    auto const addToResponse = [&](ripple::SLE const sle) {
         if (sle.getType() == ripple::ltPAYCHAN && sle.getAccountID(ripple::sfAccount) == accountID &&
             (!destAccountID || *destAccountID == sle.getAccountID(ripple::sfDestination))) {
             addChannel(response.channels, sle);

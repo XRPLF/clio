@@ -389,6 +389,7 @@ parseStringAsUInt(std::string const& value)
     try {
         index = boost::lexical_cast<std::uint32_t>(value);
     } catch (boost::bad_lexical_cast const&) {
+        index = std::nullopt;
     }
 
     return index;
@@ -454,7 +455,7 @@ getLedgerInfoFromHashOrSeq(
 )
 {
     std::optional<ripple::LedgerHeader> lgrInfo;
-    auto const err = Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+    auto err = Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
     if (ledgerHash) {
         // invoke uint256's constructor to parse the hex string , instead of
         // copying buffer
@@ -523,7 +524,7 @@ traverseNFTObjects(
     ripple::uint256 nextPage,
     std::uint32_t limit,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode
+    std::function<void(ripple::SLE)> atOwnedNode
 )
 {
     auto const firstNFTPage = ripple::keylet::nftpage_min(accountID);
@@ -575,7 +576,7 @@ traverseOwnedNodes(
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode,
+    std::function<void(ripple::SLE)> atOwnedNode,
     bool nftIncluded
 )
 {
@@ -629,7 +630,7 @@ traverseOwnedNodes(
     std::uint32_t sequence,
     std::uint32_t limit,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode
+    std::function<void(ripple::SLE)> atOwnedNode
 )
 {
     auto cursor = AccountCursor({beast::zero, 0});

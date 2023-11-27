@@ -521,7 +521,7 @@ public:
      * @param data A vector of NFTsData objects representing the NFTs
      */
     virtual void
-    writeNFTs(std::vector<NFTsData>&& data) = 0;
+    writeNFTs(std::vector<NFTsData> const& data) = 0;
 
     /**
      * @brief Write a new set of account transactions.
@@ -529,7 +529,7 @@ public:
      * @param data A vector of AccountTransactionsData objects representing the account transactions
      */
     virtual void
-    writeAccountTransactions(std::vector<AccountTransactionsData>&& data) = 0;
+    writeAccountTransactions(std::vector<AccountTransactionsData> data) = 0;
 
     /**
      * @brief Write NFTs transactions.
@@ -537,7 +537,7 @@ public:
      * @param data A vector of NFTTransactionsData objects
      */
     virtual void
-    writeNFTTransactions(std::vector<NFTTransactionsData>&& data) = 0;
+    writeNFTTransactions(std::vector<NFTTransactionsData> const& data) = 0;
 
     /**
      * @brief Write a new successor.

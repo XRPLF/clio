@@ -21,7 +21,6 @@
 #include "data/BackendInterface.h"
 #include "etl/ETLHelpers.h"
 #include "etl/ETLState.h"
-#include "etl/LoadBalancer.h"
 #include <algorithm>
 #include <chrono>
 #include <cstddef>

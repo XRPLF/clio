@@ -59,7 +59,7 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
     Output response;
-    auto const addToResponse = [&](ripple::SLE&& sle) {
+    auto const addToResponse = [&](ripple::SLE const sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE) {
             auto balance = sle.getFieldAmount(ripple::sfBalance);
             auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);

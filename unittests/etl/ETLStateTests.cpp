@@ -18,11 +18,14 @@
 //==============================================================================
 
 #include "gmock/gmock.h"
+#include <etl/ETLState.h>
 #include <util/MockSource.h>
 
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
 #include <util/Fixtures.h>
+
+#include <optional>
 
 namespace json = boost::json;
 using namespace util;

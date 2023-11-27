@@ -19,6 +19,8 @@
 
 #include <main/Build.h>
 
+#include <string>
+
 namespace Build {
 static constexpr char versionString[] = "@VERSION@";
 

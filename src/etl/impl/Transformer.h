@@ -199,8 +199,8 @@ private:
                           << rawData.transactions_list().transactions_size();
 
         backend_->writeAccountTransactions(std::move(insertTxResultOp->accountTxData));
-        backend_->writeNFTs(std::move(insertTxResultOp->nfTokensData));
-        backend_->writeNFTTransactions(std::move(insertTxResultOp->nfTokenTxData));
+        backend_->writeNFTs(insertTxResultOp->nfTokensData);
+        backend_->writeNFTTransactions(insertTxResultOp->nfTokenTxData);
 
         auto [success, duration] =
             ::util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(lgrInfo.seq); });

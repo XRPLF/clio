@@ -74,7 +74,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
 
     auto output = GatewayBalancesHandler::Output{};
 
-    auto const addToResponse = [&](ripple::SLE&& sle) {
+    auto const addToResponse = [&](ripple::SLE const sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE) {
             ripple::STAmount balance = sle.getFieldAmount(ripple::sfBalance);
             auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);
