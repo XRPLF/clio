@@ -18,11 +18,13 @@
 //==============================================================================
 
 #include "util/TerminationHandler.h"
+
 #include "util/log/Logger.h"
-#include <cstdlib>
-#include <exception>
 
 #include <boost/stacktrace/stacktrace.hpp>
+
+#include <cstdlib>
+#include <exception>
 
 namespace util {
 

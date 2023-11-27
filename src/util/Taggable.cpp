@@ -18,11 +18,11 @@
 //==============================================================================
 
 #include "util/Taggable.h"
-#include <memory>
 
 #include <boost/uuid/random_generator.hpp>
 
 #include <atomic>
+#include <memory>
 #include <mutex>
 
 namespace util::detail {

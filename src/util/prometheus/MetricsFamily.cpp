@@ -18,16 +18,17 @@
 //==============================================================================
 
 #include "util/prometheus/MetricsFamily.h"
+
+#include "util/Assert.h"
 #include "util/prometheus/Label.h"
 #include "util/prometheus/MetricBase.h"
 #include "util/prometheus/MetricBuilder.h"
 #include "util/prometheus/OStream.h"
+
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
-
-#include "util/Assert.h"
 #include <utility>
 #include <vector>
 

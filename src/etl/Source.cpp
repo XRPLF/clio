@@ -18,9 +18,8 @@
 //==============================================================================
 
 #include "etl/Source.h"
+
 #include "util/log/Logger.h"
-#include <memory>
-#include <string>
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/post.hpp>
@@ -31,6 +30,9 @@
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
+
+#include <memory>
+#include <string>
 
 namespace etl {
 

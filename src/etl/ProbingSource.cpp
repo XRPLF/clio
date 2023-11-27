@@ -18,12 +18,7 @@
 //==============================================================================
 
 #include "etl/ProbingSource.h"
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/asio/ssl/context.hpp>
-#include <boost/json/object.hpp>
-#include <boost/uuid/nil_generator.hpp>
-#include <boost/uuid/uuid.hpp>
+
 #include "data/BackendInterface.h"
 #include "etl/ETLHelpers.h"
 #include "etl/LoadBalancer.h"
@@ -31,9 +26,17 @@
 #include "feed/SubscriptionManager.h"
 #include "util/config/Config.h"
 #include "util/log/Logger.h"
+
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/asio/ssl/context.hpp>
+#include <boost/json/object.hpp>
+#include <boost/uuid/nil_generator.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <grpcpp/support/status.h>
+
 #include <cstdint>
 #include <functional>
-#include <grpcpp/support/status.h>
 #include <memory>
 #include <mutex>
 #include <optional>

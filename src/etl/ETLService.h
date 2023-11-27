@@ -35,9 +35,9 @@
 #include "feed/SubscriptionManager.h"
 #include "util/log/Logger.h"
 
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <boost/asio/steady_timer.hpp>
 #include <grpcpp/grpcpp.h>
+#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <memory>
 

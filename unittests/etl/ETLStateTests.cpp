@@ -18,11 +18,11 @@
 //==============================================================================
 
 #include "etl/ETLState.h"
+#include "util/Fixtures.h"
 #include "util/MockSource.h"
-#include <gmock/gmock.h>
 
 #include <boost/json/parse.hpp>
-#include "util/Fixtures.h"
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <optional>

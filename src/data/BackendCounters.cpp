@@ -18,15 +18,17 @@
 //==============================================================================
 
 #include "data/BackendCounters.h"
-#include <boost/json/object.hpp>
+
 #include "util/Assert.h"
 #include "util/prometheus/Label.h"
+#include "util/prometheus/Prometheus.h"
+
+#include <boost/json/object.hpp>
+
 #include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
-
-#include "util/prometheus/Prometheus.h"
 #include <utility>
 #include <vector>
 

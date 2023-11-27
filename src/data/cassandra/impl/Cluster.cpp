@@ -18,15 +18,16 @@
 //==============================================================================
 
 #include "data/cassandra/impl/Cluster.h"
+
 #include "data/cassandra/impl/ManagedObject.h"
 #include "data/cassandra/impl/SslContext.h"
 #include "util/log/Logger.h"
-#include <cassandra.h>
-#include <stdexcept>
-#include <string>
 
+#include <cassandra.h>
 #include <fmt/core.h>
 
+#include <stdexcept>
+#include <string>
 #include <variant>
 
 namespace {

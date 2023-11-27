@@ -17,8 +17,6 @@
 */
 //==============================================================================
 
-#include <ripple/protocol/Book.h>
-#include <boost/json/parse.hpp>
 #include "rpc/Errors.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/AnyHandler.h"
@@ -30,12 +28,15 @@
 #include "util/Taggable.h"
 #include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
+
+#include <boost/json/parse.hpp>
+#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <ripple/protocol/Book.h>
+
 #include <memory>
 #include <string>
-
-#include <fmt/core.h>
 #include <vector>
 
 using namespace rpc;

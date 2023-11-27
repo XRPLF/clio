@@ -28,9 +28,9 @@
 #include "util/Profiler.h"
 #include "util/log/Logger.h"
 
+#include <grpcpp/grpcpp.h>
 #include <ripple/beast/core/CurrentThreadName.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
-#include <grpcpp/grpcpp.h>
 
 #include <chrono>
 #include <memory>

@@ -19,11 +19,12 @@
 
 #include "util/prometheus/Histogram.h"
 #include "util/prometheus/OStream.h"
-#include <cstdint>
-#include <string>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <cstdint>
+#include <string>
 #include <utility>
 #include <vector>
 

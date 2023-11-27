@@ -27,11 +27,11 @@
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
 
+#include <fmt/core.h>
 #include <ripple/basics/chrono.h>
 #include <ripple/protocol/BuildInfo.h>
 
 #include <chrono>
-#include <fmt/core.h>
 
 namespace etl {
 class ETLService;

@@ -32,8 +32,9 @@
 
 #pragma once
 
-#include <ripple/basics/contract.h>
 #include <boost/outcome.hpp>
+#include <ripple/basics/contract.h>
+
 #include <stdexcept>
 #include <type_traits>
 

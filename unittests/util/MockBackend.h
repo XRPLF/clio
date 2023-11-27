@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+
 #include <gmock/gmock.h>
 
 using namespace data;

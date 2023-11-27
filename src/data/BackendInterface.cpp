@@ -18,9 +18,20 @@
 //==============================================================================
 
 #include "data/BackendInterface.h"
+
 #include "data/Types.h"
 #include "util/Assert.h"
 #include "util/log/Logger.h"
+
+#include <boost/asio/spawn.hpp>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/Fees.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/Serializer.h>
+
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -31,15 +42,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/Serializer.h>
-#include <boost/asio/spawn.hpp>
 
 // local to compilation unit loggers
 namespace {

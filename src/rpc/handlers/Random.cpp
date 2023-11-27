@@ -18,16 +18,17 @@
 //==============================================================================
 
 #include "rpc/handlers/Random.h"
+
 #include "rpc/JS.h"
 #include "rpc/common/Types.h"
 
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/beast/utility/rngfill.h>
 #include <ripple/crypto/csprng.h>
 #include <ripple/protocol/jss.h>
-#include <boost/json/conversion.hpp>
-#include <boost/json/value.hpp>
 
 namespace rpc {
 

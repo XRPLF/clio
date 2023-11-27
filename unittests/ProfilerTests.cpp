@@ -18,8 +18,10 @@
 //==============================================================================
 
 #include "util/Profiler.h"
-#include <chrono>
+
 #include <gtest/gtest.h>
+
+#include <chrono>
 #include <limits>
 #include <thread>
 #include <utility>

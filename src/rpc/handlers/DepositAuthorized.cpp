@@ -18,6 +18,15 @@
 //==============================================================================
 
 #include "rpc/handlers/DepositAuthorized.h"
+
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/Types.h"
+
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
@@ -27,13 +36,7 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/jss.h>
-#include <boost/json/conversion.hpp>
-#include <boost/json/object.hpp>
-#include <boost/json/value.hpp>
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/Types.h"
+
 #include <string>
 #include <variant>
 

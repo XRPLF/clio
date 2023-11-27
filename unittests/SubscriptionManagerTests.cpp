@@ -17,6 +17,24 @@
 */
 //==============================================================================
 
+#include "data/Types.h"
+#include "feed/SubscriptionManager.h"
+#include "util/Fixtures.h"
+#include "util/MockBackend.h"
+#include "util/MockWsBase.h"
+#include "util/Taggable.h"
+#include "util/TestObject.h"
+#include "util/config/Config.h"
+#include "web/interface/ConnectionBase.h"
+
+#include <__chrono/duration.h>
+#include <boost/asio/impl/spawn.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Book.h>
 #include <ripple/protocol/Fees.h>
@@ -28,28 +46,10 @@
 #include <ripple/protocol/STArray.h>
 #include <ripple/protocol/STObject.h>
 #include <ripple/protocol/TER.h>
-#include "data/Types.h"
-#include "feed/SubscriptionManager.h"
-#include "util/Fixtures.h"
-#include "util/MockBackend.h"
-#include "util/MockWsBase.h"
-#include "util/Taggable.h"
-#include "util/TestObject.h"
-#include "util/config/Config.h"
-#include "web/interface/ConnectionBase.h"
-#include <__chrono/duration.h>
-#include <gtest/gtest.h>
+
 #include <memory>
 #include <string>
 #include <thread>
-
-#include <boost/asio/impl/spawn.hpp>
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/json/object.hpp>
-#include <boost/json/parse.hpp>
-#include <gmock/gmock.h>
-
 #include <vector>
 
 using namespace std::chrono_literals;

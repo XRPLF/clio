@@ -18,14 +18,16 @@
 //==============================================================================
 
 #include "rpc/common/impl/APIVersionParser.h"
-#include <boost/json/object.hpp>
+
 #include "rpc/common/APIVersion.h"
 #include "util/Expected.h"
 #include "util/log/Logger.h"
+
+#include <boost/json/object.hpp>
+#include <fmt/core.h>
+
 #include <cstdint>
 #include <string>
-
-#include <fmt/core.h>
 
 using namespace std;
 

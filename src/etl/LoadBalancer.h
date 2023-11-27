@@ -26,9 +26,9 @@
 #include "util/config/Config.h"
 #include "util/log/Logger.h"
 
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <boost/asio.hpp>
 #include <grpcpp/grpcpp.h>
+#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 namespace etl {
 class Source;

@@ -19,9 +19,9 @@
 #include "util/Fixtures.h"
 #include "util/config/Config.h"
 #include "web/WhitelistHandler.h"
-#include <gtest/gtest.h>
 
 #include <boost/json/parse.hpp>
+#include <gtest/gtest.h>
 
 using namespace util;
 using namespace web;

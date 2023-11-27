@@ -18,11 +18,14 @@
 //==============================================================================
 
 #include "etl/ETLState.h"
-#include <ripple/protocol/jss.h>
+
+#include "rpc/JS.h"
+
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include "rpc/JS.h"
+#include <ripple/protocol/jss.h>
+
 #include <cstdint>
 
 namespace etl {

@@ -19,10 +19,12 @@
 
 #pragma once
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/hardened_hash.h>
 #include "data/Types.h"
 #include "util/prometheus/Prometheus.h"
+
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/hardened_hash.h>
+
 #include <map>
 #include <mutex>
 #include <shared_mutex>

@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include <ripple/basics/base_uint.h>
 #include "rpc/Amendments.h"
 
 #include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
 
 using namespace rpc;
 

@@ -27,14 +27,14 @@
 #include "util/MockLedgerLoader.h"
 #include "util/MockLedgerPublisher.h"
 #include "util/StringUtils.h"
-#include <chrono>
-#include <gmock/gmock.h>
-#include <optional>
-#include <thread>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <memory>
+#include <optional>
+#include <thread>
 
 using namespace testing;
 using namespace etl;

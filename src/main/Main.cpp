@@ -17,31 +17,23 @@
 */
 //==============================================================================
 
-#include "etl/ETLHelpers.h"
-#include "rpc/WorkQueue.h"
-#include "util/log/Logger.h"
-#include "web/DOSGuard.h"
-#include "web/IntervalSweepHandler.h"
-#include "web/WhitelistHandler.h"
-#include <cstdint>
-#include <cstdlib>
-#include <exception>
-#include <functional>
-
 #include "data/BackendFactory.h"
+#include "etl/ETLHelpers.h"
 #include "etl/ETLService.h"
+#include "main/Build.h"
 #include "rpc/Counters.h"
 #include "rpc/RPCEngine.h"
+#include "rpc/WorkQueue.h"
 #include "rpc/common/impl/HandlerProvider.h"
 #include "util/TerminationHandler.h"
 #include "util/config/Config.h"
+#include "util/log/Logger.h"
 #include "util/prometheus/Prometheus.h"
+#include "web/DOSGuard.h"
+#include "web/IntervalSweepHandler.h"
 #include "web/RPCServerHandler.h"
 #include "web/Server.h"
-#include <ios>
-#include <iostream>
-#include <optional>
-#include <ostream>
+#include "web/WhitelistHandler.h"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
@@ -52,9 +44,16 @@
 #include <boost/program_options/value_semantic.hpp>
 #include <boost/program_options/variables_map.hpp>
 
-#include "main/Build.h"
+#include <cstdint>
+#include <cstdlib>
+#include <exception>
 #include <fstream>
+#include <functional>
+#include <ios>
+#include <iostream>
 #include <memory>
+#include <optional>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <thread>

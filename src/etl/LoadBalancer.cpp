@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "etl/LoadBalancer.h"
+
 #include "data/BackendInterface.h"
 #include "etl/ETLHelpers.h"
 #include "etl/ETLService.h"
@@ -27,22 +28,22 @@
 #include "util/Assert.h"
 #include "util/Random.h"
 #include "util/log/Logger.h"
-#include <algorithm>
-#include <chrono>
-#include <cstddef>
-#include <cstdint>
-#include <fmt/core.h>
-#include <memory>
-#include <optional>
-#include <stdexcept>
-#include <string>
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <fmt/core.h>
 
+#include <algorithm>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+#include <string>
 #include <thread>
 #include <utility>
 #include <vector>

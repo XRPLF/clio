@@ -25,10 +25,10 @@
 #include "data/cassandra/impl/Tuple.h"
 #include "util/Expected.h"
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/STAccount.h>
 #include <cassandra.h>
 #include <fmt/core.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/STAccount.h>
 
 #include <chrono>
 #include <compare>

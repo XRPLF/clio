@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "rpc/handlers/NFTBuyOffers.h"
+
 #include "rpc/common/Types.h"
 
 #include <ripple/basics/base_uint.h>

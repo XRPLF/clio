@@ -17,14 +17,6 @@
 */
 //==============================================================================
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STObject.h>
-#include <boost/json/parse.hpp>
 #include "data/Types.h"
 #include "rpc/Errors.h"
 #include "rpc/common/AnyHandler.h"
@@ -33,15 +25,24 @@
 #include "util/Fixtures.h"
 #include "util/MockBackend.h"
 #include "util/TestObject.h"
-#include <algorithm>
-#include <cstdint>
+
+#include <boost/json/parse.hpp>
+#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STAmount.h>
+#include <ripple/protocol/STObject.h>
+
+#include <algorithm>
+#include <cstdint>
 #include <iterator>
 #include <optional>
 #include <string>
-
-#include <fmt/core.h>
 #include <vector>
 
 using namespace rpc;

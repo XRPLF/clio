@@ -19,9 +19,10 @@
 
 #pragma once
 
+#include "util/config/Config.h"
+
 #include <boost/asio.hpp>
 #include <boost/iterator/transform_iterator.hpp>
-#include "util/config/Config.h"
 #include <fmt/core.h>
 
 #include <regex>

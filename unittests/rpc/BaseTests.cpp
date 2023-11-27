@@ -17,18 +17,13 @@
 */
 //==============================================================================
 
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
 #include "rpc/Errors.h"
-#include "rpc/common/Types.h"
-#include "util/Fixtures.h"
-#include <cstdint>
-#include <string_view>
-
 #include "rpc/common/MetaProcessors.h"
 #include "rpc/common/Modifiers.h"
 #include "rpc/common/Specs.h"
+#include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
+#include "util/Fixtures.h"
 
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
@@ -36,8 +31,12 @@
 #include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
 
+#include <cstdint>
 #include <string>
+#include <string_view>
 
 using namespace std;
 

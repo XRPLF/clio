@@ -24,12 +24,12 @@
 #include "util/MockExtractionDataPipe.h"
 #include "util/MockLedgerFetcher.h"
 #include "util/MockNetworkValidatedLedgers.h"
-#include <gmock/gmock.h>
-#include <optional>
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <memory>
+#include <optional>
 
 using namespace testing;
 using namespace etl;

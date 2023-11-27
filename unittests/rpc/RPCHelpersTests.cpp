@@ -17,12 +17,6 @@
 */
 //==============================================================================
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/jss.h>
 #include "data/Types.h"
 #include "rpc/Errors.h"
 #include "rpc/JS.h"
@@ -31,19 +25,25 @@
 #include "util/Fixtures.h"
 #include "util/MockBackend.h"
 #include "util/TestObject.h"
-#include <cstddef>
-#include <cstdint>
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include <tuple>
 
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STObject.h>
+#include <ripple/protocol/jss.h>
 
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <string>
+#include <tuple>
 #include <variant>
 #include <vector>
 

@@ -17,16 +17,16 @@
 */
 //==============================================================================
 
-#include <boost/asio/io_context.hpp>
-#include "util/Fixtures.h"
-#include <atomic>
-#include <cassandra.h>
-#include <optional>
-
 #include "data/cassandra/Error.h"
 #include "data/cassandra/impl/RetryPolicy.h"
+#include "util/Fixtures.h"
 
+#include <boost/asio/io_context.hpp>
+#include <cassandra.h>
 #include <gtest/gtest.h>
+
+#include <atomic>
+#include <optional>
 
 using namespace data::cassandra;
 using namespace data::cassandra::detail;

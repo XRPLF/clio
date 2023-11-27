@@ -18,9 +18,12 @@
 //==============================================================================
 
 #include "data/LedgerCache.h"
-#include <ripple/basics/base_uint.h>
+
 #include "data/Types.h"
 #include "util/Assert.h"
+
+#include <ripple/basics/base_uint.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <mutex>

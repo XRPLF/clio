@@ -30,9 +30,9 @@
 #include "util/Profiler.h"
 #include "util/log/Logger.h"
 
+#include <boost/asio/spawn.hpp>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/nft.h>
-#include <boost/asio/spawn.hpp>
 
 namespace data::cassandra {
 

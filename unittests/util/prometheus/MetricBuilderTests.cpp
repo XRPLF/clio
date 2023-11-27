@@ -22,11 +22,12 @@
 #include "util/prometheus/Histogram.h"
 #include "util/prometheus/MetricBase.h"
 #include "util/prometheus/MetricBuilder.h"
+
+#include <gtest/gtest.h>
+
 #include <cstdint>
 #include <memory>
 #include <string>
-
-#include <gtest/gtest.h>
 #include <vector>
 
 using namespace util::prometheus;

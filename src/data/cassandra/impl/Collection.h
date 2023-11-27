@@ -21,8 +21,8 @@
 
 #include "data/cassandra/impl/ManagedObject.h"
 
-#include <ripple/basics/base_uint.h>
 #include <cassandra.h>
+#include <ripple/basics/base_uint.h>
 
 #include <string>
 #include <string_view>

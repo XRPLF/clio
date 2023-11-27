@@ -18,15 +18,14 @@
 //==============================================================================
 
 #include "rpc/handlers/AccountNFTs.h"
+
 #include "rpc/Errors.h"
 #include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
-#include <cstdint>
-#include <optional>
-#include <string>
-#include <variant>
 
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
@@ -41,8 +40,11 @@
 #include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/jss.h>
 #include <ripple/protocol/nft.h>
-#include <boost/json/conversion.hpp>
-#include <boost/json/value.hpp>
+
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <variant>
 
 namespace rpc {
 

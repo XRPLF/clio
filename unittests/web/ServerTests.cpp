@@ -29,15 +29,6 @@
 #include "web/WhitelistHandler.h"
 #include "web/impl/AdminVerificationStrategy.h"
 #include "web/interface/ConnectionBase.h"
-#include <condition_variable>
-#include <functional>
-#include <memory>
-#include <mutex>
-#include <stdexcept>
-#include <string>
-#include <thread>
-#include <utility>
-#include <vector>
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
@@ -52,7 +43,16 @@
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
+#include <condition_variable>
+#include <functional>
+#include <memory>
+#include <mutex>
 #include <optional>
+#include <stdexcept>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 using namespace util;
 using namespace web::detail;

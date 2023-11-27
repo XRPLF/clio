@@ -19,12 +19,12 @@
 
 #include "util/prometheus/Counter.h"
 #include "util/prometheus/OStream.h"
-#include <cstdint>
-#include <string>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstdint>
+#include <string>
 #include <thread>
 #include <utility>
 

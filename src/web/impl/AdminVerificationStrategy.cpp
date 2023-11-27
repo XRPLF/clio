@@ -18,17 +18,19 @@
 //==============================================================================
 
 #include "web/impl/AdminVerificationStrategy.h"
+
 #include "util/JsonUtils.h"
+
+#include <boost/beast/http/field.hpp>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/digest.h>
+
 #include <cstring>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
-
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/digest.h>
-#include <boost/beast/http/field.hpp>
 
 namespace web::detail {
 

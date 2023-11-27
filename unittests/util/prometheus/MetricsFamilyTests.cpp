@@ -22,13 +22,14 @@
 #include "util/prometheus/MetricBuilder.h"
 #include "util/prometheus/MetricsFamily.h"
 #include "util/prometheus/OStream.h"
-#include <cstdint>
-#include <fmt/core.h>
-#include <memory>
-#include <string>
 
+#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <cstdint>
+#include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 

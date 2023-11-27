@@ -22,12 +22,13 @@
 #include "util/prometheus/Counter.h"
 #include "util/prometheus/Gauge.h"
 #include "util/prometheus/Histogram.h"
-#include <chrono>
-#include <gmock/gmock.h>
 
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <chrono>
 
 using namespace data;
 using namespace util::prometheus;

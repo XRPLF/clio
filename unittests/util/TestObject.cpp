@@ -19,11 +19,8 @@
 
 #include "data/DBHelpers.h"
 #include "data/Types.h"
-#include <TestObject.h>
-#include <algorithm>
-#include <cstdint>
-#include <optional>
 
+#include <TestObject.h>
 #include <ripple/basics/Blob.h>
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/base_uint.h>
@@ -44,7 +41,10 @@
 #include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/tokens.h>
 
+#include <algorithm>
 #include <chrono>
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>

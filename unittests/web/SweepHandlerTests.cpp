@@ -21,11 +21,12 @@
 #include "util/Fixtures.h"
 #include "util/config/Config.h"
 #include "web/IntervalSweepHandler.h"
-#include <chrono>
-#include <gtest/gtest.h>
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include <chrono>
 
 using namespace util;
 using namespace web;

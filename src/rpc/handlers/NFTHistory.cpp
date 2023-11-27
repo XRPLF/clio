@@ -18,16 +18,7 @@
 //==============================================================================
 
 #include "rpc/handlers/NFTHistory.h"
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/chrono.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/jss.h>
-#include <boost/json/conversion.hpp>
-#include <boost/json/object.hpp>
-#include <boost/json/value.hpp>
-#include <boost/json/value_from.hpp>
+
 #include "data/Types.h"
 #include "rpc/Errors.h"
 #include "rpc/JS.h"
@@ -35,11 +26,22 @@
 #include "rpc/common/Types.h"
 #include "util/Profiler.h"
 #include "util/log/Logger.h"
+
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <boost/json/value_from.hpp>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/chrono.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/jss.h>
+
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <string>
-
-#include <limits>
 #include <utility>
 #include <variant>
 

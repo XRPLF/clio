@@ -17,16 +17,16 @@
 */
 //==============================================================================
 
-#include <boost/json/parse.hpp>
-#include <boost/json/value.hpp>
+#include "rpc/common/AnyHandler.h"
 #include "rpc/common/Types.h"
+#include "rpc/handlers/VersionHandler.h"
 #include "util/Fixtures.h"
 #include "util/config/Config.h"
+
+#include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
-
-#include "rpc/common/AnyHandler.h"
-#include "rpc/handlers/VersionHandler.h"
 
 constexpr static auto DEFAULT_API_VERSION = 3u;
 constexpr static auto MIN_API_VERSION = 2u;

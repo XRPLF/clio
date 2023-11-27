@@ -20,8 +20,10 @@
 /** @file */
 #pragma once
 
-#include <ripple/basics/base_uint.h>
 #include "util/Assert.h"
+
+#include <ripple/basics/base_uint.h>
+
 #include <condition_variable>
 #include <mutex>
 #include <optional>

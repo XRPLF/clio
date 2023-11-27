@@ -17,17 +17,6 @@
 */
 //==============================================================================
 
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/UintTypes.h>
-#include <boost/asio/spawn.hpp>
-#include <boost/json/parse.hpp>
 #include "data/Types.h"
 #include "rpc/Errors.h"
 #include "rpc/RPCHelpers.h"
@@ -37,16 +26,28 @@
 #include "util/Fixtures.h"
 #include "util/MockBackend.h"
 #include "util/TestObject.h"
-#include <algorithm>
-#include <cstdint>
+
+#include <boost/asio/spawn.hpp>
+#include <boost/json/parse.hpp>
+#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <ripple/basics/Blob.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Book.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/STObject.h>
+#include <ripple/protocol/UintTypes.h>
+
+#include <algorithm>
+#include <cstdint>
 #include <iterator>
 #include <map>
 #include <optional>
 #include <string>
-
-#include <fmt/core.h>
 #include <vector>
 
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";

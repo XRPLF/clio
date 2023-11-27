@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "rpc/RPCHelpers.h"
+
 #include "data/BackendInterface.h"
 #include "data/Types.h"
 #include "rpc/Errors.h"
@@ -26,26 +27,19 @@
 #include "util/Profiler.h"
 #include "util/log/Logger.h"
 #include "web/Context.h"
-#include <algorithm>
-#include <array>
-#include <chrono>
-#include <cstddef>
-#include <cstdint>
-#include <exception>
-#include <fmt/core.h>
-#include <functional>
-#include <iterator>
-#include <limits>
-#include <map>
-#include <memory>
-#include <optional>
-#include <sstream>
-#include <string>
-#include <string_view>
-#include <utility>
-#include <variant>
-#include <vector>
 
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/format/format_fwd.hpp>
+#include <boost/format/free_funcs.hpp>
+#include <boost/json/array.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
+#include <boost/json/string.hpp>
+#include <boost/json/value.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/lexical_cast/bad_lexical_cast.hpp>
+#include <fmt/core.h>
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/basics/XRPAmount.h>
@@ -82,17 +76,25 @@
 #include <ripple/protocol/jss.h>
 #include <ripple/protocol/nftPageMask.h>
 #include <ripple/protocol/tokens.h>
-#include <boost/algorithm/string/case_conv.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/format/format_fwd.hpp>
-#include <boost/format/free_funcs.hpp>
-#include <boost/json/array.hpp>
-#include <boost/json/object.hpp>
-#include <boost/json/parse.hpp>
-#include <boost/json/string.hpp>
-#include <boost/json/value.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/lexical_cast/bad_lexical_cast.hpp>
+
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <iterator>
+#include <limits>
+#include <map>
+#include <memory>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 
 // local to compilation unit loggers
 namespace {

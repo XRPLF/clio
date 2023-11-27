@@ -17,11 +17,12 @@
 */
 //==============================================================================
 
-#include <boost/json/parse.hpp>
 #include "rpc/common/AnyHandler.h"
 #include "rpc/common/Types.h"
 #include "rpc/handlers/LedgerRange.h"
 #include "util/Fixtures.h"
+
+#include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
 
 using namespace rpc;

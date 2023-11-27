@@ -26,17 +26,18 @@
 #include "util/Fixtures.h"
 #include "util/MockBackend.h"
 #include "util/TestObject.h"
+
+#include <boost/json/parse.hpp>
+#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <optional>
-#include <string>
-
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
-#include <boost/json/parse.hpp>
-#include <fmt/core.h>
+
+#include <optional>
+#include <string>
 #include <vector>
 
 using namespace rpc;

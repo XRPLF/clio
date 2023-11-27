@@ -22,11 +22,10 @@
 #include "rpc/Errors.h"
 #include "util/Expected.h"
 
-#include <ripple/basics/base_uint.h>
-
 #include <boost/asio/spawn.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
+#include <ripple/basics/base_uint.h>
 
 namespace etl {
 class LoadBalancer;

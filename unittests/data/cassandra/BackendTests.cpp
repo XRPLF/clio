@@ -17,6 +17,26 @@
 */
 //==============================================================================
 
+#include "data/BackendInterface.h"
+#include "data/CassandraBackend.h"
+#include "data/DBHelpers.h"
+#include "data/Types.h"
+#include "data/cassandra/Handle.h"
+#include "data/cassandra/SettingsProvider.h"
+#include "etl/NFTHelpers.h"
+#include "rpc/RPCHelpers.h"
+#include "util/Fixtures.h"
+#include "util/LedgerUtils.h"
+#include "util/Random.h"
+#include "util/StringUtils.h"
+#include "util/config/Config.h"
+
+#include <boost/asio/impl/spawn.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/parse.hpp>
+#include <fmt/core.h>
+#include <gtest/gtest.h>
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
@@ -25,20 +45,12 @@
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/TxMeta.h>
-#include "data/BackendInterface.h"
-#include "data/DBHelpers.h"
-#include "data/Types.h"
-#include "data/cassandra/Handle.h"
-#include "data/cassandra/SettingsProvider.h"
-#include "util/Fixtures.h"
-#include "util/LedgerUtils.h"
-#include "util/StringUtils.h"
+
 #include <algorithm>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <fmt/core.h>
 #include <map>
 #include <memory>
 #include <optional>
@@ -46,18 +58,6 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
-
-#include "data/CassandraBackend.h"
-#include "etl/NFTHelpers.h"
-#include "rpc/RPCHelpers.h"
-#include "util/Random.h"
-#include "util/config/Config.h"
-
-#include <boost/asio/impl/spawn.hpp>
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/json/parse.hpp>
-#include <gtest/gtest.h>
 #include <utility>
 #include <vector>
 

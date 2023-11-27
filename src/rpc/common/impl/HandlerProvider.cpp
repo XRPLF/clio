@@ -18,16 +18,12 @@
 //==============================================================================
 
 #include "rpc/common/impl/HandlerProvider.h"
-#include "data/BackendInterface.h"
-#include "rpc/common/AnyHandler.h"
-#include "util/config/Config.h"
-#include <memory>
-#include <optional>
 
+#include "data/BackendInterface.h"
 #include "etl/ETLService.h"
 #include "feed/SubscriptionManager.h"
 #include "rpc/Counters.h"
-
+#include "rpc/common/AnyHandler.h"
 #include "rpc/handlers/AccountChannels.h"
 #include "rpc/handlers/AccountCurrencies.h"
 #include "rpc/handlers/AccountInfo.h"
@@ -58,6 +54,10 @@
 #include "rpc/handlers/Tx.h"
 #include "rpc/handlers/Unsubscribe.h"
 #include "rpc/handlers/VersionHandler.h"
+#include "util/config/Config.h"
+
+#include <memory>
+#include <optional>
 #include <string>
 
 namespace rpc::detail {

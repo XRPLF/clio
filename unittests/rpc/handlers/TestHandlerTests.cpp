@@ -22,9 +22,9 @@
 #include "rpc/common/Types.h"
 #include "rpc/handlers/impl/FakesAndMocks.h"
 #include "util/Fixtures.h"
-#include <gtest/gtest.h>
 
 #include <boost/json/parse.hpp>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace rpc;

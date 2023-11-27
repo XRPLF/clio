@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/prometheus/Prometheus.h"
+
 #include "util/Assert.h"
 #include "util/config/Config.h"
 #include "util/prometheus/Counter.h"
@@ -27,6 +28,7 @@
 #include "util/prometheus/MetricBase.h"
 #include "util/prometheus/MetricsFamily.h"
 #include "util/prometheus/OStream.h"
+
 #include <cstdint>
 #include <memory>
 #include <optional>

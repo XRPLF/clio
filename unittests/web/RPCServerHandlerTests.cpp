@@ -16,9 +16,6 @@
 */
 //==============================================================================
 
-#include <ripple/protocol/ErrorCodes.h>
-#include <boost/beast/http/status.hpp>
-#include <boost/json/parse.hpp>
 #include "feed/SubscriptionManager.h"
 #include "rpc/Errors.h"
 #include "util/Fixtures.h"
@@ -28,12 +25,16 @@
 #include "util/config/Config.h"
 #include "web/RPCServerHandler.h"
 #include "web/interface/ConnectionBase.h"
+
+#include <boost/beast/http/status.hpp>
+#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/protocol/ErrorCodes.h>
+
 #include <memory>
 #include <stdexcept>
 #include <string>
-
-#include <gtest/gtest.h>
 
 using namespace std::chrono_literals;
 using namespace feed;

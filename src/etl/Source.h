@@ -29,7 +29,6 @@
 #include "util/config/Config.h"
 #include "util/log/Logger.h"
 
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
@@ -39,6 +38,8 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <grpcpp/grpcpp.h>
+#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+
 #include <utility>
 
 namespace feed {

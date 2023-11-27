@@ -20,12 +20,12 @@
 #pragma once
 
 #include "util/log/Logger.h"
+
 #include <MockBackend.h>
 #include <MockCounters.h>
 #include <MockETLService.h>
 #include <MockLoadBalancer.h>
 #include <MockSubscriptionManager.h>
-
 #include <boost/asio.hpp>
 #include <gtest/gtest.h>
 

@@ -17,9 +17,6 @@
 */
 //==============================================================================
 
-#include <boost/json/object.hpp>
-#include <boost/json/parse.hpp>
-#include <boost/json/serialize.hpp>
 #include "rpc/Errors.h"
 #include "rpc/common/AnyHandler.h"
 #include "rpc/common/Types.h"
@@ -31,9 +28,14 @@
 #include "util/MockLoadBalancer.h"
 #include "util/MockSubscriptionManager.h"
 #include "util/TestObject.h"
-#include <chrono>
+
+#include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
+#include <boost/json/serialize.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <chrono>
 #include <optional>
 
 using namespace rpc;

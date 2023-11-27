@@ -18,15 +18,19 @@
 //==============================================================================
 
 #include "util/config/Config.h"
+
+#include "util/config/detail/Helpers.h"
+#include "util/log/Logger.h"
+
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/parse_options.hpp>
 #include <boost/json/value.hpp>
-#include "util/config/detail/Helpers.h"
-#include "util/log/Logger.h"
+
 #include <algorithm>
 #include <exception>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <ios>
 #include <iterator>
@@ -35,8 +39,6 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-
-#include <fstream>
 #include <utility>
 
 namespace util {

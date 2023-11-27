@@ -17,6 +17,9 @@
 */
 //==============================================================================
 
+#include "data/DBHelpers.h"
+
+#include <fmt/core.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
@@ -31,6 +34,7 @@
 #include <ripple/protocol/TER.h>
 #include <ripple/protocol/TxFormats.h>
 #include <ripple/protocol/TxMeta.h>
+
 #include <algorithm>
 #include <cstdint>
 #include <iterator>
@@ -40,9 +44,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "data/DBHelpers.h"
-#include <fmt/core.h>
 
 namespace etl {
 
