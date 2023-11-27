@@ -43,7 +43,7 @@ public:
     /**
      * @brief Resolve hostname to IP addresses.
      *
-     * @note This method throws an exception when the hostname cannot be resolved.
+     * @throw This method throws an exception when the hostname cannot be resolved.
      *
      * @param hostname Hostname to resolve
      * @param service Service to resolve (could be empty or port number or http)
