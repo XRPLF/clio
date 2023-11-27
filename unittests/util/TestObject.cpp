@@ -20,7 +20,6 @@
 #include "data/DBHelpers.h"
 #include "data/Types.h"
 
-#include <TestObject.h>
 #include <ripple/basics/Blob.h>
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/base_uint.h>
@@ -40,6 +39,7 @@
 #include <ripple/protocol/TxFormats.h>
 #include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/tokens.h>
+#include <util/TestObject.h>
 
 #include <algorithm>
 #include <chrono>

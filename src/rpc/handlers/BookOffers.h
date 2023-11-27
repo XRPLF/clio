@@ -20,10 +20,12 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+#include "rpc/JS.h"
 #include "rpc/common/MetaProcessors.h"
 #include "rpc/common/Modifiers.h"
 #include "rpc/common/Types.h"
-#include "rpc/common/Validators.h"
+
+#include <ripple/protocol/jss.h>
 
 namespace rpc {
 
