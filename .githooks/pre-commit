@@ -7,7 +7,7 @@ sources="src unittests"
 formatter="clang-format -i"
 version=$($formatter --version | grep -o '[0-9\.]*')
 
-if [[ "16.0.0" > "$version" ]]; then
+if [[ "17.0.0" > "$version" ]]; then
     cat <<EOF
 
                                     ERROR
