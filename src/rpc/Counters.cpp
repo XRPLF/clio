@@ -17,8 +17,10 @@
 */
 //==============================================================================
 
+#include "rpc/Counters.h"
 #include <ripple/protocol/jss.h>
 #include <boost/json/object.hpp>
+#include "rpc/JS.h"
 #include "rpc/WorkQueue.h"
 #include "util/prometheus/Label.h"
 #include "util/prometheus/Prometheus.h"
@@ -26,8 +28,6 @@
 #include <fmt/core.h>
 #include <functional>
 #include <mutex>
-#include <rpc/Counters.h>
-#include <rpc/JS.h>
 #include <string>
 #include <utility>
 

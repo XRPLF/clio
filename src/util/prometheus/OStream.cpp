@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
+#include "util/prometheus/OStream.h"
 #include <string>
-#include <util/prometheus/OStream.h>
 #include <utility>
 
 #include <boost/iostreams/device/back_inserter.hpp>

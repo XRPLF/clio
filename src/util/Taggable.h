@@ -29,7 +29,7 @@
 #include <ostream>
 #include <string>
 
-#include <util/config/Config.h>
+#include "util/config/Config.h"
 
 namespace util {
 namespace detail {

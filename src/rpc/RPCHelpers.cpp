@@ -17,16 +17,20 @@
 */
 //==============================================================================
 
+#include "rpc/RPCHelpers.h"
+#include "data/BackendInterface.h"
 #include "data/Types.h"
+#include "rpc/Errors.h"
 #include "rpc/JS.h"
 #include "rpc/common/Types.h"
+#include "util/Profiler.h"
+#include "util/log/Logger.h"
 #include "web/Context.h"
 #include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <data/BackendInterface.h>
 #include <exception>
 #include <fmt/core.h>
 #include <functional>
@@ -35,13 +39,9 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <rpc/Errors.h>
-#include <rpc/RPCHelpers.h>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <util/Profiler.h>
-#include <util/log/Logger.h>
 #include <utility>
 #include <variant>
 #include <vector>

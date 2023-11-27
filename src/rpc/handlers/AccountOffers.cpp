@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/AccountOffers.h"
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
@@ -35,7 +36,6 @@
 #include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
-#include <rpc/handlers/AccountOffers.h>
 #include <string>
 #include <variant>
 #include <vector>

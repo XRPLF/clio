@@ -17,18 +17,18 @@
 */
 //==============================================================================
 
+#include "feed/SubscriptionManager.h"
 #include "util/Taggable.h"
 #include "util/config/Config.h"
 #include "util/prometheus/Gauge.h"
 #include "web/interface/ConnectionBase.h"
-#include <feed/SubscriptionManager.h>
 
+#include "util/Fixtures.h"
+#include "util/MockPrometheus.h"
+#include "util/MockWsBase.h"
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
-#include <util/Fixtures.h>
-#include <util/MockPrometheus.h>
-#include <util/MockWsBase.h>
 
 #include <gmock/gmock.h>
 

@@ -19,19 +19,19 @@
 
 #include <ripple/basics/base_uint.h>
 #include "data/Types.h"
-#include "gmock/gmock.h"
+#include "etl/impl/CacheLoader.h"
+#include "util/Fixtures.h"
 #include "util/MockBackend.h"
+#include "util/MockCache.h"
 #include "util/config/Config.h"
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
-#include <etl/impl/CacheLoader.h>
+#include <gmock/gmock.h>
 #include <map>
 #include <mutex>
 #include <optional>
 #include <thread>
-#include <util/Fixtures.h>
-#include <util/MockCache.h>
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/io_service.hpp>

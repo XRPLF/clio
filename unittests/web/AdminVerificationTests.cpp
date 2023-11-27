@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
+#include "util/Fixtures.h"
 #include <optional>
 #include <string>
-#include <util/Fixtures.h>
 
+#include "web/impl/AdminVerificationStrategy.h"
 #include <utility>
-#include <web/impl/AdminVerificationStrategy.h>
 
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>

@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
+#include "data/cassandra/impl/Result.h"
 #include "data/cassandra/impl/ManagedObject.h"
 #include <cassandra.h>
 #include <cstddef>
-#include <data/cassandra/impl/Result.h>
 
 namespace {
 constexpr auto resultDeleter = [](CassResult const* ptr) { cass_result_free(ptr); };

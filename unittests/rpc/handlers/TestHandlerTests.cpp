@@ -18,11 +18,11 @@
 //==============================================================================
 
 #include "rpc/Errors.h"
+#include "rpc/common/AnyHandler.h"
 #include "rpc/common/Types.h"
+#include "rpc/handlers/impl/FakesAndMocks.h"
+#include "util/Fixtures.h"
 #include <gtest/gtest.h>
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/impl/FakesAndMocks.h>
-#include <util/Fixtures.h>
 
 #include <boost/json/parse.hpp>
 

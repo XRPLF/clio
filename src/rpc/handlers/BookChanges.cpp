@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/BookChanges.h"
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/LedgerHeader.h>
@@ -30,7 +31,6 @@
 #include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
-#include <rpc/handlers/BookChanges.h>
 #include <string>
 #include <variant>
 #include <vector>

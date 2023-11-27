@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/LedgerData.h"
 #include "data/Types.h"
 #include "rpc/Errors.h"
 #include "rpc/JS.h"
@@ -26,7 +27,6 @@
 #include <chrono>
 #include <cstddef>
 #include <iterator>
-#include <rpc/handlers/LedgerData.h>
 
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>

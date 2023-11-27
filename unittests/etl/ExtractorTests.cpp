@@ -18,14 +18,14 @@
 //==============================================================================
 
 #include "etl/SystemState.h"
-#include "gmock/gmock.h"
-#include <etl/impl/Extractor.h>
+#include "etl/impl/Extractor.h"
+#include "util/FakeFetchResponse.h"
+#include "util/Fixtures.h"
+#include "util/MockExtractionDataPipe.h"
+#include "util/MockLedgerFetcher.h"
+#include "util/MockNetworkValidatedLedgers.h"
+#include <gmock/gmock.h>
 #include <optional>
-#include <util/FakeFetchResponse.h>
-#include <util/Fixtures.h>
-#include <util/MockExtractionDataPipe.h>
-#include <util/MockLedgerFetcher.h>
-#include <util/MockNetworkValidatedLedgers.h>
 
 #include <gtest/gtest.h>
 

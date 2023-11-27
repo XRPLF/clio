@@ -18,13 +18,13 @@
 //==============================================================================
 
 #include <boost/asio/io_context.hpp>
+#include "util/Fixtures.h"
 #include <atomic>
 #include <cassandra.h>
 #include <optional>
-#include <util/Fixtures.h>
 
-#include <data/cassandra/Error.h>
-#include <data/cassandra/impl/RetryPolicy.h>
+#include "data/cassandra/Error.h"
+#include "data/cassandra/impl/RetryPolicy.h"
 
 #include <gtest/gtest.h>
 

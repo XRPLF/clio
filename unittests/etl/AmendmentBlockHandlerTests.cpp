@@ -19,13 +19,13 @@
 
 #include <boost/asio/io_context.hpp>
 #include "etl/SystemState.h"
+#include "util/FakeAmendmentBlockAction.h"
+#include "util/Fixtures.h"
 #include <chrono>
 #include <cstddef>
 #include <functional>
-#include <util/FakeAmendmentBlockAction.h>
-#include <util/Fixtures.h>
 
-#include <etl/impl/AmendmentBlock.h>
+#include "etl/impl/AmendmentBlock.h"
 
 #include <gtest/gtest.h>
 

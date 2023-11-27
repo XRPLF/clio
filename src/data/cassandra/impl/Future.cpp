@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
+#include "data/cassandra/impl/Future.h"
+#include "data/cassandra/Error.h"
 #include "data/cassandra/Types.h"
 #include "data/cassandra/impl/ManagedObject.h"
+#include "data/cassandra/impl/Result.h"
 #include <cassandra.h>
 #include <cstddef>
-#include <data/cassandra/Error.h>
-#include <data/cassandra/impl/Future.h>
-#include <data/cassandra/impl/Result.h>
 
 #include <memory>
 #include <string>

@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include "MockBackend.h"
-#include "MockCounters.h"
-#include "MockETLService.h"
-#include "MockLoadBalancer.h"
-#include "MockSubscriptionManager.h"
-#include <util/log/Logger.h>
+#include "util/log/Logger.h"
+#include <MockBackend.h>
+#include <MockCounters.h>
+#include <MockETLService.h>
+#include <MockLoadBalancer.h>
+#include <MockSubscriptionManager.h>
 
 #include <boost/asio.hpp>
 #include <gtest/gtest.h>

@@ -17,6 +17,8 @@
 */
 //==============================================================================
 
+#include "util/prometheus/Prometheus.h"
+#include "util/Assert.h"
 #include "util/config/Config.h"
 #include "util/prometheus/Counter.h"
 #include "util/prometheus/Gauge.h"
@@ -30,8 +32,6 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include <util/Assert.h>
-#include <util/prometheus/Prometheus.h>
 #include <utility>
 #include <vector>
 

@@ -21,12 +21,12 @@
 #pragma once
 
 #include <ripple/basics/base_uint.h>
+#include "util/Assert.h"
 #include <condition_variable>
 #include <mutex>
 #include <optional>
 #include <queue>
 #include <sstream>
-#include <util/Assert.h>
 
 namespace etl {
 /**

@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/AccountInfo.h"
 #include "rpc/Amendments.h"
 #include "rpc/Errors.h"
 #include "rpc/JS.h"
@@ -25,7 +26,6 @@
 #include "rpc/common/Types.h"
 #include <algorithm>
 #include <iterator>
-#include <rpc/handlers/AccountInfo.h>
 #include <string>
 #include <string_view>
 #include <utility>

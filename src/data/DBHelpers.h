@@ -20,7 +20,7 @@
 /** @file */
 #pragma once
 
-#include <util/Assert.h>
+#include "util/Assert.h"
 
 #include <ripple/basics/Log.h>
 #include <ripple/basics/StringUtilities.h>
@@ -30,7 +30,7 @@
 
 #include <boost/container/flat_set.hpp>
 
-#include <data/Types.h>
+#include "data/Types.h"
 
 /**
  * @brief Struct used to keep track of what to write to account_transactions/account_tx tables.

@@ -18,19 +18,19 @@
 //==============================================================================
 
 #include "etl/SystemState.h"
-#include "gmock/gmock.h"
+#include "etl/impl/Transformer.h"
+#include "util/FakeFetchResponse.h"
+#include "util/Fixtures.h"
+#include "util/MockAmendmentBlockHandler.h"
 #include "util/MockBackend.h"
+#include "util/MockExtractionDataPipe.h"
+#include "util/MockLedgerLoader.h"
+#include "util/MockLedgerPublisher.h"
+#include "util/StringUtils.h"
 #include <chrono>
-#include <etl/impl/Transformer.h>
+#include <gmock/gmock.h>
 #include <optional>
 #include <thread>
-#include <util/FakeFetchResponse.h>
-#include <util/Fixtures.h>
-#include <util/MockAmendmentBlockHandler.h>
-#include <util/MockExtractionDataPipe.h>
-#include <util/MockLedgerLoader.h>
-#include <util/MockLedgerPublisher.h>
-#include <util/StringUtils.h>
 
 #include <gtest/gtest.h>
 

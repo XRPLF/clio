@@ -17,11 +17,15 @@
 */
 //==============================================================================
 
+#include "util/Fixtures.h"
+#include "util/MockPrometheus.h"
+#include "util/TestHttpSyncClient.h"
 #include "util/config/Config.h"
 #include "util/prometheus/Label.h"
 #include "util/prometheus/Prometheus.h"
 #include "web/DOSGuard.h"
 #include "web/IntervalSweepHandler.h"
+#include "web/Server.h"
 #include "web/WhitelistHandler.h"
 #include "web/impl/AdminVerificationStrategy.h"
 #include "web/interface/ConnectionBase.h"
@@ -32,12 +36,8 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
-#include <util/Fixtures.h>
-#include <util/MockPrometheus.h>
-#include <util/TestHttpSyncClient.h>
 #include <utility>
 #include <vector>
-#include <web/Server.h>
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>

@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/log/Logger.h"
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -40,6 +41,7 @@
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/formatter_parser.hpp>
 #include "util/SourceLocation.h"
+#include "util/config/Config.h"
 #include <cstddef>
 #include <cstdint>
 #include <ios>
@@ -47,8 +49,6 @@
 #include <ostream>
 #include <stdexcept>
 #include <string>
-#include <util/config/Config.h>
-#include <util/log/Logger.h>
 
 #include <algorithm>
 #include <array>

@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/AccountLines.h"
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
@@ -36,7 +37,6 @@
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
 #include <optional>
-#include <rpc/handlers/AccountLines.h>
 #include <string>
 #include <utility>
 #include <variant>

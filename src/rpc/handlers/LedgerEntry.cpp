@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/LedgerEntry.h"
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
@@ -40,7 +41,6 @@
 #include "rpc/common/Types.h"
 #include <algorithm>
 #include <cstdint>
-#include <rpc/handlers/LedgerEntry.h>
 
 #include <string>
 #include <string_view>

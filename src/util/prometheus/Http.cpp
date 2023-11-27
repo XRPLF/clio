@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/prometheus/Http.h"
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
@@ -24,7 +25,6 @@
 #include <boost/beast/http/verb.hpp>
 #include "util/prometheus/Prometheus.h"
 #include <optional>
-#include <util/prometheus/Http.h>
 
 namespace util::prometheus {
 

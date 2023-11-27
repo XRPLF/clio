@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/GatewayBalances.h"
 #include <ripple/basics/strHex.h>
 #include <ripple/beast/utility/Zero.h>
 #include <ripple/protocol/AccountID.h>
@@ -42,7 +43,6 @@
 #include <iterator>
 #include <limits>
 #include <map>
-#include <rpc/handlers/GatewayBalances.h>
 #include <stdexcept>
 #include <string>
 #include <utility>

@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "data/cassandra/Types.h"
+#include "util/Fixtures.h"
 #include <algorithm>
 #include <cassandra.h>
 #include <chrono>
@@ -27,9 +28,8 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <util/Fixtures.h>
 
-#include <data/cassandra/Handle.h>
+#include "data/cassandra/Handle.h"
 
 #include <fmt/core.h>
 #include <gtest/gtest.h>

@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
+#include "util/Fixtures.h"
 #include <string_view>
-#include <util/Fixtures.h>
 
-#include <util/config/Config.h>
-#include <web/DOSGuard.h>
+#include "util/config/Config.h"
+#include "web/DOSGuard.h"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>

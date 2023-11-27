@@ -18,7 +18,7 @@
 //==============================================================================
 #pragma once
 
-#include <etl/Source.h>
+#include "etl/Source.h"
 
 #include <gmock/gmock.h>
 

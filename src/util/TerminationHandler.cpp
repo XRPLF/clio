@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
+#include "util/TerminationHandler.h"
+#include "util/log/Logger.h"
 #include <cstdlib>
 #include <exception>
-#include <util/TerminationHandler.h>
-#include <util/log/Logger.h>
 
 #include <boost/stacktrace/stacktrace.hpp>
 

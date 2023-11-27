@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
+#include "util/StringUtils.h"
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <string>
-#include <util/StringUtils.h>
 
-#include <rpc/RPCHelpers.h>
+#include "rpc/RPCHelpers.h"
 
 std::string
 hexStringToBinaryString(std::string const& hex)

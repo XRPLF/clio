@@ -18,17 +18,17 @@
 //==============================================================================
 
 #include <boost/asio/io_context.hpp>
+#include "data/cassandra/impl/FakesAndMocks.h"
+#include "util/Fixtures.h"
 #include <atomic>
 #include <cassandra.h>
-#include <data/cassandra/impl/FakesAndMocks.h>
 #include <functional>
 #include <gtest/gtest.h>
 #include <optional>
 #include <thread>
-#include <util/Fixtures.h>
 
-#include <data/cassandra/Error.h>
-#include <data/cassandra/impl/AsyncExecutor.h>
+#include "data/cassandra/Error.h"
+#include "data/cassandra/impl/AsyncExecutor.h"
 
 #include <gmock/gmock.h>
 #include <utility>

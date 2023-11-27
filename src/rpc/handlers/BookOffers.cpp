@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/BookOffers.h"
 #include <ripple/basics/strHex.h>
 #include <ripple/beast/utility/Zero.h>
 #include <ripple/protocol/AccountID.h>
@@ -30,9 +31,8 @@
 #include <boost/json/value.hpp>
 #include "rpc/Errors.h"
 #include "rpc/JS.h"
+#include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
-#include <rpc/RPCHelpers.h>
-#include <rpc/handlers/BookOffers.h>
 #include <string>
 #include <variant>
 

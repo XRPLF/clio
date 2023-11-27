@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/NoRippleCheck.h"
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
@@ -44,7 +45,6 @@
 #include <cstdint>
 #include <limits>
 #include <optional>
-#include <rpc/handlers/NoRippleCheck.h>
 
 #include <fmt/core.h>
 #include <string>

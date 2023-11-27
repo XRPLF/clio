@@ -17,14 +17,14 @@
 */
 //==============================================================================
 
+#include "util/Assert.h"
+#include "util/Fixtures.h"
+#include "util/config/Config.h"
 #include <cstdint>
 #include <gtest/gtest.h>
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include <util/Assert.h>
-#include <util/Fixtures.h>
-#include <util/config/Config.h>
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/json/conversion.hpp>

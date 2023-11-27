@@ -17,14 +17,14 @@
 */
 //==============================================================================
 
+#include "util/Fixtures.h"
 #include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <thread>
-#include <util/Fixtures.h>
 
-#include <etl/impl/ExtractionDataPipe.h>
+#include "etl/impl/ExtractionDataPipe.h"
 
 #include <gtest/gtest.h>
 

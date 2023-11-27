@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
+#include "util/prometheus/Label.h"
 #include <algorithm>
 #include <fmt/core.h>
 #include <string>
 #include <tuple>
-#include <util/prometheus/Label.h>
 
 #include <utility>
 #include <vector>

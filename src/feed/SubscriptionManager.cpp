@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "feed/SubscriptionManager.h"
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
@@ -35,16 +36,15 @@
 #include <boost/json/serialize.hpp>
 #include "data/BackendInterface.h"
 #include "data/Types.h"
+#include "rpc/BookChangesHelper.h"
+#include "rpc/RPCHelpers.h"
+#include "util/Assert.h"
 #include <cstdint>
-#include <feed/SubscriptionManager.h>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <rpc/BookChangesHelper.h>
-#include <rpc/RPCHelpers.h>
 #include <string>
 #include <unordered_set>
-#include <util/Assert.h>
 #include <utility>
 #include <vector>
 

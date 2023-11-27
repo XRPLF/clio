@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
+#include "data/cassandra/Handle.h"
 #include "data/cassandra/Types.h"
 #include <cassandra.h>
-#include <data/cassandra/Handle.h>
 #include <functional>
 #include <stdexcept>
 #include <string>

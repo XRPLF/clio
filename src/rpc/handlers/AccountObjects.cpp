@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/AccountObjects.h"
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
@@ -34,7 +35,6 @@
 #include <algorithm>
 #include <iterator>
 #include <optional>
-#include <rpc/handlers/AccountObjects.h>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>

@@ -23,20 +23,20 @@
 #include "data/BackendInterface.h"
 #include "data/cassandra/Error.h"
 #include "data/cassandra/Types.h"
-#include "gmock/gmock.h"
+#include "data/cassandra/impl/FakesAndMocks.h"
+#include "util/Fixtures.h"
 #include <atomic>
 #include <cassandra.h>
 #include <chrono>
 #include <cstdint>
-#include <data/cassandra/impl/FakesAndMocks.h>
 #include <functional>
+#include <gmock/gmock.h>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <thread>
-#include <util/Fixtures.h>
 
-#include <data/cassandra/impl/ExecutionStrategy.h>
+#include "data/cassandra/impl/ExecutionStrategy.h"
 
 #include <gtest/gtest.h>
 #include <vector>

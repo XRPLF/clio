@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include <data/BackendInterface.h>
-#include <data/CassandraBackend.h>
-#include <util/config/Config.h>
-#include <util/log/Logger.h>
+#include "data/BackendInterface.h"
+#include "data/CassandraBackend.h"
+#include "util/config/Config.h"
+#include "util/log/Logger.h"
 
 #include <boost/algorithm/string.hpp>
 

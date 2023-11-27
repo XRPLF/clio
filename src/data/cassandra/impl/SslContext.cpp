@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
+#include "data/cassandra/impl/SslContext.h"
 #include "data/cassandra/impl/ManagedObject.h"
 #include <cassandra.h>
-#include <data/cassandra/impl/SslContext.h>
 #include <stdexcept>
 #include <string>
 

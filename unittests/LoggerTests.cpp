@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
+#include "util/Fixtures.h"
 #include "util/log/Logger.h"
 #include <gtest/gtest.h>
-#include <util/Fixtures.h>
 using namespace util;
 
 // Used as a fixture for tests with enabled logging

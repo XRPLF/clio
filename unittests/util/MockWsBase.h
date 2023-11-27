@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <web/interface/ConnectionBase.h>
+#include "web/interface/ConnectionBase.h"
 
 struct MockSession : public web::ConnectionBase {
     std::string message;

@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/TransactionEntry.h"
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/chrono.h>
 #include <ripple/basics/strHex.h>
@@ -29,7 +30,6 @@
 #include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
-#include <rpc/handlers/TransactionEntry.h>
 #include <string>
 #include <utility>
 #include <variant>

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <data/Types.h>
+#include "data/Types.h"
 
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/Protocol.h>

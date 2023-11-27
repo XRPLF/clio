@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <util/prometheus/Prometheus.h>
+#include "util/prometheus/Prometheus.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

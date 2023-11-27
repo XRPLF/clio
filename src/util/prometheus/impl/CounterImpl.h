@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <util/Assert.h>
-#include <util/Atomic.h>
+#include "util/Assert.h"
+#include "util/Atomic.h"
 
 #include <atomic>
 #include <concepts>

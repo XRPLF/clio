@@ -18,8 +18,8 @@
 //==============================================================================
 
 #include <ripple/protocol/ErrorCodes.h>
+#include "rpc/Errors.h"
 #include <cstdint>
-#include <rpc/Errors.h>
 
 #include <boost/json/object.hpp>
 #include <gtest/gtest.h>

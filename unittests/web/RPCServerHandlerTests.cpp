@@ -20,18 +20,18 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/json/parse.hpp>
 #include "feed/SubscriptionManager.h"
-#include "gmock/gmock.h"
 #include "rpc/Errors.h"
+#include "util/Fixtures.h"
+#include "util/MockETLService.h"
+#include "util/MockRPCEngine.h"
 #include "util/Taggable.h"
 #include "util/config/Config.h"
+#include "web/RPCServerHandler.h"
 #include "web/interface/ConnectionBase.h"
+#include <gmock/gmock.h>
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <util/Fixtures.h>
-#include <util/MockETLService.h>
-#include <util/MockRPCEngine.h>
-#include <web/RPCServerHandler.h>
 
 #include <gtest/gtest.h>
 

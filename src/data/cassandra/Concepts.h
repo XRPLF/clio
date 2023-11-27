@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <data/cassandra/Types.h>
+#include "data/cassandra/Types.h"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>

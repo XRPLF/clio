@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "TestObject.h"
+#include "data/DBHelpers.h"
 #include "data/Types.h"
+#include <TestObject.h>
 #include <algorithm>
 #include <cstdint>
-#include <data/DBHelpers.h>
 #include <optional>
 
 #include <ripple/basics/Blob.h>

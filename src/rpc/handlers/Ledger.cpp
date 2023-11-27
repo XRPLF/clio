@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/Ledger.h"
 #include <ripple/basics/chrono.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/LedgerHeader.h>
@@ -38,7 +39,6 @@
 #include "rpc/common/Types.h"
 #include <algorithm>
 #include <iterator>
-#include <rpc/handlers/Ledger.h>
 #include <string>
 #include <utility>
 #include <variant>

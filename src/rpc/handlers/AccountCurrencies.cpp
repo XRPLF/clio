@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/handlers/AccountCurrencies.h"
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
@@ -34,7 +35,6 @@
 #include "rpc/common/Types.h"
 #include <cstdint>
 #include <limits>
-#include <rpc/handlers/AccountCurrencies.h>
 #include <string>
 #include <variant>
 
