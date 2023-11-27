@@ -17,6 +17,8 @@
 */
 //==============================================================================
 
+#include "util/TestObject.h"
+
 #include "data/DBHelpers.h"
 #include "data/Types.h"
 
@@ -39,7 +41,6 @@
 #include <ripple/protocol/TxFormats.h>
 #include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/tokens.h>
-#include <util/TestObject.h>
 
 #include <algorithm>
 #include <chrono>

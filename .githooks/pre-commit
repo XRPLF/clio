@@ -22,7 +22,7 @@ EOF
 fi
 
 function grep_code {
-    grep -l "${1}" "${sources}" -r --include \*.h --include \*.cpp
+    grep -l "${1}" ${sources} -r --include \*.h --include \*.cpp
 }
 
 # make all includes to be <...> style
