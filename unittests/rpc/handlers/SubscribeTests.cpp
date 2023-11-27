@@ -33,7 +33,6 @@
 #include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
 
-#include <__chrono/duration.h>
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
@@ -44,16 +43,17 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/UintTypes.h>
 
+#include <chrono>
 #include <memory>
 #include <optional>
 #include <string>
 #include <thread>
 #include <vector>
 
-using namespace std::chrono_literals;
 using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
+using std::chrono::milliseconds;
 
 constexpr static auto MINSEQ = 10;
 constexpr static auto MAXSEQ = 30;
@@ -621,7 +621,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("transactions_proposed").as_uint64(), 1);
         EXPECT_EQ(report.at("transactions").as_uint64(), 1);
@@ -668,7 +668,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object(), json::parse(expectedOutput));
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("ledger").as_uint64(), 1);
     });
@@ -689,7 +689,7 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // filter the duplicates
         EXPECT_EQ(report.at("account").as_uint64(), 2);
@@ -711,7 +711,7 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // filter the duplicates
         EXPECT_EQ(report.at("accounts_proposed").as_uint64(), 2);
@@ -744,7 +744,7 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("books").as_uint64(), 1);
     });
@@ -777,7 +777,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 2);
@@ -953,7 +953,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         EXPECT_EQ(output->as_object().at("asks").as_array().size(), 10);
         EXPECT_EQ(output->as_object().at("bids").as_array()[0].as_object(), json::parse(expectedOffer));
         EXPECT_EQ(output->as_object().at("asks").as_array()[0].as_object(), json::parse(expectedReversedOffer));
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 2);
@@ -1100,7 +1100,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("offers").as_array().size(), 10);
         EXPECT_EQ(output->as_object().at("offers").as_array()[0].as_object(), json::parse(expectedOffer));
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 1);

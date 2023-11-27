@@ -284,20 +284,19 @@ TEST_F(RPCBaseTest, ArrayAtValidator)
 
 TEST_F(RPCBaseTest, IfTypeValidator)
 {
-    // clang-format off
     auto spec = RpcSpec{
         {"mix",
          Required{},
          Type<std::string, json::object>{},
          IfType<json::object>{
              Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
-             Section{{"limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}},
+             Section{{"limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
+         },
          IfType<std::string>{Uint256HexStringValidator}},
         {"mix2",
          Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
          Type<std::string, json::object>{}},
     };
-    // clang-format on
 
     // if json object pass
     auto passingInput = json::parse(R"({ "mix": {"limit": 42, "limit2": 22} })");

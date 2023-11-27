@@ -146,8 +146,6 @@ getDeliveredAmount(
     if (meta->hasDeliveredAmount())
         return meta->getDeliveredAmount();
     if (txn->isFieldPresent(ripple::sfAmount)) {
-        using namespace std::chrono_literals;
-
         // Ledger 4594095 is the first ledger in which the DeliveredAmount field
         // was present when a partial payment was made and its absence indicates
         // that the amount delivered is listed in the Amount field.
