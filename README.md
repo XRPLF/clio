@@ -263,7 +263,7 @@ There is an example of docker-compose file, Prometheus and Grafana configs in [e
 
 ## Using clang-tidy for static analysis
 
-Minimum clang-tidy version required is 16.0.
+Minimum clang-tidy version required is 17.0.
 Clang-tidy could be run by cmake during building the project.
 For that provide the option `-o lint=True` for `conan install` command:
 ```sh
@@ -273,7 +273,7 @@ By default cmake will try to find clang-tidy automatically in your system.
 To force cmake use desired binary set `CLIO_CLANG_TIDY_BIN` environment variable as path to clang-tidy binary.
 E.g.:
 ```sh
-export CLIO_CLANG_TIDY_BIN=/opt/homebrew/opt/llvm@16/bin/clang-tidy
+export CLIO_CLANG_TIDY_BIN=/opt/homebrew/opt/llvm@17/bin/clang-tidy
 ```
 
 ## Developing against `rippled` in standalone mode

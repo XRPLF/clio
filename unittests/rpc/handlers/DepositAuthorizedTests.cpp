@@ -17,12 +17,26 @@
 */
 //==============================================================================
 
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/DepositAuthorized.h>
-#include <util/Fixtures.h>
-#include <util/TestObject.h>
+#include "data/Types.h"
+#include "rpc/Errors.h"
+#include "rpc/common/AnyHandler.h"
+#include "rpc/common/Types.h"
+#include "rpc/handlers/DepositAuthorized.h"
+#include "util/Fixtures.h"
+#include "util/MockBackend.h"
+#include "util/TestObject.h"
 
+#include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+
+#include <optional>
+#include <string>
+#include <vector>
 
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";

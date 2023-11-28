@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <util/SourceLocation.h>
+#include "util/SourceLocation.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>

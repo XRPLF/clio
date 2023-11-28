@@ -17,10 +17,41 @@
 */
 //==============================================================================
 
-#include <ripple/protocol/TxFlags.h>
-#include <rpc/handlers/NoRippleCheck.h>
+#include "rpc/handlers/NoRippleCheck.h"
 
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/JsonBool.h"
+#include "rpc/common/Types.h"
+
+#include <boost/json/array.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <fmt/core.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STAmount.h>
+#include <ripple/protocol/STBase.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/Serializer.h>
+#include <ripple/protocol/TxFlags.h>
+#include <ripple/protocol/UintTypes.h>
+#include <ripple/protocol/jss.h>
+
+#include <cstdint>
+#include <limits>
+#include <optional>
+#include <string>
+#include <utility>
+#include <variant>
 
 namespace rpc {
 
@@ -88,7 +119,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
         std::numeric_limits<std::uint32_t>::max(),
         {},
         ctx.yield,
-        [&](ripple::SLE&& ownedItem) {
+        [&](ripple::SLE const ownedItem) {
             // don't push to result if limit is reached
             if (limit != 0 && ownedItem.getType() == ripple::ltRIPPLE_STATE) {
                 bool const bLow = accountID == ownedItem.getFieldAmount(ripple::sfLowLimit).getIssuer();

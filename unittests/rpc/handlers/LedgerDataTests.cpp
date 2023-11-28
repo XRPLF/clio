@@ -17,12 +17,25 @@
 */
 //==============================================================================
 
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/LedgerData.h>
-#include <util/Fixtures.h>
-#include <util/TestObject.h>
+#include "data/Types.h"
+#include "rpc/Errors.h"
+#include "rpc/common/AnyHandler.h"
+#include "rpc/common/Types.h"
+#include "rpc/handlers/LedgerData.h"
+#include "util/Fixtures.h"
+#include "util/MockBackend.h"
+#include "util/TestObject.h"
 
+#include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
+
+#include <optional>
+#include <string>
+#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;
@@ -65,11 +78,14 @@ generateTestValuesForParametersTest()
 {
     return std::vector<LedgerDataParamTestCaseBundle>{
         LedgerDataParamTestCaseBundle{
-            "ledger_indexInvalid", R"({"ledger_index": "x"})", "invalidParams", "ledgerIndexMalformed"},
+            "ledger_indexInvalid", R"({"ledger_index": "x"})", "invalidParams", "ledgerIndexMalformed"
+        },
         LedgerDataParamTestCaseBundle{
-            "ledger_hashInvalid", R"({"ledger_hash": "x"})", "invalidParams", "ledger_hashMalformed"},
+            "ledger_hashInvalid", R"({"ledger_hash": "x"})", "invalidParams", "ledger_hashMalformed"
+        },
         LedgerDataParamTestCaseBundle{
-            "ledger_hashNotString", R"({"ledger_hash": 123})", "invalidParams", "ledger_hashNotString"},
+            "ledger_hashNotString", R"({"ledger_hash": 123})", "invalidParams", "ledger_hashNotString"
+        },
         LedgerDataParamTestCaseBundle{"binaryNotBool", R"({"binary": 123})", "invalidParams", "Invalid parameters."},
         LedgerDataParamTestCaseBundle{"limitNotInt", R"({"limit": "xxx"})", "invalidParams", "Invalid parameters."},
         LedgerDataParamTestCaseBundle{"limitNagetive", R"({"limit": -1})", "invalidParams", "Invalid parameters."},
@@ -82,10 +98,12 @@ generateTestValuesForParametersTest()
                 "out_of_order": true
             })",
             "invalidParams",
-            "outOfOrderMarkerNotInt"},
+            "outOfOrderMarkerNotInt"
+        },
         LedgerDataParamTestCaseBundle{"markerNotString", R"({"marker": 123})", "invalidParams", "markerNotString"},
         LedgerDataParamTestCaseBundle{
-            "typeNotString", R"({"type": 123})", "invalidParams", "Invalid field 'type', not string."},
+            "typeNotString", R"({"type": 123})", "invalidParams", "Invalid field 'type', not string."
+        },
         LedgerDataParamTestCaseBundle{"typeNotValid", R"({"type": "xxx"})", "invalidParams", "Invalid field 'type'."},
     };
 }
@@ -543,7 +561,7 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
     while ((limit--) != 0) {
         auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
-        los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});
+        los.emplace_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});  // NOLINT(modernize-use-emplace)
     }
     ON_CALL(*rawBackendPtr, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));
 

@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include <data/cassandra/Concepts.h>
-#include <data/cassandra/Handle.h>
-#include <data/cassandra/SettingsProvider.h>
-#include <data/cassandra/Types.h>
-#include <util/Expected.h>
-#include <util/config/Config.h>
-#include <util/log/Logger.h>
+#include "data/cassandra/Concepts.h"
+#include "data/cassandra/Handle.h"
+#include "data/cassandra/SettingsProvider.h"
+#include "data/cassandra/Types.h"
+#include "util/Expected.h"
+#include "util/config/Config.h"
+#include "util/log/Logger.h"
 
 #include <fmt/compile.h>
 

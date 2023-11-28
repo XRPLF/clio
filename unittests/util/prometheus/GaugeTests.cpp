@@ -17,11 +17,12 @@
 */
 //==============================================================================
 
-#include <util/prometheus/Gauge.h>
+#include "util/prometheus/Gauge.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstdint>
 #include <thread>
 
 using namespace util::prometheus;

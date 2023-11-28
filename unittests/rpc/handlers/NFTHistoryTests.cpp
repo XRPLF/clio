@@ -17,12 +17,26 @@
 */
 //==============================================================================
 
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/NFTHistory.h>
-#include <util/Fixtures.h>
-#include <util/TestObject.h>
+#include "data/Types.h"
+#include "rpc/Errors.h"
+#include "rpc/common/AnyHandler.h"
+#include "rpc/common/Types.h"
+#include "rpc/handlers/NFTHistory.h"
+#include "util/Fixtures.h"
+#include "util/MockBackend.h"
+#include "util/TestObject.h"
 
+#include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/STObject.h>
+
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;
@@ -67,57 +81,68 @@ generateTestValuesForParametersTest()
             "BinaryNotBool",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "binary": 1})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NFTHistoryParamTestCaseBundle{
             "ForwardNotBool",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "forward": 1})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NFTHistoryParamTestCaseBundle{
             "ledger_index_minNotInt",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index_min": "x"})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NFTHistoryParamTestCaseBundle{
             "ledger_index_maxNotInt",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index_max": "x"})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NFTHistoryParamTestCaseBundle{
             "ledger_indexInvalid",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_index": "x"})",
             "invalidParams",
-            "ledgerIndexMalformed"},
+            "ledgerIndexMalformed"
+        },
         NFTHistoryParamTestCaseBundle{
             "ledger_hashInvalid",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_hash": "x"})",
             "invalidParams",
-            "ledger_hashMalformed"},
+            "ledger_hashMalformed"
+        },
         NFTHistoryParamTestCaseBundle{
             "ledger_hashNotString",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "ledger_hash": 123})",
             "invalidParams",
-            "ledger_hashNotString"},
+            "ledger_hashNotString"
+        },
         NFTHistoryParamTestCaseBundle{
             "limitNotInt",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": "123"})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NFTHistoryParamTestCaseBundle{
             "limitNagetive",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": -1})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NFTHistoryParamTestCaseBundle{
             "limitZero",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "limit": 0})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NFTHistoryParamTestCaseBundle{
             "MarkerNotObject",
             R"({"nft_id":"00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004", "marker": 101})",
             "invalidParams",
-            "invalidMarker"},
+            "invalidMarker"
+        },
         NFTHistoryParamTestCaseBundle{
             "MarkerMissingSeq",
             R"({
@@ -125,7 +150,8 @@ generateTestValuesForParametersTest()
                 "marker": {"ledger": 123}
             })",
             "invalidParams",
-            "Required field 'seq' missing"},
+            "Required field 'seq' missing"
+        },
         NFTHistoryParamTestCaseBundle{
             "MarkerMissingLedger",
             R"({
@@ -133,7 +159,8 @@ generateTestValuesForParametersTest()
                 "marker":{"seq": 123}
             })",
             "invalidParams",
-            "Required field 'ledger' missing"},
+            "Required field 'ledger' missing"
+        },
         NFTHistoryParamTestCaseBundle{
             "MarkerLedgerNotInt",
             R"({
@@ -145,7 +172,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NFTHistoryParamTestCaseBundle{
             "MarkerSeqNotInt",
             R"({
@@ -157,7 +185,8 @@ generateTestValuesForParametersTest()
                 }
             })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NFTHistoryParamTestCaseBundle{
             "LedgerIndexMinLessThanMinSeq",
             R"({
@@ -165,7 +194,8 @@ generateTestValuesForParametersTest()
                 "ledger_index_min": 9
             })",
             "lgrIdxMalformed",
-            "ledgerSeqMinOutOfRange"},
+            "ledgerSeqMinOutOfRange"
+        },
         NFTHistoryParamTestCaseBundle{
             "LedgerIndexMaxLargeThanMaxSeq",
             R"({
@@ -173,7 +203,8 @@ generateTestValuesForParametersTest()
                 "ledger_index_max": 31
             })",
             "lgrIdxMalformed",
-            "ledgerSeqMaxOutOfRange"},
+            "ledgerSeqMaxOutOfRange"
+        },
         NFTHistoryParamTestCaseBundle{
             "LedgerIndexMaxLessThanLedgerIndexMin",
             R"({
@@ -182,7 +213,8 @@ generateTestValuesForParametersTest()
                 "ledger_index_min": 20
             })",
             "lgrIdxsInvalid",
-            "Ledger indexes invalid."},
+            "Ledger indexes invalid."
+        },
         NFTHistoryParamTestCaseBundle{
             "LedgerIndexMaxMinAndLedgerIndex",
             R"({
@@ -192,7 +224,8 @@ generateTestValuesForParametersTest()
                 "ledger_index": 10
             })",
             "invalidParams",
-            "containsLedgerSpecifierAndRange"},
+            "containsLedgerSpecifierAndRange"
+        },
     };
 }
 

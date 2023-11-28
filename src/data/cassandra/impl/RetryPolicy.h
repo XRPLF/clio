@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include <data/cassandra/Handle.h>
-#include <data/cassandra/Types.h>
-#include <util/Expected.h>
-#include <util/log/Logger.h>
+#include "data/cassandra/Handle.h"
+#include "data/cassandra/Types.h"
+#include "util/Expected.h"
+#include "util/log/Logger.h"
 
 #include <boost/asio.hpp>
 

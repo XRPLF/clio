@@ -17,12 +17,28 @@
 */
 //==============================================================================
 
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/AccountNFTs.h>
-#include <util/Fixtures.h>
-#include <util/TestObject.h>
+#include "data/Types.h"
+#include "rpc/Errors.h"
+#include "rpc/common/AnyHandler.h"
+#include "rpc/common/Types.h"
+#include "rpc/handlers/AccountNFTs.h"
+#include "util/Fixtures.h"
+#include "util/MockBackend.h"
+#include "util/TestObject.h"
 
+#include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerHeader.h>
+
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
@@ -168,7 +184,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_hash":"{}"
@@ -197,7 +213,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":"{}"
@@ -226,7 +242,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "ledger_index":{}
@@ -257,7 +273,7 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -322,7 +338,7 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}"
         }})",
@@ -359,7 +375,7 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1 + limit);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -397,7 +413,7 @@ TEST_F(RPCAccountNFTsHandlerTest, Marker)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "marker":"{}"
@@ -463,7 +479,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}
@@ -529,7 +545,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
             "limit":{}

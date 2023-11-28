@@ -16,13 +16,27 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include <ripple/protocol/TxFlags.h>
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/NoRippleCheck.h>
-#include <util/Fixtures.h>
-#include <util/TestObject.h>
+#include "data/Types.h"
+#include "rpc/Errors.h"
+#include "rpc/common/AnyHandler.h"
+#include "rpc/common/Types.h"
+#include "rpc/handlers/NoRippleCheck.h"
+#include "util/Fixtures.h"
+#include "util/MockBackend.h"
+#include "util/TestObject.h"
 
+#include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/TxFlags.h>
+
+#include <optional>
+#include <string>
+#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;
@@ -69,7 +83,8 @@ generateTestValuesForParametersTest()
                 "role": "gateway"
              })",
             "invalidParams",
-            "Required field 'account' missing"},
+            "Required field 'account' missing"
+        },
         NoRippleParamTestCaseBundle{
             "AccountNotString",
             R"({
@@ -77,7 +92,8 @@ generateTestValuesForParametersTest()
                 "role": "gateway"
              })",
             "invalidParams",
-            "accountNotString"},
+            "accountNotString"
+        },
         NoRippleParamTestCaseBundle{
             "InvalidAccount",
             R"({
@@ -85,7 +101,8 @@ generateTestValuesForParametersTest()
                 "role": "gateway"
              })",
             "actMalformed",
-            "accountMalformed"},
+            "accountMalformed"
+        },
         NoRippleParamTestCaseBundle{
             "InvalidRole",
             R"({
@@ -93,14 +110,16 @@ generateTestValuesForParametersTest()
                 "role": "notrole"
              })",
             "invalidParams",
-            "role field is invalid"},
+            "role field is invalid"
+        },
         NoRippleParamTestCaseBundle{
             "RoleNotExists",
             R"({
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
              })",
             "invalidParams",
-            "Required field 'role' missing"},
+            "Required field 'role' missing"
+        },
         NoRippleParamTestCaseBundle{
             "LimitNotInt",
             R"({
@@ -109,7 +128,8 @@ generateTestValuesForParametersTest()
                 "limit": "gg"
              })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NoRippleParamTestCaseBundle{
             "LimitNegative",
             R"({
@@ -118,7 +138,8 @@ generateTestValuesForParametersTest()
                 "limit": -1
              })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NoRippleParamTestCaseBundle{
             "LimitZero",
             R"({
@@ -127,7 +148,8 @@ generateTestValuesForParametersTest()
                 "limit": 0
              })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         NoRippleParamTestCaseBundle{
             "TransactionsNotBool",
             R"({
@@ -136,7 +158,8 @@ generateTestValuesForParametersTest()
                 "transactions": "gg"
              })",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
     };
 }
 
@@ -196,7 +219,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "role": "gateway",
@@ -226,7 +249,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::nullopt));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "role": "gateway",
@@ -256,7 +279,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::nullopt));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "role": "gateway",

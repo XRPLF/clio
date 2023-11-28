@@ -84,13 +84,13 @@ jobs:
 
       - name: Add llvm repo
         run: |
-          echo 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-16 main' >> /etc/apt/sources.list
+          echo 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-17 main' >> /etc/apt/sources.list
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 
       - name: Install packages
         run: |
           apt update -qq
-          apt install -y jq clang-tidy-16
+          apt install -y jq clang-tidy-17
 
       - name: Install ccache
         run: |

@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <data/cassandra/impl/ManagedObject.h>
-#include <util/log/Logger.h>
+#include "data/cassandra/impl/ManagedObject.h"
+#include "util/log/Logger.h"
 
 #include <cassandra.h>
 

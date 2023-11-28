@@ -17,18 +17,24 @@
 */
 //==============================================================================
 
-#include <etl/impl/Transformer.h>
-#include <util/FakeFetchResponse.h>
-#include <util/Fixtures.h>
-#include <util/MockAmendmentBlockHandler.h>
-#include <util/MockExtractionDataPipe.h>
-#include <util/MockLedgerLoader.h>
-#include <util/MockLedgerPublisher.h>
-#include <util/StringUtils.h>
+#include "etl/SystemState.h"
+#include "etl/impl/Transformer.h"
+#include "util/FakeFetchResponse.h"
+#include "util/Fixtures.h"
+#include "util/MockAmendmentBlockHandler.h"
+#include "util/MockBackend.h"
+#include "util/MockExtractionDataPipe.h"
+#include "util/MockLedgerLoader.h"
+#include "util/MockLedgerPublisher.h"
+#include "util/StringUtils.h"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <memory>
+#include <optional>
+#include <thread>
 
 using namespace testing;
 using namespace etl;

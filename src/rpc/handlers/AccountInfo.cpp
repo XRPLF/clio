@@ -17,9 +17,36 @@
 */
 //==============================================================================
 
-#include <rpc/handlers/AccountInfo.h>
+#include "rpc/handlers/AccountInfo.h"
 
+#include "rpc/Amendments.h"
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/JsonBool.h"
+#include "rpc/common/Types.h"
+
+#include <boost/json/array.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
+#include <ripple/basics/strHex.h>
 #include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/Serializer.h>
+#include <ripple/protocol/jss.h>
+
+#include <algorithm>
+#include <iterator>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 
 namespace rpc {
 AccountInfoHandler::Result
@@ -46,7 +73,8 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     ripple::STLedgerEntry const sle{
-        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key};
+        ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
+    };
 
     if (!accountKeylet.check(sle))
         return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
@@ -70,7 +98,8 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
 
         if (signers) {
             ripple::STLedgerEntry const sleSigners{
-                ripple::SerialIter{signers->data(), signers->size()}, signersKey.key};
+                ripple::SerialIter{signers->data(), signers->size()}, signersKey.key
+            };
 
             if (!signersKey.check(sleSigners))
                 return Error{Status{RippledError::rpcDB_DESERIALIZATION}};

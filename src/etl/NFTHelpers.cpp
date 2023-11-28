@@ -17,15 +17,33 @@
 */
 //==============================================================================
 
-#include <ripple/protocol/STBase.h>
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/TxMeta.h>
-#include <vector>
+#include "data/DBHelpers.h"
 
-#include <data/BackendInterface.h>
-#include <data/DBHelpers.h>
-#include <data/Types.h>
 #include <fmt/core.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STArray.h>
+#include <ripple/protocol/STBase.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/STObject.h>
+#include <ripple/protocol/STTx.h>
+#include <ripple/protocol/Serializer.h>
+#include <ripple/protocol/TER.h>
+#include <ripple/protocol/TxFormats.h>
+#include <ripple/protocol/TxMeta.h>
+
+#include <algorithm>
+#include <cstdint>
+#include <iterator>
+#include <optional>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace etl {
 
@@ -114,7 +132,8 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 
     return {
         {NFTTransactionsData(*diff.first, txMeta, sttx.getTransactionID())},
-        NFTsData(*diff.first, *owner, sttx.getFieldVL(ripple::sfURI), txMeta)};
+        NFTsData(*diff.first, *owner, sttx.getFieldVL(ripple::sfURI), txMeta)
+    };
 }
 
 std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
@@ -198,7 +217,8 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
                                             .downcast<ripple::STObject>()
                                             .getAccountID(ripple::sfOwner);
         return {
-            {NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())}, NFTsData(tokenID, owner, txMeta, false)};
+            {NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())}, NFTsData(tokenID, owner, txMeta, false)
+        };
     }
 
     // Otherwise we have to infer the new owner from the affected nodes.
@@ -247,7 +267,8 @@ getNFTokenAcceptOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
         if (nft != nfts.end()) {
             return {
                 {NFTTransactionsData(tokenID, txMeta, sttx.getTransactionID())},
-                NFTsData(tokenID, nodeOwner, txMeta, false)};
+                NFTsData(tokenID, nodeOwner, txMeta, false)
+            };
         }
     }
 

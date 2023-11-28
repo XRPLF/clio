@@ -17,22 +17,43 @@
 */
 //==============================================================================
 
-#include <feed/SubscriptionManager.h>
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/Subscribe.h>
-#include <util/Fixtures.h>
-#include <util/MockPrometheus.h>
-#include <util/MockWsBase.h>
-#include <util/TestObject.h>
+#include "data/Types.h"
+#include "feed/SubscriptionManager.h"
+#include "rpc/Errors.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/AnyHandler.h"
+#include "rpc/common/Types.h"
+#include "rpc/handlers/Subscribe.h"
+#include "util/Fixtures.h"
+#include "util/MockBackend.h"
+#include "util/MockPrometheus.h"
+#include "util/MockWsBase.h"
+#include "util/Taggable.h"
+#include "util/TestObject.h"
+#include "util/config/Config.h"
+#include "web/interface/ConnectionBase.h"
 
+#include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Book.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/UintTypes.h>
 
 #include <chrono>
+#include <memory>
+#include <optional>
+#include <string>
+#include <thread>
+#include <vector>
 
-using namespace std::chrono_literals;
 using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
+using std::chrono::milliseconds;
 
 constexpr static auto MINSEQ = 10;
 constexpr static auto MAXSEQ = 30;
@@ -94,33 +115,38 @@ generateTestValuesForParametersTest()
             "AccountsNotArray",
             R"({"accounts": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})",
             "invalidParams",
-            "accountsNotArray"},
+            "accountsNotArray"
+        },
         SubscribeParamTestCaseBundle{
-            "AccountsItemNotString", R"({"accounts": [123]})", "invalidParams", "accounts'sItemNotString"},
+            "AccountsItemNotString", R"({"accounts": [123]})", "invalidParams", "accounts'sItemNotString"
+        },
         SubscribeParamTestCaseBundle{
-            "AccountsItemInvalidString", R"({"accounts": ["123"]})", "actMalformed", "accounts'sItemMalformed"},
+            "AccountsItemInvalidString", R"({"accounts": ["123"]})", "actMalformed", "accounts'sItemMalformed"
+        },
         SubscribeParamTestCaseBundle{
-            "AccountsEmptyArray", R"({"accounts": []})", "actMalformed", "accounts malformed."},
+            "AccountsEmptyArray", R"({"accounts": []})", "actMalformed", "accounts malformed."
+        },
         SubscribeParamTestCaseBundle{
             "AccountsProposedNotArray",
             R"({"accounts_proposed": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})",
             "invalidParams",
-            "accounts_proposedNotArray"},
+            "accounts_proposedNotArray"
+        },
         SubscribeParamTestCaseBundle{
             "AccountsProposedItemNotString",
             R"({"accounts_proposed": [123]})",
             "invalidParams",
-            "accounts_proposed'sItemNotString"},
+            "accounts_proposed'sItemNotString"
+        },
         SubscribeParamTestCaseBundle{
             "AccountsProposedItemInvalidString",
             R"({"accounts_proposed": ["123"]})",
             "actMalformed",
-            "accounts_proposed'sItemMalformed"},
+            "accounts_proposed'sItemMalformed"
+        },
         SubscribeParamTestCaseBundle{
-            "AccountsProposedEmptyArray",
-            R"({"accounts_proposed": []})",
-            "actMalformed",
-            "accounts_proposed malformed."},
+            "AccountsProposedEmptyArray", R"({"accounts_proposed": []})", "actMalformed", "accounts_proposed malformed."
+        },
         SubscribeParamTestCaseBundle{"StreamsNotArray", R"({"streams": 1})", "invalidParams", "streamsNotArray"},
         SubscribeParamTestCaseBundle{"StreamNotString", R"({"streams": [1]})", "invalidParams", "streamNotString"},
         SubscribeParamTestCaseBundle{"StreamNotValid", R"({"streams": ["1"]})", "malformedStream", "Stream malformed."},
@@ -128,30 +154,36 @@ generateTestValuesForParametersTest()
             "StreamPeerStatusNotSupport",
             R"({"streams": ["peer_status"]})",
             "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"},
+            "Requested operation not supported by reporting mode server"
+        },
         SubscribeParamTestCaseBundle{
             "StreamConsensusNotSupport",
             R"({"streams": ["consensus"]})",
             "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"},
+            "Requested operation not supported by reporting mode server"
+        },
         SubscribeParamTestCaseBundle{
             "StreamServerNotSupport",
             R"({"streams": ["server"]})",
             "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"},
+            "Requested operation not supported by reporting mode server"
+        },
         SubscribeParamTestCaseBundle{"BooksNotArray", R"({"books": "1"})", "invalidParams", "booksNotArray"},
         SubscribeParamTestCaseBundle{
-            "BooksItemNotObject", R"({"books": ["1"]})", "invalidParams", "booksItemNotObject"},
+            "BooksItemNotObject", R"({"books": ["1"]})", "invalidParams", "booksItemNotObject"
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemMissingTakerPays",
             R"({"books": [{"taker_gets": {"currency": "XRP"}}]})",
             "invalidParams",
-            "Missing field 'taker_pays'"},
+            "Missing field 'taker_pays'"
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemMissingTakerGets",
             R"({"books": [{"taker_pays": {"currency": "XRP"}}]})",
             "invalidParams",
-            "Missing field 'taker_gets'"},
+            "Missing field 'taker_gets'"
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerGetsNotObject",
             R"({
@@ -166,7 +198,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "invalidParams",
-            "Field 'taker_gets' is not an object"},
+            "Field 'taker_gets' is not an object"
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerPaysNotObject",
             R"({
@@ -181,7 +214,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "invalidParams",
-            "Field 'taker_pays' is not an object"},
+            "Field 'taker_pays' is not an object"
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerPaysMissingCurrency",
             R"({
@@ -196,7 +230,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcCurMalformed",
-            "Source currency is malformed."},
+            "Source currency is malformed."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerGetsMissingCurrency",
             R"({
@@ -211,7 +246,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstAmtMalformed",
-            "Destination amount/currency/issuer is malformed."},
+            "Destination amount/currency/issuer is malformed."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerPaysCurrencyNotString",
             R"({
@@ -229,7 +265,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcCurMalformed",
-            "Source currency is malformed."},
+            "Source currency is malformed."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerGetsCurrencyNotString",
             R"({
@@ -247,7 +284,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstAmtMalformed",
-            "Destination amount/currency/issuer is malformed."},
+            "Destination amount/currency/issuer is malformed."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerPaysInvalidCurrency",
             R"({
@@ -265,7 +303,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcCurMalformed",
-            "Source currency is malformed."},
+            "Source currency is malformed."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerGetsInvalidCurrency",
             R"({
@@ -283,7 +322,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstAmtMalformed",
-            "Destination amount/currency/issuer is malformed."},
+            "Destination amount/currency/issuer is malformed."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerPaysMissingIssuer",
             R"({
@@ -300,7 +340,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcIsrMalformed",
-            "Invalid field 'taker_pays.issuer', expected non-XRP issuer."},
+            "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerGetsMissingIssuer",
             R"({
@@ -317,7 +358,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstIsrMalformed",
-            "Invalid field 'taker_gets.issuer', expected non-XRP issuer."},
+            "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerPaysIssuerNotString",
             R"({
@@ -335,7 +377,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "invalidParams",
-            "takerPaysIssuerNotString"},
+            "takerPaysIssuerNotString"
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerGetsIssuerNotString",
             R"({
@@ -353,7 +396,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "invalidParams",
-            "taker_gets.issuer should be string"},
+            "taker_gets.issuer should be string"
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerPaysInvalidIssuer",
             R"({
@@ -371,7 +415,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcIsrMalformed",
-            "Source issuer is malformed."},
+            "Source issuer is malformed."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerGetsInvalidIssuer",
             R"({
@@ -389,7 +434,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstIsrMalformed",
-            "Invalid field 'taker_gets.issuer', bad issuer."},
+            "Invalid field 'taker_gets.issuer', bad issuer."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerGetsXRPHasIssuer",
             R"({
@@ -408,7 +454,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "dstIsrMalformed",
-            "Unneeded field 'taker_gets.issuer' for XRP currency specification."},
+            "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemTakerPaysXRPHasIssuer",
             R"({
@@ -427,7 +474,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "srcIsrMalformed",
-            "Unneeded field 'taker_pays.issuer' for XRP currency specification."},
+            "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemBadMartket",
             R"({
@@ -444,7 +492,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "badMarket",
-            "badMarket"},
+            "badMarket"
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemInvalidSnapshot",
             R"({
@@ -463,7 +512,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "invalidParams",
-            "snapshotNotBool"},
+            "snapshotNotBool"
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemInvalidBoth",
             R"({
@@ -482,7 +532,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "invalidParams",
-            "bothNotBool"},
+            "bothNotBool"
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemInvalidTakerNotString",
             R"({
@@ -501,7 +552,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "badIssuer",
-            "Issuer account malformed."},
+            "Issuer account malformed."
+        },
         SubscribeParamTestCaseBundle{
             "BooksItemInvalidTaker",
             R"({
@@ -520,7 +572,8 @@ generateTestValuesForParametersTest()
                 ]
             })",
             "badIssuer",
-            "Issuer account malformed."},
+            "Issuer account malformed."
+        },
     };
 }
 
@@ -568,7 +621,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("transactions_proposed").as_uint64(), 1);
         EXPECT_EQ(report.at("transactions").as_uint64(), 1);
@@ -615,7 +668,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object(), json::parse(expectedOutput));
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("ledger").as_uint64(), 1);
     });
@@ -636,7 +689,7 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // filter the duplicates
         EXPECT_EQ(report.at("account").as_uint64(), 2);
@@ -658,7 +711,7 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // filter the duplicates
         EXPECT_EQ(report.at("accounts_proposed").as_uint64(), 2);
@@ -691,7 +744,7 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("books").as_uint64(), 1);
     });
@@ -724,7 +777,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 2);
@@ -900,7 +953,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         EXPECT_EQ(output->as_object().at("asks").as_array().size(), 10);
         EXPECT_EQ(output->as_object().at("bids").as_array()[0].as_object(), json::parse(expectedOffer));
         EXPECT_EQ(output->as_object().at("asks").as_array()[0].as_object(), json::parse(expectedReversedOffer));
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 2);
@@ -1047,7 +1100,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("offers").as_array().size(), 10);
         EXPECT_EQ(output->as_object().at("offers").as_array()[0].as_object(), json::parse(expectedOffer));
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 1);

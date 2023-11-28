@@ -33,12 +33,13 @@ DisableFormat:   false
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
 ForEachMacros:   [ Q_FOREACH,  BOOST_FOREACH ]
+IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '^<(BeastConfig)'
-    Priority:        0
-  - Regex:           '^<(ripple)/'
+  - Regex:           '^".*"$'
+    Priority:        1
+  - Regex:           '^<.*\.(h|hpp)>$'
     Priority:        2
-  - Regex:           '^<(boost)/'
+  - Regex:           '^<.*>$'
     Priority:        3
   - Regex:           '.*'
     Priority:        4

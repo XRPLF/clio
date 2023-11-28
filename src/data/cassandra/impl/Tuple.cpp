@@ -17,7 +17,11 @@
 */
 //==============================================================================
 
-#include <data/cassandra/impl/Tuple.h>
+#include "data/cassandra/impl/Tuple.h"
+
+#include "data/cassandra/impl/ManagedObject.h"
+
+#include <cassandra.h>
 
 namespace {
 constexpr auto tupleDeleter = [](CassTuple* ptr) { cass_tuple_free(ptr); };

@@ -20,9 +20,8 @@
 /** @file */
 #pragma once
 
-#include <ripple/protocol/ErrorCodes.h>
-
 #include <boost/json/object.hpp>
+#include <ripple/protocol/ErrorCodes.h>
 
 #include <optional>
 #include <string>

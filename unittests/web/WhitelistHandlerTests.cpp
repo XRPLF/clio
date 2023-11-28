@@ -16,12 +16,12 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include <util/Fixtures.h>
-#include <util/config/Config.h>
-#include <web/DOSGuard.h>
+#include "util/Fixtures.h"
+#include "util/config/Config.h"
+#include "web/WhitelistHandler.h"
 
 #include <boost/json/parse.hpp>
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 using namespace util;
 using namespace web;

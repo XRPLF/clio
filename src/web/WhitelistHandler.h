@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <util/config/Config.h>
-#include <web/Resolver.h>
+#include "util/config/Config.h"
+#include "web/Resolver.h"
 
 #include <boost/asio.hpp>
 #include <boost/iterator/transform_iterator.hpp>
@@ -115,14 +115,14 @@ private:
     static bool
     isV4(std::string_view net)
     {
-        static const std::regex ipv4CidrRegex(R"(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$)");
+        static std::regex const ipv4CidrRegex(R"(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$)");
         return std::regex_match(std::string(net), ipv4CidrRegex);
     }
 
     static bool
     isV6(std::string_view net)
     {
-        static const std::regex ipv6CidrRegex(R"(^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}/\d{1,3}$)");
+        static std::regex const ipv6CidrRegex(R"(^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}/\d{1,3}$)");
         return std::regex_match(std::string(net), ipv6CidrRegex);
     }
 
@@ -172,7 +172,8 @@ private:
 
         std::unordered_set<std::string> const hostnames{
             boost::transform_iterator(std::begin(whitelist), transform),
-            boost::transform_iterator(std::end(whitelist), transform)};
+            boost::transform_iterator(std::end(whitelist), transform)
+        };
 
         // resolve hostnames to ips
         std::unordered_set<std::string> ips;

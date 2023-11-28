@@ -16,15 +16,26 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
-#include <util/MockETLService.h>
-#include <util/MockRPCEngine.h>
-#include <web/RPCServerHandler.h>
+#include "feed/SubscriptionManager.h"
+#include "rpc/Errors.h"
+#include "util/Fixtures.h"
+#include "util/MockETLService.h"
+#include "util/MockRPCEngine.h"
+#include "util/Taggable.h"
+#include "util/config/Config.h"
+#include "web/RPCServerHandler.h"
+#include "web/interface/ConnectionBase.h"
 
-#include <chrono>
+#include <boost/beast/http/status.hpp>
+#include <boost/json/parse.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <ripple/protocol/ErrorCodes.h>
 
-using namespace std::chrono_literals;
+#include <memory>
+#include <stdexcept>
+#include <string>
+
 using namespace feed;
 using namespace web;
 
@@ -43,9 +54,10 @@ struct MockWsBase : public web::ConnectionBase {
     }
 
     void
+    // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
     send(std::string&& msg, boost::beast::http::status status = boost::beast::http::status::ok) override
     {
-        message += std::string(msg);
+        message += msg;
         lastStatus = status;
     }
 

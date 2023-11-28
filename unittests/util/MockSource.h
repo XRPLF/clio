@@ -18,14 +18,14 @@
 //==============================================================================
 #pragma once
 
-#include <etl/Source.h>
+#include "etl/Source.h"
 
 #include <gmock/gmock.h>
 
 class MockSource : public etl::Source {
 public:
     MOCK_METHOD(bool, isConnected, (), (const, override));
-    MOCK_METHOD(boost::json::object, toJson, (), (const override));
+    MOCK_METHOD(boost::json::object, toJson, (), (const, override));
     MOCK_METHOD(void, run, (), (override));
     MOCK_METHOD(void, pause, (), (override));
     MOCK_METHOD(void, resume, (), (override));

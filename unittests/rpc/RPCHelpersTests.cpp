@@ -17,16 +17,35 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
-#include <util/Fixtures.h>
-#include <util/TestObject.h>
+#include "data/Types.h"
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/Types.h"
+#include "util/Fixtures.h"
+#include "util/MockBackend.h"
+#include "util/TestObject.h"
 
-#include <boost/json.hpp>
+#include <boost/asio/impl/spawn.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STObject.h>
+#include <ripple/protocol/jss.h>
 
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <string>
+#include <tuple>
 #include <variant>
+#include <vector>
 
 using namespace rpc;
 using namespace testing;
@@ -361,7 +380,8 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
             "Amount1": {
                 "test": "test"
             }
-        })"};
+        })"
+    };
 
     std::array<std::string, 3> outputArray = {
         R"({
@@ -384,7 +404,8 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV1)
             "Amount1": {
                 "test": "test"
             }
-        })"};
+        })"
+    };
 
     for (size_t i = 0; i < inputArray.size(); i++) {
         auto req = boost::json::parse(inputArray[i]).as_object();

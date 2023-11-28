@@ -17,18 +17,84 @@
 */
 //==============================================================================
 
-#include <data/BackendInterface.h>
-#include <data/DBHelpers.h>
-#include <rpc/Errors.h>
-#include <rpc/RPCHelpers.h>
-#include <util/Profiler.h>
-#include <util/log/Logger.h>
+#include "rpc/RPCHelpers.h"
 
+#include "data/BackendInterface.h"
+#include "data/Types.h"
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/common/Types.h"
+#include "util/Profiler.h"
+#include "util/log/Logger.h"
+#include "web/Context.h"
+
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/format/format_fwd.hpp>
+#include <boost/format/free_funcs.hpp>
+#include <boost/json/array.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
+#include <boost/json/string.hpp>
+#include <boost/json/value.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/lexical_cast/bad_lexical_cast.hpp>
+#include <fmt/core.h>
+#include <ripple/basics/Slice.h>
 #include <ripple/basics/StringUtilities.h>
+#include <ripple/basics/XRPAmount.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/chrono.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/beast/utility/Zero.h>
+#include <ripple/json/json_value.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Book.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/Issue.h>
+#include <ripple/protocol/KeyType.h>
+#include <ripple/protocol/Keylet.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/NFTSyntheticSerializer.h>
+#include <ripple/protocol/PublicKey.h>
+#include <ripple/protocol/Rate.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STAmount.h>
+#include <ripple/protocol/STBase.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/STObject.h>
+#include <ripple/protocol/STTx.h>
+#include <ripple/protocol/SecretKey.h>
+#include <ripple/protocol/Seed.h>
+#include <ripple/protocol/Serializer.h>
+#include <ripple/protocol/TER.h>
+#include <ripple/protocol/TxFormats.h>
+#include <ripple/protocol/TxMeta.h>
+#include <ripple/protocol/UintTypes.h>
+#include <ripple/protocol/jss.h>
 #include <ripple/protocol/nftPageMask.h>
-#include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
+#include <ripple/protocol/tokens.h>
+
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <iterator>
+#include <limits>
+#include <map>
+#include <memory>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 
 // local to compilation unit loggers
 namespace {
@@ -80,8 +146,6 @@ getDeliveredAmount(
     if (meta->hasDeliveredAmount())
         return meta->getDeliveredAmount();
     if (txn->isFieldPresent(ripple::sfAmount)) {
-        using namespace std::chrono_literals;
-
         // Ledger 4594095 is the first ledger in which the DeliveredAmount field
         // was present when a partial payment was made and its absence indicates
         // that the amount delivered is listed in the Amount field.
@@ -325,6 +389,7 @@ parseStringAsUInt(std::string const& value)
     try {
         index = boost::lexical_cast<std::uint32_t>(value);
     } catch (boost::bad_lexical_cast const&) {
+        index = std::nullopt;
     }
 
     return index;
@@ -390,7 +455,7 @@ getLedgerInfoFromHashOrSeq(
 )
 {
     std::optional<ripple::LedgerHeader> lgrInfo;
-    auto const err = Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
+    auto err = Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotFound"};
     if (ledgerHash) {
         // invoke uint256's constructor to parse the hex string , instead of
         // copying buffer
@@ -459,7 +524,7 @@ traverseNFTObjects(
     ripple::uint256 nextPage,
     std::uint32_t limit,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode
+    std::function<void(ripple::SLE)> atOwnedNode
 )
 {
     auto const firstNFTPage = ripple::keylet::nftpage_min(accountID);
@@ -511,7 +576,7 @@ traverseOwnedNodes(
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode,
+    std::function<void(ripple::SLE)> atOwnedNode,
     bool nftIncluded
 )
 {
@@ -565,7 +630,7 @@ traverseOwnedNodes(
     std::uint32_t sequence,
     std::uint32_t limit,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode
+    std::function<void(ripple::SLE)> atOwnedNode
 )
 {
     auto cursor = AccountCursor({beast::zero, 0});
@@ -750,7 +815,8 @@ keypairFromRequst(boost::json::object const& request)
     if (count > 1) {
         return Status{
             RippledError::rpcINVALID_PARAMS,
-            "Exactly one of the following must be specified: passphrase, secret, seed, or seed_hex"};
+            "Exactly one of the following must be specified: passphrase, secret, seed, or seed_hex"
+        };
     }
 
     std::optional<ripple::KeyType> keyType;
@@ -1129,22 +1195,26 @@ parseBook(ripple::Currency pays, ripple::AccountID payIssuer, ripple::Currency g
 {
     if (isXRP(pays) && !isXRP(payIssuer)) {
         return Status{
-            RippledError::rpcSRC_ISR_MALFORMED, "Unneeded field 'taker_pays.issuer' for XRP currency specification."};
+            RippledError::rpcSRC_ISR_MALFORMED, "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+        };
     }
 
     if (!isXRP(pays) && isXRP(payIssuer)) {
         return Status{
-            RippledError::rpcSRC_ISR_MALFORMED, "Invalid field 'taker_pays.issuer', expected non-XRP issuer."};
+            RippledError::rpcSRC_ISR_MALFORMED, "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
+        };
     }
 
     if (ripple::isXRP(gets) && !ripple::isXRP(getIssuer)) {
         return Status{
-            RippledError::rpcDST_ISR_MALFORMED, "Unneeded field 'taker_gets.issuer' for XRP currency specification."};
+            RippledError::rpcDST_ISR_MALFORMED, "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+        };
     }
 
     if (!ripple::isXRP(gets) && ripple::isXRP(getIssuer)) {
         return Status{
-            RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
+            RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
+        };
     }
 
     if (pays == gets && payIssuer == getIssuer)
@@ -1209,12 +1279,14 @@ parseBook(boost::json::object const& request)
 
     if (isXRP(pay_currency) && !isXRP(pay_issuer)) {
         return Status{
-            RippledError::rpcSRC_ISR_MALFORMED, "Unneeded field 'taker_pays.issuer' for XRP currency specification."};
+            RippledError::rpcSRC_ISR_MALFORMED, "Unneeded field 'taker_pays.issuer' for XRP currency specification."
+        };
     }
 
     if (!isXRP(pay_currency) && isXRP(pay_issuer)) {
         return Status{
-            RippledError::rpcSRC_ISR_MALFORMED, "Invalid field 'taker_pays.issuer', expected non-XRP issuer."};
+            RippledError::rpcSRC_ISR_MALFORMED, "Invalid field 'taker_pays.issuer', expected non-XRP issuer."
+        };
     }
 
     if ((!isXRP(pay_currency)) && (!taker_pays.contains("issuer")))
@@ -1231,7 +1303,8 @@ parseBook(boost::json::object const& request)
 
         if (get_issuer == ripple::noAccount()) {
             return Status{
-                RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', bad issuer account one."};
+                RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', bad issuer account one."
+            };
         }
     } else {
         get_issuer = ripple::xrpAccount();
@@ -1239,12 +1312,14 @@ parseBook(boost::json::object const& request)
 
     if (ripple::isXRP(get_currency) && !ripple::isXRP(get_issuer)) {
         return Status{
-            RippledError::rpcDST_ISR_MALFORMED, "Unneeded field 'taker_gets.issuer' for XRP currency specification."};
+            RippledError::rpcDST_ISR_MALFORMED, "Unneeded field 'taker_gets.issuer' for XRP currency specification."
+        };
     }
 
     if (!ripple::isXRP(get_currency) && ripple::isXRP(get_issuer)) {
         return Status{
-            RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."};
+            RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', expected non-XRP issuer."
+        };
     }
 
     if (pay_currency == get_currency && pay_issuer == get_issuer)
@@ -1307,7 +1382,8 @@ isAmendmentEnabled(
     auto const& amendments = backend->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
 
     ripple::SLE const amendmentsSLE{
-        ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key};
+        ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key
+    };
 
     auto const listAmendments = amendmentsSLE.getFieldV256(ripple::sfAmendments);
     return std::find(listAmendments.begin(), listAmendments.end(), amendmentId) != listAmendments.end();

@@ -17,10 +17,20 @@
 */
 //==============================================================================
 
-#include <data/BackendCounters.h>
-#include <util/Assert.h>
+#include "data/BackendCounters.h"
 
-#include <util/prometheus/Prometheus.h>
+#include "util/Assert.h"
+#include "util/prometheus/Label.h"
+#include "util/prometheus/Prometheus.h"
+
+#include <boost/json/object.hpp>
+
+#include <chrono>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace data {
 
@@ -223,7 +233,8 @@ BackendCounters::AsyncOperationCounters::report() const
         {name_ + "_pending", pendingCounter_.get().value()},
         {name_ + "_completed", completedCounter_.get().value()},
         {name_ + "_retry", retryCounter_.get().value()},
-        {name_ + "_error", errorCounter_.get().value()}};
+        {name_ + "_error", errorCounter_.get().value()}
+    };
 }
 
 }  // namespace data

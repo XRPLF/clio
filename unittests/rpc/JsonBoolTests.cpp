@@ -16,10 +16,14 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include <rpc/common/JsonBool.h>
+#include "rpc/common/JsonBool.h"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value_to.hpp>
 #include <gtest/gtest.h>
+
+#include <string>
+#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;
@@ -59,7 +63,8 @@ public:
             {"ArrayTrueValue", R"({ "test_bool": [0] })", true},
             {"ArrayFalseValue", R"({ "test_bool": [] })", false},
             {"ObjectTrueValue", R"({ "test_bool": { "key": null } })", true},
-            {"ObjectFalseValue", R"({ "test_bool": {} })", false}};
+            {"ObjectFalseValue", R"({ "test_bool": {} })", false}
+        };
     }
 };
 

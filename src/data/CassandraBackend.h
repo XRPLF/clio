@@ -19,20 +19,20 @@
 
 #pragma once
 
-#include <data/BackendInterface.h>
-#include <data/cassandra/Concepts.h>
-#include <data/cassandra/Handle.h>
-#include <data/cassandra/Schema.h>
-#include <data/cassandra/SettingsProvider.h>
-#include <data/cassandra/impl/ExecutionStrategy.h>
-#include <util/Assert.h>
-#include <util/LedgerUtils.h>
-#include <util/Profiler.h>
-#include <util/log/Logger.h>
+#include "data/BackendInterface.h"
+#include "data/cassandra/Concepts.h"
+#include "data/cassandra/Handle.h"
+#include "data/cassandra/Schema.h"
+#include "data/cassandra/SettingsProvider.h"
+#include "data/cassandra/impl/ExecutionStrategy.h"
+#include "util/Assert.h"
+#include "util/LedgerUtils.h"
+#include "util/Profiler.h"
+#include "util/log/Logger.h"
 
+#include <boost/asio/spawn.hpp>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/nft.h>
-#include <boost/asio/spawn.hpp>
 
 namespace data::cassandra {
 
@@ -741,7 +741,7 @@ public:
     }
 
     void
-    writeAccountTransactions(std::vector<AccountTransactionsData>&& data) override
+    writeAccountTransactions(std::vector<AccountTransactionsData> data) override
     {
         std::vector<Statement> statements;
         statements.reserve(data.size() * 10);  // assume 10 transactions avg
@@ -765,7 +765,7 @@ public:
     }
 
     void
-    writeNFTTransactions(std::vector<NFTTransactionsData>&& data) override
+    writeNFTTransactions(std::vector<NFTTransactionsData> const& data) override
     {
         std::vector<Statement> statements;
         statements.reserve(data.size());
@@ -797,7 +797,7 @@ public:
     }
 
     void
-    writeNFTs(std::vector<NFTsData>&& data) override
+    writeNFTs(std::vector<NFTsData> const& data) override
     {
         std::vector<Statement> statements;
         statements.reserve(data.size() * 3);

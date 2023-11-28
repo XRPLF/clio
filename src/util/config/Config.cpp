@@ -17,10 +17,29 @@
 */
 //==============================================================================
 
-#include <util/config/Config.h>
-#include <util/log/Logger.h>
+#include "util/config/Config.h"
 
+#include "util/config/detail/Helpers.h"
+#include "util/log/Logger.h"
+
+#include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
+#include <boost/json/parse_options.hpp>
+#include <boost/json/value.hpp>
+
+#include <algorithm>
+#include <exception>
+#include <filesystem>
 #include <fstream>
+#include <functional>
+#include <ios>
+#include <iterator>
+#include <optional>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
 
 namespace util {
 
@@ -92,7 +111,7 @@ Config::maybeArray(KeyType key) const
             });
             return std::make_optional<ArrayType>(std::move(out));
         }
-    } catch (detail::StoreException const&) {
+    } catch (detail::StoreException const&) {  // NOLINT(bugprone-empty-catch)
         // ignore store error, but rethrow key errors
     }
 

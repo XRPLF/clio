@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include <data/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
-#include <rpc/common/MetaProcessors.h>
-#include <rpc/common/Modifiers.h>
-#include <rpc/common/Types.h>
-#include <rpc/common/Validators.h>
-#include <util/log/Logger.h>
+#include "data/BackendInterface.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/MetaProcessors.h"
+#include "rpc/common/Modifiers.h"
+#include "rpc/common/Types.h"
+#include "rpc/common/Validators.h"
+#include "util/log/Logger.h"
 
 namespace rpc {
 
@@ -98,7 +98,8 @@ public:
              modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(marker),
              meta::WithCustomError{
-                 validation::Type<boost::json::object>{}, Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}},
+                 validation::Type<boost::json::object>{}, Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}
+             },
              meta::Section{
                  {JS(ledger), validation::Required{}, validation::Type<uint32_t>{}},
                  {JS(seq), validation::Required{}, validation::Type<uint32_t>{}},

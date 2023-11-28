@@ -19,16 +19,16 @@
 
 #pragma once
 
-#include <data/DBHelpers.h>
-#include <data/LedgerCache.h>
-#include <data/Types.h>
-#include <util/config/Config.h>
-#include <util/log/Logger.h>
+#include "data/DBHelpers.h"
+#include "data/LedgerCache.h"
+#include "data/Types.h"
+#include "util/config/Config.h"
+#include "util/log/Logger.h"
 
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/LedgerHeader.h>
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
+#include <ripple/protocol/Fees.h>
+#include <ripple/protocol/LedgerHeader.h>
 
 #include <thread>
 #include <type_traits>
@@ -86,7 +86,7 @@ synchronous(FnType&& func)
     boost::asio::io_context ctx;
 
     using R = typename boost::result_of<FnType(boost::asio::yield_context)>::type;
-    if constexpr (!std::is_same<R, void>::value) {
+    if constexpr (!std::is_same_v<R, void>) {
         R res;
         boost::asio::spawn(ctx, [_ = boost::asio::make_work_guard(ctx), &func, &res](auto yield) {
             res = func(yield);
@@ -521,7 +521,7 @@ public:
      * @param data A vector of NFTsData objects representing the NFTs
      */
     virtual void
-    writeNFTs(std::vector<NFTsData>&& data) = 0;
+    writeNFTs(std::vector<NFTsData> const& data) = 0;
 
     /**
      * @brief Write a new set of account transactions.
@@ -529,7 +529,7 @@ public:
      * @param data A vector of AccountTransactionsData objects representing the account transactions
      */
     virtual void
-    writeAccountTransactions(std::vector<AccountTransactionsData>&& data) = 0;
+    writeAccountTransactions(std::vector<AccountTransactionsData> data) = 0;
 
     /**
      * @brief Write NFTs transactions.
@@ -537,7 +537,7 @@ public:
      * @param data A vector of NFTTransactionsData objects
      */
     virtual void
-    writeNFTTransactions(std::vector<NFTTransactionsData>&& data) = 0;
+    writeNFTTransactions(std::vector<NFTTransactionsData> const& data) = 0;
 
     /**
      * @brief Write a new successor.

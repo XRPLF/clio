@@ -17,7 +17,29 @@
 */
 //==============================================================================
 
-#include <rpc/handlers/AccountCurrencies.h>
+#include "rpc/handlers/AccountCurrencies.h"
+
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/Types.h"
+
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/UintTypes.h>
+#include <ripple/protocol/jss.h>
+
+#include <cstdint>
+#include <limits>
+#include <string>
+#include <variant>
 
 namespace rpc {
 AccountCurrenciesHandler::Result
@@ -40,7 +62,7 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
         return Error{Status{RippledError::rpcACT_NOT_FOUND, "accountNotFound"}};
 
     Output response;
-    auto const addToResponse = [&](ripple::SLE&& sle) {
+    auto const addToResponse = [&](ripple::SLE const sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE) {
             auto balance = sle.getFieldAmount(ripple::sfBalance);
             auto const lowLimit = sle.getFieldAmount(ripple::sfLowLimit);

@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <etl/ETLHelpers.h>
-#include <util/log/Logger.h>
+#include "etl/ETLHelpers.h"
+#include "util/log/Logger.h"
 
 #include <memory>
 #include <vector>

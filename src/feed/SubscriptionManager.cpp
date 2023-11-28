@@ -17,10 +17,39 @@
 */
 //==============================================================================
 
-#include <feed/SubscriptionManager.h>
-#include <rpc/BookChangesHelper.h>
-#include <rpc/RPCHelpers.h>
-#include <util/Assert.h>
+#include "feed/SubscriptionManager.h"
+
+#include "data/BackendInterface.h"
+#include "data/Types.h"
+#include "rpc/BookChangesHelper.h"
+#include "rpc/RPCHelpers.h"
+#include "util/Assert.h"
+
+#include <boost/asio/post.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/serialize.hpp>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Book.h>
+#include <ripple/protocol/Fees.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STAmount.h>
+#include <ripple/protocol/STObject.h>
+#include <ripple/protocol/TER.h>
+#include <ripple/protocol/TxFormats.h>
+
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace feed {
 
@@ -240,7 +269,8 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
                     // determine the OrderBook
                     ripple::Book const book{
                         data->getFieldAmount(ripple::sfTakerGets).issue(),
-                        data->getFieldAmount(ripple::sfTakerPays).issue()};
+                        data->getFieldAmount(ripple::sfTakerPays).issue()
+                    };
                     if (alreadySent.find(book) == alreadySent.end()) {
                         bookSubscribers_.publish(pubMsg, book);
                         alreadySent.insert(book);

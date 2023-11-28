@@ -17,13 +17,27 @@
 */
 //==============================================================================
 
-#include <etl/ETLService.h>
-#include <util/Assert.h>
-#include <util/Constants.h>
+#include "etl/ETLService.h"
 
+#include "data/BackendInterface.h"
+#include "util/Assert.h"
+#include "util/Constants.h"
+#include "util/config/Config.h"
+#include "util/log/Logger.h"
+
+#include <boost/asio/io_context.hpp>
+#include <ripple/beast/core/CurrentThreadName.h>
 #include <ripple/protocol/LedgerHeader.h>
 
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+#include <thread>
 #include <utility>
+#include <vector>
 
 namespace etl {
 // Database must be populated when this starts
@@ -39,7 +53,7 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     auto const rng = backend_->hardFetchLedgerRangeNoThrow();
     ASSERT(rng.has_value(), "Parent ledger range can't be null");
     ASSERT(
-        rng->maxSequence < startSequence - 1,
+        rng->maxSequence >= startSequence - 1,
         "Got not parent ledger. rnd->maxSequence = {}, startSequence = {}",
         rng->maxSequence,
         startSequence

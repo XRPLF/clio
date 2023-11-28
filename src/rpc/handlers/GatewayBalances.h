@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include <data/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
-#include <rpc/common/MetaProcessors.h>
-#include <rpc/common/Types.h>
-#include <rpc/common/Validators.h>
+#include "data/BackendInterface.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/MetaProcessors.h"
+#include "rpc/common/Types.h"
+#include "rpc/common/Validators.h"
 
 namespace rpc {
 
@@ -101,7 +101,8 @@ public:
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(hotwallet), hotWalletValidator}};
+            {JS(hotwallet), hotWalletValidator}
+        };
 
         return rpcSpec;
     }

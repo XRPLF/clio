@@ -17,7 +17,33 @@
 */
 //==============================================================================
 
-#include <rpc/handlers/AccountLines.h>
+#include "rpc/handlers/AccountLines.h"
+
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/Types.h"
+
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STAmount.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/UintTypes.h>
+#include <ripple/protocol/jss.h>
+
+#include <optional>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 namespace rpc {
 
@@ -114,7 +140,7 @@ AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ct
     Output response;
     response.lines.reserve(input.limit);
 
-    auto const addToResponse = [&](ripple::SLE&& sle) {
+    auto const addToResponse = [&](ripple::SLE const sle) {
         if (sle.getType() == ripple::ltRIPPLE_STATE) {
             auto ignore = false;
             if (input.ignoreDefault) {

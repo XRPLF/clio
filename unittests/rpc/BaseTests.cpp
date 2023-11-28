@@ -17,21 +17,26 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
+#include "rpc/Errors.h"
+#include "rpc/common/MetaProcessors.h"
+#include "rpc/common/Modifiers.h"
+#include "rpc/common/Specs.h"
+#include "rpc/common/Types.h"
+#include "rpc/common/Validators.h"
+#include "util/Fixtures.h"
 
-#include <rpc/Factories.h>
-#include <rpc/common/AnyHandler.h>
-#include <rpc/common/MetaProcessors.h>
-#include <rpc/common/Modifiers.h>
-#include <rpc/common/Specs.h>
-#include <rpc/common/Validators.h>
-
+#include <boost/json/array.hpp>
+#include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
 
-#include <optional>
+#include <cstdint>
 #include <string>
+#include <string_view>
 
 using namespace std;
 
@@ -252,13 +257,15 @@ TEST_F(RPCBaseTest, ArrayAtValidator)
              0,
              {
                  {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
-             }}},
+             }
+         }},
         {"arr2",
          ValidateArrayAt{
              0,
              {
                  {"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}},
-             }}},
+             }
+         }},
     };
     // clang-format on
 
@@ -277,20 +284,19 @@ TEST_F(RPCBaseTest, ArrayAtValidator)
 
 TEST_F(RPCBaseTest, IfTypeValidator)
 {
-    // clang-format off
     auto spec = RpcSpec{
         {"mix",
          Required{},
          Type<std::string, json::object>{},
          IfType<json::object>{
              Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
-             Section{{"limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}},
+             Section{{"limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
+         },
          IfType<std::string>{Uint256HexStringValidator}},
         {"mix2",
          Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
          Type<std::string, json::object>{}},
     };
-    // clang-format on
 
     // if json object pass
     auto passingInput = json::parse(R"({ "mix": {"limit": 42, "limit2": 22} })");
@@ -321,9 +327,10 @@ TEST_F(RPCBaseTest, IfTypeValidator)
 TEST_F(RPCBaseTest, WithCustomError)
 {
     auto const spec = RpcSpec{
-        {"transaction",
-         WithCustomError{Uint256HexStringValidator, rpc::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}}},
-        {"other", WithCustomError{Type<std::string>{}, rpc::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}}}};
+        {"transaction", WithCustomError{Uint256HexStringValidator, rpc::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}}
+        },
+        {"other", WithCustomError{Type<std::string>{}, rpc::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}}}
+    };
 
     auto passingInput = json::parse(
         R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC", "other": "1"})"

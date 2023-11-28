@@ -17,14 +17,24 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
+#include "data/cassandra/Handle.h"
+#include "data/cassandra/Types.h"
+#include "util/Fixtures.h"
 
-#include <data/cassandra/Handle.h>
-
+#include <cassandra.h>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <chrono>
+#include <cstdint>
+#include <iterator>
+#include <optional>
 #include <semaphore>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <vector>
 
 using namespace std;
 

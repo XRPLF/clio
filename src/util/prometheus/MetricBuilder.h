@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <util/prometheus/MetricBase.h>
+#include "util/prometheus/MetricBase.h"
 
 namespace util::prometheus {
 

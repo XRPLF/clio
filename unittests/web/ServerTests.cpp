@@ -17,17 +17,42 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
-#include <util/MockPrometheus.h>
-#include <util/TestHttpSyncClient.h>
-#include <web/Server.h>
+#include "util/Fixtures.h"
+#include "util/MockPrometheus.h"
+#include "util/TestHttpSyncClient.h"
+#include "util/config/Config.h"
+#include "util/prometheus/Label.h"
+#include "util/prometheus/Prometheus.h"
+#include "web/DOSGuard.h"
+#include "web/IntervalSweepHandler.h"
+#include "web/Server.h"
+#include "web/WhitelistHandler.h"
+#include "web/impl/AdminVerificationStrategy.h"
+#include "web/interface/ConnectionBase.h"
 
-#include <ripple/protocol/digest.h>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/ssl/context.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/status.hpp>
+#include <boost/beast/websocket/error.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/system/system_error.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
+#include <condition_variable>
+#include <functional>
+#include <memory>
+#include <mutex>
 #include <optional>
+#include <stdexcept>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 using namespace util;
 using namespace web::detail;
@@ -486,49 +511,58 @@ INSTANTIATE_TEST_CASE_P(
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {WebHeader(http::field::authorization, "")},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {WebHeader(http::field::authorization, "s")},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {WebHeader(http::field::authorization, SecertSha256)},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {WebHeader(
                 http::field::authorization,
                 fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
             )},
-            .expectedResponse = "admin"},
+            .expectedResponse = "admin"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse,
             .headers = {WebHeader(http::field::authorization, SecertSha256)},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse,
             .headers = {WebHeader(
                 http::field::authorization,
                 fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
             )},
-            .expectedResponse = "admin"},
+            .expectedResponse = "admin"
+        },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword,
             .headers = {WebHeader(
                 http::field::authentication_info,
                 fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
             )},
-            .expectedResponse = "user"},
+            .expectedResponse = "user"
+        },
         WebServerAdminTestParams{.config = JSONServerConfigWithLocalAdmin, .headers = {}, .expectedResponse = "admin"},
         WebServerAdminTestParams{
             .config = JSONServerConfigWithNoSpecifiedAdmin,
             .headers = {},
-            .expectedResponse = "admin"}
+            .expectedResponse = "admin"
+        }
 
     )
 );

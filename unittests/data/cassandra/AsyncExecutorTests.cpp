@@ -17,13 +17,21 @@
 */
 //==============================================================================
 
-#include <data/cassandra/impl/FakesAndMocks.h>
-#include <util/Fixtures.h>
+#include "data/cassandra/Error.h"
+#include "data/cassandra/impl/AsyncExecutor.h"
+#include "data/cassandra/impl/FakesAndMocks.h"
+#include "util/Fixtures.h"
 
-#include <data/cassandra/Error.h>
-#include <data/cassandra/impl/AsyncExecutor.h>
-
+#include <boost/asio/io_context.hpp>
+#include <cassandra.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include <atomic>
+#include <functional>
+#include <optional>
+#include <thread>
+#include <utility>
 
 using namespace data::cassandra;
 using namespace data::cassandra::detail;

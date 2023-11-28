@@ -19,10 +19,10 @@
 
 #pragma once
 
+#include <fmt/core.h>
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/StringUtilities.h>
 #include <ripple/protocol/LedgerHeader.h>
-#include <fmt/core.h>
 
 #include <sstream>
 #include <string>

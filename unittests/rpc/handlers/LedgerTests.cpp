@@ -17,12 +17,27 @@
 */
 //==============================================================================
 
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/Ledger.h>
-#include <util/Fixtures.h>
-#include <util/TestObject.h>
+#include "data/Types.h"
+#include "rpc/Errors.h"
+#include "rpc/common/AnyHandler.h"
+#include "rpc/common/Types.h"
+#include "rpc/handlers/Ledger.h"
+#include "util/Fixtures.h"
+#include "util/MockBackend.h"
+#include "util/TestObject.h"
 
+#include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/UintTypes.h>
+
+#include <optional>
+#include <string>
+#include <vector>
 
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
@@ -764,10 +779,11 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff).Times(1);
 
-    los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});
+    los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});  // NOLINT(modernize-use-emplace)
     los.push_back(LedgerObject{
         ripple::uint256{INDEX1},
-        CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()});
+        CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()
+    });
 
     ON_CALL(*rawBackendPtr, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));
 
@@ -810,10 +826,11 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
 
     EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff).Times(1);
 
-    los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});
+    los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});  // NOLINT(modernize-use-emplace)
     los.push_back(LedgerObject{
         ripple::uint256{INDEX1},
-        CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()});
+        CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()
+    });
 
     ON_CALL(*rawBackendPtr, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));
 
