@@ -53,7 +53,7 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     auto const rng = backend_->hardFetchLedgerRangeNoThrow();
     ASSERT(rng.has_value(), "Parent ledger range can't be null");
     ASSERT(
-        rng->maxSequence < startSequence - 1,
+        rng->maxSequence >= startSequence - 1,
         "Got not parent ledger. rnd->maxSequence = {}, startSequence = {}",
         rng->maxSequence,
         startSequence
