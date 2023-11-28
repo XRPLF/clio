@@ -21,7 +21,12 @@
 #include "web/WhitelistHandler.h"
 
 #include <boost/json/parse.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <string>
+#include <string_view>
+#include <vector>
 
 using namespace util;
 using namespace web;
