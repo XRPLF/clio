@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <util/prometheus/MetricBuilder.h>
+#include "util/prometheus/MetricBuilder.h"
 
 #include <optional>
 #include <unordered_map>

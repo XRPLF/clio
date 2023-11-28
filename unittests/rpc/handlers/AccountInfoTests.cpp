@@ -17,13 +17,28 @@
 */
 //==============================================================================
 
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/AccountInfo.h>
-#include <util/Fixtures.h>
-#include <util/TestObject.h>
+#include "data/Types.h"
+#include "rpc/Amendments.h"
+#include "rpc/Errors.h"
+#include "rpc/common/AnyHandler.h"
+#include "rpc/common/Types.h"
+#include "rpc/handlers/AccountInfo.h"
+#include "util/Fixtures.h"
+#include "util/MockBackend.h"
+#include "util/TestObject.h"
 
-#include <ripple/protocol/digest.h>
+#include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
+
+#include <optional>
+#include <string>
+#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;
@@ -71,22 +86,26 @@ generateTestValuesForParametersTest()
             "SignerListsInvalid",
             R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1})",
             "invalidParams",
-            "Invalid parameters."},
+            "Invalid parameters."
+        },
         AccountInfoParamTestCaseBundle{
             "LedgerHashInvalid",
             R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})",
             "invalidParams",
-            "ledger_hashMalformed"},
+            "ledger_hashMalformed"
+        },
         AccountInfoParamTestCaseBundle{
             "LedgerHashNotString",
             R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":1})",
             "invalidParams",
-            "ledger_hashNotString"},
+            "ledger_hashNotString"
+        },
         AccountInfoParamTestCaseBundle{
             "LedgerIndexInvalid",
             R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})",
             "invalidParams",
-            "ledgerIndexMalformed"},
+            "ledgerIndexMalformed"
+        },
     };
 }
 
@@ -142,7 +161,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "ledger_index": 30
@@ -169,7 +188,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
     // return empty ledgerinfo
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::nullopt));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "ledger_index": "30"
@@ -197,7 +216,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
     ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "ledger_hash": "{}"
@@ -228,7 +247,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}"
         }})",
@@ -258,7 +277,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}"
         }})",
@@ -296,7 +315,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
         .WillByDefault(Return(CreateAmendmentsObject({}).getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(4);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "signer_lists": true
@@ -402,7 +421,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
         .WillByDefault(Return(CreateAmendmentsObject({}).getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(4);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "signer_lists": true
@@ -506,7 +525,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
         .WillByDefault(Return(CreateAmendmentsObject({}).getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(4);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
             "signer_lists": true
@@ -583,7 +602,7 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
         .WillByDefault(Return(CreateAmendmentsObject({}).getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}"
         }})",
@@ -616,7 +635,7 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
         .WillByDefault(Return(CreateAmendmentsObject({}).getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "ident": "{}"
         }})",
@@ -697,7 +716,7 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
         .WillByDefault(Return(CreateAmendmentsObject({rpc::Amendments::DisallowIncoming}).getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}"
         }})",
@@ -774,7 +793,7 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
         .WillByDefault(Return(CreateAmendmentsObject({rpc::Amendments::Clawback}).getSerializer().peekData()));
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
 
-    auto const static input = json::parse(fmt::format(
+    auto static const input = json::parse(fmt::format(
         R"({{
             "account": "{}"
         }})",

@@ -17,7 +17,18 @@
 */
 //==============================================================================
 
-#include <data/cassandra/Handle.h>
+#include "data/cassandra/Handle.h"
+
+#include "data/cassandra/Types.h"
+
+#include <cassandra.h>
+
+#include <functional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 namespace data::cassandra {
 

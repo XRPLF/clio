@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include <util/Assert.h>
-#include <util/config/Config.h>
-#include <util/log/Logger.h>
-#include <web/IntervalSweepHandler.h>
-#include <web/WhitelistHandler.h>
+#include "util/Assert.h"
+#include "util/config/Config.h"
+#include "util/log/Logger.h"
+#include "web/IntervalSweepHandler.h"
+#include "web/WhitelistHandler.h"
 
 #include <boost/asio.hpp>
 #include <boost/iterator/transform_iterator.hpp>
@@ -249,7 +249,8 @@ private:
         auto const transform = [](auto const& elem) { return elem.template value<std::string>(); };
         return T{
             boost::transform_iterator(std::begin(whitelist), transform),
-            boost::transform_iterator(std::end(whitelist), transform)};
+            boost::transform_iterator(std::end(whitelist), transform)
+        };
     }
 };
 

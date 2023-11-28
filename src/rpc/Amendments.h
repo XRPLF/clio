@@ -20,7 +20,6 @@
 #pragma once
 
 #include <ripple/basics/base_uint.h>
-
 #include <ripple/protocol/digest.h>
 
 namespace rpc {

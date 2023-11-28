@@ -17,15 +17,18 @@
 */
 //==============================================================================
 
-#include <data/cassandra/impl/Cluster.h>
-#include <data/cassandra/impl/SslContext.h>
-#include <data/cassandra/impl/Statement.h>
-#include <util/Expected.h>
+#include "data/cassandra/impl/Cluster.h"
 
+#include "data/cassandra/impl/ManagedObject.h"
+#include "data/cassandra/impl/SslContext.h"
+#include "util/log/Logger.h"
+
+#include <cassandra.h>
 #include <fmt/core.h>
 
-#include <exception>
-#include <vector>
+#include <stdexcept>
+#include <string>
+#include <variant>
 
 namespace {
 constexpr auto clusterDeleter = [](CassCluster* ptr) { cass_cluster_free(ptr); };
@@ -88,7 +91,8 @@ Cluster::setupConnection(Settings const& settings)
     std::visit(
         overloadSet{
             [this](Settings::ContactPoints const& points) { setupContactPoints(points); },
-            [this](Settings::SecureConnectionBundle const& bundle) { setupSecureBundle(bundle); }},
+            [this](Settings::SecureConnectionBundle const& bundle) { setupSecureBundle(bundle); }
+        },
         settings.connectionInfo
     );
 }

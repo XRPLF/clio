@@ -24,20 +24,19 @@
  * This file contains a variety of utility functions used when executing the handlers.
  */
 
-#include <data/BackendInterface.h>
-#include <rpc/Amendments.h>
-#include <rpc/JS.h>
-#include <rpc/common/Types.h>
-#include <util/JsonUtils.h>
-#include <web/Context.h>
+#include "data/BackendInterface.h"
+#include "rpc/Amendments.h"
+#include "rpc/JS.h"
+#include "rpc/common/Types.h"
+#include "util/JsonUtils.h"
+#include "web/Context.h"
 
+#include <boost/regex.hpp>
+#include <fmt/core.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Rate.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STTx.h>
-
-#include <boost/regex.hpp>
-#include <fmt/core.h>
 
 namespace rpc {
 
@@ -157,7 +156,7 @@ traverseOwnedNodes(
     std::uint32_t sequence,
     std::uint32_t limit,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode
+    std::function<void(ripple::SLE)> atOwnedNode
 );
 
 // Remove the account check from traverseOwnedNodes
@@ -170,7 +169,7 @@ traverseOwnedNodes(
     std::uint32_t limit,
     std::optional<std::string> jsonCursor,
     boost::asio::yield_context yield,
-    std::function<void(ripple::SLE&&)> atOwnedNode,
+    std::function<void(ripple::SLE)> atOwnedNode,
     bool nftIncluded = false
 );
 

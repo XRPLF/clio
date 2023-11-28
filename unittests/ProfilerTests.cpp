@@ -17,10 +17,14 @@
 */
 //==============================================================================
 
-#include <cmath>
+#include "util/Profiler.h"
+
 #include <gtest/gtest.h>
+
+#include <chrono>
+#include <limits>
 #include <thread>
-#include <util/Profiler.h>
+#include <utility>
 
 using namespace util;
 TEST(TimedTest, HasReturnValue)

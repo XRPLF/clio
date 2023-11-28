@@ -17,14 +17,18 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
-#include <util/MockPrometheus.h>
+#include "rpc/Counters.h"
+#include "rpc/JS.h"
+#include "rpc/WorkQueue.h"
+#include "util/Fixtures.h"
+#include "util/MockPrometheus.h"
+#include "util/prometheus/Counter.h"
 
-#include <rpc/Counters.h>
-#include <rpc/JS.h>
-
-#include <boost/json.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <ripple/protocol/jss.h>
+
+#include <chrono>
 
 using namespace rpc;
 

@@ -17,7 +17,31 @@
 */
 //==============================================================================
 
-#include <rpc/handlers/AccountOffers.h>
+#include "rpc/handlers/AccountOffers.h"
+
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/Types.h"
+
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
+#include <boost/json/value_from.hpp>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STAmount.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/UintTypes.h>
+#include <ripple/protocol/jss.h>
+
+#include <string>
+#include <variant>
+#include <vector>
 
 namespace rpc {
 
@@ -64,7 +88,7 @@ AccountOffersHandler::process(AccountOffersHandler::Input input, Context const& 
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
 
-    auto const addToResponse = [&](ripple::SLE&& sle) {
+    auto const addToResponse = [&](ripple::SLE const sle) {
         if (sle.getType() == ripple::ltOFFER)
             addOffer(response.offers, sle);
 

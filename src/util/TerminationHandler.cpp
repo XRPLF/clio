@@ -17,12 +17,14 @@
 */
 //==============================================================================
 
-#include <util/TerminationHandler.h>
-#include <util/log/Logger.h>
+#include "util/TerminationHandler.h"
 
-#include <boost/stacktrace.hpp>
+#include "util/log/Logger.h"
 
-#include <iostream>
+#include <boost/stacktrace/stacktrace.hpp>
+
+#include <cstdlib>
+#include <exception>
 
 namespace util {
 

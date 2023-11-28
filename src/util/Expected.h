@@ -32,8 +32,9 @@
 
 #pragma once
 
-#include <ripple/basics/contract.h>
 #include <boost/outcome.hpp>
+#include <ripple/basics/contract.h>
+
 #include <stdexcept>
 #include <type_traits>
 
@@ -89,7 +90,7 @@ struct throw_policy : public boost::outcome_v2::policy::base {
 template <class E>
 class Unexpected {
 public:
-    static_assert(!std::is_same<E, void>::value, "E must not be void");
+    static_assert(!std::is_same_v<E, void>, "E must not be void");
 
     Unexpected() = delete;
 
@@ -179,7 +180,8 @@ public:
         return Base::error();
     }
 
-    constexpr explicit operator bool() const
+    constexpr explicit
+    operator bool() const
     {
         return has_value();
     }
@@ -242,7 +244,8 @@ public:
         return Base::error();
     }
 
-    constexpr explicit operator bool() const
+    constexpr explicit
+    operator bool() const
     {
         return Base::has_value();
     }

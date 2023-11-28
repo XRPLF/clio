@@ -19,13 +19,14 @@
 
 #pragma once
 
-#include <rpc/Errors.h>
-#include <rpc/Factories.h>
-#include <rpc/RPCHelpers.h>
-#include <rpc/common/impl/APIVersionParser.h>
-#include <util/JsonUtils.h>
-#include <util/Profiler.h>
-#include <web/impl/ErrorHandling.h>
+#include "feed/SubscriptionManager.h"
+#include "rpc/Errors.h"
+#include "rpc/Factories.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/impl/APIVersionParser.h"
+#include "util/JsonUtils.h"
+#include "util/Profiler.h"
+#include "web/impl/ErrorHandling.h"
 
 #include <boost/json/parse.hpp>
 
@@ -147,7 +148,7 @@ private:
             if (!range) {
                 // for error that happened before the handler, we don't attach any warnings
                 rpcEngine_->notifyNotReady();
-                return web::detail::ErrorHelper(connection, request).sendNotReadyError();
+                return web::detail::ErrorHelper(connection, std::move(request)).sendNotReadyError();
             }
 
             auto const context = [&] {
@@ -181,7 +182,7 @@ private:
                 // we count all those as BadSyntax - as the WS path would.
                 // Although over HTTP these will yield a 400 status with a plain text response (for most).
                 rpcEngine_->notifyBadSyntax();
-                return web::detail::ErrorHelper(connection, request).sendError(err);
+                return web::detail::ErrorHelper(connection, std::move(request)).sendError(err);
             }
 
             auto [result, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
@@ -248,7 +249,7 @@ private:
             LOG(log_.error()) << connection->tag() << "Caught exception: " << ex.what();
 
             rpcEngine_->notifyInternalError();
-            return web::detail::ErrorHelper(connection, request).sendInternalError();
+            return web::detail::ErrorHelper(connection, std::move(request)).sendInternalError();
         }
     }
 

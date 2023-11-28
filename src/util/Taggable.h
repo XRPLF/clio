@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "util/config/Config.h"
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/json.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -28,8 +30,6 @@
 #include <optional>
 #include <ostream>
 #include <string>
-
-#include <util/config/Config.h>
 
 namespace util {
 namespace detail {

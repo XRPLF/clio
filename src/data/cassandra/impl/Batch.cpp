@@ -17,12 +17,17 @@
 */
 //==============================================================================
 
-#include <data/cassandra/Error.h>
-#include <data/cassandra/impl/Batch.h>
-#include <data/cassandra/impl/Statement.h>
-#include <util/Expected.h>
+#include "data/cassandra/impl/Batch.h"
 
-#include <exception>
+#include "data/cassandra/Error.h"
+#include "data/cassandra/Types.h"
+#include "data/cassandra/impl/ManagedObject.h"
+#include "data/cassandra/impl/Statement.h"
+#include "util/Expected.h"
+
+#include <cassandra.h>
+
+#include <stdexcept>
 #include <vector>
 
 namespace {

@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include <data/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
-#include <rpc/common/MetaProcessors.h>
-#include <rpc/common/Types.h>
-#include <rpc/common/Validators.h>
+#include "data/BackendInterface.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/MetaProcessors.h"
+#include "rpc/common/Types.h"
+#include "rpc/common/Validators.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -95,8 +95,8 @@ public:
              meta::IfType<std::string>{validation::Uint256HexStringValidator}},
             {JS(type),
              meta::WithCustomError{
-                 validation::Type<std::string>{},
-                 Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}},
+                 validation::Type<std::string>{}, Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}
+             },
              validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend())},
 
         };

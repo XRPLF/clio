@@ -17,10 +17,14 @@
 */
 //==============================================================================
 
-#include <rpc/Errors.h>
+#include "rpc/Errors.h"
 
-#include <boost/json.hpp>
+#include <boost/json/object.hpp>
 #include <gtest/gtest.h>
+#include <ripple/protocol/ErrorCodes.h>
+
+#include <cstdint>
+#include <string_view>
 
 using namespace rpc;
 using namespace std;

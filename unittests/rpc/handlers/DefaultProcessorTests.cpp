@@ -17,12 +17,16 @@
 */
 //==============================================================================
 
-#include <rpc/handlers/impl/FakesAndMocks.h>
-#include <util/Fixtures.h>
-
-#include <rpc/common/impl/Processors.h>
+#include "rpc/common/Specs.h"
+#include "rpc/common/Types.h"
+#include "rpc/common/Validators.h"
+#include "rpc/common/impl/Processors.h"
+#include "rpc/handlers/impl/FakesAndMocks.h"
+#include "util/Fixtures.h"
 
 #include <boost/json/parse.hpp>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 using namespace testing;
 using namespace std;

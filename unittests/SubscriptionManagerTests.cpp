@@ -17,18 +17,42 @@
 */
 //==============================================================================
 
-#include <feed/SubscriptionManager.h>
-#include <util/Fixtures.h>
-#include <util/MockBackend.h>
-#include <util/MockWsBase.h>
-#include <util/TestObject.h>
+#include "data/Types.h"
+#include "feed/SubscriptionManager.h"
+#include "util/Fixtures.h"
+#include "util/MockBackend.h"
+#include "util/MockWsBase.h"
+#include "util/Taggable.h"
+#include "util/TestObject.h"
+#include "util/config/Config.h"
+#include "web/interface/ConnectionBase.h"
 
+#include <boost/asio/impl/spawn.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/Book.h>
+#include <ripple/protocol/Fees.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/Issue.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STAmount.h>
+#include <ripple/protocol/STArray.h>
+#include <ripple/protocol/STObject.h>
+#include <ripple/protocol/TER.h>
 
 #include <chrono>
+#include <memory>
+#include <string>
+#include <thread>
+#include <vector>
 
-using namespace std::chrono_literals;
+using std::chrono::milliseconds;
 namespace json = boost::json;
 using namespace data;
 using ::testing::Return;
@@ -70,7 +94,7 @@ CheckSubscriberMessage(std::string out, std::shared_ptr<web::ConnectionBase> ses
     auto sessionPtr = dynamic_cast<MockSession*>(session.get());
     ASSERT_NE(sessionPtr, nullptr);
     while (retry-- != 0) {
-        std::this_thread::sleep_for(20ms);
+        std::this_thread::sleep_for(milliseconds(20));
         if ((!sessionPtr->message.empty()) && json::parse(sessionPtr->message) == json::parse(out)) {
             return;
         }
@@ -137,7 +161,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
     ripple::Book const book{ripple::xrpIssue(), issue1};
     subManagerPtr->subBook(book, session1);
     subManagerPtr->subBook(book, session2);
-    std::this_thread::sleep_for(20ms);
+    std::this_thread::sleep_for(milliseconds(20));
     EXPECT_EQ(subManagerPtr->report(), json::parse(ReportReturn));
     subManagerPtr->unsubBookChanges(session1);
     subManagerPtr->unsubManifest(session1);
@@ -147,7 +171,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
     subManagerPtr->unsubAccount(account, session1);
     subManagerPtr->unsubProposedAccount(account, session1);
     subManagerPtr->unsubBook(book, session1);
-    std::this_thread::sleep_for(20ms);
+    std::this_thread::sleep_for(milliseconds(20));
     auto checkResult = [](json::object reportReturn, int result) {
         EXPECT_EQ(reportReturn["book_changes"], result);
         EXPECT_EQ(reportReturn["validations"], result);
@@ -160,7 +184,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
     };
     checkResult(subManagerPtr->report(), 1);
     subManagerPtr->cleanup(session2);  // clean a removed session
-    std::this_thread::sleep_for(20ms);
+    std::this_thread::sleep_for(milliseconds(20));
     checkResult(subManagerPtr->report(), 0);
 }
 
@@ -181,12 +205,12 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerLedgerUnSub)
     EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) { subManagerPtr->subLedger(yield, session); });
     ctx.run();
-    std::this_thread::sleep_for(20ms);
+    std::this_thread::sleep_for(milliseconds(20));
     auto report = subManagerPtr->report();
     EXPECT_EQ(report["ledger"], 1);
     subManagerPtr->cleanup(session);
     subManagerPtr->unsubLedger(session);
-    std::this_thread::sleep_for(20ms);
+    std::this_thread::sleep_for(milliseconds(20));
     report = subManagerPtr->report();
     EXPECT_EQ(report["ledger"], 0);
 }

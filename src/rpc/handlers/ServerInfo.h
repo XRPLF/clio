@@ -19,19 +19,19 @@
 
 #pragma once
 
-#include <data/BackendInterface.h>
-#include <data/DBHelpers.h>
-#include <main/Build.h>
-#include <rpc/Errors.h>
-#include <rpc/RPCHelpers.h>
-#include <rpc/common/Types.h>
-#include <rpc/common/Validators.h>
+#include "data/BackendInterface.h"
+#include "data/DBHelpers.h"
+#include "main/Build.h"
+#include "rpc/Errors.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/Types.h"
+#include "rpc/common/Validators.h"
 
+#include <fmt/core.h>
 #include <ripple/basics/chrono.h>
 #include <ripple/protocol/BuildInfo.h>
 
 #include <chrono>
-#include <fmt/core.h>
 
 namespace etl {
 class ETLService;
@@ -124,7 +124,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static const RpcSpec rpcSpec = {};
+        static RpcSpec const rpcSpec = {};
         return rpcSpec;
     }
 
@@ -156,7 +156,8 @@ public:
                 .counters = counters_.get().report(),
                 .backendCounters = input.backendCounters ? std::make_optional(backend_->stats()) : std::nullopt,
                 .subscriptions = subscriptions_->report(),
-                .etl = etl_->getInfo()};
+                .etl = etl_->getInfo()
+            };
         }
 
         auto const serverInfoRippled =

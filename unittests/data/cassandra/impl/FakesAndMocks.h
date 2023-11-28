@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include <data/cassandra/Error.h>
-#include <data/cassandra/impl/AsyncExecutor.h>
+#include "data/cassandra/Error.h"
+#include "data/cassandra/impl/AsyncExecutor.h"
 
 #include <gmock/gmock.h>
 

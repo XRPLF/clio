@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include <data/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
-#include <rpc/common/JsonBool.h>
-#include <rpc/common/MetaProcessors.h>
-#include <rpc/common/Types.h>
-#include <rpc/common/Validators.h>
+#include "data/BackendInterface.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/JsonBool.h"
+#include "rpc/common/MetaProcessors.h"
+#include "rpc/common/Types.h"
+#include "rpc/common/Validators.h"
 
 namespace rpc {
 
@@ -91,7 +91,8 @@ public:
             {JS(account), validation::AccountValidator},
             {JS(ident), validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator}};
+            {JS(ledger_index), validation::LedgerIndexValidator}
+        };
 
         static auto const rpcSpec = RpcSpec{rpcSpecV1, {{JS(signer_lists), validation::Type<bool>{}}}};
 

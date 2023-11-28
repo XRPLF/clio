@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include <data/cassandra/impl/ManagedObject.h>
-#include <data/cassandra/impl/Tuple.h>
-#include <util/Expected.h>
+#include "data/cassandra/impl/ManagedObject.h"
+#include "data/cassandra/impl/Tuple.h"
+#include "util/Expected.h"
 
+#include <cassandra.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
-#include <cassandra.h>
 
 #include <compare>
 #include <iterator>

@@ -17,12 +17,17 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
+#include "util/Fixtures.h"
+#include "web/impl/AdminVerificationStrategy.h"
 
-#include <web/impl/AdminVerificationStrategy.h>
-
-#include <boost/json.hpp>
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
 #include <gtest/gtest.h>
+
+#include <optional>
+#include <string>
+#include <utility>
 
 namespace http = boost::beast::http;
 
@@ -43,8 +48,8 @@ TEST_F(IPAdminVerificationStrategyTest, IsAdminOnlyForIP_127_0_0_1)
 
 class PasswordAdminVerificationStrategyTest : public NoLoggerFixture {
 protected:
-    const std::string password_ = "secret";
-    const std::string passwordHash_ = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
+    std::string const password_ = "secret";
+    std::string const passwordHash_ = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
 
     web::detail::PasswordAdminVerificationStrategy strat_{password_};
 

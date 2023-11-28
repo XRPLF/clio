@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include <data/BackendInterface.h>
-#include <rpc/RPCHelpers.h>
-#include <rpc/common/MetaProcessors.h>
-#include <rpc/common/Modifiers.h>
-#include <rpc/common/Types.h>
-#include <rpc/common/Validators.h>
+#include "data/BackendInterface.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/MetaProcessors.h"
+#include "rpc/common/Modifiers.h"
+#include "rpc/common/Types.h"
+#include "rpc/common/Validators.h"
 
 namespace rpc {
 
@@ -86,7 +86,8 @@ public:
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}}};
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}}
+        };
 
         return rpcSpec;
     }

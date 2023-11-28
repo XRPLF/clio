@@ -17,10 +17,15 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
-#include <rpc/common/AnyHandler.h>
-#include <rpc/handlers/Random.h>
-#include <util/Fixtures.h>
+#include "rpc/JS.h"
+#include "rpc/common/AnyHandler.h"
+#include "rpc/common/Types.h"
+#include "rpc/handlers/Random.h"
+#include "util/Fixtures.h"
+
+#include <boost/json/parse.hpp>
+#include <gtest/gtest.h>
+#include <ripple/protocol/jss.h>
 
 using namespace rpc;
 

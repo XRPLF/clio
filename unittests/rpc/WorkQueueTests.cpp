@@ -17,15 +17,20 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
-#include <util/MockPrometheus.h>
+#include "rpc/WorkQueue.h"
+#include "util/Fixtures.h"
+#include "util/MockPrometheus.h"
+#include "util/config/Config.h"
+#include "util/prometheus/Counter.h"
+#include "util/prometheus/Gauge.h"
 
-#include <rpc/WorkQueue.h>
+#include <boost/json/parse.hpp>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
-#include <boost/json.hpp>
-
+#include <condition_variable>
+#include <cstdint>
 #include <mutex>
-#include <semaphore>
 
 using namespace util;
 using namespace rpc;

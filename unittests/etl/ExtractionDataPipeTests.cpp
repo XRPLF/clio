@@ -17,11 +17,16 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
-
-#include <etl/impl/ExtractionDataPipe.h>
+#include "etl/impl/ExtractionDataPipe.h"
+#include "util/Fixtures.h"
 
 #include <gtest/gtest.h>
+
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <thread>
 
 constexpr static auto STRIDE = 4;
 constexpr static auto START_SEQ = 1234;

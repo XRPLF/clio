@@ -17,11 +17,25 @@
 */
 //==============================================================================
 
-#include <util/Assert.h>
-#include <util/prometheus/Prometheus.h>
+#include "util/prometheus/Prometheus.h"
 
-#include <boost/iostreams/filter/gzip.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
+#include "util/Assert.h"
+#include "util/config/Config.h"
+#include "util/prometheus/Counter.h"
+#include "util/prometheus/Gauge.h"
+#include "util/prometheus/Histogram.h"
+#include "util/prometheus/Label.h"
+#include "util/prometheus/MetricBase.h"
+#include "util/prometheus/MetricsFamily.h"
+#include "util/prometheus/OStream.h"
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace util::prometheus {
 

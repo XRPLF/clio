@@ -17,16 +17,18 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
-#include <util/TmpFile.h>
-
-#include <data/cassandra/SettingsProvider.h>
-#include <util/config/Config.h>
+#include "data/cassandra/SettingsProvider.h"
+#include "data/cassandra/Types.h"
+#include "util/Fixtures.h"
+#include "util/TmpFile.h"
+#include "util/config/Config.h"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <optional>
 #include <thread>
 #include <variant>
 

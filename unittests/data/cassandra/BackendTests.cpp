@@ -17,18 +17,49 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
-#include <util/StringUtils.h>
+#include "data/BackendInterface.h"
+#include "data/CassandraBackend.h"
+#include "data/DBHelpers.h"
+#include "data/Types.h"
+#include "data/cassandra/Handle.h"
+#include "data/cassandra/SettingsProvider.h"
+#include "etl/NFTHelpers.h"
+#include "rpc/RPCHelpers.h"
+#include "util/Fixtures.h"
+#include "util/LedgerUtils.h"
+#include "util/Random.h"
+#include "util/StringUtils.h"
+#include "util/config/Config.h"
 
-#include <data/CassandraBackend.h>
-#include <etl/NFTHelpers.h>
-#include <rpc/RPCHelpers.h>
-#include <util/Random.h>
-#include <util/config/Config.h>
-
+#include <boost/asio/impl/spawn.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/json/parse.hpp>
-#include <fmt/compile.h>
+#include <fmt/core.h>
 #include <gtest/gtest.h>
+#include <ripple/basics/Slice.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/STTx.h>
+#include <ripple/protocol/Serializer.h>
+#include <ripple/protocol/TxMeta.h>
+
+#include <algorithm>
+#include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <map>
+#include <memory>
+#include <optional>
+#include <random>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 using namespace util;
 using namespace std;
@@ -384,8 +415,8 @@ TEST_F(BackendCassandraTest, Basic)
                 std::string{metaBlob}
             );
             backend->writeAccountTransactions(std::move(accountTxData));
-            backend->writeNFTs(std::move(nftData));
-            backend->writeNFTTransactions(std::move(parsedNFTTxs));
+            backend->writeNFTs(nftData);
+            backend->writeNFTTransactions(parsedNFTTxs);
 
             backend->writeLedgerObject(std::string{accountIndexBlob}, lgrInfoNext.seq, std::string{accountBlob});
             backend->writeSuccessor(uint256ToString(data::firstKey), lgrInfoNext.seq, std::string{accountIndexBlob});
@@ -668,8 +699,8 @@ TEST_F(BackendCassandraTest, Basic)
                 } while (cursor);
                 EXPECT_EQ(retData.size(), data.size());
                 for (size_t i = 0; i < retData.size(); ++i) {
-                    auto [txn, meta, _, __] = retData[i];
-                    auto [___, expTxn, expMeta] = data[i];
+                    auto [txn, meta, _, _2] = retData[i];
+                    auto [_3, expTxn, expMeta] = data[i];
                     EXPECT_STREQ(reinterpret_cast<const char*>(txn.data()), static_cast<const char*>(expTxn.data()));
                     EXPECT_STREQ(reinterpret_cast<const char*>(meta.data()), static_cast<const char*>(expMeta.data()));
                 }

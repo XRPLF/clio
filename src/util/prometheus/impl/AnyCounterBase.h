@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <util/prometheus/impl/CounterImpl.h>
+#include "util/prometheus/impl/CounterImpl.h"
 
 #include <memory>
 

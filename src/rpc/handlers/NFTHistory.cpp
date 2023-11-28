@@ -17,10 +17,33 @@
 */
 //==============================================================================
 
-#include <rpc/handlers/NFTHistory.h>
-#include <util/Profiler.h>
+#include "rpc/handlers/NFTHistory.h"
 
+#include "data/Types.h"
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/Types.h"
+#include "util/Profiler.h"
+#include "util/log/Logger.h"
+
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <boost/json/value_from.hpp>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/chrono.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/jss.h>
+
+#include <cstdint>
 #include <limits>
+#include <optional>
+#include <string>
+#include <utility>
+#include <variant>
 
 namespace rpc {
 
@@ -207,7 +230,8 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
     if (jsonObject.contains(JS(marker))) {
         input.marker = NFTHistoryHandler::Marker{
             jsonObject.at(JS(marker)).as_object().at(JS(ledger)).as_int64(),
-            jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()};
+            jsonObject.at(JS(marker)).as_object().at(JS(seq)).as_int64()
+        };
     }
 
     return input;

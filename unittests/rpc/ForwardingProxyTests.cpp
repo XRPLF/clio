@@ -17,16 +17,26 @@
 */
 //==============================================================================
 
-#include <util/Fixtures.h>
-#include <util/MockCounters.h>
-#include <util/MockHandlerProvider.h>
-#include <util/MockLoadBalancer.h>
+#include "rpc/Errors.h"
+#include "rpc/common/impl/ForwardingProxy.h"
+#include "util/Fixtures.h"
+#include "util/MockCounters.h"
+#include "util/MockHandlerProvider.h"
+#include "util/MockLoadBalancer.h"
+#include "util/Taggable.h"
+#include "util/config/Config.h"
+#include "web/Context.h"
 
-#include <rpc/common/impl/ForwardingProxy.h>
-#include <util/config/Config.h>
-
-#include <boost/json.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <ripple/protocol/ErrorCodes.h>
+
+#include <memory>
+#include <optional>
+#include <string>
+#include <variant>
 
 using namespace rpc;
 using namespace testing;
@@ -46,7 +56,8 @@ protected:
     rpc::detail::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy{
         loadBalancer,
         counters,
-        handlerProvider};
+        handlerProvider
+    };
 };
 
 TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfClioOnly)

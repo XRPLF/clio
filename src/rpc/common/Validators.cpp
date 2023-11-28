@@ -17,14 +17,27 @@
 */
 //==============================================================================
 
-#include <ripple/basics/base_uint.h>
-#include <rpc/RPCHelpers.h>
-#include <rpc/common/Validators.h>
+#include "rpc/common/Validators.h"
 
+#include "rpc/Errors.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/Types.h"
+
+#include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <fmt/core.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/UintTypes.h>
+#include <ripple/protocol/tokens.h>
 
 #include <charconv>
+#include <cstdint>
+#include <string>
 #include <string_view>
+#include <system_error>
+#include <unordered_set>
 
 namespace rpc::validation {
 
@@ -144,8 +157,9 @@ CustomValidator IssuerValidator =
             return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer.", key)}};
 
         if (issuer == ripple::noAccount()) {
-            return Error{Status{
-                RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer account one.", key)}};
+            return Error{
+                Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer account one.", key)}
+            };
         }
 
         return MaybeError{};
@@ -157,10 +171,12 @@ CustomValidator SubscribeStreamValidator =
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
 
         static std::unordered_set<std::string> const validStreams = {
-            "ledger", "transactions", "transactions_proposed", "book_changes", "manifests", "validations"};
+            "ledger", "transactions", "transactions_proposed", "book_changes", "manifests", "validations"
+        };
 
         static std::unordered_set<std::string> const reportingNotSupportStreams = {
-            "peer_status", "consensus", "server"};
+            "peer_status", "consensus", "server"
+        };
         for (auto const& v : value.as_array()) {
             if (!v.is_string())
                 return Error{Status{RippledError::rpcINVALID_PARAMS, "streamNotString"}};

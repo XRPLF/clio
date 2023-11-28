@@ -17,8 +17,27 @@
 */
 //==============================================================================
 
-#include <rpc/RPCHelpers.h>
-#include <rpc/handlers/BookOffers.h>
+#include "rpc/handlers/BookOffers.h"
+
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/Types.h"
+
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/basics/strHex.h>
+#include <ripple/beast/utility/Zero.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Book.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/UintTypes.h>
+#include <ripple/protocol/jss.h>
+
+#include <string>
+#include <variant>
 
 namespace rpc {
 
