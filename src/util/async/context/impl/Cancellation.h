@@ -19,10 +19,9 @@
 
 #pragma once
 
-#include <util/async/Concepts.h>
-
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
+#include <util/async/Concepts.h>
 
 #include <future>
 #include <memory>

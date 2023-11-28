@@ -19,11 +19,10 @@
 
 #pragma once
 
+#include <fmt/std.h>
 #include <util/async/Concepts.h>
 #include <util/async/Outcome.h>
 #include <util/async/context/impl/Cancellation.h>
-
-#include <fmt/std.h>
 
 #include <future>
 

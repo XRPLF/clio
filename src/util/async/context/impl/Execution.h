@@ -19,13 +19,12 @@
 
 #pragma once
 
+#include <boost/asio.hpp>
+#include <boost/asio/spawn.hpp>
 #include <util/Expected.h>
 #include <util/async/Concepts.h>
 #include <util/async/Error.h>
 #include <util/async/Outcome.h>
-
-#include <boost/asio.hpp>
-#include <boost/asio/spawn.hpp>
 
 namespace util::async::detail {
 

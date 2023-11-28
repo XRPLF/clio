@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <boost/asio.hpp>
 #include <util/Expected.h>
 #include <util/async/Concepts.h>
 #include <util/async/Error.h>
@@ -28,8 +29,6 @@
 #include <util/async/context/impl/Strand.h>
 #include <util/async/context/impl/Timer.h>
 #include <util/async/impl/ErrorHandling.h>
-
-#include <boost/asio.hpp>
 
 #include <chrono>
 #include <exception>

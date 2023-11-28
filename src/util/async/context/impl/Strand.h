@@ -19,11 +19,10 @@
 
 #pragma once
 
+#include <boost/asio.hpp>
 #include <util/async/context/impl/Cancellation.h>
 #include <util/async/context/impl/Execution.h>
 #include <util/async/impl/ErrorHandling.h>
-
-#include <boost/asio.hpp>
 
 #include <memory>
 

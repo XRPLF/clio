@@ -19,14 +19,13 @@
 
 #pragma once
 
+#include <fmt/core.h>
+#include <fmt/std.h>
 #include <util/Expected.h>
 #include <util/async/Concepts.h>
 #include <util/async/Error.h>
 #include <util/async/impl/Any.h>
 #include <util/async/impl/ErasedOperation.h>
-
-#include <fmt/core.h>
-#include <fmt/std.h>
 
 #include <any>
 #include <chrono>
