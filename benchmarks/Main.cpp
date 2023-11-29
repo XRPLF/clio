@@ -17,19 +17,27 @@
 */
 //==============================================================================
 
-#include <etl/ETLHelpers.h>
-#include <util/Random.h>
-#include <util/async/Async.h>
+#include "etl/ETLHelpers.h"
+#include "util/Random.h"
+#include "util/async/AnyExecutionContext.h"
+#include "util/async/AnyOperation.h"
+#include "util/async/context/BasicExecutionContext.h"
+#include "util/async/context/SyncExecutionContext.h"
 
 #include <benchmark/benchmark.h>
-#include <benchmark/export.h>
 
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <latch>
+#include <optional>
+#include <stdexcept>
+#include <thread>
+#include <vector>
 
 using namespace util;
 using namespace util::async;
-using namespace std::chrono_literals;
 
 class TestThread {
     std::vector<std::thread> threads_;
@@ -119,7 +127,7 @@ public:
                             hasMore = doOne();
                     }
                 },
-                1s
+                std::chrono::seconds{1}
             ));
         }
 
@@ -233,7 +241,7 @@ public:
 };
 
 struct TestSleepingCoroExecutionContext {
-    void
+    static void
     run(std::size_t numThreads, std::size_t numTasks)
     {
         using CtxType = CoroExecutionContext;
@@ -243,7 +251,7 @@ struct TestSleepingCoroExecutionContext {
 
         for (std::size_t i = 0; i < numTasks; ++i) {
             futures.push_back(ctx.execute([&completion]() {
-                std::this_thread::sleep_for(1ns);
+                std::this_thread::sleep_for(std::chrono::nanoseconds{1});
                 completion.count_down(1);
             }));
         }
@@ -253,7 +261,7 @@ struct TestSleepingCoroExecutionContext {
 };
 
 struct TestSleepingWithStopTokenCoroExecutionContext {
-    void
+    static void
     run(std::size_t numThreads, std::size_t numTasks)
     {
         using CtxType = CoroExecutionContext;
@@ -262,10 +270,11 @@ struct TestSleepingWithStopTokenCoroExecutionContext {
         std::latch completion{numTasks};
         auto const batchSize = numTasks / numThreads;
 
+        futures.reserve(numThreads);
         for (auto i = 0u; i < numThreads; ++i) {
             futures.push_back(ctx.execute([&completion, batchSize](auto stopRequested) {
                 for (auto b = 0u; b < batchSize and not stopRequested; ++b) {
-                    std::this_thread::sleep_for(1ns);
+                    std::this_thread::sleep_for(std::chrono::nanoseconds{1});
                     completion.count_down(1);
                 }
             }));
@@ -276,7 +285,7 @@ struct TestSleepingWithStopTokenCoroExecutionContext {
 };
 
 struct TestSleepingThread {
-    void
+    static void
     run(std::size_t numThreads, std::size_t numTasks)
     {
         std::vector<std::thread> threads;
@@ -287,7 +296,7 @@ struct TestSleepingThread {
         for (auto i = 0u; i < numThreads; ++i) {
             threads.emplace_back([&completion, batchSize]() {
                 for (auto b = 0u; b < batchSize; ++b) {
-                    std::this_thread::sleep_for(1ns);
+                    std::this_thread::sleep_for(std::chrono::nanoseconds{1});
                 }
                 completion.count_down(1);
             });
@@ -399,7 +408,7 @@ public:
                     completion.count_down(1);
                     return 0;
                 },
-                1s
+                std::chrono::seconds{1}
             ));
         }
 
@@ -455,7 +464,7 @@ public:
                     completion.count_down(1);
                     return uint64_t{1234};
                 },
-                1s
+                std::chrono::seconds{1}
             ));
         }
 
@@ -577,7 +586,7 @@ public:
 };
 
 struct TestTimer {
-    void
+    static void
     run(std::size_t numThreads)
     {
         using CtxType = CoroExecutionContext;
@@ -586,15 +595,15 @@ struct TestTimer {
         AnyExecutionContext anyCtx{ctx};
         std::latch completion{3};
 
-        auto t1 = anyCtx.scheduleAfter(3s, [&completion] {
+        auto t1 = anyCtx.scheduleAfter(std::chrono::seconds{3}, [&completion] {
             std::cout << "running timer without bool\n";
             completion.count_down(1);
         });
-        auto t2 = anyCtx.scheduleAfter(5s, [&completion](auto cancelled) {
+        auto t2 = anyCtx.scheduleAfter(std::chrono::seconds{5}, [&completion](auto cancelled) {
             std::cout << "running timer with bool: " << cancelled << '\n';
             completion.count_down(1);
         });
-        auto t3 = anyCtx.scheduleAfter(1s, [&completion, &t2]() {
+        auto t3 = anyCtx.scheduleAfter(std::chrono::seconds{1}, [&completion, &t2]() {
             std::cout << "cancelling timer t2\n";
             t2.cancel();
             completion.count_down(1);
@@ -605,28 +614,28 @@ struct TestTimer {
 };
 
 struct TestSync {
-    void
+    static void
     run()
     {
         SyncExecutionContext ctx{};
         AnyExecutionContext anyCtx{ctx};
         std::latch completion{3};
 
-        auto t1 = anyCtx.scheduleAfter(3s, [&completion] {
+        auto t1 = anyCtx.scheduleAfter(std::chrono::seconds{3}, [&completion] {
             std::cout << "running timer without bool\n";
             completion.count_down(1);
         });
 
         auto op1 = anyCtx.execute([] { std::cout << "unstoppable job 1 ran..\n"; });
 
-        auto t2 = anyCtx.scheduleAfter(5s, [&completion](auto cancelled) {
+        auto t2 = anyCtx.scheduleAfter(std::chrono::seconds{5}, [&completion](auto cancelled) {
             std::cout << "running timer with bool: " << cancelled << '\n';
             completion.count_down(1);
         });
 
         auto op2 = anyCtx.execute([] { std::cout << "unstoppable job 2 ran..\n"; });
 
-        auto t3 = anyCtx.scheduleAfter(1s, [&completion, &t2]() {
+        auto t3 = anyCtx.scheduleAfter(std::chrono::seconds{1}, [&completion, &t2]() {
             std::cout << "cancelling timer t2\n";
             t2.cancel();
             completion.count_down(1);
@@ -822,8 +831,7 @@ static void
 benchmarkCoroExecutionContextSimpleSleep(benchmark::State& state)
 {
     for (auto _ : state) {
-        TestSleepingCoroExecutionContext t;
-        t.run(state.range(0), 10000);
+        TestSleepingCoroExecutionContext::run(state.range(0), 10000);
     }
 }
 
@@ -831,8 +839,7 @@ static void
 benchmarkCoroExecutionContextBatchedSleep(benchmark::State& state)
 {
     for (auto _ : state) {
-        TestSleepingWithStopTokenCoroExecutionContext t;
-        t.run(state.range(0), 10000);
+        TestSleepingWithStopTokenCoroExecutionContext::run(state.range(0), 10000);
     }
 }
 
@@ -840,8 +847,7 @@ static void
 benchmarkThreadSleep(benchmark::State& state)
 {
     for (auto _ : state) {
-        TestSleepingThread t;
-        t.run(state.range(0), 10000);
+        TestSleepingThread::run(state.range(0), 10000);
     }
 }
 
@@ -849,8 +855,7 @@ static void
 benchmarkTimer(benchmark::State& state)
 {
     for (auto _ : state) {
-        TestTimer t;
-        t.run(state.range(0));
+        TestTimer::run(state.range(0));
     }
 }
 
@@ -858,8 +863,7 @@ static void
 benchmarkSync(benchmark::State& state)
 {
     for (auto _ : state) {
-        TestSync t;
-        t.run();
+        TestSync::run();
     }
 }
 

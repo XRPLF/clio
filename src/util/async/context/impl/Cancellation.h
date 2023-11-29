@@ -19,12 +19,13 @@
 
 #pragma once
 
-#include <boost/asio.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
-#include <util/async/Concepts.h>
 
-#include <future>
+#include <chrono>
 #include <memory>
+#include <optional>
+#include <utility>
 
 namespace util::async::detail {
 
@@ -121,7 +122,7 @@ getTimoutHandleIfNeeded(
 )
 {
     using TimerType = decltype(ctx.scheduleAfter(std::chrono::milliseconds{1}, []() {}));
-    std::optional<TimerType> timer = std::nullopt;
+    std::optional<TimerType> timer;
     if (timeout) {
         timer.emplace(ctx.scheduleAfter(*timeout, [&stopSource](auto cancelled) {
             if (not cancelled)
