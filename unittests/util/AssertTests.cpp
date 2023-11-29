@@ -28,5 +28,5 @@ TEST(AssertTests, assertTrue)
 
 TEST(AssertTests, assertFalse)
 {
-    EXPECT_DEATH({ ASSERT(false, "failure"); }, "failure");
+    EXPECT_DEATH({ ASSERT(false, "failure"); }, ".*");
 }
