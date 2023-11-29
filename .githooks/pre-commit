@@ -30,7 +30,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     grep_code '#include ".*"' | xargs sed -i '' -E 's|#include "(.*)"|#include <\1>|g'
 
     # make local includes to be "..." style
-    main_src_dirs=$(find ./src -type d -maxdepth 1 -exec basename {} \; | paste -sd '|' | sed 's/|/\\|/g')
+    main_src_dirs=$(find ./src -maxdepth 1 -type d -exec basename {} \; | tr '\n' '|' | sed 's/|$//' | sed 's/|/\\|/g')
     grep_code "#include <\($main_src_dirs\)/.*>" | xargs sed -i '' -E "s|#include <(($main_src_dirs)/.*)>|#include \"\1\"|g"
 else
     # make all includes to be <...> style
