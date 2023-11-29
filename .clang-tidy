@@ -126,6 +126,7 @@ CheckOptions:
   readability-braces-around-statements.ShortStatementLines: 2
   bugprone-unsafe-functions.ReportMoreUnsafeFunctions: true
   bugprone-unused-return-value.CheckedReturnTypes: ::std::error_code;::std::error_condition;::std::errc;::std::expected
+  misc-include-cleaner.IgnoreHeaders: ".*/(detail|impl)/.*"
 
 HeaderFilterRegex: '^.*/(src|unitests)/.*\.(h|hpp)$'
 WarningsAsErrors: '*'

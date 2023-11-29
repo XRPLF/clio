@@ -19,6 +19,12 @@
 
 #include "web/Resolver.h"
 
+#include <boost/asio/ip/address.hpp>
+
+#include <string>
+#include <string_view>
+#include <vector>
+
 namespace asio = boost::asio;
 
 namespace web {
