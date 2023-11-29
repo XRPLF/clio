@@ -12,7 +12,7 @@ if [[ "17.0.0" > "$version" ]]; then
 
                                     ERROR
 -----------------------------------------------------------------------------
-            A minimum of version 17 of `clang-format` is required.
+            A minimum of version 17 of `which clang-format` is required.
             Your version is $version.
             Please fix paths and run again.
 -----------------------------------------------------------------------------
@@ -30,14 +30,14 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     grep_code '#include ".*"' | xargs sed -i '' -E 's|#include "(.*)"|#include <\1>|g'
 
     # make local includes to be "..." style
-    main_src_dirs=$(find ./src -type d -d 1 -exec basename {} \; | paste -sd '|' | sed 's/|/\\|/g')
+    main_src_dirs=$(find ./src -type d -maxdepth 1 -exec basename {} \; | paste -sd '|' | sed 's/|/\\|/g')
     grep_code "#include <\($main_src_dirs\)/.*>" | xargs sed -i '' -E "s|#include <(($main_src_dirs)/.*)>|#include \"\1\"|g"
 else
     # make all includes to be <...> style
     grep_code '#include ".*"' | xargs sed -i -E 's|#include "(.*)"|#include <\1>|g'
 
     # make local includes to be "..." style
-    main_src_dirs=$(find ./src -type d -d 1 -exec basename {} \; | paste -sd '|' | sed 's/|/\\|/g')
+    main_src_dirs=$(find ./src -type d -maxdepth 1 -exec basename {} \; | paste -sd '|' | sed 's/|/\\|/g')
     grep_code "#include <\($main_src_dirs\)/.*>" | xargs sed -i -E "s|#include <(($main_src_dirs)/.*)>|#include \"\1\"|g"
 fi
 
