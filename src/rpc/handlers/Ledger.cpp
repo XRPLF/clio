@@ -79,8 +79,9 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                 return toJsonWithBinaryTx(tx, ctx.apiVersion);
             };
 
+            auto const isoTimeStr = ripple::to_string_iso(lgrInfo.closeTime);
+
             auto const expandTxJsonV2 = [&](data::TransactionAndMetadata const& tx) {
-                static auto const isoTimeStr = ripple::to_string_iso(lgrInfo.closeTime);
                 auto [txn, meta] = toExpandedJson(tx, ctx.apiVersion);
                 if (!input.binary) {
                     boost::json::object entry;
