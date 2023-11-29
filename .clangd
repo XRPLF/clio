@@ -1,0 +1,5 @@
+Diagnostics:
+  UnusedIncludes: Strict
+  MissingIncludes: Strict
+  Includes:
+    IgnoreHeader: ".*/(detail|impl)/.*"
