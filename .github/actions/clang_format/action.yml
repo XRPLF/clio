@@ -13,6 +13,8 @@ runs:
       run: |
         sudo apt update -qq
         sudo apt install -y jq clang-format-17
+        sudo rm /usr/bin/clang-format
+        sudo ln -s /usr/bin/clang-format-17 /usr/bin/clang-format
       shell: bash
 
     - name: Run formatter
