@@ -711,6 +711,57 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
     });
 }
 
+TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
+{
+    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+    ASSERT_NE(rawBackendPtr, nullptr);
+    mockBackendPtr->updateRange(RANGEMIN);
+    mockBackendPtr->updateRange(RANGEMAX);
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerinfo));
+
+    auto const ledgerinfo2 = CreateLedgerInfo(LEDGERHASH, RANGEMAX - 1, 10);
+    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX - 1, _)).WillOnce(Return(ledgerinfo2));
+
+    TransactionAndMetadata t1;
+    t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, RANGEMAX).getSerializer().peekData();
+    t1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
+    t1.ledgerSequence = RANGEMAX;
+
+    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX, _)).WillOnce(Return(std::vector{t1}));
+    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(RANGEMAX - 1, _)).WillOnce(Return(std::vector{t1}));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerHandler{mockBackendPtr}};
+        auto const req = json::parse(
+            R"({
+                "binary": false,
+                "expand": true,
+                "transactions": true
+            })"
+        );
+        auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output);
+
+        auto const req2 = json::parse(fmt::format(
+            R"({{
+                "binary": false,
+                "expand": true,
+                "transactions": true,
+                "ledger_index": {}
+            }})",
+            RANGEMAX - 1
+        ));
+        auto output2 = handler.process(req2, Context{.yield = yield, .apiVersion = 2u});
+        ASSERT_TRUE(output2);
+        EXPECT_NE(
+            output->at("ledger").at("transactions").as_array()[0].at("close_time_iso"),
+            output2->at("ledger").at("transactions").as_array()[0].at("close_time_iso")
+        );
+    });
+}
+
 TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
 {
     auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
