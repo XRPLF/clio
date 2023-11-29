@@ -32,6 +32,7 @@
 #include <boost/log/expressions/predicates/channel_severity_filter.hpp>
 #include <boost/log/keywords/auto_flush.hpp>
 #include <boost/log/keywords/file_name.hpp>
+#include <boost/log/keywords/filter.hpp>
 #include <boost/log/keywords/format.hpp>
 #include <boost/log/keywords/max_size.hpp>
 #include <boost/log/keywords/open_mode.hpp>
@@ -112,8 +113,13 @@ LogService::init(util::Config const& config)
     std::string format = config.valueOr<std::string>("log_format", defaultFormat);
 
     if (config.valueOr("log_to_console", false)) {
-        boost::log::add_console_log(std::cout, keywords::format = format);
+        boost::log::add_console_log(
+            std::cout, keywords::format = format, keywords::filter = log_severity < Severity::FTL
+        );
     }
+
+    // Always print fatal logs to cerr
+    boost::log::add_console_log(std::cerr, keywords::format = format, keywords::filter = log_severity >= Severity::FTL);
 
     if (auto logDir = config.maybeValue<std::string>("log_directory"); logDir) {
         boost::filesystem::path dirPath{logDir.value()};

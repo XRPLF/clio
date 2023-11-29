@@ -20,13 +20,14 @@
 #pragma once
 
 #include "util/SourceLocation.h"
+#include "util/log/Logger.h"
 
 #include <boost/stacktrace.hpp>
+#include <boost/stacktrace/stacktrace.hpp>
+#include <fmt/core.h>
 #include <fmt/format.h>
-#include <fmt/ostream.h>
 
-template <>
-struct fmt::formatter<boost::stacktrace::stacktrace> : ostream_formatter {};
+#include <cstdlib>
 
 namespace util {
 
@@ -41,9 +42,11 @@ assertImpl(
 )
 {
     if (!condition) {
-        fmt::println(stderr, "Assertion '{}' failed at {}:{}:", expression, location.file_name(), location.line());
-        fmt::println(stderr, format, std::forward<Args>(args)...);
-        fmt::println(stderr, "Stacktrace:\n{}\n", boost::stacktrace::stacktrace());
+        LOG(LogService::fatal()) << "Assertion '" << expression << "' failed at " << location.file_name() << ":"
+                                 << location.line() << ":\n"
+                                 << fmt::format(format, std::forward<Args>(args)...) << "\n"
+                                 << "Stacktrace:\n"
+                                 << boost::stacktrace::stacktrace() << "\n";
         std::abort();
     }
 }
