@@ -201,25 +201,26 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
 {
     auto [tx, meta] = rpc::deserializeTxPlusMeta(blobs, lgrInfo.seq);
     boost::json::object pubObj;
-    pubObj["transaction"] = rpc::toJson(*tx);
-    pubObj["meta"] = rpc::toJson(*meta);
-    rpc::insertDeliveredAmount(pubObj["meta"].as_object(), tx, meta, blobs.date);
+    pubObj[JS(transaction)] = rpc::toJson(*tx);
+    pubObj[JS(meta)] = rpc::toJson(*meta);
+    rpc::insertDeliveredAmount(pubObj[JS(meta)].as_object(), tx, meta, blobs.date);
     // hardcode api_version to 1 for now, until https://github.com/XRPLF/clio/issues/978 fixed
-    rpc::insertDeliverMaxAlias(pubObj["transaction"].as_object(), 1);
-    pubObj["type"] = "transaction";
-    pubObj["validated"] = true;
-    pubObj["status"] = "closed";
+    rpc::insertDeliverMaxAlias(pubObj[JS(transaction)].as_object(), 1);
+    pubObj[JS(type)] = "transaction";
+    pubObj[JS(validated)] = true;
+    pubObj[JS(status)] = "closed";
+    pubObj[JS(close_time_iso)] = ripple::to_string_iso(lgrInfo.closeTime);
 
-    pubObj["ledger_index"] = lgrInfo.seq;
-    pubObj["ledger_hash"] = ripple::strHex(lgrInfo.hash);
-    pubObj["transaction"].as_object()["date"] = lgrInfo.closeTime.time_since_epoch().count();
+    pubObj[JS(ledger_index)] = lgrInfo.seq;
+    pubObj[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
+    pubObj[JS(transaction)].as_object()[JS(date)] = lgrInfo.closeTime.time_since_epoch().count();
 
-    pubObj["engine_result_code"] = meta->getResult();
+    pubObj[JS(engine_result_code)] = meta->getResult();
     std::string token;
     std::string human;
     ripple::transResultInfo(meta->getResultTER(), token, human);
-    pubObj["engine_result"] = token;
-    pubObj["engine_result_message"] = human;
+    pubObj[JS(engine_result)] = token;
+    pubObj[JS(engine_result_message)] = human;
     if (tx->getTxnType() == ripple::ttOFFER_CREATE) {
         auto account = tx->getAccountID(ripple::sfAccount);
         auto amount = tx->getFieldAmount(ripple::sfTakerGets);
@@ -233,7 +234,7 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& blobs, r
 
             data::retryOnTimeout(fetchFundsSynchronous);
 
-            pubObj["transaction"].as_object()["owner_funds"] = ownerFunds.getText();
+            pubObj[JS(transaction)].as_object()[JS(owner_funds)] = ownerFunds.getText();
         }
     }
 

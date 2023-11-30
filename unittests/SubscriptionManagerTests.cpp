@@ -440,6 +440,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransaction)
         "validated":true,
         "status":"closed",
         "ledger_index":33,
+        "close_time_iso": "2000-01-01T00:00:00Z",
         "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
         "engine_result_code":0,
         "engine_result":"tesSUCCESS",
@@ -511,6 +512,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
         "ledger_index":33,
         "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
         "engine_result_code":0,
+        "close_time_iso": "2000-01-01T00:00:00Z",
         "engine_result":"tesSUCCESS",
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
     })";
@@ -543,6 +545,7 @@ constexpr static auto TransactionForOwnerFundFrozen = R"({
     "validated":true,
     "status":"closed",
     "ledger_index":33,
+    "close_time_iso": "2000-01-01T00:00:00Z",
     "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
     "engine_result_code":0,
     "engine_result":"tesSUCCESS",
@@ -691,6 +694,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccount)
         "ledger_index":33,
         "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
         "engine_result_code":0,
+        "close_time_iso": "2000-01-01T00:00:00Z",
         "engine_result":"tesSUCCESS",
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
     })";
@@ -765,6 +769,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerOrderBook)
         "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
         "engine_result_code":0,
         "engine_result":"tesSUCCESS",
+        "close_time_iso": "2000-01-01T00:00:00Z",
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
     })";
     CheckSubscriberMessage(OrderbookPublish, session);
@@ -815,6 +820,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerOrderBook)
         "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
         "engine_result_code":0,
         "engine_result":"tesSUCCESS",
+        "close_time_iso": "2000-01-01T00:00:00Z",
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
     })";
     CheckSubscriberMessage(OrderbookCancelPublish, session1);
@@ -859,6 +865,7 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerOrderBook)
         "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
         "engine_result_code":0,
         "engine_result":"tesSUCCESS",
+        "close_time_iso": "2000-01-01T00:00:00Z",
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
     })";
     std::shared_ptr<web::ConnectionBase> const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
