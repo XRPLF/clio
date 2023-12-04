@@ -25,14 +25,14 @@ jobs:
       NO_IMAGE: '{"image": null}'
     strategy:
       matrix:
-        os: ["self-hosted, macOS", "self-hosted, Linux"]
+        os: ["macOS", "Linux"]
         container: [WITH_IMAGE, NO_IMAGE]
         exclude:
-          - os: "self-hosted, Linux"
+          - os: "Linux"
             container: NO_IMAGE
-          - os: "self-hosted, macOS"
+          - os: "macOS"
             container: WITH_IMAGE
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, "${{ matrix.os }}"]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -148,8 +148,8 @@ jobs:
     needs: build
     strategy:
       matrix:
-        os: ["self-hosted, macOS", "self-hosted, Linux"]
-    runs-on: ${{ matrix.os }}
+        os: ["macOS", "Linux"]
+    runs-on: [self-hosted, "${{ matrix.os }}"]
 
     steps:
       - uses: actions/download-artifact@v3
