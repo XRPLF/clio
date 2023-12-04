@@ -10,17 +10,9 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Get number of threads on mac
-      id: mac_threads
-      if: ${{ runner.os == 'macOS' }}
-      shell: bash
-      run: echo "num=$(($(sysctl -n hw.logicalcpu) - 2))" >> $GITHUB_OUTPUT
-
-    - name: Get number of threads on Linux
-      id: linux_threads
-      if: ${{ runner.os == 'Linux' }}
-      shell: bash
-      run: echo "num=$(($(nproc) - 2))" >> $GITHUB_OUTPUT
+    - name: Get number of threads
+      uses: ./.github/actions/get_number_of_threads
+      id: number_of_threads
 
     - name: Build Clio
       shell: bash
@@ -29,7 +21,8 @@ runs:
       run: |
         mkdir -p build
         cd build
-        threads_num=${{ steps.mac_threads.outputs.num || steps.linux_threads.outputs.num }}
+        threads_num=${{ steps.number_of_threads.outputs.threads_number }}
         conan install .. -of . -b $BUILD_OPTION -s build_type=Release -o clio:tests=True -o clio:lint=False --profile ${{ inputs.conan_profile }}
         cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release .. -G Ninja
         cmake --build . --parallel $threads_num
+        ccache -s

@@ -1,0 +1,26 @@
+name: Get number of threads
+description: Determines number of threads to use on macOS and Linux
+outputs:
+  threads_number:
+    description: Number of threads to use
+    value: ${{ steps.number_of_threads_output.num }}
+runs:
+  using: composite
+  steps:
+    - name: Get number of threads on mac
+      id: mac_threads
+      if: ${{ runner.os == 'macOS' }}
+      shell: bash
+      run: echo "num=$(($(sysctl -n hw.logicalcpu) - 2))" >> $GITHUB_OUTPUT
+
+    - name: Get number of threads on Linux
+      id: linux_threads
+      if: ${{ runner.os == 'Linux' }}
+      shell: bash
+      run: echo "num=$(($(nproc) - 2))" >> $GITHUB_OUTPUT
+
+    - name: Export output variable
+      shell: bash
+      id: number_of_threads_output
+      run: |
+        echo "num=${{ steps.mac_threads.outputs.num || steps.linux_threads.outputs.num }}" >> $GITHUB_OUTPUT
