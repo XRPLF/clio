@@ -42,6 +42,7 @@
 #include <ripple/protocol/STObject.h>
 #include <ripple/protocol/TER.h>
 #include <ripple/protocol/TxFormats.h>
+#include <ripple/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
