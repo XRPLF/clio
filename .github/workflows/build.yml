@@ -19,9 +19,6 @@ jobs:
   build:
     name: Build
     needs: lint
-    env:
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-      CONAN_USER_HOME: ${{ github.workspace }}
     strategy:
       matrix:
         include:
@@ -34,6 +31,18 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
+      - name: Set env variables for macOS
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV
+          echo "CONAN_USER_HOME=${{ github.workspace }}" >> $GITHUB_ENV
+
+      - name: Set env variables for Linux
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          echo "CCACHE_DIR=/root/.ccache" >> $GITHUB_ENV
+          echo "CONAN_USER_HOME=/root/" >> $GITHUB_ENV
+
       - uses: actions/checkout@v3
         with:
             fetch-depth: 0
