@@ -31,6 +31,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
 #include <ripple/basics/base_uint.h>
+#include <ripple/basics/chrono.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/Book.h>
