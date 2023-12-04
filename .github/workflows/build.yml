@@ -6,6 +6,8 @@ on:
     branches: [master, release/*, develop]
   workflow_dispatch:
 
+  
+
 jobs:
   lint:
     name: Lint
@@ -31,48 +33,49 @@ jobs:
           - os: "macOS"
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
+
     steps:
       - uses: actions/checkout@v3
         with:
             fetch-depth: 0
 
-      # - name: Install packages and prepare platform
-      #   uses: ./.github/actions/install_packages
-      #
-      # - name: Setup conan
-      #   uses: ./.github/actions/setup_conan
-      #   id: conan
-      #
-      # - name: Restore cache
-      #   uses: ./.github/actions/restore_cache
-      #   id: restore_cache
-      #   with:
-      #     conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-      #     ccache_dir: ${{ env.CCACHE_DIR }}
-      #
-      # - name: Build Clio
-      #   uses: ./.github/actions/build_clio
-      #   with:
-      #     conan_profile: ${{ steps.conan.outputs.conan_profile }}
-      #     conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-      #
-      # - name: Strip tests
-      #   run: strip build/clio_tests
-      #
-      # - name: Upload clio_tests
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: clio_tests_${{ runner.os }}
-      #     path: build/clio_tests
-      #
-      # - name: Save cache
-      #   uses: ./.github/actions/save_cache
-      #   with:
-      #     conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-      #     conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
-      #     conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-      #     ccache_dir: ${{ env.CCACHE_DIR }}
-      #     ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
+      - name: Install packages and prepare platform
+        uses: ./.github/actions/install_packages
+
+      - name: Setup conan
+        uses: ./.github/actions/setup_conan
+        id: conan
+
+      - name: Restore cache
+        uses: ./.github/actions/restore_cache
+        id: restore_cache
+        with:
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          ccache_dir: ${{ env.CCACHE_DIR }}
+
+      - name: Build Clio
+        uses: ./.github/actions/build_clio
+        with:
+          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+
+      - name: Strip tests
+        run: strip build/clio_tests
+
+      - name: Upload clio_tests
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_tests_${{ runner.os }}
+          path: build/clio_tests
+
+      - name: Save cache
+        uses: ./.github/actions/save_cache
+        with:
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+          ccache_dir: ${{ env.CCACHE_DIR }}
+          ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
 
   # build_linux:
   #   name: Build linux
@@ -142,18 +145,24 @@ jobs:
   #         ccache_dir: ${{ env.CCACHE_DIR }}
   #         ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
 
-  # test:
-  #   needs: build
-  #   strategy:
-  #     matrix:
-  #       os: ["macOS", "Linux"]
-  #   runs-on: [self-hosted, "${{ matrix.os }}"]
-  #
-  #   steps:
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: clio_tests_${{ runner.os }}
-  #     - name: Run clio_tests
-  #       run: |
-  #         chmod +x ./clio_tests
-  #         ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+  test:
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - os: "Linux"
+            container:
+              image: conanio/gcc11:1.61.0
+              options: --user root
+          - os: "macOS"
+    runs-on: [self-hosted, "${{ matrix.os }}"]
+    container: ${{ matrix.container }}
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: clio_tests_${{ runner.os }}
+      - name: Run clio_tests
+        run: |
+          chmod +x ./clio_tests
+          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
