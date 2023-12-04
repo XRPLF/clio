@@ -22,6 +22,7 @@
 #include "data/BackendInterface.h"
 #include "data/Types.h"
 #include "rpc/BookChangesHelper.h"
+#include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
 #include "util/Assert.h"
 
@@ -30,6 +31,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
 #include <ripple/basics/base_uint.h>
+#include <ripple/basics/chrono.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/Book.h>
@@ -41,6 +43,7 @@
 #include <ripple/protocol/STObject.h>
 #include <ripple/protocol/TER.h>
 #include <ripple/protocol/TxFormats.h>
+#include <ripple/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
