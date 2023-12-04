@@ -22,6 +22,7 @@
 #include "data/BackendInterface.h"
 #include "data/Types.h"
 #include "rpc/BookChangesHelper.h"
+#include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
 #include "util/Assert.h"
 
