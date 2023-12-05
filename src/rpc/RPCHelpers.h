@@ -115,10 +115,11 @@ toJson(ripple::SLE const& sle);
  *
  * @param entry The LedgerHeader to convert.
  * @param binary Whether to convert in hex format.
+ * @param apiVersion The api version
  * @return The JSON object.
  */
 boost::json::object
-toJson(ripple::LedgerHeader const& info, bool binary);
+toJson(ripple::LedgerHeader const& info, bool binary, std::uint32_t apiVersion);
 
 boost::json::object
 toJson(ripple::TxMeta const& meta);
