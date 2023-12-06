@@ -66,11 +66,19 @@ jobs:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
           ccache_dir: ${{ env.CCACHE_DIR }}
 
-      - name: Build Clio
-        uses: ./.github/actions/build_clio
+      - name: Run conan and cmake
+        uses: ./.github/actions/generate
         with:
           conan_profile: ${{ steps.conan.outputs.conan_profile }}
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+          build_type: 'Release'
+
+
+      - name: Build Clio
+        uses: ./.github/actions/build_clio
+
+      - name: Show ccache's statistics
+        run: ccache -s
 
       - name: Strip tests
         run: strip build/clio_tests

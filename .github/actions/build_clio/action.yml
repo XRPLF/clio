@@ -1,12 +1,5 @@
 name: Build clio
 description: Build clio in build directory
-inputs:
-  conan_profile:
-    description: Conan profile name
-    required: true
-  conan_cache_hit:
-    description: Whether conan cache has been downloaded
-    required: true
 runs:
   using: composite
   steps:
@@ -16,13 +9,12 @@ runs:
 
     - name: Build Clio
       shell: bash
-      env:
-        BUILD_OPTION: "${{ inputs.conan_cache_hit == 'true' && 'missing' || '' }}"
       run: |
-        mkdir -p build
         cd build
-        threads_num=${{ steps.number_of_threads.outputs.threads_number }}
-        conan install .. -of . -b $BUILD_OPTION -s build_type=Release -o clio:tests=True -o clio:lint=False --profile ${{ inputs.conan_profile }}
-        cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release .. -G Ninja
-        cmake --build . --parallel $threads_num
+        cmake --build . --parallel ${{ steps.number_of_threads.outputs.threads_number }}
+
+    - name: Print ccache statistics
+      if: ${{ env.CCACHE_DISABLED != '1' }}
+      shell: bash
+      run: |
         ccache -s

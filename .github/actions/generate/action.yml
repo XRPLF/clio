@@ -1,0 +1,36 @@
+name: Run conan and cmake
+description: Run conan and cmake
+inputs:
+  conan_profile:
+    description: Conan profile name
+    required: true
+  conan_cache_hit:
+    description: Whether conan cache has been downloaded
+    required: true
+    default: 'false'
+  build_type:
+    description: Build type for third-party libraries and clio. Could be 'Release', 'Debug'
+    required: true
+    default: 'Release'
+runs:
+  using: composite
+  steps:
+    - name: Create build directory
+      shell: bash
+      run: mkdir -p build
+
+    - name: Run conan
+      shell: bash
+      env:
+        BUILD_OPTION: "${{ inputs.conan_cache_hit == 'true' && 'missing' || '' }}"
+      run: |
+        cd build
+        conan install .. -of . -b $BUILD_OPTION -s build_type=${{ inputs.build_type }} -o clio:tests=True -o clio:lint=False --profile ${{ inputs.conan_profile }}
+
+    - name: Run cmake
+      shell: bash
+      env:
+        BUILD_TYPE: "${{ inputs.build_type }}"
+      run: |
+        cd build
+        cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} .. -G Ninja
