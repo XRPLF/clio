@@ -95,7 +95,7 @@ jobs:
 
       - name: Run clio_tests
         run: |
-          chmod +x ./clio_tests_${{ runner.os }}_${{ matrix.build_type }}
+          chmod +x ./clio_tests
           ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
 
 
