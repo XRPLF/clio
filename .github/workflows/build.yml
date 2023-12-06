@@ -35,18 +35,10 @@ jobs:
         with:
             fetch-depth: 0
 
-      - name: Set environment variables
-        uses: ./.github/actions/set_env_variables
+      - name: Prepare runner
+        uses: ./.github/actions/prepare_runner
         with:
             disable_ccache: false
-
-      - name: Create directories
-        run: |
-          mkdir -p $CCACHE_DIR
-          mkdir -p $CONAN_USER_HOME/.conan
-
-      - name: Install packages and prepare platform
-        uses: ./.github/actions/install_packages
 
       - name: Setup conan
         uses: ./.github/actions/setup_conan
