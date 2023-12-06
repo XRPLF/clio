@@ -31,14 +31,14 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+
       - name: Set environment variables
         uses: ./.github/actions/set_env_variables
         with:
             disable_ccache: false
-
-      - uses: actions/checkout@v4
-        with:
-            fetch-depth: 0
 
       - name: Create directories
         run: |

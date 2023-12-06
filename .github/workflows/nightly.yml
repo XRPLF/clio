@@ -15,7 +15,12 @@ jobs:
           - os: macOS
             build_type: Release
           - os: Linux
-            build_type: [Release, Debug]
+            build_type: Release
+            container:
+              image: conanio/gcc11:1.61.0
+              options: --user root
+          - os: Linux
+            build_type: Debug
             container:
               image: conanio/gcc11:1.61.0
               options: --user root
@@ -23,14 +28,19 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+
       - name: Set environment variables
         uses: ./.github/actions/set_env_variables
         with:
             disable_ccache: true
 
-      - uses: actions/checkout@v4
-        with:
-            fetch-depth: 0
+      - name: Create directories
+        run: |
+          mkdir -p $CCACHE_DIR
+          mkdir -p $CONAN_USER_HOME/.conan
 
       - name: Install packages and prepare platform
         uses: ./.github/actions/install_packages
@@ -40,7 +50,7 @@ jobs:
         id: conan
 
       - name: Run conan and cmake
-        uses: ./.github/actions/build_clio
+        uses: ./.github/actions/generate
         with:
           conan_profile: ${{ steps.conan.outputs.conan_profile }}
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
@@ -79,7 +89,9 @@ jobs:
           - os: macOS
             build_type: Release
           - os: Linux
-            build_type: [Release, Debug]
+            build_type: Release
+          - os: Linux
+            build_type: Debug
     runs-on: [self-hosted, "${{ matrix.os }}"]
 
     steps:
