@@ -12,7 +12,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run clang-format
         uses: ./.github/actions/clang_format
 
@@ -22,28 +22,21 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: "Linux"
+          - os: Linux
             container:
               image: conanio/gcc11:1.61.0
               options: --user root
-          - os: "macOS"
+          - os: macOS
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
     steps:
-      - name: Set env variables for macOS
-        if: ${{ runner.os == 'macOS' }}
-        run: |
-          echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV
-          echo "CONAN_USER_HOME=${{ github.workspace }}" >> $GITHUB_ENV
+      - name: Set environment variables
+        uses: ./.github/actions/set_env_variables
+        with:
+            disable_ccache: false
 
-      - name: Set env variables for Linux
-        if: ${{ runner.os == 'Linux' }}
-        run: |
-          echo "CCACHE_DIR=/root/.ccache" >> $GITHUB_ENV
-          echo "CONAN_USER_HOME=/root/" >> $GITHUB_ENV
-
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
             fetch-depth: 0
 
@@ -103,11 +96,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: "Linux"
+          - os: Linux
             container:
               image: conanio/gcc11:1.61.0
               options: --user root
-          - os: "macOS"
+          - os: macOS
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 

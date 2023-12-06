@@ -1,0 +1,124 @@
+name: Nightly Clio build and testing
+on:
+  schedule:
+    - cron:  '0 5 * * 1-5'
+  workflow_dispatch:
+  pull_request:
+    branches: [develop]
+
+jobs:
+  build:
+    name: Build clio
+    strategy:
+      matrix:
+        include:
+          - os: macOS
+            build_type: Release
+          - os: Linux
+            build_type: [Release, Debug]
+            container:
+              image: conanio/gcc11:1.61.0
+              options: --user root
+    runs-on: [self-hosted, "${{ matrix.os }}"]
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Set environment variables
+        uses: ./.github/actions/set_env_variables
+        with:
+            disable_ccache: true
+
+      - uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+
+      - name: Install packages and prepare platform
+        uses: ./.github/actions/install_packages
+
+      - name: Setup conan
+        uses: ./.github/actions/setup_conan
+        id: conan
+
+      - name: Run conan and cmake
+        uses: ./.github/actions/build_clio
+        with:
+          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+          build_type: ${{ matrix.build_type }}
+
+      - name: Build Clio
+        uses: ./.github/actions/build_clio
+
+      - name: Strip tests
+        run: strip build/clio_tests
+
+      - name: Upload clio_tests
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
+          path: build/clio_tests
+
+      - name: Compress clio_server
+        shell: bash
+        run: |
+            cd build
+            tar cfz ./clio_server_${{ runner.os}}_${{ matrix.build_type }}.tar.gz ./clio_server
+
+      - name: Upload clio_server
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_server_${{ runner.os }}_${{ matrix.build_type }}
+          path: build/clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz
+
+
+  run_tests:
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - os: macOS
+            build_type: Release
+          - os: Linux
+            build_type: [Release, Debug]
+    runs-on: [self-hosted, "${{ matrix.os }}"]
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
+
+      - name: Run clio_tests
+        run: |
+          chmod +x ./clio_tests_${{ runner.os }}_${{ matrix.build_type }}
+          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+
+
+  nightly_release:
+    needs: run_tests
+    runs-on: ubuntu-20.04
+    env:
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v3
+
+      - name: Prepare files
+        shell: bash
+        run: |
+          rm -r clio_tests*
+          for d in $(ls); do
+            archive_name=$(ls $d)
+            mv ${d}/${archive_name} ./
+            rm -r $d
+            sha256sum ./$archive_name > ./$archive_name.sha256sum
+          done
+
+      - name: Publish nightly release
+        shell: bash
+        run: |
+          gh release create nightly --prerelease --title "Clio development (nightly) build" --target ./clio_server* --generate-notes
+
+
+

@@ -12,9 +12,3 @@ runs:
       run: |
         cd build
         cmake --build . --parallel ${{ steps.number_of_threads.outputs.threads_number }}
-
-    - name: Print ccache statistics
-      if: ${{ env.CCACHE_DISABLED != '1' }}
-      shell: bash
-      run: |
-        ccache -s
