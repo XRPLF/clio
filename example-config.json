@@ -103,7 +103,7 @@
     ],
     "prometheus": {
         "enabled": true,
-        "compress_reply": true,
+        "compress_reply": true
     },
     "log_level": "info",
     // Log format (this is the default format)
