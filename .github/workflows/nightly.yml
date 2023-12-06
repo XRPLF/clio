@@ -10,6 +10,7 @@ jobs:
   build:
     name: Build clio
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: macOS
@@ -64,7 +65,7 @@ jobs:
         shell: bash
         run: |
             cd build
-            tar cfz ./clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz ./clio_server
+            tar czf ./clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz ./clio_server
 
       - name: Upload clio_server
         uses: actions/upload-artifact@v3
@@ -76,6 +77,7 @@ jobs:
   run_tests:
     needs: build
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: macOS

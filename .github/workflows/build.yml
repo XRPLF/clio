@@ -20,6 +20,7 @@ jobs:
     name: Build
     needs: lint
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: Linux
@@ -86,6 +87,7 @@ jobs:
   test:
     needs: build
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: Linux
