@@ -124,7 +124,7 @@ jobs:
       - name: Publish nightly release
         shell: bash
         run: |
-          gh release create nightly --prerelease --title "Clio development (nightly) build" --target ./clio_server* --generate-notes
+          gh release create nightly --prerelease --title "Clio development (nightly) build" --target $GITHUB_SHA --generate-notes ./clio_server* 
 
 
 
