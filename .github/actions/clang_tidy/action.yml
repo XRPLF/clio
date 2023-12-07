@@ -28,7 +28,7 @@ runs:
       shell: bash
       run: |
         echo -e 'Clang-tidy found issues in the code:\n' > issue.md
-        echo -e "List of the issues found: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ gihub.job_id }}" >> issue.md
+        echo -e "List of the issues found: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ github.job }}" >> issue.md
         gh issue create --assignee 'cindyyan317,godexsoft,kuznetsss' --label bug --title 'Clang-tidy found bugs in code🐛' --body-file ./issue.md > create_issue.log
         created_issue=$(cat create_issue.log | sed 's|.*/||')
         echo "created_issue=$created_issue" >> $GITHUB_OUTPUT
@@ -45,7 +45,7 @@ runs:
         body: 'Fixes #${{ steps.create_issue.outputs.created_issue }}. Please review and commit clang-tidy fixes'
         reviewers: 'cindyyan317,godexsoft,kuznetsss'
 
-    - name: Fail the job if issues found
+    - name: Fail the job
       if: ${{ steps.run_clang_tidy.outputs.clang_tidy_failed == 'true' }}
       shell: bash
       run: exit 1
