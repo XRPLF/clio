@@ -45,6 +45,7 @@ runs:
     - name: Restore ccache cache
       uses: actions/cache/restore@v3
       id: ccache_cache
+      if: ${{ env.CCACHE_DISABLE != '1' }}
       with:
         path: ${{ inputs.ccache_dir }}
         key: clio-ccache-${{ runner.os }}-develop-${{ steps.git_common_ancestor.outputs.commit }}

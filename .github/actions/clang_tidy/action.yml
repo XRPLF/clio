@@ -1,0 +1,51 @@
+name: Run clang-tidy
+description: Build clio in build directory
+runs:
+  using: composite
+  steps:
+    - name: Get number of threads
+      uses: ./.github/actions/get_number_of_threads
+      id: number_of_threads
+
+    - name: Run clang-tidy
+      shell: bash
+      id: run_clang_tidy
+      run: |
+        run-clang-tidy -p build -j ${{ steps.number_of_threads.outputs.threads_number }} -fix -quiet 1>output.txt
+        if [[ "$?" != 0 ]]; then
+          echo 'clang_tidy_failed=true' >> $GITHUB_OUTPUT
+        fi
+
+        sed -i '/error\||/!d' ./output.txt
+
+    - name: Print issues found
+      shell: bash
+      run: cat output.txt
+
+    - name: Create an issue
+      if: ${{ steps.run_clang_tidy.outputs.clang_tidy_failed == 'true' }}
+      id: create_issue
+      shell: bash
+      run: |
+        echo -e 'Clang-tidy found issues in the code:\n' > issue.md
+        echo -e "List of the issues found: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ gihub.job_id }}" >> issue.md
+        gh issue create --assignee 'cindyyan317,godexsoft,kuznetsss' --label bug --title 'Clang-tidy found bugs in code🐛' --body-file ./issue.md > create_issue.log
+        created_issue=$(cat create_issue.log | sed 's|.*/||')
+        echo "created_issue=$created_issue" >> $GITHUB_OUTPUT
+
+    - name: Create PR with fixes
+      if: ${{ steps.run_clang_tidy.outputs.clang_tidy_failed == 'true' }}
+      uses: peter-evans/create-pull-request@v5
+      with:
+        commit-message: '[CI]: clang-tidy auto fixes'
+        branch: 'clang_tidy/autofix'
+        branch-suffix: timestamp
+        delete-branch: true
+        title: '[CI]: clang-tidy auto fixes'
+        body: 'Fixes #${{ steps.create_issue.outputs.created_issue }}. Please review and commit clang-tidy fixes'
+        reviewers: 'cindyyan317,godexsoft,kuznetsss'
+
+    - name: Fail the job if issues found
+      if: ${{ steps.run_clang_tidy.outputs.clang_tidy_failed == 'true' }}
+      shell: bash
+      run: exit 1
