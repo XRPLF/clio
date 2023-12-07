@@ -3,79 +3,77 @@ on:
   schedule:
     - cron:  '0 5 * * 1-5'
   workflow_dispatch:
-  pull_request:
-    branches: [develop]
 
 jobs:
-  # build:
-  #   name: Build clio
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       include:
-  #         - os: macOS
-  #           build_type: Release
-  #         - os: Linux
-  #           build_type: Release
-  #           container:
-  #             image: conanio/gcc11:1.61.0
-  #             options: --user root
-  #         - os: Linux
-  #           build_type: Debug
-  #           container:
-  #             image: conanio/gcc11:1.61.0
-  #             options: --user root
-  #   runs-on: [self-hosted, "${{ matrix.os }}"]
-  #   container: ${{ matrix.container }}
-  #
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #           fetch-depth: 0
-  #
-  #     - name: Prepare runner
-  #       uses: ./.github/actions/prepare_runner
-  #       with:
-  #           disable_ccache: true
-  #
-  #     - name: Setup conan
-  #       uses: ./.github/actions/setup_conan
-  #       id: conan
-  #
-  #     - name: Run conan and cmake
-  #       uses: ./.github/actions/generate
-  #       with:
-  #         conan_profile: ${{ steps.conan.outputs.conan_profile }}
-  #         conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-  #         build_type: ${{ matrix.build_type }}
-  #
-  #     - name: Build Clio
-  #       uses: ./.github/actions/build_clio
-  #
-  #     - name: Strip tests
-  #       run: strip build/clio_tests
-  #
-  #     - name: Upload clio_tests
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
-  #         path: build/clio_tests
-  #
-  #     - name: Compress clio_server
-  #       shell: bash
-  #       run: |
-  #           cd build
-  #           tar czf ./clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz ./clio_server
-  #
-  #     - name: Upload clio_server
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: clio_server_${{ runner.os }}_${{ matrix.build_type }}
-  #         path: build/clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz
-  #
+  build:
+    name: Build clio
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macOS
+            build_type: Release
+          - os: Linux
+            build_type: Release
+            container:
+              image: conanio/gcc11:1.61.0
+              options: --user root
+          - os: Linux
+            build_type: Debug
+            container:
+              image: conanio/gcc11:1.61.0
+              options: --user root
+    runs-on: [self-hosted, "${{ matrix.os }}"]
+    container: ${{ matrix.container }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+
+      - name: Prepare runner
+        uses: ./.github/actions/prepare_runner
+        with:
+            disable_ccache: true
+
+      - name: Setup conan
+        uses: ./.github/actions/setup_conan
+        id: conan
+
+      - name: Run conan and cmake
+        uses: ./.github/actions/generate
+        with:
+          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+          build_type: ${{ matrix.build_type }}
+
+      - name: Build Clio
+        uses: ./.github/actions/build_clio
+
+      - name: Strip tests
+        run: strip build/clio_tests
+
+      - name: Upload clio_tests
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
+          path: build/clio_tests
+
+      - name: Compress clio_server
+        shell: bash
+        run: |
+            cd build
+            tar czf ./clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz ./clio_server
+
+      - name: Upload clio_server
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_server_${{ runner.os }}_${{ matrix.build_type }}
+          path: build/clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz
+
 
   run_tests:
-    # needs: build
+    needs: build
     strategy:
       fail-fast: false
       matrix:
@@ -89,33 +87,14 @@ jobs:
     runs-on: [self-hosted, "${{ matrix.os }}"]
 
     steps:
-      # - uses: actions/download-artifact@v3
-      #   with:
-      #     name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
-      #
-      # - name: Run clio_tests
-      #   run: |
-      #     chmod +x ./clio_tests
-      #     ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
-      - name: Make mock artifacts
-        shell: bash
-        run: |
-          ls
-          mkdir -p build
-          echo 'test' > build/clio_tests
-          echo 'test' > build/clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz
-
-      - name: Upload clio_tests
-        uses: actions/upload-artifact@v3
+      - uses: actions/download-artifact@v3
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
-          path: build/clio_tests
 
-      - name: Upload clio_server
-        uses: actions/upload-artifact@v3
-        with:
-          name: clio_server_${{ runner.os }}_${{ matrix.build_type }}
-          path: build/clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz
+      - name: Run clio_tests
+        run: |
+          chmod +x ./clio_tests
+          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
 
   nightly_release:
     needs: run_tests
@@ -150,7 +129,6 @@ jobs:
       - name: Publish nightly release
         shell: bash
         run: |
-          curl -sS -f -I -H "Authorization: token $GH_TOKEN" https://api.github.com
           gh release create nightly --prerelease --title "Clio development (nightly) build" --target $GITHUB_SHA --notes-file "${{ github.workspace }}/.github/workflows/nightly_notes.md" ./nightly_release/clio_server*
 
 
