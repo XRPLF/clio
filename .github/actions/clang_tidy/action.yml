@@ -13,17 +13,16 @@ runs:
       id: run_clang_tidy
       run: |
         run-clang-tidy-17 -p build -j ${{ steps.number_of_threads.outputs.threads_number }} -fix -quiet 1>output.txt
-        if [[ "$?" != 0 ]]; then
-          echo 'clang_tidy_failed=true' >> $GITHUB_OUTPUT
-        fi
-        sed -i '/error\||/!d' ./output.txt
 
     - name: Print issues found
+      if: ${{ steps.run_clang_tidy.outcome != 'success' }}
       shell: bash
-      run: cat output.txt
+      run: |
+        sed -i '/error\||/!d' ./output.txt
+        cat output.txt
 
     - name: Create an issue
-      if: ${{ steps.run_clang_tidy.outputs.clang_tidy_failed == 'true' }}
+      if: ${{ steps.run_clang_tidy.outcome != 'success' }}
       id: create_issue
       shell: bash
       run: |
@@ -34,7 +33,7 @@ runs:
         echo "created_issue=$created_issue" >> $GITHUB_OUTPUT
 
     - name: Create PR with fixes
-      if: ${{ steps.run_clang_tidy.outputs.clang_tidy_failed == 'true' }}
+      if: ${{ steps.run_clang_tidy.outcome != 'success' }}
       uses: peter-evans/create-pull-request@v5
       with:
         commit-message: '[CI]: clang-tidy auto fixes'
@@ -46,6 +45,6 @@ runs:
         reviewers: 'cindyyan317,godexsoft,kuznetsss'
 
     - name: Fail the job
-      if: ${{ steps.run_clang_tidy.outputs.clang_tidy_failed == 'true' }}
+      if: ${{ steps.run_clang_tidy.outcome != 'success' }}
       shell: bash
       run: exit 1
