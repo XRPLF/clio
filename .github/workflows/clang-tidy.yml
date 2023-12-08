@@ -10,7 +10,7 @@ on:
       - '.github/**'
 
 jobs:
-  build:
+  clang_tidy:
     runs-on: [self-hosted, Linux]
     container:
       image: conanio/gcc11:1.61.0

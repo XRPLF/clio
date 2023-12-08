@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       GH_REPO: ${{ github.repository }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
     permissions:
       contents: write
     steps:

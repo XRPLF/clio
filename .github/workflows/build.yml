@@ -64,7 +64,13 @@ jobs:
         uses: ./.github/actions/build_clio
 
       - name: Show ccache's statistics
-        run: ccache -s
+        shell: bash
+        id: ccache_stats
+        run: |
+          ccache -s > /tmp/ccache.stats
+          miss_rate=$(cat /tmp/ccache.stats | grep 'Misses' | head -n1 | sed 's/.*(\(.*\)%).*/\1/')
+          echo "miss_rate=${miss_rate}" >> $GITHUB_OUTPUT
+          cat /tmp/ccache.stats
 
       - name: Strip tests
         run: strip build/clio_tests
@@ -83,6 +89,7 @@ jobs:
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           ccache_dir: ${{ env.CCACHE_DIR }}
           ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
+          ccache_cache_miss_rate: ${{ steps.ccache_stats.outputs.miss_rate }}
 
   test:
     needs: build
