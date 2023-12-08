@@ -1,5 +1,5 @@
 ```
-Based on commit: $GITHUB_SH
+Based on commit: $GITHUB_SHA
 ```
 
 > **Note:** Please remember that this is a development release and it is not recommended for production use.
