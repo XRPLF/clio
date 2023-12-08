@@ -11,7 +11,7 @@ runs:
       if: ${{ runner.os == 'macOS' }}
       shell: bash
       run: |
-          brew install llvm@14 pkg-config ninja bison cmake ccache jq
+          brew install llvm@14 pkg-config ninja bison cmake ccache jq gh
 
     - name: Install packages on linux
       if: ${{ runner.os == 'Linux' }}
@@ -21,6 +21,15 @@ runs:
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
           apt update -qq
           apt install -y jq clang-tidy-17 clang-tools-17
+
+    - name: Install gh on Linux
+      if: ${{ runner.os == 'Linux' }}
+      shell: bash
+      run: |
+        wget https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz
+        tar xf gh_2.40.0_linux_amd64.tar.gz
+        sudo mv gh_2.40.0_linux_amd64/bin/gh /usr/bin/gh
+        rm -r gh_2.40.0_linux_amd64*
 
     - name: Install ccache on Linux
       if: ${{ runner.os == 'Linux' && inputs.disable_ccache != 'true' }}

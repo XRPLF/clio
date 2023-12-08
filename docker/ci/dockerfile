@@ -1,21 +1,22 @@
 FROM ubuntu:focal
 ARG DEBIAN_FRONTEND=noninteractive
+ARG TARGETARCH
 
 USER root
 
 ENV GCC_VERSION=11 \
     CCACHE_VERSION=4.8.3 \
-    LLVM_TOOLS_VERSION=17
+    LLVM_TOOLS_VERSION=17 \
+    GH_VERSION=2.40.0
  
 # Add repositories
 RUN apt-get -qq update \
-    && apt-get -qq install -y --no-install-recommends --no-install-suggests gnupg wget software-properties-common \
+    && apt-get -qq install -y --no-install-recommends --no-install-suggests gnupg wget curl software-properties-common \
     && add-apt-repository -y ppa:ubuntu-toolchain-r/test \
     && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - \
     && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
     && echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-${LLVM_TOOLS_VERSION} main" >> /etc/apt/sources.list \
     && wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
-
 
 # Install packages
 RUN apt update -qq \
@@ -41,6 +42,11 @@ RUN wget "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/
     && mkdir build && cd build \
     && cmake -GNinja -DCMAKE_BUILD_TYPE=Release .. \
     && ninja && cp ./ccache /usr/bin/ccache
+
+# Install gh
+RUN wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
+    && tar xf gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
+    && mv gh_${GH_VERSION}_linux_${TARGETARCH}/bin/gh /usr/bin/gh
 
 # Clean up
 RUN rm -rf  /tmp/* /var/tmp/*
