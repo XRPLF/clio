@@ -1,11 +1,9 @@
-name: Update CI docker imae
+name: Update CI docker image
 on:
   push:
     branches: [develop]
     paths:
       - docker/ci/*
-  pull_request:
-    branches: [master, release/*, develop]
   workflow_dispatch:
 
 jobs:
@@ -17,7 +15,6 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       DOCKERHUB_REPO: rippleci
-      GITHUB_REPO: "ghcr.io/${{ github.repository_owner }}"
     steps:
       - name: Login to DockerHub
         uses: docker/login-action@v3
