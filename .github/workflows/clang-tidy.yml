@@ -1,0 +1,51 @@
+name: Clang-tidy check
+on:
+  schedule:
+    - cron:  '0 6 * * 1-5'
+  workflow_dispatch:
+  pull_request:
+    branches: [develop]
+    paths:
+      - .clang_tidy
+      - '.github/**'
+
+jobs:
+  clang_tidy:
+    runs-on: [self-hosted, Linux]
+    container:
+      image: conanio/gcc11:1.61.0
+      options: --user root
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+
+      - name: Prepare runner
+        uses: ./.github/actions/prepare_runner
+        with:
+            disable_ccache: true
+
+      - name: Setup conan
+        uses: ./.github/actions/setup_conan
+        id: conan
+
+      - name: Restore cache
+        uses: ./.github/actions/restore_cache
+        id: restore_cache
+        with:
+          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
+          ccache_dir: ${{ env.CCACHE_DIR }}
+
+      - name: Run conan and cmake
+        uses: ./.github/actions/generate
+        with:
+          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+          build_type: Release
+
+      - name: Run clang-tidy
+        uses: ./.github/actions/clang_tidy

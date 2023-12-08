@@ -16,6 +16,8 @@ inputs:
   ccache_cache_hit:
     description: Whether conan cache has been downloaded
     required: true
+  ccache_cache_miss_rate:
+    description: How many cache misses happened
 runs:
   using: composite
   steps:
@@ -37,7 +39,7 @@ runs:
         key: clio-conan_data-${{ runner.os }}-develop-${{ inputs.conan_hash }}
 
     - name: Save ccache cache
-      if: ${{ inputs.ccache_cache_hit != 'true' }}
+      if: ${{ inputs.ccache_cache_hit != 'true' || inputs.ccache_cache_miss_rate == '100.0' }}
       uses: actions/cache/save@v3
       with:
         path: ${{ inputs.ccache_dir }}

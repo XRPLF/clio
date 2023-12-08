@@ -1,0 +1,36 @@
+name: Update CI docker image
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'docker/ci/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        target_platform: [linux/amd64, linux/arm64]
+    name: Build and push docker image
+    runs-on: ubuntu-20.04
+    env:
+      DOCKERHUB_REPO: rippleci
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PW }}
+
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        shell: bash
+        run: |
+          cd docker/ci
+          docker build . -t clio_ci --progress=plain --platform=${{ matrix.target_platform }}
+          for tag in "$GITHUB_SHA" "latest" ; do
+            docker tag clio_ci ${DOCKERHUB_REPO}/clio_ci:${tag}
+            docker push ${DOCKERHUB_REPO}/clio_ci:${tag}
+          done
+

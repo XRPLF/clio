@@ -24,6 +24,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <stdexcept>
+
 namespace util::prometheus {
 
 template <SomeNumberType NumberType>
@@ -213,6 +215,9 @@ struct WithMockPrometheus : virtual ::testing::Test {
             return mockPrometheusPtr->histogramDoubleImpls[key];
         }
         ASSERT(false, "Wrong metric type for metric {} {}", name, labelsString);
+
+        // to fix -Werror=return-type for gcc 14.1 in Debug mode
+        throw std::runtime_error("Wrong metric type");
     }
 };
 

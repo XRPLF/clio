@@ -6,30 +6,40 @@ on:
     branches: [master, release/*, develop]
   workflow_dispatch:
 
+ 
 jobs:
   lint:
-    name: Lint
+    name: Check format
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run clang-format
         uses: ./.github/actions/clang_format
 
-  build_mac:
-    name: Build macOS
+  build:
+    name: Build
     needs: lint
-    runs-on: [self-hosted, macOS]
-    env:
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-      CONAN_USER_HOME: ${{ github.workspace }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: Linux
+            container:
+              image: conanio/gcc11:1.61.0
+              options: --user root
+          - os: macOS
+    runs-on: [self-hosted, "${{ matrix.os }}"]
+    container: ${{ matrix.container }}
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
             fetch-depth: 0
 
-      - name: Install packages
-        run: |
-          brew install llvm@14 pkg-config ninja bison cmake ccache jq
+      - name: Prepare runner
+        uses: ./.github/actions/prepare_runner
+        with:
+            disable_ccache: false
 
       - name: Setup conan
         uses: ./.github/actions/setup_conan
@@ -42,79 +52,25 @@ jobs:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
           ccache_dir: ${{ env.CCACHE_DIR }}
 
-      - name: Build Clio
-        uses: ./.github/actions/build_clio
+      - name: Run conan and cmake
+        uses: ./.github/actions/generate
         with:
           conan_profile: ${{ steps.conan.outputs.conan_profile }}
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+          build_type: 'Release'
 
-      - name: Strip tests
-        run: strip build/clio_tests
-
-      - name: Upload clio_tests
-        uses: actions/upload-artifact@v3
-        with:
-          name: clio_tests_mac
-          path: build/clio_tests
-
-      - name: Save cache
-        uses: ./.github/actions/save_cache
-        with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-          conan_hash: ${{ steps.restore_cache.outputs.conan_hash }}
-          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-          ccache_dir: ${{ env.CCACHE_DIR }}
-          ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
-
-  build_linux:
-    name: Build linux
-    needs: lint
-    runs-on: [self-hosted, Linux]
-    container:
-      image: conanio/gcc11:1.61.0
-      options: --user root
-    env:
-      CCACHE_DIR: /root/.ccache
-      CONAN_USER_HOME: /root/
-    steps:
-      - name: Get Clio
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Add llvm repo
-        run: |
-          echo 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-17 main' >> /etc/apt/sources.list
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
-
-      - name: Install packages
-        run: |
-          apt update -qq
-          apt install -y jq clang-tidy-17
-
-      - name: Install ccache
-        run: |
-          wget https://github.com/ccache/ccache/releases/download/v4.8.3/ccache-4.8.3-linux-x86_64.tar.xz
-          tar xf ./ccache-4.8.3-linux-x86_64.tar.xz
-          mv ./ccache-4.8.3-linux-x86_64/ccache /usr/bin/ccache
-
-      - name: Fix git permissions
-        run: git config --global --add safe.directory $PWD
-
-      - name: Setup conan
-        uses: ./.github/actions/setup_conan
-
-      - name: Restore cache
-        uses: ./.github/actions/restore_cache
-        id: restore_cache
-        with:
-          conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-          ccache_dir: ${{ env.CCACHE_DIR }}
 
       - name: Build Clio
         uses: ./.github/actions/build_clio
-        with:
-          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+
+      - name: Show ccache's statistics
+        shell: bash
+        id: ccache_stats
+        run: |
+          ccache -s > /tmp/ccache.stats
+          miss_rate=$(cat /tmp/ccache.stats | grep 'Misses' | head -n1 | sed 's/.*(\(.*\)%).*/\1/')
+          echo "miss_rate=${miss_rate}" >> $GITHUB_OUTPUT
+          cat /tmp/ccache.stats
 
       - name: Strip tests
         run: strip build/clio_tests
@@ -122,7 +78,7 @@ jobs:
       - name: Upload clio_tests
         uses: actions/upload-artifact@v3
         with:
-          name: clio_tests_linux
+          name: clio_tests_${{ runner.os }}
           path: build/clio_tests
 
       - name: Save cache
@@ -133,26 +89,26 @@ jobs:
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           ccache_dir: ${{ env.CCACHE_DIR }}
           ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
+          ccache_cache_miss_rate: ${{ steps.ccache_stats.outputs.miss_rate }}
 
-  test_mac:
-    needs: build_mac
-    runs-on: [self-hosted, macOS]
+  test:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: Linux
+            container:
+              image: conanio/gcc11:1.61.0
+              options: --user root
+          - os: macOS
+    runs-on: [self-hosted, "${{ matrix.os }}"]
+    container: ${{ matrix.container }}
+
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: clio_tests_mac
-      - name: Run clio_tests
-        run: |
-          chmod +x ./clio_tests
-          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
-
-  test_linux:
-    needs: build_linux
-    runs-on: [self-hosted, x-heavy]
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: clio_tests_linux
+          name: clio_tests_${{ runner.os }}
       - name: Run clio_tests
         run: |
           chmod +x ./clio_tests
