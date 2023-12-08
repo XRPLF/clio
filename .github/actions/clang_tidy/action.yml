@@ -8,6 +8,7 @@ runs:
       id: number_of_threads
 
     - name: Run clang-tidy
+      continue-on-error: true
       shell: bash
       id: run_clang_tidy
       run: |
@@ -15,7 +16,6 @@ runs:
         if [[ "$?" != 0 ]]; then
           echo 'clang_tidy_failed=true' >> $GITHUB_OUTPUT
         fi
-
         sed -i '/error\||/!d' ./output.txt
 
     - name: Print issues found

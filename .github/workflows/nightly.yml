@@ -3,6 +3,10 @@ on:
   schedule:
     - cron:  '0 5 * * 1-5'
   workflow_dispatch:
+  pull_request:
+    branches: [develop]
+    paths:
+      - '.github/**'
 
 jobs:
   build:
@@ -129,7 +133,9 @@ jobs:
       - name: Publish nightly release
         shell: bash
         run: |
-          gh release create nightly --prerelease --title "Clio development (nightly) build" --target $GITHUB_SHA --notes-file "${{ github.workspace }}/.github/workflows/nightly_notes.md" ./nightly_release/clio_server*
+          gh release create nightly --prerelease --title "Clio development (nightly) build" \
+            --target $GITHUB_SHA --notes-file "${{ github.workspace }}/.github/workflows/nightly_notes.md" \
+            ./nightly_release/clio_server*
 
 
 

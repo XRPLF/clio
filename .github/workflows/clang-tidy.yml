@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [develop]
+    paths:
+      - .clang_tidy
+      - '.github/**'
 
 jobs:
   build:
