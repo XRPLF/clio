@@ -359,7 +359,7 @@ toJson(ripple::SLE const& sle)
 }
 
 boost::json::object
-toJson(ripple::LedgerHeader const& lgrInfo, bool const binary)
+toJson(ripple::LedgerHeader const& lgrInfo, bool const binary, std::uint32_t const apiVersion)
 {
     boost::json::object header;
     if (binary) {
@@ -372,11 +372,16 @@ toJson(ripple::LedgerHeader const& lgrInfo, bool const binary)
         header[JS(close_time_resolution)] = lgrInfo.closeTimeResolution.count();
         header[JS(close_time_iso)] = ripple::to_string_iso(lgrInfo.closeTime);
         header[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
-        header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
         header[JS(parent_close_time)] = lgrInfo.parentCloseTime.time_since_epoch().count();
         header[JS(parent_hash)] = ripple::strHex(lgrInfo.parentHash);
         header[JS(total_coins)] = ripple::to_string(lgrInfo.drops);
         header[JS(transaction_hash)] = ripple::strHex(lgrInfo.txHash);
+
+        if (apiVersion < 2u) {
+            header[JS(ledger_index)] = std::to_string(lgrInfo.seq);
+        } else {
+            header[JS(ledger_index)] = lgrInfo.seq;
+        }
     }
     header[JS(closed)] = true;
     return header;

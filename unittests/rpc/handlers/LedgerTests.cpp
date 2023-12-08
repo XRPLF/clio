@@ -623,7 +623,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                 "close_time_resolution": 0,
                 "closed": true,
                 "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                "ledger_index": "30",
+                "ledger_index": 30,
                 "parent_close_time": 0,
                 "close_time_iso": "2000-01-01T00:00:00Z",
                 "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -635,7 +635,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
                         "close_time_iso": "2000-01-01T00:00:00Z",
                         "hash": "70436A9332F7CD928FAEC1A41269A677739D8B11F108CE23AE23CBF0C9113F8C",
                         "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-                        "ledger_index": "30",
+                        "ledger_index": 30,
                         "tx_json":
                         {
                             "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",

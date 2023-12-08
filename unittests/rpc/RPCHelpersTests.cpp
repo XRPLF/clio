@@ -443,7 +443,7 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV2)
 TEST_F(RPCHelpersTest, LedgerHeaderJson)
 {
     auto const ledgerHeader = CreateLedgerInfo(INDEX1, 30);
-    auto const binJson = toJson(ledgerHeader, true);
+    auto const binJson = toJson(ledgerHeader, true, 1u);
 
     auto constexpr EXPECTBIN = R"({
                                     "ledger_data": "0000001E000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -469,7 +469,35 @@ TEST_F(RPCHelpersTest, LedgerHeaderJson)
         INDEX1,
         30
     );
-    auto json = toJson(ledgerHeader, false);
+    auto json = toJson(ledgerHeader, false, 1u);
+    // remove platform-related close_time_human field
+    json.erase(JS(close_time_human));
+    EXPECT_EQ(json, boost::json::parse(EXPECTJSON));
+}
+
+TEST_F(RPCHelpersTest, LedgerHeaderJsonV2)
+{
+    auto const ledgerHeader = CreateLedgerInfo(INDEX1, 30);
+
+    auto const EXPECTJSON = fmt::format(
+        R"({{
+            "account_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "close_flags": 0,
+            "close_time": 0,
+            "close_time_resolution": 0,
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "ledger_hash": "{}",
+            "ledger_index": {},
+            "parent_close_time": 0,
+            "parent_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "total_coins": "0",
+            "transaction_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "closed": true
+        }})",
+        INDEX1,
+        30
+    );
+    auto json = toJson(ledgerHeader, false, 2u);
     // remove platform-related close_time_human field
     json.erase(JS(close_time_human));
     EXPECT_EQ(json, boost::json::parse(EXPECTJSON));

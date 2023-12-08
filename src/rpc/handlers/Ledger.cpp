@@ -61,7 +61,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     Output output;
 
-    output.header = toJson(lgrInfo, input.binary);
+    output.header = toJson(lgrInfo, input.binary, ctx.apiVersion);
 
     if (input.transactions) {
         output.header[JS(transactions)] = boost::json::value(boost::json::array_kind);
@@ -86,8 +86,13 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                 if (!input.binary) {
                     boost::json::object entry;
                     entry[JS(validated)] = true;
-                    // same with rippled, ledger_index is a string here
-                    entry[JS(ledger_index)] = std::to_string(lgrInfo.seq);
+
+                    if (ctx.apiVersion < 2u) {
+                        entry[JS(ledger_index)] = std::to_string(lgrInfo.seq);
+                    } else {
+                        entry[JS(ledger_index)] = lgrInfo.seq;
+                    }
+
                     entry[JS(close_time_iso)] = isoTimeStr;
                     entry[JS(ledger_hash)] = ripple::strHex(lgrInfo.hash);
                     if (txn.contains(JS(hash))) {

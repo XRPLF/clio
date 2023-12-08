@@ -105,7 +105,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
 
     // no marker -> first call, return header information
     if ((!input.marker) && (!input.diffMarker)) {
-        output.header = toJson(lgrInfo, input.binary);
+        output.header = toJson(lgrInfo, input.binary, ctx.apiVersion);
     } else {
         if (input.marker && !sharedPtrBackend_->fetchLedgerObject(*(input.marker), lgrInfo.seq, ctx.yield))
             return Error{Status{RippledError::rpcINVALID_PARAMS, "markerDoesNotExist"}};
