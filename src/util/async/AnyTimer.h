@@ -60,7 +60,9 @@ private:
     struct Model : Concept {
         TimerType timer;
 
-        Model(TimerType&& timer) : timer{std::move(timer)}
+        template <typename TType>
+            requires std::is_same_v<TType, TimerType>
+        Model(TType&& timer) : timer{std::forward<TType>(timer)}
         {
         }
 

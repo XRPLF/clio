@@ -89,7 +89,9 @@ private:
     struct Model : Concept {
         OpType operation;
 
-        Model(OpType&& operation) : operation{std::move(operation)}
+        template <typename OType>
+            requires std::is_same_v<OType, OpType>
+        Model(OType&& operation) : operation{std::forward<OType>(operation)}
         {
         }
 

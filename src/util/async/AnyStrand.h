@@ -118,7 +118,9 @@ private:
     struct Model : Concept {
         StrandType strand;
 
-        Model(StrandType&& strand) : strand{std::move(strand)}
+        template <typename SType>
+            requires std::is_same_v<SType, StrandType>
+        Model(SType&& strand) : strand{std::forward<SType>(strand)}
         {
         }
 

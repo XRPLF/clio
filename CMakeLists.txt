@@ -181,6 +181,7 @@ if (tests)
     unittests/util/AssertTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
+    ## Prometheus support
     unittests/util/prometheus/CounterTests.cpp
     unittests/util/prometheus/GaugeTests.cpp
     unittests/util/prometheus/HistogramTests.cpp
@@ -189,6 +190,9 @@ if (tests)
     unittests/util/prometheus/MetricBuilderTests.cpp
     unittests/util/prometheus/MetricsFamilyTests.cpp
     unittests/util/prometheus/OStreamTests.cpp
+    ## Async framework
+    unittests/util/async/AnyExecutionContextTests.cpp
+    unittests/util/async/AsyncExecutionContextTests.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp

@@ -27,7 +27,8 @@ namespace util {
 class Random {
 public:
     template <typename T>
-    static T constexpr uniform(T min, T max)
+    static T
+    uniform(T min, T max)
     {
         ASSERT(min <= max, "Min cannot be greater than max. min: {}, max: {}", min, max);
         if constexpr (std::is_floating_point_v<T>) {
