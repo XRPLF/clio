@@ -70,9 +70,9 @@ protected:
     SetUp() override
     {
         HandlerBaseTest::SetUp();
-        util::Config const cfg;
-        subManager_ = feed::SubscriptionManager::make_SubscriptionManager(cfg, backend);
-        util::TagDecoratorFactory const tagDecoratorFactory{cfg};
+
+        subManager_ = std::make_shared<feed::SubscriptionManager>(ctx, backend);
+        util::TagDecoratorFactory const tagDecoratorFactory{util::Config{}};
         session_ = std::make_shared<MockSession>(tagDecoratorFactory);
     }
     void

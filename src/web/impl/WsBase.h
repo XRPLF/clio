@@ -86,7 +86,6 @@ protected:
         if (!ec_ && ec != boost::asio::error::operation_aborted) {
             ec_ = ec;
             boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);
-            (*handler_)(ec, derived().shared_from_this());
         }
     }
 
@@ -141,10 +140,6 @@ public:
     void
     maybeSendNext()
     {
-        // cleanup if needed. can't do this in destructor so it's here
-        if (dead())
-            (*handler_)(ec_, derived().shared_from_this());
-
         if (ec_ || sending_ || messages_.empty())
             return;
 

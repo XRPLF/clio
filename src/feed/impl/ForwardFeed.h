@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,24 +19,27 @@
 
 #pragma once
 
-#include "web/interface/ConnectionBase.h"
+#include "feed/impl/SingleFeedBase.h"
 
-#include <boost/beast.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/serialize.hpp>
 
-#include <memory>
-
-namespace web {
+namespace feed::impl {
 
 /**
- * @brief Specifies the requirements a Webserver handler must fulfill.
+ * @brief Feed that publishes the json object as it is.
  */
-template <typename T>
-concept SomeServerHandler =
-    requires(T handler, std::string req, std::shared_ptr<ConnectionBase> ws, boost::beast::error_code ec) {
-        // the callback when server receives a request
-        {
-            handler(req, ws)
-        };
-    };
+class ForwardFeed : public SingleFeedBase {
+public:
+    using SingleFeedBase::SingleFeedBase;
 
-}  // namespace web
+    /**
+     * @brief Publishes the json object.
+     */
+    void
+    pub(boost::json::object const& json) const
+    {
+        SingleFeedBase::pub(boost::json::serialize(json));
+    }
+};
+}  // namespace feed::impl

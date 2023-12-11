@@ -64,7 +64,6 @@ class RPCEngine {
     util::Logger log_{"RPC"};
 
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<feed::SubscriptionManager> subscriptions_;
     std::shared_ptr<etl::LoadBalancer> balancer_;
     std::reference_wrapper<web::DOSGuard const> dosGuard_;
     std::reference_wrapper<WorkQueue> workQueue_;
@@ -77,7 +76,6 @@ class RPCEngine {
 public:
     RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
         web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
@@ -85,7 +83,6 @@ public:
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
         : backend_{backend}
-        , subscriptions_{subscriptions}
         , balancer_{balancer}
         , dosGuard_{std::cref(dosGuard)}
         , workQueue_{std::ref(workQueue)}
@@ -98,7 +95,6 @@ public:
     static std::shared_ptr<RPCEngine>
     make_RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<feed::SubscriptionManager> const& subscriptions,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
         web::DOSGuard const& dosGuard,
         WorkQueue& workQueue,
@@ -106,9 +102,7 @@ public:
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
     {
-        return std::make_shared<RPCEngine>(
-            backend, subscriptions, balancer, dosGuard, workQueue, counters, handlerProvider
-        );
+        return std::make_shared<RPCEngine>(backend, balancer, dosGuard, workQueue, counters, handlerProvider);
     }
 
     /**

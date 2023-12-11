@@ -20,369 +20,127 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "util/config/Config.h"
+#include "data/Types.h"
+#include "feed/Types.h"
+#include "feed/impl/BookChangesFeed.h"
+#include "feed/impl/ForwardFeed.h"
+#include "feed/impl/LedgerFeed.h"
+#include "feed/impl/ProposedTransactionFeed.h"
+#include "feed/impl/TransactionFeed.h"
 #include "util/log/Logger.h"
-#include "util/prometheus/Prometheus.h"
-#include "web/interface/ConnectionBase.h"
 
-#include <fmt/format.h>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Book.h>
+#include <ripple/protocol/Fees.h>
 #include <ripple/protocol/LedgerHeader.h>
 
+#include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
+#include <string>
+#include <thread>
+#include <vector>
 
-/**
- * @brief This namespace deals with subscriptions.
- */
 namespace feed {
 
-using SessionPtrType = std::shared_ptr<web::ConnectionBase>;
-
-/**
- * @brief Sends a message to subscribers.
- *
- * @param message The message to send
- * @param subscribers The subscription stream to send the message to
- * @param counter The subscription counter to decrement if session is detected as dead
- */
-template <class T>
-inline void
-sendToSubscribers(std::shared_ptr<std::string> const& message, T& subscribers, util::prometheus::GaugeInt& counter)
-{
-    for (auto it = subscribers.begin(); it != subscribers.end();) {
-        auto& session = *it;
-        if (session->dead()) {
-            it = subscribers.erase(it);
-            --counter;
-        } else {
-            session->send(message);
-            ++it;
-        }
-    }
-}
-
-/**
- * @brief Adds a session to the subscription stream.
- *
- * @param session The session to add
- * @param subscribers The stream to subscribe to
- * @param counter The counter representing the current total subscribers
- */
-template <class T>
-inline void
-addSession(SessionPtrType session, T& subscribers, util::prometheus::GaugeInt& counter)
-{
-    if (!subscribers.contains(session)) {
-        subscribers.insert(session);
-        ++counter;
-    }
-}
-
-/**
- * @brief Removes a session from the subscription stream.
- *
- * @param session The session to remove
- * @param subscribers The stream to unsubscribe from
- * @param counter The counter representing the current total subscribers
- */
-template <class T>
-inline void
-removeSession(SessionPtrType session, T& subscribers, util::prometheus::GaugeInt& counter)
-{
-    if (subscribers.contains(session)) {
-        subscribers.erase(session);
-        --counter;
-    }
-}
-
-/**
- * @brief Represents a subscription stream.
- */
-class Subscription {
-    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
-    std::unordered_set<SessionPtrType> subscribers_ = {};
-    util::prometheus::GaugeInt& subCount_;
-
-public:
-    Subscription() = delete;
-    Subscription(Subscription&) = delete;
-    Subscription(Subscription&&) = delete;
-
-    /**
-     * @brief Create a new subscription stream.
-     *
-     * @param ioc The io_context to run on
-     */
-    explicit Subscription(boost::asio::io_context& ioc, std::string const& name)
-        : strand_(boost::asio::make_strand(ioc))
-        , subCount_(PrometheusService::gaugeInt(
-              "subscriptions_current_number",
-              util::prometheus::Labels({util::prometheus::Label{"stream", name}}),
-              fmt::format("Current subscribers number on the {} stream", name)
-          ))
-    {
-    }
-
-    ~Subscription() = default;
-
-    /**
-     * @brief Adds the given session to the subscribers set.
-     *
-     * @param session The session to add
-     */
-    void
-    subscribe(SessionPtrType const& session);
-
-    /**
-     * @brief Removes the given session from the subscribers set.
-     *
-     * @param session The session to remove
-     */
-    void
-    unsubscribe(SessionPtrType const& session);
-
-    /**
-     * @brief Check if a session has been in subscribers list.
-     *
-     * @param session The session to check
-     * @return true if the session is in the subscribers list; false otherwise
-     */
-    bool
-    hasSession(SessionPtrType const& session);
-
-    /**
-     * @brief Sends the given message to all subscribers.
-     *
-     * @param message The message to send
-     */
-    void
-    publish(std::shared_ptr<std::string> const& message);
-
-    /**
-     * @return Total subscriber count on this stream.
-     */
-    std::uint64_t
-    count() const
-    {
-        return subCount_.value();
-    }
-
-    /**
-     * @return true if the stream currently has no subscribers; false otherwise
-     */
-    bool
-    empty() const
-    {
-        return count() == 0;
-    }
-};
-
-/**
- * @brief Represents a collection of subscriptions where each stream is mapped to a key.
- */
-template <class Key>
-class SubscriptionMap {
-    using SubscribersType = std::set<SessionPtrType>;
-
-    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
-    std::unordered_map<Key, SubscribersType> subscribers_ = {};
-    util::prometheus::GaugeInt& subCount_;
-
-public:
-    SubscriptionMap() = delete;
-    SubscriptionMap(SubscriptionMap&) = delete;
-    SubscriptionMap(SubscriptionMap&&) = delete;
-
-    /**
-     * @brief Create a new subscription map.
-     *
-     * @param ioc The io_context to run on
-     */
-    explicit SubscriptionMap(boost::asio::io_context& ioc, std::string const& name)
-        : strand_(boost::asio::make_strand(ioc))
-        , subCount_(PrometheusService::gaugeInt(
-              "subscriptions_current_number",
-              util::prometheus::Labels({util::prometheus::Label{"collection", name}}),
-              fmt::format("Current subscribers number on the {} collection", name)
-          ))
-    {
-    }
-
-    ~SubscriptionMap() = default;
-
-    /**
-     * @brief Subscribe to a specific stream by its key.
-     *
-     * @param session The session to add
-     * @param key The key for the subscription to subscribe to
-     */
-    void
-    subscribe(SessionPtrType const& session, Key const& key)
-    {
-        boost::asio::post(strand_, [this, session, key]() { addSession(session, subscribers_[key], subCount_); });
-    }
-
-    /**
-     * @brief Unsubscribe from a specific stream by its key.
-     *
-     * @param session The session to remove
-     * @param key The key for the subscription to unsubscribe from
-     */
-    void
-    unsubscribe(SessionPtrType const& session, Key const& key)
-    {
-        boost::asio::post(strand_, [this, key, session]() {
-            if (!subscribers_.contains(key))
-                return;
-
-            if (!subscribers_[key].contains(session))
-                return;
-
-            --subCount_;
-            subscribers_[key].erase(session);
-
-            if (subscribers_[key].size() == 0) {
-                subscribers_.erase(key);
-            }
-        });
-    }
-
-    /**
-     * @brief Check if a session has been in subscribers list.
-     *
-     * @param session The session to check
-     * @param key The key for the subscription to check
-     * @return true if the session is in the subscribers list; false otherwise
-     */
-    bool
-    hasSession(SessionPtrType const& session, Key const& key)
-    {
-        if (!subscribers_.contains(key))
-            return false;
-
-        return subscribers_[key].contains(session);
-    }
-
-    /**
-     * @brief Sends the given message to all subscribers.
-     *
-     * @param message The message to send
-     * @param key The key for the subscription to send the message to
-     */
-    void
-    publish(std::shared_ptr<std::string> const& message, Key const& key)
-    {
-        boost::asio::post(strand_, [this, key, message]() {
-            if (!subscribers_.contains(key))
-                return;
-
-            sendToSubscribers(message, subscribers_[key], subCount_);
-        });
-    }
-
-    /**
-     * @return Total subscriber count on all streams in the collection.
-     */
-    std::uint64_t
-    count() const
-    {
-        return subCount_.value();
-    }
-};
-
-/**
- * @brief Manages subscriptions.
- */
 class SubscriptionManager {
-    util::Logger log_{"Subscriptions"};
-
-    std::vector<std::thread> workers_;
-    boost::asio::io_context ioc_;
-    std::optional<boost::asio::io_context::work> work_;
-
-    Subscription ledgerSubscribers_;
-    Subscription txSubscribers_;
-    Subscription txProposedSubscribers_;
-    Subscription manifestSubscribers_;
-    Subscription validationsSubscribers_;
-    Subscription bookChangesSubscribers_;
-
-    SubscriptionMap<ripple::AccountID> accountSubscribers_;
-    SubscriptionMap<ripple::AccountID> accountProposedSubscribers_;
-    SubscriptionMap<ripple::Book> bookSubscribers_;
-
+    std::reference_wrapper<boost::asio::io_context> ioContext_;
     std::shared_ptr<data::BackendInterface const> backend_;
 
+    impl::ForwardFeed manifestFeed_;
+    impl::ForwardFeed validationsFeed_;
+    impl::LedgerFeed ledgerFeed_;
+    impl::BookChangesFeed bookChangesFeed_;
+    impl::TransactionFeed transactionFeed_;
+    impl::ProposedTransactionFeed proposedTransactionFeed_;
+
 public:
-    /**
-     * @brief A factory function that creates a new subscription manager configured from the config provided.
-     *
-     * @param config The configuration to use
-     * @param backend The backend to use
-     */
-    static std::shared_ptr<SubscriptionManager>
-    make_SubscriptionManager(util::Config const& config, std::shared_ptr<data::BackendInterface const> const& backend)
-    {
-        auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
-        return std::make_shared<SubscriptionManager>(numThreads, backend);
-    }
-
-    /**
-     * @brief Creates a new instance of the subscription manager.
-     *
-     * @param numThreads The number of worker threads to manage subscriptions
-     * @param backend The backend to use
-     */
-    SubscriptionManager(std::uint64_t numThreads, std::shared_ptr<data::BackendInterface const> const& backend)
-        : ledgerSubscribers_(ioc_, "ledger")
-        , txSubscribers_(ioc_, "tx")
-        , txProposedSubscribers_(ioc_, "tx_proposed")
-        , manifestSubscribers_(ioc_, "manifest")
-        , validationsSubscribers_(ioc_, "validations")
-        , bookChangesSubscribers_(ioc_, "book_changes")
-        , accountSubscribers_(ioc_, "account")
-        , accountProposedSubscribers_(ioc_, "account_proposed")
-        , bookSubscribers_(ioc_, "book")
+    SubscriptionManager(boost::asio::io_context& ioContext, std::shared_ptr<data::BackendInterface> const& backend)
+        : ioContext_(ioContext)
         , backend_(backend)
+        , manifestFeed_(ioContext, "manifest")
+        , validationsFeed_(ioContext, "validations")
+        , ledgerFeed_(ioContext)
+        , bookChangesFeed_(ioContext)
+        , transactionFeed_(ioContext)
+        , proposedTransactionFeed_(ioContext)
     {
-        work_.emplace(ioc_);
-
-        // We will eventually want to clamp this to be the number of strands,
-        // since adding more threads than we have strands won't see any
-        // performance benefits
-        LOG(log_.info()) << "Starting subscription manager with " << numThreads << " workers";
-
-        workers_.reserve(numThreads);
-        for (auto i = numThreads; i > 0; --i)
-            workers_.emplace_back([this] { ioc_.run(); });
-    }
-
-    /** @brief Stops the worker threads of the subscription manager. */
-    ~SubscriptionManager()
-    {
-        work_.reset();
-
-        ioc_.stop();
-        for (auto& worker : workers_)
-            worker.join();
     }
 
     /**
-     * @brief Subscribe to the ledger stream.
-     *
-     * @param yield The coroutine context
-     * @param session The session to subscribe to the stream
-     * @return JSON object representing the first message to be sent to the new subscriber
+     * @brief Subscribe to the book changes feed.
+     */
+    void
+    subBookChanges(SubscriberSharedPtr const& subscriber);
+
+    /**
+     * @brief Unsubscribe to the book changes feed.
+     */
+    void
+    unsubBookChanges(SubscriberSharedPtr const& subscriber);
+
+    /**
+     * @brief Publish the book changes feed.
+     * @param lgrInfo: The current ledger header.
+     * @param transactions: The transactions in the current ledger.
+     */
+    void
+    pubBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions)
+        const;
+
+    /**
+     * @brief Subscribe to the proposed transactions feed.
+     */
+    void
+    subProposedTransactions(SubscriberSharedPtr const& subscriber);
+
+    /**
+     * @brief Unsubscribe to the proposed transactions feed.
+     */
+    void
+    unsubProposedTransactions(SubscriberSharedPtr const& subscriber);
+
+    /**
+     * @brief Subscribe to the proposed transactions feed, only receive the feed when particular account is affected.
+     */
+    void
+    subProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+
+    /**
+     * @brief Unsubscribe to the proposed transactions feed for particular account.
+     */
+    void
+    unsubProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+
+    /**
+     * @brief Forward the proposed transactions feed.
+     * @param receivedTxJson: The proposed transaction json.
+     */
+    void
+    forwardProposedTransaction(boost::json::object const& receivedTxJson);
+
+    /**
+     * @brief Subscribe to the ledger feed.
      */
     boost::json::object
-    subLedger(boost::asio::yield_context yield, SessionPtrType session);
+    subLedger(boost::asio::yield_context yield, SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Publish to the ledger stream.
-     *
-     * @param lgrInfo The ledger header to serialize
-     * @param fees The fees to serialize
-     * @param ledgerRange The ledger range this message applies to
-     * @param txnCount The total number of transactions to serialize
+     * @brief Unsubscribe to the ledger feed.
+     */
+    void
+    unsubLedger(SubscriberSharedPtr const& subscriber);
+
+    /**
+     * @brief Publish the ledger feed.
+     * @param lgrInfo: The ledger header.
+     * @param fees: The fees.
+     * @param ledgerRange: The ledger range.
+     * @param txnCount: The transaction count.
      */
     void
     pubLedger(
@@ -390,232 +148,152 @@ public:
         ripple::Fees const& fees,
         std::string const& ledgerRange,
         std::uint32_t txnCount
-    );
+    ) const;
 
     /**
-     * @brief Publish to the book changes stream.
-     *
-     * @param lgrInfo The ledger header to serialize
-     * @param transactions The transactions to serialize
+     * @brief Subscribe to the manifest feed.
      */
     void
-    pubBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions);
+    subManifest(SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Unsubscribe from the ledger stream.
-     *
-     * @param session The session to unsubscribe from the stream
+     * @brief Unsubscribe to the manifest feed.
      */
     void
-    unsubLedger(SessionPtrType session);
+    unsubManifest(SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Subscribe to the transactions stream.
-     *
-     * @param session The session to subscribe to the stream
+     * @brief Forward the manifest feed.
+     * @param manifestJson: The manifest json to forward.
      */
     void
-    subTransactions(SessionPtrType session);
+    forwardManifest(boost::json::object const& manifestJson) const;
 
     /**
-     * @brief Unsubscribe from the transactions stream.
-     *
-     * @param session The session to unsubscribe from the stream
+     * @brief Subscribe to the validation feed.
      */
     void
-    unsubTransactions(SessionPtrType session);
+    subValidation(SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Publish to the book changes stream.
-     *
-     * @param blobs The transactions to serialize
-     * @param lgrInfo The ledger header to serialize
+     * @brief Unsubscribe to the validation feed.
      */
     void
-    pubTransaction(data::TransactionAndMetadata const& blobs, ripple::LedgerHeader const& lgrInfo);
+    unsubValidation(SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Subscribe to the account changes stream.
-     *
-     * @param account The account to monitor changes for
-     * @param session The session to subscribe to the stream
+     * @brief Forward the validation feed.
+     * @param validationJson: The validation feed json to forward.
      */
     void
-    subAccount(ripple::AccountID const& account, SessionPtrType const& session);
+    forwardValidation(boost::json::object const& validationJson) const;
 
     /**
-     * @brief Unsubscribe from the account changes stream.
-     *
-     * @param account The account the stream is for
-     * @param session The session to unsubscribe from the stream
+     * @brief Subscribe to the transactions feed.
+     * @param apiVersion: The api version of feed to subscribe.
      */
     void
-    unsubAccount(ripple::AccountID const& account, SessionPtrType const& session);
+    subTransactions(SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
 
     /**
-     * @brief Subscribe to a specific book changes stream.
-     *
-     * @param book The book to monitor changes for
-     * @param session The session to subscribe to the stream
+     * @brief Unsubscribe to the transactions feed.
      */
     void
-    subBook(ripple::Book const& book, SessionPtrType session);
+    unsubTransactions(SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Unsubscribe from the specific book changes stream.
-     *
-     * @param book The book to stop monitoring changes for
-     * @param session The session to unsubscribe from the stream
+     * @brief Subscribe to the transactions feed, only receive the feed when particular account is affected.
+     * @param account: The account to watch.
+     * @param apiVersion: The api version of feed to subscribe.
      */
     void
-    unsubBook(ripple::Book const& book, SessionPtrType session);
+    subAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
 
     /**
-     * @brief Subscribe to the book changes stream.
-     *
-     * @param session The session to subscribe to the stream
+     * @brief Unsubscribe to the transactions feed for particular account.
+     * @param subscriber: The subscriber.
      */
     void
-    subBookChanges(SessionPtrType session);
+    unsubAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Unsubscribe from the book changes stream.
-     *
-     * @param session The session to unsubscribe from the stream
+     * @brief Subscribe to the transactions feed, only receive feed when particular order book is affected.
+     * @param book: The book to watch.
+     * @param apiVersion: The api version of feed to subscribe.
      */
     void
-    unsubBookChanges(SessionPtrType session);
+    subBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
 
     /**
-     * @brief Subscribe to the manifest stream.
-     *
-     * @param session The session to subscribe to the stream
+     * @brief Unsubscribe to the transactions feed for particular order book.
+     * @param book: The book to watch.
      */
     void
-    subManifest(SessionPtrType session);
+    unsubBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Unsubscribe from the manifest stream.
-     *
-     * @param session The session to unsubscribe from the stream
+     * @brief Forward the transactions feed.
+     * @param txMeta: The transaction and metadata.
+     * @param lgrInfo: The ledger header.
      */
     void
-    unsubManifest(SessionPtrType session);
+    pubTransaction(data::TransactionAndMetadata const& txMeta, ripple::LedgerHeader const& lgrInfo);
 
     /**
-     * @brief Subscribe to the validation stream.
-     *
-     * @param session The session to subscribe to the stream
-     */
-    void
-    subValidation(SessionPtrType session);
-
-    /**
-     * @brief Unsubscribe from the validation stream.
-     *
-     * @param session The session to unsubscribe from the stream
-     */
-    void
-    unsubValidation(SessionPtrType session);
-
-    /**
-     * @brief Publish proposed transactions and proposed accounts from a JSON response.
-     *
-     * @param response The JSON response to use
-     */
-    void
-    forwardProposedTransaction(boost::json::object const& response);
-
-    /**
-     * @brief Publish manifest updates from a JSON response.
-     *
-     * @param response The JSON response to use
-     */
-    void
-    forwardManifest(boost::json::object const& response);
-
-    /**
-     * @brief Publish validation updates from a JSON response.
-     *
-     * @param response The JSON response to use
-     */
-    void
-    forwardValidation(boost::json::object const& response);
-
-    /**
-     * @brief Subscribe to the proposed account stream.
-     *
-     * @param account The account to monitor
-     * @param session The session to subscribe to the stream
-     */
-    void
-    subProposedAccount(ripple::AccountID const& account, SessionPtrType session);
-
-    /**
-     * @brief Unsubscribe from the proposed account stream.
-     *
-     * @param account The account the stream is for
-     * @param session The session to unsubscribe from the stream
-     */
-    void
-    unsubProposedAccount(ripple::AccountID const& account, SessionPtrType session);
-
-    /**
-     * @brief Subscribe to the processed transactions stream.
-     *
-     * @param session The session to subscribe to the stream
-     */
-    void
-    subProposedTransactions(SessionPtrType session);
-
-    /**
-     * @brief Unsubscribe from the proposed transactions stream.
-     *
-     * @param session The session to unsubscribe from the stream
-     */
-    void
-    unsubProposedTransactions(SessionPtrType session);
-
-    /** @brief Clenup the session on removal. */
-    void
-    cleanup(SessionPtrType session);
-
-    /**
-     * @brief Generate a JSON report on the current state of the subscriptions.
-     *
-     * @return The report as a JSON object
+     * @brief Get the number of subscribers.
      */
     boost::json::object
     report() const
     {
         return {
-            {"ledger", ledgerSubscribers_.count()},
-            {"transactions", txSubscribers_.count()},
-            {"transactions_proposed", txProposedSubscribers_.count()},
-            {"manifests", manifestSubscribers_.count()},
-            {"validations", validationsSubscribers_.count()},
-            {"account", accountSubscribers_.count()},
-            {"accounts_proposed", accountProposedSubscribers_.count()},
-            {"books", bookSubscribers_.count()},
-            {"book_changes", bookChangesSubscribers_.count()},
+            {"ledger", ledgerFeed_.count()},
+            {"transactions", transactionFeed_.transactionSubCount()},
+            {"transactions_proposed", proposedTransactionFeed_.transactionSubcount()},
+            {"manifests", manifestFeed_.count()},
+            {"validations", validationsFeed_.count()},
+            {"account", transactionFeed_.accountSubCount()},
+            {"accounts_proposed", proposedTransactionFeed_.accountSubCount()},
+            {"books", transactionFeed_.bookSubCount()},
+            {"book_changes", bookChangesFeed_.count()},
         };
     }
-
-private:
-    using CleanupFunction = std::function<void(SessionPtrType const)>;
-
-    void
-    subscribeHelper(SessionPtrType const& session, Subscription& subs, CleanupFunction&& func);
-
-    template <typename Key>
-    void
-    subscribeHelper(SessionPtrType const& session, Key const& k, SubscriptionMap<Key>& subs, CleanupFunction&& func);
-
-    // This is how we chose to cleanup subscriptions that have been closed.
-    // Each time we add a subscriber, we add the opposite lambda that unsubscribes that subscriber when cleanup is
-    // called with the session that closed.
-    std::mutex cleanupMtx_;
-    std::unordered_map<SessionPtrType, std::vector<CleanupFunction>> cleanupFuncs_ = {};
 };
 
+/**
+ * @brief The help class to run the subscription manager. The container of io_context which is used to publish the
+ * feeds.
+ */
+class SubscriptionManagerRunner {
+    boost::asio::io_context ioContext_;
+    std::shared_ptr<SubscriptionManager> SubscriptionManager_;
+    util::Logger logger_{"Subscriptions"};
+    std::optional<boost::asio::io_context::work> work_;
+    std::vector<std::thread> workers_;
+
+public:
+    SubscriptionManagerRunner(util::Config const& config, std::shared_ptr<data::BackendInterface> const& backend)
+        : SubscriptionManager_(std::make_shared<SubscriptionManager>(ioContext_, backend))
+    {
+        auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
+        LOG(logger_.info()) << "Starting subscription manager with " << numThreads << " workers";
+        workers_.reserve(numThreads);
+        work_.emplace(ioContext_);
+        for (auto i = numThreads; i > 0; --i)
+            workers_.emplace_back([&] { ioContext_.run(); });
+    }
+
+    std::shared_ptr<SubscriptionManager>
+    get()
+    {
+        return SubscriptionManager_;
+    }
+
+    ~SubscriptionManagerRunner()
+    {
+        work_.reset();
+        for (auto& worker : workers_)
+            worker.join();
+        SubscriptionManager_.reset();
+    }
+};
 }  // namespace feed
