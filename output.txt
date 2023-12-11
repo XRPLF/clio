@@ -1,0 +1,2382 @@
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/data/cassandra/impl/FakesAndMocks.h:47:5: error: method 'value' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   46 |     FakeResult
+      |     static 
+   47 |     value() const
+      |     ^       ~~~~~
+../unittests/data/cassandra/impl/FakesAndMocks.h:69:5: error: method 'await' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   68 |     FakeMaybeError
+      |     static 
+   69 |     await() const
+      |     ^       ~~~~~
+../unittests/data/cassandra/impl/FakesAndMocks.h:107:5: error: method 'calculateDelay' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  106 |     std::chrono::milliseconds
+      |     static 
+  107 |     calculateDelay(uint32_t /* attempt */)
+      |     ^
+../unittests/data/cassandra/impl/FakesAndMocks.h:113:5: error: method 'shouldRetry' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  112 |     bool
+      |     static 
+  113 |     shouldRetry(CassandraError) const
+      |     ^                           ~~~~~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:74:5: error: method 'spec' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   73 |     rpc::RpcSpecConstRef
+      |     static 
+   74 |     spec([[maybe_unused]] uint32_t apiVersion) const
+      |     ^                                          ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:87:5: error: method 'process' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   86 |     Result
+      |     static 
+   87 |     process(Input input, [[maybe_unused]] rpc::Context const& ctx) const
+      |     ^                                                              ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:99:5: error: method 'process' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   98 |     Result
+      |     static 
+   99 |     process([[maybe_unused]] rpc::Context const& ctx) const
+      |     ^                                                 ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:113:5: error: method 'spec' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  112 |     rpc::RpcSpecConstRef
+      |     static 
+  113 |     spec([[maybe_unused]] uint32_t apiVersion) const
+      |     ^                                          ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:126:5: error: method 'process' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  125 |     Result
+      |     static 
+  126 |     process([[maybe_unused]] Input input, [[maybe_unused]] rpc::Context const& ctx) const
+      |     ^                                                                               ~~~~~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+/__w/clio/clio/unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+/__w/clio/clio/unittests/util/MockWsBase.h:33:24: error: rvalue reference parameter 'msg' is never moved from inside the function body [cppcoreguidelines-rvalue-reference-param-not-moved,-warnings-as-errors]
+   33 |     send(std::string&& msg, boost::beast::http::status = boost::beast::http::status::ok) override
+      |                        ^
+/__w/clio/clio/unittests/util/MockWsBase.h:52:23: error: rvalue reference parameter '' is never moved from inside the function body [cppcoreguidelines-rvalue-reference-param-not-moved,-warnings-as-errors]
+   52 |     send(std::string&&, boost::beast::http::status = boost::beast::http::status::ok) override
+      |                       ^
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+/__w/clio/clio/unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+/__w/clio/clio/unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:74:5: error: method 'spec' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   73 |     rpc::RpcSpecConstRef
+      |     static 
+   74 |     spec([[maybe_unused]] uint32_t apiVersion) const
+      |     ^                                          ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:87:5: error: method 'process' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   86 |     Result
+      |     static 
+   87 |     process(Input input, [[maybe_unused]] rpc::Context const& ctx) const
+      |     ^                                                              ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:99:5: error: method 'process' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   98 |     Result
+      |     static 
+   99 |     process([[maybe_unused]] rpc::Context const& ctx) const
+      |     ^                                                 ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:113:5: error: method 'spec' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  112 |     rpc::RpcSpecConstRef
+      |     static 
+  113 |     spec([[maybe_unused]] uint32_t apiVersion) const
+      |     ^                                          ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:126:5: error: method 'process' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  125 |     Result
+      |     static 
+  126 |     process([[maybe_unused]] Input input, [[maybe_unused]] rpc::Context const& ctx) const
+      |     ^                                                                               ~~~~~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeAmendmentBlockAction.h:28:5: error: method 'operator()' can be made const [readability-make-member-function-const,-warnings-as-errors]
+   28 |     operator()()
+      |     ^           
+      |                  const
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:74:5: error: method 'spec' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   73 |     rpc::RpcSpecConstRef
+      |     static 
+   74 |     spec([[maybe_unused]] uint32_t apiVersion) const
+      |     ^                                          ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:87:5: error: method 'process' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   86 |     Result
+      |     static 
+   87 |     process(Input input, [[maybe_unused]] rpc::Context const& ctx) const
+      |     ^                                                              ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:99:5: error: method 'process' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   98 |     Result
+      |     static 
+   99 |     process([[maybe_unused]] rpc::Context const& ctx) const
+      |     ^                                                 ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:113:5: error: method 'spec' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  112 |     rpc::RpcSpecConstRef
+      |     static 
+  113 |     spec([[maybe_unused]] uint32_t apiVersion) const
+      |     ^                                          ~~~~~
+../unittests/rpc/handlers/impl/FakesAndMocks.h:126:5: error: method 'process' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  125 |     Result
+      |     static 
+  126 |     process([[maybe_unused]] Input input, [[maybe_unused]] rpc::Context const& ctx) const
+      |     ^                                                                               ~~~~~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/MockWsBase.h:33:24: error: rvalue reference parameter 'msg' is never moved from inside the function body [cppcoreguidelines-rvalue-reference-param-not-moved,-warnings-as-errors]
+   33 |     send(std::string&& msg, boost::beast::http::status = boost::beast::http::status::ok) override
+      |                        ^
+../unittests/util/MockWsBase.h:52:23: error: rvalue reference parameter '' is never moved from inside the function body [cppcoreguidelines-rvalue-reference-param-not-moved,-warnings-as-errors]
+   52 |     send(std::string&&, boost::beast::http::status = boost::beast::http::status::ok) override
+      |                       ^
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+/__w/clio/clio/unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+/__w/clio/clio/unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+/__w/clio/clio/unittests/util/MockWsBase.h:33:24: error: rvalue reference parameter 'msg' is never moved from inside the function body [cppcoreguidelines-rvalue-reference-param-not-moved,-warnings-as-errors]
+   33 |     send(std::string&& msg, boost::beast::http::status = boost::beast::http::status::ok) override
+      |                        ^
+/__w/clio/clio/unittests/util/MockWsBase.h:52:23: error: rvalue reference parameter '' is never moved from inside the function body [cppcoreguidelines-rvalue-reference-param-not-moved,-warnings-as-errors]
+   52 |     send(std::string&&, boost::beast::http::status = boost::beast::http::status::ok) override
+      |                       ^
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/data/cassandra/impl/FakesAndMocks.h:47:5: error: method 'value' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   46 |     FakeResult
+      |     static 
+   47 |     value() const
+      |     ^       ~~~~~
+../unittests/data/cassandra/impl/FakesAndMocks.h:69:5: error: method 'await' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+   68 |     FakeMaybeError
+      |     static 
+   69 |     await() const
+      |     ^       ~~~~~
+../unittests/data/cassandra/impl/FakesAndMocks.h:107:5: error: method 'calculateDelay' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  106 |     std::chrono::milliseconds
+      |     static 
+  107 |     calculateDelay(uint32_t /* attempt */)
+      |     ^
+../unittests/data/cassandra/impl/FakesAndMocks.h:113:5: error: method 'shouldRetry' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  112 |     bool
+      |     static 
+  113 |     shouldRetry(CassandraError) const
+      |     ^                           ~~~~~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/MockWsBase.h:33:24: error: rvalue reference parameter 'msg' is never moved from inside the function body [cppcoreguidelines-rvalue-reference-param-not-moved,-warnings-as-errors]
+   33 |     send(std::string&& msg, boost::beast::http::status = boost::beast::http::status::ok) override
+      |                        ^
+../unittests/util/MockWsBase.h:52:23: error: rvalue reference parameter '' is never moved from inside the function body [cppcoreguidelines-rvalue-reference-param-not-moved,-warnings-as-errors]
+   52 |     send(std::string&&, boost::beast::http::status = boost::beast::http::status::ok) override
+      |                       ^
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/FakeFetchResponse.h:138:5: error: method 'transactions_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  138 |     transactions_size()
+      |     ^                  
+      |                         const
+../unittests/util/FakeFetchResponse.h:149:5: error: method 'objects_size' can be made const [readability-make-member-function-const,-warnings-as-errors]
+  149 |     objects_size()
+      |     ^             
+      |                    const
+../unittests/util/FakeFetchResponse.h:167:23: error: pass by value and use std::move [modernize-pass-by-value,-warnings-as-errors]
+   24 |     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
+      |                       ^
+   25 |         : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+      |                                                                                      
+      |                                                                                  std::move( )
+../unittests/util/FakeFetchResponse.h:179:5: error: method 'transactions_list' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  178 |     FakeTransactionsList
+      |     static 
+  179 |     transactions_list() const
+      |     ^                   ~~~~~
+../unittests/util/FakeFetchResponse.h:185:5: error: method 'ledger_objects' can be made static [readability-convert-member-functions-to-static,-warnings-as-errors]
+  184 |     FakeObjectsList
+      |     static 
+  185 |     ledger_objects() const
+      |     ^                ~~~~~
+../unittests/util/Fixtures.h:184:9: error: variable 'cfg' of type 'util::Config' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  184 |         util::Config cfg;
+      |         ^
+      |                      const 
+../unittests/util/MockSubscriptionManager.h:31:5: error: use '= default' to define a trivial default constructor [modernize-use-equals-default,-warnings-as-errors]
+   31 |     MockSubscriptionManager()
+      |     ^
+   32 |     {
+      |     ~
+      |     = default;
+   33 |     }
+      |     ~
+../unittests/util/TestHttpSyncClient.h:130:38: error: std::move of the const expression has no effect; remove std::move() [performance-move-const-arg,-warnings-as-errors]
+  130 |                 req.set(header.name, std::move(header.value));
+      |                                      ^~~~~~~~~~            ~
+../unittests/util/TestHttpSyncClient.h:179:13: error: variable 'ec' of type 'boost::beast::error_code' (aka 'boost::system::error_code') can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+  179 |             boost::beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
+      |             ^
+      |                                      const 

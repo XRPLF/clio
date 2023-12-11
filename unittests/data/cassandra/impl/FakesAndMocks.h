@@ -43,8 +43,8 @@ struct FakeResultOrError {
         return err;
     }
 
-    FakeResult
-    value() const
+    static FakeResult
+    value() 
     {
         return FakeResult{};
     }
@@ -65,8 +65,8 @@ struct FakeFuture {
         return data;
     }
 
-    FakeMaybeError
-    await() const
+    static FakeMaybeError
+    await() 
     {
         return {};
     }
@@ -103,14 +103,14 @@ struct MockHandle {
 struct FakeRetryPolicy {
     FakeRetryPolicy(boost::asio::io_context&){};  // required by concept
 
-    std::chrono::milliseconds
+    static std::chrono::milliseconds
     calculateDelay(uint32_t /* attempt */)
     {
         return std::chrono::milliseconds{1};
     }
 
-    bool
-    shouldRetry(CassandraError) const
+    static bool
+    shouldRetry(CassandraError) 
     {
         return false;
     }
