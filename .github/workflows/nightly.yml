@@ -125,9 +125,15 @@ jobs:
             mv ${d}/${archive_name} ./
             rm -r $d
             sha256sum ./$archive_name > ./${archive_name}.sha256sum
-            cat ./$archive_name >> "${RUNNER_TEMP}/nightly_notes.md"
+            cat ./$archive_name.sha256sum >> "${RUNNER_TEMP}/nightly_notes.md"
           done
           echo '```' >> "${RUNNER_TEMP}/nightly_notes.md"
+
+      - name: Remove current nightly release and nightly tag
+        shell: bash
+        run: |
+          gh release delete nightly --yes || true
+          git push origin :nightly || true
 
       - name: Publish nightly release
         shell: bash
