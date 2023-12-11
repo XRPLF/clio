@@ -40,6 +40,7 @@ jobs:
         with:
             disable_ccache: true
 
+
       - name: Setup conan
         uses: ./.github/actions/setup_conan
         id: conan
@@ -118,23 +119,23 @@ jobs:
       - name: Prepare files
         shell: bash
         run: |
+          cp ${{ github.workspace }}/.github/workflows/nightly_notes.md "${RUNNER_TEMP}/nightly_notes.md"
           cd nightly_release
           rm -r clio_tests*
-          CLIO_SHA256_SUMS=''
           for d in $(ls); do
             archive_name=$(ls $d)
             mv ${d}/${archive_name} ./
             rm -r $d
             sha256sum ./$archive_name > ./${archive_name}.sha256sum
-            CLIO_SHA256_SUMS="${CLIO_SHA256_SUMS}\n$(cat ./${archive_name}.sha256sum)"
+            cat ./$archive_name >> "${RUNNER_TEMP}/nightly_notes.md"
           done
-          echo $CLIO_SHA256_SUMS >> $GITHUB_ENV
+          echo '```' >> "${RUNNER_TEMP}/nightly_notes.md"
 
       - name: Publish nightly release
         shell: bash
         run: |
           gh release create nightly --prerelease --title "Clio development (nightly) build" \
-            --target $GITHUB_SHA --notes-file "${{ github.workspace }}/.github/workflows/nightly_notes.md" \
+            --target $GITHUB_SHA --notes-file "${RUNNER_TEMP}/nightly_notes.md" \
             ./nightly_release/clio_server*
 
 
