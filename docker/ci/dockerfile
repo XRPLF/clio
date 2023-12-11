@@ -10,13 +10,13 @@ ENV GCC_VERSION=11 \
     GH_VERSION=2.40.0
  
 # Add repositories
-RUN apt-get -qq update \
-    && apt-get -qq install -y --no-install-recommends --no-install-suggests gnupg wget curl software-properties-common \
-    && add-apt-repository -y ppa:ubuntu-toolchain-r/test \
-    && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - \
-    && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
-    && echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-${LLVM_TOOLS_VERSION} main" >> /etc/apt/sources.list \
-    && wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+RUN apt-get -qq update
+RUN apt-get -qq install -y --no-install-recommends --no-install-suggests gnupg wget curl software-properties-common
+RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test
+RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
+RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+RUN echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-${LLVM_TOOLS_VERSION} main" >> /etc/apt/sources.list
+RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add
 
 # Install packages
 RUN apt update -qq \
