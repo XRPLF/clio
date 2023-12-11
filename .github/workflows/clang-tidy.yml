@@ -75,8 +75,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo -e 'Clang-tidy found issues in the code:\n' > issue.md
-          job_id=$(gh run view ${{ github.run_id }} | grep '${{ github.job }} in' | sed 's/.*(ID \(.*\))/\1/')
-          echo -e "List of the issues found: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${job_id}" >> issue.md
+          echo -e "List of the issues found: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/" >> issue.md
           gh issue create --assignee 'cindyyan317,godexsoft,kuznetsss' --label bug --title 'Clang-tidy found bugs in code🐛' --body-file ./issue.md > create_issue.log
           created_issue=$(cat create_issue.log | sed 's|.*/||')
           echo "created_issue=$created_issue" >> $GITHUB_OUTPUT
