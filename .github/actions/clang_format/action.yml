@@ -18,6 +18,8 @@ runs:
       shell: bash
 
     - name: Run formatter
+      continue-on-error: true
+      id: run_formatter
       run: |
         ./.githooks/pre-commit
       shell: bash
@@ -27,3 +29,8 @@ runs:
       shell: bash
       run: |
         git diff --color --exit-code | tee "clang-format.patch"
+
+    - name: Fail job
+      if: ${{ steps.run_formatter.outcome != 'success' }}
+      shell: bash
+      run: exit 1
