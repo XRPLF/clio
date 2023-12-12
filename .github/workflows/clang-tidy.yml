@@ -80,6 +80,13 @@ jobs:
           echo "created_issue=$created_issue" >> $GITHUB_OUTPUT
           rm create_issue.log issue.md
 
+      - uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.ACTIONS_GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.ACTIONS_GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
       - name: Create PR with fixes
         if: ${{ steps.run_clang_tidy.outcome != 'success' && github.event_name == 'schedule' }}
         uses: peter-evans/create-pull-request@v5
@@ -88,6 +95,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         with:
           commit-message: '[CI] clang-tidy auto fixes'
+          commiter: Clio CI <skuznetsov@ripple.com>
           branch: 'clang_tidy/autofix'
           branch-suffix: timestamp
           delete-branch: true
