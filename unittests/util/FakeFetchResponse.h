@@ -177,13 +177,13 @@ struct FakeFetchResponse {
     }
 
     static FakeTransactionsList
-    transactions_list() 
+    transactions_list()
     {
         return {};
     }
 
     static FakeObjectsList
-    ledger_objects() 
+    ledger_objects()
     {
         return {};
     }

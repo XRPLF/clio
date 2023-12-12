@@ -19,7 +19,13 @@
 
 #pragma once
 
+#include "util/Taggable.h"
 #include "web/interface/ConnectionBase.h"
+
+#include <boost/beast/http/status.hpp>
+
+#include <memory>
+#include <string>
 
 struct MockSession : public web::ConnectionBase {
     std::string message;
@@ -30,6 +36,7 @@ struct MockSession : public web::ConnectionBase {
     }
 
     void
+    // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
     send(std::string&& msg, boost::beast::http::status = boost::beast::http::status::ok) override
     {
         message += msg;
@@ -49,6 +56,7 @@ struct MockDeadSession : public web::ConnectionBase {
     }
 
     void
+    // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
     send(std::string&&, boost::beast::http::status = boost::beast::http::status::ok) override
     {
     }
