@@ -13,8 +13,7 @@ jobs:
   clang_tidy:
     runs-on: [self-hosted, Linux]
     container:
-      image: conanio/gcc11:1.61.0
-      options: --user root
+      image: rippleci/clio_ci:latest
     permissions:
       contents: write
       issues: write
@@ -68,7 +67,7 @@ jobs:
           rm output.txt
 
       - name: Create an issue
-        if: ${{ steps.run_clang_tidy.outcome != 'success' }}
+        if: ${{ steps.run_clang_tidy.outcome != 'success' && github.event_name == 'schedule' }}
         id: create_issue
         shell: bash
         env:
@@ -82,7 +81,7 @@ jobs:
           rm create_issue.log issue.md
 
       - name: Create PR with fixes
-        if: ${{ steps.run_clang_tidy.outcome != 'success' }}
+        if: ${{ steps.run_clang_tidy.outcome != 'success' && github.event_name == 'schedule' }}
         uses: peter-evans/create-pull-request@v5
         env:
           GH_REPO: ${{ github.repository }}
