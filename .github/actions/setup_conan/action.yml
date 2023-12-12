@@ -31,9 +31,6 @@ runs:
       shell: bash
       id: conan_setup_linux
       run: |
-        conan profile new default --detect
-        conan profile update settings.compiler.cppstd=20 default
-        conan profile update settings.compiler.libcxx=libstdc++11 default
         echo "created_conan_profile=default" >> $GITHUB_OUTPUT
 
     - name: Export output variable

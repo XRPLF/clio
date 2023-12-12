@@ -25,8 +25,8 @@ jobs:
         include:
           - os: Linux
             container:
-              image: conanio/gcc11:1.61.0
-              options: --user root
+              image: rippleci/clio_ci:latest
+              # options: --user root
           - os: macOS
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
@@ -59,7 +59,6 @@ jobs:
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           build_type: 'Release'
 
-
       - name: Build Clio
         uses: ./.github/actions/build_clio
 
@@ -81,6 +80,13 @@ jobs:
           name: clio_tests_${{ runner.os }}
           path: build/clio_tests
 
+      - name: Upload compile_commans
+        if: ${{ runner.os == 'macOS' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: compile_commans_${{ runner.os }}
+          path: build/compile_commands.json
+
       - name: Save cache
         uses: ./.github/actions/save_cache
         with:
@@ -99,8 +105,8 @@ jobs:
         include:
           - os: Linux
             container:
-              image: conanio/gcc11:1.61.0
-              options: --user root
+              image: rippleci/clio_ci:latest
+              # options: --user root
           - os: macOS
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}

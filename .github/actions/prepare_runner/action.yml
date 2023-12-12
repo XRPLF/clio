@@ -13,36 +13,10 @@ runs:
       run: |
           brew install llvm@14 pkg-config ninja bison cmake ccache jq gh
 
-    - name: Install packages on linux
-      if: ${{ runner.os == 'Linux' }}
-      shell: bash
-      run: |
-          echo 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-17 main' >> /etc/apt/sources.list
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
-          apt update -qq
-          apt install -y jq clang-tidy-17 clang-tools-17
-
-    - name: Install gh on Linux
-      if: ${{ runner.os == 'Linux' }}
-      shell: bash
-      run: |
-        wget https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz
-        tar xf gh_2.40.0_linux_amd64.tar.gz
-        sudo mv gh_2.40.0_linux_amd64/bin/gh /usr/bin/gh
-        rm -r gh_2.40.0_linux_amd64*
-
-    - name: Install ccache on Linux
-      if: ${{ runner.os == 'Linux' && inputs.disable_ccache != 'true' }}
-      shell: bash
-      run: |
-          wget https://github.com/ccache/ccache/releases/download/v4.8.3/ccache-4.8.3-linux-x86_64.tar.xz
-          tar xf ./ccache-4.8.3-linux-x86_64.tar.xz
-          mv ./ccache-4.8.3-linux-x86_64/ccache /usr/bin/ccache
-
-    - name: Fix git permissions on Linux
-      if: ${{ runner.os == 'Linux' }}
-      shell: bash
-      run: git config --global --add safe.directory $PWD
+    # - name: Fix git permissions on Linux
+    #   if: ${{ runner.os == 'Linux' }}
+    #   shell: bash
+    #   run: git config --global --add safe.directory $PWD
 
     - name: Set env variables for macOS
       if: ${{ runner.os == 'macOS' }}
@@ -50,13 +24,6 @@ runs:
       run: |
         echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV
         echo "CONAN_USER_HOME=${{ github.workspace }}" >> $GITHUB_ENV
-
-    - name: Set env variables for Linux
-      if: ${{ runner.os == 'Linux' }}
-      shell: bash
-      run: |
-        echo "CCACHE_DIR=/root/.ccache" >> $GITHUB_ENV
-        echo "CONAN_USER_HOME=/root/" >> $GITHUB_ENV
 
     - name: Set CCACHE_DISABLE=1
       if: ${{ inputs.disable_ccache == 'true' }}
