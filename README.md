@@ -1,4 +1,7 @@
 # Clio
+![Build status](https://github.com/XRPLF/clio/actions/workflows/build.yml/badge.svg?branch=develop)
+![Nightly release status](https://github.com/XRPLF/clio/actions/workflows/nightly.yml/badge.svg?branch=develop)
+![Clang-tidy checks status](https://github.com/XRPLF/clio/actions/workflows/clang-tidy.yml/badge.svg?branch=develop)
 
 Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. 
 Validated historical ledger and transaction data are stored in a more space-efficient format,
@@ -91,7 +94,7 @@ conan remove -f xrpl
 Navigate to Clio's root directory and perform
 ```sh
 mkdir build && cd build
-conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True
+conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True -o lint=False
 cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --parallel 8 # or without the number if you feel extra adventurous
 ```
@@ -100,6 +103,18 @@ If all goes well, `conan install` will find required packages and `cmake` will d
 > **Tip:** You can omit the `-o tests=True` in `conan install` command above if you don't want to build `clio_tests`.
 
 > **Tip:** To generate a Code Coverage report, include `-o coverage=True` in the `conan install` command above, along with `-o tests=True` to enable tests. After running the `cmake` commands, execute `make clio_tests-ccov`. The coverage report will be found at `clio_tests-llvm-cov/index.html`.
+
+## Building Clio with Docker
+
+It is possible to build Clio using docker if you don't want to install all the dependencies on your machine.
+```sh
+docker run -it rippleci/clio_ci:latest
+git clone https://github.com/XRPLF/clio
+mkdir build && cd build
+conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True -o lint=False
+cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --parallel 8 # or without the number if you feel extra adventurous
+```
 
 ## Running
 ```sh

@@ -1,4 +1,4 @@
-name: Build Clio
+name: Build
 on:
   push:
     branches: [master, release/*, develop]

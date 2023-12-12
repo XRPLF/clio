@@ -1,4 +1,4 @@
-name: Nightly Clio build and testing
+name: Nightly release
 on:
   schedule:
     - cron:  '0 5 * * 1-5'
