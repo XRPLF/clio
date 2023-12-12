@@ -13,10 +13,10 @@ runs:
       run: |
           brew install llvm@14 pkg-config ninja bison cmake ccache jq gh
 
-    # - name: Fix git permissions on Linux
-    #   if: ${{ runner.os == 'Linux' }}
-    #   shell: bash
-    #   run: git config --global --add safe.directory $PWD
+    - name: Fix git permissions on Linux
+      if: ${{ runner.os == 'Linux' }}
+      shell: bash
+      run: git config --global --add safe.directory $PWD
 
     - name: Set env variables for macOS
       if: ${{ runner.os == 'macOS' }}
@@ -24,6 +24,13 @@ runs:
       run: |
         echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV
         echo "CONAN_USER_HOME=${{ github.workspace }}" >> $GITHUB_ENV
+
+    - name: Set env variables for Linux
+      if: ${{ runner.os == 'Linux' }}
+      shell: bash
+      run: |
+        echo "CCACHE_DIR=/root/.ccache" >> $GITHUB_ENV
+        echo "CONAN_USER_HOME=/root/" >> $GITHUB_ENV
 
     - name: Set CCACHE_DISABLE=1
       if: ${{ inputs.disable_ccache == 'true' }}
