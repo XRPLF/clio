@@ -44,7 +44,7 @@ struct FakeResultOrError {
     }
 
     static FakeResult
-    value() 
+    value()
     {
         return FakeResult{};
     }
@@ -66,7 +66,7 @@ struct FakeFuture {
     }
 
     static FakeMaybeError
-    await() 
+    await()
     {
         return {};
     }
@@ -110,7 +110,7 @@ struct FakeRetryPolicy {
     }
 
     static bool
-    shouldRetry(CassandraError) 
+    shouldRetry(CassandraError)
     {
         return false;
     }

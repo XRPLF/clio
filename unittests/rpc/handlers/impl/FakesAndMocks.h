@@ -71,7 +71,7 @@ public:
     using Result = rpc::HandlerReturnType<Output>;
 
     static rpc::RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) 
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         using namespace rpc::validation;
 
@@ -84,7 +84,7 @@ public:
     }
 
     static Result
-    process(Input input, [[maybe_unused]] rpc::Context const& ctx) 
+    process(Input input, [[maybe_unused]] rpc::Context const& ctx)
     {
         return Output{input.hello + '_' + std::to_string(input.limit.value_or(0))};
     }
@@ -96,7 +96,7 @@ public:
     using Result = rpc::HandlerReturnType<Output>;
 
     static Result
-    process([[maybe_unused]] rpc::Context const& ctx) 
+    process([[maybe_unused]] rpc::Context const& ctx)
     {
         return Output{"test"};
     }
@@ -110,7 +110,7 @@ public:
     using Result = rpc::HandlerReturnType<Output>;
 
     static rpc::RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) 
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         using namespace rpc::validation;
 
@@ -123,7 +123,7 @@ public:
     }
 
     static Result
-    process([[maybe_unused]] Input input, [[maybe_unused]] rpc::Context const& ctx) 
+    process([[maybe_unused]] Input input, [[maybe_unused]] rpc::Context const& ctx)
     {
         // always fail
         return rpc::Error{rpc::Status{"Very custom error"}};
