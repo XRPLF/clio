@@ -3,6 +3,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 
 USER root
+WORKDIR /root/
 
 ENV GCC_VERSION=11 \
     CCACHE_VERSION=4.8.3 \
@@ -51,16 +52,11 @@ RUN wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VER
 # Clean up
 RUN rm -rf  /tmp/* /var/tmp/*
 
-# Add clio user
-RUN useradd -ms /bin/bash clio \
-    && echo 'clio ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
-USER clio
-WORKDIR /home/clio
-
-# Setup environment
-ENV CCACHE_DIR=/home/clio/.ccache \
-    CONAN_USER_HOME=/home/clio/
+WORKDIR /root/
+# Using root by default is not very secure but github checkout action doesn't work with any other user
+# https://github.com/actions/checkout/issues/956
+# And Github Actions doc recommends using root
+# https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
 
 # Setup conan
 RUN conan profile new default --detect \
