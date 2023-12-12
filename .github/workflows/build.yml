@@ -26,7 +26,6 @@ jobs:
           - os: Linux
             container:
               image: rippleci/clio_ci:latest
-              options: --user root
           - os: macOS
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
