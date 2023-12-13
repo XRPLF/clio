@@ -19,16 +19,38 @@
 
 #pragma once
 
+#include "data/BackendInterface.h"
 #include "feed/SubscriptionManager.h"
 #include "rpc/Errors.h"
 #include "rpc/Factories.h"
+#include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/impl/APIVersionParser.h"
 #include "util/JsonUtils.h"
 #include "util/Profiler.h"
+#include "util/Taggable.h"
+#include "util/config/Config.h"
+#include "util/log/Logger.h"
 #include "web/impl/ErrorHandling.h"
+#include "web/interface/ConnectionBase.h"
 
+#include <boost/asio/spawn.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/json/array.hpp>
+#include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/json/serialize.hpp>
+#include <boost/system/system_error.hpp>
+#include <ripple/protocol/jss.h>
+
+#include <chrono>
+#include <exception>
+#include <functional>
+#include <memory>
+#include <ratio>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace web {
 
@@ -104,11 +126,13 @@ public:
         } catch (boost::system::system_error const& ex) {
             // system_error thrown when json parsing failed
             rpcEngine_->notifyBadSyntax();
-            web::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
+            web::detail::ErrorHelper(connection).sendJsonParsingError();
+            LOG(log_.warn()) << "Error parsing JSON: " << ex.what() << ". For request: " << request;
         } catch (std::invalid_argument const& ex) {
             // thrown when json parses something that is not an object at top level
             rpcEngine_->notifyBadSyntax();
-            web::detail::ErrorHelper(connection).sendJsonParsingError(ex.what());
+            LOG(log_.warn()) << "Invalid argument error: " << ex.what() << ". For request: " << request;
+            web::detail::ErrorHelper(connection).sendJsonParsingError();
         } catch (std::exception const& ex) {
             LOG(perfLog_.error()) << connection->tag() << "Caught exception: " << ex.what();
             rpcEngine_->notifyInternalError();
