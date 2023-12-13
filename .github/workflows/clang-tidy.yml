@@ -92,10 +92,10 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         env:
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.SIGN_COMMIT_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         with:
           commit-message: '[CI] clang-tidy auto fixes'
-          commiter: Clio CI <skuznetsov@ripple.com>
+          committer: Clio CI <skuznetsov@ripple.com>
           branch: 'clang_tidy/autofix'
           branch-suffix: timestamp
           delete-branch: true
