@@ -67,7 +67,7 @@ jobs:
           rm output.txt
 
       - name: Create an issue
-        if: ${{ steps.run_clang_tidy.outcome != 'success' && github.event_name == 'schedule' }}
+        if: ${{ steps.run_clang_tidy.outcome != 'success' }}
         id: create_issue
         shell: bash
         env:
@@ -88,11 +88,11 @@ jobs:
           git_commit_gpgsign: true
 
       - name: Create PR with fixes
-        if: ${{ steps.run_clang_tidy.outcome != 'success' && github.event_name == 'schedule' }}
+        if: ${{ steps.run_clang_tidy.outcome != 'success' }}
         uses: peter-evans/create-pull-request@v5
         env:
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.SIGN_COMMIT_TOKEN }}
         with:
           commit-message: '[CI] clang-tidy auto fixes'
           commiter: Clio CI <skuznetsov@ripple.com>
@@ -100,8 +100,9 @@ jobs:
           branch-suffix: timestamp
           delete-branch: true
           title: '[CI] clang-tidy auto fixes'
-          body: 'Fixes #${{ steps.create_issue.outputs.created_issue }}. Please review and commit clang-tidy fixes'
+          body: 'Fixes #${{ steps.create_issue.outputs.created_issue }}. Please review and commit clang-tidy fixes.'
           reviewers: 'cindyyan317,godexsoft,kuznetsss'
+          push-to-fork: 'kuznetsss/clio'
 
       - name: Fail the job
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
