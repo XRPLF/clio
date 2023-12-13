@@ -102,7 +102,6 @@ jobs:
           title: '[CI] clang-tidy auto fixes'
           body: 'Fixes #${{ steps.create_issue.outputs.created_issue }}. Please review and commit clang-tidy fixes.'
           reviewers: 'cindyyan317,godexsoft,kuznetsss'
-          push-to-fork: 'kuznetsss/clio'
 
       - name: Fail the job
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
