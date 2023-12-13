@@ -27,7 +27,6 @@
 #include <boost/asio/ssl/stream_base.hpp>
 #include <boost/asio/ssl/verify_context.hpp>
 #include <boost/asio/ssl/verify_mode.hpp>
-#include <boost/beast.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
@@ -38,7 +37,6 @@
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
-#include <boost/beast/ssl.hpp>
 #include <boost/beast/ssl/ssl_stream.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
