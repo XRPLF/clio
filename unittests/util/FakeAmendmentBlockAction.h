@@ -25,7 +25,7 @@ struct FakeAmendmentBlockAction {
     std::reference_wrapper<std::size_t> callCount;
 
     void
-    operator()()
+    operator()() const
     {
         ++(callCount.get());
     }

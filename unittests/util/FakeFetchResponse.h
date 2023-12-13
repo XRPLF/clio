@@ -21,6 +21,7 @@
 
 #include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 class FakeBook {
@@ -135,7 +136,7 @@ class FakeTransactionsList {
 
 public:
     std::size_t
-    transactions_size()
+    transactions_size() const
     {
         return size_;
     }
@@ -146,7 +147,7 @@ class FakeObjectsList {
 
 public:
     std::size_t
-    objects_size()
+    objects_size() const
     {
         return size_;
     }
@@ -165,7 +166,7 @@ struct FakeFetchResponse {
     }
 
     FakeFetchResponse(std::string blob, uint32_t id = 0, bool objectNeighborsIncluded = false)
-        : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{blob}
+        : id{id}, objectNeighborsIncluded{objectNeighborsIncluded}, ledgerHeader{std::move(blob)}
     {
     }
 
@@ -175,14 +176,14 @@ struct FakeFetchResponse {
         return other.id == id;
     }
 
-    FakeTransactionsList
-    transactions_list() const
+    static FakeTransactionsList
+    transactions_list() 
     {
         return {};
     }
 
-    FakeObjectsList
-    ledger_objects() const
+    static FakeObjectsList
+    ledger_objects() 
     {
         return {};
     }
