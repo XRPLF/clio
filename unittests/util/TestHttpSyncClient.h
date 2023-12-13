@@ -127,7 +127,7 @@ public:
                                                                         )](boost::beast::websocket::request_type& req) {
             req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
             for (auto& header : additionalHeaders) {
-                req.set(header.name, std::move(header.value));
+                req.set(header.name, header.value);
             }
         }));
 
@@ -176,7 +176,7 @@ struct HttpsSyncClient {
         if (!SSL_set_tlsext_host_name(stream.native_handle(), host.c_str()))
 #pragma GCC diagnostic pop
         {
-            boost::beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
+            boost::beast::error_code const ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
             throw boost::beast::system_error{ec};
         }
 

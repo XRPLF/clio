@@ -181,7 +181,7 @@ struct MockBackendTest : virtual public NoLoggerFixture {
     SetUp() override
     {
         NoLoggerFixture::SetUp();
-        util::Config cfg;
+        util::Config const cfg;
         mockBackendPtr = std::make_shared<MockBackend>(cfg);
     }
     void
