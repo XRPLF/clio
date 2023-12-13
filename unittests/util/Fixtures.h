@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/BackendInterface.h"
 #include "util/MockBackend.h"
 #include "util/MockCounters.h"
 #include "util/MockETLService.h"
@@ -26,10 +27,24 @@
 #include "util/MockSubscriptionManager.h"
 #include "util/log/Logger.h"
 
-#include <boost/asio.hpp>
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/log/core/core.hpp>
+#include <boost/log/expressions/predicates/channel_severity_filter.hpp>
+#include <boost/log/keywords/format.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/setup/console.hpp>
+#include <boost/log/utility/setup/formatter_parser.hpp>
 #include <gtest/gtest.h>
 
+#include <memory>
 #include <mutex>
+#include <optional>
+#include <ostream>
+#include <sstream>
+#include <string>
 #include <thread>
 
 /**
@@ -181,7 +196,7 @@ struct MockBackendTest : virtual public NoLoggerFixture {
     SetUp() override
     {
         NoLoggerFixture::SetUp();
-        util::Config cfg;
+        util::Config const cfg;
         mockBackendPtr = std::make_shared<MockBackend>(cfg);
     }
     void

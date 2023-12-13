@@ -19,12 +19,36 @@
 
 #pragma once
 
-#include <boost/asio.hpp>
-#include <boost/beast.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl/context.hpp>
+#include <boost/asio/ssl/error.hpp>
+#include <boost/asio/ssl/stream_base.hpp>
+#include <boost/asio/ssl/verify_context.hpp>
+#include <boost/asio/ssl/verify_mode.hpp>
+#include <boost/beast/core/buffers_to_string.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/core/stream_traits.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/http.hpp>
-#include <boost/beast/ssl.hpp>
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/verb.hpp>
+#include <boost/beast/ssl/ssl_stream.hpp>
+#include <boost/beast/version.hpp>
+#include <boost/beast/websocket/rfc6455.hpp>
+#include <boost/beast/websocket/stream.hpp>
+#include <boost/beast/websocket/stream_base.hpp>
+#include <openssl/err.h>
+#include <openssl/tls1.h>
 
+#include <optional>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
@@ -126,8 +150,8 @@ public:
         ws_.set_option(boost::beast::websocket::stream_base::decorator([additionalHeaders = std::move(additionalHeaders
                                                                         )](boost::beast::websocket::request_type& req) {
             req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
-            for (auto& header : additionalHeaders) {
-                req.set(header.name, std::move(header.value));
+            for (auto const& header : additionalHeaders) {
+                req.set(header.name, header.value);
             }
         }));
 
@@ -176,7 +200,7 @@ struct HttpsSyncClient {
         if (!SSL_set_tlsext_host_name(stream.native_handle(), host.c_str()))
 #pragma GCC diagnostic pop
         {
-            boost::beast::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
+            boost::beast::error_code const ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
             throw boost::beast::system_error{ec};
         }
 
