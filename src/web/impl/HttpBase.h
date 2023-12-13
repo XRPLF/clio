@@ -21,6 +21,7 @@
 
 #include "main/Build.h"
 #include "rpc/Errors.h"
+#include "util/Taggable.h"
 #include "util/log/Logger.h"
 #include "util/prometheus/Http.h"
 #include "web/DOSGuard.h"
@@ -28,13 +29,33 @@
 #include "web/interface/Concepts.h"
 #include "web/interface/ConnectionBase.h"
 
+#include <boost/asio/error.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl/error.hpp>
 #include <boost/beast/core.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http.hpp>
+#include <boost/beast/http/error.hpp>
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/status.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/verb.hpp>
 #include <boost/beast/ssl.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <boost/json.hpp>
+#include <boost/json/array.hpp>
+#include <boost/json/parse.hpp>
+#include <boost/json/serialize.hpp>
+#include <ripple/protocol/ErrorCodes.h>
 
+#include <cstddef>
+#include <exception>
+#include <functional>
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace web::detail {
 

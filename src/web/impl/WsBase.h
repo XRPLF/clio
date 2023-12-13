@@ -19,17 +19,40 @@
 
 #pragma once
 
+#include "rpc/Errors.h"
 #include "rpc/common/Types.h"
+#include "util/Taggable.h"
 #include "util/log/Logger.h"
 #include "web/DOSGuard.h"
 #include "web/interface/Concepts.h"
 #include "web/interface/ConnectionBase.h"
 
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/core/role.hpp>
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/status.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/version.hpp>
+#include <boost/beast/websocket/rfc6455.hpp>
+#include <boost/beast/websocket/stream_base.hpp>
+#include <boost/core/ignore_unused.hpp>
+#include <boost/json/array.hpp>
+#include <boost/json/parse.hpp>
+#include <boost/json/serialize.hpp>
+#include <ripple/protocol/ErrorCodes.h>
 
-#include <iostream>
+#include <cstddef>
+#include <exception>
+#include <functional>
 #include <memory>
+#include <queue>
+#include <string>
+#include <utility>
 
 namespace web::detail {
 
@@ -153,7 +176,7 @@ public:
      * If the DOSGuard is triggered, the message will be modified to include a warning
      */
     void
-    send(std::string&& msg, http::status = http::status::ok) override
+    send(std::string&& msg, http::status) override
     {
         if (!dosGuard_.get().add(clientIp, msg.size())) {
             auto jsonResponse = boost::json::parse(msg).as_object();

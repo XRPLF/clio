@@ -782,7 +782,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPTooBusy)
 TEST_F(WebRPCServerHandlerTest, HTTPRequestNotJson)
 {
     static auto constexpr request = "not json";
-    static auto constexpr responsePrefix = "Unable to parse request: syntax error";
+    static auto constexpr responsePrefix = "Unable to parse JSON from the request";
 
     EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
 
