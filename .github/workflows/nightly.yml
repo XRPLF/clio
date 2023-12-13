@@ -20,7 +20,7 @@ jobs:
           - os: Linux
             build_type: Debug
             container:
-              image: conanio/gcc11:1.61.0
+              image: rippleci/clio_ci:latest
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
