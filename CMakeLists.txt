@@ -227,6 +227,7 @@ if (tests)
     unittests/rpc/handlers/BookChangesTests.cpp
     unittests/rpc/handlers/LedgerTests.cpp
     unittests/rpc/handlers/VersionHandlerTests.cpp
+    unittests/rpc/handlers/AMMInfoTests.cpp
     # Backend
     unittests/data/BackendFactoryTests.cpp
     unittests/data/BackendCountersTests.cpp
