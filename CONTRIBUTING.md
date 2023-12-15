@@ -62,6 +62,11 @@ git commit --amend -S
 git push --force
 ```
 
+## Use ccache (optional)
+Clio uses ccache to speed up compilation. If you want to use it, please make sure it is installed on your machine.
+CMake will automatically detect it and use it if it's available.
+
+
 ## Fixing issues found during code review
 While your code is in review, it's possible that some changes will be requested by reviewer(s).
 This section describes the process of adding your fixes.
