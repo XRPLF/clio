@@ -25,6 +25,12 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
+      - name: Cleanup working direcktory
+        if: ${{ runner.os == 'macOS' }}
+        shell: bash
+        run: |
+          find ${{ github.workspace }}/ -depth 1 | xargs rm -rfv
+
       - uses: actions/checkout@v4
         with:
             fetch-depth: 0

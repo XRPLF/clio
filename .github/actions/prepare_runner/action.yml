@@ -13,12 +13,6 @@ runs:
       run: |
           brew install llvm@14 pkg-config ninja bison cmake ccache jq gh
 
-    - name: Cleanup working directory
-      if: ${{ runner.os == 'macOS' }}
-      shell: bash
-      run: |
-        find ${{ github.workspace }}/ -depth 1 | xargs rm -rfv
-
     - name: Fix git permissions on Linux
       if: ${{ runner.os == 'Linux' }}
       shell: bash
