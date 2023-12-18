@@ -91,15 +91,18 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTInfoHandler::
         {JS(nft_id), output.nftID},
         {JS(ledger_index), output.ledgerIndex},
         {JS(owner), output.owner},
-        {"is_burned", output.isBurned},
+        {JS(is_burned), output.isBurned},
         {JS(flags), output.flags},
         {"transfer_fee", output.transferFee},
         {JS(issuer), output.issuer},
-        {"nft_taxon", output.taxon},
+        {JS(nft_taxon), output.taxon},
         {JS(nft_serial), output.serial},
         {JS(validated), output.validated},
-        {JS(uri), output.uri},
     };
+
+    // Omitted if the NFT is burned at this ledger.
+    if (not output.isBurned)
+        jv.as_object()[JS(uri)] = output.uri;
 }
 
 NFTInfoHandler::Input

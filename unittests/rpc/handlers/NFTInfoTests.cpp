@@ -367,7 +367,6 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
         "issuer": "rGJUF4PvVkMNxG6Bg6AKg3avhrtQyAffcm",
         "nft_taxon": 0,
         "nft_serial": 4,
-        "uri": "757269",
         "validated": true
     })";
     MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
