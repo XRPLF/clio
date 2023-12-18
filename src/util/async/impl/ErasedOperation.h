@@ -30,6 +30,7 @@
 #include <any>
 #include <chrono>
 #include <exception>
+#include <type_traits>
 
 namespace util::async::detail {
 
