@@ -140,7 +140,7 @@ getTimoutHandleIfNeeded(
     SomeStopSource auto& stopSource
 )
 {
-    using TimerType = std::decay_t<decltype(ctx)>::Timer;
+    using TimerType = typename std::decay_t<decltype(ctx)>::Timer;
     std::optional<TimerType> timer;
     if (timeout) {
         timer.emplace(TimerType(ctx, *timeout, [&stopSource](auto cancelled) {
