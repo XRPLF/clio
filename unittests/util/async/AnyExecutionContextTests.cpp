@@ -40,14 +40,19 @@ struct MockOperation {
 };
 
 template <typename ValueType>
-struct MockCancellableOperation {
-    MOCK_METHOD(void, cancel, (), (const));
+struct MockStoppableOperation {
+    MOCK_METHOD(void, stop, (), (const));
     MOCK_METHOD(void, wait, (), (const));
     MOCK_METHOD(ValueType, get, (), (const));
 };
 
-struct MockTimer {
+template <typename ValueType>
+struct MockScheduledOperation {
     MOCK_METHOD(void, cancel, (), (const));
+    MOCK_METHOD(void, stop, (), (const));
+    MOCK_METHOD(void, wait, (), (const));
+    MOCK_METHOD(ValueType, get, (), (const));
+    MOCK_METHOD(void, getToken, (), (const));
 };
 
 struct MockStrand {
@@ -58,7 +63,7 @@ struct MockStrand {
     using Operation = MockOperation<T>;
 
     template <typename T>
-    using CancellableOperation = MockCancellableOperation<T>;
+    using StoppableOperation = MockStoppableOperation<T>;
 
     MOCK_METHOD(Operation<detail::Any> const&, execute, (std::function<detail::Any()>), (const));
     MOCK_METHOD(
@@ -67,9 +72,9 @@ struct MockStrand {
         (std::function<detail::Any()>, std::optional<std::chrono::milliseconds>),
         (const)
     );
-    MOCK_METHOD(CancellableOperation<detail::Any> const&, execute, (std::function<detail::Any(AnyStopToken)>), (const));
+    MOCK_METHOD(StoppableOperation<detail::Any> const&, execute, (std::function<detail::Any(AnyStopToken)>), (const));
     MOCK_METHOD(
-        CancellableOperation<detail::Any> const&,
+        StoppableOperation<detail::Any> const&,
         execute,
         (std::function<detail::Any(AnyStopToken)>, std::optional<std::chrono::milliseconds>),
         (const)
@@ -82,15 +87,16 @@ struct MockExecutionContext {
 
     using StopSource = MockStopSource;
     using StopToken = MockStopToken;
-
-    template <typename T>
-    using CancellableOperation = MockCancellableOperation<T>;
+    using Strand = MockStrand;
 
     template <typename T>
     using Operation = MockOperation<T>;
 
-    using Strand = MockStrand;
-    using Timer = MockTimer;
+    template <typename T>
+    using StoppableOperation = MockStoppableOperation<T>;
+
+    template <typename T>
+    using ScheduledOperation = MockScheduledOperation<T>;
 
     MOCK_METHOD(Operation<detail::Any> const&, execute, (std::function<detail::Any()>), (const));  // never possibly
                                                                                                    // called??
@@ -101,13 +107,23 @@ struct MockExecutionContext {
         (const)
     );
     MOCK_METHOD(
-        CancellableOperation<detail::Any> const&,
+        StoppableOperation<detail::Any> const&,
         execute,
         (std::function<detail::Any(AnyStopToken)>, std::optional<std::chrono::milliseconds>),
         (const)
     );
-    MOCK_METHOD(MockTimer const&, scheduleAfter, (std::chrono::milliseconds, std::function<void()>), (const));
-    MOCK_METHOD(MockTimer const&, scheduleAfter, (std::chrono::milliseconds, std::function<void(bool)>), (const));
+    MOCK_METHOD(
+        ScheduledOperation<detail::Any> const&,
+        scheduleAfter,
+        (std::chrono::milliseconds, std::function<detail::Any(AnyStopToken)>),
+        (const)
+    );
+    MOCK_METHOD(
+        ScheduledOperation<detail::Any> const&,
+        scheduleAfter,
+        (std::chrono::milliseconds, std::function<detail::Any(AnyStopToken, bool)>),
+        (const)
+    );
     MOCK_METHOD(MockStrand const&, makeStrand, (), (const));
     MOCK_METHOD(void, stop, (), (const));
 };
@@ -119,7 +135,7 @@ struct AnyExecutionContextTests : ::testing::Test {
 
 TEST_F(AnyExecutionContextTests, ExecuteWithReturnValue)
 {
-    auto mockOp = MockCancellableOperation<detail::Any>{};
+    auto mockOp = MockStoppableOperation<detail::Any>{};
     EXPECT_CALL(mockOp, get()).WillOnce(Return(std::make_any<int>(42)));
     EXPECT_CALL(mockExecutionContext, execute(An<std::function<detail::Any(AnyStopToken)>>(), _))
         .WillOnce(ReturnRef(mockOp));
@@ -132,31 +148,34 @@ TEST_F(AnyExecutionContextTests, ExecuteWithReturnValue)
 
 TEST_F(AnyExecutionContextTests, TimerCancellation)
 {
-    auto mockTimer = MockTimer{};
+    auto mockTimer = MockScheduledOperation<detail::Any>{};
     EXPECT_CALL(mockTimer, cancel()).Times(1);
-    EXPECT_CALL(mockExecutionContext, scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<void()>>()))
+    EXPECT_CALL(
+        mockExecutionContext,
+        scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<detail::Any(AnyStopToken)>>())
+    )
         .WillOnce(ReturnRef(mockTimer));
 
-    auto timer = ctx.scheduleAfter(std::chrono::milliseconds{42}, [] {});
-    static_assert(std::is_same_v<decltype(timer), AnyTimer>);
+    auto timer = ctx.scheduleAfter(std::chrono::milliseconds{42}, [](auto) {});
+    static_assert(std::is_same_v<decltype(timer), AnyOperation<void>>);
 
     timer.cancel();
 }
 
 TEST_F(AnyExecutionContextTests, TimerExecuted)
 {
-    auto mockTimer = MockTimer{};
-    EXPECT_CALL(mockExecutionContext, scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<void()>>()))
-        .WillOnce([&mockTimer](auto, auto&& fn) -> MockTimer const& {
-            fn();
-            return mockTimer;
-        });
+    auto mockTimer = MockScheduledOperation<detail::Any>{};
+    EXPECT_CALL(mockTimer, get()).WillOnce(Return(std::make_any<int>(42)));
+    EXPECT_CALL(
+        mockExecutionContext,
+        scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<detail::Any(AnyStopToken)>>())
+    )
+        .WillOnce([&mockTimer](auto, auto&&) -> MockScheduledOperation<detail::Any> const& { return mockTimer; });
 
-    std::atomic_bool called = false;
-    auto timer = ctx.scheduleAfter(std::chrono::milliseconds{42}, [&called] { called = true; });
-    static_assert(std::is_same_v<decltype(timer), AnyTimer>);
+    auto timer = ctx.scheduleAfter(std::chrono::milliseconds{42}, [](auto) { return 42; });
 
-    ASSERT_TRUE(called);
+    static_assert(std::is_same_v<decltype(timer), AnyOperation<int>>);
+    EXPECT_EQ(timer.get().value(), 42);
 }
 
 TEST_F(AnyExecutionContextTests, StrandExecuteWithReturnValue)
@@ -173,5 +192,5 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithReturnValue)
     auto op = strand.execute([] { return 42; });
     static_assert(std::is_same_v<decltype(op), AnyOperation<int>>);
 
-    ASSERT_EQ(op.get().value(), 42);
+    EXPECT_EQ(op.get().value(), 42);
 }

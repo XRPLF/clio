@@ -29,9 +29,16 @@ namespace util::async {
 class AnyStopToken;
 
 template <typename T>
-concept SomeCancellable = requires(T v) {
+concept SomeStoppable = requires(T v) {
     {
         v.requestStop()
+    } -> std::same_as<void>;
+};
+
+template <typename T>
+concept SomeCancellable = requires(T v) {
+    {
+        v.cancel()
     } -> std::same_as<void>;
 };
 
@@ -45,6 +52,9 @@ concept SomeOperation = requires(T v) {
         v.get()
     };
 };
+
+template <typename T>
+concept SomeStoppableOperation = SomeOperation<T> and SomeStoppable<T>;
 
 template <typename T>
 concept SomeCancellableOperation = SomeOperation<T> and SomeCancellable<T>;
@@ -78,7 +88,7 @@ concept SomeSimpleStopSource = requires(T v) {
 };
 
 template <typename T>
-concept SomeStopSource = (SomeSimpleStopSource<T> or SomeYieldStopSource<T>)and SomeCancellable<T>;
+concept SomeStopSource = (SomeSimpleStopSource<T> or SomeYieldStopSource<T>)and SomeStoppable<T>;
 
 template <typename T>
 concept SomeStopSourceProvider = requires(T v) {
@@ -88,7 +98,7 @@ concept SomeStopSourceProvider = requires(T v) {
 };
 
 template <typename T>
-concept SomeCancellableOutcome = SomeOutcome<T> and SomeStopSourceProvider<T>;
+concept SomeStoppableOutcome = SomeOutcome<T> and SomeStopSourceProvider<T>;
 
 template <typename T>
 concept SomeHandlerWithoutStopToken = requires(T fn) {
@@ -97,11 +107,25 @@ concept SomeHandlerWithoutStopToken = requires(T fn) {
     };
 };
 
+template <typename T>
+concept SomeHandlerWithBool = requires(T fn, bool b) {
+    {
+        fn(b)
+    };
+};
+
 // TODO: is there a better way? AnyStopToken is not the same type that is actually sent outside of AnyExecutionContext
 template <typename T>
 concept SomeHandlerWithStopToken = requires(T fn, AnyStopToken token) {
     {
         fn(token)
+    };
+};
+
+template <typename T>
+concept SomeHandlerWithStopTokenAndBool = requires(T fn, AnyStopToken token) {
+    {
+        fn(token, true)
     };
 };
 
@@ -124,9 +148,6 @@ template <typename T>
 concept SomeExecutionContext = requires(T v) {
     {
         v.execute([]() {})
-    };
-    {
-        v.scheduleAfter(std::chrono::milliseconds(1), []() {})
     };
     {
         v.makeStrand()

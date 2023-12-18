@@ -51,7 +51,7 @@ public:
     using StopToken = typename StopSource::Token;
 
     template <typename T>
-    using CancellableOperation = CancellableOperation<ValueType<T>, StopSource>;
+    using StoppableOperation = StoppableOperation<ValueType<T>, StopSource>;
 
     template <typename T>
     using Operation = Operation<ValueType<T>>;
@@ -64,21 +64,30 @@ public:
     BasicSyncExecutionContext(BasicSyncExecutionContext const&) = delete;
 
     /**
-     * @brief Schedule a timer on the global system execution context.
+     * @brief Schedule a timer on the global system execution context. Callback receives a StopToken.
      */
     [[nodiscard]] auto
-    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWithSignature<void()> auto&& fn) noexcept
+    scheduleAfter(
+        SomeStdDuration auto delay,
+        SomeHandlerWithStopToken auto&& fn,
+        std::optional<std::chrono::milliseconds> timeout = std::nullopt
+    ) noexcept
     {
-        return SystemExecutionContext::instance().scheduleAfter(delay, std::forward<decltype(fn)>(fn));
+        return SystemExecutionContext::instance().scheduleAfter(delay, std::forward<decltype(fn)>(fn), timeout);
     }
 
     /**
-     * @brief Schedule a timer on the global system execution context. Callback receives a cancellation flag.
+     * @brief Schedule a timer on the global system execution context. Callback receives a StopToken and a cancellation
+     * flag.
      */
     [[nodiscard]] auto
-    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWithSignature<void(bool)> auto&& fn) noexcept
+    scheduleAfter(
+        SomeStdDuration auto delay,
+        SomeHandlerWithStopTokenAndBool auto&& fn,
+        std::optional<std::chrono::milliseconds> timeout = std::nullopt
+    ) noexcept
     {
-        return SystemExecutionContext::instance().scheduleAfter(delay, std::forward<decltype(fn)>(fn));
+        return SystemExecutionContext::instance().scheduleAfter(delay, std::forward<decltype(fn)>(fn), timeout);
     }
 
     /**

@@ -31,14 +31,32 @@
 
 namespace util::async::detail {
 
+class StopState {
+    std::atomic_bool isStopRequested_{false};
+
+public:
+    void
+    requestStop()
+    {
+        isStopRequested_ = true;
+    }
+
+    bool
+    isStopRequested() const
+    {
+        return isStopRequested_;
+    }
+};
+
+using SharedStopState = std::shared_ptr<StopState>;
+
 class YieldContextStopSource {
-    struct SharedToken {};
-    std::shared_ptr<SharedToken> shared_ = std::make_shared<SharedToken>();
+    SharedStopState shared_ = std::make_shared<StopState>();
 
 public:
     class Token {
         friend class YieldContextStopSource;
-        std::weak_ptr<SharedToken> shared_;
+        SharedStopState shared_;
         boost::asio::yield_context yield_;
 
         Token(YieldContextStopSource* source, boost::asio::yield_context yield)
@@ -52,7 +70,7 @@ public:
         {
             // yield explicitly
             boost::asio::post(yield_);
-            return shared_.expired();
+            return shared_->isStopRequested();
         }
 
         operator bool() const
@@ -70,18 +88,17 @@ public:
     void
     requestStop()
     {
-        shared_.reset();
+        shared_->requestStop();
     }
 };
 
 class BasicStopSource {
-    struct SharedToken {};
-    std::shared_ptr<SharedToken> shared_ = std::make_shared<SharedToken>();
+    SharedStopState shared_ = std::make_shared<StopState>();
 
 public:
     class Token {
         friend class BasicStopSource;
-        std::weak_ptr<SharedToken> shared_;
+        SharedStopState shared_;
 
         Token(BasicStopSource* source) : shared_{source->shared_}
         {
@@ -94,7 +111,7 @@ public:
         bool
         isStopRequested() const
         {
-            return shared_.expired();
+            return shared_->isStopRequested();
         }
 
         operator bool() const
@@ -112,7 +129,7 @@ public:
     void
     requestStop()
     {
-        shared_.reset();
+        shared_->requestStop();
     }
 };
 
@@ -123,10 +140,10 @@ getTimoutHandleIfNeeded(
     SomeStopSource auto& stopSource
 )
 {
-    using TimerType = decltype(ctx.scheduleAfter(std::chrono::milliseconds{1}, []() {}));
+    using TimerType = std::decay_t<decltype(ctx)>::Timer;
     std::optional<TimerType> timer;
     if (timeout) {
-        timer.emplace(ctx.scheduleAfter(*timeout, [&stopSource](auto cancelled) {
+        timer.emplace(TimerType(ctx, *timeout, [&stopSource](auto cancelled) {
             if (not cancelled)
                 stopSource.requestStop();
         }));

@@ -64,6 +64,12 @@ public:
         operation_.requestStop();
     }
 
+    void
+    cancel()
+    {
+        operation_.cancel();
+    }
+
     [[nodiscard]] util::Expected<RetType, ExecutionContextException>
     get()
     {

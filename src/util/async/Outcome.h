@@ -30,7 +30,7 @@ template <typename RetType>
 class BasicOperation;
 
 template <typename RetType, typename StopSourceType>
-class CancellableOperation;
+class StoppableOperation;
 
 template <typename RetType>
 class BasicOutcome {
@@ -74,15 +74,15 @@ public:
 };
 
 template <typename RetType, typename StopSourceType>
-class CancellableOutcome : public BasicOutcome<RetType> {
+class StoppableOutcome : public BasicOutcome<RetType> {
 private:
     StopSourceType stopSource_;
 
 public:
-    CancellableOperation<RetType, StopSourceType>
+    StoppableOperation<RetType, StopSourceType>
     getOperation()
     {
-        return CancellableOperation<RetType, StopSourceType>{this};
+        return StoppableOperation<RetType, StopSourceType>{this};
     }
 
     StopSourceType&

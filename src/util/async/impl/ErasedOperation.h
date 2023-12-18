@@ -73,6 +73,15 @@ public:
         pimpl_->requestStop();
     }
 
+    /**
+     * @brief Cancel the operation if it is scheduled and not yet started.
+     */
+    void
+    cancel()
+    {
+        pimpl_->cancel();
+    }
+
 private:
     struct Concept {
         virtual ~Concept() = default;
@@ -83,6 +92,8 @@ private:
         get() = 0;
         virtual void
         requestStop() = 0;
+        virtual void
+        cancel() = 0;
     };
 
     template <SomeOperation OpType>
@@ -111,8 +122,18 @@ private:
         void
         requestStop() override
         {
-            if constexpr (SomeCancellableOperation<OpType>) {
+            if constexpr (SomeStoppableOperation<OpType>) {
                 operation.requestStop();
+            } else {
+                throw std::logic_error("Stop requested on non-stoppable operation");
+            }
+        }
+
+        void
+        cancel() override
+        {
+            if constexpr (SomeCancellableOperation<OpType>) {
+                operation.cancel();
             } else {
                 throw std::logic_error("Cancellation requested on non-cancellable operation");
             }

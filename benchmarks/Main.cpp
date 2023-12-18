@@ -105,7 +105,7 @@ public:
         using CtxType = CoroExecutionContext;
 
         CtxType ctx{numThreads};
-        std::vector<CtxType::CancellableOperation<void>> operations;
+        std::vector<CtxType::StoppableOperation<void>> operations;
 
         for (std::size_t i = 0; i < numThreads; ++i) {
             q_.push(std::nullopt);
@@ -155,7 +155,7 @@ public:
         using CtxType = CoroExecutionContext;
 
         CtxType ctx{numThreads};
-        std::vector<CtxType::CancellableOperation<void>> operations;
+        std::vector<CtxType::StoppableOperation<void>> operations;
         auto strand = ctx.makeStrand();
 
         for (std::size_t i = 0; i < numThreads; ++i) {
@@ -203,7 +203,7 @@ public:
         using CtxType = CoroExecutionContext;
 
         CtxType ctx{numThreads};
-        std::vector<CtxType::CancellableOperation<int>> operations;
+        std::vector<CtxType::StoppableOperation<int>> operations;
         auto strand = ctx.makeStrand();
 
         for (std::size_t i = 0; i < numThreads; ++i) {
@@ -266,7 +266,7 @@ struct TestSleepingWithStopTokenCoroExecutionContext {
     {
         using CtxType = CoroExecutionContext;
         CtxType ctx{numThreads};
-        std::vector<CtxType::CancellableOperation<void>> futures;
+        std::vector<CtxType::StoppableOperation<void>> futures;
         std::latch completion{numTasks};
         auto const batchSize = numTasks / numThreads;
 
@@ -595,19 +595,23 @@ struct TestTimer {
         AnyExecutionContext anyCtx{ctx};
         std::latch completion{3};
 
-        auto t1 = anyCtx.scheduleAfter(std::chrono::seconds{3}, [&completion] {
+        auto t1 = anyCtx.scheduleAfter(std::chrono::seconds{3}, [&completion](auto) {
             std::cout << "running timer without bool\n";
             completion.count_down(1);
         });
-        auto t2 = anyCtx.scheduleAfter(std::chrono::seconds{5}, [&completion](auto cancelled) {
-            std::cout << "running timer with bool: " << cancelled << '\n';
-            completion.count_down(1);
-        });
-        auto t3 = anyCtx.scheduleAfter(std::chrono::seconds{1}, [&completion, &t2]() {
-            std::cout << "cancelling timer t2\n";
-            t2.cancel();
-            completion.count_down(1);
-        });
+        auto t2 = anyCtx.scheduleAfter(
+            std::chrono::seconds{5},
+            [&completion]([[maybe_unused]] auto stopRequested, auto cancelled) {
+                std::cout << "running timer with bool: " << cancelled << '\n';
+                completion.count_down(1);
+            }
+        );
+        auto t3 =
+            anyCtx.scheduleAfter(std::chrono::seconds{1}, [&completion, &t2]([[maybe_unused]] auto stopRequested) {
+                std::cout << "cancelling timer t2\n";
+                t2.cancel();
+                completion.count_down(1);
+            });
 
         completion.wait();
     }
@@ -621,25 +625,29 @@ struct TestSync {
         AnyExecutionContext anyCtx{ctx};
         std::latch completion{3};
 
-        auto t1 = anyCtx.scheduleAfter(std::chrono::seconds{3}, [&completion] {
+        auto t1 = anyCtx.scheduleAfter(std::chrono::seconds{3}, [&completion]([[maybe_unused]] auto stopRequested) {
             std::cout << "running timer without bool\n";
             completion.count_down(1);
         });
 
         auto op1 = anyCtx.execute([] { std::cout << "unstoppable job 1 ran..\n"; });
 
-        auto t2 = anyCtx.scheduleAfter(std::chrono::seconds{5}, [&completion](auto cancelled) {
-            std::cout << "running timer with bool: " << cancelled << '\n';
-            completion.count_down(1);
-        });
+        auto t2 = anyCtx.scheduleAfter(
+            std::chrono::seconds{5},
+            [&completion]([[maybe_unused]] auto stopRequested, auto cancelled) {
+                std::cout << "running timer with bool: " << cancelled << '\n';
+                completion.count_down(1);
+            }
+        );
 
         auto op2 = anyCtx.execute([] { std::cout << "unstoppable job 2 ran..\n"; });
 
-        auto t3 = anyCtx.scheduleAfter(std::chrono::seconds{1}, [&completion, &t2]() {
-            std::cout << "cancelling timer t2\n";
-            t2.cancel();
-            completion.count_down(1);
-        });
+        auto t3 =
+            anyCtx.scheduleAfter(std::chrono::seconds{1}, [&completion, &t2]([[maybe_unused]] auto stopRequested) {
+                std::cout << "cancelling timer t2\n";
+                t2.cancel();
+                completion.count_down(1);
+            });
 
         completion.wait();
     }

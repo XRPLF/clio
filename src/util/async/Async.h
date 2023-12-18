@@ -23,7 +23,6 @@
 #include "util/async/AnyOperation.h"
 #include "util/async/AnyStopToken.h"
 #include "util/async/AnyStrand.h"
-#include "util/async/AnyTimer.h"
 #include "util/async/Concepts.h"
 #include "util/async/Error.h"
 #include "util/async/Operation.h"

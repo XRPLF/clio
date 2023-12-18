@@ -75,17 +75,27 @@ TYPED_TEST(AsyncExecutionContextTests, executeWithTimeout)
 
 TYPED_TEST(AsyncExecutionContextTests, timer)
 {
-    auto value = 0;
-    std::binary_semaphore sem{0};
+    auto res =
+        this->ctx.scheduleAfter(std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
+            if (not cancelled)
+                return 42;
+            return 0;
+        });
 
-    auto timer = this->ctx.scheduleAfter(std::chrono::milliseconds(1), [&value, &sem](auto cancelled) {
-        if (not cancelled)
-            value = 42;
-        sem.release();
+    EXPECT_EQ(res.get().value(), 42);
+}
+
+TYPED_TEST(AsyncExecutionContextTests, timerWithStopToken)
+{
+    auto res = this->ctx.scheduleAfter(std::chrono::milliseconds(1), [](auto stopRequested) {
+        while (not stopRequested)
+            ;
+
+        return 42;
     });
 
-    sem.acquire();
-    EXPECT_EQ(value, 42);
+    res.requestStop();
+    EXPECT_EQ(res.get().value(), 42);
 }
 
 TYPED_TEST(AsyncExecutionContextTests, timerCancel)
@@ -93,16 +103,31 @@ TYPED_TEST(AsyncExecutionContextTests, timerCancel)
     auto value = 0;
     std::binary_semaphore sem{0};
 
-    auto timer = this->ctx.scheduleAfter(std::chrono::milliseconds(10), [&value, &sem](auto cancelled) {
-        if (cancelled)
-            value = 42;
+    auto res = this->ctx.scheduleAfter(
+        std::chrono::milliseconds(10),
+        [&value, &sem]([[maybe_unused]] auto stopRequested, auto cancelled) {
+            if (cancelled)
+                value = 42;
 
-        sem.release();
-    });
+            sem.release();
+        }
+    );
 
-    timer.cancel();
+    res.cancel();
     sem.acquire();
     EXPECT_EQ(value, 42);
+}
+
+TYPED_TEST(AsyncExecutionContextTests, timerException)
+{
+    auto res =
+        this->ctx.scheduleAfter(std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
+            if (not cancelled)
+                throw std::runtime_error("test");
+            return 0;
+        });
+
+    EXPECT_TRUE(res.get().error().message.ends_with("test"));
 }
 
 TYPED_TEST(AsyncExecutionContextTests, strand)

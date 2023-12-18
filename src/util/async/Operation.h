@@ -22,23 +22,24 @@
 #include "util/async/Concepts.h"
 #include "util/async/Outcome.h"
 #include "util/async/context/impl/Cancellation.h"
+#include "util/async/context/impl/Timer.h"
 
 #include <fmt/std.h>
 
 #include <future>
+#include <semaphore>
 
 namespace util::async {
 
 template <typename OutcomeType>
 class BasicOperation {
 protected:
-    OutcomeType* outcome_ = nullptr;
     std::future<typename OutcomeType::DataType> future_;
 
 public:
     using DataType = typename OutcomeType::DataType;
 
-    explicit BasicOperation(OutcomeType* outcome) : outcome_{outcome}, future_{outcome->getStdFuture()}
+    explicit BasicOperation(OutcomeType* outcome) : future_{outcome->getStdFuture()}
     {
     }
 
@@ -59,22 +60,88 @@ public:
 };
 
 template <typename RetType, typename StopSourceType>
-class CancellableOperation : public BasicOperation<CancellableOutcome<RetType, StopSourceType>> {
-    using OutcomeType = CancellableOutcome<RetType, StopSourceType>;
+class StoppableOperation : public BasicOperation<StoppableOutcome<RetType, StopSourceType>> {
+    using OutcomeType = StoppableOutcome<RetType, StopSourceType>;
+
+    StopSourceType stopSource_;
 
 public:
-    explicit CancellableOperation(OutcomeType* outcome) : BasicOperation<OutcomeType>(outcome)
+    explicit StoppableOperation(OutcomeType* outcome)
+        : BasicOperation<OutcomeType>(outcome), stopSource_(outcome->getStopSource())
     {
     }
 
     void
     requestStop()
     {
-        this->outcome_->getStopSource().requestStop();
+        stopSource_.requestStop();
+    }
+};
+
+template <typename CtxType, typename OpType>
+struct BasicScheduledOperation {
+    struct State {
+        std::mutex m_;
+        std::condition_variable ready_;
+        std::optional<OpType> op_{std::nullopt};
+
+        void
+        emplace(auto&& op)
+        {
+            std::lock_guard lock{m_};
+            op_.emplace(std::forward<decltype(op)>(op));
+            ready_.notify_all();
+        }
+
+        OpType&
+        get()
+        {
+            std::unique_lock lock{m_};
+            ready_.wait(lock, [this] { return op_.has_value(); });
+            return op_.value();
+        }
+    };
+
+    std::shared_ptr<State> state_ = std::make_shared<State>();
+    detail::SteadyTimer<CtxType> timer_;
+
+    BasicScheduledOperation(CtxType& ctx, auto delay, auto&& fn)
+        : timer_(ctx, delay, [state = state_, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
+            state->emplace(fn(ec));
+        })
+    {
+    }
+
+    auto
+    get() -> decltype(auto)
+    {
+        return state_->get().get();
+    }
+
+    void
+    wait()
+    {
+        state_->get().wait();
+    }
+
+    void
+    cancel()
+    {
+        timer_.cancel();
+    }
+
+    void
+    requestStop()
+        requires(SomeStoppableOperation<OpType>)
+    {
+        state_->get().requestStop();
     }
 };
 
 template <typename T>
 using Operation = BasicOperation<Outcome<T>>;
+
+template <typename CtxType, typename OpType>
+using ScheduledOperation = BasicScheduledOperation<CtxType, OpType>;
 
 }  // namespace util::async

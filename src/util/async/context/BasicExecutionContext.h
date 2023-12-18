@@ -61,7 +61,7 @@ public:
     using StopToken = typename StopSourceType::Token;
 
     template <typename T>
-    using CancellableOperation = CancellableOperation<ValueType<T>, StopSourceType>;
+    using StoppableOperation = StoppableOperation<ValueType<T>, StopSourceType>;
 
     template <typename T>
     using Operation = Operation<ValueType<T>>;
@@ -71,6 +71,10 @@ public:
 
     using Timer = detail::SteadyTimer<BasicExecutionContext>;
     friend Timer;
+
+    // note: scheduled operations are always stoppable
+    template <typename T>
+    using ScheduledOperation = ScheduledOperation<BasicExecutionContext, StoppableOperation<T>>;
 
     /**
      * @brief Create a new execution context with the given number of threads.
@@ -94,33 +98,59 @@ public:
     BasicExecutionContext(BasicExecutionContext const&) = delete;
 
     /**
-     * @brief Schedule a timer on the global system execution context.
-     */
-    [[nodiscard]] Timer
-    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWithSignature<void()> auto&& fn) noexcept
-    {
-        return Timer(*this, delay, [fn = std::forward<decltype(fn)>(fn)](auto) mutable {
-            try {
-                fn();
-            } catch (...) {
-                throw std::current_exception();
-            }
-        });
-    }
-
-    /**
      * @brief Schedule a timer on the global system execution context. Callback receives a cancellation flag.
      */
-    [[nodiscard]] Timer
-    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWithSignature<void(bool)> auto&& fn) noexcept
+    [[nodiscard]] auto
+    scheduleAfter(
+        SomeStdDuration auto delay,
+        SomeHandlerWithStopToken auto&& fn,
+        std::optional<std::chrono::milliseconds> timeout = std::nullopt
+    ) noexcept
     {
-        return Timer(*this, delay, [fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
-            try {
-                fn(ec == boost::asio::error::operation_aborted);
-            } catch (...) {
-                throw std::current_exception();
+        using FnRetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
+        return ScheduledOperation<FnRetType>(
+            *this,
+            delay,
+            [this, timeout, fn = std::forward<decltype(fn)>(fn)](auto) mutable {
+                return this->execute(
+                    [fn = std::forward<decltype(fn)>(fn)](auto stopToken) {
+                        if constexpr (std::is_void_v<FnRetType>) {
+                            fn(std::move(stopToken));
+                        } else {
+                            return fn(std::move(stopToken));
+                        }
+                    },
+                    timeout
+                );
             }
-        });
+        );
+    }
+
+    [[nodiscard]] auto
+    scheduleAfter(
+        SomeStdDuration auto delay,
+        SomeHandlerWithStopTokenAndBool auto&& fn,
+        std::optional<std::chrono::milliseconds> timeout = std::nullopt
+    ) noexcept
+    {
+        using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>(), true))>;
+        return ScheduledOperation<FnRetType>(
+            *this,
+            delay,
+            [this, timeout, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
+                return this->execute(
+                    [fn = std::forward<decltype(fn)>(fn),
+                     isAborted = (ec == boost::asio::error::operation_aborted)](auto stopToken) {
+                        if constexpr (std::is_void_v<FnRetType>) {
+                            fn(std::move(stopToken), isAborted);
+                        } else {
+                            return fn(std::move(stopToken), isAborted);
+                        }
+                    },
+                    timeout
+                );
+            }
+        );
     }
 
     /**

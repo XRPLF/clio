@@ -22,7 +22,6 @@
 #include "util/Expected.h"
 #include "util/async/AnyOperation.h"
 #include "util/async/AnyStrand.h"
-#include "util/async/AnyTimer.h"
 #include "util/async/Concepts.h"
 #include "util/async/Error.h"
 #include "util/async/impl/Any.h"
@@ -102,17 +101,43 @@ public:
     }
 
     [[nodiscard]] auto
-    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWithSignature<void()> auto&& fn) noexcept
+    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWithStopToken auto&& fn) noexcept
     {
+        using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
+        static_assert(not std::is_same_v<RetType, detail::Any>);
+
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(delay);
-        return pimpl_->scheduleAfter(millis, std::forward<decltype(fn)>(fn));
+        return AnyOperation<RetType>(pimpl_->scheduleAfter(
+            millis,
+            [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> detail::Any {
+                if constexpr (std::is_void_v<RetType>) {
+                    fn(std::move(stopToken));
+                    return {};
+                } else {
+                    return std::make_any<RetType>(fn(std::move(stopToken)));
+                }
+            }
+        ));
     }
 
     [[nodiscard]] auto
-    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWithSignature<void(bool)> auto&& fn) noexcept
+    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWithStopTokenAndBool auto&& fn) noexcept
     {
+        using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>(), true))>;
+        static_assert(not std::is_same_v<RetType, detail::Any>);
+
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(delay);
-        return pimpl_->scheduleAfter(millis, std::forward<decltype(fn)>(fn));
+        return AnyOperation<RetType>(pimpl_->scheduleAfter(
+            millis,
+            [fn = std::forward<decltype(fn)>(fn)](auto stopToken, auto cancelled) -> detail::Any {
+                if constexpr (std::is_void_v<RetType>) {
+                    fn(std::move(stopToken), cancelled);
+                    return {};
+                } else {
+                    return std::make_any<RetType>(fn(std::move(stopToken), cancelled));
+                }
+            }
+        ));
     }
 
     [[nodiscard]] auto
@@ -131,8 +156,10 @@ private:
             std::optional<std::chrono::milliseconds> timeout = std::nullopt
         ) = 0;
         virtual detail::ErasedOperation execute(std::function<detail::Any()>) = 0;
-        virtual AnyTimer scheduleAfter(std::chrono::milliseconds, std::function<void()>) = 0;
-        virtual AnyTimer scheduleAfter(std::chrono::milliseconds, std::function<void(bool)>) = 0;
+        virtual detail::ErasedOperation
+            scheduleAfter(std::chrono::milliseconds, std::function<detail::Any(AnyStopToken)>) = 0;
+        virtual detail::ErasedOperation
+            scheduleAfter(std::chrono::milliseconds, std::function<detail::Any(AnyStopToken, bool)>) = 0;
         virtual AnyStrand
         makeStrand() = 0;
     };
@@ -157,14 +184,14 @@ private:
             return ctx.get().execute(std::move(fn));
         }
 
-        AnyTimer
-        scheduleAfter(std::chrono::milliseconds delay, std::function<void()> fn) override
+        detail::ErasedOperation
+        scheduleAfter(std::chrono::milliseconds delay, std::function<detail::Any(AnyStopToken)> fn) override
         {
             return ctx.get().scheduleAfter(delay, std::move(fn));
         }
 
-        AnyTimer
-        scheduleAfter(std::chrono::milliseconds delay, std::function<void(bool)> fn) override
+        detail::ErasedOperation
+        scheduleAfter(std::chrono::milliseconds delay, std::function<detail::Any(AnyStopToken, bool)> fn) override
         {
             return ctx.get().scheduleAfter(delay, std::move(fn));
         }

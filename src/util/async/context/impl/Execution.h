@@ -42,7 +42,7 @@ struct CoroDispatcher {
         boost::asio::spawn(
             executor,
             [outcome = std::move(outcome), fn = std::forward<decltype(fn)>(fn)](auto yield) mutable {
-                if constexpr (SomeCancellableOutcome<OutcomeType>) {
+                if constexpr (SomeStoppableOutcome<OutcomeType>) {
                     auto& stopSource = outcome.getStopSource();
                     fn(outcome, stopSource, stopSource[yield]);
                 } else {
@@ -66,7 +66,7 @@ struct PoolDispatcher {
         auto op = outcome.getOperation();
 
         boost::asio::post(executor, [outcome = std::move(outcome), fn = std::forward<decltype(fn)>(fn)]() mutable {
-            if constexpr (SomeCancellableOutcome<OutcomeType>) {
+            if constexpr (SomeStoppableOutcome<OutcomeType>) {
                 auto& stopSource = outcome.getStopSource();
                 fn(outcome, stopSource, stopSource.getToken());
             } else {
@@ -85,7 +85,7 @@ struct SyncDispatcher {
     {
         auto op = outcome.getOperation();
 
-        if constexpr (SomeCancellableOutcome<OutcomeType>) {
+        if constexpr (SomeStoppableOutcome<OutcomeType>) {
             auto& stopSource = outcome.getStopSource();
             fn(outcome, stopSource, stopSource.getToken());
         } else {
@@ -104,7 +104,7 @@ outcomeForHandler(auto&& fn)
         using FnRetType = decltype(fn(std::declval<typename StopSourceType::Token>()));
         using RetType = util::Expected<FnRetType, ExecutionContextException>;
 
-        return CancellableOutcome<RetType, StopSourceType>();
+        return StoppableOutcome<RetType, StopSourceType>();
     } else {
         using FnRetType = decltype(fn());
         using RetType = util::Expected<FnRetType, ExecutionContextException>;
