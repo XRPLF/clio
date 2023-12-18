@@ -287,6 +287,9 @@ if (benchmark)
   add_executable (${BENCH_TARGET}
     # Common
     benchmarks/Main.cpp
+    benchmarks/Playground.cpp
+    # ExecutionContext
+    benchmarks/ExecutionContextBenchmarks.cpp
   )
 
   include (CMake/deps/gbench.cmake)
