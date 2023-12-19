@@ -31,6 +31,9 @@ class Any {
 
 public:
     Any() = default;
+    Any(Any const&) = default;
+    Any(Any&&) = default;
+
     Any(std::any&& v) : value_{std::move(v)}
     {
     }
