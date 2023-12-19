@@ -34,7 +34,10 @@ public:
     Any(Any const&) = default;
     Any(Any&&) = default;
 
-    Any(std::any&& v) : value_{std::move(v)}
+    // note: this needs to be `auto` instead of `std::any` because of a bug in gcc 11.4
+    Any(auto&& v)
+        requires(std::is_same_v<std::decay_t<decltype(v)>, std::any>)
+        : value_{std::forward<decltype(v)>(v)}
     {
     }
 
