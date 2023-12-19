@@ -53,7 +53,7 @@ public:
         pimpl_->wait();
     }
 
-    auto
+    util::Expected<Any, ExecutionContextException>
     get()
     {
         return pimpl_->get();
