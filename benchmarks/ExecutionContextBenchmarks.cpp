@@ -184,7 +184,7 @@ public:
     }
 };
 
-static constexpr auto
+static auto
 generateData()
 {
     constexpr auto TOTAL = 10'000;

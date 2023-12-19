@@ -26,9 +26,6 @@
 #include "util/async/impl/Any.h"
 #include "util/async/impl/ErasedOperation.h"
 
-#include <fmt/core.h>
-#include <fmt/std.h>
-
 #include <any>
 #include <chrono>
 #include <exception>

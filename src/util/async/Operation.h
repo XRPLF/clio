@@ -24,10 +24,10 @@
 #include "util/async/context/impl/Cancellation.h"
 #include "util/async/context/impl/Timer.h"
 
-#include <fmt/std.h>
-
 #include <future>
-#include <semaphore>
+#include <mutex>
+#include <condition_variable>
+#include <optional>
 
 namespace util::async {
 

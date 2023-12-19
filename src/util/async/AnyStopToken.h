@@ -21,14 +21,8 @@
 
 #include "util/Expected.h"
 #include "util/async/Concepts.h"
-#include "util/async/Error.h"
 
-#include <fmt/core.h>
-#include <fmt/std.h>
-
-#include <any>
-#include <chrono>
-#include <exception>
+#include <memory>
 
 namespace util::async {
 

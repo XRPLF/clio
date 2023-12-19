@@ -24,13 +24,8 @@
 #include "util/async/Error.h"
 #include "util/async/impl/Any.h"
 
-#include <fmt/core.h>
-#include <fmt/std.h>
-
 #include <any>
-#include <chrono>
 #include <exception>
-#include <type_traits>
 
 namespace util::async::detail {
 
@@ -89,7 +84,7 @@ private:
 
         virtual void
         wait() = 0;
-        virtual util::Expected<detail::Any, ExecutionContextException>
+        virtual util::Expected<Any, ExecutionContextException>
         get() = 0;
         virtual void
         requestStop() = 0;
@@ -113,7 +108,7 @@ private:
             return operation.wait();
         }
 
-        util::Expected<detail::Any, ExecutionContextException>
+        util::Expected<Any, ExecutionContextException>
         get() override
         {
             // Note: return type of the operation was already wrapped to detail::Any by AnyExecutionContext
