@@ -30,7 +30,7 @@ namespace util::prometheus::detail {
 template <typename T>
 concept SomeCounterImpl = requires(T a) {
     typename std::remove_cvref_t<T>::ValueType;
-    SomeNumberType<typename std::remove_cvref_t<T>::ValueType>;
+    requires SomeNumberType<typename std::remove_cvref_t<T>::ValueType>;
     {
         a.add(typename std::remove_cvref_t<T>::ValueType{1})
     } -> std::same_as<void>;
