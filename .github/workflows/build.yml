@@ -165,3 +165,18 @@ jobs:
         uses: ./.github/actions/build_clio
         with:
           target: coverage_report
+
+      - name: Archive coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report.xml
+          path: build/coverage_report.xml
+          retention-days: 30
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          files: build/coverage_report.xml
+          fail_ci_if_error: true
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
