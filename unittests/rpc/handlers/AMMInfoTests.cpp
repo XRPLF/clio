@@ -59,14 +59,9 @@ static auto
 generateTestValuesForParametersTest()
 {
     return std::vector<AMMInfoParamTestCaseBundle>{
+        AMMInfoParamTestCaseBundle{"MissingAMMAccountOrAssets", "{}", "invalidParams", "Invalid parameters."},
         AMMInfoParamTestCaseBundle{
-            "MissingAMMAccountOrAssets",
-            "{}",
-            "invalidParams",
-            "Missing field 'amm_account' or both 'asset' and 'asset2'."
-        },
-        AMMInfoParamTestCaseBundle{
-            "AMMAccountNotString", R"({"amm_account": 1})", "invalidParams", "AMMAccountNotString"
+            "AMMAccountNotString", R"({"amm_account": 1})", "invalidParams", "amm_accountNotString"
         },
         AMMInfoParamTestCaseBundle{"AMMAccountInvalid", R"({"account": "xxx"})", "actMalformed", "accountMalformed"}
         // TODO: test for assetNotStringOrObject, assetInvalid, LPTokenAccountInvalid
@@ -101,11 +96,8 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
     mockBackendPtr->updateRange(10);  // min
     mockBackendPtr->updateRange(30);  // max
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-
     ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
     ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -118,7 +110,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
-        EXPECT_EQ(err.at("error").as_string(), "actNotFound");
-        EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
+        EXPECT_EQ(err.at("error").as_string(), "actMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "amm_accountMalformed");
     });
 }

@@ -46,7 +46,16 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
 {
     using namespace ripple;
 
-    if (!input.ammAccount && (input.issue1 == ripple::noIssue() || input.issue2 == ripple::noIssue()))
+    auto const hasInvalidParams = [&input] {
+        // no asset/asset2 can be specified if amm account is specified
+        if (input.ammAccount)
+            return input.issue1 != ripple::noIssue() || input.issue2 != ripple::noIssue();
+
+        // both assets must be specified when amm account is not specified
+        return input.issue1 == ripple::noIssue() || input.issue2 == ripple::noIssue();
+    }();
+
+    if (hasInvalidParams)
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
@@ -58,35 +67,39 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         return Error{*status};
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
-    ripple::uint256 ammID;
-    if (input.ammAccount) {
-        auto accountKeylet = ripple::keylet::account(*input.ammAccount);
-        auto const accountLedgerObject =
-            sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
-        ripple::STLedgerEntry const sle{
-            ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
-        };
-        ammID = sle.getFieldH256(ripple::sfAMMID);
-    }
-
     if (input.accountID) {
         auto keylet = keylet::account(*input.accountID);
         if (not sharedPtrBackend_->fetchLedgerObject(keylet.key, lgrInfo.seq, ctx.yield))
-            return Error{Status{RippledError::rpcACT_NOT_FOUND}};
+            return Error{Status{RippledError::rpcACT_NOT_FOUND, "Account not found."}};
+    }
+
+    ripple::uint256 ammID;
+    if (input.ammAccount) {
+        auto const accountKeylet = keylet::account(*input.ammAccount);
+        auto const accountLedgerObject =
+            sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
+        if (not accountLedgerObject)
+            return Error{Status{RippledError::rpcACT_MALFORMED, "Amm account malformed."}};
+        ripple::STLedgerEntry const sle{
+            ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
+        };
+        if (not sle.isFieldPresent(ripple::sfAMMID))
+            return Error{Status{RippledError::rpcACT_NOT_FOUND, "Amm account not found."}};
+        ammID = sle.getFieldH256(ripple::sfAMMID);
     }
 
     auto ammKeylet = ammID != 0 ? keylet::amm(ammID) : keylet::amm(input.issue1, input.issue2);
     auto const ammBlob = sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (not ammBlob)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "Amm account not found"}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND, "Amm account not found."}};
 
     auto const amm = SLE{SerialIter{ammBlob->data(), ammBlob->size()}, ammKeylet.key};
     auto const ammAccountID = amm.getAccountID(sfAccount);
     auto const accBlob =
         sharedPtrBackend_->fetchLedgerObject(keylet::account(ammAccountID).key, lgrInfo.seq, ctx.yield);
     if (not accBlob)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "Amm account not found"}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND, "Amm account not found."}};
 
     auto const [asset1Balance, asset2Balance] =
         getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset], amm[sfAsset2], false, ctx.yield);
@@ -211,10 +224,11 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
         return ripple::Issue{currency, *issuer};
     };
 
-    if (jsonObject.contains(JS(asset)) && jsonObject.contains(JS(asset2))) {
+    if (jsonObject.contains(JS(asset)))
         input.issue1 = getIssue(jsonObject.at(JS(asset)));
+
+    if (jsonObject.contains(JS(asset2)))
         input.issue2 = getIssue(jsonObject.at(JS(asset2)));
-    }
 
     if (jsonObject.contains(JS(account)))
         input.accountID = accountFromStringStrict(jsonObject.at(JS(account)).as_string().c_str());
