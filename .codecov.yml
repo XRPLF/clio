@@ -1,0 +1,11 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 50%
+        threshold: 2%
+
+    patch:
+      default:
+        target: 20% # Need to bump this number https://docs.codecov.com/docs/commit-status#patch-status
+        threshold: 2%
