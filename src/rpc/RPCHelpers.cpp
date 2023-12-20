@@ -988,7 +988,7 @@ xrpLiquid(
     boost::asio::yield_context yield
 )
 {
-    auto key = ripple::keylet::account(id).key;
+    auto const key = ripple::keylet::account(id).key;
     auto blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob)
@@ -999,13 +999,18 @@ xrpLiquid(
 
     std::uint32_t const ownerCount = sle.getFieldU32(ripple::sfOwnerCount);
 
-    auto const reserve = backend.fetchFees(sequence, yield)->accountReserve(ownerCount);
+    auto balance = sle.getFieldAmount(ripple::sfBalance);
 
-    auto const balance = sle.getFieldAmount(ripple::sfBalance);
-
-    ripple::STAmount amount = balance - reserve;
-    if (balance < reserve)
-        amount.clear();
+    ripple::STAmount const amount = [&]() {
+        // AMM doesn't require the reserves
+        if ((sle.getFlags() & ripple::lsfAMMNode) != 0u)
+            return balance;
+        auto const reserve = backend.fetchFees(sequence, yield)->accountReserve(ownerCount);
+        ripple::STAmount amount = balance - reserve;
+        if (balance < reserve)
+            amount.clear();
+        return amount;
+    }();
 
     return amount.xrp();
 }
@@ -1038,11 +1043,10 @@ accountHolds(
 )
 {
     ripple::STAmount amount;
-    if (ripple::isXRP(currency)) {
+    if (ripple::isXRP(currency))
         return {xrpLiquid(backend, sequence, account, yield)};
-    }
-    auto key = ripple::keylet::line(account, issuer, currency).key;
 
+    auto const key = ripple::keylet::line(account, issuer, currency).key;
     auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob) {

@@ -103,27 +103,6 @@ public:
         static auto const malformedRequestIntValidator =
             meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_REQUEST)};
 
-        static auto const ammAssetValidator =
-            validation::CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
-                if (!value.is_object()) {
-                    return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
-                }
-
-                Json::Value jvAsset;
-                if (value.as_object().contains(JS(issuer)))
-                    jvAsset["issuer"] = value.at(JS(issuer)).as_string().c_str();
-                if (value.as_object().contains(JS(currency)))
-                    jvAsset["currency"] = value.at(JS(currency)).as_string().c_str();
-                // same as rippled
-                try {
-                    ripple::issueFromJson(jvAsset);
-                } catch (std::runtime_error const&) {
-                    return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
-                }
-
-                return MaybeError{};
-            }};
-
         static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
@@ -198,13 +177,13 @@ public:
                       meta::WithCustomError{
                           validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
                       },
-                      ammAssetValidator},
+                      validation::ammAssetValidator},
                      {JS(asset2),
                       meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
                       meta::WithCustomError{
                           validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
                       },
-                      ammAssetValidator},
+                      validation::ammAssetValidator},
                  },
              }}
         };
