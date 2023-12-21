@@ -35,7 +35,8 @@ constexpr static auto NOTFOUND_ACCOUNT = "rBdLS7RVLqkPwnWQCT2bC6HJd6xGoBizq8";
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto INDEX = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 
-class RPCAMMInfoHandlerTest : public HandlerBaseTest {};
+// TODO: change back to HandlerBaseTest when done writing tests
+class RPCAMMInfoHandlerTest : public HandlerBaseTestNaggy {};
 
 struct AMMInfoParamTestCaseBundle {
     std::string testName;
@@ -47,12 +48,10 @@ struct AMMInfoParamTestCaseBundle {
 // parameterized test cases for parameters check
 struct AMMInfoParameterTest : public RPCAMMInfoHandlerTest, public WithParamInterface<AMMInfoParamTestCaseBundle> {
     struct NameGenerator {
-        template <class ParamType>
         std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
+        operator()(auto const& info) const
         {
-            auto bundle = static_cast<AMMInfoParamTestCaseBundle>(info.param);
-            return bundle.testName;
+            return static_cast<AMMInfoParamTestCaseBundle>(info.param).testName;
         }
     };
 };
@@ -95,7 +94,7 @@ TEST_P(AMMInfoParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AMMInfoHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AMMInfoHandler{backend}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -108,12 +107,11 @@ TEST_P(AMMInfoParameterTest, InvalidParams)
 
 TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
+    backend->setRange(10, 30);
+
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -121,7 +119,8 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
         }})",
         WRONG_AMM_ACCOUNT
     ));
-    auto const handler = AnyHandler{AMMInfoHandler{mockBackendPtr}};
+
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
@@ -133,12 +132,11 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
 
 TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
+    backend->setRange(10, 30);
+
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -147,8 +145,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
         CORRECT_AMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{mockBackendPtr}};
-
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
@@ -161,13 +158,13 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
 
 TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFound)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    backend->setRange(10, 30);
+
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
     auto const accountRoot = CreateAccountRootObject(CORRECT_AMM_ACCOUNT, 0, 2, 200, 2, INDEX, 2);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(accountRoot.getSerializer().peekData()));
+
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(accountRoot.getSerializer().peekData()));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -176,7 +173,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFound)
         CORRECT_AMM_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
 
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
@@ -190,14 +187,13 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFound)
 
 TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
 {
-    auto const rawBackendPtr = static_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    backend->setRange(10, 30);
+
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
     auto accountKey = GetAccountKey(NOTFOUND_ACCOUNT);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKey, testing::_, testing::_))
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject(accountKey, testing::_, testing::_))
         .WillByDefault(Return(std::optional<Blob>{}));
 
     auto static const input = json::parse(fmt::format(
@@ -209,7 +205,7 @@ TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
         NOTFOUND_ACCOUNT
     ));
 
-    auto const handler = AnyHandler{AMMInfoHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
 
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});

@@ -191,23 +191,65 @@ protected:
 /**
  * @brief Fixture with a mock backend
  */
-struct MockBackendTest : virtual public NoLoggerFixture {
+template <bool IsNice = true>
+struct MockBackendTestBase : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
         NoLoggerFixture::SetUp();
-        util::Config const cfg;
-        mockBackendPtr = std::make_shared<MockBackend>(cfg);
+        backend.reset();
+        mockBackendPtr = backend;
     }
     void
     TearDown() override
     {
         mockBackendPtr.reset();
+        NoLoggerFixture::TearDown();
     }
 
+    class BackendProxy {
+        std::shared_ptr<BackendInterface> backend;
+
+    private:
+        void
+        reset()
+        {
+            if constexpr (IsNice) {
+                backend = std::make_shared<::testing::NiceMock<MockBackend>>(util::Config{});
+            } else {
+                backend = std::make_shared<MockBackend>(util::Config{});
+            }
+        }
+
+        friend MockBackendTestBase;
+
+    public:
+        auto
+        operator->()
+        {
+            return backend.get();
+        }
+
+        operator std::shared_ptr<BackendInterface>()
+        {
+            return backend;
+        }
+
+        operator MockBackend*()
+        {
+            MockBackend* ret = dynamic_cast<MockBackend*>(backend.get());
+            [&] { ASSERT_NE(ret, nullptr); }();
+            return ret;
+        }
+    };
+
 protected:
-    std::shared_ptr<BackendInterface> mockBackendPtr;
+    BackendProxy backend;
+    std::shared_ptr<BackendInterface> mockBackendPtr;  // legacy compat
 };
+
+using MockBackendTest = MockBackendTestBase<true>;
+using MockBackendTestNaggy = MockBackendTestBase<false>;
 
 /**
  * @brief Fixture with a mock subscription manager
@@ -293,12 +335,13 @@ protected:
  * @brief Fixture with an mock backend and an embedded boost::asio context
  * Handler unittest base class
  */
-struct HandlerBaseTest : public MockBackendTest, public SyncAsioContextTest, public MockETLServiceTest {
+template <bool IsNice = true>
+struct HandlerBaseTestBase : public MockBackendTestBase<IsNice>, public SyncAsioContextTest, public MockETLServiceTest {
 protected:
     void
     SetUp() override
     {
-        MockBackendTest::SetUp();
+        MockBackendTestBase<IsNice>::SetUp();
         SyncAsioContextTest::SetUp();
         MockETLServiceTest::SetUp();
     }
@@ -308,6 +351,9 @@ protected:
     {
         MockETLServiceTest::TearDown();
         SyncAsioContextTest::TearDown();
-        MockBackendTest::TearDown();
+        MockBackendTestBase<IsNice>::TearDown();
     }
 };
+
+using HandlerBaseTest = HandlerBaseTestBase<true>;
+using HandlerBaseTestNaggy = HandlerBaseTestBase<false>;
