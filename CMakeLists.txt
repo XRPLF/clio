@@ -278,14 +278,14 @@ if (tests)
     if (DEFINED CODE_COVERAGE_REPORT_FORMAT)
       set(CODE_COVERAGE_FORMAT ${CODE_COVERAGE_REPORT_FORMAT})
     else()
-      set(CODE_COVERAGE_FORMAT xml)
+      set(CODE_COVERAGE_FORMAT html-details)
     endif()
 
-    if (DEFINED CODE_COVERAGE_TEST_ARGS)
-      set(TEST_ADDITIONAL_ARGS ${CODE_COVERAGE_TEST_ARGS})
-      separate_arguments(TEST_ADDITIONAL_ARGS)
+    if (DEFINED CODE_COVERAGE_TESTS_ARGS)
+      set(TESTS_ADDITIONAL_ARGS ${CODE_COVERAGE_TESTS_ARGS})
+      separate_arguments(TESTS_ADDITIONAL_ARGS)
     else()
-      set(TEST_ADDITIONAL_ARGS "")
+      set(TESTS_ADDITIONAL_ARGS "")
     endif()
 
     set (GCOVR_ADDITIONAL_ARGS --exclude-throw-branches -s)
@@ -294,7 +294,7 @@ if (tests)
         NAME coverage_report
         FORMAT ${CODE_COVERAGE_FORMAT}
         EXECUTABLE clio_tests
-        EXECUTABLE_ARGS --gtest_brief=1 ${TEST_ADDITIONAL_ARGS}
+        EXECUTABLE_ARGS --gtest_brief=1 ${TESTS_ADDITIONAL_ARGS}
         EXCLUDE "unittests"
         DEPENDENCIES clio_tests
     )

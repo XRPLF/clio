@@ -158,7 +158,7 @@ jobs:
           build_type: 'Debug'
           extra_cmake_args: >-
             -Dcoverage=ON
-            -DCODE_COVERAGE_TEST_ARGS="--gtest_filter=-BackendCassandra*"
+            -DCODE_COVERAGE_TESTS_ARGS="--gtest_filter=-BackendCassandra*"
             -DCODE_COVERAGE_REPORT_FORMAT=xml
 
       - name: Run tests and coverage report
