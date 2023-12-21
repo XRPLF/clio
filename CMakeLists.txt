@@ -21,6 +21,12 @@ include (CMake/Ccache.cmake)
 include (CheckCXXCompilerFlag)
 include (CMake/ClangTidy.cmake)
 
+# Set coverage build options
+if (tests AND coverage)
+  include (CMake/CodeCoverage.cmake)
+  append_coverage_compiler_flags()
+endif()
+
 if (verbose)
   set (CMAKE_VERBOSE_MAKEFILE TRUE)
 endif ()
@@ -267,12 +273,31 @@ if (tests)
   target_include_directories (${TEST_TARGET} PRIVATE unittests)
   target_link_libraries (${TEST_TARGET} PUBLIC clio gtest::gtest)
 
-  # Generate `clio_tests-ccov` if coverage is enabled
-  # Note: use `make clio_tests-ccov` to generate report
+  # Generate `coverage_report` target if coverage is enabled
   if (coverage)
-    target_compile_definitions(${TEST_TARGET} PRIVATE COVERAGE_ENABLED)
-    include (CMake/Coverage.cmake)
-    add_coverage (${TEST_TARGET})
+    if (DEFINED CODE_COVERAGE_REPORT_FORMAT)
+      set(CODE_COVERAGE_FORMAT ${CODE_COVERAGE_REPORT_FORMAT})
+    else()
+      set(CODE_COVERAGE_FORMAT html-details)
+    endif()
+
+    if (DEFINED CODE_COVERAGE_TESTS_ARGS)
+      set(TESTS_ADDITIONAL_ARGS ${CODE_COVERAGE_TESTS_ARGS})
+      separate_arguments(TESTS_ADDITIONAL_ARGS)
+    else()
+      set(TESTS_ADDITIONAL_ARGS "")
+    endif()
+
+    set (GCOVR_ADDITIONAL_ARGS --exclude-throw-branches -s)
+
+    setup_target_for_coverage_gcovr(
+        NAME coverage_report
+        FORMAT ${CODE_COVERAGE_FORMAT}
+        EXECUTABLE clio_tests
+        EXECUTABLE_ARGS --gtest_brief=1 ${TESTS_ADDITIONAL_ARGS}
+        EXCLUDE "unittests"
+        DEPENDENCIES clio_tests
+    )
   endif ()
 endif ()
 

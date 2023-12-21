@@ -12,6 +12,9 @@ inputs:
     description: Build type for third-party libraries and clio. Could be 'Release', 'Debug'
     required: true
     default: 'Release'
+  extra_cmake_args:
+    description: Additional cmake options
+    default: null
 runs:
   using: composite
   steps:
@@ -33,4 +36,4 @@ runs:
         BUILD_TYPE: "${{ inputs.build_type }}"
       run: |
         cd build
-        cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} .. -G Ninja
+        cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} ${{ inputs.extra_cmake_args }} .. -G Ninja
