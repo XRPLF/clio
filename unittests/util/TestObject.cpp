@@ -60,6 +60,12 @@ GetAccountIDWithString(std::string_view id)
     return ripple::parseBase58<ripple::AccountID>(std::string(id)).value();
 }
 
+ripple::uint256
+GetAccountKey(std::string_view id)
+{
+    return ripple::keylet::account(GetAccountIDWithString(id)).key;
+}
+
 ripple::LedgerInfo
 CreateLedgerInfo(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age)
 {

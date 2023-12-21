@@ -177,13 +177,13 @@ public:
                       meta::WithCustomError{
                           validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
                       },
-                      validation::ammAssetValidator},
+                      validation::AMMAssetValidator},
                      {JS(asset2),
                       meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
                       meta::WithCustomError{
                           validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
                       },
-                      validation::ammAssetValidator},
+                      validation::AMMAssetValidator},
                  },
              }}
         };

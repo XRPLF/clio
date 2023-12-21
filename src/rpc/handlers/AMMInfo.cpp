@@ -67,6 +67,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         return Error{*status};
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
+
     if (input.accountID) {
         auto keylet = keylet::account(*input.accountID);
         if (not sharedPtrBackend_->fetchLedgerObject(keylet.key, lgrInfo.seq, ctx.yield))
@@ -215,6 +216,9 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
     }
 
     auto getIssue = [](boost::json::value const& request) {
+        if (request.is_string())
+            return ripple::issueFromJson(request.as_string().c_str());
+
         // Note: no checks needed as we already validated the input if we made it here
         auto const currency = ripple::to_currency(request.at(JS(currency)).as_string().c_str());
         if (ripple::isXRP(currency)) {

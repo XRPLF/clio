@@ -212,8 +212,11 @@ CustomValidator SubscribeAccountsValidator =
         return MaybeError{};
     }};
 
-CustomValidator ammAssetValidator =
-    CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
+CustomValidator AMMAssetValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (not value.is_object())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotObject"}};
+
         Json::Value jvAsset;
         if (value.as_object().contains(JS(issuer)))
             jvAsset["issuer"] = value.at(JS(issuer)).as_string().c_str();
@@ -228,4 +231,5 @@ CustomValidator ammAssetValidator =
 
         return MaybeError{};
     }};
+
 }  // namespace rpc::validation

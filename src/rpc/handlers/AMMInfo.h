@@ -22,6 +22,7 @@
 #include "data/BackendInterface.h"
 #include "rpc/BookChangesHelper.h"
 #include "rpc/RPCHelpers.h"
+#include "rpc/common/MetaProcessors.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
 
@@ -70,13 +71,42 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
+        static auto const stringIssueValidator =
+            validation::CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
+                if (!value.is_string())
+                    return Error{Status{RippledError::rpcISSUE_MALFORMED}};
+
+                try {
+                    ripple::issueFromJson(value.as_string().c_str());
+                } catch (std::runtime_error const&) {
+                    return Error{Status{RippledError::rpcISSUE_MALFORMED}};
+                }
+
+                return MaybeError{};
+            }};
+
         static auto const rpcSpec = RpcSpec{
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(asset), validation::ammAssetValidator},
-            {JS(asset2), validation::ammAssetValidator},
-            {JS(amm_account), validation::AccountValidator},
-            {JS(account), validation::AccountValidator},
+            {JS(asset),
+             meta::WithCustomError{
+                 validation::Type<std::string, boost::json::object>{}, Status(RippledError::rpcISSUE_MALFORMED)
+             },
+             meta::IfType<std::string>{stringIssueValidator},
+             meta::IfType<boost::json::object>{
+                 meta::WithCustomError{validation::AMMAssetValidator, Status(RippledError::rpcISSUE_MALFORMED)},
+             }},
+            {JS(asset2),
+             meta::WithCustomError{
+                 validation::Type<std::string, boost::json::object>{}, Status(RippledError::rpcISSUE_MALFORMED)
+             },
+             meta::IfType<std::string>{stringIssueValidator},
+             meta::IfType<boost::json::object>{
+                 meta::WithCustomError{validation::AMMAssetValidator, Status(RippledError::rpcISSUE_MALFORMED)},
+             }},
+            {JS(amm_account),
+             meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+            {JS(account), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
         };
 
         return rpcSpec;
