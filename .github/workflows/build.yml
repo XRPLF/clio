@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: Linux
+          - os: heavy
             container:
               image: rippleci/clio_ci:latest
           - os: macOS
@@ -73,6 +73,12 @@ jobs:
       - name: Strip tests
         run: strip build/clio_tests
 
+      - name: Upload clio_server
+        uses: actions/upload-artifact@v3
+        with:
+          name: clio_server_${{ runner.os }}
+          path: build/clio_server
+          
       - name: Upload clio_tests
         uses: actions/upload-artifact@v3
         with:
