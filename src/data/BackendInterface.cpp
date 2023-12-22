@@ -270,6 +270,13 @@ BackendInterface::updateRange(uint32_t newMax)
     }
 }
 
+void
+BackendInterface::setRange(uint32_t min, uint32_t max)
+{
+    std::scoped_lock const lck(rngMtx_);
+    range = {min, max};
+}
+
 LedgerPage
 BackendInterface::fetchLedgerPage(
     std::optional<ripple::uint256> const& cursor,

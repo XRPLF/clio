@@ -398,17 +398,15 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_P(AccountTxParameterTest, CheckParams)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
+    backend->setRange(MINSEQ, MAXSEQ);
     auto const& testBundle = GetParam();
-    auto* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+
     auto const req = json::parse(testBundle.testJson);
     if (testBundle.expectedError.has_value()) {
         ASSERT_TRUE(testBundle.expectedErrorMessage.has_value());
 
         runSpawn([&, this](auto yield) {
-            auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+            auto const handler = AnyHandler{AccountTxHandler{backend}};
             auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
             ASSERT_FALSE(output);
             auto const err = rpc::makeError(output.error());
@@ -416,10 +414,10 @@ TEST_P(AccountTxParameterTest, CheckParams)
             EXPECT_EQ(err.at("error_message").as_string(), *testBundle.expectedErrorMessage);
         });
     } else {
-        EXPECT_CALL(*rawBackendPtr, fetchAccountTransactions);
+        EXPECT_CALL(*backend, fetchAccountTransactions);
 
         runSpawn([&, this](auto yield) {
-            auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+            auto const handler = AnyHandler{AccountTxHandler{backend}};
             auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
             EXPECT_TRUE(output);
         });
@@ -482,15 +480,13 @@ genNFTTransactions(uint32_t seq)
 
 TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_,
             testing::_,
@@ -502,7 +498,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -527,15 +523,13 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
 
 TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_,
             testing::_,
@@ -547,7 +541,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -572,15 +566,13 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
 
 TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_,
             testing::_,
@@ -592,7 +584,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -617,15 +609,13 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
 
 TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_,
             testing::_,
@@ -637,7 +627,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -662,15 +652,13 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
 
 TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_,
             testing::_,
@@ -682,7 +670,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -721,14 +709,12 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
 
 TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_,
             testing::_,
@@ -740,7 +726,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
         .WillOnce(Return(transCursor));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -779,15 +765,13 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
 
 TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const transactions = genTransactions(MINSEQ + 1, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
         )
@@ -795,7 +779,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -822,16 +806,14 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
 
 TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_,
             testing::_,
@@ -843,11 +825,11 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerinfo));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -869,16 +851,13 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
 
 TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
 
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -897,16 +876,13 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 
 TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
 
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -925,16 +901,14 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
 
 TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_,
             testing::_,
@@ -946,11 +920,11 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -972,16 +946,14 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
 
 TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     // adjust the order for forward->false
     auto const transactions = genTransactions(MAXSEQ, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_,
             testing::_,
@@ -993,11 +965,11 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1018,15 +990,13 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
 
 TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_,
             testing::_,
@@ -1038,7 +1008,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1063,15 +1033,13 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
 
 TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const transactions = genTransactions(MAXSEQ - 1, MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_,
             testing::_,
@@ -1083,7 +1051,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1304,15 +1272,13 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
                 "seq": 34
             }
         })";
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const transactions = genNFTTransactions(MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
         )
@@ -1320,7 +1286,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -1545,15 +1511,13 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
                 "seq": 34
             }
         })";
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const transactions = genNFTTransactions(MINSEQ + 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
     EXPECT_CALL(
-        *rawBackendPtr,
+        *backend,
         fetchAccountTransactions(
             testing::_, testing::_, false, testing::Optional(testing::Eq(TransactionsCursor{10, 11})), testing::_
         )
@@ -1561,10 +1525,10 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
         .Times(1);
 
     auto const ledgerInfo = CreateLedgerInfo(LEDGERHASH, 11);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(transactions.size()).WillRepeatedly(Return(ledgerInfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(transactions.size()).WillRepeatedly(Return(ledgerInfo));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const static input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
@@ -2030,26 +1994,21 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
 {
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
 
     auto const transactions = genTransactions(MAXSEQ, MAXSEQ - 1);
     auto const transCursor = TransactionsAndCursor{transactions, TransactionsCursor{12, 34}};
-    ON_CALL(*rawBackendPtr, fetchAccountTransactions).WillByDefault(Return(transCursor));
-    EXPECT_CALL(
-        *rawBackendPtr, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{MAXSEQ, INT32_MAX})), _)
-    )
+    ON_CALL(*backend, fetchAccountTransactions).WillByDefault(Return(transCursor));
+    EXPECT_CALL(*backend, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{MAXSEQ, INT32_MAX})), _))
         .Times(1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).Times(Between(1, 2));
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).Times(Between(1, 2));
 
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountTxHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountTxHandler{backend}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = testBundle.apiVersion});
         EXPECT_TRUE(output);

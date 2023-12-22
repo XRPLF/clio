@@ -195,12 +195,11 @@ struct MockBackendTestBase : virtual public NoLoggerFixture {
     {
         NoLoggerFixture::SetUp();
         backend.reset();
-        mockBackendPtr = backend;
     }
+
     void
     TearDown() override
     {
-        mockBackendPtr.reset();
         NoLoggerFixture::TearDown();
     }
 
@@ -232,6 +231,11 @@ struct MockBackendTestBase : virtual public NoLoggerFixture {
             return backend;
         }
 
+        operator std::shared_ptr<BackendInterface const>() const
+        {
+            return backend;
+        }
+
         operator MockBackend*()
         {
             MockBackend* ret = dynamic_cast<MockBackend*>(backend.get());
@@ -242,7 +246,6 @@ struct MockBackendTestBase : virtual public NoLoggerFixture {
 
 protected:
     BackendProxy backend;
-    std::shared_ptr<BackendInterface> mockBackendPtr;  // legacy compat
 };
 
 using MockBackendTest = MockBackendTestBase<true>;

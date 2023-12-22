@@ -103,39 +103,37 @@ getLatestDiff()
 
 TEST_F(CacheLoaderTest, FromCache)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    CacheLoader loader{cfg, ctx, mockBackendPtr, cache};
+    CacheLoader loader{cfg, ctx, backend, cache};
 
     auto const diffs = getLatestDiff();
-    ON_CALL(*rawBackendPtr, fetchLedgerDiff(_, _)).WillByDefault(Return(diffs));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(_, _)).Times(32);
+    ON_CALL(*backend, fetchLedgerDiff(_, _)).WillByDefault(Return(diffs));
+    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(32);
 
     auto const loops = diffs.size() + 1;
     auto const keysSize = 14;
     std::mutex keysMutex;
 
     std::map<std::thread::id, uint32_t> threadKeysMap;
-    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(_, SEQ, _))
-        .WillByDefault(Invoke([&]() -> std::optional<ripple::uint256> {
-            // mock the result from doFetchSuccessorKey, be aware this function will be called from multiple threads
-            // for each thread, the last 2 items must be end flag and nullopt, otherwise it will loop forever
-            std::lock_guard<std::mutex> const guard(keysMutex);
-            threadKeysMap[std::this_thread::get_id()]++;
+    ON_CALL(*backend, doFetchSuccessorKey(_, SEQ, _)).WillByDefault(Invoke([&]() -> std::optional<ripple::uint256> {
+        // mock the result from doFetchSuccessorKey, be aware this function will be called from multiple threads
+        // for each thread, the last 2 items must be end flag and nullopt, otherwise it will loop forever
+        std::lock_guard<std::mutex> const guard(keysMutex);
+        threadKeysMap[std::this_thread::get_id()]++;
 
-            if (threadKeysMap[std::this_thread::get_id()] == keysSize - 1) {
-                return lastKey;
-            }
-            if (threadKeysMap[std::this_thread::get_id()] == keysSize) {
-                threadKeysMap[std::this_thread::get_id()] = 0;
-                return std::nullopt;
-            }
-            return ripple::uint256{INDEX1};
-        }));
-    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(keysSize * loops);
+        if (threadKeysMap[std::this_thread::get_id()] == keysSize - 1) {
+            return lastKey;
+        }
+        if (threadKeysMap[std::this_thread::get_id()] == keysSize) {
+            threadKeysMap[std::this_thread::get_id()] = 0;
+            return std::nullopt;
+        }
+        return ripple::uint256{INDEX1};
+    }));
+    EXPECT_CALL(*backend, doFetchSuccessorKey).Times(keysSize * loops);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects(_, SEQ, _))
+    ON_CALL(*backend, doFetchLedgerObjects(_, SEQ, _))
         .WillByDefault(Return(std::vector<Blob>{keysSize - 1, Blob{'s'}}));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(loops);
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(loops);
 
     EXPECT_CALL(cache, updateImp).Times(loops);
     EXPECT_CALL(cache, isFull).Times(1);
