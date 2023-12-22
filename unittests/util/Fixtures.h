@@ -248,7 +248,23 @@ protected:
     BackendProxy backend;
 };
 
+/**
+ * @brief Fixture with a "nice" mock backend.
+ *
+ * Use @see MockBackendTestNaggy during development to get unset call expectation warnings.
+ * Once the test is ready and you are happy you can switch to this fixture to mute the warnings.
+ *
+ * A fixture that is based off of this MockBackendTest or MockBackendTestNaggy get a `backend` member
+ * that is a `BackendProxy` that can be used to access the mock backend. It can be used wherever a
+ * `std::shared_ptr<BackendInterface>` is expected as well as `*backend` can be used with EXPECT_CALL and ON_CALL.
+ */
 using MockBackendTest = MockBackendTestBase<true>;
+
+/**
+ * @brief Fixture with a "naggy" mock backend.
+ *
+ * Use this during development to get unset call expectation warnings.
+ */
 using MockBackendTestNaggy = MockBackendTestBase<false>;
 
 /**
@@ -332,8 +348,9 @@ protected:
 };
 
 /**
- * @brief Fixture with an mock backend and an embedded boost::asio context
- * Handler unittest base class
+ * @brief Fixture with an mock backend and an embedded boost::asio context.
+ *
+ * Use as a handler unittest base fixture thru either @see HandlerBaseTest or @see HandlerBaseTestNaggy.
  */
 template <bool IsNice = true>
 struct HandlerBaseTestBase : public MockBackendTestBase<IsNice>, public SyncAsioContextTest, public MockETLServiceTest {
@@ -355,5 +372,19 @@ protected:
     }
 };
 
+/**
+ * @brief Fixture with an "nice" backend mock and an embedded boost::asio context.
+ *
+ * Use @see HandlerBaseTest during development to get unset call expectation warnings from the backend mock.
+ * Once the test is ready and you are happy you can switch to this fixture to mute the warnings.
+ *
+ * @see BackendBaseTest for more details on the injected backend mock.
+ */
 using HandlerBaseTest = HandlerBaseTestBase<true>;
+
+/**
+ * @brief Fixture with an "naggy" backend mock and an embedded boost::asio context.
+ *
+ * Use this during development to get unset call expectation warnings from the backend mock.
+ */
 using HandlerBaseTestNaggy = HandlerBaseTestBase<false>;
