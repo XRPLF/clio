@@ -196,6 +196,7 @@ public:
      *
      * @param min The new minimum sequence available
      * @param max The new maximum sequence available
+     * @param force If set to true, the range will be set even if it's already set
      */
     void
     setRange(uint32_t min, uint32_t max, bool force = false);
