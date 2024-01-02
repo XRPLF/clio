@@ -194,13 +194,11 @@ public:
     /**
      * @brief Sets the range of sequences that are stored in the DB.
      *
-     * Warning: Use responsibly (for testing purposes).
-     *
      * @param min The new minimum sequence available
      * @param max The new maximum sequence available
      */
     void
-    setRange(uint32_t min, uint32_t max);
+    setRange(uint32_t min, uint32_t max, bool force = false);
 
     /**
      * @brief Fetch the fees from a specific ledger sequence.
