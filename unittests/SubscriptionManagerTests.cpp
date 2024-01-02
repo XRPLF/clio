@@ -109,13 +109,15 @@ protected:
     std::shared_ptr<feed::SubscriptionManager> subManagerPtr;
     util::TagDecoratorFactory tagDecoratorFactory{cfg};
     std::shared_ptr<web::ConnectionBase> session;
+
     void
     SetUp() override
     {
         MockBackendTest::SetUp();
-        subManagerPtr = feed::SubscriptionManager::make_SubscriptionManager(cfg, mockBackendPtr);
+        subManagerPtr = feed::SubscriptionManager::make_SubscriptionManager(cfg, backend);
         session = std::make_shared<MockSession>(tagDecoratorFactory);
     }
+
     void
     TearDown() override
     {
@@ -190,19 +192,16 @@ TEST_F(SubscriptionManagerSimpleBackendTest, ReportCurrentSubscriber)
 
 TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerLedgerUnSub)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     boost::asio::io_context ctx;
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     // mock fetchLedgerBySequence return this ledger
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // mock doFetchLedgerObject return fee setting ledger object
     auto feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(feeBlob));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(feeBlob));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) { subManagerPtr->subLedger(yield, session); });
     ctx.run();
     std::this_thread::sleep_for(milliseconds(20));
@@ -304,19 +303,16 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerAccountProposedT
  */
 TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerLedger)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     boost::asio::io_context ctx;
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     // mock fetchLedgerBySequence return this ledger
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // mock doFetchLedgerObject return fee setting ledger object
     auto feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(feeBlob));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(feeBlob));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
     // check the function response
     // Information about the ledgers on hand and current fee schedule. This
     // includes the same fields as a ledger stream message, except that it omits
@@ -479,10 +475,9 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
     line.setFieldU32(ripple::sfFlags, 0);
     auto issue2 = GetIssue(CURRENCY, ISSUER);
     line.setFieldAmount(ripple::sfBalance, ripple::STAmount(issue2, 100));
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(line.getSerializer().peekData()));
+
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(line.getSerializer().peekData()));
     subManagerPtr->pubTransaction(trans1, ledgerinfo);
     constexpr static auto TransactionForOwnerFund = R"({
         "transaction":{
@@ -581,10 +576,9 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
     line.setFieldU32(ripple::sfPreviousTxnLgrSeq, 3);
     line.setFieldU32(ripple::sfFlags, ripple::lsfHighFreeze);
     line.setFieldAmount(ripple::sfBalance, ripple::STAmount(GetIssue(CURRENCY, ISSUER), 100));
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(line.getSerializer().peekData()));
+
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(line.getSerializer().peekData()));
     subManagerPtr->pubTransaction(trans1, ledgerinfo);
     CheckSubscriberMessage(TransactionForOwnerFundFrozen, session);
 }
@@ -619,14 +613,13 @@ TEST_F(SubscriptionManagerSimpleBackendTest, SubscriptionManagerTransactionOffer
     line.setFieldU32(ripple::sfFlags, ripple::lsfHighFreeze);
     auto issueAccount = GetAccountIDWithString(ISSUER);
     line.setFieldAmount(ripple::sfBalance, ripple::STAmount(GetIssue(CURRENCY, ISSUER), 100));
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
     auto kk = ripple::keylet::account(issueAccount).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(testing::_, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(testing::_, testing::_, testing::_))
         .WillByDefault(Return(line.getSerializer().peekData()));
     ripple::STObject const accountRoot = CreateAccountRootObject(ISSUER, ripple::lsfGlobalFreeze, 1, 10, 2, TXNID, 3);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(kk, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     subManagerPtr->pubTransaction(trans1, ledgerinfo);
     CheckSubscriberMessage(TransactionForOwnerFundFrozen, session);

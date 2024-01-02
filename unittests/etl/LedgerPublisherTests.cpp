@@ -77,14 +77,11 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingFalse)
     SystemState dummyState;
     dummyState.isWriting = false;
     auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
-    detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
+    detail::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerInfo);
 
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-
-    ON_CALL(*rawBackendPtr, fetchLedgerDiff(SEQ, _)).WillByDefault(Return(std::vector<LedgerObject>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(SEQ, _)).Times(1);
+    ON_CALL(*backend, fetchLedgerDiff(SEQ, _)).WillByDefault(Return(std::vector<LedgerObject>{}));
+    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).Times(1);
 
     // setLastPublishedSequence not in strand, should verify before run
     EXPECT_TRUE(publisher.getLastPublishedSequence());
@@ -93,9 +90,9 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingFalse)
     EXPECT_CALL(mockCache, updateImp).Times(1);
 
     ctx.run();
-    EXPECT_TRUE(rawBackendPtr->fetchLedgerRange());
-    EXPECT_EQ(rawBackendPtr->fetchLedgerRange().value().minSequence, SEQ);
-    EXPECT_EQ(rawBackendPtr->fetchLedgerRange().value().maxSequence, SEQ);
+    EXPECT_TRUE(backend->fetchLedgerRange());
+    EXPECT_EQ(backend->fetchLedgerRange().value().minSequence, SEQ);
+    EXPECT_EQ(backend->fetchLedgerRange().value().maxSequence, SEQ);
 }
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingTrue)
@@ -103,18 +100,17 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingTrue)
     SystemState dummyState;
     dummyState.isWriting = true;
     auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
-    detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
+    detail::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerInfo);
 
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(_, _)).Times(0);
+    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(0);
 
     // setLastPublishedSequence not in strand, should verify before run
     EXPECT_TRUE(publisher.getLastPublishedSequence());
     EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
 
     ctx.run();
-    EXPECT_FALSE(rawBackendPtr->fetchLedgerRange());
+    EXPECT_FALSE(backend->fetchLedgerRange());
 }
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoInRange)
@@ -123,27 +119,25 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoInRange)
     dummyState.isWriting = true;
 
     auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, 0);  // age is 0
-    detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
-    mockBackendPtr->updateRange(SEQ - 1);
-    mockBackendPtr->updateRange(SEQ);
+    detail::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
+    backend->setRange(SEQ - 1, SEQ);
 
     publisher.publish(dummyLedgerInfo);
 
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(_, _)).Times(0);
+    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(0);
 
     // mock fetch fee
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
         .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
 
     // mock fetch transactions
-    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
+    EXPECT_CALL(*backend, fetchAllTransactionsInLedger).Times(1);
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, SEQ).getSerializer().peekData();
     t1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
     t1.ledgerSequence = SEQ;
-    ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(SEQ, _))
+    ON_CALL(*backend, fetchAllTransactionsInLedger(SEQ, _))
         .WillByDefault(Return(std::vector<TransactionAndMetadata>{t1}));
 
     // setLastPublishedSequence not in strand, should verify before run
@@ -173,27 +167,25 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoCloseTimeGreaterThanNow)
     auto const closeTime = duration_cast<seconds>(nowPlus10.time_since_epoch()).count() - rippleEpochStart;
     dummyLedgerInfo.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
 
-    mockBackendPtr->updateRange(SEQ - 1);
-    mockBackendPtr->updateRange(SEQ);
+    backend->setRange(SEQ - 1, SEQ);
 
-    detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
+    detail::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerInfo);
 
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(_, _)).Times(0);
+    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(0);
 
     // mock fetch fee
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
         .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
 
     // mock fetch transactions
-    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
+    EXPECT_CALL(*backend, fetchAllTransactionsInLedger).Times(1);
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, SEQ).getSerializer().peekData();
     t1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
     t1.ledgerSequence = SEQ;
-    ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(SEQ, _))
+    ON_CALL(*backend, fetchAllTransactionsInLedger(SEQ, _))
         .WillByDefault(Return(std::vector<TransactionAndMetadata>{t1}));
 
     // setLastPublishedSequence not in strand, should verify before run
@@ -217,7 +209,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsTrue)
 {
     SystemState dummyState;
     dummyState.isStopping = true;
-    detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
+    detail::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
     EXPECT_FALSE(publisher.publish(SEQ, {}));
 }
 
@@ -225,14 +217,14 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttampt)
 {
     SystemState dummyState;
     dummyState.isStopping = false;
-    detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
+    detail::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
 
     static auto constexpr MAX_ATTEMPT = 2;
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    EXPECT_CALL(*rawBackendPtr, hardFetchLedgerRange).Times(MAX_ATTEMPT);
+
+    EXPECT_CALL(*backend, hardFetchLedgerRange).Times(MAX_ATTEMPT);
 
     LedgerRange const range{.minSequence = SEQ - 1, .maxSequence = SEQ - 1};
-    ON_CALL(*rawBackendPtr, hardFetchLedgerRange(_)).WillByDefault(Return(range));
+    ON_CALL(*backend, hardFetchLedgerRange(_)).WillByDefault(Return(range));
     EXPECT_FALSE(publisher.publish(SEQ, MAX_ATTEMPT));
 }
 
@@ -240,19 +232,18 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
 {
     SystemState dummyState;
     dummyState.isStopping = false;
-    detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
+    detail::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
 
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     LedgerRange const range{.minSequence = SEQ, .maxSequence = SEQ};
-    ON_CALL(*rawBackendPtr, hardFetchLedgerRange(_)).WillByDefault(Return(range));
-    EXPECT_CALL(*rawBackendPtr, hardFetchLedgerRange).Times(1);
+    ON_CALL(*backend, hardFetchLedgerRange(_)).WillByDefault(Return(range));
+    EXPECT_CALL(*backend, hardFetchLedgerRange).Times(1);
 
     auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(SEQ, _)).WillByDefault(Return(dummyLedgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence(SEQ, _)).WillByDefault(Return(dummyLedgerInfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerDiff(SEQ, _)).WillByDefault(Return(std::vector<LedgerObject>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(SEQ, _)).Times(1);
+    ON_CALL(*backend, fetchLedgerDiff(SEQ, _)).WillByDefault(Return(std::vector<LedgerObject>{}));
+    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).Times(1);
     EXPECT_CALL(mockCache, updateImp).Times(1);
 
     EXPECT_TRUE(publisher.publish(SEQ, {}));
@@ -265,22 +256,20 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
     dummyState.isWriting = true;
 
     auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, 0);  // age is 0
-    detail::LedgerPublisher publisher(ctx, mockBackendPtr, mockCache, mockSubscriptionManagerPtr, dummyState);
-    mockBackendPtr->updateRange(SEQ - 1);
-    mockBackendPtr->updateRange(SEQ);
+    detail::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
+    backend->setRange(SEQ - 1, SEQ);
 
     publisher.publish(dummyLedgerInfo);
 
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerDiff(_, _)).Times(0);
+    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(0);
 
     // mock fetch fee
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
         .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
 
     // mock fetch transactions
-    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
+    EXPECT_CALL(*backend, fetchAllTransactionsInLedger).Times(1);
     // t1 index > t2 index
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, SEQ).getSerializer().peekData();
@@ -292,7 +281,7 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
     t2.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30, 1).getSerializer().peekData();
     t2.ledgerSequence = SEQ;
     t2.date = 2;
-    ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(SEQ, _))
+    ON_CALL(*backend, fetchAllTransactionsInLedger(SEQ, _))
         .WillByDefault(Return(std::vector<TransactionAndMetadata>{t1, t2}));
 
     // setLastPublishedSequence not in strand, should verify before run
