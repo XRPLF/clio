@@ -290,7 +290,11 @@ CreateAMMObject(
     std::string_view assetCurrency,
     std::string_view assetIssuer,
     std::string_view asset2Currency,
-    std::string_view asset2Issuer
+    std::string_view asset2Issuer,
+    std::string_view lpTokenBalanceIssueCurrency = "03930D02208264E2E40EC1B0C09E4DB96EE197B1",
+    uint32_t lpTokenBalanceIssueAmount = 100u,
+    uint16_t tradingFee = 5u,
+    uint64_t ownerNode = 0u
 );
 
 [[nodiscard]] ripple::STObject

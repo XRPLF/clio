@@ -129,6 +129,7 @@ BackendInterface::fetchLedgerObjects(
 
     return results;
 }
+
 // Fetches the successor to key/index
 std::optional<ripple::uint256>
 BackendInterface::fetchSuccessorKey(
