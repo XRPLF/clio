@@ -1,5 +1,9 @@
 name: Build clio
 description: Build clio in build directory
+inputs:
+  target:
+    description: Build target name
+    default: all
 runs:
   using: composite
   steps:
@@ -11,4 +15,4 @@ runs:
       shell: bash
       run: |
         cd build
-        cmake --build . --parallel ${{ steps.number_of_threads.outputs.threads_number }}
+        cmake --build . --parallel ${{ steps.number_of_threads.outputs.threads_number }} --target ${{ inputs.target }}

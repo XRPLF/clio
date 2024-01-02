@@ -532,7 +532,7 @@ TEST_P(UnsubscribeParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
+        auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -545,7 +545,7 @@ TEST_P(UnsubscribeParameterTest, InvalidParams)
 TEST_F(RPCUnsubscribeTest, EmptyResponse)
 {
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
+        auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(json::parse(R"({})"), Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
@@ -569,7 +569,7 @@ TEST_F(RPCUnsubscribeTest, Streams)
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedTransactions).Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
+        auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
@@ -591,7 +591,7 @@ TEST_F(RPCUnsubscribeTest, Accounts)
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(rpc::accountFromStringStrict(ACCOUNT2).value(), _)).Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
+        auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
@@ -615,7 +615,7 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
         .Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
+        auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
@@ -650,7 +650,7 @@ TEST_F(RPCUnsubscribeTest, Books)
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(ripple::reversed(book), _)).Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
+        auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
@@ -683,7 +683,7 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(book, _)).Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TestUnsubscribeHandler{mockBackendPtr, mockSubscriptionManagerPtr}};
+        auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());

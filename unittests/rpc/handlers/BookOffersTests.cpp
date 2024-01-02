@@ -91,7 +91,7 @@ struct RPCBookOffersParameterTest : public RPCBookOffersHandlerTest, public With
 TEST_P(RPCBookOffersParameterTest, CheckError)
 {
     auto bundle = GetParam();
-    auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{BookOffersHandler{backend}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(json::parse(bundle.testJson), Context{yield});
         ASSERT_FALSE(output);
@@ -528,25 +528,23 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
 {
     auto const& bundle = GetParam();
     auto const seq = 300;
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);   // min
-    mockBackendPtr->updateRange(seq);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    backend->setRange(10, seq);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
 
     // return valid book dir
-    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(bundle.mockedSuccessors.size());
+    EXPECT_CALL(*backend, doFetchSuccessorKey).Times(bundle.mockedSuccessors.size());
     for (auto const& [key, value] : bundle.mockedSuccessors) {
-        ON_CALL(*rawBackendPtr, doFetchSuccessorKey(key, seq, _)).WillByDefault(Return(value));
+        ON_CALL(*backend, doFetchSuccessorKey(key, seq, _)).WillByDefault(Return(value));
     }
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(bundle.ledgerObjectCalls);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(bundle.ledgerObjectCalls);
 
     for (auto const& [key, value] : bundle.mockedLedgerObjects) {
-        ON_CALL(*rawBackendPtr, doFetchLedgerObject(key, seq, _)).WillByDefault(Return(value));
+        ON_CALL(*backend, doFetchLedgerObject(key, seq, _)).WillByDefault(Return(value));
     }
 
     std::vector<Blob> bbs;
@@ -556,10 +554,10 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
         std::back_inserter(bbs),
         [](auto const& obj) { return obj.getSerializer().peekData(); }
     );
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
-    auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{BookOffersHandler{backend}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(json::parse(bundle.inputJson), Context{yield});
         ASSERT_TRUE(output);
@@ -1181,13 +1179,10 @@ INSTANTIATE_TEST_SUITE_P(
 // ledger not exist
 TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    backend->setRange(10, 30);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerinfo
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -1204,7 +1199,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
         }})",
         ACCOUNT
     ));
-    auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{BookOffersHandler{backend}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
@@ -1216,13 +1211,10 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
 
 TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    backend->setRange(10, 30);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerinfo
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -1239,7 +1231,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
         }})",
         ACCOUNT
     ));
-    auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{BookOffersHandler{backend}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
@@ -1251,13 +1243,10 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
 
 TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    backend->setRange(10, 30);
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // return empty ledgerinfo
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto static const input = json::parse(fmt::format(
@@ -1276,7 +1265,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
         LEDGERHASH,
         ACCOUNT
     ));
-    auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{BookOffersHandler{backend}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
@@ -1289,37 +1278,35 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
 TEST_F(RPCBookOffersHandlerTest, Limit)
 {
     auto const seq = 300;
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);   // min
-    mockBackendPtr->updateRange(seq);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    backend->setRange(10, seq);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
 
     auto const issuer = GetAccountIDWithString(ACCOUNT);
     // return valid book dir
-    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(1);
+    EXPECT_CALL(*backend, doFetchSuccessorKey).Times(1);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
         rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())
     ));
-    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
+    ON_CALL(*backend, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(5);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(5);
     auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{INDEX2});
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, seq, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, seq, _))
         .WillByDefault(Return(CreateOwnerDirLedgerObject(indexes, INDEX1).getSerializer().peekData()));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, seq, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, seq, _))
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::fees().key, seq, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, seq, _))
         .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(issuer).key, seq, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(issuer).key, seq, _))
         .WillByDefault(
             Return(CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2, TRANSFERRATEX2).getSerializer().peekData())
         );
@@ -1336,8 +1323,8 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     );
 
     std::vector<Blob> const bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -1354,7 +1341,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
         }})",
         ACCOUNT
     ));
-    auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{BookOffersHandler{backend}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
@@ -1365,37 +1352,35 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
 TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
 {
     auto const seq = 300;
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);   // min
-    mockBackendPtr->updateRange(seq);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+
+    backend->setRange(10, seq);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
 
     auto const issuer = GetAccountIDWithString(ACCOUNT);
     // return valid book dir
-    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(1);
+    EXPECT_CALL(*backend, doFetchSuccessorKey).Times(1);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
         rpc::parseBook(ripple::to_currency("USD"), issuer, ripple::xrpCurrency(), ripple::xrpAccount())
     ));
-    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
+    ON_CALL(*backend, doFetchSuccessorKey(getsXRPPaysUSDBook, seq, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(5);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(5);
     auto const indexes = std::vector<ripple::uint256>(BookOffersHandler::LIMIT_MAX + 1, ripple::uint256{INDEX2});
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, seq, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, seq, _))
         .WillByDefault(Return(CreateOwnerDirLedgerObject(indexes, INDEX1).getSerializer().peekData()));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, seq, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, seq, _))
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::fees().key, seq, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, seq, _))
         .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(issuer).key, seq, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(issuer).key, seq, _))
         .WillByDefault(
             Return(CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2, TRANSFERRATEX2).getSerializer().peekData())
         );
@@ -1412,8 +1397,8 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     );
 
     std::vector<Blob> const bbs(BookOffersHandler::LIMIT_MAX + 1, gets10XRPPays20USDOffer.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -1431,7 +1416,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
         ACCOUNT,
         BookOffersHandler::LIMIT_MAX + 1
     ));
-    auto const handler = AnyHandler{BookOffersHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{BookOffersHandler{backend}};
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);

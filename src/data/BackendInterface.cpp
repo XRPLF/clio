@@ -271,9 +271,15 @@ BackendInterface::updateRange(uint32_t newMax)
 }
 
 void
-BackendInterface::setRange(uint32_t min, uint32_t max)
+BackendInterface::setRange(uint32_t min, uint32_t max, bool force)
 {
     std::scoped_lock const lck(rngMtx_);
+
+    if (!force) {
+        ASSERT(min <= max, "Range min must be less than or equal to max");
+        ASSERT(not range.has_value(), "Range was already set");
+    }
+
     range = {min, max};
 }
 
