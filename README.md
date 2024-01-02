@@ -2,6 +2,7 @@
 ![Build status](https://github.com/XRPLF/clio/actions/workflows/build.yml/badge.svg?branch=develop)
 ![Nightly release status](https://github.com/XRPLF/clio/actions/workflows/nightly.yml/badge.svg?branch=develop)
 ![Clang-tidy checks status](https://github.com/XRPLF/clio/actions/workflows/clang-tidy.yml/badge.svg?branch=develop)
+![Code coverage develop branch](https://codecov.io/gh/XRPLF/clio/branch/develop/graph/badge.svg?)
 
 Clio is an XRP Ledger API server. Clio is optimized for RPC calls, over WebSocket or JSON-RPC. 
 Validated historical ledger and transaction data are stored in a more space-efficient format,
