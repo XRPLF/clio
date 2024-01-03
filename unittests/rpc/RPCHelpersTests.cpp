@@ -23,7 +23,6 @@
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/TestObject.h"
 
 #include <boost/asio/impl/spawn.hpp>

@@ -25,7 +25,6 @@
 #include "rpc/common/Types.h"
 #include "rpc/handlers/Subscribe.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/MockPrometheus.h"
 #include "util/MockWsBase.h"
 #include "util/Taggable.h"
