@@ -24,7 +24,6 @@
 #include "rpc/common/Types.h"
 #include "rpc/handlers/Tx.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/MockETLService.h"
 #include "util/TestObject.h"
 

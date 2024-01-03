@@ -22,7 +22,6 @@
 #include "util/FakeFetchResponse.h"
 #include "util/Fixtures.h"
 #include "util/MockAmendmentBlockHandler.h"
-#include "util/MockBackend.h"
 #include "util/MockExtractionDataPipe.h"
 #include "util/MockLedgerLoader.h"
 #include "util/MockLedgerPublisher.h"

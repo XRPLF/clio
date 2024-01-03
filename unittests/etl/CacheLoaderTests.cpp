@@ -20,7 +20,6 @@
 #include "data/Types.h"
 #include "etl/impl/CacheLoader.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/MockCache.h"
 #include "util/config/Config.h"
 
