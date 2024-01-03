@@ -188,26 +188,85 @@ protected:
     boost::asio::io_context ctx;
 };
 
-/**
- * @brief Fixture with a mock backend
- */
-struct MockBackendTest : virtual public NoLoggerFixture {
+template <template <typename> typename MockType = ::testing::NiceMock>
+struct MockBackendTestBase : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
         NoLoggerFixture::SetUp();
-        util::Config const cfg;
-        mockBackendPtr = std::make_shared<MockBackend>(cfg);
+        backend.reset();
     }
+
     void
     TearDown() override
     {
-        mockBackendPtr.reset();
+        NoLoggerFixture::TearDown();
     }
 
+    class BackendProxy {
+        std::shared_ptr<BackendInterface> backend;
+
+    private:
+        void
+        reset()
+        {
+            backend = std::make_shared<MockType<MockBackend>>(util::Config{});
+        }
+
+        friend MockBackendTestBase;
+
+    public:
+        auto
+        operator->()
+        {
+            return backend.get();
+        }
+
+        operator std::shared_ptr<BackendInterface>()
+        {
+            return backend;
+        }
+
+        operator std::shared_ptr<BackendInterface const>() const
+        {
+            return backend;
+        }
+
+        operator MockBackend*()
+        {
+            MockBackend* ret = dynamic_cast<MockBackend*>(backend.get());
+            [&] { ASSERT_NE(ret, nullptr); }();
+            return ret;
+        }
+    };
+
 protected:
-    std::shared_ptr<BackendInterface> mockBackendPtr;
+    BackendProxy backend;
 };
+
+/**
+ * @brief Fixture with a "nice" mock backend.
+ *
+ * Use @see MockBackendTestNaggy during development to get unset call expectation warnings.
+ * Once the test is ready and you are happy you can switch to this fixture to mute the warnings.
+ *
+ * A fixture that is based off of this MockBackendTest or MockBackendTestNaggy get a `backend` member
+ * that is a `BackendProxy` that can be used to access the mock backend. It can be used wherever a
+ * `std::shared_ptr<BackendInterface>` is expected as well as `*backend` can be used with EXPECT_CALL and ON_CALL.
+ */
+using MockBackendTest = MockBackendTestBase<::testing::NiceMock>;
+
+/**
+ * @brief Fixture with a "naggy" mock backend.
+ *
+ * Use this during development to get unset call expectation warnings.
+ */
+using MockBackendTestNaggy = MockBackendTestBase<::testing::NaggyMock>;
+
+/**
+ * @brief Fixture with a "strict" mock backend.
+ */
+using MockBackendTestStrict = MockBackendTestBase<::testing::StrictMock>;
 
 /**
  * @brief Fixture with a mock subscription manager
@@ -290,15 +349,20 @@ protected:
 };
 
 /**
- * @brief Fixture with an mock backend and an embedded boost::asio context
- * Handler unittest base class
+ * @brief Fixture with an mock backend and an embedded boost::asio context.
+ *
+ * Use as a handler unittest base fixture thru either @see HandlerBaseTest, @see HandlerBaseTestNaggy or @see
+ * HandlerBaseTestStrict.
  */
-struct HandlerBaseTest : public MockBackendTest, public SyncAsioContextTest, public MockETLServiceTest {
+template <template <typename> typename MockType = ::testing::NiceMock>
+struct HandlerBaseTestBase : public MockBackendTestBase<MockType>,
+                             public SyncAsioContextTest,
+                             public MockETLServiceTest {
 protected:
     void
     SetUp() override
     {
-        MockBackendTest::SetUp();
+        MockBackendTestBase<MockType>::SetUp();
         SyncAsioContextTest::SetUp();
         MockETLServiceTest::SetUp();
     }
@@ -308,6 +372,28 @@ protected:
     {
         MockETLServiceTest::TearDown();
         SyncAsioContextTest::TearDown();
-        MockBackendTest::TearDown();
+        MockBackendTestBase<MockType>::TearDown();
     }
 };
+
+/**
+ * @brief Fixture with a "nice" backend mock and an embedded boost::asio context.
+ *
+ * Use @see HandlerBaseTest during development to get unset call expectation warnings from the backend mock.
+ * Once the test is ready and you are happy you can switch to this fixture to mute the warnings.
+ *
+ * @see BackendBaseTest for more details on the injected backend mock.
+ */
+using HandlerBaseTest = HandlerBaseTestBase<::testing::NiceMock>;
+
+/**
+ * @brief Fixture with a "naggy" backend mock and an embedded boost::asio context.
+ *
+ * Use this during development to get unset call expectation warnings from the backend mock.
+ */
+using HandlerBaseTestNaggy = HandlerBaseTestBase<::testing::NaggyMock>;
+
+/**
+ * @brief Fixture with a "strict" backend mock and an embedded boost::asio context.
+ */
+using HandlerBaseTestStrict = HandlerBaseTestBase<::testing::StrictMock>;

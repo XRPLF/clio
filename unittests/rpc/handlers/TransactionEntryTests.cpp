@@ -50,7 +50,7 @@ class RPCTransactionEntryHandlerTest : public HandlerBaseTest {};
 TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TransactionEntryHandler{backend}};
         auto const output = handler.process(json::parse("{}"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -62,7 +62,7 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashNotProvide)
 TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TransactionEntryHandler{backend}};
         auto const output = handler.process(json::parse(R"({"tx_hash":"123"})"), Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -73,12 +73,10 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
     // mock fetchLedgerByHash return empty
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{INDEX}, _))
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{INDEX}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -89,7 +87,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
         TXNID
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TransactionEntryHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -101,13 +99,10 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 // error case ledger non exist via index
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
             "ledger_index": "4",
@@ -116,7 +111,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
         TXNID
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TransactionEntryHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -127,17 +122,14 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 
 TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, 30)));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
+    backend->setRange(10, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, 30)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+    EXPECT_CALL(*backend, fetchTransaction).Times(1);
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TransactionEntryHandler{backend}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "tx_hash": "{}"
@@ -154,24 +146,21 @@ TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
 
 TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
         CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 10;
-    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+    ON_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction).Times(1);
 
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, 30)));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    backend->setRange(10, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, 30)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TransactionEntryHandler{backend}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "tx_hash": "{}",
@@ -234,24 +223,22 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
                                         "ledger_hash": "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322",
                                         "validated": true
                                     })";
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
         CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 30;
-    ON_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction).Times(1);
+    ON_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillByDefault(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction).Times(1);
 
-    mockBackendPtr->updateRange(10);                 // min
-    mockBackendPtr->updateRange(tx.ledgerSequence);  // max
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, tx.ledgerSequence)));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    backend->setRange(10, tx.ledgerSequence);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, tx.ledgerSequence)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TransactionEntryHandler{backend}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "tx_hash": "{}",
@@ -314,22 +301,20 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
                                         "hash": "2E2FBAAFF767227FE4381C4BE9855986A6B9F96C62F6E443731AB36F7BBB8A08",
                                         "validated": true
                                     })";
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
         CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 30;
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
-    mockBackendPtr->updateRange(10);                 // min
-    mockBackendPtr->updateRange(tx.ledgerSequence);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).WillOnce(Return(CreateLedgerInfo(INDEX, tx.ledgerSequence)));
+    backend->setRange(10, tx.ledgerSequence);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(CreateLedgerInfo(INDEX, tx.ledgerSequence)));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TransactionEntryHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{TransactionEntryHandler{backend}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "tx_hash": "{}",
