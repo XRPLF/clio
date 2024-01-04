@@ -22,6 +22,8 @@
 #include "util/Assert.h"
 
 #include <algorithm>
+#include <functional>
+#include <iterator>
 #include <ranges>
 
 namespace util {
