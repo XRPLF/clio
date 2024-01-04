@@ -23,12 +23,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: Linux
+          - os: heavy
             container:
               image: rippleci/clio_ci:latest
             build_type: Release
             code_coverage: false
-          - os: Linux
+          - os: heavy
             container:
               image: rippleci/clio_ci:latest
             build_type: Debug
@@ -119,7 +119,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: Linux
+          - os: heavy
             container:
               image: rippleci/clio_ci:latest
           - os: macOS
