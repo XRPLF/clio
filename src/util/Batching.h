@@ -24,7 +24,6 @@
 #include <algorithm>
 #include <cstdint>
 #include <ranges>
-#include <type_traits>
 
 namespace util {
 
