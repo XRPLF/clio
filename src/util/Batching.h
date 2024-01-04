@@ -22,7 +22,6 @@
 #include "util/Assert.h"
 
 #include <algorithm>
-#include <cstdint>
 #include <ranges>
 
 namespace util {
@@ -32,13 +31,19 @@ forEachBatch(std::ranges::forward_range auto&& container, std::size_t batchSize,
 {
     ASSERT(batchSize > 0, "Batch size must be greater than 0");
 
-    auto const totalSize = container.size();
-    auto const batches = totalSize / batchSize + (totalSize % batchSize ? 1 : 0);
+    auto to = std::begin(container);
+    auto end = std::end(container);
 
-    for (auto i = 0u; i < batches; ++i) {
-        auto const start = i * batchSize;
-        auto const end = std::min(start + batchSize, totalSize);
-        fn(container.begin() + start, container.begin() + end);
+    while (to != end) {
+        auto from = to;
+
+        auto cnt = batchSize;
+        while (to != end and cnt > 0) {
+            ++to;
+            --cnt;
+        }
+
+        std::invoke(fn, from, to);
     }
 }
 
