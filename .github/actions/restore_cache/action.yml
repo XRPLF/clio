@@ -7,6 +7,14 @@ inputs:
   ccache_dir:
     description: Path to .ccache directory
     required: true
+  build_type:
+    description: Current build type (e.g. Release, Debug)
+    required: true
+    default: Release
+  code_coverage:
+    description: Whether code coverage is on
+    required: true
+    default: 'false'
 outputs:
   conan_hash:
     description: Hash to use as a part of conan cache key
@@ -40,7 +48,7 @@ runs:
       id: conan_cache
       with:
         path: ${{ inputs.conan_dir }}/data
-        key: clio-conan_data-${{ runner.os }}-develop-${{ steps.conan_hash.outputs.hash }}
+        key: clio-conan_data-${{ runner.os }}-${{ inputs.build_type }}-develop-${{ steps.conan_hash.outputs.hash }}
 
     - name: Restore ccache cache
       uses: actions/cache/restore@v3
@@ -48,4 +56,4 @@ runs:
       if: ${{ env.CCACHE_DISABLE != '1' }}
       with:
         path: ${{ inputs.ccache_dir }}
-        key: clio-ccache-${{ runner.os }}-develop-${{ steps.git_common_ancestor.outputs.commit }}
+        key: clio-ccache-${{ runner.os }}-${{ inputs.build_type }}${{ inputs.code_coverage == 'true' && '-code_coverage' || '' }}-develop-${{ steps.git_common_ancestor.outputs.commit }}

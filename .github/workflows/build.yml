@@ -26,6 +26,11 @@ jobs:
           - os: Linux
             container:
               image: rippleci/clio_ci:latest
+          - os: Linux
+            container:
+              image: rippleci/clio_ci:latest
+            build_type: Debug
+            code_coverage: true
           - os: macOS
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
@@ -50,13 +55,16 @@ jobs:
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
           ccache_dir: ${{ env.CCACHE_DIR }}
+          build_type: ${{ matrix.build_type }}
+          code_coverage: ${{ matrix.code_coverage }}
 
       - name: Run conan and cmake
         uses: ./.github/actions/generate
         with:
           conan_profile: ${{ steps.conan.outputs.conan_profile }}
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
-          build_type: 'Release'
+          build_type: ${{ matrix.build_type }}
+          code_coverage: ${{ matrix.code_coverage }}
 
       - name: Build Clio
         uses: ./.github/actions/build_clio
@@ -71,20 +79,15 @@ jobs:
           cat /tmp/ccache.stats
 
       - name: Strip tests
+        if: ${{ matrix.code_coverage != 'true' }}
         run: strip build/clio_tests
 
       - name: Upload clio_tests
+        if: ${{ matrix.code_coverage != 'true' }}
         uses: actions/upload-artifact@v3
         with:
           name: clio_tests_${{ runner.os }}
           path: build/clio_tests
-
-      - name: Upload compile_commans
-        if: ${{ runner.os == 'macOS' }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: compile_commans_${{ runner.os }}
-          path: build/compile_commands.json
 
       - name: Save cache
         uses: ./.github/actions/save_cache
@@ -95,6 +98,15 @@ jobs:
           ccache_dir: ${{ env.CCACHE_DIR }}
           ccache_cache_hit: ${{ steps.restore_cache.outputs.ccache_cache_hit }}
           ccache_cache_miss_rate: ${{ steps.ccache_stats.outputs.miss_rate }}
+          build_type: ${{ matrix.build_type }}
+          code_coverage: ${{ matrix.code_coverage }}
+
+      # TODO: This is not a part of build process but it is the easiest way to do it here.
+      # It will be refactored in https://github.com/XRPLF/clio/issues/1075
+      - name: Run code coverage
+        if: ${{ matrix.code_coverage == 'true' }}
+        uses: ./.github/actions/code_coverage
+
 
   test:
     name: Run Tests
@@ -118,65 +130,3 @@ jobs:
         run: |
           chmod +x ./clio_tests
           ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
-
-  coverage:
-    name: Run Coverage Report
-    needs: lint
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: Linux
-            container:
-              image: rippleci/clio_ci:latest
-    runs-on: [self-hosted, "${{ matrix.os }}"]
-    container: ${{ matrix.container }}
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-            fetch-depth: 0
-
-      - name: Prepare runner
-        uses: ./.github/actions/prepare_runner
-        with:
-          disable_ccache: true
-
-      - name: Install gcovr
-        run: |
-          pip install gcovr
-
-      - name: Setup conan
-        uses: ./.github/actions/setup_conan
-        id: conan
-
-      - name: Run conan and cmake
-        uses: ./.github/actions/generate
-        with:
-          conan_profile: ${{ steps.conan.outputs.conan_profile }}
-          conan_cache_hit: false
-          build_type: 'Debug'
-          extra_cmake_args: >-
-            -Dcoverage=ON
-            -DCODE_COVERAGE_TESTS_ARGS="--gtest_filter=-BackendCassandra*"
-            -DCODE_COVERAGE_REPORT_FORMAT=xml
-
-      - name: Run tests and coverage report
-        uses: ./.github/actions/build_clio
-        with:
-          target: coverage_report
-
-      - name: Archive coverage report
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage-report.xml
-          path: build/coverage_report.xml
-          retention-days: 30
-
-      - name: Upload coverage report
-        uses: codecov/codecov-action@v3
-        with:
-          files: build/coverage_report.xml
-          fail_ci_if_error: true
-          verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }}

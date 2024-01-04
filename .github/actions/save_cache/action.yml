@@ -18,6 +18,14 @@ inputs:
     required: true
   ccache_cache_miss_rate:
     description: How many cache misses happened
+  build_type:
+    description: Current build type (e.g. Release, Debug)
+    required: true
+    default: Release
+  code_coverage:
+    description: Whether code coverage is on
+    required: true
+    default: 'false'
 runs:
   using: composite
   steps:
@@ -36,13 +44,13 @@ runs:
       uses: actions/cache/save@v3
       with:
         path: ${{ inputs.conan_dir }}/data
-        key: clio-conan_data-${{ runner.os }}-develop-${{ inputs.conan_hash }}
+        key: clio-conan_data-${{ runner.os }}-${{ inputs.build_type }}-develop-${{ steps.conan_hash.outputs.hash }}
 
     - name: Save ccache cache
       if: ${{ inputs.ccache_cache_hit != 'true' || inputs.ccache_cache_miss_rate == '100.0' }}
       uses: actions/cache/save@v3
       with:
         path: ${{ inputs.ccache_dir }}
-        key: clio-ccache-${{ runner.os }}-develop-${{ steps.git_common_ancestor.outputs.commit }}
+        key: clio-ccache-${{ runner.os }}-${{ inputs.build_type }}${{ inputs.code_coverage == 'true' && '-code_coverage' || '' }}-develop-${{ steps.git_common_ancestor.outputs.commit }}
 
 
