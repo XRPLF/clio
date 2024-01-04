@@ -22,7 +22,6 @@
 #include "rpc/common/Types.h"
 #include "rpc/handlers/ServerInfo.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/MockCounters.h"
 #include "util/MockETLService.h"
 #include "util/MockLoadBalancer.h"
