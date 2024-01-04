@@ -184,6 +184,7 @@ if (tests)
     unittests/SubscriptionTests.cpp
     unittests/SubscriptionManagerTests.cpp
     unittests/util/AssertTests.cpp
+    unittests/util/BatchingTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
     unittests/util/prometheus/CounterTests.cpp

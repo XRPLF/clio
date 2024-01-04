@@ -83,6 +83,7 @@ Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), c
     LOG(log_.info()) << "Threads: " << settings.threads;
     LOG(log_.info()) << "Core connections per host: " << settings.coreConnectionsPerHost;
     LOG(log_.info()) << "IO queue size: " << queueSize;
+    LOG(log_.info()) << "Batched writes auto-chunk size: " << settings.writeBatchSize;
 }
 
 void
