@@ -42,6 +42,8 @@ struct Settings {
     static constexpr std::size_t DEFAULT_CONNECTION_TIMEOUT = 10000;
     static constexpr uint32_t DEFAULT_MAX_WRITE_REQUESTS_OUTSTANDING = 10'000;
     static constexpr uint32_t DEFAULT_MAX_READ_REQUESTS_OUTSTANDING = 100'000;
+    static constexpr std::size_t DEFAULT_BATCH_SIZE = 20;
+
     /**
      * @brief Represents the configuration of contact points for cassandra.
      */
@@ -80,6 +82,9 @@ struct Settings {
 
     /** @brief The number of connection per host to always have active */
     uint32_t coreConnectionsPerHost = 1u;
+
+    /** @brief Size of batches when writing */
+    std::size_t writeBatchSize = DEFAULT_BATCH_SIZE;
 
     /** @brief Size of the IO queue */
     std::optional<uint32_t> queueSizeIO{};
