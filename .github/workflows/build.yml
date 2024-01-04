@@ -26,12 +26,16 @@ jobs:
           - os: Linux
             container:
               image: rippleci/clio_ci:latest
+            build_type: Release
+            code_coverage: false
           - os: Linux
             container:
               image: rippleci/clio_ci:latest
             build_type: Debug
             code_coverage: true
           - os: macOS
+            build_type: Release
+            code_coverage: false
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
