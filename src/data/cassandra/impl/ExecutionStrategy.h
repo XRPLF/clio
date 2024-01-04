@@ -25,6 +25,7 @@
 #include "data/cassandra/Types.h"
 #include "data/cassandra/impl/AsyncExecutor.h"
 #include "util/Assert.h"
+#include "util/Batching.h"
 #include "util/Expected.h"
 #include "util/log/Logger.h"
 
@@ -58,6 +59,8 @@ class DefaultExecutionStrategy {
 
     std::uint32_t maxReadRequestsOutstanding_;
     std::atomic_uint32_t numReadRequestsOutstanding_ = 0;
+
+    std::size_t writeBatchSize_;
 
     std::mutex throttleMutex_;
     std::condition_variable throttleCv_;
@@ -93,6 +96,7 @@ public:
     )
         : maxWriteRequestsOutstanding_{settings.maxWriteRequestsOutstanding}
         , maxReadRequestsOutstanding_{settings.maxReadRequestsOutstanding}
+        , writeBatchSize_{settings.writeBatchSize}
         , work_{ioc_}
         , handle_{std::cref(handle)}
         , thread_{[this]() { ioc_.run(); }}
@@ -214,22 +218,28 @@ public:
         if (statements.empty())
             return;
 
-        auto const startTime = std::chrono::steady_clock::now();
+        util::forEachBatch(std::move(statements), writeBatchSize_, [this](auto begin, auto end) {
+            auto const startTime = std::chrono::steady_clock::now();
+            auto chunk = std::vector<StatementType>{};
 
-        incrementOutstandingRequestCount();
+            chunk.reserve(std::distance(begin, end));
+            std::move(begin, end, std::back_inserter(chunk));
 
-        counters_->registerWriteStarted();
-        // Note: lifetime is controlled by std::shared_from_this internally
-        AsyncExecutor<std::decay_t<decltype(statements)>, HandleType>::run(
-            ioc_,
-            handle_,
-            std::move(statements),
-            [this, startTime](auto const&) {
-                decrementOutstandingRequestCount();
-                counters_->registerWriteFinished(startTime);
-            },
-            [this]() { counters_->registerWriteRetry(); }
-        );
+            incrementOutstandingRequestCount();
+            counters_->registerWriteStarted();
+
+            // Note: lifetime is controlled by std::shared_from_this internally
+            AsyncExecutor<std::decay_t<decltype(chunk)>, HandleType>::run(
+                ioc_,
+                handle_,
+                std::move(chunk),
+                [this, startTime](auto const&) {
+                    decrementOutstandingRequestCount();
+                    counters_->registerWriteFinished(startTime);
+                },
+                [this]() { counters_->registerWriteRetry(); }
+            );
+        });
     }
 
     /**
