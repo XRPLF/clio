@@ -83,11 +83,11 @@ jobs:
           cat /tmp/ccache.stats
 
       - name: Strip tests
-        if: ${{ matrix.code_coverage != 'true' }}
+        if: ${{ matrix.code_coverage }}
         run: strip build/clio_tests
 
       - name: Upload clio_tests
-        if: ${{ matrix.code_coverage != 'true' }}
+        if: ${{ matrix.code_coverage }}
         uses: actions/upload-artifact@v3
         with:
           name: clio_tests_${{ runner.os }}
@@ -108,7 +108,7 @@ jobs:
       # TODO: This is not a part of build process but it is the easiest way to do it here.
       # It will be refactored in https://github.com/XRPLF/clio/issues/1075
       - name: Run code coverage
-        if: ${{ matrix.code_coverage == 'true' }}
+        if: ${{ matrix.code_coverage }}
         uses: ./.github/actions/code_coverage
 
 
