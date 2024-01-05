@@ -22,6 +22,8 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <iterator>
+#include <vector>
 
 TEST(BatchingTests, simpleBatch)
 {
