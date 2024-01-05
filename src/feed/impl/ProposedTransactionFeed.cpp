@@ -40,12 +40,14 @@ void
 ProposedTransactionFeed::sub(SubscriberSharedPtr const& subscriber)
 {
     auto const weakPtr = std::weak_ptr(subscriber);
-    if (signal_.connectTrackableSlot(subscriber, [weakPtr](std::shared_ptr<std::string> const& msg) {
-            if (auto connectionPtr = weakPtr.lock()) {
-                connectionPtr->send(msg);
-            }
-        })) {
-        ++subAllCount_;
+    auto const added = signal_.connectTrackableSlot(subscriber, [weakPtr](std::shared_ptr<std::string> const& msg) {
+        if (auto connectionPtr = weakPtr.lock()) {
+            connectionPtr->send(msg);
+        }
+    });
+
+    if (added) {
+        ++subAllCount_.get();
         subscriber->onDisconnect.connect([this](SubscriberPtr connection) { unsubInternal(connection); });
     }
 }
@@ -54,18 +56,22 @@ void
 ProposedTransactionFeed::sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     auto const weakPtr = std::weak_ptr(subscriber);
-    if (accountSignal_
-            .connectTrackableSlot(subscriber, account, [this, weakPtr](std::shared_ptr<std::string> const& msg) {
-                if (auto connectionPtr = weakPtr.lock()) {
-                    // Check if this connection already sent
-                    if (notified_.contains(connectionPtr.get()))
-                        return;
+    auto const added = accountSignal_.connectTrackableSlot(
+        subscriber,
+        account,
+        [this, weakPtr](std::shared_ptr<std::string> const& msg) {
+            if (auto connectionPtr = weakPtr.lock()) {
+                // Check if this connection already sent
+                if (notified_.contains(connectionPtr.get()))
+                    return;
 
-                    notified_.insert(connectionPtr.get());
-                    connectionPtr->send(msg);
-                }
-            })) {
-        ++subAccountCount_;
+                notified_.insert(connectionPtr.get());
+                connectionPtr->send(msg);
+            }
+        }
+    );
+    if (added) {
+        ++subAccountCount_.get();
         subscriber->onDisconnect.connect([this, account](SubscriberPtr connection) {
             unsubInternal(account, connection);
         });
@@ -91,16 +97,16 @@ ProposedTransactionFeed::pub(boost::json::object const& receivedTxJson)
 
     auto const transaction = receivedTxJson.at("transaction").as_object();
     auto const accounts = rpc::getAccountsFromTransaction(transaction);
-    auto affactedAccounts = std::unordered_set<ripple::AccountID>(accounts.cbegin(), accounts.cend());
+    auto affectedAccounts = std::unordered_set<ripple::AccountID>(accounts.cbegin(), accounts.cend());
 
-    boost::asio::post(strand_, [this, pubMsg = std::move(pubMsg), affactedAccounts = std::move(affactedAccounts)]() {
+    boost::asio::post(strand_, [this, pubMsg = std::move(pubMsg), affectedAccounts = std::move(affectedAccounts)]() {
         signal_.emit(pubMsg);
         // Prevent the same connection from receiving the same message twice if it is subscribed to multiple accounts
         // However, if the same connection subscribe both stream and account, it will still receive the message twice.
         // notified_ can be cleared before signal_ emit to improve this, but let's keep it as is for now, since rippled
         // acts like this.
         notified_.clear();
-        for (auto const& account : affactedAccounts)
+        for (auto const& account : affectedAccounts)
             accountSignal_.emit(account, pubMsg);
     });
 }
@@ -108,13 +114,13 @@ ProposedTransactionFeed::pub(boost::json::object const& receivedTxJson)
 std::uint64_t
 ProposedTransactionFeed::transactionSubcount() const
 {
-    return subAllCount_.value();
+    return subAllCount_.get().value();
 }
 
 std::uint64_t
 ProposedTransactionFeed::accountSubCount() const
 {
-    return subAccountCount_.value();
+    return subAccountCount_.get().value();
 }
 
 void
@@ -122,7 +128,7 @@ ProposedTransactionFeed::unsubInternal(SubscriberPtr subscriber)
 {
     if (signal_.disconnect(subscriber)) {
         LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed tx_proposed";
-        --subAllCount_;
+        --subAllCount_.get();
     }
 }
 
@@ -131,7 +137,7 @@ ProposedTransactionFeed::unsubInternal(ripple::AccountID const& account, Subscri
 {
     if (accountSignal_.disconnect(subscriber, account)) {
         LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed accounts_proposed " << account;
-        --subAccountCount_;
+        --subAccountCount_.get();
     }
 }
 

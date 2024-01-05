@@ -41,8 +41,8 @@ using FeedLedgerTest = FeedBaseTest<LedgerFeed>;
 TEST_F(FeedLedgerTest, SubPub)
 {
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerinfo));
+    auto const ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerInfo));
 
     auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(testing::Return(feeBlob));

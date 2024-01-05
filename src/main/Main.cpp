@@ -198,7 +198,9 @@ try {
     auto backend = data::make_Backend(config);
 
     // Manages clients subscribed to streams
-    auto subscriptions = std::make_shared<feed::SubscriptionManagerRunner>(config, backend);
+    auto subscriptionsRunner = feed::SubscriptionManagerRunner(config, backend);
+
+    auto const subscriptions = subscriptionsRunner.getManager();
 
     // Tracks which ledgers have been validated by the network
     auto ledgers = etl::NetworkValidatedLedgers::make_ValidatedLedgers();
@@ -207,15 +209,15 @@ try {
     // ETL uses the balancer to extract data.
     // The server uses the balancer to forward RPCs to a rippled node.
     // The balancer itself publishes to streams (transactions_proposed and accounts_proposed)
-    auto balancer = etl::LoadBalancer::make_LoadBalancer(config, ioc, backend, subscriptions->get(), ledgers);
+    auto balancer = etl::LoadBalancer::make_LoadBalancer(config, ioc, backend, subscriptions, ledgers);
 
     // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only publishes
-    auto etl = etl::ETLService::make_ETLService(config, ioc, backend, subscriptions->get(), balancer, ledgers);
+    auto etl = etl::ETLService::make_ETLService(config, ioc, backend, subscriptions, balancer, ledgers);
 
     auto workQueue = rpc::WorkQueue::make_WorkQueue(config);
     auto counters = rpc::Counters::make_Counters(workQueue);
     auto const handlerProvider = std::make_shared<rpc::detail::ProductionHandlerProvider const>(
-        config, backend, subscriptions->get(), balancer, etl, counters
+        config, backend, subscriptions, balancer, etl, counters
     );
     auto const rpcEngine =
         rpc::RPCEngine::make_RPCEngine(backend, balancer, dosGuard, workQueue, counters, handlerProvider);

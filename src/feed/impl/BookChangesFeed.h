@@ -36,16 +36,15 @@ namespace feed::impl {
  *  Example : {'type': 'bookChanges', 'ledger_index': 2647936, 'ledger_hash':
  * '0A5010342D8AAFABDCA58A68F6F588E1C6E58C21B63ED6CA8DB2478F58F3ECD5', 'ledger_time': 756395682, 'changes': []}
  */
-class BookChangesFeed : public SingleFeedBase {
-public:
+struct BookChangesFeed : public SingleFeedBase {
     BookChangesFeed(boost::asio::io_context& ioContext) : SingleFeedBase(ioContext, "book_changes")
     {
     }
 
     /**
      * @brief Publishes the book changes.
-     * @param lgrInfo: The ledger header.
-     * @param transactions: The transactions that were included in the ledger.
+     * @param lgrInfo The ledger header.
+     * @param transactions The transactions that were included in the ledger.
      */
     void
     pub(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions) const

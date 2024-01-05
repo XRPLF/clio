@@ -19,27 +19,23 @@
 
 #pragma once
 
-#include "feed/impl/SingleFeedBase.h"
+#include "util/prometheus/Gauge.h"
+#include "util/prometheus/Label.h"
+#include "util/prometheus/Prometheus.h"
 
-#include <boost/json/object.hpp>
-#include <boost/json/serialize.hpp>
+#include <fmt/core.h>
+
+#include <string>
 
 namespace feed::impl {
 
-/**
- * @brief Feed that publishes the json object as it is.
- */
-struct ForwardFeed : public SingleFeedBase {
-public:
-    using SingleFeedBase::SingleFeedBase;
-
-    /**
-     * @brief Publishes the json object.
-     */
-    void
-    pub(boost::json::object const& json) const
-    {
-        SingleFeedBase::pub(boost::json::serialize(json));
-    }
-};
+inline util::prometheus::GaugeInt&
+getSubscriptionsGaugeInt(std::string const& counterName)
+{
+    return PrometheusService::gaugeInt(
+        "subscriptions_current_number",
+        util::prometheus::Labels({util::prometheus::Label{"stream", counterName}}),
+        fmt::format("Current subscribers number on the {} stream", counterName)
+    );
+}
 }  // namespace feed::impl

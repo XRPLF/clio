@@ -22,6 +22,7 @@
 #include "feed/Types.h"
 #include "feed/impl/TrackableSignal.h"
 #include "feed/impl/TrackableSignalMap.h"
+#include "feed/impl/Util.h"
 #include "util/log/Logger.h"
 #include "util/prometheus/Gauge.h"
 
@@ -34,6 +35,7 @@
 #include <ripple/protocol/LedgerHeader.h>
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -50,8 +52,8 @@ class ProposedTransactionFeed {
     std::unordered_set<SubscriberPtr>
         notified_;  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
-    util::prometheus::GaugeInt& subAllCount_;
-    util::prometheus::GaugeInt& subAccountCount_;
+    std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_;
+    std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
 
     TrackableSignalMap<ripple::AccountID, Subscriber, std::shared_ptr<std::string>> accountSignal_;
     TrackableSignal<Subscriber, std::shared_ptr<std::string>> signal_;
@@ -59,7 +61,7 @@ class ProposedTransactionFeed {
 public:
     /**
      * @brief Construct a Proposed Transaction Feed object.
-     * @param ioContext: The actual publish will be called in the strand of this.
+     * @param ioContext The actual publish will be called in the strand of this.
      */
     ProposedTransactionFeed(boost::asio::io_context& ioContext)
         : strand_(boost::asio::make_strand(ioContext))
@@ -76,8 +78,8 @@ public:
     sub(SubscriberSharedPtr const& subscriber);
 
     /**
-     * @brief Subscribe to the proposed transaction feed, only receive the feed when particular account is affacted.
-     * @param account: The account to watch.
+     * @brief Subscribe to the proposed transaction feed, only receive the feed when particular account is affected.
+     * @param account The account to watch.
      */
     void
     sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
@@ -90,26 +92,26 @@ public:
 
     /**
      * @brief Unsubscribe to the proposed transaction feed for particular account.
-     * @param account: The account to unsubscribe.
+     * @param account The account to unsubscribe.
      */
     void
     unsub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Publishes the proposed transaction feed.
-     * @param receivedTxJson: The proposed transaction json.
+     * @param receivedTxJson The proposed transaction json.
      */
     void
     pub(boost::json::object const& receivedTxJson);
 
     /**
-     *@brief Get the number of subscribers of the proposed transaction feed.
+     * @brief Get the number of subscribers of the proposed transaction feed.
      */
     std::uint64_t
     transactionSubcount() const;
 
     /**
-     *@brief Get the number of accounts subscribers.
+     * @brief Get the number of accounts subscribers.
      */
     std::uint64_t
     accountSubCount() const;

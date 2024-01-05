@@ -273,7 +273,6 @@ protected:
     void
     SetUp() override
     {
-        WithMockPrometheus::SetUp();
         SyncAsioContextTest::SetUp();
         testFeedPtr = std::make_shared<ProposedTransactionFeed>(ctx);
         sessionPtr = std::make_shared<MockSession>(tagDecoratorFactory);
@@ -284,7 +283,6 @@ protected:
         sessionPtr.reset();
         testFeedPtr.reset();
         SyncAsioContextTest::TearDown();
-        WithMockPrometheus::TearDown();
     }
 };
 

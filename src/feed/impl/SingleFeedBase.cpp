@@ -21,6 +21,7 @@
 
 #include "feed/Types.h"
 #include "feed/impl/TrackableSignal.h"
+#include "feed/impl/Util.h"
 #include "util/log/Logger.h"
 
 #include <boost/asio/io_context.hpp>
@@ -43,11 +44,13 @@ void
 SingleFeedBase::sub(SubscriberSharedPtr const& subscriber)
 {
     auto const weakPtr = std::weak_ptr(subscriber);
-    if (signal_.connectTrackableSlot(subscriber, [weakPtr](std::shared_ptr<std::string> const& msg) {
-            if (auto connectionPtr = weakPtr.lock())
-                connectionPtr->send(msg);
-        })) {
-        ++subCount_;
+    auto const added = signal_.connectTrackableSlot(subscriber, [weakPtr](std::shared_ptr<std::string> const& msg) {
+        if (auto connectionPtr = weakPtr.lock())
+            connectionPtr->send(msg);
+    });
+
+    if (added) {
+        ++subCount_.get();
         subscriber->onDisconnect.connect([this](SubscriberPtr connectionDisconnecting) {
             unsubInternal(connectionDisconnecting);
         });
@@ -72,7 +75,7 @@ SingleFeedBase::pub(std::string msg) const
 std::uint64_t
 SingleFeedBase::count() const
 {
-    return subCount_.value();
+    return subCount_.get().value();
 }
 
 void
@@ -80,7 +83,7 @@ SingleFeedBase::unsubInternal(SubscriberPtr subscriber)
 {
     if (signal_.disconnect(subscriber)) {
         LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed " << name_;
-        --subCount_;
+        --subCount_.get();
     }
 }
 }  // namespace feed::impl

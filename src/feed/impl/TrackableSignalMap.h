@@ -40,10 +40,10 @@ concept Hashable = requires(T a) {
 
 /**
  * @brief Class to manage a map of key and its associative signal.
- * @tparam Key: The type of the key.
- * @tparam Session: The type of the object that will be tracked, when the object is destroyed, the connection will be
+ * @param Key The type of the key.
+ * @param Session The type of the object that will be tracked, when the object is destroyed, the connection will be
  * removed lazily.
- * @tparam Args: The types of the arguments that will be passed to the slot
+ * @param Args The types of the arguments that will be passed to the slot
  */
 template <Hashable Key, typename Session, typename... Args>
 class TrackableSignalMap {

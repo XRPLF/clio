@@ -40,7 +40,7 @@
 namespace feed::impl {
 
 boost::json::object
-LedgerFeed::getLedgerPubMessage(
+LedgerFeed::makeLedgerPubMessage(
     ripple::LedgerHeader const& lgrInfo,
     ripple::Fees const& fees,
     std::string const& ledgerRange,
@@ -81,7 +81,7 @@ LedgerFeed::sub(
 
     auto const range = std::to_string(ledgerRange->minSequence) + "-" + std::to_string(ledgerRange->maxSequence);
 
-    auto pubMsg = getLedgerPubMessage(*lgrInfo, *fees, range, 0);
+    auto pubMsg = makeLedgerPubMessage(*lgrInfo, *fees, range, 0);
     pubMsg.erase("txn_count");
     pubMsg.erase("type");
 
@@ -96,6 +96,6 @@ LedgerFeed::pub(
     std::uint32_t const txnCount
 ) const
 {
-    SingleFeedBase::pub(boost::json::serialize(getLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount)));
+    SingleFeedBase::pub(boost::json::serialize(makeLedgerPubMessage(lgrInfo, fees, ledgerRange, txnCount)));
 }
 }  // namespace feed::impl

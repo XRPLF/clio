@@ -24,6 +24,7 @@
 #include "feed/Types.h"
 #include "feed/impl/TrackableSignal.h"
 #include "feed/impl/TrackableSignalMap.h"
+#include "feed/impl/Util.h"
 #include "util/log/Logger.h"
 #include "util/prometheus/Gauge.h"
 
@@ -57,30 +58,15 @@ class TransactionFeed {
         }
 
         void
-        operator()(AllVersionTransactionsType const& allVersionMsgs) const
-        {
-            if (auto connection = connectionWeakPtr.lock(); connection) {
-                // Check if this connection already sent
-                if (feed.get().notified_.contains(connection.get()))
-                    return;
-
-                feed.get().notified_.insert(connection.get());
-
-                if (connection->apiSubVersion < 2u) {
-                    connection->send(allVersionMsgs[0]);
-                    return;
-                }
-                connection->send(allVersionMsgs[1]);
-            }
-        }
+        operator()(AllVersionTransactionsType const& allVersionMsgs) const;
     };
 
     util::Logger logger_{"Subscriptions"};
 
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
-    util::prometheus::GaugeInt& subAllCount_;
-    util::prometheus::GaugeInt& subAccountCount_;
-    util::prometheus::GaugeInt& subBookCount_;
+    std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_;
+    std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
+    std::reference_wrapper<util::prometheus::GaugeInt> subBookCount_;
 
     TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountSignal_;
     TrackableSignalMap<ripple::Book, Subscriber, AllVersionTransactionsType const&> bookSignal_;
@@ -92,7 +78,7 @@ class TransactionFeed {
 public:
     /**
      * @brief Construct a new Transaction Feed object.
-     * @param ioContext: The actual publish will be called in the strand of this.
+     * @param ioContext The actual publish will be called in the strand of this.
      */
     TransactionFeed(boost::asio::io_context& ioContext)
         : strand_(boost::asio::make_strand(ioContext))
@@ -104,23 +90,23 @@ public:
 
     /**
      * @brief Subscribe to the transaction feed.
-     * @param apiVersion: The api version of feed.
+     * @param apiVersion The api version of feed.
      */
     void
     sub(SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
 
     /**
      * @brief Subscribe to the transaction feed, only receive the feed when particular account is affected.
-     * @param account: The account to watch.
-     * @param apiVersion: The api version of feed.
+     * @param account The account to watch.
+     * @param apiVersion The api version of feed.
      */
     void
     sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
 
     /**
      * @brief Subscribe to the transaction feed, only receive the feed when particular order book is affected.
-     * @param book: The order book to watch.
-     * @param apiVersion: The api version of feed.
+     * @param book The order book to watch.
+     * @param apiVersion The api version of feed.
      */
     void
     sub(ripple::Book const& book, SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
@@ -133,23 +119,23 @@ public:
 
     /**
      * @brief Unsubscribe to the transaction for particular account.
-     * @param account: The account to unsubscribe.
+     * @param account The account to unsubscribe.
      */
     void
     unsub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the transaction feed for particular order book.
-     * @param book: The book to unsubscribe.
+     * @param book The book to unsubscribe.
      */
     void
     unsub(ripple::Book const& book, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Publishes the transaction feed.
-     * @param txMeta: The transaction and metadata.
-     * @param lgrInfo: The ledger header.
-     * @param backend: The backend.
+     * @param txMeta The transaction and metadata.
+     * @param lgrInfo The ledger header.
+     * @param backend The backend.
      */
     void
     pub(data::TransactionAndMetadata const& txMeta,

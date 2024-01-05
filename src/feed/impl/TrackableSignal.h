@@ -34,9 +34,9 @@ namespace feed::impl {
 /**
  * @brief A thread-safe class to manage a signal and its tracking connections.
  *
- * @tparam Session: The type of the object that will be tracked, when the object is destroyed, the connection will be
+ * @param Session The type of the object that will be tracked, when the object is destroyed, the connection will be
  * removed lazily. The pointer of the session object will also be the key to disconnect.
- * @tparam Args: The types of the arguments that will be passed to the slot.
+ * @param Args The types of the arguments that will be passed to the slot.
  */
 template <typename Session, typename... Args>
 class TrackableSignal {

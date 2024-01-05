@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+
 namespace feed::impl {
 
 /**
@@ -45,7 +46,7 @@ class LedgerFeed : public SingleFeedBase {
 public:
     /**
      * @brief Construct a new Ledger Feed object
-     * @param ioContext: The actual publish will be called in the strand of this.
+     * @param ioContext The actual publish will be called in the strand of this.
      */
     LedgerFeed(boost::asio::io_context& ioContext) : SingleFeedBase(ioContext, "ledger")
     {
@@ -53,8 +54,8 @@ public:
 
     /**
      * @brief Subscribe the ledger feed.
-     * @param yield: The coroutine yield.
-     * @param backend: The backend.
+     * @param yield The coroutine yield.
+     * @param backend The backend.
      * @return The information of the latest ledger.
      */
     boost::json::object
@@ -64,10 +65,10 @@ public:
 
     /**
      * @brief Publishes the ledger feed.
-     * @param lgrInfo: The ledger header.
-     * @param fees: The fees.
-     * @param ledgerRange: The ledger range.
-     * @param txnCount: The transaction count.
+     * @param lgrInfo The ledger header.
+     * @param fees The fees.
+     * @param ledgerRange The ledger range.
+     * @param txnCount The transaction count.
      */
     void
     pub(ripple::LedgerHeader const& lgrInfo,
@@ -77,7 +78,7 @@ public:
 
 private:
     static boost::json::object
-    getLedgerPubMessage(
+    makeLedgerPubMessage(
         ripple::LedgerHeader const& lgrInfo,
         ripple::Fees const& fees,
         std::string const& ledgerRange,

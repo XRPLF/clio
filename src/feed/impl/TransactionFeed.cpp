@@ -52,10 +52,29 @@
 namespace feed::impl {
 
 void
+TransactionFeed::TransactionSlot::operator()(AllVersionTransactionsType const& allVersionMsgs) const
+{
+    if (auto connection = connectionWeakPtr.lock(); connection) {
+        // Check if this connection already sent
+        if (feed.get().notified_.contains(connection.get()))
+            return;
+
+        feed.get().notified_.insert(connection.get());
+
+        if (connection->apiSubVersion < 2u) {
+            connection->send(allVersionMsgs[0]);
+            return;
+        }
+        connection->send(allVersionMsgs[1]);
+    }
+}
+
+void
 TransactionFeed::sub(SubscriberSharedPtr const& subscriber, std::uint32_t const apiVersion)
 {
-    if (signal_.connectTrackableSlot(subscriber, TransactionSlot(*this, subscriber))) {
-        ++subAllCount_;
+    auto const added = signal_.connectTrackableSlot(subscriber, TransactionSlot(*this, subscriber));
+    if (added) {
+        ++subAllCount_.get();
         subscriber->apiSubVersion = apiVersion;
         subscriber->onDisconnect.connect([this](SubscriberPtr connection) { unsubInternal(connection); });
     }
@@ -68,8 +87,9 @@ TransactionFeed::sub(
     std::uint32_t const apiVersion
 )
 {
-    if (accountSignal_.connectTrackableSlot(subscriber, account, TransactionSlot(*this, subscriber))) {
-        ++subAccountCount_;
+    auto const added = accountSignal_.connectTrackableSlot(subscriber, account, TransactionSlot(*this, subscriber));
+    if (added) {
+        ++subAccountCount_.get();
         subscriber->apiSubVersion = apiVersion;
         subscriber->onDisconnect.connect([this, account](SubscriberPtr connection) {
             unsubInternal(account, connection);
@@ -80,8 +100,9 @@ TransactionFeed::sub(
 void
 TransactionFeed::sub(ripple::Book const& book, SubscriberSharedPtr const& subscriber, std::uint32_t const apiVersion)
 {
-    if (bookSignal_.connectTrackableSlot(subscriber, book, TransactionSlot(*this, subscriber))) {
-        ++subBookCount_;
+    auto const added = bookSignal_.connectTrackableSlot(subscriber, book, TransactionSlot(*this, subscriber));
+    if (added) {
+        ++subBookCount_.get();
         subscriber->apiSubVersion = apiVersion;
         subscriber->onDisconnect.connect([this, book](SubscriberPtr connection) { unsubInternal(book, connection); });
     }
@@ -108,19 +129,19 @@ TransactionFeed::unsub(ripple::Book const& book, SubscriberSharedPtr const& subs
 std::uint64_t
 TransactionFeed::transactionSubCount() const
 {
-    return subAllCount_.value();
+    return subAllCount_.get().value();
 }
 
 std::uint64_t
 TransactionFeed::accountSubCount() const
 {
-    return subAccountCount_.value();
+    return subAccountCount_.get().value();
 }
 
 std::uint64_t
 TransactionFeed::bookSubCount() const
 {
-    return subBookCount_.value();
+    return subBookCount_.get().value();
 }
 
 void
@@ -188,9 +209,9 @@ TransactionFeed::pub(
         std::make_shared<std::string>(boost::json::serialize(genJsonByVersion(2u)))
     };
 
-    auto const affactedAccountsFlat = meta->getAffectedAccounts();
-    auto affactedAccounts =
-        std::unordered_set<ripple::AccountID>(affactedAccountsFlat.cbegin(), affactedAccountsFlat.cend());
+    auto const affectedAccountsFlat = meta->getAffectedAccounts();
+    auto affectedAccounts =
+        std::unordered_set<ripple::AccountID>(affectedAccountsFlat.cbegin(), affectedAccountsFlat.cend());
 
     std::unordered_set<ripple::Book> affectedBooks;
 
@@ -230,14 +251,14 @@ TransactionFeed::pub(
         strand_,
         [this,
          allVersionsMsgs = std::move(allVersionsMsgs),
-         affactedAccounts = std::move(affactedAccounts),
+         affectedAccounts = std::move(affectedAccounts),
          affectedBooks = std::move(affectedBooks)]() {
             notified_.clear();
             signal_.emit(allVersionsMsgs);
             notified_.clear();
             // check duplicate for accounts, this prevents sending the same message multiple times if it touches
             // multiple accounts watched by the same connection
-            for (auto const& account : affactedAccounts) {
+            for (auto const& account : affectedAccounts) {
                 accountSignal_.emit(account, allVersionsMsgs);
             }
             notified_.clear();
@@ -255,7 +276,7 @@ TransactionFeed::unsubInternal(SubscriberPtr subscriber)
 {
     if (signal_.disconnect(subscriber)) {
         LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed transactions";
-        --subAllCount_;
+        --subAllCount_.get();
     }
 }
 
@@ -264,7 +285,7 @@ TransactionFeed::unsubInternal(ripple::AccountID const& account, SubscriberPtr s
 {
     if (accountSignal_.disconnect(subscriber, account)) {
         LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed account " << account;
-        --subAccountCount_;
+        --subAccountCount_.get();
     }
 }
 
@@ -273,7 +294,7 @@ TransactionFeed::unsubInternal(ripple::Book const& book, SubscriberPtr subscribe
 {
     if (bookSignal_.disconnect(subscriber, book)) {
         LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed book " << book;
-        --subBookCount_;
+        --subBookCount_.get();
     }
 }
 }  // namespace feed::impl

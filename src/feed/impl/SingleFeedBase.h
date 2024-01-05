@@ -28,6 +28,7 @@
 #include <boost/asio/strand.hpp>
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -38,7 +39,7 @@ namespace feed::impl {
  */
 class SingleFeedBase {
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
-    util::prometheus::GaugeInt& subCount_;
+    std::reference_wrapper<util::prometheus::GaugeInt> subCount_;
     TrackableSignal<Subscriber, std::shared_ptr<std::string> const&> signal_;
     util::Logger logger_{"Subscriptions"};
     std::string name_;
@@ -46,8 +47,8 @@ class SingleFeedBase {
 public:
     /**
      * @brief Construct a new Single Feed Base object
-     * @param ioContext: The actual publish will be called in the strand of this.
-     * @param name: The promethues counter name of the feed.
+     * @param ioContext The actual publish will be called in the strand of this.
+     * @param name The promethues counter name of the feed.
      */
     SingleFeedBase(boost::asio::io_context& ioContext, std::string const& name);
 
@@ -65,7 +66,7 @@ public:
 
     /**
      * @brief Publishes the feed in strand.
-     * @param msg: The message.
+     * @param msg The message.
      */
     void
     pub(std::string msg) const;

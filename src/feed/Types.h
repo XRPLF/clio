@@ -19,28 +19,19 @@
 
 #pragma once
 
-#include "util/prometheus/Gauge.h"
-#include "util/prometheus/Label.h"
-#include "util/prometheus/Prometheus.h"
 #include "web/interface/ConnectionBase.h"
 
-#include <fmt/core.h>
-
 #include <memory>
-#include <string>
+
+namespace web {
+
+struct ConnectionBase;
+
+}  // namespace web
 
 namespace feed {
 using Subscriber = web::ConnectionBase;
 using SubscriberPtr = Subscriber*;
 using SubscriberSharedPtr = std::shared_ptr<Subscriber>;
 
-inline util::prometheus::GaugeInt&
-getSubscriptionsGaugeInt(std::string const& counterName)
-{
-    return PrometheusService::gaugeInt(
-        "subscriptions_current_number",
-        util::prometheus::Labels({util::prometheus::Label{"stream", counterName}}),
-        fmt::format("Current subscribers number on the {} stream", counterName)
-    );
-}
 }  // namespace feed
