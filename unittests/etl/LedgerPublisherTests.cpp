@@ -22,7 +22,6 @@
 #include "etl/SystemState.h"
 #include "etl/impl/LedgerPublisher.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/MockCache.h"
 #include "util/MockSubscriptionManager.h"
 #include "util/TestObject.h"
