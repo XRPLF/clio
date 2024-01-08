@@ -56,6 +56,7 @@ public:
      * @brief Subscribe the ledger feed.
      * @param yield The coroutine yield.
      * @param backend The backend.
+     * @param subscriber
      * @return The information of the latest ledger.
      */
     boost::json::object

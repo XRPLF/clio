@@ -104,7 +104,7 @@ public:
      * @param args The arguments to pass to the slots.
      */
     void
-    emit(Args... args) const
+    emit(Args const&... args) const
     {
         signal_(args...);
     }

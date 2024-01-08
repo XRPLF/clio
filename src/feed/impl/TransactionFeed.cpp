@@ -74,6 +74,7 @@ TransactionFeed::sub(SubscriberSharedPtr const& subscriber, std::uint32_t const 
 {
     auto const added = signal_.connectTrackableSlot(subscriber, TransactionSlot(*this, subscriber));
     if (added) {
+        LOG(logger_.debug()) << subscriber->tag() << "Subscribed transactions";
         ++subAllCount_.get();
         subscriber->apiSubVersion = apiVersion;
         subscriber->onDisconnect.connect([this](SubscriberPtr connection) { unsubInternal(connection); });
@@ -89,6 +90,7 @@ TransactionFeed::sub(
 {
     auto const added = accountSignal_.connectTrackableSlot(subscriber, account, TransactionSlot(*this, subscriber));
     if (added) {
+        LOG(logger_.debug()) << subscriber->tag() << "Subscribed account " << account;
         ++subAccountCount_.get();
         subscriber->apiSubVersion = apiVersion;
         subscriber->onDisconnect.connect([this, account](SubscriberPtr connection) {
@@ -102,6 +104,7 @@ TransactionFeed::sub(ripple::Book const& book, SubscriberSharedPtr const& subscr
 {
     auto const added = bookSignal_.connectTrackableSlot(subscriber, book, TransactionSlot(*this, subscriber));
     if (added) {
+        LOG(logger_.debug()) << subscriber->tag() << "Subscribed book " << book;
         ++subBookCount_.get();
         subscriber->apiSubVersion = apiVersion;
         subscriber->onDisconnect.connect([this, book](SubscriberPtr connection) { unsubInternal(book, connection); });

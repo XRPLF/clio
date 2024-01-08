@@ -73,12 +73,14 @@ public:
 
     /**
      * @brief Subscribe to the proposed transaction feed.
+     * @param subscriber
      */
     void
     sub(SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Subscribe to the proposed transaction feed, only receive the feed when particular account is affected.
+     * @param subscriber
      * @param account The account to watch.
      */
     void
@@ -86,12 +88,14 @@ public:
 
     /**
      * @brief Unsubscribe to the proposed transaction feed.
+     * @param subscriber
      */
     void
     unsub(SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the proposed transaction feed for particular account.
+     * @param subscriber
      * @param account The account to unsubscribe.
      */
     void

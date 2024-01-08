@@ -90,6 +90,7 @@ public:
 
     /**
      * @brief Subscribe to the transaction feed.
+     * @param subscriber
      * @param apiVersion The api version of feed.
      */
     void
@@ -97,6 +98,7 @@ public:
 
     /**
      * @brief Subscribe to the transaction feed, only receive the feed when particular account is affected.
+     * @param subscriber
      * @param account The account to watch.
      * @param apiVersion The api version of feed.
      */
@@ -105,6 +107,7 @@ public:
 
     /**
      * @brief Subscribe to the transaction feed, only receive the feed when particular order book is affected.
+     * @param subscriber
      * @param book The order book to watch.
      * @param apiVersion The api version of feed.
      */
@@ -113,12 +116,14 @@ public:
 
     /**
      * @brief Unsubscribe to the transaction feed.
+     * @param subscriber
      */
     void
     unsub(SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the transaction for particular account.
+     * @param subscriber
      * @param account The account to unsubscribe.
      */
     void
@@ -126,6 +131,7 @@ public:
 
     /**
      * @brief Unsubscribe to the transaction feed for particular order book.
+     * @param subscriber
      * @param book The book to unsubscribe.
      */
     void

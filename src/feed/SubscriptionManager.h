@@ -76,12 +76,14 @@ public:
 
     /**
      * @brief Subscribe to the book changes feed.
+     * @param subscriber
      */
     void
     subBookChanges(SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the book changes feed.
+     * @param subscriber
      */
     void
     unsubBookChanges(SubscriberSharedPtr const& subscriber);
@@ -97,24 +99,30 @@ public:
 
     /**
      * @brief Subscribe to the proposed transactions feed.
+     * @param subscriber
      */
     void
     subProposedTransactions(SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the proposed transactions feed.
+     * @param subscriber
      */
     void
     unsubProposedTransactions(SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Subscribe to the proposed transactions feed, only receive the feed when particular account is affected.
+     * @param account The account to watch.
+     * @param subscriber
      */
     void
     subProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the proposed transactions feed for particular account.
+     * @param account The account to stop watching.
+     * @param subscriber
      */
     void
     unsubProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
@@ -128,12 +136,14 @@ public:
 
     /**
      * @brief Subscribe to the ledger feed.
+     * @param subscriber
      */
     boost::json::object
     subLedger(boost::asio::yield_context yield, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the ledger feed.
+     * @param subscriber
      */
     void
     unsubLedger(SubscriberSharedPtr const& subscriber);
@@ -155,12 +165,14 @@ public:
 
     /**
      * @brief Subscribe to the manifest feed.
+     * @param subscriber
      */
     void
     subManifest(SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the manifest feed.
+     * @param subscriber
      */
     void
     unsubManifest(SubscriberSharedPtr const& subscriber);
@@ -174,12 +186,14 @@ public:
 
     /**
      * @brief Subscribe to the validation feed.
+     * @param subscriber
      */
     void
     subValidation(SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the validation feed.
+     * @param subscriber
      */
     void
     unsubValidation(SubscriberSharedPtr const& subscriber);
@@ -193,6 +207,7 @@ public:
 
     /**
      * @brief Subscribe to the transactions feed.
+     * @param subscriber
      * @param apiVersion The api version of feed to subscribe.
      */
     void
@@ -200,6 +215,7 @@ public:
 
     /**
      * @brief Unsubscribe to the transactions feed.
+     * @param subscriber
      */
     void
     unsubTransactions(SubscriberSharedPtr const& subscriber);
@@ -207,6 +223,7 @@ public:
     /**
      * @brief Subscribe to the transactions feed, only receive the feed when particular account is affected.
      * @param account The account to watch.
+     * @param subscriber
      * @param apiVersion The api version of feed to subscribe.
      */
     void
@@ -214,7 +231,7 @@ public:
 
     /**
      * @brief Unsubscribe to the transactions feed for particular account.
-     * @param subscriber The subscriber.
+     * @param subscriber
      */
     void
     unsubAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
@@ -222,6 +239,7 @@ public:
     /**
      * @brief Subscribe to the transactions feed, only receive feed when particular order book is affected.
      * @param book The book to watch.
+     * @param subscriber
      * @param apiVersion The api version of feed to subscribe.
      */
     void
@@ -230,6 +248,7 @@ public:
     /**
      * @brief Unsubscribe to the transactions feed for particular order book.
      * @param book The book to watch.
+     * @param subscriber
      */
     void
     unsubBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber);

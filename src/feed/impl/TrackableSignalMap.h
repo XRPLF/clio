@@ -100,7 +100,7 @@ public:
      * @param args The arguments to be passed to the slot.
      */
     void
-    emit(Key const& key, Args... args)
+    emit(Key const& key, Args const&... args)
     {
         std::scoped_lock const lk(mutex_);
         if (signalsMap_.contains(key))

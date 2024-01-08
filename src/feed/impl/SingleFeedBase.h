@@ -54,12 +54,14 @@ public:
 
     /**
      * @brief Subscribe the feed.
+     * @param subscriber
      */
     void
     sub(SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe the feed.
+     * @param subscriber
      */
     void
     unsub(SubscriberSharedPtr const& subscriber);
