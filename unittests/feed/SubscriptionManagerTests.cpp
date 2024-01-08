@@ -26,6 +26,7 @@
 #include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
 
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
@@ -113,13 +114,15 @@ TEST_F(SubscriptionManagerTest, MultipleThreadCtx)
     SubscriptionManagerPtr->forwardManifest(json::parse(R"({"manifest":"test"})").get_object());
     SubscriptionManagerPtr->forwardValidation(json::parse(R"({"validation":"test"})").get_object());
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    auto retry = 5;
+    while (--retry != 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-    EXPECT_TRUE(
-        receivedFeedMessage() == R"({"manifest":"test"}{"validation":"test"})" ||
-        receivedFeedMessage() == R"({"validation":"test"}{"manifest":"test"})"
-    ) << "receivedFeedMessage() = "
-      << receivedFeedMessage();
+        if (receivedFeedMessage() == R"({"manifest":"test"}{"validation":"test"})" ||
+            receivedFeedMessage() == R"({"validation":"test"}{"manifest":"test"})")
+            break;
+    }
+    EXPECT_TRUE(retry != 0) << "receivedFeedMessage() = " << receivedFeedMessage();
 
     session.reset();
     work_.reset();
@@ -131,8 +134,7 @@ TEST_F(SubscriptionManagerTest, MultipleThreadCtx)
 
 TEST_F(SubscriptionManagerTest, MultipleThreadCtxSessionDieEarly)
 {
-    std::optional<boost::asio::io_context::work> work_;
-    work_.emplace(ctx);  // guard the context
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_ = boost::asio::make_work_guard(ctx);
 
     std::vector<std::thread> workers;
     workers.reserve(2);
@@ -157,17 +159,18 @@ TEST_F(SubscriptionManagerTest, MultipleThreadCtxSessionDieEarly)
 
 TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
 {
-    constexpr static auto ReportReturn = R"({
-        "ledger":0,
-        "transactions":2,
-        "transactions_proposed":2,
-        "manifests":2,
-        "validations":2,
-        "account":2,
-        "accounts_proposed":2,
-        "books":2,
-        "book_changes":2
-    })";
+    constexpr static auto ReportReturn =
+        R"({
+            "ledger":0,
+            "transactions":2,
+            "transactions_proposed":2,
+            "manifests":2,
+            "validations":2,
+            "account":2,
+            "accounts_proposed":2,
+            "books":2,
+            "book_changes":2
+        })";
     std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
     std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
     SubscriptionManagerPtr->subBookChanges(session1);
@@ -270,24 +273,26 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
     transactions.push_back(trans1);
 
     SubscriptionManagerPtr->pubBookChanges(ledgerinfo, transactions);
-    constexpr static auto bookChangePublish = R"({
-        "type":"bookChanges",
-        "ledger_index":32,
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_time":0,
-        "changes":[
-            {
-                "currency_a":"XRP_drops",
-                "currency_b":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD/0158415500000000C1F76FF6ECB0BAC600000000",
-                "volume_a":"2",
-                "volume_b":"2",
-                "high":"-1",
-                "low":"-1",
-                "open":"-1",
-                "close":"-1"
-            }
-        ]
-    })";
+    constexpr static auto bookChangePublish =
+        R"({
+            "type":"bookChanges",
+            "ledger_index":32,
+            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time":0,
+            "changes":
+            [
+                {
+                    "currency_a":"XRP_drops",
+                    "currency_b":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD/0158415500000000C1F76FF6ECB0BAC600000000",
+                    "volume_a":"2",
+                    "volume_b":"2",
+                    "high":"-1",
+                    "low":"-1",
+                    "open":"-1",
+                    "close":"-1"
+                }
+            ]
+        })";
     ctx.run();
 
     EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(bookChangePublish));
@@ -308,15 +313,16 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
     // Information about the ledgers on hand and current fee schedule. This
     // includes the same fields as a ledger stream message, except that it omits
     // the type and txn_count fields
-    constexpr static auto LedgerResponse = R"({
-        "validated_ledgers":"10-30",
-        "ledger_index":30,
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_time":0,
-        "fee_base":1,
-        "reserve_base":3,
-        "reserve_inc":2
-    })";
+    constexpr static auto LedgerResponse =
+        R"({
+            "validated_ledgers":"10-30",
+            "ledger_index":30,
+            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time":0,
+            "fee_base":1,
+            "reserve_base":3,
+            "reserve_inc":2
+        })";
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto const res = SubscriptionManagerPtr->subLedger(yield, session);
         // check the response
@@ -330,17 +336,18 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
     auto fee2 = ripple::Fees();
     fee2.reserve = 10;
     SubscriptionManagerPtr->pubLedger(ledgerinfo2, fee2, "10-31", 8);
-    constexpr static auto ledgerPub = R"({
-        "type":"ledgerClosed",
-        "ledger_index":31,
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_time":0,
-        "fee_base":0,
-        "reserve_base":10,
-        "reserve_inc":0,
-        "validated_ledgers":"10-31",
-        "txn_count":8
-    })";
+    constexpr static auto ledgerPub =
+        R"({
+            "type":"ledgerClosed",
+            "ledger_index":31,
+            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time":0,
+            "fee_base":0,
+            "reserve_base":10,
+            "reserve_inc":0,
+            "validated_ledgers":"10-31",
+            "txn_count":8
+        })";
     ctx.restart();
     ctx.run();
 
@@ -373,57 +380,66 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
     trans1.metadata = metaObj.getSerializer().peekData();
     SubscriptionManagerPtr->pubTransaction(trans1, ledgerinfo);
 
-    constexpr static auto OrderbookPublish = R"({
-        "transaction":{
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Amount":"1",
-            "DeliverMax":"1",
-            "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-            "Fee":"1",
-            "Sequence":32,
-            "SigningPubKey":"74657374",
-            "TransactionType":"Payment",
-            "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-            "date":0
-        },
-        "meta":{
-            "AffectedNodes":[
-                {
-                    "ModifiedNode":{
-                    "FinalFields":{
-                        "TakerGets":"3",
-                        "TakerPays":{
-                            "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                            "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                            "value":"1"
-                        }
-                    },
-                    "LedgerEntryType":"Offer",
-                    "PreviousFields":{
-                        "TakerGets":"1",
-                        "TakerPays":{
-                            "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                            "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                            "value":"3"
+    constexpr static auto OrderbookPublish =
+        R"({
+            "transaction":
+            {
+                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Amount":"1",
+                "DeliverMax":"1",
+                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee":"1",
+                "Sequence":32,
+                "SigningPubKey":"74657374",
+                "TransactionType":"Payment",
+                "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "date":0
+            },
+            "meta":
+            {
+                "AffectedNodes":
+                [
+                    {
+                        "ModifiedNode":
+                        {
+                            "FinalFields":
+                            {
+                                "TakerGets":"3",
+                                "TakerPays":
+                                {
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value":"1"
+                                }
+                            },
+                            "LedgerEntryType":"Offer",
+                            "PreviousFields":
+                            {
+                                "TakerGets":"1",
+                                "TakerPays":
+                                {
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value":"3"
+                                }
+                            }
                         }
                     }
-                    }
-                }
-            ],
-            "TransactionIndex":22,
-            "TransactionResult":"tesSUCCESS",
-            "delivered_amount":"unavailable"
-        },
-        "type":"transaction",
-        "validated":true,
-        "status":"closed",
-        "ledger_index":33,
-        "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-        "engine_result_code":0,
-        "engine_result":"tesSUCCESS",
-        "close_time_iso": "2000-01-01T00:00:00Z",
-        "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-    })";
+                ],
+                "TransactionIndex":22,
+                "TransactionResult":"tesSUCCESS",
+                "delivered_amount":"unavailable"
+            },
+            "type":"transaction",
+            "validated":true,
+            "status":"closed",
+            "ledger_index":33,
+            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code":0,
+            "engine_result":"tesSUCCESS",
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+        })";
 
     ctx.run();
 
@@ -445,13 +461,14 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
     EXPECT_EQ(SubscriptionManagerPtr->report()["accounts_proposed"], 1);
     EXPECT_EQ(SubscriptionManagerPtr->report()["transactions_proposed"], 1);
 
-    constexpr static auto dummyTransaction = R"({
-        "transaction":
-        {
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-        }
-    })";
+    constexpr static auto dummyTransaction =
+        R"({
+            "transaction":
+            {
+                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
+            }
+        })";
 
     SubscriptionManagerPtr->forwardProposedTransaction(json::parse(dummyTransaction).get_object());
     ctx.run();

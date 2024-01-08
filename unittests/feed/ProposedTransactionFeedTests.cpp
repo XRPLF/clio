@@ -38,7 +38,8 @@
 
 constexpr static auto ACCOUNT1 = "rh1HPuRVsYYvThxG2Bs1MfjmrVC73S16Fb";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr static auto DUMMY_TRANSACTION = R"({
+constexpr static auto DUMMY_TRANSACTION =
+    R"({
         "transaction":
         {
             "Account":"rh1HPuRVsYYvThxG2Bs1MfjmrVC73S16Fb",
@@ -160,13 +161,14 @@ TEST_F(FeedProposedTransactionTest, AccountProposedTransactionDuplicate)
     testFeedPtr->sub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
-    constexpr static auto dummyTransaction = R"({
-        "transaction":
-        {
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-        }
-    })";
+    constexpr static auto dummyTransaction =
+        R"({
+            "transaction":
+            {
+                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
+            }
+        })";
 
     testFeedPtr->pub(json::parse(dummyTransaction).get_object());
     ctx.run();

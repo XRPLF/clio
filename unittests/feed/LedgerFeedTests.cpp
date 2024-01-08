@@ -50,15 +50,16 @@ TEST_F(FeedLedgerTest, SubPub)
     // Information about the ledgers on hand and current fee schedule. This
     // includes the same fields as a ledger stream message, except that it omits
     // the type and txn_count fields
-    constexpr static auto LedgerResponse = R"({
-        "validated_ledgers":"10-30",
-        "ledger_index":30,
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_time":0,
-        "fee_base":1,
-        "reserve_base":3,
-        "reserve_inc":2
-    })";
+    constexpr static auto LedgerResponse =
+        R"({
+            "validated_ledgers":"10-30",
+            "ledger_index":30,
+            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time":0,
+            "fee_base":1,
+            "reserve_base":3,
+            "reserve_inc":2
+        })";
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto res = testFeedPtr->sub(yield, backend, sessionPtr);
         // check the response
@@ -72,17 +73,18 @@ TEST_F(FeedLedgerTest, SubPub)
     auto fee2 = ripple::Fees();
     fee2.reserve = 10;
     testFeedPtr->pub(ledgerinfo2, fee2, "10-31", 8);
-    constexpr static auto ledgerPub = R"({
-        "type":"ledgerClosed",
-        "ledger_index":31,
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_time":0,
-        "fee_base":0,
-        "reserve_base":10,
-        "reserve_inc":0,
-        "validated_ledgers":"10-31",
-        "txn_count":8
-    })";
+    constexpr static auto ledgerPub =
+        R"({
+            "type":"ledgerClosed",
+            "ledger_index":31,
+            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time":0,
+            "fee_base":0,
+            "reserve_base":10,
+            "reserve_inc":0,
+            "validated_ledgers":"10-31",
+            "txn_count":8
+        })";
     ctx.restart();
     ctx.run();
 
@@ -107,15 +109,16 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
 
     auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(testing::Return(feeBlob));
-    constexpr static auto LedgerResponse = R"({
-        "validated_ledgers":"10-30",
-        "ledger_index":30,
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_time":0,
-        "fee_base":1,
-        "reserve_base":3,
-        "reserve_inc":2
-    })";
+    constexpr static auto LedgerResponse =
+        R"({
+            "validated_ledgers":"10-30",
+            "ledger_index":30,
+            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time":0,
+            "fee_base":1,
+            "reserve_base":3,
+            "reserve_inc":2
+        })";
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto res = testFeedPtr->sub(yield, backend, sessionPtr);
         // check the response

@@ -53,8 +53,10 @@ constexpr static auto CURRENCY = "0158415500000000C1F76FF6ECB0BAC600000000";
 constexpr static auto ISSUER = "rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD";
 constexpr static auto TXNID = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
-constexpr static auto TRAN_V1 = R"({
-        "transaction":{
+constexpr static auto TRAN_V1 =
+    R"({
+        "transaction":
+        {
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Amount":"1",
             "DeliverMax":"1",
@@ -66,24 +68,30 @@ constexpr static auto TRAN_V1 = R"({
             "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
             "date":0
         },
-        "meta":{
-            "AffectedNodes":[
+        "meta":
+        {
+            "AffectedNodes":
+            [
                 {
-                    "ModifiedNode":{
-                    "FinalFields":{
-                        "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                        "Balance":"110"
-                    },
-                    "LedgerEntryType":"AccountRoot"
+                    "ModifiedNode":
+                    {
+                        "FinalFields":
+                        {
+                            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                            "Balance":"110"
+                        },
+                        "LedgerEntryType":"AccountRoot"
                     }
                 },
                 {
-                    "ModifiedNode":{
-                    "FinalFields":{
-                        "Account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                        "Balance":"30"
-                    },
-                    "LedgerEntryType":"AccountRoot"
+                    "ModifiedNode":
+                    {
+                        "FinalFields":
+                        {
+                            "Account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                            "Balance":"30"
+                        },
+                        "LedgerEntryType":"AccountRoot"
                     }
                 }
             ],
@@ -102,8 +110,10 @@ constexpr static auto TRAN_V1 = R"({
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
     })";
 
-constexpr static auto TRAN_V2 = R"({
-        "tx_json":{
+constexpr static auto TRAN_V2 =
+    R"({
+        "tx_json":
+        {
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "DeliverMax":"1",
             "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
@@ -113,8 +123,10 @@ constexpr static auto TRAN_V2 = R"({
             "TransactionType":"Payment",
             "date":0
         },
-        "meta":{
-      "AffectedNodes":[
+        "meta":
+        {
+            "AffectedNodes":
+            [
                 {
                     "ModifiedNode":{
                     "FinalFields":{
@@ -324,57 +336,65 @@ TEST_F(FeedTransactionTest, SubBookV1)
     trans1.metadata = metaObj.getSerializer().peekData();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
 
-    constexpr static auto OrderbookPublish = R"({
-        "transaction":{
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Amount":"1",
-            "DeliverMax":"1",
-            "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-            "Fee":"1",
-            "Sequence":32,
-            "SigningPubKey":"74657374",
-            "TransactionType":"Payment",
-            "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-            "date":0
-        },
-        "meta":{
-            "AffectedNodes":[
-                {
-                    "ModifiedNode":{
-                    "FinalFields":{
-                        "TakerGets":"3",
-                        "TakerPays":{
-                            "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                            "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                            "value":"1"
-                        }
-                    },
-                    "LedgerEntryType":"Offer",
-                    "PreviousFields":{
-                        "TakerGets":"1",
-                        "TakerPays":{
-                            "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                            "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                            "value":"3"
+    constexpr static auto OrderbookPublish =
+        R"({
+            "transaction":
+            {
+                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Amount":"1",
+                "DeliverMax":"1",
+                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee":"1",
+                "Sequence":32,
+                "SigningPubKey":"74657374",
+                "TransactionType":"Payment",
+                "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "date":0
+            },
+            "meta":
+            {
+                "AffectedNodes":
+                [
+                    {
+                        "ModifiedNode":
+                        {
+                            "FinalFields":
+                            {
+                                "TakerGets":"3",
+                                "TakerPays":
+                                {
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value":"1"
+                                }
+                            },
+                            "LedgerEntryType":"Offer",
+                            "PreviousFields":{
+                                "TakerGets":"1",
+                                "TakerPays":
+                                {
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value":"3"
+                                }
+                            }
                         }
                     }
-                    }
-                }
-            ],
-            "TransactionIndex":22,
-            "TransactionResult":"tesSUCCESS",
-            "delivered_amount":"unavailable"
-        },
-        "type":"transaction",
-        "validated":true,
-        "status":"closed",
-        "ledger_index":33,
-        "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-        "engine_result_code":0,
-        "engine_result":"tesSUCCESS",
-        "close_time_iso": "2000-01-01T00:00:00Z",
-        "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-    })";
+                ],
+                "TransactionIndex":22,
+                "TransactionResult":"tesSUCCESS",
+                "delivered_amount":"unavailable"
+            },
+            "type":"transaction",
+            "validated":true,
+            "status":"closed",
+            "ledger_index":33,
+            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code":0,
+            "engine_result":"tesSUCCESS",
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+        })";
 
     ctx.run();
 
@@ -387,97 +407,107 @@ TEST_F(FeedTransactionTest, SubBookV1)
     trans1.metadata = metaObj.getSerializer().peekData();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
 
-    constexpr static auto OrderbookCancelPublish = R"({
-        "transaction":{
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Amount":"1",
-            "DeliverMax":"1",
-            "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-            "Fee":"1",
-            "Sequence":32,
-            "SigningPubKey":"74657374",
-            "TransactionType":"Payment",
-            "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-            "date":0
-        },
-        "meta":{
-            "AffectedNodes":[
-                {
-                    "DeletedNode":{
-                    "FinalFields":{
-                        "TakerGets":"3",
-                        "TakerPays":{
-                            "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                            "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                            "value":"1"
+    constexpr static auto OrderbookCancelPublish =
+        R"({
+            "transaction":{
+                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Amount":"1",
+                "DeliverMax":"1",
+                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee":"1",
+                "Sequence":32,
+                "SigningPubKey":"74657374",
+                "TransactionType":"Payment",
+                "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "date":0
+            },
+            "meta":{
+                "AffectedNodes":
+                [
+                    {
+                        "DeletedNode":
+                        {
+                            "FinalFields":
+                            {
+                                "TakerGets":"3",
+                                "TakerPays":{
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value":"1"
+                                }
+                            },
+                            "LedgerEntryType":"Offer"
                         }
-                    },
-                    "LedgerEntryType":"Offer"
                     }
-                }
-            ],
-            "TransactionIndex":22,
-            "TransactionResult":"tesSUCCESS",
-            "delivered_amount":"unavailable"
-        },
-        "type":"transaction",
-        "validated":true,
-        "status":"closed",
-        "ledger_index":33,
-        "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-        "engine_result_code":0,
-        "engine_result":"tesSUCCESS",
-        "close_time_iso": "2000-01-01T00:00:00Z",
-        "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-    })";
+                ],
+                "TransactionIndex":22,
+                "TransactionResult":"tesSUCCESS",
+                "delivered_amount":"unavailable"
+            },
+            "type":"transaction",
+            "validated":true,
+            "status":"closed",
+            "ledger_index":33,
+            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code":0,
+            "engine_result":"tesSUCCESS",
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+        })";
     ctx.restart();
     ctx.run();
     EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(OrderbookCancelPublish));
 
     // trigger by offer create meta data
-    constexpr static auto OrderbookCreatePublish = R"({
-        "transaction":{
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "Amount":"1",
-            "DeliverMax":"1",
-            "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-            "Fee":"1",
-            "Sequence":32,
-            "SigningPubKey":"74657374",
-            "TransactionType":"Payment",
-            "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-            "date":0
-        },
-        "meta":{
-            "AffectedNodes":[
-                {
-                    "CreatedNode":{
-                    "NewFields":{
-                        "TakerGets":"3",
-                        "TakerPays":{
-                            "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                            "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                            "value":"1"
+    constexpr static auto OrderbookCreatePublish =
+        R"({
+            "transaction":
+            {
+                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Amount":"1",
+                "DeliverMax":"1",
+                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee":"1",
+                "Sequence":32,
+                "SigningPubKey":"74657374",
+                "TransactionType":"Payment",
+                "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "date":0
+            },
+            "meta":
+            {
+                "AffectedNodes":
+                [
+                    {
+                        "CreatedNode":
+                        {
+                            "NewFields":{
+                                "TakerGets":"3",
+                                "TakerPays":
+                                {
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value":"1"
+                                }
+                            },
+                            "LedgerEntryType":"Offer"
                         }
-                    },
-                    "LedgerEntryType":"Offer"
                     }
-                }
-            ],
-            "TransactionIndex":22,
-            "TransactionResult":"tesSUCCESS",
-            "delivered_amount":"unavailable"
-        },
-        "type":"transaction",
-        "validated":true,
-        "status":"closed",
-        "ledger_index":33,
-        "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-        "engine_result_code":0,
-        "engine_result":"tesSUCCESS",
-        "close_time_iso": "2000-01-01T00:00:00Z",
-        "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-    })";
+                ],
+                "TransactionIndex":22,
+                "TransactionResult":"tesSUCCESS",
+                "delivered_amount":"unavailable"
+            },
+            "type":"transaction",
+            "validated":true,
+            "status":"closed",
+            "ledger_index":33,
+            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code":0,
+            "engine_result":"tesSUCCESS",
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+        })";
     metaObj = CreateMetaDataForCreateOffer(CURRENCY, ISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
@@ -513,56 +543,65 @@ TEST_F(FeedTransactionTest, SubBookV2)
     trans1.metadata = metaObj.getSerializer().peekData();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
 
-    constexpr static auto OrderbookPublish = R"({
-        "tx_json":{
-            "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "DeliverMax":"1",
-            "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-            "Fee":"1",
-            "Sequence":32,
-            "SigningPubKey":"74657374",
-            "TransactionType":"Payment",
-            "date":0
-        },
-        "meta":{
-            "AffectedNodes":[
-                {
-                    "ModifiedNode":{
-                    "FinalFields":{
-                        "TakerGets":"3",
-                        "TakerPays":{
-                            "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                            "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                            "value":"1"
-                        }
-                    },
-                    "LedgerEntryType":"Offer",
-                    "PreviousFields":{
-                        "TakerGets":"1",
-                        "TakerPays":{
-                            "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-                            "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-                            "value":"3"
+    constexpr static auto OrderbookPublish =
+        R"({
+            "tx_json":
+            {
+                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "DeliverMax":"1",
+                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee":"1",
+                "Sequence":32,
+                "SigningPubKey":"74657374",
+                "TransactionType":"Payment",
+                "date":0
+            },
+            "meta":
+            {
+                "AffectedNodes":
+                [
+                    {
+                        "ModifiedNode":
+                        {
+                            "FinalFields":
+                            {
+                                "TakerGets":"3",
+                                "TakerPays":
+                                {
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value":"1"
+                                }
+                            },
+                            "LedgerEntryType":"Offer",
+                            "PreviousFields":
+                            {
+                                "TakerGets":"1",
+                                "TakerPays":
+                                {
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                                    "value":"3"
+                                }
+                            }
                         }
                     }
-                    }
-                }
-            ],
-            "TransactionIndex":22,
-            "TransactionResult":"tesSUCCESS",
-            "delivered_amount":"unavailable"
-        },
-        "type":"transaction",
-        "validated":true,
-        "status":"closed",
-        "ledger_index":33,
-        "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-        "engine_result_code":0,
-        "engine_result":"tesSUCCESS",
-        "close_time_iso": "2000-01-01T00:00:00Z",
-        "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
-        "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-    })";
+                ],
+                "TransactionIndex":22,
+                "TransactionResult":"tesSUCCESS",
+                "delivered_amount":"unavailable"
+            },
+            "type":"transaction",
+            "validated":true,
+            "status":"closed",
+            "ledger_index":33,
+            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code":0,
+            "engine_result":"tesSUCCESS",
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+        })";
 
     ctx.run();
 
@@ -776,13 +815,57 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
 
     testFeedPtr->pub(trans1, ledgerinfo, backend);
-    constexpr static auto TransactionForOwnerFund = R"({
-        "transaction":{
+    constexpr static auto TransactionForOwnerFund =
+        R"({
+            "transaction":
+            {
+                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Fee":"1",
+                "Sequence":32,
+                "SigningPubKey":"74657374",
+                "TakerGets":
+                {
+                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                    "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
+                    "value":"1"
+                },
+                "TakerPays":"3",
+                "TransactionType":"OfferCreate",
+                "hash":"EE8775B43A67F4803DECEC5E918E0EA9C56D8ED93E512EBE9F2891846509AAAB",
+                "date":0,
+                "owner_funds":"100"
+            },
+            "meta":
+            {
+                "AffectedNodes":[],
+                "TransactionIndex":22,
+                "TransactionResult":"tesSUCCESS"
+            },
+            "type":"transaction",
+            "validated":true,
+            "status":"closed",
+            "ledger_index":33,
+            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "engine_result_code":0,
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "engine_result":"tesSUCCESS",
+            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+        })";
+
+    ctx.run();
+    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TransactionForOwnerFund));
+}
+
+constexpr static auto TRAN_FROZEN =
+    R"({
+        "transaction":
+        {
             "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "Fee":"1",
             "Sequence":32,
             "SigningPubKey":"74657374",
-            "TakerGets":{
+            "TakerGets":
+            {
                 "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
                 "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
                 "value":"1"
@@ -791,7 +874,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
             "TransactionType":"OfferCreate",
             "hash":"EE8775B43A67F4803DECEC5E918E0EA9C56D8ED93E512EBE9F2891846509AAAB",
             "date":0,
-            "owner_funds":"100"
+            "owner_funds":"0"
         },
         "meta":{
             "AffectedNodes":[],
@@ -802,49 +885,12 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
         "validated":true,
         "status":"closed",
         "ledger_index":33,
+        "close_time_iso": "2000-01-01T00:00:00Z",
         "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
         "engine_result_code":0,
-        "close_time_iso": "2000-01-01T00:00:00Z",
         "engine_result":"tesSUCCESS",
         "engine_result_message":"The transaction was applied. Only final in a validated ledger."
     })";
-
-    ctx.run();
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TransactionForOwnerFund));
-}
-
-constexpr static auto TRAN_FROZEN = R"({
-    "transaction":{
-        "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-        "Fee":"1",
-        "Sequence":32,
-        "SigningPubKey":"74657374",
-        "TakerGets":{
-            "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
-            "issuer":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD",
-            "value":"1"
-        },
-        "TakerPays":"3",
-        "TransactionType":"OfferCreate",
-        "hash":"EE8775B43A67F4803DECEC5E918E0EA9C56D8ED93E512EBE9F2891846509AAAB",
-        "date":0,
-        "owner_funds":"0"
-    },
-    "meta":{
-        "AffectedNodes":[],
-        "TransactionIndex":22,
-        "TransactionResult":"tesSUCCESS"
-    },
-    "type":"transaction",
-    "validated":true,
-    "status":"closed",
-    "ledger_index":33,
-    "close_time_iso": "2000-01-01T00:00:00Z",
-    "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
-    "engine_result_code":0,
-    "engine_result":"tesSUCCESS",
-    "engine_result_message":"The transaction was applied. Only final in a validated ledger."
-})";
 
 TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
 {

@@ -58,24 +58,26 @@ TEST_F(FeedBookChangeTest, Pub)
     transactions.push_back(trans1);
 
     testFeedPtr->pub(ledgerinfo, transactions);
-    constexpr static auto bookChangePublish = R"({
-        "type":"bookChanges",
-        "ledger_index":32,
-        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
-        "ledger_time":0,
-        "changes":[
-            {
-                "currency_a":"XRP_drops",
-                "currency_b":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD/0158415500000000C1F76FF6ECB0BAC600000000",
-                "volume_a":"2",
-                "volume_b":"2",
-                "high":"-1",
-                "low":"-1",
-                "open":"-1",
-                "close":"-1"
-            }
-        ]
-    })";
+    constexpr static auto bookChangePublish =
+        R"({
+            "type":"bookChanges",
+            "ledger_index":32,
+            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_time":0,
+            "changes":
+            [
+                {
+                    "currency_a":"XRP_drops",
+                    "currency_b":"rK9DrarGKnVEo2nYp5MfVRXRYf5yRX3mwD/0158415500000000C1F76FF6ECB0BAC600000000",
+                    "volume_a":"2",
+                    "volume_b":"2",
+                    "high":"-1",
+                    "low":"-1",
+                    "open":"-1",
+                    "close":"-1"
+                }
+            ]
+        })";
     ctx.run();
 
     EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(bookChangePublish));
