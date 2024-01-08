@@ -64,8 +64,6 @@ class RPCServerHandler {
     std::shared_ptr<BackendInterface const> const backend_;
     std::shared_ptr<RPCEngineType> const rpcEngine_;
     std::shared_ptr<ETLType const> const etl_;
-    // subscription manager holds the shared_ptr of this class
-    std::weak_ptr<feed::SubscriptionManager> const subscriptions_;
     util::TagDecoratorFactory const tagFactory_;
     rpc::detail::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
 
@@ -86,13 +84,11 @@ public:
         util::Config const& config,
         std::shared_ptr<BackendInterface const> const& backend,
         std::shared_ptr<RPCEngineType> const& rpcEngine,
-        std::shared_ptr<ETLType const> const& etl,
-        std::shared_ptr<feed::SubscriptionManager> const& subscriptions
+        std::shared_ptr<ETLType const> const& etl
     )
         : backend_(backend)
         , rpcEngine_(rpcEngine)
         , etl_(etl)
-        , subscriptions_(subscriptions)
         , tagFactory_(config)
         , apiVersionParser_(config.sectionOr("api_version", {}))
     {
@@ -138,21 +134,6 @@ public:
             rpcEngine_->notifyInternalError();
             throw;
         }
-    }
-
-    /**
-     * @brief The callback when there is an error.
-     *
-     * Remove the session shared ptr from subscription manager.
-     *
-     * @param ec The error code
-     * @param connection The connection
-     */
-    void
-    operator()([[maybe_unused]] boost::beast::error_code ec, std::shared_ptr<web::ConnectionBase> const& connection)
-    {
-        if (auto manager = subscriptions_.lock(); manager)
-            manager->cleanup(connection);
     }
 
 private:

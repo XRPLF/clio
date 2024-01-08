@@ -16,7 +16,6 @@
 */
 //==============================================================================
 
-#include "feed/SubscriptionManager.h"
 #include "rpc/Errors.h"
 #include "util/Fixtures.h"
 #include "util/MockETLService.h"
@@ -66,7 +65,7 @@ struct MockWsBase : public web::ConnectionBase {
     }
 };
 
-class WebRPCServerHandlerTest : public MockBackendTest {
+class WebRPCServerHandlerTest : public MockBackendTest, public SyncAsioContextTest {
 protected:
     void
     SetUp() override
@@ -76,11 +75,8 @@ protected:
         etl = std::make_shared<MockETLService>();
         rpcEngine = std::make_shared<MockAsyncRPCEngine>();
         tagFactory = std::make_shared<util::TagDecoratorFactory>(cfg);
-        subManager = std::make_shared<SubscriptionManager>(cfg, backend);
         session = std::make_shared<MockWsBase>(*tagFactory);
-        handler = std::make_shared<RPCServerHandler<MockAsyncRPCEngine, MockETLService>>(
-            cfg, backend, rpcEngine, etl, subManager
-        );
+        handler = std::make_shared<RPCServerHandler<MockAsyncRPCEngine, MockETLService>>(cfg, backend, rpcEngine, etl);
     }
 
     void
@@ -91,7 +87,6 @@ protected:
 
     std::shared_ptr<MockAsyncRPCEngine> rpcEngine;
     std::shared_ptr<MockETLService> etl;
-    std::shared_ptr<SubscriptionManager> subManager;
     std::shared_ptr<util::TagDecoratorFactory> tagFactory;
     std::shared_ptr<RPCServerHandler<MockAsyncRPCEngine, MockETLService>> handler;
     std::shared_ptr<MockWsBase> session;
@@ -703,9 +698,8 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
     session->upgraded = true;
 
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine, MockETLService>>(
-        cfg, backend, localRpcEngine, etl, subManager
-    );
+    auto localHandler =
+        std::make_shared<RPCServerHandler<MockRPCEngine, MockETLService>>(cfg, backend, localRpcEngine, etl);
     static auto constexpr request = R"({
                                         "command": "server_info",
                                         "id": 99
@@ -732,9 +726,8 @@ TEST_F(WebRPCServerHandlerTest, WsTooBusy)
 TEST_F(WebRPCServerHandlerTest, HTTPTooBusy)
 {
     auto localRpcEngine = std::make_shared<MockRPCEngine>();
-    auto localHandler = std::make_shared<RPCServerHandler<MockRPCEngine, MockETLService>>(
-        cfg, backend, localRpcEngine, etl, subManager
-    );
+    auto localHandler =
+        std::make_shared<RPCServerHandler<MockRPCEngine, MockETLService>>(cfg, backend, localRpcEngine, etl);
     static auto constexpr request = R"({
                                         "method": "server_info",
                                         "params": [{}]

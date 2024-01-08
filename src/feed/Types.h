@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -21,22 +21,11 @@
 
 #include "web/interface/ConnectionBase.h"
 
-#include <boost/beast.hpp>
-
 #include <memory>
 
-namespace web {
+namespace feed {
+using Subscriber = web::ConnectionBase;
+using SubscriberPtr = Subscriber*;
+using SubscriberSharedPtr = std::shared_ptr<Subscriber>;
 
-/**
- * @brief Specifies the requirements a Webserver handler must fulfill.
- */
-template <typename T>
-concept SomeServerHandler =
-    requires(T handler, std::string req, std::shared_ptr<ConnectionBase> ws, boost::beast::error_code ec) {
-        // the callback when server receives a request
-        {
-            handler(req, ws)
-        };
-    };
-
-}  // namespace web
+}  // namespace feed
