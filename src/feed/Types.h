@@ -23,12 +23,6 @@
 
 #include <memory>
 
-namespace web {
-
-struct ConnectionBase;
-
-}  // namespace web
-
 namespace feed {
 using Subscriber = web::ConnectionBase;
 using SubscriberPtr = Subscriber*;

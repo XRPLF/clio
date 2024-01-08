@@ -30,7 +30,6 @@ namespace feed::impl {
  * @brief Feed that publishes the json object as it is.
  */
 struct ForwardFeed : public SingleFeedBase {
-public:
     using SingleFeedBase::SingleFeedBase;
 
     /**
