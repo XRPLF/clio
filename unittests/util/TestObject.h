@@ -43,6 +43,12 @@ GetAccountIDWithString(std::string_view id);
 GetAccountKey(std::string_view id);
 
 /*
+ * Gets the account key from an account id
+ */
+[[nodiscard]] ripple::uint256
+GetAccountKey(ripple::AccountID const& acc);
+
+/*
  * Create a simple ledgerInfo object with only hash and seq
  */
 [[nodiscard]] ripple::LedgerInfo
