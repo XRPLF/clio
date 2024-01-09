@@ -21,6 +21,8 @@
 
 #include "data/BackendInterface.h"
 #include "data/LedgerCache.h"
+#include "etl/ETLHelpers.h"
+#include "etl/ETLState.h"
 #include "etl/LoadBalancer.h"
 #include "etl/Source.h"
 #include "etl/SystemState.h"
@@ -35,11 +37,19 @@
 #include "feed/SubscriptionManager.h"
 #include "util/log/Logger.h"
 
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/json/object.hpp>
 #include <grpcpp/grpcpp.h>
+#include <org/xrpl/rpc/v1/get_ledger.pb.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <optional>
+#include <string>
+#include <thread>
 
 struct AccountTransactionsData;
 struct NFTTransactionsData;

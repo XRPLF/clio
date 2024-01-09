@@ -27,8 +27,21 @@
 #include "util/log/Logger.h"
 
 #include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
 #include <grpcpp/grpcpp.h>
+#include <org/xrpl/rpc/v1/get_ledger.pb.h>
+#include <org/xrpl/rpc/v1/ledger.pb.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace etl {
 class Source;
@@ -99,26 +112,6 @@ public:
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
     );
 
-    /**
-     * @brief A factory function for the ETL source.
-     *
-     * @param config The configuration to use
-     * @param ioc The io_context to run on
-     * @param backend BackendInterface implementation
-     * @param subscriptions Subscription manager
-     * @param validatedLedgers The network validated ledgers datastructure
-     * @param balancer The load balancer
-     */
-    static std::unique_ptr<Source>
-    make_Source(
-        util::Config const& config,
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-        LoadBalancer& balancer
-    );
-
     ~LoadBalancer();
 
     /**
@@ -187,6 +180,26 @@ public:
     getETLState() noexcept;
 
 private:
+    /**
+     * @brief A factory function for the ETL source.
+     *
+     * @param config The configuration to use
+     * @param ioc The io_context to run on
+     * @param backend BackendInterface implementation
+     * @param subscriptions Subscription manager
+     * @param validatedLedgers The network validated ledgers datastructure
+     * @param balancer The load balancer
+     */
+    static std::unique_ptr<Source>
+    make_Source(
+        util::Config const& config,
+        boost::asio::io_context& ioc,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
+        LoadBalancer& balancer
+    );
+
     /**
      * @brief Execute a function on a randomly selected source.
      *

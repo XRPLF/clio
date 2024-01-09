@@ -20,15 +20,12 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "etl/Source.h"
 #include "rpc/Counters.h"
 #include "rpc/Errors.h"
-#include "rpc/RPCHelpers.h"
+#include "rpc/WorkQueue.h"
 #include "rpc/common/AnyHandler.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/impl/ForwardingProxy.h"
-#include "util/Taggable.h"
-#include "util/config/Config.h"
 #include "util/log/Logger.h"
 #include "web/Context.h"
 #include "web/DOSGuard.h"
@@ -36,11 +33,14 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
 #include <fmt/core.h>
+#include <ripple/protocol/ErrorCodes.h>
 
+#include <chrono>
+#include <exception>
+#include <functional>
+#include <memory>
 #include <optional>
 #include <string>
-#include <unordered_map>
-#include <variant>
 
 // forward declarations
 namespace feed {
@@ -64,7 +64,6 @@ class RPCEngine {
     util::Logger log_{"RPC"};
 
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<etl::LoadBalancer> balancer_;
     std::reference_wrapper<web::DOSGuard const> dosGuard_;
     std::reference_wrapper<WorkQueue> workQueue_;
     std::reference_wrapper<Counters> counters_;
@@ -83,7 +82,6 @@ public:
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
         : backend_{backend}
-        , balancer_{balancer}
         , dosGuard_{std::cref(dosGuard)}
         , workQueue_{std::ref(workQueue)}
         , counters_{std::ref(counters)}
