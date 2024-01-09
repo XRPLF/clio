@@ -105,6 +105,10 @@ target_sources (clio PRIVATE
   src/etl/impl/ForwardCache.cpp
   ## Feed
   src/feed/SubscriptionManager.cpp
+  src/feed/impl/TransactionFeed.cpp
+  src/feed/impl/LedgerFeed.cpp
+  src/feed/impl/ProposedTransactionFeed.cpp
+  src/feed/impl/SingleFeedBase.cpp
   ## Web
   src/web/impl/AdminVerificationStrategy.cpp
   src/web/IntervalSweepHandler.cpp
@@ -183,8 +187,6 @@ if (tests)
     unittests/ProfilerTests.cpp
     unittests/JsonUtilTests.cpp
     unittests/DOSGuardTests.cpp
-    unittests/SubscriptionTests.cpp
-    unittests/SubscriptionManagerTests.cpp
     unittests/util/AssertTests.cpp
     unittests/util/BatchingTests.cpp
     unittests/util/TestObject.cpp
@@ -263,7 +265,16 @@ if (tests)
     unittests/web/ServerTests.cpp
     unittests/web/RPCServerHandlerTests.cpp
     unittests/web/WhitelistHandlerTests.cpp
-    unittests/web/SweepHandlerTests.cpp)
+    unittests/web/SweepHandlerTests.cpp
+    # Feed
+    unittests/feed/SubscriptionManagerTests.cpp
+    unittests/feed/SingleFeedBaseTests.cpp
+    unittests/feed/ProposedTransactionFeedTests.cpp
+    unittests/feed/BookChangesFeedTests.cpp
+    unittests/feed/LedgerFeedTests.cpp
+    unittests/feed/TransactionFeedTests.cpp
+    unittests/feed/ForwardFeedTests.cpp
+    unittests/feed/TrackableSignalTests.cpp)
 
   include (CMake/deps/gtest.cmake)
 
