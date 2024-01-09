@@ -21,6 +21,7 @@
 
 #include "data/DBHelpers.h"
 #include "data/Types.h"
+#include "util/Assert.h"
 
 #include <ripple/basics/Blob.h>
 #include <ripple/basics/Slice.h>
@@ -859,6 +860,8 @@ AMMSetAuctionSlot(
     std::vector<ripple::AccountID> const& authAccounts
 )
 {
+    ASSERT(expiration >= 24 * 3600, "Expiration must be at least 24 hours");
+
     if (!amm.isFieldPresent(ripple::sfAuctionSlot))
         amm.makeFieldPresent(ripple::sfAuctionSlot);
 

@@ -49,7 +49,6 @@ struct AMMInfoParamTestCaseBundle {
     std::string expectedErrorMessage;
 };
 
-// parameterized test cases for parameters check
 struct AMMInfoParameterTest : public RPCAMMInfoHandlerTest, public WithParamInterface<AMMInfoParamTestCaseBundle> {
     struct NameGenerator {
         std::string
@@ -879,7 +878,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
         AMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY
     );
     AMMSetAuctionSlot(
-        ammObj, account2, ripple::amountFromString(ripple::xrpIssue(), "100"), 2, 60, {account1, account2}
+        ammObj, account2, ripple::amountFromString(ripple::xrpIssue(), "100"), 2, 25 * 3600, {account1, account2}
     );
 
     accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
@@ -929,7 +928,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
                         "price": "100",
                         "discounted_fee": 2,
                         "account": "{}",
-                        "expiration": "2000-01-01T00:01:00+0000",
+                        "expiration": "2000-01-02T01:00:00+0000",
                         "auth_accounts": [
                             {{
                                 "account": "{}"
