@@ -834,3 +834,49 @@ CreateAMMObject(
     amm.setFieldU32(ripple::sfFlags, 0);
     return amm;
 }
+
+void
+AMMAddVoteSlot(ripple::STObject& amm, ripple::AccountID const& accountId, uint16_t tradingFee, uint32_t voteWeight)
+{
+    if (!amm.isFieldPresent(ripple::sfVoteSlots))
+        amm.setFieldArray(ripple::sfVoteSlots, ripple::STArray{});
+
+    auto& arr = amm.peekFieldArray(ripple::sfVoteSlots);
+    auto slot = ripple::STObject(ripple::sfVoteEntry);
+    slot.setAccountID(ripple::sfAccount, accountId);
+    slot.setFieldU16(ripple::sfTradingFee, tradingFee);
+    slot.setFieldU32(ripple::sfVoteWeight, voteWeight);
+    arr.push_back(slot);
+}
+
+void
+AMMSetAuctionSlot(
+    ripple::STObject& amm,
+    ripple::AccountID const& accountId,
+    ripple::STAmount price,
+    uint16_t discountedFee,
+    uint32_t expiration,
+    std::vector<ripple::AccountID> const& authAccounts
+)
+{
+    if (!amm.isFieldPresent(ripple::sfAuctionSlot))
+        amm.makeFieldPresent(ripple::sfAuctionSlot);
+
+    auto& auctionSlot = amm.peekFieldObject(ripple::sfAuctionSlot);
+    auctionSlot.setAccountID(ripple::sfAccount, accountId);
+    auctionSlot.setFieldAmount(ripple::sfPrice, price);
+    auctionSlot.setFieldU16(ripple::sfDiscountedFee, discountedFee);
+    auctionSlot.setFieldU32(ripple::sfExpiration, expiration);
+
+    if (not authAccounts.empty()) {
+        ripple::STArray accounts;
+
+        for (auto const& acc : authAccounts) {
+            ripple::STObject authAcc(ripple::sfAuthAccount);
+            authAcc.setAccountID(ripple::sfAccount, acc);
+            accounts.push_back(authAcc);
+        }
+
+        auctionSlot.setFieldArray(ripple::sfAuthAccounts, accounts);
+    }
+}

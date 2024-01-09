@@ -33,6 +33,7 @@ constexpr static auto SEQ = 30;
 constexpr static auto WRONG_AMM_ACCOUNT = "000S7XL6nxRAi7JcbJcn1Na179oF300000";
 constexpr static auto AMM_ACCOUNT = "rLcS7XL6nxRAi7JcbJcn1Na179oF3vdfbh";
 constexpr static auto AMM_ACCOUNT2 = "rnW8FAPgpQgA6VoESnVrUVJHBdq9QAtRZs";
+constexpr static auto LP_ISSUE_CURRENCY = "03930D02208264E2E40EC1B0C09E4DB96EE197B1";
 constexpr static auto NOTFOUND_ACCOUNT = "rBdLS7RVLqkPwnWQCT2bC6HJd6xGoBizq8";
 constexpr static auto AMMID = 54321;
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
@@ -296,7 +297,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
     });
 }
 
-TEST_F(RPCAMMInfoHandlerTest, HappyPath2)
+TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
 {
     backend->setRange(10, 30);
 
@@ -310,12 +311,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPath2)
 
     auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto ammObj = CreateAMMObject(
-        AMM_ACCOUNT,
-        "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
-        "JPY",
-        AMM_ACCOUNT2,
-        "03930D02208264E2E40EC1B0C09E4DB96EE197B1"
+        AMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY
     );
     accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
     auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
@@ -361,7 +357,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPath2)
                 "ledger_index": 30,
                 "validated": true
             }})",
-            "03930D02208264E2E40EC1B0C09E4DB96EE197B1",
+            LP_ISSUE_CURRENCY,
             AMM_ACCOUNT,
             "JPY",
             AMM_ACCOUNT2,
@@ -373,7 +369,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPath2)
     });
 }
 
-TEST_F(RPCAMMInfoHandlerTest, HappyPath3)
+TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
 {
     backend->setRange(10, 30);
 
@@ -387,12 +383,245 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPath3)
 
     auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto ammObj = CreateAMMObject(
-        AMM_ACCOUNT,
-        "XRP",
-        ripple::toBase58(ripple::xrpAccount()),
-        "JPY",
-        AMM_ACCOUNT2,
-        "03930D02208264E2E40EC1B0C09E4DB96EE197B1"
+        AMM_ACCOUNT, "JPY", AMM_ACCOUNT2, "XRP", ripple::toBase58(ripple::xrpAccount()), LP_ISSUE_CURRENCY
+    );
+    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account1), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account2), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
+        .WillByDefault(Return(ammObj.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(feesKey, SEQ, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend, doFetchLedgerObject(issue2LineKey, SEQ, _)).WillByDefault(Return(std::optional<Blob>{}));
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "amm_account": "{}"
+        }})",
+        AMM_ACCOUNT
+    ));
+
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        auto const expectedResult = json::parse(fmt::format(
+            R"({{
+                "amm": {{
+                    "lp_token": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "100"
+                    }},
+                    "amount": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "0"
+                    }},
+                    "amount2": "193",
+                    "account": "{}",
+                    "trading_fee": 5,
+                    "asset_frozen": false
+                }},
+                "ledger_index": 30,
+                "validated": true
+            }})",
+            LP_ISSUE_CURRENCY,
+            AMM_ACCOUNT,
+            "JPY",
+            AMM_ACCOUNT2,
+            AMM_ACCOUNT
+        ));
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.value(), expectedResult);
+    });
+}
+
+TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
+{
+    backend->setRange(10, 30);
+
+    auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
+    auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const ammKey = ripple::uint256{AMMID};
+    auto const ammKeylet = ripple::keylet::amm(ammKey);
+    auto const feesKey = ripple::keylet::fees().key;
+    auto const issue2LineKey = ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+
+    auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto ammObj = CreateAMMObject(AMM_ACCOUNT, "USD", AMM_ACCOUNT, "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY);
+    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account1), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account2), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
+        .WillByDefault(Return(ammObj.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(feesKey, SEQ, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend, doFetchLedgerObject(issue2LineKey, SEQ, _)).WillByDefault(Return(std::optional<Blob>{}));
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "amm_account": "{}"
+        }})",
+        AMM_ACCOUNT
+    ));
+
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        auto const expectedResult = json::parse(fmt::format(
+            R"({{
+                "amm": {{
+                    "lp_token": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "100"
+                    }},
+                    "amount": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "0"
+                    }},
+                    "amount2": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "0"
+                    }},
+                    "account": "{}",
+                    "trading_fee": 5,
+                    "asset_frozen": false,
+                    "asset2_frozen": false
+                }},
+                "ledger_index": 30,
+                "validated": true
+            }})",
+            LP_ISSUE_CURRENCY,
+            AMM_ACCOUNT,
+            "USD",
+            AMM_ACCOUNT,
+            "JPY",
+            AMM_ACCOUNT2,
+            AMM_ACCOUNT
+        ));
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.value(), expectedResult);
+    });
+}
+
+TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
+{
+    backend->setRange(10, 30);
+
+    auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
+    auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const ammKey = ripple::uint256{AMMID};
+    auto const ammKeylet = ripple::keylet::amm(ammKey);
+    auto const feesKey = ripple::keylet::fees().key;
+    auto const issue1LineKey = ripple::keylet::line(account1, account1, ripple::to_currency("USD")).key;
+    auto const issue2LineKey = ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+
+    auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto ammObj = CreateAMMObject(AMM_ACCOUNT, "USD", AMM_ACCOUNT, "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY);
+    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+
+    // note: frozen flag will not be used for trustline1 because issuer == account
+    auto const trustline1BalanceFrozen = CreateRippleStateLedgerObject(
+        "USD", AMM_ACCOUNT, 8, AMM_ACCOUNT, 1000, AMM_ACCOUNT2, 2000, INDEX1, 2, ripple::lsfGlobalFreeze
+    );
+    auto const trustline2BalanceFrozen = CreateRippleStateLedgerObject(
+        "JPY", AMM_ACCOUNT, 12, AMM_ACCOUNT2, 1000, AMM_ACCOUNT, 2000, INDEX1, 2, ripple::lsfGlobalFreeze
+    );
+
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account1), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account2), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
+        .WillByDefault(Return(ammObj.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(feesKey, SEQ, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend, doFetchLedgerObject(issue1LineKey, SEQ, _))
+        .WillByDefault(Return(trustline1BalanceFrozen.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(issue2LineKey, SEQ, _))
+        .WillByDefault(Return(trustline2BalanceFrozen.getSerializer().peekData()));
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "amm_account": "{}"
+        }})",
+        AMM_ACCOUNT
+    ));
+
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        auto const expectedResult = json::parse(fmt::format(
+            R"({{
+                "amm": {{
+                    "lp_token": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "100"
+                    }},
+                    "amount": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "8"
+                    }},
+                    "amount2": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "-12"
+                    }},
+                    "account": "{}",
+                    "trading_fee": 5,
+                    "asset_frozen": false,
+                    "asset2_frozen": true
+                }},
+                "ledger_index": 30,
+                "validated": true
+            }})",
+            LP_ISSUE_CURRENCY,
+            AMM_ACCOUNT,
+            "USD",
+            AMM_ACCOUNT,
+            "JPY",
+            AMM_ACCOUNT2,
+            AMM_ACCOUNT
+        ));
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.value(), expectedResult);
+    });
+}
+
+TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
+{
+    backend->setRange(10, 30);
+
+    auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
+    auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const ammKey = ripple::uint256{AMMID};
+    auto const ammKeylet = ripple::keylet::amm(ammKey);
+    auto const feesKey = ripple::keylet::fees().key;
+    auto const issue2LineKey = ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+
+    auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto ammObj = CreateAMMObject(
+        AMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY
     );
     accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
     auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
@@ -441,11 +670,199 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPath3)
                 "ledger_index": 30,
                 "validated": true
             }})",
-            "03930D02208264E2E40EC1B0C09E4DB96EE197B1",
+            LP_ISSUE_CURRENCY,
             AMM_ACCOUNT,
             "JPY",
             AMM_ACCOUNT2,
             AMM_ACCOUNT
+        ));
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.value(), expectedResult);
+    });
+}
+
+TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
+{
+    backend->setRange(10, 30);
+
+    auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
+    auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const ammKey = ripple::uint256{AMMID};
+    auto const ammKeylet = ripple::keylet::amm(ammKey);
+    auto const feesKey = ripple::keylet::fees().key;
+    auto const issue2LineKey = ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+
+    auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto ammObj = CreateAMMObject(
+        AMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY
+    );
+    AMMAddVoteSlot(ammObj, account1, 2, 4);
+    AMMAddVoteSlot(ammObj, account2, 4, 2);
+    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const trustlineBalance =
+        CreateRippleStateLedgerObject("JPY", AMM_ACCOUNT2, -8, AMM_ACCOUNT, 1000, AMM_ACCOUNT2, 2000, INDEX2, 2, 0);
+
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account1), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account2), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
+        .WillByDefault(Return(ammObj.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(feesKey, SEQ, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend, doFetchLedgerObject(issue2LineKey, SEQ, _))
+        .WillByDefault(Return(trustlineBalance.getSerializer().peekData()));
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "amm_account": "{}"
+        }})",
+        AMM_ACCOUNT
+    ));
+
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        auto expectedResult = json::parse(fmt::format(
+            R"({{
+                "amm": {{
+                    "lp_token": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "100"
+                    }},
+                    "amount": "193",
+                    "amount2": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "8"
+                    }},
+                    "account": "{}",
+                    "trading_fee": 5,
+                    "vote_slots": [
+                        {{
+                            "account": "{}",
+                            "trading_fee": 2,
+                            "vote_weight": 4
+                        }},
+                        {{
+                            "account": "{}",
+                            "trading_fee": 4,
+                            "vote_weight": 2
+                        }}
+                    ],
+                    "asset2_frozen": false
+                }},
+                "ledger_index": 30,
+                "validated": true
+            }})",
+            LP_ISSUE_CURRENCY,
+            AMM_ACCOUNT,
+            "JPY",
+            AMM_ACCOUNT2,
+            AMM_ACCOUNT,
+            AMM_ACCOUNT,
+            AMM_ACCOUNT2
+        ));
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.value(), expectedResult);
+    });
+}
+
+TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
+{
+    backend->setRange(10, 30);
+
+    auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
+    auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const ammKey = ripple::uint256{AMMID};
+    auto const ammKeylet = ripple::keylet::amm(ammKey);
+    auto const feesKey = ripple::keylet::fees().key;
+    auto const issue2LineKey = ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+
+    auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto ammObj = CreateAMMObject(
+        AMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY
+    );
+    AMMSetAuctionSlot(
+        ammObj, account2, ripple::amountFromString(ripple::xrpIssue(), "100"), 2, 60, {account1, account2}
+    );
+
+    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const trustlineBalance =
+        CreateRippleStateLedgerObject("JPY", AMM_ACCOUNT2, -8, AMM_ACCOUNT, 1000, AMM_ACCOUNT2, 2000, INDEX2, 2, 0);
+
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account1), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account2), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
+        .WillByDefault(Return(ammObj.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(feesKey, SEQ, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend, doFetchLedgerObject(issue2LineKey, SEQ, _))
+        .WillByDefault(Return(trustlineBalance.getSerializer().peekData()));
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "amm_account": "{}"
+        }})",
+        AMM_ACCOUNT
+    ));
+
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        auto expectedResult = json::parse(fmt::format(
+            R"({{
+                "amm": {{
+                    "lp_token": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "100"
+                    }},
+                    "amount": "193",
+                    "amount2": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "8"
+                    }},
+                    "account": "{}",
+                    "trading_fee": 5,
+                    "auction_slot": {{
+                        "time_interval": 20,
+                        "price": "100",
+                        "discounted_fee": 2,
+                        "account": "{}",
+                        "expiration": "2000-01-01T00:01:00+0000",
+                        "auth_accounts": [
+                            {{
+                                "account": "{}"
+                            }},
+                            {{
+                                "account": "{}"
+                            }}
+                        ]
+                    }},
+                    "asset2_frozen": false
+                }},
+                "ledger_index": 30,
+                "validated": true
+            }})",
+            LP_ISSUE_CURRENCY,
+            AMM_ACCOUNT,
+            "JPY",
+            AMM_ACCOUNT2,
+            AMM_ACCOUNT,
+            AMM_ACCOUNT2,
+            AMM_ACCOUNT,
+            AMM_ACCOUNT2
         ));
 
         ASSERT_TRUE(output);

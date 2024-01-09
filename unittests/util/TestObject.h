@@ -303,5 +303,18 @@ CreateAMMObject(
     uint64_t ownerNode = 0u
 );
 
+void
+AMMAddVoteSlot(ripple::STObject& amm, ripple::AccountID const& accountId, uint16_t tradingFee, uint32_t voteWeight);
+
+void
+AMMSetAuctionSlot(
+    ripple::STObject& amm,
+    ripple::AccountID const& accountId,
+    ripple::STAmount price,
+    uint16_t discountedFee,
+    uint32_t expiration,
+    std::vector<ripple::AccountID> const& authAccounts = {}
+);
+
 [[nodiscard]] ripple::STObject
 CreateDidObject(std::string_view accountId, std::string_view didDoc, std::string_view uri, std::string_view data);
