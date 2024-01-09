@@ -40,8 +40,7 @@ constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A
 constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
-// TODO: change back to HandlerBaseTest when done writing tests
-class RPCAMMInfoHandlerTest : public HandlerBaseTestNaggy {};
+class RPCAMMInfoHandlerTest : public HandlerBaseTest {};
 
 struct AMMInfoParamTestCaseBundle {
     std::string testName;
@@ -588,6 +587,96 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
                     "account": "{}",
                     "trading_fee": 5,
                     "asset_frozen": false,
+                    "asset2_frozen": true
+                }},
+                "ledger_index": 30,
+                "validated": true
+            }})",
+            LP_ISSUE_CURRENCY,
+            AMM_ACCOUNT,
+            "USD",
+            AMM_ACCOUNT,
+            "JPY",
+            AMM_ACCOUNT2,
+            AMM_ACCOUNT
+        ));
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.value(), expectedResult);
+    });
+}
+
+TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
+{
+    backend->setRange(10, 30);
+
+    auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
+    auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const ammKey = ripple::uint256{AMMID};
+    auto const ammKeylet = ripple::keylet::amm(ammKey);
+    auto const feesKey = ripple::keylet::fees().key;
+    auto const issue1LineKey = ripple::keylet::line(account1, account1, ripple::to_currency("USD")).key;
+    auto const issue2LineKey = ripple::keylet::line(account1, account2, ripple::to_currency("JPY")).key;
+
+    // asset1 will be frozen because flag set here
+    auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, ripple::lsfGlobalFreeze, 2, 200, 2, INDEX1, 2);
+    auto ammObj = CreateAMMObject(AMM_ACCOUNT, "USD", AMM_ACCOUNT, "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY);
+    accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
+    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+
+    // note: frozen flag will not be used for trustline1 because issuer == account
+    auto const trustline1BalanceFrozen = CreateRippleStateLedgerObject(
+        "USD", AMM_ACCOUNT, 8, AMM_ACCOUNT, 1000, AMM_ACCOUNT2, 2000, INDEX1, 2, ripple::lsfGlobalFreeze
+    );
+    auto const trustline2BalanceFrozen = CreateRippleStateLedgerObject(
+        "JPY", AMM_ACCOUNT, 12, AMM_ACCOUNT2, 1000, AMM_ACCOUNT, 2000, INDEX1, 2, ripple::lsfGlobalFreeze
+    );
+
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account1), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account2), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
+        .WillByDefault(Return(ammObj.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(feesKey, SEQ, _)).WillByDefault(Return(feesObj));
+    ON_CALL(*backend, doFetchLedgerObject(issue1LineKey, SEQ, _))
+        .WillByDefault(Return(trustline1BalanceFrozen.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(issue2LineKey, SEQ, _))
+        .WillByDefault(Return(trustline2BalanceFrozen.getSerializer().peekData()));
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "amm_account": "{}"
+        }})",
+        AMM_ACCOUNT
+    ));
+
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        auto const expectedResult = json::parse(fmt::format(
+            R"({{
+                "amm": {{
+                    "lp_token": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "100"
+                    }},
+                    "amount": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "8"
+                    }},
+                    "amount2": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "-12"
+                    }},
+                    "account": "{}",
+                    "trading_fee": 5,
+                    "asset_frozen": true,
                     "asset2_frozen": true
                 }},
                 "ledger_index": 30,
