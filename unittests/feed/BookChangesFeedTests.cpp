@@ -28,7 +28,6 @@
 #include <gtest/gtest.h>
 #include <ripple/protocol/STObject.h>
 
-#include <memory>
 #include <vector>
 
 using namespace feed::impl;
