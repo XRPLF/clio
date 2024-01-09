@@ -58,6 +58,8 @@ public:
         std::optional<std::string> accountRoot;
         // account id to address did object
         std::optional<std::string> did;
+        // mpt issuance id to address mptIssuance object
+        std::optional<std::string> mptIssuanceID;
         // TODO: extract into custom objects, remove json from Input
         std::optional<boost::json::object> directory;
         std::optional<boost::json::object> offer;
@@ -131,6 +133,7 @@ public:
             {JS(index), malformedRequestHexStringValidator},
             {JS(account_root), validation::AccountBase58Validator},
             {JS(did), validation::AccountBase58Validator},
+            {JS(mpt_issuance_id), validation::Uint192HexStringValidator},
             {JS(check), malformedRequestHexStringValidator},
             {JS(deposit_preauth),
              validation::Type<std::string, boost::json::object>{},
