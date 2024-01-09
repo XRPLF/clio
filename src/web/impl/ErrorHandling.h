@@ -150,18 +150,23 @@ public:
         auto e = rpc::makeError(error);
 
         if (request_) {
-            auto const& req = request_.value();
-            auto const id = req.contains("id") ? req.at("id") : nullptr;
-            if (not id.is_null())
-                e["id"] = id;
+            auto const appendFieldIfExist = [&](auto const& field) {
+                if (request_->contains(field) and not request_->at(field).is_null())
+                    e[field] = request_->at(field);
+            };
 
-            e["request"] = req;
+            appendFieldIfExist(JS(id));
+
+            if (connection_->upgraded)
+                appendFieldIfExist(JS(api_version));
+
+            e[JS(request)] = request_.value();
         }
 
         if (connection_->upgraded) {
             return e;
         }
-        return {{"result", e}};
+        return {{JS(result), e}};
     }
 };
 

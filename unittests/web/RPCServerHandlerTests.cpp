@@ -129,7 +129,8 @@ TEST_F(WebRPCServerHandlerTest, WsNormalPath)
     session->upgraded = true;
     static auto constexpr request = R"({
                                         "command": "server_info",
-                                        "id": 99
+                                        "id": 99,
+                                        "api_version": 2
                                     })";
 
     backend->setRange(MINSEQ, MAXSEQ);
@@ -140,6 +141,7 @@ TEST_F(WebRPCServerHandlerTest, WsNormalPath)
                                         "id": 99,
                                         "status": "success",
                                         "type": "response",
+                                        "api_version": 2,
                                         "warnings": [
                                             {
                                                 "id": 2001,
@@ -291,10 +293,12 @@ TEST_F(WebRPCServerHandlerTest, WsErrorPath)
                                         "error_message": "ledgerIndexMalformed",
                                         "status": "error",
                                         "type": "response",
+                                        "api_version": 2,
                                         "request": {
                                             "command": "ledger",
                                             "ledger_index": "xx",
-                                            "id": "123"
+                                            "id": "123",
+                                            "api_version": 2
                                         },
                                         "warnings": [
                                             {
@@ -309,7 +313,8 @@ TEST_F(WebRPCServerHandlerTest, WsErrorPath)
     static auto constexpr requestJSON = R"({
                                             "command": "ledger",
                                             "ledger_index": "xx",
-                                            "id": "123"
+                                            "id": "123",
+                                            "api_version": 2
                                         })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
         .WillOnce(testing::Return(rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}));
