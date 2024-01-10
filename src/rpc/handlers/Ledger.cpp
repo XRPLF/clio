@@ -132,7 +132,7 @@ LedgerHandler::process(LedgerHandler::Input input, Context const& ctx) const
                                     *sharedPtrBackend_,
                                     lgrInfo.seq,
                                     account,
-                                    amount.getCurrency(),
+                                    amount.getAsset(),
                                     amount.getIssuer(),
                                     false,  // fhIGNORE_FREEZE from rippled
                                     ctx.yield

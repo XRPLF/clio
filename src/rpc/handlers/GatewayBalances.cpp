@@ -111,7 +111,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
                 output.frozenBalances[peer].push_back(-balance);
             } else {
                 // normal negative balance, obligation to customer
-                auto& bal = output.sums[balance.getCurrency()];
+                auto& bal = output.sums[balance.getAsset()];
                 if (bal == beast::zero) {
                     // This is needed to set the currency code correctly
                     bal = -balance;

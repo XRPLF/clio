@@ -144,7 +144,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountOffersHan
             jsonObject[field] = amount.getText();
         } else {
             jsonObject[field] = {
-                {JS(currency), ripple::to_string(amount.getCurrency())},
+                {JS(currency), ripple::to_string(static_cast<ripple::Currency>(amount.getAsset()))},
                 {JS(issuer), ripple::to_string(amount.getIssuer())},
                 {JS(value), amount.getText()},
             };

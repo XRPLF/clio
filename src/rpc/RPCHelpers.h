@@ -223,7 +223,7 @@ accountHolds(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& account,
-    ripple::Currency const& currency,
+    ripple::Asset const& asset,
     ripple::AccountID const& issuer,
     bool zeroIfFrozen,
     boost::asio::yield_context yield
