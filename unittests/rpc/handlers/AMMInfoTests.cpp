@@ -82,7 +82,6 @@ generateTestValuesForParametersTest()
         AMMInfoParamTestCaseBundle{
             "AMMAsset2EmptyObject", R"({"asset2": {}})", "issueMalformed", "Issue is malformed."
         },
-        // TODO: LPTokenAccountInvalid??
     };
 }
 
@@ -113,11 +112,15 @@ TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
     backend->setRange(10, 30);
 
     auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    auto const accountKey = GetAccountKey(NOTFOUND_ACCOUNT);
+    auto const missingAccountKey = GetAccountKey(NOTFOUND_ACCOUNT);
+    auto const accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto const accountKey = GetAccountKey(AMM_ACCOUNT);
 
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
-    ON_CALL(*backend, doFetchLedgerObject(accountKey, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(missingAccountKey, testing::_, testing::_))
         .WillByDefault(Return(std::optional<Blob>{}));
+    ON_CALL(*backend, doFetchLedgerObject(accountKey, testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -160,9 +163,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
-        EXPECT_EQ(
-            err.at("error_message").as_string(), "Account malformed."
-        );  // TODO: is this supposed to say Amm account malformed?
+        EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
     });
 }
 
@@ -188,7 +189,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
 
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
-        EXPECT_EQ(err.at("error_message").as_string(), "Amm account malformed.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
     });
 }
 
@@ -216,7 +217,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFoundMissingAmmField)
 
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
-        EXPECT_EQ(err.at("error_message").as_string(), "Amm account not found.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
 }
 
@@ -252,7 +253,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
 
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
-        EXPECT_EQ(err.at("error_message").as_string(), "Amm account not found.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
 }
 
@@ -291,7 +292,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
 
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
-        EXPECT_EQ(err.at("error_message").as_string(), "Amm account not found.");
+        EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
 }
 
@@ -352,7 +353,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
                     "trading_fee": 5,
                     "asset2_frozen": false
                 }},
-                "ledger_index": 30,
+                "ledger_current_index": 30,
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -424,7 +425,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
                     "trading_fee": 5,
                     "asset_frozen": false
                 }},
-                "ledger_index": 30,
+                "ledger_current_index": 30,
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -499,7 +500,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
                     "asset_frozen": false,
                     "asset2_frozen": false
                 }},
-                "ledger_index": 30,
+                "ledger_current_index": 30,
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -588,7 +589,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
                     "asset_frozen": false,
                     "asset2_frozen": true
                 }},
-                "ledger_index": 30,
+                "ledger_current_index": 30,
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -678,7 +679,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
                     "asset_frozen": true,
                     "asset2_frozen": true
                 }},
-                "ledger_index": 30,
+                "ledger_current_index": 30,
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -755,7 +756,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
                     "trading_fee": 5,
                     "asset2_frozen": false
                 }},
-                "ledger_index": 30,
+                "ledger_current_index": 30,
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -844,7 +845,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
                     ],
                     "asset2_frozen": false
                 }},
-                "ledger_index": 30,
+                "ledger_current_index": 30,
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -940,13 +941,122 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
                     }},
                     "asset2_frozen": false
                 }},
-                "ledger_index": 30,
+                "ledger_current_index": 30,
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
             AMM_ACCOUNT,
             "JPY",
             AMM_ACCOUNT2,
+            AMM_ACCOUNT,
+            AMM_ACCOUNT2,
+            AMM_ACCOUNT,
+            AMM_ACCOUNT2
+        ));
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.value(), expectedResult);
+    });
+}
+
+TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssets)
+{
+    backend->setRange(10, 30);
+
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
+    auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
+    auto const issue1 = ripple::Issue(ripple::to_currency("JPY"), account1);
+    auto const issue2 = ripple::Issue(ripple::to_currency("USD"), account2);
+    auto const ammKeylet = ripple::keylet::amm(issue1, issue2);
+
+    auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto ammObj = CreateAMMObject(AMM_ACCOUNT, "JPY", AMM_ACCOUNT, "USD", AMM_ACCOUNT2, LP_ISSUE_CURRENCY);
+    auto const auctionIssue = ripple::Issue{ripple::Currency{LP_ISSUE_CURRENCY}, account1};
+    AMMSetAuctionSlot(
+        ammObj, account2, ripple::amountFromString(auctionIssue, "100"), 2, 25 * 3600, {account1, account2}
+    );
+    accountRoot.setFieldH256(ripple::sfAMMID, ammKeylet.key);
+
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account1), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account2), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
+        .WillByDefault(Return(ammObj.getSerializer().peekData()));
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "asset": {{
+                "currency": "JPY", 
+                "issuer": "{}"
+            }},
+            "asset2": {{
+                "currency": "USD",
+                "issuer": "{}"
+            }}
+        }})",
+        AMM_ACCOUNT,
+        AMM_ACCOUNT2
+    ));
+
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        auto expectedResult = json::parse(fmt::format(
+            R"({{
+                "amm": {{
+                    "lp_token": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "100"
+                    }},
+                    "amount": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "0"
+                    }},
+                    "amount2": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "0"
+                    }},
+                    "account": "{}",
+                    "trading_fee": 5,
+                    "auction_slot": {{
+                        "time_interval": 20,
+                        "price": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "100"
+                        }},
+                        "discounted_fee": 2,
+                        "account": "{}",
+                        "expiration": "2000-01-02T01:00:00+0000",
+                        "auth_accounts": [
+                            {{
+                                "account": "{}"
+                            }},
+                            {{
+                                "account": "{}"
+                            }}
+                        ]
+                    }},
+                    "asset_frozen": false,
+                    "asset2_frozen": false
+                }},
+                "ledger_current_index": 30,
+                "validated": true
+            }})",
+            LP_ISSUE_CURRENCY,
+            AMM_ACCOUNT,
+            "JPY",
+            AMM_ACCOUNT,
+            "USD",
+            AMM_ACCOUNT2,
+            AMM_ACCOUNT,
+            LP_ISSUE_CURRENCY,
             AMM_ACCOUNT,
             AMM_ACCOUNT2,
             AMM_ACCOUNT,

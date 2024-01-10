@@ -71,7 +71,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     if (input.accountID) {
         auto keylet = keylet::account(*input.accountID);
         if (not sharedPtrBackend_->fetchLedgerObject(keylet.key, lgrInfo.seq, ctx.yield))
-            return Error{Status{RippledError::rpcACT_NOT_FOUND, "Account not found."}};
+            return Error{Status{RippledError::rpcACT_NOT_FOUND}};
     }
 
     ripple::uint256 ammID;
@@ -80,12 +80,12 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         auto const accountLedgerObject =
             sharedPtrBackend_->fetchLedgerObject(accountKeylet.key, lgrInfo.seq, ctx.yield);
         if (not accountLedgerObject)
-            return Error{Status{RippledError::rpcACT_MALFORMED, "Amm account malformed."}};
+            return Error{Status{RippledError::rpcACT_MALFORMED}};
         ripple::STLedgerEntry const sle{
             ripple::SerialIter{accountLedgerObject->data(), accountLedgerObject->size()}, accountKeylet.key
         };
         if (not sle.isFieldPresent(ripple::sfAMMID))
-            return Error{Status{RippledError::rpcACT_NOT_FOUND, "Amm account not found."}};
+            return Error{Status{RippledError::rpcACT_NOT_FOUND}};
         ammID = sle.getFieldH256(ripple::sfAMMID);
     }
 
@@ -93,14 +93,14 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     auto const ammBlob = sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (not ammBlob)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "Amm account not found."}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     auto const amm = SLE{SerialIter{ammBlob->data(), ammBlob->size()}, ammKeylet.key};
     auto const ammAccountID = amm.getAccountID(sfAccount);
     auto const accBlob =
         sharedPtrBackend_->fetchLedgerObject(keylet::account(ammAccountID).key, lgrInfo.seq, ctx.yield);
     if (not accBlob)
-        return Error{Status{RippledError::rpcACT_NOT_FOUND, "Amm account not found."}};
+        return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
     auto const [asset1Balance, asset2Balance] =
         getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset], amm[sfAsset2], false, ctx.yield);
@@ -193,7 +193,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AMMInfoHandler::
 
     jv = {
         {JS(amm), amm},
-        {JS(ledger_index), output.ledgerIndex},
+        {JS(ledger_current_index), output.ledgerIndex},
         {JS(validated), output.validated},
     };
 }

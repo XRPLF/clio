@@ -22,6 +22,7 @@
 #include "rpc/Errors.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
+#include "util/Assert.h"
 
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
@@ -214,8 +215,7 @@ CustomValidator SubscribeAccountsValidator =
 
 CustomValidator AMMAssetValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        if (not value.is_object())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotObject"}};
+        ASSERT(value.is_object(), "{}: Value must be a JSON object", key);
 
         Json::Value jvAsset;
         if (value.as_object().contains(JS(issuer)))
