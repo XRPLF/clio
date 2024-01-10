@@ -163,6 +163,7 @@ target_sources (clio PRIVATE
   src/util/prometheus/OStream.cpp
   src/util/prometheus/Prometheus.cpp
   src/util/Random.cpp
+  src/util/requests/RequestBuilder.cpp
   src/util/Taggable.cpp
   src/util/TerminationHandler.cpp
   src/util/TxUtils.cpp
