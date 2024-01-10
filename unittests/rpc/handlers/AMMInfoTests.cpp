@@ -227,7 +227,8 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
 
     auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
     auto const accountKey = GetAccountKey(AMM_ACCOUNT);
-    auto const account2Key = GetAccountKey(AMM_ACCOUNT2);
+    auto const ammId = ripple::uint256{AMMID};
+    auto const ammKeylet = ripple::keylet::amm(ammId);
 
     auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto ammObj = CreateAMMObject(AMM_ACCOUNT2, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", AMM_ACCOUNT2);
@@ -236,7 +237,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend, doFetchLedgerObject(accountKey, testing::_, testing::_))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    ON_CALL(*backend, doFetchLedgerObject(account2Key, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
         .WillByDefault(Return(std::optional<Blob>{}));
 
     auto static const input = json::parse(fmt::format(
