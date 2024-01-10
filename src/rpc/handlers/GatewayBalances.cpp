@@ -173,7 +173,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesH
                 boost::json::array arr;
                 for (auto const& balance : accBalances) {
                     boost::json::object entry;
-                    entry[JS(currency)] = ripple::to_string(static_cast<ripple::Currency>(balance.issue().asset()));
+                    entry[JS(currency)] = ripple::to_string(balance.issue().asset());
                     entry[JS(value)] = balance.getText();
                     arr.push_back(std::move(entry));
                 }
