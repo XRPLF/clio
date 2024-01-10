@@ -93,7 +93,7 @@ AccountLinesHandler::addLine(
     LineResponse line;
     line.account = ripple::to_string(lineAccountIDPeer);
     line.balance = saBalance.getText();
-    line.currency = ripple::to_string(saBalance.issue().currency);
+    line.currency = ripple::to_string(static_cast<ripple::Currency>(saBalance.issue().asset()));
     line.limit = saLimit.getText();
     line.limitPeer = saLimitPeer.getText();
     line.qualityIn = lineQualityIn;

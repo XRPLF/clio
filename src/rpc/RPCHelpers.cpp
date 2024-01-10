@@ -1023,7 +1023,7 @@ accountFunds(
         return amount;
     }
 
-    return accountHolds(backend, sequence, id, amount.getCurrency(), amount.getIssuer(), true, yield);
+    return accountHolds(backend, sequence, id, amount.getAsset(), amount.getIssuer(), true, yield);
 }
 
 ripple::STAmount
@@ -1031,30 +1031,33 @@ accountHolds(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& account,
-    ripple::Currency const& currency,
+    ripple::Asset const& asset,
     ripple::AccountID const& issuer,
     bool const zeroIfFrozen,
     boost::asio::yield_context yield
 )
 {
     ripple::STAmount amount;
-    if (ripple::isXRP(currency)) {
+    if (ripple::isXRP(asset)) {
         return {xrpLiquid(backend, sequence, account, yield)};
     }
-    auto key = ripple::keylet::line(account, issuer, currency).key;
+    
+    // TODO: check MPTs!
+
+    auto key = ripple::keylet::line(account, issuer, asset).key;
 
     auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob) {
-        amount.clear({currency, issuer});
+        amount.clear({asset, issuer});
         return amount;
     }
 
     ripple::SerialIter it{blob->data(), blob->size()};
     ripple::SLE const sle{it, key};
 
-    if (zeroIfFrozen && isFrozen(backend, sequence, account, currency, issuer, yield)) {
-        amount.clear(ripple::Issue(currency, issuer));
+    if (zeroIfFrozen && isFrozen(backend, sequence, account, asset, issuer, yield)) {
+        amount.clear(ripple::Issue(asset, issuer));
     } else {
         amount = sle.getFieldAmount(ripple::sfBalance);
         if (account > issuer) {
@@ -1103,10 +1106,10 @@ postProcessOrderBook(
 
     std::map<ripple::AccountID, ripple::STAmount> umBalance;
 
-    bool const globalFreeze = isGlobalFrozen(backend, ledgerSequence, book.out.account, yield) ||
-        isGlobalFrozen(backend, ledgerSequence, book.in.account, yield);
+    bool const globalFreeze = isGlobalFrozen(backend, ledgerSequence, book.out.account(), yield) ||
+        isGlobalFrozen(backend, ledgerSequence, book.in.account(), yield);
 
-    auto rate = transferRate(backend, ledgerSequence, book.out.account, yield);
+    auto rate = transferRate(backend, ledgerSequence, book.out.account(), yield);
 
     for (auto const& obj : offers) {
         try {
@@ -1120,7 +1123,7 @@ postProcessOrderBook(
             ripple::STAmount saOwnerFunds;
             bool firstOwnerOffer = true;
 
-            if (book.out.account == uOfferOwnerID) {
+            if (book.out.account() == uOfferOwnerID) {
                 // If an offer is selling issuer's own IOUs, it is fully
                 // funded.
                 saOwnerFunds = saTakerGets;
@@ -1137,7 +1140,7 @@ postProcessOrderBook(
                     firstOwnerOffer = false;
                 } else {
                     saOwnerFunds = accountHolds(
-                        backend, ledgerSequence, uOfferOwnerID, book.out.currency, book.out.account, true, yield
+                        backend, ledgerSequence, uOfferOwnerID, book.out.asset(), book.out.account(), true, yield
                     );
 
                     if (saOwnerFunds < beast::zero)
@@ -1154,9 +1157,9 @@ postProcessOrderBook(
 
             if (rate != ripple::parityRate
                 // Have a tranfer fee.
-                && takerID != book.out.account
+                && takerID != book.out.account()
                 // Not taking offers of own IOUs.
-                && book.out.account != uOfferOwnerID)
+                && book.out.account() != uOfferOwnerID)
             // Offer owner not issuing ownfunds
             {
                 // Need to charge a transfer fee to offer owner.
