@@ -20,13 +20,32 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "rpc/RPCHelpers.h"
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
 #include "rpc/common/JsonBool.h"
 #include "rpc/common/MetaProcessors.h"
 #include "rpc/common/Modifiers.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
+#include "util/JsonUtils.h"
 #include "util/log/Logger.h"
+
+#include <boost/json/array.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/TxFormats.h>
+#include <ripple/protocol/jss.h>
+
+#include <algorithm>
+#include <cstdint>
+#include <iterator>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <string>
+#include <unordered_set>
 
 namespace rpc {
 
@@ -38,9 +57,6 @@ namespace rpc {
 class AccountTxHandler {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-
-    static std::unordered_map<std::string, ripple::TxType> const TYPESMAP;
-    static std::unordered_set<std::string> const TYPES_KEYS;
 
 public:
     // no max limit
@@ -77,7 +93,7 @@ public:
         JsonBool forward{false};
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
-        std::optional<ripple::TxType> transactionType;
+        std::optional<std::string> transactionTypeInLowercase;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -89,6 +105,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
+        auto const& typesKeysInLowercase = getTypesKeysInLowercase();
         static auto const rpcSpecForV1 = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
@@ -112,7 +129,7 @@ public:
                 "tx_type",
                 validation::Type<std::string>{},
                 modifiers::ToLower{},
-                validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend()),
+                validation::OneOf<std::string>(typesKeysInLowercase.cbegin(), typesKeysInLowercase.cend()),
             },
         };
 
@@ -131,6 +148,23 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
+    static std::unordered_set<std::string> const&
+    getTypesKeysInLowercase()
+    {
+        static std::unordered_set<std::string> const typesKeysInLowercase = []() {
+            std::unordered_set<std::string> keys;
+            std::transform(
+                ripple::TxFormats::getInstance().begin(),
+                ripple::TxFormats::getInstance().end(),
+                std::inserter(keys, keys.begin()),
+                [](auto const& pair) { return util::toLower(pair.getName()); }
+            );
+            return keys;
+        }();
+
+        return typesKeysInLowercase;
+    }
+
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
