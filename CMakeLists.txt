@@ -193,8 +193,9 @@ if (tests)
     unittests/util/TestGlobals.cpp
     unittests/util/AssertTests.cpp
     unittests/util/BatchingTests.cpp
-    unittests/util/TxUtilTests.cpp
+    unittests/util/TestHttpServer.cpp
     unittests/util/TestObject.cpp
+    unittests/util/TxUtilTests.cpp
     unittests/util/StringUtils.cpp
     unittests/util/LedgerUtilsTests.cpp
     unittests/util/prometheus/CounterTests.cpp
