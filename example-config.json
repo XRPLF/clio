@@ -16,7 +16,8 @@
             //
             // Advanced options. USE AT OWN RISK:
             // ---
-            "core_connections_per_host": 1 // Defaults to 1
+            "core_connections_per_host": 1, // Defaults to 1
+            "write_batch_size": 20 // Defaults to 20
             //
             // Below options will use defaults from cassandra driver if left unspecified.
             // See https://docs.datastax.com/en/developer/cpp-driver/2.17/api/struct.CassCluster/ for details.

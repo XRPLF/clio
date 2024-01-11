@@ -25,7 +25,6 @@
 #include "rpc/common/Types.h"
 #include "rpc/handlers/Subscribe.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/MockPrometheus.h"
 #include "util/MockWsBase.h"
 #include "util/Taggable.h"
@@ -71,9 +70,9 @@ protected:
     SetUp() override
     {
         HandlerBaseTest::SetUp();
-        util::Config const cfg;
-        subManager_ = feed::SubscriptionManager::make_SubscriptionManager(cfg, mockBackendPtr);
-        util::TagDecoratorFactory const tagDecoratorFactory{cfg};
+
+        subManager_ = std::make_shared<feed::SubscriptionManager>(ctx, backend);
+        util::TagDecoratorFactory const tagDecoratorFactory{util::Config{}};
         session_ = std::make_shared<MockSession>(tagDecoratorFactory);
     }
     void
@@ -588,7 +587,7 @@ TEST_P(SubscribeParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -601,7 +600,7 @@ TEST_P(SubscribeParameterTest, InvalidParams)
 TEST_F(RPCSubscribeHandlerTest, EmptyResponse)
 {
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(json::parse(R"({})"), Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
@@ -617,7 +616,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
         })"
     );
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
@@ -643,18 +642,16 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
             "reserve_base":3,
             "reserve_inc":2
         })";
-    mockBackendPtr->updateRange(MINSEQ);
-    mockBackendPtr->updateRange(MAXSEQ);
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    backend->setRange(MINSEQ, MAXSEQ);
+
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
     // fee
     auto feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(feeBlob));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(feeBlob));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
 
     // ledger stream returns information about the ledgers on hand and current
     // fee schedule.
@@ -664,7 +661,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
         })"
     );
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object(), json::parse(expectedOutput));
@@ -685,7 +682,7 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
         ACCOUNT2
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
@@ -707,7 +704,7 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
         ACCOUNT2
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
@@ -740,7 +737,7 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
         ACCOUNT
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
@@ -773,7 +770,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
         ACCOUNT
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().empty());
@@ -807,10 +804,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         }})",
         ACCOUNT
     ));
-    mockBackendPtr->updateRange(MINSEQ);
-    mockBackendPtr->updateRange(MAXSEQ);
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const issuer = GetAccountIDWithString(ACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
@@ -821,44 +816,40 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)
     ));
 
-    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, MAXSEQ, _))
+    ON_CALL(*backend, doFetchSuccessorKey(getsXRPPaysUSDBook, MAXSEQ, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
 
-    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, MAXSEQ, _))
+    ON_CALL(*backend, doFetchSuccessorKey(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, MAXSEQ, _))
         .WillByDefault(Return(std::nullopt));
 
-    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(reversedBook, MAXSEQ, _))
+    ON_CALL(*backend, doFetchSuccessorKey(reversedBook, MAXSEQ, _))
         .WillByDefault(Return(ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(4);
+    EXPECT_CALL(*backend, doFetchSuccessorKey).Times(4);
 
     // 2 book dirs + 2 issuer global freeze + 2 transferRate + 1 owner root + 1 fee
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(8);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(8);
 
     auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{INDEX2});
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, MAXSEQ, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, MAXSEQ, _))
         .WillByDefault(Return(CreateOwnerDirLedgerObject(indexes, INDEX1).getSerializer().peekData()));
 
     // for reverse
     auto const indexes2 = std::vector<ripple::uint256>(10, ripple::uint256{INDEX1});
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, MAXSEQ, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, MAXSEQ, _))
         .WillByDefault(Return(CreateOwnerDirLedgerObject(indexes2, INDEX2).getSerializer().peekData()));
 
     // offer owner account root
-    ON_CALL(
-        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, MAXSEQ, _)
-    )
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, MAXSEQ, _))
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     // issuer account root
-    ON_CALL(
-        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, MAXSEQ, _)
-    )
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, MAXSEQ, _))
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     // fee
     auto feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::fees().key, MAXSEQ, _)).WillByDefault(Return(feeBlob));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, MAXSEQ, _)).WillByDefault(Return(feeBlob));
 
     auto const gets10XRPPays20USDOffer = CreateOfferLedgerObject(
         ACCOUNT2,
@@ -885,13 +876,13 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
     );
 
     std::vector<Blob> const bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes, MAXSEQ, _)).WillByDefault(Return(bbs));
+    ON_CALL(*backend, doFetchLedgerObjects(indexes, MAXSEQ, _)).WillByDefault(Return(bbs));
 
     // for reverse
     std::vector<Blob> const bbs2(10, gets10USDPays20XRPOffer.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes2, MAXSEQ, _)).WillByDefault(Return(bbs2));
+    ON_CALL(*backend, doFetchLedgerObjects(indexes2, MAXSEQ, _)).WillByDefault(Return(bbs2));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(2);
 
     static auto const expectedOffer = fmt::format(
         R"({{
@@ -946,7 +937,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         ACCOUNT
     );
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("bids").as_array().size(), 10);
@@ -982,10 +973,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         }})",
         ACCOUNT
     ));
-    mockBackendPtr->updateRange(MINSEQ);
-    mockBackendPtr->updateRange(MAXSEQ);
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+    backend->setRange(MINSEQ, MAXSEQ);
+
     auto const issuer = GetAccountIDWithString(ACCOUNT);
 
     auto const getsXRPPaysUSDBook = getBookBase(std::get<ripple::Book>(
@@ -996,43 +985,39 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         rpc::parseBook(ripple::xrpCurrency(), ripple::xrpAccount(), ripple::to_currency("USD"), issuer)
     ));
 
-    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(getsXRPPaysUSDBook, MAXSEQ, _))
+    ON_CALL(*backend, doFetchSuccessorKey(getsXRPPaysUSDBook, MAXSEQ, _))
         .WillByDefault(Return(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}));
 
-    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, MAXSEQ, _))
+    ON_CALL(*backend, doFetchSuccessorKey(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, MAXSEQ, _))
         .WillByDefault(Return(std::nullopt));
 
-    ON_CALL(*rawBackendPtr, doFetchSuccessorKey(reversedBook, MAXSEQ, _))
+    ON_CALL(*backend, doFetchSuccessorKey(reversedBook, MAXSEQ, _))
         .WillByDefault(Return(ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchSuccessorKey).Times(2);
+    EXPECT_CALL(*backend, doFetchSuccessorKey).Times(2);
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(5);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(5);
 
     auto const indexes = std::vector<ripple::uint256>(10, ripple::uint256{INDEX2});
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, MAXSEQ, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{PAYS20USDGETS10XRPBOOKDIR}, MAXSEQ, _))
         .WillByDefault(Return(CreateOwnerDirLedgerObject(indexes, INDEX1).getSerializer().peekData()));
 
     // for reverse
     auto const indexes2 = std::vector<ripple::uint256>(10, ripple::uint256{INDEX1});
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, MAXSEQ, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{PAYS20XRPGETS10USDBOOKDIR}, MAXSEQ, _))
         .WillByDefault(Return(CreateOwnerDirLedgerObject(indexes2, INDEX2).getSerializer().peekData()));
 
     // offer owner account root
-    ON_CALL(
-        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, MAXSEQ, _)
-    )
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, MAXSEQ, _))
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     // issuer account root
-    ON_CALL(
-        *rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, MAXSEQ, _)
-    )
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, MAXSEQ, _))
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     // fee
     auto feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::fees().key, MAXSEQ, _)).WillByDefault(Return(feeBlob));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, MAXSEQ, _)).WillByDefault(Return(feeBlob));
 
     auto const gets10XRPPays20USDOffer = CreateOfferLedgerObject(
         ACCOUNT2,
@@ -1059,13 +1044,13 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     );
 
     std::vector<Blob> const bbs(10, gets10XRPPays20USDOffer.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes, MAXSEQ, _)).WillByDefault(Return(bbs));
+    ON_CALL(*backend, doFetchLedgerObjects(indexes, MAXSEQ, _)).WillByDefault(Return(bbs));
 
     // for reverse
     std::vector<Blob> const bbs2(10, gets10USDPays20XRPOffer.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects(indexes2, MAXSEQ, _)).WillByDefault(Return(bbs2));
+    ON_CALL(*backend, doFetchLedgerObjects(indexes2, MAXSEQ, _)).WillByDefault(Return(bbs2));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     static auto const expectedOffer = fmt::format(
         R"({{
@@ -1095,7 +1080,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     );
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{mockBackendPtr, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output->as_object().at("offers").as_array().size(), 10);

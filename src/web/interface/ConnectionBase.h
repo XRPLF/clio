@@ -22,6 +22,7 @@
 #include "util/Taggable.h"
 
 #include <boost/beast/http.hpp>
+#include <boost/signals2.hpp>
 
 #include <utility>
 
@@ -42,6 +43,8 @@ public:
     std::string const clientIp;
     bool upgraded = false;
     bool isAdmin_ = false;
+    boost::signals2::signal<void(ConnectionBase*)> onDisconnect;
+    std::uint32_t apiSubVersion = 0;
 
     /**
      * @brief Create a new connection base.
@@ -54,7 +57,10 @@ public:
     {
     }
 
-    ~ConnectionBase() override = default;
+    ~ConnectionBase() override
+    {
+        onDisconnect(this);
+    };
 
     /**
      * @brief Send the response to the client.

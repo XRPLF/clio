@@ -55,10 +55,8 @@ make_Backend(util::Config const& config)
         throw std::runtime_error("Invalid database type");
 
     auto const rng = backend->hardFetchLedgerRangeNoThrow();
-    if (rng) {
-        backend->updateRange(rng->minSequence);
-        backend->updateRange(rng->maxSequence);
-    }
+    if (rng)
+        backend->setRange(rng->minSequence, rng->maxSequence);
 
     LOG(log.info()) << "Constructed BackendInterface Successfully";
     return backend;

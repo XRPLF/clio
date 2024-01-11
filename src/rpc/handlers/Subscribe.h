@@ -20,10 +20,31 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+#include "data/Types.h"
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/MetaProcessors.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
+
+#include <boost/asio/spawn.hpp>
+#include <boost/json/array.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/beast/utility/Zero.h>
+#include <ripple/protocol/Book.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/jss.h>
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <variant>
+#include <vector>
 
 namespace feed {
 class SubscriptionManager;
@@ -125,20 +146,19 @@ public:
         auto output = Output{};
 
         if (input.streams) {
-            auto const ledger = subscribeToStreams(ctx.yield, *(input.streams), ctx.session);
+            auto const ledger = subscribeToStreams(ctx.yield, *(input.streams), ctx.session, ctx.apiVersion);
             if (!ledger.empty())
                 output.ledger = ledger;
         }
 
         if (input.accounts)
-            subscribeToAccounts(*(input.accounts), ctx.session);
+            subscribeToAccounts(*(input.accounts), ctx.session, ctx.apiVersion);
 
         if (input.accountsProposed)
             subscribeToAccountsProposed(*(input.accountsProposed), ctx.session);
 
-        if (input.books) {
-            subscribeToBooks(*(input.books), ctx.session, ctx.yield, output);
-        };
+        if (input.books)
+            subscribeToBooks(*(input.books), ctx.session, ctx.yield, ctx.apiVersion, output);
 
         return output;
     }
@@ -148,7 +168,8 @@ private:
     subscribeToStreams(
         boost::asio::yield_context yield,
         std::vector<std::string> const& streams,
-        std::shared_ptr<web::ConnectionBase> const& session
+        std::shared_ptr<web::ConnectionBase> const& session,
+        std::uint32_t apiVersion
     ) const
     {
         auto response = boost::json::object{};
@@ -157,7 +178,7 @@ private:
             if (stream == "ledger") {
                 response = subscriptions_->subLedger(yield, session);
             } else if (stream == "transactions") {
-                subscriptions_->subTransactions(session);
+                subscriptions_->subTransactions(session, apiVersion);
             } else if (stream == "transactions_proposed") {
                 subscriptions_->subProposedTransactions(session);
             } else if (stream == "validations") {
@@ -173,12 +194,15 @@ private:
     }
 
     void
-    subscribeToAccounts(std::vector<std::string> const& accounts, std::shared_ptr<web::ConnectionBase> const& session)
-        const
+    subscribeToAccounts(
+        std::vector<std::string> const& accounts,
+        std::shared_ptr<web::ConnectionBase> const& session,
+        std::uint32_t apiVersion
+    ) const
     {
         for (auto const& account : accounts) {
             auto const accountID = accountFromStringStrict(account);
-            subscriptions_->subAccount(*accountID, session);
+            subscriptions_->subAccount(*accountID, session, apiVersion);
         }
     }
 
@@ -199,6 +223,7 @@ private:
         std::vector<OrderBook> const& books,
         std::shared_ptr<web::ConnectionBase> const& session,
         boost::asio::yield_context yield,
+        uint32_t apiVersion,
         Output& output
     ) const
     {
@@ -240,10 +265,10 @@ private:
                 }
             }
 
-            subscriptions_->subBook(internalBook.book, session);
+            subscriptions_->subBook(internalBook.book, session, apiVersion);
 
             if (internalBook.both)
-                subscriptions_->subBook(ripple::reversed(internalBook.book), session);
+                subscriptions_->subBook(ripple::reversed(internalBook.book), session, apiVersion);
         }
     }
 

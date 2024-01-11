@@ -20,6 +20,7 @@
 #include "data/BackendFactory.h"
 #include "etl/ETLHelpers.h"
 #include "etl/ETLService.h"
+#include "feed/SubscriptionManager.h"
 #include "main/Build.h"
 #include "rpc/Counters.h"
 #include "rpc/RPCEngine.h"
@@ -197,7 +198,9 @@ try {
     auto backend = data::make_Backend(config);
 
     // Manages clients subscribed to streams
-    auto subscriptions = feed::SubscriptionManager::make_SubscriptionManager(config, backend);
+    auto subscriptionsRunner = feed::SubscriptionManagerRunner(config, backend);
+
+    auto const subscriptions = subscriptionsRunner.getManager();
 
     // Tracks which ledgers have been validated by the network
     auto ledgers = etl::NetworkValidatedLedgers::make_ValidatedLedgers();
@@ -216,14 +219,12 @@ try {
     auto const handlerProvider = std::make_shared<rpc::detail::ProductionHandlerProvider const>(
         config, backend, subscriptions, balancer, etl, counters
     );
-    auto const rpcEngine = rpc::RPCEngine::make_RPCEngine(
-        backend, subscriptions, balancer, dosGuard, workQueue, counters, handlerProvider
-    );
+    auto const rpcEngine =
+        rpc::RPCEngine::make_RPCEngine(backend, balancer, dosGuard, workQueue, counters, handlerProvider);
 
     // Init the web server
-    auto handler = std::make_shared<web::RPCServerHandler<rpc::RPCEngine, etl::ETLService>>(
-        config, backend, rpcEngine, etl, subscriptions
-    );
+    auto handler =
+        std::make_shared<web::RPCServerHandler<rpc::RPCEngine, etl::ETLService>>(config, backend, rpcEngine, etl);
     auto ctx = parseCerts(config);
     auto const ctxRef = ctx ? std::optional<std::reference_wrapper<ssl::context>>{ctx.value()} : std::nullopt;
     auto const httpServer = web::make_HttpServer(config, ioc, ctxRef, dosGuard, handler);

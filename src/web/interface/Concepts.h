@@ -37,10 +37,6 @@ concept SomeServerHandler =
         {
             handler(req, ws)
         };
-        // the callback when there is an error
-        {
-            handler(ec, ws)
-        };
     };
 
 }  // namespace web
