@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "rpc/common/AnyHandler.h"
+#include "rpc/common/Specs.h"
 #include "rpc/handlers/AMMInfo.h"
 #include "util/Fixtures.h"
 #include "util/TestObject.h"
@@ -356,14 +357,16 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
                     "trading_fee": 5,
                     "asset2_frozen": false
                 }},
-                "ledger_current_index": 30,
+                "ledger_index": 30,
+                "ledger_hash": "{}",
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
             AMM_ACCOUNT,
             "JPY",
             AMM_ACCOUNT2,
-            AMM_ACCOUNT
+            AMM_ACCOUNT,
+            LEDGERHASH
         ));
 
         ASSERT_TRUE(output);
@@ -438,14 +441,16 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
                     "trading_fee": 5,
                     "asset2_frozen": false
                 }},
-                "ledger_current_index": 30,
+                "ledger_index": 30,
+                "ledger_hash": "{}",
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
             AMM_ACCOUNT2,
             "JPY",
             AMM_ACCOUNT,
-            AMM_ACCOUNT2
+            AMM_ACCOUNT2,
+            LEDGERHASH
         ));
 
         ASSERT_TRUE(output);
@@ -510,14 +515,16 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
                     "trading_fee": 5,
                     "asset_frozen": false
                 }},
-                "ledger_current_index": 30,
+                "ledger_index": 30,
+                "ledger_hash": "{}",
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
             AMM_ACCOUNT,
             "JPY",
             AMM_ACCOUNT2,
-            AMM_ACCOUNT
+            AMM_ACCOUNT,
+            LEDGERHASH
         ));
 
         ASSERT_TRUE(output);
@@ -585,7 +592,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
                     "asset_frozen": false,
                     "asset2_frozen": false
                 }},
-                "ledger_current_index": 30,
+                "ledger_index": 30,
+                "ledger_hash": "{}",
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -594,7 +602,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
             AMM_ACCOUNT,
             "JPY",
             AMM_ACCOUNT2,
-            AMM_ACCOUNT
+            AMM_ACCOUNT,
+            LEDGERHASH
         ));
 
         ASSERT_TRUE(output);
@@ -674,7 +683,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
                     "asset_frozen": false,
                     "asset2_frozen": true
                 }},
-                "ledger_current_index": 30,
+                "ledger_index": 30,
+                "ledger_hash": "{}",
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -683,7 +693,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
             AMM_ACCOUNT,
             "JPY",
             AMM_ACCOUNT2,
-            AMM_ACCOUNT
+            AMM_ACCOUNT,
+            LEDGERHASH
         ));
 
         ASSERT_TRUE(output);
@@ -764,7 +775,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
                     "asset_frozen": true,
                     "asset2_frozen": true
                 }},
-                "ledger_current_index": 30,
+                "ledger_index": 30,
+                "ledger_hash": "{}",
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -773,7 +785,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
             AMM_ACCOUNT,
             "JPY",
             AMM_ACCOUNT2,
-            AMM_ACCOUNT
+            AMM_ACCOUNT,
+            LEDGERHASH
         ));
 
         ASSERT_TRUE(output);
@@ -841,14 +854,16 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
                     "trading_fee": 5,
                     "asset2_frozen": false
                 }},
-                "ledger_current_index": 30,
+                "ledger_index": 30,
+                "ledger_hash": "{}",
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
             AMM_ACCOUNT,
             "JPY",
             AMM_ACCOUNT2,
-            AMM_ACCOUNT
+            AMM_ACCOUNT,
+            LEDGERHASH
         ));
 
         ASSERT_TRUE(output);
@@ -930,7 +945,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
                     ],
                     "asset2_frozen": false
                 }},
-                "ledger_current_index": 30,
+                "ledger_index": 30,
+                "ledger_hash": "{}",
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -939,7 +955,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
             AMM_ACCOUNT2,
             AMM_ACCOUNT,
             AMM_ACCOUNT,
-            AMM_ACCOUNT2
+            AMM_ACCOUNT2,
+            LEDGERHASH
         ));
 
         ASSERT_TRUE(output);
@@ -1026,7 +1043,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
                     }},
                     "asset2_frozen": false
                 }},
-                "ledger_current_index": 30,
+                "ledger_index": 30,
+                "ledger_hash": "{}",
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -1036,7 +1054,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
             AMM_ACCOUNT,
             AMM_ACCOUNT2,
             AMM_ACCOUNT,
-            AMM_ACCOUNT2
+            AMM_ACCOUNT2,
+            LEDGERHASH
         ));
 
         ASSERT_TRUE(output);
@@ -1131,7 +1150,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssets)
                     "asset_frozen": false,
                     "asset2_frozen": false
                 }},
-                "ledger_current_index": 30,
+                "ledger_index": 30,
+                "ledger_hash": "{}",
                 "validated": true
             }})",
             LP_ISSUE_CURRENCY,
@@ -1145,7 +1165,8 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssets)
             AMM_ACCOUNT,
             AMM_ACCOUNT2,
             AMM_ACCOUNT,
-            AMM_ACCOUNT2
+            AMM_ACCOUNT2,
+            LEDGERHASH
         ));
 
         ASSERT_TRUE(output);

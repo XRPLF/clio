@@ -21,6 +21,10 @@
 
 #include "data/DBHelpers.h"
 #include "rpc/AMMHelpers.h"
+#include "rpc/RPCHelpers.h"
+#include "rpc/common/MetaProcessors.h"
+#include "rpc/common/Specs.h"
+#include "rpc/common/Validators.h"
 
 #include <ripple/protocol/AMMCore.h>
 
@@ -41,6 +45,7 @@ toIso8601(ripple::NetClock::time_point tp)
 }  // namespace
 
 namespace rpc {
+
 AMMInfoHandler::Result
 AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
 {
@@ -110,6 +115,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
 
     Output response;
     response.ledgerIndex = lgrInfo.seq;
+    response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.amount1 = toBoostJson(asset1Balance.getJson(JsonOptions::none));
     response.amount2 = toBoostJson(asset2Balance.getJson(JsonOptions::none));
     response.lpToken = toBoostJson(lptAMMBalance.getJson(JsonOptions::none));
@@ -144,7 +150,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
                 for (auto const& acct : auctionSlot.getFieldArray(sfAuthAccounts)) {
                     boost::json::object accountData;
                     accountData[JS(account)] = to_string(acct.getAccountID(sfAccount));
-                    auth.push_back(accountData);
+                    auth.push_back(std::move(accountData));
                 }
 
                 auction[JS(auth_accounts)] = std::move(auth);
@@ -166,6 +172,49 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     }
 
     return response;
+}
+
+RpcSpecConstRef
+AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
+{
+    static auto const stringIssueValidator =
+        validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+            if (not value.is_string())
+                return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
+
+            try {
+                ripple::issueFromJson(value.as_string().c_str());
+            } catch (std::runtime_error const&) {
+                return Error{Status{RippledError::rpcISSUE_MALFORMED}};
+            }
+
+            return MaybeError{};
+        }};
+
+    static auto const rpcSpec = RpcSpec{
+        {JS(ledger_hash), validation::Uint256HexStringValidator},
+        {JS(ledger_index), validation::LedgerIndexValidator},
+        {JS(asset),
+         meta::WithCustomError{
+             validation::Type<std::string, boost::json::object>{}, Status(RippledError::rpcISSUE_MALFORMED)
+         },
+         meta::IfType<std::string>{stringIssueValidator},
+         meta::IfType<boost::json::object>{
+             meta::WithCustomError{validation::AMMAssetValidator, Status(RippledError::rpcISSUE_MALFORMED)},
+         }},
+        {JS(asset2),
+         meta::WithCustomError{
+             validation::Type<std::string, boost::json::object>{}, Status(RippledError::rpcISSUE_MALFORMED)
+         },
+         meta::IfType<std::string>{stringIssueValidator},
+         meta::IfType<boost::json::object>{
+             meta::WithCustomError{validation::AMMAssetValidator, Status(RippledError::rpcISSUE_MALFORMED)},
+         }},
+        {JS(amm_account), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+        {JS(account), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+    };
+
+    return rpcSpec;
 }
 
 void
@@ -193,7 +242,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AMMInfoHandler::
 
     jv = {
         {JS(amm), amm},
-        {JS(ledger_current_index), output.ledgerIndex},
+        {JS(ledger_index), output.ledgerIndex},
+        {JS(ledger_hash), output.ledgerHash},
         {JS(validated), output.validated},
     };
 }
