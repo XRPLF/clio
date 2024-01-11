@@ -72,8 +72,7 @@ protected:
         HandlerBaseTest::SetUp();
 
         subManager_ = std::make_shared<feed::SubscriptionManager>(ctx, backend);
-        util::TagDecoratorFactory const tagDecoratorFactory{util::Config{}};
-        session_ = std::make_shared<MockSession>(tagDecoratorFactory);
+        session_ = std::make_shared<MockSession>();
     }
     void
     TearDown() override

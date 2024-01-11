@@ -18,10 +18,10 @@
 //==============================================================================
 
 #include "data/Types.h"
+#include "feed/FeedTestUtil.h"
 #include "feed/SubscriptionManager.h"
 #include "util/Fixtures.h"
 #include "util/MockWsBase.h"
-#include "util/Taggable.h"
 #include "util/TestObject.h"
 #include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
@@ -58,8 +58,8 @@ class SubscriptionManagerTest : public MockBackendTest, public SyncAsioContextTe
 protected:
     util::Config cfg;
     std::shared_ptr<SubscriptionManager> SubscriptionManagerPtr;
-    util::TagDecoratorFactory tagDecoratorFactory{cfg};
     std::shared_ptr<web::ConnectionBase> session;
+    MockSession* sessionPtr;
 
     void
     SetUp() override
@@ -67,7 +67,8 @@ protected:
         MockBackendTest::SetUp();
         SyncAsioContextTest::SetUp();
         SubscriptionManagerPtr = std::make_shared<SubscriptionManager>(ctx, backend);
-        session = std::make_shared<MockSession>(tagDecoratorFactory);
+        session = std::make_shared<MockSession>();
+        sessionPtr = dynamic_cast<MockSession*>(session.get());
     }
 
     void
@@ -77,22 +78,6 @@ protected:
         SubscriptionManagerPtr.reset();
         SyncAsioContextTest::TearDown();
         MockBackendTest::TearDown();
-    }
-
-    std::string const&
-    receivedFeedMessage() const
-    {
-        auto const mockSession = dynamic_cast<MockSession*>(session.get());
-        [&] { ASSERT_NE(mockSession, nullptr); }();
-        return mockSession->message;
-    }
-
-    void
-    cleanReceivedFeed()
-    {
-        auto mockSession = dynamic_cast<MockSession*>(session.get());
-        [&] { ASSERT_NE(mockSession, nullptr); }();
-        mockSession->message.clear();
     }
 };
 
@@ -106,8 +91,14 @@ TEST_F(SubscriptionManagerTest, MultipleThreadCtx)
     SubscriptionManagerPtr->subManifest(session);
     SubscriptionManagerPtr->subValidation(session);
 
-    SubscriptionManagerPtr->forwardManifest(json::parse(R"({"manifest":"test"})").get_object());
-    SubscriptionManagerPtr->forwardValidation(json::parse(R"({"validation":"test"})").get_object());
+    constexpr static auto jsonManifest = R"({"manifest":"test"})";
+    constexpr static auto jsonValidation = R"({"validation":"test"})";
+
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(jsonManifest))).Times(1);
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(jsonValidation))).Times(1);
+
+    SubscriptionManagerPtr->forwardManifest(json::parse(jsonManifest).get_object());
+    SubscriptionManagerPtr->forwardValidation(json::parse(jsonValidation).get_object());
 
     for (int i = 0; i < 2; ++i)
         workers.emplace_back([this]() { ctx.run(); });
@@ -115,12 +106,6 @@ TEST_F(SubscriptionManagerTest, MultipleThreadCtx)
     // wait for all jobs in ctx to finish
     for (auto& worker : workers)
         worker.join();
-
-    EXPECT_TRUE(
-        receivedFeedMessage() == R"({"manifest":"test"}{"validation":"test"})" ||
-        receivedFeedMessage() == R"({"validation":"test"}{"manifest":"test"})"
-    ) << "receivedFeedMessage() = "
-      << receivedFeedMessage();
 
     session.reset();
     SubscriptionManagerPtr.reset();
@@ -166,8 +151,8 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
             "books":2,
             "book_changes":2
         })";
-    std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>(tagDecoratorFactory);
-    std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>();
+    std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>();
     SubscriptionManagerPtr->subBookChanges(session1);
     SubscriptionManagerPtr->subBookChanges(session2);
     SubscriptionManagerPtr->subManifest(session1);
@@ -222,34 +207,31 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
 
 TEST_F(SubscriptionManagerTest, ManifestTest)
 {
-    SubscriptionManagerPtr->subManifest(session);
     constexpr static auto dummyManifest = R"({"manifest":"test"})";
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummyManifest))).Times(1);
+    SubscriptionManagerPtr->subManifest(session);
     SubscriptionManagerPtr->forwardManifest(json::parse(dummyManifest).get_object());
     ctx.run();
 
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(dummyManifest));
-
-    cleanReceivedFeed();
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummyManifest))).Times(0);
     SubscriptionManagerPtr->unsubManifest(session);
     SubscriptionManagerPtr->forwardManifest(json::parse(dummyManifest).get_object());
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(SubscriptionManagerTest, ValidationTest)
 {
+    constexpr static auto dummy = R"({"validation":"test"})";
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummy))).Times(1);
     SubscriptionManagerPtr->subValidation(session);
-    constexpr static auto dummyManifest = R"({"validation":"test"})";
-    SubscriptionManagerPtr->forwardValidation(json::parse(dummyManifest).get_object());
+    SubscriptionManagerPtr->forwardValidation(json::parse(dummy).get_object());
     ctx.run();
 
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(dummyManifest));
-    cleanReceivedFeed();
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummy))).Times(0);
     SubscriptionManagerPtr->unsubValidation(session);
-    SubscriptionManagerPtr->forwardValidation(json::parse(dummyManifest).get_object());
+    SubscriptionManagerPtr->forwardValidation(json::parse(dummy).get_object());
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(SubscriptionManagerTest, BookChangesTest)
@@ -288,9 +270,8 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
                 }
             ]
         })";
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(bookChangePublish))).Times(1);
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(bookChangePublish));
 
     SubscriptionManagerPtr->unsubBookChanges(session);
     EXPECT_EQ(SubscriptionManagerPtr->report()["book_changes"], 0);
@@ -343,10 +324,9 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
             "validated_ledgers":"10-31",
             "txn_count":8
         })";
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(ledgerPub))).Times(1);
     ctx.restart();
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(ledgerPub));
 
     // test unsub
     SubscriptionManagerPtr->unsubLedger(session);
@@ -429,16 +409,14 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
             "validated":true,
             "status":"closed",
             "ledger_index":33,
-            "ledger_hash":"1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC",
+            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
             "engine_result_code":0,
             "engine_result":"tesSUCCESS",
             "close_time_iso": "2000-01-01T00:00:00Z",
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
         })";
-
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(OrderbookPublish))).Times(3);
     ctx.run();
-
-    EXPECT_EQ(receivedFeedMessage().size(), json::serialize(json::parse(OrderbookPublish)).size() * 3);
 
     SubscriptionManagerPtr->unsubBook(book, session);
     SubscriptionManagerPtr->unsubTransactions(session);
@@ -464,14 +442,11 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
                 "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
             }
         })";
-
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummyTransaction))).Times(2);
     SubscriptionManagerPtr->forwardProposedTransaction(json::parse(dummyTransaction).get_object());
     ctx.run();
 
-    EXPECT_EQ(receivedFeedMessage().size(), json::serialize(json::parse(dummyTransaction)).size() * 2);
-
     // unsub account1
-    cleanReceivedFeed();
     SubscriptionManagerPtr->unsubProposedAccount(account, session);
     EXPECT_EQ(SubscriptionManagerPtr->report()["accounts_proposed"], 0);
     SubscriptionManagerPtr->unsubProposedTransactions(session);

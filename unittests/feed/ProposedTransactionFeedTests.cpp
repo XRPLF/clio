@@ -17,14 +17,12 @@
 */
 //==============================================================================
 
-#include "feed/FeedBaseTest.h"
+#include "feed/FeedTestUtil.h"
 #include "feed/impl/ProposedTransactionFeed.h"
 #include "util/Fixtures.h"
 #include "util/MockPrometheus.h"
 #include "util/MockWsBase.h"
-#include "util/Taggable.h"
 #include "util/TestObject.h"
-#include "util/config/Config.h"
 #include "util/prometheus/Gauge.h"
 #include "web/interface/ConnectionBase.h"
 
@@ -38,13 +36,14 @@
 
 constexpr static auto ACCOUNT1 = "rh1HPuRVsYYvThxG2Bs1MfjmrVC73S16Fb";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr static auto ACCOUNT3 = "r92yNeoiCdwULRbjh6cUBEbD71iHcqe1hE";
 constexpr static auto DUMMY_TRANSACTION =
     R"({
         "transaction":
         {
             "Account":"rh1HPuRVsYYvThxG2Bs1MfjmrVC73S16Fb",
             "Amount":"40000000",
-            "Destination":"rDgGprMjMWkJRnJ8M5RXq3SXYD8zuQncPc",
+            "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
             "Fee":"20",
             "Flags":2147483648,
             "Sequence":13767283,
@@ -66,19 +65,16 @@ TEST_F(FeedProposedTransactionTest, ProposedTransaction)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 1);
 
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
     ctx.run();
 
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(DUMMY_TRANSACTION));
-
-    cleanReceivedFeed();
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 0);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedProposedTransactionTest, AccountProposedTransaction)
@@ -87,29 +83,23 @@ TEST_F(FeedProposedTransactionTest, AccountProposedTransaction)
     testFeedPtr->sub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    std::shared_ptr<web::ConnectionBase> const sessionIdle = std::make_shared<MockSession>(tagDecoratorFactory);
-    auto const accountIdle = GetAccountIDWithString(ACCOUNT2);
+    std::shared_ptr<web::ConnectionBase> const sessionIdle = std::make_shared<MockSession>();
+    auto const accountIdle = GetAccountIDWithString(ACCOUNT3);
     testFeedPtr->sub(accountIdle, sessionIdle);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
+
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
     ctx.run();
 
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(DUMMY_TRANSACTION));
-
-    auto const rawIdle = dynamic_cast<MockSession*>(sessionIdle.get());
-    ASSERT_NE(rawIdle, nullptr);
-    EXPECT_TRUE(rawIdle->message.empty());
-
     // unsub
-    cleanReceivedFeed();
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedProposedTransactionTest, SubStreamAndAccount)
@@ -119,37 +109,27 @@ TEST_F(FeedProposedTransactionTest, SubStreamAndAccount)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 1);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(2);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
     ctx.run();
-
-    EXPECT_EQ(receivedFeedMessage().size(), json::serialize(json::parse(DUMMY_TRANSACTION)).size() * 2);
-
-    cleanReceivedFeed();
-    testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
-    ctx.restart();
-    ctx.run();
-    EXPECT_EQ(receivedFeedMessage().size(), json::serialize(json::parse(DUMMY_TRANSACTION)).size() * 2);
 
     // unsub
-    cleanReceivedFeed();
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
     ctx.restart();
     ctx.run();
-    EXPECT_EQ(receivedFeedMessage().size(), json::serialize(json::parse(DUMMY_TRANSACTION)).size());
 
     // unsub transaction
-    cleanReceivedFeed();
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 0);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedProposedTransactionTest, AccountProposedTransactionDuplicate)
@@ -161,39 +141,25 @@ TEST_F(FeedProposedTransactionTest, AccountProposedTransactionDuplicate)
     testFeedPtr->sub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
-    constexpr static auto dummyTransaction =
-        R"({
-            "transaction":
-            {
-                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-            }
-        })";
-
-    testFeedPtr->pub(json::parse(dummyTransaction).get_object());
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
+    testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(dummyTransaction));
 
     // unsub account1
-    cleanReceivedFeed();
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
-
-    testFeedPtr->pub(json::parse(dummyTransaction).get_object());
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
+    testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
     ctx.restart();
     ctx.run();
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(dummyTransaction));
 
     // unsub account2
-    cleanReceivedFeed();
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(json::parse(dummyTransaction).get_object());
+    testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedProposedTransactionTest, Count)
@@ -209,7 +175,7 @@ TEST_F(FeedProposedTransactionTest, Count)
     testFeedPtr->sub(account1, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    auto const sessionPtr2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    auto const sessionPtr2 = std::make_shared<MockSession>();
     testFeedPtr->sub(sessionPtr2);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 2);
 
@@ -247,7 +213,7 @@ TEST_F(FeedProposedTransactionTest, AutoDisconnect)
     testFeedPtr->sub(account1, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    auto sessionPtr2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    auto sessionPtr2 = std::make_shared<MockSession>();
     testFeedPtr->sub(sessionPtr2);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 2);
 
@@ -268,7 +234,6 @@ TEST_F(FeedProposedTransactionTest, AutoDisconnect)
 
 struct ProposedTransactionFeedMockPrometheusTest : WithMockPrometheus, SyncAsioContextTest {
 protected:
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
     std::shared_ptr<web::ConnectionBase> sessionPtr;
     std::shared_ptr<ProposedTransactionFeed> testFeedPtr;
 
@@ -277,7 +242,7 @@ protected:
     {
         SyncAsioContextTest::SetUp();
         testFeedPtr = std::make_shared<ProposedTransactionFeed>(ctx);
-        sessionPtr = std::make_shared<MockSession>(tagDecoratorFactory);
+        sessionPtr = std::make_shared<MockSession>();
     }
     void
     TearDown() override

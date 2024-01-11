@@ -56,9 +56,7 @@ protected:
     {
         HandlerBaseTest::SetUp();
         MockSubscriptionManagerTest::SetUp();
-        util::Config const cfg;
-        util::TagDecoratorFactory const tagDecoratorFactory{cfg};
-        session_ = std::make_shared<MockSession>(tagDecoratorFactory);
+        session_ = std::make_shared<MockSession>();
     }
     void
     TearDown() override

@@ -33,19 +33,17 @@ using namespace testing;
 
 struct FeedTrackableSignalTests : Test {
 protected:
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
     std::shared_ptr<web::ConnectionBase> sessionPtr;
 
     void
     SetUp() override
     {
-        sessionPtr = std::make_shared<MockSession>(tagDecoratorFactory);
+        sessionPtr = std::make_shared<MockSession>();
     }
 
     void
     TearDown() override
     {
-        sessionPtr.reset();
     }
 };
 

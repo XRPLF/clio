@@ -18,20 +18,20 @@
 //==============================================================================
 
 #include "data/Types.h"
-#include "feed/FeedBaseTest.h"
+#include "feed/FeedTestUtil.h"
 #include "feed/impl/BookChangesFeed.h"
 #include "feed/impl/ForwardFeed.h"
 #include "util/TestObject.h"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/json/parse.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/protocol/STObject.h>
 
 #include <vector>
 
 using namespace feed::impl;
-namespace json = boost::json;
 
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto ACCOUNT1 = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
@@ -77,15 +77,13 @@ TEST_F(FeedBookChangeTest, Pub)
                 }
             ]
         })";
-    ctx.run();
 
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(bookChangePublish));
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(bookChangePublish))).Times(1);
+    ctx.run();
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
-    cleanReceivedFeed();
     testFeedPtr->pub(ledgerinfo, transactions);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
