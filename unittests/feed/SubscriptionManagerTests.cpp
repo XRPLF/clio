@@ -39,9 +39,7 @@
 #include <ripple/protocol/Issue.h>
 #include <ripple/protocol/STObject.h>
 
-#include <chrono>
 #include <memory>
-#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -102,13 +100,8 @@ protected:
 /*
 TEST_F(SubscriptionManagerTest, MultipleThreadCtx)
 {
-    std::optional<boost::asio::io_context::work> work_;
-    work_.emplace(ctx);  // guard the context
-
     std::vector<std::thread> workers;
     workers.reserve(2);
-    for (int i = 0; i < 2; ++i)
-        workers.emplace_back([this]() { ctx.run(); });
 
     SubscriptionManagerPtr->subManifest(session);
     SubscriptionManagerPtr->subValidation(session);
@@ -116,21 +109,20 @@ TEST_F(SubscriptionManagerTest, MultipleThreadCtx)
     SubscriptionManagerPtr->forwardManifest(json::parse(R"({"manifest":"test"})").get_object());
     SubscriptionManagerPtr->forwardValidation(json::parse(R"({"validation":"test"})").get_object());
 
-    auto retry = 5;
-    while (--retry != 0) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    for (int i = 0; i < 2; ++i)
+        workers.emplace_back([this]() { ctx.run(); });
 
-        if (receivedFeedMessage() == R"({"manifest":"test"}{"validation":"test"})" ||
-            receivedFeedMessage() == R"({"validation":"test"}{"manifest":"test"})")
-            break;
-    }
-    EXPECT_TRUE(retry != 0) << "receivedFeedMessage() = " << receivedFeedMessage();
-
-    session.reset();
-    work_.reset();
-
+    // wait for all jobs in ctx to finish
     for (auto& worker : workers)
         worker.join();
+
+    EXPECT_TRUE(
+        receivedFeedMessage() == R"({"manifest":"test"}{"validation":"test"})" ||
+        receivedFeedMessage() == R"({"validation":"test"}{"manifest":"test"})"
+    ) << "receivedFeedMessage() = "
+      << receivedFeedMessage();
+
+    session.reset();
     SubscriptionManagerPtr.reset();
 }
 */

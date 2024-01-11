@@ -214,28 +214,31 @@ private:
                 // if the result is forwarded - just use it as is
                 // if forwarded request has error, for http, error should be in "result"; for ws, error should
                 // be at top
-                if (isForwarded && (json.contains("result") || connection->upgraded)) {
+                if (isForwarded && (json.contains(JS(result)) || connection->upgraded)) {
                     for (auto const& [k, v] : json)
                         response.insert_or_assign(k, v);
                 } else {
-                    response["result"] = json;
+                    response[JS(result)] = json;
                 }
 
                 // for ws there is an additional field "status" in the response,
                 // otherwise the "status" is in the "result" field
                 if (connection->upgraded) {
-                    auto const id = request.contains("id") ? request.at("id") : nullptr;
+                    auto const appendFieldIfExist = [&](auto const& field) {
+                        if (request.contains(field) and not request.at(field).is_null())
+                            response[field] = request.at(field);
+                    };
 
-                    if (not id.is_null())
-                        response["id"] = id;
+                    appendFieldIfExist(JS(id));
+                    appendFieldIfExist(JS(api_version));
 
-                    if (!response.contains("error"))
-                        response["status"] = "success";
+                    if (!response.contains(JS(error)))
+                        response[JS(status)] = JS(success);
 
-                    response["type"] = "response";
+                    response[JS(type)] = JS(response);
                 } else {
-                    if (response.contains("result") && !response["result"].as_object().contains("error"))
-                        response["result"].as_object()["status"] = "success";
+                    if (response.contains(JS(result)) && !response[JS(result)].as_object().contains(JS(error)))
+                        response[JS(result)].as_object()[JS(status)] = JS(success);
                 }
             }
 
