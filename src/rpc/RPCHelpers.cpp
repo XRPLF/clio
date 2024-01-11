@@ -261,6 +261,7 @@ toExpandedJson(
     auto metaJson = toJson(*meta);
     insertDeliveredAmount(metaJson, txn, meta, blobs.date);
     insertDeliverMaxAlias(txnJson, apiVersion);
+    insertMPTIssuanceID(metaJson, txn, meta);
 
     if (nftEnabled == NFTokenjson::ENABLE) {
         Json::Value nftJson;
@@ -310,6 +311,61 @@ insertDeliveredAmount(
             metaJson["delivered_amount"] = toBoostJson(amt->getJson(ripple::JsonOptions::include_date));
         } else {
             metaJson["delivered_amount"] = "unavailable";
+        }
+        return true;
+    }
+    return false;
+}
+
+static std::optional<ripple::uint192>
+getMPTissuanceID(
+    std::shared_ptr<ripple::TxMeta const> const& meta
+)
+{
+    ripple::TxMeta const& transactionMeta = *meta;
+
+    for (ripple::STObject const& node : transactionMeta.getNodes())
+    {
+        if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltMPTOKEN_ISSUANCE ||
+            node.getFName() != ripple::sfCreatedNode)
+            continue;
+
+        auto const& mptNode =
+            node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
+        return ripple::getMptID(
+            mptNode.getAccountID(ripple::sfIssuer), mptNode.getFieldU32(ripple::sfSequence));
+    }
+
+    return {};
+}
+
+static bool
+canHaveMPTIssuanceID(
+    std::shared_ptr<ripple::STTx const> const& txn,
+    std::shared_ptr<ripple::TxMeta const> const& meta
+)
+{
+    ripple::TxType const tt{txn->getTxnType()};
+    if (tt != ripple::ttMPTOKEN_ISSUANCE_CREATE)
+        return false;
+
+    if (meta->getResultTER() != ripple::tesSUCCESS)
+        return false;
+
+    return true;
+}
+
+bool
+insertMPTIssuanceID(
+    boost::json::object& metaJson,
+    std::shared_ptr<ripple::STTx const> const& txn,
+    std::shared_ptr<ripple::TxMeta const> const& meta
+){
+    if (canHaveMPTIssuanceID(txn, meta)) {
+        if (auto const amt = getMPTissuanceID(meta)) {
+            metaJson["mpt_issuance_id"] = ripple::to_string(*amt);
+        } else {
+            metaJson["mpt_issuance_id"] = "unavailable";
         }
         return true;
     }

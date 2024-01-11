@@ -104,6 +104,13 @@ insertDeliveredAmount(
     uint32_t date
 );
 
+bool
+insertMPTIssuanceID(
+    boost::json::object& metaJson,
+    std::shared_ptr<ripple::STTx const> const& txn,
+    std::shared_ptr<ripple::TxMeta const> const& meta
+);
+
 boost::json::object
 toJson(ripple::STBase const& obj);
 
