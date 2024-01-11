@@ -73,8 +73,7 @@ public:
     {
         static auto const stringIssueValidator =
             validation::CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
-                if (!value.is_string())
-                    return Error{Status{RippledError::rpcISSUE_MALFORMED}};
+                ASSERT(value.is_string(), "Issue expected to be a string");
 
                 try {
                     ripple::issueFromJson(value.as_string().c_str());
