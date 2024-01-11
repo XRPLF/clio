@@ -24,6 +24,7 @@
 #include "feed/SubscriptionManager.h"
 #include "rpc/Counters.h"
 #include "rpc/common/AnyHandler.h"
+#include "rpc/handlers/AMMInfo.h"
 #include "rpc/handlers/AccountChannels.h"
 #include "rpc/handlers/AccountCurrencies.h"
 #include "rpc/handlers/AccountInfo.h"
@@ -79,6 +80,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"account_objects", {AccountObjectsHandler{backend}}},
           {"account_offers", {AccountOffersHandler{backend}}},
           {"account_tx", {AccountTxHandler{backend}}},
+          {"amm_info", {AMMInfoHandler{backend}}},
           {"book_changes", {BookChangesHandler{backend}}},
           {"book_offers", {BookOffersHandler{backend}}},
           {"deposit_authorized", {DepositAuthorizedHandler{backend}}},

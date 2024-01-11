@@ -637,6 +637,18 @@ generateTestValuesForParametersTest()
         },
 
         ParamTestCaseBundle{
+            "NonObjectAMMJsonAsset",
+            R"({
+                "amm": {
+                    "asset": 123,
+                    "asset2": 123
+                }
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+
+        ParamTestCaseBundle{
             "EmptyAMMAssetJson",
             fmt::format(
                 R"({{
