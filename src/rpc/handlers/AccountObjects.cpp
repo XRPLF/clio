@@ -61,6 +61,8 @@ std::unordered_map<std::string, ripple::LedgerEntryType> const AccountObjectsHan
     {JS(nft_page), ripple::ltNFTOKEN_PAGE},
     {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
     {JS(did), ripple::ltDID},
+    {JS(mpt_issuance), ripple::ltMPTOKEN_ISSUANCE},
+    {JS(mptoken), ripple::ltMPTOKEN},
 };
 
 std::unordered_set<std::string> const AccountObjectsHandler::TYPES_KEYS = [] {
@@ -99,6 +101,8 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
             ripple::ltNFTOKEN_PAGE,
             ripple::ltPAYCHAN,
             ripple::ltRIPPLE_STATE,
+            ripple::ltMPTOKEN_ISSUANCE,
+            ripple::ltMPTOKEN
         };
 
         typeFilter.emplace();
@@ -153,7 +157,14 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHa
         std::cbegin(output.accountObjects),
         std::cend(output.accountObjects),
         std::back_inserter(objects),
-        [](auto const& sle) { return toJson(sle); }
+        [](auto const& sle) { 
+            auto sleJson = toJson(sle);
+            if (sle.getType() == ripple::ltMPTOKEN_ISSUANCE)
+                sleJson["mpt_issuance_id"] = ripple::to_string(ripple::getMptID(
+                    sle.getAccountID(ripple::sfIssuer),
+                    sle[ripple::sfSequence]));
+            
+            return sleJson; }
     );
 
     jv = {

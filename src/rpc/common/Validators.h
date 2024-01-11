@@ -479,6 +479,14 @@ extern CustomValidator AccountBase58Validator;
 extern CustomValidator AccountMarkerValidator;
 
 /**
+ * @brief Provides a commonly used validator for uint192 hex string.
+ *
+ * It must be a string and also a decodable hex.
+ * Transaction index, ledger hash all use this validator.
+ */
+extern CustomValidator Uint192HexStringValidator;
+
+/**
  * @brief Provides a commonly used validator for uint256 hex string.
  *
  * It must be a string and also a decodable hex.
