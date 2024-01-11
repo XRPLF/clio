@@ -42,9 +42,19 @@
 
 namespace util::requests {
 
-namespace beast = boost::beast;    // from <boost/beast.hpp>
-namespace http = beast::http;      // from <boost/beast/http.hpp>
-using tcp = boost::asio::ip::tcp;  // from <boost/asio/ip/tcp.hpp>
+namespace beast = boost::beast;
+namespace http = beast::http;
+using tcp = boost::asio::ip::tcp;
+
+RequestError::RequestError(std::string message) : message(std::move(message))
+{
+}
+
+RequestError::RequestError(std::string message, beast::error_code const& ec) : message(std::move(message))
+{
+    message.append(": ");
+    message.append(ec.message());
+}
 
 RequestBuilder::RequestBuilder(std::string host, std::string port) : host_(std::move(host)), port_(std::move(port))
 {
@@ -62,6 +72,7 @@ RequestBuilder&
 RequestBuilder::addData(std::string data)
 {
     request_.body() = data;
+    request_.prepare_payload();
     return *this;
 }
 

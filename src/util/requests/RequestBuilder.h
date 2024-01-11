@@ -31,24 +31,34 @@
 
 #include <chrono>
 #include <string>
-#include <utility>
 
 namespace util::requests {
 
+/**
+ * @brief Error type for HTTP requests
+ */
 struct RequestError {
-    explicit RequestError(std::string message) : message(std::move(message))
-    {
-    }
+    /**
+     * @brief Construct a new Request Error object
+     *
+     * @param message error message
+     */
+    explicit RequestError(std::string message);
 
-    RequestError(std::string message, boost::beast::error_code ec) : message(std::move(message))
-    {
-        message.append(": ");
-        message.append(ec.message());
-    }
+    /**
+     * @brief Construct a new Request Error object
+     *
+     * @param message error message
+     * @param ec error code from boost::beast
+     */
+    RequestError(std::string message, boost::beast::error_code const& ec);
 
     std::string message;
 };
 
+/**
+ * @brief Builder for HTTP requests
+ */
 class RequestBuilder {
     std::string host_;
     std::string port_;
@@ -56,25 +66,69 @@ class RequestBuilder {
     boost::beast::http::request<boost::beast::http::string_body> request_;
 
 public:
+    /**
+     * @brief Construct a new Request Builder object
+     *
+     * @param host host to connect to
+     * @param port port to connect to
+     */
     RequestBuilder(std::string host, std::string port);
 
+    /**
+     * @brief Add a header to the request
+     *
+     * @param header header to add
+     * @param value value of the header
+     * @return reference to itself
+     */
     RequestBuilder&
     addHeader(boost::beast::http::field header, std::string value);
 
+    /**
+     * @brief Add body or data to the request
+     *
+     * @param data data to add
+     * @return reference to itself
+     */
     RequestBuilder&
     addData(std::string data);
 
-    // default timeout is 30s
+    /**
+     * @brief Set the timeout for the request
+     *
+     * @note Default timeout is defined in DEFAULT_TIMEOUT
+     * @param timeout timeout to set
+     * @return reference to itself
+     */
     RequestBuilder&
     setTimeout(std::chrono::milliseconds timeout);
 
-    // default target is "/"
+    /**
+     * @brief Set the target for the request
+     *
+     * @note Default target is "/"
+     *
+     * @param target target to set
+     * @return reference to itself
+     */
     RequestBuilder&
     setTarget(std::string target);
 
+    /**
+     * @brief Perform a GET request asynchronously
+     *
+     * @param yield yield context
+     * @return expected response or error
+     */
     Expected<std::string, RequestError>
     get(boost::asio::yield_context yield);
 
+    /**
+     * @brief Perform a POST request asynchronously
+     *
+     * @param yield yield context
+     * @return expected response or error
+     */
     Expected<std::string, RequestError>
     post(boost::asio::yield_context yield);
 
