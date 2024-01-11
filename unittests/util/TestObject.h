@@ -318,3 +318,6 @@ AMMSetAuctionSlot(
 
 [[nodiscard]] ripple::STObject
 CreateDidObject(std::string_view accountId, std::string_view didDoc, std::string_view uri, std::string_view data);
+
+[[nodiscard]] ripple::Currency
+CreateLPTCurrency(std::string_view assetCurrency, std::string_view asset2Currency);

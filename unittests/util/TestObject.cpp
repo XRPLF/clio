@@ -27,6 +27,7 @@
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/chrono.h>
+#include <ripple/protocol/AMMCore.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/Issue.h>
 #include <ripple/protocol/LedgerFormats.h>
@@ -882,4 +883,12 @@ AMMSetAuctionSlot(
 
         auctionSlot.setFieldArray(ripple::sfAuthAccounts, accounts);
     }
+}
+
+ripple::Currency
+CreateLPTCurrency(std::string_view assetCurrency, std::string_view asset2Currency)
+{
+    return ripple::ammLPTCurrency(
+        ripple::to_currency(std::string(assetCurrency)), ripple::to_currency(std::string(asset2Currency))
+    );
 }
