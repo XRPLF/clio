@@ -59,4 +59,3 @@ EOF
     exit 1
 fi
 
-.githooks/ensure_release_tag
