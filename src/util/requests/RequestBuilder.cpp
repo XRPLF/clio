@@ -38,6 +38,7 @@
 
 #include <chrono>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace util::requests {
@@ -50,7 +51,7 @@ RequestError::RequestError(std::string message) : message(std::move(message))
 {
 }
 
-RequestError::RequestError(std::string message, beast::error_code const& ec) : message(std::move(message))
+RequestError::RequestError(std::string msg, beast::error_code const& ec) : message(std::move(msg))
 {
     message.append(": ");
     message.append(ec.message());
@@ -58,7 +59,8 @@ RequestError::RequestError(std::string message, beast::error_code const& ec) : m
 
 RequestBuilder::RequestBuilder(std::string host, std::string port) : host_(std::move(host)), port_(std::move(port))
 {
-    request_.set(http::field::host, host);
+    request_.set(http::field::host, host_);
+    request_.target("/");
 }
 
 RequestBuilder&
@@ -80,6 +82,13 @@ RequestBuilder&
 RequestBuilder::setTimeout(std::chrono::milliseconds const timeout)
 {
     timeout_ = timeout;
+    return *this;
+}
+
+RequestBuilder&
+RequestBuilder::setTarget(std::string_view target)
+{
+    request_.target(target);
     return *this;
 }
 

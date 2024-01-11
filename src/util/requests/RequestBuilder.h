@@ -31,6 +31,7 @@
 
 #include <chrono>
 #include <string>
+#include <string_view>
 
 namespace util::requests {
 
@@ -51,7 +52,7 @@ struct RequestError {
      * @param message error message
      * @param ec error code from boost::beast
      */
-    RequestError(std::string message, boost::beast::error_code const& ec);
+    RequestError(std::string msg, boost::beast::error_code const& ec);
 
     std::string message;
 };
@@ -112,7 +113,7 @@ public:
      * @return reference to itself
      */
     RequestBuilder&
-    setTarget(std::string target);
+    setTarget(std::string_view target);
 
     /**
      * @brief Perform a GET request asynchronously
