@@ -18,8 +18,6 @@
 //==============================================================================
 
 #include "data/Types.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "rpc/Errors.h"
 #include "rpc/common/AnyHandler.h"
 #include "rpc/common/Types.h"
@@ -29,6 +27,7 @@
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
