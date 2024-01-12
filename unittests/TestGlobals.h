@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,20 +17,33 @@
 */
 //==============================================================================
 
-#include "util/TerminationHandler.h"
-#include "util/prometheus/Prometheus.h"
+#pragma once
 
-#include <TestGlobals.h>
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/program_options/positional_options.hpp>
+#include <boost/program_options/value_semantic.hpp>
+#include <boost/program_options/variables_map.hpp>
 #include <gtest/gtest.h>
 
-int
-main(int argc, char* argv[])
-{
-    util::setTerminationHandler();
-    PrometheusService::init();
-    testing::InitGoogleTest(&argc, argv);
+/*
+ * Contains global variables for use in unit tests.
+ */
+struct TestGlobals {
+    std::string backendHost = "127.0.0.1";
+    std::string backendKeyspace = "clio_test";
 
-    TestGlobals::instance().parse(argc, argv);
+    static TestGlobals&
+    instance();
+    void
+    parse(int argc, char* argv[]);
 
-    return RUN_ALL_TESTS();
-}
+private:
+    TestGlobals() = default;
+    TestGlobals(TestGlobals const&) = delete;
+    TestGlobals(TestGlobals&&) = delete;
+    TestGlobals&
+    operator=(TestGlobals const&) = delete;
+    TestGlobals&
+    operator=(TestGlobals&&) = delete;
+};

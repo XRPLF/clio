@@ -181,6 +181,7 @@ if (tests)
   add_executable (${TEST_TARGET}
     # Common
     unittests/Main.cpp
+    unittests/TestGlobals.cpp
     unittests/Playground.cpp
     unittests/LoggerTests.cpp
     unittests/ConfigTests.cpp

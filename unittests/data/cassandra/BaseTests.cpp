@@ -21,6 +21,7 @@
 #include "data/cassandra/Types.h"
 #include "util/Fixtures.h"
 
+#include <TestGlobals.h>
 #include <cassandra.h>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
@@ -107,7 +108,7 @@ protected:
 
 TEST_F(BackendCassandraBaseTest, ConnectionSuccess)
 {
-    Handle const handle{"127.0.0.1"};
+    Handle const handle{TestGlobals::instance().backendHost};
     auto const f = handle.asyncConnect();
     auto const res = f.await();
 
@@ -144,7 +145,7 @@ TEST_F(BackendCassandraBaseTest, ConnectionFailTimeout)
 
 TEST_F(BackendCassandraBaseTest, FutureCallback)
 {
-    Handle const handle{"127.0.0.1"};
+    Handle const handle{TestGlobals::instance().backendHost};
     ASSERT_TRUE(handle.connect());
 
     auto const statement = handle.prepare("SELECT keyspace_name FROM system_schema.keyspaces").bind();
@@ -165,7 +166,7 @@ TEST_F(BackendCassandraBaseTest, FutureCallback)
 
 TEST_F(BackendCassandraBaseTest, FutureCallbackSurviveMove)
 {
-    Handle const handle{"127.0.0.1"};
+    Handle const handle{TestGlobals::instance().backendHost};
     ASSERT_TRUE(handle.connect());
 
     auto const statement = handle.prepare("SELECT keyspace_name FROM system_schema.keyspaces").bind();
@@ -192,7 +193,7 @@ TEST_F(BackendCassandraBaseTest, FutureCallbackSurviveMove)
 
 TEST_F(BackendCassandraBaseTest, KeyspaceManipulation)
 {
-    Handle const handle{"127.0.0.1"};
+    Handle const handle{TestGlobals::instance().backendHost};
     std::string keyspace = "test_keyspace_manipulation";
 
     {
@@ -244,7 +245,7 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
         "fifth",
     };
 
-    auto handle = createHandle("127.0.0.1", "test");
+    auto handle = createHandle(TestGlobals::instance().backendHost, "test");
     auto q1 = fmt::format(
         R"(
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
@@ -309,7 +310,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
         "fifth",
     };
 
-    auto handle = createHandle("127.0.0.1", "test");
+    auto handle = createHandle(TestGlobals::instance().backendHost, "test");
     auto const q1 = fmt::format(
         R"(
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
@@ -368,7 +369,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
         "fifth",
     };
 
-    auto handle = createHandle("127.0.0.1", "test");
+    auto handle = createHandle(TestGlobals::instance().backendHost, "test");
     auto const q1 = fmt::format(
         R"(
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
@@ -414,7 +415,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
 
 TEST_F(BackendCassandraBaseTest, AlterTableAddColumn)
 {
-    auto handle = createHandle("127.0.0.1", "test");
+    auto handle = createHandle(TestGlobals::instance().backendHost, "test");
     auto const q1 = fmt::format(
         R"(
             CREATE TABLE IF NOT EXISTS strings (hash blob PRIMARY KEY, sequence bigint) 
@@ -432,7 +433,7 @@ TEST_F(BackendCassandraBaseTest, AlterTableAddColumn)
 
 TEST_F(BackendCassandraBaseTest, AlterTableMoveToNewTable)
 {
-    auto handle = createHandle("127.0.0.1", "test");
+    auto handle = createHandle(TestGlobals::instance().backendHost, "test");
     prepStringsTable(handle);
 
     auto const newTable = fmt::format(

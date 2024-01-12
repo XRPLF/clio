@@ -22,6 +22,7 @@
 #include "util/Fixtures.h"
 #include "util/config/Config.h"
 
+#include <TestGlobals.h>
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
@@ -30,7 +31,6 @@
 #include <string>
 
 namespace {
-constexpr auto contactPoints = "127.0.0.1";
 constexpr auto keyspace = "factory_test";
 }  // namespace
 
@@ -62,7 +62,7 @@ protected:
     {
         BackendCassandraFactoryTest::TearDown();
         // drop the keyspace for next test
-        data::cassandra::Handle const handle{contactPoints};
+        data::cassandra::Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
         handle.execute("DROP KEYSPACE " + std::string{keyspace});
     }
@@ -116,7 +116,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
                 }}
             }}
         }})",
-        contactPoints,
+        TestGlobals::instance().backendHost,
         keyspace
     ))};
 
@@ -128,7 +128,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
         EXPECT_FALSE(backend->fetchLedgerRange());
 
         // insert range table
-        data::cassandra::Handle const handle{contactPoints};
+        data::cassandra::Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
         handle.execute(fmt::format("INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (False, 100)", keyspace));
         handle.execute(fmt::format("INSERT INTO {}.ledger_range (is_latest, sequence) VALUES (True, 500)", keyspace));
@@ -159,7 +159,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmpt
                 }}
             }}
         }})",
-        contactPoints,
+        TestGlobals::instance().backendHost,
         keyspace
     ))};
     EXPECT_THROW(make_Backend(cfg), std::runtime_error);
@@ -180,7 +180,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
                 }}
             }}
         }})",
-        contactPoints,
+        TestGlobals::instance().backendHost,
         keyspace
     ))};
 
@@ -197,7 +197,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
                 }}
             }}
         }})",
-        contactPoints,
+        TestGlobals::instance().backendHost,
         keyspace
     ))};
 
