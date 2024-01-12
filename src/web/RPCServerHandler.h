@@ -211,6 +211,9 @@ private:
                 auto const isForwarded =
                     json.contains("forwarded") && json.at("forwarded").is_bool() && json.at("forwarded").as_bool();
 
+                if (isForwarded)
+                    json.erase("forwarded");
+
                 // if the result is forwarded - just use it as is
                 // if forwarded request has error, for http, error should be in "result"; for ws, error should
                 // be at top
@@ -220,6 +223,9 @@ private:
                 } else {
                     response[JS(result)] = json;
                 }
+
+                if (isForwarded)
+                    response["forwarded"] = true;
 
                 // for ws there is an additional field "status" in the response,
                 // otherwise the "status" is in the "result" field
