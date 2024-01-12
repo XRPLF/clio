@@ -168,6 +168,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedPath)
 
     backend->setRange(MINSEQ, MAXSEQ);
 
+    // Note: forwarding always goes thru WS API
     static auto constexpr result = R"({
                                         "result": {
                                             "index": 1
@@ -197,6 +198,50 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedPath)
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
+TEST_F(WebRPCServerHandlerTest, HTTPForwardedErrorPath)
+{
+    static auto constexpr request = R"({
+                                        "method": "server_info",
+                                        "params": [{}]
+                                    })";
+
+    backend->setRange(MINSEQ, MAXSEQ);
+
+    // Note: forwarding always goes thru WS API
+    static auto constexpr result = R"({
+                                        "error": "error",
+                                        "error_code": 123,
+                                        "error_message": "error message",
+                                        "status": "error",
+                                        "type": "response",
+                                        "forwarded": true
+                                    })";
+    static auto constexpr response = R"({
+                                        "result":{
+                                            "error": "error",
+                                            "error_code": 123,
+                                            "error_message": "error message",
+                                            "status": "error",
+                                            "type": "response"
+                                        },
+                                        "forwarded": true,
+                                        "warnings":[
+                                            {
+                                                "id": 2001,
+                                                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                                            }
+                                        ]
+                                    })";
+    EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
+        .WillOnce(testing::Return(boost::json::parse(result).as_object()));
+    EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
+
+    EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
+
+    (*handler)(request, session);
+    EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
+}
+
 TEST_F(WebRPCServerHandlerTest, WsForwardedPath)
 {
     session->upgraded = true;
@@ -207,6 +252,7 @@ TEST_F(WebRPCServerHandlerTest, WsForwardedPath)
 
     backend->setRange(MINSEQ, MAXSEQ);
 
+    // Note: forwarding always goes thru WS API
     static auto constexpr result = R"({
                                         "result": {
                                             "index": 1
@@ -232,6 +278,52 @@ TEST_F(WebRPCServerHandlerTest, WsForwardedPath)
         .WillOnce(testing::Return(boost::json::parse(result).as_object()));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
 
+    EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
+
+    (*handler)(request, session);
+    EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
+}
+
+TEST_F(WebRPCServerHandlerTest, WsForwardedErrorPath)
+{
+    session->upgraded = true;
+    static auto constexpr request = R"({
+                                        "command": "server_info",
+                                        "id": 99
+                                    })";
+
+    backend->setRange(MINSEQ, MAXSEQ);
+
+    // Note: forwarding always goes thru WS API
+    static auto constexpr result = R"({
+                                        "error": "error",
+                                        "error_code": 123,
+                                        "error_message": "error message",
+                                        "status": "error",
+                                        "type": "response",
+                                        "forwarded": true
+                                   })";
+    // WS error responses, unlike their successful counterpart, contain everything on top level without "result"
+    static auto constexpr response = R"({
+                                        "error": "error",
+                                        "error_code": 123,
+                                        "error_message": "error message",
+                                        "status": "error",
+                                        "type": "response",
+                                        "forwarded": true,
+                                        "id": 99,
+                                        "warnings": [
+                                            {
+                                                "id": 2001,
+                                                "message": "This is a clio server. clio only serves validated data. If you want to talk to rippled, include 'ledger_index':'current' in your request"
+                                            }
+                                        ]
+                                    })";
+    EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
+        .WillOnce(testing::Return(boost::json::parse(result).as_object()));
+
+    // Forwarded errors counted as successful:
+    EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
     (*handler)(request, session);
