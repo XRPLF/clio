@@ -17,44 +17,114 @@
 */
 //==============================================================================
 
+#include "util/Expected.h"
 #include "util/Fixtures.h"
 #include "util/TestHttpServer.h"
 #include "util/requests/RequestBuilder.h"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <optional>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 using namespace util::requests;
 using namespace boost;
 using namespace boost::beast;
 
-struct RequestBuilderTest : SyncAsioContextTest {
+struct RequestBuilderTestBundle {
+    std::string testName;
+    http::verb method;
+    std::vector<std::pair<http::field, std::string>> headers;
+    std::string target;
+};
+
+struct RequestBuilderTest : SyncAsioContextTest, testing::WithParamInterface<RequestBuilderTestBundle> {
     TestHttpServer server{ctx, "0.0.0.0", 11111};
     RequestBuilder builder{"localhost", "11111"};
 };
 
-TEST_F(RequestBuilderTest, testGetRequest)
+INSTANTIATE_TEST_CASE_P(
+    RequestBuilderTest,
+    RequestBuilderTest,
+    testing::Values(
+        RequestBuilderTestBundle{"GetSimple", http::verb::get, {}, "/"},
+        RequestBuilderTestBundle{
+            "GetWithHeaders",
+            http::verb::get,
+            {{http::field::accept, "text/html"}, {http::field::authorization, "password"}},
+            "/"
+        },
+        RequestBuilderTestBundle{"GetWithTarget", http::verb::get, {}, "/test"},
+        RequestBuilderTestBundle{"PostSimple", http::verb::post, {}, "/"},
+        RequestBuilderTestBundle{
+            "PostWithHeaders",
+            http::verb::post,
+            {{http::field::accept, "text/html"}, {http::field::authorization, "password"}},
+            "/"
+        },
+        RequestBuilderTestBundle{"PostWithTarget", http::verb::post, {}, "/test"}
+    ),
+    [](auto const& info) { return info.param.testName; }
+);
+
+TEST_P(RequestBuilderTest, simpleRequest)
 {
+    for (auto const& [header, value] : GetParam().headers)
+        builder.addHeader(header, value);
+    builder.setTarget(GetParam().target);
+
     server.handleRequest(
         [](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
             [&]() {
-                ASSERT_TRUE(request.target() == "/");
-                ASSERT_TRUE(request.method() == http::verb::get);
+                ASSERT_TRUE(request.target() == GetParam().target);
+                ASSERT_TRUE(request.method() == GetParam().method);
             }();
             return http::response<http::string_body>{http::status::ok, 11, "Hello, world!"};
         }
     );
 
     runSpawn([this](asio::yield_context yield) {
-        auto response = builder.get(yield);
+        auto response = [&]() -> util::Expected<std::string, RequestError> {
+            switch (GetParam().method) {
+                case http::verb::get:
+                    return builder.get(yield);
+                case http::verb::post:
+                    return builder.post(yield);
+                default:
+                    return util::Unexpected{RequestError{"Invalid HTTP verb"}};
+            }
+        }();
         ASSERT_TRUE(response) << response.error().message;
         EXPECT_EQ(response.value(), "Hello, world!");
+    });
+}
+
+TEST_F(RequestBuilderTest, Timeout)
+{
+    builder.setTimeout(std::chrono::milliseconds{10});
+    server.handleRequest(
+        [](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
+            [&]() {
+                ASSERT_TRUE(request.target() == "/");
+                ASSERT_TRUE(request.method() == http::verb::get);
+            }();
+            std::this_thread::sleep_for(std::chrono::milliseconds{20});
+            return std::nullopt;
+        }
+    );
+    runSpawn([this](asio::yield_context yield) {
+        auto response = builder.get(yield);
+        EXPECT_FALSE(response);
     });
 }

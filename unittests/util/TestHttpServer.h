@@ -28,13 +28,30 @@
 #include <optional>
 #include <string>
 
+/**
+ * @brief Simple HTTP server for use in unit tests
+ */
 class TestHttpServer {
 public:
     using RequestHandler = std::function<std::optional<boost::beast::http::response<
         boost::beast::http::string_body>>(boost::beast::http::request<boost::beast::http::string_body>)>;
 
+    /**
+     * @brief Construct a new TestHttpServer
+     *
+     * @param context boost::asio::io_context to use for networking
+     * @param host host to bind to
+     * @param port port to bind to
+     */
     TestHttpServer(boost::asio::io_context& context, std::string host, int port);
 
+    /**
+     * @brief Start the server
+     *
+     * @note This method schedules to process only one request
+     *
+     * @param handler RequestHandler to use for incoming request
+     */
     void
     handleRequest(RequestHandler handler);
 
