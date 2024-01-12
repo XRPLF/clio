@@ -40,7 +40,7 @@ struct FeedBaseMockPrometheusTest : WithMockPrometheus, SyncAsioContextTest {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
     std::shared_ptr<SingleFeedBase> testFeedPtr;
-    MockSession* mockSessionPtr;
+    MockSession* mockSessionPtr = nullptr;
 
     void
     SetUp() override

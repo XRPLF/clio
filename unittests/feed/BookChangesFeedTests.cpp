@@ -24,7 +24,6 @@
 #include "util/TestObject.h"
 
 #include <boost/asio/io_context.hpp>
-#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/protocol/STObject.h>

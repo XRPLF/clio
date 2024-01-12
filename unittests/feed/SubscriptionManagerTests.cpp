@@ -23,7 +23,6 @@
 #include "util/Fixtures.h"
 #include "util/MockWsBase.h"
 #include "util/TestObject.h"
-#include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
 
 #include <boost/asio/executor_work_guard.hpp>
@@ -31,7 +30,6 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
-#include <boost/json/serialize.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/protocol/Book.h>
@@ -56,10 +54,9 @@ using namespace feed::impl;
 
 class SubscriptionManagerTest : public MockBackendTest, public SyncAsioContextTest {
 protected:
-    util::Config cfg;
     std::shared_ptr<SubscriptionManager> SubscriptionManagerPtr;
     std::shared_ptr<web::ConnectionBase> session;
-    MockSession* sessionPtr;
+    MockSession* sessionPtr = nullptr;
 
     void
     SetUp() override

@@ -20,8 +20,6 @@
 #include "feed/impl/TrackableSignal.h"
 #include "feed/impl/TrackableSignalMap.h"
 #include "util/MockWsBase.h"
-#include "util/Taggable.h"
-#include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
 
 #include <gtest/gtest.h>

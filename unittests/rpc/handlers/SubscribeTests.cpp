@@ -27,9 +27,7 @@
 #include "util/Fixtures.h"
 #include "util/MockPrometheus.h"
 #include "util/MockWsBase.h"
-#include "util/Taggable.h"
 #include "util/TestObject.h"
-#include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
 
 #include <boost/json/parse.hpp>

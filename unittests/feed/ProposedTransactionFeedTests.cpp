@@ -28,7 +28,6 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/json/parse.hpp>
-#include <boost/json/serialize.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
