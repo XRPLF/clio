@@ -33,9 +33,11 @@ public:
     using RequestHandler = std::function<std::optional<boost::beast::http::response<
         boost::beast::http::string_body>>(boost::beast::http::request<boost::beast::http::string_body>)>;
 
-    TestHttpServer(boost::asio::io_context& context, std::string host, int port, RequestHandler handler);
+    TestHttpServer(boost::asio::io_context& context, std::string host, int port);
+
+    void
+    handleRequest(RequestHandler handler);
 
 private:
     boost::asio::ip::tcp::acceptor acceptor_;
-    RequestHandler handler_;
 };

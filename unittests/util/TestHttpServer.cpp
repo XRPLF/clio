@@ -49,7 +49,7 @@ using tcp = boost::asio::ip::tcp;
 namespace {
 
 void
-doSession(beast::tcp_stream stream, TestHttpServer::RequestHandler& requestHandler, asio::yield_context yield)
+doSession(beast::tcp_stream stream, TestHttpServer::RequestHandler requestHandler, asio::yield_context yield)
 {
     beast::error_code errorCode;
 
@@ -96,30 +96,28 @@ doSession(beast::tcp_stream stream, TestHttpServer::RequestHandler& requestHandl
 
 }  // namespace
 
-TestHttpServer::TestHttpServer(
-    boost::asio::io_context& context,
-    std::string host,
-    int const port,
-    RequestHandler handler
-)
-    : acceptor_(context), handler_(std::move(handler))
+TestHttpServer::TestHttpServer(boost::asio::io_context& context, std::string host, int const port) : acceptor_(context)
 {
     boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(host), port);
     acceptor_.open(endpoint.protocol());
     acceptor_.set_option(asio::socket_base::reuse_address(true));
     acceptor_.bind(endpoint);
     acceptor_.listen(asio::socket_base::max_listen_connections);
+}
 
+void
+TestHttpServer::handleRequest(TestHttpServer::RequestHandler handler)
+{
     boost::asio::spawn(
-        context,
-        [this, &context](asio::yield_context yield) {
+        acceptor_.get_executor(),
+        [this, handler = std::move(handler)](asio::yield_context yield) mutable {
             boost::beast::error_code errorCode;
-            tcp::socket socket(context);
+            tcp::socket socket(this->acceptor_.get_executor());
             acceptor_.async_accept(socket, yield[errorCode]);
 
             [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
 
-            doSession(beast::tcp_stream{std::move(socket)}, handler_, yield);
+            doSession(beast::tcp_stream{std::move(socket)}, std::move(handler), yield);
         },
         boost::asio::detached
     );

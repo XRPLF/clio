@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/Fixtures.h"
 #include "util/TestHttpServer.h"
 #include "util/requests/RequestBuilder.h"
 
@@ -34,14 +35,14 @@ using namespace util::requests;
 using namespace boost;
 using namespace boost::beast;
 
-TEST(RequestBuilder, testGetRequest)
-{
-    boost::asio::io_context context;
+struct RequestBuilderTest : SyncAsioContextTest {
+    TestHttpServer server{ctx, "0.0.0.0", 11111};
+    RequestBuilder builder{"localhost", "11111"};
+};
 
-    TestHttpServer server{
-        context,
-        "0.0.0.0",
-        11111,
+TEST_F(RequestBuilderTest, testGetRequest)
+{
+    server.handleRequest(
         [](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
             [&]() {
                 ASSERT_TRUE(request.target() == "/");
@@ -49,14 +50,11 @@ TEST(RequestBuilder, testGetRequest)
             }();
             return http::response<http::string_body>{http::status::ok, 11, "Hello, world!"};
         }
-    };
+    );
 
-    boost::asio::spawn(context, [](asio::yield_context yield) {
-        RequestBuilder builder("localhost", "11111");
+    runSpawn([this](asio::yield_context yield) {
         auto response = builder.get(yield);
         ASSERT_TRUE(response) << response.error().message;
         EXPECT_EQ(response.value(), "Hello, world!");
     });
-
-    context.run();
 }
