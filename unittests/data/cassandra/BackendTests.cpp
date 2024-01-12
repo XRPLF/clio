@@ -99,7 +99,7 @@ protected:
         // drop the keyspace for next test
         Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
-        handle.execute("DROP KEYSPACE " + std::string{TestGlobals::instance().backendKeyspace});
+        handle.execute("DROP KEYSPACE " + TestGlobals::instance().backendKeyspace);
     }
 
     std::default_random_engine randomEngine{0};

@@ -23,13 +23,17 @@
 
 #include <gtest/gtest.h>
 
+/*
+ * Supported custom command line options for clio_tests:
+ *   --backend_host=<host>         - sets the cassandra/scylladb host for backend tests
+ *   --backend_keyspace=<keyspace> - sets the cassandra/scylladb keyspace for backend tests
+ */
 int
 main(int argc, char* argv[])
 {
     util::setTerminationHandler();
     PrometheusService::init();
     testing::InitGoogleTest(&argc, argv);
-
     TestGlobals::instance().parse(argc, argv);
 
     return RUN_ALL_TESTS();
