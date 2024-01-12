@@ -46,7 +46,7 @@ public:
         std::optional<bool> asset2Frozen;
 
         std::string ledgerHash;
-        uint32_t ledgerIndex;
+        uint32_t ledgerIndex{};
         bool validated = true;
     };
 

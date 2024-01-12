@@ -58,6 +58,12 @@ jobs:
         run: |
           run-clang-tidy-17 -p build -j ${{ steps.number_of_threads.outputs.threads_number }} -fix -quiet 1>output.txt
 
+      - name: Run pre-commit hook
+        if: ${{ steps.run_clang_tidy.outcome != 'success' }}
+        continue-on-error: true
+        shell: bash
+        run: ./.githooks/pre-commit
+
       - name: Print issues found
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
         shell: bash

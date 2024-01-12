@@ -20,9 +20,18 @@
 #include "rpc/AMMHelpers.h"
 
 #include "data/BackendInterface.h"
-#include "util/log/Logger.h"
+#include "rpc/RPCHelpers.h"
 
+#include <boost/asio/spawn.hpp>
 #include <ripple/protocol/AMMCore.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Issue.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/UintTypes.h>
+
+#include <cstdint>
+#include <utility>
 
 namespace rpc {
 
