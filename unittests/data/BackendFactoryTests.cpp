@@ -20,9 +20,9 @@
 #include "data/BackendFactory.h"
 #include "data/cassandra/Handle.h"
 #include "util/Fixtures.h"
+#include "util/TestGlobals.h"
 #include "util/config/Config.h"
 
-#include <TestGlobals.h>
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>

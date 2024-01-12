@@ -29,9 +29,9 @@
 #include "util/LedgerUtils.h"
 #include "util/Random.h"
 #include "util/StringUtils.h"
+#include "util/TestGlobals.h"
 #include "util/config/Config.h"
 
-#include <TestGlobals.h>
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>

@@ -17,7 +17,8 @@
 */
 //==============================================================================
 
-#include <TestGlobals.h>
+#include "util/TestGlobals.h"
+
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/positional_options.hpp>

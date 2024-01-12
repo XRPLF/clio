@@ -19,12 +19,7 @@
 
 #pragma once
 
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/program_options/positional_options.hpp>
-#include <boost/program_options/value_semantic.hpp>
-#include <boost/program_options/variables_map.hpp>
-#include <gtest/gtest.h>
+#include <string>
 
 /*
  * Contains global variables for use in unit tests.
@@ -35,6 +30,7 @@ struct TestGlobals {
 
     static TestGlobals&
     instance();
+
     void
     parse(int argc, char* argv[]);
 

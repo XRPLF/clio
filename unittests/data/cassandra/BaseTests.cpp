@@ -20,8 +20,8 @@
 #include "data/cassandra/Handle.h"
 #include "data/cassandra/Types.h"
 #include "util/Fixtures.h"
+#include "util/TestGlobals.h"
 
-#include <TestGlobals.h>
 #include <cassandra.h>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
