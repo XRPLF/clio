@@ -119,10 +119,10 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
         // check the response
         EXPECT_EQ(res, json::parse(LedgerResponse));
     });
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(LedgerResponse))).Times(1);
     ctx.run();
     EXPECT_EQ(testFeedPtr->count(), 1);
 
+    EXPECT_CALL(*mockSessionPtr, send(_)).Times(0);
     // destroy the session
     sessionPtr.reset();
     EXPECT_EQ(testFeedPtr->count(), 0);
