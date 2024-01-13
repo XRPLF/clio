@@ -160,7 +160,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHa
         [](auto const& sle) { 
             auto sleJson = toJson(sle);
             if (sle.getType() == ripple::ltMPTOKEN_ISSUANCE)
-                sleJson["mpt_issuance_id"] = ripple::to_string(ripple::getMptID(
+                sleJson[JS(mpt_issuance_id)] = ripple::to_string(ripple::getMptID(
                     sle.getAccountID(ripple::sfIssuer),
                     sle[ripple::sfSequence]));
             
