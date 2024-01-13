@@ -59,7 +59,7 @@ public:
         // account id to address did object
         std::optional<std::string> did;
         // mpt issuance id to address mptIssuance object
-        std::optional<std::string> mptIssuanceID;
+        std::optional<std::string> mptIssuance;
         // TODO: extract into custom objects, remove json from Input
         std::optional<boost::json::object> directory;
         std::optional<boost::json::object> offer;
@@ -68,6 +68,7 @@ public:
         std::optional<boost::json::object> depositPreauth;
         std::optional<boost::json::object> ticket;
         std::optional<boost::json::object> amm;
+        std::optional<boost::json::object> mptoken;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -133,7 +134,6 @@ public:
             {JS(index), malformedRequestHexStringValidator},
             {JS(account_root), validation::AccountBase58Validator},
             {JS(did), validation::AccountBase58Validator},
-            {JS(mpt_issuance_id), validation::Uint192HexStringValidator},
             {JS(check), malformedRequestHexStringValidator},
             {JS(deposit_preauth),
              validation::Type<std::string, boost::json::object>{},
@@ -208,6 +208,16 @@ public:
                           validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
                       },
                       ammAssetValidator},
+                 },
+             }},
+            {JS(mpt_issuance), validation::Uint192HexStringValidator},
+            {JS(mptoken), 
+            validation::Type<std::string, boost::json::object>{},
+             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             meta::IfType<boost::json::object>{
+                 meta::Section{
+                     {JS(account), validation::Required{}, validation::AccountBase58Validator},
+                     {JS(mpt_issuance_id), validation::Required{}, validation::Uint192HexStringValidator},
                  },
              }}
         };

@@ -64,8 +64,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     } else if (input.did) {
         key = ripple::keylet::did(*ripple::parseBase58<ripple::AccountID>(*(input.did))).key;
     } 
-    else if (input.mptIssuanceID){
-        auto const mptIssuanceID = ripple::uint192{std::string_view(*(input.mptIssuanceID))};
+    else if (input.mptIssuance){
+        auto const mptIssuanceID = ripple::uint192{std::string_view(*(input.mptIssuance))};
         key = ripple::keylet::mptIssuance(mptIssuanceID).key;
     }
     else if (input.directory) {
@@ -116,6 +116,10 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
                   getIssuerFromJson(input.amm->at(JS(asset))), getIssuerFromJson(input.amm->at(JS(asset2)))
         )
                   .key;
+    } else if (input.mptoken) {
+        auto const holder = ripple::parseBase58<ripple::AccountID>(input.mptoken->at(JS(account)).as_string().c_str());
+        auto const mptIssuanceID = ripple::uint192{std::string_view(input.mptoken->at(JS(mpt_issuance_id)).as_string().c_str())};
+        key = ripple::keylet::mptoken(mptIssuanceID, *holder).key;
     } else {
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
@@ -230,7 +234,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
         {JS(ticket), ripple::ltTICKET},
         {JS(nft_page), ripple::ltNFTOKEN_PAGE},
-        {JS(amm), ripple::ltAMM}
+        {JS(amm), ripple::ltAMM},
+        {JS(mptoken), ripple::ltMPTOKEN}
     };
 
     auto const indexFieldType =
@@ -248,8 +253,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.accountRoot = jv.at(JS(account_root)).as_string().c_str();
     } else if (jsonObject.contains(JS(did))) {
         input.did = jv.at(JS(did)).as_string().c_str();
-    } else if (jsonObject.contains(JS(mpt_issuance_id))) {
-        input.mptIssuanceID = jv.at(JS(mpt_issuance_id)).as_string().c_str();
+    } else if (jsonObject.contains(JS(mpt_issuance))) {
+        input.mptIssuance = jv.at(JS(mpt_issuance)).as_string().c_str();
     }
     // no need to check if_object again, validator only allows string or object
     else if (jsonObject.contains(JS(directory))) {
@@ -266,6 +271,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.ticket = jv.at(JS(ticket)).as_object();
     } else if (jsonObject.contains(JS(amm))) {
         input.amm = jv.at(JS(amm)).as_object();
+    } else if (jsonObject.contains(JS(mptoken))) {
+        input.mptoken = jv.at(JS(mptoken)).as_object();
     }
 
     return input;
