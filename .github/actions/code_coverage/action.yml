@@ -23,11 +23,11 @@ runs:
     - name: Upload coverage report
       uses: Wandalen/wretry.action@1.3.0
         with:
-            action: codecov/codecov-action@v3
-            with: |
-              files: build/coverage_report.xml 
-              fail_ci_if_error: true
-              verbose: true
-              token: ${{ env.CODECOV_TOKEN }}
-            attempt_limit: 5
-            attempt_delay: 10000
+          action: codecov/codecov-action@v3
+          with: |
+            files: build/coverage_report.xml 
+            fail_ci_if_error: true
+            verbose: true
+            token: ${{ env.CODECOV_TOKEN }}
+          attempt_limit: 5
+          attempt_delay: 10000
