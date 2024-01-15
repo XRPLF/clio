@@ -1,13 +1,14 @@
 name: Clang-tidy check
 on:
   schedule:
-    - cron:  '0 6 * * 1-5'
+    - cron: "0 6 * * 1-5"
   workflow_dispatch:
   pull_request:
     branches: [develop]
     paths:
       - .clang_tidy
       - .github/workflows/clang-tidy.yml
+  workflow_call:
 
 jobs:
   clang_tidy:
@@ -22,12 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-            fetch-depth: 0
+          fetch-depth: 0
 
       - name: Prepare runner
         uses: ./.github/actions/prepare_runner
         with:
-            disable_ccache: true
+          disable_ccache: true
 
       - name: Setup conan
         uses: ./.github/actions/setup_conan
@@ -100,14 +101,14 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         with:
-          commit-message: '[CI] clang-tidy auto fixes'
+          commit-message: "[CI] clang-tidy auto fixes"
           committer: Clio CI <skuznetsov@ripple.com>
-          branch: 'clang_tidy/autofix'
+          branch: "clang_tidy/autofix"
           branch-suffix: timestamp
           delete-branch: true
-          title: '[CI] clang-tidy auto fixes'
-          body: 'Fixes #${{ steps.create_issue.outputs.created_issue }}. Please review and commit clang-tidy fixes.'
-          reviewers: 'cindyyan317,godexsoft,kuznetsss'
+          title: "[CI] clang-tidy auto fixes"
+          body: "Fixes #${{ steps.create_issue.outputs.created_issue }}. Please review and commit clang-tidy fixes."
+          reviewers: "cindyyan317,godexsoft,kuznetsss"
 
       - name: Fail the job
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
