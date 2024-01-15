@@ -165,6 +165,7 @@ target_sources (clio PRIVATE
   src/util/Random.cpp
   src/util/Taggable.cpp
   src/util/TerminationHandler.cpp
+  src/util/TxUtil.cpp
 )
 
 # Clio server
@@ -189,6 +190,7 @@ if (tests)
     unittests/DOSGuardTests.cpp
     unittests/util/AssertTests.cpp
     unittests/util/BatchingTests.cpp
+    unittests/util/TxUtilTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
     unittests/util/prometheus/CounterTests.cpp
