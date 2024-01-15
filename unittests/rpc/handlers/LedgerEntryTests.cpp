@@ -869,6 +869,35 @@ generateTestValuesForParametersTest()
             "malformedRequest",
             "Malformed request."
         },
+        ParamTestCaseBundle{
+            "InvalidMPTIssuanceStringIndex",
+            R"({
+                "mpt_issuance": "invalid"
+            })",
+            "invalidParams",
+            "mpt_issuanceMalformed"
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenStringIndex",
+            R"({
+                "mptoken": "invalid"
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "MissingMPTokenID",
+            fmt::format(
+                R"({{
+                    "mptoken": {{
+                        "account": "{}"
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "invalidParams",
+            "Required field \'mpt_issuance_id\' missing"
+        },
     };
 }
 
@@ -1302,7 +1331,47 @@ generateTestValuesForNormalPathTest()
             ),
             ripple::keylet::amm(GetIssue("XRP", ripple::toBase58(ripple::xrpAccount())), GetIssue("JPY", ACCOUNT2)).key,
             CreateAMMObject(ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", ACCOUNT2)
-        }
+        },
+        NormalPathTestBundle{
+            "MPTIssuance",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "mpt_issuance": "{}"
+                }})",
+                ripple::to_string(ripple::getMptID(account1, 2))
+            ),
+            ripple::keylet::mptIssuance(ripple::getMptID(account1, 2)).key,
+            CreateMPTIssuanceObject(ACCOUNT, 2,  "metadata")
+        },
+        NormalPathTestBundle{
+            "MPTokenViaIndex",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "mptoken": "{}"
+                }})",
+                INDEX1
+            ),
+            ripple::uint256{INDEX1},
+            CreateMPTokenObject(ACCOUNT, ripple::getMptID(account1, 2))
+        },
+        NormalPathTestBundle{
+            "MPTokenViaObject",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "mptoken": {{
+                        "account": "{}",
+                        "mpt_issuance_id": "{}"
+                    }}
+                }})",
+                ACCOUNT,
+                ripple::to_string(ripple::getMptID(account1, 2))
+            ),
+            ripple::keylet::mptoken(ripple::getMptID(account1, 2), account1).key,
+            CreateMPTokenObject(ACCOUNT, ripple::getMptID(account1, 2))
+        },
     };
 }
 

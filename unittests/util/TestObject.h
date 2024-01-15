@@ -289,3 +289,9 @@ CreateAMMObject(
 
 [[nodiscard]] ripple::STObject
 CreateDidObject(std::string_view accountId, std::string_view didDoc, std::string_view uri, std::string_view data);
+
+[[nodiscard]] ripple::STObject
+CreateMPTIssuanceObject(std::string_view accountId, std::uint32_t seq, std::string_view metadata);
+
+[[nodiscard]] ripple::STObject
+CreateMPTokenObject(std::string_view accountId, ripple::uint192 issuanceID);
