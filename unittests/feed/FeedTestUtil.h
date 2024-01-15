@@ -31,8 +31,6 @@
 #include <string>
 #include <utility>
 
-namespace json = boost::json;
-
 // Base class for feed tests, providing easy way to access the received feed
 template <typename TestedFeed>
 class FeedBaseTest : public SyncAsioContextTest, public MockBackendTest {
@@ -61,6 +59,7 @@ protected:
     }
 };
 
+namespace detail {
 class SharedStringJsonEqMatcher {
     std::string expected_;
 
@@ -74,13 +73,13 @@ public:
     bool
     MatchAndExplain(std::shared_ptr<std::string> const& arg, std::ostream* /* listener */) const
     {
-        return json::parse(*arg) == json::parse(expected_);
+        return boost::json::parse(*arg) == boost::json::parse(expected_);
     }
 
     void
     DescribeTo(std::ostream* os) const
     {
-        *os << "contains json" << expected_;
+        *os << "Contains json " << expected_;
     }
 
     void
@@ -89,9 +88,10 @@ public:
         *os << "Expecting json " << expected_;
     }
 };
+}  // namespace detail
 
 inline ::testing::Matcher<std::shared_ptr<std::string>>
 SharedStringJsonEq(std::string const& expected)
 {
-    return SharedStringJsonEqMatcher(expected);
+    return detail::SharedStringJsonEqMatcher(expected);
 }

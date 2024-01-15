@@ -64,6 +64,8 @@ TEST_F(FeedLedgerTest, SubPub)
         EXPECT_EQ(res, json::parse(LedgerResponse));
     });
     ctx.run();
+    EXPECT_EQ(testFeedPtr->count(), 1);
+
     constexpr static auto ledgerPub =
         R"({
             "type":"ledgerClosed",
@@ -76,14 +78,13 @@ TEST_F(FeedLedgerTest, SubPub)
             "validated_ledgers":"10-31",
             "txn_count":8
         })";
-    EXPECT_EQ(testFeedPtr->count(), 1);
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(ledgerPub))).Times(1);
+
     // test publish
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(ledgerPub))).Times(1);
     auto const ledgerinfo2 = CreateLedgerInfo(LEDGERHASH, 31);
     auto fee2 = ripple::Fees();
     fee2.reserve = 10;
     testFeedPtr->pub(ledgerinfo2, fee2, "10-31", 8);
-
     ctx.restart();
     ctx.run();
 
@@ -121,11 +122,11 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     });
     ctx.run();
     EXPECT_EQ(testFeedPtr->count(), 1);
-
     EXPECT_CALL(*mockSessionPtr, send(_)).Times(0);
-    // destroy the session
+
     sessionPtr.reset();
     EXPECT_EQ(testFeedPtr->count(), 0);
+
     auto const ledgerinfo2 = CreateLedgerInfo(LEDGERHASH, 31);
     auto fee2 = ripple::Fees();
     fee2.reserve = 10;
