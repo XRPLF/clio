@@ -17,11 +17,12 @@
 */
 //==============================================================================
 
-#include "feed/FeedBaseTest.h"
+#include "feed/FeedTestUtil.h"
 #include "feed/impl/ForwardFeed.h"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/json/parse.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <memory>
@@ -47,16 +48,14 @@ TEST_F(FeedForwardTest, Pub)
     EXPECT_EQ(testFeedPtr->count(), 1);
     auto const json = json::parse(FEED).as_object();
     testFeedPtr->pub(json);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED))).Times(1);
     ctx.run();
 
-    EXPECT_EQ(receivedFeedMessage(), FEED);
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
-    cleanReceivedFeed();
     testFeedPtr->pub(json);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedForwardTest, AutoDisconnect)
@@ -65,8 +64,8 @@ TEST_F(FeedForwardTest, AutoDisconnect)
     EXPECT_EQ(testFeedPtr->count(), 1);
     auto const json = json::parse(FEED).as_object();
     testFeedPtr->pub(json);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED))).Times(1);
     ctx.run();
-    EXPECT_EQ(receivedFeedMessage(), FEED);
     sessionPtr.reset();
     EXPECT_EQ(testFeedPtr->count(), 0);
     testFeedPtr->pub(json);
