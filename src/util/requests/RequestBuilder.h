@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Expected.h"
+#include "util/requests/Types.h"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/beast.hpp>
@@ -32,30 +33,9 @@
 #include <chrono>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace util::requests {
-
-/**
- * @brief Error type for HTTP requests
- */
-struct RequestError {
-    /**
-     * @brief Construct a new Request Error object
-     *
-     * @param message error message
-     */
-    explicit RequestError(std::string message);
-
-    /**
-     * @brief Construct a new Request Error object
-     *
-     * @param message error message
-     * @param ec error code from boost::beast
-     */
-    RequestError(std::string msg, boost::beast::error_code const& ec);
-
-    std::string message;
-};
 
 /**
  * @brief Builder for HTTP requests
@@ -79,11 +59,19 @@ public:
      * @brief Add a header to the request
      *
      * @param header header to add
-     * @param value value of the header
      * @return reference to itself
      */
     RequestBuilder&
-    addHeader(boost::beast::http::field header, std::string value);
+    addHeader(HttpHeader const& header);
+
+    /**
+     * @brief Add headers to the request
+     *
+     * @param headers headers to add
+     * @return reference to itself
+     */
+    RequestBuilder&
+    addHeaders(std::vector<HttpHeader> const& headers);
 
     /**
      * @brief Add body or data to the request
@@ -118,6 +106,9 @@ public:
     /**
      * @brief Perform a GET request asynchronously
      *
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
+     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
+     *
      * @param yield yield context
      * @return expected response or error
      */
@@ -126,6 +117,9 @@ public:
 
     /**
      * @brief Perform a POST request asynchronously
+     *
+     * @note It is not thread-safe to call get() and post() of the same RequestBuilder from multiple threads. But it is
+     * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
      *
      * @param yield yield context
      * @return expected response or error

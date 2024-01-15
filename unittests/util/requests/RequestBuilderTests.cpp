@@ -45,7 +45,7 @@ using namespace boost::beast;
 struct RequestBuilderTestBundle {
     std::string testName;
     http::verb method;
-    std::vector<std::pair<http::field, std::string>> headers;
+    std::vector<HttpHeader> headers;
     std::string target;
 };
 
@@ -80,8 +80,7 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_P(RequestBuilderTest, simpleRequest)
 {
-    for (auto const& [header, value] : GetParam().headers)
-        builder.addHeader(header, value);
+    builder.addHeaders(GetParam().headers);
     builder.setTarget(GetParam().target);
 
     server.handleRequest(

@@ -164,6 +164,8 @@ target_sources (clio PRIVATE
   src/util/prometheus/Prometheus.cpp
   src/util/Random.cpp
   src/util/requests/RequestBuilder.cpp
+  src/util/requests/Types.cpp
+  src/util/requests/WsConnection.cpp
   src/util/Taggable.cpp
   src/util/TerminationHandler.cpp
   src/util/TxUtils.cpp

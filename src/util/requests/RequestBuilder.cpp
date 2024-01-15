@@ -20,6 +20,7 @@
 #include "util/requests/RequestBuilder.h"
 
 #include "util/Expected.h"
+#include "util/requests/Types.h"
 
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -40,22 +41,13 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 namespace util::requests {
 
 namespace beast = boost::beast;
 namespace http = beast::http;
 using tcp = boost::asio::ip::tcp;
-
-RequestError::RequestError(std::string message) : message(std::move(message))
-{
-}
-
-RequestError::RequestError(std::string msg, beast::error_code const& ec) : message(std::move(msg))
-{
-    message.append(": ");
-    message.append(ec.message());
-}
 
 RequestBuilder::RequestBuilder(std::string host, std::string port) : host_(std::move(host)), port_(std::move(port))
 {
@@ -64,9 +56,17 @@ RequestBuilder::RequestBuilder(std::string host, std::string port) : host_(std::
 }
 
 RequestBuilder&
-RequestBuilder::addHeader(boost::beast::http::field header, std::string value)
+RequestBuilder::addHeader(HttpHeader const& header)
 {
-    request_.set(header, value);
+    request_.set(header.name, header.value);
+    return *this;
+}
+
+RequestBuilder&
+RequestBuilder::addHeaders(std::vector<HttpHeader> const& headers)
+{
+    for (auto const& header : headers)
+        addHeader(header);
     return *this;
 }
 
