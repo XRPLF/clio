@@ -21,7 +21,7 @@ runs:
         retention-days: 30
 
     - name: Upload coverage report
-      uses: Wandalen/wretry.action@1.3.0
+      uses: Wandalen/wretry.action@1.2.0
       with:
         action: codecov/codecov-action@v3
         with: |
