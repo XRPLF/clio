@@ -8,7 +8,8 @@ on:
     paths:
       - .clang_tidy
       - .github/workflows/clang-tidy.yml
-
+  workflow_call:
+    secrets: inherit
 jobs:
   clang_tidy:
     runs-on: [self-hosted, Linux]
