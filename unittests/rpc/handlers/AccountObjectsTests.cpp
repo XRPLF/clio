@@ -1629,3 +1629,92 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
         EXPECT_EQ(*output, json::parse(expectedOut));
     });
 }
+
+TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTIssuanceType)
+{
+    backend->setRange(MINSEQ, MAXSEQ);
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    EXPECT_CALL(*backend, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    EXPECT_CALL(*backend, doFetchLedgerObject(ownerDirKk, 30, _)).WillOnce(Return(ownerDir.getSerializer().peekData()));
+
+    // nft null
+    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    EXPECT_CALL(*backend, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+
+    std::vector<Blob> bbs;
+    // put 1 mpt issuance
+    auto const issuanceObject = CreateMPTIssuanceObject(ACCOUNT, 2, "metadata");
+    bbs.push_back(issuanceObject.getSerializer().peekData());
+
+    EXPECT_CALL(*backend, doFetchLedgerObjects).WillOnce(Return(bbs));
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "type": "mpt_issuance"
+        }})",
+        ACCOUNT
+    ));
+
+    auto const handler = AnyHandler{AccountObjectsHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        auto const& accountObjects = output->as_object().at("account_objects").as_array();
+        ASSERT_EQ(accountObjects.size(), 1);
+        EXPECT_EQ(accountObjects.front().at("LedgerEntryType").as_string(), "MPTokenIssuance");
+
+        // make sure mptID is synethetically parsed if object is mptIssuance
+        EXPECT_EQ(accountObjects.front().at("mpt_issuance_id").as_string(), ripple::to_string(ripple::getMptID(GetAccountIDWithString(ACCOUNT), 2)));
+    });
+}
+
+TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTokenType)
+{
+    backend->setRange(MINSEQ, MAXSEQ);
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+
+    auto const account = GetAccountIDWithString(ACCOUNT);
+    auto const accountKk = ripple::keylet::account(account).key;
+    EXPECT_CALL(*backend, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}}, INDEX1);
+    auto const ownerDirKk = ripple::keylet::ownerDir(account).key;
+    EXPECT_CALL(*backend, doFetchLedgerObject(ownerDirKk, 30, _)).WillOnce(Return(ownerDir.getSerializer().peekData()));
+
+    // nft null
+    auto const nftMaxKK = ripple::keylet::nftpage_max(account).key;
+    EXPECT_CALL(*backend, doFetchLedgerObject(nftMaxKK, 30, _)).WillOnce(Return(std::nullopt));
+
+    std::vector<Blob> bbs;
+    // put 1 mpt issuance
+    auto const mptokenObject =CreateMPTokenObject(ACCOUNT, ripple::getMptID(GetAccountIDWithString(ACCOUNT), 2));
+    bbs.push_back(mptokenObject.getSerializer().peekData());
+
+    EXPECT_CALL(*backend, doFetchLedgerObjects).WillOnce(Return(bbs));
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "account": "{}",
+            "type": "mptoken"
+        }})",
+        ACCOUNT
+    ));
+
+    auto const handler = AnyHandler{AccountObjectsHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        auto const& accountObjects = output->as_object().at("account_objects").as_array();
+        ASSERT_EQ(accountObjects.size(), 1);
+        EXPECT_EQ(accountObjects.front().at("LedgerEntryType").as_string(), "MPToken");
+    });
+}
