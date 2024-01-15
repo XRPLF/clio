@@ -6,7 +6,7 @@ runs:
     - name: Run tests
       shell: bash
       run: |
-        build/clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+        build/clio_tests --backend_host=scylladb
 
     - name: Run gcovr
       shell: bash

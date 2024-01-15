@@ -39,6 +39,15 @@ jobs:
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
+    services:
+      scylladb:
+        image: ${{ (matrix.code_coverage) && 'scylladb/scylla' || '' }}
+        options: >-
+          --health-cmd "cqlsh -e 'describe cluster'" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
         with:

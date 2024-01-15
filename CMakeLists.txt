@@ -187,6 +187,7 @@ if (tests)
     unittests/ProfilerTests.cpp
     unittests/JsonUtilTests.cpp
     unittests/DOSGuardTests.cpp
+    unittests/util/TestGlobals.cpp
     unittests/util/AssertTests.cpp
     unittests/util/BatchingTests.cpp
     unittests/util/TestObject.cpp

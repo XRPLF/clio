@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,24 +17,29 @@
 */
 //==============================================================================
 
-#include "util/TerminationHandler.h"
-#include "util/TestGlobals.h"
-#include "util/prometheus/Prometheus.h"
+#pragma once
 
-#include <gtest/gtest.h>
+#include <string>
 
 /*
- * Supported custom command line options for clio_tests:
- *   --backend_host=<host>         - sets the cassandra/scylladb host for backend tests
- *   --backend_keyspace=<keyspace> - sets the cassandra/scylladb keyspace for backend tests
+ * Contains global variables for use in tests.
  */
-int
-main(int argc, char* argv[])
-{
-    util::setTerminationHandler();
-    PrometheusService::init();
-    testing::InitGoogleTest(&argc, argv);
-    TestGlobals::instance().parse(argc, argv);
+struct TestGlobals {
+    std::string backendHost = "127.0.0.1";
+    std::string backendKeyspace = "clio_test";
 
-    return RUN_ALL_TESTS();
-}
+    static TestGlobals&
+    instance();
+
+    void
+    parse(int argc, char* argv[]);
+
+private:
+    TestGlobals() = default;
+    TestGlobals(TestGlobals const&) = delete;
+    TestGlobals(TestGlobals&&) = delete;
+    TestGlobals&
+    operator=(TestGlobals const&) = delete;
+    TestGlobals&
+    operator=(TestGlobals&&) = delete;
+};
