@@ -23,6 +23,7 @@
 #include <ripple/protocol/AccountID.h>
 
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
