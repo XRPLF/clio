@@ -6,6 +6,6 @@ on:
 
 jobs:
   on_fix_merge:
-    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.labels.*.name == '[CI] clang-tidy auto fixes' }}
+    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, '[CI] clang-tidy auto fixes') }}
     uses: ./.github/workflows/clang-tidy.yml
     secrets: inherit
