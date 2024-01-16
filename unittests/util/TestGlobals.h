@@ -36,6 +36,8 @@ struct TestGlobals {
 
 private:
     TestGlobals() = default;
+
+public:
     TestGlobals(TestGlobals const&) = delete;
     TestGlobals(TestGlobals&&) = delete;
     TestGlobals&
