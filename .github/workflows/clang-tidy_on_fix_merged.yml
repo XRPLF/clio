@@ -8,6 +8,10 @@ jobs:
   on_fix_merge:
     if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.title, '[CI] clang-tidy auto fixes') }}
     runs-on: ubuntu-20.04
+
+    permissions:
+      actions: write
+
     steps:
       - name: Run clang-tidy workflow
         shell: bash
