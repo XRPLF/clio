@@ -81,88 +81,88 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             },
             AccountTxParamTestCaseBundle{
                 "BinaryNotBool",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "binary": 1})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "binary": 1})",
                 "invalidParams",
                 "Invalid parameters."
             },
             AccountTxParamTestCaseBundle{
                 "BinaryNotBool_API_v1",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "binary": 1})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "binary": 1})",
                 std::nullopt,
                 std::nullopt,
                 1u
             },
             AccountTxParamTestCaseBundle{
                 "ForwardNotBool",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})",
                 "invalidParams",
                 "Invalid parameters."
             },
             AccountTxParamTestCaseBundle{
                 "ForwardNotBool_API_v1",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "forward": 1})",
                 std::nullopt,
                 std::nullopt,
                 1u
             },
             AccountTxParamTestCaseBundle{
                 "ledger_index_minNotInt",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index_min": "x"})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index_min": "x"})",
                 "invalidParams",
                 "Invalid parameters."
             },
             AccountTxParamTestCaseBundle{
                 "ledger_index_maxNotInt",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index_max": "x"})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index_max": "x"})",
                 "invalidParams",
                 "Invalid parameters."
             },
             AccountTxParamTestCaseBundle{
                 "ledger_indexInvalid",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})",
                 "invalidParams",
                 "ledgerIndexMalformed"
             },
             AccountTxParamTestCaseBundle{
                 "ledger_hashInvalid",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})",
                 "invalidParams",
                 "ledger_hashMalformed"
             },
             AccountTxParamTestCaseBundle{
                 "ledger_hashNotString",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})",
                 "invalidParams",
                 "ledger_hashNotString"
             },
             AccountTxParamTestCaseBundle{
                 "limitNotInt",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "123"})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": "123"})",
                 "invalidParams",
                 "Invalid parameters."
             },
             AccountTxParamTestCaseBundle{
                 "limitNegative",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": -1})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": -1})",
                 "invalidParams",
                 "Invalid parameters."
             },
             AccountTxParamTestCaseBundle{
                 "limitZero",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 0})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "limit": 0})",
                 "invalidParams",
                 "Invalid parameters."
             },
             AccountTxParamTestCaseBundle{
                 "MarkerNotObject",
-                R"({"account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 101})",
+                R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "marker": 101})",
                 "invalidParams",
                 "invalidMarker"
             },
             AccountTxParamTestCaseBundle{
                 "MarkerMissingSeq",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "marker": {"ledger": 123}
             })",
                 "invalidParams",
@@ -171,8 +171,8 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "MarkerMissingLedger",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-                "marker":{"seq": 123}
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "marker": {"seq": 123}
             })",
                 "invalidParams",
                 "Required field 'ledger' missing"
@@ -180,7 +180,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "MarkerLedgerNotInt",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "marker": 
                 {
                     "seq": "string",
@@ -193,7 +193,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "MarkerSeqNotInt",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "marker": 
                 {
                     "ledger": "string",
@@ -206,7 +206,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMinLessThanMinSeq",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_min": 9
             })",
                 "lgrIdxMalformed",
@@ -215,7 +215,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxLargeThanMaxSeq",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 31
             })",
                 "lgrIdxMalformed",
@@ -224,7 +224,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxLargeThanMaxSeq_API_v1",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 31
             })",
                 std::nullopt,
@@ -234,7 +234,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxSmallerThanMinSeq",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 9
             })",
                 "lgrIdxMalformed",
@@ -243,7 +243,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxSmallerThanMinSeq_API_v1",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 9
             })",
                 "lgrIdxsInvalid",
@@ -253,7 +253,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMinSmallerThanMinSeq",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_min": 9
             })",
                 "lgrIdxMalformed",
@@ -262,7 +262,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMinSmallerThanMinSeq_API_v1",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_min": 9
             })",
                 std::nullopt,
@@ -272,7 +272,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMinLargerThanMaxSeq",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_min": 31
             })",
                 "lgrIdxMalformed",
@@ -281,7 +281,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMinLargerThanMaxSeq_API_v1",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_min": 31
             })",
                 "lgrIdxsInvalid",
@@ -291,7 +291,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxLessThanLedgerIndexMin",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 11,
                 "ledger_index_min": 20
             })",
@@ -301,7 +301,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxLessThanLedgerIndexMin_API_v1",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 11,
                 "ledger_index_min": 20
             })",
@@ -312,7 +312,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxMinAndLedgerIndex",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_index": 10
@@ -323,7 +323,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxMinAndLedgerIndexValidated",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_index": "validated"
@@ -334,7 +334,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxMinAndLedgerIndex_API_v1",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_index": 10
@@ -347,7 +347,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 "LedgerIndexMaxMinAndLedgerHash",
                 fmt::format(
                     R"({{
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_hash": "{}"
@@ -361,7 +361,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 "LedgerIndexMaxMinAndLedgerHash_API_v1",
                 fmt::format(
                     R"({{
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_hash": "{}"
@@ -375,7 +375,7 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
             AccountTxParamTestCaseBundle{
                 "LedgerIndexMaxMinAndLedgerIndexValidated_API_v1",
                 R"({
-                "account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index_max": 20,
                 "ledger_index_min": 11,
                 "ledger_index": "validated"
@@ -384,6 +384,15 @@ struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                 std::nullopt,
                 1u
             },
+            AccountTxParamTestCaseBundle{
+                "InvalidTxType",
+                R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "tx_type": "unknow"
+            })",
+                "invalidParams",
+                "Invalid field 'tx_type'."
+            }
         };
     };
 };
@@ -1793,6 +1802,58 @@ generateTransactionTypeTestValues()
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
                 "ledger_index": "validated",
                 "tx_type": "Payment"
+            })",
+            R"([
+                {
+                    "meta": {
+                        "AffectedNodes": [
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "Balance": "22"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        },
+                        {
+                            "ModifiedNode": {
+                                "FinalFields": {
+                                    "Account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                    "Balance": "23"
+                                },
+                                "LedgerEntryType": "AccountRoot"
+                            }
+                        }],
+                        "TransactionIndex": 0,
+                        "TransactionResult": "tesSUCCESS",
+                        "delivered_amount": "unavailable"
+                    },
+                    "tx": {
+                        "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                        "Amount": "1",
+                        "DeliverMax": "1",
+                        "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                        "Fee": "1",
+                        "Sequence": 32,
+                        "SigningPubKey": "74657374",
+                        "TransactionType": "Payment",
+                        "hash": "51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                        "ledger_index": 30,
+                        "inLedger": 30,
+                        "date": 1
+                    },
+                    "validated": true
+                }
+            ])",
+            1u
+        },
+        AccountTxTransactionBundle{
+            "Lowercase_Payment",
+            R"({
+                "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "ledger_index": "validated",
+                "tx_type": "payment"
             })",
             R"([
                 {
