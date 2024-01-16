@@ -22,6 +22,12 @@ include (CMake/Ccache.cmake)
 include (CheckCXXCompilerFlag)
 include (CMake/ClangTidy.cmake)
 
+# Set coverage build options
+if (tests AND coverage)
+  include (CMake/CodeCoverage.cmake)
+  append_coverage_compiler_flags()
+endif()
+
 if (verbose)
   set (CMAKE_VERBOSE_MAKEFILE TRUE)
 endif ()
@@ -100,6 +106,10 @@ target_sources (clio PRIVATE
   src/etl/impl/ForwardCache.cpp
   ## Feed
   src/feed/SubscriptionManager.cpp
+  src/feed/impl/TransactionFeed.cpp
+  src/feed/impl/LedgerFeed.cpp
+  src/feed/impl/ProposedTransactionFeed.cpp
+  src/feed/impl/SingleFeedBase.cpp
   ## Web
   src/web/impl/AdminVerificationStrategy.cpp
   src/web/IntervalSweepHandler.cpp
@@ -107,6 +117,7 @@ target_sources (clio PRIVATE
   ## RPC
   src/rpc/Errors.cpp
   src/rpc/Factories.cpp
+  src/rpc/AMMHelpers.cpp
   src/rpc/RPCHelpers.cpp
   src/rpc/Counters.cpp
   src/rpc/WorkQueue.cpp
@@ -124,6 +135,7 @@ target_sources (clio PRIVATE
   src/rpc/handlers/AccountObjects.cpp
   src/rpc/handlers/AccountOffers.cpp
   src/rpc/handlers/AccountTx.cpp
+  src/rpc/handlers/AMMInfo.cpp
   src/rpc/handlers/BookChanges.cpp
   src/rpc/handlers/BookOffers.cpp
   src/rpc/handlers/DepositAuthorized.cpp
@@ -154,6 +166,7 @@ target_sources (clio PRIVATE
   src/util/Random.cpp
   src/util/Taggable.cpp
   src/util/TerminationHandler.cpp
+  src/util/TxUtil.cpp
 )
 
 # Clio server
@@ -176,9 +189,10 @@ if (tests)
     unittests/ProfilerTests.cpp
     unittests/JsonUtilTests.cpp
     unittests/DOSGuardTests.cpp
-    unittests/SubscriptionTests.cpp
-    unittests/SubscriptionManagerTests.cpp
+    unittests/util/TestGlobals.cpp
     unittests/util/AssertTests.cpp
+    unittests/util/BatchingTests.cpp
+    unittests/util/TxUtilTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
     ## Prometheus support
@@ -244,6 +258,7 @@ if (tests)
     unittests/rpc/handlers/BookChangesTests.cpp
     unittests/rpc/handlers/LedgerTests.cpp
     unittests/rpc/handlers/VersionHandlerTests.cpp
+    unittests/rpc/handlers/AMMInfoTests.cpp
     # Backend
     unittests/data/BackendFactoryTests.cpp
     unittests/data/BackendCountersTests.cpp
@@ -258,7 +273,16 @@ if (tests)
     unittests/web/ServerTests.cpp
     unittests/web/RPCServerHandlerTests.cpp
     unittests/web/WhitelistHandlerTests.cpp
-    unittests/web/SweepHandlerTests.cpp)
+    unittests/web/SweepHandlerTests.cpp
+    # Feed
+    unittests/feed/SubscriptionManagerTests.cpp
+    unittests/feed/SingleFeedBaseTests.cpp
+    unittests/feed/ProposedTransactionFeedTests.cpp
+    unittests/feed/BookChangesFeedTests.cpp
+    unittests/feed/LedgerFeedTests.cpp
+    unittests/feed/TransactionFeedTests.cpp
+    unittests/feed/ForwardFeedTests.cpp
+    unittests/feed/TrackableSignalTests.cpp)
 
   include (CMake/deps/gtest.cmake)
 
@@ -272,12 +296,31 @@ if (tests)
   target_include_directories (${TEST_TARGET} PRIVATE unittests)
   target_link_libraries (${TEST_TARGET} PUBLIC clio gtest::gtest)
 
-  # Generate `clio_tests-ccov` if coverage is enabled
-  # Note: use `make clio_tests-ccov` to generate report
+  # Generate `coverage_report` target if coverage is enabled
   if (coverage)
-    target_compile_definitions(${TEST_TARGET} PRIVATE COVERAGE_ENABLED)
-    include (CMake/Coverage.cmake)
-    add_coverage (${TEST_TARGET})
+    if (DEFINED CODE_COVERAGE_REPORT_FORMAT)
+      set(CODE_COVERAGE_FORMAT ${CODE_COVERAGE_REPORT_FORMAT})
+    else()
+      set(CODE_COVERAGE_FORMAT html-details)
+    endif()
+
+    if (DEFINED CODE_COVERAGE_TESTS_ARGS)
+      set(TESTS_ADDITIONAL_ARGS ${CODE_COVERAGE_TESTS_ARGS})
+      separate_arguments(TESTS_ADDITIONAL_ARGS)
+    else()
+      set(TESTS_ADDITIONAL_ARGS "")
+    endif()
+
+    set (GCOVR_ADDITIONAL_ARGS --exclude-throw-branches -s)
+
+    setup_target_for_coverage_gcovr(
+        NAME coverage_report
+        FORMAT ${CODE_COVERAGE_FORMAT}
+        EXECUTABLE clio_tests
+        EXECUTABLE_ARGS --gtest_brief=1 ${TESTS_ADDITIONAL_ARGS}
+        EXCLUDE "unittests"
+        DEPENDENCIES clio_tests
+    )
   endif ()
 endif ()
 

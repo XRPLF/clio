@@ -21,12 +21,15 @@
 
 #include "data/DBHelpers.h"
 #include "data/Types.h"
+#include "util/Assert.h"
 
 #include <ripple/basics/Blob.h>
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/chrono.h>
+#include <ripple/protocol/AMMCore.h>
 #include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Issue.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
@@ -52,12 +55,23 @@
 #include <vector>
 
 constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
-constexpr static auto CURRENCY = "03930D02208264E2E40EC1B0C09E4DB96EE197B1";
 
 ripple::AccountID
 GetAccountIDWithString(std::string_view id)
 {
     return ripple::parseBase58<ripple::AccountID>(std::string(id)).value();
+}
+
+ripple::uint256
+GetAccountKey(std::string_view id)
+{
+    return ripple::keylet::account(GetAccountIDWithString(id)).key;
+}
+
+ripple::uint256
+GetAccountKey(ripple::AccountID const& acc)
+{
+    return ripple::keylet::account(acc).key;
 }
 
 ripple::LedgerInfo
@@ -801,20 +815,81 @@ CreateAMMObject(
     std::string_view assetCurrency,
     std::string_view assetIssuer,
     std::string_view asset2Currency,
-    std::string_view asset2Issuer
+    std::string_view asset2Issuer,
+    std::string_view lpTokenBalanceIssueCurrency,
+    uint32_t lpTokenBalanceIssueAmount,
+    uint16_t tradingFee,
+    uint64_t ownerNode
 )
 {
     auto amm = ripple::STObject(ripple::sfLedgerEntry);
     amm.setFieldU16(ripple::sfLedgerEntryType, ripple::ltAMM);
     amm.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId));
-    amm.setFieldU16(ripple::sfTradingFee, 5);
-    amm.setFieldU64(ripple::sfOwnerNode, 0);
+    amm.setFieldU16(ripple::sfTradingFee, tradingFee);
+    amm.setFieldU64(ripple::sfOwnerNode, ownerNode);
     amm.setFieldIssue(ripple::sfAsset, ripple::STIssue{ripple::sfAsset, GetIssue(assetCurrency, assetIssuer)});
     amm.setFieldIssue(ripple::sfAsset2, ripple::STIssue{ripple::sfAsset2, GetIssue(asset2Currency, asset2Issuer)});
     ripple::Issue const issue1(
-        ripple::Currency{CURRENCY}, ripple::parseBase58<ripple::AccountID>(std::string(accountId)).value()
+        ripple::Currency{lpTokenBalanceIssueCurrency},
+        ripple::parseBase58<ripple::AccountID>(std::string(accountId)).value()
     );
-    amm.setFieldAmount(ripple::sfLPTokenBalance, ripple::STAmount(issue1, 100));
+    amm.setFieldAmount(ripple::sfLPTokenBalance, ripple::STAmount(issue1, lpTokenBalanceIssueAmount));
     amm.setFieldU32(ripple::sfFlags, 0);
     return amm;
+}
+
+void
+AMMAddVoteSlot(ripple::STObject& amm, ripple::AccountID const& accountId, uint16_t tradingFee, uint32_t voteWeight)
+{
+    if (!amm.isFieldPresent(ripple::sfVoteSlots))
+        amm.setFieldArray(ripple::sfVoteSlots, ripple::STArray{});
+
+    auto& arr = amm.peekFieldArray(ripple::sfVoteSlots);
+    auto slot = ripple::STObject(ripple::sfVoteEntry);
+    slot.setAccountID(ripple::sfAccount, accountId);
+    slot.setFieldU16(ripple::sfTradingFee, tradingFee);
+    slot.setFieldU32(ripple::sfVoteWeight, voteWeight);
+    arr.push_back(slot);
+}
+
+void
+AMMSetAuctionSlot(
+    ripple::STObject& amm,
+    ripple::AccountID const& accountId,
+    ripple::STAmount price,
+    uint16_t discountedFee,
+    uint32_t expiration,
+    std::vector<ripple::AccountID> const& authAccounts
+)
+{
+    ASSERT(expiration >= 24 * 3600, "Expiration must be at least 24 hours");
+
+    if (!amm.isFieldPresent(ripple::sfAuctionSlot))
+        amm.makeFieldPresent(ripple::sfAuctionSlot);
+
+    auto& auctionSlot = amm.peekFieldObject(ripple::sfAuctionSlot);
+    auctionSlot.setAccountID(ripple::sfAccount, accountId);
+    auctionSlot.setFieldAmount(ripple::sfPrice, price);
+    auctionSlot.setFieldU16(ripple::sfDiscountedFee, discountedFee);
+    auctionSlot.setFieldU32(ripple::sfExpiration, expiration);
+
+    if (not authAccounts.empty()) {
+        ripple::STArray accounts;
+
+        for (auto const& acc : authAccounts) {
+            ripple::STObject authAcc(ripple::sfAuthAccount);
+            authAcc.setAccountID(ripple::sfAccount, acc);
+            accounts.push_back(authAcc);
+        }
+
+        auctionSlot.setFieldArray(ripple::sfAuthAccounts, accounts);
+    }
+}
+
+ripple::Currency
+CreateLPTCurrency(std::string_view assetCurrency, std::string_view asset2Currency)
+{
+    return ripple::ammLPTCurrency(
+        ripple::to_currency(std::string(assetCurrency)), ripple::to_currency(std::string(asset2Currency))
+    );
 }

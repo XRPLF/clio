@@ -23,7 +23,6 @@
 #include "rpc/common/Types.h"
 #include "rpc/handlers/DepositAuthorized.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/TestObject.h"
 
 #include <boost/json/parse.hpp>
@@ -180,7 +179,7 @@ TEST_P(DepositAuthorizedParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
 
@@ -194,15 +193,13 @@ TEST_P(DepositAuthorizedParameterTest, InvalidParams)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(RANGEMIN);  // min
-    mockBackendPtr->updateRange(RANGEMAX);  // max
+    backend->setRange(RANGEMIN, RANGEMAX);
 
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "source_account": "{}", 
@@ -225,15 +222,13 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(RANGEMIN);  // min
-    mockBackendPtr->updateRange(RANGEMAX);  // max
+    backend->setRange(RANGEMIN, RANGEMAX);
 
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "source_account": "{}", 
@@ -256,15 +251,13 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(RANGEMIN);  // min
-    mockBackendPtr->updateRange(RANGEMAX);  // max
+    backend->setRange(RANGEMIN, RANGEMAX);
 
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
         auto const req = json::parse(fmt::format(
             R"({{
                 "source_account": "{}", 
@@ -287,17 +280,15 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
 
 TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
 
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -311,7 +302,7 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
     ));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_FALSE(output);
@@ -324,21 +315,19 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 
 TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
 
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(_, _, _)).WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
         .WillByDefault(Return(std::optional<Blob>{}));
 
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -352,7 +341,7 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
     ));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_FALSE(output);
@@ -375,18 +364,16 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
             "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
         })";
 
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
 
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -400,7 +387,7 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
     ));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -420,23 +407,21 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
 
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
 
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto const account2Root = CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX2, 2);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, _, _))
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -450,7 +435,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
     ));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -470,24 +455,22 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
 
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
 
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::nullopt));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::nullopt));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, _, _))
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -501,7 +484,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
     ));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -521,24 +504,22 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
 
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
 
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
 
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, _, _))
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -552,7 +533,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
     ));
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{DepositAuthorizedHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);

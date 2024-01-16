@@ -20,29 +20,21 @@
 #pragma once
 
 #include "util/Taggable.h"
+#include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
 
 #include <boost/beast/http/status.hpp>
+#include <gmock/gmock.h>
 
 #include <memory>
 #include <string>
 
 struct MockSession : public web::ConnectionBase {
-    std::string message;
-    void
-    send(std::shared_ptr<std::string> msg_type) override
-    {
-        message += std::string(msg_type->data());
-    }
+    MOCK_METHOD(void, send, (std::shared_ptr<std::string>), (override));
+    MOCK_METHOD(void, send, (std::string&&, boost::beast::http::status), (override));
+    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
 
-    void
-    // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
-    send(std::string&& msg, boost::beast::http::status = boost::beast::http::status::ok) override
-    {
-        message += msg;
-    }
-
-    MockSession(util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "")
+    MockSession() : web::ConnectionBase(tagDecoratorFactory, "")
     {
     }
 };

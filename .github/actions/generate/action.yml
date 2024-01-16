@@ -12,6 +12,10 @@ inputs:
     description: Build type for third-party libraries and clio. Could be 'Release', 'Debug'
     required: true
     default: 'Release'
+  code_coverage:
+    description: Whether conan's coverage option should be on or not
+    required: true
+    default: 'false'
 runs:
   using: composite
   steps:
@@ -23,9 +27,10 @@ runs:
       shell: bash
       env:
         BUILD_OPTION: "${{ inputs.conan_cache_hit == 'true' && 'missing' || '' }}"
+        CODE_COVERAGE: "${{ inputs.code_coverage == 'true' && 'True' || 'False' }}"
       run: |
         cd build
-        conan install .. -of . -b $BUILD_OPTION -s build_type=${{ inputs.build_type }} -o clio:tests=True -o clio:lint=False --profile ${{ inputs.conan_profile }}
+        conan install .. -of . -b $BUILD_OPTION -s build_type=${{ inputs.build_type }} -o clio:tests=True -o clio:lint=False -o clio:coverage="${CODE_COVERAGE}" --profile ${{ inputs.conan_profile }}
 
     - name: Run cmake
       shell: bash
@@ -33,4 +38,4 @@ runs:
         BUILD_TYPE: "${{ inputs.build_type }}"
       run: |
         cd build
-        cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} .. -G Ninja
+        cmake -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=${{ inputs.build_type }} ${{ inputs.extra_cmake_args }} .. -G Ninja

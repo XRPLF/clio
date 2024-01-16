@@ -23,7 +23,6 @@
 #include "rpc/common/Types.h"
 #include "rpc/handlers/NFTSellOffers.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/TestObject.h"
 
 #include <boost/asio/spawn.hpp>
@@ -54,7 +53,7 @@ class RPCNFTSellOffersHandlerTest : public HandlerBaseTest {};
 TEST_F(RPCNFTSellOffersHandlerTest, LimitNotInt)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "nft_id": "{}", 
@@ -73,7 +72,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNotInt)
 TEST_F(RPCNFTSellOffersHandlerTest, LimitNegative)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "nft_id": "{}", 
@@ -92,7 +91,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNegative)
 TEST_F(RPCNFTSellOffersHandlerTest, LimitZero)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "nft_id": "{}", 
@@ -111,7 +110,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitZero)
 TEST_F(RPCNFTSellOffersHandlerTest, NonHexLedgerHash)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "nft_id": "{}", 
@@ -131,7 +130,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonHexLedgerHash)
 TEST_F(RPCNFTSellOffersHandlerTest, NonStringLedgerHash)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{
                 "nft_id": "{}", 
@@ -151,7 +150,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonStringLedgerHash)
 TEST_F(RPCNFTSellOffersHandlerTest, InvalidLedgerIndexString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "nft_id": "{}", 
@@ -172,7 +171,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidLedgerIndexString)
 TEST_F(RPCNFTSellOffersHandlerTest, NFTIDInvalidFormat)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(R"({ 
             "nft_id": "00080000B4F4AFC5FBCBD76873F18006173D2193467D3EE7"
         })");
@@ -188,7 +187,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDInvalidFormat)
 TEST_F(RPCNFTSellOffersHandlerTest, NFTIDNotString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(R"({ 
             "nft_id": 12
         })");
@@ -204,12 +203,10 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDNotString)
 // error case ledger non exist via hash
 TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
     // mock fetchLedgerByHash return empty
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -220,7 +217,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
         LEDGERHASH
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -233,13 +230,10 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
 // error case ledger non exist via index
 TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
             "nft_id": "{}",
@@ -248,7 +242,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
         NFTID
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -261,14 +255,11 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
 // idk why this case will happen in reality
 TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 31);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
             "nft_id": "{}",
@@ -278,7 +269,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
         LEDGERHASH
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -290,13 +281,10 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
 // error case ledger > max seq via index
 TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     // no need to check from db, call fetchLedgerBySequence 0 time
     // differ from previous logic
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(0);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(0);
     auto const input = json::parse(fmt::format(
         R"({{ 
             "nft_id": "{}",
@@ -305,7 +293,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
         NFTID
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -317,15 +305,12 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
 // error case when nft is not found
 TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::nullopt));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{
             "nft_id": "{}",
@@ -335,7 +320,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
         LEDGERHASH
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -347,7 +332,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
 TEST_F(RPCNFTSellOffersHandlerTest, MarkerNotString)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "nft_id": "{}", 
@@ -369,7 +354,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, MarkerNotString)
 TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "nft_id": "{}",
@@ -385,7 +370,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
         EXPECT_EQ(err.at("error_message").as_string(), "markerMalformed");
     });
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "nft_id": "{}", 
@@ -422,29 +407,27 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
             }
         ]
     })";
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+
+    backend->setRange(10, 30);
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // return owner index containing 2 indexes
     auto const directory = ripple::keylet::nft_sells(ripple::uint256{NFTID});
     auto const ownerDir = CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(directory.key, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(directory.key, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(directory.key, testing::_, testing::_)).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObject(directory.key, testing::_, testing::_)).Times(2);
 
     // return two nft sell offers
     std::vector<Blob> bbs;
     auto const offer = CreateNFTSellOffer(NFTID, ACCOUNT);
     bbs.push_back(offer.getSerializer().peekData());
     bbs.push_back(offer.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -453,7 +436,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
         NFTID
     ));
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{NFTSellOffersHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -464,13 +447,10 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
 // normal case when provided with nft_id and limit
 TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // return owner index
     std::vector<ripple::uint256> indexes;
@@ -484,11 +464,11 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
     }
     ripple::STObject const ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(ownerDir.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -498,7 +478,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
         NFTID
     ));
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{NFTSellOffersHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -513,13 +493,10 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
 // normal case when provided with nft_id, limit and marker
 TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // return owner index
     std::vector<ripple::uint256> indexes;
@@ -537,19 +514,19 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
     // first is nft offer object
     auto const cursor = ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"};
     auto const first = ripple::keylet::nftoffer(cursor);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(first.key, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(first.key, testing::_, testing::_))
         .WillByDefault(Return(cursorSellOffer.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(first.key, testing::_, testing::_)).Times(1);
+    EXPECT_CALL(*backend, doFetchLedgerObject(first.key, testing::_, testing::_)).Times(1);
 
     auto const directory = ripple::keylet::nft_sells(ripple::uint256{NFTID});
     auto const startHint = 0ul;  // offer node is hardcoded to 0ul
     auto const secondKey = ripple::keylet::page(directory, startHint).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(secondKey, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(secondKey, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(secondKey, testing::_, testing::_)).Times(3);
+    EXPECT_CALL(*backend, doFetchLedgerObject(secondKey, testing::_, testing::_)).Times(3);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -560,7 +537,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
         NFTID
     ));
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{NFTSellOffersHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -577,13 +554,10 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
 // nothing left after reading remaining 50 entries
 TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimit)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(3);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(3);
 
     // return owner index
     std::vector<ripple::uint256> indexes;
@@ -601,22 +575,22 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
     // first is nft offer object
     auto const cursor = ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"};
     auto const first = ripple::keylet::nftoffer(cursor);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(first.key, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(first.key, testing::_, testing::_))
         .WillByDefault(Return(cursorSellOffer.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(first.key, testing::_, testing::_)).Times(1);
+    EXPECT_CALL(*backend, doFetchLedgerObject(first.key, testing::_, testing::_)).Times(1);
 
     auto const directory = ripple::keylet::nft_sells(ripple::uint256{NFTID});
     auto const startHint = 0ul;  // offer node is hardcoded to 0ul
     auto const secondKey = ripple::keylet::page(directory, startHint).key;
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(secondKey, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(secondKey, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(secondKey, testing::_, testing::_)).Times(7);
+    EXPECT_CALL(*backend, doFetchLedgerObject(secondKey, testing::_, testing::_)).Times(7);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(3);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(3);
 
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{NFTSellOffersHandler{this->backend}};
         auto const input = json::parse(fmt::format(
             R"({{
                 "nft_id": "{}",
@@ -635,7 +609,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
     });
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "nft_id": "{}", 
@@ -648,7 +622,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
     });
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{NFTSellOffersHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "nft_id": "{}", 
@@ -663,22 +637,19 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
 
 TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // return owner index containing 2 indexes
     auto const directory = ripple::keylet::nft_sells(ripple::uint256{NFTID});
     auto const ownerDir =
         CreateOwnerDirLedgerObject(std::vector{NFTSellOffersHandler::LIMIT_MIN + 1, ripple::uint256{INDEX1}}, INDEX1);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(directory.key, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(directory.key, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(directory.key, testing::_, testing::_)).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObject(directory.key, testing::_, testing::_)).Times(2);
 
     // return two nft buy offers
     std::vector<Blob> bbs;
@@ -686,8 +657,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
     bbs.reserve(NFTSellOffersHandler::LIMIT_MIN + 1);
     for (auto i = 0; i < NFTSellOffersHandler::LIMIT_MIN + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -698,7 +669,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
         NFTSellOffersHandler::LIMIT_MIN - 1
     ));
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{NFTSellOffersHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
@@ -709,22 +680,19 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
 
 TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // return owner index containing 2 indexes
     auto const directory = ripple::keylet::nft_sells(ripple::uint256{NFTID});
     auto const ownerDir =
         CreateOwnerDirLedgerObject(std::vector{NFTSellOffersHandler::LIMIT_MAX + 1, ripple::uint256{INDEX1}}, INDEX1);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(directory.key, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(directory.key, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject(directory.key, testing::_, testing::_)).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObject(directory.key, testing::_, testing::_)).Times(2);
 
     // return two nft buy offers
     std::vector<Blob> bbs;
@@ -732,8 +700,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
     bbs.reserve(NFTSellOffersHandler::LIMIT_MAX + 1);
     for (auto i = 0; i < NFTSellOffersHandler::LIMIT_MAX + 1; i++)
         bbs.push_back(offer.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -744,7 +712,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
         NFTSellOffersHandler::LIMIT_MAX + 1
     ));
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{NFTSellOffersHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{NFTSellOffersHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);

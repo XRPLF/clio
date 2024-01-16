@@ -1,0 +1,11 @@
+name: On clang-tidy auto fixes merged
+on:
+  pull_request:
+    types: [closed]
+    branches: [develop]
+
+jobs:
+  on_fix_merge:
+    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.title, '[CI] clang-tidy auto fixes') }}
+    uses: ./.github/workflows/clang-tidy.yml
+    secrets: inherit

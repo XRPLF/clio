@@ -23,7 +23,6 @@
 #include "rpc/common/Types.h"
 #include "rpc/handlers/BookChanges.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/TestObject.h"
 
 #include <boost/json/parse.hpp>
@@ -100,7 +99,7 @@ TEST_P(BookChangesParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{BookChangesHandler{backend}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -112,17 +111,13 @@ TEST_P(BookChangesParameterTest, InvalidParams)
 
 TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    backend->setRange(MINSEQ, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerinfo
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto static const input = json::parse(R"({"ledger_index":30})");
-    auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{BookChangesHandler{backend}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
@@ -134,16 +129,13 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
 
 TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    backend->setRange(MINSEQ, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerinfo
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(std::nullopt));
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(std::nullopt));
 
     auto static const input = json::parse(R"({"ledger_index":"30"})");
-    auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{BookChangesHandler{backend}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
@@ -155,13 +147,10 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
 
 TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    backend->setRange(MINSEQ, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // return empty ledgerinfo
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
 
     auto static const input = json::parse(fmt::format(
@@ -170,7 +159,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
         }})",
         LEDGERHASH
     ));
-    auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{BookChangesHandler{backend}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
@@ -202,13 +191,10 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
                 }
             ]
         })";
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(MINSEQ);  // min
-    mockBackendPtr->updateRange(MAXSEQ);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence(MAXSEQ, _))
-        .WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, MAXSEQ)));
+
+    backend->setRange(MINSEQ, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, MAXSEQ)));
 
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
@@ -219,10 +205,10 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
 
-    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger).Times(1);
-    ON_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(MAXSEQ, _)).WillByDefault(Return(transactions));
+    EXPECT_CALL(*backend, fetchAllTransactionsInLedger).Times(1);
+    ON_CALL(*backend, fetchAllTransactionsInLedger(MAXSEQ, _)).WillByDefault(Return(transactions));
 
-    auto const handler = AnyHandler{BookChangesHandler{mockBackendPtr}};
+    auto const handler = AnyHandler{BookChangesHandler{backend}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(json::parse("{}"), Context{yield});
         ASSERT_TRUE(output);

@@ -28,8 +28,6 @@
 
 namespace rpc {
 
-struct RpcSpec;
-
 /**
  * @brief Specifies what a requirement used with @ref rpc::FieldSpec must provide.
  */

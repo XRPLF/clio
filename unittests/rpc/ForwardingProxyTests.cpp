@@ -71,7 +71,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfClioOnly)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -91,7 +91,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfProxied)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -111,7 +111,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfCurrentLedgerSpecified)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -131,7 +131,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfClosedLedgerSpecified)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -151,7 +151,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfAccountInfoWithQueueSpe
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -171,7 +171,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithQueueSpecifie
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -191,7 +191,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithFullSpecified
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -211,7 +211,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithAccountsSpeci
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -231,7 +231,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAccountInfoQueueIsFals
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -251,7 +251,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerQueueIsFalse)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -271,7 +271,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerFullIsFalse)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -291,7 +291,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerAccountsIsFalse)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -311,7 +311,7 @@ TEST_F(RPCForwardingProxyTest, ShouldNotForwardReturnsTrueIfAPIVersionIsV1)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -331,7 +331,7 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAPIVersionIsV2)
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -347,7 +347,7 @@ TEST_F(RPCForwardingProxyTest, ShouldNeverForwardSubscribe)
     auto const params = json::parse("{}");
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -363,7 +363,7 @@ TEST_F(RPCForwardingProxyTest, ShouldNeverForwardUnsubscribe)
     auto const params = json::parse("{}");
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -392,7 +392,7 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
     EXPECT_CALL(counters, rpcForwarded(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 
@@ -423,7 +423,7 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
     EXPECT_CALL(counters, rpcFailedToForward(method)).Times(1);
 
     runSpawn([&](auto yield) {
-        auto const range = mockBackendPtr->fetchLedgerRange();
+        auto const range = backend->fetchLedgerRange();
         auto const ctx =
             web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
 

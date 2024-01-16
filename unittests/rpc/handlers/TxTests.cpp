@@ -24,7 +24,6 @@
 #include "rpc/common/Types.h"
 #include "rpc/handlers/Tx.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/MockETLService.h"
 #include "util/TestObject.h"
 
@@ -140,7 +139,7 @@ class RPCTxTest : public HandlerBaseTest {};
 TEST_F(RPCTxTest, ExcessiveLgrRange)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -161,22 +160,20 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
 
 TEST_F(RPCTxTest, InvalidBinaryV1)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
         CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -193,7 +190,7 @@ TEST_F(RPCTxTest, InvalidBinaryV1)
 TEST_F(RPCTxTest, InvalidBinaryV2)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -214,7 +211,7 @@ TEST_F(RPCTxTest, InvalidBinaryV2)
 TEST_F(RPCTxTest, InvalidLgrRange)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -235,9 +232,7 @@ TEST_F(RPCTxTest, InvalidLgrRange)
 
 TEST_F(RPCTxTest, TxnNotFound)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillOnce(Return(std::optional<TransactionAndMetadata>{}));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
@@ -245,7 +240,7 @@ TEST_F(RPCTxTest, TxnNotFound)
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -264,11 +259,8 @@ TEST_F(RPCTxTest, TxnNotFound)
 
 TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
+    backend->setRange(10, 30);
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillOnce(Return(std::optional<TransactionAndMetadata>{}));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
@@ -276,7 +268,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -298,11 +290,8 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
 
 TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(1);     // min
-    mockBackendPtr->updateRange(1000);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _))
+    backend->setRange(1, 1000);
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillOnce(Return(std::optional<TransactionAndMetadata>{}));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
@@ -310,7 +299,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -333,11 +322,8 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
 // when ledger range and ctid are provided, searched_all should not be present, because the seq is specified in ctid
 TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(1);     // min
-    mockBackendPtr->updateRange(1000);  // max
-    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(SEQ_FROM_CTID, _))
+    backend->setRange(1, 1000);
+    EXPECT_CALL(*backend, fetchAllTransactionsInLedger(SEQ_FROM_CTID, _))
         .WillOnce(Return(std::vector<TransactionAndMetadata>{}));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
@@ -345,7 +331,7 @@ TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{2}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "ctid": "{}",
@@ -366,9 +352,6 @@ TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
 
 TEST_F(RPCTxTest, DefaultParameter_API_v1)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
@@ -376,14 +359,14 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -400,23 +383,20 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
 
 TEST_F(RPCTxTest, PaymentTx_API_v1)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-
     TransactionAndMetadata tx;
     tx.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 2, 3, 300).getSerializer().peekData();
     tx.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -433,24 +413,21 @@ TEST_F(RPCTxTest, PaymentTx_API_v1)
 
 TEST_F(RPCTxTest, PaymentTx_API_v2)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-
     TransactionAndMetadata tx;
     tx.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 2, 3, 300).getSerializer().peekData();
     tx.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(std::nullopt));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -468,9 +445,6 @@ TEST_F(RPCTxTest, PaymentTx_API_v2)
 
 TEST_F(RPCTxTest, DefaultParameter_API_v2)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
@@ -478,16 +452,16 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
     tx.date = 123456;
     tx.ledgerSequence = 100;
 
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, tx.ledgerSequence);
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(ledgerinfo));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -513,22 +487,21 @@ TEST_F(RPCTxTest, ReturnBinary)
         "inLedger": 100,
         "validated": true
     })";
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
         CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -557,22 +530,21 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
         "ctid": "C000006400640002",
         "validated": true
     })";
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
         CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 2}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -649,18 +621,17 @@ TEST_F(RPCTxTest, MintNFT)
         NFTID
     );
     TransactionAndMetadata tx = CreateMintNFTTxWithMetadata(ACCOUNT, 1, 50, 123, NFTID);
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -677,18 +648,17 @@ TEST_F(RPCTxTest, MintNFT)
 TEST_F(RPCTxTest, NFTAcceptOffer)
 {
     TransactionAndMetadata tx = CreateAcceptNFTOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID);
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -706,18 +676,17 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 {
     std::vector<std::string> ids{NFTID, NFTID2};
     TransactionAndMetadata tx = CreateCancelNFTOffersTxWithMetadata(ACCOUNT, 1, 50, ids);
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this, &ids](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -742,18 +711,17 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 TEST_F(RPCTxTest, NFTCreateOffer)
 {
     TransactionAndMetadata tx = CreateCreateNFTOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID, 123, NFTID2);
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
+
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -770,7 +738,7 @@ TEST_F(RPCTxTest, NFTCreateOffer)
 TEST_F(RPCTxTest, CTIDAndTransactionBothProvided)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -792,7 +760,7 @@ TEST_F(RPCTxTest, CTIDAndTransactionBothProvided)
 TEST_F(RPCTxTest, CTIDAndTransactionBothNotProvided)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(R"({ "command": "tx"})");
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -806,7 +774,7 @@ TEST_F(RPCTxTest, CTIDAndTransactionBothNotProvided)
 TEST_F(RPCTxTest, CTIDInvalidType)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(R"({ "command": "tx", "ctid": 123})");
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -824,7 +792,7 @@ TEST_F(RPCTxTest, CTIDInvalidString)
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 5}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(R"({ "command": "tx", "ctid": "B002807000010002"})");
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -842,7 +810,7 @@ TEST_F(RPCTxTest, CTIDNotMatch)
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 5}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -908,21 +876,21 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
             "inLedger":100,
             "validated": true
     })";
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
         CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 2}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -981,21 +949,21 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvaiable)
             "inLedger":100,
             "validated": true
     })";
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+
     TransactionAndMetadata tx;
     tx.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 100, 200, 300).getSerializer().peekData();
     tx.transaction =
         CreateCreateOfferTransactionObject(ACCOUNT, 2, 100, CURRENCY, ACCOUNT2, 200, 300).getSerializer().peekData();
     tx.date = 123456;
     tx.ledgerSequence = 100;
-    EXPECT_CALL(*rawBackendPtr, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(std::nullopt));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -1060,7 +1028,7 @@ TEST_F(RPCTxTest, ViaCTID)
         SEQ_FROM_CTID,
         SEQ_FROM_CTID
     );
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
+
     TransactionAndMetadata tx1;
     tx1.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 1, 200, 300).getSerializer().peekData();
     tx1.transaction =
@@ -1073,14 +1041,14 @@ TEST_F(RPCTxTest, ViaCTID)
     tx2.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
     tx2.ledgerSequence = SEQ_FROM_CTID;
 
-    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(SEQ_FROM_CTID, _)).WillOnce(Return(std::vector{tx1, tx2}));
+    EXPECT_CALL(*backend, fetchAllTransactionsInLedger(SEQ_FROM_CTID, _)).WillOnce(Return(std::vector{tx1, tx2}));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 2}));
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",
@@ -1096,7 +1064,6 @@ TEST_F(RPCTxTest, ViaCTID)
 
 TEST_F(RPCTxTest, ViaLowercaseCTID)
 {
-    auto const rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
     TransactionAndMetadata tx1;
     tx1.metadata = CreateMetaDataForCreateOffer(CURRENCY, ACCOUNT, 1, 200, 300).getSerializer().peekData();
     tx1.transaction =
@@ -1109,7 +1076,7 @@ TEST_F(RPCTxTest, ViaLowercaseCTID)
     tx2.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
     tx2.ledgerSequence = SEQ_FROM_CTID;
 
-    EXPECT_CALL(*rawBackendPtr, fetchAllTransactionsInLedger(SEQ_FROM_CTID, _)).WillOnce(Return(std::vector{tx1, tx2}));
+    EXPECT_CALL(*backend, fetchAllTransactionsInLedger(SEQ_FROM_CTID, _)).WillOnce(Return(std::vector{tx1, tx2}));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
@@ -1119,7 +1086,7 @@ TEST_F(RPCTxTest, ViaLowercaseCTID)
     std::transform(ctid.begin(), ctid.end(), ctid.begin(), ::tolower);
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{TestTxHandler{mockBackendPtr, mockETLServicePtr}};
+        auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};
         auto const req = json::parse(fmt::format(
             R"({{ 
                 "command": "tx",

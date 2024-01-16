@@ -29,6 +29,7 @@
 
 #include <cerrno>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -122,8 +123,8 @@ SettingsProvider::parseSettings() const
         config_.valueOr<uint32_t>("max_read_requests_outstanding", settings.maxReadRequestsOutstanding);
     settings.coreConnectionsPerHost =
         config_.valueOr<uint32_t>("core_connections_per_host", settings.coreConnectionsPerHost);
-
     settings.queueSizeIO = config_.maybeValue<uint32_t>("queue_size_io");
+    settings.writeBatchSize = config_.valueOr<std::size_t>("write_batch_size", settings.writeBatchSize);
 
     auto const connectTimeoutSecond = config_.maybeValue<uint32_t>("connect_timeout");
     if (connectTimeoutSecond)

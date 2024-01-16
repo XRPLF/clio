@@ -23,7 +23,6 @@
 #include "rpc/common/Types.h"
 #include "rpc/handlers/AccountLines.h"
 #include "util/Fixtures.h"
-#include "util/MockBackend.h"
 #include "util/TestObject.h"
 
 #include <boost/json/parse.hpp>
@@ -62,7 +61,7 @@ class RPCAccountLinesHandlerTest : public HandlerBaseTest {};
 TEST_F(RPCAccountLinesHandlerTest, NonHexLedgerHash)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
@@ -83,7 +82,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonHexLedgerHash)
 TEST_F(RPCAccountLinesHandlerTest, NonStringLedgerHash)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{
                 "account": "{}", 
@@ -104,7 +103,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonStringLedgerHash)
 TEST_F(RPCAccountLinesHandlerTest, InvalidLedgerIndexString)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
@@ -125,7 +124,7 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidLedgerIndexString)
 TEST_F(RPCAccountLinesHandlerTest, MarkerNotString)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
@@ -148,7 +147,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerNotString)
 TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}",
@@ -164,7 +163,7 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
         EXPECT_EQ(err.at("error_message").as_string(), "Malformed cursor.");
     });
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
@@ -184,7 +183,7 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
 TEST_F(RPCAccountLinesHandlerTest, AccountInvalidFormat)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(
             R"({ 
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp"
@@ -202,7 +201,7 @@ TEST_F(RPCAccountLinesHandlerTest, AccountInvalidFormat)
 TEST_F(RPCAccountLinesHandlerTest, AccountNotString)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(
             R"({ 
                 "account": 12
@@ -220,7 +219,7 @@ TEST_F(RPCAccountLinesHandlerTest, AccountNotString)
 TEST_F(RPCAccountLinesHandlerTest, PeerInvalidFormat)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(
             R"({ 
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -238,7 +237,7 @@ TEST_F(RPCAccountLinesHandlerTest, PeerInvalidFormat)
 TEST_F(RPCAccountLinesHandlerTest, PeerNotString)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(
             R"({ 
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -257,7 +256,7 @@ TEST_F(RPCAccountLinesHandlerTest, PeerNotString)
 TEST_F(RPCAccountLinesHandlerTest, LimitNotInt)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(
             R"({ 
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -275,7 +274,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitNotInt)
 TEST_F(RPCAccountLinesHandlerTest, LimitNagetive)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(
             R"({ 
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -293,7 +292,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitNagetive)
 TEST_F(RPCAccountLinesHandlerTest, LimitZero)
 {
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(
             R"({ 
                 "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -311,12 +310,10 @@ TEST_F(RPCAccountLinesHandlerTest, LimitZero)
 // error case ledger non exist via hash
 TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
     // mock fetchLedgerByHash return empty
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -327,7 +324,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash)
         LEDGERHASH
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
@@ -340,13 +337,10 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash)
 // error case ledger non exist via index
 TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
             "account": "{}",
@@ -355,7 +349,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerStringIndex)
         ACCOUNT
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -366,13 +360,10 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerStringIndex)
 
 TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
             "account": "{}",
@@ -381,7 +372,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIntIndex)
         ACCOUNT
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -394,14 +385,11 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIntIndex)
 // idk why this case will happen in reality
 TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash2)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 31);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
             "account": "{}",
@@ -411,7 +399,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash2)
         LEDGERHASH
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -423,13 +411,10 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash2)
 // error case ledger > max seq via index
 TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex2)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     // no need to check from db, call fetchLedgerBySequence 0 time
     // differ from previous logic
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(0);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(0);
     auto const input = json::parse(fmt::format(
         R"({{ 
             "account": "{}",
@@ -438,7 +423,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex2)
         ACCOUNT
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -450,16 +435,13 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex2)
 // error case account not exist
 TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerByHash).Times(1);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch account object return emtpy
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(1);
+    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{
             "account": "{}",
@@ -469,7 +451,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
         LEDGERHASH
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -481,28 +463,25 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
 // normal case when only provide account
 TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
     ripple::STObject const ownerDir =
         CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
     // return two trust lines
     std::vector<Blob> bbs;
@@ -510,8 +489,8 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
     auto const line2 = CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(line2.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     runSpawn([this](auto yield) {
         auto const input = json::parse(fmt::format(
@@ -553,7 +532,7 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
                 ]
             })";
 
-        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
@@ -563,20 +542,17 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
 // normal case : limit is used
 TEST_F(RPCAccountLinesHandlerTest, UseLimit)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(3);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(3);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index
     std::vector<ripple::uint256> indexes;
@@ -591,15 +567,15 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
     // it should not appear in return marker,marker is the current page
     ownerDir.setFieldU64(ripple::sfIndexNext, 99);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(7);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(7);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(3);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(3);
 
     runSpawn([this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}",
@@ -615,7 +591,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     });
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
@@ -628,7 +604,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
     });
 
     runSpawn([this](auto yield) {
-        auto const handler = AnyHandler{AccountLinesHandler{mockBackendPtr}};
+        auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const input = json::parse(fmt::format(
             R"({{ 
                 "account": "{}", 
@@ -644,20 +620,17 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
 // normal case : destination is used
 TEST_F(RPCAccountLinesHandlerTest, UseDestination)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index
     std::vector<ripple::uint256> indexes;
@@ -680,12 +653,12 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
     }
 
     ripple::STObject const ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -697,7 +670,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
         ACCOUNT3
     ));
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 20);
@@ -707,27 +680,24 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
 // normal case : but the lines is emtpy
 TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index
     ripple::STObject const ownerDir = CreateOwnerDirLedgerObject({}, INDEX1);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
     auto const input = json::parse(fmt::format(
         R"({{ 
             "account": "{}"
@@ -735,7 +705,7 @@ TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
         ACCOUNT
     ));
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 0);
@@ -779,13 +749,11 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
             }
         ]
     })";
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+
+    backend->setRange(10, 30);
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
@@ -793,15 +761,15 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
     auto fake = Blob{'f', 'a', 'k', 'e'};
 
     // return a non empty account
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index
     ripple::STObject const ownerDir =
         CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
     // return few trust lines
     std::vector<Blob> bbs;
@@ -817,8 +785,8 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
     line2.setFlag(ripple::lsfLowFreeze);
     bbs.push_back(line2.getSerializer().peekData());
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
             "account": "{}"
@@ -826,7 +794,7 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
         ACCOUNT
     ));
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
@@ -836,10 +804,7 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
 // normal case : test marker output correct
 TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto account = GetAccountIDWithString(ACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
     auto ownerDirKk = ripple::keylet::ownerDir(account).key;
@@ -847,12 +812,12 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
     constexpr static auto limit = 15;
     auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), nextPage).key;
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    ON_CALL(*backend, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
     auto line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 0);
@@ -875,16 +840,16 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
     ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
     ownerDir.setFieldU64(ripple::sfIndexNext, nextPage);
     // first page's next page is 99
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(ownerDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
     ripple::STObject ownerDir2 = CreateOwnerDirLedgerObject(indexes, INDEX1);
     // second page's next page is 0
     ownerDir2.setFieldU64(ripple::sfIndexNext, 0);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDir2Kk, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(ownerDir2Kk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir2.getSerializer().peekData()));
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{ 
@@ -895,7 +860,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
         limit
     ));
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ((*output).as_object().at("marker").as_string().c_str(), fmt::format("{},{}", INDEX1, nextPage));
@@ -906,22 +871,19 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
 // normal case : handler marker correctly
 TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto account = GetAccountIDWithString(ACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
     constexpr static auto nextPage = 99;
     constexpr static auto limit = 15;
     auto ownerDirKk = ripple::keylet::page(ripple::keylet::ownerDir(account), nextPage).key;
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto fake = Blob{'f', 'a', 'k', 'e'};
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(3);
+    ON_CALL(*backend, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
 
     std::vector<Blob> bbs;
     auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 0);
@@ -936,11 +898,11 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
 
     ripple::STObject ownerDir = CreateOwnerDirLedgerObject(indexes, INDEX1);
     ownerDir.setFieldU64(ripple::sfIndexNext, 0);
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(ownerDirKk, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(ownerDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     auto const input = json::parse(fmt::format(
         R"({{ 
@@ -954,7 +916,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
         nextPage
     ));
     runSpawn([&, this](auto yield) {
-        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_TRUE((*output).as_object().if_contains("marker") == nullptr);
@@ -966,28 +928,25 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
 
 TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
     ripple::STObject const ownerDir =
         CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
     // return two trust lines
     std::vector<Blob> bbs;
@@ -995,8 +954,8 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
     auto const line2 = CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(line2.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     runSpawn([this](auto yield) {
         auto const input = json::parse(fmt::format(
@@ -1042,7 +1001,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
             AccountLinesHandler::LIMIT_MIN
         );
 
-        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
@@ -1051,28 +1010,25 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
 
 TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
 {
-    MockBackend* rawBackendPtr = dynamic_cast<MockBackend*>(mockBackendPtr.get());
-    ASSERT_NE(rawBackendPtr, nullptr);
-    mockBackendPtr->updateRange(10);  // min
-    mockBackendPtr->updateRange(30);  // max
+    backend->setRange(10, 30);
     auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*rawBackendPtr, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
-    EXPECT_CALL(*rawBackendPtr, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
     auto accountKk = ripple::keylet::account(account).key;
     auto owneDirKk = ripple::keylet::ownerDir(account).key;
     auto fake = Blob{'f', 'a', 'k', 'e'};
     // return a non empty account
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
+    ON_CALL(*backend, doFetchLedgerObject(accountKk, testing::_, testing::_)).WillByDefault(Return(fake));
 
     // return owner index containing 2 indexes
     ripple::STObject const ownerDir =
         CreateOwnerDirLedgerObject({ripple::uint256{INDEX1}, ripple::uint256{INDEX2}}, INDEX1);
 
-    ON_CALL(*rawBackendPtr, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
+    ON_CALL(*backend, doFetchLedgerObject(owneDirKk, testing::_, testing::_))
         .WillByDefault(Return(ownerDir.getSerializer().peekData()));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObject).Times(2);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
     // return two trust lines
     std::vector<Blob> bbs;
@@ -1080,8 +1036,8 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
     auto const line2 = CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
     bbs.push_back(line1.getSerializer().peekData());
     bbs.push_back(line2.getSerializer().peekData());
-    ON_CALL(*rawBackendPtr, doFetchLedgerObjects).WillByDefault(Return(bbs));
-    EXPECT_CALL(*rawBackendPtr, doFetchLedgerObjects).Times(1);
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
 
     runSpawn([this](auto yield) {
         auto const input = json::parse(fmt::format(
@@ -1127,7 +1083,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
             AccountLinesHandler::LIMIT_MAX
         );
 
-        auto handler = AnyHandler{AccountLinesHandler{this->mockBackendPtr}};
+        auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(json::parse(correctOutput), *output);
