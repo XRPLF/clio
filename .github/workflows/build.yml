@@ -6,7 +6,6 @@ on:
     branches: [master, release/*, develop]
   workflow_dispatch:
 
- 
 jobs:
   lint:
     name: Check format
@@ -51,12 +50,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-            fetch-depth: 0
+          fetch-depth: 0
 
       - name: Prepare runner
         uses: ./.github/actions/prepare_runner
         with:
-            disable_ccache: false
+          disable_ccache: false
 
       - name: Setup conan
         uses: ./.github/actions/setup_conan
@@ -99,7 +98,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: clio_server_${{ runner.os }}_${{ matrix.build_type }}
-          path: build/clio_server      
+          path: build/clio_server
 
       - name: Upload clio_tests
         if: ${{ !matrix.code_coverage }}
@@ -127,7 +126,6 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         uses: ./.github/actions/code_coverage
-
 
   test:
     name: Run Tests
