@@ -197,6 +197,7 @@ if (tests)
     unittests/util/BatchingTests.cpp
     unittests/util/TestHttpServer.cpp
     unittests/util/TestObject.cpp
+    unittests/util/TestWsServer.cpp
     unittests/util/TxUtilTests.cpp
     unittests/util/StringUtils.cpp
     unittests/util/LedgerUtilsTests.cpp
