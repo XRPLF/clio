@@ -13,15 +13,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Get commit name
-        id: commit_name
+      - name: Check last commit matches clang-tidy auto fixes
+        id: check
         shell: bash
         run: |
-          commit=$(git log -1 --pretty=format:%s | grep '\[CI\] clang-tidy auto fixes')
-          echo "commit=$commit" >> $GITHUB_OUTPUT
+          passed=$(if [[ $(git log -1 --pretty=format:%s | grep '\[CI\] clang-tidy auto fixes') ]]; then echo 'true' ; else echo 'false' ; fi)
+          echo "passed=$passed" >> $GITHUB_OUTPUT
 
       - name: Run clang-tidy workflow
-        if: ${{ steps.commit_name.outputs.commit != '' }}
+        if: ${{ contains(steps.check.outputs.passed, 'true') }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
