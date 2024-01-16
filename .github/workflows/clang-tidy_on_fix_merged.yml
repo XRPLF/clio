@@ -7,5 +7,10 @@ on:
 jobs:
   on_fix_merge:
     if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.title, '[CI] clang-tidy auto fixes') }}
-    uses: ./.github/workflows/clang-tidy.yml
-    secrets: inherit
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Run clang-tidy workflow
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run clang-tidy.yml
