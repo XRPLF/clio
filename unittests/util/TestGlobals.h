@@ -25,13 +25,6 @@
  * Contains global variables for use in tests.
  */
 struct TestGlobals {
-    TestGlobals(TestGlobals const&) = delete;
-    TestGlobals(TestGlobals&&) = delete;
-    TestGlobals&
-    operator=(TestGlobals const&) = delete;
-    TestGlobals&
-    operator=(TestGlobals&&) = delete;
-
     std::string backendHost = "127.0.0.1";
     std::string backendKeyspace = "clio_test";
 
