@@ -33,8 +33,10 @@
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/Issue.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/STObject.h>
+#include <ripple/protocol/STXChainBridge.h>
 #include <ripple/protocol/UintTypes.h>
 
 #include <optional>
@@ -49,6 +51,7 @@ using namespace testing;
 constexpr static auto INDEX1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr static auto ACCOUNT3 = "rhzcyub9SbyZ4YF1JYskN5rLrTDUuLZG6D";
 constexpr static auto RANGEMIN = 10;
 constexpr static auto RANGEMAX = 30;
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
@@ -881,6 +884,587 @@ generateTestValuesForParametersTest()
             "malformedRequest",
             "Malformed request."
         },
+        ParamTestCaseBundle{
+            "BridgeMissingBridgeAccount",
+            fmt::format(
+                R"({{
+                    "bridge": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                "JPY",
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeWithInvalidBridgeAccount",
+            fmt::format(
+                R"({{
+                    "bridge_account": "abcd",
+                    "bridge": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                "JPY",
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeDoorInvalid",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "abcd",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                "JPY",
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeIssuerInvalid",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}",
+                            "issuer": "invalid"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT,
+                "JPY"
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeIssueCurrencyInvalid",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "JPJPJP",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT2,
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeIssueXRPCurrencyInvalid",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP",
+                            "issuer": "{}"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "JPY",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT2,
+                ACCOUNT2,
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeIssueJPYCurrencyInvalid",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "JPY"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeMissingLockingChainDoor",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP",
+                            "issuer": "{}"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "JPY",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2,
+                ACCOUNT2,
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeMissingIssuingChainDoor",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "JPY",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeMissingLockingChainIssue",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "IssuingChainDoor": "{}",
+                        "LockingChainDoor": "{}",
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "JPY",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeMissingIssuingChainIssue",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "IssuingChainDoor": "{}",
+                        "LockingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "JPY",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeInvalidType",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": "invalid"
+                    }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedClaimIdInvalidType",
+            R"({
+                    "xchain_owned_claim_id": 123
+                    })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedClaimIdJsonMissingClaimId",
+            fmt::format(
+                R"({{
+                    "xchain_owned_claim_id": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                "JPY",
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedClaimIdJsonMissingDoor",
+            fmt::format(
+                R"({{
+                    "xchain_owned_claim_id": 
+                    {{
+                        "xchain_owned_claim_id": 10,
+                        "LockingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                "JPY",
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedClaimIdJsonMissingIssue",
+            fmt::format(
+                R"({{
+                    "xchain_owned_claim_id": 
+                    {{
+                        "xchain_owned_claim_id": 10,
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT
+            ),
+
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedClaimIdJsonInvalidDoor",
+            fmt::format(
+                R"({{
+                    "xchain_owned_claim_id": 
+                    {{
+                        "xchain_owned_claim_id": 10,
+                        "LockingChainDoor": "abcd",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                "JPY",
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedClaimIdJsonInvalidIssue",
+            fmt::format(
+                R"({{
+                    "xchain_owned_claim_id": 
+                    {{
+                        "xchain_owned_claim_id": 10,
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                "JPY"
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedCreateAccountClaimIdInvalidType",
+            R"({
+                    "xchain_owned_create_account_claim_id": 123
+                    })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedCreateAccountClaimIdJsonMissingClaimId",
+            fmt::format(
+                R"({{
+                    "xchain_owned_create_account_claim_id": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                "JPY",
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedCreateAccountClaimIdJsonMissingDoor",
+            fmt::format(
+                R"({{
+                    "xchain_owned_create_account_claim_id": 
+                    {{
+                        "xchain_owned_create_account_claim_id": 10,
+                        "LockingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                "JPY",
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedCreateAccountClaimIdJsonMissingIssue",
+            fmt::format(
+                R"({{
+                    "xchain_owned_create_account_claim_id": 
+                    {{
+                        "xchain_owned_create_account_claim_id": 10,
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT
+            ),
+
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedCreateAccountClaimIdJsonInvalidDoor",
+            fmt::format(
+                R"({{
+                    "xchain_owned_create_account_claim_id": 
+                    {{
+                        "xchain_owned_create_account_claim_id": 10,
+                        "LockingChainDoor": "abcd",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}",
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                "JPY",
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OwnedCreateAccountClaimIdJsonInvalidIssue",
+            fmt::format(
+                R"({{
+                    "xchain_owned_create_account_claim_id": 
+                    {{
+                        "xchain_owned_create_account_claim_id": 10,
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                "JPY"
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
     };
 }
 
@@ -1314,7 +1898,145 @@ generateTestValuesForNormalPathTest()
             ),
             ripple::keylet::amm(GetIssue("XRP", ripple::toBase58(ripple::xrpAccount())), GetIssue("JPY", ACCOUNT2)).key,
             CreateAMMObject(ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", ACCOUNT2)
-        }
+        },
+        NormalPathTestBundle{
+            "BridgeLocking",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "bridge_account": "{}",
+                    "bridge": {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue": {{
+                            "currency" : "XRP"
+                        }},
+                        "IssuingChainIssue": {{
+                            "currency" : "JPY",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT2,
+                ACCOUNT3
+            ),
+            ripple::keylet::bridge(
+                ripple::STXChainBridge(
+                    GetAccountIDWithString(ACCOUNT),
+                    ripple::xrpIssue(),
+                    GetAccountIDWithString(ACCOUNT2),
+                    GetIssue("JPY", ACCOUNT3)
+                ),
+                ripple::STXChainBridge::ChainType::locking
+            )
+                .key,
+            CreateBridgeObject(ACCOUNT, ACCOUNT, ACCOUNT2, "JPY", ACCOUNT3)
+        },
+        NormalPathTestBundle{
+            "BridgeIssuing",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "bridge_account": "{}",
+                    "bridge": {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue": {{
+                            "currency" : "XRP"
+                        }},
+                        "IssuingChainIssue": {{
+                            "currency" : "JPY",
+                            "issuer" : "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT2,
+                ACCOUNT,
+                ACCOUNT2,
+                ACCOUNT3
+            ),
+            ripple::keylet::bridge(
+                ripple::STXChainBridge(
+                    GetAccountIDWithString(ACCOUNT),
+                    ripple::xrpIssue(),
+                    GetAccountIDWithString(ACCOUNT2),
+                    GetIssue("JPY", ACCOUNT3)
+                ),
+                ripple::STXChainBridge::ChainType::issuing
+            )
+                .key,
+            CreateBridgeObject(ACCOUNT, ACCOUNT, ACCOUNT2, "JPY", ACCOUNT3)
+        },
+        NormalPathTestBundle{
+            "XChainOwnedClaimId",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "xchain_owned_claim_id": {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue": {{
+                            "currency" : "XRP"
+                        }},
+                        "IssuingChainIssue": {{
+                            "currency" : "JPY",
+                            "issuer" : "{}"
+                        }},
+                        "xchain_owned_claim_id": 10
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2,
+                ACCOUNT3
+            ),
+            ripple::keylet::xChainClaimID(
+                ripple::STXChainBridge(
+                    GetAccountIDWithString(ACCOUNT),
+                    ripple::xrpIssue(),
+                    GetAccountIDWithString(ACCOUNT2),
+                    GetIssue("JPY", ACCOUNT3)
+                ),
+                10
+            )
+                .key,
+            CreateChainOwnedClaimIDObject(ACCOUNT, ACCOUNT, ACCOUNT2, "JPY", ACCOUNT3, ACCOUNT)
+        },
+        NormalPathTestBundle{
+            "XChainOwnedCreateAccountClaimId",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "xchain_owned_create_account_claim_id": {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue": {{
+                            "currency" : "XRP"
+                        }},
+                        "IssuingChainIssue": {{
+                            "currency" : "JPY",
+                            "issuer" : "{}"
+                        }},
+                        "xchain_owned_create_account_claim_id": 10
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2,
+                ACCOUNT3
+            ),
+            ripple::keylet::xChainCreateAccountClaimID(
+                ripple::STXChainBridge(
+                    GetAccountIDWithString(ACCOUNT),
+                    ripple::xrpIssue(),
+                    GetAccountIDWithString(ACCOUNT2),
+                    GetIssue("JPY", ACCOUNT3)
+                ),
+                10
+            )
+                .key,
+            CreateChainOwnedClaimIDObject(ACCOUNT, ACCOUNT, ACCOUNT2, "JPY", ACCOUNT3, ACCOUNT)
+        },
     };
 }
 

@@ -232,7 +232,7 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
          },
          meta::IfType<std::string>{stringIssueValidator},
          meta::IfType<boost::json::object>{
-             meta::WithCustomError{validation::AMMAssetValidator, Status(RippledError::rpcISSUE_MALFORMED)},
+             meta::WithCustomError{validation::CurrencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)},
          }},
         {JS(asset2),
          meta::WithCustomError{
@@ -240,7 +240,7 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
          },
          meta::IfType<std::string>{stringIssueValidator},
          meta::IfType<boost::json::object>{
-             meta::WithCustomError{validation::AMMAssetValidator, Status(RippledError::rpcISSUE_MALFORMED)},
+             meta::WithCustomError{validation::CurrencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)},
          }},
         {JS(amm_account), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
         {JS(account), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
@@ -297,24 +297,11 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
         }
     }
 
-    auto getIssue = [](boost::json::value const& request) {
-        if (request.is_string())
-            return ripple::issueFromJson(request.as_string().c_str());
-
-        // Note: no checks needed as we already validated the input if we made it here
-        auto const currency = ripple::to_currency(request.at(JS(currency)).as_string().c_str());
-        if (ripple::isXRP(currency)) {
-            return ripple::xrpIssue();
-        }
-        auto const issuer = ripple::parseBase58<ripple::AccountID>(request.at(JS(issuer)).as_string().c_str());
-        return ripple::Issue{currency, *issuer};
-    };
-
     if (jsonObject.contains(JS(asset)))
-        input.issue1 = getIssue(jsonObject.at(JS(asset)));
+        input.issue1 = parseIssue(jsonObject.at(JS(asset)));
 
     if (jsonObject.contains(JS(asset2)))
-        input.issue2 = getIssue(jsonObject.at(JS(asset2)));
+        input.issue2 = parseIssue(jsonObject.at(JS(asset2)));
 
     if (jsonObject.contains(JS(account)))
         input.accountID = accountFromStringStrict(jsonObject.at(JS(account)).as_string().c_str());

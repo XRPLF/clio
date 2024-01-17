@@ -117,7 +117,7 @@ public:
                                            validation::AccountValidator,
                                            Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."}
                             )
-                                           .verify(book.as_object(), "taker");
+                                           .verify(book, "taker");
                             !err)
                             return err;
                     }

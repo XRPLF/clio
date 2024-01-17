@@ -175,7 +175,8 @@ public:
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
-        if (auto const res = requirement.verify(value, key); not res)
+        auto valueCopy = value;
+        if (auto const res = requirement.verify(valueCopy, key); not res)
             return Error{error};
 
         return {};

@@ -36,6 +36,7 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STObject.h>
+#include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
 
 #include <array>
@@ -501,4 +502,22 @@ TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV2)
     auto const json = toJsonWithBinaryTx(txMeta, 2);
     EXPECT_TRUE(json.contains(JS(tx_blob)));
     EXPECT_TRUE(json.contains(JS(meta_blob)));
+}
+
+TEST_F(RPCHelpersTest, ParseIssue)
+{
+    auto issue = parseIssue(boost::json::parse(
+        R"({
+                "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "currency": "JPY"
+            })"
+    ));
+    EXPECT_TRUE(issue.account == GetAccountIDWithString(ACCOUNT2));
+
+    issue = parseIssue(boost::json::parse(
+        R"({
+                "currency": "XRP"
+            })"
+    ));
+    EXPECT_TRUE(ripple::isXRP((issue.currency)));
 }
