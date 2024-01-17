@@ -20,12 +20,27 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "rpc/RPCHelpers.h"
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
 #include "rpc/common/MetaProcessors.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
+#include "util/LedgerUtils.h"
+#include "util/log/Logger.h"
 
-#include <unordered_map>
+#include <boost/json/array.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/jss.h>
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
 #include <unordered_set>
 
 namespace rpc {
@@ -40,10 +55,6 @@ class LedgerDataHandler {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     util::Logger log_{"RPC"};
-
-    static std::unordered_map<std::string, ripple::LedgerEntryType> const TYPES_MAP;
-
-    static std::unordered_set<std::string> const TYPES_KEYS;
 
 public:
     // constants
@@ -84,6 +95,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
+        auto const& ledgerTypeStrs = util::getLedgerEntryTypeStrs();
         static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {"out_of_order", validation::Type<bool>{}},
@@ -97,7 +109,7 @@ public:
              meta::WithCustomError{
                  validation::Type<std::string>{}, Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}
              },
-             validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend())},
+             validation::OneOf<std::string>(ledgerTypeStrs.cbegin(), ledgerTypeStrs.cend())},
 
         };
         return rpcSpec;

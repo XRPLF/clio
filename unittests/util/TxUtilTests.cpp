@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "util/JsonUtils.h"
-#include "util/TxUtil.h"
+#include "util/TxUtils.h"
 
 #include <gtest/gtest.h>
 #include <ripple/protocol/TxFormats.h>
