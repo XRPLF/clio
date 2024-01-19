@@ -19,27 +19,41 @@
 
 #pragma once
 
+#include "util/Expected.h"
+#include "util/requests/Types.h"
+
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
+#include <boost/beast/core/error.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/ssl/ssl_stream.hpp>
 
 namespace util::requests::impl {
 
 struct TcpStreamData {
-    explicit TcpStreamData(boost::asio::yield_context& yield);
+    explicit TcpStreamData(boost::asio::yield_context yield);
+
+    // Does nothing for plain TCP
+    static boost::beast::error_code doHandshake(boost::asio::yield_context);
 
     boost::beast::tcp_stream stream;
 };
 
-struct SslTcpStreamData {
-private:
+class SslTcpStreamData {
     boost::asio::ssl::context sslContext_;
 
 public:
-    explicit SslTcpStreamData(boost::asio::yield_context& yield);
+    static Expected<SslTcpStreamData, RequestError>
+    create(boost::asio::yield_context yield);
+
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream;
+
+    boost::beast::error_code
+    doHandshake(boost::asio::yield_context yield);
+
+private:
+    explicit SslTcpStreamData(boost::asio::ssl::context context, boost::asio::yield_context yield);
 };
 
 }  // namespace util::requests::impl

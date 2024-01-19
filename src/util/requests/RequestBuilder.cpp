@@ -27,6 +27,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
+#include <boost/asio/ssl/error.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
@@ -39,6 +40,8 @@
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/ssl/ssl_stream.hpp>
 #include <boost/beast/version.hpp>
+#include <openssl/err.h>
+#include <openssl/tls1.h>
 
 #include <chrono>
 #include <string>
@@ -118,8 +121,16 @@ Expected<std::string, RequestError>
 RequestBuilder::doRequest(boost::asio::yield_context yield, boost::beast::http::verb method)
 {
     if (sslEnabled_) {
-        auto streamData = impl::SslTcpStreamData{yield};
-        return doRequestImpl(std::move(streamData), yield, method);
+        auto streamData = impl::SslTcpStreamData::create(yield);
+        if (not streamData.has_value())
+            return Unexpected{std::move(streamData.error())};
+
+        if (!SSL_set_tlsext_host_name(streamData->stream.native_handle(), host_.c_str())) {
+            boost::beast::error_code errorCode;
+            errorCode.assign(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category());
+            return Unexpected{RequestError{"SSL setup failed", errorCode}};
+        }
+        return doRequestImpl(std::move(streamData.value()), yield, method);
     }
 
     auto streamData = impl::TcpStreamData{yield};
@@ -149,6 +160,14 @@ RequestBuilder::doRequestImpl(StreamDataType&& streamData, boost::asio::yield_co
 
     // Set up HTTP method
     request_.method(method);
+
+    // Perform SSL handshake
+    if (sslEnabled_) {
+        beast::get_lowest_layer(stream).expires_after(timeout_);
+        errorCode = streamData.doHandshake(yield);
+        if (errorCode)
+            return Unexpected{RequestError{"Handshake error", errorCode}};
+    }
 
     // Send the HTTP request to the remote host
     beast::get_lowest_layer(stream).expires_after(timeout_);
