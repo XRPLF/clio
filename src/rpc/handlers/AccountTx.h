@@ -27,7 +27,7 @@
 #include "rpc/common/Modifiers.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
-#include "util/TxUtil.h"
+#include "util/TxUtils.h"
 #include "util/log/Logger.h"
 
 #include <boost/json/array.hpp>

@@ -1,11 +1,29 @@
-name: On clang-tidy auto fixes merged
+name: Restart clang-tidy workflow
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [develop]
+  workflow_dispatch:
 
 jobs:
-  on_fix_merge:
-    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.title, '[CI] clang-tidy auto fixes') }}
-    uses: ./.github/workflows/clang-tidy.yml
-    secrets: inherit
+  restart_clang_tidy:
+    runs-on: ubuntu-20.04
+
+    permissions:
+      actions: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check last commit matches clang-tidy auto fixes
+        id: check
+        shell: bash
+        run: |
+          passed=$(if [[ $(git log -1 --pretty=format:%s | grep '\[CI\] clang-tidy auto fixes') ]]; then echo 'true' ; else echo 'false' ; fi)
+          echo "passed=$passed" >> $GITHUB_OUTPUT
+
+      - name: Run clang-tidy workflow
+        if: ${{ contains(steps.check.outputs.passed, 'true') }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run clang-tidy.yml

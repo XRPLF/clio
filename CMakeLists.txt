@@ -166,7 +166,8 @@ target_sources (clio PRIVATE
   src/util/Random.cpp
   src/util/Taggable.cpp
   src/util/TerminationHandler.cpp
-  src/util/TxUtil.cpp
+  src/util/TxUtils.cpp
+  src/util/LedgerUtils.cpp
 )
 
 # Clio server
@@ -195,6 +196,7 @@ if (tests)
     unittests/util/TxUtilTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
+    unittests/util/LedgerUtilsTests.cpp
     ## Prometheus support
     unittests/util/prometheus/CounterTests.cpp
     unittests/util/prometheus/GaugeTests.cpp
