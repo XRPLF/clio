@@ -210,6 +210,7 @@ if (tests)
     unittests/util/prometheus/MetricsFamilyTests.cpp
     unittests/util/prometheus/OStreamTests.cpp
     unittests/util/requests/RequestBuilderTests.cpp
+    unittests/util/requests/WsConnectionTests.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp

@@ -31,9 +31,11 @@
 #include <boost/beast/core/role.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/beast/websocket/error.hpp>
+#include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
 #include <gtest/gtest.h>
 
+#include <iostream>
 #include <optional>
 #include <string>
 #include <utility>
@@ -42,22 +44,23 @@ namespace asio = boost::asio;
 namespace beast = boost::beast;
 namespace websocket = boost::beast::websocket;
 
-TestWsConnection::TestWsConnection(asio::ip::tcp::socket socket, boost::asio::yield_context yield)
+TestWsConnection::TestWsConnection(asio::ip::tcp::socket&& socket, boost::asio::yield_context yield)
     : ws_(std::move(socket))
 {
     ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::server));
-
     beast::error_code errorCode;
     ws_.async_accept(yield[errorCode]);
     [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
 }
 
-void
+std::optional<std::string>
 TestWsConnection::send(std::string const& message, boost::asio::yield_context yield)
 {
     beast::error_code errorCode;
     ws_.async_write(asio::buffer(message), yield[errorCode]);
-    [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
+    if (errorCode)
+        return errorCode.message();
+    return std::nullopt;
 }
 
 std::optional<std::string>
@@ -74,25 +77,31 @@ TestWsConnection::receive(boost::asio::yield_context yield)
     return beast::buffers_to_string(buffer.data());
 }
 
-TestWsServer::TestWsServer(asio::io_context& context, std::string host, int port)
-    : acceptor_(context, asio::ip::tcp::endpoint(boost::asio::ip::make_address(host), port))
+std::optional<std::string>
+TestWsConnection::close(boost::asio::yield_context yield)
 {
-    boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(host), port);
+    beast::error_code errorCode;
+    ws_.async_close(websocket::close_code::normal, yield[errorCode]);
+    if (errorCode)
+        return errorCode.message();
+    return std::nullopt;
+}
+
+TestWsServer::TestWsServer(asio::io_context& context, std::string const& host, int port) : acceptor_(context)
+{
+    auto endpoint = asio::ip::tcp::endpoint(boost::asio::ip::make_address(host), port);
     acceptor_.open(endpoint.protocol());
     acceptor_.set_option(asio::socket_base::reuse_address(true));
     acceptor_.bind(endpoint);
-    acceptor_.listen(asio::socket_base::max_listen_connections);
-
-    // Accept a connection
-    asio::spawn(acceptor_.get_executor(), [&](auto yield) { acceptConnection(yield); });
 }
 
 TestWsConnection
 TestWsServer::acceptConnection(asio::yield_context yield)
 {
+    acceptor_.listen(asio::socket_base::max_listen_connections);
     beast::error_code errorCode;
-    asio::ip::tcp::socket socket_(acceptor_.get_executor());
-    acceptor_.async_accept(socket_, yield[errorCode]);
+    asio::ip::tcp::socket socket(acceptor_.get_executor());
+    acceptor_.async_accept(socket, yield[errorCode]);
     [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
-    return TestWsConnection(std::move(socket_), yield);
+    return TestWsConnection(std::move(socket), yield);
 }

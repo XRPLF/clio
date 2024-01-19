@@ -26,6 +26,7 @@
 #include <boost/beast/websocket/stream.hpp>
 
 #include <functional>
+#include <optional>
 #include <string>
 
 class TestWsConnection {
@@ -35,21 +36,25 @@ public:
     using SendCallback = std::function<void()>;
     using ReceiveCallback = std::function<void(std::string)>;
 
-    TestWsConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield);
+    TestWsConnection(boost::asio::ip::tcp::socket&& socket, boost::asio::yield_context yield);
 
-    void
+    // returns error message if error occurs
+    std::optional<std::string>
     send(std::string const& message, boost::asio::yield_context yield);
 
     // returns nullopt if the connection is closed
     std::optional<std::string>
     receive(boost::asio::yield_context yield);
+
+    std::optional<std::string>
+    close(boost::asio::yield_context yield);
 };
 
 class TestWsServer {
     boost::asio::ip::tcp::acceptor acceptor_;
 
 public:
-    TestWsServer(boost::asio::io_context& context, std::string host, int port);
+    TestWsServer(boost::asio::io_context& context, std::string const& host, int port);
 
     TestWsConnection
     acceptConnection(boost::asio::yield_context yield);

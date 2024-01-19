@@ -97,9 +97,6 @@ public:
     static constexpr std::chrono::milliseconds DEFAULT_TIMEOUT{5000};
 };
 
-Expected<WsConnection, RequestError>
-connectWs(std::string host, std::string port, std::vector<HttpHeader> headers = {}, std::string target = "/");
-
 class WsConnection {
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
 
