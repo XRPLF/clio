@@ -23,6 +23,7 @@
 #include "util/requests/Types.h"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/ssl/context.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/http/field.hpp>
@@ -45,6 +46,7 @@ class RequestBuilder {
     std::string port_;
     std::chrono::milliseconds timeout_{DEFAULT_TIMEOUT};
     boost::beast::http::request<boost::beast::http::string_body> request_;
+    bool sslEnabled_{false};
 
 public:
     /**
@@ -86,6 +88,7 @@ public:
      * @brief Set the timeout for the request
      *
      * @note Default timeout is defined in DEFAULT_TIMEOUT
+     *
      * @param timeout timeout to set
      * @return reference to itself
      */
@@ -102,6 +105,17 @@ public:
      */
     RequestBuilder&
     setTarget(std::string_view target);
+
+    /**
+     * @brief Set SSL enabled or disabled
+     *
+     * @note Default is false
+     *
+     * @param ssl boolean value to set
+     * @return reference to itself
+     */
+    RequestBuilder&
+    setSslEnabled(bool enabled);
 
     /**
      * @brief Perform a GET request asynchronously
@@ -131,7 +145,11 @@ public:
 
 private:
     Expected<std::string, RequestError>
-    requestImpl(boost::asio::yield_context yield, boost::beast::http::verb method);
+    doRequest(boost::asio::yield_context yield, boost::beast::http::verb method);
+
+    template <typename StreamDataType>
+    Expected<std::string, RequestError>
+    doRequestImpl(StreamDataType&& streamData, boost::asio::yield_context yield, boost::beast::http::verb method);
 };
 
 }  // namespace util::requests

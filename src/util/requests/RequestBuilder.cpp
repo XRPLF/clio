@@ -21,10 +21,12 @@
 
 #include "util/Expected.h"
 #include "util/requests/Types.h"
+#include "util/requests/impl/TcpStreamData.h"
 
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/ssl/context.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
@@ -35,6 +37,7 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
+#include <boost/beast/ssl/ssl_stream.hpp>
 #include <boost/beast/version.hpp>
 
 #include <chrono>
@@ -92,20 +95,40 @@ RequestBuilder::setTarget(std::string_view target)
     return *this;
 }
 
+RequestBuilder&
+RequestBuilder::setSslEnabled(bool const enabled)
+{
+    sslEnabled_ = enabled;
+    return *this;
+}
+
 Expected<std::string, RequestError>
 RequestBuilder::get(boost::asio::yield_context yield)
 {
-    return requestImpl(yield, http::verb::get);
+    return doRequest(yield, http::verb::get);
 }
 
 Expected<std::string, RequestError>
 RequestBuilder::post(boost::asio::yield_context yield)
 {
-    return requestImpl(yield, http::verb::post);
+    return doRequest(yield, http::verb::post);
 }
 
 Expected<std::string, RequestError>
-RequestBuilder::requestImpl(boost::asio::yield_context yield, http::verb const method)
+RequestBuilder::doRequest(boost::asio::yield_context yield, boost::beast::http::verb method)
+{
+    if (sslEnabled_) {
+        auto streamData = impl::SslTcpStreamData{yield};
+        return doRequestImpl(std::move(streamData), yield, method);
+    }
+
+    auto streamData = impl::TcpStreamData{yield};
+    return doRequestImpl(std::move(streamData), yield, method);
+}
+
+template <typename StreamDataType>
+Expected<std::string, RequestError>
+RequestBuilder::doRequestImpl(StreamDataType&& streamData, boost::asio::yield_context yield, http::verb const method)
 {
     auto executor = boost::asio::get_associated_executor(yield);
 
@@ -116,11 +139,11 @@ RequestBuilder::requestImpl(boost::asio::yield_context yield, http::verb const m
     if (errorCode)
         return Unexpected{RequestError{"Resolve error", errorCode}};
 
-    beast::tcp_stream stream(executor);
+    auto& stream = streamData.stream;
 
     // Make the connection on the IP address we get from a lookup
-    stream.expires_after(timeout_);
-    stream.async_connect(resolverResult, yield[errorCode]);
+    beast::get_lowest_layer(stream).expires_after(timeout_);
+    beast::get_lowest_layer(stream).async_connect(resolverResult, yield[errorCode]);
     if (errorCode)
         return Unexpected{RequestError{"Connection error", errorCode}};
 
@@ -128,7 +151,7 @@ RequestBuilder::requestImpl(boost::asio::yield_context yield, http::verb const m
     request_.method(method);
 
     // Send the HTTP request to the remote host
-    stream.expires_after(timeout_);
+    beast::get_lowest_layer(stream).expires_after(timeout_);
     http::async_write(stream, request_, yield[errorCode]);
     if (errorCode)
         return Unexpected{RequestError{"Write error", errorCode}};
@@ -144,7 +167,7 @@ RequestBuilder::requestImpl(boost::asio::yield_context yield, http::verb const m
         return Unexpected{RequestError{"Read error", errorCode}};
 
     // Gracefully close the socket
-    stream.socket().shutdown(tcp::socket::shutdown_both, errorCode);
+    beast::get_lowest_layer(stream).socket().shutdown(tcp::socket::shutdown_both, errorCode);
 
     // not_connected happens sometimes
     // so don't bother reporting it.
