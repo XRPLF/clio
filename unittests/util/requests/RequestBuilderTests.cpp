@@ -21,6 +21,7 @@
 #include "util/Fixtures.h"
 #include "util/TestHttpServer.h"
 #include "util/requests/RequestBuilder.h"
+#include "util/requests/Types.h"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -35,7 +36,6 @@
 #include <optional>
 #include <string>
 #include <thread>
-#include <utility>
 #include <vector>
 
 using namespace util::requests;

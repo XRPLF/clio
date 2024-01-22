@@ -21,6 +21,7 @@
 
 #include "util/Expected.h"
 #include "util/requests/Types.h"
+#include "util/requests/impl/SslContext.h"
 
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/buffer.hpp>
@@ -30,64 +31,12 @@
 #include <boost/asio/ssl/verify_mode.hpp>
 #include <boost/beast/core/error.hpp>
 
-#include <array>
-#include <filesystem>
-#include <fstream>
-#include <ios>
-#include <sstream>
-#include <string>
 #include <utility>
 
 namespace util::requests::impl {
 
 namespace asio = boost::asio;
 namespace ssl = asio::ssl;
-
-namespace {
-
-// Taken from https://go.dev/src/crypto/x509/root_linux.go
-constexpr std::array CERT_FILE_PATHS{
-    "/etc/ssl/certs/ca-certificates.crt",                 // Debian/Ubuntu/Gentoo etc.
-    "/etc/pki/tls/certs/ca-bundle.crt",                   // Fedora/RHEL 6
-    "/etc/ssl/ca-bundle.pem",                             // OpenSUSE
-    "/etc/pki/tls/cacert.pem",                            // OpenELEC
-    "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",  // CentOS/RHEL 7
-    "/etc/ssl/cert.pem",                                  // Alpine Linux
-    "/etc/ssl/certs",                                     // SLES10/SLES11, https://golang.org/issue/12139
-    "/etc/pki/tls/certs",                                 // Fedora/RHEL
-    "/system/etc/security/cacerts",                       // Android
-};
-
-Expected<std::string, RequestError>
-getRootCertificate()
-{
-    for (auto const& path : CERT_FILE_PATHS) {
-        if (std::filesystem::exists(path)) {
-            std::ifstream fileStream{path, std::ios::in};
-            if (not fileStream.is_open()) {
-                continue;
-            }
-            std::stringstream buffer;
-            buffer << fileStream.rdbuf();
-            return std::move(buffer).str();
-        }
-    }
-    return Unexpected{RequestError{"SSL setup failed: could not find root certificate"}};
-}
-
-Expected<ssl::context, RequestError>
-makeSslContext()
-{
-    ssl::context context{ssl::context::tlsv13_client};
-    context.set_verify_mode(ssl::verify_peer);
-    auto const rootCertificate = getRootCertificate();
-    if (not rootCertificate.has_value()) {
-    }
-    context.add_certificate_authority(asio::buffer(rootCertificate->data(), rootCertificate->size()));
-    return context;
-}
-
-}  // namespace
 
 TcpStreamData::TcpStreamData(asio::yield_context yield) : stream(asio::get_associated_executor(yield))
 {
