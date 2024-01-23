@@ -47,6 +47,9 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     if (finishSequence_ && startSequence > *finishSequence_)
         return {};
 
+    LOG(log_.debug()) << "Wait for cache is ready";
+    backend_->cache().waitUntilCacheContainsSeq(startSequence - 1);
+
     LOG(log_.debug()) << "Starting etl pipeline";
     state_.isWriting = true;
 
@@ -175,7 +178,6 @@ ETLService::publishNextSequence(uint32_t nextSequence)
 
         if (!success) {
             LOG(log_.warn()) << "Failed to publish ledger with sequence = " << nextSequence << " . Beginning ETL";
-            backend_->cache().waitUntilCacheContainsSeq(nextSequence - 1);
             // returns the most recent sequence published empty optional if no sequence was published
             std::optional<uint32_t> lastPublished = runETLPipeline(nextSequence, extractorThreads_);
             LOG(log_.info()) << "Aborting ETL. Falling back to publishing";
