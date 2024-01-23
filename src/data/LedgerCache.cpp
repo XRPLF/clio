@@ -41,6 +41,14 @@ LedgerCache::latestLedgerSequence() const
 }
 
 void
+LedgerCache::waitUntilCacheContainsSeq(uint32_t seq)
+{
+    std::unique_lock lock(mtx_);
+    cv_.wait(lock, [this, seq] { return latestSeq_ >= seq; });
+    return;
+}
+
+void
 LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool isBackground)
 {
     if (disabled_)
@@ -72,6 +80,7 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
                     deletes_.insert(obj.key);
             }
         }
+        cv_.notify_all();
     }
 }
 
