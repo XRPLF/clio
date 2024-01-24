@@ -88,6 +88,13 @@ WsConnectionBuilder::setTimeout(std::chrono::milliseconds timeout)
     return *this;
 }
 
+WsConnectionBuilder&
+WsConnectionBuilder::setSslEnabled(bool sslEnabled)
+{
+    sslEnabled_ = sslEnabled;
+    return *this;
+}
+
 Expected<WsConnection, RequestError>
 WsConnectionBuilder::connect(asio::yield_context yield) const
 {

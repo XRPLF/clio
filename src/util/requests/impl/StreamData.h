@@ -25,17 +25,17 @@
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
+#include <boost/asio/ssl/stream.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/ssl/ssl_stream.hpp>
+#include <boost/beast/websocket.hpp>
+#include <boost/beast/websocket/stream.hpp>
 
 namespace util::requests::impl {
 
 struct TcpStreamData {
     explicit TcpStreamData(boost::asio::yield_context yield);
-
-    // Does nothing for plain TCP
-    static boost::beast::error_code doHandshake(boost::asio::yield_context);
 
     boost::beast::tcp_stream stream;
 };
@@ -49,11 +49,27 @@ public:
 
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream;
 
-    boost::beast::error_code
-    doHandshake(boost::asio::yield_context yield);
-
 private:
     explicit SslTcpStreamData(boost::asio::ssl::context context, boost::asio::yield_context yield);
+};
+
+struct WsStreamData {
+    explicit WsStreamData(boost::asio::yield_context yield);
+
+    boost::beast::websocket::stream<boost::beast::tcp_stream> stream;
+};
+
+class SslWsStreamData {
+    boost::asio::ssl::context sslContext_;
+
+public:
+    static Expected<SslWsStreamData, RequestError>
+    create(boost::asio::yield_context yield);
+
+    boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>> stream;
+
+private:
+    explicit SslWsStreamData(boost::asio::ssl::context context, boost::asio::yield_context yield);
 };
 
 }  // namespace util::requests::impl

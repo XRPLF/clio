@@ -45,6 +45,7 @@ class WsConnectionBuilder {
     std::vector<HttpHeader> headers_;
     std::chrono::milliseconds timeout_{DEFAULT_TIMEOUT};
     std::string target_{"/"};
+    bool sslEnabled_{false};
 
 public:
     WsConnectionBuilder(std::string host, std::string port);
@@ -84,6 +85,17 @@ public:
      */
     WsConnectionBuilder&
     setTimeout(std::chrono::milliseconds timeout);
+
+    /**
+     * @brief Set whether SSL is enabled
+     *
+     * @note Default is false
+     *
+     * @param enabled whether SSL is enabled
+     * @return RequestBuilder& this
+     */
+    WsConnectionBuilder&
+    setSslEnabled(bool enabled);
 
     /**
      * @brief Connect to the host asynchronously

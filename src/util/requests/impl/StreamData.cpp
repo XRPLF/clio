@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/requests/impl/TcpStreamData.h"
+#include "util/requests/impl/StreamData.h"
 
 #include "util/Expected.h"
 #include "util/requests/Types.h"
@@ -42,12 +42,6 @@ TcpStreamData::TcpStreamData(asio::yield_context yield) : stream(asio::get_assoc
 {
 }
 
-boost::beast::error_code
-TcpStreamData::doHandshake(boost::asio::yield_context)
-{
-    return {};
-}
-
 SslTcpStreamData::SslTcpStreamData(ssl::context sslContext, boost::asio::yield_context yield)
     : sslContext_(std::move(sslContext)), stream(asio::get_associated_executor(yield), sslContext_)
 {
@@ -63,12 +57,23 @@ SslTcpStreamData::create(boost::asio::yield_context yield)
     return SslTcpStreamData{std::move(sslContext.value()), yield};
 }
 
-boost::beast::error_code
-SslTcpStreamData::doHandshake(boost::asio::yield_context yield)
+WsStreamData::WsStreamData(boost::asio::yield_context yield) : stream(asio::get_associated_executor(yield))
 {
-    boost::beast::error_code errorCode;
-    stream.async_handshake(ssl::stream_base::client, yield[errorCode]);
-    return errorCode;
+}
+
+SslWsStreamData::SslWsStreamData(ssl::context sslContext, boost::asio::yield_context yield)
+    : sslContext_(std::move(sslContext)), stream(asio::get_associated_executor(yield), sslContext_)
+{
+}
+
+Expected<SslWsStreamData, RequestError>
+SslWsStreamData::create(boost::asio::yield_context yield)
+{
+    auto sslContext = makeSslContext();
+    if (not sslContext.has_value()) {
+        return Unexpected{std::move(sslContext.error())};
+    }
+    return SslWsStreamData{std::move(sslContext.value()), yield};
 }
 
 }  // namespace util::requests::impl

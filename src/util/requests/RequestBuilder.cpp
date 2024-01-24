@@ -21,13 +21,14 @@
 
 #include "util/Expected.h"
 #include "util/requests/Types.h"
-#include "util/requests/impl/TcpStreamData.h"
+#include "util/requests/impl/StreamData.h"
 
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/error.hpp>
+#include <boost/asio/ssl/stream_base.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
@@ -163,10 +164,12 @@ RequestBuilder::doRequestImpl(StreamDataType&& streamData, boost::asio::yield_co
 
     // Perform SSL handshake
     if (sslEnabled_) {
-        beast::get_lowest_layer(stream).expires_after(timeout_);
-        errorCode = streamData.doHandshake(yield);
-        if (errorCode)
-            return Unexpected{RequestError{"Handshake error", errorCode}};
+        if constexpr (std::is_same_v<decltype(stream), boost::beast::ssl_stream<boost::beast::tcp_stream>>) {
+            beast::get_lowest_layer(stream).expires_after(timeout_);
+            stream.async_handshake(boost::asio::ssl::stream_base::client, yield[errorCode]);
+            if (errorCode)
+                return Unexpected{RequestError{"Handshake error", errorCode}};
+        }
     }
 
     // Send the HTTP request to the remote host
