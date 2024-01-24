@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,16 +19,14 @@
 
 #pragma once
 
+#include "util/async/Concepts.h"
 #include "util/async/context/BasicExecutionContext.h"
 #include "util/async/context/SystemExecutionContext.h"
 #include "util/async/context/impl/Cancellation.h"
 
 #include <boost/asio/error.hpp>
 
-#include <chrono>
 #include <cstddef>
-#include <optional>
-#include <type_traits>
 
 namespace util::async {
 namespace detail {
@@ -72,7 +70,7 @@ struct SameThreadContext {
 };
 
 struct SystemContextProvider {
-    template <typename CtxType>
+    template <SomeExecutionContextOrStrand CtxType>
     [[nodiscard]] static constexpr auto&
     getContext([[maybe_unused]] CtxType& self) noexcept
     {

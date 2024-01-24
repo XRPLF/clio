@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,7 @@
 #include <optional>
 
 namespace util::async::detail {
+
 inline constexpr static struct AssociatedExecutorExtractor {
     template <typename CtxType>
     [[nodiscard]] CtxType::ExecutorType&
@@ -59,7 +60,7 @@ template <SomeStopSource StopSourceType>
 [[nodiscard]] inline constexpr static auto
 outcomeForHandler(auto&& fn)
 {
-    if constexpr (SomeHandlerWith<decltype(fn), AnyStopToken>) {
+    if constexpr (SomeHandlerWith<decltype(fn), typename StopSourceType::Token>) {
         using FnRetType = decltype(fn(std::declval<typename StopSourceType::Token>()));
         using RetType = util::Expected<FnRetType, ExecutionContextException>;
 

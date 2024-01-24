@@ -2,7 +2,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "util/Expected.h"
 #include "util/async/Concepts.h"
 
 #include <fmt/core.h>
@@ -28,12 +27,13 @@
 
 #include <exception>
 #include <string>
+#include <utility>
 
 namespace util::async {
 
 struct ExecutionContextException : std::exception {
     ExecutionContextException(std::string tid, std::string msg)
-        : message{fmt::format("Thread {} exit with exception: {}", tid, msg)}
+        : message{fmt::format("Thread {} exit with exception: {}", std::move(tid), std::move(msg))}
     {
     }
 

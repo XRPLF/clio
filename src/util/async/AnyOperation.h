@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -29,15 +29,16 @@
 #include <fmt/std.h>
 
 #include <any>
-#include <chrono>
-#include <exception>
+#include <thread>
+#include <type_traits>
+#include <utility>
 
 namespace util::async {
 
 template <typename RetType>
 class AnyOperation {
 public:
-    template <typename OpType>
+    template <SomeOperation OpType>
         requires std::is_same_v<std::decay_t<OpType>, detail::ErasedOperation>
     /* implicit */ AnyOperation(OpType&& operation) : operation_{std::forward<OpType>(operation)}
     {

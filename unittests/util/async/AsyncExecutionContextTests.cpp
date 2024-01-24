@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "util/async/Async.h"
 #include "util/async/context/BasicExecutionContext.h"
 #include "util/async/context/SyncExecutionContext.h"
 

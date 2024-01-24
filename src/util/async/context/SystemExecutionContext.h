@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +31,7 @@ namespace util::async {
  */
 class SystemExecutionContext {
 public:
-    static auto&
+    [[nodiscard]] static auto&
     instance()
     {
         static util::async::PoolExecutionContext systemExecutionContext{};
