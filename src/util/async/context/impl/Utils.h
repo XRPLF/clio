@@ -32,7 +32,7 @@
 
 namespace util::async::detail {
 
-inline constexpr static struct AssociatedExecutorExtractor {
+inline constexpr struct AssociatedExecutorExtractor {
     template <typename CtxType>
     [[nodiscard]] CtxType::ExecutorType&
     operator()(CtxType& ctx) const noexcept
@@ -42,7 +42,7 @@ inline constexpr static struct AssociatedExecutorExtractor {
 } extractAssociatedExecutor;
 
 template <SomeExecutionContextOrStrand CtxType>
-[[nodiscard]] inline constexpr static auto
+[[nodiscard]] inline constexpr auto
 getTimeoutHandleIfNeeded(CtxType& ctx, SomeOptStdDuration auto timeout, SomeStopSource auto& stopSource)
 {
     using TimerType = CtxType::Timer;
@@ -57,7 +57,7 @@ getTimeoutHandleIfNeeded(CtxType& ctx, SomeOptStdDuration auto timeout, SomeStop
 }
 
 template <SomeStopSource StopSourceType>
-[[nodiscard]] inline constexpr static auto
+[[nodiscard]] inline constexpr auto
 outcomeForHandler(auto&& fn)
 {
     if constexpr (SomeHandlerWith<decltype(fn), typename StopSourceType::Token>) {

@@ -27,6 +27,7 @@
 #include <fmt/std.h>
 
 #include <exception>
+#include <thread>
 
 namespace util::async::detail {
 
@@ -52,7 +53,7 @@ struct DefaultErrorHandler {
 };
 
 struct NoErrorHandler {
-    [[nodiscard]] static auto
+    [[nodiscard]] static constexpr auto
     wrap(auto&& fn)
     {
         return std::forward<decltype(fn)>(fn);

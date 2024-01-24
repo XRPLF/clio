@@ -42,19 +42,7 @@ struct SameThreadContext {
         {
         }
     };
-    struct Timer {
-        Timer(auto&, auto, auto&&)
-        {
-        }
-
-        Timer(Timer&&) = default;
-        Timer(Timer const&) = delete;
-
-        void
-        cancel()
-        {
-        }
-    };
+    struct Timer {};  // note: not actually used but needed for compilation
     struct Strand {
         using Executor = SameThreadContext::Executor;
         using Timer = SameThreadContext::Timer;
