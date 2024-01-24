@@ -21,6 +21,7 @@
 
 #include <boost/asio/spawn.hpp>
 
+#include <chrono>
 #include <functional>
 #include <type_traits>
 
@@ -103,29 +104,14 @@ concept SomeStoppableOutcome = SomeOutcome<T> and SomeStopSourceProvider<T>;
 template <typename T>
 concept SomeHandlerWithoutStopToken = requires(T fn) {
     {
-        fn()
+        std::invoke(fn)
     };
 };
 
-template <typename T>
-concept SomeHandlerWithBool = requires(T fn, bool b) {
+template <typename T, typename... Args>
+concept SomeHandlerWith = requires(T fn) {
     {
-        fn(b)
-    };
-};
-
-// TODO: is there a better way? AnyStopToken is not the same type that is actually sent outside of AnyExecutionContext
-template <typename T>
-concept SomeHandlerWithStopToken = requires(T fn, AnyStopToken token) {
-    {
-        fn(token)
-    };
-};
-
-template <typename T>
-concept SomeHandlerWithStopTokenAndBool = requires(T fn, AnyStopToken token) {
-    {
-        fn(token, true)
+        std::invoke(fn, std::declval<Args>()...)
     };
 };
 

@@ -29,6 +29,11 @@
 
 #include <any>
 #include <chrono>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <type_traits>
+#include <utility>
 
 namespace util::async {
 
@@ -97,7 +102,7 @@ public:
     }
 
     [[nodiscard]] auto
-    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWithStopToken auto&& fn) noexcept
+    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken> auto&& fn) noexcept
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -117,7 +122,7 @@ public:
     }
 
     [[nodiscard]] auto
-    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWithStopTokenAndBool auto&& fn) noexcept
+    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken, bool> auto&& fn) noexcept
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>(), true))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);

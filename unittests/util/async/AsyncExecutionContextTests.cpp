@@ -18,11 +18,15 @@
 //==============================================================================
 
 #include "util/async/Async.h"
+#include "util/async/context/BasicExecutionContext.h"
+#include "util/async/context/SyncExecutionContext.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <semaphore>
+#include <stdexcept>
 
 using namespace util::async;
 using ::testing::Types;

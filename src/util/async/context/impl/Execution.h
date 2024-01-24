@@ -23,25 +23,25 @@
 #include "util/async/Concepts.h"
 #include "util/async/Error.h"
 #include "util/async/Outcome.h"
+#include "util/async/context/impl/Timer.h"
 
-#include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/thread_pool.hpp>
 
 namespace util::async::detail {
 
-template <typename ExecutorType>
-struct CoroDispatcher {
-    ExecutorType executor;
-
-    template <SomeOutcome OutcomeType>
-    auto
-    dispatch(OutcomeType outcome, auto&& fn)
+struct SpawnDispatchStrategy {
+    template <typename ContextType, SomeOutcome OutcomeType>
+    static auto
+    dispatch(ContextType& ctx, OutcomeType&& outcome, auto&& fn)
     {
         auto op = outcome.getOperation();
 
         boost::asio::spawn(
-            executor,
-            [outcome = std::move(outcome), fn = std::forward<decltype(fn)>(fn)](auto yield) mutable {
+            ctx.executor,
+            [outcome = std::forward<decltype(outcome)>(outcome),
+             fn = std::forward<decltype(fn)>(fn)](auto yield) mutable {
                 if constexpr (SomeStoppableOutcome<OutcomeType>) {
                     auto& stopSource = outcome.getStopSource();
                     fn(outcome, stopSource, stopSource[yield]);
@@ -55,33 +55,33 @@ struct CoroDispatcher {
     }
 };
 
-template <typename ExecutorType>
-struct PoolDispatcher {
-    ExecutorType executor;
-
-    template <SomeOutcome OutcomeType>
-    auto
-    dispatch(OutcomeType outcome, auto&& fn)
+struct PostDispatchStrategy {
+    template <typename ContextType, SomeOutcome OutcomeType>
+    static auto
+    dispatch(ContextType& ctx, OutcomeType&& outcome, auto&& fn)
     {
         auto op = outcome.getOperation();
 
-        boost::asio::post(executor, [outcome = std::move(outcome), fn = std::forward<decltype(fn)>(fn)]() mutable {
-            if constexpr (SomeStoppableOutcome<OutcomeType>) {
-                auto& stopSource = outcome.getStopSource();
-                fn(outcome, stopSource, stopSource.getToken());
-            } else {
-                fn(outcome);
+        boost::asio::post(
+            ctx.executor,
+            [outcome = std::forward<decltype(outcome)>(outcome), fn = std::forward<decltype(fn)>(fn)]() mutable {
+                if constexpr (SomeStoppableOutcome<OutcomeType>) {
+                    auto& stopSource = outcome.getStopSource();
+                    fn(outcome, stopSource, stopSource.getToken());
+                } else {
+                    fn(outcome);
+                }
             }
-        });
+        );
 
         return op;
     }
 };
 
-struct SyncDispatcher {
-    template <SomeOutcome OutcomeType>
-    auto
-    dispatch(OutcomeType outcome, auto&& fn)
+struct SyncDispatchStrategy {
+    template <typename ContextType, SomeOutcome OutcomeType>
+    static auto
+    dispatch([[maybe_unused]] ContextType& ctx, OutcomeType outcome, auto&& fn)
     {
         auto op = outcome.getOperation();
 
@@ -95,22 +95,5 @@ struct SyncDispatcher {
         return op;
     }
 };
-
-template <SomeStopSource StopSourceType>
-[[nodiscard]] inline constexpr auto
-outcomeForHandler(auto&& fn)
-{
-    if constexpr (SomeHandlerWithStopToken<decltype(fn)>) {
-        using FnRetType = decltype(fn(std::declval<typename StopSourceType::Token>()));
-        using RetType = util::Expected<FnRetType, ExecutionContextException>;
-
-        return StoppableOutcome<RetType, StopSourceType>();
-    } else {
-        using FnRetType = decltype(fn());
-        using RetType = util::Expected<FnRetType, ExecutionContextException>;
-
-        return Outcome<RetType>();
-    }
-}
 
 }  // namespace util::async::detail

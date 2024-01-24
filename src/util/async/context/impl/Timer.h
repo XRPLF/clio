@@ -19,15 +19,15 @@
 
 #pragma once
 
-#include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
 
 namespace util::async::detail {
 
-template <typename CtxType>
+template <typename ExecutorType>
 struct SteadyTimer {
     boost::asio::steady_timer timer_;
 
-    SteadyTimer(CtxType& ctx, auto delay, auto&& fn) : timer_{ctx.ioc_}
+    SteadyTimer(ExecutorType& executor, auto delay, auto&& fn) : timer_{executor}
     {
         timer_.expires_after(delay);
         timer_.async_wait(std::forward<decltype(fn)>(fn));

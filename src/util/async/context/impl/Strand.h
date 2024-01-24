@@ -21,25 +21,36 @@
 
 #include "util/async/context/impl/Cancellation.h"
 #include "util/async/context/impl/Execution.h"
+#include "util/async/context/impl/Timer.h"
+#include "util/async/context/impl/Utils.h"
 #include "util/async/impl/ErrorHandling.h"
 
-#include <boost/asio.hpp>
-
-#include <memory>
+#include <chrono>
+#include <functional>
+#include <optional>
+#include <type_traits>
 
 namespace util::async::detail {
 
-template <typename CtxType, template <typename> typename DispatchStrategy, typename ErrorHandlingStrategy>
+template <
+    typename ParentContextType,  // SomeExecutionContext
+    SomeStopSource StopSourceType,
+    typename DispatcherType,                                      // SomeDispatchStrategy
+    typename TimerContextProvider = detail::SelfContextProvider,  // SomeTimerContextProvider
+    typename ErrorHandlerType = detail::DefaultErrorHandler>      // SomeErrorStrategy>
 class BasicStrand {
-    using ExecutorType = boost::asio::strand<boost::asio::thread_pool::executor_type>;
-    using StopSourceType = typename CtxType::StopSource;
-    using StopToken = typename StopSourceType::Token;
-
-    std::reference_wrapper<CtxType> ctx_;
-    DispatchStrategy<ExecutorType> dispatcher_;
+    std::reference_wrapper<ParentContextType> parentContext_;
+    ParentContextType::ContextHolderType::Strand context_;
+    friend AssociatedExecutorExtractor;
 
 public:
-    BasicStrand(CtxType& ctx) : ctx_{std::ref(ctx)}, dispatcher_{boost::asio::make_strand(ctx.ioc_)}
+    using ContextHolderType = ParentContextType::ContextHolderType::Strand;
+    using ExecutorType = ContextHolderType::Executor;
+    using StopToken = StopSourceType::Token;
+    using Timer = ParentContextType::ContextHolderType::Timer;  // timers are associated with the parent context
+
+    BasicStrand(ParentContextType& parent, auto&& strand)
+        : parentContext_{std::ref(parent)}, context_{std::forward<decltype(strand)>(strand)}
     {
     }
 
@@ -49,16 +60,19 @@ public:
 
     [[nodiscard]] auto
     execute(
-        SomeHandlerWithStopToken auto&& fn,
+        SomeHandlerWith<StopToken> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
     ) noexcept
     {
-        return dispatcher_.dispatch(
+        return DispatcherType::dispatch(
+            context_,
             detail::outcomeForHandler<StopSourceType>(fn),
-            ErrorHandlingStrategy::wrap([this, timeout, fn = std::forward<decltype(fn)>(fn)](
-                                            auto& outcome, auto& stopSource, auto stopToken
-                                        ) mutable {
-                auto timeoutHandler = detail::getTimoutHandleIfNeeded(ctx_.get(), timeout, stopSource);
+            ErrorHandlerType::wrap([this, timeout, fn = std::forward<decltype(fn)>(fn)](
+                                       auto& outcome, auto& stopSource, auto stopToken
+                                   ) mutable {
+                [[maybe_unused]] auto timeoutHandler = detail::getTimeoutHandleIfNeeded(
+                    TimerContextProvider::getContext(parentContext_.get()), timeout, stopSource
+                );
 
                 using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>()))>;
                 if constexpr (std::is_void_v<FnRetType>) {
@@ -72,7 +86,7 @@ public:
     }
 
     [[nodiscard]] auto
-    execute(SomeHandlerWithStopToken auto&& fn, SomeStdDuration auto timeout) noexcept
+    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept
     {
         return execute(
             std::forward<decltype(fn)>(fn),
@@ -83,9 +97,10 @@ public:
     [[nodiscard]] auto
     execute(SomeHandlerWithoutStopToken auto&& fn) noexcept
     {
-        return dispatcher_.dispatch(
+        return DispatcherType::dispatch(
+            context_,
             detail::outcomeForHandler<StopSourceType>(fn),
-            ErrorHandlingStrategy::wrap([fn = std::forward<decltype(fn)>(fn)](auto& outcome) mutable {
+            ErrorHandlerType::wrap([fn = std::forward<decltype(fn)>(fn)](auto& outcome) mutable {
                 using FnRetType = std::decay_t<decltype(fn())>;
                 if constexpr (std::is_void_v<FnRetType>) {
                     fn();

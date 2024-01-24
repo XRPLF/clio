@@ -19,14 +19,10 @@
 
 #pragma once
 
-#include "util/async/Concepts.h"
-
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 
-#include <chrono>
 #include <memory>
-#include <optional>
 #include <utility>
 
 namespace util::async::detail {
@@ -132,23 +128,5 @@ public:
         shared_->requestStop();
     }
 };
-
-[[nodiscard]] inline auto
-getTimoutHandleIfNeeded(
-    SomeExecutionContext auto& ctx,
-    SomeOptStdDuration auto timeout,
-    SomeStopSource auto& stopSource
-)
-{
-    using TimerType = typename std::decay_t<decltype(ctx)>::Timer;
-    std::optional<TimerType> timer;
-    if (timeout) {
-        timer.emplace(TimerType(ctx, *timeout, [&stopSource](auto cancelled) {
-            if (not cancelled)
-                stopSource.requestStop();
-        }));
-    }
-    return timer;
-}
 
 }  // namespace util::async::detail

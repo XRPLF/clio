@@ -20,21 +20,48 @@
 #pragma once
 
 #include "util/Expected.h"
-#include "util/async/Concepts.h"
 #include "util/async/Error.h"
 #include "util/async/Operation.h"
 #include "util/async/context/impl/Cancellation.h"
 #include "util/async/context/impl/Execution.h"
 #include "util/async/context/impl/Strand.h"
 #include "util/async/context/impl/Timer.h"
+#include "util/async/context/impl/Utils.h"
 #include "util/async/impl/ErrorHandling.h"
 
 #include <boost/asio.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/thread_pool.hpp>
 
 #include <chrono>
-#include <exception>
+#include <cstddef>
+#include <optional>
+#include <type_traits>
+#include <utility>
 
 namespace util::async {
+namespace detail {
+
+struct AsioPoolContext {
+    using Executor = boost::asio::thread_pool;
+    using Timer = SteadyTimer<Executor>;
+    struct Strand {
+        using Executor = boost::asio::strand<Executor::executor_type>;
+        using Timer = SteadyTimer<Executor>;
+        Executor executor;
+    };
+
+    auto
+    makeStrand()
+    {
+        return boost::asio::make_strand(executor);
+    }
+
+    boost::asio::thread_pool executor;
+};
+
+}  // namespace detail
 
 /**
  * @brief A basic, dispatch-agnostic execution context.
@@ -42,23 +69,25 @@ namespace util::async {
  * Both return values and exceptions are handled by capturing them and returning them packaged as util::Expected.
  */
 template <
+    typename ContextType,  // SomeContextHolder
     SomeStopSource StopSourceType,
-    template <typename>
-    typename DispatchStrategy,
-    typename ErrorHandlingStrategy = detail::DefaultErrorHandler>
+    typename DispatcherType,                                      // SomeDispatchStrategy
+    typename TimerContextProvider = detail::SelfContextProvider,  // SomeTimerContextProvider
+    typename ErrorHandlerType = detail::DefaultErrorHandler>      // SomeErrorStrategy
 class BasicExecutionContext {
-    using ExecutorType = boost::asio::thread_pool;
-
-    ExecutorType ioc_;
-    DispatchStrategy<ExecutorType&> dispatcher_;
+    ContextType context_;
+    friend detail::AssociatedExecutorExtractor;
 
 public:
+    using ContextHolderType = ContextType;
+    using ExecutorType = ContextHolderType::Executor;
+
     template <typename T>
     using ValueType = util::Expected<T, ExecutionContextException>;
 
     using StopSource = StopSourceType;
 
-    using StopToken = typename StopSourceType::Token;
+    using StopToken = StopSourceType::Token;
 
     template <typename T>
     using StoppableOperation = StoppableOperation<ValueType<T>, StopSourceType>;
@@ -66,11 +95,10 @@ public:
     template <typename T>
     using Operation = Operation<ValueType<T>>;
 
-    using Strand = detail::BasicStrand<BasicExecutionContext, DispatchStrategy, ErrorHandlingStrategy>;
-    friend Strand;
+    using Strand = detail::
+        BasicStrand<BasicExecutionContext, StopSourceType, DispatcherType, TimerContextProvider, ErrorHandlerType>;
 
-    using Timer = detail::SteadyTimer<BasicExecutionContext>;
-    friend Timer;
+    using Timer = ContextHolderType::Timer;
 
     // note: scheduled operations are always stoppable
     template <typename T>
@@ -81,7 +109,7 @@ public:
      *
      * @param numThreads The number of threads to use for the underlying thread pool
      */
-    BasicExecutionContext(std::size_t numThreads = 1) noexcept : ioc_{numThreads}, dispatcher_{ioc_}
+    explicit BasicExecutionContext(std::size_t numThreads = 1) noexcept : context_{numThreads}
     {
     }
 
@@ -91,66 +119,74 @@ public:
     ~BasicExecutionContext()
     {
         stop();
-        ioc_.join();
     }
 
     BasicExecutionContext(BasicExecutionContext&&) = delete;
     BasicExecutionContext(BasicExecutionContext const&) = delete;
 
-    /**
-     * @brief Schedule a timer on the global system execution context. Callback receives a cancellation flag.
-     */
     [[nodiscard]] auto
     scheduleAfter(
         SomeStdDuration auto delay,
-        SomeHandlerWithStopToken auto&& fn,
+        SomeHandlerWith<StopToken> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
     ) noexcept
     {
-        using FnRetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
-        return ScheduledOperation<FnRetType>(
-            *this,
-            delay,
-            [this, timeout, fn = std::forward<decltype(fn)>(fn)](auto) mutable {
-                return this->execute(
-                    [fn = std::forward<decltype(fn)>(fn)](auto stopToken) {
-                        if constexpr (std::is_void_v<FnRetType>) {
-                            fn(std::move(stopToken));
-                        } else {
-                            return fn(std::move(stopToken));
-                        }
-                    },
-                    timeout
-                );
-            }
-        );
+        if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
+            return TimerContextProvider::getContext(*this).scheduleAfter(
+                delay, std::forward<decltype(fn)>(fn), timeout
+            );
+        } else {
+            using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>()))>;
+            return ScheduledOperation<FnRetType>(
+                detail::extractAssociatedExecutor(*this),
+                delay,
+                [this, timeout, fn = std::forward<decltype(fn)>(fn)](auto) mutable {
+                    return this->execute(
+                        [fn = std::forward<decltype(fn)>(fn)](auto stopToken) {
+                            if constexpr (std::is_void_v<FnRetType>) {
+                                fn(std::move(stopToken));
+                            } else {
+                                return fn(std::move(stopToken));
+                            }
+                        },
+                        timeout
+                    );
+                }
+            );
+        }
     }
 
     [[nodiscard]] auto
     scheduleAfter(
         SomeStdDuration auto delay,
-        SomeHandlerWithStopTokenAndBool auto&& fn,
+        SomeHandlerWith<StopToken, bool> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
     ) noexcept
     {
-        using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>(), true))>;
-        return ScheduledOperation<FnRetType>(
-            *this,
-            delay,
-            [this, timeout, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
-                return this->execute(
-                    [fn = std::forward<decltype(fn)>(fn),
-                     isAborted = (ec == boost::asio::error::operation_aborted)](auto stopToken) {
-                        if constexpr (std::is_void_v<FnRetType>) {
-                            fn(std::move(stopToken), isAborted);
-                        } else {
-                            return fn(std::move(stopToken), isAborted);
-                        }
-                    },
-                    timeout
-                );
-            }
-        );
+        if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
+            return TimerContextProvider::getContext(*this).scheduleAfter(
+                delay, std::forward<decltype(fn)>(fn), timeout
+            );
+        } else {
+            using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>(), true))>;
+            return ScheduledOperation<FnRetType>(
+                detail::extractAssociatedExecutor(*this),
+                delay,
+                [this, timeout, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
+                    return this->execute(
+                        [fn = std::forward<decltype(fn)>(fn),
+                         isAborted = (ec == boost::asio::error::operation_aborted)](auto stopToken) {
+                            if constexpr (std::is_void_v<FnRetType>) {
+                                fn(std::move(stopToken), isAborted);
+                            } else {
+                                return fn(std::move(stopToken), isAborted);
+                            }
+                        },
+                        timeout
+                    );
+                }
+            );
+        }
     }
 
     /**
@@ -161,16 +197,18 @@ public:
      */
     [[nodiscard]] auto
     execute(
-        SomeHandlerWithStopToken auto&& fn,
+        SomeHandlerWith<StopToken> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
     ) noexcept
     {
-        return dispatcher_.dispatch(
+        return DispatcherType::dispatch(
+            context_,
             detail::outcomeForHandler<StopSourceType>(fn),
-            ErrorHandlingStrategy::wrap([this, timeout, fn = std::forward<decltype(fn)>(fn)](
-                                            auto& outcome, auto& stopSource, auto stopToken
-                                        ) mutable {
-                auto timeoutHandler = detail::getTimoutHandleIfNeeded(*this, timeout, stopSource);
+            ErrorHandlerType::wrap([this, timeout, fn = std::forward<decltype(fn)>(fn)](
+                                       auto& outcome, auto& stopSource, auto stopToken
+                                   ) mutable {
+                [[maybe_unused]] auto timeoutHandler =
+                    detail::getTimeoutHandleIfNeeded(TimerContextProvider::getContext(*this), timeout, stopSource);
 
                 using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>()))>;
                 if constexpr (std::is_void_v<FnRetType>) {
@@ -191,7 +229,7 @@ public:
      * @param timeout The timeout duration after which the operation will be cancelled
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWithStopToken auto&& fn, SomeStdDuration auto timeout) noexcept
+    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept
     {
         return execute(
             std::forward<decltype(fn)>(fn),
@@ -208,9 +246,10 @@ public:
     [[nodiscard]] auto
     execute(SomeHandlerWithoutStopToken auto&& fn) noexcept
     {
-        return dispatcher_.dispatch(
+        return DispatcherType::dispatch(
+            context_,
             detail::outcomeForHandler<StopSourceType>(fn),
-            ErrorHandlingStrategy::wrap([fn = std::forward<decltype(fn)>(fn)](auto& outcome) mutable {
+            ErrorHandlerType::wrap([fn = std::forward<decltype(fn)>(fn)](auto& outcome) mutable {
                 using FnRetType = std::decay_t<decltype(fn())>;
                 if constexpr (std::is_void_v<FnRetType>) {
                     fn();
@@ -228,16 +267,16 @@ public:
     [[nodiscard]] Strand
     makeStrand()
     {
-        return Strand(*this);
+        return Strand(*this, context_.makeStrand());
     }
 
     /**
      * @brief Stop the execution context as soon as possible
      */
     void
-    stop()
+    stop() noexcept
     {
-        ioc_.stop();
+        context_.executor.stop();
     }
 };
 
@@ -251,7 +290,8 @@ public:
  * This makes it possible to have 1 thread in the execution context and still be able to execute operations AND timers
  * at the same time.
  */
-using CoroExecutionContext = BasicExecutionContext<detail::YieldContextStopSource, detail::CoroDispatcher>;
+using CoroExecutionContext =
+    BasicExecutionContext<detail::AsioPoolContext, detail::YieldContextStopSource, detail::SpawnDispatchStrategy>;
 
 /**
  * @brief A asio::thread_pool-based execution context.
@@ -260,6 +300,7 @@ using CoroExecutionContext = BasicExecutionContext<detail::YieldContextStopSourc
  * Please note that this execution context can't handle timers and operations at the same time iff you have exactly 1
  * thread in the thread pool.
  */
-using PoolExecutionContext = BasicExecutionContext<detail::BasicStopSource, detail::PoolDispatcher>;
+using PoolExecutionContext =
+    BasicExecutionContext<detail::AsioPoolContext, detail::BasicStopSource, detail::PostDispatchStrategy>;
 
 }  // namespace util::async

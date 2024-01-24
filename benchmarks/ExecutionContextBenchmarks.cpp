@@ -27,6 +27,8 @@
 #include <benchmark/benchmark.h>
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <latch>
 #include <optional>
 #include <stdexcept>

@@ -26,6 +26,7 @@
 
 #include <condition_variable>
 #include <future>
+#include <memory>
 #include <mutex>
 #include <optional>
 
@@ -103,10 +104,10 @@ struct BasicScheduledOperation {
     };
 
     std::shared_ptr<State> state_ = std::make_shared<State>();
-    detail::SteadyTimer<CtxType> timer_;
+    typename CtxType::Timer timer_;
 
-    BasicScheduledOperation(CtxType& ctx, auto delay, auto&& fn)
-        : timer_(ctx, delay, [state = state_, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
+    BasicScheduledOperation(auto& executor, auto delay, auto&& fn)
+        : timer_(executor, delay, [state = state_, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
             state->emplace(fn(ec));
         })
     {
