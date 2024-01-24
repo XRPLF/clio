@@ -89,9 +89,12 @@ public:
     {
         LOG(log_.debug()) << "Attempting to fetch ledger with sequence = " << sequence;
 
-        auto response = loadBalancer_->fetchLedger(
-            sequence, true, !backend_->cache().isFull() || backend_->cache().latestLedgerSequence() + 1 < sequence
-        );
+        auto const isCacheFull = backend_->cache().isFull();
+        auto const isLedgerCached = backend_->cache().latestLedgerSequence() >= sequence;
+        if (isLedgerCached)
+            LOG(log_.info()) << "Fetching a ledger which has been cached before." << sequence << " is already cached";
+
+        auto response = loadBalancer_->fetchLedger(sequence, true, !isCacheFull || isLedgerCached);
         if (response)
             LOG(log_.trace()) << "GetLedger reply = " << response->DebugString();
 
