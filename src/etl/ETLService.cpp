@@ -47,7 +47,8 @@ ETLService::runETLPipeline(uint32_t startSequence, uint32_t numExtractors)
     if (finishSequence_ && startSequence > *finishSequence_)
         return {};
 
-    LOG(log_.debug()) << "Wait for cache is ready";
+    LOG(log_.debug()) << "Wait for cache containing seq " << startSequence - 1
+                      << " current cache last seq =" << backend_->cache().latestLedgerSequence();
     backend_->cache().waitUntilCacheContainsSeq(startSequence - 1);
 
     LOG(log_.debug()) << "Starting etl pipeline";
