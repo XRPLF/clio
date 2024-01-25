@@ -144,7 +144,21 @@ struct AnyExecutionContextTests : ::testing::Test {
     AnyExecutionContext ctx{static_cast<MockExecutionContext&>(mockExecutionContext)};
 };
 
-TEST_F(AnyExecutionContextTests, ExecuteWithReturnValue)
+TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndVoid)
+{
+    auto mockOp = MockStoppableOperation<detail::Any>{};
+    EXPECT_CALL(mockOp, get()).WillOnce(Return());
+    EXPECT_CALL(mockExecutionContext, execute(An<std::function<detail::Any(AnyStopToken)>>(), _))
+        .WillOnce(ReturnRef(mockOp));
+
+    bool called = false;
+    auto op = ctx.execute([&](auto) { called = true; });
+    static_assert(std::is_same_v<decltype(op), AnyOperation<void>>);
+
+    ASSERT_TRUE(called);
+}
+
+TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndReturnValue)
 {
     auto mockOp = MockStoppableOperation<detail::Any>{};
     EXPECT_CALL(mockOp, get()).WillOnce(Return(std::make_any<int>(42)));
