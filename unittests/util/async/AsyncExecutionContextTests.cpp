@@ -127,7 +127,7 @@ TYPED_TEST(ExecutionContextTests, timerCancel)
     EXPECT_EQ(value, 42);
 }
 
-TYPED_TEST(ExecutionContextTests, timerException)
+TYPED_TEST(ExecutionContextTests, timerStdException)
 {
     auto res =
         this->ctx.scheduleAfter(std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
@@ -139,6 +139,18 @@ TYPED_TEST(ExecutionContextTests, timerException)
     EXPECT_TRUE(res.get().error().message.ends_with("test"));
 }
 
+TYPED_TEST(ExecutionContextTests, timerUnknownException)
+{
+    auto res =
+        this->ctx.scheduleAfter(std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
+            if (not cancelled)
+                throw 0;
+            return 0;
+        });
+
+    EXPECT_TRUE(res.get().error().message.ends_with("unknown"));
+}
+
 TYPED_TEST(ExecutionContextTests, strand)
 {
     auto strand = this->ctx.makeStrand();
@@ -147,12 +159,20 @@ TYPED_TEST(ExecutionContextTests, strand)
     EXPECT_EQ(res.get().value(), 42);
 }
 
-TYPED_TEST(ExecutionContextTests, strandException)
+TYPED_TEST(ExecutionContextTests, strandStdException)
 {
     auto strand = this->ctx.makeStrand();
     auto res = strand.execute([]() { throw std::runtime_error("test"); });
 
     EXPECT_TRUE(res.get().error().message.ends_with("test"));
+}
+
+TYPED_TEST(ExecutionContextTests, strandUnknownException)
+{
+    auto strand = this->ctx.makeStrand();
+    auto res = strand.execute([]() { throw 0; });
+
+    EXPECT_TRUE(res.get().error().message.ends_with("unknown"));
 }
 
 // note: this fails on pool context with 1 thread
@@ -180,40 +200,26 @@ using NoErrorHandlerSyncExecutionContext = BasicExecutionContext<
 
 TEST(NoErrorHandlerSyncExecutionContextTests, executeStdException)
 {
-    EXPECT_THROW(
-        [] {
-            auto ctx = NoErrorHandlerSyncExecutionContext{2};
-            ctx.execute([] { throw std::runtime_error("test"); }).wait();
-        }(),
-        std::runtime_error
-    );
+    auto ctx = NoErrorHandlerSyncExecutionContext{};
+    EXPECT_THROW(ctx.execute([] { throw std::runtime_error("test"); }).wait(), std::runtime_error);
 }
 
 TEST(NoErrorHandlerSyncExecutionContextTests, executeUnknownException)
 {
-    EXPECT_ANY_THROW([] {
-        auto ctx = NoErrorHandlerSyncExecutionContext{2};
-        ctx.execute([] { throw 0; }).wait();
-    }());
+    auto ctx = NoErrorHandlerSyncExecutionContext{};
+    EXPECT_ANY_THROW(ctx.execute([] { throw 0; }).wait());
 }
 
 TEST(NoErrorHandlerSyncExecutionContextTests, executeStdExceptionInStrand)
 {
-    EXPECT_THROW(
-        [] {
-            auto ctx = NoErrorHandlerSyncExecutionContext{2};
-            auto strand = ctx.makeStrand();
-            strand.execute([] { throw std::runtime_error("test"); }).wait();
-        }(),
-        std::runtime_error
-    );
+    auto ctx = NoErrorHandlerSyncExecutionContext{};
+    auto strand = ctx.makeStrand();
+    EXPECT_THROW(strand.execute([] { throw std::runtime_error("test"); }).wait(), std::runtime_error);
 }
 
 TEST(NoErrorHandlerSyncExecutionContextTests, executeUnknownExceptionInStrand)
 {
-    EXPECT_ANY_THROW([] {
-        auto ctx = NoErrorHandlerSyncExecutionContext{2};
-        auto strand = ctx.makeStrand();
-        strand.execute([] { throw 0; }).wait();
-    }());
+    auto ctx = NoErrorHandlerSyncExecutionContext{};
+    auto strand = ctx.makeStrand();
+    EXPECT_ANY_THROW(strand.execute([] { throw 0; }).wait());
 }
