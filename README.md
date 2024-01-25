@@ -86,6 +86,8 @@ conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactor
 ```
 Now you should be able to download prebuilt `xrpl` package on some platforms.
 
+You might need to edit the `~/.conan/remotes.json` file to ensure that this newly added artifactory is listed last. Otherwise you might see compilation errors when building the project with gcc version 13 (or newer).
+
 2. Remove old packages you may have cached: 
 ```sh 
 conan remove -f xrpl
