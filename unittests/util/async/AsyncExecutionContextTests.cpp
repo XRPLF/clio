@@ -26,6 +26,7 @@
 #include <chrono>
 #include <semaphore>
 #include <stdexcept>
+#include <string>
 
 using namespace util::async;
 using ::testing::Types;
@@ -58,13 +59,19 @@ TYPED_TEST(ExecutionContextTests, executeVoid)
 TYPED_TEST(ExecutionContextTests, executeStdException)
 {
     auto res = this->ctx.execute([]() { throw std::runtime_error("test"); });
-    EXPECT_TRUE(res.get().error().message.ends_with("test"));
+
+    auto const err = res.get().error();
+    EXPECT_TRUE(err.message.ends_with("test"));
+    EXPECT_TRUE(std::string{err.what()}.ends_with("test"));
 }
 
 TYPED_TEST(ExecutionContextTests, executeUnknownException)
 {
     auto res = this->ctx.execute([]() { throw 0; });
-    EXPECT_TRUE(res.get().error().message.ends_with("unknown"));
+
+    auto const err = res.get().error();
+    EXPECT_TRUE(err.message.ends_with("unknown"));
+    EXPECT_TRUE(std::string{err.what()}.ends_with("unknown"));
 }
 
 // note: this fails on pool context with 1 thread
@@ -136,7 +143,9 @@ TYPED_TEST(ExecutionContextTests, timerStdException)
             return 0;
         });
 
-    EXPECT_TRUE(res.get().error().message.ends_with("test"));
+    auto const err = res.get().error();
+    EXPECT_TRUE(err.message.ends_with("test"));
+    EXPECT_TRUE(std::string{err.what()}.ends_with("test"));
 }
 
 TYPED_TEST(ExecutionContextTests, timerUnknownException)
@@ -148,7 +157,9 @@ TYPED_TEST(ExecutionContextTests, timerUnknownException)
             return 0;
         });
 
-    EXPECT_TRUE(res.get().error().message.ends_with("unknown"));
+    auto const err = res.get().error();
+    EXPECT_TRUE(err.message.ends_with("unknown"));
+    EXPECT_TRUE(std::string{err.what()}.ends_with("unknown"));
 }
 
 TYPED_TEST(ExecutionContextTests, strand)
@@ -164,7 +175,9 @@ TYPED_TEST(ExecutionContextTests, strandStdException)
     auto strand = this->ctx.makeStrand();
     auto res = strand.execute([]() { throw std::runtime_error("test"); });
 
-    EXPECT_TRUE(res.get().error().message.ends_with("test"));
+    auto const err = res.get().error();
+    EXPECT_TRUE(err.message.ends_with("test"));
+    EXPECT_TRUE(std::string{err.what()}.ends_with("test"));
 }
 
 TYPED_TEST(ExecutionContextTests, strandUnknownException)
@@ -172,7 +185,9 @@ TYPED_TEST(ExecutionContextTests, strandUnknownException)
     auto strand = this->ctx.makeStrand();
     auto res = strand.execute([]() { throw 0; });
 
-    EXPECT_TRUE(res.get().error().message.ends_with("unknown"));
+    auto const err = res.get().error();
+    EXPECT_TRUE(err.message.ends_with("unknown"));
+    EXPECT_TRUE(std::string{err.what()}.ends_with("unknown"));
 }
 
 // note: this fails on pool context with 1 thread
