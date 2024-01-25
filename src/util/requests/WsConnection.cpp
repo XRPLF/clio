@@ -29,6 +29,8 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/ssl/error.hpp>
+#include <boost/asio/ssl/stream_base.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/error.hpp>
@@ -43,6 +45,8 @@
 #include <boost/beast/websocket/stream_base.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include <openssl/err.h>
+#include <openssl/tls1.h>
 
 #include <chrono>
 #include <iterator>
@@ -89,6 +93,13 @@ WsConnectionBuilder::setTimeout(std::chrono::milliseconds timeout)
     return *this;
 }
 
+WsConnectionBuilder&
+WsConnectionBuilder::setSslEnabled(bool sslEnabled)
+{
+    sslEnabled_ = sslEnabled;
+    return *this;
+}
+
 Expected<WsConnectionPtr, RequestError>
 WsConnectionBuilder::connect(asio::yield_context yield) const
 {
@@ -96,6 +107,12 @@ WsConnectionBuilder::connect(asio::yield_context yield) const
         auto streamData = impl::SslWsStreamData::create(yield);
         if (not streamData.has_value())
             return Unexpected{std::move(streamData.error())};
+
+        if (!SSL_set_tlsext_host_name(streamData->stream.next_layer().native_handle(), host_.c_str())) {
+            beast::error_code errorCode;
+            errorCode.assign(static_cast<int>(::ERR_get_error()), beast::net::error::get_ssl_category());
+            return Unexpected{RequestError{"SSL setup failed", errorCode}};
+        }
         return connectImpl(std::move(streamData.value()), yield);
     }
 
@@ -125,6 +142,14 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, boost::asio::yield
     auto endpoint = beast::get_lowest_layer(ws).async_connect(results, yield[errorCode]);
     if (errorCode)
         return Unexpected{RequestError{"Connect error", errorCode}};
+
+    if constexpr (StreamDataType::sslEnabled) {
+        beast::get_lowest_layer(ws).expires_never();
+        // Perform the SSL handshake
+        ws.next_layer().async_handshake(asio::ssl::stream_base::client, yield[errorCode]);
+        if (errorCode)
+            return Unexpected{RequestError{"SSL handshake error", errorCode}};
+    }
 
     // Turn off the timeout on the tcp_stream, because
     // the websocket stream has its own timeout system.

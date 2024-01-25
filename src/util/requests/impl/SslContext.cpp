@@ -77,7 +77,7 @@ getRootCertificate()
 Expected<boost::asio::ssl::context, RequestError>
 makeSslContext()
 {
-    ssl::context context{ssl::context::tlsv13_client};
+    ssl::context context{ssl::context::sslv23_client};
     context.set_verify_mode(ssl::verify_peer);
     auto const rootCertificate = getRootCertificate();
     if (not rootCertificate.has_value()) {
