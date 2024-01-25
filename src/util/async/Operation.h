@@ -31,6 +31,7 @@
 #include <optional>
 
 namespace util::async {
+namespace detail {
 
 template <typename OutcomeType>
 class BasicOperation {
@@ -57,25 +58,6 @@ public:
     wait()
     {
         future_.wait();
-    }
-};
-
-template <typename RetType, typename StopSourceType>
-class StoppableOperation : public BasicOperation<StoppableOutcome<RetType, StopSourceType>> {
-    using OutcomeType = StoppableOutcome<RetType, StopSourceType>;
-
-    StopSourceType stopSource_;
-
-public:
-    explicit StoppableOperation(OutcomeType* outcome)
-        : BasicOperation<OutcomeType>(outcome), stopSource_(outcome->getStopSource())
-    {
-    }
-
-    void
-    requestStop()
-    {
-        stopSource_.requestStop();
     }
 };
 
@@ -139,10 +121,49 @@ struct BasicScheduledOperation {
     }
 };
 
-template <typename T>
-using Operation = BasicOperation<Outcome<T>>;
+}  // namespace detail
 
+/**
+ * @brief The `future` side of async operations that can be stopped
+ *
+ * @tparam RetType The return type of the operation
+ * @tparam StopSourceType The type of the stop source
+ */
+template <typename RetType, typename StopSourceType>
+class StoppableOperation : public detail::BasicOperation<StoppableOutcome<RetType, StopSourceType>> {
+    using OutcomeType = StoppableOutcome<RetType, StopSourceType>;
+
+    StopSourceType stopSource_;
+
+public:
+    explicit StoppableOperation(OutcomeType* outcome)
+        : detail::BasicOperation<OutcomeType>(outcome), stopSource_(outcome->getStopSource())
+    {
+    }
+
+    /** @brief Requests the operation to stop */
+    void
+    requestStop()
+    {
+        stopSource_.requestStop();
+    }
+};
+
+/**
+ * @brief The `future` side of async operations that cannot be stopped
+ *
+ * @tparam RetType The return type of the operation
+ */
+template <typename RetType>
+using Operation = detail::BasicOperation<Outcome<RetType>>;
+
+/**
+ * @brief The `future` side of async operations that can be scheduled
+ *
+ * @tparam CtxType The type of the execution context
+ * @tparam OpType The type of the wrapped operation
+ */
 template <typename CtxType, typename OpType>
-using ScheduledOperation = BasicScheduledOperation<CtxType, OpType>;
+using ScheduledOperation = detail::BasicScheduledOperation<CtxType, OpType>;
 
 }  // namespace util::async

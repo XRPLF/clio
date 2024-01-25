@@ -34,6 +34,9 @@
 
 namespace util::async {
 
+/**
+ * @brief A type-erased execution context
+ */
 class AnyStrand {
 public:
     template <typename StrandType>
@@ -45,32 +48,33 @@ public:
 
     ~AnyStrand() = default;
 
-    //
-    // TODO: execute functions seems similar to same function in Context itself, need to share
-    //
+    /** @brief Execute a function without a stop token on the strand */
     [[nodiscard]] auto
     execute(SomeHandlerWithoutStopToken auto&& fn) noexcept
     {
         using RetType = std::decay_t<decltype(fn())>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
 
-        return AnyOperation<RetType>(pimpl_->execute([fn = std::forward<decltype(fn)>(fn)]() -> detail::Any {
-            if constexpr (std::is_void_v<RetType>) {
-                fn();
-                return {};
-            } else {
-                return std::make_any<RetType>(fn());
-            }
-        }));
+        return AnyOperation<RetType>(  //
+            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)]() -> detail::Any {
+                if constexpr (std::is_void_v<RetType>) {
+                    fn();
+                    return {};
+                } else {
+                    return std::make_any<RetType>(fn());
+                }
+            })
+        );
     }
 
+    /** @brief Execute a function taking a stop token on the strand */
     [[nodiscard]] auto
-    execute(auto&& fn) noexcept
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn) noexcept
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
 
-        return AnyOperation<RetType>(
+        return AnyOperation<RetType>(  //
             pimpl_->execute([fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> detail::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     fn(std::move(stopToken));
@@ -82,23 +86,26 @@ public:
         );
     }
 
+    /** @brief Execute a function taking a stop token on the strand with a timeout */
     [[nodiscard]] auto
-    execute(auto&& fn, SomeStdDuration auto timeout) noexcept
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout) noexcept
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
 
-        return AnyOperation<RetType>(pimpl_->execute(
-            [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> detail::Any {
-                if constexpr (std::is_void_v<RetType>) {
-                    fn(std::move(stopToken));
-                    return {};
-                } else {
-                    return std::make_any<RetType>(fn(std::move(stopToken)));
-                }
-            },
-            std::chrono::duration_cast<std::chrono::milliseconds>(timeout)
-        ));
+        return AnyOperation<RetType>(  //
+            pimpl_->execute(
+                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> detail::Any {
+                    if constexpr (std::is_void_v<RetType>) {
+                        fn(std::move(stopToken));
+                        return {};
+                    } else {
+                        return std::make_any<RetType>(fn(std::move(stopToken)));
+                    }
+                },
+                std::chrono::duration_cast<std::chrono::milliseconds>(timeout)
+            )
+        );
     }
 
 private:

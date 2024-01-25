@@ -36,6 +36,9 @@
 
 namespace util::async {
 
+/**
+ * @brief A type-erased execution context
+ */
 class AnyExecutionContext {
 public:
     template <typename CtxType>
@@ -47,6 +50,12 @@ public:
 
     ~AnyExecutionContext() = default;
 
+    /**
+     * @brief Execute a function on the execution context
+     *
+     * @param fn The function to execute
+     * @returns A unstoppable operation that can be used to wait for the result
+     */
     [[nodiscard]] auto
     execute(SomeHandlerWithoutStopToken auto&& fn) noexcept
     {
@@ -63,8 +72,16 @@ public:
         }));
     }
 
+    /**
+     * @brief Execute a function on the execution context
+     *
+     * @param fn The function to execute
+     * @returns A stoppable operation that can be used to wait for the result
+     *
+     * @note The function is expected to take a stop token
+     */
     [[nodiscard]] auto
-    execute(auto&& fn) noexcept
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn) noexcept
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -81,8 +98,17 @@ public:
         );
     }
 
+    /**
+     * @brief Execute a function with a timeout
+     *
+     * @param fn The function to execute
+     * @param timeout The timeout after which the function should be cancelled
+     * @returns A stoppable operation that can be used to wait for the result
+     *
+     * @note The function is expected to take a stop token
+     */
     [[nodiscard]] auto
-    execute(auto&& fn, SomeStdDuration auto timeout) noexcept
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout) noexcept
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -100,6 +126,15 @@ public:
         ));
     }
 
+    /**
+     * @brief Schedule a function for execution
+     *
+     * @param delay The delay after which the function should be executed
+     * @param fn The function to execute
+     * @returns A stoppable operation that can be used to wait for the result
+     *
+     * @note The function is expected to take a stop token
+     */
     [[nodiscard]] auto
     scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken> auto&& fn) noexcept
     {
@@ -120,6 +155,16 @@ public:
         ));
     }
 
+    /**
+     * @brief Schedule a function for execution
+     *
+     * @param delay The delay after which the function should be executed
+     * @param fn The function to execute
+     * @returns A stoppable operation that can be used to wait for the result
+     *
+     * @note The function is expected to take a stop token and a boolean representing whether the scheduled operation
+     * got cancelled
+     */
     [[nodiscard]] auto
     scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken, bool> auto&& fn) noexcept
     {
@@ -140,6 +185,14 @@ public:
         ));
     }
 
+    /**
+     * @brief Make a strand for this execution context
+     *
+     * @return A strand for this execution context
+     *
+     * @note The strand can be used similarly to the execution context and guarantees serial execution of all submitted
+     * operations
+     */
     [[nodiscard]] auto
     makeStrand()
     {

@@ -34,11 +34,11 @@
 namespace util::async::detail {
 
 template <
-    typename ParentContextType,  // SomeExecutionContext
-    SomeStopSource StopSourceType,
-    typename DispatcherType,                                      // SomeDispatchStrategy
-    typename TimerContextProvider = detail::SelfContextProvider,  // SomeTimerContextProvider
-    typename ErrorHandlerType = detail::DefaultErrorHandler>      // SomeErrorStrategy>
+    typename ParentContextType,
+    typename StopSourceType,
+    typename DispatcherType,
+    typename TimerContextProvider = detail::SelfContextProvider,
+    typename ErrorHandlerType = detail::DefaultErrorHandler>
 class BasicStrand {
     std::reference_wrapper<ParentContextType> parentContext_;
     ParentContextType::ContextHolderType::Strand context_;

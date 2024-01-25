@@ -46,7 +46,6 @@ concept SomeOperation = requires(T v) {
     {
         v.wait()
     } -> std::same_as<void>;
-
     {
         v.get()
     };
@@ -115,47 +114,12 @@ concept SomeHandlerWith = requires(T fn) {
 
 template <typename T>
 concept SomeStdDuration = requires {
+    // Thank you Ed Catmur for this trick.
+    // See https://stackoverflow.com/questions/74383254/concept-that-models-only-the-stdchrono-duration-types
     []<class Rep, class Period>(std::type_identity<std::chrono::duration<Rep, Period>>) {}(std::type_identity<T>());
 };
 
 template <typename T>
 concept SomeOptStdDuration = requires(T v) { SomeStdDuration<decltype(v.value())>; };
-
-template <typename Fn, typename Signature>
-concept SomeHandlerWithSignature = requires(Fn v) {
-    {
-        std::function<Signature>(v)
-    };
-};
-
-template <typename T>
-concept SomeExecutionContext = requires(T v) {
-    {
-        v.execute([]() {})
-    };
-    {
-        v.makeStrand()
-    };
-    {
-        v.stop()
-    };
-};
-
-template <typename T>
-concept SomeStrand = requires(T v) {
-    {
-        v.execute([]() {})
-    };
-};
-
-template <typename T>
-concept SomeTimer = requires(T v) {
-    {
-        v.cancel()
-    };
-};
-
-template <typename T>
-concept SomeExecutionContextOrStrand = SomeExecutionContext<T> or SomeStrand<T>;
 
 }  // namespace util::async

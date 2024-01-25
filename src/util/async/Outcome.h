@@ -25,12 +25,19 @@
 
 namespace util::async {
 
-template <typename RetType>
-class BasicOperation;
-
 template <typename RetType, typename StopSourceType>
 class StoppableOperation;
 
+namespace detail {
+
+template <typename RetType>
+class BasicOperation;
+
+/**
+ * @brief Base for all `promise` side of async operations
+ *
+ * @tparam RetType The return type of the operation.
+ */
 template <typename RetType>
 class BasicOutcome {
 protected:
@@ -43,18 +50,21 @@ public:
     BasicOutcome(BasicOutcome&&) = default;
     BasicOutcome(BasicOutcome const&) = delete;
 
+    /** @brief Sets the value on the inner `promise` */
     void
     setValue(std::convertible_to<RetType> auto&& val)
     {
         promise_.set_value(std::forward<decltype(val)>(val));
     }
 
+    /** @brief Sets the value channel for void operations */
     void
     setValue()
     {
         promise_.set_value({});
     }
 
+    /** @brief Get the `future` for the inner `promise` */
     std::future<RetType>
     getStdFuture()
     {
@@ -62,28 +72,44 @@ public:
     }
 };
 
+}  // namespace detail
+
+/**
+ * @brief Unstoppable outcome
+ *
+ * @tparam RetType The return type of the operation.
+ */
 template <typename RetType>
-class Outcome : public BasicOutcome<RetType> {
+class Outcome : public detail::BasicOutcome<RetType> {
 public:
-    BasicOperation<Outcome>
+    /** @brief Gets the unstoppable operation for this outcome */
+    detail::BasicOperation<Outcome>
     getOperation()
     {
-        return BasicOperation<Outcome>{this};
+        return detail::BasicOperation<Outcome>{this};
     }
 };
 
+/**
+ * @brief Stoppable outcome
+ *
+ * @tparam RetType The return type of the operation.
+ * @tparam StopSourceType The type of the stop source.
+ */
 template <typename RetType, typename StopSourceType>
-class StoppableOutcome : public BasicOutcome<RetType> {
+class StoppableOutcome : public detail::BasicOutcome<RetType> {
 private:
     StopSourceType stopSource_;
 
 public:
+    /** @brief Gets the stoppable operation for this outcome */
     StoppableOperation<RetType, StopSourceType>
     getOperation()
     {
         return StoppableOperation<RetType, StopSourceType>{this};
     }
 
+    /** @brief Gets the stop source for this outcome */
     StopSourceType&
     getStopSource()
     {

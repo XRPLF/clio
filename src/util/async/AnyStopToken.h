@@ -27,6 +27,9 @@
 
 namespace util::async {
 
+/**
+ * @brief A type-erased stop token
+ */
 class AnyStopToken {
 public:
     template <SomeStopToken TokenType>
@@ -54,12 +57,14 @@ public:
     AnyStopToken&
     operator=(AnyStopToken&&) = default;
 
+    /** @returns true if stop is requested; false otherwise */
     [[nodiscard]] bool
     isStopRequested() const
     {
         return pimpl_->isStopRequested();
     }
 
+    /** @returns true if stop is requested; false otherwise */
     [[nodiscard]] operator bool() const
     {
         return isStopRequested();

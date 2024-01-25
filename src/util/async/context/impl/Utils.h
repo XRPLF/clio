@@ -41,7 +41,7 @@ inline constexpr struct AssociatedExecutorExtractor {
     }
 } extractAssociatedExecutor;
 
-template <SomeExecutionContextOrStrand CtxType>
+template <typename CtxType>
 [[nodiscard]] inline constexpr auto
 getTimeoutHandleIfNeeded(CtxType& ctx, SomeOptStdDuration auto timeout, SomeStopSource auto& stopSource)
 {

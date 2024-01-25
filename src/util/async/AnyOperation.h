@@ -33,8 +33,15 @@
 #include <type_traits>
 #include <utility>
 
+// TODO: In the future, perhaps cancel and requestStop should be combined into one.
+// Users of the library should not care whether the operation is cancellable or stoppable - users just want to cancel
+// it whatever that means internally.
+
 namespace util::async {
 
+/**
+ * @brief A type-erased operation that can be executed via AnyExecutionContext
+ */
 template <typename RetType>
 class AnyOperation {
 public:
@@ -53,24 +60,28 @@ public:
     AnyOperation&
     operator=(AnyOperation&&) = default;
 
+    /** @brief Wait for the operation to complete */
     void
     wait()
     {
         operation_.wait();
     }
 
+    /** @brief Request the operation to be stopped as soon as possible */
     void
     requestStop()
     {
         operation_.requestStop();
     }
 
+    /** @brief Cancel the operation. Used to cancel the timer for scheduled operations */
     void
     cancel()
     {
         operation_.cancel();
     }
 
+    /** @brief Get the result of the operation */
     [[nodiscard]] util::Expected<RetType, ExecutionContextException>
     get()
     {

@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/async/Concepts.h"
 #include "util/async/context/BasicExecutionContext.h"
 #include "util/async/context/SystemExecutionContext.h"
 #include "util/async/context/impl/Cancellation.h"
@@ -58,7 +57,7 @@ struct SameThreadContext {
 };
 
 struct SystemContextProvider {
-    template <SomeExecutionContextOrStrand CtxType>
+    template <typename CtxType>
     [[nodiscard]] static constexpr auto&
     getContext([[maybe_unused]] CtxType& self) noexcept
     {
@@ -74,7 +73,7 @@ struct SystemContextProvider {
  * This execution context runs the operations on the same thread that requested the operation to run.
  * Each operation must finish before the corresponding `execute` returns an operation object that can immediately be
  * queried for value or error as it's guaranteed to have completed. Timer-based operations are scheduled via
- * SystemExecutionContext.
+ * SystemExecutionContext, including those that are scheduled from within a strand.
  */
 using SyncExecutionContext = BasicExecutionContext<
     detail::SameThreadContext,

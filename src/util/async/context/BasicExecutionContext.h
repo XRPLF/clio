@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Expected.h"
+#include "util/async/Concepts.h"
 #include "util/async/Error.h"
 #include "util/async/Operation.h"
 #include "util/async/Outcome.h"
@@ -53,10 +54,10 @@ struct AsioPoolContext {
         Executor executor;
     };
 
-    auto
+    Strand
     makeStrand()
     {
-        return boost::asio::make_strand(executor);
+        return {boost::asio::make_strand(executor)};
     }
 
     boost::asio::thread_pool executor;
@@ -65,16 +66,19 @@ struct AsioPoolContext {
 }  // namespace detail
 
 /**
- * @brief A basic, dispatch-agnostic execution context.
+ * @brief A highly configurable execution context.
  *
- * Both return values and exceptions are handled by capturing them and returning them packaged as util::Expected.
+ * This execution context is used as the base for all specialized execution contexts.
+ * Return values are handled by capturing them and returning them packaged as util::Expected.
+ * Exceptions may or may not be caught and handled depending on the error strategy. The default behavior is to catch and
+ * package them as the error channel of util::Expected.
  */
 template <
-    typename ContextType,  // SomeContextHolder
-    SomeStopSource StopSourceType,
-    typename DispatcherType,                                      // SomeDispatchStrategy
-    typename TimerContextProvider = detail::SelfContextProvider,  // SomeTimerContextProvider
-    typename ErrorHandlerType = detail::DefaultErrorHandler>      // SomeErrorStrategy
+    typename ContextType,
+    typename StopSourceType,
+    typename DispatcherType,
+    typename TimerContextProvider = detail::SelfContextProvider,
+    typename ErrorHandlerType = detail::DefaultErrorHandler>
 class BasicExecutionContext {
     ContextType context_;
     friend detail::AssociatedExecutorExtractor;
