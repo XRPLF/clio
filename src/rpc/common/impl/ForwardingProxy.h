@@ -104,6 +104,7 @@ public:
     {
         static std::unordered_set<std::string> const proxiedCommands{
             "server_definitions",
+            "server_state",
             "submit",
             "submit_multisigned",
             "fee",
