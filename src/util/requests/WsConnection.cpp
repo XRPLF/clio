@@ -21,6 +21,8 @@
 
 #include "util/Expected.h"
 #include "util/requests/Types.h"
+#include "util/requests/impl/StreamData.h"
+#include "util/requests/impl/WsConnectionImpl.h"
 
 #include <boost/asio.hpp>
 #include <boost/asio/associated_executor.hpp>
@@ -44,7 +46,6 @@
 
 #include <chrono>
 #include <iterator>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -88,22 +89,29 @@ WsConnectionBuilder::setTimeout(std::chrono::milliseconds timeout)
     return *this;
 }
 
-WsConnectionBuilder&
-WsConnectionBuilder::setSslEnabled(bool sslEnabled)
+Expected<WsConnectionPtr, RequestError>
+WsConnectionBuilder::connect(asio::yield_context yield) const
 {
-    sslEnabled_ = sslEnabled;
-    return *this;
+    if (sslEnabled_) {
+        auto streamData = impl::SslWsStreamData::create(yield);
+        if (not streamData.has_value())
+            return Unexpected{std::move(streamData.error())};
+        return connectImpl(std::move(streamData.value()), yield);
+    }
+
+    return connectImpl(impl::WsStreamData{yield}, yield);
 }
 
-Expected<WsConnection, RequestError>
-WsConnectionBuilder::connect(asio::yield_context yield) const
+template <class StreamDataType>
+Expected<WsConnectionPtr, RequestError>
+WsConnectionBuilder::connectImpl(StreamDataType&& streamData, boost::asio::yield_context yield) const
 {
     auto context = asio::get_associated_executor(yield);
     beast::error_code errorCode;
 
     // These objects perform our I/O
     asio::ip::tcp::resolver resolver(context);
-    websocket::stream<beast::tcp_stream> ws(context);
+    auto& ws = streamData.stream;
 
     // Look up the domain name
     auto const results = resolver.async_resolve(host_, port_, yield[errorCode]);
@@ -117,10 +125,6 @@ WsConnectionBuilder::connect(asio::yield_context yield) const
     auto endpoint = beast::get_lowest_layer(ws).async_connect(results, yield[errorCode]);
     if (errorCode)
         return Unexpected{RequestError{"Connect error", errorCode}};
-
-    // Update the host_ string. This will provide the value of the
-    // Host HTTP header during the WebSocket handshake.
-    // See https://tools.ietf.org/html/rfc7230#section-5.4
 
     // Turn off the timeout on the tcp_stream, because
     // the websocket stream has its own timeout system.
@@ -141,47 +145,11 @@ WsConnectionBuilder::connect(asio::yield_context yield) const
     if (errorCode)
         return Unexpected{RequestError{"Handshake error", errorCode}};
 
-    return WsConnection{std::move(ws)};
-}
-
-WsConnection::WsConnection(websocket::stream<beast::tcp_stream> ws) : ws_(std::move(ws))
-{
-}
-
-Expected<std::string, RequestError>
-WsConnection::read(asio::yield_context yield)
-{
-    beast::error_code errorCode;
-    beast::flat_buffer buffer;
-
-    ws_.async_read(buffer, yield[errorCode]);
-
-    if (errorCode)
-        return Unexpected{RequestError{"Read error", errorCode}};
-
-    return beast::buffers_to_string(std::move(buffer).data());
-}
-
-std::optional<RequestError>
-WsConnection::write(std::string const& message, asio::yield_context yield)
-{
-    beast::error_code errorCode;
-    ws_.async_write(asio::buffer(message), yield[errorCode]);
-
-    if (errorCode)
-        return RequestError{"Write error", errorCode};
-
-    return std::nullopt;
-}
-
-std::optional<RequestError>
-WsConnection::close(asio::yield_context yield)
-{
-    beast::error_code errorCode;
-    ws_.async_close(websocket::close_code::normal, yield[errorCode]);
-    if (errorCode)
-        return RequestError{"Close error", errorCode};
-    return std::nullopt;
+    if constexpr (StreamDataType::sslEnabled) {
+        return std::make_unique<impl::SslWsConnection>(std::move(ws));
+    } else {
+        return std::make_unique<impl::PlainWsConnection>(std::move(ws));
+    }
 }
 
 }  // namespace util::requests

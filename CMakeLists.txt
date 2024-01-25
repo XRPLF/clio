@@ -168,7 +168,6 @@ target_sources (clio PRIVATE
   src/util/requests/WsConnection.cpp
   src/util/requests/RequestBuilder.cpp
   src/util/requests/impl/SslContext.cpp
-  src/util/requests/impl/StreamData.cpp
   src/util/Taggable.cpp
   src/util/TerminationHandler.cpp
   src/util/TxUtils.cpp

@@ -163,13 +163,11 @@ RequestBuilder::doRequestImpl(StreamDataType&& streamData, boost::asio::yield_co
     request_.method(method);
 
     // Perform SSL handshake
-    if (sslEnabled_) {
-        if constexpr (std::is_same_v<decltype(stream), boost::beast::ssl_stream<boost::beast::tcp_stream>>) {
-            beast::get_lowest_layer(stream).expires_after(timeout_);
-            stream.async_handshake(boost::asio::ssl::stream_base::client, yield[errorCode]);
-            if (errorCode)
-                return Unexpected{RequestError{"Handshake error", errorCode}};
-        }
+    if constexpr (StreamDataType::sslEnabled) {
+        beast::get_lowest_layer(stream).expires_after(timeout_);
+        stream.async_handshake(boost::asio::ssl::stream_base::client, yield[errorCode]);
+        if (errorCode)
+            return Unexpected{RequestError{"Handshake error", errorCode}};
     }
 
     // Send the HTTP request to the remote host

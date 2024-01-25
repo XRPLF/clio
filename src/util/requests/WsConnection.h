@@ -28,13 +28,27 @@
 #include <boost/beast/websocket/stream.hpp>
 
 #include <chrono>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace util::requests {
 
-class WsConnection;
+class WsConnection {
+public:
+    virtual ~WsConnection() = default;
+
+    virtual Expected<std::string, RequestError>
+    read(boost::asio::yield_context yield) = 0;
+
+    virtual std::optional<RequestError>
+    write(std::string const& message, boost::asio::yield_context yield) = 0;
+
+    virtual std::optional<RequestError>
+    close(boost::asio::yield_context yield) = 0;
+};
+using WsConnectionPtr = std::unique_ptr<WsConnection>;
 
 /**
  * @brief Builder for WebSocket connections
@@ -103,29 +117,15 @@ public:
      * @param yield yield context
      * @return Expected<WsConnection, RequestError> WebSocket connection or error
      */
-    Expected<WsConnection, RequestError>
+    Expected<WsConnectionPtr, RequestError>
     connect(boost::asio::yield_context yield) const;
 
     static constexpr std::chrono::milliseconds DEFAULT_TIMEOUT{5000};
-};
-
-class WsConnection {
-    boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
-
-public:
-    Expected<std::string, RequestError>
-    read(boost::asio::yield_context yield);
-
-    std::optional<RequestError>
-    write(std::string const& message, boost::asio::yield_context yield);
-
-    std::optional<RequestError>
-    close(boost::asio::yield_context yield);
 
 private:
-    explicit WsConnection(boost::beast::websocket::stream<boost::beast::tcp_stream> ws);
-
-    friend WsConnectionBuilder;
+    template <class StreamDataType>
+    Expected<WsConnectionPtr, RequestError>
+    connectImpl(StreamDataType&& streamData, boost::asio::yield_context yield) const;
 };
 
 }  // namespace util::requests
