@@ -88,14 +88,14 @@ class BasicExecutionContext {
 
 public:
     using ContextHolderType = ContextType;
-    using ExecutorType = ContextHolderType::Executor;
+    using ExecutorType = typename ContextHolderType::Executor;
 
     template <typename T>
     using ValueType = util::Expected<T, ExecutionContextException>;
 
     using StopSource = StopSourceType;
 
-    using StopToken = StopSourceType::Token;
+    using StopToken = typename StopSourceType::Token;
 
     template <typename T>
     using StoppableOperation = StoppableOperation<ValueType<T>, StopSourceType>;
@@ -106,7 +106,7 @@ public:
     using Strand = detail::
         BasicStrand<BasicExecutionContext, StopSourceType, DispatcherType, TimerContextProvider, ErrorHandlerType>;
 
-    using Timer = ContextHolderType::Timer;
+    using Timer = typename ContextHolderType::Timer;
 
     // note: scheduled operations are always stoppable
     template <typename T>

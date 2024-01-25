@@ -41,14 +41,15 @@ template <
     typename ErrorHandlerType = detail::DefaultErrorHandler>
 class BasicStrand {
     std::reference_wrapper<ParentContextType> parentContext_;
-    ParentContextType::ContextHolderType::Strand context_;
+    typename ParentContextType::ContextHolderType::Strand context_;
     friend AssociatedExecutorExtractor;
 
 public:
-    using ContextHolderType = ParentContextType::ContextHolderType::Strand;
-    using ExecutorType = ContextHolderType::Executor;
-    using StopToken = StopSourceType::Token;
-    using Timer = ParentContextType::ContextHolderType::Timer;  // timers are associated with the parent context
+    using ContextHolderType = typename ParentContextType::ContextHolderType::Strand;
+    using ExecutorType = typename ContextHolderType::Executor;
+    using StopToken = typename StopSourceType::Token;
+    using Timer =
+        typename ParentContextType::ContextHolderType::Timer;  // timers are associated with the parent context
 
     BasicStrand(ParentContextType& parent, auto&& strand)
         : parentContext_{std::ref(parent)}, context_{std::forward<decltype(strand)>(strand)}
