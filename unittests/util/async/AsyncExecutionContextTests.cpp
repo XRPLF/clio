@@ -30,23 +30,23 @@
 using namespace util::async;
 using ::testing::Types;
 
-using AsyncExecutionContextTypes = Types<CoroExecutionContext, PoolExecutionContext, SyncExecutionContext>;
+using ExecutionContextTypes = Types<CoroExecutionContext, PoolExecutionContext, SyncExecutionContext>;
 
 template <typename T>
-struct AsyncExecutionContextTests : public ::testing::Test {
+struct ExecutionContextTests : public ::testing::Test {
     using ExecutionContextType = T;
     ExecutionContextType ctx{2};
 };
 
-TYPED_TEST_CASE(AsyncExecutionContextTests, AsyncExecutionContextTypes);
+TYPED_TEST_CASE(ExecutionContextTests, ExecutionContextTypes);
 
-TYPED_TEST(AsyncExecutionContextTests, execute)
+TYPED_TEST(ExecutionContextTests, execute)
 {
     auto res = this->ctx.execute([]() { return 42; });
     EXPECT_EQ(res.get().value(), 42);
 }
 
-TYPED_TEST(AsyncExecutionContextTests, executeVoid)
+TYPED_TEST(ExecutionContextTests, executeVoid)
 {
     auto value = 0;
     auto res = this->ctx.execute([&value]() { value = 42; });
@@ -55,14 +55,20 @@ TYPED_TEST(AsyncExecutionContextTests, executeVoid)
     ASSERT_EQ(value, 42);
 }
 
-TYPED_TEST(AsyncExecutionContextTests, executeException)
+TYPED_TEST(ExecutionContextTests, executeStdException)
 {
     auto res = this->ctx.execute([]() { throw std::runtime_error("test"); });
     EXPECT_TRUE(res.get().error().message.ends_with("test"));
 }
 
+TYPED_TEST(ExecutionContextTests, executeUnknownException)
+{
+    auto res = this->ctx.execute([]() { throw 0; });
+    EXPECT_TRUE(res.get().error().message.ends_with("unknown"));
+}
+
 // note: this fails on pool context with 1 thread
-TYPED_TEST(AsyncExecutionContextTests, executeWithTimeout)
+TYPED_TEST(ExecutionContextTests, executeWithTimeout)
 {
     auto res = this->ctx.execute(
         [](auto stopRequested) {
@@ -76,7 +82,7 @@ TYPED_TEST(AsyncExecutionContextTests, executeWithTimeout)
     EXPECT_EQ(res.get().value(), 42);
 }
 
-TYPED_TEST(AsyncExecutionContextTests, timer)
+TYPED_TEST(ExecutionContextTests, timer)
 {
     auto res =
         this->ctx.scheduleAfter(std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
@@ -88,7 +94,7 @@ TYPED_TEST(AsyncExecutionContextTests, timer)
     EXPECT_EQ(res.get().value(), 42);
 }
 
-TYPED_TEST(AsyncExecutionContextTests, timerWithStopToken)
+TYPED_TEST(ExecutionContextTests, timerWithStopToken)
 {
     auto res = this->ctx.scheduleAfter(std::chrono::milliseconds(1), [](auto stopRequested) {
         while (not stopRequested)
@@ -101,7 +107,7 @@ TYPED_TEST(AsyncExecutionContextTests, timerWithStopToken)
     EXPECT_EQ(res.get().value(), 42);
 }
 
-TYPED_TEST(AsyncExecutionContextTests, timerCancel)
+TYPED_TEST(ExecutionContextTests, timerCancel)
 {
     auto value = 0;
     std::binary_semaphore sem{0};
@@ -121,7 +127,7 @@ TYPED_TEST(AsyncExecutionContextTests, timerCancel)
     EXPECT_EQ(value, 42);
 }
 
-TYPED_TEST(AsyncExecutionContextTests, timerException)
+TYPED_TEST(ExecutionContextTests, timerException)
 {
     auto res =
         this->ctx.scheduleAfter(std::chrono::milliseconds(1), []([[maybe_unused]] auto stopRequested, auto cancelled) {
@@ -133,7 +139,7 @@ TYPED_TEST(AsyncExecutionContextTests, timerException)
     EXPECT_TRUE(res.get().error().message.ends_with("test"));
 }
 
-TYPED_TEST(AsyncExecutionContextTests, strand)
+TYPED_TEST(ExecutionContextTests, strand)
 {
     auto strand = this->ctx.makeStrand();
     auto res = strand.execute([] { return 42; });
@@ -141,7 +147,7 @@ TYPED_TEST(AsyncExecutionContextTests, strand)
     EXPECT_EQ(res.get().value(), 42);
 }
 
-TYPED_TEST(AsyncExecutionContextTests, strandException)
+TYPED_TEST(ExecutionContextTests, strandException)
 {
     auto strand = this->ctx.makeStrand();
     auto res = strand.execute([]() { throw std::runtime_error("test"); });
@@ -150,7 +156,7 @@ TYPED_TEST(AsyncExecutionContextTests, strandException)
 }
 
 // note: this fails on pool context with 1 thread
-TYPED_TEST(AsyncExecutionContextTests, strandWithTimeout)
+TYPED_TEST(ExecutionContextTests, strandWithTimeout)
 {
     auto strand = this->ctx.makeStrand();
     auto res = strand.execute(
@@ -163,4 +169,51 @@ TYPED_TEST(AsyncExecutionContextTests, strandWithTimeout)
     );
 
     EXPECT_EQ(res.get().value(), 42);
+}
+
+using NoErrorHandlerSyncExecutionContext = BasicExecutionContext<
+    detail::SameThreadContext,
+    detail::BasicStopSource,
+    detail::SyncDispatchStrategy,
+    detail::SelfContextProvider,
+    detail::NoErrorHandler>;
+
+TEST(NoErrorHandlerSyncExecutionContextTests, executeStdException)
+{
+    EXPECT_THROW(
+        [] {
+            auto ctx = NoErrorHandlerSyncExecutionContext{2};
+            ctx.execute([] { throw std::runtime_error("test"); }).wait();
+        }(),
+        std::runtime_error
+    );
+}
+
+TEST(NoErrorHandlerSyncExecutionContextTests, executeUnknownException)
+{
+    EXPECT_ANY_THROW([] {
+        auto ctx = NoErrorHandlerSyncExecutionContext{2};
+        ctx.execute([] { throw 0; }).wait();
+    }());
+}
+
+TEST(NoErrorHandlerSyncExecutionContextTests, executeStdExceptionInStrand)
+{
+    EXPECT_THROW(
+        [] {
+            auto ctx = NoErrorHandlerSyncExecutionContext{2};
+            auto strand = ctx.makeStrand();
+            strand.execute([] { throw std::runtime_error("test"); }).wait();
+        }(),
+        std::runtime_error
+    );
+}
+
+TEST(NoErrorHandlerSyncExecutionContextTests, executeUnknownExceptionInStrand)
+{
+    EXPECT_ANY_THROW([] {
+        auto ctx = NoErrorHandlerSyncExecutionContext{2};
+        auto strand = ctx.makeStrand();
+        strand.execute([] { throw 0; }).wait();
+    }());
 }

@@ -137,7 +137,7 @@ public:
         SomeStdDuration auto delay,
         SomeHandlerWith<StopToken> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    ) noexcept
+    )
     {
         if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
             return TimerContextProvider::getContext(*this).scheduleAfter(
@@ -169,7 +169,7 @@ public:
         SomeStdDuration auto delay,
         SomeHandlerWith<StopToken, bool> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    ) noexcept
+    )
     {
         if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
             return TimerContextProvider::getContext(*this).scheduleAfter(
@@ -204,10 +204,7 @@ public:
      * @param timeout The optional timeout duration after which the operation will be cancelled
      */
     [[nodiscard]] auto
-    execute(
-        SomeHandlerWith<StopToken> auto&& fn,
-        std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    ) noexcept
+    execute(SomeHandlerWith<StopToken> auto&& fn, std::optional<std::chrono::milliseconds> timeout = std::nullopt)
     {
         return DispatcherType::dispatch(
             context_,
@@ -237,7 +234,7 @@ public:
      * @param timeout The timeout duration after which the operation will be cancelled
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept
+    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout)
     {
         return execute(
             std::forward<decltype(fn)>(fn),
@@ -252,7 +249,7 @@ public:
      * @param timeout The timeout duration after which the operation will be cancelled
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn) noexcept
+    execute(SomeHandlerWithoutStopToken auto&& fn)
     {
         return DispatcherType::dispatch(
             context_,
