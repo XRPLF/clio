@@ -54,7 +54,8 @@ namespace util::requests {
 
 namespace beast = boost::beast;
 namespace http = beast::http;
-using tcp = boost::asio::ip::tcp;
+namespace asio = boost::asio;
+using tcp = asio::ip::tcp;
 
 RequestBuilder::RequestBuilder(std::string host, std::string port) : host_(std::move(host)), port_(std::move(port))
 {
@@ -107,19 +108,19 @@ RequestBuilder::setSslEnabled(bool const enabled)
 }
 
 Expected<std::string, RequestError>
-RequestBuilder::get(boost::asio::yield_context yield)
+RequestBuilder::get(asio::yield_context yield)
 {
     return doRequest(yield, http::verb::get);
 }
 
 Expected<std::string, RequestError>
-RequestBuilder::post(boost::asio::yield_context yield)
+RequestBuilder::post(asio::yield_context yield)
 {
     return doRequest(yield, http::verb::post);
 }
 
 Expected<std::string, RequestError>
-RequestBuilder::doRequest(boost::asio::yield_context yield, boost::beast::http::verb method)
+RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
 {
     if (sslEnabled_) {
         auto streamData = impl::SslTcpStreamData::create(yield);
@@ -127,8 +128,8 @@ RequestBuilder::doRequest(boost::asio::yield_context yield, boost::beast::http::
             return Unexpected{std::move(streamData.error())};
 
         if (!SSL_set_tlsext_host_name(streamData->stream.native_handle(), host_.c_str())) {
-            boost::beast::error_code errorCode;
-            errorCode.assign(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category());
+            beast::error_code errorCode;
+            errorCode.assign(static_cast<int>(::ERR_get_error()), asio::error::get_ssl_category());
             return Unexpected{RequestError{"SSL setup failed", errorCode}};
         }
         return doRequestImpl(std::move(streamData.value()), yield, method);
@@ -140,9 +141,9 @@ RequestBuilder::doRequest(boost::asio::yield_context yield, boost::beast::http::
 
 template <typename StreamDataType>
 Expected<std::string, RequestError>
-RequestBuilder::doRequestImpl(StreamDataType&& streamData, boost::asio::yield_context yield, http::verb const method)
+RequestBuilder::doRequestImpl(StreamDataType&& streamData, asio::yield_context yield, http::verb const method)
 {
-    auto executor = boost::asio::get_associated_executor(yield);
+    auto executor = asio::get_associated_executor(yield);
 
     // Look up the domain name
     beast::error_code errorCode;
@@ -165,7 +166,7 @@ RequestBuilder::doRequestImpl(StreamDataType&& streamData, boost::asio::yield_co
     // Perform SSL handshake
     if constexpr (StreamDataType::sslEnabled) {
         beast::get_lowest_layer(stream).expires_after(timeout_);
-        stream.async_handshake(boost::asio::ssl::stream_base::client, yield[errorCode]);
+        stream.async_handshake(asio::ssl::stream_base::client, yield[errorCode]);
         if (errorCode)
             return Unexpected{RequestError{"Handshake error", errorCode}};
     }

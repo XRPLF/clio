@@ -121,7 +121,7 @@ WsConnectionBuilder::connect(asio::yield_context yield) const
 
 template <class StreamDataType>
 Expected<WsConnectionPtr, RequestError>
-WsConnectionBuilder::connectImpl(StreamDataType&& streamData, boost::asio::yield_context yield) const
+WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_context yield) const
 {
     auto context = asio::get_associated_executor(yield);
     beast::error_code errorCode;
