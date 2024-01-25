@@ -41,10 +41,12 @@ struct SameThreadContext {
         {
         }
     };
-    struct Timer {};  // note: not actually used but needed for compilation
+
+    // Note: these types are not actually used but needed for compilation
+    struct Timer {};
     struct Strand {
-        using Executor = SameThreadContext::Executor;
-        using Timer = SameThreadContext::Timer;
+        struct Executor {};
+        struct Timer {};
     };
 
     Executor executor;

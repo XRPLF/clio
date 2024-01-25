@@ -45,14 +45,17 @@
 namespace util::async {
 namespace detail {
 
+struct AsioPoolStrandContext {
+    using Executor = boost::asio::strand<boost::asio::thread_pool::executor_type>;
+    using Timer = SteadyTimer<Executor>;
+
+    Executor executor;
+};
+
 struct AsioPoolContext {
     using Executor = boost::asio::thread_pool;
     using Timer = SteadyTimer<Executor>;
-    struct Strand {
-        using Executor = boost::asio::strand<Executor::executor_type>;
-        using Timer = SteadyTimer<Executor>;
-        Executor executor;
-    };
+    using Strand = AsioPoolStrandContext;
 
     Strand
     makeStrand()
