@@ -68,7 +68,7 @@ public:
              validation::Type<uint32_t>{},
              validation::Min(1u),
              modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
-            {JS(marker), validation::AccountValidator},
+            {JS(marker), validation::Uint160HexStringValidator},
         };
 
         return rpcSpec;

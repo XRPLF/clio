@@ -479,10 +479,18 @@ extern CustomValidator AccountBase58Validator;
 extern CustomValidator AccountMarkerValidator;
 
 /**
+ * @brief Provides a commonly used validator for uint160(AccountID) hex string.
+ *
+ * It must be a string and also a decodable hex.
+ * AccountID uses this validator.
+ */
+extern CustomValidator Uint160HexStringValidator;
+
+/**
  * @brief Provides a commonly used validator for uint192 hex string.
  *
  * It must be a string and also a decodable hex.
- * Transaction index, ledger hash all use this validator.
+ * MPTIssuanceID uses this validator.
  */
 extern CustomValidator Uint192HexStringValidator;
 

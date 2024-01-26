@@ -78,13 +78,14 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
         ripple::STLedgerEntry sle{ripple::SerialIter{mpt.data(), mpt.size()}, keylet::mptIssuance(mptID).key};
         boost::json::object mptJson;
 
-        mptJson["mpt_amount"] = std::to_string(sle[ripple::sfMPTAmount]);
-        mptJson[JS(flags)] = sle[ripple::sfFlags];
         mptJson[JS(account)] = toBase58(sle.getAccountID(ripple::sfAccount));
+        mptJson[JS(flags)] = sle[ripple::sfFlags];
+        mptJson["mpt_amount"] = toBoostJson(ripple::STUInt64{sle[sfMPTAmount]}.getJson(JsonOptions::none));
 
-        if(sle[~ripple::sfLockedAmount])
-            mptJson["locked_amount"] = std::to_string(sle[~ripple::sfLockedAmount].value_or(0));
+        if (!sle[~ripple::sfLockedAmount])
+            mptJson["locked_amount"] = toBoostJson(ripple::STUInt64{sle[~sfLockedAmount].value_or(0)}.getJson(JsonOptions::none));
         
+        mptJson["mptoken_index"] = ripple::to_string(ripple::keylet::mptoken(mptID, sle.getAccountID(ripple::sfAccount)).key);  
         output.mpts.push_back(mptJson);
     }
 
@@ -101,7 +102,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, MPTHoldersHandle
         {JS(mpt_issuance_id), output.mptID},
         {JS(limit), output.limit},
         {JS(ledger_index), output.ledgerIndex},
-        {"mpts", output.mpts},
+        {"mptokens", output.mpts},
         {JS(validated), output.validated},
     };
 

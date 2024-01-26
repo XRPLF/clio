@@ -1087,33 +1087,33 @@ accountHolds(
     BackendInterface const& backend,
     std::uint32_t sequence,
     ripple::AccountID const& account,
-    ripple::Asset const& asset,
+    ripple::Currency const& currency,
     ripple::AccountID const& issuer,
     bool const zeroIfFrozen,
     boost::asio::yield_context yield
 )
 {
     ripple::STAmount amount;
-    if (ripple::isXRP(asset)) {
+    if (ripple::isXRP(currency)) {
         return {xrpLiquid(backend, sequence, account, yield)};
     }
     
     // TODO: check MPTs!
 
-    auto key = ripple::keylet::line(account, issuer, asset).key;
+    auto key = ripple::keylet::line(account, issuer, currency).key;
 
     auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob) {
-        amount.clear({asset, issuer});
+        amount.clear({currency, issuer});
         return amount;
     }
 
     ripple::SerialIter it{blob->data(), blob->size()};
     ripple::SLE const sle{it, key};
 
-    if (zeroIfFrozen && isFrozen(backend, sequence, account, asset, issuer, yield)) {
-        amount.clear(ripple::Issue(asset, issuer));
+    if (zeroIfFrozen && isFrozen(backend, sequence, account, currency, issuer, yield)) {
+        amount.clear(ripple::Issue(currency, issuer));
     } else {
         amount = sle.getFieldAmount(ripple::sfBalance);
         if (account > issuer) {

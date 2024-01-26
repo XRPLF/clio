@@ -68,6 +68,19 @@ checkIsU32Numeric(std::string_view sv)
     return ec == std::errc();
 }
 
+// TODO: Should refactor hex string validators due to duplicate code
+CustomValidator Uint160HexStringValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (!value.is_string())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
+
+        ripple::uint160 ledgerHash;
+        if (!ledgerHash.parseHex(value.as_string().c_str()))
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
+
+        return MaybeError{};
+    }};
+
 CustomValidator Uint192HexStringValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())

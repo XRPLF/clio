@@ -103,6 +103,7 @@ target_sources (clio PRIVATE
   src/etl/ETLState.cpp
   src/etl/LoadBalancer.cpp
   src/etl/impl/ForwardCache.cpp
+  src/etl/MPTHelpers.cpp
   ## Feed
   src/feed/SubscriptionManager.cpp
   src/feed/impl/TransactionFeed.cpp
@@ -141,6 +142,7 @@ target_sources (clio PRIVATE
   src/rpc/handlers/LedgerData.cpp
   src/rpc/handlers/LedgerEntry.cpp
   src/rpc/handlers/LedgerRange.cpp
+  src/rpc/handlers/MPTHolders.cpp
   src/rpc/handlers/NFTsByIssuer.cpp
   src/rpc/handlers/NFTBuyOffers.cpp
   src/rpc/handlers/NFTHistory.cpp
