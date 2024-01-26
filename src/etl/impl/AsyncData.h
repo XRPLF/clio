@@ -139,6 +139,11 @@ public:
                     backend.writeSuccessor(std::move(lastKey_), request_.ledger().sequence(), std::string{obj.key()});
                 lastKey_ = obj.key();
                 backend.writeNFTs(getNFTDataFromObj(request_.ledger().sequence(), obj.key(), obj.data()));
+                
+                auto const maybeMPTHolder = getMPTHolderFromObj(request_.ledger().sequence(), obj.key(), obj.data());
+                if(maybeMPTHolder)
+                    backend.writeMPTHolders({*maybeMPTHolder});
+
                 backend.writeLedgerObject(
                     std::move(*obj.mutable_key()), request_.ledger().sequence(), std::move(*obj.mutable_data())
                 );

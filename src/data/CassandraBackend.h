@@ -530,6 +530,50 @@ public:
         return ret;
     }
 
+    MPTHoldersAndCursor
+    fetchMPTHolders( 
+        ripple::uint192 const& mpt_id,
+        std::uint32_t const limit,
+        std::optional<ripple::AccountID> const& cursorIn,
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context yield)const override
+    {
+
+        auto const holderEntries = executor_.read(yield, schema_->selectMPTHolders, mpt_id, cursorIn.value_or(ripple::AccountID(0)), Limit{limit});
+
+        auto const& holderResults = holderEntries.value();
+        if (not holderResults.hasRows())
+        {
+            LOG(log_.debug()) << "No rows returned";
+            return {};
+        }
+
+        std::vector<ripple::uint256> mptKeys;
+        std::optional<ripple::AccountID> cursor;
+        for (auto const [holder] : extract<ripple::AccountID>(holderResults))
+        {
+            mptKeys.push_back(ripple::getMptID(mpt_id, holder));
+            cursor = holder;
+        }
+
+        auto const mptObjects = doFetchLedgerObjects(mptKeys, ledgerSequence, yield);
+
+        std::vector<Blob> filteredMpt;
+
+        // need to filter out the objs that don't exist at the ledger seq because these MPT are in no particular time order
+        for(auto const mpt: mptObjects){
+            if (!mpt.size())
+                continue;
+
+            filteredMpt.push_back(mpt);
+        }
+        
+        if (mptKeys.size() == limit)
+            return {filteredMpt, cusor};
+        
+        return {filteredMpt, {}}
+    }
+
     std::optional<Blob>
     doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
         const override
@@ -822,6 +866,22 @@ public:
                     schema_->insertNFTURI.bind(record.tokenID, record.ledgerSequence, record.uri.value())
                 );
             }
+        }
+
+        executor_.write(std::move(statements));
+    }
+
+    void
+    writeMPTHolders(std::vector<std::pair<ripple::uint192, ripple::AccountID>>&& data) override
+    {
+        std::vector<Statement> statements;
+        for (auto const& record : data)
+        {
+            auto const mpt_id = record.first;
+            auto const holder = record.second;
+
+             statements.push_back(
+                schema_->insertMPTHolder.bind(mpt_id, holder));
         }
 
         executor_.write(std::move(statements));

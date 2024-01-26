@@ -166,6 +166,12 @@ struct NFTsAndCursor {
     std::optional<ripple::uint256> cursor;
 };
 
+struct MPTHoldersAndCursor
+{
+    std::vector<Blob> mptokens;
+    std::optional<ripple::AccountID> cursor;
+};
+
 /**
  * @brief Stores a range of sequences as a min and max pair.
  */
