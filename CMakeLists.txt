@@ -102,6 +102,7 @@ target_sources (clio PRIVATE
   src/etl/ETLService.cpp
   src/etl/ETLState.cpp
   src/etl/LoadBalancer.cpp
+  src/etl/NewSource.cpp
   src/etl/impl/ForwardCache.cpp
   ## Feed
   src/feed/SubscriptionManager.cpp
