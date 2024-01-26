@@ -201,7 +201,7 @@ private:
         backend_->writeAccountTransactions(std::move(insertTxResultOp->accountTxData));
         backend_->writeNFTs(insertTxResultOp->nfTokensData);
         backend_->writeNFTTransactions(insertTxResultOp->nfTokenTxData);
-        backend_->writeMPTHolders(insertTxResultOp->mptHoldersData);
+        backend_->writeMPTHolders(std::move(insertTxResultOp->mptHoldersData));
 
         auto [success, duration] =
             ::util::timed<std::chrono::duration<double>>([&]() { return backend_->finishWrites(lgrInfo.seq); });

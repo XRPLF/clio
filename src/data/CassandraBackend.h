@@ -532,14 +532,14 @@ public:
 
     MPTHoldersAndCursor
     fetchMPTHolders( 
-        ripple::uint192 const& mpt_id,
+        ripple::uint192 const& mptID,
         std::uint32_t const limit,
         std::optional<ripple::AccountID> const& cursorIn,
         std::uint32_t const ledgerSequence,
         boost::asio::yield_context yield)const override
     {
 
-        auto const holderEntries = executor_.read(yield, schema_->selectMPTHolders, mpt_id, cursorIn.value_or(ripple::AccountID(0)), Limit{limit});
+        auto const holderEntries = executor_.read(yield, schema_->selectMPTHolders, mptID, cursorIn.value_or(ripple::AccountID(0)), Limit{limit});
 
         auto const& holderResults = holderEntries.value();
         if (not holderResults.hasRows())
@@ -552,7 +552,7 @@ public:
         std::optional<ripple::AccountID> cursor;
         for (auto const [holder] : extract<ripple::AccountID>(holderResults))
         {
-            mptKeys.push_back(ripple::getMptID(mpt_id, holder));
+            mptKeys.push_back(ripple::keylet::mptoken(mptID, holder).key);
             cursor = holder;
         }
 
@@ -569,9 +569,9 @@ public:
         }
         
         if (mptKeys.size() == limit)
-            return {filteredMpt, cusor};
+            return {filteredMpt, cursor};
         
-        return {filteredMpt, {}}
+        return {filteredMpt, {}};
     }
 
     std::optional<Blob>

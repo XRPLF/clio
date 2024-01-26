@@ -247,7 +247,7 @@ public:
                 backend_->writeAccountTransactions(std::move(insertTxResult.accountTxData));
                 backend_->writeNFTs(insertTxResult.nfTokensData);
                 backend_->writeNFTTransactions(insertTxResult.nfTokenTxData);
-                backend_->writeMPTHolders(insertTxResult.mptHoldersData);
+                backend_->writeMPTHolders(std::move(insertTxResult.mptHoldersData));
             }
 
             backend_->finishWrites(sequence);

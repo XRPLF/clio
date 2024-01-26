@@ -322,6 +322,14 @@ public:
         boost::asio::yield_context yield
     ) const = 0;
 
+    virtual MPTHoldersAndCursor
+    fetchMPTHolders( 
+        ripple::uint192 const& mptID,
+        std::uint32_t const limit,
+        std::optional<ripple::AccountID> const& cursorIn,
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context yield)const = 0;
+
     /**
      * @brief Fetches a specific ledger object.
      *
@@ -548,6 +556,9 @@ public:
      */
     virtual void
     writeNFTTransactions(std::vector<NFTTransactionsData> const& data) = 0;
+
+    virtual void
+    writeMPTHolders(std::vector<std::pair<ripple::uint192, ripple::AccountID>>&& data) = 0;
 
     /**
      * @brief Write a new successor.

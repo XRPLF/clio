@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.h"
 #include "etl/NFTHelpers.h"
+#include "etl/MPTHelpers.h"
 #include "util/Assert.h"
 #include "util/log/Logger.h"
 
@@ -140,7 +141,7 @@ public:
                 lastKey_ = obj.key();
                 backend.writeNFTs(getNFTDataFromObj(request_.ledger().sequence(), obj.key(), obj.data()));
                 
-                auto const maybeMPTHolder = getMPTHolderFromObj(request_.ledger().sequence(), obj.key(), obj.data());
+                auto const maybeMPTHolder = getMPTHolderFromObj(obj.key(), obj.data());
                 if(maybeMPTHolder)
                     backend.writeMPTHolders({*maybeMPTHolder});
 
