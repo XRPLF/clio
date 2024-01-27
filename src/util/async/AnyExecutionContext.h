@@ -57,7 +57,7 @@ public:
      * @returns A unstoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn) noexcept
+    execute(SomeHandlerWithoutStopToken auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn())>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -81,7 +81,7 @@ public:
      * @note The function is expected to take a stop token
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn) noexcept
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -108,7 +108,7 @@ public:
      * @note The function is expected to take a stop token
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout) noexcept
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -136,7 +136,7 @@ public:
      * @note The function is expected to take a stop token
      */
     [[nodiscard]] auto
-    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken> auto&& fn) noexcept
+    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken> auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -166,7 +166,7 @@ public:
      * got cancelled
      */
     [[nodiscard]] auto
-    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken, bool> auto&& fn) noexcept
+    scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken, bool> auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>(), true))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);

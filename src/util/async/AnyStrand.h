@@ -50,7 +50,7 @@ public:
 
     /** @brief Execute a function without a stop token on the strand */
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn) noexcept
+    execute(SomeHandlerWithoutStopToken auto&& fn)  // noexcept
     {
         using RetType = std::decay_t<decltype(fn())>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -69,7 +69,7 @@ public:
 
     /** @brief Execute a function taking a stop token on the strand */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn) noexcept
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn)  // noexcept
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -88,7 +88,7 @@ public:
 
     /** @brief Execute a function taking a stop token on the strand with a timeout */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout) noexcept
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)  // noexcept
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);

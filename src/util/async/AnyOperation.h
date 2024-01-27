@@ -83,14 +83,18 @@ public:
 
     /** @brief Get the result of the operation */
     [[nodiscard]] util::Expected<RetType, ExecutionContextException>
-    get()
+    get() noexcept
     {
         try {
             auto data = operation_.get();
-            if (not data.has_value())
+            if (not data)
                 return util::Unexpected(std::move(data).error());
 
-            return std::any_cast<RetType&>(std::move(data).value());
+            if constexpr (std::is_void_v<RetType>) {
+                return {};
+            } else {
+                return std::any_cast<RetType>(std::move(data).value());
+            }
 
         } catch (std::bad_any_cast const& e) {
             return util::Unexpected{
