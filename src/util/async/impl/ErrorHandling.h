@@ -40,13 +40,13 @@ struct DefaultErrorHandler {
                 try {
                     fn(outcome, std::forward<Args>(args)...);
                 } catch (std::exception const& e) {
-                    outcome.setValue(util::Unexpected(
-                        ExecutionContextException{fmt::format("{}", std::this_thread::get_id()), e.what()}
-                    ));
+                    outcome.setValue(
+                        util::Unexpected(ExecutionError{fmt::format("{}", std::this_thread::get_id()), e.what()})
+                    );
                 } catch (...) {
-                    outcome.setValue(util::Unexpected(
-                        ExecutionContextException{fmt::format("{}", std::this_thread::get_id()), "unknown"}
-                    ));
+                    outcome.setValue(
+                        util::Unexpected(ExecutionError{fmt::format("{}", std::this_thread::get_id()), "unknown"})
+                    );
                 }
             };
     }

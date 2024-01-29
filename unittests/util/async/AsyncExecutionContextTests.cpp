@@ -62,7 +62,7 @@ TYPED_TEST(ExecutionContextTests, executeStdException)
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("test"));
-    EXPECT_TRUE(std::string{err.what()}.ends_with("test"));
+    EXPECT_TRUE(std::string{err}.ends_with("test"));
 }
 
 TYPED_TEST(ExecutionContextTests, executeUnknownException)
@@ -71,7 +71,7 @@ TYPED_TEST(ExecutionContextTests, executeUnknownException)
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("unknown"));
-    EXPECT_TRUE(std::string{err.what()}.ends_with("unknown"));
+    EXPECT_TRUE(std::string{err}.ends_with("unknown"));
 }
 
 // note: this fails on pool context with 1 thread
@@ -145,7 +145,7 @@ TYPED_TEST(ExecutionContextTests, timerStdException)
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("test"));
-    EXPECT_TRUE(std::string{err.what()}.ends_with("test"));
+    EXPECT_TRUE(std::string{err}.ends_with("test"));
 }
 
 TYPED_TEST(ExecutionContextTests, timerUnknownException)
@@ -159,7 +159,7 @@ TYPED_TEST(ExecutionContextTests, timerUnknownException)
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("unknown"));
-    EXPECT_TRUE(std::string{err.what()}.ends_with("unknown"));
+    EXPECT_TRUE(std::string{err}.ends_with("unknown"));
 }
 
 TYPED_TEST(ExecutionContextTests, strand)
@@ -177,7 +177,7 @@ TYPED_TEST(ExecutionContextTests, strandStdException)
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("test"));
-    EXPECT_TRUE(std::string{err.what()}.ends_with("test"));
+    EXPECT_TRUE(std::string{err}.ends_with("test"));
 }
 
 TYPED_TEST(ExecutionContextTests, strandUnknownException)
@@ -187,7 +187,7 @@ TYPED_TEST(ExecutionContextTests, strandUnknownException)
 
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("unknown"));
-    EXPECT_TRUE(std::string{err.what()}.ends_with("unknown"));
+    EXPECT_TRUE(std::string{err}.ends_with("unknown"));
 }
 
 // note: this fails on pool context with 1 thread

@@ -34,29 +34,22 @@ namespace util::async {
 /**
  * @brief Exception that is the error channel of an async operation of any ExecutionContext
  */
-struct ExecutionContextException : std::exception {
-    ExecutionContextException(std::string tid, std::string msg)
+struct ExecutionError {
+    ExecutionError(std::string tid, std::string msg)
         : message{fmt::format("Thread {} exit with exception: {}", std::move(tid), std::move(msg))}
     {
     }
 
-    ExecutionContextException(ExecutionContextException const&) = default;
-    ExecutionContextException(ExecutionContextException&&) = default;
-    ExecutionContextException&
-    operator=(ExecutionContextException&&) = default;
-    ExecutionContextException&
-    operator=(ExecutionContextException const&) = default;
-
-    /** @brief Returns the message of the exception */
-    char const*
-    what() const noexcept override
-    {
-        return message.c_str();
-    }
+    ExecutionError(ExecutionError const&) = default;
+    ExecutionError(ExecutionError&&) = default;
+    ExecutionError&
+    operator=(ExecutionError&&) = default;
+    ExecutionError&
+    operator=(ExecutionError const&) = default;
 
     operator char const*() const noexcept
     {
-        return what();
+        return message.c_str();
     }
 
     std::string message;

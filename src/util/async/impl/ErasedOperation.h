@@ -54,7 +54,7 @@ public:
         pimpl_->wait();
     }
 
-    util::Expected<Any, ExecutionContextException>
+    util::Expected<Any, ExecutionError>
     get()
     {
         return pimpl_->get();
@@ -85,7 +85,7 @@ private:
 
         virtual void
         wait() = 0;
-        virtual util::Expected<Any, ExecutionContextException>
+        virtual util::Expected<Any, ExecutionError>
         get() = 0;
         virtual void
         requestStop() = 0;
@@ -109,7 +109,7 @@ private:
             return operation.wait();
         }
 
-        util::Expected<Any, ExecutionContextException>
+        util::Expected<Any, ExecutionError>
         get() override
         {
             // Note: return type of the operation was already wrapped to detail::Any by AnyExecutionContext

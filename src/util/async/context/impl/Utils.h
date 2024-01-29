@@ -62,12 +62,12 @@ outcomeForHandler(auto&& fn)
 {
     if constexpr (SomeHandlerWith<decltype(fn), typename StopSourceType::Token>) {
         using FnRetType = decltype(fn(std::declval<typename StopSourceType::Token>()));
-        using RetType = util::Expected<FnRetType, ExecutionContextException>;
+        using RetType = util::Expected<FnRetType, ExecutionError>;
 
         return StoppableOutcome<RetType, StopSourceType>();
     } else {
         using FnRetType = decltype(fn());
-        using RetType = util::Expected<FnRetType, ExecutionContextException>;
+        using RetType = util::Expected<FnRetType, ExecutionError>;
 
         return Outcome<RetType>();
     }

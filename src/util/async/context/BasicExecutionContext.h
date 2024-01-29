@@ -91,7 +91,7 @@ public:
     using ExecutorType = typename ContextHolderType::Executor;
 
     template <typename T>
-    using ValueType = util::Expected<T, ExecutionContextException>;
+    using ValueType = util::Expected<T, ExecutionError>;
 
     using StopSource = StopSourceType;
 

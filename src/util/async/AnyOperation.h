@@ -82,7 +82,7 @@ public:
     }
 
     /** @brief Get the result of the operation */
-    [[nodiscard]] util::Expected<RetType, ExecutionContextException>
+    [[nodiscard]] util::Expected<RetType, ExecutionError>
     get() noexcept
     {
         try {
@@ -97,9 +97,7 @@ public:
             }
 
         } catch (std::bad_any_cast const& e) {
-            return util::Unexpected{
-                ExecutionContextException(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")
-            };
+            return util::Unexpected{ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")};
         }
     }
 
