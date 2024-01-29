@@ -108,7 +108,10 @@ WsConnectionBuilder::connect(asio::yield_context yield) const
         if (not streamData.has_value())
             return Unexpected{std::move(streamData.error())};
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
         if (!SSL_set_tlsext_host_name(streamData->stream.next_layer().native_handle(), host_.c_str())) {
+#pragma GCC diagnostic pop
             beast::error_code errorCode;
             errorCode.assign(static_cast<int>(::ERR_get_error()), beast::net::error::get_ssl_category());
             return Unexpected{RequestError{"SSL setup failed", errorCode}};
