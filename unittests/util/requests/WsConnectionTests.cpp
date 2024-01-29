@@ -115,7 +115,7 @@ TEST_P(WsConnectionTests, SendAndReceive)
 
 TEST_F(WsConnectionTests, Timeout)
 {
-    builder.setTimeout(std::chrono::milliseconds{1});
+    builder.setConnectionTimeout(std::chrono::milliseconds{1});
     runSpawn([&](asio::yield_context yield) {
         auto connection = builder.connect(yield);
         EXPECT_FALSE(connection.has_value());
@@ -178,6 +178,7 @@ INSTANTIATE_TEST_SUITE_P(
             case WsConnectionErrorTestsBundle::Write:
                 return "Write";
         }
+        return "Unknown";
     }
 );
 

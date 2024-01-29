@@ -87,7 +87,7 @@ WsConnectionBuilder::setTarget(std::string target)
 }
 
 WsConnectionBuilder&
-WsConnectionBuilder::setTimeout(std::chrono::milliseconds timeout)
+WsConnectionBuilder::setConnectionTimeout(std::chrono::milliseconds timeout)
 {
     timeout_ = timeout;
     return *this;
@@ -128,13 +128,13 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_contex
 
     // These objects perform our I/O
     asio::ip::tcp::resolver resolver(context);
-    auto& ws = streamData.stream;
 
     // Look up the domain name
     auto const results = resolver.async_resolve(host_, port_, yield[errorCode]);
     if (errorCode)
         return Unexpected{RequestError{"Resolve error", errorCode}};
 
+    auto& ws = streamData.stream;
     // Set a timeout on the operation
     beast::get_lowest_layer(ws).expires_after(timeout_);
 
@@ -144,7 +144,8 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_contex
         return Unexpected{RequestError{"Connect error", errorCode}};
 
     if constexpr (StreamDataType::sslEnabled) {
-        beast::get_lowest_layer(ws).expires_never();
+        // Set a timeout on the operation
+        beast::get_lowest_layer(ws).expires_after(timeout_);
         // Perform the SSL handshake
         ws.next_layer().async_handshake(asio::ssl::stream_base::client, yield[errorCode]);
         if (errorCode)

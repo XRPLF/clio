@@ -92,13 +92,13 @@ public:
     setTarget(std::string target);
 
     /**
-     * @brief Set the timeout of the request
+     * @brief Set the timeout for connection establishing operations
      *
      * @param timeout timeout to set
      * @return RequestBuilder& this
      */
     WsConnectionBuilder&
-    setTimeout(std::chrono::milliseconds timeout);
+    setConnectionTimeout(std::chrono::milliseconds timeout);
 
     /**
      * @brief Set whether SSL is enabled

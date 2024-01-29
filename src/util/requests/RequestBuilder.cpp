@@ -127,7 +127,10 @@ RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
         if (not streamData.has_value())
             return Unexpected{std::move(streamData.error())};
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
         if (!SSL_set_tlsext_host_name(streamData->stream.native_handle(), host_.c_str())) {
+#pragma GCC diagnostic pop
             beast::error_code errorCode;
             errorCode.assign(static_cast<int>(::ERR_get_error()), asio::error::get_ssl_category());
             return Unexpected{RequestError{"SSL setup failed", errorCode}};
@@ -187,6 +190,9 @@ RequestBuilder::doRequestImpl(StreamDataType&& streamData, asio::yield_context y
     if (errorCode)
         return Unexpected{RequestError{"Read error", errorCode}};
 
+    if (response.result() != http::status::ok)
+        return Unexpected{RequestError{"Response status not OK"}};
+
     // Gracefully close the socket
     beast::get_lowest_layer(stream).socket().shutdown(tcp::socket::shutdown_both, errorCode);
 
@@ -195,9 +201,6 @@ RequestBuilder::doRequestImpl(StreamDataType&& streamData, asio::yield_context y
     //
     if (errorCode && errorCode != beast::errc::not_connected)
         return Unexpected{RequestError{"Shutdown socket error", errorCode}};
-
-    if (response.result() != http::status::ok)
-        return Unexpected{RequestError{"Response status not OK"}};
 
     return std::move(response).body();
 }
