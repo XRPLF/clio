@@ -166,7 +166,6 @@ target_sources (clio PRIVATE
   src/util/requests/RequestBuilder.cpp
   src/util/requests/Types.cpp
   src/util/requests/WsConnection.cpp
-  src/util/requests/RequestBuilder.cpp
   src/util/requests/impl/SslContext.cpp
   src/util/Taggable.cpp
   src/util/TerminationHandler.cpp
@@ -212,6 +211,7 @@ if (tests)
     unittests/util/prometheus/MetricsFamilyTests.cpp
     unittests/util/prometheus/OStreamTests.cpp
     unittests/util/requests/RequestBuilderTests.cpp
+    unittests/util/requests/SslContextTests.cpp
     unittests/util/requests/WsConnectionTests.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTests.cpp

@@ -58,4 +58,7 @@ public:
 
     TestWsConnection
     acceptConnection(boost::asio::yield_context yield);
+
+    void
+    acceptConnectionAndDropIt(boost::asio::yield_context yield);
 };

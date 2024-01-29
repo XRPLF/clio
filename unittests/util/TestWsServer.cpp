@@ -105,3 +105,13 @@ TestWsServer::acceptConnection(asio::yield_context yield)
     [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
     return TestWsConnection(std::move(socket), yield);
 }
+
+void
+TestWsServer::acceptConnectionAndDropIt(asio::yield_context yield)
+{
+    acceptor_.listen(asio::socket_base::max_listen_connections);
+    beast::error_code errorCode;
+    asio::ip::tcp::socket socket(acceptor_.get_executor());
+    acceptor_.async_accept(socket, yield[errorCode]);
+    [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
+}

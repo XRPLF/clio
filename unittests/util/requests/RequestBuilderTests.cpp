@@ -78,23 +78,24 @@ INSTANTIATE_TEST_CASE_P(
     [](auto const& info) { return info.param.testName; }
 );
 
-TEST_P(RequestBuilderTest, simpleRequest)
+TEST_P(RequestBuilderTest, SimpleRequest)
 {
+    std::string const replyBody = "Hello, world!";
     builder.addHeaders(GetParam().headers);
     builder.setTarget(GetParam().target);
 
     server.handleRequest(
-        [](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
+        [&replyBody](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
             [&]() {
                 ASSERT_TRUE(request.target() == GetParam().target);
                 ASSERT_TRUE(request.method() == GetParam().method);
             }();
-            return http::response<http::string_body>{http::status::ok, 11, "Hello, world!"};
+            return http::response<http::string_body>{http::status::ok, 11, replyBody};
         }
     );
 
-    runSpawn([this](asio::yield_context yield) {
-        auto response = [&]() -> util::Expected<std::string, RequestError> {
+    runSpawn([this, replyBody](asio::yield_context yield) {
+        auto const response = [&]() -> util::Expected<std::string, RequestError> {
             switch (GetParam().method) {
                 case http::verb::get:
                     return builder.get(yield);
@@ -105,7 +106,7 @@ TEST_P(RequestBuilderTest, simpleRequest)
             }
         }();
         ASSERT_TRUE(response) << response.error().message;
-        EXPECT_EQ(response.value(), "Hello, world!");
+        EXPECT_EQ(response.value(), replyBody);
     });
 }
 
@@ -126,4 +127,63 @@ TEST_F(RequestBuilderTest, Timeout)
         auto response = builder.get(yield);
         EXPECT_FALSE(response);
     });
+}
+
+TEST_F(RequestBuilderTest, RequestWithBody)
+{
+    std::string const requestBody = "Hello, world!";
+    std::string const replyBody = "Hello, client!";
+    builder.addData(requestBody);
+
+    server.handleRequest(
+        [&](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
+            [&]() {
+                EXPECT_EQ(request.target(), "/");
+                EXPECT_EQ(request.method(), http::verb::get);
+                EXPECT_EQ(request.body(), requestBody);
+            }();
+
+            return http::response<http::string_body>{http::status::ok, 11, replyBody};
+        }
+    );
+
+    runSpawn([&](asio::yield_context yield) {
+        auto const response = builder.get(yield);
+        ASSERT_TRUE(response) << response.error().message;
+        EXPECT_EQ(response.value(), replyBody) << response.value();
+    });
+}
+
+TEST_F(RequestBuilderTest, ResolveError)
+{
+    builder = RequestBuilder{"wrong_host", "11111"};
+    runSpawn([this](asio::yield_context yield) {
+        auto const response = builder.get(yield);
+        ASSERT_FALSE(response);
+        EXPECT_TRUE(response.error().message.starts_with("Resolve error")) << response.error().message;
+    });
+}
+
+TEST_F(RequestBuilderTest, ConnectionError)
+{
+    builder = RequestBuilder{"localhost", "11112"};
+    builder.setTimeout(std::chrono::milliseconds{1});
+    runSpawn([this](asio::yield_context yield) {
+        auto const response = builder.get(yield);
+        ASSERT_FALSE(response);
+        EXPECT_TRUE(response.error().message.starts_with("Connection error")) << response.error().message;
+    });
+}
+
+TEST_F(RequestBuilderTest, WritingError)
+{
+    server.handleRequest(
+        [](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
+            [&]() {
+                EXPECT_EQ(request.target(), "/");
+                EXPECT_EQ(request.method(), http::verb::get);
+            }();
+            return std::nullopt;
+        }
+    );
 }

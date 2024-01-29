@@ -118,9 +118,30 @@ TEST_F(WsConnectionTests, Timeout)
     builder.setConnectionTimeout(std::chrono::milliseconds{1});
     runSpawn([&](asio::yield_context yield) {
         auto connection = builder.connect(yield);
-        EXPECT_FALSE(connection.has_value());
+        ASSERT_FALSE(connection.has_value());
 
         EXPECT_TRUE(connection.error().message.starts_with("Connect error"));
+    });
+}
+
+TEST_F(WsConnectionTests, ResolveError)
+{
+    builder = WsConnectionBuilder{"wrong_host", "11112"};
+    runSpawn([&](asio::yield_context yield) {
+        auto connection = builder.connect(yield);
+        ASSERT_FALSE(connection.has_value());
+        EXPECT_TRUE(connection.error().message.starts_with("Resolve error")) << connection.error().message;
+    });
+}
+
+TEST_F(WsConnectionTests, WsHandshakeError)
+{
+    builder.setConnectionTimeout(std::chrono::milliseconds{1});
+    asio::spawn(ctx, [&](asio::yield_context yield) { server.acceptConnectionAndDropIt(yield); });
+    runSpawn([&](asio::yield_context yield) {
+        auto connection = builder.connect(yield);
+        ASSERT_FALSE(connection.has_value());
+        EXPECT_TRUE(connection.error().message.starts_with("Handshake error")) << connection.error().message;
     });
 }
 
