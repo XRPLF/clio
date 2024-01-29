@@ -20,81 +20,27 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "etl/ETLHelpers.h"
-#include "etl/impl/GrpcSource.h"
-#include "feed/SubscriptionManager.h"
-#include "util/Mutex.h"
 #include "util/config/Config.h"
 #include "util/log/Logger.h"
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/json/object.hpp>
-#include <boost/uuid/uuid.hpp>
 #include <grpcpp/support/status.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
+#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
+namespace etl::impl {
 
-namespace etl {
-
-class NewSource {
-    util::Logger log_{"ETL"};
-    boost::uuids::uuid uuid_{};
-
-    std::string ip_;
-    std::string wsPort_;
-
-    impl::GrpcSource grpcSource_;
-
-    // SubscriptionSource
-    util::Mutex<std::vector<std::pair<uint32_t, uint32_t>>> validatedLedgers_;
-    std::string validatedLedgersRaw_{"N/A"};
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
+class GrpcSource {
+    util::Logger log_{"ETL_Grpc"};
+    std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub> stub_;
+    std::shared_ptr<BackendInterface> backend_;
 
 public:
-    /**
-     * @brief Create the base portion of ETL source.
-     *
-     * @param config The configuration to use
-     * @param ioc The io_context to run on
-     * @param backend BackendInterface implementation
-     * @param subscriptions Subscription manager
-     * @param validatedLedgers The network validated ledgers data structure
-     */
-    NewSource(
-        util::Config const& config,
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
-    );
-
-    /** @return true if source is connected; false otherwise */
-    bool
-    isConnected() const;
-
-    /** @return JSON representation of the source */
-    boost::json::object
-    toJson() const;
-
-    /** @return String representation of the source (for debug) */
-    std::string
-    toString() const;
-
-    /**
-     * @brief Check if ledger is known by this source.
-     *
-     * @param sequence The ledger sequence to check
-     * @return true if ledger is in the range of this source; false otherwise
-     */
-    bool
-    hasLedger(uint32_t sequence) const;
+    GrpcSource(util::Config const& config, std::shared_ptr<BackendInterface> backend);
 
     /**
      * @brief Fetch data for a specific ledger.
@@ -121,20 +67,8 @@ public:
     std::pair<std::vector<std::string>, bool>
     loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly = false);
 
-    /**
-     * @brief Forward a request to rippled.
-     *
-     * @param request The request to forward
-     * @param clientIp IP of the client forwarding this request if known
-     * @param yield The coroutine context
-     * @return Response wrapped in an optional on success; nullopt otherwise
-     */
-    std::optional<boost::json::object>
-    forwardToRippled(
-        boost::json::object const& request,
-        std::optional<std::string> const& forwardToRippledClientIp,
-        boost::asio::yield_context yield
-    ) const;
+    std::string
+    toString() const;
 };
 
-}  // namespace etl
+}  // namespace etl::impl

@@ -76,7 +76,7 @@ public:
 private:
     friend class Mutex<ProtectedDataType>;
 
-    Lock(Mutex<ProtectedDataType>& mutex) : lock_(mutex.mutex_), mutex_(mutex)
+    explicit Lock(Mutex<ProtectedDataType>& mutex) : lock_(mutex.mutex_), mutex_(mutex)
     {
     }
 };
@@ -88,7 +88,7 @@ private:
  */
 template <typename ProtectedDataType>
 class Mutex {
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     ProtectedDataType data_;
 
 public:
@@ -108,13 +108,13 @@ public:
     Lock<ProtectedDataType const>
     lock() const
     {
-        return Lock<ProtectedDataType const>(std::unique_lock<std::mutex>(mutex_), data_);
+        return Lock<ProtectedDataType const>(*this);
     }
 
     Lock<ProtectedDataType>
     lock()
     {
-        return Lock<ProtectedDataType>(std::unique_lock<std::mutex>(mutex_), data_);
+        return Lock<ProtectedDataType>(*this);
     }
 };
 
