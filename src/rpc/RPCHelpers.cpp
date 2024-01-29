@@ -1354,13 +1354,13 @@ parseTaker(boost::json::value const& taker)
 ripple::Issue
 parseIssue(boost::json::value const& issue)
 {
-    Json::Value jvAsset;
+    Json::Value jv;
     if (issue.as_object().contains(JS(issuer)))
-        jvAsset["issuer"] = issue.at(JS(issuer)).as_string().c_str();
+        jv["issuer"] = issue.at(JS(issuer)).as_string().c_str();
     if (issue.as_object().contains(JS(currency)))
-        jvAsset["currency"] = issue.at(JS(currency)).as_string().c_str();
+        jv["currency"] = issue.at(JS(currency)).as_string().c_str();
 
-    return ripple::issueFromJson(jvAsset);
+    return ripple::issueFromJson(jv);
 }
 
 bool
