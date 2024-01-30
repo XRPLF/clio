@@ -267,92 +267,130 @@ func getLedgerRange(cluster *gocql.ClusterConfig) (uint64, uint64, error) {
 }
 
 func deleteLedgerData(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, toLedgerIdx uint64) error {
-	log.Printf("Start generating delete queries for %d -> %d\n\n", fromLedgerIdx, toLedgerIdx)
+	var totalErrors uint64
+	var totalRows uint64
+	var totalDeletes uint64
 
-	var traversedRowsCount uint64
 	var info deleteInfo
+	var rowsCount uint64
+	var deleteCount uint64
+	var errCount uint64
+
+	log.Printf("Start scanning and removing data for %d -> latest (%d according to ledger_range table)\n\n", fromLedgerIdx, toLedgerIdx)
 
 	// successor queries
 	log.Println("Generating delete queries for successor table")
-	info, traversedRowsCount = prepareDeleteQueries(cluster,
-		fromLedgerIdx, toLedgerIdx,
+	info, rowsCount, errCount = prepareDeleteQueries(cluster, fromLedgerIdx,
 		"SELECT key, seq FROM successor WHERE token(key) >= %s AND token(key) <= %s",
 		"DELETE FROM successor WHERE key = ? AND seq = ?")
 	log.Printf("Total delete queries: %d\n", len(info.Data))
-	log.Printf("Total traversed rows: %d\n\n", traversedRowsCount)
-	performDeleteQueries(cluster, &info, columnSettings{UseBlob: true, UseSeq: true})
+	log.Printf("Total traversed rows: %d\n\n", rowsCount)
+	totalErrors += errCount
+	totalRows += rowsCount
+	deleteCount, errCount = performDeleteQueries(cluster, &info, columnSettings{UseBlob: true, UseSeq: true})
+	totalErrors += errCount
+	totalDeletes += deleteCount
 
 	// diff queries
 	log.Println("Generating delete queries for diff table")
-	info, traversedRowsCount = prepareDeleteQueries(cluster,
-		fromLedgerIdx, toLedgerIdx,
+	info, rowsCount, errCount = prepareDeleteQueries(cluster, fromLedgerIdx,
 		"SELECT key, seq FROM diff WHERE token(seq) >= %s AND token(seq) <= %s",
 		"DELETE FROM diff WHERE key = ? AND seq = ?")
 	log.Printf("Total delete queries: %d\n", len(info.Data))
-	log.Printf("Total traversed rows: %d\n\n", traversedRowsCount)
-	performDeleteQueries(cluster, &info, columnSettings{UseBlob: true, UseSeq: true})
+	log.Printf("Total traversed rows: %d\n\n", rowsCount)
+	totalErrors += errCount
+	totalRows += rowsCount
+	deleteCount, errCount = performDeleteQueries(cluster, &info, columnSettings{UseBlob: true, UseSeq: true})
+	totalErrors += errCount
+	totalDeletes += deleteCount
 
 	// objects queries
 	log.Println("Generating delete queries for objects table")
-	info, traversedRowsCount = prepareDeleteQueries(cluster,
-		fromLedgerIdx, toLedgerIdx,
+	info, rowsCount, errCount = prepareDeleteQueries(cluster, fromLedgerIdx,
 		"SELECT key, sequence FROM objects WHERE token(key) >= %s AND token(key) <= %s",
 		"DELETE FROM objects WHERE key = ? AND sequence = ?")
 	log.Printf("Total delete queries: %d\n", len(info.Data))
-	log.Printf("Total traversed rows: %d\n\n", traversedRowsCount)
-	performDeleteQueries(cluster, &info, columnSettings{UseBlob: true, UseSeq: true})
+	log.Printf("Total traversed rows: %d\n\n", rowsCount)
+	totalErrors += errCount
+	totalRows += rowsCount
+	deleteCount, errCount = performDeleteQueries(cluster, &info, columnSettings{UseBlob: true, UseSeq: true})
+	totalErrors += errCount
+	totalDeletes += deleteCount
 
 	// ledger_hashes queries
 	log.Println("Generating delete queries for ledger_hashes table")
-	info, traversedRowsCount = prepareDeleteQueries(cluster,
-		fromLedgerIdx, toLedgerIdx,
+	info, rowsCount, errCount = prepareDeleteQueries(cluster, fromLedgerIdx,
 		"SELECT hash, sequence FROM ledger_hashes WHERE token(hash) >= %s AND token(hash) <= %s",
 		"DELETE FROM ledger_hashes WHERE hash = ?")
 	log.Printf("Total delete queries: %d\n", len(info.Data))
-	log.Printf("Total traversed rows: %d\n\n", traversedRowsCount)
-	performDeleteQueries(cluster, &info, columnSettings{UseBlob: true, UseSeq: false})
+	log.Printf("Total traversed rows: %d\n\n", rowsCount)
+	totalErrors += errCount
+	totalRows += rowsCount
+	deleteCount, errCount = performDeleteQueries(cluster, &info, columnSettings{UseBlob: true, UseSeq: false})
+	totalErrors += errCount
+	totalDeletes += deleteCount
 
 	// transactions queries
 	log.Println("Generating delete queries for transactions table")
-	info, traversedRowsCount = prepareDeleteQueries(cluster,
-		fromLedgerIdx, toLedgerIdx,
+	info, rowsCount, errCount = prepareDeleteQueries(cluster, fromLedgerIdx,
 		"SELECT hash, ledger_sequence FROM transactions WHERE token(hash) >= %s AND token(hash) <= %s",
 		"DELETE FROM transactions WHERE hash = ?")
 	log.Printf("Total delete queries: %d\n", len(info.Data))
-	log.Printf("Total traversed rows: %d\n\n", traversedRowsCount)
-	performDeleteQueries(cluster, &info, columnSettings{UseBlob: true, UseSeq: false})
+	log.Printf("Total traversed rows: %d\n\n", rowsCount)
+	totalErrors += errCount
+	totalRows += rowsCount
+	deleteCount, errCount = performDeleteQueries(cluster, &info, columnSettings{UseBlob: true, UseSeq: false})
+	totalErrors += errCount
+	totalDeletes += deleteCount
 
 	// ledger_transactions queries
 	log.Println("Generating delete queries for ledger_transactions table")
-	info, traversedRowsCount = prepareDeleteQueries(cluster,
-		fromLedgerIdx, toLedgerIdx,
-		"SELECT hash, ledger_sequence FROM ledger_transactions WHERE token(ledger_sequence) >= %s AND token(ledger_sequence) <= %s",
-		"DELETE FROM ledger_transactions WHERE hash = ? AND ledger_sequence = ?")
-	log.Printf("Total delete queries: %d\n", len(info.Data))
-	log.Printf("Total traversed rows: %d\n\n", traversedRowsCount)
-	performDeleteQueries(cluster, &info, columnSettings{UseBlob: true, UseSeq: true})
+	info = prepareSimpleDeleteQueries(fromLedgerIdx, toLedgerIdx,
+		"DELETE FROM ledger_transactions WHERE ledger_sequence = ?")
+	log.Printf("Total delete queries: %d\n\n", len(info.Data))
+	deleteCount, errCount = performDeleteQueries(cluster, &info, columnSettings{UseBlob: false, UseSeq: true})
+	totalErrors += errCount
+	totalDeletes += deleteCount
 
 	// ledgers queries
 	log.Println("Generating delete queries for ledgers table")
-	info, traversedRowsCount = prepareDeleteQueries(cluster,
-		fromLedgerIdx, toLedgerIdx,
-		"SELECT header, sequence FROM ledgers WHERE token(sequence) >= %s AND token(sequence) <= %s",
+	info = prepareSimpleDeleteQueries(fromLedgerIdx, toLedgerIdx,
 		"DELETE FROM ledgers WHERE sequence = ?")
-	log.Printf("Total delete queries: %d\n", len(info.Data))
-	log.Printf("Total traversed rows: %d\n\n", traversedRowsCount)
-	performDeleteQueries(cluster, &info, columnSettings{UseBlob: false, UseSeq: true})
+	log.Printf("Total delete queries: %d\n\n", len(info.Data))
+	deleteCount, errCount = performDeleteQueries(cluster, &info, columnSettings{UseBlob: false, UseSeq: true})
+	totalErrors += errCount
+	totalDeletes += deleteCount
 
 	// TODO: tbd what to do with account_tx as it got tuple for seq_idx
 	// TODO: also, whether we need to take care of nft tables and other stuff like that
 
 	if err := updateLedgerRange(cluster, fromLedgerIdx-1); err != nil {
-		log.Fatalf("ERROR failed updating ledger range: %s\n", err)
+		log.Printf("ERROR failed updating ledger range: %s\n", err)
+		return err
 	}
+
+	log.Printf("TOTAL ERRORS: %d\n", totalErrors)
+	log.Printf("TOTAL ROWS TRAVERSED: %d\n", totalRows)
+	log.Printf("TOTAL DELETES: %d\n\n", totalDeletes)
+
+	log.Printf("Completed deletion for %d -> %d\n\n", fromLedgerIdx, toLedgerIdx)
 
 	return nil
 }
 
-func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, toLedgerIdx uint64, queryTemplate string, deleteQueryTemplate string) (deleteInfo, uint64) {
+func prepareSimpleDeleteQueries(fromLedgerIdx uint64, toLedgerIdx uint64, deleteQueryTemplate string) deleteInfo {
+	var info = deleteInfo{Query: deleteQueryTemplate}
+
+	// Note: we deliberately add 1 extra ledger to make sure we delete any data Clio might have written
+	// if it crashed or was stopped in the middle of writing just before it wrote ledger_range.
+	for i := fromLedgerIdx; i <= toLedgerIdx+1; i++ {
+		info.Data = append(info.Data, deleteParams{Seq: i})
+	}
+
+	return info
+}
+
+func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, queryTemplate string, deleteQueryTemplate string) (deleteInfo, uint64, uint64) {
 	rangesChannel := make(chan *tokenRange, len(ranges))
 	for i := range ranges {
 		rangesChannel <- ranges[i]
@@ -372,6 +410,7 @@ func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, to
 	var wg sync.WaitGroup
 	var sessionCreationWaitGroup sync.WaitGroup
 	var totalRows uint64
+	var totalErrors uint64
 
 	wg.Add(numberOfParallelClientThreads)
 	sessionCreationWaitGroup.Add(numberOfParallelClientThreads)
@@ -402,19 +441,21 @@ func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, to
 						rowsRetrieved++
 
 						// only grab the rows that are in the correct range of sequence numbers
-						if fromLedgerIdx <= seq && seq <= toLedgerIdx {
+						if fromLedgerIdx <= seq {
 							outChannel <- deleteParams{Seq: seq, Blob: key}
 						}
 					}
 
 					if err := iter.Close(); err != nil {
 						log.Printf("ERROR: iteration failed: %s\n", err)
+						atomic.AddUint64(&totalErrors, 1)
 					}
 
 					atomic.AddUint64(&totalRows, rowsRetrieved)
 				}
 			} else {
 				log.Printf("ERROR: %s\n", err)
+				atomic.AddUint64(&totalErrors, 1)
 			}
 		}()
 	}
@@ -422,13 +463,14 @@ func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, to
 	wg.Wait()
 	close(outChannel)
 
-	return info, totalRows
+	return info, totalRows, totalErrors
 }
 
-func performDeleteQueries(cluster *gocql.ClusterConfig, info *deleteInfo, colSettings columnSettings) uint64 {
+func performDeleteQueries(cluster *gocql.ClusterConfig, info *deleteInfo, colSettings columnSettings) (uint64, uint64) {
 	var wg sync.WaitGroup
 	var sessionCreationWaitGroup sync.WaitGroup
 	var totalDeletes uint64
+	var totalErrors uint64
 
 	chunks := splitDeleteWork(info)
 	chunksChannel := make(chan []deleteParams, len(chunks))
@@ -469,19 +511,22 @@ func performDeleteQueries(cluster *gocql.ClusterConfig, info *deleteInfo, colSet
 						}
 
 						if err := preparedQuery.Exec(); err != nil {
-							log.Fatalf("DELETE ERROR: %s\n", err)
+							log.Printf("DELETE ERROR: %s\n", err)
+							atomic.AddUint64(&totalErrors, 1)
+						} else {
+							atomic.AddUint64(&totalDeletes, 1)
 						}
-						atomic.AddUint64(&totalDeletes, 1)
 					}
 				}
 			} else {
 				log.Printf("ERROR: %s\n", err)
+				atomic.AddUint64(&totalErrors, 1)
 			}
 		}()
 	}
 
 	wg.Wait()
-	return totalDeletes
+	return totalDeletes, totalErrors
 }
 
 func updateLedgerRange(cluster *gocql.ClusterConfig, ledgerIndex uint64) error {
