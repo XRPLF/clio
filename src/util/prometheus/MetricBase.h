@@ -22,6 +22,8 @@
 #include "util/prometheus/Label.h"
 #include "util/prometheus/OStream.h"
 
+#include <cstdint>
+
 namespace util::prometheus {
 
 /**

@@ -206,7 +206,7 @@ public:
                         if (isBookDir(cur->key, cur->blob)) {
                             auto base = getBookBase(cur->key);
                             // make sure the base is not an actual object
-                            if (!backend_->cache().get(cur->key, sequence)) {
+                            if (!backend_->cache().get(base, sequence)) {
                                 auto succ = backend_->cache().getSuccessor(base, sequence);
                                 ASSERT(succ.has_value(), "Book base {} must have a successor", ripple::strHex(base));
                                 if (succ->key == cur->key) {
