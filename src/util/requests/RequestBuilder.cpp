@@ -48,6 +48,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace util::requests {
@@ -66,7 +67,7 @@ RequestBuilder::RequestBuilder(std::string host, std::string port) : host_(std::
 RequestBuilder&
 RequestBuilder::addHeader(HttpHeader const& header)
 {
-    request_.set(header.name, header.value);
+    std::visit([&](auto const& name) { request_.set(name, header.value); }, header.name);
     return *this;
 }
 

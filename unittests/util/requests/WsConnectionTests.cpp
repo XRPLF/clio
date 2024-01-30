@@ -67,7 +67,9 @@ INSTANTIATE_TEST_CASE_P(
         WsConnectionTestBundle{"singleHeader", {{http::field::accept, "text/html"}}, std::nullopt},
         WsConnectionTestBundle{
             "multiple headers",
-            {{http::field::accept, "text/html"}, {http::field::authorization, "password"}},
+            {{http::field::accept, "text/html"},
+             {http::field::authorization, "password"},
+             {"Custom_header", "some_value"}},
             std::nullopt
         },
         WsConnectionTestBundle{"target", {}, "/target"}
@@ -76,14 +78,10 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_P(WsConnectionTests, SendAndReceive)
 {
-    auto target = GetParam().target;
-    if (target) {
+    if (auto const target = GetParam().target; target) {
         builder.setTarget(*target);
     }
-
-    for (auto const& header : GetParam().headers) {
-        builder.addHeader(header);
-    }
+    builder.addHeaders(GetParam().headers);
 
     asio::spawn(ctx, [&](asio::yield_context yield) {
         auto serverConnection = server.acceptConnection(yield);

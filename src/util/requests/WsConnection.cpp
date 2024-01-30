@@ -154,7 +154,7 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_contex
     ws.set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
     ws.set_option(websocket::stream_base::decorator([this](websocket::request_type& req) {
         for (auto const& header : headers_)
-            req.set(header.name, header.value);
+            std::visit([&](auto const& name) { req.set(name, header.value); }, header.name);
     }));
 
     std::string const host = fmt::format("{}:{}", host_, endpoint.port());

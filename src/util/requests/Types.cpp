@@ -41,4 +41,8 @@ HttpHeader::HttpHeader(boost::beast::http::field name, std::string value) : name
 {
 }
 
+HttpHeader::HttpHeader(std::string name, std::string value) : name(std::move(name)), value(std::move(value))
+{
+}
+
 }  // namespace util::requests

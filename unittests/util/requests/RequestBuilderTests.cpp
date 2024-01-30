@@ -36,6 +36,7 @@
 #include <optional>
 #include <string>
 #include <thread>
+#include <variant>
 #include <vector>
 
 using namespace util::requests;
@@ -62,7 +63,9 @@ INSTANTIATE_TEST_CASE_P(
         RequestBuilderTestBundle{
             "GetWithHeaders",
             http::verb::get,
-            {{http::field::accept, "text/html"}, {http::field::authorization, "password"}},
+            {{http::field::accept, "text/html"},
+             {http::field::authorization, "password"},
+             {"Custom_header", "some_value"}},
             "/"
         },
         RequestBuilderTestBundle{"GetWithTarget", http::verb::get, {}, "/test"},
@@ -70,7 +73,9 @@ INSTANTIATE_TEST_CASE_P(
         RequestBuilderTestBundle{
             "PostWithHeaders",
             http::verb::post,
-            {{http::field::accept, "text/html"}, {http::field::authorization, "password"}},
+            {{http::field::accept, "text/html"},
+             {http::field::authorization, "password"},
+             {"Custom_header", "some_value"}},
             "/"
         },
         RequestBuilderTestBundle{"PostWithTarget", http::verb::post, {}, "/test"}
@@ -87,8 +92,18 @@ TEST_P(RequestBuilderTest, SimpleRequest)
     server.handleRequest(
         [&replyBody](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
             [&]() {
-                ASSERT_TRUE(request.target() == GetParam().target);
-                ASSERT_TRUE(request.method() == GetParam().method);
+                EXPECT_TRUE(request.target() == GetParam().target);
+                EXPECT_TRUE(request.method() == GetParam().method);
+                for (auto const& header : GetParam().headers) {
+                    std::visit(
+                        [&](auto const& name) {
+                            auto it = request.find(name);
+                            ASSERT_NE(it, request.end());
+                            EXPECT_EQ(it->value(), header.value);
+                        },
+                        header.name
+                    );
+                }
             }();
             return http::response<http::string_body>{http::status::ok, 11, replyBody};
         }

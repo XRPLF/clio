@@ -23,6 +23,7 @@
 #include <boost/beast/http/field.hpp>
 
 #include <string>
+#include <variant>
 
 namespace util::requests {
 
@@ -53,8 +54,9 @@ struct RequestError {
  */
 struct HttpHeader {
     HttpHeader(boost::beast::http::field name, std::string value);
+    HttpHeader(std::string name, std::string value);
 
-    boost::beast::http::field name;
+    std::variant<boost::beast::http::field, std::string> name;
     std::string value;
 };
 
