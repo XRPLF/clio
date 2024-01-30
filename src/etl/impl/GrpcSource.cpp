@@ -45,12 +45,10 @@
 
 namespace etl::impl {
 
-GrpcSource::GrpcSource(util::Config const& config, std::shared_ptr<BackendInterface> backend)
+GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::shared_ptr<BackendInterface> backend)
     : backend_(std::move(backend))
 {
-    auto const ip = config.valueOr<std::string>("ip", {});
-    if (auto value = config.maybeValue<std::string>("grpc_port"); value) {
-        auto const grpcPort = *value;
+    if (not grpcPort.empty()) {
         try {
             boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::make_address(ip), std::stoi(grpcPort)};
             std::stringstream ss;
@@ -62,7 +60,7 @@ GrpcSource::GrpcSource(util::Config const& config, std::shared_ptr<BackendInterf
             );
             LOG(log_.debug()) << "Made stub for remote = " << toString();
         } catch (std::exception const& e) {
-            LOG(log_.warn()) << "Exception while creating stub = " << e.what() << " . Remote = " << toString();
+            LOG(log_.warn()) << "Exception while creating stub: " << e.what() << ". Remote = " << toString();
         }
     }
 }

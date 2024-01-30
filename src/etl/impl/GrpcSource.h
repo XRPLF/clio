@@ -20,7 +20,6 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "util/config/Config.h"
 #include "util/log/Logger.h"
 
 #include <grpcpp/support/status.h>
@@ -40,7 +39,7 @@ class GrpcSource {
     std::shared_ptr<BackendInterface> backend_;
 
 public:
-    GrpcSource(util::Config const& config, std::shared_ptr<BackendInterface> backend);
+    GrpcSource(std::string const& ip, std::string const& grpcPort, std::shared_ptr<BackendInterface> backend);
 
     /**
      * @brief Fetch data for a specific ledger.

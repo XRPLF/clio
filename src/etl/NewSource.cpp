@@ -65,31 +65,20 @@ NewSource::NewSource(
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
 )
-    : grpcSource_(config, std::move(backend)), networkValidatedLedgers_(std::move(validatedLedgers))
+    : ip_(config.valueOr<std::string>("ip", {}))
+    , wsPort_(config.valueOr<std::string>("ws_port", {}))
+    , grpcPort_(config.valueOr<std::string>("grpc_port", {}))
+    , grpcSource_(config, std::move(backend))
+    , subscribedSource_(config, std::move(validatedLedgers))
 {
     static boost::uuids::random_generator uuidGenerator;
     uuid_ = uuidGenerator();
-
-    ip_ = config.valueOr<std::string>("ip", {});
-    wsPort_ = config.valueOr<std::string>("ws_port", {});
 }
 
 bool
 NewSource::hasLedger(uint32_t sequence) const
 {
-    auto validatedLedgers = validatedLedgers_.lock();
-    for (auto& pair : validatedLedgers.get()) {
-        if (sequence >= pair.first && sequence <= pair.second) {
-            return true;
-        }
-        if (sequence < pair.first) {
-            // validatedLedgers_ is a sorted list of disjoint ranges
-            // if the sequence comes before this range, the sequence will
-            // come before all subsequent ranges
-            return false;
-        }
-    }
-    return false;
+    return subscribedSource_.hasLedger(sequence);
 }
 
 std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>

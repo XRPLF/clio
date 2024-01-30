@@ -22,8 +22,8 @@
 #include "data/BackendInterface.h"
 #include "etl/ETLHelpers.h"
 #include "etl/impl/GrpcSource.h"
+#include "etl/impl/SubscribedSource.h"
 #include "feed/SubscriptionManager.h"
-#include "util/Mutex.h"
 #include "util/config/Config.h"
 #include "util/log/Logger.h"
 
@@ -49,13 +49,10 @@ class NewSource {
 
     std::string ip_;
     std::string wsPort_;
+    std::string grpcPort_;
 
     impl::GrpcSource grpcSource_;
-
-    // SubscriptionSource
-    util::Mutex<std::vector<std::pair<uint32_t, uint32_t>>> validatedLedgers_;
-    std::string validatedLedgersRaw_{"N/A"};
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
+    impl::SubscribedSource subscribedSource_;
 
 public:
     /**
