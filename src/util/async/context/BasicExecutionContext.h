@@ -87,6 +87,8 @@ class BasicExecutionContext {
     friend detail::AssociatedExecutorExtractor;
 
 public:
+    static constexpr bool isNoexcept = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; }));
+
     using ContextHolderType = ContextType;
     using ExecutorType = typename ContextHolderType::Executor;
 
@@ -137,7 +139,7 @@ public:
         SomeStdDuration auto delay,
         SomeHandlerWith<StopToken> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    )
+    ) noexcept(isNoexcept)
     {
         if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
             return TimerContextProvider::getContext(*this).scheduleAfter(
@@ -169,7 +171,7 @@ public:
         SomeStdDuration auto delay,
         SomeHandlerWith<StopToken, bool> auto&& fn,
         std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    )
+    ) noexcept(isNoexcept)
     {
         if constexpr (not std::is_same_v<decltype(TimerContextProvider::getContext(*this)), decltype(*this)>) {
             return TimerContextProvider::getContext(*this).scheduleAfter(
@@ -204,7 +206,10 @@ public:
      * @param timeout The optional timeout duration after which the operation will be cancelled
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<StopToken> auto&& fn, std::optional<std::chrono::milliseconds> timeout = std::nullopt)
+    execute(
+        SomeHandlerWith<StopToken> auto&& fn,
+        std::optional<std::chrono::milliseconds> timeout = std::nullopt
+    ) noexcept(isNoexcept)
     {
         return DispatcherType::dispatch(
             context_,
@@ -234,7 +239,7 @@ public:
      * @param timeout The timeout duration after which the operation will be cancelled
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout)
+    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept(isNoexcept)
     {
         return execute(
             std::forward<decltype(fn)>(fn),
@@ -249,7 +254,7 @@ public:
      * @param timeout The timeout duration after which the operation will be cancelled
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn)
+    execute(SomeHandlerWithoutStopToken auto&& fn) noexcept(isNoexcept)
     {
         return DispatcherType::dispatch(
             context_,

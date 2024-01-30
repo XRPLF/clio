@@ -19,9 +19,12 @@
 
 #pragma once
 
+#include "util/FakeFetchResponse.h"
+
 #include <gmock/gmock.h>
 
-#include <chrono>
+#include <cstdint>
+#include <optional>
 
 struct MockExtractionDataPipe {
     MOCK_METHOD(void, push, (uint32_t, std::optional<FakeFetchResponse>&&), ());

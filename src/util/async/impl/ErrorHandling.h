@@ -33,7 +33,7 @@ namespace util::async::detail {
 
 struct DefaultErrorHandler {
     [[nodiscard]] static auto
-    wrap(auto&& fn)
+    wrap(auto&& fn) noexcept
     {
         return
             [fn = std::forward<decltype(fn)>(fn)]<typename... Args>(SomeOutcome auto& outcome, Args&&... args) mutable {

@@ -159,6 +159,7 @@ func getConsistencyLevel(consistencyValue string) gocql.Consistency {
 }
 
 func main() {
+	log.SetOutput(os.Stdout)
 	kingpin.Parse()
 
 	numberOfParallelClientThreads = (*nodesInCluster) * (*coresInNode) * (*smudgeFactor)

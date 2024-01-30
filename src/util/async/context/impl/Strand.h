@@ -45,6 +45,8 @@ class BasicStrand {
     friend AssociatedExecutorExtractor;
 
 public:
+    static constexpr bool isNoexcept = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; }));
+
     using ContextHolderType = typename ParentContextType::ContextHolderType::Strand;
     using ExecutorType = typename ContextHolderType::Executor;
     using StopToken = typename StopSourceType::Token;
@@ -61,7 +63,10 @@ public:
     BasicStrand(BasicStrand const&) = delete;
 
     [[nodiscard]] auto
-    execute(SomeHandlerWith<StopToken> auto&& fn, std::optional<std::chrono::milliseconds> timeout = std::nullopt)
+    execute(
+        SomeHandlerWith<StopToken> auto&& fn,
+        std::optional<std::chrono::milliseconds> timeout = std::nullopt
+    ) noexcept(isNoexcept)
     {
         return DispatcherType::dispatch(
             context_,
@@ -85,7 +90,7 @@ public:
     }
 
     [[nodiscard]] auto
-    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout)
+    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept(isNoexcept)
     {
         return execute(
             std::forward<decltype(fn)>(fn),
@@ -94,7 +99,7 @@ public:
     }
 
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn)
+    execute(SomeHandlerWithoutStopToken auto&& fn) noexcept(isNoexcept)
     {
         return DispatcherType::dispatch(
             context_,

@@ -19,22 +19,14 @@
 
 #include "util/Expected.h"
 #include "util/MockOperation.h"
-#include "util/async/AnyExecutionContext.h"
 #include "util/async/AnyOperation.h"
-#include "util/async/AnyStopToken.h"
-#include "util/async/AnyStrand.h"
 #include "util/async/Error.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <any>
-#include <chrono>
-#include <functional>
-#include <optional>
 #include <string>
-#include <type_traits>
-#include <utility>
 
 using namespace util::async;
 using namespace ::testing;
