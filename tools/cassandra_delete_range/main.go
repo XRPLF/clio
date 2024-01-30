@@ -19,11 +19,9 @@ import (
 )
 
 const (
-	defaultNumberOfNodesInCluster     = 3
-	defaultNumberOfCoresInNode        = 8
-	defaultSmudgeFactor               = 3
-	defaultSelectStatementsOutputFile = "/tmp/select_statements.txt"
-	defaultPrintRowsOutputFile        = "/tmp/rows.txt"
+	defaultNumberOfNodesInCluster = 3
+	defaultNumberOfCoresInNode    = 8
+	defaultSmudgeFactor           = 3
 )
 
 var (
