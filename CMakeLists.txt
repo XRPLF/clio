@@ -208,6 +208,9 @@ if (tests)
     unittests/util/prometheus/OStreamTests.cpp
     ## Async framework
     unittests/util/async/AnyExecutionContextTests.cpp
+    unittests/util/async/AnyStrandTests.cpp
+    unittests/util/async/AnyOperationTests.cpp
+    unittests/util/async/AnyStopTokenTests.cpp
     unittests/util/async/AsyncExecutionContextTests.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTests.cpp
