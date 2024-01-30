@@ -9,6 +9,7 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -445,6 +446,7 @@ func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, qu
 
 					if err := iter.Close(); err != nil {
 						log.Printf("ERROR: iteration failed: %s\n", err)
+						fmt.Fprintf(os.Stderr, "FAILED QUERY: %s\n", fmt.Sprintf("%s [from=%d][to=%d]", preparedQueryString, r.StartRange, r.EndRange))
 						atomic.AddUint64(&totalErrors, 1)
 					}
 
@@ -452,6 +454,7 @@ func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, qu
 				}
 			} else {
 				log.Printf("ERROR: %s\n", err)
+				fmt.Fprintf(os.Stderr, "FAILED TO CREATE SESSION: %s\n", err)
 				atomic.AddUint64(&totalErrors, 1)
 			}
 		}()
@@ -509,6 +512,7 @@ func performDeleteQueries(cluster *gocql.ClusterConfig, info *deleteInfo, colSet
 
 						if err := preparedQuery.Exec(); err != nil {
 							log.Printf("DELETE ERROR: %s\n", err)
+							fmt.Fprintf(os.Stderr, "FAILED QUERY: %s\n", fmt.Sprintf("%s [blob=0x%x][seq=%d]", info.Query, r.Blob, r.Seq))
 							atomic.AddUint64(&totalErrors, 1)
 						} else {
 							atomic.AddUint64(&totalDeletes, 1)
@@ -517,6 +521,7 @@ func performDeleteQueries(cluster *gocql.ClusterConfig, info *deleteInfo, colSet
 				}
 			} else {
 				log.Printf("ERROR: %s\n", err)
+				fmt.Fprintf(os.Stderr, "FAILED TO CREATE SESSION: %s\n", err)
 				atomic.AddUint64(&totalErrors, 1)
 			}
 		}()
@@ -532,11 +537,14 @@ func updateLedgerRange(cluster *gocql.ClusterConfig, ledgerIndex uint64) error {
 	if session, err := cluster.CreateSession(); err == nil {
 		defer session.Close()
 
-		preparedQuery := session.Query("UPDATE ledger_range SET sequence = ? WHERE is_latest = ?", ledgerIndex, true)
+		query := "UPDATE ledger_range SET sequence = ? WHERE is_latest = ?"
+		preparedQuery := session.Query(query, ledgerIndex, true)
 		if err := preparedQuery.Exec(); err != nil {
+			fmt.Fprintf(os.Stderr, "FAILED QUERY: %s [seq=%d][true]\n", query, ledgerIndex)
 			return err
 		}
 	} else {
+		fmt.Fprintf(os.Stderr, "FAILED TO CREATE SESSION: %s\n", err)
 		return err
 	}
 
