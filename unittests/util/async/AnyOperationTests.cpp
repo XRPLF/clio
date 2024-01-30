@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/Expected.h"
+#include "util/MockOperation.h"
 #include "util/async/AnyExecutionContext.h"
 #include "util/async/AnyOperation.h"
 #include "util/async/AnyStopToken.h"
@@ -37,30 +38,6 @@
 
 using namespace util::async;
 using namespace ::testing;
-
-namespace {
-template <typename ValueType>
-struct MockOperation {
-    MOCK_METHOD(void, wait, (), (const));
-    MOCK_METHOD(ValueType, get, (), (const));
-};
-
-template <typename ValueType>
-struct MockStoppableOperation {
-    MOCK_METHOD(void, requestStop, (), (const));
-    MOCK_METHOD(void, wait, (), (const));
-    MOCK_METHOD(ValueType, get, (), (const));
-};
-
-template <typename ValueType>
-struct MockScheduledOperation {
-    MOCK_METHOD(void, cancel, (), (const));
-    MOCK_METHOD(void, requestStop, (), (const));
-    MOCK_METHOD(void, wait, (), (const));
-    MOCK_METHOD(ValueType, get, (), (const));
-    MOCK_METHOD(void, getToken, (), (const));
-};
-}  // namespace
 
 struct AnyOperationTests : ::testing::Test {
     using OperationType = MockOperation<util::Expected<detail::Any, ExecutionError>>;

@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/Expected.h"
+#include "util/MockStrand.h"
 #include "util/async/AnyOperation.h"
 #include "util/async/AnyStopToken.h"
 #include "util/async/AnyStrand.h"
@@ -34,47 +35,6 @@
 
 using namespace util::async;
 using namespace ::testing;
-
-namespace {
-template <typename ValueType>
-struct MockOperation {
-    MOCK_METHOD(void, wait, (), (const));
-    MOCK_METHOD(ValueType, get, (), (const));
-};
-
-template <typename ValueType>
-struct MockStoppableOperation {
-    MOCK_METHOD(void, requestStop, (), (const));
-    MOCK_METHOD(void, wait, (), (const));
-    MOCK_METHOD(ValueType, get, (), (const));
-};
-
-struct MockStrand {
-    template <typename T>
-    using ValueType = util::Expected<T, ExecutionError>;
-
-    template <typename T>
-    using Operation = MockOperation<T>;
-
-    template <typename T>
-    using StoppableOperation = MockStoppableOperation<T>;
-
-    MOCK_METHOD(Operation<detail::Any> const&, execute, (std::function<detail::Any()>), (const));
-    MOCK_METHOD(
-        Operation<detail::Any> const&,
-        execute,
-        (std::function<detail::Any()>, std::optional<std::chrono::milliseconds>),
-        (const)
-    );
-    MOCK_METHOD(StoppableOperation<detail::Any> const&, execute, (std::function<detail::Any(AnyStopToken)>), (const));
-    MOCK_METHOD(
-        StoppableOperation<detail::Any> const&,
-        execute,
-        (std::function<detail::Any(AnyStopToken)>, std::optional<std::chrono::milliseconds>),
-        (const)
-    );
-};
-}  // namespace
 
 struct AnyStrandTests : ::testing::Test {
     template <typename T>
