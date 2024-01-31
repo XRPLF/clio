@@ -509,44 +509,28 @@ TEST_F(RPCHelpersTest, ParseIssue)
 {
     auto issue = parseIssue(boost::json::parse(
         R"({
-                "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                "currency": "JPY"
+            "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+            "currency": "JPY"
             })"
     ));
     EXPECT_TRUE(issue.account == GetAccountIDWithString(ACCOUNT2));
 
-    issue = parseIssue(boost::json::parse(
-        R"({
-                "currency": "XRP"
-            })"
-    ));
+    issue = parseIssue(boost::json::parse(R"({"currency": "XRP"})"));
     EXPECT_TRUE(ripple::isXRP(issue.currency));
 
+    EXPECT_THROW(parseIssue(boost::json::parse(R"({"currency": "XRP2"})")), std::runtime_error);
+
     EXPECT_THROW(
         parseIssue(boost::json::parse(
             R"({
-                    "currency": "XRP2"
+                "issuer": "abcd",
+                "currency": "JPY"
                 })"
         )),
         std::runtime_error
     );
 
     EXPECT_THROW(
-        parseIssue(boost::json::parse(
-            R"({
-                    "issuer": "abcd",
-                    "currency": "JPY"
-                })"
-        )),
-        std::runtime_error
-    );
-
-    EXPECT_THROW(
-        parseIssue(boost::json::parse(
-            R"({
-                    "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
-                })"
-        )),
-        std::runtime_error
+        parseIssue(boost::json::parse(R"({"issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"})")), std::runtime_error
     );
 }
