@@ -322,6 +322,17 @@ public:
         boost::asio::yield_context yield
     ) const = 0;
 
+    /**
+     * @brief Fetches all holders' balances for a MPTIssuanceID
+     *
+     * @param mptID MPTIssuanceID you wish you query.
+     * @param limit Paging limit.
+     * @param cursorIn Optional cursor to allow us to pick up from where we
+     * last left off.
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield Currently executing coroutine.
+     * @return std::vector<Blob> of MPToken balances and an optional marker
+     */
     virtual MPTHoldersAndCursor
     fetchMPTHolders( 
         ripple::uint192 const& mptID,

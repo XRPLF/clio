@@ -104,6 +104,9 @@ insertDeliveredAmount(
     uint32_t date
 );
 
+/**
+ * @brief Add "mpt_issuance_id" into MPTokenIssuanceCreate transaction json.
+ */
 bool
 insertMPTIssuanceID(
     boost::json::object& metaJson,

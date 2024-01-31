@@ -1098,7 +1098,7 @@ accountHolds(
         return {xrpLiquid(backend, sequence, account, yield)};
     }
     
-    // TODO: check MPTs!
+    // TODO: Refactor for MPT phase 2
 
     auto key = ripple::keylet::line(account, issuer, currency).key;
 

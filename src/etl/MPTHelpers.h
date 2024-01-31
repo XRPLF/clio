@@ -28,22 +28,21 @@
 namespace etl {
 
 /**
- * @brief Pull CFTIssuance data from TX via ETLService.
+ * @brief Pull MPT data from TX via ETLService.
  *
  * @param txMeta Transaction metadata
  * @param sttx The transaction
- * @return The CFTIssuance and issuer pair as a optional 
+ * @return The MPTIssuanceID and holder pair as a optional
  */
 std::optional<std::pair<ripple::uint192, ripple::AccountID>>
 getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 
 /**
- * @brief Pull CFTIssuance data from ledger object via loadInitialLedger.
+ * @brief Pull MPT data from ledger object via loadInitialLedger.
  *
- * @param seq The ledger sequence to pull for
  * @param key The owner key
  * @param blob Object data as blob
- * @return The CFTIssuance and issuer pair as a optional
+ * @return The MPTIssuanceID and holder pair as a optional
  */
 std::optional<std::pair<ripple::uint192, ripple::AccountID>>
 getMPTHolderFromObj(std::string const& key, std::string const& blob);
