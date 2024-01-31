@@ -42,6 +42,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <variant>
@@ -519,5 +520,33 @@ TEST_F(RPCHelpersTest, ParseIssue)
                 "currency": "XRP"
             })"
     ));
-    EXPECT_TRUE(ripple::isXRP((issue.currency)));
+    EXPECT_TRUE(ripple::isXRP(issue.currency));
+
+    EXPECT_THROW(
+        parseIssue(boost::json::parse(
+            R"({
+                    "currency": "XRP2"
+                })"
+        )),
+        std::runtime_error
+    );
+
+    EXPECT_THROW(
+        parseIssue(boost::json::parse(
+            R"({
+                    "issuer": "abcd",
+                    "currency": "JPY"
+                })"
+        )),
+        std::runtime_error
+    );
+
+    EXPECT_THROW(
+        parseIssue(boost::json::parse(
+            R"({
+                    "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
+                })"
+        )),
+        std::runtime_error
+    );
 }

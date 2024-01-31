@@ -305,6 +305,8 @@ parseTaker(boost::json::value const& taker);
  * @brief Parse the json object into a ripple::Issue object.
  * @param issue The json object to parse. The accepted format is { "currency" : "USD", "issuer" :
  * "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59" } or {"currency" : "XRP"}
+ * @return The ripple::Issue object.
+ * @exception raise Json::error exception if the json object is not in the accepted format.
  */
 ripple::Issue
 parseIssue(boost::json::value const& issue);

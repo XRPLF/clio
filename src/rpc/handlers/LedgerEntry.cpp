@@ -120,8 +120,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 
         if (input.bridgeAccount) {
             auto const bridgeAccount = ripple::parseBase58<ripple::AccountID>(*(input.bridgeAccount));
-            ripple::STXChainBridge::ChainType const chainType =
-                ripple::STXChainBridge::srcChain(bridgeAccount == input.bridge->lockingChainDoor());
+            auto const chainType = ripple::STXChainBridge::srcChain(bridgeAccount == input.bridge->lockingChainDoor());
 
             if (bridgeAccount != input.bridge->door(chainType))
                 return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
