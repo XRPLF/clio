@@ -318,7 +318,7 @@ insertDeliveredAmount(
 }
 
 static std::optional<ripple::uint192>
-getMPTissuanceID(
+getMPTIssuanceID(
     std::shared_ptr<ripple::TxMeta const> const& meta
 )
 {
@@ -364,7 +364,7 @@ insertMPTIssuanceID(
     if (!canHaveMPTIssuanceID(txn, meta))
         return false;
 
-    if (auto const amt = getMPTissuanceID(meta)) 
+    if (auto const amt = getMPTIssuanceID(meta)) 
         metaJson[JS(mpt_issuance_id)] = ripple::to_string(*amt);
     else 
         metaJson[JS(mpt_issuance_id)] = "unavailable";
