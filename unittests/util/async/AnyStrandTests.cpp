@@ -63,7 +63,7 @@ TEST_F(AnyStrandTests, ExecuteWithoutTokenAndVoidThrowsException)
     EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any()>>()))
         .WillOnce([](auto&&) -> OperationType<detail::Any> const& { throw 0; });
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto _ = strand.execute([] {}));
+    EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([] {}));
 }
 
 TEST_F(AnyStrandTests, ExecuteWithStopTokenAndVoid)
@@ -82,7 +82,7 @@ TEST_F(AnyStrandTests, ExecuteWithStopTokenAndVoidThrowsException)
     EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any(AnyStopToken)>>(), _))
         .WillOnce([](auto&&, auto) -> StoppableOperationType<detail::Any> const& { throw 0; });
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto _ = strand.execute([](auto) {}));
+    EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([](auto) {}));
 }
 
 TEST_F(AnyStrandTests, ExecuteWithStopTokenAndReturnValue)
@@ -102,7 +102,7 @@ TEST_F(AnyStrandTests, ExecuteWithStopTokenAndReturnValueThrowsException)
     EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any(AnyStopToken)>>(), _))
         .WillOnce([](auto&&, auto) -> StoppableOperationType<detail::Any> const& { throw 0; });
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto _ = strand.execute([](auto) { return 42; }));
+    EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([](auto) { return 42; }));
 }
 
 TEST_F(AnyStrandTests, ExecuteWithTimeoutAndStopTokenAndReturnValue)
@@ -122,5 +122,7 @@ TEST_F(AnyStrandTests, ExecuteWithTimoutAndStopTokenAndReturnValueThrowsExceptio
     EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any(AnyStopToken)>>(), _))
         .WillOnce([](auto&&, auto) -> StoppableOperationType<detail::Any> const& { throw 0; });
 
-    EXPECT_ANY_THROW([[maybe_unused]] auto _ = strand.execute([](auto) { return 42; }, std::chrono::milliseconds{1}));
+    EXPECT_ANY_THROW(
+        [[maybe_unused]] auto unused = strand.execute([](auto) { return 42; }, std::chrono::milliseconds{1})
+    );
 }
