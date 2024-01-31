@@ -69,7 +69,9 @@ std::unordered_map<std::string, ripple::LedgerEntryType> const LedgerDataHandler
     {JS(ticket), ripple::ltTICKET},
     {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
     {JS(nft_page), ripple::ltNFTOKEN_PAGE},
-    {JS(amm), ripple::ltAMM}
+    {JS(amm), ripple::ltAMM},
+    {JS(mpt_issuance), ripple::ltMPTOKEN_ISSUANCE},
+    {JS(mptoken), ripple::ltMPTOKEN}
 };
 
 // TODO: should be std::views::keys when clang supports it
@@ -169,7 +171,15 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
                 entry[JS(index)] = ripple::to_string(sle.key());
                 output.states.push_back(std::move(entry));
             } else {
-                output.states.push_back(toJson(sle));
+                auto sleJson = toJson(sle);
+
+                // if object type if mpt issuance, inject synthetic mpt id
+                if (sle.getType() == ripple::ltMPTOKEN_ISSUANCE)
+                    sleJson[JS(mpt_issuance_id)] = ripple::to_string(ripple::getMptID(
+                        sle.getAccountID(ripple::sfIssuer),
+                        sle.getFieldU32(ripple::sfSequence)));
+
+                output.states.push_back(sleJson);
             }
         }
     }

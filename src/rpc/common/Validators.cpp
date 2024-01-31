@@ -74,8 +74,8 @@ CustomValidator Uint160HexStringValidator =
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
-        ripple::uint160 ledgerHash;
-        if (!ledgerHash.parseHex(value.as_string().c_str()))
+        ripple::uint160 parsedInt;
+        if (!parsedInt.parseHex(value.as_string().c_str()))
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
 
         return MaybeError{};
@@ -86,8 +86,8 @@ CustomValidator Uint192HexStringValidator =
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
-        ripple::uint192 ledgerHash;
-        if (!ledgerHash.parseHex(value.as_string().c_str()))
+        ripple::uint192 parsedInt;
+        if (!parsedInt.parseHex(value.as_string().c_str()))
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
 
         return MaybeError{};
