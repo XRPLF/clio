@@ -347,7 +347,8 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
     auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(MPTID)).key;
     ON_CALL(*backend, doFetchLedgerObject(issuanceKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    std::vector<Blob> const mpts = {CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID)).getSerializer().peekData()};
+    auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID));
+    std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
     EXPECT_CALL(
         *backend,
@@ -394,7 +395,8 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
     auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(MPTID)).key;
     ON_CALL(*backend, doFetchLedgerObject(issuanceKk, specificLedger, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    std::vector<Blob> const mpts = {CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID)).getSerializer().peekData()};
+    auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID));
+    std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
     EXPECT_CALL(
         *backend,
@@ -442,7 +444,8 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
     auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(MPTID)).key;
     ON_CALL(*backend, doFetchLedgerObject(issuanceKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    std::vector<Blob> const mpts = {CreateMPTokenObject(HOLDER2_ACCOUNT, ripple::uint192(MPTID)).getSerializer().peekData()};
+    auto const mptoken = CreateMPTokenObject(HOLDER2_ACCOUNT, ripple::uint192(MPTID));
+    std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     auto const marker = GetAccountIDWithString(HOLDER1_ACCOUNT);
     ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, marker}));
     EXPECT_CALL(
@@ -492,7 +495,9 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
     auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(MPTID)).key;
     ON_CALL(*backend, doFetchLedgerObject(issuanceKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    std::vector<Blob> const mpts = {CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID)).getSerializer().peekData(), CreateMPTokenObject(HOLDER2_ACCOUNT, ripple::uint192(MPTID)).getSerializer().peekData()};
+    auto const mptoken1 = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID));
+    auto const mptoken2 = CreateMPTokenObject(HOLDER2_ACCOUNT, ripple::uint192(MPTID));
+    std::vector<Blob> const mpts = {mptoken1.getSerializer().peekData(), mptoken2.getSerializer().peekData()};
     ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
     EXPECT_CALL(
         *backend,
@@ -536,7 +541,8 @@ TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
     auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(MPTID)).key;
     ON_CALL(*backend, doFetchLedgerObject(issuanceKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    std::vector<Blob> const mpts = {CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID)).getSerializer().peekData()};
+    auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID));
+    std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
     EXPECT_CALL(
         *backend,
