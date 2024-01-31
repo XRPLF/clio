@@ -258,8 +258,10 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         auto const issuingDoor = *ripple::parseBase58<ripple::AccountID>(
             bridgeJson.at(ripple::sfIssuingChainDoor.getJsonName().c_str()).as_string().c_str()
         );
-        auto const lockingIssue = parseIssue(bridgeJson.at(ripple::sfLockingChainIssue.getJsonName().c_str()));
-        auto const issuingIssue = parseIssue(bridgeJson.at(ripple::sfIssuingChainIssue.getJsonName().c_str()));
+        auto const lockingIssue =
+            parseIssue(bridgeJson.at(ripple::sfLockingChainIssue.getJsonName().c_str()).as_object());
+        auto const issuingIssue =
+            parseIssue(bridgeJson.at(ripple::sfIssuingChainIssue.getJsonName().c_str()).as_object());
 
         return ripple::STXChainBridge{lockingDoor, lockingIssue, issuingDoor, issuingIssue};
     };

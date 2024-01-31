@@ -223,7 +223,7 @@ CustomValidator CurrencyIssueValidator =
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotObject"}};
 
         try {
-            parseIssue(value);
+            parseIssue(value.as_object());
         } catch (std::runtime_error const&) {
             return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
         }

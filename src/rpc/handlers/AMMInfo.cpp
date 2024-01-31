@@ -298,10 +298,10 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
     }
 
     if (jsonObject.contains(JS(asset)))
-        input.issue1 = parseIssue(jsonObject.at(JS(asset)));
+        input.issue1 = parseIssue(jsonObject.at(JS(asset)).as_object());
 
     if (jsonObject.contains(JS(asset2)))
-        input.issue2 = parseIssue(jsonObject.at(JS(asset2)));
+        input.issue2 = parseIssue(jsonObject.at(JS(asset2)).as_object());
 
     if (jsonObject.contains(JS(account)))
         input.accountID = accountFromStringStrict(jsonObject.at(JS(account)).as_string().c_str());

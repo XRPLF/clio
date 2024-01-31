@@ -309,7 +309,7 @@ parseTaker(boost::json::value const& taker);
  * @exception raise Json::error exception if the json object is not in the accepted format.
  */
 ripple::Issue
-parseIssue(boost::json::value const& issue);
+parseIssue(boost::json::object const& issue);
 
 bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request);
