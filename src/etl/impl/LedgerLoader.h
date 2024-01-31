@@ -112,7 +112,7 @@ public:
                 result.nfTokensData.push_back(*maybeNFT);
 
             auto const maybeMPTHolder = getMPTHolderFromTx(txMeta, sttx);
-            if(maybeMPTHolder)
+            if (maybeMPTHolder)
                 result.mptHoldersData.push_back(*maybeMPTHolder);
 
             result.accountTxData.emplace_back(txMeta, sttx.getTransactionID());

@@ -70,8 +70,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
     if (input.marker)
         cursor = ripple::AccountID{input.marker->c_str()};
 
-    auto const dbResponse =
-        sharedPtrBackend_->fetchMPTHolders(mptID, limit, cursor, lgrInfo.seq, ctx.yield);
+    auto const dbResponse = sharedPtrBackend_->fetchMPTHolders(mptID, limit, cursor, lgrInfo.seq, ctx.yield);
 
     auto output = MPTHoldersHandler::Output{};
 
@@ -89,9 +88,11 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
         mptJson["mpt_amount"] = toBoostJson(ripple::STUInt64{sle[ripple::sfMPTAmount]}.getJson(JsonOptions::none));
 
         if (!sle[~ripple::sfLockedAmount])
-            mptJson["locked_amount"] = toBoostJson(ripple::STUInt64{sle[~ripple::sfLockedAmount].value_or(0)}.getJson(JsonOptions::none));
-        
-        mptJson["mptoken_index"] = ripple::to_string(ripple::keylet::mptoken(mptID, sle.getAccountID(ripple::sfAccount)).key);  
+            mptJson["locked_amount"] =
+                toBoostJson(ripple::STUInt64{sle[~ripple::sfLockedAmount].value_or(0)}.getJson(JsonOptions::none));
+
+        mptJson["mptoken_index"] =
+            ripple::to_string(ripple::keylet::mptoken(mptID, sle.getAccountID(ripple::sfAccount)).key);
         output.mpts.push_back(mptJson);
     }
 

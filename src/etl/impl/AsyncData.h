@@ -20,8 +20,8 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "etl/NFTHelpers.h"
 #include "etl/MPTHelpers.h"
+#include "etl/NFTHelpers.h"
 #include "util/Assert.h"
 #include "util/log/Logger.h"
 
@@ -140,9 +140,9 @@ public:
                     backend.writeSuccessor(std::move(lastKey_), request_.ledger().sequence(), std::string{obj.key()});
                 lastKey_ = obj.key();
                 backend.writeNFTs(getNFTDataFromObj(request_.ledger().sequence(), obj.key(), obj.data()));
-                
+
                 auto const maybeMPTHolder = getMPTHolderFromObj(obj.key(), obj.data());
-                if(maybeMPTHolder)
+                if (maybeMPTHolder)
                     backend.writeMPTHolders({*maybeMPTHolder});
 
                 backend.writeLedgerObject(

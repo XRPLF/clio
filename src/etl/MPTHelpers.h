@@ -21,7 +21,6 @@
 #pragma once
 
 #include <data/DBHelpers.h>
-
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/TxMeta.h>
 
@@ -46,6 +45,5 @@ getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
  */
 std::optional<std::pair<ripple::uint192, ripple::AccountID>>
 getMPTHolderFromObj(std::string const& key, std::string const& blob);
-
 
 }  // namespace etl

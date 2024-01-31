@@ -334,12 +334,13 @@ public:
      * @return std::vector<Blob> of MPToken balances and an optional marker
      */
     virtual MPTHoldersAndCursor
-    fetchMPTHolders( 
+    fetchMPTHolders(
         ripple::uint192 const& mptID,
         std::uint32_t const limit,
         std::optional<ripple::AccountID> const& cursorIn,
         std::uint32_t const ledgerSequence,
-        boost::asio::yield_context yield)const = 0;
+        boost::asio::yield_context yield
+    ) const = 0;
 
     /**
      * @brief Fetches a specific ledger object.

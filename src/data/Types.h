@@ -166,8 +166,7 @@ struct NFTsAndCursor {
     std::optional<ripple::uint256> cursor;
 };
 
-struct MPTHoldersAndCursor
-{
+struct MPTHoldersAndCursor {
     std::vector<Blob> mptokens;
     std::optional<ripple::AccountID> cursor;
 };

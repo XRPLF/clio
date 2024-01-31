@@ -738,7 +738,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPTIssuance)
     EXPECT_CALL(*backend, doFetchSuccessorKey).Times(1);
     ON_CALL(*backend, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
 
-    auto const issuance = CreateMPTIssuanceObject(ACCOUNT, 2,  "metadata");
+    auto const issuance = CreateMPTIssuanceObject(ACCOUNT, 2, "metadata");
     bbs.push_back(issuance.getSerializer().peekData());
 
     ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
@@ -758,12 +758,15 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPTIssuance)
         EXPECT_EQ(output->as_object().at("marker").as_string(), INDEX2);
         EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
         EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
-    
+
         auto const& objects = output->as_object().at("state").as_array();
         EXPECT_EQ(objects.front().at("LedgerEntryType").as_string(), "MPTokenIssuance");
 
         // make sure mptID is synethetically parsed if object is mptIssuance
-        EXPECT_EQ(objects.front().at("mpt_issuance_id").as_string(), ripple::to_string(ripple::getMptID(GetAccountIDWithString(ACCOUNT), 2)));
+        EXPECT_EQ(
+            objects.front().at("mpt_issuance_id").as_string(),
+            ripple::to_string(ripple::getMptID(GetAccountIDWithString(ACCOUNT), 2))
+        );
     });
 }
 
@@ -795,10 +798,10 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPToken)
         ASSERT_TRUE(output);
         EXPECT_TRUE(output->as_object().contains("ledger"));
         EXPECT_EQ(output->as_object().at("state").as_array().size(), 1);
-            EXPECT_EQ(output->as_object().at("marker").as_string(), INDEX2);
+        EXPECT_EQ(output->as_object().at("marker").as_string(), INDEX2);
         EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
         EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
-    
+
         auto const& objects = output->as_object().at("state").as_array();
         EXPECT_EQ(objects.front().at("LedgerEntryType").as_string(), "MPToken");
     });

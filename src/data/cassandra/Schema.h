@@ -277,7 +277,8 @@ public:
               AND default_time_to_live = {}
             )",
             qualifiedTableName(settingsProvider_.get(), "mp_token_holders"),
-            settingsProvider_.get().getTtl()));
+            settingsProvider_.get().getTtl()
+        ));
 
         return statements;
     }();
@@ -416,7 +417,8 @@ public:
                        (mpt_id, holder)
                 VALUES (?, ?)
                 )",
-                qualifiedTableName(settingsProvider_.get(), "mp_token_holders")));
+                qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
+            ));
         }();
 
         PreparedStatement insertLedgerHeader = [this]() {
@@ -697,7 +699,8 @@ public:
               ORDER BY holder ASC
                  LIMIT ?
                 )",
-                qualifiedTableName(settingsProvider_.get(), "mp_token_holders")));
+                qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
+            ));
         }();
 
         PreparedStatement selectLedgerByHash = [this]() {

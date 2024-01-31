@@ -88,7 +88,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"ledger_data", {LedgerDataHandler{backend}}},
           {"ledger_entry", {LedgerEntryHandler{backend}}},
           {"ledger_range", {LedgerRangeHandler{backend}}},
-         {"mpt_holders", {MPTHoldersHandler{backend}, true}},   //clio only 
+          {"mpt_holders", {MPTHoldersHandler{backend}, true}},       // clio only
           {"nfts_by_issuer", {NFTsByIssuerHandler{backend}, true}},  // clio only
           {"nft_history", {NFTHistoryHandler{backend}, true}},       // clio only
           {"nft_buy_offers", {NFTBuyOffersHandler{backend}}},

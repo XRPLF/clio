@@ -102,8 +102,7 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
             ripple::ltPAYCHAN,
             ripple::ltRIPPLE_STATE,
             ripple::ltMPTOKEN_ISSUANCE,
-            ripple::ltMPTOKEN
-        };
+            ripple::ltMPTOKEN};
 
         typeFilter.emplace();
         typeFilter->reserve(std::size(deletionBlockers));
@@ -157,16 +156,17 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHa
         std::cbegin(output.accountObjects),
         std::cend(output.accountObjects),
         std::back_inserter(objects),
-        [](auto const& sle) { 
+        [](auto const& sle) {
             auto sleJson = toJson(sle);
 
             // if object type if mpt issuance, inject synthetic mpt id
             if (sle.getType() == ripple::ltMPTOKEN_ISSUANCE)
-                sleJson[JS(mpt_issuance_id)] = ripple::to_string(ripple::getMptID(
-                    sle.getAccountID(ripple::sfIssuer),
-                    sle.getFieldU32(ripple::sfSequence)));
-            
-            return sleJson; }
+                sleJson[JS(mpt_issuance_id)] = ripple::to_string(
+                    ripple::getMptID(sle.getAccountID(ripple::sfIssuer), sle.getFieldU32(ripple::sfSequence))
+                );
+
+            return sleJson;
+        }
     );
 
     jv = {

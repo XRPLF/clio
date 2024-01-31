@@ -318,32 +318,24 @@ insertDeliveredAmount(
 }
 
 static std::optional<ripple::uint192>
-getMPTIssuanceID(
-    std::shared_ptr<ripple::TxMeta const> const& meta
-)
+getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
 {
     ripple::TxMeta const& transactionMeta = *meta;
 
-    for (ripple::STObject const& node : transactionMeta.getNodes())
-    {
+    for (ripple::STObject const& node : transactionMeta.getNodes()) {
         if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltMPTOKEN_ISSUANCE ||
             node.getFName() != ripple::sfCreatedNode)
             continue;
 
-        auto const& mptNode =
-            node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
-        return ripple::getMptID(
-            mptNode.getAccountID(ripple::sfIssuer), mptNode.getFieldU32(ripple::sfSequence));
+        auto const& mptNode = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
+        return ripple::getMptID(mptNode.getAccountID(ripple::sfIssuer), mptNode.getFieldU32(ripple::sfSequence));
     }
 
     return {};
 }
 
 static bool
-canHaveMPTIssuanceID(
-    std::shared_ptr<ripple::STTx const> const& txn,
-    std::shared_ptr<ripple::TxMeta const> const& meta
-)
+canHaveMPTIssuanceID(std::shared_ptr<ripple::STTx const> const& txn, std::shared_ptr<ripple::TxMeta const> const& meta)
 {
     ripple::TxType const tt{txn->getTxnType()};
     if (tt != ripple::ttMPTOKEN_ISSUANCE_CREATE)
@@ -360,15 +352,16 @@ insertMPTIssuanceID(
     boost::json::object& metaJson,
     std::shared_ptr<ripple::STTx const> const& txn,
     std::shared_ptr<ripple::TxMeta const> const& meta
-){
+)
+{
     if (!canHaveMPTIssuanceID(txn, meta))
         return false;
 
-    if (auto const amt = getMPTIssuanceID(meta)) 
+    if (auto const amt = getMPTIssuanceID(meta))
         metaJson[JS(mpt_issuance_id)] = ripple::to_string(*amt);
-    else 
+    else
         metaJson[JS(mpt_issuance_id)] = "unavailable";
-    
+
     return true;
 }
 
@@ -1097,7 +1090,7 @@ accountHolds(
     if (ripple::isXRP(currency)) {
         return {xrpLiquid(backend, sequence, account, yield)};
     }
-    
+
     // TODO: Refactor for MPT phase 2
 
     auto key = ripple::keylet::line(account, issuer, currency).key;

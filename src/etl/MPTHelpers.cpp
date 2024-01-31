@@ -17,45 +17,46 @@
 */
 //==============================================================================
 
-#include <ripple/protocol/STBase.h>
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/TxMeta.h>
-#include <vector>
-
 #include <data/BackendInterface.h>
 #include <data/DBHelpers.h>
 #include <data/Types.h>
 #include <fmt/core.h>
+#include <ripple/protocol/STBase.h>
+#include <ripple/protocol/STTx.h>
+#include <ripple/protocol/TxMeta.h>
+
+#include <vector>
 
 namespace etl {
 
 static std::optional<std::pair<ripple::uint192, ripple::AccountID>>
-getMPTokenAuthorize(ripple::TxMeta const& txMeta){
-    for (ripple::STObject const& node : txMeta.getNodes())
-    {
+getMPTokenAuthorize(ripple::TxMeta const& txMeta)
+{
+    for (ripple::STObject const& node : txMeta.getNodes()) {
         if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltMPTOKEN)
             continue;
 
-        if (node.getFName() == ripple::sfCreatedNode){
+        if (node.getFName() == ripple::sfCreatedNode) {
             auto const& newMPT = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
-            return std::make_pair(newMPT[ripple::sfMPTokenIssuanceID], newMPT[ripple::sfAccount]);            
+            return std::make_pair(newMPT[ripple::sfMPTokenIssuanceID], newMPT[ripple::sfAccount]);
         }
     }
     return {};
 }
 
 std::optional<std::pair<ripple::uint192, ripple::AccountID>>
-getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx){
-    if (txMeta.getResultTER() != ripple::tesSUCCESS 
-            || sttx.getTxnType()!= ripple::TxType::ttMPTOKEN_AUTHORIZE)
+getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
+{
+    if (txMeta.getResultTER() != ripple::tesSUCCESS || sttx.getTxnType() != ripple::TxType::ttMPTOKEN_AUTHORIZE)
         return {};
 
     return getMPTokenAuthorize(txMeta);
 }
 
 std::optional<std::pair<ripple::uint192, ripple::AccountID>>
-getMPTHolderFromObj(std::string const& key, std::string const& blob){
-  ripple::STLedgerEntry const sle =
+getMPTHolderFromObj(std::string const& key, std::string const& blob)
+{
+    ripple::STLedgerEntry const sle =
         ripple::STLedgerEntry(ripple::SerialIter{blob.data(), blob.size()}, ripple::uint256::fromVoid(key.data()));
 
     if (sle.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltMPTOKEN)

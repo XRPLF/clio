@@ -63,12 +63,10 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         key = ripple::keylet::account(*ripple::parseBase58<ripple::AccountID>(*(input.accountRoot))).key;
     } else if (input.did) {
         key = ripple::keylet::did(*ripple::parseBase58<ripple::AccountID>(*(input.did))).key;
-    } 
-    else if (input.mptIssuance){
+    } else if (input.mptIssuance) {
         auto const mptIssuanceID = ripple::uint192{std::string_view(*(input.mptIssuance))};
         key = ripple::keylet::mptIssuance(mptIssuanceID).key;
-    }
-    else if (input.directory) {
+    } else if (input.directory) {
         auto const keyOrStatus = composeKeyFromDirectory(*input.directory);
         if (auto const status = std::get_if<Status>(&keyOrStatus))
             return Error{*status};
@@ -118,7 +116,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
                   .key;
     } else if (input.mptoken) {
         auto const holder = ripple::parseBase58<ripple::AccountID>(input.mptoken->at(JS(account)).as_string().c_str());
-        auto const mptIssuanceID = ripple::uint192{std::string_view(input.mptoken->at(JS(mpt_issuance_id)).as_string().c_str())};
+        auto const mptIssuanceID =
+            ripple::uint192{std::string_view(input.mptoken->at(JS(mpt_issuance_id)).as_string().c_str())};
         key = ripple::keylet::mptoken(mptIssuanceID, *holder).key;
     } else {
         // Must specify 1 of the following fields to indicate what type
@@ -235,8 +234,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(ticket), ripple::ltTICKET},
         {JS(nft_page), ripple::ltNFTOKEN_PAGE},
         {JS(amm), ripple::ltAMM},
-        {JS(mptoken), ripple::ltMPTOKEN}
-    };
+        {JS(mptoken), ripple::ltMPTOKEN}};
 
     auto const indexFieldType =
         std::find_if(indexFieldTypeMap.begin(), indexFieldTypeMap.end(), [&jsonObject](auto const& pair) {

@@ -43,12 +43,11 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-//constexpr static auto ISSUER_ACCOUNT = "rsS8ju2jYabSKJ6uzLarAS1gEzvRQ6JAiF";
+// constexpr static auto ISSUER_ACCOUNT = "rsS8ju2jYabSKJ6uzLarAS1gEzvRQ6JAiF";
 constexpr static auto HOLDER1_ACCOUNT = "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN";
 constexpr static auto HOLDER2_ACCOUNT = "rEiNkzogdHEzUxPfsri5XSMqtXUixf2Yx";
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto MPTID = "000004C463C52827307480341125DA0577DEFC38405B0E3E";
-
 
 static std::string MPTOUT1 =
     R"({
@@ -351,10 +350,7 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
     EXPECT_CALL(
-        *backend,
-        fetchMPTHolders(
-            ripple::uint192(MPTID), testing::_,  testing::Eq(std::nullopt), Const(30),   testing::_
-        )
+        *backend, fetchMPTHolders(ripple::uint192(MPTID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
     )
         .Times(1);
 
@@ -393,7 +389,8 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
     ON_CALL(*backend, fetchLedgerBySequence(specificLedger, _)).WillByDefault(Return(ledgerInfo));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(MPTID)).key;
-    ON_CALL(*backend, doFetchLedgerObject(issuanceKk, specificLedger, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+    ON_CALL(*backend, doFetchLedgerObject(issuanceKk, specificLedger, _))
+        .WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID));
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
@@ -401,7 +398,7 @@ TEST_F(RPCMPTHoldersHandlerTest, SpecificLedgerIndex)
     EXPECT_CALL(
         *backend,
         fetchMPTHolders(
-            ripple::uint192(MPTID), testing::_,  testing::Eq(std::nullopt), Const(specificLedger),   testing::_
+            ripple::uint192(MPTID), testing::_, testing::Eq(std::nullopt), Const(specificLedger), testing::_
         )
     )
         .Times(1);
@@ -449,14 +446,11 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
     auto const marker = GetAccountIDWithString(HOLDER1_ACCOUNT);
     ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, marker}));
     EXPECT_CALL(
-        *backend,
-        fetchMPTHolders(
-            ripple::uint192(MPTID), testing::_,  testing::Eq(marker), Const(30),   testing::_
-        )
+        *backend, fetchMPTHolders(ripple::uint192(MPTID), testing::_, testing::Eq(marker), Const(30), testing::_)
     )
         .Times(1);
 
-    const auto HOLDER1_ACCOUNTID = ripple::strHex(GetAccountIDWithString(HOLDER1_ACCOUNT));
+    auto const HOLDER1_ACCOUNTID = ripple::strHex(GetAccountIDWithString(HOLDER1_ACCOUNT));
     auto const input = json::parse(fmt::format(
         R"({{
             "mpt_issuance_id": "{}",
@@ -472,7 +466,6 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerParameter)
         EXPECT_EQ(json::parse(currentOutput), *output);
     });
 }
-
 
 TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
 {
@@ -500,10 +493,7 @@ TEST_F(RPCMPTHoldersHandlerTest, MultipleMPTs)
     std::vector<Blob> const mpts = {mptoken1.getSerializer().peekData(), mptoken2.getSerializer().peekData()};
     ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
     EXPECT_CALL(
-        *backend,
-        fetchMPTHolders(
-            ripple::uint192(MPTID), testing::_,  testing::Eq(std::nullopt), Const(30),   testing::_
-        )
+        *backend, fetchMPTHolders(ripple::uint192(MPTID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
     )
         .Times(1);
 
@@ -547,7 +537,11 @@ TEST_F(RPCMPTHoldersHandlerTest, LimitMoreThanMAx)
     EXPECT_CALL(
         *backend,
         fetchMPTHolders(
-            ripple::uint192(MPTID), Const(MPTHoldersHandler::LIMIT_MAX),  testing::Eq(std::nullopt), Const(30),   testing::_
+            ripple::uint192(MPTID),
+            Const(MPTHoldersHandler::LIMIT_MAX),
+            testing::Eq(std::nullopt),
+            Const(30),
+            testing::_
         )
     )
         .Times(1);

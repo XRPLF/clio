@@ -61,7 +61,7 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(mpt_issuance_id), validation::Required{},  validation::Uint192HexStringValidator},
+            {JS(mpt_issuance_id), validation::Required{}, validation::Uint192HexStringValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
             {JS(limit),
@@ -83,6 +83,5 @@ private:
 
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
-
 };
 }  // namespace rpc

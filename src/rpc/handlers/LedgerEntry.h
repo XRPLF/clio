@@ -152,8 +152,7 @@ public:
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(owner), validation::AccountBase58Validator},
                  {JS(dir_root), validation::Uint256HexStringValidator},
-                 {JS(sub_index), malformedRequestIntValidator}
-             }}},
+                 {JS(sub_index), malformedRequestIntValidator}}}},
             {JS(escrow),
              validation::Type<std::string, boost::json::object>{},
              meta::IfType<std::string>{malformedRequestHexStringValidator},
@@ -199,28 +198,25 @@ public:
                      {JS(asset),
                       meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
                       meta::WithCustomError{
-                          validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
-                      },
+                          validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)},
                       ammAssetValidator},
                      {JS(asset2),
                       meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
                       meta::WithCustomError{
-                          validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
-                      },
+                          validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)},
                       ammAssetValidator},
                  },
              }},
             {JS(mpt_issuance), validation::Uint192HexStringValidator},
-            {JS(mptoken), 
-            validation::Type<std::string, boost::json::object>{},
+            {JS(mptoken),
+             validation::Type<std::string, boost::json::object>{},
              meta::IfType<std::string>{malformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{
                  meta::Section{
                      {JS(account), validation::Required{}, validation::AccountBase58Validator},
                      {JS(mpt_issuance_id), validation::Required{}, validation::Uint192HexStringValidator},
                  },
-             }}
-        };
+             }}};
 
         return rpcSpec;
     }
