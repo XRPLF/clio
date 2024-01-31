@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -59,6 +59,12 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
     auto const limit = input.limit.value_or(MPTHoldersHandler::LIMIT_DEFAULT);
 
     auto const mptID = ripple::uint192{input.mptID.c_str()};
+
+    auto const issuanceLedgerObject =
+        sharedPtrBackend_->fetchLedgerObject(ripple::keylet::mptIssuance(mptID).key, lgrInfo.seq, ctx.yield);
+
+    if (!issuanceLedgerObject)
+        return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "objectNotFound"}};
 
     std::optional<ripple::AccountID> cursor;
     if (input.marker)
