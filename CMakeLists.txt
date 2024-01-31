@@ -238,6 +238,7 @@ if (tests)
     unittests/rpc/handlers/ServerInfoTests.cpp
     unittests/rpc/handlers/PingTests.cpp
     unittests/rpc/handlers/RandomTests.cpp
+    unittests/rpc/handlers/MPTHoldersTests.cpp
     unittests/rpc/handlers/NFTInfoTests.cpp
     unittests/rpc/handlers/NFTBuyOffersTests.cpp
     unittests/rpc/handlers/NFTsByIssuerTest.cpp
