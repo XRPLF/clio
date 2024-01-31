@@ -912,6 +912,87 @@ generateTestValuesForParametersTest()
             "Malformed request."
         },
         ParamTestCaseBundle{
+            "BridgeCurrencyIsNumber",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": {},
+                            "issuer": "{}"
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT,
+                1,
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeIssuerIsNumber",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue":
+                        {{
+                            "currency": "{}",
+                            "issuer": {}
+                        }}
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT,
+                "JPY",
+                2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "BridgeIssuingChainIssueIsNotObject",
+            fmt::format(
+                R"({{
+                    "bridge_account": "{}",
+                    "bridge": 
+                    {{
+                        "LockingChainDoor": "{}",
+                        "IssuingChainDoor": "{}",
+                        "LockingChainIssue":
+                        {{
+                            "currency": "XRP"
+                        }},
+                        "IssuingChainIssue": 1
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT,
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
             "BridgeWithInvalidBridgeAccount",
             fmt::format(
                 R"({{
