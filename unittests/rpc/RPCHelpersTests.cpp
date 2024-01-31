@@ -509,8 +509,8 @@ TEST_F(RPCHelpersTest, ParseIssue)
 {
     auto issue = parseIssue(boost::json::parse(
                                 R"({
-                                    "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-                                    "currency": "JPY"
+                                        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                        "currency": "JPY"
                                     })"
     )
                                 .as_object());
@@ -519,13 +519,15 @@ TEST_F(RPCHelpersTest, ParseIssue)
     issue = parseIssue(boost::json::parse(R"({"currency": "XRP"})").as_object());
     EXPECT_TRUE(ripple::isXRP(issue.currency));
 
+    EXPECT_THROW(parseIssue(boost::json::parse(R"({"currency": 2})").as_object()), std::runtime_error);
+
     EXPECT_THROW(parseIssue(boost::json::parse(R"({"currency": "XRP2"})").as_object()), std::runtime_error);
 
     EXPECT_THROW(
         parseIssue(boost::json::parse(
                        R"({
-                            "issuer": "abcd",
-                            "currency": "JPY"
+                                "issuer": "abcd",
+                                "currency": "JPY"
                             })"
         )
                        .as_object()),

@@ -1355,9 +1355,9 @@ ripple::Issue
 parseIssue(boost::json::object const& issue)
 {
     Json::Value jv;
-    if (issue.contains(JS(issuer)))
+    if (issue.contains(JS(issuer)) && issue.at(JS(issuer)).is_string())
         jv["issuer"] = issue.at(JS(issuer)).as_string().c_str();
-    if (issue.contains(JS(currency)))
+    if (issue.contains(JS(currency)) && issue.at(JS(currency)).is_string())
         jv["currency"] = issue.at(JS(currency)).as_string().c_str();
 
     return ripple::issueFromJson(jv);
