@@ -63,9 +63,6 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         key = ripple::keylet::account(*ripple::parseBase58<ripple::AccountID>(*(input.accountRoot))).key;
     } else if (input.did) {
         key = ripple::keylet::did(*ripple::parseBase58<ripple::AccountID>(*(input.did))).key;
-    } else if (input.mptIssuance) {
-        auto const mptIssuanceID = ripple::uint192{std::string_view(*(input.mptIssuance))};
-        key = ripple::keylet::mptIssuance(mptIssuanceID).key;
     } else if (input.directory) {
         auto const keyOrStatus = composeKeyFromDirectory(*input.directory);
         if (auto const status = std::get_if<Status>(&keyOrStatus))
@@ -114,6 +111,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
                   getIssuerFromJson(input.amm->at(JS(asset))), getIssuerFromJson(input.amm->at(JS(asset2)))
         )
                   .key;
+    } else if (input.mptIssuance) {
+        auto const mptIssuanceID = ripple::uint192{std::string_view(*(input.mptIssuance))};
+        key = ripple::keylet::mptIssuance(mptIssuanceID).key;
     } else if (input.mptoken) {
         auto const holder = ripple::parseBase58<ripple::AccountID>(input.mptoken->at(JS(account)).as_string().c_str());
         auto const mptIssuanceID =
