@@ -22,8 +22,10 @@
 #include "etl/ETLHelpers.h"
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/http/field.hpp>
+#include <fmt/core.h>
 
 #include <cstdint>
 #include <memory>
@@ -38,7 +40,8 @@ SubscribedSource::SubscribedSource(
     std::string const& wsPort,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
 )
-    : wsConnectionBuilder_(ip, wsPort)
+    : log_(fmt::format("GrpcSource-{}:{}", ip, wsPort))
+    , wsConnectionBuilder_(ip, wsPort)
     , networkValidatedLedgers_(std::move(validatedLedgers))
     , strand_(boost::asio::make_strand(ioContext))
 {
@@ -68,9 +71,14 @@ SubscribedSource::hasLedger(uint32_t sequence) const
 void
 SubscribedSource::subscribe()
 {
-    boost::asio::post(strand_, [this](boost::asio::yield_context yield) {
-        auto connection = wsConnectionBuilder_.connect(yield);
-    });
+    // boost::asio::post(strand_, [this](boost::asio::yield_context yield) {
+    //     bool connected = false;
+    //     while (not connected) {
+    //         auto connection = wsConnectionBuilder_.connect(yield);
+    //         if (not connection.has_value()) {
+    //         }
+    //     }
+    // });
 }
 
 }  // namespace etl::impl

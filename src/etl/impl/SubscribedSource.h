@@ -35,11 +35,14 @@
 namespace etl::impl {
 
 class SubscribedSource {
+    util::Logger log_;
     util::requests::WsConnectionBuilder wsConnectionBuilder_;
     util::requests::WsConnectionPtr wsConnection_;
+
     util::Mutex<std::vector<std::pair<uint32_t, uint32_t>>> validatedLedgers_;
     std::string validatedLedgersRaw_{"N/A"};
     std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
+
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
 
 public:

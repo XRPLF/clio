@@ -29,18 +29,28 @@
 
 namespace util::requests {
 
-struct RetryStrategy {
+class RetryStrategy {
+    std::chrono::steady_clock::duration delay_;
+
+public:
+    RetryStrategy(std::chrono::steady_clock::duration delay);
     virtual ~RetryStrategy() = default;
 
+    std::chrono::steady_clock::duration
+    getDelay() const;
+
+    void
+    increaseDelay();
+
     virtual std::chrono::steady_clock::duration
-    getDelay() = 0;
+    nextDelay() const = 0;
 };
 using RetryStrategyPtr = std::unique_ptr<RetryStrategy>;
 
 class Retry {
     RetryStrategyPtr strategy_;
     boost::asio::steady_timer timer_;
-    size_t numRetries_ = 0;
+    size_t attemptNumber_ = 0;
 
 public:
     Retry(RetryStrategyPtr strategy, boost::asio::strand<boost::asio::io_context::executor_type> strand);
@@ -48,13 +58,15 @@ public:
 
     template <typename Fn>
     void
-    retry(Fn func)
+    retry(Fn&& func)
     {
         timer_.expires_after(strategy_->getDelay());
-        timer_.async_wait([func](boost::system::error_code const& ec) {
+        strategy_->increaseDelay();
+        timer_.async_wait([this, func = std::forward<Fn>(func)](boost::system::error_code const& ec) {
             if (ec) {
                 return;
             }
+            ++attemptNumber_;
             func();
         });
     }
@@ -63,18 +75,30 @@ public:
     cancel();
 
     size_t
-    getNumRetries() const;
+    attemptNumber() const;
+
+    std::chrono::steady_clock::duration
+    currentDelay() const;
+
+    std::chrono::steady_clock::duration
+    nextDelay() const;
 };
 
 class ExponentialBackoff : public RetryStrategy {
-    std::chrono::steady_clock::duration delay_;
     std::chrono::steady_clock::duration maxDelay_;
 
 public:
     ExponentialBackoff(std::chrono::steady_clock::duration delay, std::chrono::steady_clock::duration maxDelay);
 
     std::chrono::steady_clock::duration
-    getDelay() override;
+    nextDelay() const override;
 };
+
+Retry
+makeRetryExponentialBackoff(
+    std::chrono::steady_clock::duration delay,
+    std::chrono::steady_clock::duration maxDelay,
+    boost::asio::strand<boost::asio::io_context::executor_type> strand
+);
 
 }  // namespace util::requests

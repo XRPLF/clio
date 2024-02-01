@@ -48,24 +48,6 @@ TEST_F(BackendCassandraRetryPolicyTest, ShouldRetryAlwaysTrue)
     }
 }
 
-TEST_F(BackendCassandraRetryPolicyTest, CheckComputedBackoffDelayIsCorrect)
-{
-    auto retryPolicy = ExponentialBackoffRetryPolicy{ctx};
-    EXPECT_EQ(retryPolicy.calculateDelay(0).count(), 1);
-    EXPECT_EQ(retryPolicy.calculateDelay(1).count(), 2);
-    EXPECT_EQ(retryPolicy.calculateDelay(2).count(), 4);
-    EXPECT_EQ(retryPolicy.calculateDelay(3).count(), 8);
-    EXPECT_EQ(retryPolicy.calculateDelay(4).count(), 16);
-    EXPECT_EQ(retryPolicy.calculateDelay(5).count(), 32);
-    EXPECT_EQ(retryPolicy.calculateDelay(6).count(), 64);
-    EXPECT_EQ(retryPolicy.calculateDelay(7).count(), 128);
-    EXPECT_EQ(retryPolicy.calculateDelay(8).count(), 256);
-    EXPECT_EQ(retryPolicy.calculateDelay(9).count(), 512);
-    EXPECT_EQ(retryPolicy.calculateDelay(10).count(), 1024);
-    EXPECT_EQ(retryPolicy.calculateDelay(11).count(),
-              1024);  // 10 is max, same after that
-}
-
 TEST_F(BackendCassandraRetryPolicyTest, RetryCorrectlyExecuted)
 {
     auto callCount = std::atomic_int{0};

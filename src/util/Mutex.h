@@ -20,6 +20,7 @@
 #pragma once
 
 #include <mutex>
+#include <type_traits>
 
 namespace util {
 
@@ -34,49 +35,49 @@ class Mutex;
 template <typename ProtectedDataType>
 class Lock {
     std::scoped_lock<std::mutex> lock_;
-    Mutex<ProtectedDataType>& mutex_;
+    ProtectedDataType& data_;
 
 public:
     ProtectedDataType const&
     operator*() const
     {
-        return mutex_.data_;
+        return data_;
     }
 
     ProtectedDataType&
     operator*()
     {
-        return mutex_.data_;
+        return data_;
     }
 
     ProtectedDataType const&
     get() const
     {
-        return mutex_.data_;
+        return data_;
     }
 
     ProtectedDataType&
     get()
     {
-        return mutex_.data_;
+        return data_;
     }
 
     ProtectedDataType const*
     operator->() const
     {
-        return &mutex_.data_;
+        return &data_;
     }
 
     ProtectedDataType*
     operator->()
     {
-        return &mutex_.data_;
+        return &data_;
     }
 
 private:
-    friend class Mutex<ProtectedDataType>;
+    friend class Mutex<std::remove_const_t<ProtectedDataType>>;
 
-    explicit Lock(Mutex<ProtectedDataType>& mutex) : lock_(mutex.mutex_), mutex_(mutex)
+    explicit Lock(std::mutex& mutex, ProtectedDataType& data) : lock_(mutex), data_(data)
     {
     }
 };
@@ -102,19 +103,19 @@ public:
     static Mutex
     make(Args&&... args)
     {
-        return Mutex(ProtectedDataType(std::forward<Args>(args)...));
+        return Mutex{ProtectedDataType{std::forward<Args>(args)...}};
     }
 
     Lock<ProtectedDataType const>
     lock() const
     {
-        return Lock<ProtectedDataType const>(*this);
+        return Lock<ProtectedDataType const>{mutex_, data_};
     }
 
     Lock<ProtectedDataType>
     lock()
     {
-        return Lock<ProtectedDataType>(*this);
+        return Lock<ProtectedDataType>{mutex_, data_};
     }
 };
 

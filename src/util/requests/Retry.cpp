@@ -25,9 +25,26 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <memory>
 #include <utility>
 
 namespace util::requests {
+
+RetryStrategy::RetryStrategy(std::chrono::steady_clock::duration delay) : delay_(delay)
+{
+}
+
+std::chrono::steady_clock::duration
+RetryStrategy::getDelay() const
+{
+    return delay_;
+}
+
+void
+RetryStrategy::increaseDelay()
+{
+    delay_ = nextDelay();
+}
 
 Retry::Retry(RetryStrategyPtr strategy, boost::asio::strand<boost::asio::io_context::executor_type> strand)
     : strategy_(std::move(strategy)), timer_(strand.get_inner_executor())
@@ -46,25 +63,46 @@ Retry::cancel()
 }
 
 size_t
-Retry::getNumRetries() const
+Retry::attemptNumber() const
 {
-    return numRetries_;
+    return attemptNumber_;
+}
+
+std::chrono::steady_clock::duration
+Retry::currentDelay() const
+{
+    return strategy_->getDelay();
+}
+
+std::chrono::steady_clock::duration
+Retry::nextDelay() const
+{
+    return strategy_->nextDelay();
 }
 
 ExponentialBackoff::ExponentialBackoff(
     std::chrono::steady_clock::duration delay,
     std::chrono::steady_clock::duration maxDelay
 )
-    : delay_(delay), maxDelay_(maxDelay)
+    : RetryStrategy(delay), maxDelay_(maxDelay)
 {
 }
 
 std::chrono::steady_clock::duration
-ExponentialBackoff::getDelay()
+ExponentialBackoff::nextDelay() const
 {
-    auto const delay = delay_;
-    delay_ = std::min(delay_ * 2, maxDelay_);
-    return std::min(delay, maxDelay_);
+    auto const next = getDelay() * 2;
+    return std::min(next, maxDelay_);
+}
+
+Retry
+makeRetryExponentialBackoff(
+    std::chrono::steady_clock::duration delay,
+    std::chrono::steady_clock::duration maxDelay,
+    boost::asio::strand<boost::asio::io_context::executor_type> strand
+)
+{
+    return Retry(std::make_unique<ExponentialBackoff>(delay, maxDelay), std::move(strand));
 }
 
 }  // namespace util::requests
