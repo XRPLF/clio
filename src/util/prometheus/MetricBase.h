@@ -19,10 +19,9 @@
 
 #pragma once
 
-#include "util/prometheus/Label.h"
 #include "util/prometheus/OStream.h"
 
-#include <cstdint>
+#include <string>
 
 namespace util::prometheus {
 

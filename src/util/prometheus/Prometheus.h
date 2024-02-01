@@ -23,7 +23,16 @@
 #include "util/prometheus/Counter.h"
 #include "util/prometheus/Gauge.h"
 #include "util/prometheus/Histogram.h"
+#include "util/prometheus/Label.h"
+#include "util/prometheus/MetricBase.h"
 #include "util/prometheus/MetricsFamily.h"
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace util::prometheus {
 

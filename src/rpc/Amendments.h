@@ -19,8 +19,11 @@
 
 #pragma once
 
+#include <ripple/basics/Slice.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/digest.h>
+
+#include <string_view>
 
 namespace rpc {
 

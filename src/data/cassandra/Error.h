@@ -21,6 +21,8 @@
 
 #include <cassandra.h>
 
+#include <cstdint>
+#include <ostream>
 #include <string>
 #include <utility>
 

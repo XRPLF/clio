@@ -20,9 +20,12 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+#include "data/Types.h"
 #include "rpc/common/Types.h"
 
 #include <boost/json.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
 
 #include <memory>
 

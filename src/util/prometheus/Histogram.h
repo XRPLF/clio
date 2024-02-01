@@ -21,7 +21,15 @@
 
 #include "util/Assert.h"
 #include "util/prometheus/MetricBase.h"
+#include "util/prometheus/OStream.h"
 #include "util/prometheus/impl/HistogramImpl.h"
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace util::prometheus {
 

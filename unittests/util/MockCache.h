@@ -22,6 +22,12 @@
 #include "data/Types.h"
 
 #include <gmock/gmock.h>
+#include <ripple/basics/base_uint.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <vector>
 
 struct MockCache {
     virtual ~MockCache() = default;

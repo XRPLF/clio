@@ -19,14 +19,16 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
+#include "data/Types.h"
 #include "util/Taggable.h"
 #include "util/log/Logger.h"
 #include "web/interface/ConnectionBase.h"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>

@@ -23,6 +23,7 @@
 
 #include <gmock/gmock.h>
 
+#include <cstdint>
 #include <optional>
 
 struct MockLedgerFetcher {

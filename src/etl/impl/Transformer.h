@@ -20,6 +20,8 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+#include "data/DBHelpers.h"
+#include "data/Types.h"
 #include "etl/SystemState.h"
 #include "etl/impl/AmendmentBlock.h"
 #include "etl/impl/LedgerLoader.h"
@@ -29,13 +31,23 @@
 #include "util/log/Logger.h"
 
 #include <grpcpp/grpcpp.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
 #include <ripple/beast/core/CurrentThreadName.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <ripple/protocol/LedgerHeader.h>
 
 #include <chrono>
+#include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
+#include <set>
+#include <stdexcept>
+#include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 namespace etl::detail {
 

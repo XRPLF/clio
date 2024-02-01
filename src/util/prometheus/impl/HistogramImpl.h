@@ -23,7 +23,14 @@
 #include "util/Concepts.h"
 #include "util/prometheus/OStream.h"
 
+#include <cstdint>
+#include <limits>
+#include <memory>
 #include <mutex>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace util::prometheus::detail {
 

@@ -21,9 +21,11 @@
 
 #include "rpc/common/Types.h"
 
+#include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
 
+#include <cstdint>
 #include <string>
 
 namespace rpc {

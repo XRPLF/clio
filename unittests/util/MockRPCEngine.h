@@ -22,8 +22,12 @@
 #include "web/Context.h"
 
 #include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <functional>
 #include <string>
 
 struct MockAsyncRPCEngine {

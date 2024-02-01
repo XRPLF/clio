@@ -26,9 +26,7 @@
 
 #include "data/BackendInterface.h"
 #include "data/Types.h"
-#include "rpc/Amendments.h"
 #include "rpc/Errors.h"
-#include "rpc/JS.h"
 #include "rpc/common/Types.h"
 #include "util/JsonUtils.h"
 #include "util/log/Logger.h"

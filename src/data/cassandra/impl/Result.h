@@ -21,15 +21,23 @@
 
 #include "data/cassandra/impl/ManagedObject.h"
 #include "data/cassandra/impl/Tuple.h"
-#include "util/Expected.h"
 
 #include <cassandra.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 
-#include <compare>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <iterator>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 #include <tuple>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace data::cassandra::detail {
 

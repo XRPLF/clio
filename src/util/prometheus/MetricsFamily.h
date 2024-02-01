@@ -19,10 +19,17 @@
 
 #pragma once
 
+#include "util/prometheus/Label.h"
+#include "util/prometheus/MetricBase.h"
 #include "util/prometheus/MetricBuilder.h"
+#include "util/prometheus/OStream.h"
 
+#include <cstdint>
+#include <memory>
 #include <optional>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace util::prometheus {
 

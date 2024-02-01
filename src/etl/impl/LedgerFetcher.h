@@ -20,13 +20,13 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "etl/Source.h"
 #include "util/log/Logger.h"
 
 #include <grpcpp/grpcpp.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
-#include <optional>
+#include <cstdint>
+#include <memory>
 #include <utility>
 
 namespace etl::detail {

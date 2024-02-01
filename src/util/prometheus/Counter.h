@@ -21,7 +21,13 @@
 
 #include "util/Assert.h"
 #include "util/prometheus/MetricBase.h"
+#include "util/prometheus/OStream.h"
 #include "util/prometheus/impl/AnyCounterBase.h"
+
+#include <cstdint>
+#include <string>
+#include <type_traits>
+#include <utility>
 
 namespace util::prometheus {
 

@@ -21,6 +21,7 @@
 
 #include "rpc/common/Types.h"
 
+#include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 
 #include <string>

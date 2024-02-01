@@ -21,10 +21,16 @@
 
 #include "data/BackendInterface.h"
 #include "data/CassandraBackend.h"
+#include "data/cassandra/SettingsProvider.h"
 #include "util/config/Config.h"
 #include "util/log/Logger.h"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
+#include <memory>
+#include <stdexcept>
+#include <string>
 
 namespace data {
 

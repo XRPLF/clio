@@ -21,14 +21,25 @@
 
 #include "data/Types.h"
 
+#include <ripple/basics/Blob.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Issue.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/Protocol.h>
+#include <ripple/protocol/STAmount.h>
 #include <ripple/protocol/STBase.h>
+#include <ripple/protocol/STObject.h>
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/TxMeta.h>
+#include <ripple/protocol/UintTypes.h>
 
+#include <cstdint>
 #include <optional>
+#include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 /*
  * Create AccountID object with string

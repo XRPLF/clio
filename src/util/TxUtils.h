@@ -23,6 +23,6 @@
 #include <unordered_set>
 
 namespace util {
-std::unordered_set<std::string> const&
+[[nodiscard]] std::unordered_set<std::string> const&
 getTxTypesInLowercase();
 }  // namespace util

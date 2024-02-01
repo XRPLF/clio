@@ -20,7 +20,6 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "feed/SubscriptionManager.h"
 #include "rpc/Errors.h"
 #include "rpc/Factories.h"
 #include "rpc/JS.h"

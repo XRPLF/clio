@@ -20,6 +20,7 @@
 #pragma once
 
 #include <memory>
+#include <stdexcept>
 
 namespace data::cassandra::detail {
 

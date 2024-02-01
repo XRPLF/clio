@@ -21,16 +21,19 @@
 
 #include "util/config/Config.h"
 #include "util/log/Logger.h"
-#include "util/prometheus/Prometheus.h"
+#include "util/prometheus/Counter.h"
+#include "util/prometheus/Gauge.h"
 
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/thread_pool.hpp>
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
 
-#include <memory>
-#include <optional>
-#include <queue>
-#include <shared_mutex>
+#include <chrono>
+#include <cstdint>
+#include <functional>
+#include <limits>
 #include <thread>
 
 namespace rpc {

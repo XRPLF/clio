@@ -19,12 +19,31 @@
 
 #pragma once
 
+#include "util/Assert.h"
+#include "util/config/Config.h"
+#include "util/prometheus/Counter.h"
+#include "util/prometheus/Gauge.h"
+#include "util/prometheus/Histogram.h"
+#include "util/prometheus/Label.h"
+#include "util/prometheus/MetricBase.h"
+#include "util/prometheus/OStream.h"
 #include "util/prometheus/Prometheus.h"
 
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <concepts>
+#include <cstdint>
+#include <iostream>
+#include <memory>
+#include <optional>
 #include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace util::prometheus {
 

@@ -22,9 +22,12 @@
 #include "etl/ETLState.h"
 
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <cstdint>
+#include <optional>
 
 struct MockETLService {
     MOCK_METHOD(boost::json::object, getInfo, (), (const));

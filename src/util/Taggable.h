@@ -23,13 +23,17 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/json.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
+#include <atomic>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <ostream>
-#include <string>
+#include <stdexcept>
 
 namespace util {
 namespace detail {

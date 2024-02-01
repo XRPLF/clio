@@ -19,11 +19,9 @@
 
 #pragma once
 
-#include "util/Assert.h"
 #include "util/Atomic.h"
 
-#include <atomic>
-#include <concepts>
+#include <type_traits>
 
 namespace util::prometheus::detail {
 

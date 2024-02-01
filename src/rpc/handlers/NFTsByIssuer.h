@@ -22,8 +22,19 @@
 #include "data/BackendInterface.h"
 #include "rpc/JS.h"
 #include "rpc/common/Modifiers.h"
+#include "rpc/common/Specs.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
+
+#include <boost/json/array.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/protocol/jss.h>
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
 
 namespace rpc {
 class NFTsByIssuerHandler {
