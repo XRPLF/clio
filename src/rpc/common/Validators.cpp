@@ -217,19 +217,13 @@ CustomValidator SubscribeAccountsValidator =
         return MaybeError{};
     }};
 
-CustomValidator AMMAssetValidator =
+CustomValidator CurrencyIssueValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (not value.is_object())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotObject"}};
 
-        Json::Value jvAsset;
-        if (value.as_object().contains(JS(issuer)))
-            jvAsset["issuer"] = value.at(JS(issuer)).as_string().c_str();
-        if (value.as_object().contains(JS(currency)))
-            jvAsset["currency"] = value.at(JS(currency)).as_string().c_str();
-        // same as rippled
         try {
-            ripple::issueFromJson(jvAsset);
+            parseIssue(value.as_object());
         } catch (std::runtime_error const&) {
             return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
         }
