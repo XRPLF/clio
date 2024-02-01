@@ -134,6 +134,14 @@ public:
     BasicExecutionContext(BasicExecutionContext&&) = delete;
     BasicExecutionContext(BasicExecutionContext const&) = delete;
 
+    /**
+     * @brief Schedule an operation on the execution context
+     *
+     * @param delay The delay after which the operation should be executed
+     * @param fn The block of code to execute with stop token as the only arg
+     * @param timeout The optional timeout duration after which the operation will be cancelled
+     * @return A scheduled stoppable operation that can be used to wait for the result
+     */
     [[nodiscard]] auto
     scheduleAfter(
         SomeStdDuration auto delay,
@@ -166,6 +174,14 @@ public:
         }
     }
 
+    /**
+     * @brief Schedule an operation on the execution context
+     *
+     * @param delay The delay after which the operation should be executed
+     * @param fn The block of code to execute with stop token as the first arg and cancellation flag as the second arg
+     * @param timeout The optional timeout duration after which the operation will be cancelled
+     * @return A scheduled stoppable operation that can be used to wait for the result
+     */
     [[nodiscard]] auto
     scheduleAfter(
         SomeStdDuration auto delay,
@@ -202,8 +218,9 @@ public:
     /**
      * @brief Schedule an operation on the execution context
      *
-     * @param fn The block of code to execute with stop token as first arg.
+     * @param fn The block of code to execute with stop token as first arg
      * @param timeout The optional timeout duration after which the operation will be cancelled
+     * @return A stoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto
     execute(
@@ -234,9 +251,9 @@ public:
     /**
      * @brief Schedule an operation on the execution context
      *
-     * @param fn The block of code to execute with stop token as first arg. Signature is `Type(auto stopToken)` where
-     * `Type` is the return type.
+     * @param fn The block of code to execute with stop token as first arg
      * @param timeout The timeout duration after which the operation will be cancelled
+     * @return A stoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto
     execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept(isNoexcept)
@@ -252,6 +269,7 @@ public:
      *
      * @param fn The block of code to execute. Signature is `Type()` where `Type` is the return type.
      * @param timeout The timeout duration after which the operation will be cancelled
+     * @return A unstoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto
     execute(SomeHandlerWithoutStopToken auto&& fn) noexcept(isNoexcept)

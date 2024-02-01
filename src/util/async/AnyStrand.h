@@ -50,7 +50,7 @@ public:
 
     /** @brief Execute a function without a stop token on the strand */
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn)  // noexcept
+    execute(SomeHandlerWithoutStopToken auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn())>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -69,7 +69,7 @@ public:
 
     /** @brief Execute a function taking a stop token on the strand */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn)  // noexcept
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -88,7 +88,7 @@ public:
 
     /** @brief Execute a function taking a stop token on the strand with a timeout */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)  // noexcept
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, detail::Any>);
@@ -112,12 +112,12 @@ private:
     struct Concept {
         virtual ~Concept() = default;
 
-        virtual detail::ErasedOperation
+        [[nodiscard]] virtual detail::ErasedOperation
         execute(
             std::function<detail::Any(AnyStopToken)>,
             std::optional<std::chrono::milliseconds> timeout = std::nullopt
         ) = 0;
-        virtual detail::ErasedOperation execute(std::function<detail::Any()>) = 0;
+        [[nodiscard]] virtual detail::ErasedOperation execute(std::function<detail::Any()>) = 0;
     };
 
     template <typename StrandType>
@@ -130,13 +130,13 @@ private:
         {
         }
 
-        detail::ErasedOperation
+        [[nodiscard]] detail::ErasedOperation
         execute(std::function<detail::Any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
         {
             return strand.execute(std::move(fn), timeout);
         }
 
-        detail::ErasedOperation
+        [[nodiscard]] detail::ErasedOperation
         execute(std::function<detail::Any()> fn) override
         {
             return strand.execute(std::move(fn));

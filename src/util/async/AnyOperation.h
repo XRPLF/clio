@@ -62,28 +62,28 @@ public:
 
     /** @brief Wait for the operation to complete */
     void
-    wait()
+    wait() noexcept
     {
         operation_.wait();
     }
 
     /** @brief Request the operation to be stopped as soon as possible */
     void
-    requestStop()
+    requestStop() noexcept
     {
         operation_.requestStop();
     }
 
     /** @brief Cancel the operation. Used to cancel the timer for scheduled operations */
     void
-    cancel()
+    cancel() noexcept
     {
         operation_.cancel();
     }
 
     /** @brief Get the result of the operation */
     [[nodiscard]] util::Expected<RetType, ExecutionError>
-    get() noexcept
+    get()
     {
         try {
             auto data = operation_.get();

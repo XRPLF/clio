@@ -49,7 +49,7 @@ public:
     operator=(ErasedOperation&&) = default;
 
     void
-    wait()
+    wait() noexcept
     {
         pimpl_->wait();
     }
@@ -62,7 +62,7 @@ public:
 
     /**
      * @brief Request the operation to be stopped as soon as possible.
-     * @throw std::logic_error if the erased operation is non-cancellable
+     * @throw std::logic_error if the erased operation is non-stoppable
      */
     void
     requestStop()
@@ -72,6 +72,7 @@ public:
 
     /**
      * @brief Cancel the operation if it is scheduled and not yet started.
+     * @throw std::logic_error if the erased operation is non-cancellable
      */
     void
     cancel()
@@ -84,7 +85,7 @@ private:
         virtual ~Concept() = default;
 
         virtual void
-        wait() = 0;
+        wait() noexcept = 0;
         virtual util::Expected<Any, ExecutionError>
         get() = 0;
         virtual void
@@ -104,7 +105,7 @@ private:
         }
 
         void
-        wait() override
+        wait() noexcept override
         {
             return operation.wait();
         }

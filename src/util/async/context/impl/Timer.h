@@ -24,9 +24,10 @@
 namespace util::async::detail {
 
 template <typename ExecutorType>
-struct SteadyTimer {
+class SteadyTimer {
     boost::asio::steady_timer timer_;
 
+public:
     SteadyTimer(ExecutorType& executor, auto delay, auto&& fn) : timer_{executor}
     {
         timer_.expires_after(delay);
@@ -42,7 +43,7 @@ struct SteadyTimer {
     SteadyTimer(SteadyTimer const&) = delete;
 
     void
-    cancel()
+    cancel() noexcept
     {
         timer_.cancel();
     }

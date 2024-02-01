@@ -20,19 +20,16 @@
 
 #pragma once
 
-#include "util/async/Concepts.h"
-
 #include <fmt/core.h>
 #include <fmt/std.h>
 
-#include <exception>
 #include <string>
 #include <utility>
 
 namespace util::async {
 
 /**
- * @brief Exception that is the error channel of an async operation of any ExecutionContext
+ * @brief Error channel type for async operation of any ExecutionContext
  */
 struct ExecutionError {
     ExecutionError(std::string tid, std::string msg)

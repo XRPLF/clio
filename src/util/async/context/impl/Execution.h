@@ -30,7 +30,7 @@ namespace util::async::detail {
 
 struct SpawnDispatchStrategy {
     template <typename ContextType, SomeOutcome OutcomeType>
-    static auto
+    [[nodiscard]] static auto
     dispatch(ContextType& ctx, OutcomeType&& outcome, auto&& fn)
     {
         auto op = outcome.getOperation();
@@ -54,7 +54,7 @@ struct SpawnDispatchStrategy {
 
 struct PostDispatchStrategy {
     template <typename ContextType, SomeOutcome OutcomeType>
-    static auto
+    [[nodiscard]] static auto
     dispatch(ContextType& ctx, OutcomeType&& outcome, auto&& fn)
     {
         auto op = outcome.getOperation();
@@ -77,7 +77,7 @@ struct PostDispatchStrategy {
 
 struct SyncDispatchStrategy {
     template <typename ContextType, SomeOutcome OutcomeType>
-    static auto
+    [[nodiscard]] static auto
     dispatch([[maybe_unused]] ContextType& ctx, OutcomeType outcome, auto&& fn)
     {
         auto op = outcome.getOperation();

@@ -65,7 +65,7 @@ public:
     }
 
     /** @brief Get the `future` for the inner `promise` */
-    std::future<RetType>
+    [[nodiscard]] std::future<RetType>
     getStdFuture()
     {
         return promise_.get_future();
@@ -83,7 +83,7 @@ template <typename RetType>
 class Outcome : public detail::BasicOutcome<RetType> {
 public:
     /** @brief Gets the unstoppable operation for this outcome */
-    detail::BasicOperation<Outcome>
+    [[nodiscard]] detail::BasicOperation<Outcome>
     getOperation()
     {
         return detail::BasicOperation<Outcome>{this};
@@ -103,14 +103,14 @@ private:
 
 public:
     /** @brief Gets the stoppable operation for this outcome */
-    StoppableOperation<RetType, StopSourceType>
+    [[nodiscard]] StoppableOperation<RetType, StopSourceType>
     getOperation()
     {
         return StoppableOperation<RetType, StopSourceType>{this};
     }
 
     /** @brief Gets the stop source for this outcome */
-    StopSourceType&
+    [[nodiscard]] StopSourceType&
     getStopSource()
     {
         return stopSource_;

@@ -48,8 +48,8 @@ public:
     BasicOperation(BasicOperation&&) = default;
     BasicOperation(BasicOperation const&) = delete;
 
-    auto
-    get() -> decltype(auto)
+    [[nodiscard]] auto
+    get()
     {
         return future_.get();
     }
@@ -76,7 +76,7 @@ struct BasicScheduledOperation {
             ready_.notify_all();
         }
 
-        OpType&
+        [[nodiscard]] OpType&
         get()
         {
             std::unique_lock lock{m_};
@@ -95,26 +95,26 @@ struct BasicScheduledOperation {
     {
     }
 
-    auto
-    get() -> decltype(auto)
+    [[nodiscard]] auto
+    get()
     {
         return state_->get().get();
     }
 
     void
-    wait()
+    wait() noexcept
     {
         state_->get().wait();
     }
 
     void
-    cancel()
+    cancel() noexcept
     {
         timer_.cancel();
     }
 
     void
-    requestStop()
+    requestStop() noexcept
         requires(SomeStoppableOperation<OpType>)
     {
         state_->get().requestStop();
@@ -143,7 +143,7 @@ public:
 
     /** @brief Requests the operation to stop */
     void
-    requestStop()
+    requestStop() noexcept
     {
         stopSource_.requestStop();
     }

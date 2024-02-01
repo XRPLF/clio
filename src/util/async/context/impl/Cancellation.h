@@ -33,13 +33,13 @@ class StopState {
 
 public:
     void
-    requestStop()
+    requestStop() noexcept
     {
         isStopRequested_ = true;
     }
 
-    bool
-    isStopRequested() const
+    [[nodiscard]] bool
+    isStopRequested() const noexcept
     {
         return isStopRequested_;
     }
@@ -62,28 +62,28 @@ public:
         }
 
     public:
-        bool
-        isStopRequested() const
+        [[nodiscard]] bool
+        isStopRequested() const noexcept
         {
             // yield explicitly
             boost::asio::post(yield_);
             return shared_->isStopRequested();
         }
 
-        operator bool() const
+        [[nodiscard]] operator bool() const noexcept
         {
             return isStopRequested();
         }
     };
 
-    Token
-    operator[](boost::asio::yield_context yield)
+    [[nodiscard]] Token
+    operator[](boost::asio::yield_context yield) noexcept
     {
         return {this, yield};
     }
 
     void
-    requestStop()
+    requestStop() noexcept
     {
         shared_->requestStop();
     }
@@ -97,7 +97,7 @@ public:
         friend class BasicStopSource;
         SharedStopState shared_;
 
-        Token(BasicStopSource* source) : shared_{source->shared_}
+        explicit Token(BasicStopSource* source) : shared_{source->shared_}
         {
         }
 
@@ -105,22 +105,22 @@ public:
         Token(Token const&) = default;
         Token(Token&&) = default;
 
-        bool
-        isStopRequested() const
+        [[nodiscard]] bool
+        isStopRequested() const noexcept
         {
             return shared_->isStopRequested();
         }
 
-        operator bool() const
+        [[nodiscard]] operator bool() const noexcept
         {
             return isStopRequested();
         }
     };
 
-    Token
+    [[nodiscard]] Token
     getToken()
     {
-        return {this};
+        return Token{this};
     }
 
     void

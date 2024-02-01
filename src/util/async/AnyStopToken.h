@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Expected.h"
 #include "util/async/Concepts.h"
 
 #include <memory>
@@ -59,13 +58,13 @@ public:
 
     /** @returns true if stop is requested; false otherwise */
     [[nodiscard]] bool
-    isStopRequested() const
+    isStopRequested() const noexcept
     {
         return pimpl_->isStopRequested();
     }
 
     /** @returns true if stop is requested; false otherwise */
-    [[nodiscard]] operator bool() const
+    [[nodiscard]] operator bool() const noexcept
     {
         return isStopRequested();
     }
@@ -74,10 +73,10 @@ private:
     struct Concept {
         virtual ~Concept() = default;
 
-        virtual bool
-        isStopRequested() const = 0;
+        [[nodiscard]] virtual bool
+        isStopRequested() const noexcept = 0;
 
-        virtual std::unique_ptr<Concept>
+        [[nodiscard]] virtual std::unique_ptr<Concept>
         clone() const = 0;
     };
 
@@ -89,13 +88,13 @@ private:
         {
         }
 
-        bool
-        isStopRequested() const override
+        [[nodiscard]] bool
+        isStopRequested() const noexcept override
         {
             return token.isStopRequested();
         }
 
-        std::unique_ptr<Concept>
+        [[nodiscard]] std::unique_ptr<Concept>
         clone() const override
         {
             return std::make_unique<Model>(*this);
