@@ -80,7 +80,7 @@ Retry::nextDelay() const
     return strategy_->nextDelay();
 }
 
-ExponentialBackoff::ExponentialBackoff(
+ExponentialBackoffStrategy::ExponentialBackoffStrategy(
     std::chrono::steady_clock::duration delay,
     std::chrono::steady_clock::duration maxDelay
 )
@@ -89,7 +89,7 @@ ExponentialBackoff::ExponentialBackoff(
 }
 
 std::chrono::steady_clock::duration
-ExponentialBackoff::nextDelay() const
+ExponentialBackoffStrategy::nextDelay() const
 {
     auto const next = getDelay() * 2;
     return std::min(next, maxDelay_);
@@ -102,7 +102,7 @@ makeRetryExponentialBackoff(
     boost::asio::strand<boost::asio::io_context::executor_type> strand
 )
 {
-    return Retry(std::make_unique<ExponentialBackoff>(delay, maxDelay), std::move(strand));
+    return Retry(std::make_unique<ExponentialBackoffStrategy>(delay, maxDelay), std::move(strand));
 }
 
 }  // namespace util

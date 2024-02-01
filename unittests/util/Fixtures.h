@@ -174,14 +174,20 @@ struct SyncAsioContextTest : virtual public NoLoggerFixture {
     {
         using namespace boost::asio;
 
-        auto called = false;
+        testing::MockFunction<void()> call;
         spawn(ctx, [&, _ = make_work_guard(ctx)](yield_context yield) {
             f(yield);
-            called = true;
+            call.Call();
         });
 
+        EXPECT_CALL(call, Call());
+        runContext();
+    }
+
+    void
+    runContext()
+    {
         ctx.run();
-        ASSERT_TRUE(called);
         ctx.reset();
     }
 

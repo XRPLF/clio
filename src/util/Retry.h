@@ -84,11 +84,11 @@ public:
     nextDelay() const;
 };
 
-class ExponentialBackoff : public RetryStrategy {
+class ExponentialBackoffStrategy : public RetryStrategy {
     std::chrono::steady_clock::duration maxDelay_;
 
 public:
-    ExponentialBackoff(std::chrono::steady_clock::duration delay, std::chrono::steady_clock::duration maxDelay);
+    ExponentialBackoffStrategy(std::chrono::steady_clock::duration delay, std::chrono::steady_clock::duration maxDelay);
 
     std::chrono::steady_clock::duration
     nextDelay() const override;

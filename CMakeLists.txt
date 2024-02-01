@@ -215,6 +215,7 @@ if (tests)
     unittests/util/prometheus/MetricBuilderTests.cpp
     unittests/util/prometheus/MetricsFamilyTests.cpp
     unittests/util/prometheus/OStreamTests.cpp
+    unittests/util/RetryTests.cpp
     unittests/util/requests/RequestBuilderTests.cpp
     unittests/util/requests/SslContextTests.cpp
     unittests/util/requests/WsConnectionTests.cpp
