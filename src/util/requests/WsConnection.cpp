@@ -20,6 +20,7 @@
 #include "util/requests/WsConnection.h"
 
 #include "util/Expected.h"
+#include "util/log/Logger.h"
 #include "util/requests/Types.h"
 #include "util/requests/impl/StreamData.h"
 #include "util/requests/impl/WsConnectionImpl.h"
@@ -93,33 +94,40 @@ WsConnectionBuilder::setConnectionTimeout(std::chrono::milliseconds timeout)
     return *this;
 }
 
-WsConnectionBuilder&
-WsConnectionBuilder::setSslEnabled(bool sslEnabled)
+Expected<WsConnectionPtr, RequestError>
+WsConnectionBuilder::sslConnect(asio::yield_context yield) const
 {
-    sslEnabled_ = sslEnabled;
-    return *this;
+    auto streamData = impl::SslWsStreamData::create(yield);
+    if (not streamData.has_value())
+        return Unexpected{std::move(streamData).error()};
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+    if (!SSL_set_tlsext_host_name(streamData->stream.next_layer().native_handle(), host_.c_str())) {
+#pragma GCC diagnostic pop
+        beast::error_code errorCode;
+        errorCode.assign(static_cast<int>(::ERR_get_error()), beast::net::error::get_ssl_category());
+        return Unexpected{RequestError{"SSL setup failed", errorCode}};
+    }
+    return connectImpl(std::move(streamData).value(), yield);
+}
+
+Expected<WsConnectionPtr, RequestError>
+WsConnectionBuilder::plainConnect(asio::yield_context yield) const
+{
+    return connectImpl(impl::WsStreamData{yield}, yield);
 }
 
 Expected<WsConnectionPtr, RequestError>
 WsConnectionBuilder::connect(asio::yield_context yield) const
 {
-    if (sslEnabled_) {
-        auto streamData = impl::SslWsStreamData::create(yield);
-        if (not streamData.has_value())
-            return Unexpected{std::move(streamData).error()};
+    auto sslConnection = sslConnect(yield);
+    if (sslConnection.has_value())
+        return sslConnection;
+    LOG(log_.info()) << "SSL connection failed with error: " << sslConnection.error().message
+                     << ". Falling back to plain connection.";
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-        if (!SSL_set_tlsext_host_name(streamData->stream.next_layer().native_handle(), host_.c_str())) {
-#pragma GCC diagnostic pop
-            beast::error_code errorCode;
-            errorCode.assign(static_cast<int>(::ERR_get_error()), beast::net::error::get_ssl_category());
-            return Unexpected{RequestError{"SSL setup failed", errorCode}};
-        }
-        return connectImpl(std::move(streamData).value(), yield);
-    }
-
-    return connectImpl(impl::WsStreamData{yield}, yield);
+    return plainConnect(yield);
 }
 
 template <typename StreamDataType>

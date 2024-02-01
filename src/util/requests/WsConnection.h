@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Expected.h"
+#include "util/log/Logger.h"
 #include "util/requests/Types.h"
 
 #include <boost/asio/io_context.hpp>
@@ -54,12 +55,12 @@ using WsConnectionPtr = std::unique_ptr<WsConnection>;
  * @brief Builder for WebSocket connections
  */
 class WsConnectionBuilder {
+    util::Logger log_{"WsConnectionBuilder"};
     std::string host_;
     std::string port_;
     std::vector<HttpHeader> headers_;
     std::chrono::milliseconds timeout_{DEFAULT_TIMEOUT};
     std::string target_{"/"};
-    bool sslEnabled_{false};
 
 public:
     WsConnectionBuilder(std::string host, std::string port);
@@ -101,18 +102,25 @@ public:
     setConnectionTimeout(std::chrono::milliseconds timeout);
 
     /**
-     * @brief Set whether SSL is enabled
+     * @brief Connect to the host using SSL asynchronously
      *
-     * @note Default is false
-     *
-     * @param enabled whether SSL is enabled
-     * @return RequestBuilder& this
+     * @param yield yield context
+     * @return Expected<WsConnection, RequestError> WebSocket connection or error
      */
-    WsConnectionBuilder&
-    setSslEnabled(bool enabled);
+    Expected<WsConnectionPtr, RequestError>
+    sslConnect(boost::asio::yield_context yield) const;
 
     /**
-     * @brief Connect to the host asynchronously
+     * @brief Connect to the host without SSL asynchronously
+     *
+     * @param yield yield context
+     * @return Expected<WsConnection, RequestError> WebSocket connection or error
+     */
+    Expected<WsConnectionPtr, RequestError>
+    plainConnect(boost::asio::yield_context yield) const;
+
+    /**
+     * @brief Connect to the host trying SSL first then plain if SSL fails
      *
      * @param yield yield context
      * @return Expected<WsConnection, RequestError> WebSocket connection or error

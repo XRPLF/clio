@@ -96,7 +96,7 @@ TEST_P(WsConnectionTests, SendAndReceive)
     });
 
     runSpawn([&](asio::yield_context yield) {
-        auto maybeConnection = builder.connect(yield);
+        auto maybeConnection = builder.plainConnect(yield);
         ASSERT_TRUE(maybeConnection.has_value()) << maybeConnection.error().message;
         auto& connection = *maybeConnection;
 
@@ -111,11 +111,37 @@ TEST_P(WsConnectionTests, SendAndReceive)
     });
 }
 
+TEST_F(WsConnectionTests, UseConnect)
+{
+    asio::spawn(ctx, [&](asio::yield_context yield) {
+        EXPECT_NO_FATAL_FAILURE(server.acceptConnection(yield););
+        auto serverConnection = server.acceptConnection(yield);
+        auto message = serverConnection.receive(yield);
+        EXPECT_EQ(message, "hello");
+
+        auto error = serverConnection.send("goodbye", yield);
+        EXPECT_FALSE(error) << *error;
+    });
+
+    runSpawn([&](asio::yield_context yield) {
+        auto maybeConnection = builder.connect(yield);
+        ASSERT_TRUE(maybeConnection.has_value()) << maybeConnection.error().message;
+        auto& connection = *maybeConnection;
+
+        auto error = connection->write("hello", yield);
+        ASSERT_FALSE(error) << error->message;
+
+        auto message = connection->read(yield);
+        ASSERT_TRUE(message.has_value()) << message.error().message;
+        EXPECT_EQ(message.value(), "goodbye");
+    });
+}
+
 TEST_F(WsConnectionTests, Timeout)
 {
     builder.setConnectionTimeout(std::chrono::milliseconds{1});
     runSpawn([&](asio::yield_context yield) {
-        auto connection = builder.connect(yield);
+        auto connection = builder.plainConnect(yield);
         ASSERT_FALSE(connection.has_value());
 
         EXPECT_TRUE(connection.error().message.starts_with("Connect error"));
@@ -126,7 +152,7 @@ TEST_F(WsConnectionTests, ResolveError)
 {
     builder = WsConnectionBuilder{"wrong_host", "11112"};
     runSpawn([&](asio::yield_context yield) {
-        auto connection = builder.connect(yield);
+        auto connection = builder.plainConnect(yield);
         ASSERT_FALSE(connection.has_value());
         EXPECT_TRUE(connection.error().message.starts_with("Resolve error")) << connection.error().message;
     });
@@ -137,7 +163,7 @@ TEST_F(WsConnectionTests, WsHandshakeError)
     builder.setConnectionTimeout(std::chrono::milliseconds{1});
     asio::spawn(ctx, [&](asio::yield_context yield) { server.acceptConnectionAndDropIt(yield); });
     runSpawn([&](asio::yield_context yield) {
-        auto connection = builder.connect(yield);
+        auto connection = builder.plainConnect(yield);
         ASSERT_FALSE(connection.has_value());
         EXPECT_TRUE(connection.error().message.starts_with("Handshake error")) << connection.error().message;
     });
@@ -153,7 +179,7 @@ TEST_F(WsConnectionTests, CloseConnection)
     });
 
     runSpawn([&](asio::yield_context yield) {
-        auto connection = builder.connect(yield);
+        auto connection = builder.plainConnect(yield);
         ASSERT_TRUE(connection.has_value()) << connection.error().message;
 
         auto error = connection->operator*().close(yield);
@@ -173,7 +199,7 @@ TEST_F(WsConnectionTests, MultipleConnections)
         });
 
         runSpawn([&](asio::yield_context yield) {
-            auto connection = builder.connect(yield);
+            auto connection = builder.plainConnect(yield);
             ASSERT_TRUE(connection.has_value()) << connection.error().message;
 
             auto error = connection->operator*().write("hello", yield);
@@ -211,7 +237,7 @@ TEST_P(WsConnectionErrorTests, WriteError)
     });
 
     runSpawn([&](asio::yield_context yield) {
-        auto maybeConnection = builder.connect(yield);
+        auto maybeConnection = builder.plainConnect(yield);
         ASSERT_TRUE(maybeConnection.has_value()) << maybeConnection.error().message;
         auto& connection = *maybeConnection;
 
