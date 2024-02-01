@@ -23,7 +23,7 @@
 #include "rpc/Counters.h"
 #include "rpc/Errors.h"
 #include "rpc/WorkQueue.h"
-#include "rpc/common/AnyHandler.h"
+#include "rpc/common/HandlerProvider.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/impl/ForwardingProxy.h"
 #include "util/log/Logger.h"

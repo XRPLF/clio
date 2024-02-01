@@ -20,7 +20,10 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+#include "rpc/common/Types.h"
 #include "rpc/handlers/NFTOffersCommon.h"
+
+#include <memory>
 
 namespace rpc {
 

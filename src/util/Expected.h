@@ -35,8 +35,12 @@
 #include "util/Assert.h"
 
 #include <boost/outcome.hpp>
+#include <boost/outcome/policy/base.hpp>
+#include <boost/outcome/result.hpp>
+#include <boost/outcome/success_failure.hpp>
 #include <ripple/basics/contract.h>
 
+#include <cstddef>
 #include <stdexcept>
 #include <type_traits>
 

@@ -21,9 +21,12 @@
 
 #include "data/cassandra/Handle.h"
 #include "data/cassandra/Types.h"
-#include "util/Expected.h"
 #include "util/config/Config.h"
 #include "util/log/Logger.h"
+
+#include <cstdint>
+#include <optional>
+#include <string>
 
 namespace data::cassandra {
 

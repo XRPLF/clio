@@ -21,7 +21,7 @@
 
 #include "util/Expected.h"
 
-#include <string>
+#include <cstdint>
 
 namespace data::cassandra {
 

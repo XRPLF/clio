@@ -23,6 +23,10 @@
 #include "rpc/common/Types.h"
 #include "rpc/common/impl/Factories.h"
 
+#include <boost/json/value.hpp>
+
+#include <functional>
+#include <initializer_list>
 #include <string>
 #include <vector>
 

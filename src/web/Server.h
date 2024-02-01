@@ -19,12 +19,34 @@
 
 #pragma once
 
+#include "util/Taggable.h"
 #include "util/log/Logger.h"
+#include "web/DOSGuard.h"
 #include "web/HttpSession.h"
 #include "web/SslHttpSession.h"
 #include "web/interface/Concepts.h"
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/address.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/socket_base.hpp>
+#include <boost/asio/ssl/context.hpp>
+#include <boost/asio/ssl/error.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/core/stream_traits.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 #include <fmt/core.h>
+
+#include <chrono>
+#include <exception>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 /**
  * @brief This namespace implements the web server and related components.

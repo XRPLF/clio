@@ -22,6 +22,9 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <ios>
+#include <string>
+#include <string_view>
 
 struct TmpFile {
     std::string const path;

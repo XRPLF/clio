@@ -22,6 +22,17 @@
 #include "data/BackendInterface.h"
 #include "rpc/common/Types.h"
 
+#include <boost/json/array.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Issue.h>
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+
 namespace rpc {
 
 /**

@@ -20,8 +20,21 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+#include "data/DBHelpers.h"
+#include "data/Types.h"
+#include "util/config/Config.h"
 
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
 #include <gmock/gmock.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/LedgerHeader.h>
+
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <vector>
 
 using namespace data;
 

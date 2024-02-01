@@ -19,9 +19,11 @@
 
 #pragma once
 
-#include "util/prometheus/Prometheus.h"
-
 #include <boost/beast/http.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
+
+#include <optional>
 
 namespace util::prometheus {
 

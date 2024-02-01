@@ -19,11 +19,12 @@
 
 #pragma once
 
-#include "rpc/common/Types.h"
 #include "util/Expected.h"
 
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
 
+#include <cstdint>
 #include <string>
 
 namespace rpc {

@@ -20,7 +20,18 @@
 
 #include "etl/Source.h"
 
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <gmock/gmock.h>
+#include <grpcpp/support/status.h>
+#include <org/xrpl/rpc/v1/get_ledger.pb.h>
+
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 class MockSource : public etl::Source {
 public:

@@ -27,6 +27,7 @@
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/chrono.h>
+#include <ripple/json/json_value.h>
 #include <ripple/protocol/AMMCore.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/Indexes.h>
@@ -836,6 +837,113 @@ CreateAMMObject(
     amm.setFieldAmount(ripple::sfLPTokenBalance, ripple::STAmount(issue1, lpTokenBalanceIssueAmount));
     amm.setFieldU32(ripple::sfFlags, 0);
     return amm;
+}
+
+ripple::STObject
+CreateBridgeObject(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer
+)
+{
+    auto bridge = ripple::STObject(ripple::sfLedgerEntry);
+    bridge.setFieldU16(ripple::sfLedgerEntryType, ripple::ltBRIDGE);
+    bridge.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId));
+    bridge.setFieldAmount(ripple::sfSignatureReward, ripple::STAmount(10, false));
+    bridge.setFieldU64(ripple::sfXChainClaimID, 100);
+    bridge.setFieldU64(ripple::sfXChainAccountCreateCount, 100);
+    bridge.setFieldU64(ripple::sfXChainAccountClaimCount, 100);
+    bridge.setFieldU64(ripple::sfOwnerNode, 100);
+    bridge.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    bridge.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    bridge.setFieldU32(ripple::sfFlags, 0);
+    Json::Value lockingIssue;
+    lockingIssue["currency"] = "XRP";
+    Json::Value issuingIssue;
+    issuingIssue["currency"] = std::string(issuingCurrency);
+    issuingIssue["issuer"] = std::string(issuingIssuer);
+
+    bridge[ripple::sfXChainBridge] = ripple::STXChainBridge(
+        GetAccountIDWithString(lockingDoor),
+        ripple::issueFromJson(lockingIssue),
+        GetAccountIDWithString(issuingDoor),
+        ripple::issueFromJson(issuingIssue)
+    );
+    bridge.setFieldU32(ripple::sfFlags, 0);
+    return bridge;
+}
+
+ripple::STObject
+CreateChainOwnedClaimIDObject(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer,
+    std::string_view otherChainSource
+)
+{
+    auto chainOwnedClaimID = ripple::STObject(ripple::sfLedgerEntry);
+    chainOwnedClaimID.setFieldU16(ripple::sfLedgerEntryType, ripple::ltXCHAIN_OWNED_CLAIM_ID);
+    chainOwnedClaimID.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId));
+    chainOwnedClaimID.setFieldAmount(ripple::sfSignatureReward, ripple::STAmount(10, false));
+    chainOwnedClaimID.setFieldU64(ripple::sfXChainClaimID, 100);
+    chainOwnedClaimID.setFieldU64(ripple::sfOwnerNode, 100);
+    chainOwnedClaimID.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    chainOwnedClaimID.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    chainOwnedClaimID.setFieldU32(ripple::sfFlags, 0);
+    Json::Value lockingIssue;
+    lockingIssue["currency"] = "XRP";
+    Json::Value issuingIssue;
+    issuingIssue["currency"] = std::string(issuingCurrency);
+    issuingIssue["issuer"] = std::string(issuingIssuer);
+
+    chainOwnedClaimID[ripple::sfXChainBridge] = ripple::STXChainBridge(
+        GetAccountIDWithString(lockingDoor),
+        ripple::issueFromJson(lockingIssue),
+        GetAccountIDWithString(issuingDoor),
+        ripple::issueFromJson(issuingIssue)
+    );
+    chainOwnedClaimID.setFieldU32(ripple::sfFlags, 0);
+    chainOwnedClaimID.setAccountID(ripple::sfOtherChainSource, GetAccountIDWithString(otherChainSource));
+    chainOwnedClaimID.setFieldArray(ripple::sfXChainClaimAttestations, ripple::STArray{});
+    return chainOwnedClaimID;
+}
+
+ripple::STObject
+CreateChainOwnedCreateAccountClaimID(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer
+)
+{
+    auto chainOwnedCreateAccountClaimID = ripple::STObject(ripple::sfLedgerEntry);
+    chainOwnedCreateAccountClaimID.setFieldU16(ripple::sfLedgerEntryType, ripple::ltXCHAIN_OWNED_CLAIM_ID);
+    chainOwnedCreateAccountClaimID.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId));
+    chainOwnedCreateAccountClaimID.setFieldU64(ripple::sfXChainAccountCreateCount, 100);
+    chainOwnedCreateAccountClaimID.setFieldU64(ripple::sfOwnerNode, 100);
+    chainOwnedCreateAccountClaimID.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    chainOwnedCreateAccountClaimID.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    chainOwnedCreateAccountClaimID.setFieldU32(ripple::sfFlags, 0);
+    Json::Value lockingIssue;
+    lockingIssue["currency"] = "XRP";
+    Json::Value issuingIssue;
+    issuingIssue["currency"] = std::string(issuingCurrency);
+    issuingIssue["issuer"] = std::string(issuingIssuer);
+
+    chainOwnedCreateAccountClaimID[ripple::sfXChainBridge] = ripple::STXChainBridge(
+        GetAccountIDWithString(lockingDoor),
+        ripple::issueFromJson(lockingIssue),
+        GetAccountIDWithString(issuingDoor),
+        ripple::issueFromJson(issuingIssue)
+    );
+    chainOwnedCreateAccountClaimID.setFieldU32(ripple::sfFlags, 0);
+    chainOwnedCreateAccountClaimID.setFieldArray(ripple::sfXChainCreateAccountAttestations, ripple::STArray{});
+    return chainOwnedCreateAccountClaimID;
 }
 
 void

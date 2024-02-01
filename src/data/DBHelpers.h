@@ -20,15 +20,24 @@
 /** @file */
 #pragma once
 
-#include "data/Types.h"
 #include "util/Assert.h"
 
 #include <boost/container/flat_set.hpp>
+#include <ripple/basics/Blob.h>
 #include <ripple/basics/Log.h>
 #include <ripple/basics/StringUtilities.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STAccount.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/TxMeta.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <string>
 
 /**
  * @brief Struct used to keep track of what to write to account_transactions/account_tx tables.

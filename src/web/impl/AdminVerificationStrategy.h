@@ -20,7 +20,11 @@
 #pragma once
 
 #include <boost/beast/http.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
 
+#include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 

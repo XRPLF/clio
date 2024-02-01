@@ -24,6 +24,8 @@
 
 #include <cassandra.h>
 
+#include <vector>
+
 namespace data::cassandra::detail {
 
 struct Batch : public ManagedObject<CassBatch> {

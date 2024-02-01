@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,11 +19,28 @@
 
 #pragma once
 
-#include <type_traits>
+#include "rpc/common/AnyHandler.h"
 
-namespace util {
+#include <optional>
+#include <string>
 
-template <typename T>
-concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_const_v<T>;
+namespace rpc {
 
-}  // namespace util
+/**
+ * @brief Interface for the provider of RPC handlers.
+ */
+class HandlerProvider {
+public:
+    virtual ~HandlerProvider() = default;
+
+    virtual bool
+    contains(std::string const& method) const = 0;
+
+    virtual std::optional<AnyHandler>
+    getHandler(std::string const& command) const = 0;
+
+    virtual bool
+    isClioOnly(std::string const& command) const = 0;
+};
+
+}  // namespace rpc

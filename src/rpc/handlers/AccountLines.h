@@ -20,12 +20,24 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "rpc/RPCHelpers.h"
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
 #include "rpc/common/MetaProcessors.h"
 #include "rpc/common/Modifiers.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
 
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/jss.h>
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
 #include <vector>
 
 namespace rpc {

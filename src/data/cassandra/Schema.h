@@ -21,13 +21,16 @@
 
 #include "data/cassandra/Concepts.h"
 #include "data/cassandra/Handle.h"
-#include "data/cassandra/SettingsProvider.h"
 #include "data/cassandra/Types.h"
-#include "util/Expected.h"
-#include "util/config/Config.h"
 #include "util/log/Logger.h"
 
 #include <fmt/compile.h>
+
+#include <functional>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace data::cassandra {
 

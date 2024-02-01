@@ -1350,6 +1350,19 @@ parseTaker(boost::json::value const& taker)
         return Status{RippledError::rpcBAD_ISSUER, "invalidTakerAccount"};
     return *takerID;
 }
+
+ripple::Issue
+parseIssue(boost::json::object const& issue)
+{
+    Json::Value jv;
+    if (issue.contains(JS(issuer)) && issue.at(JS(issuer)).is_string())
+        jv["issuer"] = issue.at(JS(issuer)).as_string().c_str();
+    if (issue.contains(JS(currency)) && issue.at(JS(currency)).is_string())
+        jv["currency"] = issue.at(JS(currency)).as_string().c_str();
+
+    return ripple::issueFromJson(jv);
+}
+
 bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request)
 {

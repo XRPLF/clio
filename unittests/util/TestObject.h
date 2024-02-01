@@ -21,14 +21,25 @@
 
 #include "data/Types.h"
 
+#include <ripple/basics/Blob.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Issue.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/Protocol.h>
+#include <ripple/protocol/STAmount.h>
 #include <ripple/protocol/STBase.h>
+#include <ripple/protocol/STObject.h>
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/TxMeta.h>
+#include <ripple/protocol/UintTypes.h>
 
+#include <cstdint>
 #include <optional>
+#include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 /*
  * Create AccountID object with string
@@ -301,6 +312,34 @@ CreateAMMObject(
     uint32_t lpTokenBalanceIssueAmount = 100u,
     uint16_t tradingFee = 5u,
     uint64_t ownerNode = 0u
+);
+
+[[nodiscard]] ripple::STObject
+CreateBridgeObject(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer
+);
+
+[[nodiscard]] ripple::STObject
+CreateChainOwnedClaimIDObject(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer,
+    std::string_view otherChainSource
+);
+
+[[nodiscard]] ripple::STObject
+CreateChainOwnedCreateAccountClaimID(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer
 );
 
 void

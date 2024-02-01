@@ -22,6 +22,9 @@
 #include "data/BackendInterface.h"
 
 #include <boost/json.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 
 #include <cstdint>
 #include <optional>

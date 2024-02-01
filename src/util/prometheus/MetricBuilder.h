@@ -21,6 +21,11 @@
 
 #include "util/prometheus/MetricBase.h"
 
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace util::prometheus {
 
 /**
