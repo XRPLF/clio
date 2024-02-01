@@ -174,6 +174,46 @@ TEST_F(RPCMPTHoldersHandlerTest, MPTIDNotString)
     });
 }
 
+// error case: invalid marker format
+TEST_F(RPCMPTHoldersHandlerTest, MarkerInvalidFormat)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{MPTHoldersHandler{backend}};
+    auto const input = json::parse(fmt::format(
+        R"({{ 
+            "mpt_issuance_id": "{}",
+            "marker": "xxx"
+        }})",
+        MPTID
+    ));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "markerMalformed");
+    });
+}
+
+// error case: invalid marker type
+TEST_F(RPCMPTHoldersHandlerTest, MarkerNotString)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{MPTHoldersHandler{backend}};
+    auto const input = json::parse(fmt::format(
+        R"({{ 
+            "mpt_issuance_id": "{}",
+            "marker": 1
+        }})",
+        MPTID
+    ));
+        auto const output = handler.process(input, Context{std::ref(yield)});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "markerNotString");
+    });
+}
+
 // error case ledger non exist via hash
 TEST_F(RPCMPTHoldersHandlerTest, NonExistLedgerViaLedgerHash)
 {
@@ -347,6 +387,55 @@ TEST_F(RPCMPTHoldersHandlerTest, DefaultParameters)
     ON_CALL(*backend, doFetchLedgerObject(issuanceKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
     auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID));
+    std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
+    ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
+    EXPECT_CALL(
+        *backend, fetchMPTHolders(ripple::uint192(MPTID), testing::_, testing::Eq(std::nullopt), Const(30), testing::_)
+    )
+        .Times(1);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "mpt_issuance_id": "{}"
+        }})",
+        MPTID
+    ));
+    runSpawn([&, this](auto& yield) {
+        auto handler = AnyHandler{MPTHoldersHandler{this->backend}};
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(json::parse(currentOutput), *output);
+    });
+}
+
+TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
+{
+    // it's not possible to have locked_amount to be greater than mpt_amount,
+    // we are simply testing the response parsing of the api
+    auto const currentOutput = fmt::format(
+        R"({{
+        "mpt_issuance_id": "{}",
+        "limit":50,
+        "ledger_index": 30,
+        "mptokens": [{{
+            "account": "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN",
+            "flags": 0,
+            "mpt_amount": "0",
+            "locked_amount": "1",
+            "mptoken_index": "D137F2E5A5767A06CB7A8F060ADE442A30CFF95028E1AF4B8767E3A56877205A"
+        }}],
+        "validated": true
+    }})",
+        MPTID
+    );
+
+    backend->setRange(10, 30);
+    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerInfo));
+    auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(MPTID)).key;
+    ON_CALL(*backend, doFetchLedgerObject(issuanceKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
+
+    auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID), 0, 1);
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
     EXPECT_CALL(

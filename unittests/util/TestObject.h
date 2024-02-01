@@ -294,4 +294,4 @@ CreateDidObject(std::string_view accountId, std::string_view didDoc, std::string
 CreateMPTIssuanceObject(std::string_view accountId, std::uint32_t seq, std::string_view metadata);
 
 [[nodiscard]] ripple::STObject
-CreateMPTokenObject(std::string_view accountId, ripple::uint192 issuanceID);
+CreateMPTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std::uint64_t mptAmount = 1, std::uint64_t lockedAmount = 0);

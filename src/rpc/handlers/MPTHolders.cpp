@@ -80,7 +80,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
 
     boost::json::array mpts;
     for (auto const& mpt : dbResponse.mptokens) {
-        ripple::STLedgerEntry sle{ripple::SerialIter{mpt.data(), mpt.size()}, keylet::mptIssuance(mptID).key};
+        ripple::STLedgerEntry const sle{ripple::SerialIter{mpt.data(), mpt.size()}, keylet::mptIssuance(mptID).key};
         boost::json::object mptJson;
 
         mptJson[JS(account)] = toBase58(sle.getAccountID(ripple::sfAccount));
@@ -93,6 +93,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
 
         mptJson["mptoken_index"] =
             ripple::to_string(ripple::keylet::mptoken(mptID, sle.getAccountID(ripple::sfAccount)).key);
+
         output.mpts.push_back(mptJson);
     }
 
