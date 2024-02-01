@@ -125,7 +125,7 @@ RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
     if (sslEnabled_) {
         auto streamData = impl::SslTcpStreamData::create(yield);
         if (not streamData.has_value())
-            return Unexpected{std::move(streamData.error())};
+            return Unexpected{std::move(streamData).error()};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -135,7 +135,7 @@ RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
             errorCode.assign(static_cast<int>(::ERR_get_error()), asio::error::get_ssl_category());
             return Unexpected{RequestError{"SSL setup failed", errorCode}};
         }
-        return doRequestImpl(std::move(streamData.value()), yield, method);
+        return doRequestImpl(std::move(streamData).value(), yield, method);
     }
 
     auto streamData = impl::TcpStreamData{yield};
@@ -148,7 +148,6 @@ RequestBuilder::doRequestImpl(StreamDataType&& streamData, asio::yield_context y
 {
     auto executor = asio::get_associated_executor(yield);
 
-    // Look up the domain name
     beast::error_code errorCode;
     tcp::resolver resolver(executor);
     auto const resolverResult = resolver.async_resolve(host_, port_, yield[errorCode]);
@@ -157,16 +156,13 @@ RequestBuilder::doRequestImpl(StreamDataType&& streamData, asio::yield_context y
 
     auto& stream = streamData.stream;
 
-    // Make the connection on the IP address we get from a lookup
     beast::get_lowest_layer(stream).expires_after(timeout_);
     beast::get_lowest_layer(stream).async_connect(resolverResult, yield[errorCode]);
     if (errorCode)
         return Unexpected{RequestError{"Connection error", errorCode}};
 
-    // Set up HTTP method
     request_.method(method);
 
-    // Perform SSL handshake
     if constexpr (StreamDataType::sslEnabled) {
         beast::get_lowest_layer(stream).expires_after(timeout_);
         stream.async_handshake(asio::ssl::stream_base::client, yield[errorCode]);
@@ -174,18 +170,14 @@ RequestBuilder::doRequestImpl(StreamDataType&& streamData, asio::yield_context y
             return Unexpected{RequestError{"Handshake error", errorCode}};
     }
 
-    // Send the HTTP request to the remote host
     beast::get_lowest_layer(stream).expires_after(timeout_);
     http::async_write(stream, request_, yield[errorCode]);
     if (errorCode)
         return Unexpected{RequestError{"Write error", errorCode}};
 
-    // This buffer is used for reading and must be persisted
     beast::flat_buffer buffer;
-    // Declare a container to hold the response
     http::response<http::string_body> response;
 
-    // Receive the HTTP response
     http::async_read(stream, buffer, response, yield[errorCode]);
     if (errorCode)
         return Unexpected{RequestError{"Read error", errorCode}};
@@ -193,12 +185,8 @@ RequestBuilder::doRequestImpl(StreamDataType&& streamData, asio::yield_context y
     if (response.result() != http::status::ok)
         return Unexpected{RequestError{"Response status not OK"}};
 
-    // Gracefully close the socket
     beast::get_lowest_layer(stream).socket().shutdown(tcp::socket::shutdown_both, errorCode);
 
-    // not_connected happens sometimes
-    // so don't bother reporting it.
-    //
     if (errorCode && errorCode != beast::errc::not_connected)
         return Unexpected{RequestError{"Shutdown socket error", errorCode}};
 

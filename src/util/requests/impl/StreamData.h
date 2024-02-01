@@ -65,7 +65,7 @@ public:
         if (not sslContext.has_value()) {
             return Unexpected{std::move(sslContext.error())};
         }
-        return SslStreamData{std::move(sslContext.value()), yield};
+        return SslStreamData{std::move(sslContext).value(), yield};
     }
 
     StreamType stream;

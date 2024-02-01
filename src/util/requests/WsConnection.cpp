@@ -106,7 +106,7 @@ WsConnectionBuilder::connect(asio::yield_context yield) const
     if (sslEnabled_) {
         auto streamData = impl::SslWsStreamData::create(yield);
         if (not streamData.has_value())
-            return Unexpected{std::move(streamData.error())};
+            return Unexpected{std::move(streamData).error()};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -116,59 +116,47 @@ WsConnectionBuilder::connect(asio::yield_context yield) const
             errorCode.assign(static_cast<int>(::ERR_get_error()), beast::net::error::get_ssl_category());
             return Unexpected{RequestError{"SSL setup failed", errorCode}};
         }
-        return connectImpl(std::move(streamData.value()), yield);
+        return connectImpl(std::move(streamData).value(), yield);
     }
 
     return connectImpl(impl::WsStreamData{yield}, yield);
 }
 
-template <class StreamDataType>
+template <typename StreamDataType>
 Expected<WsConnectionPtr, RequestError>
 WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_context yield) const
 {
     auto context = asio::get_associated_executor(yield);
     beast::error_code errorCode;
 
-    // These objects perform our I/O
     asio::ip::tcp::resolver resolver(context);
-
-    // Look up the domain name
     auto const results = resolver.async_resolve(host_, port_, yield[errorCode]);
     if (errorCode)
         return Unexpected{RequestError{"Resolve error", errorCode}};
 
     auto& ws = streamData.stream;
-    // Set a timeout on the operation
-    beast::get_lowest_layer(ws).expires_after(timeout_);
 
-    // Make the connection on the IP address we get from a lookup
+    beast::get_lowest_layer(ws).expires_after(timeout_);
     auto endpoint = beast::get_lowest_layer(ws).async_connect(results, yield[errorCode]);
     if (errorCode)
         return Unexpected{RequestError{"Connect error", errorCode}};
 
     if constexpr (StreamDataType::sslEnabled) {
-        // Set a timeout on the operation
         beast::get_lowest_layer(ws).expires_after(timeout_);
-        // Perform the SSL handshake
         ws.next_layer().async_handshake(asio::ssl::stream_base::client, yield[errorCode]);
         if (errorCode)
             return Unexpected{RequestError{"SSL handshake error", errorCode}};
     }
 
-    // Turn off the timeout on the tcp_stream, because
-    // the websocket stream has its own timeout system.
+    // Turn off the timeout on the tcp_stream, because the websocket stream has its own timeout system
     beast::get_lowest_layer(ws).expires_never();
 
-    // Set suggested timeout settings for the websocket
     ws.set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
-
-    // Set a decorator to change the User-Agent of the handshake
     ws.set_option(websocket::stream_base::decorator([this](websocket::request_type& req) {
         for (auto const& header : headers_)
             req.set(header.name, header.value);
     }));
 
-    // Perform the websocket handshake
     std::string const host = fmt::format("{}:{}", host_, endpoint.port());
     ws.async_handshake(host, target_, yield[errorCode]);
     if (errorCode)
