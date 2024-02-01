@@ -84,7 +84,9 @@ TEST(LedgerUtilsTests, DeletionBlockerTypes)
         ripple::ltRIPPLE_STATE,
         ripple::ltXCHAIN_OWNED_CLAIM_ID,
         ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID,
-        ripple::ltBRIDGE
+        ripple::ltBRIDGE,
+        ripple::ltMPTOKEN_ISSUANCE,
+        ripple::ltMPTOKEN
     };
 
     ASSERT_TRUE(std::size(deletionBlockers) == testedTypes.size());
