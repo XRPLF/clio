@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/requests/Retry.h"
+#include "util/Retry.h"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
@@ -28,7 +28,7 @@
 #include <memory>
 #include <utility>
 
-namespace util::requests {
+namespace util {
 
 RetryStrategy::RetryStrategy(std::chrono::steady_clock::duration delay) : delay_(delay)
 {
@@ -105,4 +105,4 @@ makeRetryExponentialBackoff(
     return Retry(std::make_unique<ExponentialBackoff>(delay, maxDelay), std::move(strand));
 }
 
-}  // namespace util::requests
+}  // namespace util

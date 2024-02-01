@@ -27,7 +27,7 @@
 #include <cstddef>
 #include <memory>
 
-namespace util::requests {
+namespace util {
 
 class RetryStrategy {
     std::chrono::steady_clock::duration delay_;
@@ -101,4 +101,4 @@ makeRetryExponentialBackoff(
     boost::asio::strand<boost::asio::io_context::executor_type> strand
 );
 
-}  // namespace util::requests
+}  // namespace util

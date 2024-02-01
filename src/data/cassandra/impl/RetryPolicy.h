@@ -21,8 +21,8 @@
 
 #include "data/cassandra/Error.h"
 #include "data/cassandra/Types.h"
+#include "util/Retry.h"
 #include "util/log/Logger.h"
-#include "util/requests/Retry.h"
 
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
@@ -38,14 +38,14 @@ namespace data::cassandra::detail {
 class ExponentialBackoffRetryPolicy {
     util::Logger log_{"Backend"};
 
-    util::requests::Retry retry_;
+    util::Retry retry_;
 
 public:
     /**
      * @brief Create a new retry policy instance with the io_context provided
      */
     ExponentialBackoffRetryPolicy(boost::asio::io_context& ioc)
-        : retry_(util::requests::makeRetryExponentialBackoff(
+        : retry_(util::makeRetryExponentialBackoff(
               std::chrono::milliseconds(1),
               std::chrono::seconds(1),
               boost::asio::make_strand(ioc)
