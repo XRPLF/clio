@@ -22,8 +22,10 @@
 #include "web/interface/ConnectionBase.h"
 
 #include <boost/beast.hpp>
+#include <boost/beast/core/error.hpp>
 
 #include <memory>
+#include <string>
 
 namespace web {
 

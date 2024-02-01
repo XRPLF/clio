@@ -6,7 +6,7 @@ runs:
     - name: Run tests
       shell: bash
       run: |
-        build/clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+        build/clio_tests --backend_host=scylladb
 
     - name: Run gcovr
       shell: bash
@@ -21,9 +21,13 @@ runs:
         retention-days: 30
 
     - name: Upload coverage report
-      uses: codecov/codecov-action@v3
+      uses: wandalen/wretry.action@v1.3.0
       with:
-        files: build/coverage_report.xml
-        fail_ci_if_error: true
-        verbose: true
-        token: ${{ env.CODECOV_TOKEN }}
+        action: codecov/codecov-action@v3
+        with: |
+          files: build/coverage_report.xml 
+          fail_ci_if_error: true
+          verbose: true
+          token: ${{ env.CODECOV_TOKEN }}
+        attempt_limit: 5
+        attempt_delay: 10000

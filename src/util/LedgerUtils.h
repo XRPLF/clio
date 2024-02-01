@@ -22,12 +22,34 @@
 #include <fmt/core.h>
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/StringUtilities.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/jss.h>
 
-#include <sstream>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
 namespace util {
+
+/**
+ * @brief Returns a string set of all supported ledger entry types.
+ */
+std::unordered_set<std::string> const&
+getLedgerEntryTypeStrs();
+
+/**
+ * @brief Return the ledger type from a string representation.
+ */
+ripple::LedgerEntryType
+getLedgerEntryTypeFromStr(std::string const& entryName);
+
+/**
+ * @brief Return the list of ledger entry types which will block the account deletion.
+ */
+std::vector<ripple::LedgerEntryType> const&
+getDeletionBlockerLedgerTypes();
 
 /**
  * @brief Deserializes a ripple::LedgerHeader from ripple::Slice of data.

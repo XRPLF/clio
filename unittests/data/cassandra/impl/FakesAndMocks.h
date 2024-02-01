@@ -20,8 +20,13 @@
 #include "data/cassandra/Error.h"
 #include "data/cassandra/impl/AsyncExecutor.h"
 
+#include <boost/asio/io_context.hpp>
+#include <cassandra.h>
 #include <gmock/gmock.h>
 
+#include <chrono>
+#include <cstdint>
+#include <functional>
 #include <vector>
 
 using namespace data::cassandra;

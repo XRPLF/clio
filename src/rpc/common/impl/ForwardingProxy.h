@@ -19,16 +19,18 @@
 
 #pragma once
 
-#include "etl/LoadBalancer.h"
-#include "etl/Source.h"
-#include "rpc/Counters.h"
+#include "rpc/Errors.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
 #include "util/log/Logger.h"
 #include "web/Context.h"
 
+#include <ripple/protocol/ErrorCodes.h>
+
+#include <functional>
 #include <memory>
 #include <string>
+#include <unordered_set>
 
 namespace rpc::detail {
 
@@ -104,6 +106,7 @@ public:
     {
         static std::unordered_set<std::string> const proxiedCommands{
             "server_definitions",
+            "server_state",
             "submit",
             "submit_multisigned",
             "fee",

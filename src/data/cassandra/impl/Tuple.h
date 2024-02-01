@@ -24,10 +24,14 @@
 #include <cassandra.h>
 #include <ripple/basics/base_uint.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
 
 namespace data::cassandra::detail {
 

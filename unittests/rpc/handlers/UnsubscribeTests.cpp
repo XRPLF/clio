@@ -25,8 +25,6 @@
 #include "util/Fixtures.h"
 #include "util/MockSubscriptionManager.h"
 #include "util/MockWsBase.h"
-#include "util/Taggable.h"
-#include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
 
 #include <boost/json/parse.hpp>
@@ -56,9 +54,7 @@ protected:
     {
         HandlerBaseTest::SetUp();
         MockSubscriptionManagerTest::SetUp();
-        util::Config const cfg;
-        util::TagDecoratorFactory const tagDecoratorFactory{cfg};
-        session_ = std::make_shared<MockSession>(tagDecoratorFactory);
+        session_ = std::make_shared<MockSession>();
     }
     void
     TearDown() override

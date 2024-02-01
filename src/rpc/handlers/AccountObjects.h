@@ -20,12 +20,26 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "rpc/RPCHelpers.h"
+#include "rpc/JS.h"
 #include "rpc/common/Modifiers.h"
+#include "rpc/common/Specs.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
+#include "util/LedgerUtils.h"
 
-#include <set>
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/jss.h>
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace rpc {
 
@@ -80,6 +94,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
+        auto const& ledgerTypeStrs = util::getLedgerEntryTypeStrs();
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
@@ -90,7 +105,7 @@ public:
              modifiers::Clamp<int32_t>(LIMIT_MIN, LIMIT_MAX)},
             {JS(type),
              validation::Type<std::string>{},
-             validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend())},
+             validation::OneOf<std::string>(ledgerTypeStrs.cbegin(), ledgerTypeStrs.cend())},
             {JS(marker), validation::AccountMarkerValidator},
             {JS(deletion_blockers_only), validation::Type<bool>{}},
         };

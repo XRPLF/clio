@@ -17,13 +17,11 @@
 */
 //==============================================================================
 
-#include "feed/FeedBaseTest.h"
+#include "feed/FeedTestUtil.h"
 #include "feed/impl/SingleFeedBase.h"
 #include "util/Fixtures.h"
 #include "util/MockPrometheus.h"
 #include "util/MockWsBase.h"
-#include "util/Taggable.h"
-#include "util/config/Config.h"
 #include "util/prometheus/Gauge.h"
 #include "web/interface/ConnectionBase.h"
 
@@ -40,16 +38,17 @@ using namespace util::prometheus;
 
 struct FeedBaseMockPrometheusTest : WithMockPrometheus, SyncAsioContextTest {
 protected:
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
     std::shared_ptr<web::ConnectionBase> sessionPtr;
     std::shared_ptr<SingleFeedBase> testFeedPtr;
+    MockSession* mockSessionPtr = nullptr;
 
     void
     SetUp() override
     {
         SyncAsioContextTest::SetUp();
         testFeedPtr = std::make_shared<SingleFeedBase>(ctx, "testFeed");
-        sessionPtr = std::make_shared<MockSession>(tagDecoratorFactory);
+        sessionPtr = std::make_shared<MockSession>();
+        mockSessionPtr = dynamic_cast<MockSession*>(sessionPtr.get());
     }
     void
     TearDown() override
@@ -91,29 +90,27 @@ using SingleFeedBaseTest = FeedBaseTest<NamedSingleFeedTest>;
 
 TEST_F(SingleFeedBaseTest, Test)
 {
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED))).Times(1);
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
     testFeedPtr->pub(FEED);
     ctx.run();
 
-    EXPECT_EQ(receivedFeedMessage(), FEED);
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
-    cleanReceivedFeed();
     testFeedPtr->pub(FEED);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(SingleFeedBaseTest, TestAutoDisconnect)
 {
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED))).Times(1);
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
     testFeedPtr->pub(FEED);
     ctx.run();
 
-    EXPECT_EQ(receivedFeedMessage(), FEED);
     sessionPtr.reset();
     EXPECT_EQ(testFeedPtr->count(), 0);
 }

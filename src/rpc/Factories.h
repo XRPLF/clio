@@ -19,17 +19,20 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
+#include "data/Types.h"
 #include "rpc/Errors.h"
 #include "rpc/common/APIVersion.h"
 #include "util/Expected.h"
+#include "util/Taggable.h"
 #include "web/Context.h"
 #include "web/interface/ConnectionBase.h"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
 
-#include <optional>
+#include <functional>
+#include <memory>
 #include <string>
 
 /*

@@ -20,9 +20,12 @@
 #pragma once
 
 #include "rpc/common/AnyHandler.h"
-#include "rpc/common/Types.h"
+#include "rpc/common/HandlerProvider.h"
 
 #include <gmock/gmock.h>
+
+#include <optional>
+#include <string>
 
 struct MockHandlerProvider : public rpc::HandlerProvider {
 public:

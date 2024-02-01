@@ -22,7 +22,10 @@
 #include "etl/ETLHelpers.h"
 #include "util/log/Logger.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace etl::detail {

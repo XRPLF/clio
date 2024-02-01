@@ -19,16 +19,19 @@
 
 #pragma once
 
-#include "rpc/Factories.h"
+#include "rpc/Errors.h"
 #include "rpc/common/Specs.h"
+#include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
 #include "web/DOSGuard.h"
 
+#include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
 #include <gmock/gmock.h>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 

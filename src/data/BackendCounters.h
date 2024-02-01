@@ -19,14 +19,17 @@
 
 #pragma once
 
-#include "util/prometheus/Prometheus.h"
+#include "util/prometheus/Counter.h"
+#include "util/prometheus/Gauge.h"
+#include "util/prometheus/Histogram.h"
 
 #include <boost/json/object.hpp>
 
-#include <atomic>
+#include <chrono>
+#include <cstdint>
 #include <functional>
 #include <memory>
-#include <utility>
+#include <string>
 
 namespace data {
 

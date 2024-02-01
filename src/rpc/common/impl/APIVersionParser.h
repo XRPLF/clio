@@ -24,7 +24,10 @@
 #include "util/config/Config.h"
 #include "util/log/Logger.h"
 
+#include <boost/json/object.hpp>
+
 #include <algorithm>
+#include <cstdint>
 #include <string>
 
 namespace rpc::detail {

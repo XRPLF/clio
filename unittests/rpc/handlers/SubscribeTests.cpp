@@ -27,9 +27,7 @@
 #include "util/Fixtures.h"
 #include "util/MockPrometheus.h"
 #include "util/MockWsBase.h"
-#include "util/Taggable.h"
 #include "util/TestObject.h"
-#include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
 
 #include <boost/json/parse.hpp>
@@ -72,8 +70,7 @@ protected:
         HandlerBaseTest::SetUp();
 
         subManager_ = std::make_shared<feed::SubscriptionManager>(ctx, backend);
-        util::TagDecoratorFactory const tagDecoratorFactory{util::Config{}};
-        session_ = std::make_shared<MockSession>(tagDecoratorFactory);
+        session_ = std::make_shared<MockSession>();
     }
     void
     TearDown() override

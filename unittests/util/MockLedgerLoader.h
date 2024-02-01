@@ -20,9 +20,12 @@
 #pragma once
 
 #include "etl/impl/LedgerLoader.h"
+#include "util/FakeFetchResponse.h"
 
 #include <gmock/gmock.h>
+#include <ripple/protocol/LedgerHeader.h>
 
+#include <cstdint>
 #include <optional>
 
 struct MockLedgerLoader {

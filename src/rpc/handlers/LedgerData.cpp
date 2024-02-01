@@ -24,6 +24,7 @@
 #include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
+#include "util/LedgerUtils.h"
 #include "util/log/Logger.h"
 
 #include <boost/json/conversion.hpp>
@@ -42,45 +43,12 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
-#include <iterator>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
 
 namespace rpc {
-
-std::unordered_map<std::string, ripple::LedgerEntryType> const LedgerDataHandler::TYPES_MAP{
-    {JS(account), ripple::ltACCOUNT_ROOT},
-    {JS(did), ripple::ltDID},
-    {JS(amendments), ripple::ltAMENDMENTS},
-    {JS(check), ripple::ltCHECK},
-    {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
-    {JS(directory), ripple::ltDIR_NODE},
-    {JS(escrow), ripple::ltESCROW},
-    {JS(fee), ripple::ltFEE_SETTINGS},
-    {JS(hashes), ripple::ltLEDGER_HASHES},
-    {JS(offer), ripple::ltOFFER},
-    {JS(payment_channel), ripple::ltPAYCHAN},
-    {JS(signer_list), ripple::ltSIGNER_LIST},
-    {JS(state), ripple::ltRIPPLE_STATE},
-    {JS(ticket), ripple::ltTICKET},
-    {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
-    {JS(nft_page), ripple::ltNFTOKEN_PAGE},
-    {JS(amm), ripple::ltAMM},
-    {JS(mpt_issuance), ripple::ltMPTOKEN_ISSUANCE},
-    {JS(mptoken), ripple::ltMPTOKEN}};
-
-// TODO: should be std::views::keys when clang supports it
-std::unordered_set<std::string> const LedgerDataHandler::TYPES_KEYS = [] {
-    std::unordered_set<std::string> keys;
-    std::transform(TYPES_MAP.begin(), TYPES_MAP.end(), std::inserter(keys, keys.begin()), [](auto const& pair) {
-        return pair.first;
-    });
-    return keys;
-}();
 
 LedgerDataHandler::Result
 LedgerDataHandler::process(Input input, Context const& ctx) const
@@ -255,7 +223,7 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
     }
 
     if (jsonObject.contains(JS(type)))
-        input.type = LedgerDataHandler::TYPES_MAP.at(jsonObject.at(JS(type)).as_string().c_str());
+        input.type = util::getLedgerEntryTypeFromStr(jsonObject.at(JS(type)).as_string().c_str());
 
     return input;
 }

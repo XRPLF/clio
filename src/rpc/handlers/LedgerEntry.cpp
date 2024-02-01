@@ -30,13 +30,16 @@
 #include <boost/json/value_to.hpp>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
+#include <ripple/json/json_value.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Issue.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/SField.h>
 #include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/STXChainBridge.h>
 #include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
@@ -111,6 +114,24 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
                   getIssuerFromJson(input.amm->at(JS(asset))), getIssuerFromJson(input.amm->at(JS(asset2)))
         )
                   .key;
+    } else if (input.bridge) {
+        if (!input.bridgeAccount && !input.chainClaimId && !input.createAccountClaimId)
+            return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
+
+        if (input.bridgeAccount) {
+            auto const bridgeAccount = ripple::parseBase58<ripple::AccountID>(*(input.bridgeAccount));
+            auto const chainType = ripple::STXChainBridge::srcChain(bridgeAccount == input.bridge->lockingChainDoor());
+
+            if (bridgeAccount != input.bridge->door(chainType))
+                return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
+
+            key = ripple::keylet::bridge(input.bridge->value(), chainType).key;
+        } else if (input.chainClaimId) {
+            key = ripple::keylet::xChainClaimID(input.bridge->value(), input.chainClaimId.value()).key;
+        } else {
+            key = ripple::keylet::xChainCreateAccountClaimID(input.bridge->value(), input.createAccountClaimId.value())
+                      .key;
+        }
     } else if (input.mptIssuance) {
         auto const mptIssuanceID = ripple::uint192{std::string_view(*(input.mptIssuance))};
         key = ripple::keylet::mptIssuance(mptIssuanceID).key;
@@ -234,7 +255,25 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(ticket), ripple::ltTICKET},
         {JS(nft_page), ripple::ltNFTOKEN_PAGE},
         {JS(amm), ripple::ltAMM},
-        {JS(mptoken), ripple::ltMPTOKEN}};
+        {JS(xchain_owned_create_account_claim_id), ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
+        {JS(xchain_owned_claim_id), ripple::ltXCHAIN_OWNED_CLAIM_ID},
+        {JS(mptoken), ripple::ltMPTOKEN},
+    };
+
+    auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {
+        auto const lockingDoor = *ripple::parseBase58<ripple::AccountID>(
+            bridgeJson.at(ripple::sfLockingChainDoor.getJsonName().c_str()).as_string().c_str()
+        );
+        auto const issuingDoor = *ripple::parseBase58<ripple::AccountID>(
+            bridgeJson.at(ripple::sfIssuingChainDoor.getJsonName().c_str()).as_string().c_str()
+        );
+        auto const lockingIssue =
+            parseIssue(bridgeJson.at(ripple::sfLockingChainIssue.getJsonName().c_str()).as_object());
+        auto const issuingIssue =
+            parseIssue(bridgeJson.at(ripple::sfIssuingChainIssue.getJsonName().c_str()).as_object());
+
+        return ripple::STXChainBridge{lockingDoor, lockingIssue, issuingDoor, issuingIssue};
+    };
 
     auto const indexFieldType =
         std::find_if(indexFieldTypeMap.begin(), indexFieldTypeMap.end(), [&jsonObject](auto const& pair) {
@@ -269,6 +308,19 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.ticket = jv.at(JS(ticket)).as_object();
     } else if (jsonObject.contains(JS(amm))) {
         input.amm = jv.at(JS(amm)).as_object();
+    } else if (jsonObject.contains(JS(bridge))) {
+        input.bridge.emplace(parseBridgeFromJson(jv.at(JS(bridge))));
+        if (jsonObject.contains(JS(bridge_account)))
+            input.bridgeAccount = jv.at(JS(bridge_account)).as_string().c_str();
+    } else if (jsonObject.contains(JS(xchain_owned_claim_id))) {
+        input.bridge.emplace(parseBridgeFromJson(jv.at(JS(xchain_owned_claim_id))));
+        input.chainClaimId =
+            boost::json::value_to<std::int32_t>(jv.at(JS(xchain_owned_claim_id)).at(JS(xchain_owned_claim_id)));
+    } else if (jsonObject.contains(JS(xchain_owned_create_account_claim_id))) {
+        input.bridge.emplace(parseBridgeFromJson(jv.at(JS(xchain_owned_create_account_claim_id))));
+        input.createAccountClaimId = boost::json::value_to<std::int32_t>(
+            jv.at(JS(xchain_owned_create_account_claim_id)).at(JS(xchain_owned_create_account_claim_id))
+        );
     } else if (jsonObject.contains(JS(mptoken))) {
         input.mptoken = jv.at(JS(mptoken)).as_object();
     }

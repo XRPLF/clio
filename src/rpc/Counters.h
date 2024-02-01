@@ -20,11 +20,13 @@
 #pragma once
 
 #include "rpc/WorkQueue.h"
-#include "util/prometheus/Prometheus.h"
+#include "util/prometheus/Counter.h"
 
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
 
 #include <chrono>
+#include <functional>
 #include <mutex>
 #include <string>
 #include <unordered_map>

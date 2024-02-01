@@ -20,9 +20,12 @@
 #pragma once
 
 #include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
 
 #include <concepts>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace web {

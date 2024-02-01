@@ -20,10 +20,31 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "rpc/RPCHelpers.h"
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
 #include "rpc/common/MetaProcessors.h"
+#include "rpc/common/Specs.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
+
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/Issue.h>
+#include <ripple/protocol/LedgerFormats.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/jss.h>
+#include <ripple/protocol/tokens.h>
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <variant>
 
 namespace rpc {
 
@@ -69,6 +90,10 @@ public:
         std::optional<boost::json::object> ticket;
         std::optional<boost::json::object> amm;
         std::optional<boost::json::object> mptoken;
+        std::optional<ripple::STXChainBridge> bridge;
+        std::optional<std::string> bridgeAccount;
+        std::optional<uint32_t> chainClaimId;
+        std::optional<uint32_t> createAccountClaimId;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -106,26 +131,23 @@ public:
         static auto const malformedRequestIntValidator =
             meta::WithCustomError{validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_REQUEST)};
 
-        static auto const ammAssetValidator =
-            validation::CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
-                if (!value.is_object()) {
-                    return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
-                }
-
-                Json::Value jvAsset;
-                if (value.as_object().contains(JS(issuer)))
-                    jvAsset["issuer"] = value.at(JS(issuer)).as_string().c_str();
-                if (value.as_object().contains(JS(currency)))
-                    jvAsset["currency"] = value.at(JS(currency)).as_string().c_str();
-                // same as rippled
-                try {
-                    ripple::issueFromJson(jvAsset);
-                } catch (std::runtime_error const&) {
-                    return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
-                }
-
-                return MaybeError{};
-            }};
+        static auto const bridgeJsonValidator = meta::WithCustomError{
+            meta::IfType<boost::json::object>{meta::Section{
+                {ripple::sfLockingChainDoor.getJsonName().c_str(),
+                 validation::Required{},
+                 validation::AccountBase58Validator},
+                {ripple::sfIssuingChainDoor.getJsonName().c_str(),
+                 validation::Required{},
+                 validation::AccountBase58Validator},
+                {ripple::sfLockingChainIssue.getJsonName().c_str(),
+                 validation::Required{},
+                 validation::CurrencyIssueValidator},
+                {ripple::sfIssuingChainIssue.getJsonName().c_str(),
+                 validation::Required{},
+                 validation::CurrencyIssueValidator},
+            }},
+            Status(ClioError::rpcMALFORMED_REQUEST)
+        };
 
         static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
@@ -198,14 +220,45 @@ public:
                      {JS(asset),
                       meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
                       meta::WithCustomError{
-                          validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)},
-                      ammAssetValidator},
+                          validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
+                      },
+                      validation::CurrencyIssueValidator},
                      {JS(asset2),
                       meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
                       meta::WithCustomError{
-                          validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)},
-                      ammAssetValidator},
+                          validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
+                      },
+                      validation::CurrencyIssueValidator},
                  },
+             }},
+            {JS(bridge),
+             meta::WithCustomError{validation::Type<boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+             bridgeJsonValidator},
+            {JS(bridge_account),
+             meta::WithCustomError{validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_REQUEST)}},
+            {JS(xchain_owned_claim_id),
+             meta::WithCustomError{
+                 validation::Type<std::string, boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
+             },
+             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             bridgeJsonValidator,
+             meta::WithCustomError{
+                 meta::IfType<boost::json::object>{
+                     meta::Section{{JS(xchain_owned_claim_id), validation::Required{}, validation::Type<uint32_t>{}}}
+                 },
+                 Status(ClioError::rpcMALFORMED_REQUEST)
+             }},
+            {JS(xchain_owned_create_account_claim_id),
+             meta::WithCustomError{
+                 validation::Type<std::string, boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
+             },
+             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             bridgeJsonValidator,
+             meta::WithCustomError{
+                 meta::IfType<boost::json::object>{meta::Section{
+                     {JS(xchain_owned_create_account_claim_id), validation::Required{}, validation::Type<uint32_t>{}}
+                 }},
+                 Status(ClioError::rpcMALFORMED_REQUEST)
              }},
             {JS(mpt_issuance), validation::Uint192HexStringValidator},
             {JS(mptoken),
@@ -216,7 +269,8 @@ public:
                      {JS(account), validation::Required{}, validation::AccountBase58Validator},
                      {JS(mpt_issuance_id), validation::Required{}, validation::Uint192HexStringValidator},
                  },
-             }}};
+             }}
+        };
 
         return rpcSpec;
     }

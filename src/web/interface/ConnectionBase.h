@@ -22,8 +22,14 @@
 #include "util/Taggable.h"
 
 #include <boost/beast/http.hpp>
+#include <boost/beast/http/status.hpp>
 #include <boost/signals2.hpp>
+#include <boost/signals2/variadic_signal.hpp>
 
+#include <cstdint>
+#include <memory>
+#include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace web {

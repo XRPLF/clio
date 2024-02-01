@@ -27,10 +27,12 @@
 // this is used by clang on linux where source_location is still not out of
 // experimental headers
 #include <experimental/source_location>
-#endif
 
-#include <optional>
-#include <string>
+#else
+
+#include <cstddef>
+#include <string_view>
+#endif
 
 namespace util {
 

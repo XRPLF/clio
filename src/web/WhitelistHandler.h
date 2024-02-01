@@ -23,13 +23,21 @@
 #include "web/Resolver.h"
 
 #include <boost/asio.hpp>
+#include <boost/asio/ip/address.hpp>
+#include <boost/asio/ip/network_v4.hpp>
+#include <boost/asio/ip/network_v6.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <fmt/core.h>
 
+#include <algorithm>
+#include <functional>
 #include <regex>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace web {
 

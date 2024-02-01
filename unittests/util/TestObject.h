@@ -21,20 +21,43 @@
 
 #include "data/Types.h"
 
+#include <ripple/basics/Blob.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Issue.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/Protocol.h>
+#include <ripple/protocol/STAmount.h>
 #include <ripple/protocol/STBase.h>
+#include <ripple/protocol/STObject.h>
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/TxMeta.h>
+#include <ripple/protocol/UintTypes.h>
 
+#include <cstdint>
 #include <optional>
+#include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 /*
  * Create AccountID object with string
  */
 [[nodiscard]] ripple::AccountID
 GetAccountIDWithString(std::string_view id);
+
+/**
+ * Create AccountID object with string and return its key
+ */
+[[nodiscard]] ripple::uint256
+GetAccountKey(std::string_view id);
+
+/*
+ * Gets the account key from an account id
+ */
+[[nodiscard]] ripple::uint256
+GetAccountKey(ripple::AccountID const& acc);
 
 /*
  * Create a simple ledgerInfo object with only hash and seq
@@ -284,11 +307,59 @@ CreateAMMObject(
     std::string_view assetCurrency,
     std::string_view assetIssuer,
     std::string_view asset2Currency,
-    std::string_view asset2Issuer
+    std::string_view asset2Issuer,
+    std::string_view lpTokenBalanceIssueCurrency = "03930D02208264E2E40EC1B0C09E4DB96EE197B1",
+    uint32_t lpTokenBalanceIssueAmount = 100u,
+    uint16_t tradingFee = 5u,
+    uint64_t ownerNode = 0u
+);
+
+[[nodiscard]] ripple::STObject
+CreateBridgeObject(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer
+);
+
+[[nodiscard]] ripple::STObject
+CreateChainOwnedClaimIDObject(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer,
+    std::string_view otherChainSource
+);
+
+[[nodiscard]] ripple::STObject
+CreateChainOwnedCreateAccountClaimID(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer
+);
+
+void
+AMMAddVoteSlot(ripple::STObject& amm, ripple::AccountID const& accountId, uint16_t tradingFee, uint32_t voteWeight);
+
+void
+AMMSetAuctionSlot(
+    ripple::STObject& amm,
+    ripple::AccountID const& accountId,
+    ripple::STAmount price,
+    uint16_t discountedFee,
+    uint32_t expiration,
+    std::vector<ripple::AccountID> const& authAccounts = {}
 );
 
 [[nodiscard]] ripple::STObject
 CreateDidObject(std::string_view accountId, std::string_view didDoc, std::string_view uri, std::string_view data);
+
+[[nodiscard]] ripple::Currency
+CreateLPTCurrency(std::string_view assetCurrency, std::string_view asset2Currency);
 
 [[nodiscard]] ripple::STObject
 CreateMPTIssuanceObject(std::string_view accountId, std::uint32_t seq, std::string_view metadata);

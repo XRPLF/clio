@@ -21,22 +21,23 @@
 
 #include "util/Fixtures.h"
 #include "util/MockWsBase.h"
-#include "util/Taggable.h"
-#include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
 
+#include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
 
 #include <memory>
+#include <ostream>
 #include <string>
+#include <utility>
 
 // Base class for feed tests, providing easy way to access the received feed
 template <typename TestedFeed>
 class FeedBaseTest : public SyncAsioContextTest, public MockBackendTest {
 protected:
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
     std::shared_ptr<web::ConnectionBase> sessionPtr;
     std::shared_ptr<TestedFeed> testFeedPtr;
+    MockSession* mockSessionPtr = nullptr;
 
     void
     SetUp() override
@@ -44,7 +45,8 @@ protected:
         SyncAsioContextTest::SetUp();
         MockBackendTest::SetUp();
         testFeedPtr = std::make_shared<TestedFeed>(ctx);
-        sessionPtr = std::make_shared<MockSession>(tagDecoratorFactory);
+        sessionPtr = std::make_shared<MockSession>();
+        mockSessionPtr = dynamic_cast<MockSession*>(sessionPtr.get());
     }
 
     void
@@ -55,20 +57,41 @@ protected:
         MockBackendTest::TearDown();
         SyncAsioContextTest::TearDown();
     }
+};
 
-    std::string const&
-    receivedFeedMessage() const
+namespace detail {
+class SharedStringJsonEqMatcher {
+    std::string expected_;
+
+public:
+    using is_gtest_matcher = void;
+
+    explicit SharedStringJsonEqMatcher(std::string expected) : expected_(std::move(expected))
     {
-        auto const mockSession = dynamic_cast<MockSession*>(sessionPtr.get());
-        [&] { ASSERT_NE(mockSession, nullptr); }();
-        return mockSession->message;
+    }
+
+    bool
+    MatchAndExplain(std::shared_ptr<std::string> const& arg, std::ostream* /* listener */) const
+    {
+        return boost::json::parse(*arg) == boost::json::parse(expected_);
     }
 
     void
-    cleanReceivedFeed()
+    DescribeTo(std::ostream* os) const
     {
-        auto mockSession = dynamic_cast<MockSession*>(sessionPtr.get());
-        [&] { ASSERT_NE(mockSession, nullptr); }();
-        mockSession->message.clear();
+        *os << "Contains json " << expected_;
+    }
+
+    void
+    DescribeNegationTo(std::ostream* os) const
+    {
+        *os << "Expecting json " << expected_;
     }
 };
+}  // namespace detail
+
+inline ::testing::Matcher<std::shared_ptr<std::string>>
+SharedStringJsonEq(std::string const& expected)
+{
+    return detail::SharedStringJsonEqMatcher(expected);
+}

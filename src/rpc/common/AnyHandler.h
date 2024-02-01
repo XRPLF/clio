@@ -23,6 +23,10 @@
 #include "rpc/common/Types.h"
 #include "rpc/common/impl/Processors.h"
 
+#include <boost/json/value.hpp>
+
+#include <memory>
+
 namespace rpc {
 
 /**

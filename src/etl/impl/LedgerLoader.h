@@ -20,6 +20,9 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+#include "data/DBHelpers.h"
+#include "data/Types.h"
+#include "etl/MPTHelpers.h"
 #include "etl/NFTHelpers.h"
 #include "etl/SystemState.h"
 #include "etl/impl/LedgerFetcher.h"
@@ -28,10 +31,23 @@
 #include "util/Profiler.h"
 #include "util/log/Logger.h"
 
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
 #include <ripple/beast/core/CurrentThreadName.h>
+#include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/STTx.h>
+#include <ripple/protocol/Serializer.h>
+#include <ripple/protocol/TxMeta.h>
 
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
+#include <string>
 #include <utility>
+#include <vector>
 
 /**
  * @brief Account transactions, NFT transactions and NFT data bundled togeher.
@@ -211,7 +227,7 @@ public:
                         if (isBookDir(cur->key, cur->blob)) {
                             auto base = getBookBase(cur->key);
                             // make sure the base is not an actual object
-                            if (!backend_->cache().get(cur->key, sequence)) {
+                            if (!backend_->cache().get(base, sequence)) {
                                 auto succ = backend_->cache().getSuccessor(base, sequence);
                                 ASSERT(succ.has_value(), "Book base {} must have a successor", ripple::strHex(base));
                                 if (succ->key == cur->key) {

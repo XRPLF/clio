@@ -27,8 +27,21 @@
 #include "util/log/Logger.h"
 
 #include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
 #include <grpcpp/grpcpp.h>
+#include <org/xrpl/rpc/v1/get_ledger.pb.h>
+#include <org/xrpl/rpc/v1/ledger.pb.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace etl {
 class Source;

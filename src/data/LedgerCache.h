@@ -20,15 +20,22 @@
 #pragma once
 
 #include "data/Types.h"
+#include "util/prometheus/Counter.h"
+#include "util/prometheus/Label.h"
 #include "util/prometheus/Prometheus.h"
 
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/hardened_hash.h>
 
+#include <atomic>
+#include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <map>
-#include <mutex>
+#include <optional>
 #include <shared_mutex>
-#include <utility>
+#include <unordered_set>
 #include <vector>
 
 namespace data {
@@ -67,6 +74,7 @@ class LedgerCache {
     std::map<ripple::uint256, CacheEntry> map_;
 
     mutable std::shared_mutex mtx_;
+    std::condition_variable_any cv_;
     uint32_t latestSeq_ = 0;
     std::atomic_bool full_ = false;
     std::atomic_bool disabled_ = false;
@@ -164,6 +172,9 @@ public:
      */
     float
     getSuccessorHitRate() const;
+
+    void
+    waitUntilCacheContainsSeq(uint32_t seq);
 };
 
 }  // namespace data

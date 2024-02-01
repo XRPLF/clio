@@ -21,13 +21,18 @@
 
 #include "data/cassandra/Types.h"
 
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
 
 #include <chrono>
 #include <concepts>
+#include <cstdint>
 #include <optional>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace data::cassandra {
 

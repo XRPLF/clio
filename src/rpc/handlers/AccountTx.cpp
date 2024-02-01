@@ -39,67 +39,16 @@
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/TxFormats.h>
 #include <ripple/protocol/jss.h>
 
-#include <algorithm>
 #include <cstdint>
-#include <iterator>
 #include <limits>
 #include <optional>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <variant>
 
 namespace rpc {
-
-// found here : https://xrpl.org/transaction-types.html
-std::unordered_map<std::string, ripple::TxType> const AccountTxHandler::TYPESMAP{
-    {JSL(AccountSet), ripple::ttACCOUNT_SET},
-    {JSL(AccountDelete), ripple::ttACCOUNT_DELETE},
-    {JSL(AMMBid), ripple::ttAMM_BID},
-    {JSL(AMMCreate), ripple::ttAMM_CREATE},
-    {JSL(AMMDelete), ripple::ttAMM_DELETE},
-    {JSL(AMMDeposit), ripple::ttAMM_DEPOSIT},
-    {JSL(AMMVote), ripple::ttAMM_VOTE},
-    {JSL(AMMWithdraw), ripple::ttAMM_WITHDRAW},
-    {JSL(CheckCancel), ripple::ttCHECK_CANCEL},
-    {JSL(CheckCash), ripple::ttCHECK_CASH},
-    {JSL(CheckCreate), ripple::ttCHECK_CREATE},
-    {JSL(Clawback), ripple::ttCLAWBACK},
-    {JSL(DepositPreauth), ripple::ttDEPOSIT_PREAUTH},
-    {JSL(EscrowCancel), ripple::ttESCROW_CANCEL},
-    {JSL(EscrowCreate), ripple::ttESCROW_CREATE},
-    {JSL(EscrowFinish), ripple::ttESCROW_FINISH},
-    {JSL(NFTokenAcceptOffer), ripple::ttNFTOKEN_ACCEPT_OFFER},
-    {JSL(NFTokenBurn), ripple::ttNFTOKEN_BURN},
-    {JSL(NFTokenCancelOffer), ripple::ttNFTOKEN_CANCEL_OFFER},
-    {JSL(NFTokenCreateOffer), ripple::ttNFTOKEN_CREATE_OFFER},
-    {JSL(NFTokenMint), ripple::ttNFTOKEN_MINT},
-    {JSL(OfferCancel), ripple::ttOFFER_CANCEL},
-    {JSL(OfferCreate), ripple::ttOFFER_CREATE},
-    {JSL(Payment), ripple::ttPAYMENT},
-    {JSL(PaymentChannelClaim), ripple::ttPAYCHAN_CLAIM},
-    {JSL(PaymentChannelCreate), ripple::ttCHECK_CREATE},
-    {JSL(PaymentChannelFund), ripple::ttPAYCHAN_FUND},
-    {JSL(SetRegularKey), ripple::ttREGULAR_KEY_SET},
-    {JSL(SignerListSet), ripple::ttSIGNER_LIST_SET},
-    {JSL(TicketCreate), ripple::ttTICKET_CREATE},
-    {JSL(TrustSet), ripple::ttTRUST_SET},
-    {JSL(DIDSet), ripple::ttDID_SET},
-    {JSL(DIDDelete), ripple::ttDID_DELETE},
-};
-
-// TODO: should be std::views::keys when clang supports it
-std::unordered_set<std::string> const AccountTxHandler::TYPES_KEYS = [] {
-    std::unordered_set<std::string> keys;
-    std::transform(TYPESMAP.begin(), TYPESMAP.end(), std::inserter(keys, keys.begin()), [](auto const& pair) {
-        return pair.first;
-    });
-    return keys;
-}();
 
 // TODO: this is currently very similar to nft_history but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
@@ -197,19 +146,13 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
 
         boost::json::object obj;
 
-        // if binary is true or transactionType is specified, we need to expand the transaction
-        if (!input.binary || input.transactionType.has_value()) {
+        // if binary is false or transactionType is specified, we need to expand the transaction
+        if (!input.binary || input.transactionTypeInLowercase.has_value()) {
             auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion, NFTokenjson::ENABLE);
 
-            if (txn.contains(JS(TransactionType))) {
-                auto const objTransactionType = txn[JS(TransactionType)];
-                auto const strType = util::toLower(objTransactionType.as_string().c_str());
-
-                // if transactionType does not match
-                if (input.transactionType.has_value() && AccountTxHandler::TYPESMAP.contains(strType) &&
-                    AccountTxHandler::TYPESMAP.at(strType) != input.transactionType.value())
-                    continue;
-            }
+            if (txn.contains(JS(TransactionType)) && input.transactionTypeInLowercase.has_value() &&
+                util::toLower(txn[JS(TransactionType)].as_string().c_str()) != input.transactionTypeInLowercase.value())
+                continue;
 
             if (!input.binary) {
                 auto const txKey = ctx.apiVersion < 2u ? JS(tx) : JS(tx_json);
@@ -324,10 +267,8 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
         };
     }
 
-    if (jsonObject.contains("tx_type")) {
-        auto objTransactionType = jsonObject.at("tx_type");
-        input.transactionType = AccountTxHandler::TYPESMAP.at(objTransactionType.as_string().c_str());
-    }
+    if (jsonObject.contains("tx_type"))
+        input.transactionTypeInLowercase = jsonObject.at("tx_type").as_string().c_str();
 
     return input;
 }

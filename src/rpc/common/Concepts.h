@@ -21,14 +21,14 @@
 
 #include "rpc/common/Types.h"
 
+#include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
 
+#include <cstdint>
 #include <string>
 
 namespace rpc {
-
-struct RpcSpec;
 
 /**
  * @brief Specifies what a requirement used with @ref rpc::FieldSpec must provide.

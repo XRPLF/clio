@@ -22,6 +22,7 @@
 #include "util/prometheus/impl/CounterImpl.h"
 
 #include <memory>
+#include <type_traits>
 
 namespace util::prometheus::detail {
 

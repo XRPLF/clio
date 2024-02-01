@@ -22,7 +22,10 @@
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 
+#include <cstdint>
 #include <optional>
+#include <string_view>
+#include <tuple>
 #include <utility>
 #include <vector>
 

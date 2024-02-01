@@ -20,6 +20,7 @@
 #include "rpc/common/Validators.h"
 
 #include "rpc/Errors.h"
+#include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
 
@@ -27,13 +28,17 @@
 #include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <ripple/basics/base_uint.h>
+#include <ripple/json/json_value.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/Issue.h>
 #include <ripple/protocol/UintTypes.h>
+#include <ripple/protocol/jss.h>
 #include <ripple/protocol/tokens.h>
 
 #include <charconv>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -232,6 +237,20 @@ CustomValidator SubscribeAccountsValidator =
 
             if (auto err = AccountValidator.verify(obj, keyItem); !err)
                 return err;
+        }
+
+        return MaybeError{};
+    }};
+
+CustomValidator CurrencyIssueValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (not value.is_object())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotObject"}};
+
+        try {
+            parseIssue(value.as_object());
+        } catch (std::runtime_error const&) {
+            return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
         }
 
         return MaybeError{};

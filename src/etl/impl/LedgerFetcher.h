@@ -20,13 +20,13 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "etl/Source.h"
 #include "util/log/Logger.h"
 
 #include <grpcpp/grpcpp.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
-#include <optional>
+#include <cstdint>
+#include <memory>
 #include <utility>
 
 namespace etl::detail {
@@ -89,9 +89,15 @@ public:
     {
         LOG(log_.debug()) << "Attempting to fetch ledger with sequence = " << sequence;
 
-        auto response = loadBalancer_->fetchLedger(
-            sequence, true, !backend_->cache().isFull() || backend_->cache().latestLedgerSequence() >= sequence
-        );
+        auto const isCacheFull = backend_->cache().isFull();
+        auto const isLedgerCached = backend_->cache().latestLedgerSequence() >= sequence;
+        if (isLedgerCached) {
+            LOG(log_.info()) << sequence << " is already cached, the current latest seq in cache is "
+                             << backend_->cache().latestLedgerSequence() << " and the cache is "
+                             << (isCacheFull ? "full" : "not full");
+        }
+
+        auto response = loadBalancer_->fetchLedger(sequence, true, !isCacheFull || isLedgerCached);
         if (response)
             LOG(log_.trace()) << "GetLedger reply = " << response->DebugString();
 

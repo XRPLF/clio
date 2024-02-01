@@ -117,6 +117,7 @@ target_sources (clio PRIVATE
   ## RPC
   src/rpc/Errors.cpp
   src/rpc/Factories.cpp
+  src/rpc/AMMHelpers.cpp
   src/rpc/RPCHelpers.cpp
   src/rpc/Counters.cpp
   src/rpc/WorkQueue.cpp
@@ -134,6 +135,7 @@ target_sources (clio PRIVATE
   src/rpc/handlers/AccountObjects.cpp
   src/rpc/handlers/AccountOffers.cpp
   src/rpc/handlers/AccountTx.cpp
+  src/rpc/handlers/AMMInfo.cpp
   src/rpc/handlers/BookChanges.cpp
   src/rpc/handlers/BookOffers.cpp
   src/rpc/handlers/DepositAuthorized.cpp
@@ -165,6 +167,8 @@ target_sources (clio PRIVATE
   src/util/Random.cpp
   src/util/Taggable.cpp
   src/util/TerminationHandler.cpp
+  src/util/TxUtils.cpp
+  src/util/LedgerUtils.cpp
 )
 
 # Clio server
@@ -187,10 +191,13 @@ if (tests)
     unittests/ProfilerTests.cpp
     unittests/JsonUtilTests.cpp
     unittests/DOSGuardTests.cpp
+    unittests/util/TestGlobals.cpp
     unittests/util/AssertTests.cpp
     unittests/util/BatchingTests.cpp
+    unittests/util/TxUtilTests.cpp
     unittests/util/TestObject.cpp
     unittests/util/StringUtils.cpp
+    unittests/util/LedgerUtilsTests.cpp
     unittests/util/prometheus/CounterTests.cpp
     unittests/util/prometheus/GaugeTests.cpp
     unittests/util/prometheus/HistogramTests.cpp
@@ -251,6 +258,7 @@ if (tests)
     unittests/rpc/handlers/BookChangesTests.cpp
     unittests/rpc/handlers/LedgerTests.cpp
     unittests/rpc/handlers/VersionHandlerTests.cpp
+    unittests/rpc/handlers/AMMInfoTests.cpp
     # Backend
     unittests/data/BackendFactoryTests.cpp
     unittests/data/BackendCountersTests.cpp

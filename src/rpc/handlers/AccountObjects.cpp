@@ -23,6 +23,7 @@
 #include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
 #include "rpc/common/Types.h"
+#include "util/LedgerUtils.h"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
@@ -47,32 +48,6 @@
 
 namespace rpc {
 
-// found here : https://xrpl.org/ledger_entry.html#:~:text=valid%20fields%20are%3A-,index,-account_root
-std::unordered_map<std::string, ripple::LedgerEntryType> const AccountObjectsHandler::TYPES_MAP{
-    {JS(amm), ripple::ltAMM},
-    {JS(state), ripple::ltRIPPLE_STATE},
-    {JS(ticket), ripple::ltTICKET},
-    {JS(signer_list), ripple::ltSIGNER_LIST},
-    {JS(payment_channel), ripple::ltPAYCHAN},
-    {JS(offer), ripple::ltOFFER},
-    {JS(escrow), ripple::ltESCROW},
-    {JS(deposit_preauth), ripple::ltDEPOSIT_PREAUTH},
-    {JS(check), ripple::ltCHECK},
-    {JS(nft_page), ripple::ltNFTOKEN_PAGE},
-    {JS(nft_offer), ripple::ltNFTOKEN_OFFER},
-    {JS(did), ripple::ltDID},
-    {JS(mpt_issuance), ripple::ltMPTOKEN_ISSUANCE},
-    {JS(mptoken), ripple::ltMPTOKEN},
-};
-
-std::unordered_set<std::string> const AccountObjectsHandler::TYPES_KEYS = [] {
-    std::unordered_set<std::string> keys;
-    std::transform(TYPES_MAP.begin(), TYPES_MAP.end(), std::inserter(keys, keys.begin()), [](auto const& pair) {
-        return pair.first;
-    });
-    return keys;
-}();
-
 AccountObjectsHandler::Result
 AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const& ctx) const
 {
@@ -95,17 +70,9 @@ AccountObjectsHandler::process(AccountObjectsHandler::Input input, Context const
     auto typeFilter = std::optional<std::vector<ripple::LedgerEntryType>>{};
 
     if (input.deletionBlockersOnly) {
-        static constexpr ripple::LedgerEntryType deletionBlockers[] = {
-            ripple::ltCHECK,
-            ripple::ltESCROW,
-            ripple::ltNFTOKEN_PAGE,
-            ripple::ltPAYCHAN,
-            ripple::ltRIPPLE_STATE,
-            ripple::ltMPTOKEN_ISSUANCE,
-            ripple::ltMPTOKEN};
-
         typeFilter.emplace();
-        typeFilter->reserve(std::size(deletionBlockers));
+        auto const& deletionBlockers = util::getDeletionBlockerLedgerTypes();
+        typeFilter->reserve(deletionBlockers.size());
 
         for (auto type : deletionBlockers) {
             if (input.type && input.type != type)
@@ -202,7 +169,7 @@ tag_invoke(boost::json::value_to_tag<AccountObjectsHandler::Input>, boost::json:
     }
 
     if (jsonObject.contains(JS(type)))
-        input.type = AccountObjectsHandler::TYPES_MAP.at(jv.at(JS(type)).as_string().c_str());
+        input.type = util::getLedgerEntryTypeFromStr(jv.at(JS(type)).as_string().c_str());
 
     if (jsonObject.contains(JS(limit)))
         input.limit = jv.at(JS(limit)).as_int64();

@@ -23,9 +23,17 @@
 #include "util/Expected.h"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 #include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <variant>
 
 namespace etl {
 class LoadBalancer;
@@ -42,7 +50,6 @@ namespace rpc {
 class Counters;
 struct RpcSpec;
 struct FieldSpec;
-class AnyHandler;
 
 /**
  * @brief Return type used for Validators that can return error but don't have
@@ -110,23 +117,6 @@ struct AccountCursor {
     {
         return index.isNonZero() || hint != 0;
     }
-};
-
-/**
- * @brief Interface for the provider of RPC handlers.
- */
-class HandlerProvider {
-public:
-    virtual ~HandlerProvider() = default;
-
-    virtual bool
-    contains(std::string const& method) const = 0;
-
-    virtual std::optional<AnyHandler>
-    getHandler(std::string const& command) const = 0;
-
-    virtual bool
-    isClioOnly(std::string const& command) const = 0;
 };
 
 inline void

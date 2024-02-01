@@ -29,6 +29,7 @@
 #include "util/LedgerUtils.h"
 #include "util/Random.h"
 #include "util/StringUtils.h"
+#include "util/TestGlobals.h"
 #include "util/config/Config.h"
 
 #include <boost/asio/impl/spawn.hpp>
@@ -68,11 +69,6 @@ namespace json = boost::json;
 
 using namespace data::cassandra;
 
-namespace {
-constexpr auto contactPoints = "127.0.0.1";
-constexpr auto keyspace = "clio_test";
-}  // namespace
-
 class BackendCassandraTest : public SyncAsioContextTest {
 protected:
     Config cfg{json::parse(fmt::format(
@@ -81,8 +77,8 @@ protected:
             "keyspace": "{}",
             "replication_factor": 1
         }})JSON",
-        contactPoints,
-        keyspace
+        TestGlobals::instance().backendHost,
+        TestGlobals::instance().backendKeyspace
     ))};
     SettingsProvider settingsProvider{cfg, 0};
 
@@ -101,9 +97,9 @@ protected:
         backend.reset();
 
         // drop the keyspace for next test
-        Handle const handle{contactPoints};
+        Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
-        handle.execute("DROP KEYSPACE " + std::string{keyspace});
+        handle.execute("DROP KEYSPACE " + TestGlobals::instance().backendKeyspace);
     }
 
     std::default_random_engine randomEngine{0};

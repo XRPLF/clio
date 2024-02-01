@@ -20,9 +20,11 @@
 #pragma once
 
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <string>
 
 struct MockCounters {
     MOCK_METHOD(void, rpcFailed, (std::string const&), ());

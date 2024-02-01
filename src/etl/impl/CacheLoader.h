@@ -20,19 +20,47 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+#include "data/Types.h"
+#include "util/Assert.h"
 #include "util/log/Logger.h"
 
+#include <boost/algorithm/hex.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/core.hpp>
+#include <boost/beast/core/buffers_to_string.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/string.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/websocket.hpp>
+#include <boost/beast/websocket/stream.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <grpcpp/grpcpp.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
+#include <atomic>
 #include <chrono>
-#include <mutex>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <iterator>
+#include <memory>
+#include <optional>
+#include <random>
+#include <sstream>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 namespace etl::detail {
 

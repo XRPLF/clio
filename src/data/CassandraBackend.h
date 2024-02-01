@@ -20,10 +20,13 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+#include "data/DBHelpers.h"
+#include "data/Types.h"
 #include "data/cassandra/Concepts.h"
 #include "data/cassandra/Handle.h"
 #include "data/cassandra/Schema.h"
 #include "data/cassandra/SettingsProvider.h"
+#include "data/cassandra/Types.h"
 #include "data/cassandra/impl/ExecutionStrategy.h"
 #include "util/Assert.h"
 #include "util/LedgerUtils.h"
@@ -31,8 +34,27 @@
 #include "util/log/Logger.h"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
+#include <cassandra.h>
+#include <ripple/basics/Blob.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
+#include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/nft.h>
+
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <limits>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 namespace data::cassandra {
 

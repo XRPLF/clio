@@ -37,6 +37,7 @@
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/formatter_parser.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <memory>

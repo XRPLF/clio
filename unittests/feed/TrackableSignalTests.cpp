@@ -20,8 +20,6 @@
 #include "feed/impl/TrackableSignal.h"
 #include "feed/impl/TrackableSignalMap.h"
 #include "util/MockWsBase.h"
-#include "util/Taggable.h"
-#include "util/config/Config.h"
 #include "web/interface/ConnectionBase.h"
 
 #include <gtest/gtest.h>
@@ -33,19 +31,17 @@ using namespace testing;
 
 struct FeedTrackableSignalTests : Test {
 protected:
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
     std::shared_ptr<web::ConnectionBase> sessionPtr;
 
     void
     SetUp() override
     {
-        sessionPtr = std::make_shared<MockSession>(tagDecoratorFactory);
+        sessionPtr = std::make_shared<MockSession>();
     }
 
     void
     TearDown() override
     {
-        sessionPtr.reset();
     }
 };
 

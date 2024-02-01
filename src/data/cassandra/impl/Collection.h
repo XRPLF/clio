@@ -24,8 +24,11 @@
 #include <cassandra.h>
 #include <ripple/basics/base_uint.h>
 
+#include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace data::cassandra::detail {
 

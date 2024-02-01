@@ -19,13 +19,22 @@
 
 #pragma once
 
-#include "rpc/common/Concepts.h"
-#include "rpc/common/Specs.h"
+#include "rpc/Errors.h"
 #include "rpc/common/Types.h"
 
+#include <boost/json/array.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
+#include <ripple/protocol/ErrorCodes.h>
 
+#include <cstdint>
+#include <functional>
+#include <initializer_list>
+#include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 namespace rpc::validation {
 
@@ -523,5 +532,12 @@ extern CustomValidator SubscribeStreamValidator;
  * @brief Provides a validator for validating accounts used in subscribe/unsubscribe.
  */
 extern CustomValidator SubscribeAccountsValidator;
+
+/**
+ * @brief Validates an asset (ripple::Issue).
+ *
+ * Used by amm_info.
+ */
+extern CustomValidator CurrencyIssueValidator;
 
 }  // namespace rpc::validation

@@ -23,6 +23,7 @@
 #include <boost/json/object.hpp>
 #include <ripple/protocol/ErrorCodes.h>
 
+#include <exception>
 #include <optional>
 #include <string>
 #include <string_view>

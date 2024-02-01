@@ -18,20 +18,16 @@
 //==============================================================================
 
 #include "data/Types.h"
-#include "feed/FeedBaseTest.h"
+#include "feed/FeedTestUtil.h"
 #include "feed/impl/TransactionFeed.h"
 #include "util/Fixtures.h"
 #include "util/MockPrometheus.h"
 #include "util/MockWsBase.h"
-#include "util/Taggable.h"
 #include "util/TestObject.h"
-#include "util/config/Config.h"
 #include "util/prometheus/Gauge.h"
 #include "web/interface/ConnectionBase.h"
 
 #include <boost/asio/io_context.hpp>
-#include <boost/json/parse.hpp>
-#include <boost/json/serialize.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/basics/base_uint.h>
@@ -164,7 +160,6 @@ constexpr static auto TRAN_V2 =
 
 using namespace feed::impl;
 using namespace util::prometheus;
-namespace json = boost::json;
 
 using FeedTransactionTest = FeedBaseTest<TransactionFeed>;
 
@@ -181,18 +176,15 @@ TEST_F(FeedTransactionTest, SubTransactionV1)
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
 
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TRAN_V1));
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    cleanReceivedFeed();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedTransactionTest, SubTransactionV2)
@@ -207,19 +199,16 @@ TEST_F(FeedTransactionTest, SubTransactionV2)
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
 
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TRAN_V2));
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    cleanReceivedFeed();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedTransactionTest, SubAccountV1)
@@ -235,20 +224,16 @@ TEST_F(FeedTransactionTest, SubAccountV1)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-
     testFeedPtr->pub(trans1, ledgerinfo, backend);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TRAN_V1));
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    cleanReceivedFeed();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedTransactionTest, SubAccountV2)
@@ -266,18 +251,15 @@ TEST_F(FeedTransactionTest, SubAccountV2)
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
 
     testFeedPtr->pub(trans1, ledgerinfo, backend);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TRAN_V2));
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    cleanReceivedFeed();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
@@ -297,26 +279,18 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
 
     testFeedPtr->pub(trans1, ledgerinfo, backend);
-    ctx.run();
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(2);
 
-    EXPECT_EQ(receivedFeedMessage().size(), json::serialize(json::parse(TRAN_V2)).size() * 2);
-
-    cleanReceivedFeed();
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
-    ctx.restart();
     ctx.run();
-    EXPECT_EQ(receivedFeedMessage().size(), json::serialize(json::parse(TRAN_V2)).size() * 2);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    cleanReceivedFeed();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedTransactionTest, SubBookV1)
@@ -396,11 +370,8 @@ TEST_F(FeedTransactionTest, SubBookV1)
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
         })";
 
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(OrderbookPublish))).Times(1);
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(OrderbookPublish));
-
-    cleanReceivedFeed();
 
     // trigger by offer cancel meta data
     metaObj = CreateMetaDataForCancelOffer(CURRENCY, ISSUER, 22, 3, 1);
@@ -455,8 +426,8 @@ TEST_F(FeedTransactionTest, SubBookV1)
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
         })";
     ctx.restart();
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(OrderbookCancelPublish))).Times(1);
     ctx.run();
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(OrderbookCancelPublish));
 
     // trigger by offer create meta data
     constexpr static auto OrderbookCreatePublish =
@@ -511,19 +482,16 @@ TEST_F(FeedTransactionTest, SubBookV1)
     metaObj = CreateMetaDataForCreateOffer(CURRENCY, ISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
-    cleanReceivedFeed();
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(OrderbookCreatePublish))).Times(1);
     ctx.restart();
     ctx.run();
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(OrderbookCreatePublish));
 
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
 
-    cleanReceivedFeed();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedTransactionTest, SubBookV2)
@@ -603,18 +571,15 @@ TEST_F(FeedTransactionTest, SubBookV2)
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
         })";
 
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(OrderbookPublish))).Times(1);
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(OrderbookPublish));
 
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
 
-    cleanReceivedFeed();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
@@ -634,27 +599,22 @@ TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
-
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TRAN_V2));
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    cleanReceivedFeed();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TRAN_V2));
 
-    cleanReceivedFeed();
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
@@ -674,27 +634,23 @@ TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TRAN_V2));
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    cleanReceivedFeed();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TRAN_V2));
 
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    cleanReceivedFeed();
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
@@ -713,24 +669,20 @@ TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
 
     testFeedPtr->pub(trans1, ledgerinfo, backend);
-
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
     ctx.run();
-
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TRAN_V1));
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
-    cleanReceivedFeed();
 
     testFeedPtr->pub(trans1, ledgerinfo, backend);
     ctx.restart();
     ctx.run();
-    EXPECT_TRUE(receivedFeedMessage().empty());
 }
 
 TEST_F(FeedTransactionTest, SubRepeat)
 {
-    auto const session2 = std::make_shared<MockSession>(tagDecoratorFactory);
+    auto const session2 = std::make_shared<MockSession>();
 
     testFeedPtr->sub(sessionPtr, 1);
     testFeedPtr->sub(session2, 1);
@@ -852,8 +804,8 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
         })";
 
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TransactionForOwnerFund))).Times(1);
     ctx.run();
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TransactionForOwnerFund));
 }
 
 constexpr static auto TRAN_FROZEN =
@@ -926,9 +878,8 @@ TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
     ON_CALL(*backend, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
     testFeedPtr->pub(trans1, ledgerinfo, backend);
-
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_FROZEN))).Times(1);
     ctx.run();
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TRAN_FROZEN));
 }
 
 TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
@@ -966,13 +917,12 @@ TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
     testFeedPtr->pub(trans1, ledgerinfo, backend);
 
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_FROZEN))).Times(1);
     ctx.run();
-    EXPECT_EQ(json::parse(receivedFeedMessage()), json::parse(TRAN_FROZEN));
 }
 
 struct TransactionFeedMockPrometheusTest : WithMockPrometheus, SyncAsioContextTest {
 protected:
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
     std::shared_ptr<web::ConnectionBase> sessionPtr;
     std::shared_ptr<TransactionFeed> testFeedPtr;
 
@@ -981,7 +931,7 @@ protected:
     {
         SyncAsioContextTest::SetUp();
         testFeedPtr = std::make_shared<TransactionFeed>(ctx);
-        sessionPtr = std::make_shared<MockSession>(tagDecoratorFactory);
+        sessionPtr = std::make_shared<MockSession>();
     }
     void
     TearDown() override

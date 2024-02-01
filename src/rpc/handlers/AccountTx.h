@@ -20,13 +20,30 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "rpc/RPCHelpers.h"
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
 #include "rpc/common/JsonBool.h"
 #include "rpc/common/MetaProcessors.h"
 #include "rpc/common/Modifiers.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
+#include "util/TxUtils.h"
 #include "util/log/Logger.h"
+
+#include <boost/json/array.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/TxFormats.h>
+#include <ripple/protocol/jss.h>
+
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <string>
+#include <unordered_set>
 
 namespace rpc {
 
@@ -38,9 +55,6 @@ namespace rpc {
 class AccountTxHandler {
     util::Logger log_{"RPC"};
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-
-    static std::unordered_map<std::string, ripple::TxType> const TYPESMAP;
-    static std::unordered_set<std::string> const TYPES_KEYS;
 
 public:
     // no max limit
@@ -77,7 +91,7 @@ public:
         JsonBool forward{false};
         std::optional<uint32_t> limit;
         std::optional<Marker> marker;
-        std::optional<ripple::TxType> transactionType;
+        std::optional<std::string> transactionTypeInLowercase;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -89,6 +103,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
+        auto const& typesKeysInLowercase = util::getTxTypesInLowercase();
         static auto const rpcSpecForV1 = RpcSpec{
             {JS(account), validation::Required{}, validation::AccountValidator},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
@@ -112,7 +127,7 @@ public:
                 "tx_type",
                 validation::Type<std::string>{},
                 modifiers::ToLower{},
-                validation::OneOf<std::string>(TYPES_KEYS.cbegin(), TYPES_KEYS.cend()),
+                validation::OneOf<std::string>(typesKeysInLowercase.cbegin(), typesKeysInLowercase.cend()),
             },
         };
 

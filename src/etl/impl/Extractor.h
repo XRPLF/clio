@@ -27,7 +27,10 @@
 #include <ripple/beast/core/CurrentThreadName.h>
 
 #include <chrono>
-#include <mutex>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <optional>
 #include <thread>
 #include <utility>
 
