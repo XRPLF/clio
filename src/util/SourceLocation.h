@@ -24,8 +24,14 @@
 #include <source_location>
 
 #elif defined(HAS_EXPERIMENTAL_SOURCE_LOCATION)
-// this is used by clang on linux where source_location is still not out of experimental headers
+// this is used by clang on linux where source_location is still not out of
+// experimental headers
 #include <experimental/source_location>
+
+#else
+
+#include <cstddef>
+#include <string_view>
 #endif
 
 namespace util {
@@ -37,8 +43,38 @@ using SourceLocationType = std::source_location;
 using SourceLocationType = std::experimental::source_location;
 
 #else
-#error "source_location not supported by your compiler"
+// A workaround for AppleClang that is lacking source_location atm.
+// TODO: remove this workaround when all compilers catch up to c++20
+class SourceLocation {
+    char const* file_;
+    std::size_t line_;
+
+public:
+    constexpr SourceLocation(char const* file, std::size_t line) : file_{file}, line_{line}
+    {
+    }
+
+    constexpr std::string_view
+    file_name() const
+    {
+        return file_;
+    }
+
+    constexpr std::size_t
+    line() const
+    {
+        return line_;
+    }
+};
+using SourceLocationType = SourceLocation;
+#define SOURCE_LOCATION_OLD_API
+
 #endif
+
 }  // namespace util
 
+#if defined(SOURCE_LOCATION_OLD_API)
+#define CURRENT_SRC_LOCATION util::SourceLocationType(__FILE__, __LINE__)
+#else
 #define CURRENT_SRC_LOCATION util::SourceLocationType::current()
+#endif
