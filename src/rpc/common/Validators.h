@@ -513,6 +513,6 @@ extern CustomValidator SubscribeAccountsValidator;
  *
  * Used by amm_info.
  */
-extern CustomValidator AMMAssetValidator;
+extern CustomValidator CurrencyIssueValidator;
 
 }  // namespace rpc::validation

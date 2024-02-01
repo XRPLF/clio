@@ -303,6 +303,34 @@ CreateAMMObject(
     uint64_t ownerNode = 0u
 );
 
+[[nodiscard]] ripple::STObject
+CreateBridgeObject(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer
+);
+
+[[nodiscard]] ripple::STObject
+CreateChainOwnedClaimIDObject(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer,
+    std::string_view otherChainSource
+);
+
+[[nodiscard]] ripple::STObject
+CreateChainOwnedCreateAccountClaimID(
+    std::string_view accountId,
+    std::string_view lockingDoor,
+    std::string_view issuingDoor,
+    std::string_view issuingCurrency,
+    std::string_view issuingIssuer
+);
+
 void
 AMMAddVoteSlot(ripple::STObject& amm, ripple::AccountID const& accountId, uint16_t tradingFee, uint32_t voteWeight);
 

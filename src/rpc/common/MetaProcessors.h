@@ -19,14 +19,21 @@
 
 #pragma once
 
-#include "rpc/common/Concepts.h"
+#include "rpc/Errors.h"
 #include "rpc/common/Specs.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
 
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 
+#include <cstddef>
+#include <functional>
+#include <initializer_list>
+#include <optional>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 namespace rpc::meta {
 
@@ -174,6 +181,23 @@ public:
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
+    {
+        if (auto const res = requirement.verify(value, key); not res)
+            return Error{error};
+
+        return {};
+    }
+
+    /**
+     * @brief Runs the stored validator and produces a custom error if the wrapped validator fails. This is an overload
+     * for the requirement which can modify the value. Such as IfType.
+     *
+     * @param value The JSON value representing the outer object, this value can be modified by the requirement inside
+     * @param key The key used to retrieve the element from the outer object
+     * @return Possibly an error
+     */
+    [[nodiscard]] MaybeError
+    verify(boost::json::value& value, std::string_view key) const
     {
         if (auto const res = requirement.verify(value, key); not res)
             return Error{error};
