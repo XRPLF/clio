@@ -20,7 +20,10 @@
 #pragma once
 
 #include <gmock/gmock.h>
+#include <ripple/protocol/LedgerHeader.h>
 
+#include <chrono>
+#include <cstdint>
 #include <optional>
 
 struct MockLedgerPublisher {

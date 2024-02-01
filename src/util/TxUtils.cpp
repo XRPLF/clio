@@ -28,7 +28,7 @@
 
 namespace util {
 
-std::unordered_set<std::string> const&
+[[nodiscard]] std::unordered_set<std::string> const&
 getTxTypesInLowercase()
 {
     static std::unordered_set<std::string> const typesKeysInLowercase = []() {

@@ -19,11 +19,21 @@
 
 #pragma once
 
+#include "data/Types.h"
 #include "web/interface/ConnectionBase.h"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
 #include <gmock/gmock.h>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Fees.h>
+#include <ripple/protocol/LedgerHeader.h>
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
 struct MockSubscriptionManager {
 public:

@@ -19,8 +19,27 @@
 
 #pragma once
 
+#include "util/Taggable.h"
+#include "web/DOSGuard.h"
 #include "web/SslWsSession.h"
 #include "web/impl/HttpBase.h"
+#include "web/interface/ConnectionBase.h"
+
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl/context.hpp>
+#include <boost/asio/ssl/stream_base.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/core/stream_traits.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/ssl/ssl_stream.hpp>
+
+#include <chrono>
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace web {
 

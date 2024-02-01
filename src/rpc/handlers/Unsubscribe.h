@@ -20,10 +20,27 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+#include "rpc/Errors.h"
+#include "rpc/JS.h"
 #include "rpc/RPCHelpers.h"
+#include "rpc/common/Specs.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
 #include "util/Assert.h"
+
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
+#include <ripple/protocol/Book.h>
+#include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/jss.h>
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <variant>
+#include <vector>
 
 namespace feed {
 class SubscriptionManager;

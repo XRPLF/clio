@@ -22,6 +22,7 @@
 #include <fmt/core.h>
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/StringUtilities.h>
+#include <ripple/basics/strHex.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/jss.h>

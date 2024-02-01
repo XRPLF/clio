@@ -20,7 +20,16 @@
 #pragma once
 
 #include "data/BackendInterface.h"
-#include "rpc/RPCHelpers.h"
+
+#include <boost/asio/spawn.hpp>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Issue.h>
+#include <ripple/protocol/STAmount.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/UintTypes.h>
+
+#include <cstdint>
+#include <utility>
 
 namespace rpc {
 

@@ -19,14 +19,22 @@
 
 #pragma once
 
+#include "rpc/Errors.h"
 #include "rpc/common/Concepts.h"
 #include "rpc/common/Specs.h"
 #include "rpc/common/Types.h"
 #include "rpc/common/Validators.h"
 
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 
+#include <cstddef>
+#include <functional>
+#include <initializer_list>
+#include <optional>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 namespace rpc::meta {
 

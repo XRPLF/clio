@@ -28,13 +28,11 @@
 #include "data/cassandra/impl/Result.h"
 #include "data/cassandra/impl/Session.h"
 #include "data/cassandra/impl/Statement.h"
-#include "util/Expected.h"
 
 #include <cassandra.h>
 
-#include <chrono>
-#include <compare>
-#include <iterator>
+#include <functional>
+#include <string_view>
 #include <vector>
 
 namespace data::cassandra {

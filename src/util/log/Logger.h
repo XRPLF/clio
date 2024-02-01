@@ -24,8 +24,14 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/json.hpp>
+#include <boost/json/conversion.hpp>
+#include <boost/json/value.hpp>
 #include <boost/log/core/core.hpp>
+#include <boost/log/core/record.hpp>
+#include <boost/log/expressions/keyword.hpp>
 #include <boost/log/expressions/predicates/channel_severity_filter.hpp>
+#include <boost/log/keywords/channel.hpp>
+#include <boost/log/keywords/severity.hpp>
 #include <boost/log/sinks/unlocked_frontend.hpp>
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/sources/severity_channel_logger.hpp>
@@ -36,6 +42,11 @@
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/formatter_parser.hpp>
+
+#include <cstddef>
+#include <optional>
+#include <ostream>
+#include <string>
 
 namespace util {
 

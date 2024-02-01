@@ -24,9 +24,13 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/value.hpp>
 #include <gmock/gmock.h>
 
+#include <cstdint>
 #include <optional>
+#include <string>
 
 struct MockLoadBalancer {
     using RawLedgerObjectType = FakeLedgerObject;

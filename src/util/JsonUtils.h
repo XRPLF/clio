@@ -20,6 +20,7 @@
 #pragma once
 
 #include <boost/json.hpp>
+#include <boost/json/object.hpp>
 
 #include <algorithm>
 #include <cctype>

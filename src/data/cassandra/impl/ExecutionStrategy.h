@@ -26,19 +26,28 @@
 #include "data/cassandra/impl/AsyncExecutor.h"
 #include "util/Assert.h"
 #include "util/Batching.h"
-#include "util/Expected.h"
 #include "util/log/Logger.h"
 
 #include <boost/asio.hpp>
+#include <boost/asio/associated_executor.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/io_service.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <stdexcept>
 #include <thread>
+#include <type_traits>
+#include <vector>
 
 namespace data::cassandra::detail {
 

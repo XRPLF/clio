@@ -20,16 +20,22 @@
 #pragma once
 
 #include "data/Types.h"
+#include "util/prometheus/Counter.h"
+#include "util/prometheus/Label.h"
 #include "util/prometheus/Prometheus.h"
 
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/hardened_hash.h>
 
+#include <atomic>
 #include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <map>
-#include <mutex>
+#include <optional>
 #include <shared_mutex>
-#include <utility>
+#include <unordered_set>
 #include <vector>
 
 namespace data {

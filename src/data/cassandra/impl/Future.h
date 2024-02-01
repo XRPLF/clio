@@ -24,6 +24,9 @@
 
 #include <cassandra.h>
 
+#include <functional>
+#include <memory>
+
 namespace data::cassandra::detail {
 
 struct Future : public ManagedObject<CassFuture> {

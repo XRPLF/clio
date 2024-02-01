@@ -19,8 +19,25 @@
 
 #pragma once
 
+#include "util/Taggable.h"
+#include "web/DOSGuard.h"
 #include "web/impl/WsBase.h"
+#include "web/interface/ConnectionBase.h"
 
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/core/stream_traits.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/parser.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/websocket/stream.hpp>
+#include <boost/optional/optional.hpp>
+
+#include <chrono>
+#include <functional>
+#include <memory>
+#include <string>
 #include <utility>
 
 namespace web {

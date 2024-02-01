@@ -20,12 +20,25 @@
 #pragma once
 
 #include "data/BackendInterface.h"
+#include "data/Types.h"
 #include "etl/NFTHelpers.h"
 #include "util/Assert.h"
 #include "util/log/Logger.h"
 
+#include <grpcpp/client_context.h>
 #include <grpcpp/grpcpp.h>
+#include <grpcpp/support/status.h>
+#include <org/xrpl/rpc/v1/get_ledger_data.pb.h>
+#include <ripple/basics/base_uint.h>
+#include <ripple/basics/strHex.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace etl::detail {
 

@@ -19,12 +19,14 @@
 
 #pragma once
 
+#include "rpc/Errors.h"
 #include "rpc/common/Concepts.h"
 #include "rpc/common/Types.h"
 
 #include <boost/json/value.hpp>
 
 #include <optional>
+#include <string>
 
 namespace rpc::detail {
 

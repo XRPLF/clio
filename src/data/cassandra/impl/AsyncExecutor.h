@@ -23,13 +23,16 @@
 #include "data/cassandra/Handle.h"
 #include "data/cassandra/Types.h"
 #include "data/cassandra/impl/RetryPolicy.h"
-#include "util/Expected.h"
 #include "util/log/Logger.h"
 
 #include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include <functional>
 #include <memory>
+#include <mutex>
+#include <optional>
+#include <utility>
 
 namespace data::cassandra::detail {
 

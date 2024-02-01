@@ -20,6 +20,7 @@
 #pragma once
 
 #include "rpc/Errors.h"
+#include "rpc/JS.h"
 #include "util/Assert.h"
 #include "web/interface/ConnectionBase.h"
 
@@ -32,7 +33,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <variant>
 
