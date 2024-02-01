@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.h"
 #include "data/Types.h"
+#include "etl/ETLHelpers.h"
 #include "etl/NFTHelpers.h"
 #include "util/Assert.h"
 #include "util/log/Logger.h"
@@ -33,6 +34,7 @@
 #include <ripple/basics/strHex.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -192,5 +194,22 @@ public:
         return lastKey_;
     }
 };
+
+inline std::vector<AsyncCallData>
+makeAsyncCallData(uint32_t const sequence, uint32_t const numMarkers)
+{
+    auto const markers = getMarkers(numMarkers);
+
+    std::vector<etl::detail::AsyncCallData> result;
+    result.reserve(markers.size());
+
+    for (size_t i = 0; i + 1 < markers.size(); ++i) {
+        result.emplace_back(sequence, markers[i], markers[i + 1]);
+    }
+    if (not markers.empty()) {
+        result.emplace_back(sequence, markers.back(), std::nullopt);
+    }
+    return result;
+}
 
 }  // namespace etl::detail

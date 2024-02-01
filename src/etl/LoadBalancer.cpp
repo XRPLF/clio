@@ -98,7 +98,7 @@ LoadBalancer::LoadBalancer(
     auto const allowNoEtl = config.valueOr("allow_no_etl", false);
 
     auto const checkOnETLFailure = [this, allowNoEtl](std::string const& log) {
-        LOG(log_.error()) << log;
+        LOG(log_.warn()) << log;
 
         if (!allowNoEtl) {
             LOG(log_.error()) << "Set allow_no_etl as true in config to allow clio run without valid ETL sources.";
