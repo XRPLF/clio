@@ -61,7 +61,7 @@ public:
     [[nodiscard]] bool
     shouldRetry([[maybe_unused]] CassandraError err)
     {
-        auto const delayMs = std::chrono::duration_cast<std::chrono::milliseconds>(retry_.nextDelay()).count();
+        auto const delayMs = std::chrono::duration_cast<std::chrono::milliseconds>(retry_.delayValue()).count();
         LOG(log_.error()) << "Cassandra write error: " << err << ", current retries " << retry_.attemptNumber()
                           << ", retrying in " << delayMs << " milliseconds";
 

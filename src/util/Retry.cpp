@@ -69,15 +69,9 @@ Retry::attemptNumber() const
 }
 
 std::chrono::steady_clock::duration
-Retry::currentDelay() const
+Retry::delayValue() const
 {
     return strategy_->getDelay();
-}
-
-std::chrono::steady_clock::duration
-Retry::nextDelay() const
-{
-    return strategy_->nextDelay();
 }
 
 ExponentialBackoffStrategy::ExponentialBackoffStrategy(

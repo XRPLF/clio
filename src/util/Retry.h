@@ -29,6 +29,9 @@
 
 namespace util {
 
+/**
+ * @brief Interface for retry strategies
+ */
 class RetryStrategy {
     std::chrono::steady_clock::duration delay_;
 
@@ -36,17 +39,34 @@ public:
     RetryStrategy(std::chrono::steady_clock::duration delay);
     virtual ~RetryStrategy() = default;
 
+    /**
+     * @brief Get the current delay value
+     *
+     * @return std::chrono::steady_clock::duration
+     */
     std::chrono::steady_clock::duration
     getDelay() const;
 
+    /**
+     * @brief Increase the delay value
+     */
     void
     increaseDelay();
 
+protected:
+    /**
+     * @brief Compute the next delay value
+     *
+     * @return std::chrono::steady_clock::duration
+     */
     virtual std::chrono::steady_clock::duration
     nextDelay() const = 0;
 };
 using RetryStrategyPtr = std::unique_ptr<RetryStrategy>;
 
+/**
+ * @brief A retry mechanism
+ */
 class Retry {
     RetryStrategyPtr strategy_;
     boost::asio::steady_timer timer_;
@@ -56,6 +76,12 @@ public:
     Retry(RetryStrategyPtr strategy, boost::asio::strand<boost::asio::io_context::executor_type> strand);
     ~Retry();
 
+    /**
+     * @brief Schedule a retry
+     *
+     * @tparam Fn The type of the callable to execute
+     * @param func The callable to execute
+     */
     template <typename Fn>
     void
     retry(Fn&& func)
@@ -71,29 +97,56 @@ public:
         });
     }
 
+    /**
+     * @brief Cancel scheduled retry if any
+     */
     void
     cancel();
 
+    /**
+     * @brief Get the current attempt number
+     *
+     * @return size_t
+     */
     size_t
     attemptNumber() const;
 
+    /**
+     * @brief Get the current delay value
+     *
+     * @return std::chrono::steady_clock::duration
+     */
     std::chrono::steady_clock::duration
-    currentDelay() const;
-
-    std::chrono::steady_clock::duration
-    nextDelay() const;
+    delayValue() const;
 };
 
+/**
+ * @brief Create a retry mechanism with exponential backoff strategy
+ *
+ * @param delay The initial delay value
+ * @param maxDelay The maximum delay value
+ * @param strand The strand to use for async operations
+ * @return Retry
+ */
 class ExponentialBackoffStrategy : public RetryStrategy {
     std::chrono::steady_clock::duration maxDelay_;
 
 public:
     ExponentialBackoffStrategy(std::chrono::steady_clock::duration delay, std::chrono::steady_clock::duration maxDelay);
 
+private:
     std::chrono::steady_clock::duration
     nextDelay() const override;
 };
 
+/**
+ * @brief Create a retry mechanism with exponential backoff strategy
+ *
+ * @param delay The initial delay value
+ * @param maxDelay The maximum delay value
+ * @param strand The strand to use for async operations
+ * @return Retry
+ */
 Retry
 makeRetryExponentialBackoff(
     std::chrono::steady_clock::duration delay,

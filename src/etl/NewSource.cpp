@@ -106,7 +106,7 @@ NewSource::forwardToRippled(
     util::requests::HttpHeader userAgentHeader{
         boost::beast::http::field::user_agent, fmt::format("clio-{}", Build::getClioVersionString())
     };
-    builder.setTimeout(std::chrono::seconds{3});
+    builder.setConnectionTimeout(std::chrono::seconds{3});
     builder.addHeader(std::move(userAgentHeader));
 
     if (forwardToRippledClientIp)
