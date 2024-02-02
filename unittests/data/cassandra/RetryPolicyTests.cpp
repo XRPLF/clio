@@ -23,20 +23,19 @@
 
 #include <boost/asio/io_context.hpp>
 #include <cassandra.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
-
-#include <atomic>
-#include <optional>
 
 using namespace data::cassandra;
 using namespace data::cassandra::detail;
 using namespace testing;
 
-class BackendCassandraRetryPolicyTest : public SyncAsioContextTest {};
+struct BackendCassandraRetryPolicyTest : SyncAsioContextTest {
+    ExponentialBackoffRetryPolicy retryPolicy{ctx};
+};
 
 TEST_F(BackendCassandraRetryPolicyTest, ShouldRetryAlwaysTrue)
 {
-    auto retryPolicy = ExponentialBackoffRetryPolicy{ctx};
     EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}));
     EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"invalid data", CASS_ERROR_LIB_INVALID_DATA}));
     EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"invalid query", CASS_ERROR_SERVER_INVALID_QUERY}));
@@ -50,17 +49,22 @@ TEST_F(BackendCassandraRetryPolicyTest, ShouldRetryAlwaysTrue)
 
 TEST_F(BackendCassandraRetryPolicyTest, RetryCorrectlyExecuted)
 {
-    auto callCount = std::atomic_int{0};
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
-    auto retryPolicy = ExponentialBackoffRetryPolicy{ctx};
+    testing::MockFunction<void()> callback;
+    EXPECT_CALL(callback, Call()).Times(3);
 
-    retryPolicy.retry([&callCount]() { ++callCount; });
-    retryPolicy.retry([&callCount]() { ++callCount; });
-    retryPolicy.retry([&callCount, &work]() {
-        ++callCount;
-        work.reset();
-    });
+    for (auto i = 0; i < 3; ++i) {
+        retryPolicy.retry([&callback]() { callback.Call(); });
+        runContext();
+    }
+}
 
-    ctx.run();
-    ASSERT_EQ(callCount, 3);
+TEST_F(BackendCassandraRetryPolicyTest, MutlipleRetryCancelPreviousCalls)
+{
+    testing::MockFunction<void()> callback;
+    EXPECT_CALL(callback, Call());
+
+    for (auto i = 0; i < 3; ++i)
+        retryPolicy.retry([&callback]() { callback.Call(); });
+
+    runContext();
 }
