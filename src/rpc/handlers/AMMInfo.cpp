@@ -48,9 +48,7 @@
 #include <ripple/protocol/STBase.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
-#include <ripple/protocol/tokens.h>
 
 #include <chrono>
 #include <cstdint>
