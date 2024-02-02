@@ -70,10 +70,9 @@ class LoggerFixture : virtual public ::testing::Test {
     FakeBuffer buffer_;
     std::ostream stream_ = std::ostream{&buffer_};
 
-protected:
+public:
     // Simulates the `util::Logger::init(config)` call
-    void
-    SetUp() override
+    LoggerFixture()
     {
         static std::once_flag once_;
         std::call_once(once_, [] {
@@ -94,6 +93,7 @@ protected:
         core->set_logging_enabled(true);
     }
 
+protected:
     void
     checkEqual(std::string expected)
     {
@@ -113,12 +113,9 @@ protected:
  *
  * This is meant to be used as a base for other fixtures.
  */
-class NoLoggerFixture : virtual public LoggerFixture {
-protected:
-    void
-    SetUp() override
+struct NoLoggerFixture : virtual LoggerFixture {
+    NoLoggerFixture()
     {
-        LoggerFixture::SetUp();
         boost::log::core::get()->set_logging_enabled(false);
     }
 };
@@ -200,14 +197,7 @@ struct MockBackendTestBase : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
-        NoLoggerFixture::SetUp();
         backend.reset();
-    }
-
-    void
-    TearDown() override
-    {
-        NoLoggerFixture::TearDown();
     }
 
     class BackendProxy {
@@ -282,7 +272,6 @@ struct MockSubscriptionManagerTest : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
-        NoLoggerFixture::SetUp();
         mockSubscriptionManagerPtr = std::make_shared<MockSubscriptionManager>();
     }
     void
@@ -302,7 +291,6 @@ struct MockLoadBalancerTest : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
-        NoLoggerFixture::SetUp();
         mockLoadBalancerPtr = std::make_shared<MockLoadBalancer>();
     }
     void
@@ -322,7 +310,6 @@ struct MockETLServiceTest : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
-        NoLoggerFixture::SetUp();
         mockETLServicePtr = std::make_shared<MockETLService>();
     }
     void
@@ -342,7 +329,6 @@ struct MockCountersTest : virtual public NoLoggerFixture {
     void
     SetUp() override
     {
-        NoLoggerFixture::SetUp();
         mockCountersPtr = std::make_shared<MockCounters>();
     }
     void
