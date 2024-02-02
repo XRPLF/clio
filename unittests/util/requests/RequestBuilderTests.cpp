@@ -50,10 +50,12 @@ struct RequestBuilderTestBundle {
     std::string target;
 };
 
-struct RequestBuilderTest : SyncAsioContextTest, testing::WithParamInterface<RequestBuilderTestBundle> {
+struct RequestBuilderTestBase : SyncAsioContextTest {
     TestHttpServer server{ctx, "0.0.0.0", 11111};
     RequestBuilder builder{"localhost", "11111"};
 };
+
+struct RequestBuilderTest : RequestBuilderTestBase, testing::WithParamInterface<RequestBuilderTestBundle> {};
 
 INSTANTIATE_TEST_CASE_P(
     RequestBuilderTest,
@@ -113,9 +115,9 @@ TEST_P(RequestBuilderTest, SimpleRequest)
         auto const response = [&]() -> util::Expected<std::string, RequestError> {
             switch (GetParam().method) {
                 case http::verb::get:
-                    return builder.get(yield);
+                    return builder.getPlain(yield);
                 case http::verb::post:
-                    return builder.post(yield);
+                    return builder.postPlain(yield);
                 default:
                     return util::Unexpected{RequestError{"Invalid HTTP verb"}};
             }
@@ -139,7 +141,7 @@ TEST_F(RequestBuilderTest, Timeout)
         }
     );
     runSpawn([this](asio::yield_context yield) {
-        auto response = builder.get(yield);
+        auto response = builder.getPlain(yield);
         EXPECT_FALSE(response);
     });
 }
@@ -163,7 +165,7 @@ TEST_F(RequestBuilderTest, RequestWithBody)
     );
 
     runSpawn([&](asio::yield_context yield) {
-        auto const response = builder.get(yield);
+        auto const response = builder.getPlain(yield);
         ASSERT_TRUE(response) << response.error().message;
         EXPECT_EQ(response.value(), replyBody) << response.value();
     });
@@ -173,7 +175,7 @@ TEST_F(RequestBuilderTest, ResolveError)
 {
     builder = RequestBuilder{"wrong_host", "11111"};
     runSpawn([this](asio::yield_context yield) {
-        auto const response = builder.get(yield);
+        auto const response = builder.getPlain(yield);
         ASSERT_FALSE(response);
         EXPECT_TRUE(response.error().message.starts_with("Resolve error")) << response.error().message;
     });
@@ -184,21 +186,75 @@ TEST_F(RequestBuilderTest, ConnectionError)
     builder = RequestBuilder{"localhost", "11112"};
     builder.setTimeout(std::chrono::milliseconds{1});
     runSpawn([this](asio::yield_context yield) {
-        auto const response = builder.get(yield);
+        auto const response = builder.getPlain(yield);
         ASSERT_FALSE(response);
         EXPECT_TRUE(response.error().message.starts_with("Connection error")) << response.error().message;
     });
 }
 
-TEST_F(RequestBuilderTest, WritingError)
+TEST_F(RequestBuilderTest, ResponseStatusIsNotOk)
 {
+    server.handleRequest([](auto&&) -> std::optional<http::response<http::string_body>> {
+        return http::response<http::string_body>{http::status::not_found, 11, "Not found"};
+    });
+
+    runSpawn([this](asio::yield_context yield) {
+        auto const response = builder.getPlain(yield);
+        ASSERT_FALSE(response);
+        EXPECT_TRUE(response.error().message.starts_with("Response status is not OK")) << response.error().message;
+    });
+}
+
+struct RequestBuilderSslTestBundle {
+    std::string testName;
+    boost::beast::http::verb method;
+};
+
+struct RequestBuilderSslTest : RequestBuilderTestBase, testing::WithParamInterface<RequestBuilderSslTestBundle> {};
+
+INSTANTIATE_TEST_CASE_P(
+    RequestBuilderSslTest,
+    RequestBuilderSslTest,
+    testing::Values(
+        RequestBuilderSslTestBundle{"Get", http::verb::get},
+        RequestBuilderSslTestBundle{"Post", http::verb::post}
+    ),
+    [](auto const& info) { return info.param.testName; }
+);
+
+TEST_P(RequestBuilderSslTest, TrySslUsePlain)
+{
+    // First try will be SSL, but the server can't handle SSL requests
     server.handleRequest(
-        [](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
+        [](auto&&) -> std::optional<http::response<http::string_body>> {
+            []() { FAIL(); }();
+            return std::nullopt;
+        },
+        true
+    );
+
+    server.handleRequest(
+        [&](http::request<http::string_body> request) -> std::optional<http::response<http::string_body>> {
             [&]() {
                 EXPECT_EQ(request.target(), "/");
-                EXPECT_EQ(request.method(), http::verb::get);
+                EXPECT_EQ(request.method(), GetParam().method);
             }();
-            return std::nullopt;
+            return http::response<http::string_body>{http::status::ok, 11, "Hello, world!"};
         }
     );
+
+    runSpawn([this](asio::yield_context yield) {
+        auto const response = [&]() -> util::Expected<std::string, RequestError> {
+            switch (GetParam().method) {
+                case http::verb::get:
+                    return builder.get(yield);
+                case http::verb::post:
+                    return builder.post(yield);
+                default:
+                    return util::Unexpected{RequestError{"Invalid HTTP verb"}};
+            }
+        }();
+        ASSERT_TRUE(response) << response.error().message;
+        EXPECT_EQ(response.value(), "Hello, world!");
+    });
 }

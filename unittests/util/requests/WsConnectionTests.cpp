@@ -120,7 +120,7 @@ TEST_P(WsConnectionTests, SendAndReceive)
     });
 }
 
-TEST_F(WsConnectionTests, UseConnect)
+TEST_F(WsConnectionTests, TrySslUsePlain)
 {
     asio::spawn(ctx, [&](asio::yield_context yield) {
         // Client attempts to establish SSL connection first which will fail

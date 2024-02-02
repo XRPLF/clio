@@ -20,6 +20,7 @@
 #include "util/requests/RequestBuilder.h"
 
 #include "util/Expected.h"
+#include "util/log/Logger.h"
 #include "util/requests/Types.h"
 #include "util/requests/impl/StreamData.h"
 
@@ -101,11 +102,16 @@ RequestBuilder::setTarget(std::string_view target)
     return *this;
 }
 
-RequestBuilder&
-RequestBuilder::setSslEnabled(bool const enabled)
+Expected<std::string, RequestError>
+RequestBuilder::getSsl(boost::asio::yield_context yield)
 {
-    sslEnabled_ = enabled;
-    return *this;
+    return doSslRequest(yield, http::verb::get);
+}
+
+Expected<std::string, RequestError>
+RequestBuilder::getPlain(boost::asio::yield_context yield)
+{
+    return doPlainRequest(yield, http::verb::get);
 }
 
 Expected<std::string, RequestError>
@@ -115,32 +121,57 @@ RequestBuilder::get(asio::yield_context yield)
 }
 
 Expected<std::string, RequestError>
+RequestBuilder::postSsl(boost::asio::yield_context yield)
+{
+    return doSslRequest(yield, http::verb::post);
+}
+
+Expected<std::string, RequestError>
+RequestBuilder::postPlain(boost::asio::yield_context yield)
+{
+    return doPlainRequest(yield, http::verb::post);
+}
+
+Expected<std::string, RequestError>
 RequestBuilder::post(asio::yield_context yield)
 {
     return doRequest(yield, http::verb::post);
 }
 
 Expected<std::string, RequestError>
-RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
+RequestBuilder::doSslRequest(asio::yield_context yield, beast::http::verb method)
 {
-    if (sslEnabled_) {
-        auto streamData = impl::SslTcpStreamData::create(yield);
-        if (not streamData.has_value())
-            return Unexpected{std::move(streamData).error()};
+    auto streamData = impl::SslTcpStreamData::create(yield);
+    if (not streamData.has_value())
+        return Unexpected{std::move(streamData).error()};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
-        if (!SSL_set_tlsext_host_name(streamData->stream.native_handle(), host_.c_str())) {
+    if (!SSL_set_tlsext_host_name(streamData->stream.native_handle(), host_.c_str())) {
 #pragma GCC diagnostic pop
-            beast::error_code errorCode;
-            errorCode.assign(static_cast<int>(::ERR_get_error()), asio::error::get_ssl_category());
-            return Unexpected{RequestError{"SSL setup failed", errorCode}};
-        }
-        return doRequestImpl(std::move(streamData).value(), yield, method);
+        beast::error_code errorCode;
+        errorCode.assign(static_cast<int>(::ERR_get_error()), asio::error::get_ssl_category());
+        return Unexpected{RequestError{"SSL setup failed", errorCode}};
     }
+    return doRequestImpl(std::move(streamData).value(), yield, method);
+}
 
+Expected<std::string, RequestError>
+RequestBuilder::doPlainRequest(asio::yield_context yield, beast::http::verb method)
+{
     auto streamData = impl::TcpStreamData{yield};
     return doRequestImpl(std::move(streamData), yield, method);
+}
+
+Expected<std::string, RequestError>
+RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
+{
+    auto result = doSslRequest(yield, method);
+    if (result.has_value())
+        return result;
+
+    LOG(log_.debug()) << "SSL request failed: " << result.error().message << ". Falling back to plain request.";
+    return doPlainRequest(yield, method);
 }
 
 template <typename StreamDataType>
@@ -184,7 +215,7 @@ RequestBuilder::doRequestImpl(StreamDataType&& streamData, asio::yield_context y
         return Unexpected{RequestError{"Read error", errorCode}};
 
     if (response.result() != http::status::ok)
-        return Unexpected{RequestError{"Response status not OK"}};
+        return Unexpected{RequestError{"Response status is not OK"}};
 
     beast::get_lowest_layer(stream).socket().shutdown(tcp::socket::shutdown_both, errorCode);
 
