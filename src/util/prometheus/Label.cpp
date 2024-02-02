@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/prometheus/Label.h"
+#include "util/prometheus/Label.hpp"
 
 #include <fmt/core.h>
 

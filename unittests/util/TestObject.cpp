@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "util/TestObject.h"
+#include "util/TestObject.hpp"
 
-#include "data/DBHelpers.h"
-#include "data/Types.h"
-#include "util/Assert.h"
+#include "data/DBHelpers.hpp"
+#include "data/Types.hpp"
+#include "util/Assert.hpp"
 
 #include <ripple/basics/Blob.h>
 #include <ripple/basics/Slice.h>

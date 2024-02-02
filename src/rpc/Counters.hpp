@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "rpc/WorkQueue.h"
-#include "util/prometheus/Counter.h"
+#include "rpc/WorkQueue.hpp"
+#include "util/prometheus/Counter.hpp"
 
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>

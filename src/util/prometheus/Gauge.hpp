@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "util/prometheus/MetricBase.h"
-#include "util/prometheus/OStream.h"
-#include "util/prometheus/impl/AnyCounterBase.h"
+#include "util/prometheus/MetricBase.hpp"
+#include "util/prometheus/OStream.hpp"
+#include "util/prometheus/impl/AnyCounterBase.hpp"
 
 #include <cstdint>
 #include <string>

@@ -20,7 +20,7 @@
 /** @file */
 #pragma once
 
-#include "util/Assert.h"
+#include "util/Assert.hpp"
 
 #include <boost/container/flat_set.hpp>
 #include <ripple/basics/Blob.h>

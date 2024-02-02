@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include "data/cassandra/Error.h"
-#include "data/cassandra/impl/AsyncExecutor.h"
+#include "data/cassandra/Error.hpp"
+#include "data/cassandra/impl/AsyncExecutor.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <cassandra.h>

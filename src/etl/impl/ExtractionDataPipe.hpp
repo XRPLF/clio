@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "etl/ETLHelpers.h"
-#include "util/log/Logger.h"
+#include "etl/ETLHelpers.hpp"
+#include "util/log/Logger.hpp"
 
 #include <cstddef>
 #include <cstdint>

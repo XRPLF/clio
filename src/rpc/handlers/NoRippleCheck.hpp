@@ -19,15 +19,15 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/common/JsonBool.h"
-#include "rpc/common/MetaProcessors.h"
-#include "rpc/common/Modifiers.h"
-#include "rpc/common/Specs.h"
-#include "rpc/common/Types.h"
-#include "rpc/common/Validators.h"
+#include "data/BackendInterface.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/common/JsonBool.hpp"
+#include "rpc/common/MetaProcessors.hpp"
+#include "rpc/common/Modifiers.hpp"
+#include "rpc/common/Specs.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/common/Validators.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>

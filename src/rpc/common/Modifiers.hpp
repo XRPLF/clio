@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "rpc/common/Types.h"
-#include "util/JsonUtils.h"
+#include "rpc/common/Types.hpp"
+#include "util/JsonUtils.hpp"
 
 #include <boost/json/value.hpp>
 

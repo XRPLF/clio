@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "data/Types.h"
-#include "web/interface/ConnectionBase.h"
+#include "data/Types.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>

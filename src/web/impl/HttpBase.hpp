@@ -19,15 +19,15 @@
 
 #pragma once
 
-#include "main/Build.h"
-#include "rpc/Errors.h"
-#include "util/Taggable.h"
-#include "util/log/Logger.h"
-#include "util/prometheus/Http.h"
-#include "web/DOSGuard.h"
-#include "web/impl/AdminVerificationStrategy.h"
-#include "web/interface/Concepts.h"
-#include "web/interface/ConnectionBase.h"
+#include "main/Build.hpp"
+#include "rpc/Errors.hpp"
+#include "util/Taggable.hpp"
+#include "util/log/Logger.hpp"
+#include "util/prometheus/Http.hpp"
+#include "web/DOSGuard.hpp"
+#include "web/impl/AdminVerificationStrategy.hpp"
+#include "web/interface/Concepts.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/error.hpp>
 #include <boost/asio/ip/tcp.hpp>

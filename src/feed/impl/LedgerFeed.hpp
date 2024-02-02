@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "feed/Types.h"
-#include "feed/impl/SingleFeedBase.h"
+#include "data/BackendInterface.hpp"
+#include "feed/Types.hpp"
+#include "feed/impl/SingleFeedBase.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>

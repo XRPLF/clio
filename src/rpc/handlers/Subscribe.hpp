@@ -19,14 +19,14 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "data/Types.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/MetaProcessors.h"
-#include "rpc/common/Types.h"
-#include "rpc/common/Validators.h"
+#include "data/BackendInterface.hpp"
+#include "data/Types.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/MetaProcessors.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/common/Validators.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>

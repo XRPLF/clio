@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include "util/Assert.h"
-#include "util/config/Config.h"
-#include "util/log/Logger.h"
-#include "web/IntervalSweepHandler.h"
-#include "web/WhitelistHandler.h"
+#include "util/Assert.hpp"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
+#include "web/IntervalSweepHandler.hpp"
+#include "web/WhitelistHandler.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/iterator/transform_iterator.hpp>

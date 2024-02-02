@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "data/Types.h"
-#include "etl/impl/CacheLoader.h"
-#include "util/Fixtures.h"
-#include "util/MockCache.h"
-#include "util/config/Config.h"
+#include "data/Types.hpp"
+#include "etl/impl/CacheLoader.hpp"
+#include "util/Fixtures.hpp"
+#include "util/MockCache.hpp"
+#include "util/config/Config.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/io_service.hpp>

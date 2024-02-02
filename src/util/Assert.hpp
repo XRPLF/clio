@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "util/SourceLocation.h"
-#include "util/log/Logger.h"
+#include "util/SourceLocation.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/stacktrace.hpp>
 #include <boost/stacktrace/stacktrace.hpp>

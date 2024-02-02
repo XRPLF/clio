@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "data/DBHelpers.h"
-#include "data/LedgerCache.h"
-#include "data/Types.h"
-#include "util/log/Logger.h"
+#include "data/DBHelpers.hpp"
+#include "data/LedgerCache.hpp"
+#include "data/Types.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>

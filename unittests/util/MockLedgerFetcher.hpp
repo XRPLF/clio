@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/FakeFetchResponse.h"
+#include "util/FakeFetchResponse.hpp"
 
 #include <gmock/gmock.h>
 

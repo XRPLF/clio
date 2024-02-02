@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "data/Types.h"
-#include "feed/impl/SingleFeedBase.h"
-#include "rpc/BookChangesHelper.h"
+#include "data/Types.hpp"
+#include "feed/impl/SingleFeedBase.hpp"
+#include "rpc/BookChangesHelper.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/json/serialize.hpp>

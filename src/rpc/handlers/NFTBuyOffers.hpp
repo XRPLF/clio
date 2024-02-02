@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "rpc/common/Types.h"
-#include "rpc/handlers/NFTOffersCommon.h"
+#include "data/BackendInterface.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/handlers/NFTOffersCommon.hpp"
 
 #include <memory>
 

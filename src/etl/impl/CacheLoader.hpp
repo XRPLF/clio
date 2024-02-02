@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "data/Types.h"
-#include "util/Assert.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "data/Types.hpp"
+#include "util/Assert.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/algorithm/hex.hpp>
 #include <boost/algorithm/string.hpp>

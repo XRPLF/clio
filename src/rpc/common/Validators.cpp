@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "rpc/common/Validators.h"
+#include "rpc/common/Validators.hpp"
 
-#include "rpc/Errors.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/Types.h"
+#include "rpc/Errors.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>

@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "data/DBHelpers.h"
+#include "data/DBHelpers.hpp"
 
 #include <fmt/core.h>
 #include <ripple/basics/base_uint.h>

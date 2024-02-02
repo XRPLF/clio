@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "util/config/Config.h"
-#include "web/Resolver.h"
+#include "util/config/Config.hpp"
+#include "web/Resolver.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/ip/address.hpp>

@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include "util/Taggable.h"
-#include "util/log/Logger.h"
-#include "web/DOSGuard.h"
-#include "web/HttpSession.h"
-#include "web/SslHttpSession.h"
-#include "web/interface/Concepts.h"
+#include "util/Taggable.hpp"
+#include "util/log/Logger.hpp"
+#include "web/DOSGuard.hpp"
+#include "web/HttpSession.hpp"
+#include "web/SslHttpSession.hpp"
+#include "web/interface/Concepts.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>

@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "rpc/common/Concepts.h"
-#include "rpc/common/Types.h"
-#include "rpc/common/impl/Processors.h"
+#include "rpc/common/Concepts.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/common/impl/Processors.hpp"
 
 #include <boost/json/value.hpp>
 

@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "data/cassandra/Types.h"
-#include "data/cassandra/impl/ManagedObject.h"
+#include "data/cassandra/Types.hpp"
+#include "data/cassandra/impl/ManagedObject.hpp"
 
 #include <cassandra.h>
 

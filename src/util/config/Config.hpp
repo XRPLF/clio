@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/config/detail/Helpers.h"
+#include "util/config/detail/Helpers.hpp"
 
 #include <boost/json.hpp>
 #include <boost/json/kind.hpp>

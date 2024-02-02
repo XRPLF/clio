@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include "util/config/Config.h"
-#include "util/prometheus/Counter.h"
-#include "util/prometheus/Gauge.h"
-#include "util/prometheus/Histogram.h"
-#include "util/prometheus/Label.h"
-#include "util/prometheus/MetricBase.h"
-#include "util/prometheus/MetricsFamily.h"
+#include "util/config/Config.hpp"
+#include "util/prometheus/Counter.hpp"
+#include "util/prometheus/Gauge.hpp"
+#include "util/prometheus/Histogram.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/MetricBase.hpp"
+#include "util/prometheus/MetricsFamily.hpp"
 
 #include <cstdint>
 #include <memory>

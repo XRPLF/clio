@@ -18,7 +18,7 @@
 //==============================================================================
 #pragma once
 
-#include "util/Assert.h"
+#include "util/Assert.hpp"
 
 #include <random>
 

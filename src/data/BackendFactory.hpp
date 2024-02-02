@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "data/CassandraBackend.h"
-#include "data/cassandra/SettingsProvider.h"
-#include "util/config/Config.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "data/CassandraBackend.hpp"
+#include "data/cassandra/SettingsProvider.hpp"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>

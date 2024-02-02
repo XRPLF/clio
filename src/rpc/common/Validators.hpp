@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "rpc/Errors.h"
-#include "rpc/common/Types.h"
+#include "rpc/Errors.hpp"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>

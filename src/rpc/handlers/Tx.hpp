@@ -19,17 +19,17 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "data/Types.h"
-#include "etl/ETLService.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/JsonBool.h"
-#include "rpc/common/Specs.h"
-#include "rpc/common/Types.h"
-#include "rpc/common/Validators.h"
-#include "util/JsonUtils.h"
+#include "data/BackendInterface.hpp"
+#include "data/Types.hpp"
+#include "etl/ETLService.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/JsonBool.hpp"
+#include "rpc/common/Specs.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/common/Validators.hpp"
+#include "util/JsonUtils.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/conversion.hpp>

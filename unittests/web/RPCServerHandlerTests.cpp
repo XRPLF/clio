@@ -16,14 +16,14 @@
 */
 //==============================================================================
 
-#include "rpc/Errors.h"
-#include "util/Fixtures.h"
-#include "util/MockETLService.h"
-#include "util/MockRPCEngine.h"
-#include "util/Taggable.h"
-#include "util/config/Config.h"
-#include "web/RPCServerHandler.h"
-#include "web/interface/ConnectionBase.h"
+#include "rpc/Errors.hpp"
+#include "util/Fixtures.hpp"
+#include "util/MockETLService.hpp"
+#include "util/MockRPCEngine.hpp"
+#include "util/Taggable.hpp"
+#include "util/config/Config.hpp"
+#include "web/RPCServerHandler.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast/http/status.hpp>
 #include <boost/json/parse.hpp>

@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "web/Resolver.h"
+#include "web/Resolver.hpp"
 
 #include <boost/asio/ip/address.hpp>
 

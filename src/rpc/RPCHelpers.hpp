@@ -24,13 +24,13 @@
  * This file contains a variety of utility functions used when executing the handlers.
  */
 
-#include "data/BackendInterface.h"
-#include "data/Types.h"
-#include "rpc/Errors.h"
-#include "rpc/common/Types.h"
-#include "util/JsonUtils.h"
-#include "util/log/Logger.h"
-#include "web/Context.h"
+#include "data/BackendInterface.hpp"
+#include "data/Types.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/common/Types.hpp"
+#include "util/JsonUtils.hpp"
+#include "util/log/Logger.hpp"
+#include "web/Context.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>

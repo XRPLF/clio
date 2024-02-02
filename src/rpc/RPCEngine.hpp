@@ -19,16 +19,16 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "rpc/Counters.h"
-#include "rpc/Errors.h"
-#include "rpc/WorkQueue.h"
-#include "rpc/common/HandlerProvider.h"
-#include "rpc/common/Types.h"
-#include "rpc/common/impl/ForwardingProxy.h"
-#include "util/log/Logger.h"
-#include "web/Context.h"
-#include "web/DOSGuard.h"
+#include "data/BackendInterface.hpp"
+#include "rpc/Counters.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/WorkQueue.hpp"
+#include "rpc/common/HandlerProvider.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/common/impl/ForwardingProxy.hpp"
+#include "util/log/Logger.hpp"
+#include "web/Context.hpp"
+#include "web/DOSGuard.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>

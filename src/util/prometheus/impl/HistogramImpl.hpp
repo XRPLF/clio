@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "util/Assert.h"
-#include "util/Concepts.h"
-#include "util/prometheus/OStream.h"
+#include "util/Assert.hpp"
+#include "util/Concepts.hpp"
+#include "util/prometheus/OStream.hpp"
 
 #include <cstdint>
 #include <limits>

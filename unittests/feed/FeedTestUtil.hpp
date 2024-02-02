@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "util/Fixtures.h"
-#include "util/MockWsBase.h"
-#include "web/interface/ConnectionBase.h"
+#include "util/Fixtures.hpp"
+#include "util/MockWsBase.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>

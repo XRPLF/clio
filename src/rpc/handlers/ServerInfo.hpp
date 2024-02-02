@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "data/DBHelpers.h"
-#include "main/Build.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/common/Specs.h"
-#include "rpc/common/Types.h"
+#include "data/BackendInterface.hpp"
+#include "data/DBHelpers.hpp"
+#include "main/Build.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/common/Specs.hpp"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>

@@ -20,7 +20,7 @@
 /** @file */
 #pragma once
 
-#include "data/DBHelpers.h"
+#include "data/DBHelpers.hpp"
 
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/TxMeta.h>

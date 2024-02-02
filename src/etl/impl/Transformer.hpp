@@ -19,16 +19,16 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "data/DBHelpers.h"
-#include "data/Types.h"
-#include "etl/SystemState.h"
-#include "etl/impl/AmendmentBlock.h"
-#include "etl/impl/LedgerLoader.h"
-#include "util/Assert.h"
-#include "util/LedgerUtils.h"
-#include "util/Profiler.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "data/DBHelpers.hpp"
+#include "data/Types.hpp"
+#include "etl/SystemState.hpp"
+#include "etl/impl/AmendmentBlock.hpp"
+#include "etl/impl/LedgerLoader.hpp"
+#include "util/Assert.hpp"
+#include "util/LedgerUtils.hpp"
+#include "util/Profiler.hpp"
+#include "util/log/Logger.hpp"
 
 #include <grpcpp/grpcpp.h>
 #include <ripple/basics/base_uint.h>

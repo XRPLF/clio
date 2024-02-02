@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "util/Assert.h"
-#include "web/interface/ConnectionBase.h"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "util/Assert.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast/http/status.hpp>
 #include <boost/json/object.hpp>

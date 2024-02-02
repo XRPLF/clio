@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "data/Types.h"
-#include "rpc/common/Types.h"
+#include "data/BackendInterface.hpp"
+#include "data/Types.hpp"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json.hpp>
 #include <boost/json/conversion.hpp>

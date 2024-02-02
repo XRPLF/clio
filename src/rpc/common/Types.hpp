@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "rpc/Errors.h"
-#include "util/Expected.h"
+#include "rpc/Errors.hpp"
+#include "util/Expected.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/conversion.hpp>

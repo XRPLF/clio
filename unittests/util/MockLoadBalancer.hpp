@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "etl/Source.h"
-#include "util/FakeFetchResponse.h"
+#include "etl/Source.hpp"
+#include "util/FakeFetchResponse.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>

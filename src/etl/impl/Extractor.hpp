@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "etl/SystemState.h"
-#include "util/Assert.h"
-#include "util/Profiler.h"
-#include "util/log/Logger.h"
+#include "etl/SystemState.hpp"
+#include "util/Assert.hpp"
+#include "util/Profiler.hpp"
+#include "util/log/Logger.hpp"
 
 #include <ripple/beast/core/CurrentThreadName.h>
 

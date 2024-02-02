@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/JsonUtils.h"
+#include "util/JsonUtils.hpp"
 
 #include <ripple/protocol/TxFormats.h>
 

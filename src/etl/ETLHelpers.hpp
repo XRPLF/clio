@@ -20,7 +20,7 @@
 /** @file */
 #pragma once
 
-#include "util/Assert.h"
+#include "util/Assert.hpp"
 
 #include <ripple/basics/base_uint.h>
 

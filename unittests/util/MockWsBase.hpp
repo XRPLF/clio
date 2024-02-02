@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "util/Taggable.h"
-#include "util/config/Config.h"
-#include "web/interface/ConnectionBase.h"
+#include "util/Taggable.hpp"
+#include "util/config/Config.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast/http/status.hpp>
 #include <gmock/gmock.h>

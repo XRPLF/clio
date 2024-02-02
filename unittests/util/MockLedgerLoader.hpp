@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "etl/impl/LedgerLoader.h"
-#include "util/FakeFetchResponse.h"
+#include "etl/impl/LedgerLoader.hpp"
+#include "util/FakeFetchResponse.hpp"
 
 #include <gmock/gmock.h>
 #include <ripple/protocol/LedgerHeader.h>

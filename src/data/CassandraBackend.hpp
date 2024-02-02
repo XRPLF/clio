@@ -19,19 +19,19 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "data/DBHelpers.h"
-#include "data/Types.h"
-#include "data/cassandra/Concepts.h"
-#include "data/cassandra/Handle.h"
-#include "data/cassandra/Schema.h"
-#include "data/cassandra/SettingsProvider.h"
-#include "data/cassandra/Types.h"
-#include "data/cassandra/impl/ExecutionStrategy.h"
-#include "util/Assert.h"
-#include "util/LedgerUtils.h"
-#include "util/Profiler.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "data/DBHelpers.hpp"
+#include "data/Types.hpp"
+#include "data/cassandra/Concepts.hpp"
+#include "data/cassandra/Handle.hpp"
+#include "data/cassandra/Schema.hpp"
+#include "data/cassandra/SettingsProvider.hpp"
+#include "data/cassandra/Types.hpp"
+#include "data/cassandra/impl/ExecutionStrategy.hpp"
+#include "util/Assert.hpp"
+#include "util/LedgerUtils.hpp"
+#include "util/Profiler.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>

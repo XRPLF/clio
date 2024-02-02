@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "data/Types.h"
-#include "util/prometheus/Counter.h"
-#include "util/prometheus/Label.h"
-#include "util/prometheus/Prometheus.h"
+#include "data/Types.hpp"
+#include "util/prometheus/Counter.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/hardened_hash.h>

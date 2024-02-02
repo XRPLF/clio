@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "util/prometheus/Gauge.h"
-#include "util/prometheus/Label.h"
-#include "util/prometheus/Prometheus.h"
+#include "util/prometheus/Gauge.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <fmt/core.h>
 

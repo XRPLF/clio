@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include "rpc/Errors.h"
-#include "rpc/common/Concepts.h"
-#include "rpc/common/Specs.h"
-#include "rpc/common/Types.h"
-#include "rpc/common/Validators.h"
+#include "rpc/Errors.hpp"
+#include "rpc/common/Concepts.hpp"
+#include "rpc/common/Specs.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/common/Validators.hpp"
 
 #include <boost/json/value.hpp>
 #include <fmt/core.h>

@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "data/Types.h"
-#include "etl/NFTHelpers.h"
-#include "util/Assert.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "data/Types.hpp"
+#include "etl/NFTHelpers.hpp"
+#include "util/Assert.hpp"
+#include "util/log/Logger.hpp"
 
 #include <grpcpp/client_context.h>
 #include <grpcpp/grpcpp.h>

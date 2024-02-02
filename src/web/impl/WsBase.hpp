@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include "rpc/Errors.h"
-#include "rpc/common/Types.h"
-#include "util/Taggable.h"
-#include "util/log/Logger.h"
-#include "web/DOSGuard.h"
-#include "web/interface/Concepts.h"
-#include "web/interface/ConnectionBase.h"
+#include "rpc/Errors.hpp"
+#include "rpc/common/Types.hpp"
+#include "util/Taggable.hpp"
+#include "util/log/Logger.hpp"
+#include "web/DOSGuard.hpp"
+#include "web/interface/Concepts.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>

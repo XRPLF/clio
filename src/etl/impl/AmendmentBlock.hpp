@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "etl/SystemState.h"
-#include "util/log/Logger.h"
+#include "etl/SystemState.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>

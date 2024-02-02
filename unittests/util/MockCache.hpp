@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "data/Types.h"
+#include "data/Types.hpp"
 
 #include <gmock/gmock.h>
 #include <ripple/basics/base_uint.h>

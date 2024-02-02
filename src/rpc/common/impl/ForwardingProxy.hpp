@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include "rpc/Errors.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/Types.h"
-#include "util/log/Logger.h"
-#include "web/Context.h"
+#include "rpc/Errors.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/Types.hpp"
+#include "util/log/Logger.hpp"
+#include "web/Context.hpp"
 
 #include <ripple/protocol/ErrorCodes.h>
 

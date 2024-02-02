@@ -20,9 +20,9 @@
 /** @file */
 #pragma once
 
-#include "data/Types.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
+#include "data/Types.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>

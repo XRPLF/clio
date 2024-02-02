@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "util/prometheus/MetricBuilder.h"
+#include "util/prometheus/MetricBuilder.hpp"
 
-#include "util/Assert.h"
-#include "util/prometheus/Counter.h"
-#include "util/prometheus/Gauge.h"
-#include "util/prometheus/Histogram.h"
-#include "util/prometheus/MetricBase.h"
+#include "util/Assert.hpp"
+#include "util/prometheus/Counter.hpp"
+#include "util/prometheus/Gauge.hpp"
+#include "util/prometheus/Histogram.hpp"
+#include "util/prometheus/MetricBase.hpp"
 
 #include <cstdint>
 #include <memory>

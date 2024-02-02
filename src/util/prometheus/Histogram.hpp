@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "util/Assert.h"
-#include "util/prometheus/MetricBase.h"
-#include "util/prometheus/OStream.h"
-#include "util/prometheus/impl/HistogramImpl.h"
+#include "util/Assert.hpp"
+#include "util/prometheus/MetricBase.hpp"
+#include "util/prometheus/OStream.hpp"
+#include "util/prometheus/impl/HistogramImpl.hpp"
 
 #include <cstdint>
 #include <memory>

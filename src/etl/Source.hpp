@@ -19,15 +19,15 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "etl/ETLHelpers.h"
-#include "etl/LoadBalancer.h"
-#include "etl/impl/AsyncData.h"
-#include "etl/impl/ForwardCache.h"
-#include "feed/SubscriptionManager.h"
-#include "util/Assert.h"
-#include "util/config/Config.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "etl/ETLHelpers.hpp"
+#include "etl/LoadBalancer.hpp"
+#include "etl/impl/AsyncData.hpp"
+#include "etl/impl/ForwardCache.hpp"
+#include "feed/SubscriptionManager.hpp"
+#include "util/Assert.hpp"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/classification.hpp>

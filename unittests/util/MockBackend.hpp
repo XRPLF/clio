@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "data/DBHelpers.h"
-#include "data/Types.h"
-#include "util/config/Config.h"
+#include "data/BackendInterface.hpp"
+#include "data/DBHelpers.hpp"
+#include "data/Types.hpp"
+#include "util/config/Config.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>

@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "feed/SubscriptionManager.h"
-#include "rpc/common/AnyHandler.h"
-#include "rpc/common/HandlerProvider.h"
-#include "rpc/common/Types.h"
-#include "util/config/Config.h"
+#include "data/BackendInterface.hpp"
+#include "feed/SubscriptionManager.hpp"
+#include "rpc/common/AnyHandler.hpp"
+#include "rpc/common/HandlerProvider.hpp"
+#include "rpc/common/Types.hpp"
+#include "util/config/Config.hpp"
 
 #include <memory>
 #include <optional>

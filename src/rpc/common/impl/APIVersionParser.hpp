@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "rpc/common/APIVersion.h"
-#include "util/Expected.h"
-#include "util/config/Config.h"
-#include "util/log/Logger.h"
+#include "rpc/common/APIVersion.hpp"
+#include "util/Expected.hpp"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/json/object.hpp>
 

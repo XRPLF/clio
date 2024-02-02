@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/config/Config.h"
+#include "util/config/Config.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/json.hpp>

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/prometheus/OStream.h"
+#include "util/prometheus/OStream.hpp"
 
 #include <string>
 

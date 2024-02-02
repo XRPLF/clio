@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "data/cassandra/impl/ManagedObject.h"
-#include "data/cassandra/impl/Tuple.h"
+#include "data/cassandra/impl/ManagedObject.hpp"
+#include "data/cassandra/impl/Tuple.hpp"
 
 #include <cassandra.h>
 #include <ripple/basics/base_uint.h>

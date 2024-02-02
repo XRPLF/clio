@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "etl/ETLHelpers.h"
-#include "etl/LoadBalancer.h"
-#include "etl/Source.h"
-#include "util/config/Config.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "etl/ETLHelpers.hpp"
+#include "etl/LoadBalancer.hpp"
+#include "etl/Source.hpp"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>

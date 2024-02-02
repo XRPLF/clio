@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "rpc/common/AnyHandler.h"
+#include "rpc/common/AnyHandler.hpp"
 
 #include <optional>
 #include <string>

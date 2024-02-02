@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "web/interface/ConnectionBase.h"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast.hpp>
 #include <boost/beast/core/error.hpp>

@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "util/MockBackend.h"
-#include "util/MockCounters.h"
-#include "util/MockETLService.h"
-#include "util/MockLoadBalancer.h"
-#include "util/MockSubscriptionManager.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "util/MockBackend.hpp"
+#include "util/MockCounters.hpp"
+#include "util/MockETLService.hpp"
+#include "util/MockLoadBalancer.hpp"
+#include "util/MockSubscriptionManager.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>

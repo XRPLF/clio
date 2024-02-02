@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "feed/impl/TrackableSignal.h"
+#include "feed/impl/TrackableSignal.hpp"
 
 #include <boost/signals2.hpp>
 

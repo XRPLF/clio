@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "rpc/handlers/LedgerRange.h"
+#include "rpc/handlers/LedgerRange.hpp"
 
-#include "rpc/JS.h"
-#include "rpc/common/Types.h"
+#include "rpc/JS.hpp"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>

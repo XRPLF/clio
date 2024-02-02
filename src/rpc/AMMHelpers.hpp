@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
+#include "data/BackendInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <ripple/protocol/AccountID.h>

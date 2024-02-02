@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "util/prometheus/Counter.h"
-#include "util/prometheus/Gauge.h"
-#include "util/prometheus/Histogram.h"
+#include "util/prometheus/Counter.hpp"
+#include "util/prometheus/Gauge.hpp"
+#include "util/prometheus/Histogram.hpp"
 
 #include <boost/json/object.hpp>
 

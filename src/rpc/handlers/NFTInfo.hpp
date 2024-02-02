@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "rpc/JS.h"
-#include "rpc/common/Specs.h"
-#include "rpc/common/Types.h"
-#include "rpc/common/Validators.h"
+#include "data/BackendInterface.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/common/Specs.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/common/Validators.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>

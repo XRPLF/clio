@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/JsonUtils.h"
+#include "util/JsonUtils.hpp"
 
 #include <ripple/protocol/jss.h>
 

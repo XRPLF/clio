@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "data/Types.h"
-#include "util/Taggable.h"
-#include "util/log/Logger.h"
-#include "web/interface/ConnectionBase.h"
+#include "data/Types.hpp"
+#include "util/Taggable.hpp"
+#include "util/log/Logger.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>

@@ -19,15 +19,15 @@
 
 #pragma once
 
-#include "data/cassandra/Error.h"
-#include "data/cassandra/Types.h"
-#include "data/cassandra/impl/Batch.h"
-#include "data/cassandra/impl/Cluster.h"
-#include "data/cassandra/impl/Future.h"
-#include "data/cassandra/impl/ManagedObject.h"
-#include "data/cassandra/impl/Result.h"
-#include "data/cassandra/impl/Session.h"
-#include "data/cassandra/impl/Statement.h"
+#include "data/cassandra/Error.hpp"
+#include "data/cassandra/Types.hpp"
+#include "data/cassandra/impl/Batch.hpp"
+#include "data/cassandra/impl/Cluster.hpp"
+#include "data/cassandra/impl/Future.hpp"
+#include "data/cassandra/impl/ManagedObject.hpp"
+#include "data/cassandra/impl/Result.hpp"
+#include "data/cassandra/impl/Session.hpp"
+#include "data/cassandra/impl/Statement.hpp"
 
 #include <cassandra.h>
 

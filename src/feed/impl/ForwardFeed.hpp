@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "feed/impl/SingleFeedBase.h"
+#include "feed/impl/SingleFeedBase.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>

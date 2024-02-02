@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/Atomic.h"
+#include "util/Atomic.hpp"
 
 #include <type_traits>
 

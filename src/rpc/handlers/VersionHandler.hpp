@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "rpc/common/APIVersion.h"
-#include "rpc/common/Types.h"
-#include "rpc/common/impl/APIVersionParser.h"
-#include "util/config/Config.h"
+#include "rpc/common/APIVersion.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/common/impl/APIVersionParser.hpp"
+#include "util/config/Config.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>

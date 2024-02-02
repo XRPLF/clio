@@ -19,19 +19,19 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "rpc/Errors.h"
-#include "rpc/Factories.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/impl/APIVersionParser.h"
-#include "util/JsonUtils.h"
-#include "util/Profiler.h"
-#include "util/Taggable.h"
-#include "util/config/Config.h"
-#include "util/log/Logger.h"
-#include "web/impl/ErrorHandling.h"
-#include "web/interface/ConnectionBase.h"
+#include "data/BackendInterface.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/Factories.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/impl/APIVersionParser.hpp"
+#include "util/JsonUtils.hpp"
+#include "util/Profiler.hpp"
+#include "util/Taggable.hpp"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
+#include "web/impl/ErrorHandling.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/core/error.hpp>

@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "util/Taggable.h"
-#include "web/DOSGuard.h"
-#include "web/impl/WsBase.h"
-#include "web/interface/ConnectionBase.h"
+#include "util/Taggable.hpp"
+#include "web/DOSGuard.hpp"
+#include "web/impl/WsBase.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/stream_traits.hpp>

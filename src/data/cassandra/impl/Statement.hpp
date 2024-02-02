@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "data/cassandra/Types.h"
-#include "data/cassandra/impl/Collection.h"
-#include "data/cassandra/impl/ManagedObject.h"
-#include "data/cassandra/impl/Tuple.h"
+#include "data/cassandra/Types.hpp"
+#include "data/cassandra/impl/Collection.hpp"
+#include "data/cassandra/impl/ManagedObject.hpp"
+#include "data/cassandra/impl/Tuple.hpp"
 
 #include <cassandra.h>
 #include <fmt/core.h>

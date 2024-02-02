@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/config/Config.h"
+#include "util/config/Config.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>

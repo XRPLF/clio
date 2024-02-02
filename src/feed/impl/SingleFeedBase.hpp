@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "feed/Types.h"
-#include "feed/impl/TrackableSignal.h"
-#include "util/log/Logger.h"
-#include "util/prometheus/Gauge.h"
+#include "feed/Types.hpp"
+#include "feed/impl/TrackableSignal.hpp"
+#include "util/log/Logger.hpp"
+#include "util/prometheus/Gauge.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>

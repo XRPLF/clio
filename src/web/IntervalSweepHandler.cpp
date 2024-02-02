@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "web/IntervalSweepHandler.h"
+#include "web/IntervalSweepHandler.hpp"
 
-#include "util/Assert.h"
-#include "util/Constants.h"
-#include "util/config/Config.h"
-#include "web/DOSGuard.h"
+#include "util/Assert.hpp"
+#include "util/Constants.hpp"
+#include "util/config/Config.hpp"
+#include "web/DOSGuard.hpp"
 
 #include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>

@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include "util/config/Config.h"
-#include "util/log/Logger.h"
-#include "util/prometheus/Counter.h"
-#include "util/prometheus/Gauge.h"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
+#include "util/prometheus/Counter.hpp"
+#include "util/prometheus/Gauge.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/spawn.hpp>

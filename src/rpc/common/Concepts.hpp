@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "rpc/common/Types.h"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>

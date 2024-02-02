@@ -18,8 +18,8 @@
 //==============================================================================
 
 #pragma once
-#include "rpc/common/Types.h"
-#include "web/Context.h"
+#include "rpc/common/Types.hpp"
+#include "web/Context.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>

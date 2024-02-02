@@ -19,14 +19,14 @@
 
 #pragma once
 
-#include "data/BackendCounters.h"
-#include "data/BackendInterface.h"
-#include "data/cassandra/Handle.h"
-#include "data/cassandra/Types.h"
-#include "data/cassandra/impl/AsyncExecutor.h"
-#include "util/Assert.h"
-#include "util/Batching.h"
-#include "util/log/Logger.h"
+#include "data/BackendCounters.hpp"
+#include "data/BackendInterface.hpp"
+#include "data/cassandra/Handle.hpp"
+#include "data/cassandra/Types.hpp"
+#include "data/cassandra/impl/AsyncExecutor.hpp"
+#include "util/Assert.hpp"
+#include "util/Batching.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/associated_executor.hpp>

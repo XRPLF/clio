@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "rpc/common/AnyHandler.h"
-#include "rpc/common/HandlerProvider.h"
+#include "rpc/common/AnyHandler.hpp"
+#include "rpc/common/HandlerProvider.hpp"
 
 #include <gmock/gmock.h>
 

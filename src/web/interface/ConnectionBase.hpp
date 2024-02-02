@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/Taggable.h"
+#include "util/Taggable.hpp"
 
 #include <boost/beast/http.hpp>
 #include <boost/beast/http/status.hpp>

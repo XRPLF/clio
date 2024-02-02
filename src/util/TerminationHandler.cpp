@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "util/TerminationHandler.h"
+#include "util/TerminationHandler.hpp"
 
-#include "util/log/Logger.h"
+#include "util/log/Logger.hpp"
 
 #include <boost/stacktrace/stacktrace.hpp>
 

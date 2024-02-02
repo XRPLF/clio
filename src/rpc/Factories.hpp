@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include "data/Types.h"
-#include "rpc/Errors.h"
-#include "rpc/common/APIVersion.h"
-#include "util/Expected.h"
-#include "util/Taggable.h"
-#include "web/Context.h"
-#include "web/interface/ConnectionBase.h"
+#include "data/Types.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/common/APIVersion.hpp"
+#include "util/Expected.hpp"
+#include "util/Taggable.hpp"
+#include "web/Context.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>

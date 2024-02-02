@@ -19,15 +19,15 @@
 
 #pragma once
 
-#include "data/BackendInterface.h"
-#include "data/Types.h"
-#include "feed/Types.h"
-#include "feed/impl/BookChangesFeed.h"
-#include "feed/impl/ForwardFeed.h"
-#include "feed/impl/LedgerFeed.h"
-#include "feed/impl/ProposedTransactionFeed.h"
-#include "feed/impl/TransactionFeed.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "data/Types.hpp"
+#include "feed/Types.hpp"
+#include "feed/impl/BookChangesFeed.hpp"
+#include "feed/impl/ForwardFeed.hpp"
+#include "feed/impl/LedgerFeed.hpp"
+#include "feed/impl/ProposedTransactionFeed.hpp"
+#include "feed/impl/TransactionFeed.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>

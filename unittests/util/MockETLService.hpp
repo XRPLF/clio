@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "etl/ETLState.h"
+#include "etl/ETLState.hpp"
 
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>

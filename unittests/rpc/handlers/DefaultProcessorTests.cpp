@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "rpc/common/Specs.h"
-#include "rpc/common/Types.h"
-#include "rpc/common/Validators.h"
-#include "rpc/common/impl/Processors.h"
-#include "rpc/handlers/impl/FakesAndMocks.h"
-#include "util/Fixtures.h"
+#include "rpc/common/Specs.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/common/Validators.hpp"
+#include "rpc/common/impl/Processors.hpp"
+#include "rpc/handlers/impl/FakesAndMocks.hpp"
+#include "util/Fixtures.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>

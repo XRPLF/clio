@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/Expected.h"
+#include "util/Expected.hpp"
 
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
