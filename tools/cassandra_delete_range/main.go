@@ -51,8 +51,8 @@ var (
 	skipLedgersTable            = kingpin.Flag("skip-ledgers", "Whether to skip deletion from ledgers table").Default("false").Bool()
 	skipWriteLatestLedger       = kingpin.Flag("skip-write-latest-ledger", "Whether to skip writing the latest ledger index").Default("false").Bool()
 
-	numberOfParallelClientThreads = 1           // the calculated number of parallel threads the client should run
-	ranges                        []*tokenRange // the calculated ranges to be executed in parallel
+	workerCount = 1           // the calculated number of parallel goroutines the client should run
+	ranges      []*tokenRange // the calculated ranges to be executed in parallel
 )
 
 type tokenRange struct {
@@ -76,7 +76,7 @@ type deleteInfo struct {
 }
 
 func getTokenRanges() []*tokenRange {
-	var n = numberOfParallelClientThreads
+	var n = workerCount
 	var m = int64(n * 100)
 	var maxSize uint64 = math.MaxInt64 * 2
 	var rangeSize = maxSize / uint64(m)
@@ -107,7 +107,7 @@ func getTokenRanges() []*tokenRange {
 }
 
 func splitDeleteWork(info *deleteInfo) [][]deleteParams {
-	var n = numberOfParallelClientThreads
+	var n = workerCount
 	var chunkSize = len(info.Data) / n
 	var chunks [][]deleteParams
 
@@ -171,7 +171,7 @@ func main() {
 	log.SetOutput(os.Stdout)
 	kingpin.Parse()
 
-	numberOfParallelClientThreads = (*nodesInCluster) * (*coresInNode) * (*smudgeFactor)
+	workerCount = (*nodesInCluster) * (*coresInNode) * (*smudgeFactor)
 	ranges = getTokenRanges()
 	shuffle(ranges)
 
@@ -232,7 +232,7 @@ Will rite latest ledger       : %t
 		*clusterNumConnections,
 		*clusterCQLVersion,
 		*clusterPageSize,
-		numberOfParallelClientThreads,
+		workerCount,
 		len(ranges),
 		*skipSuccessorTable,
 		*skipObjectsTable,
@@ -463,10 +463,10 @@ func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, qu
 	var totalRows uint64
 	var totalErrors uint64
 
-	wg.Add(numberOfParallelClientThreads)
-	sessionCreationWaitGroup.Add(numberOfParallelClientThreads)
+	wg.Add(workerCount)
+	sessionCreationWaitGroup.Add(workerCount)
 
-	for i := 0; i < numberOfParallelClientThreads; i++ {
+	for i := 0; i < workerCount; i++ {
 		go func(q string) {
 			defer wg.Done()
 
@@ -484,6 +484,8 @@ func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, qu
 
 					var pageState []byte
 					var rowsRetrieved uint64
+					var key []byte
+					var seq uint64
 
 					for {
 						iter := preparedQuery.PageSize(*clusterPageSize).PageState(pageState).Iter()
@@ -491,9 +493,6 @@ func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, qu
 						scanner := iter.Scanner()
 
 						for scanner.Next() {
-							var key []byte
-							var seq uint64
-
 							err = scanner.Scan(&key, &seq)
 							if err == nil {
 								rowsRetrieved++
@@ -546,13 +545,13 @@ func performDeleteQueries(cluster *gocql.ClusterConfig, info *deleteInfo, colSet
 
 	close(chunksChannel)
 
-	wg.Add(numberOfParallelClientThreads)
-	sessionCreationWaitGroup.Add(numberOfParallelClientThreads)
+	wg.Add(workerCount)
+	sessionCreationWaitGroup.Add(workerCount)
 
 	query := info.Query
 	bindCount := strings.Count(query, "?")
 
-	for i := 0; i < numberOfParallelClientThreads; i++ {
+	for i := 0; i < workerCount; i++ {
 		go func(number int, q string, bc int) {
 			defer wg.Done()
 
