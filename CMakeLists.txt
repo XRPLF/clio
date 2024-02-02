@@ -220,13 +220,14 @@ if (tests)
     unittests/util/requests/SslContextTests.cpp
     unittests/util/requests/WsConnectionTests.cpp
     # ETL
+    unittests/etl/AmendmentBlockHandlerTests.cpp
+    unittests/etl/CacheLoaderTests.cpp
+    unittests/etl/ETLStateTests.cpp
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp
-    unittests/etl/TransformerTests.cpp
-    unittests/etl/CacheLoaderTests.cpp
-    unittests/etl/AmendmentBlockHandlerTests.cpp
+    unittests/etl/GrpcSourceTests.cpp
     unittests/etl/LedgerPublisherTests.cpp
-    unittests/etl/ETLStateTests.cpp
+    unittests/etl/TransformerTests.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
