@@ -241,7 +241,7 @@ Will rite latest ledger       : %t
 		*skipDiffTable,
 		*skipLedgerTransactionsTable,
 		*skipLedgersTable,
-		*skipWriteLatestLedger)
+		!*skipWriteLatestLedger)
 
 	fmt.Println(runParameters)
 
