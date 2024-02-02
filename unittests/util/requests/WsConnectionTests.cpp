@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/Expected.h"
 #include "util/Fixtures.h"
 #include "util/TestWsServer.h"
 #include "util/requests/Types.h"
@@ -41,6 +42,14 @@ namespace http = boost::beast::http;
 struct WsConnectionTestsBase : SyncAsioContextTest {
     WsConnectionBuilder builder{"localhost", "11112"};
     TestWsServer server{ctx, "0.0.0.0", 11112};
+
+    template <typename T, typename E>
+    T
+    unwrap(util::Expected<T, E> expected)
+    {
+        [&]() { ASSERT_TRUE(expected.has_value()) << expected.error().message; }();
+        return std::move(expected).value();
+    }
 };
 
 struct WsConnectionTestBundle {
@@ -84,7 +93,7 @@ TEST_P(WsConnectionTests, SendAndReceive)
     builder.addHeaders(GetParam().headers);
 
     asio::spawn(ctx, [&](asio::yield_context yield) {
-        auto serverConnection = server.acceptConnection(yield);
+        auto serverConnection = unwrap(server.acceptConnection(yield));
 
         for (size_t i = 0; i < clientMessages.size(); ++i) {
             auto message = serverConnection.receive(yield);
@@ -114,8 +123,11 @@ TEST_P(WsConnectionTests, SendAndReceive)
 TEST_F(WsConnectionTests, UseConnect)
 {
     asio::spawn(ctx, [&](asio::yield_context yield) {
-        EXPECT_NO_FATAL_FAILURE(server.acceptConnection(yield););
-        auto serverConnection = server.acceptConnection(yield);
+        // Client attempts to establish SSL connection first which will fail
+        auto failedConnection = server.acceptConnection(yield);
+        EXPECT_FALSE(failedConnection.has_value());
+
+        auto serverConnection = unwrap(server.acceptConnection(yield));
         auto message = serverConnection.receive(yield);
         EXPECT_EQ(message, "hello");
 
@@ -172,7 +184,7 @@ TEST_F(WsConnectionTests, WsHandshakeError)
 TEST_F(WsConnectionTests, CloseConnection)
 {
     asio::spawn(ctx, [&](asio::yield_context yield) {
-        auto serverConnection = server.acceptConnection(yield);
+        auto serverConnection = unwrap(server.acceptConnection(yield));
 
         auto message = serverConnection.receive(yield);
         EXPECT_EQ(std::nullopt, message);
@@ -191,7 +203,7 @@ TEST_F(WsConnectionTests, MultipleConnections)
 {
     for (size_t i = 0; i < 2; ++i) {
         asio::spawn(ctx, [&](asio::yield_context yield) {
-            auto serverConnection = server.acceptConnection(yield);
+            auto serverConnection = unwrap(server.acceptConnection(yield));
             auto message = serverConnection.receive(yield);
 
             ASSERT_TRUE(message.has_value());
@@ -230,7 +242,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_P(WsConnectionErrorTests, WriteError)
 {
     asio::spawn(ctx, [&](asio::yield_context yield) {
-        auto serverConnection = server.acceptConnection(yield);
+        auto serverConnection = unwrap(server.acceptConnection(yield));
 
         auto error = serverConnection.close(yield);
         EXPECT_FALSE(error.has_value()) << *error;
