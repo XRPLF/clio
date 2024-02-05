@@ -69,7 +69,6 @@ checkIsU32Numeric(std::string_view sv)
     return ec == std::errc();
 }
 
-// TODO: Should refactor hex string validators due to duplicate code
 CustomValidator Uint160HexStringValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         return makeHexStringValidator<ripple::uint160>(value, key);
