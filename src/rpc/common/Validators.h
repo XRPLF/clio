@@ -457,6 +457,18 @@ public:
 [[nodiscard]] bool
 checkIsU32Numeric(std::string_view sv);
 
+template <class HexType>
+MaybeError makeHexStringValidator(boost::json::value const& value, std::string_view key) {
+    if (!value.is_string())
+        return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
+
+    HexType parsedInt;
+    if (!parsedInt.parseHex(value.as_string().c_str()))
+        return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
+
+    return MaybeError{};
+}
+
 /**
  * @brief Provides a commonly used validator for ledger index.
  *
