@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,25 +17,28 @@
 */
 //==============================================================================
 
-#include "util/TerminationHandler.hpp"
-#include "util/TestGlobals.hpp"
-#include "util/prometheus/Prometheus.hpp"
+#include "util/requests/Types.h"
 
-#include <gtest/gtest.h>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/http/field.hpp>
 
-/*
- * Supported custom command line options for clio_tests:
- *   --backend_host=<host>         - sets the cassandra/scylladb host for backend tests
- *   --backend_keyspace=<keyspace> - sets the cassandra/scylladb keyspace for backend tests
- *   --clean-gcda                  - delete all gcda files defore running tests
- */
-int
-main(int argc, char* argv[])
+#include <string>
+#include <utility>
+
+namespace util::requests {
+
+RequestError::RequestError(std::string message) : message(std::move(message))
 {
-    util::setTerminationHandler();
-    PrometheusService::init();
-    testing::InitGoogleTest(&argc, argv);
-    TestGlobals::instance().parse(argc, argv);
-
-    return RUN_ALL_TESTS();
 }
+
+RequestError::RequestError(std::string msg, boost::beast::error_code const& ec) : message(std::move(msg))
+{
+    message.append(": ");
+    message.append(ec.message());
+}
+
+HttpHeader::HttpHeader(boost::beast::http::field name, std::string value) : name(name), value(std::move(value))
+{
+}
+
+}  // namespace util::requests

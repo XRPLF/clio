@@ -39,6 +39,7 @@
 #include <exception>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 // forward declarations
@@ -63,7 +64,6 @@ class RPCEngine {
     util::Logger log_{"RPC"};
 
     std::shared_ptr<BackendInterface> backend_;
-    std::shared_ptr<etl::LoadBalancer> balancer_;
     std::reference_wrapper<web::DOSGuard const> dosGuard_;
     std::reference_wrapper<WorkQueue> workQueue_;
     std::reference_wrapper<Counters> counters_;
@@ -82,7 +82,6 @@ public:
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
         : backend_{backend}
-        , balancer_{balancer}
         , dosGuard_{std::cref(dosGuard)}
         , workQueue_{std::ref(workQueue)}
         , counters_{std::ref(counters)}
