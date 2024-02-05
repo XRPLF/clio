@@ -30,7 +30,7 @@
 
 namespace util {
 
-RetryStrategy::RetryStrategy(std::chrono::steady_clock::duration delay) : delay_(delay)
+RetryStrategy::RetryStrategy(std::chrono::steady_clock::duration delay) : initialDelay_(delay), delay_(delay)
 {
 }
 
@@ -44,6 +44,12 @@ void
 RetryStrategy::increaseDelay()
 {
     delay_ = nextDelay();
+}
+
+void
+RetryStrategy::reset()
+{
+    delay_ = initialDelay_;
 }
 
 Retry::Retry(RetryStrategyPtr strategy, boost::asio::strand<boost::asio::io_context::executor_type> strand)
@@ -72,6 +78,13 @@ std::chrono::steady_clock::duration
 Retry::delayValue() const
 {
     return strategy_->getDelay();
+}
+
+void
+Retry::reset()
+{
+    attemptNumber_ = 0;
+    strategy_->reset();
 }
 
 ExponentialBackoffStrategy::ExponentialBackoffStrategy(

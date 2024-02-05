@@ -34,6 +34,7 @@ namespace util {
  * @brief Interface for retry strategies
  */
 class RetryStrategy {
+    std::chrono::steady_clock::duration initialDelay_;
     std::chrono::steady_clock::duration delay_;
 
 public:
@@ -53,6 +54,12 @@ public:
      */
     void
     increaseDelay();
+
+    /**
+     * @brief Reset the delay value
+     */
+    void
+    reset();
 
 protected:
     /**
@@ -119,6 +126,12 @@ public:
      */
     std::chrono::steady_clock::duration
     delayValue() const;
+
+    /**
+     * @brief Reset the delay value and attempt number
+     */
+    void
+    reset();
 };
 
 /**

@@ -51,6 +51,9 @@ TEST_F(RetryTests, ExponentialBackoffStrategy)
         EXPECT_EQ(strategy.getDelay(), maxDelay_);
         EXPECT_EQ(strategy.getDelay(), maxDelay_);
     }
+
+    strategy.reset();
+    EXPECT_EQ(strategy.getDelay(), delay_);
 }
 
 struct RetryWithExponentialBackoffStrategyTests : SyncAsioContextTest, RetryTests {
@@ -86,4 +89,19 @@ TEST_F(RetryWithExponentialBackoffStrategyTests, Cancel)
 
     retry_.cancel();
     EXPECT_EQ(retry_.attemptNumber(), 0);
+}
+
+TEST_F(RetryWithExponentialBackoffStrategyTests, Reset)
+{
+    retry_.retry(mockCallback_.AsStdFunction());
+
+    EXPECT_CALL(mockCallback_, Call());
+    runContext();
+
+    EXPECT_EQ(retry_.attemptNumber(), 1);
+    EXPECT_EQ(retry_.delayValue(), delay_ * 2);
+
+    retry_.reset();
+    EXPECT_EQ(retry_.attemptNumber(), 0);
+    EXPECT_EQ(retry_.delayValue(), delay_);
 }
