@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,25 +17,14 @@
 */
 //==============================================================================
 
-#include "util/TerminationHandler.h"
-#include "util/TestGlobals.h"
-#include "util/prometheus/Prometheus.h"
+#include "util/requests/impl/SslContext.h"
 
 #include <gtest/gtest.h>
 
-/*
- * Supported custom command line options for clio_tests:
- *   --backend_host=<host>         - sets the cassandra/scylladb host for backend tests
- *   --backend_keyspace=<keyspace> - sets the cassandra/scylladb keyspace for backend tests
- *   --clean-gcda                  - delete all gcda files defore running tests
- */
-int
-main(int argc, char* argv[])
-{
-    util::setTerminationHandler();
-    PrometheusService::init();
-    testing::InitGoogleTest(&argc, argv);
-    TestGlobals::instance().parse(argc, argv);
+using namespace util::requests::impl;
 
-    return RUN_ALL_TESTS();
+TEST(SslContext, Create)
+{
+    auto ctx = makeSslContext();
+    EXPECT_TRUE(ctx);
 }

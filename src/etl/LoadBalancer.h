@@ -112,26 +112,6 @@ public:
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
     );
 
-    /**
-     * @brief A factory function for the ETL source.
-     *
-     * @param config The configuration to use
-     * @param ioc The io_context to run on
-     * @param backend BackendInterface implementation
-     * @param subscriptions Subscription manager
-     * @param validatedLedgers The network validated ledgers datastructure
-     * @param balancer The load balancer
-     */
-    static std::unique_ptr<Source>
-    make_Source(
-        util::Config const& config,
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-        LoadBalancer& balancer
-    );
-
     ~LoadBalancer();
 
     /**
@@ -200,6 +180,26 @@ public:
     getETLState() noexcept;
 
 private:
+    /**
+     * @brief A factory function for the ETL source.
+     *
+     * @param config The configuration to use
+     * @param ioc The io_context to run on
+     * @param backend BackendInterface implementation
+     * @param subscriptions Subscription manager
+     * @param validatedLedgers The network validated ledgers datastructure
+     * @param balancer The load balancer
+     */
+    static std::unique_ptr<Source>
+    make_Source(
+        util::Config const& config,
+        boost::asio::io_context& ioc,
+        std::shared_ptr<BackendInterface> backend,
+        std::shared_ptr<feed::SubscriptionManager> subscriptions,
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
+        LoadBalancer& balancer
+    );
+
     /**
      * @brief Execute a function on a randomly selected source.
      *

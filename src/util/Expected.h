@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include "util/Assert.h"
+
 #include <boost/outcome.hpp>
 #include <boost/outcome/policy/base.hpp>
 #include <boost/outcome/result.hpp>
@@ -161,27 +163,39 @@ public:
     }
 
     constexpr T const&
-    value() const
+    value() const&
     {
         return Base::value();
     }
 
     constexpr T&
-    value()
+    value() &
     {
         return Base::value();
     }
 
+    constexpr T
+    value() &&
+    {
+        return std::move(*base()).value();
+    }
+
     constexpr E const&
-    error() const
+    error() const&
     {
         return Base::error();
     }
 
     constexpr E&
-    error()
+    error() &
     {
         return Base::error();
+    }
+
+    constexpr E
+    error() &&
+    {
+        return std::move(*base()).error();
     }
 
     constexpr explicit
@@ -215,6 +229,15 @@ public:
     operator->() const
     {
         return &this->value();
+    }
+
+private:
+    Base*
+    base()
+    {
+        auto b = dynamic_cast<Base*>(this);
+        ASSERT(b != nullptr, "Base class is not Base");
+        return b;
     }
 };
 

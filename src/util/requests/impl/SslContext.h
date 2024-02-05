@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,25 +17,16 @@
 */
 //==============================================================================
 
-#include "util/TerminationHandler.h"
-#include "util/TestGlobals.h"
-#include "util/prometheus/Prometheus.h"
+#pragma once
 
-#include <gtest/gtest.h>
+#include "util/Expected.h"
+#include "util/requests/Types.h"
 
-/*
- * Supported custom command line options for clio_tests:
- *   --backend_host=<host>         - sets the cassandra/scylladb host for backend tests
- *   --backend_keyspace=<keyspace> - sets the cassandra/scylladb keyspace for backend tests
- *   --clean-gcda                  - delete all gcda files defore running tests
- */
-int
-main(int argc, char* argv[])
-{
-    util::setTerminationHandler();
-    PrometheusService::init();
-    testing::InitGoogleTest(&argc, argv);
-    TestGlobals::instance().parse(argc, argv);
+#include <boost/asio/ssl/context.hpp>
 
-    return RUN_ALL_TESTS();
-}
+namespace util::requests::impl {
+
+Expected<boost::asio::ssl::context, RequestError>
+makeSslContext();
+
+}  // namespace util::requests::impl
