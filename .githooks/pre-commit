@@ -30,7 +30,7 @@ function prettify {
 
 wrong_headers=$(find $sources -name "*.h")
 wrong_headers_pretty=$(echo "$wrong_headers" | prettify)
-if [[ $(echo -ne "$wrong_headers" | wc -l) -ne 0 ]]; then
+if [[ $(echo -ne "$wrong_headers" | wc -c) -ne 0 ]]; then
     cat <<EOF
 
                                     ERROR
