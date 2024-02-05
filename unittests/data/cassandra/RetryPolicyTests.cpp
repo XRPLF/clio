@@ -49,7 +49,7 @@ TEST_F(BackendCassandraRetryPolicyTest, ShouldRetryAlwaysTrue)
 
 TEST_F(BackendCassandraRetryPolicyTest, RetryCorrectlyExecuted)
 {
-    testing::MockFunction<void()> callback;
+    StrictMock<MockFunction<void()>> callback;
     EXPECT_CALL(callback, Call()).Times(3);
 
     for (auto i = 0; i < 3; ++i) {
@@ -60,7 +60,7 @@ TEST_F(BackendCassandraRetryPolicyTest, RetryCorrectlyExecuted)
 
 TEST_F(BackendCassandraRetryPolicyTest, MutlipleRetryCancelPreviousCalls)
 {
-    testing::MockFunction<void()> callback;
+    StrictMock<MockFunction<void()>> callback;
     EXPECT_CALL(callback, Call());
 
     for (auto i = 0; i < 3; ++i)
@@ -71,6 +71,6 @@ TEST_F(BackendCassandraRetryPolicyTest, MutlipleRetryCancelPreviousCalls)
 
 TEST_F(BackendCassandraRetryPolicyTest, CallbackIsNotCalledIfContextDies)
 {
-    testing::MockFunction<void()> callback;
+    StrictMock<MockFunction<void()>> callback;
     retryPolicy.retry([&callback]() { callback.Call(); });
 }

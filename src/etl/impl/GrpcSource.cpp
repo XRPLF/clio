@@ -26,6 +26,7 @@
 
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <fmt/core.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/security/credentials.h>
 #include <grpcpp/support/channel_arguments.h>
@@ -45,7 +46,7 @@
 namespace etl::impl {
 
 GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::shared_ptr<BackendInterface> backend)
-    : backend_(std::move(backend))
+    : log_(fmt::format("ETL_Grpc[{}:{}]", ip, grpcPort)), backend_(std::move(backend))
 {
     try {
         boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::make_address(ip), std::stoi(grpcPort)};
@@ -56,9 +57,9 @@ GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::
         stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
             grpc::CreateCustomChannel(ss.str(), grpc::InsecureChannelCredentials(), chArgs)
         );
-        LOG(log_.debug()) << "Made stub for remote = " << toString();
+        LOG(log_.debug()) << "Made stub for remote.";
     } catch (std::exception const& e) {
-        LOG(log_.warn()) << "Exception while creating stub: " << e.what() << ". Remote = " << toString();
+        LOG(log_.warn()) << "Exception while creating stub: " << e.what() << ".";
     }
 }
 
@@ -83,8 +84,8 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
     grpc::Status const status = stub_->GetLedger(&context, request, &response);
 
     if (status.ok() && !response.is_unlimited()) {
-        log_.warn() << "is_unlimited is false. Make sure secure_gateway is set correctly on the ETL source. source = "
-                    << toString() << "; status = " << status.error_message();
+        log_.warn() << "is_unlimited is false. Make sure secure_gateway is set correctly on the ETL source. Status = "
+                    << status.error_message();
     }
 
     return {status, std::move(response)};
@@ -98,7 +99,7 @@ GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers
 
     std::vector<etl::detail::AsyncCallData> calls = detail::makeAsyncCallData(sequence, numMarkers);
 
-    LOG(log_.debug()) << "Starting data download for ledger " << sequence << ". Using source = " << toString();
+    LOG(log_.debug()) << "Starting data download for ledger " << sequence << ".";
 
     grpc::CompletionQueue cq;
     for (auto& c : calls)
@@ -146,13 +147,6 @@ GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers
 
     LOG(log_.info()) << "Finished loadInitialLedger. cache size = " << backend_->cache().size();
     return {std::move(edgeKeys), !abort};
-}
-
-std::string
-GrpcSource::toString() const
-{
-    // TODO
-    return {};
 }
 
 }  // namespace etl::impl
