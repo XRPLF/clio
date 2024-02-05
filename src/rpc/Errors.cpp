@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "rpc/Errors.h"
+#include "rpc/Errors.hpp"
 
-#include "rpc/JS.h"
+#include "rpc/JS.hpp"
 
 #include <boost/json/object.hpp>
 #include <ripple/protocol/ErrorCodes.h>

@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "util/prometheus/MetricBase.h"
+#include "util/prometheus/MetricBase.hpp"
 
-#include "util/Assert.h"
-#include "util/prometheus/OStream.h"
+#include "util/Assert.hpp"
+#include "util/prometheus/OStream.hpp"
 
 #include <string>
 #include <utility>

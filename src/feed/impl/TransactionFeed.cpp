@@ -17,14 +17,14 @@
 */
 //==============================================================================
 
-#include "feed/impl/TransactionFeed.h"
+#include "feed/impl/TransactionFeed.hpp"
 
-#include "data/BackendInterface.h"
-#include "data/Types.h"
-#include "feed/Types.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "data/Types.hpp"
+#include "feed/Types.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>

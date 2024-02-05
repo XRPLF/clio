@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "rpc/handlers/Ledger.h"
+#include "rpc/handlers/Ledger.hpp"
 
-#include "data/Types.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/Types.h"
+#include "data/Types.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>

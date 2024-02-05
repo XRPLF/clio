@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "feed/impl/ProposedTransactionFeed.h"
+#include "feed/impl/ProposedTransactionFeed.hpp"
 
-#include "feed/Types.h"
-#include "rpc/RPCHelpers.h"
-#include "util/log/Logger.h"
+#include "feed/Types.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/post.hpp>
 #include <boost/json/object.hpp>

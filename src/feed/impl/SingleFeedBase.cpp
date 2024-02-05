@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "feed/impl/SingleFeedBase.h"
+#include "feed/impl/SingleFeedBase.hpp"
 
-#include "feed/Types.h"
-#include "feed/impl/TrackableSignal.h"
-#include "feed/impl/Util.h"
-#include "util/log/Logger.h"
+#include "feed/Types.hpp"
+#include "feed/impl/TrackableSignal.hpp"
+#include "feed/impl/Util.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>

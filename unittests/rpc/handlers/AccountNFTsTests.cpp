@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "data/Types.h"
-#include "rpc/Errors.h"
-#include "rpc/common/AnyHandler.h"
-#include "rpc/common/Types.h"
-#include "rpc/handlers/AccountNFTs.h"
-#include "util/Fixtures.h"
-#include "util/TestObject.h"
+#include "data/Types.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/common/AnyHandler.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/handlers/AccountNFTs.hpp"
+#include "util/Fixtures.hpp"
+#include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>

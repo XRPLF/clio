@@ -16,11 +16,11 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include "util/MockPrometheus.h"
-#include "util/config/Config.h"
-#include "util/prometheus/Http.h"
-#include "util/prometheus/Label.h"
-#include "util/prometheus/Prometheus.h"
+#include "util/MockPrometheus.hpp"
+#include "util/config/Config.hpp"
+#include "util/prometheus/Http.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>

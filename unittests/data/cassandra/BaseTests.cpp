@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "data/cassandra/Handle.h"
-#include "data/cassandra/Types.h"
-#include "util/Fixtures.h"
-#include "util/TestGlobals.h"
+#include "data/cassandra/Handle.hpp"
+#include "data/cassandra/Types.hpp"
+#include "util/Fixtures.hpp"
+#include "util/TestGlobals.hpp"
 
 #include <cassandra.h>
 #include <fmt/core.h>

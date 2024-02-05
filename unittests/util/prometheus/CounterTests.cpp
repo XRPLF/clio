@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include "util/prometheus/Counter.h"
-#include "util/prometheus/OStream.h"
+#include "util/prometheus/Counter.hpp"
+#include "util/prometheus/OStream.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

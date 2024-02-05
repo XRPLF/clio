@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "rpc/WorkQueue.h"
+#include "rpc/WorkQueue.hpp"
 
-#include "util/prometheus/Label.h"
-#include "util/prometheus/Prometheus.h"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <cstdint>
 

@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "data/cassandra/impl/Future.h"
+#include "data/cassandra/impl/Future.hpp"
 
-#include "data/cassandra/Error.h"
-#include "data/cassandra/Types.h"
-#include "data/cassandra/impl/ManagedObject.h"
-#include "data/cassandra/impl/Result.h"
+#include "data/cassandra/Error.hpp"
+#include "data/cassandra/Types.hpp"
+#include "data/cassandra/impl/ManagedObject.hpp"
+#include "data/cassandra/impl/Result.hpp"
 
 #include <cassandra.h>
 

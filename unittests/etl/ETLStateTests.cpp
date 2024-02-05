@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "etl/ETLState.h"
-#include "util/Fixtures.h"
-#include "util/MockSource.h"
+#include "etl/ETLState.hpp"
+#include "util/Fixtures.hpp"
+#include "util/MockSource.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>

@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "util/LedgerUtils.h"
+#include "util/LedgerUtils.hpp"
 
-#include "rpc/JS.h"
+#include "rpc/JS.hpp"
 
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/jss.h>

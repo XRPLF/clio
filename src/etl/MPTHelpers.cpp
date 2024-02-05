@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include <data/BackendInterface.h>
-#include <data/DBHelpers.h>
-#include <data/Types.h>
+#include <data/BackendInterface.hpp>
+#include <data/DBHelpers.hpp>
+#include <data/Types.hpp>
 #include <fmt/core.h>
 #include <ripple/protocol/STBase.h>
 #include <ripple/protocol/STTx.h>

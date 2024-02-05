@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "rpc/common/MetaProcessors.h"
+#include "rpc/common/MetaProcessors.hpp"
 
-#include "rpc/Errors.h"
-#include "rpc/common/Types.h"
+#include "rpc/Errors.hpp"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json/value.hpp>
 #include <ripple/protocol/ErrorCodes.h>
