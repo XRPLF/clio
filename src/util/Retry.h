@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/strand.hpp>
@@ -89,7 +90,7 @@ public:
         timer_.expires_after(strategy_->getDelay());
         strategy_->increaseDelay();
         timer_.async_wait([this, func = std::forward<Fn>(func)](boost::system::error_code const& ec) {
-            if (ec) {
+            if (ec == boost::asio::error::operation_aborted) {
                 return;
             }
             ++attemptNumber_;

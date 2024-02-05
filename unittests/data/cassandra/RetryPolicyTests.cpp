@@ -68,3 +68,10 @@ TEST_F(BackendCassandraRetryPolicyTest, MutlipleRetryCancelPreviousCalls)
 
     runContext();
 }
+
+TEST_F(BackendCassandraRetryPolicyTest, CallbackIsNotCalledIfContextDies)
+{
+    testing::MockFunction<void()> callback;
+    retryPolicy.retry([&callback]() { callback.Call(); });
+}
+
