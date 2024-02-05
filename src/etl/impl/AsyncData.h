@@ -147,7 +147,7 @@ public:
                     continue;
             }
             cacheUpdates.push_back(
-                {*ripple::uint256::fromVoidChecked(obj.key()), {obj.mutable_data()->begin(), obj.mutable_data()->end()}}
+                {*ripple::uint256::fromVoidChecked(obj.key()), {obj.data().begin(), obj.data().end()}}
             );
             if (!cacheOnly) {
                 if (!lastKey_.empty())

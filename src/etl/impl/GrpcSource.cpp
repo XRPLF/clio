@@ -22,7 +22,6 @@
 #include "data/BackendInterface.h"
 #include "etl/impl/AsyncData.h"
 #include "util/Assert.h"
-#include "util/config/Config.h"
 #include "util/log/Logger.h"
 
 #include <boost/asio/ip/address.hpp>
@@ -48,20 +47,18 @@ namespace etl::impl {
 GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::shared_ptr<BackendInterface> backend)
     : backend_(std::move(backend))
 {
-    if (not grpcPort.empty()) {
-        try {
-            boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::make_address(ip), std::stoi(grpcPort)};
-            std::stringstream ss;
-            ss << endpoint;
-            grpc::ChannelArguments chArgs;
-            chArgs.SetMaxReceiveMessageSize(-1);
-            stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
-                grpc::CreateCustomChannel(ss.str(), grpc::InsecureChannelCredentials(), chArgs)
-            );
-            LOG(log_.debug()) << "Made stub for remote = " << toString();
-        } catch (std::exception const& e) {
-            LOG(log_.warn()) << "Exception while creating stub: " << e.what() << ". Remote = " << toString();
-        }
+    try {
+        boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::make_address(ip), std::stoi(grpcPort)};
+        std::stringstream ss;
+        ss << endpoint;
+        grpc::ChannelArguments chArgs;
+        chArgs.SetMaxReceiveMessageSize(-1);
+        stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
+            grpc::CreateCustomChannel(ss.str(), grpc::InsecureChannelCredentials(), chArgs)
+        );
+        LOG(log_.debug()) << "Made stub for remote = " << toString();
+    } catch (std::exception const& e) {
+        LOG(log_.warn()) << "Exception while creating stub: " << e.what() << ". Remote = " << toString();
     }
 }
 
@@ -94,7 +91,7 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
 }
 
 std::pair<std::vector<std::string>, bool>
-GrpcSource::loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly)
+GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers, bool const cacheOnly)
 {
     if (!stub_)
         return {{}, false};
