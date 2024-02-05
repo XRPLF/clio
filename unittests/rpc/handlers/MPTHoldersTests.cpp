@@ -179,13 +179,13 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerInvalidFormat)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend}};
-    auto const input = json::parse(fmt::format(
-        R"({{ 
+        auto const input = json::parse(fmt::format(
+            R"({{ 
             "mpt_issuance_id": "{}",
             "marker": "xxx"
         }})",
-        MPTID
-    ));
+            MPTID
+        ));
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
@@ -199,13 +199,13 @@ TEST_F(RPCMPTHoldersHandlerTest, MarkerNotString)
 {
     runSpawn([this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{MPTHoldersHandler{backend}};
-    auto const input = json::parse(fmt::format(
-        R"({{ 
+        auto const input = json::parse(fmt::format(
+            R"({{ 
             "mpt_issuance_id": "{}",
             "marker": 1
         }})",
-        MPTID
-    ));
+            MPTID
+        ));
         auto const output = handler.process(input, Context{std::ref(yield)});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());

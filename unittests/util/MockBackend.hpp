@@ -192,7 +192,7 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(bool, doFinishWrites, (), (override));
 
-    MOCK_METHOD(void, writeMPTHolders, ((std::vector<std::pair<ripple::uint192, ripple::AccountID>> &&)), (override));
+    MOCK_METHOD(void, writeMPTHolders, ((std::vector<std::pair<ripple::uint192, ripple::AccountID>>&&)), (override));
 
     MOCK_METHOD(
         MPTHoldersAndCursor,

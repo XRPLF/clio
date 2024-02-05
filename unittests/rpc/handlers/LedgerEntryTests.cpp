@@ -2157,7 +2157,7 @@ generateTestValuesForNormalPathTest()
                 ripple::to_string(ripple::getMptID(account1, 2))
             ),
             ripple::keylet::mptIssuance(ripple::getMptID(account1, 2)).key,
-            CreateMPTIssuanceObject(ACCOUNT, 2,  "metadata")
+            CreateMPTIssuanceObject(ACCOUNT, 2, "metadata")
         },
         NormalPathTestBundle{
             "MPTokenViaIndex",

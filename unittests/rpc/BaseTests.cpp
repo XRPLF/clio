@@ -453,8 +453,7 @@ TEST_F(RPCBaseTest, AccountMarkerValidator)
 TEST_F(RPCBaseTest, Uint160HexStringValidator)
 {
     auto const spec = RpcSpec{{"marker", Uint160HexStringValidator}};
-    auto passingInput =
-        json::parse(R"({ "marker": "F609A18102218C75767209946A77523CBD97E225"})");
+    auto passingInput = json::parse(R"({ "marker": "F609A18102218C75767209946A77523CBD97E225"})");
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput = json::parse(R"({ "marker": 160})");
@@ -471,8 +470,7 @@ TEST_F(RPCBaseTest, Uint160HexStringValidator)
 TEST_F(RPCBaseTest, Uint192HexStringValidator)
 {
     auto const spec = RpcSpec{{"mpt_issuance_id", Uint192HexStringValidator}};
-    auto passingInput =
-        json::parse(R"({ "mpt_issuance_id": "0000012F27A9DE73EAA1E8831FA253E19030A17E2D038198"})");
+    auto passingInput = json::parse(R"({ "mpt_issuance_id": "0000012F27A9DE73EAA1E8831FA253E19030A17E2D038198"})");
     ASSERT_TRUE(spec.process(passingInput));
 
     auto failingInput = json::parse(R"({ "mpt_issuance_id": 192})");
