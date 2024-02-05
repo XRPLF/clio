@@ -22,22 +22,15 @@ EOF
 fi
 
 # check there is no .h headers, only .hpp
-function prettify {
-    while read -r line; 
-        do echo "       - $line" 
-    done
-}
-
-wrong_headers=$(find $sources -name "*.h")
-wrong_headers_pretty=$(echo "$wrong_headers" | prettify)
-if [[ $(echo -ne "$wrong_headers" | wc -c) -ne 0 ]]; then
+wrong_headers=$(find $sources -name "*.h" | sed 's/^/        - /')
+if [[ ! -z "$wrong_headers" ]]; then
     cat <<EOF
 
                                     ERROR
 -----------------------------------------------------------------------------
        Found .h headers in the source code. Please rename them to .hpp:
 
-$wrong_headers_pretty
+$wrong_headers
 -----------------------------------------------------------------------------
 
 EOF
