@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "util/TerminationHandler.h"
-#include "util/TestGlobals.h"
-#include "util/prometheus/Prometheus.h"
+#include "util/TerminationHandler.hpp"
+#include "util/TestGlobals.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <gtest/gtest.h>
 

@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "util/requests/RequestBuilder.h"
+#include "util/requests/RequestBuilder.hpp"
 
-#include "util/Expected.h"
-#include "util/requests/Types.h"
-#include "util/requests/impl/StreamData.h"
+#include "util/Expected.hpp"
+#include "util/requests/Types.hpp"
+#include "util/requests/impl/StreamData.hpp"
 
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/ip/tcp.hpp>

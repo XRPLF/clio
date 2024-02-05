@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "data/BackendInterface.h"
+#include "data/BackendInterface.hpp"
 
-#include "data/Types.h"
-#include "util/Assert.h"
-#include "util/log/Logger.h"
+#include "data/Types.hpp"
+#include "util/Assert.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <ripple/basics/base_uint.h>

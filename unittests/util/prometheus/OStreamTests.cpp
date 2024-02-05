@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/prometheus/OStream.h"
+#include "util/prometheus/OStream.hpp"
 
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/filter/gzip.hpp>

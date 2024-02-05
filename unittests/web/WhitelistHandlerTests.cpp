@@ -16,9 +16,9 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include "util/Fixtures.h"
-#include "util/config/Config.h"
-#include "web/WhitelistHandler.h"
+#include "util/Fixtures.hpp"
+#include "util/config/Config.hpp"
+#include "web/WhitelistHandler.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>

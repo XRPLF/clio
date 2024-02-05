@@ -17,14 +17,14 @@
 */
 //==============================================================================
 
-#include "rpc/handlers/BookChanges.h"
+#include "rpc/handlers/BookChanges.hpp"
 
-#include "data/Types.h"
-#include "rpc/BookChangesHelper.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/Types.h"
+#include "data/Types.hpp"
+#include "rpc/BookChangesHelper.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>

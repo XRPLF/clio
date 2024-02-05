@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/TestWsServer.h"
+#include "util/TestWsServer.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>

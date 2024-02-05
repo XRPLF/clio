@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/Batching.h"
+#include "util/Batching.hpp"
 
 #include <gtest/gtest.h>
 

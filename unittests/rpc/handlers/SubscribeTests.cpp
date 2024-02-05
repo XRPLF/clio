@@ -17,18 +17,18 @@
 */
 //==============================================================================
 
-#include "data/Types.h"
-#include "feed/SubscriptionManager.h"
-#include "rpc/Errors.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/AnyHandler.h"
-#include "rpc/common/Types.h"
-#include "rpc/handlers/Subscribe.h"
-#include "util/Fixtures.h"
-#include "util/MockPrometheus.h"
-#include "util/MockWsBase.h"
-#include "util/TestObject.h"
-#include "web/interface/ConnectionBase.h"
+#include "data/Types.hpp"
+#include "feed/SubscriptionManager.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/AnyHandler.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/handlers/Subscribe.hpp"
+#include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
+#include "util/MockWsBase.hpp"
+#include "util/TestObject.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>

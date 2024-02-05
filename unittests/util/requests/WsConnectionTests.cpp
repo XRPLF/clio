@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "util/Fixtures.h"
-#include "util/TestWsServer.h"
-#include "util/requests/Types.h"
-#include "util/requests/WsConnection.h"
+#include "util/Fixtures.hpp"
+#include "util/TestWsServer.hpp"
+#include "util/requests/Types.hpp"
+#include "util/requests/WsConnection.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/post.hpp>

@@ -17,15 +17,15 @@
 */
 //==============================================================================
 
-#include "data/Types.h"
-#include "feed/FeedTestUtil.h"
-#include "feed/impl/TransactionFeed.h"
-#include "util/Fixtures.h"
-#include "util/MockPrometheus.h"
-#include "util/MockWsBase.h"
-#include "util/TestObject.h"
-#include "util/prometheus/Gauge.h"
-#include "web/interface/ConnectionBase.h"
+#include "data/Types.hpp"
+#include "feed/FeedTestUtil.hpp"
+#include "feed/impl/TransactionFeed.hpp"
+#include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
+#include "util/MockWsBase.hpp"
+#include "util/TestObject.hpp"
+#include "util/prometheus/Gauge.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>

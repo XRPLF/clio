@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "feed/impl/TrackableSignal.h"
-#include "feed/impl/TrackableSignalMap.h"
-#include "util/MockWsBase.h"
-#include "web/interface/ConnectionBase.h"
+#include "feed/impl/TrackableSignal.hpp"
+#include "feed/impl/TrackableSignalMap.hpp"
+#include "util/MockWsBase.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <gtest/gtest.h>
 

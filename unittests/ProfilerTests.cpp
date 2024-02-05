@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/Profiler.h"
+#include "util/Profiler.hpp"
 
 #include <gtest/gtest.h>
 

@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "util/Expected.h"
-#include "util/Fixtures.h"
-#include "util/TestHttpServer.h"
-#include "util/requests/RequestBuilder.h"
-#include "util/requests/Types.h"
+#include "util/Expected.hpp"
+#include "util/Fixtures.hpp"
+#include "util/TestHttpServer.hpp"
+#include "util/requests/RequestBuilder.hpp"
+#include "util/requests/Types.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>

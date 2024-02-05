@@ -17,15 +17,15 @@
 */
 //==============================================================================
 
-#include "rpc/Errors.h"
-#include "rpc/common/impl/ForwardingProxy.h"
-#include "util/Fixtures.h"
-#include "util/MockCounters.h"
-#include "util/MockHandlerProvider.h"
-#include "util/MockLoadBalancer.h"
-#include "util/Taggable.h"
-#include "util/config/Config.h"
-#include "web/Context.h"
+#include "rpc/Errors.hpp"
+#include "rpc/common/impl/ForwardingProxy.hpp"
+#include "util/Fixtures.hpp"
+#include "util/MockCounters.hpp"
+#include "util/MockHandlerProvider.hpp"
+#include "util/MockLoadBalancer.hpp"
+#include "util/Taggable.hpp"
+#include "util/config/Config.hpp"
+#include "web/Context.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>

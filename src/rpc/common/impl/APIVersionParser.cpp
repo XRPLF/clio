@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "rpc/common/impl/APIVersionParser.h"
+#include "rpc/common/impl/APIVersionParser.hpp"
 
-#include "rpc/common/APIVersion.h"
-#include "util/Expected.h"
-#include "util/log/Logger.h"
+#include "rpc/common/APIVersion.hpp"
+#include "util/Expected.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/json/object.hpp>
 #include <fmt/core.h>

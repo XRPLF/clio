@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "web/impl/AdminVerificationStrategy.h"
+#include "web/impl/AdminVerificationStrategy.hpp"
 
-#include "util/JsonUtils.h"
+#include "util/JsonUtils.hpp"
 
 #include <boost/beast/http/field.hpp>
 #include <ripple/basics/base_uint.h>
