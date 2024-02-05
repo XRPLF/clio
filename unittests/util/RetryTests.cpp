@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include "util/Fixtures.h"
-#include "util/Retry.h"
+#include "util/Fixtures.hpp"
+#include "util/Retry.hpp"
 
 #include <boost/asio/strand.hpp>
 #include <gmock/gmock.h>

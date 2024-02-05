@@ -17,18 +17,18 @@
 */
 //==============================================================================
 
-#include "etl/NewSource.h"
+#include "etl/NewSource.hpp"
 
-#include "data/BackendInterface.h"
-#include "etl/ETLHelpers.h"
-#include "etl/impl/AsyncData.h"
-#include "feed/SubscriptionManager.h"
-#include "main/Build.h"
-#include "util/Assert.h"
-#include "util/config/Config.h"
-#include "util/log/Logger.h"
-#include "util/requests/Types.h"
-#include "util/requests/WsConnection.h"
+#include "data/BackendInterface.hpp"
+#include "etl/ETLHelpers.hpp"
+#include "etl/impl/AsyncData.hpp"
+#include "feed/SubscriptionManager.hpp"
+#include "main/Build.hpp"
+#include "util/Assert.hpp"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
+#include "util/requests/Types.hpp"
+#include "util/requests/WsConnection.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>

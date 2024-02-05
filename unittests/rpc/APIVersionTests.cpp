@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "rpc/common/impl/APIVersionParser.h"
-#include "util/Fixtures.h"
-#include "util/config/Config.h"
+#include "rpc/common/impl/APIVersionParser.hpp"
+#include "util/Fixtures.hpp"
+#include "util/config/Config.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>

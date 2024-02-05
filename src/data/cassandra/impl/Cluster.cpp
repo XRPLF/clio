@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "data/cassandra/impl/Cluster.h"
+#include "data/cassandra/impl/Cluster.hpp"
 
-#include "data/cassandra/impl/ManagedObject.h"
-#include "data/cassandra/impl/SslContext.h"
-#include "util/log/Logger.h"
+#include "data/cassandra/impl/ManagedObject.hpp"
+#include "data/cassandra/impl/SslContext.hpp"
+#include "util/log/Logger.hpp"
 
 #include <cassandra.h>
 #include <fmt/core.h>

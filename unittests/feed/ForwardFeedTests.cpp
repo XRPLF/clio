@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include "feed/FeedTestUtil.h"
-#include "feed/impl/ForwardFeed.h"
+#include "feed/FeedTestUtil.hpp"
+#include "feed/impl/ForwardFeed.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/json/parse.hpp>

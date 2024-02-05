@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/requests/impl/SslContext.h"
+#include "util/requests/impl/SslContext.hpp"
 
 #include <gtest/gtest.h>
 

@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "etl/impl/GrpcSource.h"
+#include "etl/impl/GrpcSource.hpp"
 
-#include "data/BackendInterface.h"
-#include "etl/impl/AsyncData.h"
-#include "util/Assert.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "etl/impl/AsyncData.hpp"
+#include "util/Assert.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>

@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "data/Types.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/Types.h"
-#include "util/Fixtures.h"
-#include "util/TestObject.h"
+#include "data/Types.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/Types.hpp"
+#include "util/Fixtures.hpp"
+#include "util/TestObject.hpp"
 
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/spawn.hpp>

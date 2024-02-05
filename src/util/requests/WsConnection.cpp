@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "util/requests/WsConnection.h"
+#include "util/requests/WsConnection.hpp"
 
-#include "util/Expected.h"
-#include "util/log/Logger.h"
-#include "util/requests/Types.h"
-#include "util/requests/impl/StreamData.h"
-#include "util/requests/impl/WsConnectionImpl.h"
+#include "util/Expected.hpp"
+#include "util/log/Logger.hpp"
+#include "util/requests/Types.hpp"
+#include "util/requests/impl/StreamData.hpp"
+#include "util/requests/impl/WsConnectionImpl.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/associated_executor.hpp>

@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "util/TestWsServer.h"
+#include "util/TestWsServer.hpp"
 
-#include "util/Expected.h"
-#include "util/requests/Types.h"
+#include "util/Expected.hpp"
+#include "util/requests/Types.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>

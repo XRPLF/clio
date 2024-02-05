@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "data/LedgerCache.h"
+#include "data/LedgerCache.hpp"
 
-#include "data/Types.h"
-#include "util/Assert.h"
+#include "data/Types.hpp"
+#include "util/Assert.hpp"
 
 #include <ripple/basics/base_uint.h>
 

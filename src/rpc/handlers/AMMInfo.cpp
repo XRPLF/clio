@@ -17,17 +17,17 @@
 */
 //==============================================================================
 
-#include "rpc/handlers/AMMInfo.h"
+#include "rpc/handlers/AMMInfo.hpp"
 
-#include "data/DBHelpers.h"
-#include "rpc/AMMHelpers.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/MetaProcessors.h"
-#include "rpc/common/Specs.h"
-#include "rpc/common/Types.h"
-#include "rpc/common/Validators.h"
+#include "data/DBHelpers.hpp"
+#include "rpc/AMMHelpers.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/MetaProcessors.hpp"
+#include "rpc/common/Specs.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/common/Validators.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
@@ -48,9 +48,7 @@
 #include <ripple/protocol/STBase.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
-#include <ripple/protocol/tokens.h>
 
 #include <chrono>
 #include <cstdint>

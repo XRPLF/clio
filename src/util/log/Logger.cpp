@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "util/log/Logger.h"
+#include "util/log/Logger.hpp"
 
-#include "util/SourceLocation.h"
-#include "util/config/Config.h"
+#include "util/SourceLocation.hpp"
+#include "util/config/Config.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>

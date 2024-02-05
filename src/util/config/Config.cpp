@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "util/config/Config.h"
+#include "util/config/Config.hpp"
 
-#include "util/config/detail/Helpers.h"
-#include "util/log/Logger.h"
+#include "util/config/detail/Helpers.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>

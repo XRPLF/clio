@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "rpc/handlers/NoRippleCheck.h"
+#include "rpc/handlers/NoRippleCheck.hpp"
 
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/JsonBool.h"
-#include "rpc/common/Types.h"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/JsonBool.hpp"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>

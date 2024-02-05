@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "data/cassandra/SettingsProvider.h"
-#include "data/cassandra/Types.h"
-#include "util/Fixtures.h"
-#include "util/TmpFile.h"
-#include "util/config/Config.h"
+#include "data/cassandra/SettingsProvider.hpp"
+#include "data/cassandra/Types.hpp"
+#include "util/Fixtures.hpp"
+#include "util/TmpFile.hpp"
+#include "util/config/Config.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>

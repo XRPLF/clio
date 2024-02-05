@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "feed/SubscriptionManager.h"
+#include "feed/SubscriptionManager.hpp"
 
-#include "data/Types.h"
-#include "feed/Types.h"
+#include "data/Types.hpp"
+#include "feed/Types.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>

@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/TestHttpServer.h"
+#include "util/TestHttpServer.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/detached.hpp>

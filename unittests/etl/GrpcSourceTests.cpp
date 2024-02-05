@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "etl/impl/GrpcSource.h"
-#include "util/Fixtures.h"
-#include "util/MockBackend.h"
-#include "util/MockXrpLedgerAPIService.h"
-#include "util/TestObject.h"
-#include "util/config/Config.h"
+#include "etl/impl/GrpcSource.hpp"
+#include "util/Fixtures.hpp"
+#include "util/MockBackend.hpp"
+#include "util/MockXrpLedgerAPIService.hpp"
+#include "util/TestObject.hpp"
+#include "util/config/Config.hpp"
 
 #include <gmock/gmock.h>
 #include <grpcpp/server_context.h>

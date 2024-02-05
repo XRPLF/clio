@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "etl/impl/SubscribedSource.h"
+#include "etl/impl/SubscribedSource.hpp"
 
-#include "etl/ETLHelpers.h"
+#include "etl/ETLHelpers.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>

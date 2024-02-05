@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "rpc/WorkQueue.h"
-#include "util/Fixtures.h"
-#include "util/MockPrometheus.h"
-#include "util/config/Config.h"
-#include "util/prometheus/Counter.h"
-#include "util/prometheus/Gauge.h"
+#include "rpc/WorkQueue.hpp"
+#include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
+#include "util/config/Config.hpp"
+#include "util/prometheus/Counter.hpp"
+#include "util/prometheus/Gauge.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>

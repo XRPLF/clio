@@ -17,17 +17,17 @@
 */
 //==============================================================================
 
-#include "etl/LoadBalancer.h"
+#include "etl/LoadBalancer.hpp"
 
-#include "data/BackendInterface.h"
-#include "etl/ETLHelpers.h"
-#include "etl/ETLService.h"
-#include "etl/ETLState.h"
-#include "etl/ProbingSource.h"
-#include "etl/Source.h"
-#include "util/Assert.h"
-#include "util/Random.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "etl/ETLHelpers.hpp"
+#include "etl/ETLService.hpp"
+#include "etl/ETLState.hpp"
+#include "etl/ProbingSource.hpp"
+#include "etl/Source.hpp"
+#include "util/Assert.hpp"
+#include "util/Random.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
