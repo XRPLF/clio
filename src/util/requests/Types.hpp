@@ -22,6 +22,7 @@
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/http/field.hpp>
 
+#include <optional>
 #include <string>
 #include <variant>
 
@@ -30,7 +31,11 @@ namespace util::requests {
 /**
  * @brief Error type for HTTP requests
  */
-struct RequestError {
+class RequestError {
+    std::string message_;
+    std::optional<boost::beast::error_code> errorCode_;
+
+public:
     /**
      * @brief Construct a new Request Error object
      *
@@ -44,9 +49,23 @@ struct RequestError {
      * @param message error message
      * @param ec error code from boost::beast
      */
-    RequestError(std::string msg, boost::beast::error_code const& ec);
+    RequestError(std::string message, boost::beast::error_code errorCode);
 
-    std::string message;
+    /**
+     * @brief Get the error message
+     *
+     * @return std::string
+     */
+    std::string const&
+    message() const;
+
+    /**
+     * @brief Get the error code, if any
+     *
+     * @return std::optional<boost::beast::error_code>
+     */
+    std::optional<boost::beast::error_code> const&
+    errorCode() const;
 };
 
 /**

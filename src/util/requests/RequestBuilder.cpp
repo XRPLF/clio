@@ -170,7 +170,7 @@ RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
     if (result.has_value())
         return result;
 
-    LOG(log_.debug()) << "SSL request failed: " << result.error().message << ". Falling back to plain request.";
+    LOG(log_.debug()) << "SSL request failed: " << result.error().message() << ". Falling back to plain request.";
     return doPlainRequest(yield, method);
 }
 

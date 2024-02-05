@@ -27,14 +27,26 @@
 
 namespace util::requests {
 
-RequestError::RequestError(std::string message) : message(std::move(message))
+RequestError::RequestError(std::string message) : message_(std::move(message))
 {
 }
 
-RequestError::RequestError(std::string msg, boost::beast::error_code const& ec) : message(std::move(msg))
+RequestError::RequestError(std::string message, boost::beast::error_code errorCode)
+    : message_(std::move(message)), errorCode_(errorCode)
 {
-    message.append(": ");
-    message.append(ec.message());
+    message_.append(": ").append(errorCode.message());
+}
+
+std::string const&
+RequestError::message() const
+{
+    return message_;
+}
+
+std::optional<boost::beast::error_code> const&
+RequestError::errorCode() const
+{
+    return errorCode_;
 }
 
 HttpHeader::HttpHeader(boost::beast::http::field name, std::string value) : name(name), value(std::move(value))

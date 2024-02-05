@@ -124,7 +124,7 @@ WsConnectionBuilder::connect(asio::yield_context yield) const
     auto sslConnection = sslConnect(yield);
     if (sslConnection.has_value())
         return sslConnection;
-    LOG(log_.debug()) << "SSL connection failed with error: " << sslConnection.error().message
+    LOG(log_.debug()) << "SSL connection failed with error: " << sslConnection.error().message()
                       << ". Falling back to plain connection.";
 
     return plainConnect(yield);

@@ -122,7 +122,7 @@ TEST_P(RequestBuilderTest, SimpleRequest)
                     return util::Unexpected{RequestError{"Invalid HTTP verb"}};
             }
         }();
-        ASSERT_TRUE(response) << response.error().message;
+        ASSERT_TRUE(response) << response.error().message();
         EXPECT_EQ(response.value(), replyBody);
     });
 }
@@ -166,7 +166,7 @@ TEST_F(RequestBuilderTest, RequestWithBody)
 
     runSpawn([&](asio::yield_context yield) {
         auto const response = builder.getPlain(yield);
-        ASSERT_TRUE(response) << response.error().message;
+        ASSERT_TRUE(response) << response.error().message();
         EXPECT_EQ(response.value(), replyBody) << response.value();
     });
 }
@@ -177,7 +177,7 @@ TEST_F(RequestBuilderTest, ResolveError)
     runSpawn([this](asio::yield_context yield) {
         auto const response = builder.getPlain(yield);
         ASSERT_FALSE(response);
-        EXPECT_TRUE(response.error().message.starts_with("Resolve error")) << response.error().message;
+        EXPECT_TRUE(response.error().message().starts_with("Resolve error")) << response.error().message();
     });
 }
 
@@ -188,7 +188,7 @@ TEST_F(RequestBuilderTest, ConnectionError)
     runSpawn([this](asio::yield_context yield) {
         auto const response = builder.getPlain(yield);
         ASSERT_FALSE(response);
-        EXPECT_TRUE(response.error().message.starts_with("Connection error")) << response.error().message;
+        EXPECT_TRUE(response.error().message().starts_with("Connection error")) << response.error().message();
     });
 }
 
@@ -201,7 +201,7 @@ TEST_F(RequestBuilderTest, ResponseStatusIsNotOk)
     runSpawn([this](asio::yield_context yield) {
         auto const response = builder.getPlain(yield);
         ASSERT_FALSE(response);
-        EXPECT_TRUE(response.error().message.starts_with("Response status is not OK")) << response.error().message;
+        EXPECT_TRUE(response.error().message().starts_with("Response status is not OK")) << response.error().message();
     });
 }
 
@@ -254,7 +254,7 @@ TEST_P(RequestBuilderSslTest, TrySslUsePlain)
                     return util::Unexpected{RequestError{"Invalid HTTP verb"}};
             }
         }();
-        ASSERT_TRUE(response) << response.error().message;
+        ASSERT_TRUE(response) << response.error().message();
         EXPECT_EQ(response.value(), "Hello, world!");
     });
 }
