@@ -18,6 +18,19 @@ if [[ "17.0.0" > "$version" ]]; then
 -----------------------------------------------------------------------------
 
 EOF
+    exit 3
+fi
+
+# check there is no .h headers, only .hpp
+if [[ $(find $sources -name "*.h" | wc -l) -ne 0 ]]; then
+    cat <<EOF
+
+                                    ERROR
+-----------------------------------------------------------------------------
+       Found .h headers in the source code. Please rename them to .hpp
+-----------------------------------------------------------------------------
+
+EOF
     exit 2
 fi
 
