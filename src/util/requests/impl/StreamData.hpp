@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "util/Expected.h"
-#include "util/requests/Types.h"
-#include "util/requests/impl/SslContext.h"
+#include "util/Expected.hpp"
+#include "util/requests/Types.hpp"
+#include "util/requests/impl/SslContext.hpp"
 
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/spawn.hpp>

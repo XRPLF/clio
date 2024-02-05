@@ -1,6 +1,6 @@
 PROJECT_NAME           = "Clio"
 INPUT                  = ../src ../unittests
-EXCLUDE_PATTERNS       = *Test*.cpp *Test*.h
+EXCLUDE_PATTERNS       = *Test*.cpp *Test*.hpp
 RECURSIVE              = YES
 HAVE_DOT               = YES
 

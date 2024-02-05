@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "util/Expected.h"
-#include "util/requests/Types.h"
-#include "util/requests/WsConnection.h"
+#include "util/Expected.hpp"
+#include "util/requests/Types.hpp"
+#include "util/requests/WsConnection.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/spawn.hpp>

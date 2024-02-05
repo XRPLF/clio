@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/requests/Types.h"
+#include "util/requests/Types.hpp"
 
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/http/field.hpp>

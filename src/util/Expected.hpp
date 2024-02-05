@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "util/Assert.h"
+#include "util/Assert.hpp"
 
 #include <boost/outcome.hpp>
 #include <boost/outcome/policy/base.hpp>
