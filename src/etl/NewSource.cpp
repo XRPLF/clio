@@ -62,14 +62,14 @@ NewSource::NewSource(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<feed::SubscriptionManager> /*subscriptions*/,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
 )
     : ip_(config.valueOr<std::string>("ip", {}))
     , wsPort_(config.valueOr<std::string>("ws_port", {}))
     , grpcPort_(config.valueOr<std::string>("grpc_port", {}))
     , grpcSource_(ip_, grpcPort_, std::move(backend))
-    , subscribedSource_(ioc, ip_, wsPort_, std::move(validatedLedgers))
+    , subscribedSource_(ioc, ip_, wsPort_, std::move(validatedLedgers), std::move(subscriptions), []() {})
 {
     static boost::uuids::random_generator uuidGenerator;
     uuid_ = uuidGenerator();
@@ -114,20 +114,20 @@ NewSource::forwardToRippled(
 
     auto wsConnection = builder.connect(yield);
     if (not wsConnection.has_value()) {
-        LOG(log_.error()) << "Failed to establish ws connection: " << wsConnection.error().message;
+        LOG(log_.error()) << "Failed to establish ws connection: " << wsConnection.error().message();
         return {};
     }
 
     // TODO: json may throw so need to put it inside try catch
     auto const error = wsConnection.value()->write(boost::json::serialize(request), yield);
     if (error) {
-        LOG(log_.error()) << "Error sending request: " << error->message;
+        LOG(log_.error()) << "Error sending request: " << error->message();
         return {};
     }
 
     auto const response = wsConnection.value()->read(yield);
     if (not response.has_value()) {
-        LOG(log_.error()) << "Error reading response: " << response.error().message;
+        LOG(log_.error()) << "Error reading response: " << response.error().message();
         return {};
     }
 

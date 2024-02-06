@@ -22,6 +22,7 @@
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/http/field.hpp>
 
+#include <optional>
 #include <string>
 #include <utility>
 

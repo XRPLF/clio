@@ -36,16 +36,38 @@
 
 namespace util::requests {
 
+/**
+ * @brief Interface for WebSocket connections. It is used to hide SSL and plain connections behind the same interface.
+ */
 class WsConnection {
 public:
     virtual ~WsConnection() = default;
 
+    /**
+     * @brief Read a message from the WebSocket
+     *
+     * @param yield yield context
+     * @return Expected<std::string, RequestError> message or error
+     */
     virtual Expected<std::string, RequestError>
     read(boost::asio::yield_context yield) = 0;
 
+    /**
+     * @brief Write a message to the WebSocket
+     *
+     * @param message message to write
+     * @param yield yield context
+     * @return std::optional<RequestError> error if any
+     */
     virtual std::optional<RequestError>
     write(std::string const& message, boost::asio::yield_context yield) = 0;
 
+    /**
+     * @brief Close the WebSocket
+     *
+     * @param yield yield context
+     * @return std::optional<RequestError> error if any
+     */
     virtual std::optional<RequestError>
     close(boost::asio::yield_context yield) = 0;
 };
