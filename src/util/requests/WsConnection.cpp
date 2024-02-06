@@ -24,23 +24,14 @@
 #include "util/requests/impl/StreamData.hpp"
 #include "util/requests/impl/WsConnectionImpl.hpp"
 
-#include <boost/asio.hpp>
 #include <boost/asio/associated_executor.hpp>
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/ssl/stream_base.hpp>
-#include <boost/beast.hpp>
-#include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/error.hpp>
-#include <boost/beast/core/flat_buffer.hpp>
-#include <boost/beast/core/make_printable.hpp>
 #include <boost/beast/core/role.hpp>
 #include <boost/beast/core/stream_traits.hpp>
-#include <boost/beast/core/tcp_stream.hpp>
-#include <boost/beast/http/field.hpp>
-#include <boost/beast/version.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
 #include <fmt/core.h>
