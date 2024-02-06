@@ -43,7 +43,7 @@
 
 namespace etl::impl {
 
-class SubscribedSource {
+class SubscriptionSource {
 public:
     using OnDisconnectHook = std::function<void()>;
 
@@ -78,7 +78,7 @@ private:
     static constexpr std::chrono::seconds RETRY_DELAY{1};
 
 public:
-    SubscribedSource(
+    SubscriptionSource(
         boost::asio::io_context& ioContext,
         std::string const& ip,
         std::string const& wsPort,

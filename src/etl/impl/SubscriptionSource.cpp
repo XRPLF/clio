@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "etl/impl/SubscribedSource.hpp"
+#include "etl/impl/SubscriptionSource.hpp"
 
 #include "etl/ETLHelpers.hpp"
 #include "feed/SubscriptionManager.hpp"
@@ -57,7 +57,7 @@
 
 namespace etl::impl {
 
-SubscribedSource::SubscribedSource(
+SubscriptionSource::SubscriptionSource(
     boost::asio::io_context& ioContext,
     std::string const& ip,
     std::string const& wsPort,
@@ -80,7 +80,7 @@ SubscribedSource::SubscribedSource(
 }
 
 bool
-SubscribedSource::hasLedger(uint32_t sequence) const
+SubscriptionSource::hasLedger(uint32_t sequence) const
 {
     auto validatedLedgersData = validatedLedgersData_.lock();
     for (auto& pair : validatedLedgersData->validatedLedgers) {
@@ -98,25 +98,25 @@ SubscribedSource::hasLedger(uint32_t sequence) const
 }
 
 bool
-SubscribedSource::isConnected() const
+SubscriptionSource::isConnected() const
 {
     return isConnected_;
 }
 
 void
-SubscribedSource::setForwarding(bool isForwarding)
+SubscriptionSource::setForwarding(bool isForwarding)
 {
     isForwarding_ = isForwarding;
 }
 
 std::chrono::system_clock::time_point
-SubscribedSource::lastMessageTime() const
+SubscriptionSource::lastMessageTime() const
 {
     return lastMessageTime_.lock().get();
 }
 
 void
-SubscribedSource::subscribe()
+SubscriptionSource::subscribe()
 {
     boost::asio::spawn([this](boost::asio::yield_context yield) {
         auto connection = wsConnectionBuilder_.connect(yield);
@@ -151,7 +151,7 @@ SubscribedSource::subscribe()
 }
 
 std::optional<util::requests::RequestError>
-SubscribedSource::handleMessage(std::string const& message)
+SubscriptionSource::handleMessage(std::string const& message)
 {
     setLastMessageTime();
 
@@ -206,7 +206,7 @@ SubscribedSource::handleMessage(std::string const& message)
 }
 
 void
-SubscribedSource::handleError(util::requests::RequestError const& error)
+SubscriptionSource::handleError(util::requests::RequestError const& error)
 {
     onDisconnect_();
 
@@ -215,14 +215,14 @@ SubscribedSource::handleError(util::requests::RequestError const& error)
 }
 
 void
-SubscribedSource::onConnect()
+SubscriptionSource::onConnect()
 {
     isConnected_ = true;
     retry_.reset();
 }
 
 void
-SubscribedSource::logError(util::requests::RequestError const& error) const
+SubscriptionSource::logError(util::requests::RequestError const& error) const
 {
     if (error.errorCode() && error.errorCode()->category() == boost::asio::error::get_ssl_category()) {
         auto& errorCode = error.errorCode().value();
@@ -253,13 +253,13 @@ SubscribedSource::logError(util::requests::RequestError const& error) const
 }
 
 void
-SubscribedSource::setLastMessageTime()
+SubscriptionSource::setLastMessageTime()
 {
     lastMessageTime_.lock().get() = std::chrono::system_clock::now();
 }
 
 void
-SubscribedSource::setValidatedRange(std::string range)
+SubscriptionSource::setValidatedRange(std::string range)
 {
     std::vector<std::string> ranges;
     boost::split(ranges, range, [](char const c) { return c == ','; });
@@ -293,7 +293,7 @@ SubscribedSource::setValidatedRange(std::string range)
 }
 
 std::string const&
-SubscribedSource::getSubscribeCommandJson()
+SubscriptionSource::getSubscribeCommandJson()
 {
     static boost::json::object const jsonValue{
         {"command", "subscribe"},

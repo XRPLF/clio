@@ -22,7 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "etl/ETLHelpers.hpp"
 #include "etl/impl/GrpcSource.hpp"
-#include "etl/impl/SubscribedSource.hpp"
+#include "etl/impl/SubscriptionSource.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -52,7 +52,7 @@ class NewSource {
     std::string grpcPort_;
 
     impl::GrpcSource grpcSource_;
-    impl::SubscribedSource subscribedSource_;
+    impl::SubscriptionSource subscriptionSource_;
 
 public:
     /**

@@ -24,7 +24,6 @@
 #include "etl/impl/AsyncData.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "main/Build.hpp"
-#include "util/Assert.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "util/requests/Types.hpp"
@@ -69,7 +68,7 @@ NewSource::NewSource(
     , wsPort_(config.valueOr<std::string>("ws_port", {}))
     , grpcPort_(config.valueOr<std::string>("grpc_port", {}))
     , grpcSource_(ip_, grpcPort_, std::move(backend))
-    , subscribedSource_(ioc, ip_, wsPort_, std::move(validatedLedgers), std::move(subscriptions), []() {})
+    , subscriptionSource_(ioc, ip_, wsPort_, std::move(validatedLedgers), std::move(subscriptions), []() {})
 {
     static boost::uuids::random_generator uuidGenerator;
     uuid_ = uuidGenerator();
@@ -78,7 +77,7 @@ NewSource::NewSource(
 bool
 NewSource::hasLedger(uint32_t sequence) const
 {
-    return subscribedSource_.hasLedger(sequence);
+    return subscriptionSource_.hasLedger(sequence);
 }
 
 std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>

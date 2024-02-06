@@ -106,7 +106,7 @@ target_sources (clio PRIVATE
   src/etl/impl/ForwardCache.cpp
   src/etl/impl/ForwardingSource.cpp
   src/etl/impl/GrpcSource.cpp
-  src/etl/impl/SubscribedSource.cpp
+  src/etl/impl/SubscriptionSource.cpp
   ## Feed
   src/feed/SubscriptionManager.cpp
   src/feed/impl/TransactionFeed.cpp
