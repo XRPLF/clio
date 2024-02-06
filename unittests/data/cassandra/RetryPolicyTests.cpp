@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "data/cassandra/Error.h"
-#include "data/cassandra/impl/RetryPolicy.h"
-#include "util/Fixtures.h"
+#include "data/cassandra/Error.hpp"
+#include "data/cassandra/impl/RetryPolicy.hpp"
+#include "util/Fixtures.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <cassandra.h>

@@ -16,7 +16,7 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include "util/Random.h"
+#include "util/Random.hpp"
 
 #include <chrono>
 #include <random>

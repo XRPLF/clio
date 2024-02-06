@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "rpc/Counters.h"
-#include "rpc/JS.h"
-#include "rpc/WorkQueue.h"
-#include "util/Fixtures.h"
-#include "util/MockPrometheus.h"
-#include "util/prometheus/Counter.h"
+#include "rpc/Counters.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/WorkQueue.hpp"
+#include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
+#include "util/prometheus/Counter.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

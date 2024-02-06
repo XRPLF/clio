@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "feed/impl/LedgerFeed.h"
+#include "feed/impl/LedgerFeed.hpp"
 
-#include "data/BackendInterface.h"
-#include "feed/Types.h"
-#include "feed/impl/SingleFeedBase.h"
-#include "rpc/RPCHelpers.h"
-#include "util/Assert.h"
+#include "data/BackendInterface.hpp"
+#include "feed/Types.hpp"
+#include "feed/impl/SingleFeedBase.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>

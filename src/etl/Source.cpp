@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "etl/Source.h"
+#include "etl/Source.hpp"
 
-#include "util/log/Logger.h"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/post.hpp>

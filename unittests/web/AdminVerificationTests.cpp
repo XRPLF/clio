@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include "util/Fixtures.h"
-#include "web/impl/AdminVerificationStrategy.h"
+#include "util/Fixtures.hpp"
+#include "web/impl/AdminVerificationStrategy.hpp"
 
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>

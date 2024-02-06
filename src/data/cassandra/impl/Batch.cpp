@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "data/cassandra/impl/Batch.h"
+#include "data/cassandra/impl/Batch.hpp"
 
-#include "data/cassandra/Error.h"
-#include "data/cassandra/Types.h"
-#include "data/cassandra/impl/ManagedObject.h"
-#include "data/cassandra/impl/Statement.h"
-#include "util/Expected.h"
+#include "data/cassandra/Error.hpp"
+#include "data/cassandra/Types.hpp"
+#include "data/cassandra/impl/ManagedObject.hpp"
+#include "data/cassandra/impl/Statement.hpp"
+#include "util/Expected.hpp"
 
 #include <cassandra.h>
 

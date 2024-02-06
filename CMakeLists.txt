@@ -164,6 +164,10 @@ target_sources (clio PRIVATE
   src/util/prometheus/OStream.cpp
   src/util/prometheus/Prometheus.cpp
   src/util/Random.cpp
+  src/util/requests/RequestBuilder.cpp
+  src/util/requests/Types.cpp
+  src/util/requests/WsConnection.cpp
+  src/util/requests/impl/SslContext.cpp
   src/util/Taggable.cpp
   src/util/TerminationHandler.cpp
   src/util/TxUtils.cpp
@@ -193,8 +197,10 @@ if (tests)
     unittests/util/TestGlobals.cpp
     unittests/util/AssertTests.cpp
     unittests/util/BatchingTests.cpp
-    unittests/util/TxUtilTests.cpp
+    unittests/util/TestHttpServer.cpp
     unittests/util/TestObject.cpp
+    unittests/util/TestWsServer.cpp
+    unittests/util/TxUtilTests.cpp
     unittests/util/StringUtils.cpp
     unittests/util/LedgerUtilsTests.cpp
     ## Prometheus support
@@ -212,6 +218,10 @@ if (tests)
     unittests/util/async/AnyOperationTests.cpp
     unittests/util/async/AnyStopTokenTests.cpp
     unittests/util/async/AsyncExecutionContextTests.cpp
+    ## Requests framework
+    unittests/util/requests/RequestBuilderTests.cpp
+    unittests/util/requests/SslContextTests.cpp
+    unittests/util/requests/WsConnectionTests.cpp
     # ETL
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp

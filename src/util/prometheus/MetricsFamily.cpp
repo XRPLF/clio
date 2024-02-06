@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "util/prometheus/MetricsFamily.h"
+#include "util/prometheus/MetricsFamily.hpp"
 
-#include "util/Assert.h"
-#include "util/prometheus/Label.h"
-#include "util/prometheus/MetricBase.h"
-#include "util/prometheus/MetricBuilder.h"
-#include "util/prometheus/OStream.h"
+#include "util/Assert.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/MetricBase.hpp"
+#include "util/prometheus/MetricBuilder.hpp"
+#include "util/prometheus/OStream.hpp"
 
 #include <cstdint>
 #include <memory>

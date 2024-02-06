@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "util/MockExecutionContext.h"
-#include "util/MockOperation.h"
-#include "util/MockStrand.h"
-#include "util/async/AnyExecutionContext.h"
-#include "util/async/AnyOperation.h"
-#include "util/async/AnyStopToken.h"
-#include "util/async/AnyStrand.h"
+#include "util/MockExecutionContext.hpp"
+#include "util/MockOperation.hpp"
+#include "util/MockStrand.hpp"
+#include "util/async/AnyExecutionContext.hpp"
+#include "util/async/AnyOperation.hpp"
+#include "util/async/AnyStopToken.hpp"
+#include "util/async/AnyStrand.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

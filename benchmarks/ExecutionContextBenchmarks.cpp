@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "etl/ETLHelpers.h"
-#include "util/Random.h"
-#include "util/async/AnyExecutionContext.h"
-#include "util/async/AnyOperation.h"
-#include "util/async/context/BasicExecutionContext.h"
-#include "util/async/context/SyncExecutionContext.h"
+#include "etl/ETLHelpers.hpp"
+#include "util/Random.hpp"
+#include "util/async/AnyExecutionContext.hpp"
+#include "util/async/AnyOperation.hpp"
+#include "util/async/context/BasicExecutionContext.hpp"
+#include "util/async/context/SyncExecutionContext.hpp"
 
 #include <benchmark/benchmark.h>
 

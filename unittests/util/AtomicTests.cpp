@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/Atomic.h"
+#include "util/Atomic.hpp"
 
 #include <gtest/gtest.h>
 

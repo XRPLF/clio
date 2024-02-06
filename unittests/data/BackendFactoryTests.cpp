@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "data/BackendFactory.h"
-#include "data/cassandra/Handle.h"
-#include "util/Fixtures.h"
-#include "util/TestGlobals.h"
-#include "util/config/Config.h"
+#include "data/BackendFactory.hpp"
+#include "data/cassandra/Handle.hpp"
+#include "util/Fixtures.hpp"
+#include "util/TestGlobals.hpp"
+#include "util/config/Config.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>

@@ -17,18 +17,18 @@
 */
 //==============================================================================
 
-#include "util/Fixtures.h"
-#include "util/MockPrometheus.h"
-#include "util/TestHttpSyncClient.h"
-#include "util/config/Config.h"
-#include "util/prometheus/Label.h"
-#include "util/prometheus/Prometheus.h"
-#include "web/DOSGuard.h"
-#include "web/IntervalSweepHandler.h"
-#include "web/Server.h"
-#include "web/WhitelistHandler.h"
-#include "web/impl/AdminVerificationStrategy.h"
-#include "web/interface/ConnectionBase.h"
+#include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
+#include "util/TestHttpSyncClient.hpp"
+#include "util/config/Config.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
+#include "web/DOSGuard.hpp"
+#include "web/IntervalSweepHandler.hpp"
+#include "web/Server.hpp"
+#include "web/WhitelistHandler.hpp"
+#include "web/impl/AdminVerificationStrategy.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>

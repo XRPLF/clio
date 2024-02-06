@@ -17,15 +17,15 @@
 */
 //==============================================================================
 
-#include "etl/ProbingSource.h"
+#include "etl/ProbingSource.hpp"
 
-#include "data/BackendInterface.h"
-#include "etl/ETLHelpers.h"
-#include "etl/LoadBalancer.h"
-#include "etl/Source.h"
-#include "feed/SubscriptionManager.h"
-#include "util/config/Config.h"
-#include "util/log/Logger.h"
+#include "data/BackendInterface.hpp"
+#include "etl/ETLHelpers.hpp"
+#include "etl/LoadBalancer.hpp"
+#include "etl/Source.hpp"
+#include "feed/SubscriptionManager.hpp"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>

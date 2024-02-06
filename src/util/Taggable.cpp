@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/Taggable.h"
+#include "util/Taggable.hpp"
 
 #include <boost/uuid/random_generator.hpp>
 

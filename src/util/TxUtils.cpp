@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/JsonUtils.h"
+#include "util/JsonUtils.hpp"
 
 #include <ripple/protocol/TxFormats.h>
 
@@ -28,7 +28,7 @@
 
 namespace util {
 
-std::unordered_set<std::string> const&
+[[nodiscard]] std::unordered_set<std::string> const&
 getTxTypesInLowercase()
 {
     static std::unordered_set<std::string> const typesKeysInLowercase = []() {

@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "rpc/Counters.h"
+#include "rpc/Counters.hpp"
 
-#include "rpc/JS.h"
-#include "rpc/WorkQueue.h"
-#include "util/prometheus/Label.h"
-#include "util/prometheus/Prometheus.h"
+#include "rpc/JS.hpp"
+#include "rpc/WorkQueue.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/json/object.hpp>
 #include <fmt/core.h>

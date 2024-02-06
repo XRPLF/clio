@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "util/prometheus/Http.h"
+#include "util/prometheus/Http.hpp"
 
-#include "util/prometheus/Prometheus.h"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>

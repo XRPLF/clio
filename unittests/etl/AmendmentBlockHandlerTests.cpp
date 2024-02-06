@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "etl/SystemState.h"
-#include "etl/impl/AmendmentBlock.h"
-#include "util/FakeAmendmentBlockAction.h"
-#include "util/Fixtures.h"
+#include "etl/SystemState.hpp"
+#include "etl/impl/AmendmentBlock.hpp"
+#include "util/FakeAmendmentBlockAction.hpp"
+#include "util/Fixtures.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <gtest/gtest.h>

@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "data/cassandra/SettingsProvider.h"
+#include "data/cassandra/SettingsProvider.hpp"
 
-#include "data/cassandra/Types.h"
-#include "data/cassandra/impl/Cluster.h"
-#include "util/Constants.h"
-#include "util/config/Config.h"
+#include "data/cassandra/Types.hpp"
+#include "data/cassandra/impl/Cluster.hpp"
+#include "util/Constants.hpp"
+#include "util/config/Config.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>

@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/async/AnyStopToken.h"
+#include "util/async/AnyStopToken.hpp"
 
 #include <gtest/gtest.h>
 

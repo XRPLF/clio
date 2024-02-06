@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "data/Types.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/Types.h"
-#include "util/Fixtures.h"
-#include "util/TestObject.h"
+#include "data/Types.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/Types.hpp"
+#include "util/Fixtures.hpp"
+#include "util/TestObject.hpp"
 
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/spawn.hpp>
@@ -36,11 +36,13 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STObject.h>
+#include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
 
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <variant>
@@ -501,4 +503,39 @@ TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV2)
     auto const json = toJsonWithBinaryTx(txMeta, 2);
     EXPECT_TRUE(json.contains(JS(tx_blob)));
     EXPECT_TRUE(json.contains(JS(meta_blob)));
+}
+
+TEST_F(RPCHelpersTest, ParseIssue)
+{
+    auto issue = parseIssue(boost::json::parse(
+                                R"({
+                                        "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                                        "currency": "JPY"
+                                    })"
+    )
+                                .as_object());
+    EXPECT_TRUE(issue.account == GetAccountIDWithString(ACCOUNT2));
+
+    issue = parseIssue(boost::json::parse(R"({"currency": "XRP"})").as_object());
+    EXPECT_TRUE(ripple::isXRP(issue.currency));
+
+    EXPECT_THROW(parseIssue(boost::json::parse(R"({"currency": 2})").as_object()), std::runtime_error);
+
+    EXPECT_THROW(parseIssue(boost::json::parse(R"({"currency": "XRP2"})").as_object()), std::runtime_error);
+
+    EXPECT_THROW(
+        parseIssue(boost::json::parse(
+                       R"({
+                                "issuer": "abcd",
+                                "currency": "JPY"
+                            })"
+        )
+                       .as_object()),
+        std::runtime_error
+    );
+
+    EXPECT_THROW(
+        parseIssue(boost::json::parse(R"({"issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"})").as_object()),
+        std::runtime_error
+    );
 }

@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/JsonUtils.h"
+#include "util/JsonUtils.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>

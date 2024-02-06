@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "util/Expected.h"
-#include "util/MockOperation.h"
-#include "util/async/AnyOperation.h"
-#include "util/async/Error.h"
+#include "util/Expected.hpp"
+#include "util/MockOperation.hpp"
+#include "util/async/AnyOperation.hpp"
+#include "util/async/Error.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
