@@ -124,7 +124,9 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         ammID = sle.getFieldH256(ripple::sfAMMID);
     }
 
-    auto ammKeylet = ammID != 0 ? keylet::amm(ammID) : keylet::amm(input.issue1, input.issue2);
+    auto issue1 = input.issue1;
+    auto issue2 = input.issue2;
+    auto ammKeylet = ammID != 0 ? keylet::amm(ammID) : keylet::amm(issue1, issue2);
     auto const ammBlob = sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (not ammBlob)
@@ -137,8 +139,15 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     if (not accBlob)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
+    // If the issue1 and issue2 are not specified, we need to get them from the AMM.
+    // Otherwise we preserve the mapping of asset1 -> issue1 and asset2 -> issue2 as requested by the user.
+    if (issue1 == ripple::noIssue() and issue2 == ripple::noIssue()) {
+        issue1 = amm[sfAsset];
+        issue2 = amm[sfAsset2];
+    }
+
     auto const [asset1Balance, asset2Balance] =
-        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset], amm[sfAsset2], false, ctx.yield);
+        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, ammAccountID, issue1, issue2, false, ctx.yield);
     auto const lptAMMBalance = input.accountID
         ? getAmmLpHolds(*sharedPtrBackend_, lgrInfo.seq, amm, *input.accountID, ctx.yield)
         : amm[sfLPTokenBalance];
