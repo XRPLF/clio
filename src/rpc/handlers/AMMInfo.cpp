@@ -103,9 +103,6 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
 
-    auto issue1 = input.issue1;
-    auto issue2 = input.issue2;
-
     if (input.accountID) {
         auto keylet = keylet::account(*input.accountID);
         if (not sharedPtrBackend_->fetchLedgerObject(keylet.key, lgrInfo.seq, ctx.yield))
@@ -127,6 +124,8 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         ammID = sle.getFieldH256(ripple::sfAMMID);
     }
 
+    auto issue1 = input.issue1;
+    auto issue2 = input.issue2;
     auto ammKeylet = ammID != 0 ? keylet::amm(ammID) : keylet::amm(issue1, issue2);
     auto const ammBlob = sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
 

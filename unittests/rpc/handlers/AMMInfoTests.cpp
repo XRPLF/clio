@@ -1079,7 +1079,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
     });
 }
 
-TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssets)
+TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
 {
     backend->setRange(10, 30);
 
@@ -1175,6 +1175,118 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssets)
             "JPY",
             AMM_ACCOUNT,
             "USD",
+            AMM_ACCOUNT2,
+            AMM_ACCOUNT,
+            LP_ISSUE_CURRENCY,
+            AMM_ACCOUNT,
+            AMM_ACCOUNT2,
+            AMM_ACCOUNT,
+            AMM_ACCOUNT2,
+            LEDGERHASH
+        ));
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.value(), expectedResult);
+    });
+}
+
+TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
+{
+    backend->setRange(10, 30);
+
+    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
+    auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
+    auto const issue1 = ripple::Issue(ripple::to_currency("USD"), account1);
+    auto const issue2 = ripple::Issue(ripple::to_currency("JPY"), account2);
+    auto const ammKeylet = ripple::keylet::amm(issue1, issue2);
+
+    // Note: order in the AMM object is different from the input
+    auto ammObj = CreateAMMObject(AMM_ACCOUNT, "JPY", AMM_ACCOUNT, "USD", AMM_ACCOUNT2, LP_ISSUE_CURRENCY);
+    auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto const auctionIssue = ripple::Issue{ripple::Currency{LP_ISSUE_CURRENCY}, account1};
+    AMMSetAuctionSlot(
+        ammObj, account2, ripple::amountFromString(auctionIssue, "100"), 2, 25 * 3600, {account1, account2}
+    );
+    accountRoot.setFieldH256(ripple::sfAMMID, ammKeylet.key);
+
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account1), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account2), testing::_, testing::_))
+        .WillByDefault(Return(accountRoot.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ammKeylet.key, testing::_, testing::_))
+        .WillByDefault(Return(ammObj.getSerializer().peekData()));
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "asset": {{
+                "currency": "USD",
+                "issuer": "{}"
+            }},
+            "asset2": {{
+                "currency": "JPY", 
+                "issuer": "{}"
+            }}
+        }})",
+        AMM_ACCOUNT,
+        AMM_ACCOUNT2
+    ));
+
+    auto const handler = AnyHandler{AMMInfoHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        auto expectedResult = json::parse(fmt::format(
+            R"({{
+                "amm": {{
+                    "lp_token": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "100"
+                    }},
+                    "amount": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "0"
+                    }},
+                    "amount2": {{
+                        "currency": "{}",
+                        "issuer": "{}",
+                        "value": "0"
+                    }},
+                    "account": "{}",
+                    "trading_fee": 5,
+                    "auction_slot": {{
+                        "time_interval": 20,
+                        "price": {{
+                            "currency": "{}",
+                            "issuer": "{}",
+                            "value": "100"
+                        }},
+                        "discounted_fee": 2,
+                        "account": "{}",
+                        "expiration": "2000-01-02T01:00:00+0000",
+                        "auth_accounts": [
+                            {{
+                                "account": "{}"
+                            }},
+                            {{
+                                "account": "{}"
+                            }}
+                        ]
+                    }},
+                    "asset_frozen": false,
+                    "asset2_frozen": false
+                }},
+                "ledger_index": 30,
+                "ledger_hash": "{}",
+                "validated": true
+            }})",
+            LP_ISSUE_CURRENCY,
+            AMM_ACCOUNT,
+            "USD",
+            AMM_ACCOUNT,
+            "JPY",
             AMM_ACCOUNT2,
             AMM_ACCOUNT,
             LP_ISSUE_CURRENCY,
