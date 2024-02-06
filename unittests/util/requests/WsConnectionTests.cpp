@@ -22,8 +22,6 @@
 #include "util/requests/Types.hpp"
 #include "util/requests/WsConnection.hpp"
 
-#include <boost/asio/executor_work_guard.hpp>
-#include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/field.hpp>
 #include <gtest/gtest.h>

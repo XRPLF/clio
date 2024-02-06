@@ -29,13 +29,11 @@
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/role.hpp>
-#include <boost/beast/version.hpp>
 #include <boost/beast/websocket/error.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
 #include <gtest/gtest.h>
 
-#include <iostream>
 #include <optional>
 #include <string>
 #include <utility>

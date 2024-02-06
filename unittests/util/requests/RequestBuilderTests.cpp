@@ -23,7 +23,6 @@
 #include "util/requests/RequestBuilder.hpp"
 #include "util/requests/Types.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
