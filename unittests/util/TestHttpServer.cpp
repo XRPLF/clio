@@ -31,6 +31,7 @@
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/message_generator.hpp>
+#include <boost/beast/http/read.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <gtest/gtest.h>
 
