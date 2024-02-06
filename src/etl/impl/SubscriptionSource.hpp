@@ -50,6 +50,7 @@ public:
 private:
     util::Logger log_;
     util::requests::WsConnectionBuilder wsConnectionBuilder_;
+    util::requests::WsConnectionPtr wsConnection_;
 
     struct ValidatedLedgersData {
         std::vector<std::pair<uint32_t, uint32_t>> validatedLedgers;
@@ -107,7 +108,7 @@ private:
     handleMessage(std::string const& message);
 
     void
-    handleError(util::requests::RequestError const& error);
+    handleError(util::requests::RequestError const& error, boost::asio::yield_context yield);
 
     void
     onConnect();

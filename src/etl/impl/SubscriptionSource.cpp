@@ -121,14 +121,14 @@ SubscriptionSource::subscribe()
     boost::asio::spawn([this](boost::asio::yield_context yield) {
         auto connection = wsConnectionBuilder_.connect(yield);
         if (not connection) {
-            handleError(connection.error());
+            handleError(connection.error(), yield);
             return;
         }
 
         auto const& subscribeCommand = getSubscribeCommandJson();
         auto const writeErrorOpt = connection.value()->write(subscribeCommand, yield);
         if (writeErrorOpt) {
-            handleError(writeErrorOpt.value());
+            handleError(writeErrorOpt.value(), yield);
             return;
         }
 
@@ -137,13 +137,13 @@ SubscriptionSource::subscribe()
         while (!stop_) {
             auto message = connection.value()->read(yield);
             if (not message) {
-                handleError(message.error());
+                handleError(message.error(), yield);
                 return;
             }
 
             auto handleErrorOpt = handleMessage(message.value());
             if (handleErrorOpt) {
-                handleError(handleErrorOpt.value());
+                handleError(handleErrorOpt.value(), yield);
                 return;
             }
         }
@@ -206,9 +206,18 @@ SubscriptionSource::handleMessage(std::string const& message)
 }
 
 void
-SubscriptionSource::handleError(util::requests::RequestError const& error)
+SubscriptionSource::handleError(util::requests::RequestError const& error, boost::asio::yield_context yield)
 {
+    isConnected_ = false;
     onDisconnect_();
+
+    if (wsConnection_ != nullptr) {
+        auto const error = wsConnection_->close(yield);
+        if (error) {
+            LOG(log_.error()) << "Error closing websocket connection: " << error->message();
+        }
+    }
+    wsConnection_.reset();
 
     logError(error);
     retry_.retry([this] { subscribe(); });

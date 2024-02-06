@@ -226,6 +226,7 @@ if (tests)
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp
     unittests/etl/GrpcSourceTests.cpp
+    unittests/etl/SubscriptionSourceTests.cpp
     unittests/etl/LedgerPublisherTests.cpp
     unittests/etl/TransformerTests.cpp
     # RPC
