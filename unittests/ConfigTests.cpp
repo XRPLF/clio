@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "util/Assert.h"
-#include "util/Fixtures.h"
-#include "util/config/Config.h"
+#include "util/Assert.hpp"
+#include "util/Fixtures.hpp"
+#include "util/config/Config.hpp"
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/json/conversion.hpp>

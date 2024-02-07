@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "data/BackendCounters.h"
+#include "data/BackendCounters.hpp"
 
-#include "util/Assert.h"
-#include "util/prometheus/Label.h"
-#include "util/prometheus/Prometheus.h"
+#include "util/Assert.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/json/object.hpp>
 

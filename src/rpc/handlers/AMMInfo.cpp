@@ -17,17 +17,17 @@
 */
 //==============================================================================
 
-#include "rpc/handlers/AMMInfo.h"
+#include "rpc/handlers/AMMInfo.hpp"
 
-#include "data/DBHelpers.h"
-#include "rpc/AMMHelpers.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/MetaProcessors.h"
-#include "rpc/common/Specs.h"
-#include "rpc/common/Types.h"
-#include "rpc/common/Validators.h"
+#include "data/DBHelpers.hpp"
+#include "rpc/AMMHelpers.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/MetaProcessors.hpp"
+#include "rpc/common/Specs.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/common/Validators.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
@@ -48,9 +48,7 @@
 #include <ripple/protocol/STBase.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
-#include <ripple/protocol/tokens.h>
 
 #include <chrono>
 #include <cstdint>
@@ -126,7 +124,9 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         ammID = sle.getFieldH256(ripple::sfAMMID);
     }
 
-    auto ammKeylet = ammID != 0 ? keylet::amm(ammID) : keylet::amm(input.issue1, input.issue2);
+    auto issue1 = input.issue1;
+    auto issue2 = input.issue2;
+    auto ammKeylet = ammID != 0 ? keylet::amm(ammID) : keylet::amm(issue1, issue2);
     auto const ammBlob = sharedPtrBackend_->fetchLedgerObject(ammKeylet.key, lgrInfo.seq, ctx.yield);
 
     if (not ammBlob)
@@ -139,8 +139,15 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     if (not accBlob)
         return Error{Status{RippledError::rpcACT_NOT_FOUND}};
 
+    // If the issue1 and issue2 are not specified, we need to get them from the AMM.
+    // Otherwise we preserve the mapping of asset1 -> issue1 and asset2 -> issue2 as requested by the user.
+    if (issue1 == ripple::noIssue() and issue2 == ripple::noIssue()) {
+        issue1 = amm[sfAsset];
+        issue2 = amm[sfAsset2];
+    }
+
     auto const [asset1Balance, asset2Balance] =
-        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset], amm[sfAsset2], false, ctx.yield);
+        getAmmPoolHolds(*sharedPtrBackend_, lgrInfo.seq, ammAccountID, issue1, issue2, false, ctx.yield);
     auto const lptAMMBalance = input.accountID
         ? getAmmLpHolds(*sharedPtrBackend_, lgrInfo.seq, amm, *input.accountID, ctx.yield)
         : amm[sfLPTokenBalance];
@@ -232,7 +239,7 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
          },
          meta::IfType<std::string>{stringIssueValidator},
          meta::IfType<boost::json::object>{
-             meta::WithCustomError{validation::AMMAssetValidator, Status(RippledError::rpcISSUE_MALFORMED)},
+             meta::WithCustomError{validation::CurrencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)},
          }},
         {JS(asset2),
          meta::WithCustomError{
@@ -240,7 +247,7 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
          },
          meta::IfType<std::string>{stringIssueValidator},
          meta::IfType<boost::json::object>{
-             meta::WithCustomError{validation::AMMAssetValidator, Status(RippledError::rpcISSUE_MALFORMED)},
+             meta::WithCustomError{validation::CurrencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)},
          }},
         {JS(amm_account), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
         {JS(account), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
@@ -297,24 +304,11 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
         }
     }
 
-    auto getIssue = [](boost::json::value const& request) {
-        if (request.is_string())
-            return ripple::issueFromJson(request.as_string().c_str());
-
-        // Note: no checks needed as we already validated the input if we made it here
-        auto const currency = ripple::to_currency(request.at(JS(currency)).as_string().c_str());
-        if (ripple::isXRP(currency)) {
-            return ripple::xrpIssue();
-        }
-        auto const issuer = ripple::parseBase58<ripple::AccountID>(request.at(JS(issuer)).as_string().c_str());
-        return ripple::Issue{currency, *issuer};
-    };
-
     if (jsonObject.contains(JS(asset)))
-        input.issue1 = getIssue(jsonObject.at(JS(asset)));
+        input.issue1 = parseIssue(jsonObject.at(JS(asset)).as_object());
 
     if (jsonObject.contains(JS(asset2)))
-        input.issue2 = getIssue(jsonObject.at(JS(asset2)));
+        input.issue2 = parseIssue(jsonObject.at(JS(asset2)).as_object());
 
     if (jsonObject.contains(JS(account)))
         input.accountID = accountFromStringStrict(jsonObject.at(JS(account)).as_string().c_str());

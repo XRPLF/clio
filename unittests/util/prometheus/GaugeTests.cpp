@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/prometheus/Gauge.h"
+#include "util/prometheus/Gauge.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

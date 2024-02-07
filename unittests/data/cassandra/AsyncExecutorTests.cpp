@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "data/cassandra/Error.h"
-#include "data/cassandra/impl/AsyncExecutor.h"
-#include "data/cassandra/impl/FakesAndMocks.h"
-#include "util/Fixtures.h"
+#include "data/cassandra/Error.hpp"
+#include "data/cassandra/impl/AsyncExecutor.hpp"
+#include "data/cassandra/impl/FakesAndMocks.hpp"
+#include "util/Fixtures.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <cassandra.h>

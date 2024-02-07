@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/Assert.h"
+#include "util/Assert.hpp"
 
 #include <gtest/gtest.h>
 

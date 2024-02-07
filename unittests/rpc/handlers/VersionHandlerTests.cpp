@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "rpc/common/AnyHandler.h"
-#include "rpc/common/Types.h"
-#include "rpc/handlers/VersionHandler.h"
-#include "util/Fixtures.h"
-#include "util/config/Config.h"
+#include "rpc/common/AnyHandler.hpp"
+#include "rpc/common/Types.hpp"
+#include "rpc/handlers/VersionHandler.hpp"
+#include "util/Fixtures.hpp"
+#include "util/config/Config.hpp"
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>

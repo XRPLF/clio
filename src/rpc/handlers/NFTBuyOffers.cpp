@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "rpc/handlers/NFTBuyOffers.h"
+#include "rpc/handlers/NFTBuyOffers.hpp"
 
-#include "rpc/common/Types.h"
+#include "rpc/common/Types.hpp"
 
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Indexes.h>

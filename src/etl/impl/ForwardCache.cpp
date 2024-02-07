@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "etl/impl/ForwardCache.h"
+#include "etl/impl/ForwardCache.hpp"
 
-#include "etl/Source.h"
-#include "rpc/RPCHelpers.h"
-#include "util/log/Logger.h"
+#include "etl/Source.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>

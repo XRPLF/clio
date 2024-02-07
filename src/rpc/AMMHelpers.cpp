@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "rpc/AMMHelpers.h"
+#include "rpc/AMMHelpers.hpp"
 
-#include "data/BackendInterface.h"
-#include "rpc/RPCHelpers.h"
+#include "data/BackendInterface.hpp"
+#include "rpc/RPCHelpers.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <ripple/protocol/AMMCore.h>

@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include "util/prometheus/Histogram.h"
-#include "util/prometheus/OStream.h"
+#include "util/prometheus/Histogram.hpp"
+#include "util/prometheus/OStream.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

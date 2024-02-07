@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "rpc/Amendments.h"
+#include "rpc/Amendments.hpp"
 
 #include <gtest/gtest.h>
 #include <ripple/basics/base_uint.h>

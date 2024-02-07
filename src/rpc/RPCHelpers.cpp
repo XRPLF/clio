@@ -17,16 +17,16 @@
 */
 //==============================================================================
 
-#include "rpc/RPCHelpers.h"
+#include "rpc/RPCHelpers.hpp"
 
-#include "data/BackendInterface.h"
-#include "data/Types.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/common/Types.h"
-#include "util/Profiler.h"
-#include "util/log/Logger.h"
-#include "web/Context.h"
+#include "data/BackendInterface.hpp"
+#include "data/Types.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/common/Types.hpp"
+#include "util/Profiler.hpp"
+#include "util/log/Logger.hpp"
+#include "web/Context.hpp"
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/asio/spawn.hpp>
@@ -1350,6 +1350,19 @@ parseTaker(boost::json::value const& taker)
         return Status{RippledError::rpcBAD_ISSUER, "invalidTakerAccount"};
     return *takerID;
 }
+
+ripple::Issue
+parseIssue(boost::json::object const& issue)
+{
+    Json::Value jv;
+    if (issue.contains(JS(issuer)) && issue.at(JS(issuer)).is_string())
+        jv["issuer"] = issue.at(JS(issuer)).as_string().c_str();
+    if (issue.contains(JS(currency)) && issue.at(JS(currency)).is_string())
+        jv["currency"] = issue.at(JS(currency)).as_string().c_str();
+
+    return ripple::issueFromJson(jv);
+}
+
 bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request)
 {

@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/TestGlobals.h"
+#include "util/TestGlobals.hpp"
 
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>

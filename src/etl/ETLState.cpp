@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "etl/ETLState.h"
+#include "etl/ETLState.hpp"
 
-#include "rpc/JS.h"
+#include "rpc/JS.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>

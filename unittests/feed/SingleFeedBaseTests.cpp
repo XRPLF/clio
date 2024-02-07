@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "feed/FeedTestUtil.h"
-#include "feed/impl/SingleFeedBase.h"
-#include "util/Fixtures.h"
-#include "util/MockPrometheus.h"
-#include "util/MockWsBase.h"
-#include "util/prometheus/Gauge.h"
-#include "web/interface/ConnectionBase.h"
+#include "feed/FeedTestUtil.hpp"
+#include "feed/impl/SingleFeedBase.hpp"
+#include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
+#include "util/MockWsBase.hpp"
+#include "util/prometheus/Gauge.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>

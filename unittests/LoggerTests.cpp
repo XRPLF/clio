@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
-#include "util/Fixtures.h"
-#include "util/log/Logger.h"
+#include "util/Fixtures.hpp"
+#include "util/log/Logger.hpp"
 
 #include <gtest/gtest.h>
 using namespace util;

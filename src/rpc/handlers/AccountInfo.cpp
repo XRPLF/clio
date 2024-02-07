@@ -17,14 +17,14 @@
 */
 //==============================================================================
 
-#include "rpc/handlers/AccountInfo.h"
+#include "rpc/handlers/AccountInfo.hpp"
 
-#include "rpc/Amendments.h"
-#include "rpc/Errors.h"
-#include "rpc/JS.h"
-#include "rpc/RPCHelpers.h"
-#include "rpc/common/JsonBool.h"
-#include "rpc/common/Types.h"
+#include "rpc/Amendments.hpp"
+#include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
+#include "rpc/common/JsonBool.hpp"
+#include "rpc/common/Types.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>

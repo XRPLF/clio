@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "feed/FeedTestUtil.h"
-#include "feed/impl/LedgerFeed.h"
-#include "util/TestObject.h"
+#include "feed/FeedTestUtil.hpp"
+#include "feed/impl/LedgerFeed.hpp"
+#include "util/TestObject.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
