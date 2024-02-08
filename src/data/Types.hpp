@@ -164,11 +164,17 @@ struct NFT {
     }
 };
 
+/**
+ * @brief Represents an array of NFTs
+ */
 struct NFTsAndCursor {
     std::vector<NFT> nfts;
     std::optional<ripple::uint256> cursor;
 };
 
+/**
+ * @brief Represents an array of MPTokens
+ */
 struct MPTHoldersAndCursor {
     std::vector<Blob> mptokens;
     std::optional<ripple::AccountID> cursor;
