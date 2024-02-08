@@ -27,6 +27,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/asio/error.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
@@ -48,6 +49,7 @@
 #include <cstdint>
 #include <exception>
 #include <future>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -59,10 +61,13 @@ namespace etl::impl {
 
 SubscriptionSource::~SubscriptionSource()
 {
-    stop_ = true;
+    std::cout << "destructor" << std::endl;
+    stop();
+    std::cout << "destructor: after stop" << std::endl;
 
     std::future<void> future = boost::asio::post(strand_, boost::asio::use_future);
     future.get();
+    std::cout << "destructor: after wait" << std::endl;
 
     wsConnection_.reset();
 }
@@ -104,18 +109,30 @@ SubscriptionSource::lastMessageTime() const
 }
 
 void
+SubscriptionSource::stop()
+{
+    stop_ = true;
+}
+
+void
 SubscriptionSource::subscribe()
 {
-    boost::asio::spawn([this](boost::asio::yield_context yield) {
+    std::cout << "subscribe" << std::endl;
+    boost::asio::spawn(strand_, [this, _ = boost::asio::make_work_guard(strand_)](boost::asio::yield_context yield) {
+        std::cout << "connect" << std::endl;
         auto connection = wsConnectionBuilder_.connect(yield);
         if (not connection) {
+            std::cout << "connect error" << std::endl;
             handleError(connection.error(), yield);
+            std::cout << "connect error handle done" << std::endl;
             return;
         }
 
+        std::cout << "write" << std::endl;
         auto const& subscribeCommand = getSubscribeCommandJson();
         auto const writeErrorOpt = connection.value()->write(subscribeCommand, yield);
         if (writeErrorOpt) {
+            std::cout << "write error" << std::endl;
             handleError(writeErrorOpt.value(), yield);
             return;
         }
@@ -123,14 +140,18 @@ SubscriptionSource::subscribe()
         onConnect();
 
         while (!stop_) {
+            std::cout << "read" << std::endl;
             auto message = connection.value()->read(yield);
             if (not message) {
+                std::cout << "read error" << std::endl;
                 handleError(message.error(), yield);
                 return;
             }
 
+            std::cout << "handle" << std::endl;
             auto handleErrorOpt = handleMessage(message.value());
             if (handleErrorOpt) {
+                std::cout << "handle error" << std::endl;
                 handleError(handleErrorOpt.value(), yield);
                 return;
             }
@@ -145,11 +166,12 @@ SubscriptionSource::handleMessage(std::string const& message)
 
     try {
         auto const raw = boost::json::parse(message);
-        auto const response = raw.as_object();
+        auto const object = raw.as_object();
         uint32_t ledgerIndex = 0;
 
-        if (response.contains("result")) {
-            auto const& result = response.at("result").as_object();
+        // TODO move strings to constants
+        if (object.contains("result")) {
+            auto const& result = object.at("result").as_object();
             if (result.contains("ledger_index"))
                 ledgerIndex = result.at("ledger_index").as_int64();
 
@@ -157,26 +179,26 @@ SubscriptionSource::handleMessage(std::string const& message)
                 auto validatedLedgers = boost::json::value_to<std::string>(result.at("validated_ledgers"));
                 setValidatedRange(std::move(validatedLedgers));
             }
-            LOG(log_.info()) << "Received a message on ledger subscription stream. Message : " << response;
+            LOG(log_.info()) << "Received a message on ledger subscription stream. Message : " << object;
 
-        } else if (response.contains("type") && response.at("type") == "ledgerClosed") {
-            LOG(log_.info()) << "Received a message on ledger subscription stream. Message : " << response;
-            if (response.contains("ledger_index")) {
-                ledgerIndex = response.at("ledger_index").as_int64();
+        } else if (object.contains("type") && object.at("type") == "ledgerClosed") {
+            LOG(log_.info()) << "Received a message on ledger subscription stream. Message : " << object;
+            if (object.contains("ledger_index")) {
+                ledgerIndex = object.at("ledger_index").as_int64();
             }
-            if (response.contains("validated_ledgers")) {
-                auto validatedLedgers = boost::json::value_to<std::string>(response.at("validated_ledgers"));
+            if (object.contains("validated_ledgers")) {
+                auto validatedLedgers = boost::json::value_to<std::string>(object.at("validated_ledgers"));
                 setValidatedRange(std::move(validatedLedgers));
             }
 
         } else {
             if (isForwarding_) {
-                if (response.contains("transaction")) {
-                    dependencies_.forwardProposedTransaction(response);
-                } else if (response.contains("type") && response.at("type") == "validationReceived") {
-                    dependencies_.forwardValidation(response);
-                } else if (response.contains("type") && response.at("type") == "manifestReceived") {
-                    dependencies_.forwardManifest(response);
+                if (object.contains("transaction")) {
+                    dependencies_.forwardProposedTransaction(object);
+                } else if (object.contains("type") && object.at("type") == "validationReceived") {
+                    dependencies_.forwardValidation(object);
+                } else if (object.contains("type") && object.at("type") == "manifestReceived") {
+                    dependencies_.forwardManifest(object);
                 }
             }
         }
@@ -196,21 +218,31 @@ SubscriptionSource::handleMessage(std::string const& message)
 void
 SubscriptionSource::handleError(util::requests::RequestError const& error, boost::asio::yield_context yield)
 {
+    std::cout << "inside handle error" << std::endl;
     isConnected_ = false;
-    if (not stop_)
+    if (not stop_) {
+        std::cout << "onDisconnect" << std::endl;
         onDisconnect_();
+    }
 
     if (wsConnection_ != nullptr) {
+        std::cout << "closing ws connection" << std::endl;
         auto const error = wsConnection_->close(yield);
         if (error) {
             LOG(log_.error()) << "Error closing websocket connection: " << error->message();
         }
+        std::cout << "ws connection closed" << std::endl;
+        wsConnection_.reset();
     }
-    wsConnection_.reset();
 
     logError(error);
-    if (not stop_)
-        retry_.retry([this] { subscribe(); });
+    if (not stop_) {
+        std::cout << "schedule retry" << std::endl;
+        retry_.retry([this] {
+            std::cout << "retry" << std::endl;
+            subscribe();
+        });
+    }
 }
 
 void

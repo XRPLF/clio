@@ -239,7 +239,7 @@ INSTANTIATE_TEST_SUITE_P(
     }
 );
 
-TEST_P(WsConnectionErrorTests, WriteError)
+TEST_P(WsConnectionErrorTests, ReadWriteError)
 {
     asio::spawn(ctx, [&](asio::yield_context yield) {
         auto serverConnection = unwrap(server.acceptConnection(yield));

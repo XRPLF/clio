@@ -160,6 +160,8 @@ start(io_context& ioc, std::uint32_t numThreads)
         v.emplace_back([&ioc] { ioc.run(); });
 
     ioc.run();
+    for (auto& t : v)
+        t.join();
 }
 
 int
