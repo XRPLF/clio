@@ -18,6 +18,7 @@ jobs:
           path: build
 
       - name: Upload coverage report
+        if: ${{ hashFiles('build/coverage_report.xml') != '' }}
         uses: wandalen/wretry.action@v1.3.0
         with:
           action: codecov/codecov-action@v3

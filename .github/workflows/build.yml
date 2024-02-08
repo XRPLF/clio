@@ -127,7 +127,6 @@ jobs:
 
   upload_coverage_report:
     needs: build
-    if: ${{ matrix.code_coverage }}
     uses: ./.github/workflows/upload_coverage_report.yml
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
