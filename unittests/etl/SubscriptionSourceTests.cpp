@@ -18,5 +18,40 @@
 //==============================================================================
 
 #include "etl/impl/SubscriptionSource.hpp"
+#include "util/MockNetworkValidatedLedgers.hpp"
+#include "util/MockSubscriptionManager.hpp"
+#include "util/TestWsServer.hpp"
 
+#include <boost/asio/io_context.hpp>
 #include <gtest/gtest.h>
+
+#include <memory>
+
+using namespace etl::impl;
+using testing::MockFunction;
+using testing::StrictMock;
+
+struct SubscriptionSourceTests : public ::testing::Test {
+    boost::asio::io_context ioContext_;
+
+    TestWsServer wsServer_{ioContext_, "0.0.0.0", 11113};
+
+    template <typename T>
+    using StrictMockPtr = std::shared_ptr<StrictMock<T>>;
+
+    StrictMockPtr<MockNetworkValidatedLedgers> networkValidatedLedgers_ =
+        std::make_shared<StrictMock<MockNetworkValidatedLedgers>>();
+    StrictMockPtr<MockSubscriptionManager> subscriptionManager_ =
+        std::make_shared<StrictMock<MockSubscriptionManager>>();
+
+    StrictMock<MockFunction<void()>> onDisconnectHook_;
+
+    SubscriptionSource subscriptionSource_{
+        ioContext_,
+        "127.0.0.1",
+        "11113",
+        networkValidatedLedgers_,
+        subscriptionManager_,
+        onDisconnectHook_.AsStdFunction()
+    };
+};

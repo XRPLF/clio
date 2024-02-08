@@ -19,8 +19,7 @@
 
 #pragma once
 
-#include "etl/ETLHelpers.hpp"
-#include "feed/SubscriptionManager.hpp"
+#include "etl/impl/SubscriptionSourceDependencies.hpp"
 #include "util/Mutex.hpp"
 #include "util/Retry.hpp"
 #include "util/log/Logger.hpp"
@@ -30,6 +29,8 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/strand.hpp>
+#include <boost/beast/http/field.hpp>
+#include <fmt/core.h>
 
 #include <atomic>
 #include <chrono>
@@ -58,9 +59,7 @@ private:
     };
     util::Mutex<ValidatedLedgersData> validatedLedgersData_;
 
-    std::shared_ptr<NetworkValidatedLedgers> networkValidatedLedgers_;
-
-    std::shared_ptr<feed::SubscriptionManager> subscriptions_;
+    SubscriptionSourceDependencies dependencies_;
 
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
 
@@ -79,14 +78,29 @@ private:
     static constexpr std::chrono::seconds RETRY_DELAY{1};
 
 public:
+    template <typename NetworkValidatedLedgersType, typename SubscriptionSourceType>
     SubscriptionSource(
         boost::asio::io_context& ioContext,
         std::string const& ip,
         std::string const& wsPort,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-        std::shared_ptr<feed::SubscriptionManager> subscriptions,
+        std::shared_ptr<NetworkValidatedLedgersType> validatedLedgers,
+        std::shared_ptr<SubscriptionSourceType> subscriptions,
         OnDisconnectHook onDisconnect
-    );
+    )
+        : log_(fmt::format("GrpcSource[{}:{}]", ip, wsPort))
+        , wsConnectionBuilder_(ip, wsPort)
+        , dependencies_(std::move(validatedLedgers), std::move(subscriptions))
+        , strand_(boost::asio::make_strand(ioContext))
+        , retry_(util::makeRetryExponentialBackoff(RETRY_DELAY, RETRY_MAX_DELAY, strand_))
+        , onDisconnect_(std::move(onDisconnect))
+    {
+        wsConnectionBuilder_.addHeader({boost::beast::http::field::user_agent, "clio-client"})
+            .addHeader({"X-User", "clio-client"})
+            .setConnectionTimeout(CONNECTION_TIMEOUT);
+        subscribe();
+    }
+
+    ~SubscriptionSource();
 
     bool
     hasLedger(uint32_t sequence) const;

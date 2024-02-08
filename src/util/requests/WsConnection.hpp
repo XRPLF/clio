@@ -23,6 +23,9 @@
 #include "util/log/Logger.hpp"
 #include "util/requests/Types.hpp"
 
+#include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/asio/cancellation_signal.hpp>
+#include <boost/asio/cancellation_type.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
@@ -32,12 +35,15 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace util::requests {
 
 /**
  * @brief Interface for WebSocket connections. It is used to hide SSL and plain connections behind the same interface.
+ *
+ * @note WsConnection must not be destroyed while there are pending asynchronous operations on it.
  */
 class WsConnection {
 public:

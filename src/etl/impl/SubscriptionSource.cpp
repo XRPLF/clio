@@ -19,8 +19,6 @@
 
 #include "etl/impl/SubscriptionSource.hpp"
 
-#include "etl/ETLHelpers.hpp"
-#include "feed/SubscriptionManager.hpp"
 #include "util/Expected.hpp"
 #include "util/Retry.hpp"
 #include "util/log/Logger.hpp"
@@ -34,6 +32,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/strand.hpp>
+#include <boost/asio/use_future.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -48,6 +47,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <future>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -57,26 +57,14 @@
 
 namespace etl::impl {
 
-SubscriptionSource::SubscriptionSource(
-    boost::asio::io_context& ioContext,
-    std::string const& ip,
-    std::string const& wsPort,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-    std::shared_ptr<feed::SubscriptionManager> subscriptions,
-    OnDisconnectHook onDisconnect
-)
-    : log_(fmt::format("GrpcSource[{}:{}]", ip, wsPort))
-    , wsConnectionBuilder_(ip, wsPort)
-    , networkValidatedLedgers_(std::move(validatedLedgers))
-    , subscriptions_(std::move(subscriptions))
-    , strand_(boost::asio::make_strand(ioContext))
-    , retry_(util::makeRetryExponentialBackoff(RETRY_DELAY, RETRY_MAX_DELAY, strand_))
-    , onDisconnect_(std::move(onDisconnect))
+SubscriptionSource::~SubscriptionSource()
 {
-    wsConnectionBuilder_.addHeader({boost::beast::http::field::user_agent, "clio-client"})
-        .addHeader({"X-User", "clio-client"})
-        .setConnectionTimeout(CONNECTION_TIMEOUT);
-    subscribe();
+    stop_ = true;
+
+    std::future<void> future = boost::asio::post(strand_, boost::asio::use_future);
+    future.get();
+
+    wsConnection_.reset();
 }
 
 bool
@@ -184,18 +172,18 @@ SubscriptionSource::handleMessage(std::string const& message)
         } else {
             if (isForwarding_) {
                 if (response.contains("transaction")) {
-                    subscriptions_->forwardProposedTransaction(response);
+                    dependencies_.forwardProposedTransaction(response);
                 } else if (response.contains("type") && response.at("type") == "validationReceived") {
-                    subscriptions_->forwardValidation(response);
+                    dependencies_.forwardValidation(response);
                 } else if (response.contains("type") && response.at("type") == "manifestReceived") {
-                    subscriptions_->forwardManifest(response);
+                    dependencies_.forwardManifest(response);
                 }
             }
         }
 
         if (ledgerIndex != 0) {
             LOG(log_.trace()) << "Pushing ledger sequence = " << ledgerIndex;
-            networkValidatedLedgers_->push(ledgerIndex);
+            dependencies_.pushValidatedLedger(ledgerIndex);
         }
 
         return std::nullopt;
@@ -209,7 +197,8 @@ void
 SubscriptionSource::handleError(util::requests::RequestError const& error, boost::asio::yield_context yield)
 {
     isConnected_ = false;
-    onDisconnect_();
+    if (not stop_)
+        onDisconnect_();
 
     if (wsConnection_ != nullptr) {
         auto const error = wsConnection_->close(yield);
@@ -220,7 +209,8 @@ SubscriptionSource::handleError(util::requests::RequestError const& error, boost
     wsConnection_.reset();
 
     logError(error);
-    retry_.retry([this] { subscribe(); });
+    if (not stop_)
+        retry_.retry([this] { subscribe(); });
 }
 
 void
