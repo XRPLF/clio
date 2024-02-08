@@ -1,0 +1,35 @@
+name: Upload report
+on:
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: true
+
+jobs:
+  upload_report:
+    name: Upload report
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download report artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage-report.xml
+          path: build
+
+      - name: Upload coverage report
+        if: ${{ hashFiles('build/coverage_report.xml') != '' }}
+        uses: wandalen/wretry.action@v1.3.0
+        with:
+          action: codecov/codecov-action@v3
+          with: |
+            files: build/coverage_report.xml 
+            fail_ci_if_error: false
+            verbose: true
+            token: ${{ secrets.CODECOV_TOKEN }}
+          attempt_limit: 5
+          attempt_delay: 10000
