@@ -63,7 +63,7 @@ struct AsioPoolContext {
         return {boost::asio::make_strand(executor)};
     }
 
-    boost::asio::thread_pool executor;
+    Executor executor;
 };
 
 }  // namespace detail
