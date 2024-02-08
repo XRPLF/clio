@@ -126,6 +126,7 @@ jobs:
         uses: ./.github/actions/code_coverage
 
   upload_coverage_report:
+    name: Codecov
     needs: build
     uses: ./.github/workflows/upload_coverage_report.yml
     secrets:

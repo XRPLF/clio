@@ -1,4 +1,4 @@
-name: Upload codecov report
+name: Upload report
 on:
   workflow_dispatch:
   workflow_call:
@@ -7,8 +7,8 @@ on:
         required: true
 
 jobs:
-  upload_coverage_report:
-    name: Upload codecov report
+  upload_report:
+    name: Upload report
     runs-on: ubuntu-20.04
     steps:
       - name: Download report artifact
