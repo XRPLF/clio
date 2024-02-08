@@ -11,6 +11,10 @@ jobs:
     name: Upload report
     runs-on: ubuntu-20.04
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download report artifact
         uses: actions/download-artifact@v3
         with:
