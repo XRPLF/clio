@@ -70,7 +70,7 @@ class RPCEngine {
 
     std::shared_ptr<HandlerProvider const> handlerProvider_;
 
-    detail::ForwardingProxy<etl::LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
+    impl::ForwardingProxy<etl::LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
 
 public:
     RPCEngine(

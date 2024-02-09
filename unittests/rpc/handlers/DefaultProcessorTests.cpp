@@ -33,7 +33,7 @@ using namespace std;
 
 using namespace rpc;
 using namespace rpc::validation;
-using namespace unittests::detail;
+using namespace unittests::impl;
 
 namespace json = boost::json;
 
@@ -43,7 +43,7 @@ TEST_F(RPCDefaultProcessorTest, ValidInput)
 {
     runSpawn([](auto yield) {
         HandlerMock const handler;
-        rpc::detail::DefaultProcessor<HandlerMock> const processor;
+        rpc::impl::DefaultProcessor<HandlerMock> const processor;
 
         auto const input = json::parse(R"({ "something": "works" })");
         auto const spec = RpcSpec{{"something", Required{}}};
@@ -60,7 +60,7 @@ TEST_F(RPCDefaultProcessorTest, NoInputVaildCall)
 {
     runSpawn([](auto yield) {
         HandlerWithoutInputMock const handler;
-        rpc::detail::DefaultProcessor<HandlerWithoutInputMock> const processor;
+        rpc::impl::DefaultProcessor<HandlerWithoutInputMock> const processor;
 
         auto const data = InOutFake{"works"};
         auto const input = json::parse(R"({})");
@@ -75,7 +75,7 @@ TEST_F(RPCDefaultProcessorTest, InvalidInput)
 {
     runSpawn([](auto yield) {
         HandlerMock const handler;
-        rpc::detail::DefaultProcessor<HandlerMock> const processor;
+        rpc::impl::DefaultProcessor<HandlerMock> const processor;
 
         auto const input = json::parse(R"({ "other": "nope" })");
         auto const spec = RpcSpec{{"something", Required{}}};

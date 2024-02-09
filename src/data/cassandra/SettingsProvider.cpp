@@ -42,7 +42,7 @@
 
 namespace data::cassandra {
 
-namespace detail {
+namespace impl {
 inline Settings::ContactPoints
 tag_invoke(boost::json::value_to_tag<Settings::ContactPoints>, boost::json::value const& value)
 {
@@ -66,7 +66,7 @@ tag_invoke(boost::json::value_to_tag<Settings::SecureConnectionBundle>, boost::j
         throw std::runtime_error("`secure_connect_bundle` must be a string");
     return Settings::SecureConnectionBundle{value.as_string().data()};
 }
-}  // namespace detail
+}  // namespace impl
 
 SettingsProvider::SettingsProvider(util::Config const& cfg, uint16_t ttl)
     : config_{cfg}

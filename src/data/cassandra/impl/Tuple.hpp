@@ -33,7 +33,7 @@
 #include <tuple>
 #include <type_traits>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 class Tuple : public ManagedObject<CassTuple> {
     static constexpr auto deleter = [](CassTuple* ptr) { cass_tuple_free(ptr); };
@@ -148,4 +148,4 @@ private:
     }
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

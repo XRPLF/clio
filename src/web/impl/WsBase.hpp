@@ -54,7 +54,7 @@
 #include <string>
 #include <utility>
 
-namespace web::detail {
+namespace web::impl {
 
 /**
  * @brief Web socket implementation. This class is the base class of the web socket session, it will handle the read and
@@ -273,4 +273,4 @@ public:
         doRead();
     }
 };
-}  // namespace web::detail
+}  // namespace web::impl

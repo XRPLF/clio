@@ -28,7 +28,7 @@ constexpr auto tupleDeleter = [](CassTuple* ptr) { cass_tuple_free(ptr); };
 constexpr auto tupleIteratorDeleter = [](CassIterator* ptr) { cass_iterator_free(ptr); };
 }  // namespace
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 /* implicit */ Tuple::Tuple(CassTuple* ptr) : ManagedObject{ptr, tupleDeleter}
 {
@@ -44,4 +44,4 @@ TupleIterator::fromTuple(CassValue const* value)
     return {cass_iterator_from_tuple(value)};
 }
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

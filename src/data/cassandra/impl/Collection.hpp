@@ -30,7 +30,7 @@
 #include <string_view>
 #include <vector>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 class Collection : public ManagedObject<CassCollection> {
     static constexpr auto deleter = [](CassCollection* ptr) { cass_collection_free(ptr); };
@@ -87,4 +87,4 @@ public:
         throwErrorIfNeeded(rc, "Bind ripple::uint256");
     }
 };
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

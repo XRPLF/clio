@@ -28,7 +28,7 @@
 #include <optional>
 #include <string>
 
-namespace rpc::detail {
+namespace rpc::impl {
 
 template <typename>
 static constexpr bool unsupported_v = false;
@@ -67,4 +67,4 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
     };
 }
 
-}  // namespace rpc::detail
+}  // namespace rpc::impl

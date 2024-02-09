@@ -36,7 +36,7 @@ namespace rpc {
  *
  */
 class VersionHandler {
-    rpc::detail::ProductionAPIVersionParser apiVersionParser_;
+    rpc::impl::ProductionAPIVersionParser apiVersionParser_;
 
 public:
     struct Output {

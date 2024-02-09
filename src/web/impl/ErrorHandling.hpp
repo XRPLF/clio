@@ -36,7 +36,7 @@
 #include <utility>
 #include <variant>
 
-namespace web::detail {
+namespace web::impl {
 
 /**
  * @brief A helper that attempts to match rippled reporting mode HTTP errors as close as possible.
@@ -170,4 +170,4 @@ public:
     }
 };
 
-}  // namespace web::detail
+}  // namespace web::impl

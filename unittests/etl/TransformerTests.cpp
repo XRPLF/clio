@@ -53,7 +53,7 @@ protected:
     using LedgerLoaderType = MockLedgerLoader;
     using LedgerPublisherType = MockLedgerPublisher;
     using AmendmentBlockHandlerType = MockAmendmentBlockHandler;
-    using TransformerType = etl::detail::
+    using TransformerType = etl::impl::
         Transformer<ExtractionDataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;
 
     ExtractionDataPipeType dataPipe_;

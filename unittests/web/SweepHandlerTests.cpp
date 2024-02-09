@@ -47,7 +47,7 @@ class DOSGuardIntervalSweepHandlerTest : public SyncAsioContextTest {
 protected:
     Config cfg{boost::json::parse(JSONData)};
     IntervalSweepHandler sweepHandler{cfg, ctx};
-    unittests::detail::BasicDOSGuardMock<IntervalSweepHandler> guard{sweepHandler};
+    unittests::impl::BasicDOSGuardMock<IntervalSweepHandler> guard{sweepHandler};
 };
 
 TEST_F(DOSGuardIntervalSweepHandlerTest, SweepAfterInterval)

@@ -34,7 +34,7 @@ namespace {
 constexpr auto batchDeleter = [](CassBatch* ptr) { cass_batch_free(ptr); };
 }  // namespace
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 // TODO: Use an appropriate value instead of CASS_BATCH_TYPE_LOGGED for different use cases
 Batch::Batch(std::vector<Statement> const& statements)
@@ -57,4 +57,4 @@ Batch::add(Statement const& statement)
     return {};
 }
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

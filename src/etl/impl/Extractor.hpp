@@ -34,7 +34,7 @@
 #include <thread>
 #include <utility>
 
-namespace etl::detail {
+namespace etl::impl {
 
 /**
  * @brief Extractor thread that is fetching GRPC data and enqueue it on the DataPipeType
@@ -143,4 +143,4 @@ private:
     }
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl

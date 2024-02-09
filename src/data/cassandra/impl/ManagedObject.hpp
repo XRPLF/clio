@@ -22,7 +22,7 @@
 #include <memory>
 #include <stdexcept>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 template <typename Managed>
 class ManagedObject {
@@ -43,4 +43,4 @@ public:
     }
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

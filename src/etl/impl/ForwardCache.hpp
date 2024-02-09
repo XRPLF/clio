@@ -38,7 +38,7 @@ namespace etl {
 class Source;
 }  // namespace etl
 
-namespace etl::detail {
+namespace etl::impl {
 
 /**
  * @brief Cache for rippled responses
@@ -82,4 +82,4 @@ public:
     get(boost::json::object const& request) const;
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl

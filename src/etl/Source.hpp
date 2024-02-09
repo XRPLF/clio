@@ -210,7 +210,7 @@ protected:
     util::Logger log_{"ETL"};
 
 private:
-    friend etl::detail::ForwardCache;
+    friend etl::impl::ForwardCache;
     friend ProbingSource;
 
     virtual std::optional<boost::json::object>
@@ -259,7 +259,7 @@ class SourceImpl : public Source {
     std::shared_ptr<feed::SubscriptionManager> subscriptions_;
     LoadBalancer& balancer_;
 
-    etl::detail::ForwardCache forwardCache_;
+    etl::impl::ForwardCache forwardCache_;
     boost::uuids::uuid uuid_{};
 
 protected:
@@ -512,7 +512,7 @@ public:
         grpc::CompletionQueue cq;
         void* tag = nullptr;
         bool ok = false;
-        std::vector<etl::detail::AsyncCallData> calls;
+        std::vector<etl::impl::AsyncCallData> calls;
         auto markers = getMarkers(numMarkers);
 
         for (size_t i = 0; i < markers.size(); ++i) {
@@ -537,7 +537,7 @@ public:
 
         while (numFinished < calls.size() && cq.Next(&tag, &ok)) {
             ASSERT(tag != nullptr, "Tag can't be null.");
-            auto ptr = static_cast<etl::detail::AsyncCallData*>(tag);
+            auto ptr = static_cast<etl::impl::AsyncCallData*>(tag);
 
             if (!ok) {
                 LOG(log_.error()) << "loadInitialLedger - ok is false";
@@ -547,7 +547,7 @@ public:
             LOG(log_.trace()) << "Marker prefix = " << ptr->getMarkerPrefix();
 
             auto result = ptr->process(stub_, cq, *backend_, abort, cacheOnly);
-            if (result != etl::detail::AsyncCallData::CallStatus::MORE) {
+            if (result != etl::impl::AsyncCallData::CallStatus::MORE) {
                 ++numFinished;
                 LOG(log_.debug()) << "Finished a marker. "
                                   << "Current number of finished = " << numFinished;
@@ -558,7 +558,7 @@ public:
                     edgeKeys.push_back(ptr->getLastKey());
             }
 
-            if (result == etl::detail::AsyncCallData::CallStatus::ERRORED)
+            if (result == etl::impl::AsyncCallData::CallStatus::ERRORED)
                 abort = true;
 
             if (backend_->cache().size() > progress) {

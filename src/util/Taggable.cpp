@@ -25,7 +25,7 @@
 #include <memory>
 #include <mutex>
 
-namespace util::detail {
+namespace util::impl {
 
 UIntTagGenerator::TagType
 UIntTagGenerator::next()
@@ -44,7 +44,7 @@ UUIDTagGenerator::next()
     return gen();
 }
 
-}  // namespace util::detail
+}  // namespace util::impl
 
 namespace util {
 
@@ -53,12 +53,12 @@ TagDecoratorFactory::make() const
 {
     switch (type_) {
         case Type::UINT:
-            return std::make_unique<TagDecorator<detail::UIntTagGenerator>>(parent_);
+            return std::make_unique<TagDecorator<impl::UIntTagGenerator>>(parent_);
         case Type::UUID:
-            return std::make_unique<TagDecorator<detail::UUIDTagGenerator>>(parent_);
+            return std::make_unique<TagDecorator<impl::UUIDTagGenerator>>(parent_);
         case Type::NONE:
         default:
-            return std::make_unique<TagDecorator<detail::NullTagGenerator>>();
+            return std::make_unique<TagDecorator<impl::NullTagGenerator>>();
     }
 }
 

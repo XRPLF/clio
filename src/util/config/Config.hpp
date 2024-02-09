@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/config/detail/Helpers.hpp"
+#include "util/config/impl/Helpers.hpp"
 
 #include <boost/json.hpp>
 #include <boost/json/kind.hpp>
@@ -158,7 +158,7 @@ public:
     {
         try {
             return maybeValue<Result>(key).value_or(fallback);
-        } catch (detail::StoreException const&) {
+        } catch (impl::StoreException const&) {
             return fallback;
         }
     }
@@ -380,7 +380,7 @@ private:
         if (has_error) {
             throw std::runtime_error(
                 "Type for key '" + key + "' is '" + std::string{to_string(value.kind())} + "' in JSON but requested '" +
-                detail::typeName<Return>() + "'"
+                impl::typeName<Return>() + "'"
             );
         }
 
