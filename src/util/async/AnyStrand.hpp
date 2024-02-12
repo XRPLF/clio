@@ -53,10 +53,10 @@ public:
     execute(SomeHandlerWithoutStopToken auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn())>;
-        static_assert(not std::is_same_v<RetType, detail::Any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         return AnyOperation<RetType>(  //
-            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)]() -> detail::Any {
+            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)]() -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     fn();
                     return {};
@@ -72,10 +72,10 @@ public:
     execute(SomeHandlerWith<AnyStopToken> auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
-        static_assert(not std::is_same_v<RetType, detail::Any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         return AnyOperation<RetType>(  //
-            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> detail::Any {
+            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     fn(std::move(stopToken));
                     return {};
@@ -91,11 +91,11 @@ public:
     execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
-        static_assert(not std::is_same_v<RetType, detail::Any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         return AnyOperation<RetType>(  //
             pimpl_->execute(
-                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> detail::Any {
+                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> impl::Any {
                     if constexpr (std::is_void_v<RetType>) {
                         fn(std::move(stopToken));
                         return {};
@@ -112,12 +112,12 @@ private:
     struct Concept {
         virtual ~Concept() = default;
 
-        [[nodiscard]] virtual detail::ErasedOperation
+        [[nodiscard]] virtual impl::ErasedOperation
         execute(
-            std::function<detail::Any(AnyStopToken)>,
+            std::function<impl::Any(AnyStopToken)>,
             std::optional<std::chrono::milliseconds> timeout = std::nullopt
         ) = 0;
-        [[nodiscard]] virtual detail::ErasedOperation execute(std::function<detail::Any()>) = 0;
+        [[nodiscard]] virtual impl::ErasedOperation execute(std::function<impl::Any()>) = 0;
     };
 
     template <typename StrandType>
@@ -130,14 +130,14 @@ private:
         {
         }
 
-        [[nodiscard]] detail::ErasedOperation
-        execute(std::function<detail::Any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
+        [[nodiscard]] impl::ErasedOperation
+        execute(std::function<impl::Any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
         {
             return strand.execute(std::move(fn), timeout);
         }
 
-        [[nodiscard]] detail::ErasedOperation
-        execute(std::function<detail::Any()> fn) override
+        [[nodiscard]] impl::ErasedOperation
+        execute(std::function<impl::Any()> fn) override
         {
             return strand.execute(std::move(fn));
         }

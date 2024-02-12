@@ -32,20 +32,20 @@ using namespace util::async;
 using namespace ::testing;
 
 struct AnyOperationTests : ::testing::Test {
-    using OperationType = MockOperation<util::Expected<detail::Any, ExecutionError>>;
-    using ScheduledOperationType = MockScheduledOperation<util::Expected<detail::Any, ExecutionError>>;
+    using OperationType = MockOperation<util::Expected<impl::Any, ExecutionError>>;
+    using ScheduledOperationType = MockScheduledOperation<util::Expected<impl::Any, ExecutionError>>;
 
     ::testing::NaggyMock<OperationType> mockOp;
     ::testing::NaggyMock<ScheduledOperationType> mockScheduledOp;
 
-    AnyOperation<void> voidOp{detail::ErasedOperation(static_cast<OperationType&>(mockOp))};
-    AnyOperation<int> intOp{detail::ErasedOperation(static_cast<OperationType&>(mockOp))};
-    AnyOperation<void> scheduledVoidOp{detail::ErasedOperation(static_cast<ScheduledOperationType&>(mockScheduledOp))};
+    AnyOperation<void> voidOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
+    AnyOperation<int> intOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
+    AnyOperation<void> scheduledVoidOp{impl::ErasedOperation(static_cast<ScheduledOperationType&>(mockScheduledOp))};
 };
 
 TEST_F(AnyOperationTests, VoidDataYieldsNoError)
 {
-    auto const noError = util::Expected<detail::Any, ExecutionError>(detail::Any{});
+    auto const noError = util::Expected<impl::Any, ExecutionError>(impl::Any{});
     EXPECT_CALL(mockOp, get()).WillOnce(Return(noError));
     auto res = voidOp.get();
     ASSERT_TRUE(res);

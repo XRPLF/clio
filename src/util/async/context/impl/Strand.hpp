@@ -31,14 +31,14 @@
 #include <optional>
 #include <type_traits>
 
-namespace util::async::detail {
+namespace util::async::impl {
 
 template <
     typename ParentContextType,
     typename StopSourceType,
     typename DispatcherType,
-    typename TimerContextProvider = detail::SelfContextProvider,
-    typename ErrorHandlerType = detail::DefaultErrorHandler>
+    typename TimerContextProvider = impl::SelfContextProvider,
+    typename ErrorHandlerType = impl::DefaultErrorHandler>
 class BasicStrand {
     std::reference_wrapper<ParentContextType> parentContext_;
     typename ParentContextType::ContextHolderType::Strand context_;
@@ -70,11 +70,11 @@ public:
     {
         return DispatcherType::dispatch(
             context_,
-            detail::outcomeForHandler<StopSourceType>(fn),
+            impl::outcomeForHandler<StopSourceType>(fn),
             ErrorHandlerType::wrap([this, timeout, fn = std::forward<decltype(fn)>(fn)](
                                        auto& outcome, auto& stopSource, auto stopToken
                                    ) mutable {
-                [[maybe_unused]] auto timeoutHandler = detail::getTimeoutHandleIfNeeded(
+                [[maybe_unused]] auto timeoutHandler = impl::getTimeoutHandleIfNeeded(
                     TimerContextProvider::getContext(parentContext_.get()), timeout, stopSource
                 );
 
@@ -103,7 +103,7 @@ public:
     {
         return DispatcherType::dispatch(
             context_,
-            detail::outcomeForHandler<StopSourceType>(fn),
+            impl::outcomeForHandler<StopSourceType>(fn),
             ErrorHandlerType::wrap([fn = std::forward<decltype(fn)>(fn)](auto& outcome) mutable {
                 using FnRetType = std::decay_t<decltype(fn())>;
                 if constexpr (std::is_void_v<FnRetType>) {
@@ -117,4 +117,4 @@ public:
     }
 };
 
-}  // namespace util::async::detail
+}  // namespace util::async::impl

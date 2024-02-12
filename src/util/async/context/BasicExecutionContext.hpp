@@ -43,7 +43,7 @@
 #include <utility>
 
 namespace util::async {
-namespace detail {
+namespace impl {
 
 struct AsioPoolStrandContext {
     using Executor = boost::asio::strand<boost::asio::thread_pool::executor_type>;
@@ -66,7 +66,7 @@ struct AsioPoolContext {
     Executor executor;
 };
 
-}  // namespace detail
+}  // namespace impl
 
 /**
  * @brief A highly configurable execution context.
@@ -80,11 +80,11 @@ template <
     typename ContextType,
     typename StopSourceType,
     typename DispatcherType,
-    typename TimerContextProvider = detail::SelfContextProvider,
-    typename ErrorHandlerType = detail::DefaultErrorHandler>
+    typename TimerContextProvider = impl::SelfContextProvider,
+    typename ErrorHandlerType = impl::DefaultErrorHandler>
 class BasicExecutionContext {
     ContextType context_;
-    friend detail::AssociatedExecutorExtractor;
+    friend impl::AssociatedExecutorExtractor;
 
 public:
     static constexpr bool isNoexcept = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; }));
@@ -105,7 +105,7 @@ public:
     template <typename T>
     using Operation = Operation<ValueType<T>>;
 
-    using Strand = detail::
+    using Strand = impl::
         BasicStrand<BasicExecutionContext, StopSourceType, DispatcherType, TimerContextProvider, ErrorHandlerType>;
 
     using Timer = typename ContextHolderType::Timer;
@@ -156,7 +156,7 @@ public:
         } else {
             using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>()))>;
             return ScheduledOperation<FnRetType>(
-                detail::extractAssociatedExecutor(*this),
+                impl::extractAssociatedExecutor(*this),
                 delay,
                 [this, timeout, fn = std::forward<decltype(fn)>(fn)](auto) mutable {
                     return this->execute(
@@ -196,7 +196,7 @@ public:
         } else {
             using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>(), true))>;
             return ScheduledOperation<FnRetType>(
-                detail::extractAssociatedExecutor(*this),
+                impl::extractAssociatedExecutor(*this),
                 delay,
                 [this, timeout, fn = std::forward<decltype(fn)>(fn)](auto ec) mutable {
                     return this->execute(
@@ -230,12 +230,12 @@ public:
     {
         return DispatcherType::dispatch(
             context_,
-            detail::outcomeForHandler<StopSourceType>(fn),
+            impl::outcomeForHandler<StopSourceType>(fn),
             ErrorHandlerType::wrap([this, timeout, fn = std::forward<decltype(fn)>(fn)](
                                        auto& outcome, auto& stopSource, auto stopToken
                                    ) mutable {
                 [[maybe_unused]] auto timeoutHandler =
-                    detail::getTimeoutHandleIfNeeded(TimerContextProvider::getContext(*this), timeout, stopSource);
+                    impl::getTimeoutHandleIfNeeded(TimerContextProvider::getContext(*this), timeout, stopSource);
 
                 using FnRetType = std::decay_t<decltype(fn(std::declval<StopToken>()))>;
                 if constexpr (std::is_void_v<FnRetType>) {
@@ -276,7 +276,7 @@ public:
     {
         return DispatcherType::dispatch(
             context_,
-            detail::outcomeForHandler<StopSourceType>(fn),
+            impl::outcomeForHandler<StopSourceType>(fn),
             ErrorHandlerType::wrap([fn = std::forward<decltype(fn)>(fn)](auto& outcome) mutable {
                 using FnRetType = std::decay_t<decltype(fn())>;
                 if constexpr (std::is_void_v<FnRetType>) {
@@ -312,14 +312,14 @@ public:
  * @brief A Boost.Coroutine-based (asio yield_context) execution context.
  *
  * This execution context uses `asio::spawn` to create a coroutine per executed operation.
- * The stop token that is sent to the lambda to execute is @ref detail::YieldContextStopSource::Token
+ * The stop token that is sent to the lambda to execute is @ref impl::YieldContextStopSource::Token
  * and is special in the way that each time your code checks `token.isStopRequested()` the coroutine will
  * be suspended and other work such as timers and/or other operations in the queue will get a chance to run.
  * This makes it possible to have 1 thread in the execution context and still be able to execute operations AND timers
  * at the same time.
  */
 using CoroExecutionContext =
-    BasicExecutionContext<detail::AsioPoolContext, detail::YieldContextStopSource, detail::SpawnDispatchStrategy>;
+    BasicExecutionContext<impl::AsioPoolContext, impl::YieldContextStopSource, impl::SpawnDispatchStrategy>;
 
 /**
  * @brief A asio::thread_pool-based execution context.
@@ -329,6 +329,6 @@ using CoroExecutionContext =
  * thread in the thread pool.
  */
 using PoolExecutionContext =
-    BasicExecutionContext<detail::AsioPoolContext, detail::BasicStopSource, detail::PostDispatchStrategy>;
+    BasicExecutionContext<impl::AsioPoolContext, impl::BasicStopSource, impl::PostDispatchStrategy>;
 
 }  // namespace util::async

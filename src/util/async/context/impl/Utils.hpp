@@ -30,7 +30,7 @@
 
 #include <optional>
 
-namespace util::async::detail {
+namespace util::async::impl {
 
 inline constexpr struct AssociatedExecutorExtractor {
     template <typename CtxType>
@@ -82,4 +82,4 @@ struct SelfContextProvider {
     }
 };
 
-}  // namespace util::async::detail
+}  // namespace util::async::impl

@@ -55,8 +55,8 @@ struct AnyExecutionContextTests : ::testing::Test {
 
 TEST_F(AnyExecutionContextTests, ExecuteWithoutTokenAndVoid)
 {
-    auto mockOp = OperationType<detail::Any>{};
-    EXPECT_CALL(mockExecutionContext, execute(An<std::function<detail::Any()>>())).WillOnce(ReturnRef(mockOp));
+    auto mockOp = OperationType<impl::Any>{};
+    EXPECT_CALL(mockExecutionContext, execute(An<std::function<impl::Any()>>())).WillOnce(ReturnRef(mockOp));
 
     auto op = ctx.execute([] {});
     static_assert(std::is_same_v<decltype(op), AnyOperation<void>>);
@@ -66,17 +66,17 @@ TEST_F(AnyExecutionContextTests, ExecuteWithoutTokenAndVoid)
 
 TEST_F(AnyExecutionContextTests, ExecuteWithoutTokenAndVoidThrowsException)
 {
-    auto mockOp = OperationType<detail::Any>{};
-    EXPECT_CALL(mockExecutionContext, execute(An<std::function<detail::Any()>>()))
-        .WillOnce([](auto&&) -> OperationType<detail::Any> const& { throw 0; });
+    auto mockOp = OperationType<impl::Any>{};
+    EXPECT_CALL(mockExecutionContext, execute(An<std::function<impl::Any()>>()))
+        .WillOnce([](auto&&) -> OperationType<impl::Any> const& { throw 0; });
 
     EXPECT_ANY_THROW([[maybe_unused]] auto unused = ctx.execute([] {}));
 }
 
 TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndVoid)
 {
-    auto mockOp = StoppableOperationType<detail::Any>{};
-    EXPECT_CALL(mockExecutionContext, execute(An<std::function<detail::Any(AnyStopToken)>>(), _))
+    auto mockOp = StoppableOperationType<impl::Any>{};
+    EXPECT_CALL(mockExecutionContext, execute(An<std::function<impl::Any(AnyStopToken)>>(), _))
         .WillOnce(ReturnRef(mockOp));
 
     auto op = ctx.execute([](auto) {});
@@ -87,17 +87,17 @@ TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndVoid)
 
 TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndVoidThrowsException)
 {
-    EXPECT_CALL(mockExecutionContext, execute(An<std::function<detail::Any(AnyStopToken)>>(), _))
-        .WillOnce([](auto&&, auto) -> StoppableOperationType<detail::Any> const& { throw 0; });
+    EXPECT_CALL(mockExecutionContext, execute(An<std::function<impl::Any(AnyStopToken)>>(), _))
+        .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
 
     EXPECT_ANY_THROW([[maybe_unused]] auto unused = ctx.execute([](auto) {}));
 }
 
 TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndReturnValue)
 {
-    auto mockOp = StoppableOperationType<detail::Any>{};
+    auto mockOp = StoppableOperationType<impl::Any>{};
     EXPECT_CALL(mockOp, get()).WillOnce(Return(std::make_any<int>(42)));
-    EXPECT_CALL(mockExecutionContext, execute(An<std::function<detail::Any(AnyStopToken)>>(), _))
+    EXPECT_CALL(mockExecutionContext, execute(An<std::function<impl::Any(AnyStopToken)>>(), _))
         .WillOnce(ReturnRef(mockOp));
 
     auto op = ctx.execute([](auto) { return 42; });
@@ -108,19 +108,19 @@ TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndReturnValue)
 
 TEST_F(AnyExecutionContextTests, ExecuteWithStopTokenAndReturnValueThrowsException)
 {
-    EXPECT_CALL(mockExecutionContext, execute(An<std::function<detail::Any(AnyStopToken)>>(), _))
-        .WillOnce([](auto&&, auto) -> StoppableOperationType<detail::Any> const& { throw 0; });
+    EXPECT_CALL(mockExecutionContext, execute(An<std::function<impl::Any(AnyStopToken)>>(), _))
+        .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
 
     EXPECT_ANY_THROW([[maybe_unused]] auto unused = ctx.execute([](auto) { return 42; }));
 }
 
 TEST_F(AnyExecutionContextTests, TimerCancellation)
 {
-    auto mockScheduledOp = ScheduledOperationType<detail::Any>{};
+    auto mockScheduledOp = ScheduledOperationType<impl::Any>{};
     EXPECT_CALL(mockScheduledOp, cancel()).Times(1);
     EXPECT_CALL(
         mockExecutionContext,
-        scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<detail::Any(AnyStopToken)>>())
+        scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<impl::Any(AnyStopToken)>>())
     )
         .WillOnce(ReturnRef(mockScheduledOp));
 
@@ -132,13 +132,13 @@ TEST_F(AnyExecutionContextTests, TimerCancellation)
 
 TEST_F(AnyExecutionContextTests, TimerExecuted)
 {
-    auto mockScheduledOp = ScheduledOperationType<detail::Any>{};
+    auto mockScheduledOp = ScheduledOperationType<impl::Any>{};
     EXPECT_CALL(mockScheduledOp, get()).WillOnce(Return(std::make_any<int>(42)));
     EXPECT_CALL(
         mockExecutionContext,
-        scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<detail::Any(AnyStopToken)>>())
+        scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<impl::Any(AnyStopToken)>>())
     )
-        .WillOnce([&mockScheduledOp](auto, auto&&) -> ScheduledOperationType<detail::Any> const& {
+        .WillOnce([&mockScheduledOp](auto, auto&&) -> ScheduledOperationType<impl::Any> const& {
             return mockScheduledOp;
         });
 
@@ -150,11 +150,11 @@ TEST_F(AnyExecutionContextTests, TimerExecuted)
 
 TEST_F(AnyExecutionContextTests, TimerWithBoolHandlerCancellation)
 {
-    auto mockScheduledOp = ScheduledOperationType<detail::Any>{};
+    auto mockScheduledOp = ScheduledOperationType<impl::Any>{};
     EXPECT_CALL(mockScheduledOp, cancel()).Times(1);
     EXPECT_CALL(
         mockExecutionContext,
-        scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<detail::Any(AnyStopToken, bool)>>())
+        scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<impl::Any(AnyStopToken, bool)>>())
     )
         .WillOnce(ReturnRef(mockScheduledOp));
 
@@ -166,13 +166,13 @@ TEST_F(AnyExecutionContextTests, TimerWithBoolHandlerCancellation)
 
 TEST_F(AnyExecutionContextTests, TimerWithBoolHandlerExecuted)
 {
-    auto mockScheduledOp = ScheduledOperationType<detail::Any>{};
+    auto mockScheduledOp = ScheduledOperationType<impl::Any>{};
     EXPECT_CALL(mockScheduledOp, get()).WillOnce(Return(std::make_any<int>(42)));
     EXPECT_CALL(
         mockExecutionContext,
-        scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<detail::Any(AnyStopToken, bool)>>())
+        scheduleAfter(An<std::chrono::milliseconds>(), An<std::function<impl::Any(AnyStopToken, bool)>>())
     )
-        .WillOnce([&mockScheduledOp](auto, auto&&) -> ScheduledOperationType<detail::Any> const& {
+        .WillOnce([&mockScheduledOp](auto, auto&&) -> ScheduledOperationType<impl::Any> const& {
             return mockScheduledOp;
         });
 
@@ -184,10 +184,10 @@ TEST_F(AnyExecutionContextTests, TimerWithBoolHandlerExecuted)
 
 TEST_F(AnyExecutionContextTests, StrandExecuteWithVoid)
 {
-    auto mockOp = OperationType<detail::Any>{};
+    auto mockOp = OperationType<impl::Any>{};
     auto mockStrand = StrandType{};
     EXPECT_CALL(mockExecutionContext, makeStrand()).WillOnce(ReturnRef(mockStrand));
-    EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any()>>())).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any()>>())).WillOnce(ReturnRef(mockOp));
 
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
@@ -202,8 +202,8 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithVoidThrowsException)
 {
     auto mockStrand = StrandType{};
     EXPECT_CALL(mockExecutionContext, makeStrand()).WillOnce(ReturnRef(mockStrand));
-    EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any()>>()))
-        .WillOnce([](auto&&) -> OperationType<detail::Any> const& { throw 0; });
+    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any()>>()))
+        .WillOnce([](auto&&) -> OperationType<impl::Any> const& { throw 0; });
 
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
@@ -213,11 +213,11 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithVoidThrowsException)
 
 TEST_F(AnyExecutionContextTests, StrandExecuteWithReturnValue)
 {
-    auto mockOp = OperationType<detail::Any>{};
+    auto mockOp = OperationType<impl::Any>{};
     auto mockStrand = StrandType{};
     EXPECT_CALL(mockOp, get()).WillOnce(Return(std::make_any<int>(42)));
     EXPECT_CALL(mockExecutionContext, makeStrand()).WillOnce(ReturnRef(mockStrand));
-    EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any()>>())).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any()>>())).WillOnce(ReturnRef(mockOp));
 
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
@@ -232,8 +232,8 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithReturnValueThrowsException)
 {
     auto mockStrand = StrandType{};
     EXPECT_CALL(mockExecutionContext, makeStrand()).WillOnce(ReturnRef(mockStrand));
-    EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any()>>()))
-        .WillOnce([](auto&&) -> OperationType<detail::Any> const& { throw 0; });
+    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any()>>()))
+        .WillOnce([](auto&&) -> OperationType<impl::Any> const& { throw 0; });
 
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
@@ -243,10 +243,10 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithReturnValueThrowsException)
 
 TEST_F(AnyExecutionContextTests, StrandExecuteWithStopTokenAndVoid)
 {
-    auto mockOp = StoppableOperationType<detail::Any>{};
+    auto mockOp = StoppableOperationType<impl::Any>{};
     auto mockStrand = StrandType{};
     EXPECT_CALL(mockExecutionContext, makeStrand()).WillOnce(ReturnRef(mockStrand));
-    EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
 
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
@@ -261,8 +261,8 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithStopTokenAndVoidThrowsExceptio
 {
     auto mockStrand = StrandType{};
     EXPECT_CALL(mockExecutionContext, makeStrand()).WillOnce(ReturnRef(mockStrand));
-    EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any(AnyStopToken)>>(), _))
-        .WillOnce([](auto&&, auto) -> StoppableOperationType<detail::Any> const& { throw 0; });
+    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _))
+        .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
 
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
@@ -272,11 +272,11 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithStopTokenAndVoidThrowsExceptio
 
 TEST_F(AnyExecutionContextTests, StrandExecuteWithStopTokenAndReturnValue)
 {
-    auto mockOp = StoppableOperationType<detail::Any>{};
+    auto mockOp = StoppableOperationType<impl::Any>{};
     auto mockStrand = StrandType{};
     EXPECT_CALL(mockOp, get()).WillOnce(Return(std::make_any<int>(42)));
     EXPECT_CALL(mockExecutionContext, makeStrand()).WillOnce(ReturnRef(mockStrand));
-    EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
 
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);
@@ -291,8 +291,8 @@ TEST_F(AnyExecutionContextTests, StrandExecuteWithStopTokenAndReturnValueThrowsE
 {
     auto mockStrand = StrandType{};
     EXPECT_CALL(mockExecutionContext, makeStrand()).WillOnce(ReturnRef(mockStrand));
-    EXPECT_CALL(mockStrand, execute(An<std::function<detail::Any(AnyStopToken)>>(), _))
-        .WillOnce([](auto&&, auto) -> StoppableOperationType<detail::Any> const& { throw 0; });
+    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _))
+        .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
 
     auto strand = ctx.makeStrand();
     static_assert(std::is_same_v<decltype(strand), AnyStrand>);

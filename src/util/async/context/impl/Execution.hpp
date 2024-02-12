@@ -26,7 +26,7 @@
 #include <boost/asio/strand.hpp>
 #include <boost/asio/thread_pool.hpp>
 
-namespace util::async::detail {
+namespace util::async::impl {
 
 struct SpawnDispatchStrategy {
     template <typename ContextType, SomeOutcome OutcomeType>
@@ -93,4 +93,4 @@ struct SyncDispatchStrategy {
     }
 };
 
-}  // namespace util::async::detail
+}  // namespace util::async::impl

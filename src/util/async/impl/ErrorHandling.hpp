@@ -29,7 +29,7 @@
 #include <exception>
 #include <thread>
 
-namespace util::async::detail {
+namespace util::async::impl {
 
 struct DefaultErrorHandler {
     [[nodiscard]] static auto
@@ -60,4 +60,4 @@ struct NoErrorHandler {
     }
 };
 
-}  // namespace util::async::detail
+}  // namespace util::async::impl

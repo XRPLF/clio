@@ -207,11 +207,11 @@ TYPED_TEST(ExecutionContextTests, strandWithTimeout)
 }
 
 using NoErrorHandlerSyncExecutionContext = BasicExecutionContext<
-    detail::SameThreadContext,
-    detail::BasicStopSource,
-    detail::SyncDispatchStrategy,
-    detail::SelfContextProvider,
-    detail::NoErrorHandler>;
+    impl::SameThreadContext,
+    impl::BasicStopSource,
+    impl::SyncDispatchStrategy,
+    impl::SelfContextProvider,
+    impl::NoErrorHandler>;
 
 TEST(NoErrorHandlerSyncExecutionContextTests, executeStdException)
 {

@@ -41,28 +41,23 @@ struct MockStrand {
     template <typename T>
     using StoppableOperation = MockStoppableOperation<T>;
 
+    MOCK_METHOD(Operation<util::async::impl::Any> const&, execute, (std::function<util::async::impl::Any()>), (const));
     MOCK_METHOD(
-        Operation<util::async::detail::Any> const&,
+        Operation<util::async::impl::Any> const&,
         execute,
-        (std::function<util::async::detail::Any()>),
+        (std::function<util::async::impl::Any()>, std::optional<std::chrono::milliseconds>),
         (const)
     );
     MOCK_METHOD(
-        Operation<util::async::detail::Any> const&,
+        StoppableOperation<util::async::impl::Any> const&,
         execute,
-        (std::function<util::async::detail::Any()>, std::optional<std::chrono::milliseconds>),
+        (std::function<util::async::impl::Any(util::async::AnyStopToken)>),
         (const)
     );
     MOCK_METHOD(
-        StoppableOperation<util::async::detail::Any> const&,
+        StoppableOperation<util::async::impl::Any> const&,
         execute,
-        (std::function<util::async::detail::Any(util::async::AnyStopToken)>),
-        (const)
-    );
-    MOCK_METHOD(
-        StoppableOperation<util::async::detail::Any> const&,
-        execute,
-        (std::function<util::async::detail::Any(util::async::AnyStopToken)>, std::optional<std::chrono::milliseconds>),
+        (std::function<util::async::impl::Any(util::async::AnyStopToken)>, std::optional<std::chrono::milliseconds>),
         (const)
     );
 };

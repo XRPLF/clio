@@ -22,7 +22,7 @@
 #include <any>
 #include <type_traits>
 
-namespace util::async::detail {
+namespace util::async::impl {
 
 /**
  * @brief A wrapper for std::any to workaround issues with boost.outcome
@@ -48,4 +48,4 @@ public:
     }
 };
 
-}  // namespace util::async::detail
+}  // namespace util::async::impl

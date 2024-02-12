@@ -28,7 +28,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-namespace util::async::detail {
+namespace util::async::impl {
 
 class ErasedOperation {
 public:
@@ -113,7 +113,7 @@ private:
         util::Expected<Any, ExecutionError>
         get() override
         {
-            // Note: return type of the operation was already wrapped to detail::Any by AnyExecutionContext
+            // Note: return type of the operation was already wrapped to impl::Any by AnyExecutionContext
             return operation.get();
         }
 
@@ -142,4 +142,4 @@ private:
     std::unique_ptr<Concept> pimpl_;
 };
 
-}  // namespace util::async::detail
+}  // namespace util::async::impl

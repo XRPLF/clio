@@ -21,7 +21,7 @@
 
 #include <boost/asio/steady_timer.hpp>
 
-namespace util::async::detail {
+namespace util::async::impl {
 
 template <typename ExecutorType>
 class SteadyTimer {
@@ -49,4 +49,4 @@ public:
     }
 };
 
-}  // namespace util::async::detail
+}  // namespace util::async::impl

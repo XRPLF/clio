@@ -28,7 +28,7 @@ namespace util::async {
 template <typename RetType, typename StopSourceType>
 class StoppableOperation;
 
-namespace detail {
+namespace impl {
 
 template <typename RetType>
 class BasicOperation;
@@ -72,7 +72,7 @@ public:
     }
 };
 
-}  // namespace detail
+}  // namespace impl
 
 /**
  * @brief Unstoppable outcome
@@ -80,13 +80,13 @@ public:
  * @tparam RetType The return type of the operation.
  */
 template <typename RetType>
-class Outcome : public detail::BasicOutcome<RetType> {
+class Outcome : public impl::BasicOutcome<RetType> {
 public:
     /** @brief Gets the unstoppable operation for this outcome */
-    [[nodiscard]] detail::BasicOperation<Outcome>
+    [[nodiscard]] impl::BasicOperation<Outcome>
     getOperation()
     {
-        return detail::BasicOperation<Outcome>{this};
+        return impl::BasicOperation<Outcome>{this};
     }
 };
 
@@ -97,7 +97,7 @@ public:
  * @tparam StopSourceType The type of the stop source.
  */
 template <typename RetType, typename StopSourceType>
-class StoppableOutcome : public detail::BasicOutcome<RetType> {
+class StoppableOutcome : public impl::BasicOutcome<RetType> {
 private:
     StopSourceType stopSource_;
 

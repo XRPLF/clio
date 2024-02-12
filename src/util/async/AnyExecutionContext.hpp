@@ -60,9 +60,9 @@ public:
     execute(SomeHandlerWithoutStopToken auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn())>;
-        static_assert(not std::is_same_v<RetType, detail::Any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
-        return AnyOperation<RetType>(pimpl_->execute([fn = std::forward<decltype(fn)>(fn)]() -> detail::Any {
+        return AnyOperation<RetType>(pimpl_->execute([fn = std::forward<decltype(fn)>(fn)]() -> impl::Any {
             if constexpr (std::is_void_v<RetType>) {
                 fn();
                 return {};
@@ -84,10 +84,10 @@ public:
     execute(SomeHandlerWith<AnyStopToken> auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
-        static_assert(not std::is_same_v<RetType, detail::Any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         return AnyOperation<RetType>(
-            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> detail::Any {
+            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     fn(std::move(stopToken));
                     return {};
@@ -111,10 +111,10 @@ public:
     execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
-        static_assert(not std::is_same_v<RetType, detail::Any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         return AnyOperation<RetType>(pimpl_->execute(
-            [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> detail::Any {
+            [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     fn(std::move(stopToken));
                     return {};
@@ -139,12 +139,12 @@ public:
     scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken> auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
-        static_assert(not std::is_same_v<RetType, detail::Any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(delay);
         return AnyOperation<RetType>(pimpl_->scheduleAfter(
             millis,
-            [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> detail::Any {
+            [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     fn(std::move(stopToken));
                     return {};
@@ -169,12 +169,12 @@ public:
     scheduleAfter(SomeStdDuration auto delay, SomeHandlerWith<AnyStopToken, bool> auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>(), true))>;
-        static_assert(not std::is_same_v<RetType, detail::Any>);
+        static_assert(not std::is_same_v<RetType, impl::Any>);
 
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(delay);
         return AnyOperation<RetType>(pimpl_->scheduleAfter(
             millis,
-            [fn = std::forward<decltype(fn)>(fn)](auto stopToken, auto cancelled) -> detail::Any {
+            [fn = std::forward<decltype(fn)>(fn)](auto stopToken, auto cancelled) -> impl::Any {
                 if constexpr (std::is_void_v<RetType>) {
                     fn(std::move(stopToken), cancelled);
                     return {};
@@ -203,16 +203,16 @@ private:
     struct Concept {
         virtual ~Concept() = default;
 
-        virtual detail::ErasedOperation
+        virtual impl::ErasedOperation
         execute(
-            std::function<detail::Any(AnyStopToken)>,
+            std::function<impl::Any(AnyStopToken)>,
             std::optional<std::chrono::milliseconds> timeout = std::nullopt
         ) = 0;
-        virtual detail::ErasedOperation execute(std::function<detail::Any()>) = 0;
-        virtual detail::ErasedOperation
-            scheduleAfter(std::chrono::milliseconds, std::function<detail::Any(AnyStopToken)>) = 0;
-        virtual detail::ErasedOperation
-            scheduleAfter(std::chrono::milliseconds, std::function<detail::Any(AnyStopToken, bool)>) = 0;
+        virtual impl::ErasedOperation execute(std::function<impl::Any()>) = 0;
+        virtual impl::ErasedOperation
+            scheduleAfter(std::chrono::milliseconds, std::function<impl::Any(AnyStopToken)>) = 0;
+        virtual impl::ErasedOperation
+            scheduleAfter(std::chrono::milliseconds, std::function<impl::Any(AnyStopToken, bool)>) = 0;
         virtual AnyStrand
         makeStrand() = 0;
     };
@@ -225,26 +225,26 @@ private:
         {
         }
 
-        detail::ErasedOperation
-        execute(std::function<detail::Any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
+        impl::ErasedOperation
+        execute(std::function<impl::Any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
         {
             return ctx.get().execute(std::move(fn), timeout);
         }
 
-        detail::ErasedOperation
-        execute(std::function<detail::Any()> fn) override
+        impl::ErasedOperation
+        execute(std::function<impl::Any()> fn) override
         {
             return ctx.get().execute(std::move(fn));
         }
 
-        detail::ErasedOperation
-        scheduleAfter(std::chrono::milliseconds delay, std::function<detail::Any(AnyStopToken)> fn) override
+        impl::ErasedOperation
+        scheduleAfter(std::chrono::milliseconds delay, std::function<impl::Any(AnyStopToken)> fn) override
         {
             return ctx.get().scheduleAfter(delay, std::move(fn));
         }
 
-        detail::ErasedOperation
-        scheduleAfter(std::chrono::milliseconds delay, std::function<detail::Any(AnyStopToken, bool)> fn) override
+        impl::ErasedOperation
+        scheduleAfter(std::chrono::milliseconds delay, std::function<impl::Any(AnyStopToken, bool)> fn) override
         {
             return ctx.get().scheduleAfter(delay, std::move(fn));
         }

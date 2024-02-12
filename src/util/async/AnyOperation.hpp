@@ -46,7 +46,7 @@ template <typename RetType>
 class AnyOperation {
 public:
     template <SomeOperation OpType>
-        requires std::is_same_v<std::decay_t<OpType>, detail::ErasedOperation>
+        requires std::is_same_v<std::decay_t<OpType>, impl::ErasedOperation>
     /* implicit */ AnyOperation(OpType&& operation) : operation_{std::forward<OpType>(operation)}
     {
     }
@@ -102,7 +102,7 @@ public:
     }
 
 private:
-    detail::ErasedOperation operation_;
+    impl::ErasedOperation operation_;
 };
 
 }  // namespace util::async

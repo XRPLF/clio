@@ -26,7 +26,7 @@
 #include <memory>
 #include <utility>
 
-namespace util::async::detail {
+namespace util::async::impl {
 
 class StopState {
     std::atomic_bool isStopRequested_{false};
@@ -130,4 +130,4 @@ public:
     }
 };
 
-}  // namespace util::async::detail
+}  // namespace util::async::impl
