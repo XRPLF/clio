@@ -30,7 +30,9 @@
 #include <fmt/core.h>
 
 #include <chrono>
+#include <exception>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -78,9 +80,13 @@ ForwardingSource::forwardToRippled(
         return std::nullopt;
     }
 
-    auto parsedResponse = boost::json::parse(response.value());
-    if (not parsedResponse.is_object()) {
-        LOG(log_.error()) << "Error parsing response from rippled: " << response.value();
+    boost::json::value parsedResponse;
+    try {
+        parsedResponse = boost::json::parse(*response);
+        if (not parsedResponse.is_object())
+            throw std::runtime_error("response is not an object");
+    } catch (std::exception const& e) {
+        LOG(log_.error()) << "Error parsing response from rippled: " << e.what() << ". Response: " << *response;
         return std::nullopt;
     }
 

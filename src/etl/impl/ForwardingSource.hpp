@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/log/Logger.hpp"
 #include "util/requests/WsConnection.hpp"
 
 #include <boost/asio/spawn.hpp>
