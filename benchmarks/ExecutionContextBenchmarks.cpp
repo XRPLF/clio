@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -44,7 +44,7 @@ class TestThread {
     etl::ThreadSafeQueue<uint64_t> res_;
 
 public:
-    TestThread(std::vector<uint64_t> const& data) : q_(data.size() + 1), res_(data.size() + 1)
+    TestThread(std::vector<uint64_t> const& data) : q_(data.size()), res_(data.size())
     {
         for (auto el : data)
             q_.push(el);
