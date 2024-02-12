@@ -19,6 +19,7 @@
 
 #include "etl/impl/SubscriptionSource.hpp"
 #include "gmock/gmock.h"
+#include "util/Fixtures.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/TestWsServer.hpp"
@@ -42,7 +43,7 @@ using namespace etl::impl;
 using testing::MockFunction;
 using testing::StrictMock;
 
-struct SubscriptionSourceConnectionTests : public ::testing::Test {
+struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
     ~SubscriptionSourceConnectionTests() override
     {
         // SubscriptionSource's destructor posts future on context and waits for it to complete.

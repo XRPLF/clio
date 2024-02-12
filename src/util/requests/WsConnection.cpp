@@ -88,7 +88,7 @@ WsConnectionBuilder::setTarget(std::string target)
 }
 
 WsConnectionBuilder&
-WsConnectionBuilder::setConnectionTimeout(std::chrono::milliseconds timeout)
+WsConnectionBuilder::setConnectionTimeout(std::chrono::steady_clock::duration timeout)
 {
     timeout_ = timeout;
     return *this;

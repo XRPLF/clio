@@ -87,7 +87,7 @@ class WsConnectionBuilder {
     std::string host_;
     std::string port_;
     std::vector<HttpHeader> headers_;
-    std::chrono::milliseconds timeout_{DEFAULT_TIMEOUT};
+    std::chrono::steady_clock::duration timeout_{DEFAULT_TIMEOUT};
     std::string target_{"/"};
 
 public:
@@ -127,7 +127,7 @@ public:
      * @return RequestBuilder& this
      */
     WsConnectionBuilder&
-    setConnectionTimeout(std::chrono::milliseconds timeout);
+    setConnectionTimeout(std::chrono::steady_clock::duration timeout);
 
     /**
      * @brief Connect to the host using SSL asynchronously
