@@ -116,6 +116,9 @@ public:
     std::chrono::system_clock::time_point
     lastMessageTime() const;
 
+    std::string const&
+    validatedLedgers() const;
+
     void
     stop();
 
@@ -128,9 +131,6 @@ private:
 
     void
     handleError(util::requests::RequestError const& error, boost::asio::yield_context yield);
-
-    void
-    onConnect();
 
     void
     logError(util::requests::RequestError const& error) const;
