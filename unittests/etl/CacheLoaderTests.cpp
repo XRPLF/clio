@@ -40,7 +40,7 @@
 #include <vector>
 
 namespace json = boost::json;
-using namespace etl::detail;
+using namespace etl::impl;
 using namespace util;
 using namespace data;
 using namespace testing;

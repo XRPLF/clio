@@ -34,7 +34,7 @@
 #include <optional>
 #include <utility>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 /**
  * @brief A query executor with a changable retry policy
@@ -132,4 +132,4 @@ private:
     }
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

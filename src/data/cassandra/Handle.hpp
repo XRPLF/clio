@@ -41,8 +41,8 @@ namespace data::cassandra {
  * @brief Represents a handle to the cassandra database cluster
  */
 class Handle {
-    detail::Cluster cluster_;
-    detail::Session session_;
+    impl::Cluster cluster_;
+    impl::Session session_;
 
 public:
     using ResultOrErrorType = ResultOrError;
@@ -54,7 +54,7 @@ public:
     using ResultType = Result;
 
     /**
-     * @brief Construct a new handle from a @ref detail::Settings object.
+     * @brief Construct a new handle from a @ref impl::Settings object.
      *
      * @param clusterSettings The settings to use
      */
@@ -320,7 +320,7 @@ public:
  * @param result The result to iterate
  */
 template <typename... Types>
-[[nodiscard]] detail::ResultExtractor<Types...>
+[[nodiscard]] impl::ResultExtractor<Types...>
 extract(Handle::ResultType const& result)
 {
     return {result};

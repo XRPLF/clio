@@ -58,7 +58,7 @@
 #include <string>
 #include <utility>
 
-namespace web::detail {
+namespace web::impl {
 
 using tcp = boost::asio::ip::tcp;
 
@@ -306,4 +306,4 @@ private:
     };
 };
 
-}  // namespace web::detail
+}  // namespace web::impl

@@ -79,7 +79,7 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, 
     std::reference_wrapper<web::DOSGuard> const dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
     boost::beast::flat_buffer buffer_;
-    std::shared_ptr<detail::AdminVerificationStrategy> const adminVerification_;
+    std::shared_ptr<impl::AdminVerificationStrategy> const adminVerification_;
 
 public:
     /**
@@ -98,7 +98,7 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> handler,
-        std::shared_ptr<detail::AdminVerificationStrategy> adminVerification
+        std::shared_ptr<impl::AdminVerificationStrategy> adminVerification
     )
         : stream_(std::move(socket))
         , ctx_(ctx)
@@ -196,7 +196,7 @@ class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslS
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     std::shared_ptr<HandlerType> handler_;
     tcp::acceptor acceptor_;
-    std::shared_ptr<detail::AdminVerificationStrategy> adminVerification_;
+    std::shared_ptr<impl::AdminVerificationStrategy> adminVerification_;
 
 public:
     /**
@@ -225,7 +225,7 @@ public:
         , dosGuard_(std::ref(dosGuard))
         , handler_(std::move(handler))
         , acceptor_(boost::asio::make_strand(ioc))
-        , adminVerification_(detail::make_AdminVerificationStrategy(std::move(adminPassword)))
+        , adminVerification_(impl::make_AdminVerificationStrategy(std::move(adminPassword)))
     {
         boost::beast::error_code ec;
 

@@ -34,7 +34,7 @@ using namespace etl;
 
 class AmendmentBlockHandlerTest : public NoLoggerFixture {
 protected:
-    using AmendmentBlockHandlerType = detail::AmendmentBlockHandler<FakeAmendmentBlockAction>;
+    using AmendmentBlockHandlerType = impl::AmendmentBlockHandler<FakeAmendmentBlockAction>;
 
     boost::asio::io_context ioc_;
 };

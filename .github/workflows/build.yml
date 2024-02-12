@@ -32,9 +32,9 @@ jobs:
               image: rippleci/clio_ci:latest
             build_type: Debug
             code_coverage: true
-          - os: macOS
-            build_type: Release
-            code_coverage: false
+          # - os: macOS
+          #   build_type: Release
+          #   code_coverage: false
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
@@ -123,9 +123,14 @@ jobs:
       # It will be refactored in https://github.com/XRPLF/clio/issues/1075
       - name: Run code coverage
         if: ${{ matrix.code_coverage }}
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         uses: ./.github/actions/code_coverage
+
+  upload_coverage_report:
+    name: Codecov
+    needs: build
+    uses: ./.github/workflows/upload_coverage_report.yml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   test:
     name: Run Tests
@@ -137,7 +142,7 @@ jobs:
           - os: heavy
             container:
               image: rippleci/clio_ci:latest
-          - os: macOS
+          # - os: macOS
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 

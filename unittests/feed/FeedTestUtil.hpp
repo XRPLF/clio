@@ -59,7 +59,7 @@ protected:
     }
 };
 
-namespace detail {
+namespace impl {
 class SharedStringJsonEqMatcher {
     std::string expected_;
 
@@ -88,10 +88,10 @@ public:
         *os << "Expecting json " << expected_;
     }
 };
-}  // namespace detail
+}  // namespace impl
 
 inline ::testing::Matcher<std::shared_ptr<std::string>>
 SharedStringJsonEq(std::string const& expected)
 {
-    return detail::SharedStringJsonEqMatcher(expected);
+    return impl::SharedStringJsonEqMatcher(expected);
 }

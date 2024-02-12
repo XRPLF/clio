@@ -27,7 +27,7 @@
 #include <functional>
 #include <memory>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 struct Future : public ManagedObject<CassFuture> {
     /* implicit */ Future(CassFuture* ptr);
@@ -56,4 +56,4 @@ private:
     FnPtrType cb_;
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

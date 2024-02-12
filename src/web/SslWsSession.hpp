@@ -49,7 +49,7 @@ namespace web {
  * Majority of the operations are handled by the base class.
  */
 template <SomeServerHandler HandlerType>
-class SslWsSession : public detail::WsBase<SslWsSession, HandlerType> {
+class SslWsSession : public impl::WsBase<SslWsSession, HandlerType> {
     using StreamType = boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>;
     StreamType ws_;
 
@@ -74,7 +74,7 @@ public:
         boost::beast::flat_buffer&& buffer,
         bool isAdmin
     )
-        : detail::WsBase<SslWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
+        : impl::WsBase<SslWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
         , ws_(std::move(stream))
     {
         ConnectionBase::isAdmin_ = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)

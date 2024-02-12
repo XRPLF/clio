@@ -48,7 +48,7 @@
 #include <utility>
 #include <vector>
 
-namespace etl::detail {
+namespace etl::impl {
 
 /**
  * @brief Publishes ledgers in a synchronized fashion.
@@ -285,4 +285,4 @@ private:
     }
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl

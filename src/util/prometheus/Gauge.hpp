@@ -34,7 +34,7 @@ namespace util::prometheus {
  * @brief A prometheus gauge metric implementation. It can be increased, decreased or set to a value.
  */
 template <SomeNumberType NumberType>
-struct AnyGauge : MetricBase, detail::AnyCounterBase<NumberType> {
+struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
     using ValueType = NumberType;
 
     /**
@@ -44,11 +44,11 @@ struct AnyGauge : MetricBase, detail::AnyCounterBase<NumberType> {
      * @param labelsString The labels of the gauge
      * @param impl The implementation of the counter inside the gauge
      */
-    template <detail::SomeCounterImpl ImplType = detail::CounterImpl<ValueType>>
+    template <impl::SomeCounterImpl ImplType = impl::CounterImpl<ValueType>>
         requires std::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
     AnyGauge(std::string name, std::string labelsString, ImplType&& impl = ImplType{})
         : MetricBase(std::move(name), std::move(labelsString))
-        , detail::AnyCounterBase<ValueType>(std::forward<ImplType>(impl))
+        , impl::AnyCounterBase<ValueType>(std::forward<ImplType>(impl))
     {
     }
 

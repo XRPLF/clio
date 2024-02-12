@@ -35,7 +35,7 @@
 #include <optional>
 #include <string>
 
-namespace unittests::detail {
+namespace unittests::impl {
 
 // input data for the test handlers below
 struct TestInput {
@@ -181,4 +181,4 @@ struct BasicDOSGuardMock : public web::BaseDOSGuard {
 
     MOCK_METHOD(void, clear, (), (noexcept, override));
 };
-}  // namespace unittests::detail
+}  // namespace unittests::impl

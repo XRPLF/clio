@@ -57,7 +57,7 @@ struct FormattedTransactionsData {
     std::vector<NFTsData> nfTokensData;
 };
 
-namespace etl::detail {
+namespace etl::impl {
 
 /**
  * @brief Loads ledger data into the DB
@@ -267,4 +267,4 @@ public:
     }
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl

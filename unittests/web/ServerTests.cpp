@@ -55,7 +55,7 @@
 #include <vector>
 
 using namespace util;
-using namespace web::detail;
+using namespace web::impl;
 using namespace web;
 
 constexpr static auto JSONData = R"JSON(

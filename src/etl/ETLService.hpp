@@ -81,16 +81,16 @@ class ETLService {
     using SubscriptionManagerType = feed::SubscriptionManager;
     using LoadBalancerType = LoadBalancer;
     using NetworkValidatedLedgersType = NetworkValidatedLedgers;
-    using DataPipeType = etl::detail::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
+    using DataPipeType = etl::impl::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
     using CacheType = data::LedgerCache;
-    using CacheLoaderType = etl::detail::CacheLoader<CacheType>;
-    using LedgerFetcherType = etl::detail::LedgerFetcher<LoadBalancerType>;
-    using ExtractorType = etl::detail::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
-    using LedgerLoaderType = etl::detail::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
-    using LedgerPublisherType = etl::detail::LedgerPublisher<SubscriptionManagerType, CacheType>;
-    using AmendmentBlockHandlerType = etl::detail::AmendmentBlockHandler<>;
+    using CacheLoaderType = etl::impl::CacheLoader<CacheType>;
+    using LedgerFetcherType = etl::impl::LedgerFetcher<LoadBalancerType>;
+    using ExtractorType = etl::impl::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
+    using LedgerLoaderType = etl::impl::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
+    using LedgerPublisherType = etl::impl::LedgerPublisher<SubscriptionManagerType, CacheType>;
+    using AmendmentBlockHandlerType = etl::impl::AmendmentBlockHandler<>;
     using TransformerType =
-        etl::detail::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;
+        etl::impl::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;
 
     util::Logger log_{"ETL"};
 

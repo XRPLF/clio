@@ -33,7 +33,7 @@
 #include <shared_mutex>
 #include <string>
 
-namespace etl::detail {
+namespace etl::impl {
 
 void
 ForwardCache::freshen()
@@ -91,4 +91,4 @@ ForwardCache::get(boost::json::object const& request) const
     return {latestForwarded_.at(*command)};
 }
 
-}  // namespace etl::detail
+}  // namespace etl::impl
