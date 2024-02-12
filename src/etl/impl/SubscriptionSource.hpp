@@ -44,6 +44,9 @@
 
 namespace etl::impl {
 
+/**
+ * @brief This class is used to subscribe to a source of ledger data and forward it to the subscription manager.
+ */
 class SubscriptionSource {
 public:
     using OnDisconnectHook = std::function<void()>;
@@ -78,6 +81,20 @@ private:
     static constexpr std::chrono::seconds RETRY_DELAY{1};
 
 public:
+    /**
+     * @brief Construct a new Subscription Source object
+     *
+     * @tparam NetworkValidatedLedgersType The type of the network validated ledgers object
+     * @tparam SubscriptionSourceType The type of the subscription source object
+     * @param ioContext The io_context to use
+     * @param ip The ip address of the source
+     * @param wsPort The port of the source
+     * @param validatedLedgers The network validated ledgers object
+     * @param subscriptions The subscription source object
+     * @param onDisconnect The onDisconnect hook. Called when the connection is lost
+     * @param connectionTimeout The connection timeout. Defaults to 30 seconds
+     * @param retryDelay The retry delay. Defaults to 1 second
+     */
     template <typename NetworkValidatedLedgersType, typename SubscriptionSourceType>
     SubscriptionSource(
         boost::asio::io_context& ioContext,
@@ -102,23 +119,58 @@ public:
         subscribe();
     }
 
+    /**
+     * @brief Destroy the Subscription Source object
+     *
+     * @note This will block to wait for all the async operations to complete. io_context must be still running
+     */
     ~SubscriptionSource();
 
+    /**
+     * @brief Check if the source has a ledger
+     *
+     * @param sequence The sequence of the ledger
+     * @return true if the source has the ledger, false otherwise
+     */
     bool
     hasLedger(uint32_t sequence) const;
 
+    /**
+     * @brief Check if the source is connected
+     *
+     * @return true if the source is connected, false otherwise
+     */
     bool
     isConnected() const;
 
+    /**
+     * @brief Set source forwarding
+     *
+     * @note If forwarding is true the source will forward messages to the subscription manager
+     * @param isForwarding The new forwarding state
+     */
     void
     setForwarding(bool isForwarding);
 
+    /**
+     * @brief Get the last message time (even if the last message had an error)
+     *
+     * @return The last message time
+     */
     std::chrono::system_clock::time_point
     lastMessageTime() const;
 
+    /**
+     * @brief Get the last received raw string of the validated ledgers
+     *
+     * @return The validated ledgers string
+     */
     std::string const&
     validatedLedgers() const;
 
+    /**
+     * @brief Stop the source. The source will complete already scheduled operations but will not schedule new ones
+     */
     void
     stop();
 
