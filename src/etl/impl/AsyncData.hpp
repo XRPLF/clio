@@ -40,7 +40,7 @@
 #include <utility>
 #include <vector>
 
-namespace etl::detail {
+namespace etl::impl {
 
 class AsyncCallData {
     util::Logger log_{"ETL"};
@@ -193,4 +193,4 @@ public:
     }
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl

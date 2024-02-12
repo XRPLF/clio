@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-namespace util::prometheus::detail {
+namespace util::prometheus::impl {
 
 template <typename T>
 concept SomeHistogramImpl = requires(T t) {
@@ -138,4 +138,4 @@ private:
     mutable std::unique_ptr<std::mutex> mutex_ = std::make_unique<std::mutex>();
 };
 
-}  // namespace util::prometheus::detail
+}  // namespace util::prometheus::impl

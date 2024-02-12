@@ -24,7 +24,7 @@
 #include <memory>
 #include <type_traits>
 
-namespace util::prometheus::detail {
+namespace util::prometheus::impl {
 
 template <SomeNumberType NumberType>
 class AnyCounterBase {
@@ -82,4 +82,4 @@ protected:
     std::unique_ptr<Concept> pimpl_;
 };
 
-}  // namespace util::prometheus::detail
+}  // namespace util::prometheus::impl

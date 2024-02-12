@@ -62,7 +62,7 @@
 #include <utility>
 #include <vector>
 
-namespace etl::detail {
+namespace etl::impl {
 
 /**
  * @brief Cache loading interface
@@ -437,4 +437,4 @@ private:
     }
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl

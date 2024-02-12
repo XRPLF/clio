@@ -34,7 +34,7 @@
 #include <utility>
 
 using namespace data::cassandra;
-using namespace data::cassandra::detail;
+using namespace data::cassandra::impl;
 using namespace testing;
 
 class BackendCassandraAsyncExecutorTest : public SyncAsioContextTest {

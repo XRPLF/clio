@@ -26,7 +26,7 @@
 
 #include <vector>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 struct Batch : public ManagedObject<CassBatch> {
     Batch(std::vector<Statement> const& statements);
@@ -35,4 +35,4 @@ struct Batch : public ManagedObject<CassBatch> {
     add(Statement const& statement);
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

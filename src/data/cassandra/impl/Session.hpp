@@ -23,7 +23,7 @@
 
 #include <cassandra.h>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 class Session : public ManagedObject<CassSession> {
     static constexpr auto deleter = [](CassSession* ptr) { cass_session_free(ptr); };
@@ -34,4 +34,4 @@ public:
     }
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

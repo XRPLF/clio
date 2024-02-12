@@ -28,7 +28,7 @@
 #include <string>
 #include <string_view>
 
-namespace web::detail {
+namespace web::impl {
 
 class AdminVerificationStrategy {
 public:
@@ -82,4 +82,4 @@ public:
 std::shared_ptr<AdminVerificationStrategy>
 make_AdminVerificationStrategy(std::optional<std::string> password);
 
-}  // namespace web::detail
+}  // namespace web::impl

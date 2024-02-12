@@ -50,7 +50,7 @@ public:
      * @param buckets The buckets of the histogram
      * @param impl The implementation of the histogram (has default value and need to be specified only for testing)
      */
-    template <detail::SomeHistogramImpl ImplType = detail::HistogramImpl<ValueType>>
+    template <impl::SomeHistogramImpl ImplType = impl::HistogramImpl<ValueType>>
         requires std::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
     AnyHistogram(std::string name, std::string labelsString, Buckets const& buckets, ImplType&& impl = ImplType{})
         : MetricBase(std::move(name), std::move(labelsString))
@@ -96,7 +96,7 @@ private:
         serializeValue(std::string const& name, std::string const& labelsString, OStream&) const = 0;
     };
 
-    template <detail::SomeHistogramImpl ImplType>
+    template <impl::SomeHistogramImpl ImplType>
         requires std::same_as<NumberType, typename std::remove_cvref_t<ImplType>::ValueType>
     struct Model : Concept {
         template <typename SomeImplType>

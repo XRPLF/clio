@@ -216,7 +216,7 @@ try {
 
     auto workQueue = rpc::WorkQueue::make_WorkQueue(config);
     auto counters = rpc::Counters::make_Counters(workQueue);
-    auto const handlerProvider = std::make_shared<rpc::detail::ProductionHandlerProvider const>(
+    auto const handlerProvider = std::make_shared<rpc::impl::ProductionHandlerProvider const>(
         config, backend, subscriptions, balancer, etl, counters
     );
     auto const rpcEngine =

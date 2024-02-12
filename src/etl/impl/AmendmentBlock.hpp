@@ -29,7 +29,7 @@
 #include <chrono>
 #include <functional>
 
-namespace etl::detail {
+namespace etl::impl {
 
 struct AmendmentBlockAction {
     void
@@ -92,4 +92,4 @@ private:
     }
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl

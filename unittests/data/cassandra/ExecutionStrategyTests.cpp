@@ -42,7 +42,7 @@
 #include <vector>
 
 using namespace data::cassandra;
-using namespace data::cassandra::detail;
+using namespace data::cassandra::impl;
 using namespace testing;
 
 class BackendCassandraExecutionStrategyTest : public SyncAsioContextTest {

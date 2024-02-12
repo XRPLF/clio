@@ -35,7 +35,7 @@ namespace {
 constexpr auto futureDeleter = [](CassFuture* ptr) { cass_future_free(ptr); };
 }  // namespace
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 /* implicit */ Future::Future(CassFuture* ptr) : ManagedObject{ptr, futureDeleter}
 {
@@ -102,4 +102,4 @@ invokeHelper(CassFuture* ptr, void* cbPtr)
     cass_future_set_callback(*this, &invokeHelper, cb_.get());
 }
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

@@ -25,7 +25,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace util::detail {
+namespace util::impl {
 
 /**
  * @brief Thrown when a KeyPath related error occurs
@@ -159,4 +159,4 @@ typeName<double>()
     return "double";
 }
 
-};  // namespace util::detail
+};  // namespace util::impl

@@ -25,7 +25,7 @@
 
 namespace data::cassandra {
 
-namespace detail {
+namespace impl {
 struct Settings;
 class Session;
 class Cluster;
@@ -35,15 +35,15 @@ struct Result;
 class Statement;
 class PreparedStatement;
 struct Batch;
-}  // namespace detail
+}  // namespace impl
 
-using Settings = detail::Settings;
-using Future = detail::Future;
-using FutureWithCallback = detail::FutureWithCallback;
-using Result = detail::Result;
-using Statement = detail::Statement;
-using PreparedStatement = detail::PreparedStatement;
-using Batch = detail::Batch;
+using Settings = impl::Settings;
+using Future = impl::Future;
+using FutureWithCallback = impl::FutureWithCallback;
+using Result = impl::Result;
+using Statement = impl::Statement;
+using PreparedStatement = impl::PreparedStatement;
+using Batch = impl::Batch;
 
 /**
  * @brief A strong type wrapper for int32_t

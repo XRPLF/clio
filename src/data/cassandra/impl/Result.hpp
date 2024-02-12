@@ -39,7 +39,7 @@
 #include <utility>
 #include <vector>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 template <typename>
 static constexpr bool unsupported_v = false;
@@ -242,4 +242,4 @@ public:
     }
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

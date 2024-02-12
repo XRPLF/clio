@@ -894,6 +894,6 @@ private:
     }
 };
 
-using CassandraBackend = BasicCassandraBackend<SettingsProvider, detail::DefaultExecutionStrategy<>>;
+using CassandraBackend = BasicCassandraBackend<SettingsProvider, impl::DefaultExecutionStrategy<>>;
 
 }  // namespace data::cassandra

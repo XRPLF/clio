@@ -30,7 +30,7 @@
 #include <cstdint>
 #include <string>
 
-namespace rpc::detail {
+namespace rpc::impl {
 
 class ProductionAPIVersionParser : public APIVersionParser {
     util::Logger log_{"RPC"};
@@ -96,4 +96,4 @@ public:
     }
 };
 
-}  // namespace rpc::detail
+}  // namespace rpc::impl

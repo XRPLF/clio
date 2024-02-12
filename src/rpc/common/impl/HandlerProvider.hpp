@@ -42,7 +42,7 @@ namespace feed {
 class SubscriptionManager;
 }  // namespace feed
 
-namespace rpc::detail {
+namespace rpc::impl {
 
 class ProductionHandlerProvider final : public HandlerProvider {
     struct Handler {
@@ -72,4 +72,4 @@ public:
     isClioOnly(std::string const& command) const override;
 };
 
-}  // namespace rpc::detail
+}  // namespace rpc::impl

@@ -19,7 +19,7 @@
 
 #include "util/config/Config.hpp"
 
-#include "util/config/detail/Helpers.hpp"
+#include "util/config/impl/Helpers.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/json/object.hpp>
@@ -69,7 +69,7 @@ Config::lookup(KeyType key) const
 
     std::reference_wrapper<boost::json::value const> cur = std::cref(store_);
     auto hasBrokenPath = false;
-    auto tokenized = detail::Tokenizer<KeyType, Separator>{key};
+    auto tokenized = impl::Tokenizer<KeyType, Separator>{key};
     std::string subkey{};
 
     auto maybeSection = tokenized.next();
@@ -79,7 +79,7 @@ Config::lookup(KeyType key) const
 
         if (not hasBrokenPath) {
             if (not cur.get().is_object())
-                throw detail::StoreException("Not an object at '" + subkey + "'");
+                throw impl::StoreException("Not an object at '" + subkey + "'");
             if (not cur.get().as_object().contains(section)) {
                 hasBrokenPath = true;
             } else {
@@ -111,7 +111,7 @@ Config::maybeArray(KeyType key) const
             });
             return std::make_optional<ArrayType>(std::move(out));
         }
-    } catch (detail::StoreException const&) {  // NOLINT(bugprone-empty-catch)
+    } catch (impl::StoreException const&) {  // NOLINT(bugprone-empty-catch)
         // ignore store error, but rethrow key errors
     }
 
