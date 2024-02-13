@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "etl/impl/SubscriptionSource.hpp"
-#include "gmock/gmock.h"
 #include "util/Fixtures.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockSubscriptionManager.hpp"
@@ -30,6 +29,7 @@
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
