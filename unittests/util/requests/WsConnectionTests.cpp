@@ -33,6 +33,7 @@
 #include <cstddef>
 #include <optional>
 #include <string>
+#include <thread>
 #include <vector>
 
 using namespace util::requests;
@@ -181,6 +182,20 @@ TEST_F(WsConnectionTests, WsHandshakeError)
     });
 }
 
+TEST_F(WsConnectionTests, WsHandshakeTimeout)
+{
+    builder.setWsHandshakeTimeout(std::chrono::milliseconds{1});
+    asio::spawn(ctx, [&](asio::yield_context yield) {
+        auto socket = server.acceptConnectionWithoutHandshake(yield);
+        std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    });
+    runSpawn([&](asio::yield_context yield) {
+        auto connection = builder.plainConnect(yield);
+        ASSERT_FALSE(connection.has_value());
+        EXPECT_TRUE(connection.error().message().starts_with("Handshake error")) << connection.error().message();
+    });
+}
+
 TEST_F(WsConnectionTests, CloseConnection)
 {
     asio::spawn(ctx, [&](asio::yield_context yield) {
@@ -191,11 +206,25 @@ TEST_F(WsConnectionTests, CloseConnection)
     });
 
     runSpawn([&](asio::yield_context yield) {
-        auto connection = builder.plainConnect(yield);
-        ASSERT_TRUE(connection.has_value()) << connection.error().message();
+        auto connection = unwrap(builder.plainConnect(yield));
 
-        auto error = connection->operator*().close(yield);
+        auto error = connection->close(yield);
         EXPECT_FALSE(error.has_value()) << error->message();
+    });
+}
+
+TEST_F(WsConnectionTests, CloseConnectionTimeout)
+{
+    asio::spawn(ctx, [&](asio::yield_context yield) {
+        auto serverConnection = unwrap(server.acceptConnection(yield));
+        std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    });
+
+    runSpawn([&](asio::yield_context yield) {
+        auto connection = unwrap(builder.plainConnect(yield));
+
+        auto error = connection->close(yield, std::chrono::milliseconds{1});
+        EXPECT_TRUE(error.has_value());
     });
 }
 

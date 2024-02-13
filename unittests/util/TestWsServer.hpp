@@ -64,4 +64,7 @@ public:
 
     void
     acceptConnectionAndDropIt(boost::asio::yield_context yield);
+
+    boost::asio::ip::tcp::socket
+    acceptConnectionWithoutHandshake(boost::asio::yield_context yield);
 };

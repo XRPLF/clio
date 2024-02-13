@@ -75,7 +75,9 @@ public:
      * @return std::optional<RequestError> error if any
      */
     virtual std::optional<RequestError>
-    close(boost::asio::yield_context yield) = 0;
+    close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) = 0;
+
+    static constexpr std::chrono::seconds DEFAULT_TIMEOUT{5};
 };
 using WsConnectionPtr = std::unique_ptr<WsConnection>;
 
@@ -87,7 +89,8 @@ class WsConnectionBuilder {
     std::string host_;
     std::string port_;
     std::vector<HttpHeader> headers_;
-    std::chrono::steady_clock::duration timeout_{DEFAULT_TIMEOUT};
+    std::chrono::steady_clock::duration connectionTimeout_{DEFAULT_TIMEOUT};
+    std::chrono::steady_clock::duration wsHandshakeTimeout_{DEFAULT_TIMEOUT};
     std::string target_{"/"};
 
 public:
@@ -121,13 +124,22 @@ public:
     setTarget(std::string target);
 
     /**
-     * @brief Set the timeout for connection establishing operations
+     * @brief Set the timeout for connection establishing operations. Default is 5 seconds
      *
      * @param timeout timeout to set
      * @return RequestBuilder& this
      */
     WsConnectionBuilder&
     setConnectionTimeout(std::chrono::steady_clock::duration timeout);
+
+    /**
+     * @brief Set the timeout for WebSocket handshake. Default is 5 seconds
+     *
+     * @param timeout timeout to set
+     * @return RequestBuilder& this
+     */
+    WsConnectionBuilder&
+    setWsHandshakeTimeout(std::chrono::steady_clock::duration timeout);
 
     /**
      * @brief Connect to the host using SSL asynchronously
@@ -156,7 +168,7 @@ public:
     Expected<WsConnectionPtr, RequestError>
     connect(boost::asio::yield_context yield) const;
 
-    static constexpr std::chrono::milliseconds DEFAULT_TIMEOUT{5000};
+    static constexpr std::chrono::seconds DEFAULT_TIMEOUT{5};
 
 private:
     template <class StreamDataType>

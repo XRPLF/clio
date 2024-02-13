@@ -90,7 +90,14 @@ WsConnectionBuilder::setTarget(std::string target)
 WsConnectionBuilder&
 WsConnectionBuilder::setConnectionTimeout(std::chrono::steady_clock::duration timeout)
 {
-    timeout_ = timeout;
+    connectionTimeout_ = timeout;
+    return *this;
+}
+
+WsConnectionBuilder&
+WsConnectionBuilder::setWsHandshakeTimeout(std::chrono::steady_clock::duration timeout)
+{
+    wsHandshakeTimeout_ = timeout;
     return *this;
 }
 
@@ -144,13 +151,13 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_contex
 
     auto& ws = streamData.stream;
 
-    beast::get_lowest_layer(ws).expires_after(timeout_);
+    beast::get_lowest_layer(ws).expires_after(connectionTimeout_);
     auto endpoint = beast::get_lowest_layer(ws).async_connect(results, yield[errorCode]);
     if (errorCode)
         return Unexpected{RequestError{"Connect error", errorCode}};
 
     if constexpr (StreamDataType::sslEnabled) {
-        beast::get_lowest_layer(ws).expires_after(timeout_);
+        beast::get_lowest_layer(ws).expires_after(connectionTimeout_);
         ws.next_layer().async_handshake(asio::ssl::stream_base::client, yield[errorCode]);
         if (errorCode)
             return Unexpected{RequestError{"SSL handshake error", errorCode}};
@@ -159,7 +166,9 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_contex
     // Turn off the timeout on the tcp_stream, because the websocket stream has its own timeout system
     beast::get_lowest_layer(ws).expires_never();
 
-    ws.set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
+    auto wsTimeout = websocket::stream_base::timeout::suggested(beast::role_type::client);
+    wsTimeout.handshake_timeout = wsHandshakeTimeout_;
+    ws.set_option(wsTimeout);
     ws.set_option(websocket::stream_base::decorator([this](websocket::request_type& req) {
         for (auto const& header : headers_)
             std::visit([&](auto const& name) { req.set(name, header.value); }, header.name);
