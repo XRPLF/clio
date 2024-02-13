@@ -39,6 +39,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -266,6 +267,11 @@ LoadBalancer::getETLState() noexcept
 void
 LoadBalancer::chooseForwardingSource()
 {
+    // In SubscriptionSource isConnected() and setForwarding() are thread safe.
+    // But just in case we are using a mutex here.
+    static std::mutex mutex;
+    std::scoped_lock lock(mutex);
+
     bool newForwardingSourceAssigned = false;
     for (auto& source : sources_) {
         if (not newForwardingSourceAssigned and source.isConnected()) {
