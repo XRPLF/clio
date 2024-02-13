@@ -97,7 +97,7 @@ GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers
     if (!stub_)
         return {{}, false};
 
-    std::vector<etl::detail::AsyncCallData> calls = detail::makeAsyncCallData(sequence, numMarkers);
+    std::vector<etl::impl::AsyncCallData> calls = impl::makeAsyncCallData(sequence, numMarkers);
 
     LOG(log_.debug()) << "Starting data download for ledger " << sequence << ".";
 
@@ -115,7 +115,7 @@ GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers
 
     while (numFinished < calls.size() && cq.Next(&tag, &ok)) {
         ASSERT(tag != nullptr, "Tag can't be null.");
-        auto ptr = static_cast<etl::detail::AsyncCallData*>(tag);
+        auto ptr = static_cast<etl::impl::AsyncCallData*>(tag);
 
         if (!ok) {
             LOG(log_.error()) << "loadInitialLedger - ok is false";
@@ -125,7 +125,7 @@ GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers
         LOG(log_.trace()) << "Marker prefix = " << ptr->getMarkerPrefix();
 
         auto result = ptr->process(stub_, cq, *backend_, abort, cacheOnly);
-        if (result != etl::detail::AsyncCallData::CallStatus::MORE) {
+        if (result != etl::impl::AsyncCallData::CallStatus::MORE) {
             ++numFinished;
             LOG(log_.debug()) << "Finished a marker. "
                               << "Current number of finished = " << numFinished;
@@ -136,7 +136,7 @@ GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers
                 edgeKeys.push_back(ptr->getLastKey());
         }
 
-        if (result == etl::detail::AsyncCallData::CallStatus::ERRORED)
+        if (result == etl::impl::AsyncCallData::CallStatus::ERRORED)
             abort = true;
 
         if (backend_->cache().size() > progress) {

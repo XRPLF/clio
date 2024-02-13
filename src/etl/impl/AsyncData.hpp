@@ -200,7 +200,7 @@ makeAsyncCallData(uint32_t const sequence, uint32_t const numMarkers)
 {
     auto const markers = getMarkers(numMarkers);
 
-    std::vector<etl::detail::AsyncCallData> result;
+    std::vector<AsyncCallData> result;
     result.reserve(markers.size());
 
     for (size_t i = 0; i + 1 < markers.size(); ++i) {
