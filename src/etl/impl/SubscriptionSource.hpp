@@ -166,7 +166,7 @@ public:
      * @return The validated ledgers string
      */
     std::string const&
-    validatedLedgers() const;
+    validatedRange() const;
 
     /**
      * @brief Stop the source. The source will complete already scheduled operations but will not schedule new ones

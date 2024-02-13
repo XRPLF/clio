@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "etl/ETLHelpers.hpp"
+#include "etl/impl/ForwardingSource.hpp"
 #include "etl/impl/GrpcSource.hpp"
 #include "etl/impl/SubscriptionSource.hpp"
 #include "feed/SubscriptionManager.hpp"
@@ -34,6 +35,7 @@
 #include <grpcpp/support/status.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -43,18 +45,22 @@
 
 namespace etl {
 
-class NewSource {
-    util::Logger log_{"ETL"};
-    boost::uuids::uuid uuid_{};
-
+template <
+    typename SomeGrpcSource = impl::GrpcSource,
+    typename SomeSubscriptionSource = impl::SubscriptionSource,
+    typename SomeForwardingSource = impl::ForwardingSource>
+class NewSourceImpl {
     std::string ip_;
     std::string wsPort_;
     std::string grpcPort_;
 
-    impl::GrpcSource grpcSource_;
-    impl::SubscriptionSource subscriptionSource_;
+    SomeGrpcSource grpcSource_;
+    SomeSubscriptionSource subscriptionSource_;
+    SomeForwardingSource forwardingSource_;
 
 public:
+    using OnDisconnectHook = impl::SubscriptionSource::OnDisconnectHook;
+
     /**
      * @brief Create the base portion of ETL source.
      *
@@ -64,25 +70,66 @@ public:
      * @param subscriptions Subscription manager
      * @param validatedLedgers The network validated ledgers data structure
      */
-    NewSource(
+    NewSourceImpl(
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
-    );
+        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
+        OnDisconnectHook onDisconnect
+    )
+        : ip_(config.valueOr<std::string>("ip", {}))
+        , wsPort_(config.valueOr<std::string>("ws_port", {}))
+        , grpcPort_(config.valueOr<std::string>("gtcp_port", {}))
+        , grpcSource_(ip_, grpcPort_, std::move(backend))
+        , subscriptionSource_(
+              ioc,
+              ip_,
+              wsPort_,
+              std::move(validatedLedgers),
+              std::move(subscriptions),
+              std::move(onDisconnect)
+          )
+        , forwardingSource_(ip_, wsPort_)
+    {
+    }
 
     /** @return true if source is connected; false otherwise */
     bool
-    isConnected() const;
+    isConnected() const
+    {
+        return subscriptionSource_.isConnected();
+    }
 
     /** @return JSON representation of the source */
     boost::json::object
-    toJson() const;
+    toJson() const
+    {
+        boost::json::object res;
+
+        res["validated_range"] = subscriptionSource_.validatedRange();
+        res["is_connected"] = std::to_string(static_cast<int>(subscriptionSource_.isConnected()));
+        res["ip"] = ip_;
+        res["ws_port"] = wsPort_;
+        res["grpc_port"] = grpcPort_;
+
+        auto last = subscriptionSource_.lastMessageTime();
+        if (last.time_since_epoch().count() != 0) {
+            res["last_msg_age_seconds"] = std::to_string(
+                std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - last).count()
+            );
+        }
+
+        return res;
+    }
 
     /** @return String representation of the source (for debug) */
     std::string
-    toString() const;
+    toString() const
+    {
+        return "{validated_ledger: " + subscriptionSource_.validatedRange() + ", ip: " + ip_ +
+            ", web socket port: " + wsPort_ + ", grpc port: " + grpcPort_ + "}";
+    }
 
     /**
      * @brief Check if ledger is known by this source.
@@ -91,7 +138,10 @@ public:
      * @return true if ledger is in the range of this source; false otherwise
      */
     bool
-    hasLedger(uint32_t sequence) const;
+    hasLedger(uint32_t sequence) const
+    {
+        return subscriptionSource_.hasLedger(sequence);
+    }
 
     /**
      * @brief Fetch data for a specific ledger.
@@ -105,7 +155,10 @@ public:
      * @return A std::pair of the response status and the response itself
      */
     std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
-    fetchLedger(uint32_t sequence, bool getObjects = true, bool getObjectNeighbors = false);
+    fetchLedger(uint32_t sequence, bool getObjects = true, bool getObjectNeighbors = false)
+    {
+        return grpcSource_.fetchLedger(sequence, getObjects, getObjectNeighbors);
+    }
 
     /**
      * @brief Download a ledger in full.
@@ -116,7 +169,10 @@ public:
      * @return A std::pair of the data and a bool indicating whether the download was successful
      */
     std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly = false);
+    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly = false)
+    {
+        return grpcSource_.loadInitialLedger(sequence, numMarkers, cacheOnly);
+    }
 
     /**
      * @brief Forward a request to rippled.
@@ -131,7 +187,14 @@ public:
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,
         boost::asio::yield_context yield
-    ) const;
+    ) const
+    {
+        return forwardingSource_.forwardToRippled(request, forwardToRippledClientIp, yield);
+    }
 };
+
+extern template class NewSourceImpl<>;
+
+using NewSource = NewSourceImpl<>;
 
 }  // namespace etl

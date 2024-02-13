@@ -109,7 +109,7 @@ SubscriptionSource::lastMessageTime() const
 }
 
 std::string const&
-SubscriptionSource::validatedLedgers() const
+SubscriptionSource::validatedRange() const
 {
     return validatedLedgersData_.lock()->validatedLedgersRaw;
 }

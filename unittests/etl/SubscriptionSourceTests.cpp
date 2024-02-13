@@ -249,7 +249,7 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithValidatedLedgers)
     EXPECT_TRUE(subscriptionSource_->hasLedger(789));
     EXPECT_FALSE(subscriptionSource_->hasLedger(790));
 
-    EXPECT_EQ(subscriptionSource_->validatedLedgers(), "123-456,789,32");
+    EXPECT_EQ(subscriptionSource_->validatedRange(), "123-456,789,32");
 }
 
 TEST_F(SubscriptionSourceReadTests, GotResultWithValidatedLedgersWrongValue_Reconnect)
@@ -280,7 +280,7 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithLedgerIndexAndValidatedLedgers)
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
 
-    EXPECT_EQ(subscriptionSource_->validatedLedgers(), "1-3");
+    EXPECT_EQ(subscriptionSource_->validatedRange(), "1-3");
     EXPECT_FALSE(subscriptionSource_->hasLedger(0));
     EXPECT_TRUE(subscriptionSource_->hasLedger(1));
     EXPECT_TRUE(subscriptionSource_->hasLedger(2));
@@ -341,7 +341,7 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithValidatedLedgers)
     EXPECT_TRUE(subscriptionSource_->hasLedger(1));
     EXPECT_TRUE(subscriptionSource_->hasLedger(2));
     EXPECT_FALSE(subscriptionSource_->hasLedger(3));
-    EXPECT_EQ(subscriptionSource_->validatedLedgers(), "1-2");
+    EXPECT_EQ(subscriptionSource_->validatedRange(), "1-2");
 }
 
 TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndexAndValidatedLedgers)
@@ -364,7 +364,7 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndexAndValidatedLe
     EXPECT_TRUE(subscriptionSource_->hasLedger(1));
     EXPECT_TRUE(subscriptionSource_->hasLedger(2));
     EXPECT_FALSE(subscriptionSource_->hasLedger(3));
-    EXPECT_EQ(subscriptionSource_->validatedLedgers(), "1-2");
+    EXPECT_EQ(subscriptionSource_->validatedRange(), "1-2");
 }
 
 TEST_F(SubscriptionSourceReadTests, GotTransactionIsForwardingFalse)
