@@ -96,14 +96,11 @@ target_sources (clio PRIVATE
   src/data/cassandra/Handle.cpp
   src/data/cassandra/SettingsProvider.cpp
   ## ETL
-  src/etl/Source.cpp
-  src/etl/ProbingSource.cpp
   src/etl/NFTHelpers.cpp
   src/etl/ETLService.cpp
   src/etl/ETLState.cpp
   src/etl/LoadBalancer.cpp
   src/etl/NewSource.cpp
-  src/etl/impl/ForwardCache.cpp
   src/etl/impl/ForwardingSource.cpp
   src/etl/impl/GrpcSource.cpp
   src/etl/impl/SubscriptionSource.cpp

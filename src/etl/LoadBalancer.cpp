@@ -23,9 +23,7 @@
 #include "etl/ETLHelpers.hpp"
 #include "etl/ETLService.hpp"
 #include "etl/ETLState.hpp"
-#include "etl/ProbingSource.hpp"
-#include "etl/Source.hpp"
-#include "util/Assert.hpp"
+#include "etl/NewSource.hpp"
 #include "util/Random.hpp"
 #include "util/log/Logger.hpp"
 
@@ -51,22 +49,6 @@
 using namespace util;
 
 namespace etl {
-
-std::unique_ptr<Source>
-LoadBalancer::make_Source(
-    Config const& config,
-    boost::asio::io_context& ioc,
-    std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<feed::SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-    LoadBalancer& balancer
-)
-{
-    auto src = std::make_unique<ProbingSource>(config, ioc, backend, subscriptions, validatedLedgers, balancer);
-    src->run();
-
-    return src;
-}
 
 std::shared_ptr<LoadBalancer>
 LoadBalancer::make_LoadBalancer(
@@ -107,15 +89,17 @@ LoadBalancer::LoadBalancer(
     };
 
     for (auto const& entry : config.array("etl_sources")) {
-        std::unique_ptr<Source> source = make_Source(entry, ioc, backend, subscriptions, validatedLedgers, *this);
+        auto source = make_NewSource(entry, ioc, backend, subscriptions, validatedLedgers, [this]() {
+            chooseForwardingSource();
+        });
 
         // checking etl node validity
-        auto const stateOpt = ETLState::fetchETLStateFromSource(*source);
+        auto const stateOpt = ETLState::fetchETLStateFromSource(source);
 
         if (!stateOpt) {
             checkOnETLFailure(fmt::format(
                 "Failed to fetch ETL state from source = {} Please check the configuration and network",
-                source->toString()
+                source.toString()
             ));
         } else if (etlState_ && etlState_->networkID && stateOpt->networkID && etlState_->networkID != stateOpt->networkID) {
             checkOnETLFailure(fmt::format(
@@ -128,7 +112,8 @@ LoadBalancer::LoadBalancer(
         }
 
         sources_.push_back(std::move(source));
-        LOG(log_.info()) << "Added etl source - " << sources_.back()->toString();
+        chooseForwardingSource();
+        LOG(log_.info()) << "Added etl source - " << sources_.back().toString();
     }
 
     if (sources_.empty())
@@ -146,11 +131,11 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
     std::vector<std::string> response;
     auto const success = execute(
         [this, &response, &sequence, cacheOnly](auto& source) {
-            auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
+            auto [data, res] = source.loadInitialLedger(sequence, downloadRanges_, cacheOnly);
 
             if (!res) {
                 LOG(log_.error()) << "Failed to download initial ledger."
-                                  << " Sequence = " << sequence << " source = " << source->toString();
+                                  << " Sequence = " << sequence << " source = " << source.toString();
             } else {
                 response = std::move(data);
             }
@@ -168,17 +153,17 @@ LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObje
     GetLedgerResponseType response;
     bool const success = execute(
         [&response, ledgerSequence, getObjects, getObjectNeighbors, log = log_](auto& source) {
-            auto [status, data] = source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
+            auto [status, data] = source.fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
             response = std::move(data);
             if (status.ok() && response.validated()) {
                 LOG(log.info()) << "Successfully fetched ledger = " << ledgerSequence
-                                << " from source = " << source->toString();
+                                << " from source = " << source.toString();
                 return true;
             }
 
             LOG(log.warn()) << "Could not fetch ledger " << ledgerSequence << ", Reply: " << response.DebugString()
                             << ", error_code: " << status.error_code() << ", error_msg: " << status.error_message()
-                            << ", source = " << source->toString();
+                            << ", source = " << source.toString();
             return false;
         },
         ledgerSequence
@@ -203,7 +188,7 @@ LoadBalancer::forwardToRippled(
     auto numAttempts = 0u;
 
     while (numAttempts < sources_.size()) {
-        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, yield))
+        if (auto res = sources_[sourceIdx].forwardToRippled(request, clientIp, yield))
             return res;
 
         sourceIdx = (sourceIdx + 1) % sources_.size();
@@ -213,27 +198,12 @@ LoadBalancer::forwardToRippled(
     return {};
 }
 
-bool
-LoadBalancer::shouldPropagateTxnStream(Source* in) const
-{
-    for (auto& src : sources_) {
-        ASSERT(src != nullptr, "Source is nullptr");
-
-        // We pick the first Source encountered that is connected
-        if (src->isConnected())
-            return *src == *in;
-    }
-
-    // If no sources connected, then this stream has not been forwarded
-    return true;
-}
-
 boost::json::value
 LoadBalancer::toJson() const
 {
     boost::json::array ret;
     for (auto& src : sources_)
-        ret.push_back(src->toJson());
+        ret.push_back(src.toJson());
 
     return ret;
 }
@@ -252,23 +222,23 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
         auto& source = sources_[sourceIdx];
 
         LOG(log_.debug()) << "Attempting to execute func. ledger sequence = " << ledgerSequence
-                          << " - source = " << source->toString();
+                          << " - source = " << source.toString();
         // Originally, it was (source->hasLedger(ledgerSequence) || true)
         /* Sometimes rippled has ledger but doesn't actually know. However,
         but this does NOT happen in the normal case and is safe to remove
         This || true is only needed when loading full history standalone */
-        if (source->hasLedger(ledgerSequence)) {
+        if (source.hasLedger(ledgerSequence)) {
             bool const res = f(source);
             if (res) {
-                LOG(log_.debug()) << "Successfully executed func at source = " << source->toString()
+                LOG(log_.debug()) << "Successfully executed func at source = " << source.toString()
                                   << " - ledger sequence = " << ledgerSequence;
                 break;
             }
 
-            LOG(log_.warn()) << "Failed to execute func at source = " << source->toString()
+            LOG(log_.warn()) << "Failed to execute func at source = " << source.toString()
                              << " - ledger sequence = " << ledgerSequence;
         } else {
-            LOG(log_.warn()) << "Ledger not present at source = " << source->toString()
+            LOG(log_.warn()) << "Ledger not present at source = " << source.toString()
                              << " - ledger sequence = " << ledgerSequence;
         }
         sourceIdx = (sourceIdx + 1) % sources_.size();
@@ -291,6 +261,19 @@ LoadBalancer::getETLState() noexcept
         etlState_ = ETLState::fetchETLStateFromSource(*this);
     }
     return etlState_;
+}
+
+void
+LoadBalancer::chooseForwardingSource()
+{
+    bool newForwardingSourceAssigned = false;
+    for (auto& source : sources_) {
+        if (not newForwardingSourceAssigned and source.isConnected()) {
+            source.setForwarding(true);
+        } else {
+            source.setForwarding(false);
+        }
+    }
 }
 
 }  // namespace etl
