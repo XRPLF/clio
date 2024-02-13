@@ -46,51 +46,39 @@
 namespace etl {
 
 template <
-    typename SomeGrpcSource = impl::GrpcSource,
-    typename SomeSubscriptionSource = impl::SubscriptionSource,
-    typename SomeForwardingSource = impl::ForwardingSource>
+    typename GrpcSourceType = impl::GrpcSource,
+    typename SubscriptionSourceType = impl::SubscriptionSource,
+    typename ForwardingSourceType = impl::ForwardingSource>
 class NewSourceImpl {
     std::string ip_;
     std::string wsPort_;
     std::string grpcPort_;
 
-    SomeGrpcSource grpcSource_;
-    SomeSubscriptionSource subscriptionSource_;
-    SomeForwardingSource forwardingSource_;
+    GrpcSourceType grpcSource_;
+    SubscriptionSourceType subscriptionSource_;
+    ForwardingSourceType forwardingSource_;
 
 public:
     using OnDisconnectHook = impl::SubscriptionSource::OnDisconnectHook;
 
-    /**
-     * @brief Create the base portion of ETL source.
-     *
-     * @param config The configuration to use
-     * @param ioc The io_context to run on
-     * @param backend BackendInterface implementation
-     * @param subscriptions Subscription manager
-     * @param validatedLedgers The network validated ledgers data structure
-     */
+    template <typename SomeGrpcSourceType, typename SomeSubscriptionSourceType, typename SomeForwardingSourceType>
+        requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType> &&
+                     std::is_same_v<SubscriptionSourceType, SomeSubscriptionSourceType> &&
+                     std::is_same_v<ForwardingSourceType, SomeForwardingSourceType>
     NewSourceImpl(
-        util::Config const& config,
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-        OnDisconnectHook onDisconnect
+        std::string ip,
+        std::string wsPort,
+        std::string grpcPort,
+        SomeGrpcSourceType&& grpcSource,
+        SomeSubscriptionSourceType&& subscriptionSource,
+        SomeForwardingSourceType&& forwardingSource
     )
-        : ip_(config.valueOr<std::string>("ip", {}))
-        , wsPort_(config.valueOr<std::string>("ws_port", {}))
-        , grpcPort_(config.valueOr<std::string>("gtcp_port", {}))
-        , grpcSource_(ip_, grpcPort_, std::move(backend))
-        , subscriptionSource_(
-              ioc,
-              ip_,
-              wsPort_,
-              std::move(validatedLedgers),
-              std::move(subscriptions),
-              std::move(onDisconnect)
-          )
-        , forwardingSource_(ip_, wsPort_)
+        : ip_(std::move(ip))
+        , wsPort_(std::move(wsPort))
+        , grpcPort_(std::move(grpcPort))
+        , grpcSource_(std::forward<SomeGrpcSourceType>(grpcSource))
+        , subscriptionSource_(std::forward<SomeSubscriptionSourceType>(subscriptionSource))
+        , forwardingSource_(std::forward<SomeForwardingSourceType>(forwardingSource))
     {
     }
 
@@ -99,6 +87,17 @@ public:
     isConnected() const
     {
         return subscriptionSource_.isConnected();
+    }
+
+    /**
+     * @brief Set the forwarding state of the source.
+     *
+     * @param isForwarding Whether to forward or not
+     */
+    void
+    setForwarding(bool isForwarding)
+    {
+        subscriptionSource_.setForwarding(isForwarding);
     }
 
     /** @return JSON representation of the source */
@@ -116,7 +115,7 @@ public:
         auto last = subscriptionSource_.lastMessageTime();
         if (last.time_since_epoch().count() != 0) {
             res["last_msg_age_seconds"] = std::to_string(
-                std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - last).count()
+                std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - last).count()
             );
         }
 
@@ -196,5 +195,38 @@ public:
 extern template class NewSourceImpl<>;
 
 using NewSource = NewSourceImpl<>;
+/**
+ * @brief Create the base portion of ETL source.
+ *
+ * @param config The configuration to use
+ * @param ioc The io_context to run on
+ * @param backend BackendInterface implementation
+ * @param subscriptions Subscription manager
+ * @param validatedLedgers The network validated ledgers data structure
+ */
+NewSource
+make_NewSource(
+    util::Config const& config,
+    boost::asio::io_context& ioc,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
+    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
+    NewSource::OnDisconnectHook onDisconnect
+)
+{
+    auto const ip = config.valueOr<std::string>("ip", {});
+    auto const wsPort = config.valueOr<std::string>("ws_port", {});
+    auto const grpcPort = config.valueOr<std::string>("grpc_port", {});
 
+    return NewSource{
+        ip,
+        wsPort,
+        grpcPort,
+        impl::GrpcSource{ip, grpcPort, std::move(backend)},
+        impl::SubscriptionSource{
+            ioc, ip, wsPort, std::move(validatedLedgers), std::move(subscriptions), std::move(onDisconnect)
+        },
+        impl::ForwardingSource{ip, wsPort}
+    };
+}
 }  // namespace etl

@@ -74,7 +74,7 @@ private:
     std::atomic_bool stop_{false};
     std::atomic_bool isForwarding_{false};
 
-    util::Mutex<std::chrono::system_clock::time_point> lastMessageTime_;
+    util::Mutex<std::chrono::steady_clock::time_point> lastMessageTime_;
 
     static constexpr std::chrono::seconds CONNECTION_TIMEOUT{30};
     static constexpr std::chrono::seconds RETRY_MAX_DELAY{30};
@@ -85,26 +85,26 @@ public:
      * @brief Construct a new Subscription Source object
      *
      * @tparam NetworkValidatedLedgersType The type of the network validated ledgers object
-     * @tparam SubscriptionSourceType The type of the subscription source object
+     * @tparam SubscriptionManagerType The type of the subscription manager object
      * @param ioContext The io_context to use
      * @param ip The ip address of the source
      * @param wsPort The port of the source
      * @param validatedLedgers The network validated ledgers object
-     * @param subscriptions The subscription source object
+     * @param subscriptions The subscription manager object
      * @param onDisconnect The onDisconnect hook. Called when the connection is lost
      * @param connectionTimeout The connection timeout. Defaults to 30 seconds
      * @param retryDelay The retry delay. Defaults to 1 second
      */
-    template <typename NetworkValidatedLedgersType, typename SubscriptionSourceType>
+    template <typename NetworkValidatedLedgersType, typename SubscriptionManagerType>
     SubscriptionSource(
         boost::asio::io_context& ioContext,
         std::string const& ip,
         std::string const& wsPort,
         std::shared_ptr<NetworkValidatedLedgersType> validatedLedgers,
-        std::shared_ptr<SubscriptionSourceType> subscriptions,
+        std::shared_ptr<SubscriptionManagerType> subscriptions,
         OnDisconnectHook onDisconnect,
-        std::chrono::milliseconds const connectionTimeout = CONNECTION_TIMEOUT,
-        std::chrono::milliseconds const retryDelay = RETRY_DELAY
+        std::chrono::steady_clock::duration const connectionTimeout = CONNECTION_TIMEOUT,
+        std::chrono::steady_clock::duration const retryDelay = RETRY_DELAY
     )
         : log_(fmt::format("GrpcSource[{}:{}]", ip, wsPort))
         , wsConnectionBuilder_(ip, wsPort)
@@ -157,7 +157,7 @@ public:
      *
      * @return The last message time
      */
-    std::chrono::system_clock::time_point
+    std::chrono::steady_clock::time_point
     lastMessageTime() const;
 
     /**

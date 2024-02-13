@@ -452,7 +452,7 @@ TEST_F(SubscriptionSourceReadTests, LastMessageTime)
     ioContext_.run();
 
     auto const actualLastTimeMessage = subscriptionSource_->lastMessageTime();
-    auto const now = std::chrono::system_clock::now();
+    auto const now = std::chrono::steady_clock::now();
     auto const diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - actualLastTimeMessage);
     EXPECT_LT(diff, std::chrono::milliseconds(100));
 }

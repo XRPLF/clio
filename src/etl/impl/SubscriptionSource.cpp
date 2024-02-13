@@ -102,7 +102,7 @@ SubscriptionSource::setForwarding(bool isForwarding)
     isForwarding_ = isForwarding;
 }
 
-std::chrono::system_clock::time_point
+std::chrono::steady_clock::time_point
 SubscriptionSource::lastMessageTime() const
 {
     return lastMessageTime_.lock().get();
@@ -278,7 +278,7 @@ SubscriptionSource::logError(util::requests::RequestError const& error) const
 void
 SubscriptionSource::setLastMessageTime()
 {
-    lastMessageTime_.lock().get() = std::chrono::system_clock::now();
+    lastMessageTime_.lock().get() = std::chrono::steady_clock::now();
 }
 
 void

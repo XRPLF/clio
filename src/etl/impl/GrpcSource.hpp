@@ -64,7 +64,7 @@ public:
      * @return A std::pair of the data and a bool indicating whether the download was successful
      */
     std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly = false);
+    loadInitialLedger(uint32_t sequence, uint32_t numMarkers, bool cacheOnly = false);
 };
 
 }  // namespace etl::impl
