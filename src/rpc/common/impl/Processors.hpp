@@ -25,7 +25,7 @@
 
 #include <boost/json/value.hpp>
 
-namespace rpc::detail {
+namespace rpc::impl {
 
 template <typename>
 static constexpr bool unsupported_handler_v = false;
@@ -67,4 +67,4 @@ struct DefaultProcessor final {
     }
 };
 
-}  // namespace rpc::detail
+}  // namespace rpc::impl

@@ -49,9 +49,9 @@
 #include <type_traits>
 #include <vector>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
-// TODO: this could probably be also moved out of detail and into the main cassandra namespace.
+// TODO: this could probably be also moved out of impl and into the main cassandra namespace.
 
 /**
  * @brief Implements async and sync querying against the cassandra DB with support for throttling.
@@ -535,4 +535,4 @@ private:
     }
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

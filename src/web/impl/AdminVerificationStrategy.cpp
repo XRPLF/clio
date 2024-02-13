@@ -32,7 +32,7 @@
 #include <string_view>
 #include <utility>
 
-namespace web::detail {
+namespace web::impl {
 
 bool
 IPAdminVerificationStrategy::isAdmin(RequestType const&, std::string_view ip) const
@@ -79,4 +79,4 @@ make_AdminVerificationStrategy(std::optional<std::string> password)
     return std::make_shared<IPAdminVerificationStrategy>();
 }
 
-}  // namespace web::detail
+}  // namespace web::impl

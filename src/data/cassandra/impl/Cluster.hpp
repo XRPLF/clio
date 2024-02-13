@@ -31,9 +31,9 @@
 #include <thread>
 #include <variant>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
-// TODO: move Settings to public interface, not detail
+// TODO: move Settings to public interface, not impl
 
 /**
  * @brief Bundles all cassandra settings in one place.
@@ -142,4 +142,4 @@ private:
     setupCredentials(Settings const& settings);
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

@@ -32,7 +32,7 @@
 #include <string>
 #include <unordered_set>
 
-namespace rpc::detail {
+namespace rpc::impl {
 
 template <typename LoadBalancerType, typename CountersType, typename HandlerProviderType>
 class ForwardingProxy {
@@ -143,4 +143,4 @@ private:
     }
 };
 
-}  // namespace rpc::detail
+}  // namespace rpc::impl

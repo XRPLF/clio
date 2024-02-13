@@ -23,7 +23,7 @@
 
 #include <type_traits>
 
-namespace util::prometheus::detail {
+namespace util::prometheus::impl {
 
 template <typename T>
 concept SomeCounterImpl = requires(T a) {
@@ -78,4 +78,4 @@ private:
     AtomicPtr<ValueType> value_ = std::make_unique<Atomic<ValueType>>(0);
 };
 
-}  // namespace util::prometheus::detail
+}  // namespace util::prometheus::impl

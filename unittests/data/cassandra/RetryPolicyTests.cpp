@@ -27,7 +27,7 @@
 #include <gtest/gtest.h>
 
 using namespace data::cassandra;
-using namespace data::cassandra::detail;
+using namespace data::cassandra::impl;
 using namespace testing;
 
 struct BackendCassandraRetryPolicyTest : SyncAsioContextTest {

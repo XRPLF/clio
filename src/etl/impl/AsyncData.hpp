@@ -42,7 +42,7 @@
 #include <utility>
 #include <vector>
 
-namespace etl::detail {
+namespace etl::impl {
 
 class AsyncCallData {
     util::Logger log_{"ETL"};
@@ -212,4 +212,4 @@ makeAsyncCallData(uint32_t const sequence, uint32_t const numMarkers)
     return result;
 }
 
-}  // namespace etl::detail
+}  // namespace etl::impl

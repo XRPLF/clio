@@ -19,15 +19,3 @@ runs:
         name: coverage-report.xml
         path: build/coverage_report.xml
         retention-days: 30
-
-    - name: Upload coverage report
-      uses: wandalen/wretry.action@v1.3.0
-      with:
-        action: codecov/codecov-action@v3
-        with: |
-          files: build/coverage_report.xml 
-          fail_ci_if_error: true
-          verbose: true
-          token: ${{ env.CODECOV_TOKEN }}
-        attempt_limit: 5
-        attempt_delay: 10000

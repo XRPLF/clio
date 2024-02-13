@@ -43,7 +43,7 @@ template <class... Ts>
 overloadSet(Ts...) -> overloadSet<Ts...>;
 };  // namespace
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 Cluster::Cluster(Settings const& settings) : ManagedObject{cass_cluster_new(), clusterDeleter}
 {
@@ -152,4 +152,4 @@ Cluster::setupCredentials(Settings const& settings)
     cass_cluster_set_credentials(*this, settings.username.value().c_str(), settings.password.value().c_str());
 }
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

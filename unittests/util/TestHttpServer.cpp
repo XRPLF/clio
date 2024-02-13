@@ -19,21 +19,19 @@
 
 #include "util/TestHttpServer.hpp"
 
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/socket_base.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/beast.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/http/error.hpp>
-#include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/message_generator.hpp>
+#include <boost/beast/http/read.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <gtest/gtest.h>
 
@@ -109,7 +107,7 @@ doSession(
 
 TestHttpServer::TestHttpServer(boost::asio::io_context& context, std::string host, int const port) : acceptor_(context)
 {
-    boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(host), port);
+    boost::asio::ip::tcp::endpoint const endpoint(boost::asio::ip::make_address(host), port);
     acceptor_.open(endpoint.protocol());
     acceptor_.set_option(asio::socket_base::reuse_address(true));
     acceptor_.bind(endpoint);

@@ -29,7 +29,7 @@
 using namespace std;
 using namespace rpc;
 using namespace rpc::validation;
-using namespace unittests::detail;
+using namespace unittests::impl;
 
 namespace json = boost::json;
 

@@ -30,7 +30,7 @@
 
 #include <chrono>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 /**
  * @brief A retry policy that employs exponential backoff
@@ -81,4 +81,4 @@ public:
     }
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

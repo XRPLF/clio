@@ -60,7 +60,7 @@ struct bad_expected_access : public std::runtime_error {
     }
 };
 
-namespace detail {
+namespace impl {
 
 // Custom policy for Expected.  Always throw on an invalid access.
 struct throw_policy : public boost::outcome_v2::policy::base {
@@ -89,7 +89,7 @@ struct throw_policy : public boost::outcome_v2::policy::base {
     }
 };
 
-}  // namespace detail
+}  // namespace impl
 
 // Definition of Unexpected, which is used to construct the unexpected
 // return type of an Expected.
@@ -142,8 +142,8 @@ Unexpected(E (&)[N]) -> Unexpected<E const*>;
 
 // Definition of Expected.  All of the machinery comes from boost::result.
 template <class T, class E>
-class Expected : private boost::outcome_v2::result<T, E, detail::throw_policy> {
-    using Base = boost::outcome_v2::result<T, E, detail::throw_policy>;
+class Expected : private boost::outcome_v2::result<T, E, impl::throw_policy> {
+    using Base = boost::outcome_v2::result<T, E, impl::throw_policy>;
 
 public:
     template <typename U, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
@@ -244,8 +244,8 @@ private:
 // Specialization of Expected<void, E>.  Allows returning either success
 // (without a value) or the reason for the failure.
 template <class E>
-class [[nodiscard]] Expected<void, E> : private boost::outcome_v2::result<void, E, detail::throw_policy> {
-    using Base = boost::outcome_v2::result<void, E, detail::throw_policy>;
+class [[nodiscard]] Expected<void, E> : private boost::outcome_v2::result<void, E, impl::throw_policy> {
+    using Base = boost::outcome_v2::result<void, E, impl::throw_policy>;
 
 public:
     // The default constructor makes a successful Expected<void, E>.

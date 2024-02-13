@@ -29,7 +29,7 @@
 #include <memory>
 #include <utility>
 
-namespace etl::detail {
+namespace etl::impl {
 
 /**
  * @brief GRPC Ledger data fetcher
@@ -105,4 +105,4 @@ public:
     }
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl
