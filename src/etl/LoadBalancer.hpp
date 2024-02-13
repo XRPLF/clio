@@ -22,7 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "etl/ETLHelpers.hpp"
 #include "etl/ETLState.hpp"
-#include "etl/NewSource.hpp"
+#include "etl/Source.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -71,7 +71,7 @@ private:
     static constexpr std::uint32_t DEFAULT_DOWNLOAD_RANGES = 16;
 
     util::Logger log_{"ETL"};
-    std::vector<NewSource> sources_;
+    std::vector<Source> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
         DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading intial ledger */

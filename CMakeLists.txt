@@ -100,7 +100,7 @@ target_sources (clio PRIVATE
   src/etl/ETLService.cpp
   src/etl/ETLState.cpp
   src/etl/LoadBalancer.cpp
-  src/etl/NewSource.cpp
+  src/etl/Source.cpp
   src/etl/impl/ForwardingSource.cpp
   src/etl/impl/GrpcSource.cpp
   src/etl/impl/SubscriptionSource.cpp
@@ -224,7 +224,7 @@ if (tests)
     unittests/etl/ExtractorTests.cpp
     unittests/etl/ForwardingSourceTests.cpp
     unittests/etl/GrpcSourceTests.cpp
-    unittests/etl/NewSourceTests.cpp
+    unittests/etl/SourceTests.cpp
     unittests/etl/SubscriptionSourceTests.cpp
     unittests/etl/SubscriptionSourceDependenciesTests.cpp
     unittests/etl/LedgerPublisherTests.cpp

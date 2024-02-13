@@ -17,9 +17,7 @@
 */
 //==============================================================================
 
-#include "etl/NewSource.hpp"
-#include "util/MockNetworkValidatedLedgers.hpp"
-#include "util/MockSubscriptionManager.hpp"
+#include "etl/Source.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -73,7 +71,7 @@ struct ForwardingSourceMock {
     );
 };
 
-struct NewSourceTest : public ::testing::Test {
+struct SourceTest : public ::testing::Test {
     boost::asio::io_context ioc_;
 
     StrictMock<GrpcSourceMock> grpcSourceMock_;
@@ -81,7 +79,7 @@ struct NewSourceTest : public ::testing::Test {
         std::make_shared<StrictMock<SubscriptionSourceMock>>();
     StrictMock<ForwardingSourceMock> forwardingSourceMock_;
 
-    NewSourceImpl<
+    SourceImpl<
         StrictMock<GrpcSourceMock>&,
         std::shared_ptr<StrictMock<SubscriptionSourceMock>>,
         StrictMock<ForwardingSourceMock>&>
@@ -95,25 +93,25 @@ struct NewSourceTest : public ::testing::Test {
         };
 };
 
-TEST_F(NewSourceTest, run)
+TEST_F(SourceTest, run)
 {
     EXPECT_CALL(*subscriptionSourceMock_, run());
     source_.run();
 }
 
-TEST_F(NewSourceTest, isConnected)
+TEST_F(SourceTest, isConnected)
 {
     EXPECT_CALL(*subscriptionSourceMock_, isConnected()).WillOnce(testing::Return(true));
     EXPECT_TRUE(source_.isConnected());
 }
 
-TEST_F(NewSourceTest, setForwarding)
+TEST_F(SourceTest, setForwarding)
 {
     EXPECT_CALL(*subscriptionSourceMock_, setForwarding(true));
     source_.setForwarding(true);
 }
 
-TEST_F(NewSourceTest, toJson)
+TEST_F(SourceTest, toJson)
 {
     EXPECT_CALL(*subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
     EXPECT_CALL(*subscriptionSourceMock_, isConnected()).WillOnce(Return(true));
@@ -131,7 +129,7 @@ TEST_F(NewSourceTest, toJson)
     EXPECT_GE(std::stoi(lastMessageAgeStr), 0);
 }
 
-TEST_F(NewSourceTest, toString)
+TEST_F(SourceTest, toString)
 {
     EXPECT_CALL(*subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
 
@@ -142,14 +140,14 @@ TEST_F(NewSourceTest, toString)
     );
 }
 
-TEST_F(NewSourceTest, hasLedger)
+TEST_F(SourceTest, hasLedger)
 {
     uint32_t const ledgerSeq = 123;
     EXPECT_CALL(*subscriptionSourceMock_, hasLedger(ledgerSeq)).WillOnce(Return(true));
     EXPECT_TRUE(source_.hasLedger(ledgerSeq));
 }
 
-TEST_F(NewSourceTest, fetchLedger)
+TEST_F(SourceTest, fetchLedger)
 {
     uint32_t const ledgerSeq = 123;
 
@@ -159,7 +157,7 @@ TEST_F(NewSourceTest, fetchLedger)
     EXPECT_EQ(actualStatus.error_code(), grpc::StatusCode::OK);
 }
 
-TEST_F(NewSourceTest, loadInitialLedger)
+TEST_F(SourceTest, loadInitialLedger)
 {
     uint32_t const ledgerSeq = 123;
     uint32_t const numMarkers = 3;
@@ -172,7 +170,7 @@ TEST_F(NewSourceTest, loadInitialLedger)
     EXPECT_TRUE(actualSuccess);
 }
 
-TEST_F(NewSourceTest, forwardToRippled)
+TEST_F(SourceTest, forwardToRippled)
 {
     boost::json::object const request = {{"some_key", "some_value"}};
     std::optional<std::string> const clientIp = "some_client_ip";

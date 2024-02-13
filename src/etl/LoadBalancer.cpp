@@ -23,7 +23,7 @@
 #include "etl/ETLHelpers.hpp"
 #include "etl/ETLService.hpp"
 #include "etl/ETLState.hpp"
-#include "etl/NewSource.hpp"
+#include "etl/Source.hpp"
 #include "util/Random.hpp"
 #include "util/log/Logger.hpp"
 
@@ -90,9 +90,8 @@ LoadBalancer::LoadBalancer(
     };
 
     for (auto const& entry : config.array("etl_sources")) {
-        auto source = make_NewSource(entry, ioc, backend, subscriptions, validatedLedgers, [this]() {
-            chooseForwardingSource();
-        });
+        auto source =
+            make_Source(entry, ioc, backend, subscriptions, validatedLedgers, [this]() { chooseForwardingSource(); });
 
         // checking etl node validity
         auto const stateOpt = ETLState::fetchETLStateFromSource(source);

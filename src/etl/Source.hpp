@@ -49,7 +49,7 @@ template <
     typename GrpcSourceType = impl::GrpcSource,
     typename SubscriptionSourceTypePtr = std::unique_ptr<impl::SubscriptionSource>,
     typename ForwardingSourceType = impl::ForwardingSource>
-class NewSourceImpl {
+class SourceImpl {
     std::string ip_;
     std::string wsPort_;
     std::string grpcPort_;
@@ -64,7 +64,7 @@ public:
     template <typename SomeGrpcSourceType, typename SomeForwardingSourceType>
         requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType> &&
                      std::is_same_v<ForwardingSourceType, SomeForwardingSourceType>
-    NewSourceImpl(
+    SourceImpl(
         std::string ip,
         std::string wsPort,
         std::string grpcPort,
@@ -200,9 +200,9 @@ public:
     }
 };
 
-extern template class NewSourceImpl<>;
+extern template class SourceImpl<>;
 
-using NewSource = NewSourceImpl<>;
+using Source = SourceImpl<>;
 
 /**
  * @brief Create a source
@@ -213,14 +213,14 @@ using NewSource = NewSourceImpl<>;
  * @param subscriptions Subscription manager
  * @param validatedLedgers The network validated ledgers data structure
  */
-NewSource
-make_NewSource(
+Source
+make_Source(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-    NewSource::OnDisconnectHook onDisconnect
+    Source::OnDisconnectHook onDisconnect
 );
 
 }  // namespace etl

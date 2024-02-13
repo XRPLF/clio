@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "etl/NewSource.hpp"
+#include "etl/Source.hpp"
 
 #include "data/BackendInterface.hpp"
 #include "etl/ETLHelpers.hpp"
@@ -32,16 +32,16 @@
 
 namespace etl {
 
-template class NewSourceImpl<>;
+template class SourceImpl<>;
 
-NewSource
-make_NewSource(
+Source
+make_Source(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-    NewSource::OnDisconnectHook onDisconnect
+    Source::OnDisconnectHook onDisconnect
 )
 {
     auto const ip = config.valueOr<std::string>("ip", {});
@@ -54,7 +54,7 @@ make_NewSource(
     );
     impl::ForwardingSource forwardingSource{ip, wsPort};
 
-    return NewSource{
+    return Source{
         ip, wsPort, grpcPort, std::move(grpcSource), std::move(subscriptionSource), std::move(forwardingSource)
     };
 }
