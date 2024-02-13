@@ -116,7 +116,6 @@ public:
         wsConnectionBuilder_.addHeader({boost::beast::http::field::user_agent, "clio-client"})
             .addHeader({"X-User", "clio-client"})
             .setConnectionTimeout(connectionTimeout);
-        subscribe();
     }
 
     /**
@@ -125,6 +124,12 @@ public:
      * @note This will block to wait for all the async operations to complete. io_context must be still running
      */
     ~SubscriptionSource();
+
+    /**
+     * @brief Run the source
+     */
+    void
+    run();
 
     /**
      * @brief Check if the source has a ledger
@@ -146,7 +151,8 @@ public:
     /**
      * @brief Set source forwarding
      *
-     * @note If forwarding is true the source will forward messages to the subscription manager
+     * @note If forwarding is true the source will forward messages to the subscription manager. Forwarding is being
+     * reset on disconnect.
      * @param isForwarding The new forwarding state
      */
     void

@@ -119,6 +119,12 @@ LoadBalancer::LoadBalancer(
 
     if (sources_.empty())
         checkOnETLFailure("No ETL sources configured. Please check the configuration");
+
+    // This is made separate from source creation to prevent UB in case one of the sources will call
+    // chooseForwardingSource while we are still filling the sources_ vector
+    for (auto& source : sources_) {
+        source.run();
+    }
 }
 
 LoadBalancer::~LoadBalancer()
@@ -267,17 +273,10 @@ LoadBalancer::getETLState() noexcept
 void
 LoadBalancer::chooseForwardingSource()
 {
-    // In SubscriptionSource isConnected() and setForwarding() are thread safe.
-    // But just in case we are using a mutex here.
-    static std::mutex mutex;
-    std::scoped_lock lock(mutex);
-
-    bool newForwardingSourceAssigned = false;
     for (auto& source : sources_) {
-        if (not newForwardingSourceAssigned and source.isConnected()) {
+        if (source.isConnected()) {
             source.setForwarding(true);
-        } else {
-            source.setForwarding(false);
+            break;
         }
     }
 }

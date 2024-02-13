@@ -44,6 +44,11 @@ using testing::MockFunction;
 using testing::StrictMock;
 
 struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
+    SubscriptionSourceConnectionTests()
+    {
+        subscriptionSource_->run();
+    }
+
     ~SubscriptionSourceConnectionTests() override
     {
         // SubscriptionSource's destructor posts future on context and waits for it to complete.

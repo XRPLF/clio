@@ -72,6 +72,12 @@ SubscriptionSource::~SubscriptionSource()
     wsConnection_.reset();
 }
 
+void
+SubscriptionSource::run()
+{
+    subscribe();
+}
+
 bool
 SubscriptionSource::hasLedger(uint32_t sequence) const
 {
@@ -228,6 +234,7 @@ SubscriptionSource::handleError(util::requests::RequestError const& error, boost
     isConnected_ = false;
     if (not stop_) {
         onDisconnect_();
+        isForwarding_ = false;
     }
 
     if (wsConnection_ != nullptr) {

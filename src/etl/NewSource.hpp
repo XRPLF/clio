@@ -81,6 +81,15 @@ public:
     {
     }
 
+    /**
+     * @brief Run subscriptions loop of the source
+     */
+    void
+    run()
+    {
+        subscriptionSource_->run();
+    }
+
     /** @return true if source is connected; false otherwise */
     bool
     isConnected() const

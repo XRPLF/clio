@@ -52,18 +52,7 @@ struct GrpcSourceMock {
 };
 
 struct SubscriptionSourceMock {
-    MOCK_METHOD(
-        void,
-        constructor,
-        (boost::asio::io_context&,
-         std::string const&,
-         std::string const&,
-         std::shared_ptr<MockNetworkValidatedLedgers>,
-         std::shared_ptr<MockSubscriptionManager>,
-         std::chrono::steady_clock::duration,
-         std::chrono::steady_clock::duration)
-    );
-
+    MOCK_METHOD(void, run, ());
     MOCK_METHOD(bool, hasLedger, (uint32_t), (const));
     MOCK_METHOD(bool, isConnected, (), (const));
     MOCK_METHOD(void, setForwarding, (bool));
@@ -105,6 +94,12 @@ struct NewSourceTest : public ::testing::Test {
             forwardingSourceMock_
         };
 };
+
+TEST_F(NewSourceTest, run)
+{
+    EXPECT_CALL(*subscriptionSourceMock_, run());
+    source_.run();
+}
 
 TEST_F(NewSourceTest, isConnected)
 {
