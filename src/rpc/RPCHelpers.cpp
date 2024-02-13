@@ -37,6 +37,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/string.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/lexical_cast/bad_lexical_cast.hpp>
 #include <fmt/core.h>
@@ -410,7 +411,7 @@ ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backe
             return Status{RippledError::rpcINVALID_PARAMS, "ledgerHashNotString"};
 
         ripple::uint256 ledgerHash;
-        if (!ledgerHash.parseHex(hashValue.as_string().c_str()))
+        if (!ledgerHash.parseHex(boost::json::value_to<std::string>(hashValue)))
             return Status{RippledError::rpcINVALID_PARAMS, "ledgerHashMalformed"};
 
         auto lgrInfo = backend->fetchLedgerByHash(ledgerHash, ctx.yield);
@@ -426,11 +427,11 @@ ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backe
     std::optional<std::uint32_t> ledgerSequence = {};
     if (!indexValue.is_null()) {
         if (indexValue.is_string()) {
-            boost::json::string const& stringIndex = indexValue.as_string();
+            std::string const stringIndex = boost::json::value_to<std::string>(indexValue);
             if (stringIndex == "validated") {
                 ledgerSequence = ctx.range.maxSequence;
             } else {
-                ledgerSequence = parseStringAsUInt(stringIndex.c_str());
+                ledgerSequence = parseStringAsUInt(stringIndex);
             }
         } else if (indexValue.is_int64())
             ledgerSequence = indexValue.as_int64();
@@ -784,7 +785,7 @@ parseRippleLibSeed(boost::json::value const& value)
     if (!value.is_string())
         return {};
 
-    auto const result = ripple::decodeBase58Token(value.as_string().c_str(), ripple::TokenType::None);
+    auto const result = ripple::decodeBase58Token(boost::json::value_to<std::string>(value), ripple::TokenType::None);
 
     static std::size_t constexpr SEED_SIZE = 18;
     static std::array<std::uint8_t, 2> constexpr SEED_PREFIX = {0xE1, 0x4B};
@@ -831,7 +832,7 @@ keypairFromRequst(boost::json::object const& request)
         if (!request.at("key_type").is_string())
             return Status{RippledError::rpcINVALID_PARAMS, "keyTypeNotString"};
 
-        std::string const key_type = request.at("key_type").as_string().c_str();
+        std::string const key_type = boost::json::value_to<std::string>(request.at("key_type"));
         keyType = ripple::keyTypeFromString(key_type);
 
         if (!keyType)
@@ -865,7 +866,7 @@ keypairFromRequst(boost::json::object const& request)
             if (!request.at(secretType).is_string())
                 return Status{RippledError::rpcINVALID_PARAMS, "secret value must be string"};
 
-            std::string const key = request.at(secretType).as_string().c_str();
+            std::string const key = boost::json::value_to<std::string>(request.at(secretType));
 
             if (secretType == "seed") {
                 seed = ripple::parseBase58<ripple::Seed>(key);
@@ -880,7 +881,7 @@ keypairFromRequst(boost::json::object const& request)
             if (!request.at("secret").is_string())
                 return Status{RippledError::rpcINVALID_PARAMS, "field secret should be a string"};
 
-            std::string const secret = request.at("secret").as_string().c_str();
+            std::string const secret = boost::json::value_to<std::string>(request.at("secret"));
             seed = ripple::parseGenericSeed(secret);
         }
     }
@@ -903,7 +904,7 @@ getAccountsFromTransaction(boost::json::object const& transaction)
             auto inObject = getAccountsFromTransaction(value.as_object());
             accounts.insert(accounts.end(), inObject.begin(), inObject.end());
         } else if (value.is_string()) {
-            auto account = ripple::parseBase58<ripple::AccountID>(value.as_string().c_str());
+            auto account = ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value));
             if (account) {
                 accounts.push_back(*account);
             }
@@ -1265,11 +1266,11 @@ parseBook(boost::json::object const& request)
     }
 
     ripple::Currency pay_currency;
-    if (!ripple::to_currency(pay_currency, taker_pays.at("currency").as_string().c_str()))
+    if (!ripple::to_currency(pay_currency, boost::json::value_to<std::string>(taker_pays.at("currency"))))
         return Status{RippledError::rpcSRC_CUR_MALFORMED};
 
     ripple::Currency get_currency;
-    if (!ripple::to_currency(get_currency, taker_gets["currency"].as_string().c_str()))
+    if (!ripple::to_currency(get_currency, boost::json::value_to<std::string>(taker_gets["currency"])))
         return Status{RippledError::rpcDST_AMT_MALFORMED};
 
     ripple::AccountID pay_issuer;
@@ -1277,7 +1278,7 @@ parseBook(boost::json::object const& request)
         if (!taker_pays.at("issuer").is_string())
             return Status{RippledError::rpcINVALID_PARAMS, "takerPaysIssuerNotString"};
 
-        if (!ripple::to_issuer(pay_issuer, taker_pays.at("issuer").as_string().c_str()))
+        if (!ripple::to_issuer(pay_issuer, boost::json::value_to<std::string>(taker_pays.at("issuer"))))
             return Status{RippledError::rpcSRC_ISR_MALFORMED};
 
         if (pay_issuer == ripple::noAccount())
@@ -1307,7 +1308,7 @@ parseBook(boost::json::object const& request)
         if (!taker_gets["issuer"].is_string())
             return Status{RippledError::rpcINVALID_PARAMS, "taker_gets.issuer should be string"};
 
-        if (!ripple::to_issuer(get_issuer, taker_gets.at("issuer").as_string().c_str()))
+        if (!ripple::to_issuer(get_issuer, boost::json::value_to<std::string>(taker_gets.at("issuer"))))
             return Status{RippledError::rpcDST_ISR_MALFORMED, "Invalid field 'taker_gets.issuer', bad issuer."};
 
         if (get_issuer == ripple::noAccount()) {
@@ -1344,7 +1345,7 @@ parseTaker(boost::json::value const& taker)
     if (!taker.is_string())
         return {Status{RippledError::rpcINVALID_PARAMS, "takerNotString"}};
 
-    takerID = accountFromStringStrict(taker.as_string().c_str());
+    takerID = accountFromStringStrict(boost::json::value_to<std::string>(taker));
 
     if (!takerID)
         return Status{RippledError::rpcBAD_ISSUER, "invalidTakerAccount"};
@@ -1356,9 +1357,9 @@ parseIssue(boost::json::object const& issue)
 {
     Json::Value jv;
     if (issue.contains(JS(issuer)) && issue.at(JS(issuer)).is_string())
-        jv["issuer"] = issue.at(JS(issuer)).as_string().c_str();
+        jv["issuer"] = boost::json::value_to<std::string>(issue.at(JS(issuer)));
     if (issue.contains(JS(currency)) && issue.at(JS(currency)).is_string())
-        jv["currency"] = issue.at(JS(currency)).as_string().c_str();
+        jv["currency"] = boost::json::value_to<std::string>(issue.at(JS(currency)));
 
     return ripple::issueFromJson(jv);
 }
@@ -1369,7 +1370,7 @@ specifiesCurrentOrClosedLedger(boost::json::object const& request)
     if (request.contains("ledger_index")) {
         auto indexValue = request.at("ledger_index");
         if (indexValue.is_string()) {
-            std::string const index = indexValue.as_string().c_str();
+            std::string const index = boost::json::value_to<std::string>(indexValue);
             return index == "current" || index == "closed";
         }
     }
@@ -1386,7 +1387,7 @@ getNFTID(boost::json::object const& request)
         return Status{RippledError::rpcINVALID_PARAMS, "tokenIDNotString"};
 
     ripple::uint256 tokenid;
-    if (!tokenid.parseHex(request.at(JS(nft_id)).as_string().c_str()))
+    if (!tokenid.parseHex(boost::json::value_to<std::string>(request.at(JS(nft_id)))))
         return Status{RippledError::rpcINVALID_PARAMS, "malformedTokenID"};
 
     return tokenid;

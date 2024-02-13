@@ -151,7 +151,8 @@ AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) con
             auto [txn, meta] = toExpandedJson(txnPlusMeta, ctx.apiVersion, NFTokenjson::ENABLE);
 
             if (txn.contains(JS(TransactionType)) && input.transactionTypeInLowercase.has_value() &&
-                util::toLower(txn[JS(TransactionType)].as_string().c_str()) != input.transactionTypeInLowercase.value())
+                util::toLower(boost::json::value_to<std::string>(txn[JS(TransactionType)])) !=
+                    input.transactionTypeInLowercase.value())
                 continue;
 
             if (!input.binary) {
@@ -229,7 +230,7 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     auto input = AccountTxHandler::Input{};
     auto const& jsonObject = jv.as_object();
 
-    input.account = jsonObject.at(JS(account)).as_string().c_str();
+    input.account = boost::json::value_to<std::string>(jsonObject.at(JS(account)));
 
     if (jsonObject.contains(JS(ledger_index_min)) && jsonObject.at(JS(ledger_index_min)).as_int64() != -1)
         input.ledgerIndexMin = jsonObject.at(JS(ledger_index_min)).as_int64();
@@ -238,13 +239,13 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
         input.ledgerIndexMax = jsonObject.at(JS(ledger_index_max)).as_int64();
 
     if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jsonObject.at(JS(ledger_index))));
         } else {
             // could not get the latest validated ledger seq here, using this flag to indicate that
             input.usingValidatedLedger = true;
@@ -268,7 +269,7 @@ tag_invoke(boost::json::value_to_tag<AccountTxHandler::Input>, boost::json::valu
     }
 
     if (jsonObject.contains("tx_type"))
-        input.transactionTypeInLowercase = jsonObject.at("tx_type").as_string().c_str();
+        input.transactionTypeInLowercase = boost::json::value_to<std::string>(jsonObject.at("tx_type"));
 
     return input;
 }

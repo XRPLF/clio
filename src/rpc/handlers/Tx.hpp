@@ -289,10 +289,10 @@ private:
         auto const& jsonObject = jv.as_object();
 
         if (jsonObject.contains(JS(transaction)))
-            input.transaction = jv.at(JS(transaction)).as_string().c_str();
+            input.transaction = boost::json::value_to<std::string>(jv.at(JS(transaction)));
 
         if (jsonObject.contains(JS(ctid))) {
-            input.ctid = jv.at(JS(ctid)).as_string().c_str();
+            input.ctid = boost::json::value_to<std::string>(jv.at(JS(ctid)));
             input.ctid = util::toUpper(*input.ctid);
         }
 

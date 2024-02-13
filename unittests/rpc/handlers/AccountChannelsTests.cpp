@@ -539,7 +539,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
         ASSERT_TRUE(output);
 
         EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 20);
-        EXPECT_THAT((*output).as_object().at("marker").as_string().c_str(), EndsWith(",0"));
+        EXPECT_THAT(boost::json::value_to<std::string>((*output).as_object().at("marker")), EndsWith(",0"));
     });
 
     runSpawn([this](auto yield) {
@@ -811,7 +811,10 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output).as_object().at("marker").as_string().c_str(), fmt::format("{},{}", INDEX1, nextPage));
+        EXPECT_EQ(
+            boost::json::value_to<std::string>((*output).as_object().at("marker")),
+            fmt::format("{},{}", INDEX1, nextPage)
+        );
         EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 15);
     });
 }

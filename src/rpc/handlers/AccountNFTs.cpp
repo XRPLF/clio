@@ -26,6 +26,7 @@
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
@@ -143,16 +144,16 @@ tag_invoke(boost::json::value_to_tag<AccountNFTsHandler::Input>, boost::json::va
     auto input = AccountNFTsHandler::Input{};
     auto const& jsonObject = jv.as_object();
 
-    input.account = jsonObject.at(JS(account)).as_string().c_str();
+    input.account = boost::json::value_to<std::string>(jsonObject.at(JS(account)));
 
     if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jsonObject.at(JS(ledger_index))));
         }
     }
 
@@ -160,7 +161,7 @@ tag_invoke(boost::json::value_to_tag<AccountNFTsHandler::Input>, boost::json::va
         input.limit = jsonObject.at(JS(limit)).as_int64();
 
     if (jsonObject.contains(JS(marker)))
-        input.marker = jsonObject.at(JS(marker)).as_string().c_str();
+        input.marker = boost::json::value_to<std::string>(jsonObject.at(JS(marker)));
 
     return input;
 }

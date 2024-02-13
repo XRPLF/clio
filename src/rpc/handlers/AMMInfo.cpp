@@ -33,6 +33,7 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <date/date.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/chrono.h>
@@ -222,7 +223,7 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
                 return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
             try {
-                ripple::issueFromJson(value.as_string().c_str());
+                ripple::issueFromJson(boost::json::value_to<std::string>(value));
             } catch (std::runtime_error const&) {
                 return Error{Status{RippledError::rpcISSUE_MALFORMED}};
             }
@@ -294,13 +295,13 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
     auto const& jsonObject = jv.as_object();
 
     if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
         }
     }
 
@@ -311,9 +312,9 @@ tag_invoke(boost::json::value_to_tag<AMMInfoHandler::Input>, boost::json::value 
         input.issue2 = parseIssue(jsonObject.at(JS(asset2)).as_object());
 
     if (jsonObject.contains(JS(account)))
-        input.accountID = accountFromStringStrict(jsonObject.at(JS(account)).as_string().c_str());
+        input.accountID = accountFromStringStrict(boost::json::value_to<std::string>(jsonObject.at(JS(account))));
     if (jsonObject.contains(JS(amm_account)))
-        input.ammAccount = accountFromStringStrict(jsonObject.at(JS(amm_account)).as_string().c_str());
+        input.ammAccount = accountFromStringStrict(boost::json::value_to<std::string>(jsonObject.at(JS(amm_account))));
 
     return input;
 }

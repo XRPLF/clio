@@ -30,6 +30,7 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
@@ -113,8 +114,10 @@ public:
                     return Error{Status{RippledError::rpcINVALID_PARAMS, "malformedAccounts"}};
                 }
 
-                auto const id1 = ripple::parseBase58<ripple::AccountID>(value.as_array()[0].as_string().c_str());
-                auto const id2 = ripple::parseBase58<ripple::AccountID>(value.as_array()[1].as_string().c_str());
+                auto const id1 =
+                    ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value.as_array()[0]));
+                auto const id2 =
+                    ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value.as_array()[1]));
 
                 if (!id1 || !id2)
                     return Error{Status{ClioError::rpcMALFORMED_ADDRESS, "malformedAddresses"}};

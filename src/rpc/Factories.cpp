@@ -31,6 +31,7 @@
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <ripple/protocol/ErrorCodes.h>
 
 #include <functional>
@@ -67,7 +68,7 @@ make_WsContext(
     if (!apiVersion)
         return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
 
-    string const command = commandValue.as_string().c_str();
+    string const command = boost::json::value_to<std::string>(commandValue);
     return web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp, session->isAdmin());
 }
 
@@ -91,7 +92,7 @@ make_HttpContext(
     if (request.at("method").as_string().empty())
         return Error{{ClioError::rpcCOMMAND_IS_EMPTY}};
 
-    string const command = request.at("method").as_string().c_str();
+    string const command = boost::json::value_to<std::string>(request.at("method"));
 
     if (command == "subscribe" || command == "unsubscribe")
         return Error{{RippledError::rpcBAD_SYNTAX, "Subscribe and unsubscribe are only allowed or websocket."}};

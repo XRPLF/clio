@@ -23,7 +23,9 @@
 #include "util/JsonUtils.hpp"
 
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 
+#include <string>
 #include <string_view>
 
 namespace rpc::modifiers {
@@ -92,7 +94,8 @@ struct ToLower final {
         if (not value.as_object().at(key.data()).is_string())
             return {};  // ignore for non-string types
 
-        value.as_object()[key.data()] = util::toLower(value.as_object().at(key.data()).as_string().c_str());
+        value.as_object()[key.data()] =
+            util::toLower(boost::json::value_to<std::string>(value.as_object().at(key.data())));
         return {};
     }
 };
