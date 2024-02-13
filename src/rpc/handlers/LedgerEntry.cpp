@@ -195,7 +195,7 @@ LedgerEntryHandler::composeKeyFromDirectory(boost::json::object const& directory
         directory.contains(JS(sub_index)) ? boost::json::value_to<uint64_t>(directory.at(JS(sub_index))) : 0;
 
     if (directory.contains(JS(dir_root))) {
-        ripple::uint256 const uDirRoot{boost::json::value_to<std::string>(directory.at(JS(dir_root)))};
+        ripple::uint256 const uDirRoot{boost::json::value_to<std::string>(directory.at(JS(dir_root))).data()};
         return ripple::keylet::page(uDirRoot, subIndex).key;
     }
 
