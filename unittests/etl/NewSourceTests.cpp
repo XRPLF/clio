@@ -64,7 +64,7 @@ struct SubscriptionSourceMock {
          std::chrono::steady_clock::duration)
     );
 
-    MOCK_METHOD(bool, hasValidatedLedger, (uint32_t), (const));
+    MOCK_METHOD(bool, hasLedger, (uint32_t), (const));
     MOCK_METHOD(bool, isConnected, (), (const));
     MOCK_METHOD(void, setForwarding, (bool));
     MOCK_METHOD(std::chrono::steady_clock::time_point, lastMessageTime, (), (const));
@@ -88,10 +88,14 @@ struct NewSourceTest : public ::testing::Test {
     boost::asio::io_context ioc_;
 
     StrictMock<GrpcSourceMock> grpcSourceMock_;
-    StrictMock<SubscriptionSourceMock> subscriptionSourceMock_;
+    std::shared_ptr<StrictMock<SubscriptionSourceMock>> subscriptionSourceMock_ =
+        std::make_shared<StrictMock<SubscriptionSourceMock>>();
     StrictMock<ForwardingSourceMock> forwardingSourceMock_;
 
-    NewSourceImpl<StrictMock<GrpcSourceMock>&, StrictMock<SubscriptionSourceMock>&, StrictMock<ForwardingSourceMock>&>
+    NewSourceImpl<
+        StrictMock<GrpcSourceMock>&,
+        std::shared_ptr<StrictMock<SubscriptionSourceMock>>,
+        StrictMock<ForwardingSourceMock>&>
         source_{
             "some_ip",
             "some_ws_port",
@@ -104,22 +108,22 @@ struct NewSourceTest : public ::testing::Test {
 
 TEST_F(NewSourceTest, isConnected)
 {
-    EXPECT_CALL(subscriptionSourceMock_, isConnected()).WillOnce(testing::Return(true));
+    EXPECT_CALL(*subscriptionSourceMock_, isConnected()).WillOnce(testing::Return(true));
     EXPECT_TRUE(source_.isConnected());
 }
 
 TEST_F(NewSourceTest, setForwarding)
 {
-    EXPECT_CALL(subscriptionSourceMock_, setForwarding(true));
+    EXPECT_CALL(*subscriptionSourceMock_, setForwarding(true));
     source_.setForwarding(true);
 }
 
 TEST_F(NewSourceTest, toJson)
 {
-    EXPECT_CALL(subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
-    EXPECT_CALL(subscriptionSourceMock_, isConnected()).WillOnce(Return(true));
+    EXPECT_CALL(*subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
+    EXPECT_CALL(*subscriptionSourceMock_, isConnected()).WillOnce(Return(true));
     auto const lastMessageTime = std::chrono::steady_clock::now();
-    EXPECT_CALL(subscriptionSourceMock_, lastMessageTime()).WillOnce(Return(lastMessageTime));
+    EXPECT_CALL(*subscriptionSourceMock_, lastMessageTime()).WillOnce(Return(lastMessageTime));
 
     auto const json = source_.toJson();
 
@@ -134,18 +138,19 @@ TEST_F(NewSourceTest, toJson)
 
 TEST_F(NewSourceTest, toString)
 {
-    EXPECT_CALL(subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
+    EXPECT_CALL(*subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
 
     auto const str = source_.toString();
     EXPECT_EQ(
-        str, "{validated_range: some_validated_range, ip: some_ip, ws_port: some_ws_port, grpc_port: some_grpc_port}"
+        str,
+        "{validated range: some_validated_range, ip: some_ip, web socket port: some_ws_port, grpc port: some_grpc_port}"
     );
 }
 
 TEST_F(NewSourceTest, hasLedger)
 {
     uint32_t const ledgerSeq = 123;
-    EXPECT_CALL(subscriptionSourceMock_, hasValidatedLedger(ledgerSeq)).WillOnce(Return(true));
+    EXPECT_CALL(*subscriptionSourceMock_, hasLedger(ledgerSeq)).WillOnce(Return(true));
     EXPECT_TRUE(source_.hasLedger(ledgerSeq));
 }
 

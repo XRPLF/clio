@@ -47,7 +47,7 @@ namespace etl {
 
 template <
     typename GrpcSourceType = impl::GrpcSource,
-    typename SubscriptionSourceType = impl::SubscriptionSource,
+    typename SubscriptionSourceTypePtr = std::unique_ptr<impl::SubscriptionSource>,
     typename ForwardingSourceType = impl::ForwardingSource>
 class NewSourceImpl {
     std::string ip_;
@@ -55,29 +55,28 @@ class NewSourceImpl {
     std::string grpcPort_;
 
     GrpcSourceType grpcSource_;
-    SubscriptionSourceType subscriptionSource_;
+    SubscriptionSourceTypePtr subscriptionSource_;
     ForwardingSourceType forwardingSource_;
 
 public:
     using OnDisconnectHook = impl::SubscriptionSource::OnDisconnectHook;
 
-    template <typename SomeGrpcSourceType, typename SomeSubscriptionSourceType, typename SomeForwardingSourceType>
+    template <typename SomeGrpcSourceType, typename SomeForwardingSourceType>
         requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType> &&
-                     std::is_same_v<SubscriptionSourceType, SomeSubscriptionSourceType> &&
                      std::is_same_v<ForwardingSourceType, SomeForwardingSourceType>
     NewSourceImpl(
         std::string ip,
         std::string wsPort,
         std::string grpcPort,
         SomeGrpcSourceType&& grpcSource,
-        SomeSubscriptionSourceType&& subscriptionSource,
+        SubscriptionSourceTypePtr subscriptionSource,
         SomeForwardingSourceType&& forwardingSource
     )
         : ip_(std::move(ip))
         , wsPort_(std::move(wsPort))
         , grpcPort_(std::move(grpcPort))
         , grpcSource_(std::forward<SomeGrpcSourceType>(grpcSource))
-        , subscriptionSource_(std::forward<SomeSubscriptionSourceType>(subscriptionSource))
+        , subscriptionSource_(std::move(subscriptionSource))
         , forwardingSource_(std::forward<SomeForwardingSourceType>(forwardingSource))
     {
     }
@@ -86,7 +85,7 @@ public:
     bool
     isConnected() const
     {
-        return subscriptionSource_.isConnected();
+        return subscriptionSource_->isConnected();
     }
 
     /**
@@ -97,7 +96,7 @@ public:
     void
     setForwarding(bool isForwarding)
     {
-        subscriptionSource_.setForwarding(isForwarding);
+        subscriptionSource_->setForwarding(isForwarding);
     }
 
     /** @return JSON representation of the source */
@@ -106,13 +105,13 @@ public:
     {
         boost::json::object res;
 
-        res["validated_range"] = subscriptionSource_.validatedRange();
-        res["is_connected"] = std::to_string(static_cast<int>(subscriptionSource_.isConnected()));
+        res["validated_range"] = subscriptionSource_->validatedRange();
+        res["is_connected"] = std::to_string(static_cast<int>(subscriptionSource_->isConnected()));
         res["ip"] = ip_;
         res["ws_port"] = wsPort_;
         res["grpc_port"] = grpcPort_;
 
-        auto last = subscriptionSource_.lastMessageTime();
+        auto last = subscriptionSource_->lastMessageTime();
         if (last.time_since_epoch().count() != 0) {
             res["last_msg_age_seconds"] = std::to_string(
                 std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - last).count()
@@ -126,7 +125,7 @@ public:
     std::string
     toString() const
     {
-        return "{validated_ledger: " + subscriptionSource_.validatedRange() + ", ip: " + ip_ +
+        return "{validated range: " + subscriptionSource_->validatedRange() + ", ip: " + ip_ +
             ", web socket port: " + wsPort_ + ", grpc port: " + grpcPort_ + "}";
     }
 
@@ -139,7 +138,7 @@ public:
     bool
     hasLedger(uint32_t sequence) const
     {
-        return subscriptionSource_.hasLedger(sequence);
+        return subscriptionSource_->hasLedger(sequence);
     }
 
     /**
@@ -195,8 +194,9 @@ public:
 extern template class NewSourceImpl<>;
 
 using NewSource = NewSourceImpl<>;
+
 /**
- * @brief Create the base portion of ETL source.
+ * @brief Create a source
  *
  * @param config The configuration to use
  * @param ioc The io_context to run on
@@ -212,21 +212,6 @@ make_NewSource(
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
     NewSource::OnDisconnectHook onDisconnect
-)
-{
-    auto const ip = config.valueOr<std::string>("ip", {});
-    auto const wsPort = config.valueOr<std::string>("ws_port", {});
-    auto const grpcPort = config.valueOr<std::string>("grpc_port", {});
+);
 
-    return NewSource{
-        ip,
-        wsPort,
-        grpcPort,
-        impl::GrpcSource{ip, grpcPort, std::move(backend)},
-        impl::SubscriptionSource{
-            ioc, ip, wsPort, std::move(validatedLedgers), std::move(subscriptions), std::move(onDisconnect)
-        },
-        impl::ForwardingSource{ip, wsPort}
-    };
-}
 }  // namespace etl
