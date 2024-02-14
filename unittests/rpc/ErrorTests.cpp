@@ -19,11 +19,13 @@
 
 #include "rpc/Errors.hpp"
 
+#include <boost/json/fwd.hpp>
 #include <boost/json/object.hpp>
 #include <gtest/gtest.h>
 #include <ripple/protocol/ErrorCodes.h>
 
 #include <cstdint>
+#include <string>
 #include <string_view>
 
 using namespace rpc;
@@ -45,12 +47,12 @@ check(boost::json::object const& j, std::string_view error, uint32_t errorCode, 
     EXPECT_TRUE(j.at("status").is_string());
     EXPECT_TRUE(j.at("type").is_string());
 
-    EXPECT_STREQ(j.at("status").as_string().c_str(), "error");
-    EXPECT_STREQ(j.at("type").as_string().c_str(), "response");
+    EXPECT_EQ(boost::json::value_to<std::string>(j.at("status")), "error");
+    EXPECT_EQ(boost::json::value_to<std::string>(j.at("type")), "response");
 
-    EXPECT_STREQ(j.at("error").as_string().c_str(), error.data());
+    EXPECT_EQ(boost::json::value_to<std::string>(j.at("error")), error.data());
     EXPECT_EQ(j.at("error_code").as_uint64(), errorCode);
-    EXPECT_STREQ(j.at("error_message").as_string().c_str(), errorMessage.data());
+    EXPECT_EQ(boost::json::value_to<std::string>(j.at("error_message")), errorMessage.data());
 }
 }  // namespace
 
@@ -89,7 +91,7 @@ TEST(RPCErrorsTest, RippledErrorToJSON)
 TEST(RPCErrorsTest, RippledErrorFromStringToJSON)
 {
     auto const j = makeError(Status{"veryCustomError"});
-    EXPECT_STREQ(j.at("error").as_string().c_str(), "veryCustomError");
+    EXPECT_EQ(boost::json::value_to<std::string>(j.at("error")), "veryCustomError");
 }
 
 TEST(RPCErrorsTest, RippledErrorToJSONCustomMessage)
@@ -137,7 +139,7 @@ TEST(RPCErrorsTest, WarningToJSON)
     EXPECT_TRUE(j.at("message").is_string());
 
     EXPECT_EQ(j.at("id").as_int64(), static_cast<uint32_t>(WarningCode::warnRPC_OUTDATED));
-    EXPECT_STREQ(j.at("message").as_string().c_str(), "This server may be out of date");
+    EXPECT_EQ(boost::json::value_to<std::string>(j.at("message")), "This server may be out of date");
 }
 
 TEST(RPCErrorsTest, InvalidWarningToJSON)
