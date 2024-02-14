@@ -41,6 +41,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <grpcpp/grpcpp.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
@@ -320,11 +321,13 @@ private:
 
                     data::LedgerObject stateObject = {};
 
-                    if (!stateObject.key.parseHex(obj.at("index").as_string().c_str())) {
+                    if (!stateObject.key.parseHex(boost::json::value_to<std::string>(obj.at("index")))) {
                         LOG(log_.error()) << "failed to parse object id";
                         return false;
                     }
-                    boost::algorithm::unhex(obj.at("data").as_string().c_str(), std::back_inserter(stateObject.blob));
+                    boost::algorithm::unhex(
+                        boost::json::value_to<std::string>(obj.at("data")), std::back_inserter(stateObject.blob)
+                    );
                     objects.push_back(std::move(stateObject));
                 }
                 cache_.get().update(objects, ledgerIndex, true);

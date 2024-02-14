@@ -31,6 +31,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
+#include <boost/json/value_to.hpp>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/chrono.h>
 #include <ripple/basics/strHex.h>
@@ -199,7 +200,7 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
     auto const& jsonObject = jv.as_object();
     auto input = NFTHistoryHandler::Input{};
 
-    input.nftID = jsonObject.at(JS(nft_id)).as_string().c_str();
+    input.nftID = boost::json::value_to<std::string>(jsonObject.at(JS(nft_id)));
 
     if (jsonObject.contains(JS(ledger_index_min)) && jsonObject.at(JS(ledger_index_min)).as_int64() != -1)
         input.ledgerIndexMin = jsonObject.at(JS(ledger_index_min)).as_int64();
@@ -208,13 +209,13 @@ tag_invoke(boost::json::value_to_tag<NFTHistoryHandler::Input>, boost::json::val
         input.ledgerIndexMax = jsonObject.at(JS(ledger_index_max)).as_int64();
 
     if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jsonObject.at(JS(ledger_index))));
         }
     }
 

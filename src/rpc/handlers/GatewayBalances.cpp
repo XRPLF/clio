@@ -28,6 +28,7 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <ripple/basics/strHex.h>
 #include <ripple/beast/utility/Zero.h>
 #include <ripple/protocol/AccountID.h>
@@ -212,29 +213,31 @@ tag_invoke(boost::json::value_to_tag<GatewayBalancesHandler::Input>, boost::json
     auto input = GatewayBalancesHandler::Input{};
     auto const& jsonObject = jv.as_object();
 
-    input.account = jv.at(JS(account)).as_string().c_str();
+    input.account = boost::json::value_to<std::string>(jv.at(JS(account)));
 
     if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
         }
     }
 
     if (jsonObject.contains(JS(hotwallet))) {
         if (jsonObject.at(JS(hotwallet)).is_string()) {
-            input.hotWallets.insert(*accountFromStringStrict(jv.at(JS(hotwallet)).as_string().c_str()));
+            input.hotWallets.insert(*accountFromStringStrict(boost::json::value_to<std::string>(jv.at(JS(hotwallet)))));
         } else {
             auto const& hotWallets = jv.at(JS(hotwallet)).as_array();
             std::transform(
                 hotWallets.begin(),
                 hotWallets.end(),
                 std::inserter(input.hotWallets, input.hotWallets.begin()),
-                [](auto const& hotWallet) { return *accountFromStringStrict(hotWallet.as_string().c_str()); }
+                [](auto const& hotWallet) {
+                    return *accountFromStringStrict(boost::json::value_to<std::string>(hotWallet));
+                }
             );
         }
     }

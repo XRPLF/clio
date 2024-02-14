@@ -26,6 +26,7 @@
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value_to.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -2155,7 +2156,10 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
             output.value().at("node_binary").as_string(),
             ripple::strHex(testBundle.mockedEntity.getSerializer().peekData())
         );
-        EXPECT_EQ(ripple::uint256(output.value().at("index").as_string().c_str()), testBundle.expectedIndex);
+        EXPECT_EQ(
+            ripple::uint256(boost::json::value_to<std::string>(output.value().at("index")).data()),
+            testBundle.expectedIndex
+        );
     });
 }
 

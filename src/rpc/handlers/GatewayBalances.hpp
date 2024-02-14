@@ -98,13 +98,13 @@ public:
                 auto const getAccountID = [](auto const& j) -> std::optional<ripple::AccountID> {
                     if (j.is_string()) {
                         auto const pk = ripple::parseBase58<ripple::PublicKey>(
-                            ripple::TokenType::AccountPublic, j.as_string().c_str()
+                            ripple::TokenType::AccountPublic, boost::json::value_to<std::string>(j)
                         );
 
                         if (pk)
                             return ripple::calcAccountID(*pk);
 
-                        return ripple::parseBase58<ripple::AccountID>(j.as_string().c_str());
+                        return ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(j));
                     }
 
                     return {};

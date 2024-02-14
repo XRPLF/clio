@@ -27,6 +27,7 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/json/value_to.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -36,6 +37,7 @@
 #include <ripple/protocol/STObject.h>
 
 #include <optional>
+#include <string>
 #include <vector>
 
 using namespace rpc;
@@ -484,8 +486,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
         ASSERT_TRUE(output);
         EXPECT_EQ(output->at("offers").as_array().size(), 50);
         EXPECT_EQ(output->at("limit").as_uint64(), 50);
-        EXPECT_STREQ(
-            output->at("marker").as_string().c_str(), "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"
+        EXPECT_EQ(
+            boost::json::value_to<std::string>(output->at("marker")),
+            "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"
         );
     });
 }
@@ -544,8 +547,9 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
         EXPECT_EQ(output->at("offers").as_array().size(), 50);
         EXPECT_EQ(output->at("limit").as_uint64(), 50);
         // marker also progressed by 50
-        EXPECT_STREQ(
-            output->at("marker").as_string().c_str(), "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC385"
+        EXPECT_EQ(
+            boost::json::value_to<std::string>(output->at("marker")),
+            "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC385"
         );
     });
 }

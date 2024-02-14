@@ -31,11 +31,13 @@
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
+#include <boost/json/value_to.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <optional>
+#include <string>
 
 using namespace rpc;
 namespace json = boost::json;
@@ -81,7 +83,7 @@ protected:
 
         auto const& info = result.at("info").as_object();
         EXPECT_TRUE(info.contains("complete_ledgers"));
-        EXPECT_STREQ(info.at("complete_ledgers").as_string().c_str(), "10-30");
+        EXPECT_EQ(boost::json::value_to<std::string>(info.at("complete_ledgers")), "10-30");
         EXPECT_TRUE(info.contains("load_factor"));
         EXPECT_TRUE(info.contains("clio_version"));
         EXPECT_TRUE(info.contains("libxrpl_version"));
@@ -93,7 +95,7 @@ protected:
         EXPECT_TRUE(validated.contains("age"));
         EXPECT_EQ(validated.at("age").as_uint64(), 3u);
         EXPECT_TRUE(validated.contains("hash"));
-        EXPECT_STREQ(validated.at("hash").as_string().c_str(), LEDGERHASH);
+        EXPECT_EQ(boost::json::value_to<std::string>(validated.at("hash")), LEDGERHASH);
         EXPECT_TRUE(validated.contains("seq"));
         EXPECT_EQ(validated.at("seq").as_uint64(), 30u);
         EXPECT_TRUE(validated.contains("base_fee_xrp"));
@@ -135,7 +137,7 @@ protected:
         EXPECT_TRUE(info.contains("validation_quorum"));
         EXPECT_EQ(info.at("validation_quorum").as_int64(), 456);
         EXPECT_TRUE(info.contains("rippled_version"));
-        EXPECT_STREQ(info.at("rippled_version").as_string().c_str(), "1234");
+        EXPECT_EQ(boost::json::value_to<std::string>(info.at("rippled_version")), "1234");
         EXPECT_TRUE(info.contains("network_id"));
         EXPECT_EQ(info.at("network_id").as_int64(), 2);
     }

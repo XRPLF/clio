@@ -25,6 +25,7 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
+#include <boost/json/value_to.hpp>
 
 #include <atomic>
 #include <memory>
@@ -74,9 +75,9 @@ ForwardCache::get(boost::json::object const& request) const
 {
     std::optional<std::string> command = {};
     if (request.contains("command") && !request.contains("method") && request.at("command").is_string()) {
-        command = request.at("command").as_string().c_str();
+        command = boost::json::value_to<std::string>(request.at("command"));
     } else if (request.contains("method") && !request.contains("command") && request.at("method").is_string()) {
-        command = request.at("method").as_string().c_str();
+        command = boost::json::value_to<std::string>(request.at("method"));
     }
 
     if (!command)
