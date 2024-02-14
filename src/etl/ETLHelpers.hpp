@@ -207,7 +207,7 @@ public:
         return ret;
     }
 
-    auto
+    std::size_t
     size() const
     {
         return queue_.size();

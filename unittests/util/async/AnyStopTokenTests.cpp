@@ -35,22 +35,25 @@ struct FakeStopToken {
 };
 }  // namespace
 
-TEST(AnyStopTokenTests, IsStopRequestedCallPropagated)
-{
-    {
-        AnyStopToken stopToken{FakeStopToken{false}};
-        EXPECT_EQ(stopToken.isStopRequested(), false);
-    }
-    {
-        AnyStopToken stopToken{FakeStopToken{true}};
-        EXPECT_EQ(stopToken.isStopRequested(), true);
-    }
-}
+struct AnyStopTokenTests : public TestWithParam<bool> {};
 
-TEST(AnyStopTokenTests, CanCopy)
+INSTANTIATE_TEST_CASE_P(AnyStopTokenGroup, AnyStopTokenTests, ValuesIn({true, false}), [](auto const& info) {
+    return info.param ? "true" : "false";
+});
+
+TEST_P(AnyStopTokenTests, CanCopy)
 {
-    AnyStopToken stopToken{FakeStopToken{true}};
+    AnyStopToken stopToken{FakeStopToken{GetParam()}};
     AnyStopToken token = stopToken;
 
     EXPECT_EQ(token, stopToken);
+}
+
+TEST_P(AnyStopTokenTests, IsStopRequestedCallPropagated)
+{
+    auto const flag = GetParam();
+    AnyStopToken stopToken{FakeStopToken{flag}};
+
+    EXPECT_EQ(stopToken.isStopRequested(), flag);
+    EXPECT_EQ(stopToken, flag);
 }

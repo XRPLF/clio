@@ -31,12 +31,12 @@
 using namespace util::async;
 using namespace ::testing;
 
-struct AnyOperationTests : ::testing::Test {
+struct AnyOperationTests : Test {
     using OperationType = MockOperation<util::Expected<impl::Any, ExecutionError>>;
     using ScheduledOperationType = MockScheduledOperation<util::Expected<impl::Any, ExecutionError>>;
 
-    ::testing::NaggyMock<OperationType> mockOp;
-    ::testing::NaggyMock<ScheduledOperationType> mockScheduledOp;
+    NaggyMock<OperationType> mockOp;
+    NaggyMock<ScheduledOperationType> mockScheduledOp;
 
     AnyOperation<void> voidOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
     AnyOperation<int> intOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
@@ -60,28 +60,26 @@ TEST_F(AnyOperationTests, GetIntData)
 
 TEST_F(AnyOperationTests, WaitCallPropagated)
 {
-    auto called = false;
-    EXPECT_CALL(mockOp, wait()).WillOnce([&] { called = true; });
-    ;
+    StrictMock<MockFunction<void()>> callback;
+    EXPECT_CALL(callback, Call());
+    EXPECT_CALL(mockOp, wait()).WillOnce([&] { callback.Call(); });
     voidOp.wait();
-    EXPECT_TRUE(called);
 }
 
 TEST_F(AnyOperationTests, CancelCallPropagated)
 {
-    auto called = false;
-    EXPECT_CALL(mockScheduledOp, cancel()).WillOnce([&] { called = true; });
-    ;
+    StrictMock<MockFunction<void()>> callback;
+    EXPECT_CALL(callback, Call());
+    EXPECT_CALL(mockScheduledOp, cancel()).WillOnce([&] { callback.Call(); });
     scheduledVoidOp.cancel();
-    EXPECT_TRUE(called);
 }
 
 TEST_F(AnyOperationTests, RequestStopCallPropagated)
 {
-    auto called = false;
-    EXPECT_CALL(mockScheduledOp, requestStop()).WillOnce([&] { called = true; });
+    StrictMock<MockFunction<void()>> callback;
+    EXPECT_CALL(callback, Call());
+    EXPECT_CALL(mockScheduledOp, requestStop()).WillOnce([&] { callback.Call(); });
     scheduledVoidOp.requestStop();
-    EXPECT_TRUE(called);
 }
 
 TEST_F(AnyOperationTests, GetPropagatesError)
