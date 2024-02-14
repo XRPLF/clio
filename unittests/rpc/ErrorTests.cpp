@@ -21,6 +21,7 @@
 
 #include <boost/json/fwd.hpp>
 #include <boost/json/object.hpp>
+#include <boost/json/value_to.hpp>
 #include <gtest/gtest.h>
 #include <ripple/protocol/ErrorCodes.h>
 
