@@ -68,7 +68,7 @@ make_WsContext(
     if (!apiVersion)
         return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
 
-    string const command = boost::json::value_to<std::string>(commandValue);
+    auto const command = boost::json::value_to<std::string>(commandValue);
     return web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp, session->isAdmin());
 }
 
@@ -92,7 +92,7 @@ make_HttpContext(
     if (request.at("method").as_string().empty())
         return Error{{ClioError::rpcCOMMAND_IS_EMPTY}};
 
-    string const command = boost::json::value_to<std::string>(request.at("method"));
+    auto const command = boost::json::value_to<std::string>(request.at("method"));
 
     if (command == "subscribe" || command == "unsubscribe")
         return Error{{RippledError::rpcBAD_SYNTAX, "Subscribe and unsubscribe are only allowed or websocket."}};

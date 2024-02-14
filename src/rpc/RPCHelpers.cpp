@@ -427,7 +427,7 @@ ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backe
     std::optional<std::uint32_t> ledgerSequence = {};
     if (!indexValue.is_null()) {
         if (indexValue.is_string()) {
-            std::string const stringIndex = boost::json::value_to<std::string>(indexValue);
+            auto const stringIndex = boost::json::value_to<std::string>(indexValue);
             if (stringIndex == "validated") {
                 ledgerSequence = ctx.range.maxSequence;
             } else {
@@ -832,7 +832,7 @@ keypairFromRequst(boost::json::object const& request)
         if (!request.at("key_type").is_string())
             return Status{RippledError::rpcINVALID_PARAMS, "keyTypeNotString"};
 
-        std::string const key_type = boost::json::value_to<std::string>(request.at("key_type"));
+        auto const key_type = boost::json::value_to<std::string>(request.at("key_type"));
         keyType = ripple::keyTypeFromString(key_type);
 
         if (!keyType)
@@ -866,7 +866,7 @@ keypairFromRequst(boost::json::object const& request)
             if (!request.at(secretType).is_string())
                 return Status{RippledError::rpcINVALID_PARAMS, "secret value must be string"};
 
-            std::string const key = boost::json::value_to<std::string>(request.at(secretType));
+            auto const key = boost::json::value_to<std::string>(request.at(secretType));
 
             if (secretType == "seed") {
                 seed = ripple::parseBase58<ripple::Seed>(key);
@@ -881,7 +881,7 @@ keypairFromRequst(boost::json::object const& request)
             if (!request.at("secret").is_string())
                 return Status{RippledError::rpcINVALID_PARAMS, "field secret should be a string"};
 
-            std::string const secret = boost::json::value_to<std::string>(request.at("secret"));
+            auto const secret = boost::json::value_to<std::string>(request.at("secret"));
             seed = ripple::parseGenericSeed(secret);
         }
     }
@@ -904,7 +904,7 @@ getAccountsFromTransaction(boost::json::object const& transaction)
             auto inObject = getAccountsFromTransaction(value.as_object());
             accounts.insert(accounts.end(), inObject.begin(), inObject.end());
         } else if (value.is_string()) {
-            auto account = ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value));
+            auto const account = ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value));
             if (account) {
                 accounts.push_back(*account);
             }
@@ -1370,7 +1370,7 @@ specifiesCurrentOrClosedLedger(boost::json::object const& request)
     if (request.contains("ledger_index")) {
         auto indexValue = request.at("ledger_index");
         if (indexValue.is_string()) {
-            std::string const index = boost::json::value_to<std::string>(indexValue);
+            auto const index = boost::json::value_to<std::string>(indexValue);
             return index == "current" || index == "closed";
         }
     }
