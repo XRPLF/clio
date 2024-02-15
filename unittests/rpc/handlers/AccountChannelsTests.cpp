@@ -26,6 +26,7 @@
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value_to.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -36,6 +37,7 @@
 #include <ripple/protocol/STObject.h>
 
 #include <optional>
+#include <string>
 #include <vector>
 
 using namespace rpc;
