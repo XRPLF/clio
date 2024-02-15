@@ -21,7 +21,7 @@ from which data can be extracted. The rippled node does not need to be running o
 
 ## Help
 Feel free to open an [issue](https://github.com/XRPLF/clio/issues) if you have a feature request or something doesn't work as expected.
-If you have any questions about building, running, contributing, using clio or any other, you could always start a new [discussion](https://github.com/XRPLF/clio/discussions).
+If you have any questions about building, running, contributing, using Clio or any other, you could always start a new [discussion](https://github.com/XRPLF/clio/discussions).
 
 ## Requirements
 1. Access to a Cassandra cluster or ScyllaDB cluster. Can be local or remote.
@@ -261,23 +261,28 @@ of the minimum and maximum supported versions hardcoded in `src/rpc/common/APIVe
 
 ## Admin rights for requests
 
-By default clio checks admin privileges by IP address from request (only `127.0.0.1` is considered to be an admin).
+By default Clio checks admin privileges by IP address from request (only `127.0.0.1` is considered to be an admin).
 It is not very secure because the IP could be spoofed.
-For a better security `admin_password` could be provided in the `server` section of clio's config:
+For a better security `admin_password` could be provided in the `server` section of Clio's config:
 ```json
 "server": {
     "admin_password": "secret"
 }
 ```
-If the password is presented in the config, clio will check the Authorization header (if any) in each request for the password.
+If the password is presented in the config, Clio will check the Authorization header (if any) in each request for the password.
 The Authorization header should contain type `Password` and the password from the config, e.g. `Password secret`.
 Exactly equal password gains admin rights for the request or a websocket connection.
 
 ## Prometheus metrics collection
 
 Clio natively supports Prometheus metrics collection. It accepts Prometheus requests on the port configured in `server` section of config.
-Prometheus metrics are enabled by default. To disable it add `"prometheus": { "enabled": false }` to the config.
-It is important to know that clio responds to Prometheus request only if they are admin requests, so Prometheus should be configured to send admin password in header.
+By default Prometheus metrics are enabled and replies to `/metrics` are compressed.
+
+To disable compression and have human readable metrics add `"prometheus": { "enabled": true, "compress_reply": false }` to the Clio's config.
+To completely disable Prometheus metrics add `"prometheus": { "enabled": false }` to the Clio's config.
+
+It is important to know that Clio responds to Prometheus request only if they are admin requests.
+If you are using admin password feature, the same password should be provided in the Authorization header of Prometheus requests.
 There is an example of docker-compose file, Prometheus and Grafana configs in [examples/infrastructure](examples/infrastructure).
 
 ## Using clang-tidy for static analysis
@@ -347,11 +352,11 @@ stored inside the build directory, as either of:
 ## Developing against `rippled` in standalone mode
 
 If you wish you develop against a `rippled` instance running in standalone
-mode there are a few quirks of both clio and rippled you need to keep in mind.
+mode there are a few quirks of both Clio and rippled you need to keep in mind.
 You must:
 
 1. Advance the `rippled` ledger to at least ledger 256
-2. Wait 10 minutes before first starting clio against this standalone node.
+2. Wait 10 minutes before first starting Clio against this standalone node.
 
 ## Logging
 Clio provides several logging options, all are configurable via the config file and are detailed below.
@@ -359,7 +364,7 @@ Clio provides several logging options, all are configurable via the config file 
 `log_level`: The minimum level of severity at which the log message will be outputted by default.
 Severity options are `trace`, `debug`, `info`, `warning`, `error`, `fatal`. Defaults to `info`.
 
-`log_format`: The format of log lines produced by clio. Defaults to `"%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%"`.
+`log_format`: The format of log lines produced by Clio. Defaults to `"%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%"`.
 Each of the variables expands like so
 - `TimeStamp`: The full date and time of the log entry
 - `SourceLocation`: A partial path to the c++ file and the line number in said file (`source/file/path:linenumber`)  
