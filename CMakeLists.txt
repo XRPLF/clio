@@ -6,6 +6,7 @@ project(clio)
 # ========================================================================== #
 option (verbose   "Verbose build"                                     FALSE)
 option (tests     "Build tests"                                       FALSE)
+option (benchmark "Build benchmarks"                                  FALSE)
 option (docs      "Generate doxygen docs"                             FALSE)
 option (coverage  "Build test coverage report"                        FALSE)
 option (packaging "Create distribution packages"                      FALSE)
@@ -202,6 +203,7 @@ if (tests)
     unittests/util/TxUtilTests.cpp
     unittests/util/StringUtils.cpp
     unittests/util/LedgerUtilsTests.cpp
+    ## Prometheus support
     unittests/util/prometheus/CounterTests.cpp
     unittests/util/prometheus/GaugeTests.cpp
     unittests/util/prometheus/HistogramTests.cpp
@@ -210,6 +212,13 @@ if (tests)
     unittests/util/prometheus/MetricBuilderTests.cpp
     unittests/util/prometheus/MetricsFamilyTests.cpp
     unittests/util/prometheus/OStreamTests.cpp
+    ## Async framework
+    unittests/util/async/AnyExecutionContextTests.cpp
+    unittests/util/async/AnyStrandTests.cpp
+    unittests/util/async/AnyOperationTests.cpp
+    unittests/util/async/AnyStopTokenTests.cpp
+    unittests/util/async/AsyncExecutionContextTests.cpp
+    ## Requests framework
     unittests/util/requests/RequestBuilderTests.cpp
     unittests/util/requests/SslContextTests.cpp
     unittests/util/requests/WsConnectionTests.cpp
@@ -328,6 +337,23 @@ if (tests)
         DEPENDENCIES clio_tests
     )
   endif ()
+endif ()
+
+# Benchmarks
+if (benchmark)
+  set (BENCH_TARGET clio_benchmarks)
+  add_executable (${BENCH_TARGET}
+    # Common
+    benchmarks/Main.cpp
+    benchmarks/Playground.cpp
+    # ExecutionContext
+    benchmarks/util/async/ExecutionContextBenchmarks.cpp
+  )
+
+  include (CMake/deps/gbench.cmake)
+
+  target_include_directories (${BENCH_TARGET} PRIVATE benchmarks)
+  target_link_libraries (${BENCH_TARGET} PUBLIC clio benchmark::benchmark_main)
 endif ()
 
 # Enable selected sanitizer if enabled via `san`
