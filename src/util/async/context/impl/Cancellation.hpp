@@ -74,6 +74,11 @@ public:
         {
             return isStopRequested();
         }
+
+        [[nodiscard]] operator boost::asio::yield_context() const noexcept
+        {
+            return yield_;
+        }
     };
 
     [[nodiscard]] Token

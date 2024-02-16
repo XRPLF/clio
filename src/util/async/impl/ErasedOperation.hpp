@@ -19,13 +19,13 @@
 
 #pragma once
 
+#include "util/Assert.hpp"
 #include "util/Expected.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
 #include "util/async/impl/Any.hpp"
 
 #include <memory>
-#include <stdexcept>
 #include <type_traits>
 
 namespace util::async::impl {
@@ -123,7 +123,7 @@ private:
             if constexpr (SomeStoppableOperation<OpType>) {
                 operation.requestStop();
             } else {
-                throw std::logic_error("Stop requested on non-stoppable operation");
+                ASSERT(false, "Stop requested on non-stoppable operation");
             }
         }
 
@@ -133,7 +133,7 @@ private:
             if constexpr (SomeCancellableOperation<OpType>) {
                 operation.cancel();
             } else {
-                throw std::logic_error("Cancellation requested on non-cancellable operation");
+                ASSERT(false, "Cancellation requested on non-cancellable operation");
             }
         }
     };

@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "data/Types.hpp"
-#include "etl/impl/CacheLoader.hpp"
+#include "etl/CacheLoader.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockCache.hpp"
 #include "util/config/Config.hpp"
@@ -30,17 +30,17 @@
 #include <gtest/gtest.h>
 #include <ripple/basics/base_uint.h>
 
-#include <chrono>
 #include <condition_variable>
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <thread>
 #include <vector>
 
 namespace json = boost::json;
-using namespace etl::impl;
+using namespace etl;
 using namespace util;
 using namespace data;
 using namespace testing;
@@ -53,29 +53,17 @@ struct CacheLoaderTest : public MockBackendTest {
     SetUp() override
     {
         MockBackendTest::SetUp();
-        work.emplace(ctx);
-        for (auto i = 0; i < 2; ++i)
-            optThreads.emplace_back([&] { ctx.run(); });
     }
 
     void
     TearDown() override
     {
-        work.reset();
-        for (auto& optThread : optThreads) {
-            if (optThread.joinable())
-                optThread.join();
-        }
-        ctx.stop();
         MockBackendTest::TearDown();
     }
 
 protected:
     MockCache cache;
     Config cfg{json::parse("{}")};
-    std::optional<boost::asio::io_service::work> work;
-    boost::asio::io_context ctx;
-    std::vector<std::thread> optThreads;
 };
 
 namespace {
@@ -102,7 +90,7 @@ getLatestDiff()
 
 TEST_F(CacheLoaderTest, FromCache)
 {
-    CacheLoader loader{cfg, ctx, backend, cache};
+    CacheLoader loader{cfg, backend, cache};
 
     auto const diffs = getLatestDiff();
     ON_CALL(*backend, fetchLedgerDiff(_, _)).WillByDefault(Return(diffs));
@@ -115,7 +103,6 @@ TEST_F(CacheLoaderTest, FromCache)
     std::map<std::thread::id, uint32_t> threadKeysMap;
     ON_CALL(*backend, doFetchSuccessorKey(_, SEQ, _)).WillByDefault(Invoke([&]() -> std::optional<ripple::uint256> {
         // mock the result from doFetchSuccessorKey, be aware this function will be called from multiple threads
-        // for each thread, the last 2 items must be end flag and nullopt, otherwise it will loop forever
         std::lock_guard<std::mutex> const guard(keysMutex);
         threadKeysMap[std::this_thread::get_id()]++;
 
@@ -135,25 +122,91 @@ TEST_F(CacheLoaderTest, FromCache)
     EXPECT_CALL(*backend, doFetchLedgerObjects).Times(loops);
 
     EXPECT_CALL(cache, updateImp).Times(loops);
-    EXPECT_CALL(cache, isFull).Times(1);
+    EXPECT_CALL(cache, isFull).WillOnce(Return(false)).WillRepeatedly(Return(true));
 
-    std::mutex m;
-    std::condition_variable cv;
-    bool cacheReady = false;
-    ON_CALL(cache, setFull).WillByDefault(Invoke([&]() {
-        {
-            std::lock_guard const lk(m);
-            cacheReady = true;
-        }
-        cv.notify_one();
-    }));
     // cache is successfully loaded
     EXPECT_CALL(cache, setFull).Times(1);
 
     loader.load(SEQ);
+    loader.wait();
+}
 
-    {
-        std::unique_lock lk(m);
-        cv.wait_for(lk, std::chrono::milliseconds(300), [&] { return cacheReady; });
-    }
+TEST_F(CacheLoaderTest, FromCacheSync)
+{
+    auto localCfg = util::Config(json::parse(R"({"cache": {"load": "sync"}})"));
+    CacheLoader loader{localCfg, backend, cache};
+
+    auto const diffs = getLatestDiff();
+    ON_CALL(*backend, fetchLedgerDiff(_, _)).WillByDefault(Return(diffs));
+    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(32);
+
+    auto const loops = diffs.size() + 1;
+    auto const keysSize = 14;
+    std::mutex keysMutex;
+
+    std::map<std::thread::id, uint32_t> threadKeysMap;
+    ON_CALL(*backend, doFetchSuccessorKey(_, SEQ, _)).WillByDefault(Invoke([&]() -> std::optional<ripple::uint256> {
+        // mock the result from doFetchSuccessorKey, be aware this function will be called from multiple threads
+        std::lock_guard<std::mutex> const guard(keysMutex);
+        threadKeysMap[std::this_thread::get_id()]++;
+
+        if (threadKeysMap[std::this_thread::get_id()] == keysSize - 1) {
+            return lastKey;
+        }
+        if (threadKeysMap[std::this_thread::get_id()] == keysSize) {
+            threadKeysMap[std::this_thread::get_id()] = 0;
+            return std::nullopt;
+        }
+        return ripple::uint256{INDEX1};
+    }));
+    EXPECT_CALL(*backend, doFetchSuccessorKey).Times(keysSize * loops);
+
+    ON_CALL(*backend, doFetchLedgerObjects(_, SEQ, _))
+        .WillByDefault(Return(std::vector<Blob>{keysSize - 1, Blob{'s'}}));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(loops);
+
+    EXPECT_CALL(cache, updateImp).Times(loops);
+    EXPECT_CALL(cache, isFull).WillOnce(Return(false)).WillRepeatedly(Return(true));
+
+    // cache is successfully loaded
+    EXPECT_CALL(cache, setFull).Times(1);
+
+    loader.load(SEQ);
+}
+
+TEST_F(CacheLoaderTest, Cancelled)
+{
+    auto loader = std::make_shared<CacheLoader<MockCache>>(cfg, backend, cache);
+
+    auto const diffs = getLatestDiff();
+    ON_CALL(*backend, fetchLedgerDiff(_, _)).WillByDefault(Return(diffs));
+
+    auto const keysSize = 1024 * 12;
+    std::mutex keysMutex;
+
+    std::map<std::thread::id, uint32_t> threadKeysMap;
+    ON_CALL(*backend, doFetchSuccessorKey(_, SEQ, _)).WillByDefault(Invoke([&]() -> std::optional<ripple::uint256> {
+        // mock the result from doFetchSuccessorKey, be aware this function will be called from multiple threads
+        std::lock_guard<std::mutex> const guard(keysMutex);
+        threadKeysMap[std::this_thread::get_id()]++;
+
+        if (threadKeysMap[std::this_thread::get_id()] == keysSize - 1) {
+            return lastKey;
+        }
+        if (threadKeysMap[std::this_thread::get_id()] == keysSize) {
+            threadKeysMap[std::this_thread::get_id()] = 0;
+            return std::nullopt;
+        }
+        return ripple::uint256{INDEX1};
+    }));
+
+    ON_CALL(*backend, doFetchLedgerObjects(_, SEQ, _))
+        .WillByDefault(Return(std::vector<Blob>{keysSize - 1, Blob{'s'}}));
+
+    EXPECT_CALL(cache, updateImp).Times(AtMost(10));
+    EXPECT_CALL(cache, isFull).WillRepeatedly(Return(false));
+
+    loader->load(SEQ);
+    loader->stop();
+    loader->wait();
 }
