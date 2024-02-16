@@ -43,8 +43,8 @@ INSTANTIATE_TEST_CASE_P(AnyStopTokenGroup, AnyStopTokenTests, ValuesIn({true, fa
 
 TEST_P(AnyStopTokenTests, CanCopy)
 {
-    AnyStopToken stopToken{FakeStopToken{GetParam()}};
-    AnyStopToken token = stopToken;
+    AnyStopToken const stopToken{FakeStopToken{GetParam()}};
+    AnyStopToken const token = stopToken;
 
     EXPECT_EQ(token, stopToken);
 }
@@ -52,7 +52,7 @@ TEST_P(AnyStopTokenTests, CanCopy)
 TEST_P(AnyStopTokenTests, IsStopRequestedCallPropagated)
 {
     auto const flag = GetParam();
-    AnyStopToken stopToken{FakeStopToken{flag}};
+    AnyStopToken const stopToken{FakeStopToken{flag}};
 
     EXPECT_EQ(stopToken.isStopRequested(), flag);
     EXPECT_EQ(stopToken, flag);

@@ -20,7 +20,6 @@
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/async/context/SyncExecutionContext.hpp"
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
