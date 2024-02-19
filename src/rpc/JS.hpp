@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include "util/JsonUtils.hpp"
-
 #include <ripple/protocol/jss.h>
 
 /** @brief Helper macro for borrowing from ripple::jss static (J)son (S)trings. */

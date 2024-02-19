@@ -207,8 +207,9 @@ public:
 
                 setLastPublishTime();
                 LOG(log_.info()) << "Published ledger " << std::to_string(lgrInfo.seq);
-            } else
+            } else {
                 LOG(log_.info()) << "Skipping publishing ledger " << std::to_string(lgrInfo.seq);
+            }
         });
 
         // we track latest publish-requested seq, not necessarily already published

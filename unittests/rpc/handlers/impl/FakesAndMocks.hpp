@@ -56,7 +56,7 @@ tag_invoke(boost::json::value_to_tag<TestInput>, boost::json::value const& jv)
     if (jv.as_object().contains("limit"))
         optLimit = jv.at("limit").as_int64();
 
-    return {jv.as_object().at("hello").as_string().c_str(), optLimit};
+    return {boost::json::value_to<std::string>(jv.as_object().at("hello")), optLimit};
 }
 
 // must be implemented as per rpc/common/Concepts.h
@@ -145,7 +145,7 @@ struct InOutFake {
 inline InOutFake
 tag_invoke(boost::json::value_to_tag<InOutFake>, boost::json::value const& jv)
 {
-    return {jv.as_object().at("something").as_string().c_str()};
+    return {boost::json::value_to<std::string>(jv.as_object().at("something"))};
 }
 
 // must be implemented as per rpc/common/Concepts.h

@@ -194,18 +194,18 @@ private:
         if (auto const& streams = jsonObject.find(JS(streams)); streams != jsonObject.end()) {
             input.streams = std::vector<std::string>();
             for (auto const& stream : streams->value().as_array())
-                input.streams->push_back(stream.as_string().c_str());
+                input.streams->push_back(boost::json::value_to<std::string>(stream));
         }
         if (auto const& accounts = jsonObject.find(JS(accounts)); accounts != jsonObject.end()) {
             input.accounts = std::vector<std::string>();
             for (auto const& account : accounts->value().as_array())
-                input.accounts->push_back(account.as_string().c_str());
+                input.accounts->push_back(boost::json::value_to<std::string>(account));
         }
         if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed));
             accountsProposed != jsonObject.end()) {
             input.accountsProposed = std::vector<std::string>();
             for (auto const& account : accountsProposed->value().as_array())
-                input.accountsProposed->push_back(account.as_string().c_str());
+                input.accountsProposed->push_back(boost::json::value_to<std::string>(account));
         }
         if (auto const& books = jsonObject.find(JS(books)); books != jsonObject.end()) {
             input.books = std::vector<OrderBook>();

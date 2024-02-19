@@ -25,6 +25,7 @@
 
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <fmt/core.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
@@ -75,7 +76,7 @@ CustomValidator Uint256HexStringValidator =
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
         ripple::uint256 ledgerHash;
-        if (!ledgerHash.parseHex(value.as_string().c_str()))
+        if (!ledgerHash.parseHex(boost::json::value_to<std::string>(value)))
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
 
         return MaybeError{};
@@ -88,7 +89,8 @@ CustomValidator LedgerIndexValidator =
         if (!value.is_string() && !(value.is_uint64() || value.is_int64()))
             return err;
 
-        if (value.is_string() && value.as_string() != "validated" && !checkIsU32Numeric(value.as_string().c_str()))
+        if (value.is_string() && value.as_string() != "validated" &&
+            !checkIsU32Numeric(boost::json::value_to<std::string>(value)))
             return err;
 
         return MaybeError{};
@@ -101,7 +103,7 @@ CustomValidator AccountValidator =
 
         // TODO: we are using accountFromStringStrict from RPCHelpers, after we
         // remove all old handler, this function can be moved to here
-        if (!accountFromStringStrict(value.as_string().c_str()))
+        if (!accountFromStringStrict(boost::json::value_to<std::string>(value)))
             return Error{Status{RippledError::rpcACT_MALFORMED, std::string(key) + "Malformed"}};
 
         return MaybeError{};
@@ -112,7 +114,7 @@ CustomValidator AccountBase58Validator =
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
-        auto const account = ripple::parseBase58<ripple::AccountID>(value.as_string().c_str());
+        auto const account = ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value));
         if (!account || account->isZero())
             return Error{Status{ClioError::rpcMALFORMED_ADDRESS}};
 
@@ -126,7 +128,7 @@ CustomValidator AccountMarkerValidator =
 
         // TODO: we are using parseAccountCursor from RPCHelpers, after we
         // remove all old handler, this function can be moved to here
-        if (!parseAccountCursor(value.as_string().c_str())) {
+        if (!parseAccountCursor(boost::json::value_to<std::string>(value))) {
             // align with the current error message
             return Error{Status{RippledError::rpcINVALID_PARAMS, "Malformed cursor."}};
         }
@@ -140,7 +142,7 @@ CustomValidator CurrencyValidator =
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
         ripple::Currency currency;
-        if (!ripple::to_currency(currency, value.as_string().c_str()))
+        if (!ripple::to_currency(currency, boost::json::value_to<std::string>(value)))
             return Error{Status{ClioError::rpcMALFORMED_CURRENCY, "malformedCurrency"}};
 
         return MaybeError{};
@@ -154,7 +156,7 @@ CustomValidator IssuerValidator =
         ripple::AccountID issuer;
 
         // TODO: need to align with the error
-        if (!ripple::to_issuer(issuer, value.as_string().c_str()))
+        if (!ripple::to_issuer(issuer, boost::json::value_to<std::string>(value)))
             return Error{Status{RippledError::rpcINVALID_PARAMS, fmt::format("Invalid field '{}', bad issuer.", key)}};
 
         if (issuer == ripple::noAccount()) {
@@ -182,10 +184,10 @@ CustomValidator SubscribeStreamValidator =
             if (!v.is_string())
                 return Error{Status{RippledError::rpcINVALID_PARAMS, "streamNotString"}};
 
-            if (reportingNotSupportStreams.contains(v.as_string().c_str()))
+            if (reportingNotSupportStreams.contains(boost::json::value_to<std::string>(v)))
                 return Error{Status{RippledError::rpcREPORTING_UNSUPPORTED}};
 
-            if (not validStreams.contains(v.as_string().c_str()))
+            if (not validStreams.contains(boost::json::value_to<std::string>(v)))
                 return Error{Status{RippledError::rpcSTREAM_MALFORMED}};
         }
 
