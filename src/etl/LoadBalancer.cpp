@@ -39,7 +39,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -90,8 +89,18 @@ LoadBalancer::LoadBalancer(
     };
 
     for (auto const& entry : config.array("etl_sources")) {
-        auto source =
-            make_Source(entry, ioc, backend, subscriptions, validatedLedgers, [this]() { chooseForwardingSource(); });
+        auto source = make_Source(
+            entry,
+            ioc,
+            backend,
+            subscriptions,
+            validatedLedgers,
+            [this]() {
+                if (not hasForwardingSource_)
+                    chooseForwardingSource();
+            },
+            [this]() { chooseForwardingSource(); }
+        );
 
         // checking etl node validity
         auto const stateOpt = ETLState::fetchETLStateFromSource(source);
@@ -123,7 +132,6 @@ LoadBalancer::LoadBalancer(
     for (auto& source : sources_) {
         source.run();
     }
-    chooseForwardingSource();
 }
 
 LoadBalancer::~LoadBalancer()
@@ -272,10 +280,12 @@ LoadBalancer::getETLState() noexcept
 void
 LoadBalancer::chooseForwardingSource()
 {
+    hasForwardingSource_ = false;
     for (auto& source : sources_) {
         if (source.isConnected()) {
             source.setForwarding(true);
-            break;
+            hasForwardingSource_ = true;
+            return;
         }
     }
 }

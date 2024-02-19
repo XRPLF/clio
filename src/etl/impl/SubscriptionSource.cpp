@@ -47,7 +47,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <future>
@@ -137,6 +136,7 @@ SubscriptionSource::subscribe()
 
             wsConnection_ = std::move(connection).value();
             isConnected_ = true;
+            onConnect_();
 
             auto const& subscribeCommand = getSubscribeCommandJson();
             auto const writeErrorOpt = wsConnection_->write(subscribeCommand, yield);

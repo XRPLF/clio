@@ -61,6 +61,7 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
     StrictMockPtr<MockSubscriptionManager> subscriptionManager_ =
         std::make_shared<StrictMock<MockSubscriptionManager>>();
 
+    StrictMock<MockFunction<void()>> onConnectHook_;
     StrictMock<MockFunction<void()>> onDisconnectHook_;
 
     std::unique_ptr<SubscriptionSource> subscriptionSource_ = std::make_unique<SubscriptionSource>(
@@ -69,6 +70,7 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
         "11113",
         networkValidatedLedgers_,
         subscriptionManager_,
+        onConnectHook_.AsStdFunction(),
         onDisconnectHook_.AsStdFunction(),
         std::chrono::milliseconds(1),
         std::chrono::milliseconds(1)
@@ -114,6 +116,8 @@ TEST_F(SubscriptionSourceConnectionTests, ReadError)
         auto connection = serverConnection(yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -126,6 +130,8 @@ TEST_F(SubscriptionSourceConnectionTests, ReadError_Reconnect)
             connection.close(yield);
         }
     });
+
+    EXPECT_CALL(onConnectHook_, Call()).Times(2);
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -138,6 +144,8 @@ TEST_F(SubscriptionSourceConnectionTests, IsConnected)
         EXPECT_TRUE(subscriptionSource_->isConnected());
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -161,6 +169,8 @@ TEST_F(SubscriptionSourceReadTests, GotWrongMessage_Reconnect)
         connection.receive(yield);
         serverConnection(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call()).Times(2);
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -171,6 +181,8 @@ TEST_F(SubscriptionSourceReadTests, GotResult)
         auto connection = connectAndSendMessage(R"({"result":{})", yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -181,6 +193,8 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithLedgerIndex)
         auto connection = connectAndSendMessage(R"({"result":{"ledger_index":123}})", yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
@@ -194,6 +208,8 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithLedgerIndexAsString_Reconnect)
         connection.receive(yield);
         serverConnection(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call()).Times(2);
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -206,6 +222,8 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithValidatedLedgersAsNumber_Reconn
         connection.receive(yield);
         serverConnection(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call()).Times(2);
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -226,6 +244,8 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithValidatedLedgers)
         auto connection = connectAndSendMessage(R"({"result":{"validated_ledgers":"123-456,789,32"}})", yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 
@@ -250,6 +270,8 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithValidatedLedgersWrongValue_Reco
         connection.receive(yield);
         serverConnection(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call()).Times(2);
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -266,6 +288,8 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithLedgerIndexAndValidatedLedgers)
         auto connection = connectAndSendMessage(R"({"result":{"ledger_index":123,"validated_ledgers":"1-3"}})", yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
@@ -284,6 +308,8 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndex)
         auto connection = connectAndSendMessage(R"({"type":"ledgerClosed","ledger_index":123})", yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
@@ -297,6 +323,8 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndexAsString_Recon
         connection.receive(yield);
         serverConnection(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call()).Times(2);
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -309,6 +337,8 @@ TEST_F(SubscriptionSourceReadTests, GorLedgerClosedWithValidatedLedgersAsNumber_
         connection.receive(yield);
         serverConnection(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call()).Times(2);
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -324,6 +354,8 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithValidatedLedgers)
         auto connection = connectAndSendMessage(R"({"type":"ledgerClosed","validated_ledgers":"1-2"})", yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 
@@ -346,6 +378,8 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndexAndValidatedLe
             connectAndSendMessage(R"({"type":"ledgerClosed","ledger_index":123,"validated_ledgers":"1-2"})", yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
@@ -363,6 +397,8 @@ TEST_F(SubscriptionSourceReadTests, GotTransactionIsForwardingFalse)
         auto connection = connectAndSendMessage(R"({"transaction":"some_transaction_data"})", yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -377,6 +413,7 @@ TEST_F(SubscriptionSourceReadTests, GotTransactionIsForwardingTrue)
         connection.close(yield);
     });
 
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     EXPECT_CALL(*subscriptionManager_, forwardProposedTransaction(message));
     ioContext_.run();
@@ -388,6 +425,8 @@ TEST_F(SubscriptionSourceReadTests, GotValidationReceivedIsForwardingFalse)
         auto connection = connectAndSendMessage(R"({"type":"validationReceived"})", yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -402,6 +441,7 @@ TEST_F(SubscriptionSourceReadTests, GotValidationReceivedIsForwardingTrue)
         connection.close(yield);
     });
 
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     EXPECT_CALL(*subscriptionManager_, forwardValidation(message));
     ioContext_.run();
@@ -413,6 +453,8 @@ TEST_F(SubscriptionSourceReadTests, GotManiefstReceivedIsForwardingFalse)
         auto connection = connectAndSendMessage(R"({"type":"manifestReceived"})", yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 }
@@ -427,6 +469,7 @@ TEST_F(SubscriptionSourceReadTests, GotManifestReceivedIsForwardingTrue)
         connection.close(yield);
     });
 
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     EXPECT_CALL(*subscriptionManager_, forwardManifest(message));
     ioContext_.run();
@@ -438,6 +481,8 @@ TEST_F(SubscriptionSourceReadTests, LastMessageTime)
         auto connection = connectAndSendMessage("some_message", yield);
         connection.close(yield);
     });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 

@@ -50,6 +50,7 @@ namespace etl::impl {
  */
 class SubscriptionSource {
 public:
+    using OnConnectHook = std::function<void()>;
     using OnDisconnectHook = std::function<void()>;
 
 private:
@@ -69,6 +70,7 @@ private:
 
     util::Retry retry_;
 
+    OnConnectHook onConnect_;
     OnDisconnectHook onDisconnect_;
 
     std::atomic_bool isConnected_{false};
@@ -105,6 +107,7 @@ public:
         std::string const& wsPort,
         std::shared_ptr<NetworkValidatedLedgersType> validatedLedgers,
         std::shared_ptr<SubscriptionManagerType> subscriptions,
+        OnConnectHook onConnect,
         OnDisconnectHook onDisconnect,
         std::chrono::steady_clock::duration const connectionTimeout = CONNECTION_TIMEOUT,
         std::chrono::steady_clock::duration const retryDelay = RETRY_DELAY
@@ -114,6 +117,7 @@ public:
         , dependencies_(std::move(validatedLedgers), std::move(subscriptions))
         , strand_(boost::asio::make_strand(ioContext))
         , retry_(util::makeRetryExponentialBackoff(retryDelay, RETRY_MAX_DELAY, strand_))
+        , onConnect_(std::move(onConnect))
         , onDisconnect_(std::move(onDisconnect))
     {
         wsConnectionBuilder_.addHeader({boost::beast::http::field::user_agent, "clio-client"})

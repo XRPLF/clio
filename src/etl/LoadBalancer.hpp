@@ -37,6 +37,7 @@
 #include <org/xrpl/rpc/v1/ledger.pb.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -75,6 +76,7 @@ private:
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
         DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading intial ledger */
+    std::atomic_bool hasForwardingSource_{false};
 
 public:
     /**

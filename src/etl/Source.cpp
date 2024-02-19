@@ -41,7 +41,8 @@ make_Source(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-    Source::OnDisconnectHook onDisconnect
+    Source::OnDisconnectHook onDisconnect,
+    Source::OnConnectHook onConnect
 )
 {
     auto const ip = config.valueOr<std::string>("ip", {});
@@ -50,7 +51,13 @@ make_Source(
 
     impl::GrpcSource grpcSource{ip, grpcPort, std::move(backend)};
     auto subscriptionSource = std::make_unique<impl::SubscriptionSource>(
-        ioc, ip, wsPort, std::move(validatedLedgers), std::move(subscriptions), std::move(onDisconnect)
+        ioc,
+        ip,
+        wsPort,
+        std::move(validatedLedgers),
+        std::move(subscriptions),
+        std::move(onConnect),
+        std::move(onDisconnect)
     );
     impl::ForwardingSource forwardingSource{ip, wsPort};
 

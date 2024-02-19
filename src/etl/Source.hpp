@@ -59,6 +59,7 @@ class SourceImpl {
     ForwardingSourceType forwardingSource_;
 
 public:
+    using OnConnectHook = impl::SubscriptionSource::OnConnectHook;
     using OnDisconnectHook = impl::SubscriptionSource::OnDisconnectHook;
 
     template <typename SomeGrpcSourceType, typename SomeForwardingSourceType>
@@ -220,7 +221,8 @@ make_Source(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-    Source::OnDisconnectHook onDisconnect
+    Source::OnDisconnectHook onDisconnect,
+    Source::OnConnectHook onConnect
 );
 
 }  // namespace etl
