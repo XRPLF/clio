@@ -64,6 +64,7 @@ namespace util {
 
 Logger LogService::general_log_ = Logger{"General"};
 Logger LogService::alert_log_ = Logger{"Alert"};
+boost::log::filter LogService::filter_{};
 
 std::ostream&
 operator<<(std::ostream& stream, Severity sev)

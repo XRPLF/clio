@@ -20,16 +20,24 @@
 #include "util/requests/impl/SslContext.hpp"
 
 #include "util/Expected.hpp"
+#include "util/log/Logger.hpp"
 #include "util/requests/Types.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ssl/context.hpp>
+#include <boost/asio/ssl/error.hpp>
 #include <boost/asio/ssl/verify_mode.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/lexical_cast.hpp>
+#include <fmt/core.h>
+#include <openssl/err.h>
 
 #include <array>
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -85,6 +93,26 @@ makeSslContext()
     }
     context.add_certificate_authority(asio::buffer(rootCertificate->data(), rootCertificate->size()));
     return context;
+}
+
+std::optional<std::string>
+sslErrorToString(boost::beast::error_code const& error)
+{
+    if (error.category() != boost::asio::error::get_ssl_category())
+        return std::nullopt;
+
+    std::string errorString = fmt::format(
+        "({},{}) ",
+        boost::lexical_cast<std::string>(ERR_GET_LIB(error.value())),
+        boost::lexical_cast<std::string>(ERR_GET_REASON(error.value()))
+    );
+
+    static constexpr size_t BUFFER_SIZE = 128;
+    char buf[BUFFER_SIZE];
+    ::ERR_error_string_n(error.value(), buf, sizeof(buf));
+    errorString += buf;
+
+    return errorString;
 }
 
 }  // namespace util::requests::impl

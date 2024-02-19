@@ -112,7 +112,6 @@ LoadBalancer::LoadBalancer(
         }
 
         sources_.push_back(std::move(source));
-        chooseForwardingSource();
         LOG(log_.info()) << "Added etl source - " << sources_.back().toString();
     }
 
@@ -124,6 +123,7 @@ LoadBalancer::LoadBalancer(
     for (auto& source : sources_) {
         source.run();
     }
+    chooseForwardingSource();
 }
 
 LoadBalancer::~LoadBalancer()

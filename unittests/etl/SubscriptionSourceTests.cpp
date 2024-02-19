@@ -49,21 +49,6 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
         subscriptionSource_->run();
     }
 
-    ~SubscriptionSourceConnectionTests() override
-    {
-        // SubscriptionSource's destructor posts future on context and waits for it to complete.
-        // It is done to be sure that all async operations are completed SubscriptionSource is destroyed.
-        // We need a running context to do that.
-        std::optional work = boost::asio::make_work_guard(ioContext_);
-        std::thread t = std::thread([this]() {
-            ioContext_.reset();
-            ioContext_.run();
-        });
-        subscriptionSource_.reset();
-        work.reset();
-        t.join();
-    }
-
     boost::asio::io_context ioContext_;
 
     TestWsServer wsServer_{ioContext_, "0.0.0.0", 11113};

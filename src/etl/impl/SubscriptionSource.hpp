@@ -36,6 +36,7 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <future>
 #include <memory>
 #include <optional>
 #include <string>
@@ -75,6 +76,8 @@ private:
     std::atomic_bool isForwarding_{false};
 
     util::Mutex<std::chrono::steady_clock::time_point> lastMessageTime_;
+
+    std::future<void> runFuture_;
 
     static constexpr std::chrono::seconds CONNECTION_TIMEOUT{30};
     static constexpr std::chrono::seconds RETRY_MAX_DELAY{30};

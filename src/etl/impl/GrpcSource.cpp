@@ -130,10 +130,8 @@ GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers
             LOG(log_.debug()) << "Finished a marker. "
                               << "Current number of finished = " << numFinished;
 
-            std::string const lastKey = ptr->getLastKey();
-
-            if (!lastKey.empty())
-                edgeKeys.push_back(ptr->getLastKey());
+            if (auto lastKey = ptr->getLastKey(); !lastKey.empty())
+                edgeKeys.push_back(std::move(lastKey));
         }
 
         if (result == etl::impl::AsyncCallData::CallStatus::ERRORED)
@@ -145,7 +143,8 @@ GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers
         }
     }
 
-    LOG(log_.info()) << "Finished loadInitialLedger. cache size = " << backend_->cache().size();
+    LOG(log_.info()) << "Finished loadInitialLedger. cache size = " << backend_->cache().size() << ", abort = " << abort
+                     << ".";
     return {std::move(edgeKeys), !abort};
 }
 

@@ -19,6 +19,8 @@
 
 #include "util/requests/Types.hpp"
 
+#include "util/requests/impl/SslContext.hpp"
+
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/http/field.hpp>
 
@@ -35,7 +37,12 @@ RequestError::RequestError(std::string message) : message_(std::move(message))
 RequestError::RequestError(std::string message, boost::beast::error_code errorCode)
     : message_(std::move(message)), errorCode_(errorCode)
 {
-    message_.append(": ").append(errorCode.message());
+    message_.append(": ");
+    if (auto const sslError = impl::sslErrorToString(errorCode); sslError.has_value()) {
+        message_.append(sslError.value());
+    } else {
+        message_.append(errorCode.message());
+    }
 }
 
 std::string const&

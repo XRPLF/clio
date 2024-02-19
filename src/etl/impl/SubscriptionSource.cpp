@@ -19,6 +19,7 @@
 
 #include "etl/impl/SubscriptionSource.hpp"
 
+#include "rpc/JS.hpp"
 #include "util/Expected.hpp"
 #include "util/Retry.hpp"
 #include "util/log/Logger.hpp"
@@ -42,6 +43,7 @@
 #include <boost/lexical_cast.hpp>
 #include <fmt/core.h>
 #include <openssl/err.h>
+#include <ripple/protocol/jss.h>
 
 #include <algorithm>
 #include <chrono>
@@ -61,15 +63,10 @@ namespace etl::impl {
 SubscriptionSource::~SubscriptionSource()
 {
     stop();
+    retry_.cancel();
 
-    if (wsConnection_) {
-        boost::asio::spawn(strand_, [this](boost::asio::yield_context yield) { wsConnection_->close(yield); });
-    }
-    // To be sure that all the async operations are completed
-    std::future<void> future = boost::asio::post(strand_, boost::asio::use_future);
-    future.get();
-
-    wsConnection_.reset();
+    if (runFuture_.valid())
+        runFuture_.wait();
 }
 
 void
@@ -129,39 +126,48 @@ SubscriptionSource::stop()
 void
 SubscriptionSource::subscribe()
 {
-    boost::asio::spawn(strand_, [this, _ = boost::asio::make_work_guard(strand_)](boost::asio::yield_context yield) {
-        auto connection = wsConnectionBuilder_.connect(yield);
-        if (not connection) {
-            handleError(connection.error(), yield);
-            return;
-        }
-
-        wsConnection_ = std::move(connection).value();
-        isConnected_ = true;
-
-        auto const& subscribeCommand = getSubscribeCommandJson();
-        auto const writeErrorOpt = wsConnection_->write(subscribeCommand, yield);
-        if (writeErrorOpt) {
-            handleError(writeErrorOpt.value(), yield);
-            return;
-        }
-
-        retry_.reset();
-
-        while (!stop_) {
-            auto message = wsConnection_->read(yield);
-            if (not message) {
-                handleError(message.error(), yield);
+    runFuture_ = boost::asio::spawn(
+        strand_,
+        [this, _ = boost::asio::make_work_guard(strand_)](boost::asio::yield_context yield) {
+            auto connection = wsConnectionBuilder_.connect(yield);
+            if (not connection) {
+                handleError(connection.error(), yield);
                 return;
             }
 
-            auto handleErrorOpt = handleMessage(message.value());
-            if (handleErrorOpt) {
-                handleError(handleErrorOpt.value(), yield);
+            wsConnection_ = std::move(connection).value();
+            isConnected_ = true;
+
+            auto const& subscribeCommand = getSubscribeCommandJson();
+            auto const writeErrorOpt = wsConnection_->write(subscribeCommand, yield);
+            if (writeErrorOpt) {
+                handleError(writeErrorOpt.value(), yield);
                 return;
             }
-        }
-    });
+
+            retry_.reset();
+
+            while (!stop_) {
+                auto const message = wsConnection_->read(yield);
+                if (not message) {
+                    handleError(message.error(), yield);
+                    return;
+                }
+
+                auto const handleErrorOpt = handleMessage(message.value());
+                if (handleErrorOpt) {
+                    handleError(handleErrorOpt.value(), yield);
+                    return;
+                }
+            }
+            // Close the connection
+            handleError(
+                util::requests::RequestError{"Subscription source stopped", boost::asio::error::operation_aborted},
+                yield
+            );
+        },
+        boost::asio::use_future
+    );
 }
 
 std::optional<util::requests::RequestError>
@@ -174,43 +180,38 @@ SubscriptionSource::handleMessage(std::string const& message)
         auto const object = raw.as_object();
         uint32_t ledgerIndex = 0;
 
-        static constexpr char const* const JS_Result = "result";
-        static constexpr char const* const JS_LedgerIndex = "ledger_index";
-        static constexpr char const* const JS_ValidatedLedgers = "validated_ledgers";
         static constexpr char const* const JS_LedgerClosed = "ledgerClosed";
-        static constexpr char const* const JS_Type = "type";
-        static constexpr char const* const JS_Transaction = "transaction";
         static constexpr char const* const JS_ValidationReceived = "validationReceived";
         static constexpr char const* const JS_ManifestReceived = "manifestReceived";
 
-        if (object.contains(JS_Result)) {
-            auto const& result = object.at(JS_Result).as_object();
-            if (result.contains("ledger_index"))
-                ledgerIndex = result.at(JS_LedgerIndex).as_int64();
+        if (object.contains(JS(result))) {
+            auto const& result = object.at(JS(result)).as_object();
+            if (result.contains(JS(ledger_index)))
+                ledgerIndex = result.at(JS(ledger_index)).as_int64();
 
-            if (result.contains(JS_ValidatedLedgers)) {
-                auto validatedLedgers = boost::json::value_to<std::string>(result.at(JS_ValidatedLedgers));
+            if (result.contains(JS(validated_ledgers))) {
+                auto validatedLedgers = boost::json::value_to<std::string>(result.at(JS(validated_ledgers)));
                 setValidatedRange(std::move(validatedLedgers));
             }
             LOG(log_.info()) << "Received a message on ledger subscription stream. Message : " << object;
 
-        } else if (object.contains(JS_Type) && object.at(JS_Type) == JS_LedgerClosed) {
+        } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_LedgerClosed) {
             LOG(log_.info()) << "Received a message on ledger subscription stream. Message : " << object;
-            if (object.contains(JS_LedgerIndex)) {
-                ledgerIndex = object.at(JS_LedgerIndex).as_int64();
+            if (object.contains(JS(ledger_index))) {
+                ledgerIndex = object.at(JS(ledger_index)).as_int64();
             }
-            if (object.contains(JS_ValidatedLedgers)) {
-                auto validatedLedgers = boost::json::value_to<std::string>(object.at(JS_ValidatedLedgers));
+            if (object.contains(JS(validated_ledgers))) {
+                auto validatedLedgers = boost::json::value_to<std::string>(object.at(JS(validated_ledgers)));
                 setValidatedRange(std::move(validatedLedgers));
             }
 
         } else {
             if (isForwarding_) {
-                if (object.contains(JS_Transaction)) {
+                if (object.contains(JS(transaction))) {
                     dependencies_.forwardProposedTransaction(object);
-                } else if (object.contains(JS_Type) && object.at(JS_Type) == JS_ValidationReceived) {
+                } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_ValidationReceived) {
                     dependencies_.forwardValidation(object);
-                } else if (object.contains(JS_Type) && object.at(JS_Type) == JS_ManifestReceived) {
+                } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_ManifestReceived) {
                     dependencies_.forwardManifest(object);
                 }
             }
@@ -254,25 +255,8 @@ SubscriptionSource::handleError(util::requests::RequestError const& error, boost
 void
 SubscriptionSource::logError(util::requests::RequestError const& error) const
 {
-    if (error.errorCode() && error.errorCode()->category() == boost::asio::error::get_ssl_category()) {
-        auto& errorCode = error.errorCode().value();
-        std::string errorString = fmt::format(
-            "({},{}) ",
-            boost::lexical_cast<std::string>(ERR_GET_LIB(errorCode.value())),
-            boost::lexical_cast<std::string>(ERR_GET_LIB(errorCode.value()))
-        );
+    auto const& errorCodeOpt = error.errorCode();
 
-        static constexpr size_t BUFFER_SIZE = 128;
-        char buf[BUFFER_SIZE];
-        ::ERR_error_string_n(errorCode.value(), buf, sizeof(buf));
-        errorString += buf;
-
-        LOG(log_.error()) << errorString;
-    }
-
-    auto& errorCodeOpt = error.errorCode();
-    // These are somewhat normal errors. operation_aborted occurs on shutdown,
-    // when the timer is cancelled. connection_refused will occur repeatedly
     if (not errorCodeOpt or
         (errorCodeOpt.value() != boost::asio::error::operation_aborted &&
          errorCodeOpt.value() != boost::asio::error::connection_refused)) {
