@@ -62,6 +62,9 @@ public:
         }
 
     public:
+        Token(Token const&) = default;
+        Token(Token&&) = default;
+
         [[nodiscard]] bool
         isStopRequested() const noexcept
         {

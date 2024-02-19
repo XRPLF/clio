@@ -103,6 +103,7 @@ target_sources (clio PRIVATE
   src/etl/ETLService.cpp
   src/etl/ETLState.cpp
   src/etl/LoadBalancer.cpp
+  src/etl/CacheLoaderSettings.cpp
   src/etl/impl/ForwardCache.cpp
   ## Feed
   src/feed/SubscriptionManager.cpp
@@ -227,6 +228,8 @@ if (tests)
     unittests/etl/ExtractorTests.cpp
     unittests/etl/TransformerTests.cpp
     unittests/etl/CacheLoaderTests.cpp
+    unittests/etl/CacheLoaderSettingsTests.cpp
+    unittests/etl/CursorProviderTests.cpp
     unittests/etl/AmendmentBlockHandlerTests.cpp
     unittests/etl/LedgerPublisherTests.cpp
     unittests/etl/ETLStateTests.cpp
@@ -302,7 +305,7 @@ if (tests)
   include (CMake/deps/gtest.cmake)
 
   # See https://github.com/google/googletest/issues/3475
-  gtest_discover_tests (clio_tests DISCOVERY_TIMEOUT 10)
+  gtest_discover_tests (clio_tests DISCOVERY_TIMEOUT 999)
 
   # Fix for dwarf5 bug on ci
   target_compile_options (clio PUBLIC -gdwarf-4)
@@ -372,6 +375,8 @@ if (san)
       $<$<STREQUAL:${san},undefined>:SANITIZER=UBSAN>)
   target_link_libraries (clio INTERFACE ${SAN_FLAG} ${SAN_LIB})
 endif ()
+
+target_compile_options (clio PUBLIC -O1)
 
 # Generate `docs` target for doxygen documentation if enabled
 # Note: use `make docs` to generate the documentation

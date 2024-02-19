@@ -65,8 +65,8 @@ public:
         auto diffs = std::vector<data::LedgerObject>{};
 
         auto const append = [](auto&& a, auto&& b) { a.insert(std::end(a), std::begin(b), std::end(b)); };
-        auto const fetchDiff = [&](uint32_t offset) {
-            return data::synchronousAndRetryOnTimeout([&](auto yield) {
+        auto const fetchDiff = [this, seq](uint32_t offset) {
+            return data::synchronousAndRetryOnTimeout([this, seq, offset](auto yield) {
                 return backend_->fetchLedgerDiff(seq - offset, yield);
             });
         };
