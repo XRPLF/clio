@@ -18,7 +18,7 @@ Clio needs access to a `rippled` server in order to work. The following configur
 
    - A port to handle gRPC requests, with the IP(s) of Clio specified in the `secure_gateway` entry
 
-The example configs of [rippled](https://github.com/XRPLF/rippled/blob/develop/cfg/rippled-example.cfg) and [Clio](../example-config.json) are set up in a way that minimal changes are required.
+The example configs of [rippled](https://github.com/XRPLF/rippled/blob/develop/cfg/rippled-example.cfg) and [Clio](../docs/examples/config/example-config.json) are set up in a way that minimal changes are required.
 When running locally, the only change needed is to uncomment the `port_grpc` section of the `rippled` config.
 
 If you're running Clio and `rippled` on separate machines, in addition to uncommenting the `port_grpc` section, a few other steps must be taken:
