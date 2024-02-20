@@ -65,7 +65,7 @@ TEST_P(ParametrizedCursorProviderTest, GetCursorsWithDifferentProviderSettings)
     EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(numDiffs);
 
     auto const cursors = provider.getCursors(SEQ);
-    EXPECT_EQ(cursors.size(), diffs.size() + 1);
+    ASSERT_EQ(cursors.size(), diffs.size() + 1);
 
     EXPECT_EQ(cursors.front().start, firstKey);
     EXPECT_EQ(cursors.back().end, lastKey);
@@ -81,7 +81,7 @@ TEST_F(CursorProviderTest, EmptyCursorIsHandledCorrectly)
 
     auto const cursors = provider.getCursors(SEQ);
 
+    ASSERT_EQ(cursors.size(), 1);
     EXPECT_EQ(cursors.front().start, firstKey);
     EXPECT_EQ(cursors.back().end, lastKey);
-    EXPECT_EQ(cursors.size(), 1);
 }

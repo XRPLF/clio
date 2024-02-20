@@ -62,7 +62,7 @@ public:
 
     /**
      * @brief Request the operation to be stopped as soon as possible
-     * Note: ASSERTs if the operation is not stoppable
+     * @note ASSERTs if the operation is not stoppable
      */
     void
     requestStop()
@@ -72,7 +72,7 @@ public:
 
     /**
      * @brief Cancel the operation if it is scheduled and not yet started
-     * Note: ASSERTs if the operation is not cancellable
+     * @note ASSERTs if the operation is not cancellable
      */
     void
     cancel()

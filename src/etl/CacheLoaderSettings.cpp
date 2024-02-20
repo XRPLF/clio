@@ -46,7 +46,7 @@ CacheLoaderSettings::isAsync() const
 [[nodiscard]] bool
 CacheLoaderSettings::isDisabled() const
 {
-    return loadStyle == LoadStyle::NOT_AT_ALL;
+    return loadStyle == LoadStyle::NONE;
 }
 
 [[nodiscard]] CacheLoaderSettings
@@ -66,7 +66,7 @@ make_CacheLoaderSettings(util::Config const& config)
             if (boost::iequals(*entry, "async"))
                 settings.loadStyle = CacheLoaderSettings::LoadStyle::ASYNC;
             if (boost::iequals(*entry, "none") or boost::iequals(*entry, "no"))
-                settings.loadStyle = CacheLoaderSettings::LoadStyle::NOT_AT_ALL;
+                settings.loadStyle = CacheLoaderSettings::LoadStyle::NONE;
         }
     }
     return settings;

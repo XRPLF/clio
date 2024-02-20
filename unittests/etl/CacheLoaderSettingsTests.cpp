@@ -96,14 +96,14 @@ TEST_F(CacheLoaderSettingsTest, NoLoadStyleCorrectlyPropagatedThroughConfig)
         auto const cfg = util::Config{json::parse(R"({"cache": {"load": "nONe"}})")};
         auto const settings = make_CacheLoaderSettings(cfg);
 
-        EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::NOT_AT_ALL);
+        EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::NONE);
         EXPECT_TRUE(settings.isDisabled());
     }
     {
         auto const cfg = util::Config{json::parse(R"({"cache": {"load": "nO"}})")};
         auto const settings = make_CacheLoaderSettings(cfg);
 
-        EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::NOT_AT_ALL);
+        EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::NONE);
         EXPECT_TRUE(settings.isDisabled());
     }
 }

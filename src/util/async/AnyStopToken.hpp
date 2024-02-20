@@ -72,6 +72,10 @@ public:
         return isStopRequested();
     }
 
+    /**
+     * @returns The underlying boost::asio::yield_context
+     * @note ASSERTs if the stop token is not convertible to boost::asio::yield_context
+     */
     [[nodiscard]] operator boost::asio::yield_context() const
     {
         return pimpl_->yieldContext();

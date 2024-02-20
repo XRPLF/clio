@@ -29,7 +29,7 @@ namespace etl {
  * @brief Settings for the cache loader
  */
 struct CacheLoaderSettings {
-    enum class LoadStyle { ASYNC, SYNC, NOT_AT_ALL };
+    enum class LoadStyle { ASYNC, SYNC, NONE };
 
     size_t numCacheDiffs = 32;       /**< number of diffs to use to generate cursors */
     size_t numCacheMarkers = 48;     /**< number of markers to use at one time to traverse the ledger */
@@ -38,7 +38,7 @@ struct CacheLoaderSettings {
 
     LoadStyle loadStyle = LoadStyle::ASYNC; /**< how to load the cache */
 
-    int
+    auto
     operator<=>(CacheLoaderSettings const&) const = default;
 
     /** @returns True if the load style is SYNC; false otherwise */
