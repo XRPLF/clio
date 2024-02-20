@@ -3,7 +3,7 @@ set (CMAKE_INSTALL_PREFIX ${CLIO_INSTALL_DIR})
 
 install (TARGETS clio_server DESTINATION bin)
 
-file (READ example-config.json config)
+file (READ docs/examples/config/example-config.json config)
 string (REGEX REPLACE "./clio_log" "/var/log/clio/" config "${config}")
 file (WRITE ${CMAKE_BINARY_DIR}/install-config.json "${config}")
 install (FILES ${CMAKE_BINARY_DIR}/install-config.json DESTINATION etc RENAME config.json)
