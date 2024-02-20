@@ -101,6 +101,7 @@ target_sources (clio PRIVATE
   src/etl/ETLService.cpp
   src/etl/ETLState.cpp
   src/etl/LoadBalancer.cpp
+  src/etl/CacheLoaderSettings.cpp
   src/etl/Source.cpp
   src/etl/impl/ForwardingSource.cpp
   src/etl/impl/GrpcSource.cpp
@@ -227,7 +228,9 @@ if (tests)
     unittests/util/requests/WsConnectionTests.cpp
     # ETL
     unittests/etl/AmendmentBlockHandlerTests.cpp
+    unittests/etl/CacheLoaderSettingsTests.cpp
     unittests/etl/CacheLoaderTests.cpp
+    unittests/etl/CursorProviderTests.cpp
     unittests/etl/ETLStateTests.cpp
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp
@@ -310,7 +313,7 @@ if (tests)
   include (CMake/deps/gtest.cmake)
 
   # See https://github.com/google/googletest/issues/3475
-  gtest_discover_tests (clio_tests DISCOVERY_TIMEOUT 10)
+  gtest_discover_tests (clio_tests DISCOVERY_TIMEOUT 90)
 
   # Fix for dwarf5 bug on ci
   target_compile_options (clio PUBLIC -gdwarf-4)

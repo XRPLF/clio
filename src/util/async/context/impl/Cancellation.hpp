@@ -62,6 +62,9 @@ public:
         }
 
     public:
+        Token(Token const&) = default;
+        Token(Token&&) = default;
+
         [[nodiscard]] bool
         isStopRequested() const noexcept
         {
@@ -73,6 +76,11 @@ public:
         [[nodiscard]] operator bool() const noexcept
         {
             return isStopRequested();
+        }
+
+        [[nodiscard]] operator boost::asio::yield_context() const noexcept
+        {
+            return yield_;
         }
     };
 

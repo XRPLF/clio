@@ -26,7 +26,7 @@ TEST(AssertTests, assertTrue)
     EXPECT_NO_THROW(ASSERT(true, "Should not fail"));
 }
 
-TEST(AssertTests, assertFalse)
+TEST(AssertDeathTest, assertFalse)
 {
     EXPECT_DEATH({ ASSERT(false, "failure"); }, ".*");
 }

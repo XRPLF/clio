@@ -42,6 +42,7 @@ struct AnyOperationTests : Test {
     AnyOperation<int> intOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
     AnyOperation<void> scheduledVoidOp{impl::ErasedOperation(static_cast<ScheduledOperationType&>(mockScheduledOp))};
 };
+using AnyOperationDeathTest = AnyOperationTests;
 
 TEST_F(AnyOperationTests, VoidDataYieldsNoError)
 {
@@ -98,4 +99,14 @@ TEST_F(AnyOperationTests, GetIncorrectDataReturnsError)
     ASSERT_FALSE(res);
     EXPECT_TRUE(res.error().message.ends_with("Bad any cast"));
     EXPECT_TRUE(std::string{res.error()}.ends_with("Bad any cast"));
+}
+
+TEST_F(AnyOperationDeathTest, CallRequestStopOnNonStoppableOperation)
+{
+    EXPECT_DEATH(voidOp.requestStop(), ".*");
+}
+
+TEST_F(AnyOperationDeathTest, CallCancelForNonCancellableOperation)
+{
+    EXPECT_DEATH(voidOp.cancel(), ".*");
 }

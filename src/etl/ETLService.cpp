@@ -268,7 +268,7 @@ ETLService::ETLService(
     : backend_(backend)
     , loadBalancer_(balancer)
     , networkValidatedLedgers_(std::move(ledgers))
-    , cacheLoader_(config, ioc, backend, backend->cache())
+    , cacheLoader_(config, backend, backend->cache())
     , ledgerFetcher_(backend, balancer)
     , ledgerLoader_(backend, balancer, ledgerFetcher_, state_)
     , ledgerPublisher_(ioc, backend, backend->cache(), subscriptions, state_)

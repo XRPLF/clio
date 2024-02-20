@@ -19,7 +19,10 @@
 
 #pragma once
 
+#include "util/Assert.hpp"
 #include "util/async/Concepts.hpp"
+
+#include <boost/asio/spawn.hpp>
 
 #include <memory>
 #include <type_traits>
@@ -69,6 +72,15 @@ public:
         return isStopRequested();
     }
 
+    /**
+     * @returns The underlying boost::asio::yield_context
+     * @note ASSERTs if the stop token is not convertible to boost::asio::yield_context
+     */
+    [[nodiscard]] operator boost::asio::yield_context() const
+    {
+        return pimpl_->yieldContext();
+    }
+
 private:
     struct Concept {
         virtual ~Concept() = default;
@@ -78,6 +90,9 @@ private:
 
         [[nodiscard]] virtual std::unique_ptr<Concept>
         clone() const = 0;
+
+        [[nodiscard]] virtual boost::asio::yield_context
+        yieldContext() const = 0;
     };
 
     template <SomeStopToken TokenType>
@@ -98,6 +113,17 @@ private:
         clone() const override
         {
             return std::make_unique<Model>(*this);
+        }
+
+        [[nodiscard]] boost::asio::yield_context
+        yieldContext() const override
+        {
+            if constexpr (std::is_convertible_v<TokenType, boost::asio::yield_context>) {
+                return token;
+            }
+
+            ASSERT(false, "Token type does not support conversion to boost::asio::yield_context");
+            __builtin_unreachable();  // TODO: replace with std::unreachable when C++23 is available
         }
     };
 

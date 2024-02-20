@@ -47,7 +47,7 @@ assertImpl(
                                  << fmt::format(format, std::forward<Args>(args)...) << "\n"
                                  << "Stacktrace:\n"
                                  << boost::stacktrace::stacktrace() << "\n";
-        std::abort();
+        std::exit(EXIT_FAILURE);  // std::abort does not flush gcovr output and causes uncovered lines
     }
 }
 

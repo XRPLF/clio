@@ -32,7 +32,7 @@
 
 using namespace util::prometheus;
 
-TEST(MetricBuilderTest, build)
+TEST(MetricBuilderDeathTest, build)
 {
     std::string const name = "name";
     std::string const labelsString = "{label1=\"value1\"}";
