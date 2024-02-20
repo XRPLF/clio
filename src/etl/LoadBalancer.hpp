@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "etl/ETLHelpers.hpp"
 #include "etl/ETLState.hpp"
+#include "etl/Source.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -36,6 +37,7 @@
 #include <org/xrpl/rpc/v1/ledger.pb.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -44,7 +46,6 @@
 #include <vector>
 
 namespace etl {
-class Source;
 class ProbingSource;
 }  // namespace etl
 
@@ -71,10 +72,11 @@ private:
     static constexpr std::uint32_t DEFAULT_DOWNLOAD_RANGES = 16;
 
     util::Logger log_{"ETL"};
-    std::vector<std::unique_ptr<Source>> sources_;
+    std::vector<Source> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
         DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading intial ledger */
+    std::atomic_bool hasForwardingSource_{false};
 
 public:
     /**
@@ -139,19 +141,6 @@ public:
     fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors);
 
     /**
-     * @brief Determine whether messages received on the transactions_proposed stream should be forwarded to subscribing
-     * clients.
-     *
-     * The server subscribes to transactions_proposed on multiple Sources, yet only forwards messages from one source at
-     * any given time (to avoid sending duplicate messages to clients).
-     *
-     * @param in Source in question
-     * @return true if messages should be forwarded
-     */
-    bool
-    shouldPropagateTxnStream(Source* in) const;
-
-    /**
      * @return JSON representation of the state of this load balancer.
      */
     boost::json::value
@@ -181,26 +170,6 @@ public:
 
 private:
     /**
-     * @brief A factory function for the ETL source.
-     *
-     * @param config The configuration to use
-     * @param ioc The io_context to run on
-     * @param backend BackendInterface implementation
-     * @param subscriptions Subscription manager
-     * @param validatedLedgers The network validated ledgers datastructure
-     * @param balancer The load balancer
-     */
-    static std::unique_ptr<Source>
-    make_Source(
-        util::Config const& config,
-        boost::asio::io_context& ioc,
-        std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-        LoadBalancer& balancer
-    );
-
-    /**
      * @brief Execute a function on a randomly selected source.
      *
      * @note f is a function that takes an Source as an argument and returns a bool.
@@ -215,5 +184,12 @@ private:
     template <class Func>
     bool
     execute(Func f, uint32_t ledgerSequence);
+
+    /**
+     * @brief Choose a new source to forward requests
+     */
+    void
+    chooseForwardingSource();
 };
+
 }  // namespace etl
