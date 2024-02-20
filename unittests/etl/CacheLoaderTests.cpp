@@ -103,7 +103,7 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_P(ParametrizedCacheLoaderTest, LoadCacheWithDifferentSettings)
 {
-    auto& settings = GetParam();
+    auto const& settings = GetParam();
     auto const diffs = diffProvider.getLatestDiff();
     auto const loops = diffs.size() + 1;
     auto const keysSize = 14;
@@ -131,7 +131,7 @@ TEST_P(ParametrizedCacheLoaderTest, LoadCacheWithDifferentSettings)
 
 TEST_P(ParametrizedCacheLoaderTest, AutomaticallyCancelledAndAwaitedInDestructor)
 {
-    auto& settings = GetParam();
+    auto const& settings = GetParam();
     auto const diffs = diffProvider.getLatestDiff();
     auto const loops = diffs.size() + 1;
     auto const keysSize = 1024;
@@ -162,7 +162,7 @@ TEST_P(ParametrizedCacheLoaderTest, AutomaticallyCancelledAndAwaitedInDestructor
 //
 TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 {
-    auto cfg = util::Config(json::parse(R"({"cache": {"load": "sync"}})"));
+    auto const cfg = util::Config(json::parse(R"({"cache": {"load": "sync"}})"));
     CacheLoader loader{cfg, backend, cache};
 
     auto const diffs = diffProvider.getLatestDiff();
@@ -187,7 +187,7 @@ TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 
 TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
 {
-    auto cfg = util::Config(json::parse(R"({"cache": {"load": "async"}})"));
+    auto const cfg = util::Config(json::parse(R"({"cache": {"load": "async"}})"));
     CacheLoader loader{cfg, backend, cache};
 
     auto const diffs = diffProvider.getLatestDiff();
