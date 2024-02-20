@@ -78,6 +78,7 @@ TEST_F(CacheLoaderSettingsTest, SyncLoadStyleCorrectlyPropagatedThroughConfig)
     auto settings = make_CacheLoaderSettings(cfg);
 
     EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::SYNC);
+    EXPECT_TRUE(settings.isSync());
 }
 
 TEST_F(CacheLoaderSettingsTest, AsyncLoadStyleCorrectlyPropagatedThroughConfig)
@@ -86,6 +87,7 @@ TEST_F(CacheLoaderSettingsTest, AsyncLoadStyleCorrectlyPropagatedThroughConfig)
     auto settings = make_CacheLoaderSettings(cfg);
 
     EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::ASYNC);
+    EXPECT_TRUE(settings.isAsync());
 }
 
 TEST_F(CacheLoaderSettingsTest, NoLoadStyleCorrectlyPropagatedThroughConfig)
@@ -95,11 +97,13 @@ TEST_F(CacheLoaderSettingsTest, NoLoadStyleCorrectlyPropagatedThroughConfig)
         auto settings = make_CacheLoaderSettings(cfg);
 
         EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::NOT_AT_ALL);
+        EXPECT_TRUE(settings.isDisabled());
     }
     {
         auto cfg = util::Config{json::parse(R"({"cache": {"load": "nO"}})")};
         auto settings = make_CacheLoaderSettings(cfg);
 
         EXPECT_EQ(settings.loadStyle, CacheLoaderSettings::LoadStyle::NOT_AT_ALL);
+        EXPECT_TRUE(settings.isDisabled());
     }
 }

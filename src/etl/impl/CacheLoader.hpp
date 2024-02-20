@@ -20,7 +20,6 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "data/Types.hpp"
 #include "etl/ETLHelpers.hpp"
 #include "etl/impl/CursorProvider.hpp"
 #include "util/async/AnyExecutionContext.hpp"
@@ -108,7 +107,7 @@ private:
             tasks_.push_back(spawnWorker(seq, cachePageFetchSize));
     }
 
-    auto
+    [[nodiscard]] auto
     spawnWorker(uint32_t const seq, size_t cachePageFetchSize)
     {
         return ctx_.execute([this, seq, cachePageFetchSize](auto token) {
@@ -130,14 +129,21 @@ private:
 
                     if (not res.cursor or res.cursor > end) {
                         if (--remaining_ <= 0) {
+                            auto endTime = std::chrono::steady_clock::now();
+                            auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime_);
+
+                            LOG(log_.info()) << "Finished loading cache. Cache size = " << cache_.get().size()
+                                             << ". Took " << duration.count() << " seconds";
+
                             cache_.get().setFull();
+                        } else {
+                            LOG(log_.debug()) << "Finished a cursor. Remaining = " << remaining_;
                         }
 
-                        LOG(log_.debug()) << "Finished a cursor. Remaining = " << remaining_;
                         break;  // pick up the next cursor if available
                     }
 
-                    start = res.cursor.value();
+                    start = std::move(res.cursor).value();
                 }
             }
         });

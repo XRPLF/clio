@@ -34,6 +34,12 @@ namespace etl {
 
 /**
  * @brief Cache loading interface
+ *
+ * This class is responsible for loading the cache for a given sequence number.
+ *
+ * @tparam CacheType The type of the cache to load
+ * @tparam CursorProviderType The type of the cursor provider to use
+ * @tparam ExecutionContextType The type of the execution context to use
  */
 template <
     typename CacheType,
@@ -51,20 +57,31 @@ class CacheLoader {
     std::unique_ptr<CacheLoaderType> loader_;
 
 public:
-    CacheLoader(util::Config const& config, std::shared_ptr<BackendInterface> const& backend, CacheType& ledgerCache)
-        : backend_{backend}
-        , cache_{ledgerCache}
-        , settings_{make_CacheLoaderSettings(config)}
-        , ctx_{settings_.numThreads}
+    /**
+     * @brief Construct a new Cache Loader object
+     *
+     * @param config The configuration to use
+     * @param backend The backend to use
+     * @param cache The cache to load into
+     */
+    CacheLoader(util::Config const& config, std::shared_ptr<BackendInterface> const& backend, CacheType& cache)
+        : backend_{backend}, cache_{cache}, settings_{make_CacheLoaderSettings(config)}, ctx_{settings_.numThreads}
     {
     }
 
+    /**
+     * @brief Load the cache for the given sequence number
+     *
+     * This function is blocking if the cache load style is set to sync and
+     * disables the cache entirely if the load style is set to none/no.
+     *
+     * @param seq The sequence number to load cache for
+     */
     void
     load(uint32_t const seq)
     {
         ASSERT(not cache_.get().isFull(), "Cache must not be full. seq = {}", seq);
 
-        // TODO: move somewhere else, this is not part of load's responsibilities
         if (settings_.isDisabled()) {
             cache_.get().setDisabled();
             LOG(log_.warn()) << "Cache is disabled. Not loading";
@@ -88,12 +105,18 @@ public:
         }
     }
 
+    /**
+     * @brief Requests the loader to stop asap
+     */
     void
     stop() noexcept
     {
         loader_->stop();
     }
 
+    /**
+     * @brief Waits for the loader to finish background work
+     */
     void
     wait() noexcept
     {

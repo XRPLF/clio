@@ -25,30 +25,31 @@
 
 namespace etl {
 
+/**
+ * @brief Settings for the cache loader
+ */
 struct CacheLoaderSettings {
-    static constexpr size_t DEFAULT_NUM_CACHE_DIFFS = 32;
-    static constexpr size_t DEFAULT_NUM_CACHE_MARKERS = 48;
-    static constexpr size_t DEFAULT_CACHE_PAGE_FETCH_SIZE = 512;
-    static constexpr size_t DEFAULT_NUM_THREADS = 2;
-
     enum class LoadStyle { ASYNC, SYNC, NOT_AT_ALL };
 
-    size_t numCacheDiffs = DEFAULT_NUM_CACHE_DIFFS; /**< number of diffs to use to generate cursors */
-    size_t numCacheMarkers =
-        DEFAULT_NUM_CACHE_MARKERS; /**< number of markers to use at one time to traverse the ledger */
-    size_t cachePageFetchSize =
-        DEFAULT_CACHE_PAGE_FETCH_SIZE;       /**< number of ledger objects to fetch concurrently per marker */
-    size_t numThreads = DEFAULT_NUM_THREADS; /**< number of threads to use for loading cache */
+    size_t numCacheDiffs = 32;       /**< number of diffs to use to generate cursors */
+    size_t numCacheMarkers = 48;     /**< number of markers to use at one time to traverse the ledger */
+    size_t cachePageFetchSize = 512; /**< number of ledger objects to fetch concurrently per marker */
+    size_t numThreads = 2;           /**< number of threads to use for loading cache */
 
     LoadStyle loadStyle = LoadStyle::ASYNC; /**< how to load the cache */
 
     int
     operator<=>(CacheLoaderSettings const&) const = default;
 
+    /** @returns True if the load style is SYNC; false otherwise */
     [[nodiscard]] bool
     isSync() const;
+
+    /** @returns True if the load style is ASYNC; false otherwise */
     [[nodiscard]] bool
     isAsync() const;
+
+    /** @returns True if the cache is disabled; false otherwise */
     [[nodiscard]] bool
     isDisabled() const;
 };
