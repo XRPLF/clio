@@ -28,7 +28,9 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
+#include <boost/log/attributes/attribute_value_set.hpp>
 #include <boost/log/core/core.hpp>
+#include <boost/log/expressions/filter.hpp>
 #include <boost/log/expressions/predicates/channel_severity_filter.hpp>
 #include <boost/log/keywords/auto_flush.hpp>
 #include <boost/log/keywords/file_name.hpp>
@@ -55,11 +57,14 @@
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
+#include <utility>
 
 namespace util {
 
 Logger LogService::general_log_ = Logger{"General"};
 Logger LogService::alert_log_ = Logger{"Alert"};
+boost::log::filter LogService::filter_{};
 
 std::ostream&
 operator<<(std::ostream& stream, Severity sev)
@@ -156,9 +161,7 @@ LogService::init(util::Config const& config)
         "Performance",
     };
 
-    auto core = boost::log::core::get();
-    auto min_severity = boost::log::expressions::channel_severity_filter(log_channel, log_severity);
-
+    std::unordered_map<std::string, Severity> min_severity;
     for (auto const& channel : channels)
         min_severity[channel] = defaultSeverity;
     min_severity["Alert"] = Severity::WRN;  // Channel for alerts, always warning severity
@@ -171,7 +174,19 @@ LogService::init(util::Config const& config)
         min_severity[name] = cfg.valueOr<Severity>("log_level", defaultSeverity);
     }
 
-    core->set_filter(min_severity);
+    auto log_filter = [min_severity = std::move(min_severity),
+                       defaultSeverity](boost::log::attribute_value_set const& attributes) -> bool {
+        auto const channel = attributes[log_channel];
+        auto const severity = attributes[log_severity];
+        if (!channel || !severity)
+            return false;
+        if (auto const it = min_severity.find(channel.get()); it != min_severity.end())
+            return severity.get() >= it->second;
+        return severity.get() >= defaultSeverity;
+    };
+
+    filter_ = boost::log::filter{std::move(log_filter)};
+    boost::log::core::get()->set_filter(filter_);
     LOG(LogService::info()) << "Default log level = " << defaultSeverity;
 }
 

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,28 +19,44 @@
 
 #pragma once
 
-#include "util/FakeFetchResponse.hpp"
+#include "util/log/Logger.hpp"
+#include "util/requests/WsConnection.hpp"
 
 #include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
 #include <boost/json/object.hpp>
-#include <boost/json/value.hpp>
-#include <gmock/gmock.h>
 
-#include <cstdint>
+#include <chrono>
 #include <optional>
 #include <string>
 
-struct MockLoadBalancer {
-    using RawLedgerObjectType = FakeLedgerObject;
+namespace etl::impl {
 
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
-    MOCK_METHOD(
-        std::optional<boost::json::object>,
-        forwardToRippled,
-        (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
-        (const)
+class ForwardingSource {
+    util::Logger log_;
+    util::requests::WsConnectionBuilder connectionBuilder_;
+    static constexpr std::chrono::seconds CONNECTION_TIMEOUT{3};
+
+public:
+    ForwardingSource(
+        std::string ip_,
+        std::string wsPort_,
+        std::chrono::steady_clock::duration connectionTimeout = CONNECTION_TIMEOUT
     );
+
+    /**
+     * @brief Forward a request to rippled.
+     *
+     * @param request The request to forward
+     * @param clientIp IP of the client forwarding this request if known
+     * @param yield The coroutine context
+     * @return Response wrapped in an optional on success; nullopt otherwise
+     */
+    std::optional<boost::json::object>
+    forwardToRippled(
+        boost::json::object const& request,
+        std::optional<std::string> const& forwardToRippledClientIp,
+        boost::asio::yield_context yield
+    ) const;
 };
+
+}  // namespace etl::impl

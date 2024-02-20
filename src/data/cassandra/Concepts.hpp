@@ -123,9 +123,6 @@ concept SomeRetryPolicy = requires(T a, boost::asio::io_context ioc, CassandraEr
     {
         a.retry([]() {})
     } -> std::same_as<void>;
-    {
-        a.calculateDelay(attempt)
-    } -> std::same_as<std::chrono::milliseconds>;
 };
 
 }  // namespace data::cassandra

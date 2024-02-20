@@ -28,6 +28,7 @@
 #include <boost/json/value.hpp>
 #include <boost/log/core/core.hpp>
 #include <boost/log/core/record.hpp>
+#include <boost/log/expressions/filter.hpp>
 #include <boost/log/expressions/keyword.hpp>
 #include <boost/log/expressions/predicates/channel_severity_filter.hpp>
 #include <boost/log/keywords/channel.hpp>
@@ -226,6 +227,7 @@ public:
 class LogService {
     static Logger general_log_; /*< Global logger for General channel */
     static Logger alert_log_;   /*< Global logger for Alerts channel */
+    static boost::log::filter filter_;
 
 public:
     LogService() = delete;

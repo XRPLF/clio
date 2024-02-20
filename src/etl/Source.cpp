@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,162 +19,51 @@
 
 #include "etl/Source.hpp"
 
-#include "util/log/Logger.hpp"
+#include "data/BackendInterface.hpp"
+#include "etl/ETLHelpers.hpp"
+#include "feed/SubscriptionManager.hpp"
+#include "util/config/Config.hpp"
 
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/asio/ssl/stream_base.hpp>
-#include <boost/beast/core/error.hpp>
-#include <boost/beast/core/role.hpp>
-#include <boost/beast/core/stream_traits.hpp>
-#include <boost/beast/http/field.hpp>
-#include <boost/beast/websocket/rfc6455.hpp>
-#include <boost/beast/websocket/stream_base.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace etl {
 
-static boost::beast::websocket::stream_base::timeout
-make_TimeoutOption()
-{
-    return boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client);
-}
+template class SourceImpl<>;
 
-void
-PlainSource::close(bool startAgain)
-{
-    timer_.cancel();
-    boost::asio::post(strand_, [this, startAgain]() {
-        if (closing_)
-            return;
-
-        if (derived().ws().is_open()) {
-            // onStop() also calls close(). If the async_close is called twice,
-            // an assertion fails. Using closing_ makes sure async_close is only
-            // called once
-            closing_ = true;
-            derived().ws().async_close(boost::beast::websocket::close_code::normal, [this, startAgain](auto ec) {
-                if (ec) {
-                    LOG(log_.error()) << "async_close: error code = " << ec << " - " << toString();
-                }
-                closing_ = false;
-                if (startAgain) {
-                    ws_ = std::make_unique<StreamType>(strand_);
-                    run();
-                }
-            });
-        } else if (startAgain) {
-            ws_ = std::make_unique<StreamType>(strand_);
-            run();
-        }
-    });
-}
-
-void
-SslSource::close(bool startAgain)
-{
-    timer_.cancel();
-    boost::asio::post(strand_, [this, startAgain]() {
-        if (closing_)
-            return;
-
-        if (derived().ws().is_open()) {
-            // onStop() also calls close(). If the async_close is called twice, an assertion fails. Using closing_
-            // makes sure async_close is only called once
-            closing_ = true;
-            derived().ws().async_close(boost::beast::websocket::close_code::normal, [this, startAgain](auto ec) {
-                if (ec) {
-                    LOG(log_.error()) << "async_close: error code = " << ec << " - " << toString();
-                }
-                closing_ = false;
-                if (startAgain) {
-                    ws_ = std::make_unique<StreamType>(strand_, *sslCtx_);
-                    run();
-                }
-            });
-        } else if (startAgain) {
-            ws_ = std::make_unique<StreamType>(strand_, *sslCtx_);
-            run();
-        }
-    });
-}
-
-void
-PlainSource::onConnect(
-    boost::beast::error_code ec,
-    boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint
+Source
+make_Source(
+    util::Config const& config,
+    boost::asio::io_context& ioc,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<feed::SubscriptionManager> subscriptions,
+    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
+    Source::OnDisconnectHook onDisconnect,
+    Source::OnConnectHook onConnect
 )
 {
-    if (ec) {
-        // start over
-        reconnect(ec);
-    } else {
-        connected_ = true;
-        numFailures_ = 0;
+    auto const ip = config.valueOr<std::string>("ip", {});
+    auto const wsPort = config.valueOr<std::string>("ws_port", {});
+    auto const grpcPort = config.valueOr<std::string>("grpc_port", {});
 
-        // Websocket stream has it's own timeout system
-        boost::beast::get_lowest_layer(derived().ws()).expires_never();
+    impl::GrpcSource grpcSource{ip, grpcPort, std::move(backend)};
+    auto subscriptionSource = std::make_unique<impl::SubscriptionSource>(
+        ioc,
+        ip,
+        wsPort,
+        std::move(validatedLedgers),
+        std::move(subscriptions),
+        std::move(onConnect),
+        std::move(onDisconnect)
+    );
+    impl::ForwardingSource forwardingSource{ip, wsPort};
 
-        derived().ws().set_option(make_TimeoutOption());
-        derived().ws().set_option(
-            boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
-                req.set(boost::beast::http::field::user_agent, "clio-client");
-                req.set("X-User", "clio-client");
-            })
-        );
-
-        // Update the host_ string. This will provide the value of the
-        // Host HTTP header during the WebSocket handshake.
-        // See https://tools.ietf.org/html/rfc7230#section-5.4
-        auto host = ip_ + ':' + std::to_string(endpoint.port());
-        derived().ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
-    }
+    return Source{
+        ip, wsPort, grpcPort, std::move(grpcSource), std::move(subscriptionSource), std::move(forwardingSource)
+    };
 }
 
-void
-SslSource::onConnect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint)
-{
-    if (ec) {
-        // start over
-        reconnect(ec);
-    } else {
-        connected_ = true;
-        numFailures_ = 0;
-
-        // Websocket stream has it's own timeout system
-        boost::beast::get_lowest_layer(derived().ws()).expires_never();
-
-        derived().ws().set_option(make_TimeoutOption());
-        derived().ws().set_option(
-            boost::beast::websocket::stream_base::decorator([](boost::beast::websocket::request_type& req) {
-                req.set(boost::beast::http::field::user_agent, "clio-client");
-                req.set("X-User", "clio-client");
-            })
-        );
-
-        // Update the host_ string. This will provide the value of the
-        // Host HTTP header during the WebSocket handshake.
-        // See https://tools.ietf.org/html/rfc7230#section-5.4
-        auto host = ip_ + ':' + std::to_string(endpoint.port());
-        ws().next_layer().async_handshake(boost::asio::ssl::stream_base::client, [this, endpoint](auto ec) {
-            onSslHandshake(ec, endpoint);
-        });
-    }
-}
-
-void
-SslSource::onSslHandshake(
-    boost::beast::error_code ec,
-    boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint
-)
-{
-    if (ec) {
-        reconnect(ec);
-    } else {
-        auto host = ip_ + ':' + std::to_string(endpoint.port());
-        ws().async_handshake(host, "/", [this](auto ec) { onHandshake(ec); });
-    }
-}
 }  // namespace etl
