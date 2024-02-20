@@ -99,3 +99,14 @@ TEST_F(AnyOperationTests, GetIncorrectDataReturnsError)
     EXPECT_TRUE(res.error().message.ends_with("Bad any cast"));
     EXPECT_TRUE(std::string{res.error()}.ends_with("Bad any cast"));
 }
+
+TEST_F(AnyOperationTests, CallRequestStopOnNonStoppableOperation)
+{
+    // FIXME: here and other places the error message is sent to the log, not to std::cerr. Nothing to match.
+    ASSERT_DEATH(voidOp.requestStop(), IsEmpty());
+}
+
+TEST_F(AnyOperationTests, CallCancelForNonCancellableOperation)
+{
+    ASSERT_DEATH(voidOp.cancel(), IsEmpty());
+}

@@ -19,6 +19,8 @@
 
 #include "util/async/AnyStopToken.hpp"
 
+#include <boost/asio/spawn.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 using namespace util::async;
@@ -56,4 +58,11 @@ TEST_P(AnyStopTokenTests, IsStopRequestedCallPropagated)
 
     EXPECT_EQ(stopToken.isStopRequested(), flag);
     EXPECT_EQ(stopToken, flag);
+}
+
+TEST_F(AnyStopTokenTests, ConversionToYieldContextAssertsIfUnsupported)
+{
+    ASSERT_DEATH(
+        [[maybe_unused]] auto unused = static_cast<boost::asio::yield_context>(AnyStopToken{FakeStopToken{}}), IsEmpty()
+    );
 }
