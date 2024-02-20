@@ -40,7 +40,7 @@ If no override is present for a given channel, that channel will log at the seve
 The log channels that can be overridden are: `Backend`, `WebServer`, `Subscriptions`, `RPC`, `ETL` and `Performance`.
 
 > [!NOTE]
-> See [example-config.json](../examples/config/example-config.json) for more details.
+> See [example-config.json](../docs/examples/config/example-config.json) for more details.
 
 ## `log_to_console`
 

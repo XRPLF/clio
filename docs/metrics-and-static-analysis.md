@@ -10,7 +10,7 @@ To completely disable Prometheus metrics add `"prometheus": { "enabled": false }
 
 It is important to know that Clio responds to Prometheus request only if they are admin requests. If you are using the admin password feature, the same password should be provided in the Authorization header of Prometheus requests.
 
-You can find an example docker-compose file, with Prometheus and Grafana configs, in [examples/infrastructure](../examples/infrastructure/).
+You can find an example docker-compose file, with Prometheus and Grafana configs, in [examples/infrastructure](../docs/examples/infrastructure/).
 
 ## Using `clang-tidy` for static analysis
 
