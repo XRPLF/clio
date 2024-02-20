@@ -71,7 +71,7 @@ struct BasicScheduledOperation {
         void
         emplace(auto&& op)
         {
-            std::lock_guard lock{m_};
+            std::lock_guard const lock{m_};
             op_.emplace(std::forward<decltype(op)>(op));
             ready_.notify_all();
         }
