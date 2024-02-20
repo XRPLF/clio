@@ -27,6 +27,7 @@
 #include <boost/json/object.hpp>
 #include <gmock/gmock.h>
 #include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Book.h>
 #include <ripple/protocol/Fees.h>
 #include <ripple/protocol/LedgerHeader.h>
 

@@ -18,8 +18,6 @@
 //==============================================================================
 #pragma once
 
-#include "etl/Source.hpp"
-
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -33,33 +31,28 @@
 #include <utility>
 #include <vector>
 
-class MockSource : public etl::Source {
+class MockSource {
 public:
-    MOCK_METHOD(bool, isConnected, (), (const, override));
-    MOCK_METHOD(boost::json::object, toJson, (), (const, override));
-    MOCK_METHOD(void, run, (), (override));
-    MOCK_METHOD(void, pause, (), (override));
-    MOCK_METHOD(void, resume, (), (override));
-    MOCK_METHOD(std::string, toString, (), (const, override));
-    MOCK_METHOD(bool, hasLedger, (uint32_t), (const, override));
-    MOCK_METHOD(
-        (std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>),
-        fetchLedger,
-        (uint32_t, bool, bool),
-        (override)
-    );
-    MOCK_METHOD((std::pair<std::vector<std::string>, bool>), loadInitialLedger, (uint32_t, uint32_t, bool), (override));
+    MOCK_METHOD(bool, isConnected, (), (const));
+    MOCK_METHOD(boost::json::object, toJson, (), (const));
+    MOCK_METHOD(void, run, ());
+    MOCK_METHOD(void, pause, ());
+    MOCK_METHOD(void, resume, ());
+    MOCK_METHOD(std::string, toString, (), (const));
+    MOCK_METHOD(bool, hasLedger, (uint32_t), (const));
+    MOCK_METHOD((std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>), fetchLedger, (uint32_t, bool, bool));
+    MOCK_METHOD((std::pair<std::vector<std::string>, bool>), loadInitialLedger, (uint32_t, uint32_t, bool));
     MOCK_METHOD(
         std::optional<boost::json::object>,
         forwardToRippled,
         (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
-        (const, override)
+        (const)
     );
     MOCK_METHOD(
         std::optional<boost::json::object>,
         requestFromRippled,
         (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
-        (const, override)
+        (const)
     );
-    MOCK_METHOD(boost::uuids::uuid, token, (), (const, override));
+    MOCK_METHOD(boost::uuids::uuid, token, (), (const));
 };

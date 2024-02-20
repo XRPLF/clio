@@ -47,7 +47,12 @@ using tcp = boost::asio::ip::tcp;
 namespace {
 
 void
-doSession(beast::tcp_stream stream, TestHttpServer::RequestHandler requestHandler, asio::yield_context yield)
+doSession(
+    beast::tcp_stream stream,
+    TestHttpServer::RequestHandler requestHandler,
+    asio::yield_context yield,
+    bool const allowToFail
+)
 {
     beast::error_code errorCode;
 
@@ -64,6 +69,9 @@ doSession(beast::tcp_stream stream, TestHttpServer::RequestHandler requestHandle
     if (errorCode == http::error::end_of_stream)
         return;
 
+    if (allowToFail and errorCode)
+        return;
+
     ASSERT_FALSE(errorCode) << errorCode.message();
 
     auto response = requestHandler(req);
@@ -77,6 +85,9 @@ doSession(beast::tcp_stream stream, TestHttpServer::RequestHandler requestHandle
 
     // Send the response
     beast::async_write(stream, std::move(messageGenerator), yield[errorCode]);
+
+    if (allowToFail and errorCode)
+        return;
 
     ASSERT_FALSE(errorCode) << errorCode.message();
 
@@ -104,18 +115,21 @@ TestHttpServer::TestHttpServer(boost::asio::io_context& context, std::string hos
 }
 
 void
-TestHttpServer::handleRequest(TestHttpServer::RequestHandler handler)
+TestHttpServer::handleRequest(TestHttpServer::RequestHandler handler, bool const allowToFail)
 {
     boost::asio::spawn(
         acceptor_.get_executor(),
-        [this, handler = std::move(handler)](asio::yield_context yield) mutable {
+        [this, allowToFail, handler = std::move(handler)](asio::yield_context yield) mutable {
             boost::beast::error_code errorCode;
             tcp::socket socket(this->acceptor_.get_executor());
             acceptor_.async_accept(socket, yield[errorCode]);
 
+            if (allowToFail and errorCode)
+                return;
+
             [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
 
-            doSession(beast::tcp_stream{std::move(socket)}, std::move(handler), yield);
+            doSession(beast::tcp_stream{std::move(socket)}, std::move(handler), yield, allowToFail);
         },
         boost::asio::detached
     );
