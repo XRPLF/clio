@@ -305,7 +305,7 @@ if (tests)
   include (CMake/deps/gtest.cmake)
 
   # See https://github.com/google/googletest/issues/3475
-  gtest_discover_tests (clio_tests DISCOVERY_TIMEOUT 999)
+  gtest_discover_tests (clio_tests DISCOVERY_TIMEOUT 90)
 
   # Fix for dwarf5 bug on ci
   target_compile_options (clio PUBLIC -gdwarf-4)
@@ -375,8 +375,6 @@ if (san)
       $<$<STREQUAL:${san},undefined>:SANITIZER=UBSAN>)
   target_link_libraries (clio INTERFACE ${SAN_FLAG} ${SAN_LIB})
 endif ()
-
-target_compile_options (clio PUBLIC -O1)
 
 # Generate `docs` target for doxygen documentation if enabled
 # Note: use `make docs` to generate the documentation

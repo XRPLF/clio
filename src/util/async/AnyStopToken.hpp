@@ -119,7 +119,7 @@ private:
             }
 
             ASSERT(false, "Token type does not support conversion to boost::asio::yield_context");
-            throw 0;
+            __builtin_unreachable();  // TODO: replace with std::unreachable when C++23 is available
         }
     };
 

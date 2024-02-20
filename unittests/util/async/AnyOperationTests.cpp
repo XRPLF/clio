@@ -42,6 +42,7 @@ struct AnyOperationTests : Test {
     AnyOperation<int> intOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
     AnyOperation<void> scheduledVoidOp{impl::ErasedOperation(static_cast<ScheduledOperationType&>(mockScheduledOp))};
 };
+using AnyOperationDeathTest = AnyOperationTests;
 
 TEST_F(AnyOperationTests, VoidDataYieldsNoError)
 {
@@ -100,13 +101,12 @@ TEST_F(AnyOperationTests, GetIncorrectDataReturnsError)
     EXPECT_TRUE(std::string{res.error()}.ends_with("Bad any cast"));
 }
 
-TEST_F(AnyOperationTests, CallRequestStopOnNonStoppableOperation)
+TEST_F(AnyOperationDeathTest, CallRequestStopOnNonStoppableOperation)
 {
-    // FIXME: here and other places the error message is sent to the log, not to std::cerr. Nothing to match.
-    ASSERT_DEATH(voidOp.requestStop(), IsEmpty());
+    EXPECT_DEATH(voidOp.requestStop(), ".*");
 }
 
-TEST_F(AnyOperationTests, CallCancelForNonCancellableOperation)
+TEST_F(AnyOperationDeathTest, CallCancelForNonCancellableOperation)
 {
-    ASSERT_DEATH(voidOp.cancel(), IsEmpty());
+    EXPECT_DEATH(voidOp.cancel(), ".*");
 }

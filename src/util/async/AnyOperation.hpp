@@ -69,14 +69,14 @@ public:
 
     /** @brief Request the operation to be stopped as soon as possible */
     void
-    requestStop() noexcept
+    requestStop()
     {
         operation_.requestStop();
     }
 
     /** @brief Cancel the operation. Used to cancel the timer for scheduled operations */
     void
-    cancel() noexcept
+    cancel()
     {
         operation_.cancel();
     }

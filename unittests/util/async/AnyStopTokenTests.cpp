@@ -38,6 +38,7 @@ struct FakeStopToken {
 }  // namespace
 
 struct AnyStopTokenTests : public TestWithParam<bool> {};
+using AnyStopTokenDeathTest = AnyStopTokenTests;
 
 INSTANTIATE_TEST_CASE_P(AnyStopTokenGroup, AnyStopTokenTests, ValuesIn({true, false}), [](auto const& info) {
     return info.param ? "true" : "false";
@@ -60,9 +61,9 @@ TEST_P(AnyStopTokenTests, IsStopRequestedCallPropagated)
     EXPECT_EQ(stopToken, flag);
 }
 
-TEST_F(AnyStopTokenTests, ConversionToYieldContextAssertsIfUnsupported)
+TEST_F(AnyStopTokenDeathTest, ConversionToYieldContextAssertsIfUnsupported)
 {
-    ASSERT_DEATH(
-        [[maybe_unused]] auto unused = static_cast<boost::asio::yield_context>(AnyStopToken{FakeStopToken{}}), IsEmpty()
+    EXPECT_DEATH(
+        [[maybe_unused]] auto unused = static_cast<boost::asio::yield_context>(AnyStopToken{FakeStopToken{}}), ".*"
     );
 }
