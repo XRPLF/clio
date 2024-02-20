@@ -103,6 +103,8 @@ private:
         namespace vs = std::views;
 
         LOG(log_.info()) << "Loading cache. Num cursors = " << queue_.size();
+        tasks_.reserve(numCacheMarkers);
+
         for ([[maybe_unused]] auto taskId : vs::iota(0u, numCacheMarkers))
             tasks_.push_back(spawnWorker(seq, cachePageFetchSize));
     }
