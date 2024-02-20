@@ -79,4 +79,4 @@ All of the above are optional.
 Clio will fallback to hardcoded defaults when these values are not specified in the config file, or if the configured values are outside of the minimum and maximum supported versions hardcoded in [src/rpc/common/APIVersion.h](../src/rpc/common/APIVersion.hpp).
 
 > [!TIP]
-> See the [example-config.json](../example-config.json) for more details.
+> See the [example-config.json](../examples/config/example-config.json) for more details.
