@@ -20,9 +20,7 @@
 #include "etl/CacheLoaderSettings.hpp"
 #include "util/config/Config.hpp"
 
-#include <boost/json.hpp>
 #include <boost/json/parse.hpp>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 namespace json = boost::json;

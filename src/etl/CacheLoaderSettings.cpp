@@ -22,9 +22,6 @@
 #include "util/config/Config.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
 
 #include <cstddef>
 #include <string>

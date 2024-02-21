@@ -27,12 +27,9 @@
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/config/Config.hpp"
 
-#include <boost/json.hpp>
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
 
 #include <vector>
 
@@ -120,7 +117,7 @@ TEST_P(ParametrizedCacheLoaderTest, LoadCacheWithDifferentSettings)
     EXPECT_CALL(cache, setFull).Times(1);
 
     async::CoroExecutionContext ctx{settings.numThreads};
-    etl::impl::CursorProvider provider{backend, settings.numCacheDiffs};
+    etl::impl::CursorProvider const provider{backend, settings.numCacheDiffs};
 
     etl::impl::CacheLoaderImpl<MockCache> loader{
         ctx, backend, cache, SEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(SEQ)
@@ -148,9 +145,9 @@ TEST_P(ParametrizedCacheLoaderTest, AutomaticallyCancelledAndAwaitedInDestructor
     EXPECT_CALL(cache, setFull).Times(AtMost(1));
 
     async::CoroExecutionContext ctx{settings.numThreads};
-    etl::impl::CursorProvider provider{backend, settings.numCacheDiffs};
+    etl::impl::CursorProvider const provider{backend, settings.numCacheDiffs};
 
-    etl::impl::CacheLoaderImpl<MockCache> loader{
+    etl::impl::CacheLoaderImpl<MockCache> const loader{
         ctx, backend, cache, SEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(SEQ)
     };
 

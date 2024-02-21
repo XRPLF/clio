@@ -31,7 +31,6 @@
 #include <boost/log/attributes/attribute_value_set.hpp>
 #include <boost/log/core/core.hpp>
 #include <boost/log/expressions/filter.hpp>
-#include <boost/log/expressions/predicates/channel_severity_filter.hpp>
 #include <boost/log/keywords/auto_flush.hpp>
 #include <boost/log/keywords/file_name.hpp>
 #include <boost/log/keywords/filter.hpp>

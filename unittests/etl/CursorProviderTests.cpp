@@ -24,8 +24,6 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
 
 #include <cstddef>
 
