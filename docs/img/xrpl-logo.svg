@@ -104,7 +104,7 @@
      transform="translate(-55,-98.5)"><path
        id="rect2"
        d="M 74.985591,98.5 H 135.01441 A 19.985591,19.985591 45 0 1 155,118.48559 v 60.02882 A 19.985591,19.985591 135 0 1 135.01441,198.5 H 74.985591 A 19.985591,19.985591 45 0 1 55,178.51441 V 118.48559 A 19.985591,19.985591 135 0 1 74.985591,98.5 Z"
-       style="fill:#e6edf3ff;fill-opacity:0.24705882;stroke-width:0.304941;stroke-dasharray:none;image-rendering:auto"
+       style="fill:#e6edf3ff;fill-opacity:1.0;stroke-width:0.304941;stroke-dasharray:none;image-rendering:auto"
        inkscape:path-effect="#path-effect4"
        inkscape:original-d="m 55,98.5 h 100 v 100 H 55 Z" /><image
        width="78.845833"
