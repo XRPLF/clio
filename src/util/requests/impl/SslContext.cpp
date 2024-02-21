@@ -20,7 +20,6 @@
 #include "util/requests/impl/SslContext.hpp"
 
 #include "util/Expected.hpp"
-#include "util/log/Logger.hpp"
 #include "util/requests/Types.hpp"
 
 #include <boost/asio/buffer.hpp>
