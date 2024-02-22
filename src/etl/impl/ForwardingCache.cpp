@@ -35,12 +35,12 @@ namespace etl::impl {
 namespace {
 
 std::optional<std::string>
-getMethod(boost::json::object const& request)
+getCommand(boost::json::object const& request)
 {
-    if (not request.contains("method")) {
+    if (not request.contains("command")) {
         return std::nullopt;
     }
-    return boost::json::value_to<std::string>(request.at("method"));
+    return boost::json::value_to<std::string>(request.at("command"));
 }
 
 }  // namespace
@@ -71,7 +71,7 @@ CacheEntry::invalidate()
 }
 
 std::unordered_set<std::string> const
-    ForwardingCache::CACHEABLE_METHODS{"server_info", "server_state", "server_definitions", "fee", "ledger_closed"};
+    ForwardingCache::CACHEABLE_COMMANDS{"server_info", "server_state", "server_definitions", "fee", "ledger_closed"};
 
 ForwardingCache::ForwardingCache(std::chrono::steady_clock::duration const cacheTimeout) : cacheTimeout_{cacheTimeout}
 {
@@ -80,20 +80,20 @@ ForwardingCache::ForwardingCache(std::chrono::steady_clock::duration const cache
 bool
 ForwardingCache::shouldCache(boost::json::object const& request)
 {
-    auto const method = getMethod(request);
-    return method.has_value() and CACHEABLE_METHODS.contains(*method);
+    auto const command = getCommand(request);
+    return command.has_value() and CACHEABLE_COMMANDS.contains(*command);
 }
 
 std::optional<boost::json::object>
 ForwardingCache::get(boost::json::object const& request) const
 {
-    auto const method = getMethod(request);
+    auto const command = getCommand(request);
 
-    if (not method.has_value()) {
+    if (not command.has_value()) {
         return std::nullopt;
     }
 
-    auto it = cache_.find(*method);
+    auto it = cache_.find(*command);
     if (it == cache_.end())
         return std::nullopt;
 
@@ -107,11 +107,11 @@ ForwardingCache::get(boost::json::object const& request) const
 void
 ForwardingCache::put(boost::json::object const& request, boost::json::object const& response)
 {
-    auto const method = getMethod(request);
-    if (not method.has_value()) {
+    auto const command = getCommand(request);
+    if (not command.has_value()) {
         return;
     }
-    auto entry = cache_[*method].lock<std::unique_lock>();
+    auto entry = cache_[*command].lock<std::unique_lock>();
     entry->put(response);
 }
 

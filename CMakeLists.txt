@@ -232,6 +232,7 @@ if (tests)
     unittests/etl/ETLStateTests.cpp
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp
+    unittests/etl/ForwardingCacheTests.cpp
     unittests/etl/ForwardingSourceTests.cpp
     unittests/etl/GrpcSourceTests.cpp
     unittests/etl/SourceTests.cpp

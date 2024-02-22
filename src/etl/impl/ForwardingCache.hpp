@@ -74,7 +74,7 @@ private:
 
 class ForwardingCache {
 public:
-    static std::unordered_set<std::string> const CACHEABLE_METHODS;
+    static std::unordered_set<std::string> const CACHEABLE_COMMANDS;
 
     ForwardingCache(std::chrono::steady_clock::duration cacheTimeout);
 
