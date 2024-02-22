@@ -104,7 +104,7 @@ ForwardingSource::forwardToRippled(
     auto responseObject = parsedResponse.as_object();
     responseObject["forwarded"] = true;
 
-    if (cache_ and ForwardingCache::shouldCache(request))
+    if (cache_ and ForwardingCache::shouldCache(request) and not responseObject.contains("error"))
         cache_->put(request, responseObject);
 
     return responseObject;

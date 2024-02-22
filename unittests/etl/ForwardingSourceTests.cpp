@@ -28,6 +28,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -35,7 +36,7 @@ using namespace etl::impl;
 
 struct ForwardingSourceTests : SyncAsioContextTest {
     TestWsServer server_{ctx, "0.0.0.0", 11114};
-    ForwardingSource forwardingSource{"127.0.0.1", "11114", std::chrono::milliseconds{1}};
+    ForwardingSource forwardingSource{"127.0.0.1", "11114", std::nullopt, std::chrono::milliseconds{1}};
 };
 
 TEST_F(ForwardingSourceTests, ConnectionFailed)
@@ -114,6 +115,93 @@ TEST_F(ForwardingSourceOperationsTests, Success)
         auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), "some_ip", yield);
         [&]() { ASSERT_TRUE(result); }();
         auto expectedReply = reply_;
+        expectedReply["forwarded"] = true;
+        EXPECT_EQ(*result, expectedReply) << *result;
+    });
+}
+
+struct ForwardingSourceCacheTests : ForwardingSourceOperationsTests {
+    ForwardingSourceCacheTests()
+    {
+        forwardingSource =
+            ForwardingSource{"127.0.0.1", "11114", std::chrono::seconds{100}, std::chrono::milliseconds{1}};
+    }
+};
+
+TEST_F(ForwardingSourceCacheTests, Cache)
+{
+    boost::json::object const request = {{"command", "server_state"}};
+    auto const response = R"({"reply":"some_reply"})";
+
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto connection = serverConnection(yield);
+
+        auto const receivedMessage = connection.receive(yield);
+        [&]() { ASSERT_TRUE(receivedMessage); }();
+        EXPECT_EQ(*receivedMessage, boost::json::serialize(request)) << *receivedMessage;
+
+        {
+            auto const sendError = connection.send(response, yield);
+            [&]() { ASSERT_FALSE(sendError) << *sendError; }();
+        }
+
+        auto const sendError = connection.send("some other message", yield);
+        [&]() { ASSERT_FALSE(sendError) << *sendError; }();
+    });
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        for (int i = 0; i < 4; ++i) {
+            auto result = forwardingSource.forwardToRippled(request, {}, yield);
+            [&]() { ASSERT_TRUE(result); }();
+
+            auto expectedReply = boost::json::parse(response).as_object();
+            expectedReply["forwarded"] = true;
+            EXPECT_EQ(*result, expectedReply) << *result;
+        }
+    });
+}
+
+TEST_F(ForwardingSourceCacheTests, ResponseWithErrorNotCached)
+{
+    boost::json::object const request = {{"command", "server_state"}};
+    auto const errorResponse = R"({"reply":"some_reply","error":"some_error"})";
+    auto const goodResponse = R"({"reply":"good_reply"})";
+
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        {
+            auto connection = serverConnection(yield);
+
+            auto const receivedMessage = connection.receive(yield);
+            [&]() { ASSERT_TRUE(receivedMessage); }();
+            EXPECT_EQ(*receivedMessage, boost::json::serialize(request)) << *receivedMessage;
+
+            auto const sendError = connection.send(errorResponse, yield);
+            [&]() { ASSERT_FALSE(sendError) << *sendError; }();
+        }
+
+        auto connection = serverConnection(yield);
+
+        auto const receivedMessage = connection.receive(yield);
+        [&]() { ASSERT_TRUE(receivedMessage); }();
+        EXPECT_EQ(*receivedMessage, boost::json::serialize(request)) << *receivedMessage;
+
+        auto const sendError = connection.send(goodResponse, yield);
+        [&]() { ASSERT_FALSE(sendError) << *sendError; }();
+    });
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        {
+            auto result = forwardingSource.forwardToRippled(request, {}, yield);
+            ASSERT_TRUE(result);
+            auto expectedReply = boost::json::parse(errorResponse).as_object();
+            expectedReply["forwarded"] = true;
+            EXPECT_EQ(*result, expectedReply) << *result;
+        }
+
+        auto result = forwardingSource.forwardToRippled(request, {}, yield);
+        ASSERT_TRUE(result);
+
+        auto expectedReply = boost::json::parse(goodResponse).as_object();
         expectedReply["forwarded"] = true;
         EXPECT_EQ(*result, expectedReply) << *result;
     });
