@@ -6,6 +6,7 @@ project(clio)
 # ========================================================================== #
 option (verbose   "Verbose build"                                     FALSE)
 option (tests     "Build tests"                                       FALSE)
+option (benchmark "Build benchmarks"                                  FALSE)
 option (docs      "Generate doxygen docs"                             FALSE)
 option (coverage  "Build test coverage report"                        FALSE)
 option (packaging "Create distribution packages"                      FALSE)
@@ -96,13 +97,15 @@ target_sources (clio PRIVATE
   src/data/cassandra/Handle.cpp
   src/data/cassandra/SettingsProvider.cpp
   ## ETL
-  src/etl/Source.cpp
-  src/etl/ProbingSource.cpp
   src/etl/NFTHelpers.cpp
   src/etl/ETLService.cpp
   src/etl/ETLState.cpp
   src/etl/LoadBalancer.cpp
-  src/etl/impl/ForwardCache.cpp
+  src/etl/CacheLoaderSettings.cpp
+  src/etl/Source.cpp
+  src/etl/impl/ForwardingSource.cpp
+  src/etl/impl/GrpcSource.cpp
+  src/etl/impl/SubscriptionSource.cpp
   ## Feed
   src/feed/SubscriptionManager.cpp
   src/feed/impl/TransactionFeed.cpp
@@ -163,6 +166,7 @@ target_sources (clio PRIVATE
   src/util/prometheus/OStream.cpp
   src/util/prometheus/Prometheus.cpp
   src/util/Random.cpp
+  src/util/Retry.cpp
   src/util/requests/RequestBuilder.cpp
   src/util/requests/Types.cpp
   src/util/requests/WsConnection.cpp
@@ -202,6 +206,7 @@ if (tests)
     unittests/util/TxUtilTests.cpp
     unittests/util/StringUtils.cpp
     unittests/util/LedgerUtilsTests.cpp
+    ## Prometheus support
     unittests/util/prometheus/CounterTests.cpp
     unittests/util/prometheus/GaugeTests.cpp
     unittests/util/prometheus/HistogramTests.cpp
@@ -210,17 +215,32 @@ if (tests)
     unittests/util/prometheus/MetricBuilderTests.cpp
     unittests/util/prometheus/MetricsFamilyTests.cpp
     unittests/util/prometheus/OStreamTests.cpp
+    unittests/util/RetryTests.cpp
+    ## Async framework
+    unittests/util/async/AnyExecutionContextTests.cpp
+    unittests/util/async/AnyStrandTests.cpp
+    unittests/util/async/AnyOperationTests.cpp
+    unittests/util/async/AnyStopTokenTests.cpp
+    unittests/util/async/AsyncExecutionContextTests.cpp
+    ## Requests framework
     unittests/util/requests/RequestBuilderTests.cpp
     unittests/util/requests/SslContextTests.cpp
     unittests/util/requests/WsConnectionTests.cpp
     # ETL
+    unittests/etl/AmendmentBlockHandlerTests.cpp
+    unittests/etl/CacheLoaderSettingsTests.cpp
+    unittests/etl/CacheLoaderTests.cpp
+    unittests/etl/CursorProviderTests.cpp
+    unittests/etl/ETLStateTests.cpp
     unittests/etl/ExtractionDataPipeTests.cpp
     unittests/etl/ExtractorTests.cpp
-    unittests/etl/TransformerTests.cpp
-    unittests/etl/CacheLoaderTests.cpp
-    unittests/etl/AmendmentBlockHandlerTests.cpp
+    unittests/etl/ForwardingSourceTests.cpp
+    unittests/etl/GrpcSourceTests.cpp
+    unittests/etl/SourceTests.cpp
+    unittests/etl/SubscriptionSourceTests.cpp
+    unittests/etl/SubscriptionSourceDependenciesTests.cpp
     unittests/etl/LedgerPublisherTests.cpp
-    unittests/etl/ETLStateTests.cpp
+    unittests/etl/TransformerTests.cpp
     # RPC
     unittests/rpc/ErrorTests.cpp
     unittests/rpc/BaseTests.cpp
@@ -293,7 +313,7 @@ if (tests)
   include (CMake/deps/gtest.cmake)
 
   # See https://github.com/google/googletest/issues/3475
-  gtest_discover_tests (clio_tests DISCOVERY_TIMEOUT 10)
+  gtest_discover_tests (clio_tests DISCOVERY_TIMEOUT 90)
 
   # Fix for dwarf5 bug on ci
   target_compile_options (clio PUBLIC -gdwarf-4)
@@ -328,6 +348,23 @@ if (tests)
         DEPENDENCIES clio_tests
     )
   endif ()
+endif ()
+
+# Benchmarks
+if (benchmark)
+  set (BENCH_TARGET clio_benchmarks)
+  add_executable (${BENCH_TARGET}
+    # Common
+    benchmarks/Main.cpp
+    benchmarks/Playground.cpp
+    # ExecutionContext
+    benchmarks/util/async/ExecutionContextBenchmarks.cpp
+  )
+
+  include (CMake/deps/gbench.cmake)
+
+  target_include_directories (${BENCH_TARGET} PRIVATE benchmarks)
+  target_link_libraries (${BENCH_TARGET} PUBLIC clio benchmark::benchmark_main)
 endif ()
 
 # Enable selected sanitizer if enabled via `san`

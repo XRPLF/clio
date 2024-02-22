@@ -166,12 +166,6 @@ protected:
         runner.emplace([this] { ctx.run(); });
     }
 
-    void
-    SetUp() override
-    {
-        NoLoggerFixture::SetUp();
-    }
-
     // this ctx is for dos timer
     boost::asio::io_context ctxSync;
     Config cfg{boost::json::parse(JSONData)};

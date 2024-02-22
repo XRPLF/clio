@@ -51,9 +51,10 @@ public:
      * @note This method schedules to process only one request
      *
      * @param handler RequestHandler to use for incoming request
+     * @param allowToFail if true, the server will not throw an exception if the request fails
      */
     void
-    handleRequest(RequestHandler handler);
+    handleRequest(RequestHandler handler, bool allowToFail = false);
 
 private:
     boost::asio::ip::tcp::acceptor acceptor_;
