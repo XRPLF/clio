@@ -32,7 +32,8 @@
         {
             "ip": "127.0.0.1",
             "ws_port": "6006",
-            "grpc_port": "50051"
+            "grpc_port": "50051",
+            "cache_timeout_ms": 250
         }
     ],
     "dos_guard": {

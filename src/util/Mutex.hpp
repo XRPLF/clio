@@ -24,17 +24,18 @@
 
 namespace util {
 
-template <typename ProtectedDataType>
+template <typename ProtectedDataType, typename MutextType>
 class Mutex;
 
 /**
  * @brief A lock on a mutex that provides access to the protected data.
  *
  * @tparam ProtectedDataType data type to hold
+ * @tparam LockType type of lock
  */
-template <typename ProtectedDataType>
+template <typename ProtectedDataType, template <typename> typename LockType, typename MutexType>
 class Lock {
-    std::scoped_lock<std::mutex> lock_;
+    LockType<MutexType> lock_;
     ProtectedDataType& data_;
 
 public:
@@ -75,9 +76,9 @@ public:
     }
 
 private:
-    friend class Mutex<std::remove_const_t<ProtectedDataType>>;
+    friend class Mutex<std::remove_const_t<ProtectedDataType>, MutexType>;
 
-    explicit Lock(std::mutex& mutex, ProtectedDataType& data) : lock_(mutex), data_(data)
+    Lock(MutexType& mutex, ProtectedDataType& data) : lock_(mutex), data_(data)
     {
     }
 };
@@ -87,9 +88,9 @@ private:
  *
  * @tparam ProtectedDataType data type to hold
  */
-template <typename ProtectedDataType>
+template <typename ProtectedDataType, typename MutexType = std::mutex>
 class Mutex {
-    mutable std::mutex mutex_;
+    mutable MutexType mutex_;
     ProtectedDataType data_;
 
 public:
@@ -106,16 +107,18 @@ public:
         return Mutex{ProtectedDataType{std::forward<Args>(args)...}};
     }
 
-    Lock<ProtectedDataType const>
+    template <template <typename> typename LockType = std::lock_guard>
+    Lock<ProtectedDataType const, LockType, MutexType>
     lock() const
     {
-        return Lock<ProtectedDataType const>{mutex_, data_};
+        return {mutex_, data_};
     }
 
-    Lock<ProtectedDataType>
+    template <template <typename> typename LockType = std::lock_guard>
+    Lock<ProtectedDataType, LockType, MutexType>
     lock()
     {
-        return Lock<ProtectedDataType>{mutex_, data_};
+        return {mutex_, data_};
     }
 };
 
