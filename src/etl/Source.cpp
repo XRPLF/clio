@@ -26,7 +26,10 @@
 
 #include <boost/asio/io_context.hpp>
 
+#include <chrono>
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -59,7 +62,12 @@ make_Source(
         std::move(onConnect),
         std::move(onDisconnect)
     );
-    impl::ForwardingSource forwardingSource{ip, wsPort};
+
+    auto const cacheEntryTimeout = config.valueOr<uint64_t>("cache_entry_timeout", 0);
+    auto const cacheEntryTimeoutDuration = cacheEntryTimeout == 0
+        ? std::nullopt
+        : std::make_optional<std::chrono::steady_clock::duration>(std::chrono::milliseconds{cacheEntryTimeout});
+    impl::ForwardingSource forwardingSource{ip, wsPort, cacheEntryTimeoutDuration};
 
     return Source{
         ip, wsPort, grpcPort, std::move(grpcSource), std::move(subscriptionSource), std::move(forwardingSource)

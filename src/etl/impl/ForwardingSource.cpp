@@ -41,10 +41,15 @@ namespace etl::impl {
 ForwardingSource::ForwardingSource(
     std::string ip,
     std::string wsPort,
+    std::optional<std::chrono::steady_clock::duration> const& cacheEntryTimeout,
     std::chrono::steady_clock::duration connectionTimeout
 )
     : log_(fmt::format("ForwardingSource[{}:{}]", ip, wsPort)), connectionBuilder_(std::move(ip), std::move(wsPort))
 {
+    if (cacheEntryTimeout) {
+        cache_ = ForwardingCache(*cacheEntryTimeout);
+    }
+
     connectionBuilder_.setConnectionTimeout(connectionTimeout)
         .addHeader(
             {boost::beast::http::field::user_agent, fmt::format("{} websocket-client-coro", BOOST_BEAST_VERSION_STRING)}
@@ -58,6 +63,12 @@ ForwardingSource::forwardToRippled(
     boost::asio::yield_context yield
 ) const
 {
+    if (cache_) {
+        if (auto cachedResponse = cache_->get(request); cachedResponse) {
+            return cachedResponse;
+        }
+    }
+
     auto connectionBuilder = connectionBuilder_;
     if (forwardToRippledClientIp) {
         connectionBuilder.addHeader(
@@ -92,6 +103,10 @@ ForwardingSource::forwardToRippled(
 
     auto responseObject = parsedResponse.as_object();
     responseObject["forwarded"] = true;
+
+    if (cache_ and ForwardingCache::shouldCache(request))
+        cache_->put(request, responseObject);
+
     return responseObject;
 }
 

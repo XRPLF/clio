@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "etl/impl/ForwardingCache.hpp"
 #include "util/log/Logger.hpp"
 #include "util/requests/WsConnection.hpp"
 
@@ -34,12 +35,15 @@ namespace etl::impl {
 class ForwardingSource {
     util::Logger log_;
     util::requests::WsConnectionBuilder connectionBuilder_;
+    mutable std::optional<ForwardingCache> cache_;
+
     static constexpr std::chrono::seconds CONNECTION_TIMEOUT{3};
 
 public:
     ForwardingSource(
         std::string ip_,
         std::string wsPort_,
+        std::optional<std::chrono::steady_clock::duration> const& cacheEntryTimeout,
         std::chrono::steady_clock::duration connectionTimeout = CONNECTION_TIMEOUT
     );
 
