@@ -36,6 +36,9 @@ namespace etl::impl {
  * @brief A class to store a cache entry.
  */
 class CacheEntry {
+    std::chrono::steady_clock::time_point lastUpdated_;
+    std::optional<boost::json::object> response_;
+
 public:
     /**
      * @brief Put a response into the cache
@@ -66,13 +69,12 @@ public:
      */
     void
     invalidate();
-
-private:
-    std::chrono::steady_clock::time_point lastUpdated_;
-    std::optional<boost::json::object> response_;
 };
 
 class ForwardingCache {
+    std::chrono::steady_clock::duration cacheTimeout_;
+    std::unordered_map<std::string, util::Mutex<CacheEntry, std::shared_mutex>> cache_;
+
 public:
     static std::unordered_set<std::string> const CACHEABLE_COMMANDS;
 
@@ -91,9 +93,8 @@ public:
     invalidate();
 
 private:
-    std::chrono::steady_clock::duration cacheTimeout_;
-
-    std::unordered_map<std::string, util::Mutex<CacheEntry, std::shared_mutex>> cache_;
+    static std::optional<std::string>
+    getCommand(boost::json::object const& request);
 };
 
 }  // namespace etl::impl

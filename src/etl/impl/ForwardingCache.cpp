@@ -30,16 +30,6 @@
 #include <unordered_set>
 #include <utility>
 
-// TODO: Move to empty namespace when update from gcc 11,4
-std::optional<std::string>
-getCommand(boost::json::object const& request)
-{
-    if (not request.contains("command")) {
-        return std::nullopt;
-    }
-    return boost::json::value_to<std::string>(request.at("command"));
-}
-
 namespace etl::impl {
 
 void
@@ -119,6 +109,16 @@ ForwardingCache::invalidate()
         auto entryLock = entry.lock<std::unique_lock>();
         entryLock->invalidate();
     }
+}
+
+// TODO: Move to anonymous namespace when update from gcc 11,4
+std::optional<std::string>
+ForwardingCache::getCommand(boost::json::object const& request)
+{
+    if (not request.contains("command")) {
+        return std::nullopt;
+    }
+    return boost::json::value_to<std::string>(request.at("command"));
 }
 
 }  // namespace etl::impl
