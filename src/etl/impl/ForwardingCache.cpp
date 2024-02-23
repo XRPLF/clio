@@ -19,6 +19,8 @@
 
 #include "etl/impl/ForwardingCache.hpp"
 
+#include "util/Assert.hpp"
+
 #include <boost/json/object.hpp>
 #include <boost/json/value_to.hpp>
 
@@ -75,6 +77,9 @@ std::unordered_set<std::string> const
 
 ForwardingCache::ForwardingCache(std::chrono::steady_clock::duration const cacheTimeout) : cacheTimeout_{cacheTimeout}
 {
+    for (auto const& command : CACHEABLE_COMMANDS) {
+        cache_.emplace(command, CacheEntry{});
+    }
 }
 
 bool
@@ -108,9 +113,11 @@ void
 ForwardingCache::put(boost::json::object const& request, boost::json::object const& response)
 {
     auto const command = getCommand(request);
-    if (not command.has_value()) {
+    if (not command.has_value() or not shouldCache(request))
         return;
-    }
+
+    ASSERT(cache_.contains(*command), "Command is not in the cache: {}", *command);
+
     auto entry = cache_[*command].lock<std::unique_lock>();
     entry->put(response);
 }

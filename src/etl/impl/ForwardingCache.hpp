@@ -71,6 +71,9 @@ public:
     invalidate();
 };
 
+/**
+ * @brief A class to store a cache of forwarding responses
+ */
 class ForwardingCache {
     std::chrono::steady_clock::duration cacheTimeout_;
     std::unordered_map<std::string, util::Mutex<CacheEntry, std::shared_mutex>> cache_;
@@ -78,17 +81,43 @@ class ForwardingCache {
 public:
     static std::unordered_set<std::string> const CACHEABLE_COMMANDS;
 
+    /**
+     * @brief Construct a new Forwarding Cache object
+     *
+     * @param cacheTimeout The time for cache entries to expire
+     */
     ForwardingCache(std::chrono::steady_clock::duration cacheTimeout);
 
-    static bool
+    /**
+     * @brief Check if a request should be cached
+     *
+     * @param request The request to check
+     * @return true if the request should be cached and false otherwise
+     */
+    [[nodiscard]] static bool
     shouldCache(boost::json::object const& request);
 
-    std::optional<boost::json::object>
+    /**
+     * @brief Get a response from the cache
+     *
+     * @param request The request to get the response for
+     * @return The response if it exists or std::nullopt otherwise
+     */
+    [[nodiscard]] std::optional<boost::json::object>
     get(boost::json::object const& request) const;
 
+    /**
+     * @brief Put a response into the cache if the request should be cached
+     *
+     * @param request The request to store the response for
+     * @param response The response to store
+     */
     void
     put(boost::json::object const& request, boost::json::object const& response);
 
+    /**
+     * @brief Invalidate all entries in the cache
+     */
     void
     invalidate();
 };

@@ -63,7 +63,7 @@ make_Source(
         std::move(onDisconnect)
     );
 
-    auto const cacheEntryTimeout = config.valueOr<uint64_t>("cache_entry_timeout", 0);
+    auto const cacheEntryTimeout = config.valueOr<uint64_t>("forwarding_cache_timeout_ms", 0);
     auto const cacheEntryTimeoutDuration = cacheEntryTimeout == 0
         ? std::nullopt
         : std::make_optional<std::chrono::steady_clock::duration>(std::chrono::milliseconds{cacheEntryTimeout});

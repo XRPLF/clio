@@ -35,7 +35,7 @@ namespace etl::impl {
 class ForwardingSource {
     util::Logger log_;
     util::requests::WsConnectionBuilder connectionBuilder_;
-    mutable std::optional<ForwardingCache> cache_;
+    std::optional<ForwardingCache> cache_;
 
     static constexpr std::chrono::seconds CONNECTION_TIMEOUT{3};
 
@@ -60,7 +60,7 @@ public:
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,
         boost::asio::yield_context yield
-    ) const;
+    );
 };
 
 }  // namespace etl::impl

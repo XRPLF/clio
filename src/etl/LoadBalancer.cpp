@@ -193,7 +193,7 @@ LoadBalancer::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
     boost::asio::yield_context yield
-) const
+)
 {
     std::size_t sourceIdx = 0;
     if (!sources_.empty())

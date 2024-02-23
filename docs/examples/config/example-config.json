@@ -33,7 +33,7 @@
             "ip": "127.0.0.1",
             "ws_port": "6006",
             "grpc_port": "50051",
-            "cache_timeout_ms": 250 // could be 0, which means no cache
+            "forwarding_cache_timeout_ms": 250 // could be 0, which means no cache
         }
     ],
     "dos_guard": {

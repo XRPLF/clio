@@ -61,7 +61,7 @@ ForwardingSource::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& forwardToRippledClientIp,
     boost::asio::yield_context yield
-) const
+)
 {
     if (cache_) {
         if (auto cachedResponse = cache_->get(request); cachedResponse) {
@@ -104,7 +104,7 @@ ForwardingSource::forwardToRippled(
     auto responseObject = parsedResponse.as_object();
     responseObject["forwarded"] = true;
 
-    if (cache_ and ForwardingCache::shouldCache(request) and not responseObject.contains("error"))
+    if (cache_ and not responseObject.contains("error"))
         cache_->put(request, responseObject);
 
     return responseObject;
