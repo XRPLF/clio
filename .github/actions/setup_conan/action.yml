@@ -11,12 +11,15 @@ runs:
       if: ${{ runner.os == 'macOS' }}
       shell: bash
       env:
-        CONAN_PROFILE: clio_clang_14
+        CONAN_PROFILE: clio_apple_clang_15
       id: conan_setup_mac
       run: |
         echo "Creating $CONAN_PROFILE conan profile";
         conan profile new $CONAN_PROFILE --detect --force
         conan profile update settings.compiler=clang $CONAN_PROFILE
+        conan profile update settings.compiler.libcxx=libc++ $CONAN_PROFILE
+        conan profile update env.CXXFLAGS=-DBOOST_ASIO_DISABLE_CONCEPTS $CONAN_PROFILE
+        conan profile update "conf.tools.build:cxxflags+=[\"-DBOOST_ASIO_DISABLE_CONCEPTS\"]" $CONAN_PROFILE
         echo "created_conan_profile=$CONAN_PROFILE" >> $GITHUB_OUTPUT
 
     - name: On linux
