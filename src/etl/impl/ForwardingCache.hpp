@@ -91,10 +91,6 @@ public:
 
     void
     invalidate();
-
-private:
-    static std::optional<std::string>
-    getCommand(boost::json::object const& request);
 };
 
 }  // namespace etl::impl

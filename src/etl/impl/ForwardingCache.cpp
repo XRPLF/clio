@@ -19,8 +19,8 @@
 
 #include "etl/impl/ForwardingCache.hpp"
 
-#include <boost/json/fwd.hpp>
 #include <boost/json/object.hpp>
+#include <boost/json/value_to.hpp>
 
 #include <chrono>
 #include <mutex>
@@ -31,6 +31,19 @@
 #include <utility>
 
 namespace etl::impl {
+
+namespace {
+
+std::optional<std::string>
+getCommand(boost::json::object const& request)
+{
+    if (not request.contains("command")) {
+        return std::nullopt;
+    }
+    return boost::json::value_to<std::string>(request.at("command"));
+}
+
+}  // namespace
 
 void
 CacheEntry::put(boost::json::object response)
@@ -109,16 +122,6 @@ ForwardingCache::invalidate()
         auto entryLock = entry.lock<std::unique_lock>();
         entryLock->invalidate();
     }
-}
-
-// TODO: Move to anonymous namespace when update from gcc 11,4
-std::optional<std::string>
-ForwardingCache::getCommand(boost::json::object const& request)
-{
-    if (not request.contains("command")) {
-        return std::nullopt;
-    }
-    return boost::json::value_to<std::string>(request.at("command"));
 }
 
 }  // namespace etl::impl
