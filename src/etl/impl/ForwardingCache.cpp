@@ -30,8 +30,6 @@
 #include <unordered_set>
 #include <utility>
 
-namespace etl::impl {
-
 // TODO: Move to empty namespace when update from gcc 11,4
 std::optional<std::string>
 getCommand(boost::json::object const& request)
@@ -41,6 +39,8 @@ getCommand(boost::json::object const& request)
     }
     return boost::json::value_to<std::string>(request.at("command"));
 }
+
+namespace etl::impl {
 
 void
 CacheEntry::put(boost::json::object response)
