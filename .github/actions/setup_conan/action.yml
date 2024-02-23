@@ -16,7 +16,6 @@ runs:
       run: |
         echo "Creating $CONAN_PROFILE conan profile";
         conan profile new $CONAN_PROFILE --detect --force
-        conan profile update settings.compiler=clang $CONAN_PROFILE
         conan profile update settings.compiler.libcxx=libc++ $CONAN_PROFILE
         conan profile update env.CXXFLAGS=-DBOOST_ASIO_DISABLE_CONCEPTS $CONAN_PROFILE
         conan profile update "conf.tools.build:cxxflags+=[\"-DBOOST_ASIO_DISABLE_CONCEPTS\"]" $CONAN_PROFILE
