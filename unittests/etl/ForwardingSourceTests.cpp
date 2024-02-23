@@ -98,6 +98,28 @@ TEST_F(ForwardingSourceOperationsTests, ParseFailed)
     });
 }
 
+TEST_F(ForwardingSourceOperationsTests, GotNotAnObject)
+{
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto connection = serverConnection(yield);
+
+        auto receivedMessage = connection.receive(yield);
+        [&]() { ASSERT_TRUE(receivedMessage); }();
+        EXPECT_EQ(*receivedMessage, message_);
+
+        auto sendError = connection.send(R"(["some_value"])", yield);
+
+        [&]() { ASSERT_FALSE(sendError) << *sendError; }();
+
+        connection.close(yield);
+    });
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, yield);
+        EXPECT_FALSE(result);
+    });
+}
+
 TEST_F(ForwardingSourceOperationsTests, Success)
 {
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {

@@ -110,6 +110,16 @@ TEST(ForwardingCacheTests, GetExpired)
     EXPECT_FALSE(result);
 }
 
+TEST(ForwardingCacheTests, GetAndPutNotCommand)
+{
+    ForwardingCache cache{std::chrono::seconds{100}};
+    auto const request = boost::json::object{{"key", "value"}};
+    auto const response = boost::json::object{{"key", "value"}};
+    cache.put(request, response);
+    auto const result = cache.get(request);
+    EXPECT_FALSE(result);
+}
+
 TEST(ForwardingCache, Invalidate)
 {
     ForwardingCache cache{std::chrono::seconds{100}};
