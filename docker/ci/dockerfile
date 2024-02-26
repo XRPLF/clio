@@ -33,7 +33,7 @@ RUN apt update -qq \
     && update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-${GCC_VERSION} 100 \
     && apt-get clean && apt remove -y software-properties-common \
     && pip3 install  -q --upgrade --no-cache-dir pip \
-    && pip3 install  -q --no-cache-dir conan==1.62 gcovr
+    && pip3 install  -q --no-cache-dir conan==1.62 gcovr cmake-format
 
 # Install ccache from source
 WORKDIR /tmp

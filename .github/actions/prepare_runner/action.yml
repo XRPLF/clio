@@ -11,7 +11,7 @@ runs:
       if: ${{ runner.os == 'macOS' }}
       shell: bash
       run: |
-          brew install llvm@14 pkg-config ninja bison cmake ccache jq gh conan@1
+          brew install llvm@14 pkg-config ninja bison cmake ccache jq gh conan@1 cmake-format
           if ! command -v conan &> /dev/null; then
             echo "/opt/homebrew/opt/conan@1/bin" >> $GITHUB_PATH
           fi
