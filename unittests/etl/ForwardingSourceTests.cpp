@@ -48,7 +48,7 @@ TEST_F(ForwardingSourceTests, ConnectionFailed)
 }
 
 struct ForwardingSourceOperationsTests : ForwardingSourceTests {
-    std::string const message_ = R"({"data":"some_data"})";
+    std::string const message_ = R"({"data": "some_data"})";
     boost::json::object const reply_ = {{"reply", "some_reply"}};
 
     TestWsConnection
@@ -84,7 +84,7 @@ TEST_F(ForwardingSourceOperationsTests, ParseFailed)
 
         auto receivedMessage = connection.receive(yield);
         [&]() { ASSERT_TRUE(receivedMessage); }();
-        EXPECT_EQ(*receivedMessage, message_);
+        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_)) << *receivedMessage;
 
         auto sendError = connection.send("invalid_json", yield);
         [&]() { ASSERT_FALSE(sendError) << *sendError; }();
@@ -105,7 +105,7 @@ TEST_F(ForwardingSourceOperationsTests, GotNotAnObject)
 
         auto receivedMessage = connection.receive(yield);
         [&]() { ASSERT_TRUE(receivedMessage); }();
-        EXPECT_EQ(*receivedMessage, message_);
+        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_)) << *receivedMessage;
 
         auto sendError = connection.send(R"(["some_value"])", yield);
 
@@ -127,7 +127,7 @@ TEST_F(ForwardingSourceOperationsTests, Success)
 
         auto receivedMessage = connection.receive(yield);
         [&]() { ASSERT_TRUE(receivedMessage); }();
-        EXPECT_EQ(*receivedMessage, message_);
+        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_)) << *receivedMessage;
 
         auto sendError = connection.send(boost::json::serialize(reply_), yield);
         [&]() { ASSERT_FALSE(sendError) << *sendError; }();
@@ -153,7 +153,7 @@ struct ForwardingSourceCacheTests : ForwardingSourceOperationsTests {
 TEST_F(ForwardingSourceCacheTests, Cache)
 {
     boost::json::object const request = {{"command", "server_state"}};
-    auto const response = R"({"reply":"some_reply"})";
+    auto const response = R"({"reply": "some_reply"})";
 
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
         auto connection = serverConnection(yield);
@@ -186,7 +186,7 @@ TEST_F(ForwardingSourceCacheTests, Cache)
 TEST_F(ForwardingSourceCacheTests, InvalidateCache)
 {
     boost::json::object const request = {{"command", "server_state"}};
-    auto const response = R"({"reply":"some_reply"})";
+    auto const response = R"({"reply": "some_reply"})";
 
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
         for (int i = 0; i < 4; ++i) {
@@ -218,8 +218,8 @@ TEST_F(ForwardingSourceCacheTests, InvalidateCache)
 TEST_F(ForwardingSourceCacheTests, ResponseWithErrorNotCached)
 {
     boost::json::object const request = {{"command", "server_state"}};
-    auto const errorResponse = R"({"reply":"some_reply","error":"some_error"})";
-    auto const goodResponse = R"({"reply":"good_reply"})";
+    auto const errorResponse = R"({"reply": "some_reply", "error": "some_error"})";
+    auto const goodResponse = R"({"reply": "good_reply"})";
 
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
         {
