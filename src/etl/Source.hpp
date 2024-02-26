@@ -48,7 +48,7 @@ namespace etl {
 template <
     typename GrpcSourceType = impl::GrpcSource,
     typename SubscriptionSourceTypePtr = std::unique_ptr<impl::SubscriptionSource>,
-    typename ForwardingSourceTypePtr = std::unique_ptr<impl::ForwardingSource>>
+    typename ForwardingSourceTypePtr = std::shared_ptr<impl::ForwardingSource>>
 class SourceImpl {
     std::string ip_;
     std::string wsPort_;
@@ -79,20 +79,6 @@ public:
         , subscriptionSource_(std::move(subscriptionSource))
         , forwardingSource_(std::move(forwardingSource))
     {
-    }
-
-    SourceImpl(SourceImpl const&) = delete;
-    SourceImpl(SourceImpl&&) = default;
-    SourceImpl&
-    operator=(SourceImpl const&) = delete;
-    SourceImpl&
-    operator=(SourceImpl&&) = default;
-
-    ~SourceImpl()
-    {
-        // subscriptionSource_ must die before forwardingSource_ because forwardingSource_ is used in callback
-        // onLedgerClosed
-        subscriptionSource_.reset();
     }
 
     /**

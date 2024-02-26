@@ -87,7 +87,7 @@ Exactly equal password gains admin rights for the request or a websocket connect
 ## ETL sources forwarding cache
 
 By default Clio does not caches forwarding requests to ETL sources.
-To enable the caching for a source, `forwarding_cache_timeout_ms` value should be added to the source entry in `etl_sources`:
+To enable the caching for a source, `forwarding_cache_timeout` value should be added to the source entry in `etl_sources`:
 
 ```json
 "etl_sources": [
@@ -95,10 +95,10 @@ To enable the caching for a source, `forwarding_cache_timeout_ms` value should b
         "ip": "127.0.0.1",
         "ws_port": "6006",
         "grpc_port": "50051",
-        "forwarding_cache_timeout_ms": 250
+        "forwarding_cache_timeout": 0.250
     }
 ],
 ```
 
-`forwarding_cache_timeout_ms` defines for how long a cache entry will be valid after being placed into cache.
-Zero value turns of the cache feature.
+`forwarding_cache_timeout` defines for how long (in seconds) a cache entry will be valid after being placed into cache.
+Zero value turns off the cache feature.
