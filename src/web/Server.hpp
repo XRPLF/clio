@@ -90,7 +90,7 @@ public:
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
-     * @param adminPassword The optional password to verify admin role in requests
+     * @param adminVerification The admin verification strategy to use
      */
     Detector(
         tcp::socket&& socket,

@@ -148,7 +148,7 @@ toJson(ripple::SLE const& sle);
 /**
  * @brief Convert a LedgerHeader to JSON object.
  *
- * @param entry The LedgerHeader to convert.
+ * @param info The LedgerHeader to convert.
  * @param binary Whether to convert in hex format.
  * @param apiVersion The api version
  * @return The JSON object.

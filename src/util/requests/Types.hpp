@@ -47,7 +47,7 @@ public:
      * @brief Construct a new Request Error object
      *
      * @param message error message
-     * @param ec error code from boost::beast
+     * @param errorCode error code from boost::beast
      */
     RequestError(std::string message, boost::beast::error_code errorCode);
 

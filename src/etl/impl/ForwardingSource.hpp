@@ -47,7 +47,7 @@ public:
      * @brief Forward a request to rippled.
      *
      * @param request The request to forward
-     * @param clientIp IP of the client forwarding this request if known
+     * @param forwardToRippledClientIp IP of the client forwarding this request if known
      * @param yield The coroutine context
      * @return Response wrapped in an optional on success; nullopt otherwise
      */

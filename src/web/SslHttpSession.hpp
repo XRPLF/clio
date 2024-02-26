@@ -65,7 +65,7 @@ public:
      *
      * @param socket The socket. Ownership is transferred to HttpSession
      * @param ip Client's IP address
-     * @param adminPassword The optional password to verify admin role in requests
+     * @param adminVerification The admin verification strategy to use
      * @param ctx The SSL context
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
