@@ -52,6 +52,7 @@ class SubscriptionSource {
 public:
     using OnConnectHook = std::function<void()>;
     using OnDisconnectHook = std::function<void()>;
+    using OnLedgerClosedHook = std::function<void()>;
 
 private:
     util::Logger log_;
@@ -72,6 +73,7 @@ private:
 
     OnConnectHook onConnect_;
     OnDisconnectHook onDisconnect_;
+    OnLedgerClosedHook onLedgerClosed_;
 
     std::atomic_bool isConnected_{false};
     std::atomic_bool stop_{false};
@@ -97,6 +99,7 @@ public:
      * @param validatedLedgers The network validated ledgers object
      * @param subscriptions The subscription manager object
      * @param onDisconnect The onDisconnect hook. Called when the connection is lost
+     * @param onNewLedger The onNewLedger hook. Called when a new ledger is received
      * @param connectionTimeout The connection timeout. Defaults to 30 seconds
      * @param retryDelay The retry delay. Defaults to 1 second
      */
@@ -109,6 +112,7 @@ public:
         std::shared_ptr<SubscriptionManagerType> subscriptions,
         OnConnectHook onConnect,
         OnDisconnectHook onDisconnect,
+        OnLedgerClosedHook onLedgerClosed,
         std::chrono::steady_clock::duration const connectionTimeout = CONNECTION_TIMEOUT,
         std::chrono::steady_clock::duration const retryDelay = RETRY_DELAY
     )
@@ -119,6 +123,7 @@ public:
         , retry_(util::makeRetryExponentialBackoff(retryDelay, RETRY_MAX_DELAY, strand_))
         , onConnect_(std::move(onConnect))
         , onDisconnect_(std::move(onDisconnect))
+        , onLedgerClosed_(std::move(onLedgerClosed))
     {
         wsConnectionBuilder_.addHeader({boost::beast::http::field::user_agent, "clio-client"})
             .addHeader({"X-User", "clio-client"})

@@ -183,6 +183,38 @@ TEST_F(ForwardingSourceCacheTests, Cache)
     });
 }
 
+TEST_F(ForwardingSourceCacheTests, InvalidateCache)
+{
+    boost::json::object const request = {{"command", "server_state"}};
+    auto const response = R"({"reply":"some_reply"})";
+
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        for (int i = 0; i < 4; ++i) {
+            auto connection = serverConnection(yield);
+
+            auto const receivedMessage = connection.receive(yield);
+            [&]() { ASSERT_TRUE(receivedMessage); }();
+            EXPECT_EQ(*receivedMessage, boost::json::serialize(request)) << *receivedMessage;
+
+            auto const sendError = connection.send(response, yield);
+            [&]() { ASSERT_FALSE(sendError) << *sendError; }();
+        }
+    });
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        for (int i = 0; i < 4; ++i) {
+            auto result = forwardingSource.forwardToRippled(request, {}, yield);
+            [&]() { ASSERT_TRUE(result); }();
+
+            auto expectedReply = boost::json::parse(response).as_object();
+            expectedReply["forwarded"] = true;
+            EXPECT_EQ(*result, expectedReply) << *result;
+
+            forwardingSource.invalidateCache();
+        }
+    });
+}
+
 TEST_F(ForwardingSourceCacheTests, ResponseWithErrorNotCached)
 {
     boost::json::object const request = {{"command", "server_state"}};

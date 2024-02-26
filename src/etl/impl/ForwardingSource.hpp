@@ -61,6 +61,12 @@ public:
         std::optional<std::string> const& forwardToRippledClientIp,
         boost::asio::yield_context yield
     );
+
+    /**
+     * @brief Invalidate the cache
+     */
+    void
+    invalidateCache();
 };
 
 }  // namespace etl::impl

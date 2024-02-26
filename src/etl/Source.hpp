@@ -48,7 +48,7 @@ namespace etl {
 template <
     typename GrpcSourceType = impl::GrpcSource,
     typename SubscriptionSourceTypePtr = std::unique_ptr<impl::SubscriptionSource>,
-    typename ForwardingSourceType = impl::ForwardingSource>
+    typename ForwardingSourceTypePtr = std::unique_ptr<impl::ForwardingSource>>
 class SourceImpl {
     std::string ip_;
     std::string wsPort_;
@@ -56,30 +56,43 @@ class SourceImpl {
 
     GrpcSourceType grpcSource_;
     SubscriptionSourceTypePtr subscriptionSource_;
-    ForwardingSourceType forwardingSource_;
+    ForwardingSourceTypePtr forwardingSource_;
 
 public:
     using OnConnectHook = impl::SubscriptionSource::OnConnectHook;
     using OnDisconnectHook = impl::SubscriptionSource::OnDisconnectHook;
 
-    template <typename SomeGrpcSourceType, typename SomeForwardingSourceType>
-        requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType> &&
-                     std::is_same_v<ForwardingSourceType, SomeForwardingSourceType>
+    template <typename SomeGrpcSourceType>
+        requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType>
     SourceImpl(
         std::string ip,
         std::string wsPort,
         std::string grpcPort,
         SomeGrpcSourceType&& grpcSource,
         SubscriptionSourceTypePtr subscriptionSource,
-        SomeForwardingSourceType&& forwardingSource
+        ForwardingSourceTypePtr forwardingSource
     )
         : ip_(std::move(ip))
         , wsPort_(std::move(wsPort))
         , grpcPort_(std::move(grpcPort))
         , grpcSource_(std::forward<SomeGrpcSourceType>(grpcSource))
         , subscriptionSource_(std::move(subscriptionSource))
-        , forwardingSource_(std::forward<SomeForwardingSourceType>(forwardingSource))
+        , forwardingSource_(std::move(forwardingSource))
     {
+    }
+
+    SourceImpl(SourceImpl const&) = delete;
+    SourceImpl(SourceImpl&&) = default;
+    SourceImpl&
+    operator=(SourceImpl const&) = delete;
+    SourceImpl&
+    operator=(SourceImpl&&) = default;
+
+    ~SourceImpl()
+    {
+        // subscriptionSource_ must die before forwardingSource_ because forwardingSource_ is used in callback
+        // onLedgerClosed
+        subscriptionSource_.reset();
     }
 
     /**
@@ -197,7 +210,7 @@ public:
         boost::asio::yield_context yield
     )
     {
-        return forwardingSource_.forwardToRippled(request, forwardToRippledClientIp, yield);
+        return forwardingSource_->forwardToRippled(request, forwardToRippledClientIp, yield);
     }
 };
 

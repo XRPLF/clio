@@ -110,4 +110,12 @@ ForwardingSource::forwardToRippled(
     return responseObject;
 }
 
+void
+ForwardingSource::invalidateCache()
+{
+    if (cache_) {
+        cache_->invalidate();
+    }
+}
+
 }  // namespace etl::impl

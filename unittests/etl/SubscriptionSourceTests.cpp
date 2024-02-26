@@ -36,7 +36,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <thread>
 #include <utility>
 
 using namespace etl::impl;
@@ -63,6 +62,7 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
 
     StrictMock<MockFunction<void()>> onConnectHook_;
     StrictMock<MockFunction<void()>> onDisconnectHook_;
+    StrictMock<MockFunction<void()>> onLedgerClosedHook_;
 
     std::unique_ptr<SubscriptionSource> subscriptionSource_ = std::make_unique<SubscriptionSource>(
         ioContext_,
@@ -72,6 +72,7 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
         subscriptionManager_,
         onConnectHook_.AsStdFunction(),
         onDisconnectHook_.AsStdFunction(),
+        onLedgerClosedHook_.AsStdFunction(),
         std::chrono::milliseconds(1),
         std::chrono::milliseconds(1)
     );
@@ -310,6 +311,7 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndex)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
+    EXPECT_CALL(onLedgerClosedHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
@@ -356,6 +358,7 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithValidatedLedgers)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
+    EXPECT_CALL(onLedgerClosedHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 
@@ -380,6 +383,7 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndexAndValidatedLe
     });
 
     EXPECT_CALL(onConnectHook_, Call());
+    EXPECT_CALL(onLedgerClosedHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
