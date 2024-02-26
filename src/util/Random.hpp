@@ -25,7 +25,7 @@
 namespace util {
 
 /**
- * Random number generator
+ * @brief Random number generator
  */
 class Random {
 public:

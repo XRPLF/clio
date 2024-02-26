@@ -22,7 +22,7 @@
 namespace util {
 
 /**
- * Set a termination handler that logs a backtrace on termination
+ * @brief Set a termination handler that logs a backtrace on termination
  */
 void
 setTerminationHandler();
