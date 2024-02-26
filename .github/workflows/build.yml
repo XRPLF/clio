@@ -10,6 +10,8 @@ jobs:
   lint:
     name: Check format
     runs-on: ubuntu-20.04
+    container:
+      image: rippleci/clio_ci:latest
     steps:
       - uses: actions/checkout@v4
       - name: Run clang-format
