@@ -172,7 +172,7 @@ public:
             this->handler_,
             std::move(this->buffer_),
             std::move(this->req_),
-            ConnectionBase::isAdmin()
+            ConnectionBase::isAdmin
         )
             ->run();
     }

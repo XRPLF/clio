@@ -76,7 +76,7 @@ public:
         : impl::WsBase<PlainWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
         , ws_(std::move(socket))
     {
-        ConnectionBase::isAdmin_ = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
+        ConnectionBase::isAdmin = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
     }
 
     ~PlainWsSession() override = default;

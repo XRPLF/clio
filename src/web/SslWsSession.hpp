@@ -77,7 +77,7 @@ public:
         : impl::WsBase<SslWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
         , ws_(std::move(stream))
     {
-        ConnectionBase::isAdmin_ = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
+        ConnectionBase::isAdmin = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
     }
 
     /** @return The secure websocket stream. */

@@ -206,7 +206,7 @@ public:
             return httpFail(ec, "read");
 
         // Update isAdmin property of the connection
-        ConnectionBase::isAdmin_ = adminVerification_->isAdmin(req_, this->clientIp);
+        ConnectionBase::isAdmin = adminVerification_->isAdmin(req_, this->clientIp);
 
         if (boost::beast::websocket::is_upgrade(req_)) {
             if (dosGuard_.get().isOk(this->clientIp)) {
@@ -220,7 +220,7 @@ public:
             return sender_(httpResponse(http::status::too_many_requests, "text/html", "Too many requests"));
         }
 
-        if (auto response = util::prometheus::handlePrometheusRequest(req_, isAdmin()); response.has_value())
+        if (auto response = util::prometheus::handlePrometheusRequest(req_, isAdmin); response.has_value())
             return sender_(std::move(response.value()));
 
         if (req_.method() != http::verb::post) {
