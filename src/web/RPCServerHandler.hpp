@@ -174,7 +174,7 @@ private:
                     *range,
                     connection->clientIp,
                     std::cref(apiVersionParser_),
-                    connection->isAdmin
+                    connection->isAdmin()
                 );
             }();
 

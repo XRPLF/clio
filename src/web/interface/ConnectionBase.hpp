@@ -44,11 +44,11 @@ namespace http = boost::beast::http;
 struct ConnectionBase : public util::Taggable {
 protected:
     boost::system::error_code ec_;
+    bool isAdmin_ = false;
 
 public:
     std::string const clientIp;
     bool upgraded = false;
-    bool isAdmin = false;
     boost::signals2::signal<void(ConnectionBase*)> onDisconnect;
     std::uint32_t apiSubVersion = 0;
 
@@ -98,6 +98,17 @@ public:
     dead()
     {
         return ec_ != boost::system::error_code{};
+    }
+
+    /**
+     * @brief Indicates whether the connection has admin privileges
+     *
+     * @return true if the connection is from admin user
+     */
+    [[nodiscard]] bool
+    isAdmin() const
+    {
+        return isAdmin_;
     }
 };
 }  // namespace web

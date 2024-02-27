@@ -69,7 +69,7 @@ make_WsContext(
         return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
 
     auto const command = boost::json::value_to<std::string>(commandValue);
-    return web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp, session->isAdmin);
+    return web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp, session->isAdmin());
 }
 
 Expected<web::Context, Status>

@@ -457,7 +457,7 @@ public:
     void
     operator()(std::string const& reqStr, std::shared_ptr<web::ConnectionBase> const& ws)
     {
-        auto response = fmt::format("{} {}", reqStr, ws->isAdmin ? "admin" : "user");
+        auto response = fmt::format("{} {}", reqStr, ws->isAdmin() ? "admin" : "user");
         ws->send(std::move(response), http::status::ok);
     }
 
