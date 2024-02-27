@@ -26,7 +26,7 @@ In Cassandra, Clio will be creating 9 tables to store the ledger data, they are 
 *Note, if you would like visually explore the data structure of the Cassandra database, you can first run Clio server with database `type` configured as `cassandra` to fill ledger data from Rippled nodes into Cassandra, then use a GUI database management tool like [Datastax's Opcenter](https://docs.datastax.com/en/install/6.0/install/opscInstallOpsc.html) to interactively view it.* 
 
 
-### `ledger_transactions`
+### ledger_transactions
 ```
 CREATE TABLE clio.ledger_transactions (  
 	ledger_sequence bigint,  # The sequence number of the ledger version
@@ -36,7 +36,7 @@ CREATE TABLE clio.ledger_transactions (
  ```
 This table stores the hashes of all transactions in a given ledger sequence ordered by the hash value in ascending order. 
 
-### `transactions`
+### transactions
 ```
 CREATE TABLE clio.transactions (  
 	hash blob PRIMARY KEY,   # The transaction hash
@@ -50,7 +50,7 @@ This table stores the full transaction and metadata of each ledger version with 
 
 To look up all the transactions that were validated in a ledger version with sequence `n`, one can first get the all the transaction hashes in that ledger version by querying `SELECT * FROM ledger_transactions WHERE ledger_sequence = n;`. Then, iterate through the list of hashes and query `SELECT * FROM transactions WHERE hash = one_of_the_hash_from_the_list;` to get the detailed transaction data.  
 
-### `ledger_hashes`
+### ledger_hashes
 ```
 CREATE TABLE clio.ledger_hashes (
 	hash blob PRIMARY KEY,  # Hash of entire ledger version's data
@@ -58,7 +58,7 @@ CREATE TABLE clio.ledger_hashes (
 ) ...
  ```
 This table stores the hash of all ledger versions by their sequences. 
-### `ledger_range`
+### ledger_range
 ```
 CREATE TABLE clio.ledger_range (
 	is_latest boolean PRIMARY KEY,  # Whether this sequence is the stopping range
@@ -67,7 +67,7 @@ CREATE TABLE clio.ledger_range (
  ```
 This table marks the range of ledger versions that is stored on this specific Cassandra node. Because of its nature, there are only two records in this table with `false` and `true` values for `is_latest`, marking the starting and ending sequence of the ledger range. 
 
-### `objects`
+### objects
 ```
 CREATE TABLE clio.objects (
 	key blob,         # Object index of the object
@@ -80,7 +80,7 @@ This table stores the specific data of all objects that ever existed on the XRP 
 
 This table is updated when all data for a given ledger sequence has been written to the various tables in the database. For each ledger, many associated records are written to different tables. This table is used as a synchronization mechanism, to prevent the application from reading data from a ledger for which all data has not yet been fully written.
 
-### `ledgers`
+### ledgers
 ```
 CREATE TABLE clio.ledgers (
 	sequence bigint PRIMARY KEY,  # Sequence of the ledger version
@@ -89,7 +89,7 @@ CREATE TABLE clio.ledgers (
  ```
 This table stores the ledger header data of specific ledger versions by their sequence.
 
-### `diff`
+### diff
 ```
 CREATE TABLE clio.diff (
 	seq bigint,  # Sequence of the ledger version
@@ -99,7 +99,7 @@ CREATE TABLE clio.diff (
  ```
 This table stores the object index of all the changes in each ledger version.
 
-### `account_tx`
+### account_tx
 ```
 CREATE TABLE clio.account_tx (
 	account blob,
@@ -110,8 +110,7 @@ CREATE TABLE clio.account_tx (
  ```
 This table stores the list of transactions affecting a given account. This includes transactions made by the account, as well as transactions received.
 
-
-### `successor`
+### successor
 ```
 CREATE TABLE clio.successor (
 	key blob,    # Object index
@@ -142,7 +141,7 @@ ledger. Because of this tradeoff, clio implements a special NFT indexing data
 structure that allows clio users to query NFTs quickly, while keeping
 rippled's space-saving optimizations.
 
-#### `nf_tokens`
+#### nf_tokens
 ```
 CREATE TABLE clio.nf_tokens (
 	token_id blob,         # The NFT's ID
@@ -166,7 +165,7 @@ use the `nft_history` API, which will give you the NFTokenBurn transaction
 that burned this token, along with the account that submitted that
 transaction.
 
-#### `issuer_nf_tokens_v2`
+#### issuer_nf_tokens_v2
 ```
 CREATE TABLE clio.issuer_nf_tokens_v2 (
 	issuer blob,       # The NFT issuer's account ID
@@ -181,7 +180,7 @@ issued, or all the NFTs a specific account issued with a specific taxon. It is
 not useful to know all the NFTs with a given taxon while excluding issuer, since the
 meaning of a taxon is left to an issuer.
 
-#### `nf_token_uris`
+#### nf_token_uris
 ```
 CREATE TABLE clio.nf_token_uris (
 	token_id blob,    # The NFT's ID
@@ -206,7 +205,7 @@ version to rippled, but just in case we can handle that edge case by allowing
 a given NFT ID to have a new URI assigned in this case, without removing the
 prior URI.
 
-#### `nf_token_transactions`
+#### nf_token_transactions
 ```
 CREATE TABLE clio.nf_token_transactions (
 	token_id blob,                  # The NFT's ID
