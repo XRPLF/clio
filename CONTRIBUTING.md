@@ -22,7 +22,7 @@ git config --local core.hooksPath .githooks
 
 ## Git hooks dependencies
 Pre-commit hook requires `clang-format >= 17.0.0` and `cmake-format` to be installed on your machine.
-`clang-format` can be installed using `brew` on macOS and default package manager on Linux.
+`clang-format` can be installed using `brew` on macOS and using default package manager on Linux.
 `cmake-format` can be installed using `pip`.
 
 ## Git commands
@@ -68,8 +68,8 @@ git push --force
 ```
 
 ## Use ccache (optional)
-Clio uses ccache to speed up compilation. If you want to use it, please make sure it is installed on your machine.
-CMake will automatically detect it and use it if it's available.
+Clio uses `ccache` to speed up compilation. If you want to use it, please make sure it is installed on your machine.
+CMake will automatically detect it and use it if it is available.
 
 
 ## Fixing issues found during code review
