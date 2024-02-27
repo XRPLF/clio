@@ -44,11 +44,11 @@ namespace http = boost::beast::http;
 struct ConnectionBase : public util::Taggable {
 protected:
     boost::system::error_code ec_;
+    bool isAdmin_ = false;
 
 public:
     std::string const clientIp;
     bool upgraded = false;
-    bool isAdmin_ = false;
     boost::signals2::signal<void(ConnectionBase*)> onDisconnect;
     std::uint32_t apiSubVersion = 0;
 
