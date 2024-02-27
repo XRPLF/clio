@@ -48,6 +48,12 @@ namespace {
 util::Logger gLog{"Backend"};
 }  // namespace
 
+/**
+ * @brief This namespace implements the data access layer and related components.
+ *
+ * The data layer is responsible for fetching and storing data from the database.
+ * Cassandra and ScyllaDB are currently supported via the `CassandraBackend` implementation.
+ */
 namespace data {
 bool
 BackendInterface::finishWrites(std::uint32_t const ledgerSequence)

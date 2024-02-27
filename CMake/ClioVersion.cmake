@@ -24,6 +24,7 @@ if (NOT (BRANCH MATCHES master OR BRANCH MATCHES release/*)) # for develop and a
                                                              # YYYYMMDDHMS-<branch>-<git-rev>
   execute_process(COMMAND date +%Y%m%d%H%M%S OUTPUT_VARIABLE DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
   set(VERSION "${DATE}-${BRANCH}-${REV}")
+  set(DOC_CLIO_VERSION "develop")
 else ()
   set(GIT_COMMAND describe --tags)
   execute_process(
@@ -31,6 +32,7 @@ else ()
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
   set(VERSION "${TAG_VERSION}-${REV}")
+  set(DOC_CLIO_VERSION "${TAG_VERSION}")
 endif ()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)

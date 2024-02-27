@@ -1,16 +1,35 @@
 PROJECT_NAME           = "Clio"
+PROJECT_LOGO           = ../docs/img/xrpl-logo.svg
+PROJECT_NUMBER         = @DOC_CLIO_VERSION@
+PROJECT_BRIEF          = The XRP Ledger API server.
 INPUT                  = ../src ../unittests
-EXCLUDE_PATTERNS       = *Test*.cpp *Test*.hpp
+EXCLUDE_PATTERNS       = *Test*.cpp *Test*.hpp */impl/*
 RECURSIVE              = YES
 HAVE_DOT               = YES
 
 QUIET                  = YES
-WARNINGS               = NO
-WARN_NO_PARAMDOC       = NO
-WARN_IF_INCOMPLETE_DOC = NO
-WARN_IF_UNDOCUMENTED   = NO
+WARNINGS               = YES
+WARN_NO_PARAMDOC       = YES
+WARN_IF_INCOMPLETE_DOC = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_AS_ERROR          = FAIL_ON_WARNINGS
 
 GENERATE_LATEX         = NO
 GENERATE_HTML          = YES
 
 SORT_MEMBERS_CTORS_1ST = YES
+
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_HEADER            = ../docs/doxygen-awesome-theme/header.html
+HTML_EXTRA_STYLESHEET  = ../docs/doxygen-awesome-theme/doxygen-awesome.css \
+                         ../docs/doxygen-awesome-theme/doxygen-awesome-sidebar-only.css \
+                         ../docs/doxygen-awesome-theme/doxygen-awesome-sidebar-only-darkmode-toggle.css 
+HTML_EXTRA_FILES       = ../docs/doxygen-awesome-theme/doxygen-awesome-darkmode-toggle.js \
+                         ../docs/doxygen-awesome-theme/doxygen-awesome-interactive-toc.js
+
+HTML_COLORSTYLE        = LIGHT
+HTML_COLORSTYLE_HUE    = 209
+HTML_COLORSTYLE_SAT    = 255
+HTML_COLORSTYLE_GAMMA  = 113

@@ -45,6 +45,11 @@
 #include <thread>
 #include <vector>
 
+/**
+ * @brief This namespace implements everything related to subscriptions.
+ *
+ * The subscription manager is responsible for managing the subscriptions and publishing the feeds.
+ */
 namespace feed {
 
 class SubscriptionManager {
