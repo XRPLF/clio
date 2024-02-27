@@ -80,7 +80,7 @@ public:
     /**
      * @brief Send via shared_ptr of string, that enables SubscriptionManager to publish to clients.
      *
-     * @param msg The message to send (only used in child classes)
+     * @param msg Unused
      * @throws std::logic_error unless the function is overridden by a child class.
      */
     virtual void
