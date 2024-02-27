@@ -20,6 +20,11 @@ Please run the following command in order to use git hooks that are helpful for 
 git config --local core.hooksPath .githooks
 ```
 
+## Git hooks dependencies
+Pre-commit hook requires `clang-format >= 17.0.0` and `cmake-format` to be installed on your machine.
+`clang-format` can be installed using `brew` on macOS and default package manager on Linux.
+`cmake-format` can be installed using `pip`.
+
 ## Git commands
 This sections offers a detailed look at the git commands you will need to use to get your PR submitted. 
 Please note that there are more than one way to do this and these commands are provided for your convenience.
@@ -97,7 +102,8 @@ This is a non-exhaustive list of recommended style guidelines. These are not alw
 
 ## Formatting
 Code must conform to `clang-format` version 17, unless the result would be unreasonably difficult to read or maintain.
-To change your code to conform use `clang-format -i <your changed files>`.
+In most cases pre-commit hook will take care of formatting and fix all the formatting issues automatically.
+To manually change your code to conform use `clang-format -i <your changed files>` for C++ files and `cmake-format -i <your changed files>` for CMake files.
 
 ## Avoid
 * Proliferation of nearly identical code.
