@@ -224,6 +224,8 @@ makeError(Status const& status);
  * @brief Generate JSON from a @ref rpc::RippledError.
  *
  * @param err The rippled error
+ * @param customError A custom error
+ * @param customMessage A custom message
  * @return The JSON output
  */
 boost::json::object
@@ -237,6 +239,8 @@ makeError(
  * @brief Generate JSON from a @ref rpc::ClioError.
  *
  * @param err The clio's custom error
+ * @param customError A custom error
+ * @param customMessage A custom message
  * @return The JSON output
  */
 boost::json::object

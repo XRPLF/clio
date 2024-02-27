@@ -42,6 +42,7 @@ public:
      * @brief Construct a new Prometheus Interface object
      *
      * @param isEnabled Whether prometheus is enabled
+     * @param compressReply Whether to compress the reply
      */
     PrometheusInterface(bool isEnabled, bool compressReply)
         : isEnabled_(isEnabled), compressReplyEnabled_(compressReply)

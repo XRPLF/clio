@@ -152,6 +152,7 @@ public:
      * @brief Adds all whitelisted IPs and masks from the given config.
      *
      * @param config The Clio config to use
+     * @param resolver The resolver to use for hostname resolution
      */
     template <SomeResolver HostnameResolverType = Resolver>
     WhitelistHandler(util::Config const& config, HostnameResolverType&& resolver = {})

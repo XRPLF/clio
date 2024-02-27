@@ -72,6 +72,7 @@ public:
      * @brief Close the WebSocket
      *
      * @param yield yield context
+     * @param timeout timeout for the operation
      * @return std::optional<RequestError> error if any
      */
     virtual std::optional<RequestError>

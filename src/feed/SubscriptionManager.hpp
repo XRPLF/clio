@@ -141,7 +141,8 @@ public:
 
     /**
      * @brief Subscribe to the ledger feed.
-     * @param subscriber
+     * @param yield The coroutine context
+     * @param subscriber The subscriber to the ledger feed
      */
     boost::json::object
     subLedger(boost::asio::yield_context yield, SubscriberSharedPtr const& subscriber);
@@ -236,7 +237,8 @@ public:
 
     /**
      * @brief Unsubscribe to the transactions feed for particular account.
-     * @param subscriber
+     * @param account The account to stop watching
+     * @param subscriber The subscriber to unsubscribe
      */
     void
     unsubAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);

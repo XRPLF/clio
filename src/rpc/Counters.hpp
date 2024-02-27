@@ -109,6 +109,7 @@ public:
      * @brief Increments the completed count for a particular RPC method.
      *
      * @param method The method to increment the count for
+     * @param rpcDuration The duration of the RPC call
      */
     void
     rpcComplete(std::string const& method, std::chrono::microseconds const& rpcDuration);

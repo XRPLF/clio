@@ -93,6 +93,7 @@ public:
      * @brief Waits for the sequence to be validated by the network.
      *
      * @param sequence The sequence to wait for
+     * @param maxWaitMs Maximum time to wait for the sequence to be validated. If empty, wait indefinitely
      * @return true if sequence was validated, false otherwise a return value of false means the datastructure has been
      * stopped
      */

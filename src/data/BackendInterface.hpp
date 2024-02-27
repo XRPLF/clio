@@ -318,9 +318,9 @@ public:
      *
      * @param issuer AccountID of issuer you wish you query.
      * @param taxon Optional taxon of NFTs by which you wish to filter.
+     * @param ledgerSequence The ledger sequence to fetch for
      * @param limit Paging limit.
-     * @param cursorIn Optional cursor to allow us to pick up from where we
-     * last left off.
+     * @param cursorIn Optional cursor to allow us to pick up from where we last left off.
      * @param yield Currently executing coroutine.
      * @return std::vector<NFT> of NFTs issued by this account, or
      * this issuer/taxon combination if taxon is passed and an optional marker

@@ -101,6 +101,7 @@ deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs, std::uint32_t s
  * @brief Convert a TransactionAndMetadata to two JSON objects.
  *
  * @param blobs The TransactionAndMetadata to convert.
+ * @param apiVersion The api version to generate the JSON for.
  * @param nftEnabled Whether to include NFT information in the JSON.
  * @param networkId The network ID to use for ctid, not include ctid if nullopt.
  */

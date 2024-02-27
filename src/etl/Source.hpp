@@ -213,6 +213,8 @@ using Source = SourceImpl<>;
  * @param backend BackendInterface implementation
  * @param subscriptions Subscription manager
  * @param validatedLedgers The network validated ledgers data structure
+ * @param onDisconnect The hook to call on disconnect
+ * @param onConnect The hook to call on connect
  */
 Source
 make_Source(
