@@ -24,8 +24,19 @@
 
 namespace util {
 
+/**
+ * @brief Random number generator
+ */
 class Random {
 public:
+    /**
+     * @brief Generate a random number between min and max
+     *
+     * @tparam T Type of the number to generate
+     * @param min Minimum value
+     * @param max Maximum value
+     * @return Random number between min and max
+     */
     template <typename T>
     static T
     uniform(T min, T max)
