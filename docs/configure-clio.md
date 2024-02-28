@@ -87,7 +87,7 @@ Exactly equal password gains admin rights for the request or a websocket connect
 ## ETL sources forwarding cache
 
 Clio can cache requests to ETL sources to reduce the load on the ETL source.
-Only following commands are cached: "server_info", "server_state", "server_definitions", "fee", "ledger_closed".
+Only following commands are cached: `server_info`, `server_state`, `server_definitions`, `fee`, `ledger_closed`.
 By default the forwarding cache is off.
 To enable the caching for a source, `forwarding_cache_timeout` value should be added to the configuration file, e.g.:
 

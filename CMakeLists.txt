@@ -100,6 +100,7 @@ target_sources(
           src/etl/ETLService.cpp
           src/etl/ETLState.cpp
           src/etl/LoadBalancer.cpp
+          src/etl/CacheLoaderSettings.cpp
           src/etl/Source.cpp
           src/etl/impl/ForwardingCache.cpp
           src/etl/impl/ForwardingSource.cpp
@@ -189,10 +190,6 @@ if (tests)
   add_executable(
     ${TEST_TARGET}
     # Common
-    <<<<<<<
-    =======
-    >>>>>>>
-    HEAD
     unittests/ConfigTests.cpp
     unittests/data/BackendCountersTests.cpp
     unittests/data/BackendCountersTests.cpp
@@ -379,7 +376,6 @@ if (tests)
     unittests/web/SweepHandlerTests.cpp
     # Feed
     unittests/web/WhitelistHandlerTests.cpp
-    upstream/develop
   )
 
   include(CMake/deps/gtest.cmake)
