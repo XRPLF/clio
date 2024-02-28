@@ -268,7 +268,6 @@ public:
      * @brief Schedule an operation on the execution context
      *
      * @param fn The block of code to execute. Signature is `Type()` where `Type` is the return type.
-     * @param timeout The timeout duration after which the operation will be cancelled
      * @return A unstoppable operation that can be used to wait for the result
      */
     [[nodiscard]] auto

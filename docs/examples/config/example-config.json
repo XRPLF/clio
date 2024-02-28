@@ -53,15 +53,6 @@
         "max_requests": 20, // Max connections per IP per sweep interval
         "sweep_interval": 1 // Time in seconds before resetting max_fetches and max_requests
     },
-    "cache": {
-        // Comma-separated list of peer nodes that Clio can use to download cache from at startup
-        "peers": [
-            {
-                "ip": "127.0.0.1",
-                "port": 51234
-            }
-        ]
-    },
     "server": {
         "ip": "0.0.0.0",
         "port": 51233,

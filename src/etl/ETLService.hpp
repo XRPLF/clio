@@ -21,12 +21,12 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/LedgerCache.hpp"
+#include "etl/CacheLoader.hpp"
 #include "etl/ETLHelpers.hpp"
 #include "etl/ETLState.hpp"
 #include "etl/LoadBalancer.hpp"
 #include "etl/SystemState.hpp"
 #include "etl/impl/AmendmentBlock.hpp"
-#include "etl/impl/CacheLoader.hpp"
 #include "etl/impl/ExtractionDataPipe.hpp"
 #include "etl/impl/Extractor.hpp"
 #include "etl/impl/LedgerFetcher.hpp"
@@ -82,7 +82,7 @@ class ETLService {
     using NetworkValidatedLedgersType = NetworkValidatedLedgers;
     using DataPipeType = etl::impl::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
     using CacheType = data::LedgerCache;
-    using CacheLoaderType = etl::impl::CacheLoader<CacheType>;
+    using CacheLoaderType = etl::CacheLoader<CacheType>;
     using LedgerFetcherType = etl::impl::LedgerFetcher<LoadBalancerType>;
     using ExtractorType = etl::impl::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
     using LedgerLoaderType = etl::impl::LedgerLoader<LoadBalancerType, LedgerFetcherType>;

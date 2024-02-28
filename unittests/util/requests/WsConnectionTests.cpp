@@ -23,20 +23,13 @@
 #include "util/requests/Types.hpp"
 #include "util/requests/WsConnection.hpp"
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/strand.hpp>
-#include <boost/asio/use_future.hpp>
 #include <boost/beast/http/field.hpp>
 #include <gtest/gtest.h>
-#include <openssl/ssl.h>
 
 #include <chrono>
 #include <cstddef>
-#include <iostream>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <thread>
 #include <vector>

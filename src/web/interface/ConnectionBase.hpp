@@ -44,11 +44,11 @@ namespace http = boost::beast::http;
 struct ConnectionBase : public util::Taggable {
 protected:
     boost::system::error_code ec_;
+    bool isAdmin_ = false;
 
 public:
     std::string const clientIp;
     bool upgraded = false;
-    bool isAdmin_ = false;
     boost::signals2::signal<void(ConnectionBase*)> onDisconnect;
     std::uint32_t apiSubVersion = 0;
 
@@ -80,11 +80,11 @@ public:
     /**
      * @brief Send via shared_ptr of string, that enables SubscriptionManager to publish to clients.
      *
-     * @param msg The message to send
-     * @throws Not supported unless implemented in child classes. Will always throw std::logic_error.
+     * @param msg Unused
+     * @throws std::logic_error unless the function is overridden by a child class.
      */
     virtual void
-    send(std::shared_ptr<std::string> /* msg */)
+    send([[maybe_unused]] std::shared_ptr<std::string> msg)
     {
         throw std::logic_error("web server can not send the shared payload");
     }

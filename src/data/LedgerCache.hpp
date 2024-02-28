@@ -86,7 +86,7 @@ public:
     /**
      * @brief Update the cache with new ledger objects.
      *
-     * @param blobs The ledger objects to update cache with
+     * @param objs The ledger objects to update cache with
      * @param seq The sequence to update cache for
      * @param isBackground Should be set to true when writing old data from a background thread
      */

@@ -1,4 +1,4 @@
-find_package (GTest REQUIRED)
+find_package(GTest REQUIRED)
 
-enable_testing ()
-include (GoogleTest)
+enable_testing()
+include(GoogleTest)

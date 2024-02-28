@@ -23,10 +23,8 @@
 #include "util/MockSubscriptionManager.hpp"
 #include "util/TestWsServer.hpp"
 
-#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
 #include <gmock/gmock.h>
