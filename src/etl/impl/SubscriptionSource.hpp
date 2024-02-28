@@ -100,6 +100,8 @@ public:
      * @param subscriptions The subscription manager object
      * @param onDisconnect The onDisconnect hook. Called when the connection is lost
      * @param onNewLedger The onNewLedger hook. Called when a new ledger is received
+     * @param onLedgerClosed The onLedgerClosed hook. Called when the ledger is closed but only if the source is
+     * forwarding
      * @param connectionTimeout The connection timeout. Defaults to 30 seconds
      * @param retryDelay The retry delay. Defaults to 1 second
      */

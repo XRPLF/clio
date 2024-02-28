@@ -77,13 +77,12 @@ struct SourceTest : public ::testing::Test {
     StrictMock<GrpcSourceMock> grpcSourceMock_;
     std::shared_ptr<StrictMock<SubscriptionSourceMock>> subscriptionSourceMock_ =
         std::make_shared<StrictMock<SubscriptionSourceMock>>();
-    std::shared_ptr<StrictMock<ForwardingSourceMock>> forwardingSourceMock_ =
-        std::make_shared<StrictMock<ForwardingSourceMock>>();
+    StrictMock<ForwardingSourceMock> forwardingSourceMock_;
 
     SourceImpl<
         StrictMock<GrpcSourceMock>&,
         std::shared_ptr<StrictMock<SubscriptionSourceMock>>,
-        std::shared_ptr<StrictMock<ForwardingSourceMock>>>
+        StrictMock<ForwardingSourceMock>&>
         source_{
             "some_ip",
             "some_ws_port",
@@ -176,7 +175,7 @@ TEST_F(SourceTest, forwardToRippled)
     boost::json::object const request = {{"some_key", "some_value"}};
     std::optional<std::string> const clientIp = "some_client_ip";
 
-    EXPECT_CALL(*forwardingSourceMock_, forwardToRippled(request, clientIp, testing::_)).WillOnce(Return(request));
+    EXPECT_CALL(forwardingSourceMock_, forwardToRippled(request, clientIp, testing::_)).WillOnce(Return(request));
 
     boost::asio::io_context ioContext;
     boost::asio::spawn(ioContext, [&](boost::asio::yield_context yield) {

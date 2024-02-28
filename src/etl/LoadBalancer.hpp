@@ -72,6 +72,7 @@ private:
     static constexpr std::uint32_t DEFAULT_DOWNLOAD_RANGES = 16;
 
     util::Logger log_{"ETL"};
+    std::optional<impl::ForwardingCache> forwardingCache_;
     std::vector<Source> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =

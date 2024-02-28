@@ -303,15 +303,41 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithLedgerIndexAndValidatedLedgers)
     EXPECT_FALSE(subscriptionSource_->hasLedger(4));
 }
 
-TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndex)
+TEST_F(SubscriptionSourceReadTests, GotLedgerClosed)
 {
     boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
-        auto connection = connectAndSendMessage(R"({"type":"ledgerClosed","ledger_index":123})", yield);
+        auto connection = connectAndSendMessage(R"({"type":"ledgerClosed"})", yield);
+        connection.close(yield);
+    });
+
+    EXPECT_CALL(onConnectHook_, Call());
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    ioContext_.run();
+}
+
+TEST_F(SubscriptionSourceReadTests, GotLedgerClosedForwardingIsSet)
+{
+    subscriptionSource_->setForwarding(true);
+
+    boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
+        auto connection = connectAndSendMessage(R"({"type": "ledgerClosed"})", yield);
         connection.close(yield);
     });
 
     EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onLedgerClosedHook_, Call());
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    ioContext_.run();
+}
+
+TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndex)
+{
+    boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
+        auto connection = connectAndSendMessage(R"({"type": "ledgerClosed","ledger_index": 123})", yield);
+        connection.close(yield);
+    });
+
+    EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
@@ -358,7 +384,6 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithValidatedLedgers)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onLedgerClosedHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     ioContext_.run();
 
@@ -383,7 +408,6 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndexAndValidatedLe
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onLedgerClosedHook_, Call());
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();

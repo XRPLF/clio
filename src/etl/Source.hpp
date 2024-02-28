@@ -48,7 +48,7 @@ namespace etl {
 template <
     typename GrpcSourceType = impl::GrpcSource,
     typename SubscriptionSourceTypePtr = std::unique_ptr<impl::SubscriptionSource>,
-    typename ForwardingSourceTypePtr = std::shared_ptr<impl::ForwardingSource>>
+    typename ForwardingSourceType = impl::ForwardingSource>
 class SourceImpl {
     std::string ip_;
     std::string wsPort_;
@@ -56,28 +56,30 @@ class SourceImpl {
 
     GrpcSourceType grpcSource_;
     SubscriptionSourceTypePtr subscriptionSource_;
-    ForwardingSourceTypePtr forwardingSource_;
+    ForwardingSourceType forwardingSource_;
 
 public:
     using OnConnectHook = impl::SubscriptionSource::OnConnectHook;
     using OnDisconnectHook = impl::SubscriptionSource::OnDisconnectHook;
+    using OnLedgerClosedHook = impl::SubscriptionSource::OnLedgerClosedHook;
 
-    template <typename SomeGrpcSourceType>
-        requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType>
+    template <typename SomeGrpcSourceType, typename SomeForwardingSourceType>
+        requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType> and
+                     std::is_same_v<ForwardingSourceType, SomeForwardingSourceType>
     SourceImpl(
         std::string ip,
         std::string wsPort,
         std::string grpcPort,
         SomeGrpcSourceType&& grpcSource,
         SubscriptionSourceTypePtr subscriptionSource,
-        ForwardingSourceTypePtr forwardingSource
+        SomeForwardingSourceType&& forwardingSource
     )
         : ip_(std::move(ip))
         , wsPort_(std::move(wsPort))
         , grpcPort_(std::move(grpcPort))
         , grpcSource_(std::forward<SomeGrpcSourceType>(grpcSource))
         , subscriptionSource_(std::move(subscriptionSource))
-        , forwardingSource_(std::move(forwardingSource))
+        , forwardingSource_(std::forward<SomeForwardingSourceType>(forwardingSource))
     {
     }
 
@@ -196,7 +198,7 @@ public:
         boost::asio::yield_context yield
     )
     {
-        return forwardingSource_->forwardToRippled(request, forwardToRippledClientIp, yield);
+        return forwardingSource_.forwardToRippled(request, forwardToRippledClientIp, yield);
     }
 };
 
@@ -221,7 +223,8 @@ make_Source(
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
     Source::OnDisconnectHook onDisconnect,
-    Source::OnConnectHook onConnect
+    Source::OnConnectHook onConnect,
+    Source::OnLedgerClosedHook onLedgerClosed
 );
 
 }  // namespace etl

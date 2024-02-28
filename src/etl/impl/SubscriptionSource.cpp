@@ -204,7 +204,8 @@ SubscriptionSource::handleMessage(std::string const& message)
                 auto validatedLedgers = boost::json::value_to<std::string>(object.at(JS(validated_ledgers)));
                 setValidatedRange(std::move(validatedLedgers));
             }
-            onLedgerClosed_();
+            if (isForwarding_)
+                onLedgerClosed_();
 
         } else {
             if (isForwarding_) {
