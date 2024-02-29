@@ -244,8 +244,8 @@ if (tests)
     unittests/rpc/handlers/AccountObjectsTests.cpp
     unittests/rpc/handlers/AccountOffersTests.cpp
     unittests/rpc/handlers/AccountTxTests.cpp
-    # Backend
     unittests/rpc/handlers/AMMInfoTests.cpp
+    # Backend
     unittests/rpc/handlers/BookChangesTests.cpp
     unittests/rpc/handlers/BookOffersTests.cpp
     unittests/rpc/handlers/DefaultProcessorTests.cpp
