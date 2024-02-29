@@ -244,6 +244,7 @@ if (tests)
     unittests/rpc/handlers/AccountObjectsTests.cpp
     unittests/rpc/handlers/AccountOffersTests.cpp
     unittests/rpc/handlers/AccountTxTests.cpp
+    # Backend
     unittests/rpc/handlers/AMMInfoTests.cpp
     unittests/rpc/handlers/BookChangesTests.cpp
     unittests/rpc/handlers/BookOffersTests.cpp
@@ -255,7 +256,6 @@ if (tests)
     unittests/rpc/handlers/LedgerRangeTests.cpp
     unittests/rpc/handlers/LedgerTests.cpp
     unittests/rpc/handlers/MPTHoldersTests.cpp
-    # Backend
     unittests/rpc/handlers/NFTBuyOffersTests.cpp
     unittests/rpc/handlers/NFTHistoryTests.cpp
     unittests/rpc/handlers/NFTInfoTests.cpp
