@@ -26,6 +26,7 @@
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
@@ -121,16 +122,16 @@ tag_invoke(boost::json::value_to_tag<AccountCurrenciesHandler::Input>, boost::js
     auto input = AccountCurrenciesHandler::Input{};
     auto const& jsonObject = jv.as_object();
 
-    input.account = jv.at(JS(account)).as_string().c_str();
+    input.account = boost::json::value_to<std::string>(jv.at(JS(account)));
 
     if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
         }
     }
 

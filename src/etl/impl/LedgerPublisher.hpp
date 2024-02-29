@@ -48,7 +48,7 @@
 #include <utility>
 #include <vector>
 
-namespace etl::detail {
+namespace etl::impl {
 
 /**
  * @brief Publishes ledgers in a synchronized fashion.
@@ -207,8 +207,9 @@ public:
 
                 setLastPublishTime();
                 LOG(log_.info()) << "Published ledger " << std::to_string(lgrInfo.seq);
-            } else
+            } else {
                 LOG(log_.info()) << "Skipping publishing ledger " << std::to_string(lgrInfo.seq);
+            }
         });
 
         // we track latest publish-requested seq, not necessarily already published
@@ -284,4 +285,4 @@ private:
     }
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl

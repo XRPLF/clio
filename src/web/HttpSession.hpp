@@ -48,7 +48,7 @@ using tcp = boost::asio::ip::tcp;
  * @tparam HandlerType The type of the server handler to use
  */
 template <SomeServerHandler HandlerType>
-class HttpSession : public detail::HttpBase<HttpSession, HandlerType>,
+class HttpSession : public impl::HttpBase<HttpSession, HandlerType>,
                     public std::enable_shared_from_this<HttpSession<HandlerType>> {
     boost::beast::tcp_stream stream_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
@@ -59,7 +59,7 @@ public:
      *
      * @param socket The socket. Ownership is transferred to HttpSession
      * @param ip Client's IP address
-     * @param adminPassword The optional password to verify admin role in requests
+     * @param adminVerification The admin verification strategy to use
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
@@ -68,13 +68,13 @@ public:
     explicit HttpSession(
         tcp::socket&& socket,
         std::string const& ip,
-        std::shared_ptr<detail::AdminVerificationStrategy> const& adminVerification,
+        std::shared_ptr<impl::AdminVerificationStrategy> const& adminVerification,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<web::DOSGuard> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer buffer
     )
-        : detail::HttpBase<HttpSession, HandlerType>(
+        : impl::HttpBase<HttpSession, HandlerType>(
               ip,
               tagFactory,
               adminVerification,
@@ -103,7 +103,7 @@ public:
         boost::asio::dispatch(
             stream_.get_executor(),
             boost::beast::bind_front_handler(
-                &detail::HttpBase<HttpSession, HandlerType>::doRead, this->shared_from_this()
+                &impl::HttpBase<HttpSession, HandlerType>::doRead, this->shared_from_this()
             )
         );
     }

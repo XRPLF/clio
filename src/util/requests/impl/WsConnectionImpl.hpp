@@ -32,7 +32,9 @@
 #include <boost/beast/ssl/ssl_stream.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream.hpp>
+#include <boost/beast/websocket/stream_base.hpp>
 
+#include <chrono>
 #include <optional>
 #include <string>
 #include <utility>
@@ -75,8 +77,15 @@ public:
     }
 
     std::optional<RequestError>
-    close(boost::asio::yield_context yield) override
+    close(boost::asio::yield_context yield, std::chrono::steady_clock::duration const timeout = DEFAULT_TIMEOUT)
+        override
     {
+        // Set the timeout for closing the connection
+        boost::beast::websocket::stream_base::timeout wsTimeout{};
+        ws_.get_option(wsTimeout);
+        wsTimeout.handshake_timeout = timeout;
+        ws_.set_option(wsTimeout);
+
         boost::beast::error_code errorCode;
         ws_.async_close(boost::beast::websocket::close_code::normal, yield[errorCode]);
         if (errorCode)

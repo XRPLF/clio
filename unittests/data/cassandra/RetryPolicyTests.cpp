@@ -21,22 +21,20 @@
 #include "data/cassandra/impl/RetryPolicy.hpp"
 #include "util/Fixtures.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <cassandra.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <atomic>
-#include <optional>
-
 using namespace data::cassandra;
-using namespace data::cassandra::detail;
+using namespace data::cassandra::impl;
 using namespace testing;
 
-class BackendCassandraRetryPolicyTest : public SyncAsioContextTest {};
+struct BackendCassandraRetryPolicyTest : SyncAsioContextTest {
+    ExponentialBackoffRetryPolicy retryPolicy{ctx};
+};
 
 TEST_F(BackendCassandraRetryPolicyTest, ShouldRetryAlwaysTrue)
 {
-    auto retryPolicy = ExponentialBackoffRetryPolicy{ctx};
     EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}));
     EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"invalid data", CASS_ERROR_LIB_INVALID_DATA}));
     EXPECT_TRUE(retryPolicy.shouldRetry(CassandraError{"invalid query", CASS_ERROR_SERVER_INVALID_QUERY}));
@@ -48,37 +46,30 @@ TEST_F(BackendCassandraRetryPolicyTest, ShouldRetryAlwaysTrue)
     }
 }
 
-TEST_F(BackendCassandraRetryPolicyTest, CheckComputedBackoffDelayIsCorrect)
-{
-    auto retryPolicy = ExponentialBackoffRetryPolicy{ctx};
-    EXPECT_EQ(retryPolicy.calculateDelay(0).count(), 1);
-    EXPECT_EQ(retryPolicy.calculateDelay(1).count(), 2);
-    EXPECT_EQ(retryPolicy.calculateDelay(2).count(), 4);
-    EXPECT_EQ(retryPolicy.calculateDelay(3).count(), 8);
-    EXPECT_EQ(retryPolicy.calculateDelay(4).count(), 16);
-    EXPECT_EQ(retryPolicy.calculateDelay(5).count(), 32);
-    EXPECT_EQ(retryPolicy.calculateDelay(6).count(), 64);
-    EXPECT_EQ(retryPolicy.calculateDelay(7).count(), 128);
-    EXPECT_EQ(retryPolicy.calculateDelay(8).count(), 256);
-    EXPECT_EQ(retryPolicy.calculateDelay(9).count(), 512);
-    EXPECT_EQ(retryPolicy.calculateDelay(10).count(), 1024);
-    EXPECT_EQ(retryPolicy.calculateDelay(11).count(),
-              1024);  // 10 is max, same after that
-}
-
 TEST_F(BackendCassandraRetryPolicyTest, RetryCorrectlyExecuted)
 {
-    auto callCount = std::atomic_int{0};
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
-    auto retryPolicy = ExponentialBackoffRetryPolicy{ctx};
+    StrictMock<MockFunction<void()>> callback;
+    EXPECT_CALL(callback, Call()).Times(3);
 
-    retryPolicy.retry([&callCount]() { ++callCount; });
-    retryPolicy.retry([&callCount]() { ++callCount; });
-    retryPolicy.retry([&callCount, &work]() {
-        ++callCount;
-        work.reset();
-    });
+    for (auto i = 0; i < 3; ++i) {
+        retryPolicy.retry([&callback]() { callback.Call(); });
+        runContext();
+    }
+}
 
-    ctx.run();
-    ASSERT_EQ(callCount, 3);
+TEST_F(BackendCassandraRetryPolicyTest, MutlipleRetryCancelPreviousCalls)
+{
+    StrictMock<MockFunction<void()>> callback;
+    EXPECT_CALL(callback, Call());
+
+    for (auto i = 0; i < 3; ++i)
+        retryPolicy.retry([&callback]() { callback.Call(); });
+
+    runContext();
+}
+
+TEST_F(BackendCassandraRetryPolicyTest, CallbackIsNotCalledIfContextDies)
+{
+    StrictMock<MockFunction<void()>> callback;
+    retryPolicy.retry([&callback]() { callback.Call(); });
 }

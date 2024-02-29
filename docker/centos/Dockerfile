@@ -40,10 +40,10 @@ RUN source /opt/rh/devtoolset-11/enable && cd /tmp/clio && \
 RUN mkdir output
 RUN strip clio/build/clio_server && strip clio/build/clio_tests
 RUN cp clio/build/clio_tests output/ && cp clio/build/clio_server output/
-RUN cp clio/example-config.json output/example-config.json
+RUN cp clio/docs/examples/config/example-config.json output/example-config.json
 
 FROM centos:7
 COPY --from=build /tmp/output /clio
-RUN mkdir -p /opt/clio/etc && mv /clio/example-config.json /opt/clio/etc/config.json
+RUN mkdir -p /opt/clio/etc && mv /clio/docs/examples/config/example-config.json /opt/clio/etc/config.json
 
 CMD ["/clio/clio_server", "/opt/clio/etc/config.json"]

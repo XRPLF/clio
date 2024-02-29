@@ -25,6 +25,7 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <gtest/gtest.h>
 
 #include <cstdint>
@@ -201,7 +202,7 @@ struct Custom {
     {
         ASSERT(value.is_object(), "Value must be an object");
         auto const& obj = value.as_object();
-        return {obj.at("str").as_string().c_str(), obj.at("int").as_int64(), obj.at("bool").as_bool()};
+        return {boost::json::value_to<std::string>(obj.at("str")), obj.at("int").as_int64(), obj.at("bool").as_bool()};
     }
 };
 

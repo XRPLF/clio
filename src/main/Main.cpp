@@ -160,6 +160,8 @@ start(io_context& ioc, std::uint32_t numThreads)
         v.emplace_back([&ioc] { ioc.run(); });
 
     ioc.run();
+    for (auto& t : v)
+        t.join();
 }
 
 int
@@ -216,7 +218,7 @@ try {
 
     auto workQueue = rpc::WorkQueue::make_WorkQueue(config);
     auto counters = rpc::Counters::make_Counters(workQueue);
-    auto const handlerProvider = std::make_shared<rpc::detail::ProductionHandlerProvider const>(
+    auto const handlerProvider = std::make_shared<rpc::impl::ProductionHandlerProvider const>(
         config, backend, subscriptions, balancer, etl, counters
     );
     auto const rpcEngine =

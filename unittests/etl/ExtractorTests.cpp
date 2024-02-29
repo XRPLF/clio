@@ -38,8 +38,7 @@ class ETLExtractorTest : public NoLoggerFixture {
 protected:
     using ExtractionDataPipeType = MockExtractionDataPipe;
     using LedgerFetcherType = MockLedgerFetcher;
-    using ExtractorType =
-        etl::detail::Extractor<ExtractionDataPipeType, MockNetworkValidatedLedgers, LedgerFetcherType>;
+    using ExtractorType = etl::impl::Extractor<ExtractionDataPipeType, MockNetworkValidatedLedgers, LedgerFetcherType>;
 
     ExtractionDataPipeType dataPipe_;
     std::shared_ptr<MockNetworkValidatedLedgers> networkValidatedLedgers_ =
@@ -53,7 +52,6 @@ public:
     void
     SetUp() override
     {
-        NoLoggerFixture::SetUp();
         state_.isStopping = false;
         state_.writeConflict = false;
         state_.isReadOnly = false;
@@ -64,7 +62,6 @@ public:
     TearDown() override
     {
         extractor_.reset();
-        NoLoggerFixture::TearDown();
     }
 };
 

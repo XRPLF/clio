@@ -36,7 +36,7 @@
 #include <stdexcept>
 
 namespace util {
-namespace detail {
+namespace impl {
 
 /**
  * @brief A `null` tag generator - does nothing.
@@ -63,7 +63,7 @@ struct UUIDTagGenerator final {
     next();
 };
 
-}  // namespace detail
+}  // namespace impl
 
 /**
  * @brief Represents any tag decorator.
@@ -146,7 +146,7 @@ public:
  * This generates a pass-thru decorate member function which can be optimized away by the compiler.
  */
 template <>
-class TagDecorator<detail::NullTagGenerator> final : public BaseTagDecorator {
+class TagDecorator<impl::NullTagGenerator> final : public BaseTagDecorator {
 public:
     /**
      * @brief Nop implementation for the decorator.

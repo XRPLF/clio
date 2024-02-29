@@ -28,7 +28,7 @@
 #include <optional>
 #include <vector>
 
-namespace etl::detail {
+namespace etl::impl {
 
 /**
  * @brief A collection of thread safe async queues used by Extractor and Transformer to communicate
@@ -133,4 +133,4 @@ private:
     }
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl

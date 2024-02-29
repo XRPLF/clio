@@ -53,7 +53,7 @@ protected:
     util::Config config;
     util::TagDecoratorFactory tagFactory{config};
 
-    rpc::detail::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy{
+    rpc::impl::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy{
         loadBalancer,
         counters,
         handlerProvider

@@ -27,6 +27,7 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <ripple/basics/strHex.h>
 #include <ripple/beast/utility/Zero.h>
 #include <ripple/protocol/AccountID.h>
@@ -90,28 +91,38 @@ tag_invoke(boost::json::value_to_tag<BookOffersHandler::Input>, boost::json::val
     auto input = BookOffersHandler::Input{};
     auto const& jsonObject = jv.as_object();
 
-    ripple::to_currency(input.getsCurrency, jv.at(JS(taker_gets)).as_object().at(JS(currency)).as_string().c_str());
-    ripple::to_currency(input.paysCurrency, jv.at(JS(taker_pays)).as_object().at(JS(currency)).as_string().c_str());
+    ripple::to_currency(
+        input.getsCurrency, boost::json::value_to<std::string>(jv.at(JS(taker_gets)).as_object().at(JS(currency)))
+    );
+    ripple::to_currency(
+        input.paysCurrency, boost::json::value_to<std::string>(jv.at(JS(taker_pays)).as_object().at(JS(currency)))
+    );
 
-    if (jv.at(JS(taker_gets)).as_object().contains(JS(issuer)))
-        ripple::to_issuer(input.getsID, jv.at(JS(taker_gets)).as_object().at(JS(issuer)).as_string().c_str());
+    if (jv.at(JS(taker_gets)).as_object().contains(JS(issuer))) {
+        ripple::to_issuer(
+            input.getsID, boost::json::value_to<std::string>(jv.at(JS(taker_gets)).as_object().at(JS(issuer)))
+        );
+    }
 
-    if (jv.at(JS(taker_pays)).as_object().contains(JS(issuer)))
-        ripple::to_issuer(input.paysID, jv.at(JS(taker_pays)).as_object().at(JS(issuer)).as_string().c_str());
+    if (jv.at(JS(taker_pays)).as_object().contains(JS(issuer))) {
+        ripple::to_issuer(
+            input.paysID, boost::json::value_to<std::string>(jv.at(JS(taker_pays)).as_object().at(JS(issuer)))
+        );
+    }
 
     if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = jv.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(jv.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
         }
     }
 
     if (jsonObject.contains(JS(taker)))
-        input.taker = accountFromStringStrict(jv.at(JS(taker)).as_string().c_str());
+        input.taker = accountFromStringStrict(boost::json::value_to<std::string>(jv.at(JS(taker))));
 
     if (jsonObject.contains(JS(limit)))
         input.limit = jv.at(JS(limit)).as_int64();

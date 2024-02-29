@@ -19,21 +19,19 @@
 
 #include "util/TestHttpServer.hpp"
 
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/socket_base.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/beast.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/http/error.hpp>
-#include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/message_generator.hpp>
+#include <boost/beast/http/read.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <gtest/gtest.h>
 
@@ -49,7 +47,12 @@ using tcp = boost::asio::ip::tcp;
 namespace {
 
 void
-doSession(beast::tcp_stream stream, TestHttpServer::RequestHandler requestHandler, asio::yield_context yield)
+doSession(
+    beast::tcp_stream stream,
+    TestHttpServer::RequestHandler requestHandler,
+    asio::yield_context yield,
+    bool const allowToFail
+)
 {
     beast::error_code errorCode;
 
@@ -66,6 +69,9 @@ doSession(beast::tcp_stream stream, TestHttpServer::RequestHandler requestHandle
     if (errorCode == http::error::end_of_stream)
         return;
 
+    if (allowToFail and errorCode)
+        return;
+
     ASSERT_FALSE(errorCode) << errorCode.message();
 
     auto response = requestHandler(req);
@@ -79,6 +85,9 @@ doSession(beast::tcp_stream stream, TestHttpServer::RequestHandler requestHandle
 
     // Send the response
     beast::async_write(stream, std::move(messageGenerator), yield[errorCode]);
+
+    if (allowToFail and errorCode)
+        return;
 
     ASSERT_FALSE(errorCode) << errorCode.message();
 
@@ -98,7 +107,7 @@ doSession(beast::tcp_stream stream, TestHttpServer::RequestHandler requestHandle
 
 TestHttpServer::TestHttpServer(boost::asio::io_context& context, std::string host, int const port) : acceptor_(context)
 {
-    boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(host), port);
+    boost::asio::ip::tcp::endpoint const endpoint(boost::asio::ip::make_address(host), port);
     acceptor_.open(endpoint.protocol());
     acceptor_.set_option(asio::socket_base::reuse_address(true));
     acceptor_.bind(endpoint);
@@ -106,18 +115,21 @@ TestHttpServer::TestHttpServer(boost::asio::io_context& context, std::string hos
 }
 
 void
-TestHttpServer::handleRequest(TestHttpServer::RequestHandler handler)
+TestHttpServer::handleRequest(TestHttpServer::RequestHandler handler, bool const allowToFail)
 {
     boost::asio::spawn(
         acceptor_.get_executor(),
-        [this, handler = std::move(handler)](asio::yield_context yield) mutable {
+        [this, allowToFail, handler = std::move(handler)](asio::yield_context yield) mutable {
             boost::beast::error_code errorCode;
             tcp::socket socket(this->acceptor_.get_executor());
             acceptor_.async_accept(socket, yield[errorCode]);
 
+            if (allowToFail and errorCode)
+                return;
+
             [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
 
-            doSession(beast::tcp_stream{std::move(socket)}, std::move(handler), yield);
+            doSession(beast::tcp_stream{std::move(socket)}, std::move(handler), yield, allowToFail);
         },
         boost::asio::detached
     );

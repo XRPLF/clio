@@ -206,6 +206,12 @@ public:
         cv_.notify_all();
         return ret;
     }
+
+    std::size_t
+    size() const
+    {
+        return queue_.size();
+    }
 };
 
 /**

@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "etl/Source.hpp"
 #include "util/FakeFetchResponse.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -37,7 +36,6 @@ struct MockLoadBalancer {
 
     MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
     MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(bool, shouldPropagateTxnStream, (etl::Source*), (const));
     MOCK_METHOD(boost::json::value, toJson, (), (const));
     MOCK_METHOD(
         std::optional<boost::json::object>,

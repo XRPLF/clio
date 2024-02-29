@@ -13,6 +13,7 @@ class Clio(ConanFile):
         'fPIC': [True, False],
         'verbose': [True, False],
         'tests': [True, False],     # build unit tests; create `clio_tests` binary
+        'benchmark': [True, False], # build benchmarks; create `clio_benchmarks` binary
         'docs': [True, False],      # doxygen API docs; create custom target 'docs'
         'packaging': [True, False], # create distribution packages
         'coverage': [True, False],  # build for test coverage report; create custom target `clio_tests-ccov`
@@ -34,6 +35,7 @@ class Clio(ConanFile):
         'fPIC': True,
         'verbose': False,
         'tests': False,
+        'benchmark': False,
         'packaging': False,
         'coverage': False,
         'lint': False,
@@ -60,6 +62,8 @@ class Clio(ConanFile):
     def requirements(self):
         if self.options.tests:
             self.requires('gtest/1.14.0')
+        if self.options.benchmark:
+            self.requires('benchmark/1.8.3')
 
     def configure(self):
         if self.settings.compiler == 'apple-clang':

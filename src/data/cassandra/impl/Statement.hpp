@@ -39,7 +39,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 class Statement : public ManagedObject<CassStatement> {
     static constexpr auto deleter = [](CassStatement* ptr) { cass_statement_free(ptr); };
@@ -174,4 +174,4 @@ public:
     }
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

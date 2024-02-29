@@ -59,7 +59,7 @@ struct FormattedTransactionsData {
     std::vector<std::pair<ripple::uint192, ripple::AccountID>> mptHoldersData;
 };
 
-namespace etl::detail {
+namespace etl::impl {
 
 /**
  * @brief Loads ledger data into the DB
@@ -274,4 +274,4 @@ public:
     }
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl

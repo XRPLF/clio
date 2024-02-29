@@ -19,6 +19,9 @@
 
 #include "util/TestWsServer.hpp"
 
+#include "util/Expected.hpp"
+#include "util/requests/Types.hpp"
+
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
@@ -29,34 +32,27 @@
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/role.hpp>
-#include <boost/beast/version.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/websocket/error.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
 #include <gtest/gtest.h>
 
-#include <iostream>
 #include <optional>
 #include <string>
 #include <utility>
 
 namespace asio = boost::asio;
-namespace beast = boost::beast;
 namespace websocket = boost::beast::websocket;
 
-TestWsConnection::TestWsConnection(asio::ip::tcp::socket&& socket, boost::asio::yield_context yield)
-    : ws_(std::move(socket))
+TestWsConnection::TestWsConnection(websocket::stream<boost::beast::tcp_stream> wsStream) : ws_(std::move(wsStream))
 {
-    ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::server));
-    beast::error_code errorCode;
-    ws_.async_accept(yield[errorCode]);
-    [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
 }
 
 std::optional<std::string>
 TestWsConnection::send(std::string const& message, boost::asio::yield_context yield)
 {
-    beast::error_code errorCode;
+    boost::beast::error_code errorCode;
     ws_.async_write(asio::buffer(message), yield[errorCode]);
     if (errorCode)
         return errorCode.message();
@@ -66,21 +62,21 @@ TestWsConnection::send(std::string const& message, boost::asio::yield_context yi
 std::optional<std::string>
 TestWsConnection::receive(boost::asio::yield_context yield)
 {
-    beast::error_code errorCode;
-    beast::flat_buffer buffer;
+    boost::beast::error_code errorCode;
+    boost::beast::flat_buffer buffer;
 
     ws_.async_read(buffer, yield[errorCode]);
     if (errorCode == websocket::error::closed)
         return std::nullopt;
 
     [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
-    return beast::buffers_to_string(buffer.data());
+    return boost::beast::buffers_to_string(buffer.data());
 }
 
 std::optional<std::string>
 TestWsConnection::close(boost::asio::yield_context yield)
 {
-    beast::error_code errorCode;
+    boost::beast::error_code errorCode;
     ws_.async_close(websocket::close_code::normal, yield[errorCode]);
     if (errorCode)
         return errorCode.message();
@@ -95,23 +91,39 @@ TestWsServer::TestWsServer(asio::io_context& context, std::string const& host, i
     acceptor_.bind(endpoint);
 }
 
-TestWsConnection
+util::Expected<TestWsConnection, util::requests::RequestError>
 TestWsServer::acceptConnection(asio::yield_context yield)
 {
     acceptor_.listen(asio::socket_base::max_listen_connections);
-    beast::error_code errorCode;
+
+    boost::beast::error_code errorCode;
     asio::ip::tcp::socket socket(acceptor_.get_executor());
     acceptor_.async_accept(socket, yield[errorCode]);
-    [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
-    return TestWsConnection(std::move(socket), yield);
+    if (errorCode)
+        return util::Unexpected{util::requests::RequestError{"Accept error", errorCode}};
+
+    boost::beast::websocket::stream<boost::beast::tcp_stream> ws(std::move(socket));
+    ws.set_option(websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
+    ws.async_accept(yield[errorCode]);
+    if (errorCode)
+        return util::Unexpected{util::requests::RequestError{"Handshake error", errorCode}};
+
+    return TestWsConnection(std::move(ws));
 }
 
 void
 TestWsServer::acceptConnectionAndDropIt(asio::yield_context yield)
 {
+    acceptConnectionWithoutHandshake(yield);
+}
+
+boost::asio::ip::tcp::socket
+TestWsServer::acceptConnectionWithoutHandshake(boost::asio::yield_context yield)
+{
     acceptor_.listen(asio::socket_base::max_listen_connections);
-    beast::error_code errorCode;
+    boost::beast::error_code errorCode;
     asio::ip::tcp::socket socket(acceptor_.get_executor());
     acceptor_.async_accept(socket, yield[errorCode]);
     [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
+    return socket;
 }

@@ -55,7 +55,7 @@
 #include <vector>
 
 using namespace util;
-using namespace web::detail;
+using namespace web::impl;
 using namespace web;
 
 constexpr static auto JSONData = R"JSON(
@@ -164,12 +164,6 @@ protected:
     {
         work.emplace(ctx);  // make sure ctx does not stop on its own
         runner.emplace([this] { ctx.run(); });
-    }
-
-    void
-    SetUp() override
-    {
-        NoLoggerFixture::SetUp();
     }
 
     // this ctx is for dos timer

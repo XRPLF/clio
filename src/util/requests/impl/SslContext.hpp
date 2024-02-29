@@ -23,10 +23,17 @@
 #include "util/requests/Types.hpp"
 
 #include <boost/asio/ssl/context.hpp>
+#include <boost/beast/core/error.hpp>
+
+#include <optional>
+#include <string>
 
 namespace util::requests::impl {
 
 Expected<boost::asio::ssl::context, RequestError>
 makeSslContext();
+
+std::optional<std::string>
+sslErrorToString(boost::beast::error_code const& error);
 
 }  // namespace util::requests::impl

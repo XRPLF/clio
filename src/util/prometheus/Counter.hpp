@@ -35,7 +35,7 @@ namespace util::prometheus {
  * @brief A prometheus counter metric implementation. It can only be increased or be reset to zero.
  */
 template <SomeNumberType NumberType>
-struct AnyCounter : MetricBase, detail::AnyCounterBase<NumberType> {
+struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType> {
     using ValueType = NumberType;
 
     /**
@@ -45,11 +45,11 @@ struct AnyCounter : MetricBase, detail::AnyCounterBase<NumberType> {
      * @param labelsString The labels of the counter
      * @param impl The implementation of the counter
      */
-    template <detail::SomeCounterImpl ImplType = detail::CounterImpl<ValueType>>
+    template <impl::SomeCounterImpl ImplType = impl::CounterImpl<ValueType>>
         requires std::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
     AnyCounter(std::string name, std::string labelsString, ImplType&& impl = ImplType{})
         : MetricBase(std::move(name), std::move(labelsString))
-        , detail::AnyCounterBase<ValueType>(std::forward<ImplType>(impl))
+        , impl::AnyCounterBase<ValueType>(std::forward<ImplType>(impl))
     {
     }
 

@@ -65,7 +65,7 @@ protected:
     /**
      * @brief Interface to serialize the value of the metric
      *
-     * @return The serialized value
+     * @param stream The stream to serialize into
      */
     virtual void
     serializeValue(OStream& stream) const = 0;

@@ -30,7 +30,7 @@
 #include <vector>
 
 using namespace data::cassandra;
-using namespace data::cassandra::detail;
+using namespace data::cassandra::impl;
 
 struct FakeResult {};
 

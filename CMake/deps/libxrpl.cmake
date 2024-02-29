@@ -1,1 +1,1 @@
-find_package (xrpl REQUIRED)
+find_package(xrpl REQUIRED)

@@ -49,7 +49,7 @@
 #include <utility>
 #include <vector>
 
-namespace etl::detail {
+namespace etl::impl {
 
 /*
  * TODO:
@@ -421,4 +421,4 @@ private:
     }
 };
 
-}  // namespace etl::detail
+}  // namespace etl::impl

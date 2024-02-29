@@ -19,18 +19,18 @@
 
 #pragma once
 
-#include "data/cassandra/Handle.hpp"
+#include "data/cassandra/Error.hpp"
 #include "data/cassandra/Types.hpp"
-#include "util/Expected.hpp"
+#include "util/Retry.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
 
-#include <algorithm>
 #include <chrono>
-#include <cmath>
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 /**
  * @brief A retry policy that employs exponential backoff
@@ -38,14 +38,18 @@ namespace data::cassandra::detail {
 class ExponentialBackoffRetryPolicy {
     util::Logger log_{"Backend"};
 
-    boost::asio::steady_timer timer_;
-    uint32_t attempt_ = 0u;
+    util::Retry retry_;
 
 public:
     /**
      * @brief Create a new retry policy instance with the io_context provided
      */
-    ExponentialBackoffRetryPolicy(boost::asio::io_context& ioc) : timer_{boost::asio::make_strand(ioc)}
+    ExponentialBackoffRetryPolicy(boost::asio::io_context& ioc)
+        : retry_(util::makeRetryExponentialBackoff(
+              std::chrono::milliseconds(1),
+              std::chrono::seconds(1),
+              boost::asio::make_strand(ioc)
+          ))
     {
     }
 
@@ -57,9 +61,9 @@ public:
     [[nodiscard]] bool
     shouldRetry([[maybe_unused]] CassandraError err)
     {
-        auto const delay = calculateDelay(attempt_);
-        LOG(log_.error()) << "Cassandra write error: " << err << ", current retries " << attempt_ << ", retrying in "
-                          << delay.count() << " milliseconds";
+        auto const delayMs = std::chrono::duration_cast<std::chrono::milliseconds>(retry_.delayValue()).count();
+        LOG(log_.error()) << "Cassandra write error: " << err << ", current retries " << retry_.attemptNumber()
+                          << ", retrying in " << delayMs << " milliseconds";
 
         return true;  // keep retrying forever
     }
@@ -73,21 +77,8 @@ public:
     void
     retry(Fn&& fn)
     {
-        timer_.expires_after(calculateDelay(attempt_++));
-        timer_.async_wait([fn = std::forward<Fn>(fn)]([[maybe_unused]] auto const& err) {
-            // todo: deal with cancellation (thru err)
-            fn();
-        });
-    }
-
-    /**
-     * @brief Calculates the wait time before attempting another retry
-     */
-    static std::chrono::milliseconds
-    calculateDelay(uint32_t attempt)
-    {
-        return std::chrono::milliseconds{lround(std::pow(2, std::min(10u, attempt)))};
+        retry_.retry(std::forward<Fn>(fn));
     }
 };
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

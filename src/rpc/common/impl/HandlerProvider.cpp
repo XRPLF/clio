@@ -62,7 +62,7 @@
 #include <optional>
 #include <string>
 
-namespace rpc::detail {
+namespace rpc::impl {
 
 ProductionHandlerProvider::ProductionHandlerProvider(
     util::Config const& config,
@@ -130,4 +130,4 @@ ProductionHandlerProvider::isClioOnly(std::string const& command) const
     return handlerMap_.contains(command) && handlerMap_.at(command).isClioOnly;
 }
 
-}  // namespace rpc::detail
+}  // namespace rpc::impl

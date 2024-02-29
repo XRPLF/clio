@@ -30,6 +30,7 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/ErrorCodes.h>
@@ -205,25 +206,25 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
 
     if (jsonObject.contains("marker")) {
         if (jsonObject.at("marker").is_string()) {
-            input.marker = ripple::uint256{jsonObject.at("marker").as_string().c_str()};
+            input.marker = ripple::uint256{boost::json::value_to<std::string>(jsonObject.at("marker")).data()};
         } else {
             input.diffMarker = jsonObject.at("marker").as_int64();
         }
     }
 
     if (jsonObject.contains(JS(ledger_hash)))
-        input.ledgerHash = jsonObject.at(JS(ledger_hash)).as_string().c_str();
+        input.ledgerHash = boost::json::value_to<std::string>(jsonObject.at(JS(ledger_hash)));
 
     if (jsonObject.contains(JS(ledger_index))) {
         if (!jsonObject.at(JS(ledger_index)).is_string()) {
             input.ledgerIndex = jsonObject.at(JS(ledger_index)).as_int64();
         } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
-            input.ledgerIndex = std::stoi(jsonObject.at(JS(ledger_index)).as_string().c_str());
+            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jsonObject.at(JS(ledger_index))));
         }
     }
 
     if (jsonObject.contains(JS(type)))
-        input.type = util::getLedgerEntryTypeFromStr(jsonObject.at(JS(type)).as_string().c_str());
+        input.type = util::getLedgerEntryTypeFromStr(boost::json::value_to<std::string>(jsonObject.at(JS(type))));
 
     return input;
 }

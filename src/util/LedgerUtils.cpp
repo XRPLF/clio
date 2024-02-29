@@ -32,7 +32,7 @@
 #include <vector>
 
 namespace util {
-namespace detail {
+namespace impl {
 
 struct LedgerTypeAttributes {
     ripple::LedgerEntryType type = ripple::ltANY;
@@ -70,7 +70,7 @@ static std::unordered_map<std::string, LedgerTypeAttributes> const LEDGER_TYPES_
      {JS(mpt_issuance), LedgerTypeAttributes(ripple::ltMPTOKEN_ISSUANCE, true)},
      {JS(mptoken), LedgerTypeAttributes(ripple::ltMPTOKEN, true)}}
 };
-}  // namespace detail
+}  // namespace impl
 
 std::unordered_set<std::string> const&
 getLedgerEntryTypeStrs()
@@ -78,8 +78,8 @@ getLedgerEntryTypeStrs()
     static std::unordered_set<std::string> const typesKeys = []() {
         std::unordered_set<std::string> keys;
         std::transform(
-            detail::LEDGER_TYPES_MAP.begin(),
-            detail::LEDGER_TYPES_MAP.end(),
+            impl::LEDGER_TYPES_MAP.begin(),
+            impl::LEDGER_TYPES_MAP.end(),
             std::inserter(keys, keys.begin()),
             [](auto const& item) { return item.first; }
         );
@@ -92,10 +92,10 @@ getLedgerEntryTypeStrs()
 ripple::LedgerEntryType
 getLedgerEntryTypeFromStr(std::string const& entryName)
 {
-    if (detail::LEDGER_TYPES_MAP.find(entryName) == detail::LEDGER_TYPES_MAP.end())
+    if (impl::LEDGER_TYPES_MAP.find(entryName) == impl::LEDGER_TYPES_MAP.end())
         return ripple::ltANY;
 
-    return detail::LEDGER_TYPES_MAP.at(entryName).type;
+    return impl::LEDGER_TYPES_MAP.at(entryName).type;
 }
 
 std::vector<ripple::LedgerEntryType> const&
@@ -104,7 +104,7 @@ getDeletionBlockerLedgerTypes()
     static std::vector<ripple::LedgerEntryType> const deletionBlockerLedgerTypes = []() {
         // TODO: Move to std::ranges::views::filter when move to higher clang
         auto ret = std::vector<ripple::LedgerEntryType>{};
-        std::for_each(detail::LEDGER_TYPES_MAP.cbegin(), detail::LEDGER_TYPES_MAP.cend(), [&ret](auto const& item) {
+        std::for_each(impl::LEDGER_TYPES_MAP.cbegin(), impl::LEDGER_TYPES_MAP.cend(), [&ret](auto const& item) {
             if (item.second.deletionBlocker)
                 ret.push_back(item.second.type);
         });

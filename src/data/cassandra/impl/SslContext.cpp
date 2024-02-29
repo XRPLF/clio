@@ -30,7 +30,7 @@ namespace {
 constexpr auto contextDeleter = [](CassSsl* ptr) { cass_ssl_free(ptr); };
 }  // namespace
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 SslContext::SslContext(std::string const& certificate) : ManagedObject{cass_ssl_new(), contextDeleter}
 {
@@ -40,4 +40,4 @@ SslContext::SslContext(std::string const& certificate) : ManagedObject{cass_ssl_
     }
 }
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

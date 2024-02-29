@@ -64,7 +64,7 @@ class RPCServerHandler {
     std::shared_ptr<RPCEngineType> const rpcEngine_;
     std::shared_ptr<ETLType const> const etl_;
     util::TagDecoratorFactory const tagFactory_;
-    rpc::detail::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
+    rpc::impl::ProductionAPIVersionParser apiVersionParser_;  // can be injected if needed
 
     util::Logger log_{"RPC"};
     util::Logger perfLog_{"Performance"};
@@ -77,7 +77,6 @@ public:
      * @param backend The backend to use
      * @param rpcEngine The RPC engine to use
      * @param etl The ETL to use
-     * @param subscriptions The subscription manager to use
      */
     RPCServerHandler(
         util::Config const& config,
@@ -116,18 +115,18 @@ public:
                     connection->clientIp
                 )) {
                 rpcEngine_->notifyTooBusy();
-                web::detail::ErrorHelper(connection).sendTooBusyError();
+                web::impl::ErrorHelper(connection).sendTooBusyError();
             }
         } catch (boost::system::system_error const& ex) {
             // system_error thrown when json parsing failed
             rpcEngine_->notifyBadSyntax();
-            web::detail::ErrorHelper(connection).sendJsonParsingError();
+            web::impl::ErrorHelper(connection).sendJsonParsingError();
             LOG(log_.warn()) << "Error parsing JSON: " << ex.what() << ". For request: " << request;
         } catch (std::invalid_argument const& ex) {
             // thrown when json parses something that is not an object at top level
             rpcEngine_->notifyBadSyntax();
             LOG(log_.warn()) << "Invalid argument error: " << ex.what() << ". For request: " << request;
-            web::detail::ErrorHelper(connection).sendJsonParsingError();
+            web::impl::ErrorHelper(connection).sendJsonParsingError();
         } catch (std::exception const& ex) {
             LOG(perfLog_.error()) << connection->tag() << "Caught exception: " << ex.what();
             rpcEngine_->notifyInternalError();
@@ -152,7 +151,7 @@ private:
             if (!range) {
                 // for error that happened before the handler, we don't attach any warnings
                 rpcEngine_->notifyNotReady();
-                return web::detail::ErrorHelper(connection, std::move(request)).sendNotReadyError();
+                return web::impl::ErrorHelper(connection, std::move(request)).sendNotReadyError();
             }
 
             auto const context = [&] {
@@ -186,7 +185,7 @@ private:
                 // we count all those as BadSyntax - as the WS path would.
                 // Although over HTTP these will yield a 400 status with a plain text response (for most).
                 rpcEngine_->notifyBadSyntax();
-                return web::detail::ErrorHelper(connection, std::move(request)).sendError(err);
+                return web::impl::ErrorHelper(connection, std::move(request)).sendError(err);
             }
 
             auto [result, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
@@ -197,7 +196,7 @@ private:
             boost::json::object response;
             if (auto const status = std::get_if<rpc::Status>(&result)) {
                 // note: error statuses are counted/notified in buildResponse itself
-                response = web::detail::ErrorHelper(connection, request).composeError(*status);
+                response = web::impl::ErrorHelper(connection, request).composeError(*status);
                 auto const responseStr = boost::json::serialize(response);
 
                 LOG(perfLog_.debug()) << context->tag() << "Encountered error: " << responseStr;
@@ -262,7 +261,7 @@ private:
             LOG(log_.error()) << connection->tag() << "Caught exception: " << ex.what();
 
             rpcEngine_->notifyInternalError();
-            return web::detail::ErrorHelper(connection, std::move(request)).sendInternalError();
+            return web::impl::ErrorHelper(connection, std::move(request)).sendInternalError();
         }
     }
 

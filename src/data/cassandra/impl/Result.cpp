@@ -30,7 +30,7 @@ constexpr auto resultDeleter = [](CassResult const* ptr) { cass_result_free(ptr)
 constexpr auto resultIteratorDeleter = [](CassIterator* ptr) { cass_iterator_free(ptr); };
 }  // namespace
 
-namespace data::cassandra::detail {
+namespace data::cassandra::impl {
 
 /* implicit */ Result::Result(CassResult const* ptr) : ManagedObject{ptr, resultDeleter}
 {
@@ -72,4 +72,4 @@ ResultIterator::hasMore() const
     return hasMore_;
 }
 
-}  // namespace data::cassandra::detail
+}  // namespace data::cassandra::impl

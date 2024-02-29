@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "etl/MPTHelpers.hpp"
+#include "etl/ETLHelpers.hpp"
 #include "etl/NFTHelpers.hpp"
 #include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
@@ -34,6 +35,7 @@
 #include <ripple/basics/strHex.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -41,7 +43,7 @@
 #include <utility>
 #include <vector>
 
-namespace etl::detail {
+namespace etl::impl {
 
 class AsyncCallData {
     util::Logger log_{"ETL"};
@@ -146,7 +148,7 @@ public:
                     continue;
             }
             cacheUpdates.push_back(
-                {*ripple::uint256::fromVoidChecked(obj.key()), {obj.mutable_data()->begin(), obj.mutable_data()->end()}}
+                {*ripple::uint256::fromVoidChecked(obj.key()), {obj.data().begin(), obj.data().end()}}
             );
             if (!cacheOnly) {
                 if (!lastKey_.empty())
@@ -199,4 +201,21 @@ public:
     }
 };
 
-}  // namespace etl::detail
+inline std::vector<AsyncCallData>
+makeAsyncCallData(uint32_t const sequence, uint32_t const numMarkers)
+{
+    auto const markers = getMarkers(numMarkers);
+
+    std::vector<AsyncCallData> result;
+    result.reserve(markers.size());
+
+    for (size_t i = 0; i + 1 < markers.size(); ++i) {
+        result.emplace_back(sequence, markers[i], markers[i + 1]);
+    }
+    if (not markers.empty()) {
+        result.emplace_back(sequence, markers.back(), std::nullopt);
+    }
+    return result;
+}
+
+}  // namespace etl::impl
