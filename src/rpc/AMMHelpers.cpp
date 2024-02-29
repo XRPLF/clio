@@ -47,9 +47,9 @@ getAmmPoolHolds(
 )
 {
     auto const assetInBalance =
-        accountHolds(backend, sequence, ammAccountID, issue1.asset(), issue1.account(), freezeHandling, yield);
+        accountHolds(backend, sequence, ammAccountID, issue1.currency, issue1.account, freezeHandling, yield);
     auto const assetOutBalance =
-        accountHolds(backend, sequence, ammAccountID, issue2.asset(), issue2.account(), freezeHandling, yield);
+        accountHolds(backend, sequence, ammAccountID, issue2.currency, issue2.account, freezeHandling, yield);
     return std::make_pair(assetInBalance, assetOutBalance);
 }
 
@@ -80,8 +80,8 @@ getAmmLpHolds(
     return getAmmLpHolds(
         backend,
         sequence,
-        ammSle[ripple::sfAsset].asset(),
-        ammSle[ripple::sfAsset2].asset(),
+        ammSle[ripple::sfAsset].currency,
+        ammSle[ripple::sfAsset2].currency,
         ammSle[ripple::sfAccount],
         lpAccount,
         yield

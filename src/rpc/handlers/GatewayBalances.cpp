@@ -111,7 +111,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
                 output.frozenBalances[peer].push_back(-balance);
             } else {
                 // normal negative balance, obligation to customer
-                auto& bal = output.sums[balance.getAsset()];
+                auto& bal = output.sums[balance.getCurrency()];
                 if (bal == beast::zero) {
                     // This is needed to set the currency code correctly
                     bal = -balance;
@@ -173,7 +173,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesH
                 boost::json::array arr;
                 for (auto const& balance : accBalances) {
                     boost::json::object entry;
-                    entry[JS(currency)] = ripple::to_string(balance.issue().asset());
+                    entry[JS(currency)] = ripple::to_string(balance.issue().currency);
                     entry[JS(value)] = balance.getText();
                     arr.push_back(std::move(entry));
                 }

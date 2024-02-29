@@ -161,7 +161,7 @@ TransactionFeed::pub(
     if (tx->getTxnType() == ripple::ttOFFER_CREATE) {
         auto const account = tx->getAccountID(ripple::sfAccount);
         auto const amount = tx->getFieldAmount(ripple::sfTakerGets);
-        if (account != amount.issue().account()) {
+        if (account != amount.issue().account) {
             auto fetchFundsSynchronous = [&]() {
                 data::synchronous([&](boost::asio::yield_context yield) {
                     ownerFunds = rpc::accountFunds(*backend, lgrInfo.seq, amount, account, yield);

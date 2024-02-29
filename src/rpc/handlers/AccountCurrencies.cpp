@@ -75,10 +75,10 @@ AccountCurrenciesHandler::process(AccountCurrenciesHandler::Input input, Context
                 balance.negate();
 
             if (balance < lineLimit)
-                response.receiveCurrencies.insert(ripple::to_string(balance.getAsset()));
+                response.receiveCurrencies.insert(ripple::to_string(balance.getCurrency()));
 
             if ((-balance) < lineLimitPeer)
-                response.sendCurrencies.insert(ripple::to_string(balance.getAsset()));
+                response.sendCurrencies.insert(ripple::to_string(balance.getCurrency()));
         }
 
         return true;

@@ -514,10 +514,10 @@ TEST_F(RPCHelpersTest, ParseIssue)
                                     })"
     )
                                 .as_object());
-    EXPECT_TRUE(issue.account() == GetAccountIDWithString(ACCOUNT2));
+    EXPECT_TRUE(issue.account == GetAccountIDWithString(ACCOUNT2));
 
     issue = parseIssue(boost::json::parse(R"({"currency": "XRP"})").as_object());
-    EXPECT_TRUE(ripple::isXRP(issue.asset()));
+    EXPECT_TRUE(ripple::isXRP(issue.currency));
 
     EXPECT_THROW(parseIssue(boost::json::parse(R"({"currency": 2})").as_object()), std::runtime_error);
 

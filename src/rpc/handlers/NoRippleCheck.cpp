@@ -145,9 +145,7 @@ NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& 
                         ownedItem.getFieldAmount(bLow ? ripple::sfHighLimit : ripple::sfLowLimit);
 
                     problem += fmt::format(
-                        "{} line to {}",
-                        to_string(static_cast<ripple::Currency>(peerLimit.getAsset())),
-                        to_string(peerLimit.getIssuer())
+                        "{} line to {}", to_string(peerLimit.getCurrency()), to_string(peerLimit.getIssuer())
                     );
                     output.problems.emplace_back(problem);
 

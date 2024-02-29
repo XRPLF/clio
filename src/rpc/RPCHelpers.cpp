@@ -1077,7 +1077,7 @@ accountFunds(
         return amount;
     }
 
-    return accountHolds(backend, sequence, id, amount.getAsset(), amount.getIssuer(), true, yield);
+    return accountHolds(backend, sequence, id, amount.getCurrency(), amount.getIssuer(), true, yield);
 }
 
 ripple::STAmount
@@ -1156,10 +1156,10 @@ postProcessOrderBook(
 
     std::map<ripple::AccountID, ripple::STAmount> umBalance;
 
-    bool const globalFreeze = isGlobalFrozen(backend, ledgerSequence, book.out.account(), yield) ||
-        isGlobalFrozen(backend, ledgerSequence, book.in.account(), yield);
+    bool const globalFreeze = isGlobalFrozen(backend, ledgerSequence, book.out.account, yield) ||
+        isGlobalFrozen(backend, ledgerSequence, book.in.account, yield);
 
-    auto rate = transferRate(backend, ledgerSequence, book.out.account(), yield);
+    auto rate = transferRate(backend, ledgerSequence, book.out.account, yield);
 
     for (auto const& obj : offers) {
         try {
@@ -1173,7 +1173,7 @@ postProcessOrderBook(
             ripple::STAmount saOwnerFunds;
             bool firstOwnerOffer = true;
 
-            if (book.out.account() == uOfferOwnerID) {
+            if (book.out.account == uOfferOwnerID) {
                 // If an offer is selling issuer's own IOUs, it is fully
                 // funded.
                 saOwnerFunds = saTakerGets;
@@ -1190,7 +1190,7 @@ postProcessOrderBook(
                     firstOwnerOffer = false;
                 } else {
                     saOwnerFunds = accountHolds(
-                        backend, ledgerSequence, uOfferOwnerID, book.out.asset(), book.out.account(), true, yield
+                        backend, ledgerSequence, uOfferOwnerID, book.out.currency, book.out.account, true, yield
                     );
 
                     if (saOwnerFunds < beast::zero)
@@ -1207,9 +1207,9 @@ postProcessOrderBook(
 
             if (rate != ripple::parityRate
                 // Have a tranfer fee.
-                && takerID != book.out.account()
+                && takerID != book.out.account
                 // Not taking offers of own IOUs.
-                && book.out.account() != uOfferOwnerID)
+                && book.out.account != uOfferOwnerID)
             // Offer owner not issuing ownfunds
             {
                 // Need to charge a transfer fee to offer owner.

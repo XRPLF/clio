@@ -192,12 +192,12 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
 
     if (!isXRP(asset1Balance)) {
         response.asset1Frozen = isFrozen(
-            *sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset].asset(), amm[sfAsset].account(), ctx.yield
+            *sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset].currency, amm[sfAsset].account, ctx.yield
         );
     }
     if (!isXRP(asset2Balance)) {
         response.asset2Frozen = isFrozen(
-            *sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset2].asset(), amm[sfAsset2].account(), ctx.yield
+            *sharedPtrBackend_, lgrInfo.seq, ammAccountID, amm[sfAsset2].currency, amm[sfAsset2].account, ctx.yield
         );
     }
 
