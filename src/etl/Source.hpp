@@ -196,7 +196,7 @@ public:
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,
         boost::asio::yield_context yield
-    )
+    ) const
     {
         return forwardingSource_.forwardToRippled(request, forwardToRippledClientIp, yield);
     }

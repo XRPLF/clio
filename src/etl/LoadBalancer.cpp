@@ -218,7 +218,7 @@ LoadBalancer::forwardToRippled(
     std::optional<boost::json::object> response;
     while (numAttempts < sources_.size()) {
         if (auto res = sources_[sourceIdx].forwardToRippled(request, clientIp, yield)) {
-            response = res;
+            response = std::move(res);
             break;
         }
 

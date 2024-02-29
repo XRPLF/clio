@@ -56,7 +56,7 @@ ForwardingSource::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& forwardToRippledClientIp,
     boost::asio::yield_context yield
-)
+) const
 {
     auto connectionBuilder = connectionBuilder_;
     if (forwardToRippledClientIp) {
@@ -92,9 +92,6 @@ ForwardingSource::forwardToRippled(
 
     auto responseObject = parsedResponse.as_object();
     responseObject["forwarded"] = true;
-
-    // if (cache_ and not responseObject.contains("error"))
-    //     cache_->put(request, responseObject);
 
     return responseObject;
 }

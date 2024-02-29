@@ -23,6 +23,7 @@
 #include "etl/ETLHelpers.hpp"
 #include "etl/ETLState.hpp"
 #include "etl/Source.hpp"
+#include "etl/impl/ForwardingCache.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"

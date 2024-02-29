@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "etl/impl/ForwardingCache.hpp"
 #include "util/log/Logger.hpp"
 #include "util/requests/WsConnection.hpp"
 
@@ -58,7 +57,7 @@ public:
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,
         boost::asio::yield_context yield
-    );
+    ) const;
 };
 
 }  // namespace etl::impl
