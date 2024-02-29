@@ -51,6 +51,8 @@ include(CMake/deps/libfmt.cmake)
 include(CMake/deps/cassandra.cmake)
 include(CMake/deps/libbacktrace.cmake)
 
+add_subdirectory(src)
+
 # TODO: Include directory will be wrong when installed.
 target_include_directories(clio PUBLIC src)
 target_compile_features(clio PUBLIC cxx_std_20)
@@ -71,6 +73,7 @@ target_link_libraries(
   PUBLIC xrpl::libxrpl
   PUBLIC dl
   PUBLIC libbacktrace::libbacktrace
+  PUBLIC clio_data
   INTERFACE Threads::Threads
 )
 
@@ -83,18 +86,6 @@ target_sources(
   clio
   PRIVATE # Main
           src/main/impl/Build.cpp
-          # Backend
-          src/data/BackendCounters.cpp
-          src/data/BackendInterface.cpp
-          src/data/LedgerCache.cpp
-          src/data/cassandra/impl/Future.cpp
-          src/data/cassandra/impl/Cluster.cpp
-          src/data/cassandra/impl/Batch.cpp
-          src/data/cassandra/impl/Result.cpp
-          src/data/cassandra/impl/Tuple.cpp
-          src/data/cassandra/impl/SslContext.cpp
-          src/data/cassandra/Handle.cpp
-          src/data/cassandra/SettingsProvider.cpp
           # ETL
           src/etl/NFTHelpers.cpp
           src/etl/ETLService.cpp
