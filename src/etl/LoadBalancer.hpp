@@ -72,11 +72,12 @@ private:
     static constexpr std::uint32_t DEFAULT_DOWNLOAD_RANGES = 16;
 
     util::Logger log_{"ETL"};
+    // Forwarding cache must be destroyed after sources because sources have a callnack to invalidate cache
     std::optional<impl::ForwardingCache> forwardingCache_;
     std::vector<Source> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
-        DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading intial ledger */
+        DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
     std::atomic_bool hasForwardingSource_{false};
 
 public:

@@ -70,11 +70,6 @@ LoadBalancer::LoadBalancer(
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
 )
 {
-    static_assert(
-        offsetof(LoadBalancer, forwardingCache_) < offsetof(LoadBalancer, sources_),
-        "forwardingCache_ must be declared before sources_"
-    );
-
     auto const forwardingCacheTimeout = config.valueOr<float>("forwarding_cache_timeout", 0.f);
     if (forwardingCacheTimeout > 0.f) {
         forwardingCache_ = impl::ForwardingCache{
