@@ -134,7 +134,7 @@ private:
      * @brief Convert a JSON object to Input type
      *
      * @param jv The JSON object to convert
-     * @return The input type
+     * @return Input parsed from the JSON object
      */
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
