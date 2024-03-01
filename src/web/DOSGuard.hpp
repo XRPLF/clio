@@ -62,16 +62,15 @@ public:
  */
 template <typename WhitelistHandlerType, typename SweepHandlerType>
 class BasicDOSGuard : public BaseDOSGuard {
-    // Accumulated state per IP, state will be reset accordingly
+    /**
+     * @brief Accumulated state per IP, state will be reset accordingly
+     */
     struct ClientState {
-        // accumulated transfered byte
-        std::uint32_t transferedByte = 0;
-        // accumulated served requests count
-        std::uint32_t requestsCount = 0;
+        std::uint32_t transferedByte = 0; /**< Accumulated transfered byte */
+        std::uint32_t requestsCount = 0;  /**< Accumulated served requests count */
     };
 
     mutable std::mutex mtx_;
-    // accumulated states map
     std::unordered_map<std::string, ClientState> ipState_;
     std::unordered_map<std::string, std::uint32_t> ipConnCount_;
     std::reference_wrapper<WhitelistHandlerType const> whitelistHandler_;

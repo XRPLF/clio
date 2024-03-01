@@ -39,14 +39,14 @@ namespace web {
  * @brief Context that is used by the Webserver to pass around information about an incoming request.
  */
 struct Context : util::Taggable {
-    boost::asio::yield_context yield;             /**< The coroutine context */
-    std::string method;                           /**< The method/command requested */
-    std::uint32_t apiVersion;                     /**< The api_version parsed from the request */
-    boost::json::object params;                   /**< Request's parameters/data as a JSON object */
-    std::shared_ptr<web::ConnectionBase> session; /**< The connection to the peer */
-    data::LedgerRange range;                      /**< The ledger range that is available at the time of the request */
-    std::string clientIp;                         /**< IP of the peer */
-    bool isAdmin;                                 /**< Whether the peer has admin privileges */
+    boost::asio::yield_context yield;
+    std::string method;
+    std::uint32_t apiVersion;
+    boost::json::object params;
+    std::shared_ptr<web::ConnectionBase> session;
+    data::LedgerRange range;
+    std::string clientIp;
+    bool isAdmin;
 
     /**
      * @brief Create a new Context instance.

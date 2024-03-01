@@ -60,7 +60,7 @@ struct ExecutionError {
         return message.c_str();
     }
 
-    std::string message; /**< The error message */
+    std::string message;
 };
 
 }  // namespace util::async

@@ -38,7 +38,7 @@ namespace util::prometheus {
  */
 template <SomeNumberType NumberType>
 struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType> {
-    using ValueType = NumberType; /**< The type of the value of the counter */
+    using ValueType = NumberType;
 
     /**
      * @brief Construct a new AnyCounter object

@@ -41,8 +41,8 @@ namespace util::prometheus {
 template <SomeNumberType NumberType>
 class AnyHistogram : public MetricBase {
 public:
-    using ValueType = NumberType;            /**< The number type of the histogram */
-    using Buckets = std::vector<NumberType>; /**< The type of the buckets */
+    using ValueType = NumberType;
+    using Buckets = std::vector<NumberType>;
 
     /**
      * @brief Construct a new Histogram object

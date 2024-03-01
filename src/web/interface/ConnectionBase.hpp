@@ -43,15 +43,14 @@ namespace http = boost::beast::http;
  */
 struct ConnectionBase : public util::Taggable {
 protected:
-    boost::system::error_code ec_; /**< The error code on the connection */
-    bool isAdmin_ = false;         /**< Whether the connection has admin privileges */
+    boost::system::error_code ec_;
+    bool isAdmin_ = false;
 
 public:
-    std::string const clientIp; /**< The IP address of the connected peer */
-    bool upgraded = false;      /**< Whether the connection has been upgraded to web socket */
-    boost::signals2::signal<void(ConnectionBase*)>
-        onDisconnect;                /**< Signal that is emitted when the connection is closed */
-    std::uint32_t apiSubVersion = 0; /**< The api_version parsed from the request used for subscriptions */
+    std::string const clientIp;
+    bool upgraded = false;
+    boost::signals2::signal<void(ConnectionBase*)> onDisconnect;
+    std::uint32_t apiSubVersion = 0;
 
     /**
      * @brief Create a new connection base.

@@ -110,14 +110,10 @@ public:
     template <typename T>
     using Operation = Operation<ValueType<T>>;
 
-    using Strand = impl::BasicStrand<
-        BasicExecutionContext,
-        StopSourceType,
-        DispatcherType,
-        TimerContextProvider,
-        ErrorHandlerType>; /**< The type of the strand */
+    using Strand = impl::
+        BasicStrand<BasicExecutionContext, StopSourceType, DispatcherType, TimerContextProvider, ErrorHandlerType>;
 
-    using Timer = typename ContextHolderType::Timer; /**< The type of the timer */
+    using Timer = typename ContextHolderType::Timer;
 
     /**
      * @brief Create a new execution context with the given number of threads.
