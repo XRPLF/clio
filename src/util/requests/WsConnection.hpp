@@ -53,7 +53,7 @@ public:
      * @brief Read a message from the WebSocket
      *
      * @param yield yield context
-     * @return Expected<std::string, RequestError> message or error
+     * @return message or error
      */
     virtual Expected<std::string, RequestError>
     read(boost::asio::yield_context yield) = 0;
@@ -63,7 +63,7 @@ public:
      *
      * @param message message to write
      * @param yield yield context
-     * @return std::optional<RequestError> error if any
+     * @return error if any
      */
     virtual std::optional<RequestError>
     write(std::string const& message, boost::asio::yield_context yield) = 0;
@@ -72,12 +72,13 @@ public:
      * @brief Close the WebSocket
      *
      * @param yield yield context
-     * @return std::optional<RequestError> error if any
+     * @param timeout timeout for the operation
+     * @return  error if any
      */
     virtual std::optional<RequestError>
     close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) = 0;
 
-    static constexpr std::chrono::seconds DEFAULT_TIMEOUT{5};
+    static constexpr std::chrono::seconds DEFAULT_TIMEOUT{5}; /**< Default timeout for connecting */
 };
 using WsConnectionPtr = std::unique_ptr<WsConnection>;
 
@@ -94,13 +95,19 @@ class WsConnectionBuilder {
     std::string target_{"/"};
 
 public:
+    /**
+     * @brief Create a new connection builder
+     *
+     * @param host Host to connect to
+     * @param port Port to connect to
+     */
     WsConnectionBuilder(std::string host, std::string port);
 
     /**
      * @brief Add a header to the request
      *
      * @param header header to add
-     * @return RequestBuilder& this
+     * @return Reference to self
      */
     WsConnectionBuilder&
     addHeader(HttpHeader header);
@@ -109,7 +116,7 @@ public:
      * @brief Add multiple headers to the request
      *
      * @param headers headers to add
-     * @return RequestBuilder& this
+     * @return Reference to self
      */
     WsConnectionBuilder&
     addHeaders(std::vector<HttpHeader> headers);
@@ -118,7 +125,7 @@ public:
      * @brief Set the target of the request
      *
      * @param target target to set
-     * @return RequestBuilder& this
+     * @return Reference to self
      */
     WsConnectionBuilder&
     setTarget(std::string target);
@@ -127,7 +134,7 @@ public:
      * @brief Set the timeout for connection establishing operations. Default is 5 seconds
      *
      * @param timeout timeout to set
-     * @return RequestBuilder& this
+     * @return Reference to self
      */
     WsConnectionBuilder&
     setConnectionTimeout(std::chrono::steady_clock::duration timeout);
@@ -136,7 +143,7 @@ public:
      * @brief Set the timeout for WebSocket handshake. Default is 5 seconds
      *
      * @param timeout timeout to set
-     * @return RequestBuilder& this
+     * @return Reference to self
      */
     WsConnectionBuilder&
     setWsHandshakeTimeout(std::chrono::steady_clock::duration timeout);
@@ -145,7 +152,7 @@ public:
      * @brief Connect to the host using SSL asynchronously
      *
      * @param yield yield context
-     * @return Expected<WsConnection, RequestError> WebSocket connection or error
+     * @return WebSocket connection or error
      */
     Expected<WsConnectionPtr, RequestError>
     sslConnect(boost::asio::yield_context yield) const;
@@ -154,7 +161,7 @@ public:
      * @brief Connect to the host without SSL asynchronously
      *
      * @param yield yield context
-     * @return Expected<WsConnection, RequestError> WebSocket connection or error
+     * @return WebSocket connection or error
      */
     Expected<WsConnectionPtr, RequestError>
     plainConnect(boost::asio::yield_context yield) const;
@@ -163,15 +170,15 @@ public:
      * @brief Connect to the host trying SSL first then plain if SSL fails
      *
      * @param yield yield context
-     * @return Expected<WsConnection, RequestError> WebSocket connection or error
+     * @return WebSocket connection or error
      */
     Expected<WsConnectionPtr, RequestError>
     connect(boost::asio::yield_context yield) const;
 
-    static constexpr std::chrono::seconds DEFAULT_TIMEOUT{5};
+    static constexpr std::chrono::seconds DEFAULT_TIMEOUT{5}; /**< Default timeout for connecting */
 
 private:
-    template <class StreamDataType>
+    template <typename StreamDataType>
     Expected<WsConnectionPtr, RequestError>
     connectImpl(StreamDataType&& streamData, boost::asio::yield_context yield) const;
 };

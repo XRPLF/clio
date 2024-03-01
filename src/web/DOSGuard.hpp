@@ -62,16 +62,15 @@ public:
  */
 template <typename WhitelistHandlerType, typename SweepHandlerType>
 class BasicDOSGuard : public BaseDOSGuard {
-    // Accumulated state per IP, state will be reset accordingly
+    /**
+     * @brief Accumulated state per IP, state will be reset accordingly
+     */
     struct ClientState {
-        // accumulated transfered byte
-        std::uint32_t transferedByte = 0;
-        // accumulated served requests count
-        std::uint32_t requestsCount = 0;
+        std::uint32_t transferedByte = 0; /**< Accumulated transfered byte */
+        std::uint32_t requestsCount = 0;  /**< Accumulated served requests count */
     };
 
     mutable std::mutex mtx_;
-    // accumulated states map
     std::unordered_map<std::string, ClientState> ipState_;
     std::unordered_map<std::string, std::uint32_t> ipConnCount_;
     std::reference_wrapper<WhitelistHandlerType const> whitelistHandler_;
@@ -82,9 +81,10 @@ class BasicDOSGuard : public BaseDOSGuard {
     util::Logger log_{"RPC"};
 
 public:
-    static constexpr std::uint32_t DEFAULT_MAX_FETCHES = 1000'000u;
-    static constexpr std::uint32_t DEFAULT_MAX_CONNECTIONS = 20u;
-    static constexpr std::uint32_t DEFAULT_MAX_REQUESTS = 20u;
+    static constexpr std::uint32_t DEFAULT_MAX_FETCHES = 1000'000u; /**< Default maximum fetches per sweep */
+    static constexpr std::uint32_t DEFAULT_MAX_CONNECTIONS = 20u;   /**< Default maximum concurrent connections */
+    static constexpr std::uint32_t DEFAULT_MAX_REQUESTS = 20u;      /**< Default maximum requests per sweep */
+
     /**
      * @brief Constructs a new DOS guard.
      *
@@ -259,6 +259,9 @@ private:
     }
 };
 
+/**
+ * @brief A simple denial of service guard used for rate limiting.
+ */
 using DOSGuard = BasicDOSGuard<web::WhitelistHandler, web::IntervalSweepHandler>;
 
 }  // namespace web

@@ -58,7 +58,7 @@ namespace web {
  *
  * Note: see @ref web::SomeServerHandler concept
  */
-template <class RPCEngineType, class ETLType>
+template <typename RPCEngineType, typename ETLType>
 class RPCServerHandler {
     std::shared_ptr<BackendInterface const> const backend_;
     std::shared_ptr<RPCEngineType> const rpcEngine_;

@@ -42,6 +42,9 @@
 
 namespace rpc {
 
+/**
+ * @brief Contains common functionality for handling the `nft_offers` command
+ */
 class NFTOffersHandlerBase {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
@@ -50,6 +53,9 @@ public:
     static auto constexpr LIMIT_MAX = 500;
     static auto constexpr LIMIT_DEFAULT = 250;
 
+    /**
+     * @brief A struct to hold the output data of the command
+     */
     struct Output {
         std::string nftID = {};
         std::vector<ripple::SLE> offers = {};
@@ -60,6 +66,9 @@ public:
         std::optional<std::string> marker = {};
     };
 
+    /**
+     * @brief A struct to hold the input data for the command
+     */
     struct Input {
         std::string nftID;
         std::optional<std::string> ledgerHash;
@@ -70,11 +79,22 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Construct a new NFTOffersHandlerBase object
+     *
+     * @param sharedPtrBackend The backend to use
+     */
     NFTOffersHandlerBase(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
+    /**
+     * @brief Returns the API specification for the command
+     *
+     * @param apiVersion The api version to return the spec for
+     * @return The spec for the given apiVersion
+     */
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
@@ -93,6 +113,15 @@ public:
     }
 
 protected:
+    /**
+     * @brief Iterate the NFT offer directory
+     *
+     * @param input The input data for the command
+     * @param tokenID The tokenID of the NFT
+     * @param directory The directory to iterate
+     * @param yield The coroutine context
+     * @return The result of the iteration
+     */
     Result
     iterateOfferDirectory(
         Input input,
@@ -102,9 +131,21 @@ protected:
     ) const;
 
 private:
+    /**
+     * @brief Convert the Output to a JSON object
+     *
+     * @param [out] jv The JSON object to convert to
+     * @param output The output to convert
+     */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
+    /**
+     * @brief Convert a JSON object to Input type
+     *
+     * @param jv The JSON object to convert
+     * @return Input parsed from the JSON object
+     */
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };

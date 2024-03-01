@@ -96,7 +96,7 @@ Handle::reconnect(std::string_view keyspace) const
 }
 
 std::vector<Handle::FutureType>
-Handle::asyncExecuteEach(std::vector<Statement> const& statements) const
+Handle::asyncExecuteEach(std::vector<StatementType> const& statements) const
 {
     std::vector<Handle::FutureType> futures;
     futures.reserve(statements.size());
@@ -106,7 +106,7 @@ Handle::asyncExecuteEach(std::vector<Statement> const& statements) const
 }
 
 Handle::MaybeErrorType
-Handle::executeEach(std::vector<Statement> const& statements) const
+Handle::executeEach(std::vector<StatementType> const& statements) const
 {
     for (auto futures = asyncExecuteEach(statements); auto const& future : futures) {
         if (auto rc = future.await(); not rc)
@@ -117,38 +117,37 @@ Handle::executeEach(std::vector<Statement> const& statements) const
 }
 
 Handle::FutureType
-Handle::asyncExecute(Statement const& statement) const
+Handle::asyncExecute(StatementType const& statement) const
 {
     return cass_session_execute(session_, statement);
 }
 
 Handle::FutureWithCallbackType
-Handle::asyncExecute(Statement const& statement, std::function<void(Handle::ResultOrErrorType)>&& cb) const
+Handle::asyncExecute(StatementType const& statement, std::function<void(ResultOrErrorType)>&& cb) const
 {
     return Handle::FutureWithCallbackType{cass_session_execute(session_, statement), std::move(cb)};
 }
 
 Handle::ResultOrErrorType
-Handle::execute(Statement const& statement) const
+Handle::execute(StatementType const& statement) const
 {
     return asyncExecute(statement).get();
 }
 
 Handle::FutureType
-Handle::asyncExecute(std::vector<Statement> const& statements) const
+Handle::asyncExecute(std::vector<StatementType> const& statements) const
 {
     return cass_session_execute_batch(session_, Batch{statements});
 }
 
 Handle::MaybeErrorType
-Handle::execute(std::vector<Statement> const& statements) const
+Handle::execute(std::vector<StatementType> const& statements) const
 {
     return asyncExecute(statements).await();
 }
 
 Handle::FutureWithCallbackType
-Handle::asyncExecute(std::vector<Statement> const& statements, std::function<void(Handle::ResultOrErrorType)>&& cb)
-    const
+Handle::asyncExecute(std::vector<StatementType> const& statements, std::function<void(ResultOrErrorType)>&& cb) const
 {
     return Handle::FutureWithCallbackType{cass_session_execute_batch(session_, Batch{statements}), std::move(cb)};
 }

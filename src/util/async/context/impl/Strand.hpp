@@ -60,6 +60,7 @@ public:
 
     ~BasicStrand() = default;
     BasicStrand(BasicStrand&&) = default;
+
     BasicStrand(BasicStrand const&) = delete;
 
     [[nodiscard]] auto

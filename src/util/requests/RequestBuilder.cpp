@@ -169,6 +169,15 @@ RequestBuilder::doRequest(asio::yield_context yield, beast::http::verb method)
     return doPlainRequest(yield, method);
 }
 
+/**
+ * @brief Perform a request asynchronously
+ *
+ * @tparam StreamDataType The type of the stream data
+ * @param streamData The stream data
+ * @param yield The coroutine context
+ * @param method The HTTP method to use
+ * @return Response or error
+ */
 template <typename StreamDataType>
 Expected<std::string, RequestError>
 RequestBuilder::doRequestImpl(StreamDataType&& streamData, asio::yield_context yield, http::verb const method)

@@ -50,12 +50,20 @@
 
 namespace rpc {
 
+/**
+ * @brief Contains common functionality for handling the `tx` command
+ *
+ * @tparam ETLServiceType The type of the ETL service to use
+ */
 template <typename ETLServiceType>
 class BaseTxHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<ETLServiceType const> etl_;
 
 public:
+    /**
+     * @brief A struct to hold the output data of the command
+     */
     struct Output {
         uint32_t date = 0u;
         std::string hash{};
@@ -70,6 +78,9 @@ public:
         bool validated = true;
     };
 
+    /**
+     * @brief A struct to hold the input data for the command
+     */
     struct Input {
         std::optional<std::string> transaction;
         std::optional<std::string> ctid;
@@ -80,6 +91,12 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Construct a new BaseTxHandler object
+     *
+     * @param sharedPtrBackend The backend to use
+     * @param etl The ETL service to use
+     */
     BaseTxHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
         std::shared_ptr<ETLServiceType const> const& etl
@@ -88,6 +105,12 @@ public:
     {
     }
 
+    /**
+     * @brief Returns the API specification for the command
+     *
+     * @param apiVersion The api version to return the spec for
+     * @return The spec for the given apiVersion
+     */
     static RpcSpecConstRef
     spec(uint32_t apiVersion)
     {
@@ -103,6 +126,13 @@ public:
         return apiVersion == 1 ? rpcSpecForV1 : rpcSpec;
     }
 
+    /**
+     * @brief Process the Tx command
+     *
+     * @param input The input data for the command
+     * @param ctx The context of the request
+     * @return The result of the operation
+     */
     Result
     process(Input input, Context const& ctx) const
     {

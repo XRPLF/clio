@@ -37,8 +37,8 @@ class Any {
 public:
     Any() = default;
     Any(Any const&) = default;
-    Any(Any&&) = default;
 
+    Any(Any&&) = default;
     // note: this needs to be `auto` instead of `std::any` because of a bug in gcc 11.4
     Any(auto&& v)
         requires(std::is_same_v<std::decay_t<decltype(v)>, std::any>)

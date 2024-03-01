@@ -52,12 +52,21 @@ class SubscriptionManager;
 }  // namespace feed
 
 namespace rpc {
+
+/**
+ * @brief Contains functionality for handling the `subscribe` command
+ *
+ * @tparam SubscriptionManagerType The type of the subscription manager to use
+ */
 template <typename SubscriptionManagerType>
 class BaseSubscribeHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<SubscriptionManagerType> subscriptions_;
 
 public:
+    /**
+     * @brief A struct to hold the output data of the command
+     */
     struct Output {
         // response of stream "ledger"
         // TODO: use better type than json, this type will be used in the stream as well
@@ -71,6 +80,9 @@ public:
         std::optional<boost::json::array> bids;
     };
 
+    /**
+     * @brief A struct to hold the data for one order book
+     */
     struct OrderBook {
         ripple::Book book;
         std::optional<std::string> taker;
@@ -78,6 +90,9 @@ public:
         bool both = false;
     };
 
+    /**
+     * @brief A struct to hold the input data for the command
+     */
     struct Input {
         std::optional<std::vector<std::string>> accounts;
         std::optional<std::vector<std::string>> streams;
@@ -87,6 +102,12 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Construct a new BaseSubscribeHandler object
+     *
+     * @param sharedPtrBackend The backend to use
+     * @param subscriptions The subscription manager to use
+     */
     BaseSubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
         std::shared_ptr<SubscriptionManagerType> const& subscriptions
@@ -95,6 +116,12 @@ public:
     {
     }
 
+    /**
+     * @brief Returns the API specification for the command
+     *
+     * @param apiVersion The api version to return the spec for
+     * @return The spec for the given apiVersion
+     */
     RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion) const
     {
@@ -141,6 +168,13 @@ public:
         return rpcSpec;
     }
 
+    /**
+     * @brief Process the Subscribe command
+     *
+     * @param input The input data for the command
+     * @param ctx The context of the request
+     * @return The result of the operation
+     */
     Result
     process(Input input, Context const& ctx) const
     {
