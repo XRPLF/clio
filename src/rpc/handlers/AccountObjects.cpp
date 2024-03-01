@@ -129,9 +129,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHa
 
             // if object type if mpt issuance, inject synthetic mpt id
             if (sle.getType() == ripple::ltMPTOKEN_ISSUANCE)
-                sleJson[JS(mpt_issuance_id)] = ripple::to_string(
-                    ripple::getMptID(sle.getAccountID(ripple::sfIssuer), sle.getFieldU32(ripple::sfSequence))
-                );
+                sleJson[JS(mpt_issuance_id)] =
+                    ripple::to_string(ripple::getMptID(sle[ripple::sfIssuer], sle[ripple::sfSequence]));
 
             return sleJson;
         }

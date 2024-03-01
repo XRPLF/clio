@@ -328,7 +328,7 @@ getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
             continue;
 
         auto const& mptNode = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
-        return ripple::getMptID(mptNode.getAccountID(ripple::sfIssuer), mptNode.getFieldU32(ripple::sfSequence));
+        return ripple::getMptID(mptNode[ripple::sfIssuer], mptNode[ripple::sfSequence]);
     }
 
     return {};
@@ -359,8 +359,6 @@ insertMPTIssuanceID(
 
     if (auto const amt = getMPTIssuanceID(meta))
         metaJson[JS(mpt_issuance_id)] = ripple::to_string(*amt);
-    else
-        metaJson[JS(mpt_issuance_id)] = "unavailable";
 
     return true;
 }

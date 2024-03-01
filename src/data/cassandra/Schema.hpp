@@ -273,7 +273,7 @@ public:
            CREATE TABLE IF NOT EXISTS {}
                   ( 
                     mpt_id blob,
-                    holder  blob,
+                    holder blob,
                     PRIMARY KEY (mpt_id, holder)
                   ) 
              WITH CLUSTERING ORDER BY (holder ASC)
