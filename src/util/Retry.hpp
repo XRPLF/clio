@@ -163,7 +163,7 @@ private:
  * @param delay The initial delay value
  * @param maxDelay The maximum delay value
  * @param strand The strand to use for async operations
- * @return The retry mechanism
+ * @return The retry object
  */
 Retry
 makeRetryExponentialBackoff(

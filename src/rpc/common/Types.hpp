@@ -134,7 +134,7 @@ struct AccountCursor {
  *
  * @note Always generates empty JSON object
  *
- * @param jv The JSON object to convert to
+ * @param [out] jv The JSON object to convert to
  */
 inline void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, VoidOutput const&)

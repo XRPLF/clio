@@ -130,7 +130,7 @@ private:
     /**
      * @brief Convert the Output to a JSON object
      *
-     * @param jv The JSON object to convert to
+     * @param [out] jv The JSON object to convert to
      * @param output The output to convert
      */
     friend void

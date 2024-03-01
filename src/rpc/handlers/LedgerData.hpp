@@ -79,7 +79,6 @@ public:
     /**
      * @brief A struct to hold the input data for the command
      *
-     * @note TODO: Clio does not implement `type` filter
      * @note `outOfOrder` is only for Clio, there is no document, traverse via seq diff (outOfOrder implementation is
      * copied from old rpc handler)
      */
@@ -148,7 +147,7 @@ private:
     /**
      * @brief Convert the Output to a JSON object
      *
-     * @param jv The JSON object to convert to
+     * @param [out] jv The JSON object to convert to
      * @param output The output to convert
      */
     friend void

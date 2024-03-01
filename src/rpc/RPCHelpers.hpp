@@ -358,7 +358,7 @@ read(
  * @brief Get the account associated with a transaction
  *
  * @param transaction The transaction
- * @return The account or an error status
+ * @return A vector of accounts associated with the transaction
  */
 std::vector<ripple::AccountID>
 getAccountsFromTransaction(boost::json::object const& transaction);

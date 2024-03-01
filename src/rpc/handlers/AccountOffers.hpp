@@ -141,7 +141,7 @@ private:
     /**
      * @brief Convert the Output to a JSON object
      *
-     * @param jv The JSON object to convert to
+     * @param [out] jv The JSON object to convert to
      * @param output The output to convert
      */
     friend void
@@ -159,7 +159,7 @@ private:
     /**
      * @brief Convert the Offer to a JSON object
      *
-     * @param jv The JSON object to convert to
+     * @param [out] jv The JSON object to convert to
      * @param offer The offer to convert
      */
     friend void
