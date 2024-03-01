@@ -93,34 +93,20 @@ public:
     /** @brief Whether operations on this execution context are noexcept */
     static constexpr bool isNoexcept = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; }));
 
-    using ContextHolderType = ContextType;                     /**< The type of the underlying context */
-    using ExecutorType = typename ContextHolderType::Executor; /**< The type of the executor */
+    using ContextHolderType = ContextType;
 
-    /**
-     * @brief The type of the value returned by operations
-     *
-     * @tparam T The type of the stored value
-     */
+    using ExecutorType = typename ContextHolderType::Executor;
+
     template <typename T>
     using ValueType = util::Expected<T, ExecutionError>;
 
-    using StopSource = StopSourceType; /**< The type of the stop source */
+    using StopSource = StopSourceType;
 
-    using StopToken = typename StopSourceType::Token; /**< The type of the stop token */
+    using StopToken = typename StopSourceType::Token;
 
-    /**
-     * @brief The type of stoppable operations
-     *
-     * @tparam T The type of the value returned by operations
-     */
     template <typename T>
     using StoppableOperation = StoppableOperation<ValueType<T>, StopSourceType>;
 
-    /**
-     * @brief The type of unstoppable operations
-     *
-     * @tparam T The type of the value returned by operations
-     */
     template <typename T>
     using Operation = Operation<ValueType<T>>;
 
