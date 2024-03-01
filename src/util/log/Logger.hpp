@@ -79,15 +79,17 @@ enum class Severity {
     FTL,
 };
 
+/** @cond */
 BOOST_LOG_ATTRIBUTE_KEYWORD(log_severity, "Severity", Severity);
 BOOST_LOG_ATTRIBUTE_KEYWORD(log_channel, "Channel", std::string);
+/** @endcond */
 
 /**
  * @brief Custom labels for @ref Severity in log output.
  *
  * @param stream std::ostream The output stream
  * @param sev Severity The severity to output to the ostream
- * @return std::ostream& The same ostream we were given
+ * @return The same ostream we were given
  */
 std::ostream&
 operator<<(std::ostream& stream, Severity sev);
@@ -117,6 +119,7 @@ class Logger final {
 
     public:
         ~Pump() = default;
+
         Pump(LoggerType& logger, Severity sev, SourceLocationType const& loc)
             : rec_{logger.open_record(boost::log::keywords::severity = sev)}
         {
@@ -138,7 +141,7 @@ class Logger final {
          *
          * @tparam T Type of data to pump
          * @param data The data to pump
-         * @return Pump& Reference to itself for chaining
+         * @return Reference to itself for chaining
          */
         template <typename T>
         [[maybe_unused]] Pump&
@@ -165,7 +168,7 @@ class Logger final {
          * @brief Custom JSON parser for @ref Severity.
          *
          * @param value The JSON string to parse
-         * @return Severity The parsed severity
+         * @return The parsed severity
          * @throws std::runtime_error Thrown if severity is not in the right format
          */
         friend Severity
@@ -173,7 +176,6 @@ class Logger final {
     };
 
 public:
-    ~Logger() = default;
     /**
      * @brief Construct a new Logger object that produces loglines for the
      * specified channel.
@@ -186,34 +188,68 @@ public:
     Logger(std::string channel) : logger_{boost::log::keywords::channel = channel}
     {
     }
+
     Logger(Logger const&) = default;
+    ~Logger() = default;
+
     Logger(Logger&&) = default;
     Logger&
     operator=(Logger const&) = default;
+
     Logger&
     operator=(Logger&&) = default;
 
-    /** Interface for logging at Severity::TRC severity */
+    /**
+     * @brief Interface for logging at Severity::TRC severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] Pump
     trace(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
-    /** Interface for logging at Severity::DBG severity */
+    /**
+     * @brief Interface for logging at Severity::DBG severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] Pump
     debug(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
-    /** Interface for logging at Severity::INFO severity */
+    /**
+     * @brief Interface for logging at Severity::NFO severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] Pump
     info(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
-    /** Interface for logging at Severity::WRN severity */
+    /**
+     * @brief Interface for logging at Severity::WRN severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] Pump
     warn(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
-    /** Interface for logging at Severity::ERR severity */
+    /**
+     * @brief Interface for logging at Severity::ERR severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] Pump
     error(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 
-    /** Interface for logging at Severity::FTL severity */
+    /**
+     * @brief Interface for logging at Severity::FTL severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] Pump
     fatal(SourceLocationType const& loc = CURRENT_SRC_LOCATION) const;
 };
@@ -234,53 +270,90 @@ public:
 
     /**
      * @brief Global log core initialization from a @ref Config
+     *
+     * @param config The configuration to use
      */
     static void
     init(Config const& config);
 
-    /** Globally accesible General logger at Severity::TRC severity */
+    /**
+     * @brief Globally accesible General logger at Severity::TRC severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] static Logger::Pump
     trace(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.trace(loc);
     }
 
-    /** Globally accesible General logger at Severity::DBG severity */
+    /**
+     * @brief Globally accesible General logger at Severity::DBG severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] static Logger::Pump
     debug(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.debug(loc);
     }
 
-    /** Globally accesible General logger at Severity::NFO severity */
+    /**
+     * @brief Globally accesible General logger at Severity::NFO severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] static Logger::Pump
     info(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.info(loc);
     }
 
-    /** Globally accesible General logger at Severity::WRN severity */
+    /**
+     * @brief Globally accesible General logger at Severity::WRN severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] static Logger::Pump
     warn(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.warn(loc);
     }
 
-    /** Globally accesible General logger at Severity::ERR severity */
+    /**
+     * @brief Globally accesible General logger at Severity::ERR severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] static Logger::Pump
     error(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.error(loc);
     }
 
-    /** Globally accesible General logger at Severity::FTL severity */
+    /**
+     * @brief Globally accesible General logger at Severity::FTL severity
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] static Logger::Pump
     fatal(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {
         return general_log_.fatal(loc);
     }
 
-    /** Globally accesible Alert logger */
+    /**
+     * @brief Globally accesible Alert logger
+     *
+     * @param loc The source location of the log message
+     * @return The pump to use for logging
+     */
     [[nodiscard]] static Logger::Pump
     alert(SourceLocationType const& loc = CURRENT_SRC_LOCATION)
     {

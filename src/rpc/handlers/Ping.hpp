@@ -33,6 +33,12 @@ public:
     using Output = VoidOutput;
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Process the Ping command
+     *
+     * @param ctx The context of the request
+     * @return The result of the operation
+     */
     static Result
     process([[maybe_unused]] Context const& ctx)
     {

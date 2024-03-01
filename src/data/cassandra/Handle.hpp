@@ -54,7 +54,7 @@ public:
     using ResultType = Result;
 
     /**
-     * @brief Construct a new handle from a @ref impl::Settings object.
+     * @brief Construct a new handle from a Settings object.
      *
      * @param clusterSettings The settings to use
      */

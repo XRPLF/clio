@@ -30,6 +30,12 @@ namespace util::prometheus {
  */
 class MetricBase {
 public:
+    /**
+     * @brief Construct a new MetricBase object
+     *
+     * @param name The name of the metric
+     * @param labelsString The labels of the metric in serialized format, e.g. {name="value",name2="value2"}
+     */
     MetricBase(std::string name, std::string labelsString);
 
     MetricBase(MetricBase const&) = delete;
@@ -51,12 +57,14 @@ public:
 
     /**
      * @brief Get the name of the metric
+     * @return The name of the metric
      */
     std::string const&
     name() const;
 
     /**
      * @brief Get the labels of the metric in serialized format, e.g. {name="value",name2="value2"}
+     * @return The labels of the metric
      */
     std::string const&
     labelsString() const;

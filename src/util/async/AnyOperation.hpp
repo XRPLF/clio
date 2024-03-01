@@ -45,6 +45,12 @@ namespace util::async {
 template <typename RetType>
 class AnyOperation {
 public:
+    /**
+     * @brief Construct a new type-erased Operation object
+     *
+     * @tparam OpType The type of the operation to wrap
+     * @param operation The operation to wrap
+     */
     template <SomeOperation OpType>
         requires std::is_same_v<std::decay_t<OpType>, impl::ErasedOperation>
     /* implicit */ AnyOperation(OpType&& operation) : operation_{std::forward<OpType>(operation)}
@@ -60,7 +66,10 @@ public:
     AnyOperation&
     operator=(AnyOperation&&) = default;
 
-    /** @brief Wait for the operation to complete */
+    /**
+     * @brief Wait for the operation to complete
+     * @note This will block the current thread until the operation is complete
+     */
     void
     wait() noexcept
     {
@@ -81,7 +90,11 @@ public:
         operation_.cancel();
     }
 
-    /** @brief Get the result of the operation */
+    /**
+     * @brief Get the result of the operation
+     *
+     * @return The result of the operation
+     */
     [[nodiscard]] util::Expected<RetType, ExecutionError>
     get()
     {

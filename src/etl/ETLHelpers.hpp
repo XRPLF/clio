@@ -52,7 +52,9 @@ class NetworkValidatedLedgers {
 
 public:
     /**
-     * @brief A factory function for NetworkValidatedLedgers.
+     * @brief A factory function for NetworkValidatedLedgers
+     *
+     * @return A shared pointer to a new instance of NetworkValidatedLedgers
      */
     static std::shared_ptr<NetworkValidatedLedgers>
     make_ValidatedLedgers()
@@ -118,7 +120,7 @@ public:
  * @note (original note) We can't use a lockfree queue here, since we need the ability to wait for an element to be
  * added or removed from the queue. These waits are blocking calls.
  */
-template <class T>
+template <typename T>
 class ThreadSafeQueue {
     std::queue<T> queue_;
 
@@ -208,6 +210,11 @@ public:
         return ret;
     }
 
+    /**
+     * @brief Get the size of the queue
+     *
+     * @return The size of the queue
+     */
     std::size_t
     size() const
     {
@@ -219,6 +226,7 @@ public:
  * @brief Parititions the uint256 keyspace into numMarkers partitions, each of equal size.
  *
  * @param numMarkers Total markers to partition for
+ * @return The markers
  */
 inline std::vector<ripple::uint256>
 getMarkers(size_t numMarkers)

@@ -84,33 +84,61 @@ template <
     typename ErrorHandlerType = impl::DefaultErrorHandler>
 class BasicExecutionContext {
     ContextType context_;
+
+    /** @cond */
     friend impl::AssociatedExecutorExtractor;
+    /** @endcond */
 
 public:
+    /** @brief Whether operations on this execution context are noexcept */
     static constexpr bool isNoexcept = noexcept(ErrorHandlerType::wrap([](auto&) { throw 0; }));
 
-    using ContextHolderType = ContextType;
-    using ExecutorType = typename ContextHolderType::Executor;
+    using ContextHolderType = ContextType;                     /**< The type of the underlying context */
+    using ExecutorType = typename ContextHolderType::Executor; /**< The type of the executor */
 
+    /**
+     * @brief The type of the value returned by operations
+     *
+     * @tparam T The type of the stored value
+     */
     template <typename T>
     using ValueType = util::Expected<T, ExecutionError>;
 
-    using StopSource = StopSourceType;
+    using StopSource = StopSourceType; /**< The type of the stop source */
 
-    using StopToken = typename StopSourceType::Token;
+    using StopToken = typename StopSourceType::Token; /**< The type of the stop token */
 
+    /**
+     * @brief The type of stoppable operations
+     *
+     * @tparam T The type of the value returned by operations
+     */
     template <typename T>
     using StoppableOperation = StoppableOperation<ValueType<T>, StopSourceType>;
 
+    /**
+     * @brief The type of unstoppable operations
+     *
+     * @tparam T The type of the value returned by operations
+     */
     template <typename T>
     using Operation = Operation<ValueType<T>>;
 
-    using Strand = impl::
-        BasicStrand<BasicExecutionContext, StopSourceType, DispatcherType, TimerContextProvider, ErrorHandlerType>;
+    using Strand = impl::BasicStrand<
+        BasicExecutionContext,
+        StopSourceType,
+        DispatcherType,
+        TimerContextProvider,
+        ErrorHandlerType>; /**< The type of the strand */
 
-    using Timer = typename ContextHolderType::Timer;
+    using Timer = typename ContextHolderType::Timer; /**< The type of the timer */
 
-    // note: scheduled operations are always stoppable
+    /**
+     * @brief Create a new execution context with the given number of threads.
+     *
+     * Note: scheduled operations are always stoppable
+     * @tparam T The type of the value returned by operations
+     */
     template <typename T>
     using ScheduledOperation = ScheduledOperation<BasicExecutionContext, StoppableOperation<T>>;
 
@@ -290,6 +318,8 @@ public:
 
     /**
      * @brief Create a strand for this execution context
+     *
+     * @return A strand for this execution context
      */
     [[nodiscard]] Strand
     makeStrand()

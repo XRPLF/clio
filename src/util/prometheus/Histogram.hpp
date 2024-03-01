@@ -35,16 +35,19 @@ namespace util::prometheus {
 
 /**
  * @brief A Prometheus histogram metric with a generic value type
+ *
+ * @tparam NumberType The number type of the histogram
  */
 template <SomeNumberType NumberType>
 class AnyHistogram : public MetricBase {
 public:
-    using ValueType = NumberType;
-    using Buckets = std::vector<NumberType>;
+    using ValueType = NumberType;            /**< The number type of the histogram */
+    using Buckets = std::vector<NumberType>; /**< The type of the buckets */
 
     /**
      * @brief Construct a new Histogram object
      *
+     * @tparam ImplType The type of the implementation of the histogram
      * @param name The name of the metric
      * @param labelsString The labels of the metric in serialized format, e.g. {name="value",name2="value2"}
      * @param buckets The buckets of the histogram

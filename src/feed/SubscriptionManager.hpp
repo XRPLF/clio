@@ -52,6 +52,9 @@
  */
 namespace feed {
 
+/**
+ * @brief A subscription manager is responsible for managing the subscriptions and publishing the feeds
+ */
 class SubscriptionManager {
     std::reference_wrapper<boost::asio::io_context> ioContext_;
     std::shared_ptr<data::BackendInterface const> backend_;
@@ -64,6 +67,12 @@ class SubscriptionManager {
     impl::ProposedTransactionFeed proposedTransactionFeed_;
 
 public:
+    /**
+     * @brief Construct a new Subscription Manager object
+     *
+     * @param ioContext The io context to use
+     * @param backend The backend to use
+     */
     SubscriptionManager(
         boost::asio::io_context& ioContext,
         std::shared_ptr<data::BackendInterface const> const& backend
@@ -143,6 +152,7 @@ public:
      * @brief Subscribe to the ledger feed.
      * @param yield The coroutine context
      * @param subscriber The subscriber to the ledger feed
+     * @return The ledger feed
      */
     boost::json::object
     subLedger(boost::asio::yield_context yield, SubscriberSharedPtr const& subscriber);
@@ -270,6 +280,8 @@ public:
 
     /**
      * @brief Get the number of subscribers.
+     *
+     * @return The report of the number of subscribers
      */
     boost::json::object
     report() const
@@ -301,6 +313,12 @@ class SubscriptionManagerRunner {
     std::vector<std::thread> workers_;
 
 public:
+    /**
+     * @brief Construct a new Subscription Manager Runner object
+     *
+     * @param config The configuration
+     * @param backend The backend to use
+     */
     SubscriptionManagerRunner(util::Config const& config, std::shared_ptr<data::BackendInterface> const& backend)
         : subscriptionManager_(std::make_shared<SubscriptionManager>(ioContext_, backend))
     {
@@ -311,6 +329,11 @@ public:
             workers_.emplace_back([&] { ioContext_.run(); });
     }
 
+    /**
+     * @brief Get the subscription manager
+     *
+     * @return The subscription manager
+     */
     std::shared_ptr<SubscriptionManager>
     getManager()
     {

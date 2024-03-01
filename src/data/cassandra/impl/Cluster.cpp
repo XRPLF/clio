@@ -33,13 +33,13 @@
 namespace {
 constexpr auto clusterDeleter = [](CassCluster* ptr) { cass_cluster_free(ptr); };
 
-template <class... Ts>
+template <typename... Ts>
 struct overloadSet : Ts... {
     using Ts::operator()...;
 };
 
 // explicit deduction guide (not needed as of C++20, but clang be clang)
-template <class... Ts>
+template <typename... Ts>
 overloadSet(Ts...) -> overloadSet<Ts...>;
 };  // namespace
 

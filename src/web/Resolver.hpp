@@ -50,7 +50,7 @@ public:
      *
      * @param hostname Hostname to resolve
      * @param service Service to resolve (could be empty or port number or http)
-     * @return std::vector<std::string> IP addresses of the hostname
+     * @return IP addresses of the hostname
      */
     std::vector<std::string>
     resolve(std::string_view hostname, std::string_view service = "");

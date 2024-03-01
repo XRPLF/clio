@@ -80,6 +80,7 @@ public:
      *
      * @param ip IP address
      * @throws std::runtime::error when the network address is not valid
+     * @return true if the given IP is whitelisted; false otherwise
      */
     bool
     isWhiteListed(std::string_view ip) const
@@ -163,6 +164,9 @@ public:
     }
 
     /**
+     * @brief Checks to see if the given IP is whitelisted
+     *
+     * @param ip The IP to check
      * @return true if the given IP is whitelisted; false otherwise
      */
     bool

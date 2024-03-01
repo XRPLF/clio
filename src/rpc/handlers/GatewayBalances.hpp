@@ -58,6 +58,9 @@ class GatewayBalancesHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    /**
+     * @brief A struct to hold the output data of the command
+     */
     struct Output {
         std::string ledgerHash;
         uint32_t ledgerIndex;
@@ -71,6 +74,9 @@ public:
         bool validated = true;
     };
 
+    /**
+     * @brief A struct to hold the input data for the command
+     */
     struct Input {
         std::string account;
         std::set<ripple::AccountID> hotWallets;
@@ -80,11 +86,22 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Construct a new GatewayBalancesHandler object
+     *
+     * @param sharedPtrBackend The backend to use
+     */
     GatewayBalancesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
+    /**
+     * @brief Returns the API specification for the command
+     *
+     * @param apiVersion The api version to return the spec for
+     * @return The spec for the given apiVersion
+     */
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
@@ -128,13 +145,32 @@ public:
         return rpcSpec;
     }
 
+    /**
+     * @brief Process the GatewayBalances command
+     *
+     * @param input The input data for the command
+     * @param ctx The context of the request
+     * @return The result of the operation
+     */
     Result
     process(Input input, Context const& ctx) const;
 
 private:
+    /**
+     * @brief Convert the Output to a JSON object
+     *
+     * @param jv The JSON object to convert to
+     * @param output The output to convert
+     */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
+    /**
+     * @brief Convert a JSON object to Input type
+     *
+     * @param jv The JSON object to convert
+     * @return The input type
+     */
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };

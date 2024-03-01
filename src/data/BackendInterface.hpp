@@ -53,6 +53,9 @@ namespace data {
  */
 class DatabaseTimeout : public std::exception {
 public:
+    /**
+     * @return The error message as a C string
+     */
     char const*
     what() const throw() override
     {
@@ -67,9 +70,9 @@ static constexpr std::size_t DEFAULT_WAIT_BETWEEN_RETRY = 500;
  * @tparam FnType The type of function object to execute
  * @param func The function object to execute
  * @param waitMs Delay between retry attempts
- * @return auto The same as the return type of func
+ * @return The same as the return type of func
  */
-template <class FnType>
+template <typename FnType>
 auto
 retryOnTimeout(FnType func, size_t waitMs = DEFAULT_WAIT_BETWEEN_RETRY)
 {
@@ -90,9 +93,9 @@ retryOnTimeout(FnType func, size_t waitMs = DEFAULT_WAIT_BETWEEN_RETRY)
  *
  * @tparam FnType The type of function object to execute
  * @param func The function object to execute
- * @return auto The same as the return type of func
+ * @return The same as the return type of func
  */
-template <class FnType>
+template <typename FnType>
 auto
 synchronous(FnType&& func)
 {
@@ -118,9 +121,9 @@ synchronous(FnType&& func)
  *
  * @tparam FnType The type of function object to execute
  * @param func The function object to execute
- * @return auto The same as the return type of func
+ * @return The same as the return type of func
  */
-template <class FnType>
+template <typename FnType>
 auto
 synchronousAndRetryOnTimeout(FnType&& func)
 {
@@ -219,7 +222,7 @@ public:
      *
      * @param seq The sequence to fetch for
      * @param yield The coroutine context
-     * @return ripple::Fees if fees are found; nullopt otherwise
+     * @return Fees if fees are found; nullopt otherwise
      */
     std::optional<ripple::Fees>
     fetchFees(std::uint32_t seq, boost::asio::yield_context yield) const;
@@ -322,8 +325,7 @@ public:
      * @param limit Paging limit.
      * @param cursorIn Optional cursor to allow us to pick up from where we last left off.
      * @param yield Currently executing coroutine.
-     * @return std::vector<NFT> of NFTs issued by this account, or
-     * this issuer/taxon combination if taxon is passed and an optional marker
+     * @return NFTs issued by this account, or this issuer/taxon combination if taxon is passed and an optional marker
      */
     virtual NFTsAndCursor
     fetchNFTsByIssuer(
@@ -488,6 +490,7 @@ public:
     /**
      * @brief Fetches the ledger range from DB.
      *
+     * @param yield The coroutine context
      * @return The ledger range if available; nullopt otherwise
      */
     virtual std::optional<LedgerRange>
@@ -598,15 +601,27 @@ public:
     isTooBusy() const = 0;
 
     /**
-     * @return json object containing backend usage statistics
+     * @return A JSON object containing backend usage statistics
      */
     virtual boost::json::object
     stats() const = 0;
 
 private:
+    /**
+     * @brief Writes a ledger object to the database
+     *
+     * @param key The key of the object
+     * @param seq The sequence of the ledger
+     * @param blob The data
+     */
     virtual void
     doWriteLedgerObject(std::string&& key, std::uint32_t seq, std::string&& blob) = 0;
 
+    /**
+     * @brief The implementation should wait for all pending writes to finish
+     *
+     * @return true on success; false otherwise
+     */
     virtual bool
     doFinishWrites() = 0;
 };

@@ -57,6 +57,9 @@ public:
     static auto constexpr LIMIT_MAX = 400;
     static auto constexpr LIMIT_DEFAULT = 200;
 
+    /**
+     * @brief A struct to hold data for one line response
+     */
     struct LineResponse {
         std::string account;
         std::string balance;
@@ -73,6 +76,9 @@ public:
         std::optional<bool> freezePeer;
     };
 
+    /**
+     * @brief A struct to hold the output data of the command
+     */
     struct Output {
         std::string account;
         std::vector<LineResponse> lines;
@@ -83,6 +89,9 @@ public:
         uint32_t limit{};
     };
 
+    /**
+     * @brief A struct to hold the input data for the command
+     */
     struct Input {
         std::string account;
         std::optional<std::string> ledgerHash;
@@ -96,10 +105,21 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Construct a new AccountLinesHandler object
+     *
+     * @param sharedPtrBackend The backend to use
+     */
     AccountLinesHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
+    /**
+     * @brief Returns the API specification for the command
+     *
+     * @param apiVersion The api version to return the spec for
+     * @return The spec for the given apiVersion
+     */
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
@@ -121,6 +141,13 @@ public:
         return rpcSpec;
     }
 
+    /**
+     * @brief Process the AccountLines command
+     *
+     * @param input The input data for the command
+     * @param ctx The context of the request
+     * @return The result of the operation
+     */
     Result
     process(Input input, Context const& ctx) const;
 
@@ -134,12 +161,30 @@ private:
     );
 
 private:
+    /**
+     * @brief Convert the Output to a JSON object
+     *
+     * @param jv The JSON object to convert to
+     * @param output The output to convert
+     */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
+    /**
+     * @brief Convert a JSON object to Input type
+     *
+     * @param jv The JSON object to convert
+     * @return The input type
+     */
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 
+    /**
+     * @brief Convert the LineResponse to a JSON object
+     *
+     * @param jv The JSON object to convert to
+     * @param line The line response to convert
+     */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LineResponse const& line);
 };

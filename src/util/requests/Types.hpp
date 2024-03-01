@@ -52,17 +52,13 @@ public:
     RequestError(std::string message, boost::beast::error_code errorCode);
 
     /**
-     * @brief Get the error message
-     *
-     * @return std::string
+     * @return The error message
      */
     std::string const&
     message() const;
 
     /**
-     * @brief Get the error code, if any
-     *
-     * @return std::optional<boost::beast::error_code>
+     * @return The error code, if any
      */
     std::optional<boost::beast::error_code> const&
     errorCode() const;
@@ -72,11 +68,24 @@ public:
  * @brief HTTP header
  */
 struct HttpHeader {
+    /**
+     * @brief Construct a new Http Header object
+     *
+     * @param name Header name
+     * @param value Header value
+     */
     HttpHeader(boost::beast::http::field name, std::string value);
+
+    /**
+     * @brief Construct a new Http Header object
+     *
+     * @param name Header name
+     * @param value Header value
+     */
     HttpHeader(std::string name, std::string value);
 
-    std::variant<boost::beast::http::field, std::string> name;
-    std::string value;
+    std::variant<boost::beast::http::field, std::string> name; /**< Header name */
+    std::string value;                                         /**< Header value */
 };
 
 }  // namespace util::requests

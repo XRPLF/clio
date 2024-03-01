@@ -57,6 +57,12 @@ struct ETLState {
     }
 };
 
+/**
+ * @brief Parse a boost::json::value into a ETLState
+ *
+ * @param jv The json value to convert
+ * @return The ETLState
+ */
 ETLState
 tag_invoke(boost::json::value_to_tag<ETLState>, boost::json::value const& jv);
 

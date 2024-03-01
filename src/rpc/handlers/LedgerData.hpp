@@ -62,6 +62,9 @@ public:
     static uint32_t constexpr LIMITBINARY = 2048;
     static uint32_t constexpr LIMITJSON = 256;
 
+    /**
+     * @brief A struct to hold the output data of the command
+     */
     struct Output {
         uint32_t ledgerIndex{};
         std::string ledgerHash;
@@ -73,9 +76,13 @@ public:
         bool validated = true;
     };
 
-    // TODO: Clio does not implement "type" filter
-    // outOfOrder only for clio, there is no document, traverse via seq diff
-    // outOfOrder implementation is copied from old rpc handler
+    /**
+     * @brief A struct to hold the input data for the command
+     *
+     * @note TODO: Clio does not implement `type` filter
+     * @note `outOfOrder` is only for Clio, there is no document, traverse via seq diff (outOfOrder implementation is
+     * copied from old rpc handler)
+     */
     struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
@@ -89,10 +96,21 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Construct a new LedgerDataHandler object
+     *
+     * @param sharedPtrBackend The backend to use
+     */
     LedgerDataHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
+    /**
+     * @brief Returns the API specification for the command
+     *
+     * @param apiVersion The api version to return the spec for
+     * @return The spec for the given apiVersion
+     */
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
@@ -116,13 +134,32 @@ public:
         return rpcSpec;
     }
 
+    /**
+     * @brief Process the LedgerData command
+     *
+     * @param input The input data for the command
+     * @param ctx The context of the request
+     * @return The result of the operation
+     */
     Result
     process(Input input, Context const& ctx) const;
 
 private:
+    /**
+     * @brief Convert the Output to a JSON object
+     *
+     * @param jv The JSON object to convert to
+     * @param output The output to convert
+     */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
+    /**
+     * @brief Convert a JSON object to Input type
+     *
+     * @param jv The JSON object to convert
+     * @return The input type
+     */
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };

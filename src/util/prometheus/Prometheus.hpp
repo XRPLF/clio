@@ -36,6 +36,9 @@
 
 namespace util::prometheus {
 
+/**
+ * @brief Interface for prometheus (https://prometheus.io/)
+ */
 class PrometheusInterface {
 public:
     /**
@@ -57,7 +60,7 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
-     * @return CounterDouble& The reference to the counter object
+     * @return A reference to the counter object
      */
     virtual CounterInt&
     counterInt(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
@@ -68,7 +71,7 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
-     * @return The reference to the counter object
+     * @return A reference to the counter object
      */
     virtual CounterDouble&
     counterDouble(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
@@ -79,7 +82,7 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
-     * @return The reference to the gauge object
+     * @return A reference to the gauge object
      */
     virtual GaugeInt&
     gaugeInt(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
@@ -90,7 +93,7 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
-     * @return The reference to the gauge object
+     * @return A reference to the gauge object
      */
     virtual GaugeDouble&
     gaugeDouble(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
@@ -102,7 +105,7 @@ public:
      * @param labels The labels of the metric
      * @param buckets The buckets of the metric
      * @param description The description of the metric
-     * @return The reference to the histogram object
+     * @return A reference to the histogram object
      */
     virtual HistogramInt&
     histogramInt(
@@ -119,7 +122,7 @@ public:
      * @param labels The labels of the metric
      * @param buckets The buckets of the metric
      * @param description The description of the metric
-     * @return The reference to the histogram object
+     * @return A reference to the histogram object
      */
     virtual HistogramDouble&
     histogramDouble(
@@ -245,6 +248,7 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
+     * @return A reference to the counter object
      */
     static util::prometheus::CounterInt&
     counterInt(
@@ -259,6 +263,7 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
+     * @return A reference to the counter object
      */
     static util::prometheus::CounterDouble&
     counterDouble(
@@ -273,6 +278,7 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
+     * @return A reference to the gauge object
      */
     static util::prometheus::GaugeInt&
     gaugeInt(std::string name, util::prometheus::Labels labels, std::optional<std::string> description = std::nullopt);
@@ -283,6 +289,7 @@ public:
      * @param name The name of the metric
      * @param labels The labels of the metric
      * @param description The description of the metric
+     * @return A reference to the gauge object
      */
     static util::prometheus::GaugeDouble&
     gaugeDouble(
@@ -298,7 +305,7 @@ public:
      * @param labels The labels of the metric
      * @param buckets The buckets of the metric
      * @param description The description of the metric
-     * @return The reference to the histogram object
+     * @return A reference to the histogram object
      */
     static util::prometheus::HistogramInt&
     histogramInt(
@@ -315,7 +322,7 @@ public:
      * @param labels The labels of the metric
      * @param buckets The buckets of the metric
      * @param description The description of the metric
-     * @return The reference to the histogram object
+     * @return A reference to the histogram object
      */
     static util::prometheus::HistogramDouble&
     histogramDouble(

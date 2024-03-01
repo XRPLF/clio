@@ -37,7 +37,7 @@
 
 namespace web {
 
-using tcp = boost::asio::ip::tcp;
+using tcp = boost::asio::ip::tcp; /**< Shorthand for boost::asio::ip::tcp */
 
 /**
  * @brief Represents a HTTP connection established by a client.

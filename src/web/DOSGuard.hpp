@@ -82,9 +82,10 @@ class BasicDOSGuard : public BaseDOSGuard {
     util::Logger log_{"RPC"};
 
 public:
-    static constexpr std::uint32_t DEFAULT_MAX_FETCHES = 1000'000u;
-    static constexpr std::uint32_t DEFAULT_MAX_CONNECTIONS = 20u;
-    static constexpr std::uint32_t DEFAULT_MAX_REQUESTS = 20u;
+    static constexpr std::uint32_t DEFAULT_MAX_FETCHES = 1000'000u; /**< Default maximum fetches per sweep */
+    static constexpr std::uint32_t DEFAULT_MAX_CONNECTIONS = 20u;   /**< Default maximum concurrent connections */
+    static constexpr std::uint32_t DEFAULT_MAX_REQUESTS = 20u;      /**< Default maximum requests per sweep */
+
     /**
      * @brief Constructs a new DOS guard.
      *
@@ -259,6 +260,9 @@ private:
     }
 };
 
+/**
+ * @brief A simple denial of service guard used for rate limiting.
+ */
 using DOSGuard = BasicDOSGuard<web::WhitelistHandler, web::IntervalSweepHandler>;
 
 }  // namespace web

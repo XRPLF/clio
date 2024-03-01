@@ -27,6 +27,13 @@
 
 namespace util {
 
+/**
+ * @brief Iterate over a container in batches
+ *
+ * @param container The container to iterate over
+ * @param batchSize The size of each batch
+ * @param fn The function to call for each batch
+ */
 void
 forEachBatch(std::ranges::forward_range auto&& container, std::size_t batchSize, auto&& fn)
 {

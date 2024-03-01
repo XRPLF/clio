@@ -45,6 +45,13 @@
 
 namespace etl {
 
+/**
+ * @brief Provides an implementation of a ETL source
+ *
+ * @tparam GrpcSourceType The type of the gRPC source
+ * @tparam SubscriptionSourceTypePtr The type of the subscription source
+ * @tparam ForwardingSourceType The type of the forwarding source
+ */
 template <
     typename GrpcSourceType = impl::GrpcSource,
     typename SubscriptionSourceTypePtr = std::unique_ptr<impl::SubscriptionSource>,
@@ -62,6 +69,16 @@ public:
     using OnConnectHook = impl::SubscriptionSource::OnConnectHook;
     using OnDisconnectHook = impl::SubscriptionSource::OnDisconnectHook;
 
+    /**
+     * @brief Construct a new SourceImpl object
+     *
+     * @param ip The IP of the source
+     * @param wsPort The web socket port of the source
+     * @param grpcPort The gRPC port of the source
+     * @param grpcSource The gRPC source
+     * @param subscriptionSource The subscription source
+     * @param forwardingSource The forwarding source
+     */
     template <typename SomeGrpcSourceType, typename SomeForwardingSourceType>
         requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType> &&
                      std::is_same_v<ForwardingSourceType, SomeForwardingSourceType>
@@ -91,7 +108,11 @@ public:
         subscriptionSource_->run();
     }
 
-    /** @return true if source is connected; false otherwise */
+    /**
+     * @brief Check if source is connected
+     *
+     * @return true if source is connected; false otherwise
+     */
     bool
     isConnected() const
     {
@@ -109,7 +130,11 @@ public:
         subscriptionSource_->setForwarding(isForwarding);
     }
 
-    /** @return JSON representation of the source */
+    /**
+     * @brief Represent the source as a JSON object
+     *
+     * @return JSON representation of the source
+     */
     boost::json::object
     toJson() const
     {
@@ -215,6 +240,7 @@ using Source = SourceImpl<>;
  * @param validatedLedgers The network validated ledgers data structure
  * @param onDisconnect The hook to call on disconnect
  * @param onConnect The hook to call on connect
+ * @return The created source
  */
 Source
 make_Source(

@@ -65,7 +65,7 @@ namespace web::impl {
  * @tparam Derived The derived class
  * @tparam HandlerType The handler type, will be called when a request is received.
  */
-template <template <class> class Derived, SomeServerHandler HandlerType>
+template <template <typename> class Derived, SomeServerHandler HandlerType>
 class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, HandlerType>> {
     using std::enable_shared_from_this<WsBase<Derived, HandlerType>>::shared_from_this;
 

@@ -83,39 +83,92 @@ class BackendCounters {
 public:
     using PtrType = std::shared_ptr<BackendCounters>;
 
+    /**
+     * @brief Create a new BackendCounters object
+     *
+     * @return A shared pointer to the new BackendCounters object
+     */
     static PtrType
     make();
 
+    /**
+     * @brief Register that the backend was too busy to process a request
+     */
     void
     registerTooBusy();
 
+    /**
+     * @brief Register that a write operation was started
+     *
+     * @param startTime The time the operation was started
+     */
     void
     registerWriteSync(std::chrono::steady_clock::time_point startTime);
 
+    /**
+     * @brief Register that a write operation was retried
+     */
     void
     registerWriteSyncRetry();
 
+    /**
+     * @brief Register that a write operation was started
+     */
     void
     registerWriteStarted();
 
+    /**
+     * @brief Register that a write operation was finished
+     *
+     * @param startTime The time the operation was started
+     */
     void
     registerWriteFinished(std::chrono::steady_clock::time_point startTime);
 
+    /**
+     * @brief Register that a write operation was retried
+     */
     void
     registerWriteRetry();
 
+    /**
+     * @brief Register that one or more read operations were started
+     *
+     * @param count The number of operations started
+     */
     void
     registerReadStarted(std::uint64_t count = 1u);
 
+    /**
+     * @brief Register that one or more read operations were finished
+     *
+     * @param startTime The time the operations were started
+     * @param count The number of operations finished
+     */
     void
     registerReadFinished(std::chrono::steady_clock::time_point startTime, std::uint64_t count = 1u);
 
+    /**
+     * @brief Register that one or more read operations were retried
+     *
+     * @param count The number of operations retried
+     */
     void
     registerReadRetry(std::uint64_t count = 1u);
 
+    /**
+     * @brief Register that one or more read operations had an error
+     *
+     * @param count The number of operations with an error
+     */
     void
     registerReadError(std::uint64_t count = 1u);
 
+    /**
+     * @brief Get a report of the backend counters
+     *
+     * @return The report
+     */
     boost::json::object
     report() const;
 

@@ -31,6 +31,12 @@
  */
 namespace util {
 
+/**
+ * @brief Convert a string to lowercase
+ *
+ * @param str The string to convert
+ * @return The string in lowercase
+ */
 inline std::string
 toLower(std::string str)
 {
@@ -38,6 +44,12 @@ toLower(std::string str)
     return str;
 }
 
+/**
+ * @brief Convert a string to uppercase
+ *
+ * @param str The string to convert
+ * @return The string in uppercase
+ */
 inline std::string
 toUpper(std::string str)
 {
