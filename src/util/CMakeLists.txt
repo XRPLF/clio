@@ -23,8 +23,6 @@ target_sources(
           LedgerUtils.cpp
 )
 
-target_include_directories(clio_util PUBLIC ${CMAKE_SOURCE_DIR}/src)
-
 target_link_libraries(
   clio_util
   PUBLIC Boost::boost

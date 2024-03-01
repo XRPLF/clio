@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(clio)
+
+set(CMAKE_PROJECT_INCLUDE_BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/CMake/ClioVersion.cmake)
+
+project(clio VERSION ${CLIO_VERSION} HOMEPAGE_URL "https://github.com/XRPLF/clio"
+        DESCRIPTION "An XRP Ledger API Server"
+)
 
 # =========================== Options ====================================== #
 option(verbose "Verbose build" FALSE)
@@ -15,15 +20,20 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set_property(CACHE san PROPERTY STRINGS ";undefined;memory;address;thread")
 # ========================================================================== #
 
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
 # Include required modules
-include(CMake/Ccache.cmake)
+include(Ccache)
 include(CheckCXXCompilerFlag)
-include(CMake/ClangTidy.cmake)
+include(ClangTidy)
+
+add_library(clio_options INTERFACE)
+target_include_directories(clio_options INTERFACE ${CMAKE_SOURCE_DIR}/src)
 
 # Set coverage build options
 if (tests AND coverage)
-  include(CMake/CodeCoverage.cmake)
-  append_coverage_compiler_flags()
+  include(CodeCoverage)
+  append_coverage_compiler_flags_to_target(clio_options INTERFACE)
 endif ()
 
 if (verbose)
@@ -32,15 +42,13 @@ endif ()
 
 if (packaging)
   add_definitions(-DPKG=1)
+  target_compile_definitions(clio_options INTERFACE PKG=1)
 endif ()
 
-add_library(clio)
-
 # Clio tweaks and checks
-include(CMake/CheckCompiler.cmake)
-include(CMake/Settings.cmake)
-include(CMake/ClioVersion.cmake)
-include(CMake/SourceLocation.cmake)
+include(CheckCompiler)
+include(Settings)
+include(SourceLocation)
 
 # Clio deps
 include(CMake/deps/libxrpl.cmake)

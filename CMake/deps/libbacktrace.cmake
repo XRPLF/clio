@@ -1,3 +1,3 @@
-target_compile_definitions(clio PUBLIC BOOST_STACKTRACE_LINK)
-target_compile_definitions(clio PUBLIC BOOST_STACKTRACE_USE_BACKTRACE)
-find_package(libbacktrace REQUIRED)
+target_compile_definitions(clio_options PUBLIC BOOST_STACKTRACE_LINK)
+target_compile_definitions(clio_options PUBLIC BOOST_STACKTRACE_USE_BACKTRACE)
+find_package(libbacktrace REQUIRED CONFIG)

@@ -1,1 +1,1 @@
-find_package(cassandra-cpp-driver REQUIRED)
+find_package(cassandra-cpp-driver REQUIRED CONFIG)

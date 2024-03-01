@@ -1,4 +1,4 @@
-add_library(clio_etl)
+add_library(clio_etl OBJECT)
 
 target_sources(
   clio_etl
@@ -16,7 +16,7 @@ target_sources(
 target_include_directories(clio_etl PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
 target_link_libraries(
-  clio_util
+  clio_etl
   PUBLIC Boost::boost
          Boost::coroutine
          Boost::program_options
