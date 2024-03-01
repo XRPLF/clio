@@ -59,13 +59,15 @@ namespace web::impl {
 /**
  * @brief Web socket implementation. This class is the base class of the web socket session, it will handle the read and
  * write operations.
+ *
  * The write operation is via a queue, each write operation of this session will be sent in order.
- * The write operation also supports shared_ptr of string, so the caller can keep the string alive until it is sent. It
- * is useful when we have multiple sessions sending the same content
+ * The write operation also supports shared_ptr of string, so the caller can keep the string alive until it is sent.
+ * It is useful when we have multiple sessions sending the same content.
+ *
  * @tparam Derived The derived class
  * @tparam HandlerType The handler type, will be called when a request is received.
  */
-template <template <typename> class Derived, SomeServerHandler HandlerType>
+template <template <typename> typename Derived, SomeServerHandler HandlerType>
 class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, HandlerType>> {
     using std::enable_shared_from_this<WsBase<Derived, HandlerType>>::shared_from_this;
 
