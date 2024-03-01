@@ -27,6 +27,9 @@
 
 namespace util::async {
 
+/**
+ * @brief Specifies the interface for an entity that can be stopped
+ */
 template <typename T>
 concept SomeStoppable = requires(T v) {
     {
@@ -34,6 +37,9 @@ concept SomeStoppable = requires(T v) {
     } -> std::same_as<void>;
 };
 
+/**
+ * @brief Specifies the interface for an entity that can be cancelled
+ */
 template <typename T>
 concept SomeCancellable = requires(T v) {
     {
@@ -41,6 +47,9 @@ concept SomeCancellable = requires(T v) {
     } -> std::same_as<void>;
 };
 
+/**
+ * @brief Specifies the interface for an operation
+ */
 template <typename T>
 concept SomeOperation = requires(T v) {
     {
@@ -51,12 +60,21 @@ concept SomeOperation = requires(T v) {
     };
 };
 
+/**
+ * @brief Specifies the interface for an operation that can be stopped
+ */
 template <typename T>
 concept SomeStoppableOperation = SomeOperation<T> and SomeStoppable<T>;
 
+/**
+ * @brief Specifies the interface for an operation that can be cancelled
+ */
 template <typename T>
 concept SomeCancellableOperation = SomeOperation<T> and SomeCancellable<T>;
 
+/**
+ * @brief Specifies the interface for an outcome (promise)
+ */
 template <typename T>
 concept SomeOutcome = requires(T v) {
     {
@@ -64,6 +82,9 @@ concept SomeOutcome = requires(T v) {
     } -> SomeOperation;
 };
 
+/**
+ * @brief Specifies the interface for a stop token
+ */
 template <typename T>
 concept SomeStopToken = requires(T v) {
     {
@@ -71,6 +92,9 @@ concept SomeStopToken = requires(T v) {
     } -> std::same_as<bool>;
 };
 
+/**
+ * @brief Specifies the interface for a stop token that internally uses a boost::asio::yield_context
+ */
 template <typename T>
 concept SomeYieldStopSource = requires(T v, boost::asio::yield_context yield) {
     {
@@ -78,6 +102,9 @@ concept SomeYieldStopSource = requires(T v, boost::asio::yield_context yield) {
     } -> SomeStopToken;
 };
 
+/**
+ * @brief Specifies the interface for a simple stop token
+ */
 template <typename T>
 concept SomeSimpleStopSource = requires(T v) {
     {
@@ -85,9 +112,15 @@ concept SomeSimpleStopSource = requires(T v) {
     } -> SomeStopToken;
 };
 
+/**
+ * @brief Specifies the interface for a stop source
+ */
 template <typename T>
 concept SomeStopSource = (SomeSimpleStopSource<T> or SomeYieldStopSource<T>)and SomeStoppable<T>;
 
+/**
+ * @brief Specifies the interface for a provider of stop sources
+ */
 template <typename T>
 concept SomeStopSourceProvider = requires(T v) {
     {
@@ -95,9 +128,15 @@ concept SomeStopSourceProvider = requires(T v) {
     } -> SomeStopSource;
 };
 
+/**
+ * @brief Specifies the interface for an outcome (promise) that can be stopped
+ */
 template <typename T>
 concept SomeStoppableOutcome = SomeOutcome<T> and SomeStopSourceProvider<T>;
 
+/**
+ * @brief Specifies the interface for a handler that can be stopped
+ */
 template <typename T>
 concept SomeHandlerWithoutStopToken = requires(T fn) {
     {
@@ -105,6 +144,9 @@ concept SomeHandlerWithoutStopToken = requires(T fn) {
     };
 };
 
+/**
+ * @brief Specifies the interface for a handler that can be invoked with the specified args
+ */
 template <typename T, typename... Args>
 concept SomeHandlerWith = requires(T fn) {
     {
@@ -112,6 +154,9 @@ concept SomeHandlerWith = requires(T fn) {
     };
 };
 
+/**
+ * @brief Specifies that the type must be some std::duration
+ */
 template <typename T>
 concept SomeStdDuration = requires {
     // Thank you Ed Catmur for this trick.
@@ -121,6 +166,9 @@ concept SomeStdDuration = requires {
     ) {}(std::type_identity<T>());
 };
 
+/**
+ * @brief Specifies that the type must be some std::duration wrapped in an optional
+ */
 template <typename T>
 concept SomeOptStdDuration = requires(T v) { SomeStdDuration<decltype(v.value())>; };
 

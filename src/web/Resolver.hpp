@@ -30,6 +30,9 @@
 
 namespace web {
 
+/**
+ * @brief The requirements of a resolver
+ */
 template <typename T>
 concept SomeResolver = requires(T t) {
     std::is_default_constructible_v<T>;

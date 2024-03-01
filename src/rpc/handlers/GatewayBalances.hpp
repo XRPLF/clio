@@ -49,6 +49,8 @@
 namespace rpc {
 
 /**
+ * @brief Handles the `gateway_balances` command
+ *
  * The gateway_balances command calculates the total balances issued by a given account, optionally excluding amounts
  * held by operational addresses.
  *

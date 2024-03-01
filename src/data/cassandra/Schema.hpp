@@ -34,6 +34,14 @@
 
 namespace data::cassandra {
 
+/**
+ * @brief Returns the table name qualified with the keyspace and table prefix
+ *
+ * @tparam SettingsProviderType The settings provider type
+ * @param provider The settings provider
+ * @param name The name of the table
+ * @return The qualified table name
+ */
 template <SomeSettingsProvider SettingsProviderType>
 [[nodiscard]] std::string inline qualifiedTableName(SettingsProviderType const& provider, std::string_view name)
 {

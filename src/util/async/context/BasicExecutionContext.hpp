@@ -42,6 +42,16 @@
 #include <type_traits>
 #include <utility>
 
+/**
+ * @brief This namespace implements an async framework built on top of execution contexts
+ *
+ * There are multiple execution contexts available, each with its own set of features and trade-offs.
+ *
+ * @see util::async::CoroExecutionContext
+ * @see util::async::PoolExecutionContext
+ * @see util::async::SyncExecutionContext
+ * @see util::async::SystemExecutionContext
+ */
 namespace util::async {
 namespace impl {
 
@@ -323,7 +333,7 @@ public:
  * @brief A Boost.Coroutine-based (asio yield_context) execution context.
  *
  * This execution context uses `asio::spawn` to create a coroutine per executed operation.
- * The stop token that is sent to the lambda to execute is @ref impl::YieldContextStopSource::Token
+ * The stop token that is sent to the lambda to execute is YieldContextStopSource::Token
  * and is special in the way that each time your code checks `token.isStopRequested()` the coroutine will
  * be suspended and other work such as timers and/or other operations in the queue will get a chance to run.
  * This makes it possible to have 1 thread in the execution context and still be able to execute operations AND timers

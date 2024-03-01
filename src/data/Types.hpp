@@ -210,7 +210,7 @@ struct NFT {
     /**
      * @brief Check if the NFT is the same as another
      *
-     * @note Clearly two tokens are the same if they have the same ID, but this struct stores the state of a given
+     * Clearly two tokens are the same if they have the same ID, but this struct stores the state of a given
      * token at a given ledger sequence, so we also need to compare with ledgerSequence.
      *
      * @param other The other NFT

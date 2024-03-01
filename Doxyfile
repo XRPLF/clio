@@ -12,8 +12,7 @@ EXTRACT_ANON_NSPACES   = NO
 
 SORT_MEMBERS_CTORS_1ST = YES
 
-INPUT                  = ../src ../unittests
-EXCLUDE_PATTERNS       = *Test*.cpp *Test*.hpp
+INPUT                  = ../src
 EXCLUDE_SYMBOLS        = impl
 RECURSIVE              = YES
 HAVE_DOT               = YES

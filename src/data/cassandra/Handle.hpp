@@ -35,6 +35,9 @@
 #include <string_view>
 #include <vector>
 
+/**
+ * @brief This namespace implements a wrapper for the Cassandra C++ driver
+ */
 namespace data::cassandra {
 
 /**
@@ -317,7 +320,9 @@ public:
  * You can call .begin() and .end() in order to iterate as usual.
  * This also means that you can use it in a range-based for or with some algorithms.
  *
+ * @tparam Types The types to extract
  * @param result The result to iterate
+ * @return An extractor object (iterator inside)
  */
 template <typename... Types>
 [[nodiscard]] impl::ResultExtractor<Types...>
