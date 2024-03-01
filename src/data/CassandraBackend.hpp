@@ -895,7 +895,7 @@ public:
     }
 
     void
-    writeMPTHolders(std::vector<std::pair<ripple::uint192, ripple::AccountID>>&& data) override
+    writeMPTHolders(std::vector<std::pair<ripple::uint192, ripple::AccountID>> const& data) override
     {
         std::vector<Statement> statements;
         for (auto const& record : data) {

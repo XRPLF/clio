@@ -583,7 +583,7 @@ public:
     writeNFTTransactions(std::vector<NFTTransactionsData> const& data) = 0;
 
     virtual void
-    writeMPTHolders(std::vector<std::pair<ripple::uint192, ripple::AccountID>>&& data) = 0;
+    writeMPTHolders(std::vector<std::pair<ripple::uint192, ripple::AccountID>> const& data) = 0;
 
     /**
      * @brief Write a new successor.
