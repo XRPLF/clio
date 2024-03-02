@@ -13,15 +13,15 @@ EXTRACT_ANON_NSPACES   = NO
 SORT_MEMBERS_CTORS_1ST = YES
 
 INPUT                  = ${SOURCE}/src
-EXCLUDE_SYMBOLS        = impl
+EXCLUDE_SYMBOLS        = ${EXCLUDES}
 RECURSIVE              = YES
-HAVE_DOT               = NO
+HAVE_DOT               = ${USE_DOT}
 
 QUIET                  = YES
-WARNINGS               = YES
-WARN_NO_PARAMDOC       = YES
-WARN_IF_INCOMPLETE_DOC = YES
-WARN_IF_UNDOCUMENTED   = YES
+WARNINGS               = ${LINT}
+WARN_NO_PARAMDOC       = ${LINT}
+WARN_IF_INCOMPLETE_DOC = ${LINT}
+WARN_IF_UNDOCUMENTED   = ${LINT}
 
 GENERATE_LATEX         = NO
 GENERATE_HTML          = YES

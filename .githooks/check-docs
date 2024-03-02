@@ -15,7 +15,13 @@ if [[ ! -z "$DOXYGEN" ]]; then
     mkdir -p ${DOCDIR} > /dev/null
     pushd ${DOCDIR} > /dev/null
 
-    sed -e "s!\${SOURCE}!${ROOT}!" ${ROOT}/Doxyfile > ./Doxyfile
+    sed \
+        -e "s/\${LINT}/YES/" \
+        -e "s!\${SOURCE}!${ROOT}!" \
+        -e "s/\${USE_DOT}/NO/" \
+        -e "s/\${EXCLUDES}/impl/" \
+        ${ROOT}/Doxyfile > ./Doxyfile
+
     ${DOXYGEN} ./Doxyfile 2> ${TMPFILE} 1> /dev/null
 
     # We don't want to check for default values and typedefs as well as for member variables

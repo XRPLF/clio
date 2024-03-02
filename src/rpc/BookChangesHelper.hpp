@@ -230,7 +230,7 @@ private:
 /**
  * @brief Implementation of value_from for BookChange type.
  *
- * @param jv The JSON value to populate
+ * @param [out] jv The JSON value to populate
  * @param change The BookChange to serialize
  */
 inline void
