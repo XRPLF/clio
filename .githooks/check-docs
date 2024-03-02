@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Note: This script is intended to be run from the root of the repository.
+#
+# Not really a hook but should be used to check the completness of documentation for added code, otherwise CI will come for you.
+# It's good to have /tmp as the output so that consecutive runs are fast but no clutter in the repository.
+
+ROOT=$(pwd)
+DOXYGEN=$(command -v doxygen)
+TMPDIR=/tmp
+TMPFILE=${TMPDIR}/docs.log
+DOCDIR=${TMPDIR}/out
+
+if [[ ! -z "$DOXYGEN" ]]; then
+    mkdir -p ${DOCDIR} > /dev/null
+    pushd ${DOCDIR} > /dev/null
+
+    sed -e "s!\${SOURCE}!${ROOT}!" ${ROOT}/Doxyfile > ./Doxyfile
+    ${DOXYGEN} ./Doxyfile 2> ${TMPFILE} 1> /dev/null
+
+    # We don't want to check for default values and typedefs as well as for member variables
+    OUT=$(cat ${TMPFILE} | grep -v "=default" | grep -v "\(variable\)" | grep -v "\(typedef\)")
+    popd > /dev/null
+
+    if [[ ! -z "$OUT" ]]; then
+        cat <<EOF
+
+                                    ERROR
+-----------------------------------------------------------------------------
+                      Found issues with documentation:
+
+$OUT
+-----------------------------------------------------------------------------
+
+EOF
+        exit 2
+    fi
+else
+    echo "Doxygen not found, skipping documentation check"
+    exit 1
+fi
