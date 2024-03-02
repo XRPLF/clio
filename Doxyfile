@@ -15,7 +15,7 @@ SORT_MEMBERS_CTORS_1ST = YES
 INPUT                  = ${SOURCE}/src
 EXCLUDE_SYMBOLS        = impl
 RECURSIVE              = YES
-HAVE_DOT               = YES
+HAVE_DOT               = NO
 
 QUIET                  = YES
 WARNINGS               = YES
