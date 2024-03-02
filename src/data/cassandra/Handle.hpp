@@ -58,6 +58,8 @@ public:
 
     /**
      * @brief Construct a new handle from a Settings object.
+     *
+     * @param clusterSettings The settings to use
      */
     explicit Handle(Settings clusterSettings = Settings::defaultSettings());
 
