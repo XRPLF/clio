@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Note: This script is intended to be run from the root of the repository.
+#
+# This script checks the format of the code and cmake files.
+# In many cases it will automatically fix the issues and abort the commit.
+
+echo "+ Checking code format..."
+
 # paths to check and re-format
 sources="src unittests"
 formatter="clang-format -i"
@@ -40,7 +47,7 @@ if ! command -v cmake-format &> /dev/null; then
 
                                     ERROR
 -----------------------------------------------------------------------------
-        `cmake-format` is required to run this script.
+        'cmake-format' is required to run this script.
         Please install it and run again.
 -----------------------------------------------------------------------------
 
@@ -83,7 +90,7 @@ if [ "$changes" != "0" ]; then
 
                                    WARNING
 -----------------------------------------------------------------------------
-  Automatically re-formatted code with `clang-format` - commit was aborted.
+  Automatically re-formatted code with 'clang-format' - commit was aborted.
   Please manually add any updated files and commit again.
 -----------------------------------------------------------------------------
 

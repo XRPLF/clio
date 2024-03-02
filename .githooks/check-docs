@@ -5,6 +5,8 @@
 # Not really a hook but should be used to check the completness of documentation for added code, otherwise CI will come for you.
 # It's good to have /tmp as the output so that consecutive runs are fast but no clutter in the repository.
 
+echo "+ Checking documentation..."
+
 ROOT=$(pwd)
 DOXYGEN=$(command -v doxygen)
 TMPDIR=/tmp
@@ -25,7 +27,11 @@ if [[ ! -z "$DOXYGEN" ]]; then
     ${DOXYGEN} ./Doxyfile 2> ${TMPFILE} 1> /dev/null
 
     # We don't want to check for default values and typedefs as well as for member variables
-    OUT=$(cat ${TMPFILE} | grep -v "=default" | grep -v "\(variable\)" | grep -v "\(typedef\)")
+    OUT=$(cat ${TMPFILE} \
+        | grep -v "=default" \
+        | grep -v "\(variable\)" \
+        | grep -v "\(typedef\)")
+
     popd > /dev/null
 
     if [[ ! -z "$OUT" ]]; then
@@ -42,6 +48,14 @@ EOF
         exit 2
     fi
 else
-    echo "Doxygen not found, skipping documentation check"
-    exit 1
+    # No hard error if doxygen is not installed yet
+    cat <<EOF
+
+                                   WARNING
+-----------------------------------------------------------------------------
+        'doxygen' is required to check documentation.
+        Please install it for next time. For the time being it's on CI.
+-----------------------------------------------------------------------------
+
+EOF
 fi
