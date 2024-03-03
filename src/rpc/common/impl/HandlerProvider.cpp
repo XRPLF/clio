@@ -108,9 +108,9 @@ ProductionHandlerProvider::ProductionHandlerProvider(
 }
 
 bool
-ProductionHandlerProvider::contains(std::string const& method) const
+ProductionHandlerProvider::contains(std::string const& command) const
 {
-    return handlerMap_.contains(method);
+    return handlerMap_.contains(command);
 }
 
 std::optional<AnyHandler>
