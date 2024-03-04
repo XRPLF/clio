@@ -580,6 +580,8 @@ public:
 
         auto const mptObjects = doFetchLedgerObjects(mptKeys, ledgerSequence, yield);
 
+        // need to filter out the objs that don't exist at the ledger seq because these MPT are in no particular time
+        // order. The MPToken at the specified ledger index may not exist.
         std::vector<Blob> filteredMpt;
         std::copy_if(mptObjects.begin(), mptObjects.end(), std::back_inserter(filteredMpt), [](Blob mpt) {
             return mpt.size() != 0;
