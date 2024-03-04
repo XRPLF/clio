@@ -39,7 +39,7 @@ getMPTokenAuthorize(ripple::TxMeta const& txMeta)
 
         if (node.getFName() == ripple::sfCreatedNode) {
             auto const& newMPT = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
-            return std::make_pair(newMPT[ripple::sfMPTokenIssuanceID], newMPT[ripple::sfAccount]);
+            return std::make_pair(newMPT[ripple::sfMPTokenIssuanceID], newMPT.getAccountID(ripple::sfAccount));
         }
     }
     return {};
