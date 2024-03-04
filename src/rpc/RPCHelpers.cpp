@@ -54,7 +54,6 @@
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Issue.h>
-#include <ripple/protocol/KeyType.h>
 #include <ripple/protocol/Keylet.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
@@ -67,7 +66,6 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STObject.h>
 #include <ripple/protocol/STTx.h>
-#include <ripple/protocol/SecretKey.h>
 #include <ripple/protocol/Seed.h>
 #include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/TER.h>
