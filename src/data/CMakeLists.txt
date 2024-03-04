@@ -18,20 +18,9 @@ target_include_directories(clio_data PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
 target_link_libraries(
   clio_data
-  PUBLIC Boost::boost
-         Boost::coroutine
-         Boost::program_options
-         Boost::system
-         Boost::log
-         Boost::log_setup
-         Boost::stacktrace_backtrace
-         cassandra-cpp-driver::cassandra-cpp-driver
-         fmt::fmt
-         OpenSSL::Crypto
-         OpenSSL::SSL
-         xrpl::libxrpl
-         dl
-         libbacktrace::libbacktrace
-         clio_util
-  INTERFACE Threads::Threads
+  PRIVATE # Boost::headers Boost::coroutine Boost::program_options Boost::system Boost::log Boost::log_setup
+          # Boost::stacktrace_backtrace fmt::fmt OpenSSL::Crypto OpenSSL::SSL xrpl::libxrpl dl
+          # libbacktrace::libbacktrace
+  PUBLIC cassandra-cpp-driver::cassandra-cpp-driver clio_util
+  # INTERFACE Threads::Threads
 )
