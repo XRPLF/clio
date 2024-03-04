@@ -48,6 +48,12 @@ struct AccountTransactionsData {
     std::uint32_t transactionIndex{};
     ripple::uint256 txHash;
 
+    /**
+     * @brief Construct a new AccountTransactionsData object
+     *
+     * @param meta The transaction metadata
+     * @param txHash The transaction hash
+     */
     AccountTransactionsData(ripple::TxMeta& meta, ripple::uint256 const& txHash)
         : accounts(meta.getAffectedAccounts())
         , ledgerSequence(meta.getLgrSeq())
@@ -70,6 +76,13 @@ struct NFTTransactionsData {
     std::uint32_t transactionIndex;
     ripple::uint256 txHash;
 
+    /**
+     * @brief Construct a new NFTTransactionsData object
+     *
+     * @param tokenID The token ID
+     * @param meta The transaction metadata
+     * @param txHash The transaction hash
+     */
     NFTTransactionsData(ripple::uint256 const& tokenID, ripple::TxMeta const& meta, ripple::uint256 const& txHash)
         : tokenID(tokenID), ledgerSequence(meta.getLgrSeq()), transactionIndex(meta.getIndex()), txHash(txHash)
     {
@@ -80,35 +93,33 @@ struct NFTTransactionsData {
  * @brief Represents an NFT state at a particular ledger.
  *
  * Gets written to nf_tokens table and the like.
+ *
+ * The transaction index is only stored because we want to store only the final state of an NFT per ledger.
+ * Since we pull this from transactions we keep track of which tx index created this so we can de-duplicate, as it is
+ * possible for one ledger to have multiple txs that change the state of the same NFT.
+ *
+ * We only set the uri if this is a mint tx, or if we are loading initial state from NFTokenPage objects.
  */
 struct NFTsData {
     ripple::uint256 tokenID;
     std::uint32_t ledgerSequence;
-
-    // The transaction index is only stored because we want to store only the
-    // final state of an NFT per ledger. Since we pull this from transactions
-    // we keep track of which tx index created this so we can de-duplicate, as
-    // it is possible for one ledger to have multiple txs that change the
-    // state of the same NFT. This field is not applicable when we are loading
-    // initial NFT state via ledger objects, since we do not have to tiebreak
-    // NFT state for a given ledger in that case.
     std::optional<std::uint32_t> transactionIndex;
     ripple::AccountID owner;
-    // We only set the uri if this is a mint tx, or if we are
-    // loading initial state from NFTokenPage objects. In other words,
-    // uri should only be set if the etl process believes this NFT hasn't
-    // been seen before in our local database. We do this so that we don't
-    // write to the the nf_token_uris table every
-    // time the same NFT changes hands. We also can infer if there is a URI
-    // that we need to write to the issuer_nf_tokens table.
     std::optional<ripple::Blob> uri;
     bool isBurned = false;
 
-    // This constructor is used when parsing an NFTokenMint tx.
-    // Unfortunately because of the extreme edge case of being able to
-    // re-mint an NFT with the same ID, we must explicitly record a null
-    // URI. For this reason, we _always_ write this field as a result of
-    // this tx.
+    /**
+     * @brief Construct a new NFTsData object
+     *
+     * @note This constructor is used when parsing an NFTokenMint tx
+     * Unfortunately because of the extreme edge case of being able to re-mint an NFT with the same ID, we must
+     * explicitly record a null URI. For this reason, we _always_ write this field as a result of this tx.
+     *
+     * @param tokenID The token ID
+     * @param owner The owner
+     * @param uri The URI
+     * @param meta The transaction metadata
+     */
     NFTsData(
         ripple::uint256 const& tokenID,
         ripple::AccountID const& owner,
@@ -119,8 +130,16 @@ struct NFTsData {
     {
     }
 
-    // This constructor is used when parsing an NFTokenBurn or
-    // NFTokenAcceptOffer tx
+    /**
+     * @brief Construct a new NFTsData object
+     *
+     * @note This constructor is used when parsing an NFTokenBurn or NFTokenAcceptOffer tx
+     *
+     * @param tokenID The token ID
+     * @param owner The owner
+     * @param meta The transaction metadata
+     * @param isBurned Whether the NFT is burned
+     */
     NFTsData(ripple::uint256 const& tokenID, ripple::AccountID const& owner, ripple::TxMeta const& meta, bool isBurned)
         : tokenID(tokenID)
         , ledgerSequence(meta.getLgrSeq())
@@ -130,12 +149,18 @@ struct NFTsData {
     {
     }
 
-    // This constructor is used when parsing an NFTokenPage directly from
-    // ledger state.
-    // Unfortunately because of the extreme edge case of being able to
-    // re-mint an NFT with the same ID, we must explicitly record a null
-    // URI. For this reason, we _always_ write this field as a result of
-    // this tx.
+    /**
+     * @brief Construct a new NFTsData object
+     *
+     * @note This constructor is used when parsing an NFTokenPage directly from ledger state.
+     * Unfortunately because of the extreme edge case of being able to re-mint an NFT with the same ID, we must
+     * explicitly record a null URI. For this reason, we _always_ write this field as a result of this tx.
+     *
+     * @param tokenID The token ID
+     * @param ledgerSequence The ledger sequence
+     * @param owner The owner
+     * @param uri The URI
+     */
     NFTsData(
         ripple::uint256 const& tokenID,
         std::uint32_t const ledgerSequence,
@@ -153,7 +178,7 @@ struct NFTsData {
  * @param object The object to check
  * @return true if the object is an offer; false otherwise
  */
-template <class T>
+template <typename T>
 inline bool
 isOffer(T const& object)
 {
@@ -170,7 +195,7 @@ isOffer(T const& object)
  * @param object The object to check
  * @return true if the object is an offer; false otherwise
  */
-template <class T>
+template <typename T>
 inline bool
 isOfferHex(T const& object)
 {
@@ -186,7 +211,7 @@ isOfferHex(T const& object)
  * @param object The object to check
  * @return true if the object is a dir node; false otherwise
  */
-template <class T>
+template <typename T>
 inline bool
 isDirNode(T const& object)
 {
@@ -202,7 +227,7 @@ isDirNode(T const& object)
  * @param object The object to check
  * @return true if the object is a book dir; false otherwise
  */
-template <class T, class R>
+template <typename T, typename R>
 inline bool
 isBookDir(T const& key, R const& object)
 {
@@ -219,7 +244,7 @@ isBookDir(T const& key, R const& object)
  * @param offer The offer to get the book for
  * @return Book as ripple::uint256
  */
-template <class T>
+template <typename T>
 inline ripple::uint256
 getBook(T const& offer)
 {
@@ -236,7 +261,7 @@ getBook(T const& offer)
  * @param key The key to get the book base out of
  * @return Book base as ripple::uint256
  */
-template <class T>
+template <typename T>
 inline ripple::uint256
 getBookBase(T const& key)
 {

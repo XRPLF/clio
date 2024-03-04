@@ -31,6 +31,11 @@ namespace util::async {
  */
 class SystemExecutionContext {
 public:
+    /**
+     * @brief Get the instance of the system execution context
+     *
+     * @return Reference to the global system execution context
+     */
     [[nodiscard]] static auto&
     instance()
     {

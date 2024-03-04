@@ -242,7 +242,7 @@ LoadBalancer::toJson() const
     return ret;
 }
 
-template <class Func>
+template <typename Func>
 bool
 LoadBalancer::execute(Func f, uint32_t ledgerSequence)
 {

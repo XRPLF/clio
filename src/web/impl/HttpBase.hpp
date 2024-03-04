@@ -68,7 +68,7 @@ using tcp = boost::asio::ip::tcp;
  * @tparam Derived The derived class
  * @tparam HandlerType The handler class, will be called when a request is received.
  */
-template <template <class> class Derived, SomeServerHandler HandlerType>
+template <template <typename> typename Derived, SomeServerHandler HandlerType>
 class HttpBase : public ConnectionBase {
     Derived<HandlerType>&
     derived()
@@ -84,7 +84,7 @@ class HttpBase : public ConnectionBase {
         {
         }
 
-        template <bool isRequest, class Body, class Fields>
+        template <bool isRequest, typename Body, typename Fields>
         void
         operator()(http::message<isRequest, Body, Fields>&& msg) const
         {

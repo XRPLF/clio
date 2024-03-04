@@ -66,6 +66,7 @@ public:
      * @brief A factory function that creates the work queue based on a config.
      *
      * @param config The Clio config to use
+     * @return The work queue
      */
     static WorkQueue
     make_WorkQueue(util::Config const& config)

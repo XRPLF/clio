@@ -23,6 +23,9 @@
 
 namespace util {
 
+/**
+ * @brief Specifies a number type
+ */
 template <typename T>
 concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_const_v<T>;
 

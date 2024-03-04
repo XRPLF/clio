@@ -73,6 +73,16 @@ class RPCEngine {
     impl::ForwardingProxy<etl::LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
 
 public:
+    /**
+     * @brief Construct a new RPCEngine object
+     *
+     * @param backend The backend to use
+     * @param balancer The load balancer to use
+     * @param dosGuard The DOS guard to use
+     * @param workQueue The work queue to use
+     * @param counters The counters to use
+     * @param handlerProvider The handler provider to use
+     */
     RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
@@ -90,6 +100,17 @@ public:
     {
     }
 
+    /**
+     * @brief Factory function to create a new instance of the RPC engine.
+     *
+     * @param backend The backend to use
+     * @param balancer The load balancer to use
+     * @param dosGuard The DOS guard to use
+     * @param workQueue The work queue to use
+     * @param counters The counters to use
+     * @param handlerProvider The handler provider to use
+     * @return A new instance of the RPC engine
+     */
     static std::shared_ptr<RPCEngine>
     make_RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
@@ -159,6 +180,7 @@ public:
      * @tparam FnType The type of function
      * @param func The lambda to execute when this request is handled
      * @param ip The ip address for which this request is being executed
+     * @return true if the request was successfully scheduled; false otherwise
      */
     template <typename FnType>
     bool

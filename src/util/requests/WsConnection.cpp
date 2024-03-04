@@ -128,6 +128,15 @@ WsConnectionBuilder::connect(asio::yield_context yield) const
     return plainConnect(yield);
 }
 
+/**
+ * @brief Connect to the host using web socket asynchronously
+ *
+ * @tparam StreamDataType The type of the stream data
+ *
+ * @param streamData The stream data
+ * @param yield The coroutine context
+ * @return WebSocket connection or error
+ */
 template <typename StreamDataType>
 Expected<WsConnectionPtr, RequestError>
 WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_context yield) const

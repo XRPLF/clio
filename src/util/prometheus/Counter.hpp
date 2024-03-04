@@ -33,6 +33,8 @@ namespace util::prometheus {
 
 /**
  * @brief A prometheus counter metric implementation. It can only be increased or be reset to zero.
+ *
+ * @tparam NumberType The type of the value of the counter
  */
 template <SomeNumberType NumberType>
 struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType> {
@@ -41,6 +43,7 @@ struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType> {
     /**
      * @brief Construct a new AnyCounter object
      *
+     * @tparam ImplType The type of the implementation of the counter
      * @param name The name of the counter
      * @param labelsString The labels of the counter
      * @param impl The implementation of the counter
@@ -55,6 +58,8 @@ struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType> {
 
     /**
      * @brief Increase the counter by one
+     *
+     * @return Reference to self
      */
     AnyCounter&
     operator++()
@@ -67,6 +72,8 @@ struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType> {
      * @brief Increase the counter by the given value
      *
      * @param value The value to increase the counter by
+     *
+     * @return Reference to self
      */
     AnyCounter&
     operator+=(ValueType const value)
@@ -87,6 +94,8 @@ struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType> {
 
     /**
      * @brief Get the value of the counter
+     *
+     * @return The value
      */
     ValueType
     value() const
@@ -106,7 +115,14 @@ struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType> {
     }
 };
 
+/**
+ * @brief A prometheus counter metric implementation with a value of type std::int64_t
+ */
 using CounterInt = AnyCounter<std::uint64_t>;
+
+/**
+ * @brief A prometheus counter metric implementation with a value of type double
+ */
 using CounterDouble = AnyCounter<double>;
 
 }  // namespace util::prometheus

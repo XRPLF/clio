@@ -61,7 +61,7 @@ public:
      * extraction succeeds, or the server shuts down.
      *
      * @param sequence sequence of the ledger to extract
-     * @return ledger header and transaction+metadata blobs; empty optional if the server is shutting down
+     * @return Ledger header and transaction+metadata blobs; Empty optional if the server is shutting down
      */
     OptionalGetLedgerResponseType
     fetchData(uint32_t sequence)
@@ -81,8 +81,7 @@ public:
      * extraction succeeds, or the server shuts down.
      *
      * @param sequence sequence of the ledger to extract
-     * @return ledger header, transaction+metadata blobs, and all ledger objects created, modified or deleted between
-     * this ledger and the parent; Empty optional if the server is shutting down
+     * @return Ledger data diff between sequance and parent; Empty optional if the server is shutting down
      */
     OptionalGetLedgerResponseType
     fetchDataAndDiff(uint32_t sequence)

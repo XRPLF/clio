@@ -34,12 +34,20 @@ namespace rpc {
 struct JsonBool {
     bool value = false;
 
+    /** @cond */
     operator bool() const
     {
         return value;
     }
+    /** @endcond */
 };
 
+/**
+ * @brief Convert a JSON value to a JsonBool
+ *
+ * @param jsonValue The JSON value to convert
+ * @return The converted JsonBool
+ */
 inline JsonBool
 tag_invoke(boost::json::value_to_tag<JsonBool> const&, boost::json::value const& jsonValue)
 {

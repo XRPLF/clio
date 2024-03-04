@@ -35,6 +35,12 @@ public:
     using ValueType = NumberType;
 
     Atomic() = default;
+
+    /**
+     * @brief Construct a new Atomic object
+     *
+     * @param value The initial value
+     */
     Atomic(ValueType const value) : value_(value)
     {
     }
@@ -86,7 +92,7 @@ public:
     /**
      * @brief Get the current value
      *
-     * @return ValueType The current value
+     * @return The current value
      */
     ValueType
     value() const

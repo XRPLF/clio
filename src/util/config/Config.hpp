@@ -50,8 +50,8 @@ class Config final {
     static constexpr char Separator = '.';
 
 public:
-    using KeyType = std::string;           /*< The type of key used */
-    using ArrayType = std::vector<Config>; /*< The type of array used */
+    using KeyType = std::string;
+    using ArrayType = std::vector<Config>;
     using WriteCursorType = std::pair<std::optional<std::reference_wrapper<boost::json::value>>, KeyType>;
 
     /**
@@ -98,7 +98,7 @@ public:
      *
      * @tparam Result The desired return type
      * @param key The key to check
-     * @return std::optional<Result> Optional value of desired type
+     * @return Optional value of desired type
      * @throws std::logic_error Thrown if conversion to Result is not possible
      * or key is of invalid format
      */
@@ -123,7 +123,7 @@ public:
      *
      * @tparam Result The desired return type
      * @param key The key to check
-     * @return Result Value of desired type
+     * @return Value of desired type
      * @throws std::logic_error Thrown if conversion to Result is not
      * possible, value does not exist under specified key path or the key is of
      * invalid format
@@ -148,7 +148,7 @@ public:
      * @tparam Result The desired return type
      * @param key The key to check
      * @param fallback The fallback value
-     * @return Result Value of desired type
+     * @return Value of desired type
      * @throws std::logic_error Thrown if conversion to Result is not possible
      * or the key is of invalid format
      */
@@ -175,7 +175,7 @@ public:
      * @tparam Result The desired return type
      * @param key The key to check
      * @param err The custom error message
-     * @return Result Value of desired type
+     * @return Value of desired type
      * @throws std::runtime_error Thrown if conversion to Result is not possible
      * or value does not exist under key
      */
@@ -199,7 +199,7 @@ public:
      * specified key - std::nullopt is returned.
      *
      * @param key The key to check
-     * @return std::optional<ArrayType> Optional array
+     * @return Optional array
      * @throws std::logic_error Thrown if the key is of invalid format
      */
     [[nodiscard]] std::optional<ArrayType>
@@ -214,7 +214,7 @@ public:
      * specified key an std::logic_error is thrown.
      *
      * @param key The key to check
-     * @return ArrayType The array
+     * @return The array
      * @throws std::logic_error Thrown if there is no array under the desired
      * key or the key is of invalid format
      */
@@ -231,7 +231,7 @@ public:
      *
      * @param key The key to check
      * @param fallback The fallback array
-     * @return ArrayType The array
+     * @return The array
      * @throws std::logic_error Thrown if the key is of invalid format
      */
     [[nodiscard]] ArrayType
@@ -247,7 +247,7 @@ public:
      *
      * @param key The key to check
      * @param err The custom error message
-     * @return ArrayType The array
+     * @return The array
      * @throws std::runtime_error Thrown if there is no array under the desired
      * key
      */
@@ -262,7 +262,7 @@ public:
      * stored under the desired key - std::logic_error is thrown.
      *
      * @param key The key to check
-     * @return Config Section represented as a separate instance of Config
+     * @return Section represented as a separate instance of Config
      * @throws std::logic_error Thrown if there is no section under the
      * desired key or the key is of invalid format
      */
@@ -278,7 +278,7 @@ public:
      *
      * @param key The key to check
      * @param fallback The fallback object
-     * @return Config Section represented as a separate instance of Config
+     * @return Section represented as a separate instance of Config
      */
     [[nodiscard]] Config
     sectionOr(KeyType key, boost::json::object fallback) const;
@@ -292,6 +292,7 @@ public:
      * instance. Wraps as std::optional.
      *
      * See @ref maybeValue(KeyType) const for how this works.
+     * @return Optional value
      */
     template <typename Result>
     [[nodiscard]] std::optional<Result>
@@ -307,6 +308,7 @@ public:
      * instance.
      *
      * See @ref value(KeyType) const for how this works.
+     * @return The value
      */
     template <typename Result>
     [[nodiscard]] Result
@@ -320,6 +322,8 @@ public:
      * instance with user-specified fallback.
      *
      * See @ref valueOr(KeyType, Result) const for how this works.
+     * @param fallback The fallback value
+     * @return The value
      */
     template <typename Result>
     [[nodiscard]] Result
@@ -334,6 +338,8 @@ public:
      *
      * See @ref valueOrThrow(KeyType, std::string_view) const for how this
      * works.
+     * @param err The custom error message
+     * @return The value
      */
     template <typename Result>
     [[nodiscard]] Result
@@ -351,6 +357,7 @@ public:
      * instance.
      *
      * See @ref array(KeyType) const for how this works.
+     * @return The array
      */
     [[nodiscard]] ArrayType
     array() const;
@@ -402,6 +409,12 @@ private:
  */
 class ConfigReader final {
 public:
+    /**
+     * @brief Read in a configuration file
+     *
+     * @param path The path to the configuration file
+     * @return The configuration object
+     */
     static Config
     open(std::filesystem::path path);
 };

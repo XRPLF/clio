@@ -39,6 +39,7 @@ class Lock {
     ProtectedDataType& data_;
 
 public:
+    /** @cond */
     ProtectedDataType const&
     operator*() const
     {
@@ -74,6 +75,7 @@ public:
     {
         return &data_;
     }
+    /** @endcond */
 
 private:
     friend class Mutex<std::remove_const_t<ProtectedDataType>, MutexType>;
@@ -96,10 +98,22 @@ class Mutex {
 public:
     Mutex() = default;
 
+    /**
+     * @brief Construct a new Mutex object with the given data
+     *
+     * @param data The data to protect
+     */
     explicit Mutex(ProtectedDataType data) : data_(std::move(data))
     {
     }
 
+    /**
+     * @brief Make a new Mutex object with the given data
+     *
+     * @tparam Args The types of the arguments to forward to the constructor of the protected data
+     * @param args The arguments to forward to the constructor of the protected data
+     * @return The Mutex object that protects the given data
+     */
     template <typename... Args>
     static Mutex
     make(Args&&... args)
@@ -107,6 +121,12 @@ public:
         return Mutex{ProtectedDataType{std::forward<Args>(args)...}};
     }
 
+    /**
+     * @brief Lock the mutex and get a lock object allowing access to the protected data
+     *
+     * @tparam LockType The type of lock to use
+     * @return A lock on the mutex and a reference to the protected data
+     */
     template <template <typename> typename LockType = std::lock_guard>
     Lock<ProtectedDataType const, LockType, MutexType>
     lock() const
@@ -116,6 +136,11 @@ public:
 
     template <template <typename> typename LockType = std::lock_guard>
     Lock<ProtectedDataType, LockType, MutexType>
+    /**
+     * @brief Lock the mutex and get a lock object allowing access to the protected data
+     *
+     * @return A lock on the mutex and a reference to the protected data
+     */
     lock()
     {
         return {mutex_, data_};

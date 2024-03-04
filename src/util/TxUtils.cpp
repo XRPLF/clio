@@ -28,6 +28,11 @@
 
 namespace util {
 
+/**
+ * @brief Get the transaction types in lowercase
+ *
+ * @return The transaction types in lowercase
+ */
 [[nodiscard]] std::unordered_set<std::string> const&
 getTxTypesInLowercase()
 {

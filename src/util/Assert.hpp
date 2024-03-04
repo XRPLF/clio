@@ -31,6 +31,17 @@
 
 namespace util {
 
+/**
+ * @brief Assert that a condition is true
+ * @note Calls std::exit if the condition is false
+ *
+ * @tparam Args The format argument types
+ * @param location The location of the assertion
+ * @param expression The expression to assert
+ * @param condition The condition to assert
+ * @param format The format string
+ * @param args The format arguments
+ */
 template <typename... Args>
 constexpr void
 assertImpl(

@@ -102,8 +102,7 @@ public:
      *
      * @param ledger ledger to insert transactions into
      * @param data data extracted from an ETL source
-     * @return struct that contains the neccessary info to write to the account_transactions/account_tx and
-     * nft_token_transactions tables (mostly transaction hashes, corresponding nodestore hashes and affected accounts)
+     * @return The neccessary info to write the account_transactions/account_tx and nft_token_transactions tables
      */
     FormattedTransactionsData
     insertTransactions(ripple::LedgerHeader const& ledger, GetLedgerResponseType& data)

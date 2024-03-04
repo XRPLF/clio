@@ -181,7 +181,7 @@ public:
     Expected<std::string, RequestError>
     post(boost::asio::yield_context yield);
 
-    static constexpr std::chrono::milliseconds DEFAULT_TIMEOUT{30000};
+    static constexpr std::chrono::milliseconds DEFAULT_TIMEOUT{30000}; /**< Default timeout for requests */
 
 private:
     Expected<std::string, RequestError>

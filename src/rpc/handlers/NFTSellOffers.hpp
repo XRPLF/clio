@@ -34,11 +34,23 @@ namespace rpc {
  */
 class NFTSellOffersHandler : public NFTOffersHandlerBase {
 public:
+    /**
+     * @brief Construct a new NFTSellOffersHandler object
+     *
+     * @param sharedPtrBackend The backend to use
+     */
     NFTSellOffersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
         : NFTOffersHandlerBase(sharedPtrBackend)
     {
     }
 
+    /**
+     * @brief Process the NFTSellOffers command
+     *
+     * @param input The input data for the command
+     * @param ctx The context of the request
+     * @return The result of the operation
+     */
     Result
     process(Input input, Context const& ctx) const;
 };

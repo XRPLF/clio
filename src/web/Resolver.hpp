@@ -30,6 +30,9 @@
 
 namespace web {
 
+/**
+ * @brief The requirements of a resolver
+ */
 template <typename T>
 concept SomeResolver = requires(T t) {
     std::is_default_constructible_v<T>;
@@ -50,7 +53,7 @@ public:
      *
      * @param hostname Hostname to resolve
      * @param service Service to resolve (could be empty or port number or http)
-     * @return std::vector<std::string> IP addresses of the hostname
+     * @return IP addresses of the hostname
      */
     std::vector<std::string>
     resolve(std::string_view hostname, std::string_view service = "");

@@ -34,7 +34,16 @@
 namespace rpc {
 
 /**
- * @brief getAmmPoolHolds returns the balances of the amm asset pair.
+ * @brief getAmmPoolHolds returns the balances of the amm asset pair
+ *
+ * @param backend The backend to use
+ * @param sequence The sequence number to use
+ * @param ammAccountID The amm account
+ * @param issue1 The first issue
+ * @param issue2 The second issue
+ * @param freezeHandling Whether to return zeroes for frozen accounts
+ * @param yield The coroutine context
+ * @return The balances of the amm asset pair
  */
 std::pair<ripple::STAmount, ripple::STAmount>
 getAmmPoolHolds(
@@ -48,7 +57,16 @@ getAmmPoolHolds(
 );
 
 /**
- * @brief getAmmLpHolds returns the lp token balance.
+ * @brief getAmmLpHolds returns the liquidity provider token balance
+ *
+ * @param backend The backend to use
+ * @param sequence The sequence number to use
+ * @param cur1 The first currency
+ * @param cur2 The second currency
+ * @param ammAccount The amm account
+ * @param lpAccount The lp account
+ * @param yield The coroutine context
+ * @return The lp token balance
  */
 ripple::STAmount
 getAmmLpHolds(
@@ -62,7 +80,14 @@ getAmmLpHolds(
 );
 
 /**
- * @brief getAmmLpHolds returns the lp token balance.
+ * @brief getAmmLpHolds returns the liquidity provider token balance
+ *
+ * @param backend The backend to use
+ * @param sequence The sequence number to use
+ * @param ammSle The amm ledger entry
+ * @param lpAccount The lp account
+ * @param yield The coroutine context
+ * @return The lp token balance
  */
 ripple::STAmount
 getAmmLpHolds(

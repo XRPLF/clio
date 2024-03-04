@@ -46,6 +46,9 @@ class LedgerHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    /**
+     * @brief A struct to hold the output data of the command
+     */
     struct Output {
         uint32_t ledgerIndex{};
         std::string ledgerHash;
@@ -54,9 +57,19 @@ public:
         bool validated = true;
     };
 
-    // clio not support : accounts/full/owner_finds/queue/type
-    // clio will throw error when accounts/full/owner_funds/queue is set to true
-    // https://github.com/XRPLF/clio/issues/603
+    /**
+     * @brief A struct to hold the input data for the command
+     *
+     * Clio does not support:
+     * - accounts
+     * - full
+     * - owner_finds
+     * - queue
+     * - type
+     *
+     * Clio will throw an error when any of `accounts`/`full`/`owner_funds`/`queue` are set to `true`
+     * @see https://github.com/XRPLF/clio/issues/603
+     */
     struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
@@ -69,10 +82,21 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Construct a new LedgerHandler object
+     *
+     * @param sharedPtrBackend The backend to use
+     */
     LedgerHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
+    /**
+     * @brief Returns the API specification for the command
+     *
+     * @param apiVersion The api version to return the spec for
+     * @return The spec for the given apiVersion
+     */
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
@@ -92,13 +116,32 @@ public:
         return rpcSpec;
     }
 
+    /**
+     * @brief Process the Ledger command
+     *
+     * @param input The input data for the command
+     * @param ctx The context of the request
+     * @return The result of the operation
+     */
     Result
     process(Input input, Context const& ctx) const;
 
 private:
+    /**
+     * @brief Convert the Output to a JSON object
+     *
+     * @param [out] jv The JSON object to convert to
+     * @param output The output to convert
+     */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
+    /**
+     * @brief Convert a JSON object to Input type
+     *
+     * @param jv The JSON object to convert
+     * @return Input parsed from the JSON object
+     */
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };

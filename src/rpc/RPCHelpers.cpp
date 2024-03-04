@@ -54,7 +54,6 @@
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Issue.h>
-#include <ripple/protocol/KeyType.h>
 #include <ripple/protocol/Keylet.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
@@ -67,7 +66,6 @@
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STObject.h>
 #include <ripple/protocol/STTx.h>
-#include <ripple/protocol/SecretKey.h>
 #include <ripple/protocol/Seed.h>
 #include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/TER.h>
@@ -793,105 +791,6 @@ parseRippleLibSeed(boost::json::value const& value)
         return ripple::Seed(ripple::makeSlice(result.substr(2)));
 
     return {};
-}
-
-std::variant<Status, std::pair<ripple::PublicKey, ripple::SecretKey>>
-keypairFromRequst(boost::json::object const& request)
-{
-    bool const has_key_type = request.contains("key_type");
-
-    // All of the secret types we allow, but only one at a time.
-    // The array should be constexpr, but that makes Visual Studio unhappy.
-    static std::string const secretTypes[]{"passphrase", "secret", "seed", "seed_hex"};
-
-    // Identify which secret type is in use.
-    std::string secretType;
-    int count = 0;
-    for (auto const& t : secretTypes) {
-        if (request.contains(t)) {
-            ++count;
-            secretType = t;
-        }
-    }
-
-    if (count == 0)
-        return Status{RippledError::rpcINVALID_PARAMS, "missing field secret"};
-
-    if (count > 1) {
-        return Status{
-            RippledError::rpcINVALID_PARAMS,
-            "Exactly one of the following must be specified: passphrase, secret, seed, or seed_hex"
-        };
-    }
-
-    std::optional<ripple::KeyType> keyType;
-    std::optional<ripple::Seed> seed;
-
-    if (has_key_type) {
-        if (!request.at("key_type").is_string())
-            return Status{RippledError::rpcINVALID_PARAMS, "keyTypeNotString"};
-
-        auto const key_type = boost::json::value_to<std::string>(request.at("key_type"));
-        keyType = ripple::keyTypeFromString(key_type);
-
-        if (!keyType)
-            return Status{RippledError::rpcINVALID_PARAMS, "invalidFieldKeyType"};
-
-        if (secretType == "secret")
-            return Status{RippledError::rpcINVALID_PARAMS, "The secret field is not allowed if key_type is used."};
-    }
-
-    // ripple-lib encodes seed used to generate an Ed25519 wallet in a
-    // non-standard way. While we never encode seeds that way, we try
-    // to detect such keys to avoid user confusion.
-    if (secretType != "seed_hex") {
-        seed = parseRippleLibSeed(request.at(secretType));
-
-        if (seed) {
-            // If the user passed in an Ed25519 seed but *explicitly*
-            // requested another key type, return an error.
-            if (keyType.value_or(ripple::KeyType::ed25519) != ripple::KeyType::ed25519)
-                return Status{RippledError::rpcINVALID_PARAMS, "Specified seed is for an Ed25519 wallet."};
-
-            keyType = ripple::KeyType::ed25519;
-        }
-    }
-
-    if (!keyType)
-        keyType = ripple::KeyType::secp256k1;
-
-    if (!seed) {
-        if (has_key_type) {
-            if (!request.at(secretType).is_string())
-                return Status{RippledError::rpcINVALID_PARAMS, "secret value must be string"};
-
-            auto const key = boost::json::value_to<std::string>(request.at(secretType));
-
-            if (secretType == "seed") {
-                seed = ripple::parseBase58<ripple::Seed>(key);
-            } else if (secretType == "passphrase") {
-                seed = ripple::parseGenericSeed(key);
-            } else if (secretType == "seed_hex") {
-                ripple::uint128 s;
-                if (s.parseHex(key))
-                    seed.emplace(ripple::Slice(s.data(), ripple::uint128::size()));
-            }
-        } else {
-            if (!request.at("secret").is_string())
-                return Status{RippledError::rpcINVALID_PARAMS, "field secret should be a string"};
-
-            auto const secret = boost::json::value_to<std::string>(request.at("secret"));
-            seed = ripple::parseGenericSeed(secret);
-        }
-    }
-
-    if (!seed)
-        return Status{RippledError::rpcBAD_SEED, "Bad Seed: invalid field message secretType"};
-
-    if (keyType != ripple::KeyType::secp256k1 && keyType != ripple::KeyType::ed25519)
-        return Status{RippledError::rpcINVALID_PARAMS, "keypairForSignature: invalid key type"};
-
-    return generateKeyPair(*keyType, *seed);
 }
 
 std::vector<ripple::AccountID>

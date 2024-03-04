@@ -55,8 +55,10 @@ public:
     using ValueType = NumberType;
 
     HistogramImpl() = default;
+
     HistogramImpl(HistogramImpl const&) = delete;
     HistogramImpl(HistogramImpl&&) = default;
+
     HistogramImpl&
     operator=(HistogramImpl const&) = delete;
     HistogramImpl&

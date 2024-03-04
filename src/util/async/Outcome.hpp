@@ -48,23 +48,34 @@ public:
 
     BasicOutcome() = default;
     BasicOutcome(BasicOutcome&&) = default;
+
     BasicOutcome(BasicOutcome const&) = delete;
 
-    /** @brief Sets the value on the inner `promise` */
+    /**
+     * @brief Sets the value on the inner `promise`
+     *
+     * @param val The value to set
+     */
     void
     setValue(std::convertible_to<RetType> auto&& val)
     {
         promise_.set_value(std::forward<decltype(val)>(val));
     }
 
-    /** @brief Sets the value channel for void operations */
+    /**
+     * @brief Sets the value channel for void operations
+     */
     void
     setValue()
     {
         promise_.set_value({});
     }
 
-    /** @brief Get the `future` for the inner `promise` */
+    /**
+     * @brief Get the `future` for the inner `promise`
+     *
+     * @return The standard future matching the inner `promise`
+     */
     [[nodiscard]] std::future<RetType>
     getStdFuture()
     {
@@ -82,7 +93,11 @@ public:
 template <typename RetType>
 class Outcome : public impl::BasicOutcome<RetType> {
 public:
-    /** @brief Gets the unstoppable operation for this outcome */
+    /**
+     * @brief Gets the unstoppable operation for this outcome
+     *
+     * @return An unstoppable operation for this outcome
+     */
     [[nodiscard]] impl::BasicOperation<Outcome>
     getOperation()
     {
@@ -102,14 +117,22 @@ private:
     StopSourceType stopSource_;
 
 public:
-    /** @brief Gets the stoppable operation for this outcome */
+    /**
+     * @brief Gets the stoppable operation for this outcome
+     *
+     * @return A stoppable operation for this outcome
+     */
     [[nodiscard]] StoppableOperation<RetType, StopSourceType>
     getOperation()
     {
         return StoppableOperation<RetType, StopSourceType>{this};
     }
 
-    /** @brief Gets the stop source for this outcome */
+    /**
+     * @brief Gets the stop source for this outcome
+     *
+     * @return The stop source
+     */
     [[nodiscard]] StopSourceType&
     getStopSource()
     {

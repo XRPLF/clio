@@ -39,12 +39,20 @@ class VersionHandler {
     rpc::impl::ProductionAPIVersionParser apiVersionParser_;
 
 public:
+    /**
+     * @brief A struct to hold the output data of the command
+     */
     struct Output {
         uint32_t minVersion;
         uint32_t maxVersion;
         uint32_t currVersion;
     };
 
+    /**
+     * @brief Construct a new Version Handler object
+     *
+     * @param config The configuration to use
+     */
     explicit VersionHandler(util::Config const& config)
         : apiVersionParser_(
               config.valueOr("default", API_VERSION_DEFAULT),
@@ -56,6 +64,12 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Process the version command
+     *
+     * @param ctx The context of the request
+     * @return The result of the command
+     */
     Result
     process([[maybe_unused]] Context const& ctx) const
     {
