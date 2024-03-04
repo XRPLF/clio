@@ -585,6 +585,11 @@ public:
     virtual void
     writeNFTTransactions(std::vector<NFTTransactionsData> const& data) = 0;
 
+    /**
+     * @brief Write accounts that started holding onto a MPT.
+     *
+     * @param data A vector of MPT ID and account pairs
+     */
     virtual void
     writeMPTHolders(std::vector<std::pair<ripple::uint192, ripple::AccountID>> const& data) = 0;
 
