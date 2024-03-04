@@ -32,6 +32,7 @@ class Mutex;
  *
  * @tparam ProtectedDataType data type to hold
  * @tparam LockType type of lock
+ * @tparam MutexType type of mutex
  */
 template <typename ProtectedDataType, template <typename> typename LockType, typename MutexType>
 class Lock {
@@ -89,6 +90,7 @@ private:
  * @brief A container for data that is protected by a mutex. Inspired by Mutex in Rust.
  *
  * @tparam ProtectedDataType data type to hold
+ * @tparam MutexType type of mutex
  */
 template <typename ProtectedDataType, typename MutexType = std::mutex>
 class Mutex {
@@ -134,13 +136,14 @@ public:
         return {mutex_, data_};
     }
 
-    template <template <typename> typename LockType = std::lock_guard>
-    Lock<ProtectedDataType, LockType, MutexType>
     /**
      * @brief Lock the mutex and get a lock object allowing access to the protected data
      *
+     * @tparam LockType The type of lock to use
      * @return A lock on the mutex and a reference to the protected data
      */
+    template <template <typename> typename LockType = std::lock_guard>
+    Lock<ProtectedDataType, LockType, MutexType>
     lock()
     {
         return {mutex_, data_};
