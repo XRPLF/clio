@@ -734,7 +734,7 @@ std::optional<ripple::STAmount>
 getDeliveredAmount(
     std::shared_ptr<ripple::STTx const> const& txn,
     std::shared_ptr<ripple::TxMeta const> const& meta,
-    std::uint32_t const ledgerSequence,
+    std::uint32_t ledgerSequence,
     uint32_t date
 );
 
