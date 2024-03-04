@@ -581,15 +581,9 @@ public:
         auto const mptObjects = doFetchLedgerObjects(mptKeys, ledgerSequence, yield);
 
         std::vector<Blob> filteredMpt;
-
-        // need to filter out the objs that don't exist at the ledger seq because these MPT are in no particular time
-        // order
-        for (auto const mpt : mptObjects) {
-            if (!mpt.size())
-                continue;
-
-            filteredMpt.push_back(mpt);
-        }
+        std::copy_if(mptObjects.begin(), mptObjects.end(), std::back_inserter(filteredMpt), [](Blob mpt) {
+            return mpt.size() != 0;
+        });
 
         if (mptKeys.size() == limit)
             return {filteredMpt, cursor};
