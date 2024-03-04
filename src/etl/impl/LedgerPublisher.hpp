@@ -106,7 +106,7 @@ public:
      *
      * @param ledgerSequence the sequence of the ledger to publish
      * @param maxAttempts the number of times to attempt to read the ledger from the database. 1 attempt per second
-     * @return whether the ledger was found in the database and published
+     * @return Whether the ledger was found in the database and published
      */
     bool
     publish(uint32_t ledgerSequence, std::optional<uint32_t> maxAttempts)

@@ -43,6 +43,10 @@ public:
 
     /**
      * @brief Write to the stream
+     *
+     * @tparam T Type of the value to write
+     * @param value The value to write
+     * @return The stream
      */
     template <typename T>
     OStream&

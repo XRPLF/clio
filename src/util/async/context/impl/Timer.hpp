@@ -40,6 +40,7 @@ public:
     }
 
     SteadyTimer(SteadyTimer&&) = default;
+
     SteadyTimer(SteadyTimer const&) = delete;
 
     void

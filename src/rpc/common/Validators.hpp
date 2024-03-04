@@ -81,6 +81,13 @@ template <typename Expected>
  * @brief A validator that simply requires a field to be present.
  */
 struct Required final {
+    /**
+     * @brief Verify that the JSON value is present and not null.
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return An error if validation failed; otherwise no error is returned
+     */
     [[nodiscard]] static MaybeError
     verify(boost::json::value const& value, std::string_view key);
 };
@@ -386,7 +393,7 @@ public:
      *
      * @param begin,end the range to copy the elements from
      */
-    template <class InputIt>
+    template <typename InputIt>
     explicit OneOf(InputIt begin, InputIt end) : options_{begin, end}
     {
     }

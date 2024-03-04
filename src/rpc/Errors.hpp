@@ -77,25 +77,61 @@ struct Status {
     std::optional<boost::json::object> extraInfo;
 
     Status() = default;
+
+    /**
+     * @brief Construct a new Status object
+     *
+     * @param code The error code
+     */
     /* implicit */ Status(CombinedError code) : code(code){};
+
+    /**
+     * @brief Construct a new Status object
+     *
+     * @param code The error code
+     * @param extraInfo The extra info
+     */
     Status(CombinedError code, boost::json::object&& extraInfo) : code(code), extraInfo(std::move(extraInfo)){};
 
-    // HACK. Some rippled handlers explicitly specify errors.
-    // This means that we have to be able to duplicate this functionality.
+    /**
+     * @brief Construct a new Status object with a custom message
+     *
+     * @note HACK. Some rippled handlers explicitly specify errors. This means that we have to be able to duplicate this
+     * functionality.
+     *
+     * @param message The message
+     */
     explicit Status(std::string message) : code(ripple::rpcUNKNOWN), message(std::move(message))
     {
     }
 
+    /**
+     * @brief Construct a new Status object
+     *
+     * @param code The error code
+     * @param message The message
+     */
     Status(CombinedError code, std::string message) : code(code), message(std::move(message))
     {
     }
 
+    /**
+     * @brief Construct a new Status object
+     *
+     * @param code The error code
+     * @param error The error
+     * @param message The message
+     */
     Status(CombinedError code, std::string error, std::string message)
         : code(code), error(std::move(error)), message(std::move(message))
     {
     }
 
-    /** @brief Returns true if the Status is *not* OK. */
+    /**
+     * @brief Check if the status is not OK
+     *
+     * @return true if the status is not OK; false otherwise
+     */
     operator bool() const
     {
         if (auto err = std::get_if<RippledError>(&code))
@@ -141,6 +177,13 @@ enum WarningCode { warnUNKNOWN = -1, warnRPC_CLIO = 2001, warnRPC_OUTDATED = 200
 /** @brief Holds information about a clio warning. */
 struct WarningInfo {
     constexpr WarningInfo() = default;
+
+    /**
+     * @brief Construct a new Warning Info object
+     *
+     * @param code The warning code
+     * @param message The warning message
+     */
     constexpr WarningInfo(WarningCode code, char const* message) : code(code), message(message)
     {
     }
@@ -154,10 +197,20 @@ class InvalidParamsError : public std::exception {
     std::string msg;
 
 public:
+    /**
+     * @brief Construct a new Invalid Params Error object
+     *
+     * @param msg The error message
+     */
     explicit InvalidParamsError(std::string msg) : msg(std::move(msg))
     {
     }
 
+    /**
+     * @brief Get the error message as a C string
+     *
+     * @return The error message
+     */
     char const*
     what() const throw() override
     {
@@ -170,10 +223,20 @@ class AccountNotFoundError : public std::exception {
     std::string account;
 
 public:
+    /**
+     * @brief Construct a new Account Not Found Error object
+     *
+     * @param acct The account
+     */
     explicit AccountNotFoundError(std::string acct) : account(std::move(acct))
     {
     }
 
+    /**
+     * @brief Get the error message as a C string
+     *
+     * @return The error message
+     */
     char const*
     what() const throw() override
     {
@@ -224,6 +287,8 @@ makeError(Status const& status);
  * @brief Generate JSON from a @ref rpc::RippledError.
  *
  * @param err The rippled error
+ * @param customError A custom error
+ * @param customMessage A custom message
  * @return The JSON output
  */
 boost::json::object
@@ -237,6 +302,8 @@ makeError(
  * @brief Generate JSON from a @ref rpc::ClioError.
  *
  * @param err The clio's custom error
+ * @param customError A custom error
+ * @param customMessage A custom message
  * @return The JSON output
  */
 boost::json::object

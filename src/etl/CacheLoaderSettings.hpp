@@ -29,6 +29,7 @@ namespace etl {
  * @brief Settings for the cache loader
  */
 struct CacheLoaderSettings {
+    /** @brief Ways to load the cache */
     enum class LoadStyle { ASYNC, SYNC, NONE };
 
     size_t numCacheDiffs = 32;       /**< number of diffs to use to generate cursors */
@@ -54,6 +55,12 @@ struct CacheLoaderSettings {
     isDisabled() const;
 };
 
+/**
+ * @brief Create a CacheLoaderSettings object from a Config object
+ *
+ * @param config The configuration object
+ * @returns The CacheLoaderSettings object
+ */
 [[nodiscard]] CacheLoaderSettings
 make_CacheLoaderSettings(util::Config const& config);
 

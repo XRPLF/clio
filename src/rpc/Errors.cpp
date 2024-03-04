@@ -37,13 +37,13 @@
 using namespace std;
 
 namespace {
-template <class... Ts>
+template <typename... Ts>
 struct overloadSet : Ts... {
     using Ts::operator()...;
 };
 
 // explicit deduction guide (not needed as of C++20, but clang be clang)
-template <class... Ts>
+template <typename... Ts>
 overloadSet(Ts...) -> overloadSet<Ts...>;
 }  // namespace
 
@@ -107,7 +107,7 @@ getErrorInfo(ClioError code)
 }
 
 boost::json::object
-makeError(RippledError err, optional<string_view> customError, optional<string_view> customMessage)
+makeError(RippledError err, std::optional<std::string_view> customError, std::optional<std::string_view> customMessage)
 {
     boost::json::object json;
     auto const& info = ripple::RPC::get_error_info(err);
@@ -122,7 +122,7 @@ makeError(RippledError err, optional<string_view> customError, optional<string_v
 }
 
 boost::json::object
-makeError(ClioError err, optional<string_view> customError, optional<string_view> customMessage)
+makeError(ClioError err, std::optional<std::string_view> customError, std::optional<std::string_view> customMessage)
 {
     boost::json::object json;
     auto const& info = getErrorInfo(err);

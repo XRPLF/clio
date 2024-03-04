@@ -41,10 +41,16 @@ namespace util::async {
  */
 class AnyExecutionContext {
 public:
+    /**
+     * @brief Construct a new type-erased Execution Context object
+     *
+     * @tparam CtxType The type of the execution context to wrap
+     * @param ctx The execution context to wrap
+     */
     template <typename CtxType>
         requires(not std::is_same_v<std::decay_t<CtxType>, AnyExecutionContext>)
-    /* implicit */ AnyExecutionContext(CtxType&& ctx)
-        : pimpl_{std::make_unique<Model<CtxType>>(std::forward<CtxType>(ctx))}
+    /* implicit */
+    AnyExecutionContext(CtxType&& ctx) : pimpl_{std::make_unique<Model<CtxType>>(std::forward<CtxType>(ctx))}
     {
     }
 

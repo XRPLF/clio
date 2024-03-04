@@ -49,6 +49,9 @@ class AccountInfoHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
+    /**
+     * @brief A struct to hold the output data of the command
+     */
     struct Output {
         uint32_t ledgerIndex;
         std::string ledgerHash;
@@ -60,6 +63,17 @@ public:
         // validated should be sent via framework
         bool validated = true;
 
+        /**
+         * @brief Construct a new Output object
+         *
+         * @param ledgerId The ledger index
+         * @param ledgerHash The ledger hash
+         * @param sle The account data
+         * @param isDisallowIncomingEnabled Whether disallow incoming is enabled
+         * @param isClawbackEnabled Whether clawback is enabled
+         * @param version The API version
+         * @param signerLists The signer lists
+         */
         Output(
             uint32_t ledgerId,
             std::string ledgerHash,
@@ -80,8 +94,12 @@ public:
         }
     };
 
-    // "queue" is not available in Reporting mode
-    // "ident" is deprecated, keep it for now, in line with rippled
+    /**
+     * @brief A struct to hold the input data for the command
+     *
+     * `queue` is not available in Reporting mode
+     * `ident` is deprecated, keep it for now, in line with rippled
+     */
     struct Input {
         std::optional<std::string> account;
         std::optional<std::string> ident;
@@ -92,10 +110,21 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Construct a new AccountInfoHandler object
+     *
+     * @param sharedPtrBackend The backend to use
+     */
     AccountInfoHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
+    /**
+     * @brief Returns the API specification for the command
+     *
+     * @param apiVersion The api version to return the spec for
+     * @return The spec for the given apiVersion
+     */
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
@@ -111,13 +140,32 @@ public:
         return apiVersion == 1 ? rpcSpecV1 : rpcSpec;
     }
 
+    /**
+     * @brief Process the AccountInfo command
+     *
+     * @param input The input data for the command
+     * @param ctx The context of the request
+     * @return The result of the operation
+     */
     Result
     process(Input input, Context const& ctx) const;
 
 private:
+    /**
+     * @brief Convert the Output to a JSON object
+     *
+     * @param [out] jv The JSON object to convert to
+     * @param output The output to convert
+     */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
+    /**
+     * @brief Convert a JSON object to Input type
+     *
+     * @param jv The JSON object to convert
+     * @return Input parsed from the JSON object
+     */
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };

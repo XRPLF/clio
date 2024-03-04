@@ -64,6 +64,9 @@ struct MetricBuilderInterface {
     operator()(std::string name, std::string labelsString, MetricType type, std::vector<double> const& buckets) = 0;
 };
 
+/**
+ * @brief Implementation for building a metric
+ */
 class MetricBuilder : public MetricBuilderInterface {
 public:
     std::unique_ptr<MetricBase>

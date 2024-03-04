@@ -32,6 +32,8 @@ namespace util::prometheus {
 
 /**
  * @brief A prometheus gauge metric implementation. It can be increased, decreased or set to a value.
+ *
+ * @tparam NumberType The type of the value of the gauge
  */
 template <SomeNumberType NumberType>
 struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
@@ -40,6 +42,7 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
     /**
      * @brief Construct a new AnyGauge object
      *
+     * @tparam ImplType The type of the implementation of the counter inside the gauge
      * @param name The name of the gauge
      * @param labelsString The labels of the gauge
      * @param impl The implementation of the counter inside the gauge
@@ -54,6 +57,8 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
 
     /**
      * @brief Increase the gauge by one
+     *
+     * @return Reference to self
      */
     AnyGauge&
     operator++()
@@ -64,6 +69,8 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
 
     /**
      * @brief Decrease the gauge by one
+     *
+     * @return Reference to self
      */
     AnyGauge&
     operator--()
@@ -76,6 +83,7 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
      * @brief Increase the gauge by the given value
      *
      * @param value The value to increase the gauge by
+     * @return Reference to self
      */
     AnyGauge&
     operator+=(ValueType const value)
@@ -88,6 +96,7 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
      * @brief Decrease the gauge by the given value
      *
      * @param value The value to decrease the gauge by
+     * @return Reference to self
      */
     AnyGauge&
     operator-=(ValueType const value)
@@ -109,6 +118,8 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
 
     /**
      * @brief Get the value of the counter
+     *
+     * @return The value of the counter
      */
     ValueType
     value() const
@@ -128,7 +139,14 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
     }
 };
 
+/**
+ * @brief Alias for a gauge with a 64-bit integer value
+ */
 using GaugeInt = AnyGauge<std::int64_t>;
+
+/**
+ * @brief Alias for a gauge with a double value
+ */
 using GaugeDouble = AnyGauge<double>;
 
 }  // namespace util::prometheus

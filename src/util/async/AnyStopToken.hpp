@@ -34,6 +34,12 @@ namespace util::async {
  */
 class AnyStopToken {
 public:
+    /**
+     * @brief Construct a new type-erased Stop Token object
+     *
+     * @tparam TokenType The type of the stop token to wrap
+     * @param token The stop token to wrap
+     */
     template <SomeStopToken TokenType>
         requires(not std::is_same_v<std::decay_t<TokenType>, AnyStopToken>)
     /* implicit */ AnyStopToken(TokenType&& token)
@@ -41,6 +47,7 @@ public:
     {
     }
 
+    /** @cond */
     ~AnyStopToken() = default;
 
     AnyStopToken(AnyStopToken const& other) : pimpl_{other.pimpl_->clone()}
@@ -56,25 +63,37 @@ public:
     }
 
     AnyStopToken(AnyStopToken&&) = default;
+
     AnyStopToken&
     operator=(AnyStopToken&&) = default;
+    /** @endcond */
 
-    /** @returns true if stop is requested; false otherwise */
+    /**
+     * @brief Check if stop is requested
+     *
+     * @returns true if stop is requested; false otherwise
+     */
     [[nodiscard]] bool
     isStopRequested() const noexcept
     {
         return pimpl_->isStopRequested();
     }
 
-    /** @returns true if stop is requested; false otherwise */
+    /**
+     * @brief Check if stop is requested
+     *
+     * @returns true if stop is requested; false otherwise
+     */
     [[nodiscard]] operator bool() const noexcept
     {
         return isStopRequested();
     }
 
     /**
-     * @returns The underlying boost::asio::yield_context
+     * @brief Get the underlying boost::asio::yield_context
      * @note ASSERTs if the stop token is not convertible to boost::asio::yield_context
+     *
+     * @returns The underlying boost::asio::yield_context
      */
     [[nodiscard]] operator boost::asio::yield_context() const
     {

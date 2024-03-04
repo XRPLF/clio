@@ -48,17 +48,26 @@ class SubscriptionManager;
 
 namespace rpc {
 
+/**
+ * @brief Handles the `unsubscribe` command which is used to disconnect a subscriber from a feed
+ */
 template <typename SubscriptionManagerType>
 class BaseUnsubscribeHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<SubscriptionManagerType> subscriptions_;
 
 public:
+    /**
+     * @brief A struct to hold one order book
+     */
     struct OrderBook {
         ripple::Book book;
         bool both = false;
     };
 
+    /**
+     * @brief A struct to hold the input data for the command
+     */
     struct Input {
         std::optional<std::vector<std::string>> accounts;
         std::optional<std::vector<std::string>> streams;
@@ -69,6 +78,12 @@ public:
     using Output = VoidOutput;
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Construct a new BaseUnsubscribeHandler object
+     *
+     * @param sharedPtrBackend The backend to use
+     * @param subscriptions The subscription manager to use
+     */
     BaseUnsubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
         std::shared_ptr<SubscriptionManagerType> const& subscriptions
@@ -77,6 +92,12 @@ public:
     {
     }
 
+    /**
+     * @brief Returns the API specification for the command
+     *
+     * @param apiVersion The api version to return the spec for
+     * @return The spec for the given apiVersion
+     */
     RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion) const
     {
@@ -110,6 +131,13 @@ public:
         return rpcSpec;
     }
 
+    /**
+     * @brief Process the Unsubscribe command
+     *
+     * @param input The input data for the command
+     * @param ctx The context of the request
+     * @return The result of the operation
+     */
     Result
     process(Input input, Context const& ctx) const
     {

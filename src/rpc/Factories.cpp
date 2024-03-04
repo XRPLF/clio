@@ -47,10 +47,10 @@ util::Expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
-    shared_ptr<web::ConnectionBase> const& session,
-    TagDecoratorFactory const& tagFactory,
+    std::shared_ptr<web::ConnectionBase> const& session,
+    util::TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
-    string const& clientIp,
+    std::string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser
 )
 {
@@ -76,9 +76,9 @@ Expected<web::Context, Status>
 make_HttpContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
-    TagDecoratorFactory const& tagFactory,
+    util::TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
-    string const& clientIp,
+    std::string const& clientIp,
     std::reference_wrapper<APIVersionParser const> apiVersionParser,
     bool const isAdmin
 )

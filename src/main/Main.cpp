@@ -70,7 +70,7 @@ namespace po = boost::program_options;
  *
  * @param argc
  * @param argv
- * @return std::string Path to configuration file
+ * @return Path to configuration file
  */
 std::string
 parseCli(int argc, char* argv[])
@@ -109,7 +109,7 @@ parseCli(int argc, char* argv[])
  * @brief Parse certificates from configuration file
  *
  * @param config The configuration
- * @return std::optional<ssl::context> SSL context if certificates were parsed
+ * @return SSL context if certificates were parsed
  */
 std::optional<ssl::context>
 parseCerts(Config const& config)

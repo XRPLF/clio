@@ -41,10 +41,7 @@ struct LedgerObject {
     Blob blob;
 
     bool
-    operator==(LedgerObject const& other) const
-    {
-        return key == other.key && blob == other.blob;
-    }
+    operator==(LedgerObject const& other) const = default;
 };
 
 /**
@@ -73,11 +70,25 @@ struct TransactionAndMetadata {
     std::uint32_t date = 0;
 
     TransactionAndMetadata() = default;
+
+    /**
+     * @brief Construct a new Transaction And Metadata object
+     *
+     * @param transaction The transaction
+     * @param metadata The metadata
+     * @param ledgerSequence The ledger sequence
+     * @param date The date
+     */
     TransactionAndMetadata(Blob transaction, Blob metadata, std::uint32_t ledgerSequence, std::uint32_t date)
         : transaction{std::move(transaction)}, metadata{std::move(metadata)}, ledgerSequence{ledgerSequence}, date{date}
     {
     }
 
+    /**
+     * @brief Construct a new Transaction And Metadata object
+     *
+     * @param data The data to construct from
+     */
     TransactionAndMetadata(std::tuple<Blob, Blob, std::uint32_t, std::uint32_t> data)
         : transaction{std::get<0>(data)}
         , metadata{std::get<1>(data)}
@@ -86,6 +97,12 @@ struct TransactionAndMetadata {
     {
     }
 
+    /**
+     * @brief Check if the transaction and metadata are the same as another
+     *
+     * @param other The other transaction and metadata
+     * @return true if they are the same; false otherwise
+     */
     bool
     operator==(TransactionAndMetadata const& other) const
     {
@@ -102,11 +119,23 @@ struct TransactionsCursor {
     std::uint32_t transactionIndex = 0;
 
     TransactionsCursor() = default;
+
+    /**
+     * @brief Construct a new Transactions Cursor object
+     *
+     * @param ledgerSequence The ledger sequence
+     * @param transactionIndex The transaction index
+     */
     TransactionsCursor(std::uint32_t ledgerSequence, std::uint32_t transactionIndex)
         : ledgerSequence{ledgerSequence}, transactionIndex{transactionIndex}
     {
     }
 
+    /**
+     * @brief Construct a new Transactions Cursor object
+     *
+     * @param data The data to construct from
+     */
     TransactionsCursor(std::tuple<std::uint32_t, std::uint32_t> data)
         : ledgerSequence{std::get<0>(data)}, transactionIndex{std::get<1>(data)}
     {
@@ -115,6 +144,11 @@ struct TransactionsCursor {
     bool
     operator==(TransactionsCursor const& other) const = default;
 
+    /**
+     * @brief Convert the cursor to a tuple of seq and index
+     *
+     * @return The cursor as a tuple
+     */
     [[nodiscard]] std::tuple<std::uint32_t, std::uint32_t>
     asTuple() const
     {
@@ -141,6 +175,16 @@ struct NFT {
     bool isBurned{};
 
     NFT() = default;
+
+    /**
+     * @brief Construct a new NFT object
+     *
+     * @param tokenID The token ID
+     * @param ledgerSequence The ledger sequence
+     * @param owner The owner
+     * @param uri The URI
+     * @param isBurned Whether the token is burned
+     */
     NFT(ripple::uint256 const& tokenID,
         std::uint32_t ledgerSequence,
         ripple::AccountID const& owner,
@@ -150,13 +194,28 @@ struct NFT {
     {
     }
 
+    /**
+     * @brief Construct a new NFT object
+     *
+     * @param tokenID The token ID
+     * @param ledgerSequence The ledger sequence
+     * @param owner The owner
+     * @param isBurned Whether the token is burned
+     */
     NFT(ripple::uint256 const& tokenID, std::uint32_t ledgerSequence, ripple::AccountID const& owner, bool isBurned)
         : NFT(tokenID, ledgerSequence, owner, {}, isBurned)
     {
     }
 
-    // clearly two tokens are the same if they have the same ID, but this struct stores the state of a given token at a
-    // given ledger sequence, so we also need to compare with ledgerSequence.
+    /**
+     * @brief Check if the NFT is the same as another
+     *
+     * Clearly two tokens are the same if they have the same ID, but this struct stores the state of a given
+     * token at a given ledger sequence, so we also need to compare with ledgerSequence.
+     *
+     * @param other The other NFT
+     * @return true if they are the same; false otherwise
+     */
     bool
     operator==(NFT const& other) const
     {
@@ -165,7 +224,7 @@ struct NFT {
 };
 
 /**
- * @brief Represents an array of NFTs
+ * @brief Represents a bundle of NFTs with a cursor to the next page
  */
 struct NFTsAndCursor {
     std::vector<NFT> nfts;

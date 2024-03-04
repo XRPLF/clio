@@ -29,11 +29,29 @@ namespace util::prometheus {
  */
 class Label {
 public:
+    /**
+     * @brief Construct a new Label object
+     *
+     * @param name The name of the label
+     * @param value The value of the label
+     */
     Label(std::string name, std::string value);
 
+    /**
+     * @brief Less than operator for labels
+     *
+     * @param rhs The label to compare to
+     * @return true if this label is less than the other; false otherwise
+     */
     bool
     operator<(Label const& rhs) const;
 
+    /**
+     * @brief Compare two labels
+     *
+     * @param rhs The label to compare to
+     * @return true if labels are equal; false otherwise
+     */
     bool
     operator==(Label const& rhs) const;
 
@@ -56,6 +74,12 @@ private:
 class Labels {
 public:
     Labels() = default;
+
+    /**
+     * @brief Construct a new Labels object
+     *
+     * @param labels The labels to add
+     */
     explicit Labels(std::vector<Label> labels);
 
     /**

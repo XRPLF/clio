@@ -68,7 +68,12 @@ namespace web {
  * @tparam SslSessionType The SSL session type
  * @tparam HandlerType The executor to handle the requests
  */
-template <template <class> class PlainSessionType, template <class> class SslSessionType, SomeServerHandler HandlerType>
+template <
+    template <typename>
+    class PlainSessionType,
+    template <typename>
+    class SslSessionType,
+    SomeServerHandler HandlerType>
 class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>> {
     using std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
 
@@ -185,7 +190,12 @@ public:
  * @tparam SslSessionType The SSL session to handle SSL connection.
  * @tparam HandlerType The handler to process the request and return response.
  */
-template <template <class> class PlainSessionType, template <class> class SslSessionType, SomeServerHandler HandlerType>
+template <
+    template <typename>
+    class PlainSessionType,
+    template <typename>
+    class SslSessionType,
+    SomeServerHandler HandlerType>
 class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>> {
     using std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
 
@@ -289,7 +299,7 @@ private:
 };
 
 /** @brief The final type of the HttpServer used by Clio. */
-template <class HandlerType>
+template <typename HandlerType>
 using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
 
 /**
@@ -301,8 +311,9 @@ using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
  * @param ctx The SSL context if any
  * @param dosGuard The dos guard to protect the server
  * @param handler The handler to process the request
+ * @return The server instance
  */
-template <class HandlerType>
+template <typename HandlerType>
 static std::shared_ptr<HttpServer<HandlerType>>
 make_HttpServer(
     util::Config const& config,
