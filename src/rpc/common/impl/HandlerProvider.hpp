@@ -63,7 +63,7 @@ public:
     );
 
     bool
-    contains(std::string const& command) const override;
+    contains(std::string const& method) const override;
 
     std::optional<AnyHandler>
     getHandler(std::string const& command) const override;
