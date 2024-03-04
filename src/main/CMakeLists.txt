@@ -1,3 +1,4 @@
+add_library(clio)
 target_sources(clio PRIVATE impl/Build.cpp)
 
 target_include_directories(clio PUBLIC ${CMAKE_SOURCE_DIR}/src)

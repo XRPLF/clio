@@ -59,5 +59,6 @@ target_link_libraries(
          xrpl::libxrpl
          dl
          libbacktrace::libbacktrace
+         clio_util
   INTERFACE Threads::Threads
 )

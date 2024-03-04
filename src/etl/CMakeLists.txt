@@ -1,4 +1,4 @@
-add_library(clio_etl OBJECT)
+add_library(clio_etl)
 
 target_sources(
   clio_etl
@@ -31,6 +31,6 @@ target_link_libraries(
          xrpl::libxrpl
          dl
          libbacktrace::libbacktrace
-         clio_util
+         clio_data
   INTERFACE Threads::Threads
 )
