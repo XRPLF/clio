@@ -75,7 +75,7 @@ else
     grep_code "#include <\($main_src_dirs\)/.*>" | xargs sed -i -E "s|#include <(($main_src_dirs)/.*)>|#include \"\1\"|g"
 fi
 
-cmake_dirs=$(echo CMake $sources)
+cmake_dirs=$(echo cmake $sources)
 cmake_files=$(find $cmake_dirs -type f \( -name "CMakeLists.txt" -o -name "*.cmake" \))
 cmake_files=$(echo $cmake_files ./CMakeLists.txt)
 
