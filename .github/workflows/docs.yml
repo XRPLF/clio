@@ -2,8 +2,6 @@ name: Documentation
 on:
   push:
     branches: [release/*, develop]
-  pull_request:
-    branches: [release/*, develop]
   workflow_dispatch:
 
 permissions:
@@ -32,6 +30,7 @@ jobs:
         run: |
           mkdir -p build_docs && cd build_docs
           cmake ../docs && cmake --build . --target docs
+      
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
@@ -40,6 +39,7 @@ jobs:
         with:
           path: build_docs/html
           name: docs-develop # TODO: use x.y.z for `release/x.y.z` branches and `develop` for latest dev docs
+      
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
