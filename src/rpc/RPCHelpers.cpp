@@ -368,9 +368,9 @@ insertMPTIssuanceID(
     if (!canHaveMPTIssuanceID(txn, meta))
         return false;
 
-    if (auto const id = getMPTIssuanceID(meta)){
-        metaJson[JS(mpt_issuance_id)] = ripple::to_string(*id);  
-        return true;     
+    if (auto const id = getMPTIssuanceID(meta)) {
+        metaJson[JS(mpt_issuance_id)] = ripple::to_string(*id);
+        return true;
     }
 
     return false;
