@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 START_LINE=`head -n1 $1`
-PATTERN="[A-Z].*"
+PATTERN="[^a-z].*"
 if ! [[ "$START_LINE" =~ $PATTERN ]]; then
   echo "Bad commit message, Please capitalize the first letter of the commit message"
   exit 1
