@@ -21,6 +21,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-20.04
+    continue-on-error: true
     container:
       image: rippleci/clio_ci:latest
     steps:
@@ -38,7 +39,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: build_docs/html
-          name: develop # TODO: use x.y.z for `release/x.y.z` branches and `develop` for latest dev docs
+          name: docs-develop # TODO: use x.y.z for `release/x.y.z` branches and `develop` for latest dev docs
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
