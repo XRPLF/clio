@@ -21,7 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
-#include "util/log/Logger.hpp"
+#include "etl/impl/BaseCursorProvider.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/io_context.hpp>
@@ -39,25 +39,19 @@
 
 namespace etl::impl {
 
-struct CursorPair {
-    ripple::uint256 start;
-    ripple::uint256 end;
-};
-
-class CursorProvider {
-    util::Logger log_{"ETL"};
+class CursorFromFixDiffNumProvider : public BaseCursorProvider {
     std::shared_ptr<BackendInterface> backend_;
 
     size_t numDiffs_;
 
 public:
-    CursorProvider(std::shared_ptr<BackendInterface> const& backend, size_t numDiffs)
+    CursorFromFixDiffNumProvider(std::shared_ptr<BackendInterface> const& backend, size_t numDiffs)
         : backend_{backend}, numDiffs_{numDiffs}
     {
     }
 
     [[nodiscard]] std::vector<CursorPair>
-    getCursors(uint32_t const seq) const
+    getCursors(uint32_t const seq) const override
     {
         namespace rg = std::ranges;
         namespace vs = std::views;

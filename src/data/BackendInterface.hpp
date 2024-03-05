@@ -200,6 +200,19 @@ public:
     fetchLedgerRange() const;
 
     /**
+     * @brief Fetch the specified number of account root object indexes by page, the accounts need to exist for seq.
+     *
+     * @param number The number of accounts to fetch
+     * @param pageSize The maximum number of accounts per page
+     * @param seq The accounts need to exist for this sequence
+     * @param yield The coroutine context
+     * @return A vector of ripple::uint256 representing the account roots
+     */
+    virtual std::vector<ripple::uint256>
+    fetchAccountRoots(std::uint32_t number, std::uint32_t pageSize, std::uint32_t seq, boost::asio::yield_context yield)
+        const = 0;
+
+    /**
      * @brief Updates the range of sequences that are stored in the DB.
      *
      * @param newMax The new maximum sequence available

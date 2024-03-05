@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "data/Types.hpp"
-#include "etl/impl/CursorProvider.hpp"
+#include "etl/impl/CursorFromFixDiffNumProvider.hpp"
 #include "etl/impl/FakeDiffProvider.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockPrometheus.hpp"
@@ -58,7 +58,7 @@ TEST_P(ParametrizedCursorProviderTest, GetCursorsWithDifferentProviderSettings)
 {
     auto const numDiffs = GetParam();
     auto const diffs = diffProvider.getLatestDiff();
-    auto const provider = etl::impl::CursorProvider{backend, numDiffs};
+    auto const provider = etl::impl::CursorFromFixDiffNumProvider{backend, numDiffs};
 
     ON_CALL(*backend, fetchLedgerDiff(_, _)).WillByDefault(Return(diffs));
     EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(numDiffs);
@@ -73,7 +73,7 @@ TEST_P(ParametrizedCursorProviderTest, GetCursorsWithDifferentProviderSettings)
 TEST_F(CursorProviderTest, EmptyCursorIsHandledCorrectly)
 {
     auto const diffs = diffProvider.getLatestDiff();
-    auto const provider = etl::impl::CursorProvider{backend, 0};
+    auto const provider = etl::impl::CursorFromFixDiffNumProvider{backend, 0};
 
     ON_CALL(*backend, fetchLedgerDiff(_, _)).WillByDefault(Return(diffs));
     EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(0);

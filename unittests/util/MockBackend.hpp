@@ -141,6 +141,13 @@ struct MockBackend : public BackendInterface {
     );
 
     MOCK_METHOD(
+        std::vector<ripple::uint256>,
+        fetchAccountRoots,
+        (std::uint32_t, std::uint32_t, std::uint32_t, boost::asio::yield_context),
+        (const, override)
+    );
+
+    MOCK_METHOD(
         std::optional<Blob>,
         doFetchLedgerObject,
         (ripple::uint256 const&, std::uint32_t const, boost::asio::yield_context),

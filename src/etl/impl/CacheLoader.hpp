@@ -21,7 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "etl/ETLHelpers.hpp"
-#include "etl/impl/CursorProvider.hpp"
+#include "etl/impl/BaseCursorProvider.hpp"
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/async/AnyOperation.hpp"
 #include "util/log/Logger.hpp"
@@ -38,7 +38,6 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <optional>
 #include <ranges>
 #include <string>
 #include <vector>
