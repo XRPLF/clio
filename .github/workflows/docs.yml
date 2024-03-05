@@ -23,10 +23,6 @@ jobs:
     runs-on: ubuntu-20.04
     container:
       image: rippleci/clio_ci:latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -36,7 +32,7 @@ jobs:
           mkdir -p build_docs && cd build_docs
           cmake ../docs && cmake --build . --target docs
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v3
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -45,4 +41,4 @@ jobs:
           name: develop # TODO: use x.y.z for `release/x.y.z` branches and `develop` for latest dev docs
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v3
