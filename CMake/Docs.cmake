@@ -1,7 +1,7 @@
 find_package(Doxygen REQUIRED)
 
 # See Doxyfile for these settings:
-set(SOURCE ${CMAKE_CURRENT_SOURCE_DIR})
+set(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(USE_DOT "YES")
 set(LINT "NO")
 set(EXCLUDES "")
