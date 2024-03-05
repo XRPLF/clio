@@ -84,6 +84,7 @@ class Clio(ConanFile):
         tc.variables['lint'] = self.options.lint
         tc.variables['docs'] = self.options.docs
         tc.variables['packaging'] = self.options.packaging
+        tc.variables['benchmark'] = self.options.benchmark
         tc.generate()
 
     def build(self):

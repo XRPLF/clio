@@ -4,6 +4,4 @@ target_sources(
                     impl/ProposedTransactionFeed.cpp impl/SingleFeedBase.cpp
 )
 
-target_include_directories(clio_feed PUBLIC ${CMAKE_SOURCE_DIR}/src)
-
 target_link_libraries(clio_feed PRIVATE clio_util)

@@ -1,12 +1,7 @@
 add_library(clio)
 target_sources(clio PRIVATE impl/Build.cpp)
 
-target_include_directories(clio PUBLIC ${CMAKE_SOURCE_DIR}/src)
-
-target_link_libraries(clio PUBLIC clio_data clio_etl clio_feed clio_web clio_rpc)
-
-# TODO: Include directory will be wrong when installed.
-target_include_directories(clio PUBLIC src)
+target_link_libraries(clio PUBLIC clio_etl clio_feed clio_web clio_rpc)
 
 target_compile_features(clio PUBLIC cxx_std_20)
 
