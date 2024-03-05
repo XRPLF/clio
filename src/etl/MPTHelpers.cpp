@@ -30,6 +30,12 @@
 
 namespace etl {
 
+/**
+ * @brief Get the MPToken created from a transaction
+ *
+ * @param txMeta Transaction metadata
+ * @return MPT and holder account pair
+ */
 static std::optional<std::pair<ripple::uint192, ripple::AccountID>>
 getMPTokenAuthorize(ripple::TxMeta const& txMeta)
 {

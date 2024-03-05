@@ -315,6 +315,12 @@ insertDeliveredAmount(
     return false;
 }
 
+/**
+ * @brief Get the delivered amount
+ *
+ * @param meta The metadata
+ * @return The mpt_issuance_id or std::nullopt if not available
+ */
 static std::optional<ripple::uint192>
 getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
 {
@@ -332,6 +338,12 @@ getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
     return {};
 }
 
+/**
+ * @brief Check if transaction has a new MPToken created
+ *
+ * @param meta The metadata
+ * @return True or false
+ */
 static bool
 canHaveMPTIssuanceID(std::shared_ptr<ripple::STTx const> const& txn, std::shared_ptr<ripple::TxMeta const> const& meta)
 {

@@ -192,6 +192,11 @@ insertDeliveredAmount(
 
 /**
  * @brief Add "mpt_issuance_id" into MPTokenIssuanceCreate transaction json.
+ *
+ * @param metaJson The metadata json object to add "DeliveredAmount"
+ * @param txn The transaction object
+ * @param meta The metadata object
+ * @return true if the "mpt_issuance_id" is added to the metadata json object
  */
 bool
 insertMPTIssuanceID(
