@@ -8,6 +8,7 @@ target_sources(
           LoadBalancer.cpp
           CacheLoaderSettings.cpp
           Source.cpp
+          impl/ForwardingCache.cpp
           impl/ForwardingSource.cpp
           impl/GrpcSource.cpp
           impl/SubscriptionSource.cpp

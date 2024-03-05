@@ -21,6 +21,7 @@ target_sources(
           etl/ETLStateTests.cpp
           etl/ExtractionDataPipeTests.cpp
           etl/ExtractorTests.cpp
+          etl/ForwardingCacheTests.cpp
           etl/ForwardingSourceTests.cpp
           etl/GrpcSourceTests.cpp
           etl/LedgerPublisherTests.cpp
