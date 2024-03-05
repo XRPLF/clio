@@ -898,7 +898,7 @@ public:
             auto const mptId = record.first;
             auto const holder = record.second;
 
-            statements.push_back(schema_->insertMPTHolder.bind(mpt_id, holder));
+            statements.push_back(schema_->insertMPTHolder.bind(mptId, holder));
         }
 
         executor_.write(std::move(statements));
