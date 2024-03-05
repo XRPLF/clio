@@ -600,32 +600,6 @@ public:
             ));
         }();
 
-        PreparedStatement selectAccountFromBegin = [this]() {
-            return handle_.get().prepare(fmt::format(
-                R"(
-                SELECT account 
-                FROM {} 
-                WHERE token(account) > 0               
-                PER PARTITION LIMIT 1              
-                LIMIT ?
-                )",
-                qualifiedTableName(settingsProvider_.get(), "account_tx")
-            ));
-        }();
-
-        PreparedStatement selectAccountFromToken = [this]() {
-            return handle_.get().prepare(fmt::format(
-                R"(
-                SELECT account 
-                FROM {} 
-                WHERE token(account) > token(?)               
-                PER PARTITION LIMIT 1              
-                LIMIT ? 
-                )",
-                qualifiedTableName(settingsProvider_.get(), "account_tx")
-            ));
-        }();
-
         PreparedStatement selectNFT = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
