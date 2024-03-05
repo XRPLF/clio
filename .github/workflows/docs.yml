@@ -20,7 +20,9 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    container:
+      image: rippleci/clio_ci:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
