@@ -42,5 +42,6 @@ jobs:
           name: docs-develop # TODO: use x.y.z for `release/x.y.z` branches and `develop` for latest dev docs
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v3
-        artifact_name: docs-develop
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: docs-develop
