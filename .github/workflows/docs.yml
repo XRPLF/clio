@@ -23,6 +23,10 @@ jobs:
     runs-on: ubuntu-20.04
     container:
       image: rippleci/clio_ci:latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
