@@ -895,7 +895,7 @@ public:
     {
         std::vector<Statement> statements;
         for (auto const& record : data) {
-            auto const mpt_id = record.first;
+            auto const mptId = record.first;
             auto const holder = record.second;
 
             statements.push_back(schema_->insertMPTHolder.bind(mpt_id, holder));
