@@ -68,7 +68,7 @@ target_link_libraries(
   PUBLIC fmt::fmt
   PUBLIC OpenSSL::Crypto
   PUBLIC OpenSSL::SSL
-  PUBLIC xrpl::libxrpl
+  PUBLIC xrpl-mpt::libxrpl
   PUBLIC dl
   PUBLIC libbacktrace::libbacktrace
   INTERFACE Threads::Threads
