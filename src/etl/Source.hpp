@@ -241,6 +241,8 @@ using Source = SourceImpl<>;
  * @param validatedLedgers The network validated ledgers data structure
  * @param onDisconnect The hook to call on disconnect
  * @param onConnect The hook to call on connect
+ * @param onLedgerClosed The hook to call on ledger closed. This is called when a ledger is closed and the source is set
+ * as forwarding.
  * @return The created source
  */
 Source
