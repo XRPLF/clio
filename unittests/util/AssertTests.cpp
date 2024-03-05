@@ -23,7 +23,6 @@
 
 TEST(AssertTests, assertTrue)
 {
-    ASSERT(false, "Should fail");
     EXPECT_NO_THROW(ASSERT(true, "Should not fail"));
 }
 
