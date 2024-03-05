@@ -124,16 +124,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountObjectsHa
         std::cbegin(output.accountObjects),
         std::cend(output.accountObjects),
         std::back_inserter(objects),
-        [](auto const& sle) {
-            auto sleJson = toJson(sle);
-
-            // if object type if mpt issuance, inject synthetic mpt id
-            if (sle.getType() == ripple::ltMPTOKEN_ISSUANCE)
-                sleJson[JS(mpt_issuance_id)] =
-                    ripple::to_string(ripple::getMptID(sle[ripple::sfIssuer], sle[ripple::sfSequence]));
-
-            return sleJson;
-        }
+        [](auto const& sle) { return toJson(sle); }
     );
 
     jv = {

@@ -139,14 +139,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
                 entry[JS(index)] = ripple::to_string(sle.key());
                 output.states.push_back(std::move(entry));
             } else {
-                auto sleJson = toJson(sle);
-
-                // if object type if mpt issuance, inject synthetic mpt id
-                if (sle.getType() == ripple::ltMPTOKEN_ISSUANCE)
-                    sleJson[JS(mpt_issuance_id)] =
-                        ripple::to_string(ripple::getMptID(sle[ripple::sfIssuer], sle[ripple::sfSequence]));
-
-                output.states.push_back(sleJson);
+                output.states.push_back(toJson(sle));
             }
         }
     }
