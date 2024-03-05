@@ -5,6 +5,7 @@
 .cache
 .vscode
 .python-version
+.DS_Store
 CMakeUserPresets.json
 config.json
 src/main/impl/Build.cpp

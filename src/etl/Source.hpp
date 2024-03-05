@@ -68,6 +68,7 @@ class SourceImpl {
 public:
     using OnConnectHook = impl::SubscriptionSource::OnConnectHook;
     using OnDisconnectHook = impl::SubscriptionSource::OnDisconnectHook;
+    using OnLedgerClosedHook = impl::SubscriptionSource::OnLedgerClosedHook;
 
     /**
      * @brief Construct a new SourceImpl object
@@ -80,7 +81,7 @@ public:
      * @param forwardingSource The forwarding source
      */
     template <typename SomeGrpcSourceType, typename SomeForwardingSourceType>
-        requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType> &&
+        requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType> and
                      std::is_same_v<ForwardingSourceType, SomeForwardingSourceType>
     SourceImpl(
         std::string ip,
@@ -250,7 +251,8 @@ make_Source(
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
     Source::OnDisconnectHook onDisconnect,
-    Source::OnConnectHook onConnect
+    Source::OnConnectHook onConnect,
+    Source::OnLedgerClosedHook onLedgerClosed
 );
 
 }  // namespace etl

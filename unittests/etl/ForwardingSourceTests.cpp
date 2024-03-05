@@ -28,6 +28,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -47,7 +48,7 @@ TEST_F(ForwardingSourceTests, ConnectionFailed)
 }
 
 struct ForwardingSourceOperationsTests : ForwardingSourceTests {
-    std::string const message_ = R"({"data":"some_data"})";
+    std::string const message_ = R"({"data": "some_data"})";
     boost::json::object const reply_ = {{"reply", "some_reply"}};
 
     TestWsConnection
@@ -83,9 +84,31 @@ TEST_F(ForwardingSourceOperationsTests, ParseFailed)
 
         auto receivedMessage = connection.receive(yield);
         [&]() { ASSERT_TRUE(receivedMessage); }();
-        EXPECT_EQ(*receivedMessage, message_);
+        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_)) << *receivedMessage;
 
         auto sendError = connection.send("invalid_json", yield);
+        [&]() { ASSERT_FALSE(sendError) << *sendError; }();
+
+        connection.close(yield);
+    });
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, yield);
+        EXPECT_FALSE(result);
+    });
+}
+
+TEST_F(ForwardingSourceOperationsTests, GotNotAnObject)
+{
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto connection = serverConnection(yield);
+
+        auto receivedMessage = connection.receive(yield);
+        [&]() { ASSERT_TRUE(receivedMessage); }();
+        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_)) << *receivedMessage;
+
+        auto sendError = connection.send(R"(["some_value"])", yield);
+
         [&]() { ASSERT_FALSE(sendError) << *sendError; }();
 
         connection.close(yield);
@@ -104,7 +127,7 @@ TEST_F(ForwardingSourceOperationsTests, Success)
 
         auto receivedMessage = connection.receive(yield);
         [&]() { ASSERT_TRUE(receivedMessage); }();
-        EXPECT_EQ(*receivedMessage, message_);
+        EXPECT_EQ(boost::json::parse(*receivedMessage), boost::json::parse(message_)) << *receivedMessage;
 
         auto sendError = connection.send(boost::json::serialize(reply_), yield);
         [&]() { ASSERT_FALSE(sendError) << *sendError; }();
