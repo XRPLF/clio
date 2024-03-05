@@ -341,8 +341,9 @@ getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
 /**
  * @brief Check if transaction has a new MPToken created
  *
+ * @param txn The transaction
  * @param meta The metadata
- * @return True or false
+ * @return true if the transaction can have a mpt_issuance_id
  */
 static bool
 canHaveMPTIssuanceID(std::shared_ptr<ripple::STTx const> const& txn, std::shared_ptr<ripple::TxMeta const> const& meta)
