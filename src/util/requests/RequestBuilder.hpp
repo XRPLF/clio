@@ -62,7 +62,7 @@ public:
      * @brief Add a header to the request
      *
      * @param header header to add
-     * @return reference to itself
+     * @return Reference to itself
      */
     RequestBuilder&
     addHeader(HttpHeader const& header);
@@ -71,7 +71,7 @@ public:
      * @brief Add headers to the request
      *
      * @param headers headers to add
-     * @return reference to itself
+     * @return Reference to itself
      */
     RequestBuilder&
     addHeaders(std::vector<HttpHeader> const& headers);
@@ -80,7 +80,7 @@ public:
      * @brief Add body or data to the request
      *
      * @param data data to add
-     * @return reference to itself
+     * @return Reference to itself
      */
     RequestBuilder&
     addData(std::string data);
@@ -91,7 +91,7 @@ public:
      * @note Default timeout is defined in DEFAULT_TIMEOUT
      *
      * @param timeout timeout to set
-     * @return reference to itself
+     * @return Reference to itself
      */
     RequestBuilder&
     setTimeout(std::chrono::milliseconds timeout);
@@ -102,7 +102,7 @@ public:
      * @note Default target is "/"
      *
      * @param target target to set
-     * @return reference to itself
+     * @return Reference to itself
      */
     RequestBuilder&
     setTarget(std::string_view target);
@@ -114,7 +114,7 @@ public:
      * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
      *
      * @param yield yield context
-     * @return expected response or error
+     * @return Expected response or error
      */
     Expected<std::string, RequestError>
     getSsl(boost::asio::yield_context yield);
@@ -126,7 +126,7 @@ public:
      * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
      *
      * @param yield yield context
-     * @return expected response or error
+     * @return Expected response or error
      */
     Expected<std::string, RequestError>
     getPlain(boost::asio::yield_context yield);
@@ -139,7 +139,7 @@ public:
      * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
      *
      * @param yield yield context
-     * @return expected response or error
+     * @return Expected response or error
      */
     Expected<std::string, RequestError>
     get(boost::asio::yield_context yield);
@@ -151,7 +151,7 @@ public:
      * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
      *
      * @param yield yield context
-     * @return expected response or error
+     * @return Expected response or error
      */
     Expected<std::string, RequestError>
     postSsl(boost::asio::yield_context yield);
@@ -163,7 +163,7 @@ public:
      * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
      *
      * @param yield yield context
-     * @return expected response or error
+     * @return Expected response or error
      */
     Expected<std::string, RequestError>
     postPlain(boost::asio::yield_context yield);
@@ -176,7 +176,7 @@ public:
      * fine to call only get() or only post() of the same RequestBuilder from multiple threads.
      *
      * @param yield yield context
-     * @return expected response or error
+     * @return Expected response or error
      */
     Expected<std::string, RequestError>
     post(boost::asio::yield_context yield);

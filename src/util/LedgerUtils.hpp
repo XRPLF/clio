@@ -36,7 +36,7 @@ namespace util {
 /**
  * @brief Returns a string set of all supported ledger entry types
  *
- * @return const& The set of ledger entry types
+ * @return The set of ledger entry types
  */
 std::unordered_set<std::string> const&
 getLedgerEntryTypeStrs();
@@ -53,7 +53,7 @@ getLedgerEntryTypeFromStr(std::string const& entryName);
 /**
  * @brief Return the list of ledger entry types which will block the account deletion
  *
- * @return const& The list of ledger entry types
+ * @return The list of ledger entry types
  */
 std::vector<ripple::LedgerEntryType> const&
 getDeletionBlockerLedgerTypes();

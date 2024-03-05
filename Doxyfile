@@ -1,6 +1,6 @@
 PROJECT_NAME           = "Clio"
-PROJECT_LOGO           = ../docs/img/xrpl-logo.svg
-PROJECT_NUMBER         = @DOC_CLIO_VERSION@
+PROJECT_LOGO           = ${SOURCE}/docs/img/xrpl-logo.svg
+PROJECT_NUMBER         = ${DOC_CLIO_VERSION}
 PROJECT_BRIEF          = The XRP Ledger API server.
 
 EXTRACT_ALL            = NO
@@ -12,16 +12,16 @@ EXTRACT_ANON_NSPACES   = NO
 
 SORT_MEMBERS_CTORS_1ST = YES
 
-INPUT                  = ../src
-EXCLUDE_SYMBOLS        = impl
+INPUT                  = ${SOURCE}/src
+EXCLUDE_SYMBOLS        = ${EXCLUDES}
 RECURSIVE              = YES
-HAVE_DOT               = YES
+HAVE_DOT               = ${USE_DOT}
 
 QUIET                  = YES
-WARNINGS               = YES
-WARN_NO_PARAMDOC       = YES
-WARN_IF_INCOMPLETE_DOC = YES
-WARN_IF_UNDOCUMENTED   = YES
+WARNINGS               = ${LINT}
+WARN_NO_PARAMDOC       = ${LINT}
+WARN_IF_INCOMPLETE_DOC = ${LINT}
+WARN_IF_UNDOCUMENTED   = ${LINT}
 
 GENERATE_LATEX         = NO
 GENERATE_HTML          = YES
@@ -31,12 +31,12 @@ SORT_MEMBERS_CTORS_1ST = YES
 GENERATE_TREEVIEW      = YES
 DISABLE_INDEX          = NO
 FULL_SIDEBAR           = NO
-HTML_HEADER            = ../docs/doxygen-awesome-theme/header.html
-HTML_EXTRA_STYLESHEET  = ../docs/doxygen-awesome-theme/doxygen-awesome.css \
-                         ../docs/doxygen-awesome-theme/doxygen-awesome-sidebar-only.css \
-                         ../docs/doxygen-awesome-theme/doxygen-awesome-sidebar-only-darkmode-toggle.css 
-HTML_EXTRA_FILES       = ../docs/doxygen-awesome-theme/doxygen-awesome-darkmode-toggle.js \
-                         ../docs/doxygen-awesome-theme/doxygen-awesome-interactive-toc.js
+HTML_HEADER            = ${SOURCE}/docs/doxygen-awesome-theme/header.html
+HTML_EXTRA_STYLESHEET  = ${SOURCE}/docs/doxygen-awesome-theme/doxygen-awesome.css \
+                         ${SOURCE}/docs/doxygen-awesome-theme/doxygen-awesome-sidebar-only.css \
+                         ${SOURCE}/docs/doxygen-awesome-theme/doxygen-awesome-sidebar-only-darkmode-toggle.css 
+HTML_EXTRA_FILES       = ${SOURCE}/docs/doxygen-awesome-theme/doxygen-awesome-darkmode-toggle.js \
+                         ${SOURCE}/docs/doxygen-awesome-theme/doxygen-awesome-interactive-toc.js
 
 HTML_COLORSTYLE        = LIGHT
 HTML_COLORSTYLE_HUE    = 209

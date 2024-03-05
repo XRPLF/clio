@@ -67,7 +67,7 @@ getRootCertificate()
 {
     for (auto const& path : CERT_FILE_PATHS) {
         if (std::filesystem::exists(path)) {
-            std::ifstream fileStream{path, std::ios::in};
+            std::ifstream const fileStream{path, std::ios::in};
             if (not fileStream.is_open()) {
                 continue;
             }
