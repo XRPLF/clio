@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 START_LINE=`head -n1 $1`
 PATTERN="[^a-z].*"
 if ! [[ "$START_LINE" =~ $PATTERN ]]; then
