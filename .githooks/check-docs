@@ -30,7 +30,7 @@ fi
 mkdir -p ${DOCDIR} > /dev/null 2>&1
 pushd ${DOCDIR} > /dev/null 2>&1
 
-cat ${ROOT}/Doxyfile | \
+cat ${ROOT}/docs/Doxyfile | \
 sed \
     -e "s/\${LINT}/YES/" \
     -e "s!\${SOURCE}!${ROOT}!" \
