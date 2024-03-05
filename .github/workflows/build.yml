@@ -17,12 +17,27 @@ jobs:
       - name: Run formatters
         id: run_formatters
         run: |
-          ./.githooks/pre-commit
+          ./.githooks/check-format
+        shell: bash
+  
+  check_docs:
+    name: Check documentation
+    runs-on: ubuntu-20.04
+    container:
+      image: rippleci/clio_ci:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run linter
+        id: run_linter
+        run: |
+          ./.githooks/check-docs
         shell: bash
 
   build:
     name: Build
-    needs: check_format
+    needs: 
+      - check_format 
+      - check_docs
     strategy:
       fail-fast: false
       matrix:

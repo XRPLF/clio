@@ -168,6 +168,9 @@ public:
     /**
      * @brief Constructs a validator that calls the given validator `req` and returns a custom error `err` in case `req`
      * fails.
+     *
+     * @param req The requirement to validate against
+     * @param err The custom error to return in case `req` fails
      */
     WithCustomError(SomeRequirement req, Status err) : requirement{std::move(req)}, error{std::move(err)}
     {

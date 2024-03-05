@@ -199,7 +199,7 @@ public:
     /**
      * @brief Instantiates the TagDecorator specified by `type_` with parent bound from `parent_`.
      *
-     * @return std::unique_ptr<BaseTagDecorator> An instance of the requested decorator
+     * @return An instance of the requested decorator
      */
     std::unique_ptr<BaseTagDecorator>
     make() const;
@@ -254,6 +254,7 @@ protected:
 public:
     virtual ~Taggable() = default;
     Taggable(Taggable&&) = default;
+
     Taggable&
     operator=(Taggable&&) = default;
 

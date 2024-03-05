@@ -36,11 +36,20 @@ class CassandraError {
     uint32_t code_{};
 
 public:
-    CassandraError() = default;  // default constructible required by Expected
+    // default constructible required by Expected
+    CassandraError() = default;
+
+    /**
+     * @brief Construct a new CassandraError object
+     *
+     * @param message The error message
+     * @param code The error code
+     */
     CassandraError(std::string message, uint32_t code) : message_{std::move(message)}, code_{code}
     {
     }
 
+    /** @cond */
     template <typename T>
     friend std::string
     operator+(T const& lhs, CassandraError const& rhs)
@@ -70,6 +79,7 @@ public:
         os << err.message();
         return os;
     }
+    /** @endcond */
 
     /**
      * @return The final error message as a std::string

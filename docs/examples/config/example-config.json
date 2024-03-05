@@ -35,6 +35,7 @@
             "grpc_port": "50051"
         }
     ],
+    "forwarding_cache_timeout": 0.250, // in seconds, could be 0, which means no cache
     "dos_guard": {
         // Comma-separated list of IPs to exclude from rate limiting
         "whitelist": [

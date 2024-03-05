@@ -39,6 +39,12 @@ namespace util::async {
  */
 class AnyStrand {
 public:
+    /**
+     * @brief Construct a new Any Strand object
+     *
+     * @tparam StrandType The type of the strand to wrap
+     * @param strand The strand to wrap
+     */
     template <typename StrandType>
         requires(not std::is_same_v<std::decay_t<StrandType>, AnyStrand>)
     /* implicit */ AnyStrand(StrandType&& strand)
@@ -48,7 +54,12 @@ public:
 
     ~AnyStrand() = default;
 
-    /** @brief Execute a function without a stop token on the strand */
+    /**
+     * @brief Execute a function without a stop token on the strand
+     *
+     * @param fn The function to execute
+     * @return The type-erased operation
+     */
     [[nodiscard]] auto
     execute(SomeHandlerWithoutStopToken auto&& fn)
     {
@@ -67,7 +78,12 @@ public:
         );
     }
 
-    /** @brief Execute a function taking a stop token on the strand */
+    /**
+     * @brief Execute a function taking a stop token on the strand
+     *
+     * @param fn The function to execute
+     * @return The type-erased operation
+     */
     [[nodiscard]] auto
     execute(SomeHandlerWith<AnyStopToken> auto&& fn)
     {
@@ -86,7 +102,13 @@ public:
         );
     }
 
-    /** @brief Execute a function taking a stop token on the strand with a timeout */
+    /**
+     * @brief Execute a function taking a stop token on the strand with a timeout
+     *
+     * @param fn The function to execute
+     * @param timeout The timeout for the function
+     * @return The type-erased operation
+     */
     [[nodiscard]] auto
     execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
     {

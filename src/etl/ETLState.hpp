@@ -44,7 +44,7 @@ struct ETLState {
      */
     template <typename Forward>
     static std::optional<ETLState>
-    fetchETLStateFromSource(Forward const& source) noexcept
+    fetchETLStateFromSource(Forward& source) noexcept
     {
         auto const serverInfoRippled = data::synchronous([&source](auto yield) {
             return source.forwardToRippled({{"command", "server_info"}}, std::nullopt, yield);
@@ -57,6 +57,12 @@ struct ETLState {
     }
 };
 
+/**
+ * @brief Parse a boost::json::value into a ETLState
+ *
+ * @param jv The json value to convert
+ * @return The ETLState
+ */
 ETLState
 tag_invoke(boost::json::value_to_tag<ETLState>, boost::json::value const& jv);
 

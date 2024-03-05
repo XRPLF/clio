@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# Note: This script is intended to be run from the root of the repository.
+#
+# Not really a hook but should be used to check the completness of documentation for added code, otherwise CI will come for you.
+# It's good to have /tmp as the output so that consecutive runs are fast but no clutter in the repository.
+
+echo "+ Checking documentation..."
+
+ROOT=$(pwd)
+DOXYGEN=$(command -v doxygen)
+TMPDIR=${ROOT}/.cache/doxygen
+TMPFILE=${TMPDIR}/docs.log
+DOCDIR=${TMPDIR}/out
+
+if [ -z "$DOXYGEN" ]; then
+    # No hard error if doxygen is not installed yet
+    cat <<EOF
+
+                                   WARNING
+-----------------------------------------------------------------------------
+        'doxygen' is required to check documentation.
+        Please install it for next time. For the time being it's on CI.
+-----------------------------------------------------------------------------
+
+EOF
+    exit 0
+fi
+
+mkdir -p ${DOCDIR} > /dev/null 2>&1
+pushd ${DOCDIR} > /dev/null 2>&1
+
+cat ${ROOT}/docs/Doxyfile | \
+sed \
+    -e "s/\${LINT}/YES/" \
+    -e "s!\${SOURCE}!${ROOT}!" \
+    -e "s/\${USE_DOT}/NO/" \
+    -e "s/\${EXCLUDES}/impl/" \
+| ${DOXYGEN} - 2> ${TMPFILE} 1> /dev/null
+
+# We don't want to check for default values and typedefs as well as for member variables
+OUT=$(cat ${TMPFILE} \
+    | grep -v "=default" \
+    | grep -v "\(variable\)" \
+    | grep -v "\(typedef\)")
+
+rm -rf ${TMPFILE} > /dev/null 2>&1
+popd > /dev/null 2>&1
+
+if [[ ! -z "$OUT" ]]; then
+    cat <<EOF
+
+                                    ERROR
+-----------------------------------------------------------------------------
+                      Found issues with documentation:
+
+$OUT
+-----------------------------------------------------------------------------
+
+EOF
+    exit 2
+fi

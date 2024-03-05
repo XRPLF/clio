@@ -51,6 +51,7 @@ public:
     {
     }
 
+    /** @cond */
     ~AnyHandler() = default;
     AnyHandler(AnyHandler const& other) : pimpl_{other.pimpl_->clone()}
     {
@@ -67,6 +68,7 @@ public:
     AnyHandler(AnyHandler&&) = default;
     AnyHandler&
     operator=(AnyHandler&&) = default;
+    /** @endcond */
 
     /**
      * @brief Process incoming JSON by the stored handler

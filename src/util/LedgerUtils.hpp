@@ -34,19 +34,26 @@
 namespace util {
 
 /**
- * @brief Returns a string set of all supported ledger entry types.
+ * @brief Returns a string set of all supported ledger entry types
+ *
+ * @return The set of ledger entry types
  */
 std::unordered_set<std::string> const&
 getLedgerEntryTypeStrs();
 
 /**
- * @brief Return the ledger type from a string representation.
+ * @brief Return the ledger type from a string representation
+ *
+ * @param entryName The string representation of the ledger entry type
+ * @return The ledger entry type
  */
 ripple::LedgerEntryType
 getLedgerEntryTypeFromStr(std::string const& entryName);
 
 /**
- * @brief Return the list of ledger entry types which will block the account deletion.
+ * @brief Return the list of ledger entry types which will block the account deletion
+ *
+ * @return The list of ledger entry types
  */
 std::vector<ripple::LedgerEntryType> const&
 getDeletionBlockerLedgerTypes();

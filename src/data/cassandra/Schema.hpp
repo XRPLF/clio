@@ -34,6 +34,14 @@
 
 namespace data::cassandra {
 
+/**
+ * @brief Returns the table name qualified with the keyspace and table prefix
+ *
+ * @tparam SettingsProviderType The settings provider type
+ * @param provider The settings provider
+ * @param name The name of the table
+ * @return The qualified table name
+ */
 template <SomeSettingsProvider SettingsProviderType>
 [[nodiscard]] std::string inline qualifiedTableName(SettingsProviderType const& provider, std::string_view name)
 {
@@ -49,6 +57,11 @@ class Schema {
     std::reference_wrapper<SettingsProviderType const> settingsProvider_;
 
 public:
+    /**
+     * @brief Construct a new Schema object
+     *
+     * @param settingsProvider The settings provider
+     */
     explicit Schema(SettingsProviderType const& settingsProvider) : settingsProvider_{std::cref(settingsProvider)}
     {
     }
@@ -279,6 +292,12 @@ public:
         std::reference_wrapper<Handle const> handle_;
 
     public:
+        /**
+         * @brief Construct a new Statements object
+         *
+         * @param settingsProvider The settings provider
+         * @param handle The handle to the DB
+         */
         Statements(SettingsProviderType const& settingsProvider, Handle const& handle)
             : settingsProvider_{settingsProvider}, handle_{std::cref(handle)}
         {
@@ -713,6 +732,8 @@ public:
 
     /**
      * @brief Recreates the prepared statements.
+     *
+     * @param handle The handle to the DB
      */
     void
     prepareStatements(Handle const& handle)
@@ -724,6 +745,8 @@ public:
 
     /**
      * @brief Provides access to statements.
+     *
+     * @return The statements
      */
     std::unique_ptr<Statements> const&
     operator->() const

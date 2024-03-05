@@ -1,0 +1,13 @@
+version: '3.7'
+services:
+  clio_develop:
+    image: rippleci/clio_ci:latest
+    volumes:
+      - ./conan_data:/root/.conan/data
+      - ../../:/root/clio
+      - ./build_docker:/root/clio/build_docker
+    working_dir: /root/clio/build_docker
+    # entrypoint: /bin/bash
+    tty: true
+
+

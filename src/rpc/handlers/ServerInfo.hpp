@@ -60,6 +60,14 @@ class Counters;
 
 namespace rpc {
 
+/**
+ * @brief Contains common functionality for handling the `server_info` command
+ *
+ * @tparam SubscriptionManagerType The type of the subscription manager
+ * @tparam LoadBalancerType The type of the load balancer
+ * @tparam ETLServiceType The type of the ETL service
+ * @tparam CountersType The type of the counters
+ */
 template <typename SubscriptionManagerType, typename LoadBalancerType, typename ETLServiceType, typename CountersType>
 class BaseServerInfoHandler {
     static constexpr auto BACKEND_COUNTERS_KEY = "backend_counters";
@@ -71,10 +79,16 @@ class BaseServerInfoHandler {
     std::reference_wrapper<CountersType const> counters_;
 
 public:
+    /**
+     * @brief A struct to hold the input data for the command
+     */
     struct Input {
         bool backendCounters = false;
     };
 
+    /**
+     * @brief A struct to hold the admin section of the output
+     */
     struct AdminSection {
         boost::json::object counters = {};
         std::optional<boost::json::object> backendCounters = {};
@@ -82,6 +96,9 @@ public:
         boost::json::object etl = {};
     };
 
+    /**
+     * @brief A struct to hold the validated ledger section of the output
+     */
     struct ValidatedLedgerSection {
         uint32_t age = 0;
         std::string hash = {};
@@ -89,6 +106,9 @@ public:
         std::optional<ripple::Fees> fees = std::nullopt;
     };
 
+    /**
+     * @brief A struct to hold the cache section of the output
+     */
     struct CacheSection {
         std::size_t size = 0;
         bool isFull = false;
@@ -97,6 +117,9 @@ public:
         float successorHitRate = 1.0;
     };
 
+    /**
+     * @brief A struct to hold the info section of the output
+     */
     struct InfoSection {
         std::optional<AdminSection> adminSection = std::nullopt;
         std::string completeLedgers = {};
@@ -111,6 +134,9 @@ public:
         bool isAmendmentBlocked = false;
     };
 
+    /**
+     * @brief A struct to hold the output data of the command
+     */
     struct Output {
         InfoSection info = {};
 
@@ -120,6 +146,15 @@ public:
 
     using Result = HandlerReturnType<Output>;
 
+    /**
+     * @brief Construct a new BaseServerInfoHandler object
+     *
+     * @param backend The backend to use
+     * @param subscriptions The subscription manager to use
+     * @param balancer The load balancer to use
+     * @param etl The ETL service to use
+     * @param counters The counters to use
+     */
     BaseServerInfoHandler(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<SubscriptionManagerType> const& subscriptions,
@@ -135,6 +170,12 @@ public:
     {
     }
 
+    /**
+     * @brief Returns the API specification for the command
+     *
+     * @param apiVersion The api version to return the spec for
+     * @return The spec for the given apiVersion
+     */
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
@@ -142,6 +183,13 @@ public:
         return rpcSpec;
     }
 
+    /**
+     * @brief Process the ServerInfo command
+     *
+     * @param input The input data for the command
+     * @param ctx The context of the request
+     * @return The result of the operation
+     */
     Result
     process(Input input, Context const& ctx) const
     {

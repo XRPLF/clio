@@ -23,6 +23,7 @@
 #include "etl/ETLHelpers.hpp"
 #include "etl/ETLState.hpp"
 #include "etl/Source.hpp"
+#include "etl/impl/ForwardingCache.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -72,10 +73,12 @@ private:
     static constexpr std::uint32_t DEFAULT_DOWNLOAD_RANGES = 16;
 
     util::Logger log_{"ETL"};
+    // Forwarding cache must be destroyed after sources because sources have a callnack to invalidate cache
+    std::optional<impl::ForwardingCache> forwardingCache_;
     std::vector<Source> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
-        DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading intial ledger */
+        DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
     std::atomic_bool hasForwardingSource_{false};
 
 public:
@@ -104,6 +107,7 @@ public:
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
      * @param validatedLedgers The network validated ledgers datastructure
+     * @return A shared pointer to a new instance of LoadBalancer
      */
     static std::shared_ptr<LoadBalancer>
     make_LoadBalancer(
@@ -121,6 +125,8 @@ public:
      *
      * @param sequence Sequence of ledger to download
      * @param cacheOnly Whether to only write to cache and not to the DB; defaults to false
+     * @return A std::pair<std::vector<std::string>, bool> The ledger data and a bool indicating whether the download
+     * was successful
      */
     std::pair<std::vector<std::string>, bool>
     loadInitialLedger(uint32_t sequence, bool cacheOnly = false);
@@ -134,13 +140,15 @@ public:
      * @param ledgerSequence Sequence of the ledger to fetch
      * @param getObjects Whether to get the account state diff between this ledger and the prior one
      * @param getObjectNeighbors Whether to request object neighbors
-     * @return The extracted data, if extraction was successful. If the ledger was found in the database or the server
-     * is shutting down, the optional will be empty
+     * @return The extracted data, if extraction was successful. If the ledger was found
+     * in the database or the server is shutting down, the optional will be empty
      */
     OptionalGetLedgerResponseType
     fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors);
 
     /**
+     * @brief Represent the state of this load balancer as a JSON object
+     *
      * @return JSON representation of the state of this load balancer.
      */
     boost::json::value
@@ -159,7 +167,7 @@ public:
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
         boost::asio::yield_context yield
-    ) const;
+    );
 
     /**
      * @brief Return state of ETL nodes.
@@ -181,7 +189,7 @@ private:
      * @return true if f was eventually executed successfully. false if the ledger was found in the database or the
      * server is shutting down
      */
-    template <class Func>
+    template <typename Func>
     bool
     execute(Func f, uint32_t ledgerSequence);
 

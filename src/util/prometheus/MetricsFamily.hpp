@@ -38,8 +38,16 @@ namespace util::prometheus {
  */
 class MetricsFamily {
 public:
-    static std::unique_ptr<MetricBuilderInterface> defaultMetricBuilder;
+    static std::unique_ptr<MetricBuilderInterface> defaultMetricBuilder; /**< The default metric builder */
 
+    /**
+     * @brief Construct a new MetricsFamily object
+     *
+     * @param name The name of the metrics
+     * @param description The description of the metrics
+     * @param type The type of the metrics
+     * @param builder The metric builder to use
+     */
     MetricsFamily(
         std::string name,
         std::optional<std::string> description,
@@ -85,9 +93,19 @@ public:
     friend OStream&
     operator<<(OStream& stream, MetricsFamily const& metricsFamily);
 
+    /**
+     * @brief Get the name of the metrics
+     *
+     * @return The name
+     */
     std::string const&
     name() const;
 
+    /**
+     * @brief Get the description of the metrics
+     *
+     * @return The description
+     */
     MetricType
     type() const;
 

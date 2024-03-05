@@ -75,7 +75,7 @@ public:
      * @brief Computes all book_changes for the given transactions.
      *
      * @param transactions The transactions to compute book changes for
-     * @return std::vector<BookChange> Book changes
+     * @return Book changes
      */
     [[nodiscard]] static std::vector<BookChange>
     compute(std::vector<data::TransactionAndMetadata> const& transactions)
@@ -230,7 +230,7 @@ private:
 /**
  * @brief Implementation of value_from for BookChange type.
  *
- * @param jv The JSON value to populate
+ * @param [out] jv The JSON value to populate
  * @param change The BookChange to serialize
  */
 inline void
@@ -261,6 +261,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, BookChange const
  *
  * @param lgrInfo The ledger header
  * @param transactions The vector of transactions with heir metadata
+ * @return The book changes
  */
 [[nodiscard]] boost::json::object
 computeBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions);

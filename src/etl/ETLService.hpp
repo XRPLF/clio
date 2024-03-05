@@ -144,6 +144,7 @@ public:
      * @param subscriptions Subscription manager
      * @param balancer Load balancer to use
      * @param ledgers The network validated ledgers datastructure
+     * @return A shared pointer to a new instance of ETLService
      */
     static std::shared_ptr<ETLService>
     make_ETLService(
@@ -180,6 +181,8 @@ public:
 
     /**
      * @brief Get time passed since last ledger close, in seconds.
+     *
+     * @return Time passed since last ledger close
      */
     std::uint32_t
     lastCloseAgeSeconds() const
@@ -200,6 +203,8 @@ public:
 
     /**
      * @brief Get state of ETL as a JSON object
+     *
+     * @return The state of ETL as a JSON object
      */
     boost::json::object
     getInfo() const
@@ -217,7 +222,7 @@ public:
 
     /**
      * @brief Get the etl nodes' state
-     * @return the etl nodes' state, nullopt if etl nodes are not connected
+     * @return The etl nodes' state, nullopt if etl nodes are not connected
      */
     std::optional<etl::ETLState>
     getETLState() const noexcept
@@ -234,7 +239,7 @@ private:
      *
      * @param startSequence the first ledger to extract
      * @param numExtractors number of extractors to use
-     * @return the last ledger written to the database, if any
+     * @return The last ledger written to the database, if any
      */
     std::optional<uint32_t>
     runETLPipeline(uint32_t startSequence, uint32_t numExtractors);
@@ -255,7 +260,7 @@ private:
      * @brief Monitor the network for newly validated ledgers and publish them to the ledgers stream
      *
      * @param nextSequence the ledger sequence to publish
-     * @return the next ledger sequence to publish
+     * @return The next ledger sequence to publish
      */
     uint32_t
     publishNextSequence(uint32_t nextSequence);
@@ -283,7 +288,7 @@ private:
      *
      * This is equivelent to the degree of parallelism during the initial ledger download.
      *
-     * @return the number of markers
+     * @return The number of markers
      */
     std::uint32_t
     getNumMarkers() const

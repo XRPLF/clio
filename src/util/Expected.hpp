@@ -53,6 +53,9 @@ namespace util {
     The implementation is entirely based on boost::outcome_v2::result.
 */
 
+// Documentation is not needed - will be removed as soon as `std::expected` available
+/** @cond */
+
 // Exception thrown by an invalid access to Expected.
 struct bad_expected_access : public std::runtime_error {
     bad_expected_access() : runtime_error("bad expected access")
@@ -64,7 +67,7 @@ namespace impl {
 
 // Custom policy for Expected.  Always throw on an invalid access.
 struct throw_policy : public boost::outcome_v2::policy::base {
-    template <class Impl>
+    template <typename Impl>
     static constexpr void
     wide_value_check(Impl&& self)
     {
@@ -72,7 +75,7 @@ struct throw_policy : public boost::outcome_v2::policy::base {
             ripple::Throw<bad_expected_access>();
     }
 
-    template <class Impl>
+    template <typename Impl>
     static constexpr void
     wide_error_check(Impl&& self)
     {
@@ -80,7 +83,7 @@ struct throw_policy : public boost::outcome_v2::policy::base {
             ripple::Throw<bad_expected_access>();
     }
 
-    template <class Impl>
+    template <typename Impl>
     static constexpr void
     wide_exception_check(Impl&& self)
     {
@@ -93,7 +96,7 @@ struct throw_policy : public boost::outcome_v2::policy::base {
 
 // Definition of Unexpected, which is used to construct the unexpected
 // return type of an Expected.
-template <class E>
+template <typename E>
 class Unexpected {
 public:
     static_assert(!std::is_same_v<E, void>, "E must not be void");
@@ -141,7 +144,7 @@ template <typename E, std::size_t N>
 Unexpected(E (&)[N]) -> Unexpected<E const*>;
 
 // Definition of Expected.  All of the machinery comes from boost::result.
-template <class T, class E>
+template <typename T, typename E>
 class Expected : private boost::outcome_v2::result<T, E, impl::throw_policy> {
     using Base = boost::outcome_v2::result<T, E, impl::throw_policy>;
 
@@ -243,7 +246,7 @@ private:
 
 // Specialization of Expected<void, E>.  Allows returning either success
 // (without a value) or the reason for the failure.
-template <class E>
+template <typename E>
 class [[nodiscard]] Expected<void, E> : private boost::outcome_v2::result<void, E, impl::throw_policy> {
     using Base = boost::outcome_v2::result<void, E, impl::throw_policy>;
 
@@ -277,5 +280,7 @@ public:
         return Base::has_value();
     }
 };
+
+/** @endcond */
 
 }  // namespace util

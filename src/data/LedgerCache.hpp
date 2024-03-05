@@ -173,6 +173,11 @@ public:
     float
     getSuccessorHitRate() const;
 
+    /**
+     * @brief Waits until the cache contains a specific sequence.
+     *
+     * @param seq The sequence to wait for
+     */
     void
     waitUntilCacheContainsSeq(uint32_t seq);
 };

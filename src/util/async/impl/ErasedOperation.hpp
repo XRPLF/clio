@@ -43,6 +43,7 @@ public:
 
     ErasedOperation(ErasedOperation const&) = delete;
     ErasedOperation(ErasedOperation&&) = default;
+
     ErasedOperation&
     operator=(ErasedOperation const&) = delete;
     ErasedOperation&

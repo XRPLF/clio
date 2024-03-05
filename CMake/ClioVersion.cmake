@@ -41,4 +41,4 @@ endif ()
 
 message(STATUS "Build version: ${CLIO_VERSION}")
 
-configure_file(CMake/Build.cpp.in ${CMAKE_SOURCE_DIR}/src/main/impl/Build.cpp)
+configure_file(${CMAKE_CURRENT_LIST_DIR}/Build.cpp.in ${CMAKE_CURRENT_LIST_DIR}/../src/main/impl/Build.cpp)

@@ -46,6 +46,7 @@ public:
     }
 
     BasicOperation(BasicOperation&&) = default;
+
     BasicOperation(BasicOperation const&) = delete;
 
     [[nodiscard]] auto
@@ -136,6 +137,11 @@ class StoppableOperation : public impl::BasicOperation<StoppableOutcome<RetType,
     StopSourceType stopSource_;
 
 public:
+    /**
+     * @brief Construct a new Stoppable Operation object
+     *
+     * @param outcome The outcome to wrap
+     */
     explicit StoppableOperation(OutcomeType* outcome)
         : impl::BasicOperation<OutcomeType>(outcome), stopSource_(outcome->getStopSource())
     {

@@ -26,7 +26,9 @@
 
 #include <boost/asio/io_context.hpp>
 
+#include <chrono>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -42,13 +44,15 @@ make_Source(
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
     Source::OnDisconnectHook onDisconnect,
-    Source::OnConnectHook onConnect
+    Source::OnConnectHook onConnect,
+    Source::OnLedgerClosedHook onLedgerClosed
 )
 {
     auto const ip = config.valueOr<std::string>("ip", {});
     auto const wsPort = config.valueOr<std::string>("ws_port", {});
     auto const grpcPort = config.valueOr<std::string>("grpc_port", {});
 
+    impl::ForwardingSource forwardingSource{ip, wsPort};
     impl::GrpcSource grpcSource{ip, grpcPort, std::move(backend)};
     auto subscriptionSource = std::make_unique<impl::SubscriptionSource>(
         ioc,
@@ -57,9 +61,9 @@ make_Source(
         std::move(validatedLedgers),
         std::move(subscriptions),
         std::move(onConnect),
-        std::move(onDisconnect)
+        std::move(onDisconnect),
+        std::move(onLedgerClosed)
     );
-    impl::ForwardingSource forwardingSource{ip, wsPort};
 
     return Source{
         ip, wsPort, grpcPort, std::move(grpcSource), std::move(subscriptionSource), std::move(forwardingSource)

@@ -106,12 +106,22 @@ struct AccountCursor {
     ripple::uint256 index;
     std::uint32_t hint{};
 
+    /**
+     * @brief Convert the cursor to a string
+     *
+     * @return The string representation of the cursor
+     */
     std::string
     toString() const
     {
         return ripple::strHex(index) + "," + std::to_string(hint);
     }
 
+    /**
+     * @brief Check if the cursor is non-zero
+     *
+     * @return true if the cursor is non-zero, false otherwise
+     */
     bool
     isNonZero() const
     {
@@ -119,6 +129,13 @@ struct AccountCursor {
     }
 };
 
+/**
+ * @brief Convert an empty output to a JSON object
+ *
+ * @note Always generates empty JSON object
+ *
+ * @param [out] jv The JSON object to convert to
+ */
 inline void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, VoidOutput const&)
 {

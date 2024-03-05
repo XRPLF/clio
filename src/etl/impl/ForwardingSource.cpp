@@ -92,6 +92,7 @@ ForwardingSource::forwardToRippled(
 
     auto responseObject = parsedResponse.as_object();
     responseObject["forwarded"] = true;
+
     return responseObject;
 }
 
