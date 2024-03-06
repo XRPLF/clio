@@ -35,4 +35,4 @@ endif ()
 # See https://github.com/cpp-best-practices/cppbestpractices/blob/master/02-Use_the_Tools_Available.md#gcc--clang for
 # the flags description
 
-target_compile_options(clio PUBLIC ${COMPILER_FLAGS})
+target_compile_options(clio_options INTERFACE ${COMPILER_FLAGS})

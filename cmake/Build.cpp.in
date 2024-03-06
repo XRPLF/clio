@@ -22,7 +22,7 @@
 #include <string>
 
 namespace Build {
-static constexpr char versionString[] = "@VERSION@";
+static constexpr char versionString[] = "@CLIO_VERSION@";
 
 std::string const&
 getClioVersionString()
