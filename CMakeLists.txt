@@ -90,7 +90,7 @@ if (docs)
   add_subdirectory(docs)
 endif ()
 
-include(CMake/install/install.cmake)
+include(cmake/install/install.cmake)
 if (packaging)
-  include(CMake/packaging.cmake) # This file exists only in build runner
+  include(cmake/packaging.cmake) # This file exists only in build runner
 endif ()
