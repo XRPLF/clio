@@ -5,11 +5,6 @@ target_link_libraries(clio PUBLIC clio_etl clio_feed clio_web clio_rpc)
 
 target_compile_features(clio PUBLIC cxx_std_20)
 
-if (is_gcc)
-  # FIXME: needed on gcc for now
-  target_compile_definitions(clio PUBLIC BOOST_ASIO_DISABLE_CONCEPTS)
-endif ()
-
 # Clio server
 add_executable(clio_server)
 target_sources(clio_server PRIVATE Main.cpp)

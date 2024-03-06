@@ -56,7 +56,7 @@ class Clio(ConanFile):
     }
 
     exports_sources = (
-        'CMakeLists.txt', 'CMake/*', 'src/*'
+        'CMakeLists.txt', 'cmake/*', 'src/*'
     )
 
     def requirements(self):

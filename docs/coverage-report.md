@@ -25,7 +25,7 @@ The above steps are automated into a single target `coverage_report`. The instru
 
 In case of a spurious failure of unit tests, it is possible to re-run the `coverage_report` target without rebuilding the `clio_tests` binary (since it is simply a dependency of the coverage report target).
 
-The default coverage report format is `html-details`, but developers can override it to any of the formats listed in `CMake/CodeCoverage.cmake` by setting `CODE_COVERAGE_REPORT_FORMAT` variable in `cmake`. For example, CI is setting this parameter to `xml` for the [codecov](https://codecov.io) integration.
+The default coverage report format is `html-details`, but developers can override it to any of the formats listed in `cmake/CodeCoverage.cmake` by setting `CODE_COVERAGE_REPORT_FORMAT` variable in `cmake`. For example, CI is setting this parameter to `xml` for the [codecov](https://codecov.io) integration.
 
 If some unit tests predictably fail (e.g., due to absence of a Cassandra database), it is possible to set unit tests options in the `CODE_COVERAGE_TESTS_ARGS` cmake variable, as demonstrated below:
 
