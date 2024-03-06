@@ -1,0 +1,64 @@
+#!/bin/bash
+
+set +x
+
+script_dir=$(dirname $0)
+
+pushd $script_dir > /dev/null
+
+function start_container {
+    if [ -z "$(docker ps -q -f name=clio_develop)" ]; then
+        docker compose up -d
+    fi
+}
+
+function run {
+    start_container
+    docker compose exec clio_develop "$@"
+}
+
+function stop_container {
+    docker compose down
+}
+
+function open_terminal {
+    start_container
+    docker compose exec clio_develop /bin/bash
+}
+
+function print_help {
+    cat <<EOF
+run: Run a command inside the development container.
+
+Usage:
+    run [options or command]
+
+If no options are provided, the command will be executed inside the container.
+
+Options:
+-h, --help      Show this help message and exit.
+-t, --terminal  Open a terminal inside the container.
+-s, --stop      Stop the container.
+EOF
+}
+
+case $1 in
+    -h|--help)
+        print_help ;;
+
+    -t|--terminal)
+        open_terminal ;;
+
+    -s|--stop)
+        stop_container ;;
+
+    -*)
+        echo "Unknown option: $1"
+        print_help ;;
+
+    *)
+        run "$@" ;;
+esac
+
+popd > /dev/null
+

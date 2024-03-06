@@ -3,11 +3,14 @@ services:
   clio_develop:
     image: rippleci/clio_ci:latest
     volumes:
-      - ./conan_data:/root/.conan/data
+      - clio_develop_conan_data:/root/.conan/data
+      - clio_develop_ccache:/root/.ccache
       - ../../:/root/clio
-      - ./build_docker:/root/clio/build_docker
+      - clio_develop_build:/root/clio/build_docker
     working_dir: /root/clio/build_docker
-    # entrypoint: /bin/bash
     tty: true
 
-
+volumes:
+  clio_develop_conan_data:
+  clio_develop_ccache:
+  clio_develop_build:
