@@ -13,6 +13,10 @@ jobs:
     container:
       image: rippleci/clio_ci:latest
     steps:
+      - name: Fix git permissions on Linux
+        shell: bash
+        run: git config --global --add safe.directory $PWD
+
       - uses: actions/checkout@v4
       - name: Run formatters
         id: run_formatters
