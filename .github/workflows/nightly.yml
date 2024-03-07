@@ -25,6 +25,10 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
+      - name: Clean workdir
+        if: ${{ runner.os == 'macOS' }}
+        uses: kuznetsss/workspace-cleanup@1.0
+
       - uses: actions/checkout@v4
         with:
             fetch-depth: 0
@@ -85,6 +89,10 @@ jobs:
     runs-on: [self-hosted, "${{ matrix.os }}"]
 
     steps:
+      - name: Clean workdir
+        if: ${{ runner.os == 'macOS' }}
+        uses: kuznetsss/workspace-cleanup@1.0
+
       - uses: actions/download-artifact@v3
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
