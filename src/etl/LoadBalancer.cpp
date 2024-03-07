@@ -229,7 +229,7 @@ LoadBalancer::forwardToRippled(
     if (response and forwardingCache_ and not response->contains("error"))
         forwardingCache_->put(request, *response);
 
-    return {};
+    return response;
 }
 
 boost::json::value

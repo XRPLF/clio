@@ -369,26 +369,23 @@ private:
     {
         using boost::json::value_to;
 
-        auto has_error = false;
-        if constexpr (std::is_same_v<Return, bool>) {
-            if (not value.is_bool())
-                has_error = true;
-        } else if constexpr (std::is_same_v<Return, std::string>) {
-            if (not value.is_string())
-                has_error = true;
-        } else if constexpr (std::is_same_v<Return, double>) {
-            if (not value.is_number())
-                has_error = true;
-        } else if constexpr (std::is_convertible_v<Return, uint64_t> || std::is_convertible_v<Return, int64_t>) {
-            if (not value.is_int64() && not value.is_uint64())
-                has_error = true;
-        }
+        auto error_if = [&key, &value](bool condition) {
+            if (condition) {
+                throw std::runtime_error(
+                    "Type for key '" + key + "' is '" + std::string{to_string(value.kind())} +
+                    "' in JSON but requested '" + impl::typeName<Return>() + "'"
+                );
+            }
+        };
 
-        if (has_error) {
-            throw std::runtime_error(
-                "Type for key '" + key + "' is '" + std::string{to_string(value.kind())} + "' in JSON but requested '" +
-                impl::typeName<Return>() + "'"
-            );
+        if constexpr (std::is_same_v<Return, bool>) {
+            error_if(not value.is_bool());
+        } else if constexpr (std::is_same_v<Return, std::string>) {
+            error_if(not value.is_string());
+        } else if constexpr (std::is_same_v<Return, double> or std::is_same_v<Return, float>) {
+            error_if(not value.is_number());
+        } else if constexpr (std::is_convertible_v<Return, uint64_t> || std::is_convertible_v<Return, int64_t>) {
+            error_if(not value.is_int64() && not value.is_uint64());
         }
 
         return value_to<Return>(value);
