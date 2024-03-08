@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/config/Config.hpp"
+#include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Histogram.hpp"
@@ -53,6 +54,18 @@ public:
     }
 
     virtual ~PrometheusInterface() = default;
+
+    /**
+     * @brief Get a bool based metric. It will be created if it doesn't exist
+     * @note Prometheus does not have a native bool type, so we use a counter with a value of 0 or 1
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     * @return The bool object
+     */
+    virtual Bool
+    boolMetric(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) = 0;
 
     /**
      * @brief Get an integer based counter metric. It will be created if it doesn't exist
@@ -176,6 +189,9 @@ class PrometheusImpl : public PrometheusInterface {
 public:
     using PrometheusInterface::PrometheusInterface;
 
+    Bool
+    boolMetric(std::string name, Labels labels, std::optional<std::string> description = std::nullopt) override;
+
     CounterInt&
     counterInt(std::string name, Labels labels, std::optional<std::string> description) override;
 
@@ -241,6 +257,22 @@ public:
      * @param config The configuration to use
      */
     void static init(util::Config const& config = util::Config{});
+
+    /**
+     * @brief Get a bool based metric. It will be created if it doesn't exist
+     * @note Prometheus does not have a native bool type, so we use a counter with a value of 0 or 1
+     *
+     * @param name The name of the metric
+     * @param labels The labels of the metric
+     * @param description The description of the metric
+     * @return The bool object
+     */
+    static util::prometheus::Bool
+    boolMetric(
+        std::string name,
+        util::prometheus::Labels labels,
+        std::optional<std::string> description = std::nullopt
+    );
 
     /**
      * @brief Get an integer based counter metric. It will be created if it doesn't exist

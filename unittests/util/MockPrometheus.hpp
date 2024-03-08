@@ -21,6 +21,7 @@
 
 #include "util/Assert.hpp"
 #include "util/config/Config.hpp"
+#include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Histogram.hpp"
@@ -81,6 +82,10 @@ using MockHistogramImplDouble = MockHistogramImpl<double>;
 struct MockPrometheusImpl : PrometheusInterface {
     MockPrometheusImpl() : PrometheusInterface(true, true)
     {
+        EXPECT_CALL(*this, boolMetric)
+            .WillRepeatedly([this](std::string name, Labels labels, std::optional<std::string>) -> Bool {
+                return Bool{getMetric<GaugeInt>(std::move(name), std::move(labels))};
+            });
         EXPECT_CALL(*this, counterInt)
             .WillRepeatedly([this](std::string name, Labels labels, std::optional<std::string>) -> CounterInt& {
                 return getMetric<CounterInt>(std::move(name), std::move(labels));
@@ -109,6 +114,7 @@ struct MockPrometheusImpl : PrometheusInterface {
             );
     }
 
+    MOCK_METHOD(Bool, boolMetric, (std::string, Labels, std::optional<std::string>), (override));
     MOCK_METHOD(CounterInt&, counterInt, (std::string, Labels, std::optional<std::string>), (override));
     MOCK_METHOD(CounterDouble&, counterDouble, (std::string, Labels, std::optional<std::string>), (override));
     MOCK_METHOD(GaugeInt&, gaugeInt, (std::string, Labels, std::optional<std::string>), (override));

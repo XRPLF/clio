@@ -20,80 +20,70 @@
 #pragma once
 
 #include "util/Assert.hpp"
-#include "util/prometheus/MetricBase.hpp"
-#include "util/prometheus/OStream.hpp"
-#include "util/prometheus/impl/AnyCounterBase.hpp"
+#include "util/prometheus/Gauge.hpp"
 
 #include <cstdint>
-#include <memory>
-#include <string>
-#include <utility>
+#include <functional>
 
 namespace util::prometheus {
 
+template <typename T>
+concept BoolMetric = requires(T a) {
+    {
+        a.set(0)
+    } -> std::same_as<void>;
+    {
+        a.value()
+    } -> std::same_as<int64_t>;
+};
+
 /**
- * @brief A Prometheus bool metric.
- * @note Prometheus does not have a native bool type, so we use a counter with a value of 0 or 1.
+ * @brief A wrapped to provide bool interface for a Prometheus metric
+ * @note Prometheus does not have a native bool type, so we use a counter with a value of 0 or 1
  */
-class AnyBool : public MetricBase, impl::AnyCounterBase<uint8_t> {
+template <typename ImplType>
+class AnyBool {
+    std::reference_wrapper<ImplType> impl_;
+
 public:
     /**
-     * @brief Construct a bool metric.
-     * @param name The name of the metric.
-     * @param labelsString The labels string for the metric.
-     * @param value The initial value of the metric.
-     * @param impl The implementation of the metric.
+     * @brief Construct a bool metric
+     *
+     * @param impl The implementation of the metric
      */
-    template <impl::SomeCounterImpl ImplType = impl::CounterImpl<uint8_t>>
-    AnyBool(std::string name, std::string labelsString, bool value, ImplType&& impl = ImplType{})
-        : MetricBase(std::move(name), std::move(labelsString))
-        , impl::AnyCounterBase<uint8_t>(std::forward<ImplType>(impl))
+    explicit AnyBool(ImplType& impl) : impl_(impl)
     {
-        *this = value;
     }
 
     /**
-     * @brief Set the value of the bool metric.
-     * @param value The value to set.
-     * @return A reference to the metric.
+     * @brief Set the value of the bool metric
+     *
+     * @param value The value to set
+     * @return A reference to the metric
      */
     AnyBool&
     operator=(bool value)
     {
-        pimpl_->set(value ? 1 : 0);
+        impl_.get().set(value ? 1 : 0);
         return *this;
     }
 
     /**
-     * @brief Get the value of the bool metric.
-     * @return The value of the metric.
+     * @brief Get the value of the bool metric
+     *
+     * @return The value of the metric
      */
     operator bool() const
     {
-        auto const value = pimpl_->value();
+        auto const value = impl_.get().value();
         ASSERT(value == 0 || value == 1, "Invalid value for bool: {}", value);
         return value == 1;
     }
-
-    /**
-     * @brief Get the value of the bool metric.
-     * @return The value of the metric.
-     */
-    std::uint8_t
-    value() const
-    {
-        return pimpl_->value();
-    }
-
-    /**
-     * @brief Serialize the metric to the given stream.
-     * @param stream The stream to serialize to.
-     */
-    void
-    serializeValue(OStream& stream) const override
-    {
-        stream << name() << labelsString() << ' ' << value();
-    }
 };
+
+/**
+ * @brief Alias for Prometheus bool metric with GaugeInt implementation
+ */
+using Bool = AnyBool<GaugeInt>;
 
 }  // namespace util::prometheus
