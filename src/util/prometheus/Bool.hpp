@@ -28,7 +28,7 @@
 namespace util::prometheus {
 
 template <typename T>
-concept BoolMetric = requires(T a) {
+concept SomeBoolImpl = requires(T a) {
     {
         a.set(0)
     } -> std::same_as<void>;
@@ -41,7 +41,7 @@ concept BoolMetric = requires(T a) {
  * @brief A wrapped to provide bool interface for a Prometheus metric
  * @note Prometheus does not have a native bool type, so we use a counter with a value of 0 or 1
  */
-template <typename ImplType>
+template <SomeBoolImpl ImplType>
 class AnyBool {
     std::reference_wrapper<ImplType> impl_;
 

@@ -97,6 +97,7 @@ target_sources(
           util/BatchingTests.cpp
           util/LedgerUtilsTests.cpp
           # Prometheus support
+          util/prometheus/BoolTests.cpp
           util/prometheus/CounterTests.cpp
           util/prometheus/GaugeTests.cpp
           util/prometheus/HistogramTests.cpp
