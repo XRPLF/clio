@@ -32,10 +32,6 @@ struct CacheLoaderSettings {
     /** @brief Ways to load the cache */
     enum class LoadStyle { ASYNC, SYNC, NONE };
 
-    /** @brief Ways to generate cursors. Cache will be loaded concurrently, cursors will be used to partition the
-     * range*/
-    enum class CursorGenerationStyle { DIFF_NUM, CURSOR_NUM_FROM_DIFF };
-
     size_t numCacheDiffs = 32;             /**< number of diffs to use to generate cursors */
     size_t numCacheMarkers = 48;           /**< number of markers to use at one time to traverse the ledger */
     size_t cachePageFetchSize = 512;       /**< number of ledger objects to fetch concurrently per marker */

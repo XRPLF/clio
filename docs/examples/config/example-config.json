@@ -95,13 +95,13 @@
         }
     ],
     "cache": {
-        // Set one of "num_diffs" or "num_cursors_from_diff" or "num_cursors_from_account", by default Clio will use "num_diffs"
+        // Set "num_diffs" or "num_cursors_from_diff" or "num_cursors_from_account", by default Clio will use "num_diffs"
         "num_diffs": 32, // Generate the cursors from the latest ledger diff, then use the cursors to partition the ledger to load concurrently. The cursors number is affected by the busyness of the network.
         // "num_cursors_from_diff": 3200, // Read the cursors from the diff table until we have enough cursors to partition the ledger to load concurrently. 
         // "num_cursors_from_account": 3200, // Read the cursors from the account table until we have enough cursors to partition the ledger to load concurrently.
-        "num_markers": 48, // The number of markers is the number of coroutines to load the ledger concurrently
+        "num_markers": 48, // The number of markers is the number of coroutines to load the cache concurrently
         "page_fetch_size": 512, // The number of rows to load for each page
-        "load": "async" // "sync" or "async" or "none"/"no"
+        "load": "async" // "sync" to load cache synchronously  or "async" to load cache asynchronously or "none"/"no" to turn off the cache
     },
     "prometheus": {
         "enabled": true,

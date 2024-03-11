@@ -721,8 +721,13 @@ public:
                 auto const objs = doFetchLedgerObjects(fullAccounts, seq, yield);
 
                 for (auto i = 0u; i < fullAccounts.size(); i++) {
-                    if (not objs[i].empty() and liveAccounts.size() < number)
-                        liveAccounts.push_back(fullAccounts[i]);
+                    if (not objs[i].empty()) {
+                        if (liveAccounts.size() < number) {
+                            liveAccounts.push_back(fullAccounts[i]);
+                        } else {
+                            break;
+                        }
+                    }
                 }
             } else {
                 LOG(log_.error()) << "Could not fetch account from account_tx: " << res.error();
