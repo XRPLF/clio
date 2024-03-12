@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/prometheus/Bool.hpp"
+#include "util/prometheus/Gauge.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -52,4 +53,11 @@ TEST_F(BoolTests, Get)
 
     EXPECT_CALL(impl_, value()).WillOnce(testing::Return(0));
     EXPECT_FALSE(bool_);
+}
+
+TEST_F(BoolTests, DefaultValues)
+{
+    GaugeInt gauge{"test", ""};
+    Bool realBool{gauge};
+    EXPECT_FALSE(realBool);
 }

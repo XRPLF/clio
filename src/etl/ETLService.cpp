@@ -276,7 +276,7 @@ ETLService::ETLService(
 {
     startSequence_ = config.maybeValue<uint32_t>("start_sequence");
     finishSequence_ = config.maybeValue<uint32_t>("finish_sequence");
-    state_.isReadOnly = config.valueOr("read_only", state_.isReadOnly);
+    state_.isReadOnly = config.valueOr("read_only", static_cast<bool>(state_.isReadOnly));
     extractorThreads_ = config.valueOr<uint32_t>("extractor_threads", extractorThreads_);
     txnThreshold_ = config.valueOr<size_t>("txn_threshold", txnThreshold_);
 }
