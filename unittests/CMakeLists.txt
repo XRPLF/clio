@@ -132,7 +132,7 @@ include(deps/gtest)
 gtest_discover_tests(clio_tests DISCOVERY_TIMEOUT 90)
 
 # Fix for dwarf5 bug on ci
-target_compile_options(clio PUBLIC -gdwarf-4)
+target_compile_options(clio_options INTERFACE -gdwarf-4)
 
 target_compile_definitions(clio_tests PUBLIC UNITTEST_BUILD)
 target_include_directories(clio_tests PRIVATE .)
