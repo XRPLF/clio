@@ -23,6 +23,8 @@
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
+#include <atomic>
+
 namespace etl {
 
 /**
