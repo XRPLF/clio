@@ -19,6 +19,7 @@
 #include "rpc/Errors.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockETLService.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/MockRPCEngine.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
@@ -65,7 +66,9 @@ struct MockWsBase : public web::ConnectionBase {
     }
 };
 
-class WebRPCServerHandlerTest : public MockBackendTest, public SyncAsioContextTest {
+class WebRPCServerHandlerTest : public util::prometheus::WithPrometheus,
+                                public MockBackendTest,
+                                public SyncAsioContextTest {
 protected:
     void
     SetUp() override

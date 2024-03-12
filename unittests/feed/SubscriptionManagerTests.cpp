@@ -21,6 +21,7 @@
 #include "feed/FeedTestUtil.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"
 #include "web/interface/ConnectionBase.hpp"
@@ -52,7 +53,9 @@ namespace json = boost::json;
 using namespace feed;
 using namespace feed::impl;
 
-class SubscriptionManagerTest : public MockBackendTest, public SyncAsioContextTest {
+class SubscriptionManagerTest : public util::prometheus::WithPrometheus,
+                                public MockBackendTest,
+                                public SyncAsioContextTest {
 protected:
     std::shared_ptr<SubscriptionManager> SubscriptionManagerPtr;
     std::shared_ptr<web::ConnectionBase> session;

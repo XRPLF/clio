@@ -258,7 +258,7 @@ struct WithPrometheus : virtual ::testing::Test {
 
     ~WithPrometheus() override
     {
-        PrometheusService::init();
+        PrometheusService::replaceInstance(nullptr);
     }
 };
 

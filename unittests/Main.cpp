@@ -19,7 +19,6 @@
 
 #include "util/TerminationHandler.hpp"
 #include "util/TestGlobals.hpp"
-#include "util/prometheus/Prometheus.hpp"
 
 #include <gtest/gtest.h>
 
@@ -33,7 +32,6 @@ int
 main(int argc, char* argv[])
 {
     util::setTerminationHandler();
-    PrometheusService::init();
     testing::InitGoogleTest(&argc, argv);
     TestGlobals::instance().parse(argc, argv);
 
