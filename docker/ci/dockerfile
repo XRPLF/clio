@@ -23,7 +23,7 @@ RUN apt-get -qq update \
 
 # Install packages
 RUN apt update -qq \
-    && apt install -y --no-install-recommends --no-install-suggests cmake python3 python3-pip sudo git \
+    && apt install -y --no-install-recommends --no-install-suggests cmake python3 python3-pip sudo git git-lfs \
     ninja-build make pkg-config libzstd-dev libzstd1 g++-${GCC_VERSION} flex bison jq graphviz \
     clang-format-${LLVM_TOOLS_VERSION} clang-tidy-${LLVM_TOOLS_VERSION} clang-tools-${LLVM_TOOLS_VERSION} \
     && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} 100 \
