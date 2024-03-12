@@ -1,1 +1,1 @@
-find_package(xrpl-mpt REQUIRED)
+find_package(xrpl REQUIRED CONFIG)
