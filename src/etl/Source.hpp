@@ -68,6 +68,7 @@ class SourceImpl {
 public:
     using OnConnectHook = impl::SubscriptionSource::OnConnectHook;
     using OnDisconnectHook = impl::SubscriptionSource::OnDisconnectHook;
+    using OnLedgerClosedHook = impl::SubscriptionSource::OnLedgerClosedHook;
 
     /**
      * @brief Construct a new SourceImpl object
@@ -80,7 +81,7 @@ public:
      * @param forwardingSource The forwarding source
      */
     template <typename SomeGrpcSourceType, typename SomeForwardingSourceType>
-        requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType> &&
+        requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType> and
                      std::is_same_v<ForwardingSourceType, SomeForwardingSourceType>
     SourceImpl(
         std::string ip,
@@ -240,6 +241,8 @@ using Source = SourceImpl<>;
  * @param validatedLedgers The network validated ledgers data structure
  * @param onDisconnect The hook to call on disconnect
  * @param onConnect The hook to call on connect
+ * @param onLedgerClosed The hook to call on ledger closed. This is called when a ledger is closed and the source is set
+ * as forwarding.
  * @return The created source
  */
 Source
@@ -250,7 +253,8 @@ make_Source(
     std::shared_ptr<feed::SubscriptionManager> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
     Source::OnDisconnectHook onDisconnect,
-    Source::OnConnectHook onConnect
+    Source::OnConnectHook onConnect,
+    Source::OnLedgerClosedHook onLedgerClosed
 );
 
 }  // namespace etl

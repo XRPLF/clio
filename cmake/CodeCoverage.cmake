@@ -352,10 +352,10 @@ function (append_coverage_compiler_flags)
 endfunction () # append_coverage_compiler_flags
 
 # Setup coverage for specific library
-function (append_coverage_compiler_flags_to_target name)
+function (append_coverage_compiler_flags_to_target name mode)
   separate_arguments(_flag_list NATIVE_COMMAND "${COVERAGE_COMPILER_FLAGS}")
-  target_compile_options(${name} PRIVATE ${_flag_list})
+  target_compile_options(${name} ${mode} ${_flag_list})
   if (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(${name} PRIVATE gcov)
+    target_link_libraries(${name} ${mode} gcov)
   endif ()
 endfunction ()

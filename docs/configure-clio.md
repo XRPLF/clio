@@ -83,3 +83,17 @@ By default Clio checks admin privileges by IP address from requests (only `127.0
 
 If the password is presented in the config, Clio will check the Authorization header (if any) in each request for the password. The Authorization header should contain the type `Password`, and the password from the config (e.g. `Password secret`).
 Exactly equal password gains admin rights for the request or a websocket connection.
+
+## ETL sources forwarding cache
+
+Clio can cache requests to ETL sources to reduce the load on the ETL source.
+Only following commands are cached: `server_info`, `server_state`, `server_definitions`, `fee`, `ledger_closed`.
+By default the forwarding cache is off.
+To enable the caching for a source, `forwarding_cache_timeout` value should be added to the configuration file, e.g.:
+
+```json
+"forwarding_cache_timeout": 0.250,
+```
+
+`forwarding_cache_timeout` defines for how long (in seconds) a cache entry will be valid after being placed into the cache.
+Zero value turns off the cache feature.

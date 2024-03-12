@@ -56,7 +56,7 @@ class Clio(ConanFile):
     }
 
     exports_sources = (
-        'CMakeLists.txt', 'CMake/*', 'src/*'
+        'CMakeLists.txt', 'cmake/*', 'src/*'
     )
 
     def requirements(self):
@@ -84,6 +84,7 @@ class Clio(ConanFile):
         tc.variables['lint'] = self.options.lint
         tc.variables['docs'] = self.options.docs
         tc.variables['packaging'] = self.options.packaging
+        tc.variables['benchmark'] = self.options.benchmark
         tc.generate()
 
     def build(self):

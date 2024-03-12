@@ -70,6 +70,13 @@ LoadBalancer::LoadBalancer(
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
 )
 {
+    auto const forwardingCacheTimeout = config.valueOr<float>("forwarding_cache_timeout", 0.f);
+    if (forwardingCacheTimeout > 0.f) {
+        forwardingCache_ = impl::ForwardingCache{
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<float>{forwardingCacheTimeout})
+        };
+    }
+
     static constexpr std::uint32_t MAX_DOWNLOAD = 256;
     if (auto value = config.maybeValue<uint32_t>("num_markers"); value) {
         downloadRanges_ = std::clamp(*value, 1u, MAX_DOWNLOAD);
@@ -99,7 +106,8 @@ LoadBalancer::LoadBalancer(
                 if (not hasForwardingSource_)
                     chooseForwardingSource();
             },
-            [this]() { chooseForwardingSource(); }
+            [this]() { chooseForwardingSource(); },
+            [this]() { forwardingCache_->invalidate(); }
         );
 
         // checking etl node validity
@@ -193,23 +201,35 @@ LoadBalancer::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
     boost::asio::yield_context yield
-) const
+)
 {
+    if (forwardingCache_) {
+        if (auto cachedResponse = forwardingCache_->get(request); cachedResponse) {
+            return cachedResponse;
+        }
+    }
+
     std::size_t sourceIdx = 0;
     if (!sources_.empty())
         sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
 
     auto numAttempts = 0u;
 
+    std::optional<boost::json::object> response;
     while (numAttempts < sources_.size()) {
-        if (auto res = sources_[sourceIdx].forwardToRippled(request, clientIp, yield))
-            return res;
+        if (auto res = sources_[sourceIdx].forwardToRippled(request, clientIp, yield)) {
+            response = std::move(res);
+            break;
+        }
 
         sourceIdx = (sourceIdx + 1) % sources_.size();
         ++numAttempts;
     }
 
-    return {};
+    if (response and forwardingCache_ and not response->contains("error"))
+        forwardingCache_->put(request, *response);
+
+    return response;
 }
 
 boost::json::value

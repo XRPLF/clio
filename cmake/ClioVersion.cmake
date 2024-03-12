@@ -23,23 +23,22 @@ endif ()
 if (NOT (BRANCH MATCHES master OR BRANCH MATCHES release/*)) # for develop and any other branch name
                                                              # YYYYMMDDHMS-<branch>-<git-rev>
   execute_process(COMMAND date +%Y%m%d%H%M%S OUTPUT_VARIABLE DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
-  set(VERSION "${DATE}-${BRANCH}-${REV}")
+  set(CLIO_VERSION "${DATE}-${BRANCH}-${REV}")
   set(DOC_CLIO_VERSION "develop")
 else ()
   set(GIT_COMMAND describe --tags)
   execute_process(
-    COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} OUTPUT_VARIABLE TAG_VERSION
+    COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} OUTPUT_VARIABLE CLIO_TAG_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
-  set(VERSION "${TAG_VERSION}-${REV}")
-  set(DOC_CLIO_VERSION "${TAG_VERSION}")
+  set(CLIO_VERSION "${CLIO_TAG_VERSION}-${REV}")
+  set(DOC_CLIO_VERSION "${CLIO_TAG_VERSION}")
 endif ()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
-  set(VERSION "${VERSION}+DEBUG")
+  set(CLIO_VERSION "${CLIO_VERSION}+DEBUG")
 endif ()
 
-message(STATUS "Build version: ${VERSION}")
-set(clio_version "${VERSION}")
+message(STATUS "Build version: ${CLIO_VERSION}")
 
-configure_file(CMake/Build.cpp.in ${CMAKE_SOURCE_DIR}/src/main/impl/Build.cpp)
+configure_file(${CMAKE_CURRENT_LIST_DIR}/Build.cpp.in ${CMAKE_CURRENT_LIST_DIR}/../src/main/impl/Build.cpp)

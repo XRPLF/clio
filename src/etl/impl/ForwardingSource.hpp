@@ -34,6 +34,7 @@ namespace etl::impl {
 class ForwardingSource {
     util::Logger log_;
     util::requests::WsConnectionBuilder connectionBuilder_;
+
     static constexpr std::chrono::seconds CONNECTION_TIMEOUT{3};
 
 public:

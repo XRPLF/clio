@@ -32,7 +32,7 @@ using namespace util;
 using namespace testing;
 
 struct ETLStateTest : public NoLoggerFixture {
-    MockSource const source = MockSource{};
+    MockSource source = MockSource{};
 };
 
 TEST_F(ETLStateTest, Error)

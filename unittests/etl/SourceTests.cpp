@@ -67,7 +67,8 @@ struct ForwardingSourceMock {
     MOCK_METHOD(
         ForwardToRippledReturnType,
         forwardToRippled,
-        (boost::json::object const&, ClientIpOpt const&, boost::asio::yield_context)
+        (boost::json::object const&, ClientIpOpt const&, boost::asio::yield_context),
+        (const)
     );
 };
 

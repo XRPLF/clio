@@ -53,7 +53,9 @@ constexpr static auto JSONData = R"JSON(
             "test": {
                 "str": "hello",
                 "int": 9042,
-                "bool": true
+                "bool": true,
+                "double": 3.14,
+                "float": 42.0
             }
         },
         "top": 420
@@ -107,6 +109,10 @@ TEST_F(ConfigTest, Access)
     ASSERT_EQ(cfg.valueOr<string>("section.test.str", "fallback"), "hello");
     ASSERT_EQ(cfg.valueOr<string>("section.test.nonexistent", "fallback"), "fallback");
     ASSERT_EQ(cfg.valueOr("section.test.bool", false), true);
+    ASSERT_EQ(cfg.valueOr("section.test.double", 0.42), 3.14);
+    ASSERT_EQ(cfg.valueOr<float>("section.test.double", 0.42f), 3.14f);
+    ASSERT_EQ(cfg.valueOr("section.test.float", 0.42f), 42.0f);
+    ASSERT_EQ(cfg.valueOr<double>("section.test.float", 0.42), 42.0);
 
     ASSERT_ANY_THROW((void)cfg.valueOr("section.test.bool", 1234));  // wrong type requested
 }

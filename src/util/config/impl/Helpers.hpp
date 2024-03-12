@@ -159,4 +159,11 @@ typeName<double>()
     return "double";
 }
 
+template <>
+constexpr char const*
+typeName<float>()
+{
+    return "float";
+}
+
 };  // namespace util::impl

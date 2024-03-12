@@ -13,16 +13,35 @@ jobs:
     container:
       image: rippleci/clio_ci:latest
     steps:
+      - name: Fix git permissions on Linux
+        shell: bash
+        run: git config --global --add safe.directory $PWD
+
       - uses: actions/checkout@v4
       - name: Run formatters
         id: run_formatters
         run: |
-          ./.githooks/pre-commit
+          ./.githooks/check-format
+        shell: bash
+  
+  check_docs:
+    name: Check documentation
+    runs-on: ubuntu-20.04
+    container:
+      image: rippleci/clio_ci:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run linter
+        id: run_linter
+        run: |
+          ./.githooks/check-docs
         shell: bash
 
   build:
     name: Build
-    needs: check_format
+    needs: 
+      - check_format 
+      - check_docs
     strategy:
       fail-fast: false
       matrix:
@@ -53,6 +72,10 @@ jobs:
           --health-retries 5
 
     steps:
+      - name: Clean workdir
+        if: ${{ runner.os == 'macOS' }}
+        uses: kuznetsss/workspace-cleanup@1.0
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -152,6 +175,10 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
+      - name: Clean workdir
+        if: ${{ runner.os == 'macOS' }}
+        uses: kuznetsss/workspace-cleanup@1.0
+
       - uses: actions/download-artifact@v3
         with:
           name: clio_tests_${{ runner.os }}

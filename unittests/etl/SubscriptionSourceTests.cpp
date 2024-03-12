@@ -60,6 +60,7 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
 
     StrictMock<MockFunction<void()>> onConnectHook_;
     StrictMock<MockFunction<void()>> onDisconnectHook_;
+    StrictMock<MockFunction<void()>> onLedgerClosedHook_;
 
     std::unique_ptr<SubscriptionSource> subscriptionSource_ = std::make_unique<SubscriptionSource>(
         ioContext_,
@@ -69,6 +70,7 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
         subscriptionManager_,
         onConnectHook_.AsStdFunction(),
         onDisconnectHook_.AsStdFunction(),
+        onLedgerClosedHook_.AsStdFunction(),
         std::chrono::milliseconds(1),
         std::chrono::milliseconds(1)
     );
@@ -299,10 +301,37 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithLedgerIndexAndValidatedLedgers)
     EXPECT_FALSE(subscriptionSource_->hasLedger(4));
 }
 
+TEST_F(SubscriptionSourceReadTests, GotLedgerClosed)
+{
+    boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
+        auto connection = connectAndSendMessage(R"({"type":"ledgerClosed"})", yield);
+        connection.close(yield);
+    });
+
+    EXPECT_CALL(onConnectHook_, Call());
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    ioContext_.run();
+}
+
+TEST_F(SubscriptionSourceReadTests, GotLedgerClosedForwardingIsSet)
+{
+    subscriptionSource_->setForwarding(true);
+
+    boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
+        auto connection = connectAndSendMessage(R"({"type": "ledgerClosed"})", yield);
+        connection.close(yield);
+    });
+
+    EXPECT_CALL(onConnectHook_, Call());
+    EXPECT_CALL(onLedgerClosedHook_, Call());
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    ioContext_.run();
+}
+
 TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndex)
 {
     boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
-        auto connection = connectAndSendMessage(R"({"type":"ledgerClosed","ledger_index":123})", yield);
+        auto connection = connectAndSendMessage(R"({"type": "ledgerClosed","ledger_index": 123})", yield);
         connection.close(yield);
     });
 
