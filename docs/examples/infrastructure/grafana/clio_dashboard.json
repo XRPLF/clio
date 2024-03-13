@@ -178,7 +178,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "etl_read_only",
+          "expr": "read_only",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -443,7 +443,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "time() - etl_last_publish_seconds\n",
+          "expr": "timestamp(etl_last_publish_seconds) - etl_last_publish_seconds",
           "format": "time_series",
           "instant": false,
           "legendFormat": "ledger age",

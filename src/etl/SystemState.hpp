@@ -38,7 +38,7 @@ struct SystemState {
      * as they are written to the database.
      */
     util::prometheus::Bool isReadOnly = PrometheusService::boolMetric(
-        "etl_read_only",
+        "read_only",
         util::prometheus::Labels{},
         "Whether the process is in strict read-only mode"
     );
