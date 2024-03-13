@@ -552,6 +552,47 @@ public:
         return ret;
     }
 
+    MPTHoldersAndCursor
+    fetchMPTHolders(
+        ripple::uint192 const& mptID,
+        std::uint32_t const limit,
+        std::optional<ripple::AccountID> const& cursorIn,
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context yield
+    ) const override
+    {
+        auto const holderEntries = executor_.read(
+            yield, schema_->selectMPTHolders, mptID, cursorIn.value_or(ripple::AccountID(0)), Limit{limit}
+        );
+
+        auto const& holderResults = holderEntries.value();
+        if (not holderResults.hasRows()) {
+            LOG(log_.debug()) << "No rows returned";
+            return {};
+        }
+
+        std::vector<ripple::uint256> mptKeys;
+        std::optional<ripple::AccountID> cursor;
+        for (auto const [holder] : extract<ripple::AccountID>(holderResults)) {
+            mptKeys.push_back(ripple::keylet::mptoken(mptID, holder).key);
+            cursor = holder;
+        }
+
+        auto const mptObjects = doFetchLedgerObjects(mptKeys, ledgerSequence, yield);
+
+        // need to filter out the objs that don't exist at the ledger seq because these MPT are in no particular time
+        // order. The MPToken at the specified ledger index may not exist.
+        std::vector<Blob> filteredMpt;
+        std::copy_if(mptObjects.begin(), mptObjects.end(), std::back_inserter(filteredMpt), [](Blob mpt) {
+            return mpt.size() != 0;
+        });
+
+        if (mptKeys.size() == limit)
+            return {filteredMpt, cursor};
+
+        return {filteredMpt, {}};
+    }
+
     std::optional<Blob>
     doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
         const override
@@ -844,6 +885,20 @@ public:
                     schema_->insertNFTURI.bind(record.tokenID, record.ledgerSequence, record.uri.value())
                 );
             }
+        }
+
+        executor_.write(std::move(statements));
+    }
+
+    void
+    writeMPTHolders(std::vector<std::pair<ripple::uint192, ripple::AccountID>> const& data) override
+    {
+        std::vector<Statement> statements;
+        for (auto const& record : data) {
+            auto const mptId = record.first;
+            auto const holder = record.second;
+
+            statements.push_back(schema_->insertMPTHolder.bind(mptId, holder));
         }
 
         executor_.write(std::move(statements));

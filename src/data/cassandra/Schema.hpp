@@ -281,6 +281,21 @@ public:
             settingsProvider_.get().getTtl()
         ));
 
+        statements.emplace_back(fmt::format(
+            R"(
+           CREATE TABLE IF NOT EXISTS {}
+                  ( 
+                    mpt_id blob,
+                    holder blob,
+                    PRIMARY KEY (mpt_id, holder)
+                  ) 
+             WITH CLUSTERING ORDER BY (holder ASC)
+              AND default_time_to_live = {}
+            )",
+            qualifiedTableName(settingsProvider_.get(), "mp_token_holders"),
+            settingsProvider_.get().getTtl()
+        ));
+
         return statements;
     }();
 
@@ -414,6 +429,17 @@ public:
                 VALUES (?, ?, ?)
                 )",
                 qualifiedTableName(settingsProvider_.get(), "nf_token_transactions")
+            ));
+        }();
+
+        PreparedStatement insertMPTHolder = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                INSERT INTO {} 
+                       (mpt_id, holder)
+                VALUES (?, ?)
+                )",
+                qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
             ));
         }();
 
@@ -682,6 +708,20 @@ public:
                  LIMIT ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "issuer_nf_tokens_v2")
+            ));
+        }();
+
+        PreparedStatement selectMPTHolders = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT holder
+                  FROM {}    
+                 WHERE mpt_id = ?
+                   AND holder > ?
+              ORDER BY holder ASC
+                 LIMIT ?
+                )",
+                qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
             ));
         }();
 

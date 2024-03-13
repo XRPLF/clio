@@ -86,6 +86,8 @@ public:
         std::optional<std::string> accountRoot;
         // account id to address did object
         std::optional<std::string> did;
+        // mpt issuance id to address mptIssuance object
+        std::optional<std::string> mptIssuance;
         // TODO: extract into custom objects, remove json from Input
         std::optional<boost::json::object> directory;
         std::optional<boost::json::object> offer;
@@ -94,6 +96,7 @@ public:
         std::optional<boost::json::object> depositPreauth;
         std::optional<boost::json::object> ticket;
         std::optional<boost::json::object> amm;
+        std::optional<boost::json::object> mptoken;
         std::optional<ripple::STXChainBridge> bridge;
         std::optional<std::string> bridgeAccount;
         std::optional<uint32_t> chainClaimId;
@@ -278,6 +281,16 @@ public:
                  }},
                  Status(ClioError::rpcMALFORMED_REQUEST)
              }},
+            {JS(mpt_issuance), validation::Uint192HexStringValidator},
+            {JS(mptoken),
+             validation::Type<std::string, boost::json::object>{},
+             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             meta::IfType<boost::json::object>{
+                 meta::Section{
+                     {JS(account), validation::Required{}, validation::AccountBase58Validator},
+                     {JS(mpt_issuance_id), validation::Required{}, validation::Uint192HexStringValidator},
+                 },
+             }}
         };
 
         return rpcSpec;

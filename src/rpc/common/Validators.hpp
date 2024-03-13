@@ -464,6 +464,21 @@ public:
 [[nodiscard]] bool
 checkIsU32Numeric(std::string_view sv);
 
+template <class HexType>
+    requires(std::is_same_v<HexType, ripple::uint160> || std::is_same_v<HexType, ripple::uint192> || std::is_same_v<HexType, ripple::uint256>)
+MaybeError
+makeHexStringValidator(boost::json::value const& value, std::string_view key)
+{
+    if (!value.is_string())
+        return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
+
+    HexType parsedInt;
+    if (!parsedInt.parseHex(value.as_string().c_str()))
+        return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
+
+    return MaybeError{};
+}
+
 /**
  * @brief Provides a commonly used validator for ledger index.
  *
@@ -493,6 +508,22 @@ extern CustomValidator AccountBase58Validator;
  * The former will be read as hex, and the latter can be cast to uint64.
  */
 extern CustomValidator AccountMarkerValidator;
+
+/**
+ * @brief Provides a commonly used validator for uint160(AccountID) hex string.
+ *
+ * It must be a string and also a decodable hex.
+ * AccountID uses this validator.
+ */
+extern CustomValidator Uint160HexStringValidator;
+
+/**
+ * @brief Provides a commonly used validator for uint192 hex string.
+ *
+ * It must be a string and also a decodable hex.
+ * MPTIssuanceID uses this validator.
+ */
+extern CustomValidator Uint192HexStringValidator;
 
 /**
  * @brief Provides a commonly used validator for uint256 hex string.

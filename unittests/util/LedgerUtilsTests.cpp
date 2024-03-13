@@ -50,7 +50,9 @@ TEST(LedgerUtilsTests, LedgerObjectTypeList)
         JS(bridge),
         JS(xchain_owned_claim_id),
         JS(xchain_owned_create_account_claim_id),
-        JS(did)
+        JS(did),
+        JS(mpt_issuance),
+        JS(mptoken)
     };
     ASSERT_TRUE(std::size(typesList) == types.size());
     EXPECT_TRUE(std::all_of(std::cbegin(typesList), std::cend(typesList), [&types](auto const& type) {
@@ -82,7 +84,9 @@ TEST(LedgerUtilsTests, DeletionBlockerTypes)
         ripple::ltRIPPLE_STATE,
         ripple::ltXCHAIN_OWNED_CLAIM_ID,
         ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID,
-        ripple::ltBRIDGE
+        ripple::ltBRIDGE,
+        ripple::ltMPTOKEN_ISSUANCE,
+        ripple::ltMPTOKEN
     };
 
     ASSERT_TRUE(std::size(deletionBlockers) == testedTypes.size());

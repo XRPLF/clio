@@ -178,6 +178,7 @@ TransactionFeed::pub(
         pubObj[JS(meta)] = rpc::toJson(*meta);
         rpc::insertDeliveredAmount(pubObj[JS(meta)].as_object(), tx, meta, txMeta.date);
         rpc::insertDeliverMaxAlias(pubObj[txKey].as_object(), version);
+        rpc::insertMPTIssuanceID(pubObj[JS(meta)].as_object(), tx, meta);
 
         pubObj[JS(type)] = "transaction";
         pubObj[JS(validated)] = true;

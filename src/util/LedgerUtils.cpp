@@ -66,7 +66,9 @@ static std::unordered_map<std::string, LedgerTypeAttributes> const LEDGER_TYPES_
      {JS(xchain_owned_claim_id), LedgerTypeAttributes(ripple::ltXCHAIN_OWNED_CLAIM_ID, true)},
      {JS(xchain_owned_create_account_claim_id),
       LedgerTypeAttributes(ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID, true)},
-     {JS(did), LedgerTypeAttributes(ripple::ltDID)}}
+     {JS(did), LedgerTypeAttributes(ripple::ltDID)},
+     {JS(mpt_issuance), LedgerTypeAttributes(ripple::ltMPTOKEN_ISSUANCE, true)},
+     {JS(mptoken), LedgerTypeAttributes(ripple::ltMPTOKEN, true)}}
 };
 }  // namespace impl
 

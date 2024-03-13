@@ -259,6 +259,7 @@ toExpandedJson(
     auto metaJson = toJson(*meta);
     insertDeliveredAmount(metaJson, txn, meta, blobs.date);
     insertDeliverMaxAlias(txnJson, apiVersion);
+    insertMPTIssuanceID(metaJson, txn, meta);
 
     if (nftEnabled == NFTokenjson::ENABLE) {
         Json::Value nftJson;
@@ -314,6 +315,67 @@ insertDeliveredAmount(
     return false;
 }
 
+/**
+ * @brief Get the delivered amount
+ *
+ * @param meta The metadata
+ * @return The mpt_issuance_id or std::nullopt if not available
+ */
+static std::optional<ripple::uint192>
+getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
+{
+    ripple::TxMeta const& transactionMeta = *meta;
+
+    for (ripple::STObject const& node : transactionMeta.getNodes()) {
+        if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltMPTOKEN_ISSUANCE ||
+            node.getFName() != ripple::sfCreatedNode)
+            continue;
+
+        auto const& mptNode = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
+        return ripple::getMptID(mptNode[ripple::sfIssuer], mptNode[ripple::sfSequence]);
+    }
+
+    return {};
+}
+
+/**
+ * @brief Check if transaction has a new MPToken created
+ *
+ * @param txn The transaction
+ * @param meta The metadata
+ * @return true if the transaction can have a mpt_issuance_id
+ */
+static bool
+canHaveMPTIssuanceID(std::shared_ptr<ripple::STTx const> const& txn, std::shared_ptr<ripple::TxMeta const> const& meta)
+{
+    ripple::TxType const tt{txn->getTxnType()};
+    if (tt != ripple::ttMPTOKEN_ISSUANCE_CREATE)
+        return false;
+
+    if (meta->getResultTER() != ripple::tesSUCCESS)
+        return false;
+
+    return true;
+}
+
+bool
+insertMPTIssuanceID(
+    boost::json::object& metaJson,
+    std::shared_ptr<ripple::STTx const> const& txn,
+    std::shared_ptr<ripple::TxMeta const> const& meta
+)
+{
+    if (!canHaveMPTIssuanceID(txn, meta))
+        return false;
+
+    if (auto const id = getMPTIssuanceID(meta)) {
+        metaJson[JS(mpt_issuance_id)] = ripple::to_string(*id);
+        return true;
+    }
+
+    return false;
+}
+
 void
 insertDeliverMaxAlias(boost::json::object& txJson, std::uint32_t const apiVersion)
 {
@@ -353,6 +415,12 @@ toJson(ripple::SLE const& sle)
             value.as_object()["urlgravatar"] = str(boost::format("http://www.gravatar.com/avatar/%s") % md5);
         }
     }
+
+    // if object type if mpt issuance, inject synthetic mpt id
+    if (sle.getType() == ripple::ltMPTOKEN_ISSUANCE)
+        value.as_object()[JS(mpt_issuance_id)] =
+            ripple::to_string(ripple::getMptID(sle[ripple::sfIssuer], sle[ripple::sfSequence]));
+
     return value.as_object();
 }
 

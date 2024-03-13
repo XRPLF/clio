@@ -139,6 +139,14 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             key = ripple::keylet::xChainCreateAccountClaimID(input.bridge->value(), input.createAccountClaimId.value())
                       .key;
         }
+    } else if (input.mptIssuance) {
+        auto const mptIssuanceID = ripple::uint192{std::string_view(*(input.mptIssuance))};
+        key = ripple::keylet::mptIssuance(mptIssuanceID).key;
+    } else if (input.mptoken) {
+        auto const holder = ripple::parseBase58<ripple::AccountID>(input.mptoken->at(JS(account)).as_string().c_str());
+        auto const mptIssuanceID =
+            ripple::uint192{std::string_view(input.mptoken->at(JS(mpt_issuance_id)).as_string().c_str())};
+        key = ripple::keylet::mptoken(mptIssuanceID, *holder).key;
     } else {
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
@@ -257,6 +265,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(amm), ripple::ltAMM},
         {JS(xchain_owned_create_account_claim_id), ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
         {JS(xchain_owned_claim_id), ripple::ltXCHAIN_OWNED_CLAIM_ID},
+        {JS(mptoken), ripple::ltMPTOKEN},
     };
 
     auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {
@@ -289,6 +298,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.accountRoot = boost::json::value_to<std::string>(jv.at(JS(account_root)));
     } else if (jsonObject.contains(JS(did))) {
         input.did = boost::json::value_to<std::string>(jv.at(JS(did)));
+    } else if (jsonObject.contains(JS(mpt_issuance))) {
+        input.mptIssuance = boost::json::value_to<std::string>(jv.at(JS(mpt_issuance)));
     }
     // no need to check if_object again, validator only allows string or object
     else if (jsonObject.contains(JS(directory))) {
@@ -318,6 +329,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.createAccountClaimId = boost::json::value_to<std::int32_t>(
             jv.at(JS(xchain_owned_create_account_claim_id)).at(JS(xchain_owned_create_account_claim_id))
         );
+    } else if (jsonObject.contains(JS(mptoken))) {
+        input.mptoken = jv.at(JS(mptoken)).as_object();
     }
 
     return input;

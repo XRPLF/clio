@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
+#include "etl/MPTHelpers.hpp"
 #include "etl/NFTHelpers.hpp"
 #include "etl/SystemState.hpp"
 #include "etl/impl/LedgerFetcher.hpp"
@@ -55,6 +56,7 @@ struct FormattedTransactionsData {
     std::vector<AccountTransactionsData> accountTxData;
     std::vector<NFTTransactionsData> nfTokenTxData;
     std::vector<NFTsData> nfTokensData;
+    std::vector<std::pair<ripple::uint192, ripple::AccountID>> mptHoldersData;
 };
 
 namespace etl::impl {
@@ -123,6 +125,10 @@ public:
             result.nfTokenTxData.insert(result.nfTokenTxData.end(), nftTxs.begin(), nftTxs.end());
             if (maybeNFT)
                 result.nfTokensData.push_back(*maybeNFT);
+
+            auto const maybeMPTHolder = getMPTHolderFromTx(txMeta, sttx);
+            if (maybeMPTHolder)
+                result.mptHoldersData.push_back(*maybeMPTHolder);
 
             result.accountTxData.emplace_back(txMeta, sttx.getTransactionID());
             static constexpr std::size_t KEY_SIZE = 32;
@@ -256,6 +262,7 @@ public:
                 backend_->writeAccountTransactions(std::move(insertTxResult.accountTxData));
                 backend_->writeNFTs(insertTxResult.nfTokensData);
                 backend_->writeNFTTransactions(insertTxResult.nfTokenTxData);
+                backend_->writeMPTHolders(std::move(insertTxResult.mptHoldersData));
             }
 
             backend_->finishWrites(sequence);

@@ -68,6 +68,7 @@ target_sources(
           rpc/handlers/LedgerEntryTests.cpp
           rpc/handlers/LedgerRangeTests.cpp
           rpc/handlers/LedgerTests.cpp
+          rpc/handlers/MPTHoldersTests.cpp
           rpc/handlers/NFTBuyOffersTests.cpp
           rpc/handlers/NFTHistoryTests.cpp
           rpc/handlers/NFTInfoTests.cpp

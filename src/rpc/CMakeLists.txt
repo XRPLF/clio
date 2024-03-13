@@ -30,6 +30,7 @@ target_sources(
           handlers/LedgerData.cpp
           handlers/LedgerEntry.cpp
           handlers/LedgerRange.cpp
+          handlers/MPTHolders.cpp
           handlers/NFTsByIssuer.cpp
           handlers/NFTBuyOffers.cpp
           handlers/NFTHistory.cpp
