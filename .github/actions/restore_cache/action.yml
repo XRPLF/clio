@@ -44,14 +44,14 @@ runs:
         echo "hash=$hash" >> $GITHUB_OUTPUT
 
     - name: Restore conan cache
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       id: conan_cache
       with:
         path: ${{ inputs.conan_dir }}/data
         key: clio-conan_data-${{ runner.os }}-${{ inputs.build_type }}-develop-${{ steps.conan_hash.outputs.hash }}
 
     - name: Restore ccache cache
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       id: ccache_cache
       if: ${{ env.CCACHE_DISABLE != '1' }}
       with:
