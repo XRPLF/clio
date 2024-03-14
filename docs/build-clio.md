@@ -97,6 +97,7 @@ To generate the API docs:
 1. First, include `-o docs=True` in the conan install command. For example:
 
     ```sh
+    mkdir build && cd build
     conan install .. --output-folder . --build missing --settings build_type=Release -o tests=True -o lint=False -o docs=True
     ```
 
@@ -107,7 +108,7 @@ To generate the API docs:
    cmake --build . --parallel 8 --target docs
    ```
 
-3. In the `build` directory, you should see a folder called `html`. Go to the folder to view the generated files.
+3. Go to `build/docs/html` to view the generated files.
 
     Open the `index.html` file in your browser to see the documentation pages.
 
