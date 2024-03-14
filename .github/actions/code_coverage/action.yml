@@ -14,7 +14,7 @@ runs:
         gcovr -e unittests --xml build/coverage_report.xml -j8 --exclude-throw-branches
 
     - name: Archive coverage report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-report.xml
         path: build/coverage_report.xml

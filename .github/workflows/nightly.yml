@@ -56,7 +56,7 @@ jobs:
         run: strip build/clio_tests
 
       - name: Upload clio_tests
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
           path: build/clio_tests
@@ -68,7 +68,7 @@ jobs:
             tar czf ./clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz ./clio_server
 
       - name: Upload clio_server
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: clio_server_${{ runner.os }}_${{ matrix.build_type }}
           path: build/clio_server_${{ runner.os }}_${{ matrix.build_type }}.tar.gz
@@ -93,7 +93,7 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: kuznetsss/workspace-cleanup@1.0
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
 
@@ -113,7 +113,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: nightly_release
 

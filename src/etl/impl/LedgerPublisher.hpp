@@ -25,6 +25,8 @@
 #include "etl/SystemState.hpp"
 #include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
+#include "util/prometheus/Counter.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
@@ -75,8 +77,11 @@ class LedgerPublisher {
     std::chrono::time_point<ripple::NetClock> lastCloseTime_;
     mutable std::shared_mutex closeTimeMtx_;
 
-    std::chrono::time_point<std::chrono::system_clock> lastPublish_;
-    mutable std::shared_mutex publishTimeMtx_;
+    std::reference_wrapper<util::prometheus::CounterInt> lastPublishSeconds_ = PrometheusService::counterInt(
+        "etl_last_publish_seconds",
+        {},
+        "Seconds since epoch of the last published ledger"
+    );
 
     std::optional<uint32_t> lastPublishedSequence_;
     mutable std::shared_mutex lastPublishedSeqMtx_;
@@ -232,8 +237,8 @@ public:
     std::chrono::time_point<std::chrono::system_clock>
     getLastPublish() const
     {
-        std::shared_lock const lck(publishTimeMtx_);
-        return lastPublish_;
+        return std::chrono::time_point<std::chrono::system_clock>{std::chrono::seconds{lastPublishSeconds_.get().value()
+        }};
     }
 
     /**
@@ -273,8 +278,9 @@ private:
     void
     setLastPublishTime()
     {
-        std::scoped_lock const lck(publishTimeMtx_);
-        lastPublish_ = std::chrono::system_clock::now();
+        using namespace std::chrono;
+        auto const nowSeconds = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
+        lastPublishSeconds_.get().set(nowSeconds);
     }
 
     void
