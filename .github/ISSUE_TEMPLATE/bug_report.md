@@ -8,6 +8,7 @@ assignees: ''
 ---
 
 <!-- Please search existing issues to avoid creating duplicates. -->
+<!-- Kindly refrain from posting any credentials or sensitive information in this issue -->
 
 ## Issue Description
 <!-- Provide a summary for your issue/bug. -->
