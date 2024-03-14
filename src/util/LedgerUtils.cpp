@@ -45,29 +45,30 @@ struct LedgerTypeAttributes {
 
 // Ledger entry type filter list, add new types here to support filtering for ledger_data and
 // account_objects
-static std::unordered_map<std::string, LedgerTypeAttributes> const LEDGER_TYPES_MAP{
-    {{JS(account), LedgerTypeAttributes(ripple::ltACCOUNT_ROOT)},
-     {JS(amendments), LedgerTypeAttributes(ripple::ltAMENDMENTS)},
-     {JS(check), LedgerTypeAttributes(ripple::ltCHECK, true)},
-     {JS(deposit_preauth), LedgerTypeAttributes(ripple::ltDEPOSIT_PREAUTH)},
-     {JS(directory), LedgerTypeAttributes(ripple::ltDIR_NODE)},
-     {JS(escrow), LedgerTypeAttributes(ripple::ltESCROW, true)},
-     {JS(fee), LedgerTypeAttributes(ripple::ltFEE_SETTINGS)},
-     {JS(hashes), LedgerTypeAttributes(ripple::ltLEDGER_HASHES)},
-     {JS(offer), LedgerTypeAttributes(ripple::ltOFFER)},
-     {JS(payment_channel), LedgerTypeAttributes(ripple::ltPAYCHAN, true)},
-     {JS(signer_list), LedgerTypeAttributes(ripple::ltSIGNER_LIST)},
-     {JS(state), LedgerTypeAttributes(ripple::ltRIPPLE_STATE, true)},
-     {JS(ticket), LedgerTypeAttributes(ripple::ltTICKET)},
-     {JS(nft_offer), LedgerTypeAttributes(ripple::ltNFTOKEN_OFFER)},
-     {JS(nft_page), LedgerTypeAttributes(ripple::ltNFTOKEN_PAGE, true)},
-     {JS(amm), LedgerTypeAttributes(ripple::ltAMM)},
-     {JS(bridge), LedgerTypeAttributes(ripple::ltBRIDGE, true)},
-     {JS(xchain_owned_claim_id), LedgerTypeAttributes(ripple::ltXCHAIN_OWNED_CLAIM_ID, true)},
-     {JS(xchain_owned_create_account_claim_id),
-      LedgerTypeAttributes(ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID, true)},
-     {JS(did), LedgerTypeAttributes(ripple::ltDID)}}
-};
+static std::unordered_map<std::string, LedgerTypeAttributes> const LEDGER_TYPES_MAP{{
+    {JS(account), LedgerTypeAttributes(ripple::ltACCOUNT_ROOT)},
+    {JS(amendments), LedgerTypeAttributes(ripple::ltAMENDMENTS)},
+    {JS(check), LedgerTypeAttributes(ripple::ltCHECK, true)},
+    {JS(deposit_preauth), LedgerTypeAttributes(ripple::ltDEPOSIT_PREAUTH)},
+    {JS(directory), LedgerTypeAttributes(ripple::ltDIR_NODE)},
+    {JS(escrow), LedgerTypeAttributes(ripple::ltESCROW, true)},
+    {JS(fee), LedgerTypeAttributes(ripple::ltFEE_SETTINGS)},
+    {JS(hashes), LedgerTypeAttributes(ripple::ltLEDGER_HASHES)},
+    {JS(offer), LedgerTypeAttributes(ripple::ltOFFER)},
+    {JS(payment_channel), LedgerTypeAttributes(ripple::ltPAYCHAN, true)},
+    {JS(signer_list), LedgerTypeAttributes(ripple::ltSIGNER_LIST)},
+    {JS(state), LedgerTypeAttributes(ripple::ltRIPPLE_STATE, true)},
+    {JS(ticket), LedgerTypeAttributes(ripple::ltTICKET)},
+    {JS(nft_offer), LedgerTypeAttributes(ripple::ltNFTOKEN_OFFER)},
+    {JS(nft_page), LedgerTypeAttributes(ripple::ltNFTOKEN_PAGE, true)},
+    {JS(amm), LedgerTypeAttributes(ripple::ltAMM)},
+    {JS(bridge), LedgerTypeAttributes(ripple::ltBRIDGE, true)},
+    {JS(xchain_owned_claim_id), LedgerTypeAttributes(ripple::ltXCHAIN_OWNED_CLAIM_ID, true)},
+    {JS(xchain_owned_create_account_claim_id),
+     LedgerTypeAttributes(ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID, true)},
+    {JS(did), LedgerTypeAttributes(ripple::ltDID)},
+    {JS(oracle), LedgerTypeAttributes(ripple::ltORACLE)},
+}};
 }  // namespace impl
 
 std::unordered_set<std::string> const&
