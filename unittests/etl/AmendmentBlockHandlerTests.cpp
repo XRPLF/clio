@@ -21,6 +21,7 @@
 #include "etl/impl/AmendmentBlock.hpp"
 #include "util/FakeAmendmentBlockAction.hpp"
 #include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <gtest/gtest.h>
@@ -32,8 +33,7 @@
 using namespace testing;
 using namespace etl;
 
-class AmendmentBlockHandlerTest : public NoLoggerFixture {
-protected:
+struct AmendmentBlockHandlerTest : util::prometheus::WithPrometheus, NoLoggerFixture {
     using AmendmentBlockHandlerType = impl::AmendmentBlockHandler<FakeAmendmentBlockAction>;
 
     boost::asio::io_context ioc_;

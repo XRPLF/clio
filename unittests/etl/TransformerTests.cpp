@@ -25,6 +25,7 @@
 #include "util/MockExtractionDataPipe.hpp"
 #include "util/MockLedgerLoader.hpp"
 #include "util/MockLedgerPublisher.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/StringUtils.hpp"
 
 #include <gmock/gmock.h>
@@ -46,8 +47,7 @@ constexpr static auto RAW_HEADER =
     "3E2232B33EF57CECAC2816E3122816E31A0A00F8377CD95DFA484CFAE282656A58"
     "CE5AA29652EFFD80AC59CD91416E4E13DBBE";
 
-class ETLTransformerTest : public MockBackendTest {
-protected:
+struct ETLTransformerTest : util::prometheus::WithPrometheus, MockBackendTest {
     using DataType = FakeFetchResponse;
     using ExtractionDataPipeType = MockExtractionDataPipe;
     using LedgerLoaderType = MockLedgerLoader;
@@ -64,7 +64,6 @@ protected:
 
     std::unique_ptr<TransformerType> transformer_;
 
-public:
     void
     SetUp() override
     {

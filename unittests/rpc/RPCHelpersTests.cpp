@@ -23,6 +23,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/asio/impl/spawn.hpp>
@@ -57,7 +58,7 @@ constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B25
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr static auto TXNID = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
-class RPCHelpersTest : public MockBackendTest, public SyncAsioContextTest {
+class RPCHelpersTest : public util::prometheus::WithPrometheus, public MockBackendTest, public SyncAsioContextTest {
     void
     SetUp() override
     {

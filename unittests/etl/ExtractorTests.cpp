@@ -24,6 +24,7 @@
 #include "util/MockExtractionDataPipe.hpp"
 #include "util/MockLedgerFetcher.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
+#include "util/MockPrometheus.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -34,8 +35,7 @@
 using namespace testing;
 using namespace etl;
 
-class ETLExtractorTest : public NoLoggerFixture {
-protected:
+struct ETLExtractorTest : util::prometheus::WithPrometheus, NoLoggerFixture {
     using ExtractionDataPipeType = MockExtractionDataPipe;
     using LedgerFetcherType = MockLedgerFetcher;
     using ExtractorType = etl::impl::Extractor<ExtractionDataPipeType, MockNetworkValidatedLedgers, LedgerFetcherType>;
@@ -48,7 +48,6 @@ protected:
 
     std::unique_ptr<ExtractorType> extractor_;
 
-public:
     void
     SetUp() override
     {

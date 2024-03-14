@@ -21,6 +21,7 @@
 #include "etl/impl/CursorProvider.hpp"
 #include "etl/impl/FakeDiffProvider.hpp"
 #include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -36,7 +37,7 @@ namespace {
 
 constexpr auto SEQ = 30;
 
-struct CursorProviderTest : MockBackendTestNaggy {
+struct CursorProviderTest : util::prometheus::WithPrometheus, MockBackendTestNaggy {
     DiffProvider diffProvider;
 };
 struct ParametrizedCursorProviderTest : CursorProviderTest, WithParamInterface<std::size_t> {};

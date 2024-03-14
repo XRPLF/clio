@@ -24,6 +24,7 @@
 #include "util/MockCounters.hpp"
 #include "util/MockETLService.hpp"
 #include "util/MockLoadBalancer.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/log/Logger.hpp"
 
@@ -349,6 +350,7 @@ protected:
  */
 template <template <typename> typename MockType = ::testing::NiceMock>
 struct HandlerBaseTestBase : public MockBackendTestBase<MockType>,
+                             public util::prometheus::WithPrometheus,
                              public SyncAsioContextTest,
                              public MockETLServiceTest {
 protected:

@@ -23,6 +23,7 @@
 #include "etl/impl/LedgerPublisher.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockCache.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/TestObject.hpp"
 #include "util/config/Config.hpp"
@@ -49,7 +50,10 @@ static auto constexpr LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A
 static auto constexpr SEQ = 30;
 static auto constexpr AGE = 800;
 
-class ETLLedgerPublisherTest : public MockBackendTest, public SyncAsioContextTest, public MockSubscriptionManagerTest {
+struct ETLLedgerPublisherTest : util::prometheus::WithPrometheus,
+                                MockBackendTest,
+                                SyncAsioContextTest,
+                                MockSubscriptionManagerTest {
     void
     SetUp() override
     {

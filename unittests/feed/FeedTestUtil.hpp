@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -33,7 +34,7 @@
 
 // Base class for feed tests, providing easy way to access the received feed
 template <typename TestedFeed>
-class FeedBaseTest : public SyncAsioContextTest, public MockBackendTest {
+class FeedBaseTest : public util::prometheus::WithPrometheus, public SyncAsioContextTest, public MockBackendTest {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
     std::shared_ptr<TestedFeed> testFeedPtr;

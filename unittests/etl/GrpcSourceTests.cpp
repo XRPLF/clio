@@ -20,6 +20,7 @@
 #include "etl/impl/GrpcSource.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockBackend.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/MockXrpLedgerAPIService.hpp"
 #include "util/TestObject.hpp"
 #include "util/config/Config.hpp"
@@ -39,7 +40,9 @@
 
 using namespace etl::impl;
 
-struct GrpcSourceTests : NoLoggerFixture, unittests::util::WithMockXrpLedgerAPIService {
+struct GrpcSourceTests : NoLoggerFixture,
+                         util::prometheus::WithPrometheus,
+                         unittests::util::WithMockXrpLedgerAPIService {
     GrpcSourceTests()
         : WithMockXrpLedgerAPIService("localhost:50051")
         , mockBackend_(std::make_shared<testing::StrictMock<MockBackend>>(util::Config{}))
