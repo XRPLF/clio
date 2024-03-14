@@ -53,15 +53,15 @@ struct CursorFromAccountProviderTests : MockBackendTestNaggy {};
 
 TEST_F(CursorFromAccountProviderTests, EnoughAccountRoots)
 {
-    auto const numCursurs = 9;
+    auto const numCursors = 9;
     auto const pageSize = 100;
-    auto const provider = etl::impl::CursorFromAccountProvider{backend, numCursurs, pageSize};
+    auto const provider = etl::impl::CursorFromAccountProvider{backend, numCursors, pageSize};
 
-    ON_CALL(*backend, fetchAccountRoots(numCursurs, _, SEQ, _)).WillByDefault(Return(ACCOUNTROOTS));
+    ON_CALL(*backend, fetchAccountRoots(numCursors, _, SEQ, _)).WillByDefault(Return(ACCOUNTROOTS));
     EXPECT_CALL(*backend, fetchAccountRoots(_, _, _, _)).Times(1);
 
     auto const cursors = provider.getCursors(SEQ);
-    ASSERT_EQ(cursors.size(), numCursurs + 1);
+    ASSERT_EQ(cursors.size(), numCursors + 1);
 
     EXPECT_EQ(cursors.front().start, firstKey);
     EXPECT_EQ(cursors.back().end, lastKey);

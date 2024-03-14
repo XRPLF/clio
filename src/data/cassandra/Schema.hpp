@@ -591,9 +591,9 @@ public:
                 R"(
                 SELECT account 
                   FROM {}               
-                WHERE token(account) > 0
-                PER PARTITION LIMIT 1 
-                LIMIT ?
+                 WHERE token(account) > 0
+                   PER PARTITION LIMIT 1 
+                 LIMIT ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "account_tx")
             ));
@@ -604,9 +604,9 @@ public:
                 R"(
                 SELECT account 
                   FROM {}               
-                WHERE token(account) > token(?)
-                PER PARTITION LIMIT 1 
-                LIMIT ?
+                 WHERE token(account) > token(?)
+                   PER PARTITION LIMIT 1 
+                 LIMIT ?
                 )",
                 qualifiedTableName(settingsProvider_.get(), "account_tx")
             ));

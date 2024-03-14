@@ -38,7 +38,7 @@ constexpr auto SEQ = 30;
 
 std::vector<data::LedgerObject> const DIFFS_FOR_SEQ = {
     {.key = ripple::uint256{"05E1EAC2574BE082B00B16F907CE32E6058DEB8F9E81CF34A00E80A5D71FA4FE"}, .blob = Blob{}
-    },  // remove
+    },  // This object is removed in SEQ while it exists in SEQ-1
     {.key = ripple::uint256{"110872C7196EE6EF7032952F1852B11BB461A96FF2D7E06A8003B4BB30FD130B"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"3B3A84E850C724E914293271785A31D0BFC8B9DD1B6332E527B149AD72E80E18"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"4EC98C5C3F34C44409BC058998CBD64F6AED3FF6C0CAAEC15F7F42DF14EE9F04"}, .blob = Blob{'s'}},
@@ -57,7 +57,7 @@ std::vector<data::LedgerObject> const DIFFS_FOR_SEQ_MINUS1 = {
     {.key = ripple::uint256{"3B3A84E850C724E914293271785A31D0BFC8B9DD1B6332E527B149AD72E80E12"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"4EC98C5C3F34C44409BC058998CBD64F6AED3FF6C0CAAEC15F7F42DF14EE9F03"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"58CEC9F17733EA7BA68C88E6179B8F207D001EE04D4E0366F958CC04FF6AB834"}, .blob = Blob{'s'}
-    },  // same
+    },  // This object is changed in both SEQ and SEQ-1
     {.key = ripple::uint256{"64FB1712146BA604C274CC335C5DE7ADFE52D1F8C3E904A9F9765FE8158A3E05"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"700BE23B1D9EE3E6BF52543D05843D5345B85D9EDB3D33BBD6B4C3A13C54B386"}, .blob = Blob{'s'}},
     {.key = ripple::uint256{"82C297FCBCD634C4424F263D17480AA2F13975DF5846A5BB57246022CEEBE447"}, .blob = Blob{'s'}},
@@ -71,8 +71,8 @@ struct CursorFromDiffProviderTests : MockBackendTestNaggy {};
 
 TEST_F(CursorFromDiffProviderTests, MultipleDiffs)
 {
-    auto const numCursurs = 15;
-    auto const provider = etl::impl::CursorFromDiffProvider{backend, numCursurs};
+    auto const numCursors = 15;
+    auto const provider = etl::impl::CursorFromDiffProvider{backend, numCursors};
 
     backend->setRange(SEQ - 10, SEQ);
     ON_CALL(*backend, fetchLedgerDiff(SEQ, _)).WillByDefault(Return(DIFFS_FOR_SEQ));
@@ -80,7 +80,7 @@ TEST_F(CursorFromDiffProviderTests, MultipleDiffs)
     EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(2);
 
     auto const cursors = provider.getCursors(SEQ);
-    ASSERT_EQ(cursors.size(), numCursurs + 1);
+    ASSERT_EQ(cursors.size(), numCursors + 1);
 
     EXPECT_EQ(cursors.front().start, firstKey);
     EXPECT_EQ(cursors.back().end, lastKey);
@@ -88,8 +88,8 @@ TEST_F(CursorFromDiffProviderTests, MultipleDiffs)
 
 TEST_F(CursorFromDiffProviderTests, NotEnoughDiffs)
 {
-    auto const numCursurs = 35;
-    auto const provider = etl::impl::CursorFromDiffProvider{backend, numCursurs};
+    auto const numCursors = 35;
+    auto const provider = etl::impl::CursorFromDiffProvider{backend, numCursors};
     auto const AVAILABLE_DIFFS = 10;
     backend->setRange(SEQ - AVAILABLE_DIFFS + 1, SEQ);
     ON_CALL(*backend, fetchLedgerDiff(_, _)).WillByDefault(Return(std::vector<data::LedgerObject>{}));
