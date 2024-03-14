@@ -40,6 +40,7 @@ Below are some useful docs to learn more about Clio.
 **General reference material:**
 
 - [API reference](https://xrpl.org/http-websocket-apis.html)
+- [Developer docs](https://xrplf.github.io/clio)
 - [Clio documentation](https://xrpl.org/the-clio-server.html#the-clio-server)
 
 ## 🆘 Help
