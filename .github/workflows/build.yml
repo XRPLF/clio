@@ -123,14 +123,14 @@ jobs:
         run: strip build/clio_tests
 
       - name: Upload clio_server
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: clio_server_${{ runner.os }}_${{ matrix.build_type }}
           path: build/clio_server
 
       - name: Upload clio_tests
         if: ${{ !matrix.code_coverage }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}
           path: build/clio_tests
@@ -179,7 +179,7 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         uses: kuznetsss/workspace-cleanup@1.0
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}
       - name: Run clio_tests
