@@ -1,7 +1,7 @@
 name: Documentation
 on:
   push:
-    branches: [release/*, develop]
+    branches: [develop]
   workflow_dispatch:
 
 permissions:
@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: build_docs/html
-          name: docs-develop # TODO: use x.y.z for `release/x.y.z` branches and `develop` for latest dev docs
+          name: docs-develop
       
       - name: Deploy to GitHub Pages
         id: deployment
