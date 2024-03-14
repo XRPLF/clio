@@ -31,7 +31,7 @@ falls back to a soft read-only mode. clio can also operate in strict
 read-only mode, in which case they will never write to the database.
 
 ## Ledger cache
-To efficiently reduce the DB load and improve the RPC performance, we maintain a ledger cache in memory. The ledger cache stores all the entities of the latest ledger as a map of index to object. The cache is updated whenever a new ledger is validated.
+To efficiently reduce database load and improve RPC performance, we maintain a ledger cache in memory. The cache stores all entities of the latest ledger as a map of index to object, and is updated whenever a new ledger is validated.
 
 The successor table stores each ledger's object indexes as a linked list 
 ![Successor Table Trace Diagram](https://raw.githubusercontent.com/Shoukozumi/clio/9b2ea3efb6b164b02e9a5f0ef6717065a70f078c/src/backend/README.png),

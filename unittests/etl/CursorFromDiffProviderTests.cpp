@@ -98,9 +98,9 @@ TEST_F(CursorFromDiffProviderTests, NotEnoughDiffs)
     EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(AVAILABLE_DIFFS);
 
     auto const cursors = provider.getCursors(SEQ);
-    ASSERT_EQ(
-        cursors.size(), DIFFS_FOR_SEQ.size() + DIFFS_FOR_SEQ_MINUS1.size() - 2 /*removed 1*/ - 1 /* repeat 1*/ + 1
-    );
+    auto const removed = 2;   // lost 2 objects because it is removed.
+    auto const repeated = 1;  // repeated 1 object
+    ASSERT_EQ(cursors.size(), DIFFS_FOR_SEQ.size() + DIFFS_FOR_SEQ_MINUS1.size() - removed - repeated + 1);
 
     EXPECT_EQ(cursors.front().start, firstKey);
     EXPECT_EQ(cursors.back().end, lastKey);
