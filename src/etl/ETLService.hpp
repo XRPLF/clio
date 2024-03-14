@@ -212,8 +212,8 @@ public:
         boost::json::object result;
 
         result["etl_sources"] = loadBalancer_->toJson();
-        result["is_writer"] = state_.isWriting.load();
-        result["read_only"] = state_.isReadOnly;
+        result["is_writer"] = static_cast<int>(state_.isWriting);
+        result["read_only"] = static_cast<int>(state_.isReadOnly);
         auto last = ledgerPublisher_.getLastPublish();
         if (last.time_since_epoch().count() != 0)
             result["last_publish_age_seconds"] = std::to_string(ledgerPublisher_.lastPublishAgeSeconds());

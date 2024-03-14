@@ -24,6 +24,7 @@
 #include "etl/impl/FakeDiffProvider.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockCache.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/config/Config.hpp"
 
@@ -43,7 +44,7 @@ namespace {
 
 constexpr auto SEQ = 30;
 
-struct CacheLoaderTest : MockBackendTest {
+struct CacheLoaderTest : util::prometheus::WithPrometheus, MockBackendTest {
     void
     SetUp() override
     {

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,23 +17,47 @@
 */
 //==============================================================================
 
-#include "util/TerminationHandler.hpp"
-#include "util/TestGlobals.hpp"
+#include "util/prometheus/Bool.hpp"
+#include "util/prometheus/Gauge.hpp"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-/*
- * Supported custom command line options for clio_tests:
- *   --backend_host=<host>         - sets the cassandra/scylladb host for backend tests
- *   --backend_keyspace=<keyspace> - sets the cassandra/scylladb keyspace for backend tests
- *   --clean-gcda                  - delete all gcda files defore running tests
- */
-int
-main(int argc, char* argv[])
-{
-    util::setTerminationHandler();
-    testing::InitGoogleTest(&argc, argv);
-    TestGlobals::instance().parse(argc, argv);
+#include <cstdint>
 
-    return RUN_ALL_TESTS();
+using namespace util::prometheus;
+using testing::StrictMock;
+
+struct BoolTests : public testing::Test {
+    struct MockImpl {
+        MOCK_METHOD(void, set, (int64_t), ());
+        MOCK_METHOD(int64_t, value, (), ());
+    };
+    StrictMock<MockImpl> impl_;
+    AnyBool<StrictMock<MockImpl>> bool_{impl_};
+};
+
+TEST_F(BoolTests, Set)
+{
+    EXPECT_CALL(impl_, set(1));
+    bool_ = true;
+
+    EXPECT_CALL(impl_, set(0));
+    bool_ = false;
+}
+
+TEST_F(BoolTests, Get)
+{
+    EXPECT_CALL(impl_, value()).WillOnce(testing::Return(1));
+    EXPECT_TRUE(bool_);
+
+    EXPECT_CALL(impl_, value()).WillOnce(testing::Return(0));
+    EXPECT_FALSE(bool_);
+}
+
+TEST_F(BoolTests, DefaultValues)
+{
+    GaugeInt gauge{"test", ""};
+    Bool realBool{gauge};
+    EXPECT_FALSE(realBool);
 }

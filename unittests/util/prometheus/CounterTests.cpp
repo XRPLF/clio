@@ -70,6 +70,13 @@ TEST_F(AnyCounterTests, operatorAdd)
     counter += 42;
 }
 
+TEST_F(AnyCounterTests, set)
+{
+    EXPECT_CALL(mockCounterImpl, value()).WillOnce(::testing::Return(4));
+    EXPECT_CALL(mockCounterImpl, set(42));
+    counter.set(42);
+}
+
 TEST_F(AnyCounterTests, reset)
 {
     EXPECT_CALL(mockCounterImpl, set(0));
@@ -80,6 +87,20 @@ TEST_F(AnyCounterTests, value)
 {
     EXPECT_CALL(mockCounterImpl, value()).WillOnce(::testing::Return(42));
     EXPECT_EQ(counter.value(), 42);
+}
+
+struct AnyCounterDeathTest : AnyCounterTests {};
+
+TEST_F(AnyCounterDeathTest, setLowerValue)
+{
+    testing::Mock::AllowLeak(&mockCounterImpl);
+    EXPECT_DEATH(
+        {
+            EXPECT_CALL(mockCounterImpl, value()).WillOnce(::testing::Return(50));
+            counter.set(42);
+        },
+        ".*"
+    );
 }
 
 struct CounterIntTests : ::testing::Test {
