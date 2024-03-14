@@ -112,7 +112,7 @@ To generate the API docs:
 
     Open the `index.html` file in your browser to see the documentation pages.
 
-    ![API index page](./img/doxygen-docs-output.png "Title")
+    ![API index page](./img/doxygen-docs-output.png "API index page")
 
 ## Building Clio with Docker
 
