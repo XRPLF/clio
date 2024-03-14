@@ -53,7 +53,13 @@ make_CacheLoaderSettings(util::Config const& config)
     settings.numThreads = config.valueOr("io_threads", settings.numThreads);
     if (config.contains("cache")) {
         auto const cache = config.section("cache");
+        // Given diff number to generate cursors
         settings.numCacheDiffs = cache.valueOr<size_t>("num_diffs", settings.numCacheDiffs);
+        // Given cursors number fetching from diff
+        settings.numCacheCursorsFromDiff = cache.valueOr<size_t>("num_cursors_from_diff", 0);
+        // Given cursors number fetching from account
+        settings.numCacheCursorsFromAccount = cache.valueOr<size_t>("num_cursors_from_account", 0);
+
         settings.numCacheMarkers = cache.valueOr<size_t>("num_markers", settings.numCacheMarkers);
         settings.cachePageFetchSize = cache.valueOr<size_t>("page_fetch_size", settings.cachePageFetchSize);
 

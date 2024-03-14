@@ -32,10 +32,12 @@ struct CacheLoaderSettings {
     /** @brief Ways to load the cache */
     enum class LoadStyle { ASYNC, SYNC, NONE };
 
-    size_t numCacheDiffs = 32;       /**< number of diffs to use to generate cursors */
-    size_t numCacheMarkers = 48;     /**< number of markers to use at one time to traverse the ledger */
-    size_t cachePageFetchSize = 512; /**< number of ledger objects to fetch concurrently per marker */
-    size_t numThreads = 2;           /**< number of threads to use for loading cache */
+    size_t numCacheDiffs = 32;             /**< number of diffs to use to generate cursors */
+    size_t numCacheMarkers = 48;           /**< number of markers to use at one time to traverse the ledger */
+    size_t cachePageFetchSize = 512;       /**< number of ledger objects to fetch concurrently per marker */
+    size_t numThreads = 2;                 /**< number of threads to use for loading cache */
+    size_t numCacheCursorsFromDiff = 0;    /**< number of cursors to fetch from diff */
+    size_t numCacheCursorsFromAccount = 0; /**< number of cursors to fetch from account_tx */
 
     LoadStyle loadStyle = LoadStyle::ASYNC; /**< how to load the cache */
 

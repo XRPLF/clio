@@ -17,7 +17,9 @@ target_sources(
           etl/AmendmentBlockHandlerTests.cpp
           etl/CacheLoaderSettingsTests.cpp
           etl/CacheLoaderTests.cpp
-          etl/CursorProviderTests.cpp
+          etl/CursorFromAccountProviderTests.cpp
+          etl/CursorFromDiffProviderTests.cpp
+          etl/CursorFromFixDiffNumProviderTests.cpp
           etl/ETLStateTests.cpp
           etl/ExtractionDataPipeTests.cpp
           etl/ExtractorTests.cpp

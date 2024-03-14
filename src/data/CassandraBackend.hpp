@@ -40,6 +40,7 @@
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/nft.h>
 
@@ -691,6 +692,50 @@ public:
 
         LOG(log_.trace()) << "Fetched " << numKeys << " objects";
         return results;
+    }
+
+    std::vector<ripple::uint256>
+    fetchAccountRoots(std::uint32_t number, std::uint32_t pageSize, std::uint32_t seq, boost::asio::yield_context yield)
+        const override
+    {
+        std::vector<ripple::uint256> liveAccounts;
+        std::optional<ripple::AccountID> lastItem;
+
+        while (liveAccounts.size() < number) {
+            Statement statement = lastItem ? schema_->selectAccountFromToken.bind(*lastItem, Limit{pageSize})
+                                           : schema_->selectAccountFromBegining.bind(Limit{pageSize});
+
+            auto const res = executor_.read(yield, statement);
+            if (res) {
+                auto const& results = res.value();
+                if (not results.hasRows()) {
+                    LOG(log_.debug()) << "No rows returned";
+                    break;
+                }
+                // The results should not contain duplicates, we just filter out deleted accounts
+                std::vector<ripple::uint256> fullAccounts;
+                for (auto [account] : extract<ripple::AccountID>(results)) {
+                    fullAccounts.push_back(ripple::keylet::account(account).key);
+                    lastItem = account;
+                }
+                auto const objs = doFetchLedgerObjects(fullAccounts, seq, yield);
+
+                for (auto i = 0u; i < fullAccounts.size(); i++) {
+                    if (not objs[i].empty()) {
+                        if (liveAccounts.size() < number) {
+                            liveAccounts.push_back(fullAccounts[i]);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            } else {
+                LOG(log_.error()) << "Could not fetch account from account_tx: " << res.error();
+                break;
+            }
+        }
+
+        return liveAccounts;
     }
 
     std::vector<LedgerObject>

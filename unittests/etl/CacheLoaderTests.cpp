@@ -118,7 +118,7 @@ TEST_P(ParametrizedCacheLoaderTest, LoadCacheWithDifferentSettings)
     EXPECT_CALL(cache, setFull).Times(1);
 
     async::CoroExecutionContext ctx{settings.numThreads};
-    etl::impl::CursorProvider const provider{backend, settings.numCacheDiffs};
+    etl::impl::CursorFromFixDiffNumProvider const provider{backend, settings.numCacheDiffs};
 
     etl::impl::CacheLoaderImpl<MockCache> loader{
         ctx, backend, cache, SEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(SEQ)
@@ -146,7 +146,7 @@ TEST_P(ParametrizedCacheLoaderTest, AutomaticallyCancelledAndAwaitedInDestructor
     EXPECT_CALL(cache, setFull).Times(AtMost(1));
 
     async::CoroExecutionContext ctx{settings.numThreads};
-    etl::impl::CursorProvider const provider{backend, settings.numCacheDiffs};
+    etl::impl::CursorFromFixDiffNumProvider const provider{backend, settings.numCacheDiffs};
 
     etl::impl::CacheLoaderImpl<MockCache> const loader{
         ctx, backend, cache, SEQ, settings.numCacheMarkers, settings.cachePageFetchSize, provider.getCursors(SEQ)
