@@ -58,6 +58,6 @@ TEST_F(BoolTests, Get)
 TEST_F(BoolTests, DefaultValues)
 {
     GaugeInt gauge{"test", ""};
-    Bool realBool{gauge};
+    Bool const realBool{gauge};
     EXPECT_FALSE(realBool);
 }
