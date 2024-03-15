@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/requests/Types.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -28,6 +27,7 @@
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/websocket/stream.hpp>
 
+#include <expected>
 #include <functional>
 #include <optional>
 #include <string>
@@ -59,7 +59,7 @@ class TestWsServer {
 public:
     TestWsServer(boost::asio::io_context& context, std::string const& host, int port);
 
-    util::Expected<TestWsConnection, util::requests::RequestError>
+    std::expected<TestWsConnection, util::requests::RequestError>
     acceptConnection(boost::asio::yield_context yield);
 
     void

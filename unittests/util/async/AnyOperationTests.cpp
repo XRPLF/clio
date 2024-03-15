@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "util/Expected.hpp"
 #include "util/MockOperation.hpp"
 #include "util/async/AnyOperation.hpp"
 #include "util/async/Error.hpp"
@@ -26,14 +25,15 @@
 #include <gtest/gtest.h>
 
 #include <any>
+#include <expected>
 #include <string>
 
 using namespace util::async;
 using namespace ::testing;
 
 struct AnyOperationTests : Test {
-    using OperationType = MockOperation<util::Expected<impl::Any, ExecutionError>>;
-    using ScheduledOperationType = MockScheduledOperation<util::Expected<impl::Any, ExecutionError>>;
+    using OperationType = MockOperation<std::expected<impl::Any, ExecutionError>>;
+    using ScheduledOperationType = MockScheduledOperation<std::expected<impl::Any, ExecutionError>>;
 
     NaggyMock<OperationType> mockOp;
     NaggyMock<ScheduledOperationType> mockScheduledOp;
@@ -46,7 +46,7 @@ using AnyOperationDeathTest = AnyOperationTests;
 
 TEST_F(AnyOperationTests, VoidDataYieldsNoError)
 {
-    auto const noError = util::Expected<impl::Any, ExecutionError>(impl::Any{});
+    auto const noError = std::expected<impl::Any, ExecutionError>(impl::Any{});
     EXPECT_CALL(mockOp, get()).WillOnce(Return(noError));
     auto res = voidOp.get();
     ASSERT_TRUE(res);
@@ -85,7 +85,7 @@ TEST_F(AnyOperationTests, RequestStopCallPropagated)
 
 TEST_F(AnyOperationTests, GetPropagatesError)
 {
-    EXPECT_CALL(mockOp, get()).WillOnce(Return(util::Unexpected(ExecutionError{"tid", "Not good"})));
+    EXPECT_CALL(mockOp, get()).WillOnce(Return(std::unexpected(ExecutionError{"tid", "Not good"})));
     auto res = intOp.get();
     ASSERT_FALSE(res);
     EXPECT_TRUE(res.error().message.ends_with("Not good"));

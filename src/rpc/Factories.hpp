@@ -22,7 +22,6 @@
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/APIVersion.hpp"
-#include "util/Expected.hpp"
 #include "util/Taggable.hpp"
 #include "web/Context.hpp"
 #include "web/interface/ConnectionBase.hpp"
@@ -31,6 +30,7 @@
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 
+#include <expected>
 #include <functional>
 #include <memory>
 #include <string>
@@ -56,7 +56,7 @@ namespace rpc {
  * @param apiVersionParser A parser that is used to parse out the "api_version" field
  * @return A Websocket context or error Status
  */
-util::Expected<web::Context, Status>
+std::expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
@@ -79,7 +79,7 @@ make_WsContext(
  * @param isAdmin Whether the connection has admin privileges
  * @return A HTTP context or error Status
  */
-util::Expected<web::Context, Status>
+std::expected<web::Context, Status>
 make_HttpContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,

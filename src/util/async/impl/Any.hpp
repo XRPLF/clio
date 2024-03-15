@@ -22,7 +22,7 @@
 #include <any>
 #include <type_traits>
 
-// Note: This is a workaround for util::Expected. This is not needed when using std::expected.
+// Note: This is a workaround for std::expected. This is not needed when using std::expected.
 // Will be removed after the migration to std::expected is complete (#1173)
 // Issue to track this removal can be found here: https://github.com/XRPLF/clio/issues/1174
 

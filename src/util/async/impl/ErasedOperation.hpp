@@ -20,11 +20,11 @@
 #pragma once
 
 #include "util/Assert.hpp"
-#include "util/Expected.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
 #include "util/async/impl/Any.hpp"
 
+#include <expected>
 #include <memory>
 #include <type_traits>
 
@@ -55,7 +55,7 @@ public:
         pimpl_->wait();
     }
 
-    util::Expected<Any, ExecutionError>
+    std::expected<Any, ExecutionError>
     get()
     {
         return pimpl_->get();
@@ -87,7 +87,7 @@ private:
 
         virtual void
         wait() noexcept = 0;
-        virtual util::Expected<Any, ExecutionError>
+        virtual std::expected<Any, ExecutionError>
         get() = 0;
         virtual void
         requestStop() = 0;
@@ -111,7 +111,7 @@ private:
             return operation.wait();
         }
 
-        util::Expected<Any, ExecutionError>
+        std::expected<Any, ExecutionError>
         get() override
         {
             // Note: return type of the operation was already wrapped to impl::Any by AnyExecutionContext

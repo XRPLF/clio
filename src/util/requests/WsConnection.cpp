@@ -19,7 +19,6 @@
 
 #include "util/requests/WsConnection.hpp"
 
-#include "util/Expected.hpp"
 #include "util/log/Logger.hpp"
 #include "util/requests/Types.hpp"
 #include "util/requests/impl/StreamData.hpp"
@@ -41,6 +40,7 @@
 #include <openssl/tls1.h>
 
 #include <chrono>
+#include <expected>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -92,12 +92,12 @@ WsConnectionBuilder::setWsHandshakeTimeout(std::chrono::steady_clock::duration t
     return *this;
 }
 
-Expected<WsConnectionPtr, RequestError>
+std::expected<WsConnectionPtr, RequestError>
 WsConnectionBuilder::sslConnect(asio::yield_context yield) const
 {
     auto streamData = impl::SslWsStreamData::create(yield);
     if (not streamData.has_value())
-        return Unexpected{std::move(streamData).error()};
+        return std::unexpected{std::move(streamData).error()};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -105,18 +105,18 @@ WsConnectionBuilder::sslConnect(asio::yield_context yield) const
 #pragma GCC diagnostic pop
         beast::error_code errorCode;
         errorCode.assign(static_cast<int>(::ERR_get_error()), beast::net::error::get_ssl_category());
-        return Unexpected{RequestError{"SSL setup failed", errorCode}};
+        return std::unexpected{RequestError{"SSL setup failed", errorCode}};
     }
     return connectImpl(std::move(streamData).value(), yield);
 }
 
-Expected<WsConnectionPtr, RequestError>
+std::expected<WsConnectionPtr, RequestError>
 WsConnectionBuilder::plainConnect(asio::yield_context yield) const
 {
     return connectImpl(impl::WsStreamData{yield}, yield);
 }
 
-Expected<WsConnectionPtr, RequestError>
+std::expected<WsConnectionPtr, RequestError>
 WsConnectionBuilder::connect(asio::yield_context yield) const
 {
     auto sslConnection = sslConnect(yield);
@@ -138,7 +138,7 @@ WsConnectionBuilder::connect(asio::yield_context yield) const
  * @return WebSocket connection or error
  */
 template <typename StreamDataType>
-Expected<WsConnectionPtr, RequestError>
+std::expected<WsConnectionPtr, RequestError>
 WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_context yield) const
 {
     auto context = asio::get_associated_executor(yield);
@@ -147,20 +147,20 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_contex
     asio::ip::tcp::resolver resolver(context);
     auto const results = resolver.async_resolve(host_, port_, yield[errorCode]);
     if (errorCode)
-        return Unexpected{RequestError{"Resolve error", errorCode}};
+        return std::unexpected{RequestError{"Resolve error", errorCode}};
 
     auto& ws = streamData.stream;
 
     beast::get_lowest_layer(ws).expires_after(connectionTimeout_);
     auto endpoint = beast::get_lowest_layer(ws).async_connect(results, yield[errorCode]);
     if (errorCode)
-        return Unexpected{RequestError{"Connect error", errorCode}};
+        return std::unexpected{RequestError{"Connect error", errorCode}};
 
     if constexpr (StreamDataType::sslEnabled) {
         beast::get_lowest_layer(ws).expires_after(connectionTimeout_);
         ws.next_layer().async_handshake(asio::ssl::stream_base::client, yield[errorCode]);
         if (errorCode)
-            return Unexpected{RequestError{"SSL handshake error", errorCode}};
+            return std::unexpected{RequestError{"SSL handshake error", errorCode}};
     }
 
     // Turn off the timeout on the tcp_stream, because the websocket stream has its own timeout system
@@ -177,7 +177,7 @@ WsConnectionBuilder::connectImpl(StreamDataType&& streamData, asio::yield_contex
     std::string const host = fmt::format("{}:{}", host_, endpoint.port());
     ws.async_handshake(host, target_, yield[errorCode]);
     if (errorCode)
-        return Unexpected{RequestError{"Handshake error", errorCode}};
+        return std::unexpected{RequestError{"Handshake error", errorCode}};
 
     if constexpr (StreamDataType::sslEnabled) {
         return std::make_unique<impl::SslWsConnection>(std::move(ws));
