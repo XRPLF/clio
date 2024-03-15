@@ -130,7 +130,7 @@ TEST_F(GaugeIntTests, multithreadAddAndSubstract)
 
 TEST_F(GaugeIntTests, DefaultValue)
 {
-    GaugeInt realGauge{"some_gauge", ""};
+    GaugeInt const realGauge{"some_gauge", ""};
     EXPECT_EQ(realGauge.value(), 0);
 }
 
@@ -140,7 +140,7 @@ struct GaugeDoubleTests : ::testing::Test {
 
 TEST_F(GaugeDoubleTests, DefaultValue)
 {
-    GaugeDouble realGauge{"some_gauge", ""};
+    GaugeDouble const realGauge{"some_gauge", ""};
     EXPECT_EQ(realGauge.value(), 0.);
 }
 

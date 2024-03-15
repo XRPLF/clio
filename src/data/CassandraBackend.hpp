@@ -702,8 +702,8 @@ public:
         std::optional<ripple::AccountID> lastItem;
 
         while (liveAccounts.size() < number) {
-            Statement statement = lastItem ? schema_->selectAccountFromToken.bind(*lastItem, Limit{pageSize})
-                                           : schema_->selectAccountFromBegining.bind(Limit{pageSize});
+            Statement const statement = lastItem ? schema_->selectAccountFromToken.bind(*lastItem, Limit{pageSize})
+                                                 : schema_->selectAccountFromBegining.bind(Limit{pageSize});
 
             auto const res = executor_.read(yield, statement);
             if (res) {
