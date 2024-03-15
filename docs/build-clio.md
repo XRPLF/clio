@@ -35,7 +35,7 @@ compiler=apple-clang
 compiler.version=15
 compiler.libcxx=libc++
 build_type=Release
-compiler.cppstd=20
+compiler.cppstd=23
 ```
 
 > Linux example:
@@ -50,7 +50,7 @@ compiler=gcc
 compiler.version=12
 compiler.libcxx=libstdc++11
 build_type=Release
-compiler.cppstd=20
+compiler.cppstd=23
 ```
 
 #### Artifactory

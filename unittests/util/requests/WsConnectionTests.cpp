@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "util/Expected.hpp"
 #include "util/Fixtures.hpp"
 #include "util/TestWsServer.hpp"
 #include "util/requests/Types.hpp"
@@ -29,6 +28,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <expected>
 #include <optional>
 #include <string>
 #include <thread>
@@ -44,7 +44,7 @@ struct WsConnectionTestsBase : SyncAsioContextTest {
 
     template <typename T, typename E>
     T
-    unwrap(util::Expected<T, E> expected)
+    unwrap(std::expected<T, E> expected)
     {
         [&]() { ASSERT_TRUE(expected.has_value()) << expected.error().message(); }();
         return std::move(expected).value();

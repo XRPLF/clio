@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "util/Expected.hpp"
 #include "util/MockOperation.hpp"
 #include "util/MockStrand.hpp"
 #include "util/async/AnyOperation.hpp"
@@ -29,6 +28,7 @@
 
 #include <any>
 #include <chrono>
+#include <expected>
 #include <functional>
 #include <type_traits>
 

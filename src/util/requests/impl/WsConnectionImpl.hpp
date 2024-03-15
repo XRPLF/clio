@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/requests/Types.hpp"
 #include "util/requests/WsConnection.hpp"
 
@@ -35,6 +34,7 @@
 #include <boost/beast/websocket/stream_base.hpp>
 
 #include <chrono>
+#include <expected>
 #include <optional>
 #include <string>
 #include <utility>
@@ -50,7 +50,7 @@ public:
     {
     }
 
-    Expected<std::string, RequestError>
+    std::expected<std::string, RequestError>
     read(boost::asio::yield_context yield) override
     {
         boost::beast::error_code errorCode;
@@ -59,7 +59,7 @@ public:
         ws_.async_read(buffer, yield[errorCode]);
 
         if (errorCode)
-            return Unexpected{RequestError{"Read error", errorCode}};
+            return std::unexpected{RequestError{"Read error", errorCode}};
 
         return boost::beast::buffers_to_string(std::move(buffer).data());
     }

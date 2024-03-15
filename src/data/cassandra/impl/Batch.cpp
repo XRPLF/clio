@@ -23,10 +23,10 @@
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/ManagedObject.hpp"
 #include "data/cassandra/impl/Statement.hpp"
-#include "util/Expected.hpp"
 
 #include <cassandra.h>
 
+#include <expected>
 #include <stdexcept>
 #include <vector>
 

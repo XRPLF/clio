@@ -19,7 +19,6 @@
 
 #include "util/requests/impl/SslContext.hpp"
 
-#include "util/Expected.hpp"
 #include "util/requests/Types.hpp"
 
 #include <boost/asio/buffer.hpp>
@@ -33,6 +32,7 @@
 
 #include <array>
 #include <cstddef>
+#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -62,7 +62,7 @@ constexpr std::array CERT_FILE_PATHS{
     "/system/etc/security/cacerts",                       // Android
 };
 
-Expected<std::string, RequestError>
+std::expected<std::string, RequestError>
 getRootCertificate()
 {
     for (auto const& path : CERT_FILE_PATHS) {
@@ -76,19 +76,19 @@ getRootCertificate()
             return std::move(buffer).str();
         }
     }
-    return Unexpected{RequestError{"SSL setup failed: could not find root certificate"}};
+    return std::unexpected{RequestError{"SSL setup failed: could not find root certificate"}};
 }
 
 }  // namespace
 
-Expected<boost::asio::ssl::context, RequestError>
+std::expected<boost::asio::ssl::context, RequestError>
 makeSslContext()
 {
     ssl::context context{ssl::context::sslv23_client};
     context.set_verify_mode(ssl::verify_peer);
     auto const rootCertificate = getRootCertificate();
     if (not rootCertificate.has_value()) {
-        return Unexpected{rootCertificate.error()};
+        return std::unexpected{rootCertificate.error()};
     }
     context.add_certificate_authority(asio::buffer(rootCertificate->data(), rootCertificate->size()));
     return context;

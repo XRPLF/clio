@@ -20,7 +20,6 @@
 #include "etl/impl/SubscriptionSource.hpp"
 
 #include "rpc/JS.hpp"
-#include "util/Expected.hpp"
 #include "util/Retry.hpp"
 #include "util/log/Logger.hpp"
 #include "util/requests/Types.hpp"
@@ -42,6 +41,7 @@
 #include <chrono>
 #include <cstdint>
 #include <exception>
+#include <expected>
 #include <future>
 #include <memory>
 #include <optional>
