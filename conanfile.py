@@ -42,6 +42,7 @@ class Clio(ConanFile):
         'docs': False,
         
         'xrpl/*:tests': False,
+        'xrpl/*:rocksdb': False,
         'cassandra-cpp-driver/*:shared': False,
         'date/*:header_only': True,
         'grpc/*:shared': False,
