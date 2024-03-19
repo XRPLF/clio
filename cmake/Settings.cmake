@@ -17,6 +17,12 @@ set(COMPILER_FLAGS
     -pedantic
     -Wpedantic
     -Wunused
+    # FIXME: The following bunch are needed for gcc12 atm.
+    -Wno-missing-requires
+    -Wno-restrict
+    -Wno-null-dereference
+    -Wno-maybe-uninitialized
+    -Wno-unknown-warning-option # and this to work with clang
 )
 
 # TODO: reenable when we change CI #884 if (is_gcc AND NOT lint) list(APPEND COMPILER_FLAGS -Wduplicated-branches
