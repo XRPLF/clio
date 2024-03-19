@@ -20,6 +20,7 @@
 #include "data/Types.hpp"
 #include "etl/impl/CursorFromAccountProvider.hpp"
 #include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -48,7 +49,7 @@ std::vector<ripple::uint256> const ACCOUNTROOTS = {
     ripple::uint256{"A2AA4C212DC2CA2C49BF58805F7C63363BC981018A01AC9609A7CBAB2A02CEDF"},
 };
 
-struct CursorFromAccountProviderTests : MockBackendTestNaggy {};
+struct CursorFromAccountProviderTests : util::prometheus::WithPrometheus, MockBackendTestNaggy {};
 }  // namespace
 
 TEST_F(CursorFromAccountProviderTests, EnoughAccountRoots)
