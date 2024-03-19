@@ -22,12 +22,14 @@
 #include "util/SourceLocation.hpp"
 #include "util/log/Logger.hpp"
 
+#include <boost/log/core/core.hpp>
 #include <boost/stacktrace.hpp>
 #include <boost/stacktrace/stacktrace.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
 
 #include <cstdlib>
+#include <iostream>
 
 namespace util {
 
@@ -53,11 +55,19 @@ assertImpl(
 )
 {
     if (!condition) {
-        LOG(LogService::fatal()) << "Assertion '" << expression << "' failed at " << location.file_name() << ":"
-                                 << location.line() << ":\n"
-                                 << fmt::format(format, std::forward<Args>(args)...) << "\n"
-                                 << "Stacktrace:\n"
-                                 << boost::stacktrace::stacktrace() << "\n";
+        auto const resultMessage = fmt::format(
+            "Assertion '{}' failed at {}:{}:\n{}\nStacktrace:\n{}",
+            expression,
+            location.file_name(),
+            location.line(),
+            fmt::format(format, std::forward<Args>(args)...),
+            boost::stacktrace::to_string(boost::stacktrace::stacktrace())
+        );
+        if (boost::log::core::get()->get_logging_enabled()) {
+            LOG(LogService::fatal()) << resultMessage;
+        } else {
+            std::cerr << resultMessage;
+        }
         std::exit(EXIT_FAILURE);  // std::abort does not flush gcovr output and causes uncovered lines
     }
 }
