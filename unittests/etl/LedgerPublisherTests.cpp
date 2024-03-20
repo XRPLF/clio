@@ -132,7 +132,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoInRange)
     // mock fetch fee
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
-        .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
+        .WillByDefault(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     // mock fetch transactions
     EXPECT_CALL(*backend, fetchAllTransactionsInLedger).Times(1);
@@ -180,7 +180,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoCloseTimeGreaterThanNow)
     // mock fetch fee
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
-        .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
+        .WillByDefault(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     // mock fetch transactions
     EXPECT_CALL(*backend, fetchAllTransactionsInLedger).Times(1);
@@ -269,7 +269,7 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
     // mock fetch fee
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
-        .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
+        .WillByDefault(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     // mock fetch transactions
     EXPECT_CALL(*backend, fetchAllTransactionsInLedger).Times(1);

@@ -645,7 +645,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
     ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
     // fee
-    auto feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(feeBlob));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
 
@@ -844,7 +844,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     // fee
-    auto feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, MAXSEQ, _)).WillByDefault(Return(feeBlob));
 
     auto const gets10XRPPays20USDOffer = CreateOfferLedgerObject(
@@ -1012,7 +1012,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     // fee
-    auto feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, MAXSEQ, _)).WillByDefault(Return(feeBlob));
 
     auto const gets10XRPPays20USDOffer = CreateOfferLedgerObject(
