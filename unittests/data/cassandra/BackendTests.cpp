@@ -65,11 +65,12 @@
 using namespace util;
 using namespace std;
 using namespace rpc;
+using namespace prometheus;
 namespace json = boost::json;
 
 using namespace data::cassandra;
 
-class BackendCassandraTest : public SyncAsioContextTest {
+class BackendCassandraTest : public SyncAsioContextTest, public WithPrometheus {
 protected:
     Config cfg{json::parse(fmt::format(
         R"JSON({{

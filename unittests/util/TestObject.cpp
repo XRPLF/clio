@@ -94,7 +94,7 @@ CreateLedgerInfo(std::string_view ledgerHash, ripple::LedgerIndex seq, std::opti
 }
 
 ripple::STObject
-CreateFeeSettingLedgerObject(
+CreateLegacyFeeSettingLedgerObject(
     uint64_t base,
     uint32_t reserveInc,
     uint32_t reserveBase,
@@ -112,10 +112,34 @@ CreateFeeSettingLedgerObject(
     return obj;
 }
 
-ripple::Blob
-CreateFeeSettingBlob(uint64_t base, uint32_t reserveInc, uint32_t reserveBase, uint32_t refFeeUnit, uint32_t flag)
+ripple::STObject
+CreateFeeSettingLedgerObject(
+    ripple::STAmount base,
+    ripple::STAmount reserveInc,
+    ripple::STAmount reserveBase,
+    uint32_t flag
+)
 {
-    auto lo = CreateFeeSettingLedgerObject(base, reserveInc, reserveBase, refFeeUnit, flag);
+    ripple::STObject obj(ripple::sfFee);
+    obj.setFieldU16(ripple::sfLedgerEntryType, ripple::ltFEE_SETTINGS);
+    obj.setFieldAmount(ripple::sfBaseFeeDrops, base);
+    obj.setFieldAmount(ripple::sfReserveBaseDrops, reserveBase);
+    obj.setFieldAmount(ripple::sfReserveIncrementDrops, reserveInc);
+    obj.setFieldU32(ripple::sfFlags, flag);
+    return obj;
+}
+
+ripple::Blob
+CreateLegacyFeeSettingBlob(uint64_t base, uint32_t reserveInc, uint32_t reserveBase, uint32_t refFeeUnit, uint32_t flag)
+{
+    auto lo = CreateLegacyFeeSettingLedgerObject(base, reserveInc, reserveBase, refFeeUnit, flag);
+    return lo.getSerializer().peekData();
+}
+
+ripple::Blob
+CreateFeeSettingBlob(ripple::STAmount base, ripple::STAmount reserveInc, ripple::STAmount reserveBase, uint32_t flag)
+{
+    auto lo = CreateFeeSettingLedgerObject(base, reserveInc, reserveBase, flag);
     return lo.getSerializer().peekData();
 }
 
