@@ -350,14 +350,37 @@ BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context 
     ripple::SerialIter it(bytes->data(), bytes->size());
     ripple::SLE const sle{it, key};
 
-    if (sle.getFieldIndex(ripple::sfBaseFee) != -1)
-        fees.base = sle.getFieldU64(ripple::sfBaseFee);
+    // XRPFees amendment introduced new fields for fees calculations.
+    // New fields are set and the old fields are removed via `set_fees` tx.
+    // Fallback to old fields if `set_fees` was not yet used to update the fields on this tx.
+    auto hasNewFields = false;
 
-    if (sle.getFieldIndex(ripple::sfReserveBase) != -1)
-        fees.reserve = sle.getFieldU32(ripple::sfReserveBase);
+    auto const baseFeeXRP = sle.at(~ripple::sfBaseFeeDrops);
+    auto const reserveBaseXRP = sle.at(~ripple::sfReserveBaseDrops);
+    auto const reserveIncrementXRP = sle.at(~ripple::sfReserveIncrementDrops);
 
-    if (sle.getFieldIndex(ripple::sfReserveIncrement) != -1)
-        fees.increment = sle.getFieldU32(ripple::sfReserveIncrement);
+    if (baseFeeXRP)
+        fees.base = baseFeeXRP->xrp();
+
+    if (reserveBaseXRP)
+        fees.reserve = reserveBaseXRP->xrp();
+
+    if (reserveIncrementXRP)
+        fees.increment = reserveIncrementXRP->xrp();
+
+    hasNewFields = baseFeeXRP || reserveBaseXRP || reserveIncrementXRP;
+
+    if (not hasNewFields) {
+        // Fallback to old fields
+        if (sle.getFieldIndex(ripple::sfBaseFee) != -1)
+            fees.base = sle.getFieldU64(ripple::sfBaseFee);
+
+        if (sle.getFieldIndex(ripple::sfReserveBase) != -1)
+            fees.reserve = sle.getFieldU32(ripple::sfReserveBase);
+
+        if (sle.getFieldIndex(ripple::sfReserveIncrement) != -1)
+            fees.increment = sle.getFieldU32(ripple::sfReserveIncrement);
+    }
 
     return fees;
 }
