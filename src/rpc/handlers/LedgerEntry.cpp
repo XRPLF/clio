@@ -139,6 +139,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             key = ripple::keylet::xChainCreateAccountClaimID(input.bridge->value(), input.createAccountClaimId.value())
                       .key;
         }
+    } else if (input.oracle) {
+        key = ripple::keylet::oracle(input.oracle->account, input.oracle->documentId).key;
     } else {
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
@@ -318,8 +320,21 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.createAccountClaimId = boost::json::value_to<std::int32_t>(
             jv.at(JS(xchain_owned_create_account_claim_id)).at(JS(xchain_owned_create_account_claim_id))
         );
+    } else if (jsonObject.contains(JS(oracle))) {
+        input.oracle = boost::json::value_to<LedgerEntryHandler::Input::Oracle>(jv.at(JS(oracle)));
     }
 
+    return input;
+}
+
+LedgerEntryHandler::Input::Oracle
+tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input::Oracle>, boost::json::value const& jv)
+{
+    auto input = LedgerEntryHandler::Input::Oracle{};
+    if (jv.is_string()) {
+    } else {
+    }
+    // TODO: parse. take into account that it can be either object or string
     return input;
 }
 
