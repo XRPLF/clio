@@ -267,6 +267,7 @@ if (tests)
     unittests/rpc/handlers/AMMInfoTests.cpp
     # Backend
     unittests/data/BackendFactoryTests.cpp
+    unittests/data/BackendInterfaceTests.cpp
     unittests/data/BackendCountersTests.cpp
     unittests/data/cassandra/BaseTests.cpp
     unittests/data/cassandra/BackendTests.cpp

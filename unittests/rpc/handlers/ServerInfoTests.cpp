@@ -203,7 +203,7 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
-    auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(Return(feeBlob));
 
     EXPECT_CALL(*rawBalancerPtr, forwardToRippled(testing::_, testing::Eq(CLIENTIP), testing::_))
@@ -240,7 +240,7 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
-    auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(Return(feeBlob));
 
     EXPECT_CALL(*rawBalancerPtr, forwardToRippled(testing::_, testing::Eq(CLIENTIP), testing::_))
@@ -277,7 +277,7 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
-    auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(Return(feeBlob));
 
     EXPECT_CALL(*rawBalancerPtr, forwardToRippled).WillOnce(Return(empty));
@@ -317,7 +317,7 @@ TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
-    auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(Return(feeBlob));
 
     EXPECT_CALL(*rawBalancerPtr, forwardToRippled).WillOnce(Return(empty));
@@ -363,7 +363,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
-    auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(Return(feeBlob));
 
     EXPECT_CALL(*rawCountersPtr, uptime).WillOnce(Return(std::chrono::seconds{1234}));
@@ -414,7 +414,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
-    auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(Return(feeBlob));
 
     EXPECT_CALL(*rawCountersPtr, uptime).WillOnce(Return(std::chrono::seconds{1234}));
