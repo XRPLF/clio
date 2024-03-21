@@ -24,14 +24,32 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 
+#include <boost/asio/spawn.hpp>
+#include <boost/bimap.hpp>
+#include <boost/bimap/bimap.hpp>
+#include <boost/bimap/multiset_of.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/Indexes.h>
+#include <ripple/protocol/Issue.h>
+#include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
+#include <ripple/protocol/SField.h>
+#include <ripple/protocol/STAmount.h>
+#include <ripple/protocol/STLedgerEntry.h>
+#include <ripple/protocol/STObject.h>
+#include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/jss.h>
+#include <ripple/protocol/tokens.h>
 
+#include <cstdint>
+#include <functional>
+#include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 
 namespace rpc {
@@ -47,8 +65,112 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
     if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    // auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+
+    // sorted descending by lastUpdateTime, ascending by AssetPrice
+    using TimestampPricesBiMap = boost::bimaps::bimap<
+        boost::bimaps::multiset_of<std::uint32_t, std::greater<std::uint32_t>>,
+        boost::bimaps::multiset_of<ripple::STAmount>>;
+
+    TimestampPricesBiMap timestampPricesBiMap;
+
+    for (auto const& oracle : input.oracles) {
+        auto const account =
+            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(oracle.as_object().at(JS(account))
+            ));
+        auto const docId = boost::json::value_to<std::uint64_t>(oracle.as_object().at(JS(oracle_document_id)));
+
+        auto const oracleIndex = ripple::keylet::oracle(*account, docId).key;
+
+        auto const oracleObject = sharedPtrBackend_->fetchLedgerObject(oracleIndex, lgrInfo.seq, ctx.yield);
+
+        if (not oracleObject)
+            continue;
+
+        ripple::STLedgerEntry const oracleSle{
+            ripple::SerialIter{oracleObject->data(), oracleObject->size()}, oracleIndex
+        };
+
+        tracebackOracleObject(ctx.yield, oracleSle, [&](auto const& node) {
+            auto const& series = node.getFieldArray(ripple::sfPriceDataSeries);
+            // find the token pair entry with the price
+            if (auto iter = std::find_if(
+                    series.begin(),
+                    series.end(),
+                    [&](ripple::STObject const& o) -> bool {
+                        return o.getFieldCurrency(ripple::sfBaseAsset).getText() == input.baseAsset and
+                            o.getFieldCurrency(ripple::sfQuoteAsset).getText() == input.quoteAsset and
+                            o.isFieldPresent(ripple::sfAssetPrice);
+                    }
+                );
+                iter != series.end()) {
+                auto const price = iter->getFieldU64(ripple::sfAssetPrice);
+                auto const scale =
+                    iter->isFieldPresent(ripple::sfScale) ? -static_cast<int>(iter->getFieldU8(ripple::sfScale)) : 0;
+                timestampPricesBiMap.insert(TimestampPricesBiMap::value_type(
+                    node.getFieldU32(ripple::sfLastUpdateTime), ripple::STAmount{ripple::noIssue(), price, scale}
+                ));
+                return true;
+            }
+            return false;
+        });
+    }
+
     return Output{};
+}
+
+void
+GetAggregatePriceHandler::tracebackOracleObject(
+    boost::asio::yield_context yield,
+    ripple::STObject oracleObject,
+    std::function<bool(ripple::STObject const&)> const& callback
+) const
+{
+    auto constexpr maxHistory = 3;
+
+    ripple::STObject const* ptrOracleObject = &oracleObject;
+    ripple::STObject const* ptrPrevObject = nullptr;
+    ripple::STObject const* ptrCurrentObject = ptrOracleObject;
+
+    bool isNew = false;
+    auto history = 0;
+
+    while (true) {
+        if (not callback(*ptrOracleObject))
+            return;
+
+        if (++history > maxHistory)
+            return;
+
+        auto const prevTxIndex = ptrCurrentObject->getFieldH256(ripple::sfPreviousTxnID);
+
+        auto const prevTx = sharedPtrBackend_->fetchTransaction(prevTxIndex, yield);
+
+        if (not prevTx)
+            return;
+
+        auto [txn, meta] = deserializeTxPlusMeta(*prevTx);
+
+        for (ripple::STObject const& node : meta->getFieldArray(ripple::sfAffectedNodes)) {
+            if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltORACLE) {
+                continue;
+            }
+
+            ptrPrevObject = ptrCurrentObject;
+            ptrCurrentObject = &node;
+            isNew = node.isFieldPresent(ripple::sfNewFields);
+            // if a meta is for the new and this is the first
+            // look-up then it's the meta for the tx that
+            // created the current object; i.e. there is no
+            // historical data
+            if (isNew and history == 1)
+                return;
+
+            ptrOracleObject = isNew ? &dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfNewFields))
+                                    : &dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfFinalFields));
+            break;
+        }
+    }
 }
 
 GetAggregatePriceHandler::Input

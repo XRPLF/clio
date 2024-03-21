@@ -30,9 +30,12 @@
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <ripple/protocol/ErrorCodes.h>
+#include <ripple/protocol/STAmount.h>
+#include <ripple/protocol/STObject.h>
 #include <ripple/protocol/jss.h>
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -141,6 +144,12 @@ class GetAggregatePriceHandler {
     process(Input input, Context const& ctx) const;
 
 private:
+    void
+    tracebackOracleObject(
+        boost::asio::yield_context yield,
+        ripple::STObject oracleObject,
+        std::function<bool(ripple::STObject const&)> const& callback
+    ) const;
     /**
      * @brief Convert the Output to a JSON object
      *
