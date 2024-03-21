@@ -281,13 +281,22 @@ public:
                  Status(ClioError::rpcMALFORMED_REQUEST)
              }},
             {JS(oracle),
-             validation::Type<std::string, boost::json::object>{},
-             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             meta::WithCustomError{
+                 validation::Type<std::string, boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
+             },
+             meta::IfType<std::string>{
+                 meta::WithCustomError{malformedRequestHexStringValidator, Status(ClioError::rpcMALFORMED_ADDRESS)}
+             },
              meta::IfType<boost::json::object>{meta::Section{
-                 {JS(account), validation::Required{}, validation::AccountBase58Validator},
-                 {JS(oracle_document_id), validation::Required{}, validation::Type<uint32_t>{}
-                 },  // note: Unlike `rippled`, Clio only supports UInt as input, no
-                     // string, no `null`, etc.
+                 {JS(account),
+                  meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                  meta::WithCustomError{validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_ADDRESS)}},
+                 // note: Unlike `rippled`, Clio only supports UInt as input, no string, no `null`, etc.:
+                 {JS(oracle_document_id),
+                  meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                  meta::WithCustomError{
+                      validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID)
+                  }},
              }}}
         };
 

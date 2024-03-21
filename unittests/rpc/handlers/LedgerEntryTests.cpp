@@ -1269,7 +1269,7 @@ generateTestValuesForParametersTest()
                 R"({{
                     "bridge_account": "{}",
                     "bridge": "invalid"
-                    }})",
+                }})",
                 ACCOUNT
             ),
             "malformedRequest",
@@ -1278,8 +1278,8 @@ generateTestValuesForParametersTest()
         ParamTestCaseBundle{
             "OwnedClaimIdInvalidType",
             R"({
-                    "xchain_owned_claim_id": 123
-                    })",
+                "xchain_owned_claim_id": 123
+            })",
             "malformedRequest",
             "Malformed request."
         },
@@ -1544,6 +1544,219 @@ generateTestValuesForParametersTest()
                 ACCOUNT,
                 "JPY"
             ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdMissing",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}"
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidNegative",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": -1
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidTypeString",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": "invalid"
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidTypeDouble",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": 3.21
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidTypeObject",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": {{}}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidTypeArray",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": []
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidTypeNull",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": null
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountMissing",
+            R"({
+                "oracle": {
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidTypeInteger",
+            R"({
+                "oracle": {
+                    "account": 123,
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidTypeDouble",
+            R"({
+                "oracle": {
+                    "account": 123.45,
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidTypeNull",
+            R"({
+                "oracle": {
+                    "account": null,
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidTypeObject",
+            R"({
+                "oracle": {
+                    "account": {"test": "test"},
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidTypeArray",
+            R"({
+                "oracle": {
+                    "account": [{"test": "test"}],
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidFormat",
+            R"({
+                "oracle": {
+                    "account": "NotHex",
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleStringInvalidFormat",
+            R"({
+                "oracle": "NotHex"
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleStringInvalidTypeInteger",
+            R"({
+                "oracle": 123
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OracleStringInvalidTypeDouble",
+            R"({
+                "oracle": 123.45
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OracleStringInvalidTypeArray",
+            R"({
+                "oracle": [{"test": "test"}]
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OracleStringInvalidTypeNull",
+            R"({
+                "oracle": null
+            })",
             "malformedRequest",
             "Malformed request."
         },

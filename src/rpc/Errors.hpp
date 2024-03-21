@@ -42,6 +42,7 @@ enum class ClioError {
     rpcINVALID_HOT_WALLET = 5004,
     rpcUNKNOWN_OPTION = 5005,
     rpcFIELD_NOT_FOUND_TRANSACTION = 5006,
+    rpcMALFORMED_ORACLE_DOCUMENT_ID = 5007,
 
     // special system errors start with 6000
     rpcINVALID_API_VERSION = 6000,
