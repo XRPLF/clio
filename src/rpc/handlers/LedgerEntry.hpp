@@ -99,15 +99,7 @@ public:
         std::optional<std::string> bridgeAccount;
         std::optional<uint32_t> chainClaimId;
         std::optional<uint32_t> createAccountClaimId;
-
-        /**
-         * @brief A struct to hold the input data for Price Oracle input
-         */
-        struct Oracle {
-            ripple::AccountID account;
-            uint32_t documentId;
-        };
-        std::optional<Oracle> oracle;
+        std::optional<ripple::uint256> oracleNode;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -175,22 +167,6 @@ public:
             }},
             Status(ClioError::rpcMALFORMED_REQUEST)
         };
-
-        static auto const oracleDocumentIdValidator =
-            validation::CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
-                Json::Value const id{boost::json::serialize(value)};
-
-                if (id.isConvertibleTo(Json::ValueType::uintValue))
-                    return MaybeError{};
-
-                if (id.isString()) {
-                    std::uint32_t v{};
-                    if (!beast::lexicalCastChecked(v, id.asString()))
-                        return MaybeError{};
-                }
-
-                return Error{Status{ClioError::rpcMALFORMED_REQUEST, "malformedOracleDocumentId"}};
-            }};
 
         static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
@@ -309,10 +285,9 @@ public:
              meta::IfType<std::string>{malformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{meta::Section{
                  {JS(account), validation::Required{}, validation::AccountBase58Validator},
-                 {JS(oracle_document_id),  // will need a custom validator?
-                  validation::Required{},
-                  oracleDocumentIdValidator},  // lexicalCastChecked if string,
-                                               // convert to uint if convertible
+                 {JS(oracle_document_id), validation::Required{}, validation::Type<uint32_t>{}
+                 },  // note: Unlike `rippled`, Clio only supports UInt as input, no
+                     // string, no `null`, etc.
              }}}
         };
 
@@ -352,15 +327,6 @@ private:
      */
     friend Input
     tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
-
-    /**
-     * @brief Convert a JSON value to Input::Oracle type
-     *
-     * @param jv The JSON value to convert
-     * @return Oracle struct parsed from the JSON value
-     */
-    friend Input::Oracle
-    tag_invoke(boost::json::value_to_tag<Input::Oracle>, boost::json::value const& jv);
 };
 
 }  // namespace rpc

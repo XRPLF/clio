@@ -139,8 +139,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             key = ripple::keylet::xChainCreateAccountClaimID(input.bridge->value(), input.createAccountClaimId.value())
                       .key;
         }
-    } else if (input.oracle) {
-        key = ripple::keylet::oracle(input.oracle->account, input.oracle->documentId).key;
+    } else if (input.oracleNode) {
+        key = input.oracleNode.value();
     } else {
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
@@ -276,6 +276,23 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         return ripple::STXChainBridge{lockingDoor, lockingIssue, issuingDoor, issuingIssue};
     };
 
+    auto const parseOracleFromJson = [](boost::json::value const& json) -> std::optional<ripple::uint256> {
+        ripple::uint256 key = beast::zero;
+
+        if (json.is_string()) {
+            if (key.parseHex(boost::json::value_to<std::string>(json)))
+                return key;
+        } else {
+            auto const account =
+                ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(json.at(JS(account))));
+            auto const documentId = boost::json::value_to<uint32_t>(json.at(JS(oracle_document_id)));
+
+            return ripple::keylet::oracle(*account, documentId).key;
+        }
+
+        return std::nullopt;
+    };
+
     auto const indexFieldType =
         std::find_if(indexFieldTypeMap.begin(), indexFieldTypeMap.end(), [&jsonObject](auto const& pair) {
             auto const& [field, _] = pair;
@@ -321,20 +338,9 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
             jv.at(JS(xchain_owned_create_account_claim_id)).at(JS(xchain_owned_create_account_claim_id))
         );
     } else if (jsonObject.contains(JS(oracle))) {
-        input.oracle = boost::json::value_to<LedgerEntryHandler::Input::Oracle>(jv.at(JS(oracle)));
+        input.oracleNode = parseOracleFromJson(jv.at(JS(oracle)));
     }
 
-    return input;
-}
-
-LedgerEntryHandler::Input::Oracle
-tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input::Oracle>, boost::json::value const& jv)
-{
-    auto input = LedgerEntryHandler::Input::Oracle{};
-    if (jv.is_string()) {
-    } else {
-    }
-    // TODO: parse. take into account that it can be either object or string
     return input;
 }
 
