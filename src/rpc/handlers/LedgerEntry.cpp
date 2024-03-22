@@ -259,6 +259,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(amm), ripple::ltAMM},
         {JS(xchain_owned_create_account_claim_id), ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
         {JS(xchain_owned_claim_id), ripple::ltXCHAIN_OWNED_CLAIM_ID},
+        {JS(oracle), ripple::ltORACLE},
     };
 
     auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {
@@ -276,21 +277,12 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         return ripple::STXChainBridge{lockingDoor, lockingIssue, issuingDoor, issuingIssue};
     };
 
-    auto const parseOracleFromJson = [](boost::json::value const& json) -> std::optional<ripple::uint256> {
-        ripple::uint256 key = beast::zero;
+    auto const parseOracleFromJson = [](boost::json::value const& json) {
+        auto const account =
+            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(json.at(JS(account))));
+        auto const documentId = boost::json::value_to<uint32_t>(json.at(JS(oracle_document_id)));
 
-        if (json.is_string()) {
-            if (key.parseHex(boost::json::value_to<std::string>(json)))
-                return key;
-        } else {
-            auto const account =
-                ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(json.at(JS(account))));
-            auto const documentId = boost::json::value_to<uint32_t>(json.at(JS(oracle_document_id)));
-
-            return ripple::keylet::oracle(*account, documentId).key;
-        }
-
-        return std::nullopt;
+        return ripple::keylet::oracle(*account, documentId).key;
     };
 
     auto const indexFieldType =
