@@ -27,6 +27,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "util/Fixtures.hpp"
 #include "util/LedgerUtils.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
 #include "util/StringUtils.hpp"
 #include "util/TestGlobals.hpp"
@@ -65,11 +66,12 @@
 using namespace util;
 using namespace std;
 using namespace rpc;
+using namespace prometheus;
 namespace json = boost::json;
 
 using namespace data::cassandra;
 
-class BackendCassandraTest : public SyncAsioContextTest {
+class BackendCassandraTest : public SyncAsioContextTest, public WithPrometheus {
 protected:
     Config cfg{json::parse(fmt::format(
         R"JSON({{

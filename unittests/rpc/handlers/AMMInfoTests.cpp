@@ -333,7 +333,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
         AMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY
     );
     accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
-    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feesObj = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account1), testing::_, testing::_))
@@ -410,7 +410,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
     );
     auto const lptCurrency = CreateLPTCurrency("XRP", "JPY");
     auto const accountHoldsKeylet = ripple::keylet::line(account2, account2, lptCurrency);
-    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feesObj = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustline = CreateRippleStateLedgerObject(
         LP_ISSUE_CURRENCY, AMM_ACCOUNT, 12, AMM_ACCOUNT2, 1000, AMM_ACCOUNT, 2000, INDEX1, 2
     );
@@ -491,7 +491,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
         AMM_ACCOUNT, "JPY", AMM_ACCOUNT2, "XRP", ripple::toBase58(ripple::xrpAccount()), LP_ISSUE_CURRENCY
     );
     accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
-    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feesObj = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account1), testing::_, testing::_))
@@ -563,7 +563,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
     auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto ammObj = CreateAMMObject(AMM_ACCOUNT, "USD", AMM_ACCOUNT, "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY);
     accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
-    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feesObj = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend, doFetchLedgerObject(GetAccountKey(account1), testing::_, testing::_))
@@ -643,7 +643,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
     auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto ammObj = CreateAMMObject(AMM_ACCOUNT, "USD", AMM_ACCOUNT, "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY);
     accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
-    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feesObj = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     // note: frozen flag will not be used for trustline1 because issuer == account
     auto const trustline1BalanceFrozen = CreateRippleStateLedgerObject(
@@ -735,7 +735,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
     auto accountRoot = CreateAccountRootObject(AMM_ACCOUNT, ripple::lsfGlobalFreeze, 2, 200, 2, INDEX1, 2);
     auto ammObj = CreateAMMObject(AMM_ACCOUNT, "USD", AMM_ACCOUNT, "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY);
     accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
-    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feesObj = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     // note: frozen flag will not be used for trustline1 because issuer == account
     auto const trustline1BalanceFrozen = CreateRippleStateLedgerObject(
@@ -827,7 +827,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
         AMM_ACCOUNT, "XRP", ripple::toBase58(ripple::xrpAccount()), "JPY", AMM_ACCOUNT2, LP_ISSUE_CURRENCY
     );
     accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
-    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feesObj = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustlineBalance =
         CreateRippleStateLedgerObject("JPY", AMM_ACCOUNT2, -8, AMM_ACCOUNT, 1000, AMM_ACCOUNT2, 2000, INDEX2, 2, 0);
 
@@ -906,7 +906,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
     AMMAddVoteSlot(ammObj, account1, 2, 4);
     AMMAddVoteSlot(ammObj, account2, 4, 2);
     accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
-    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feesObj = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustlineBalance =
         CreateRippleStateLedgerObject("JPY", AMM_ACCOUNT2, -8, AMM_ACCOUNT, 1000, AMM_ACCOUNT2, 2000, INDEX2, 2, 0);
 
@@ -1001,7 +1001,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
     );
 
     accountRoot.setFieldH256(ripple::sfAMMID, ammKey);
-    auto const feesObj = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feesObj = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     auto const trustlineBalance =
         CreateRippleStateLedgerObject("JPY", AMM_ACCOUNT2, -8, AMM_ACCOUNT, 1000, AMM_ACCOUNT2, 2000, INDEX2, 2, 0);
 

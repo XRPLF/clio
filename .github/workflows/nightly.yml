@@ -84,9 +84,14 @@ jobs:
             build_type: Release
           - os: heavy
             build_type: Release
+            container:
+              image: rippleci/clio_ci:latest
           - os: heavy
             build_type: Debug
+            container:
+              image: rippleci/clio_ci:latest
     runs-on: [self-hosted, "${{ matrix.os }}"]
+    container: ${{ matrix.container }}
 
     steps:
       - name: Clean workdir
