@@ -6,6 +6,7 @@ target_sources(
           ConfigTests.cpp
           data/BackendCountersTests.cpp
           data/BackendFactoryTests.cpp
+          data/BackendInterfaceTests.cpp
           data/cassandra/AsyncExecutorTests.cpp
           # Webserver
           data/cassandra/BackendTests.cpp

@@ -66,10 +66,33 @@ GetAccountKey(ripple::AccountID const& acc);
 CreateLedgerInfo(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age = std::nullopt);
 
 /*
- * Create a FeeSetting ledger object
+ * Create a Legacy (pre XRPFees amendment) FeeSetting ledger object
  */
 [[nodiscard]] ripple::STObject
+CreateLegacyFeeSettingLedgerObject(
+    uint64_t base,
+    uint32_t reserveInc,
+    uint32_t reserveBase,
+    uint32_t refFeeUnit,
+    uint32_t flag
+);
+
+/*
+ * Create a FeeSetting ledger object
+ */
+ripple::STObject
 CreateFeeSettingLedgerObject(
+    ripple::STAmount base,
+    ripple::STAmount reserveInc,
+    ripple::STAmount reserveBase,
+    uint32_t flag
+);
+
+/*
+ * Create a Legacy (pre XRPFees amendment) FeeSetting ledger object and return its blob
+ */
+[[nodiscard]] ripple::Blob
+CreateLegacyFeeSettingBlob(
     uint64_t base,
     uint32_t reserveInc,
     uint32_t reserveBase,
@@ -80,8 +103,8 @@ CreateFeeSettingLedgerObject(
 /*
  * Create a FeeSetting ledger object and return its blob
  */
-[[nodiscard]] ripple::Blob
-CreateFeeSettingBlob(uint64_t base, uint32_t reserveInc, uint32_t reserveBase, uint32_t refFeeUnit, uint32_t flag);
+ripple::Blob
+CreateFeeSettingBlob(ripple::STAmount base, ripple::STAmount reserveInc, ripple::STAmount reserveBase, uint32_t flag);
 
 /*
  * Create a payment transaction object
