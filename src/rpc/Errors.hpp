@@ -172,7 +172,13 @@ struct Status {
 };
 
 /** @brief Warning codes that can be returned by clio. */
-enum WarningCode { warnUNKNOWN = -1, warnRPC_CLIO = 2001, warnRPC_OUTDATED = 2002, warnRPC_RATE_LIMIT = 2003 };
+enum WarningCode {
+    warnUNKNOWN = -1,
+    warnRPC_CLIO = 2001,
+    warnRPC_OUTDATED = 2002,
+    warnRPC_RATE_LIMIT = 2003,
+    warnRPC_DEPRECATED = 2004
+};
 
 /** @brief Holds information about a clio warning. */
 struct WarningInfo {
@@ -269,10 +275,11 @@ getErrorInfo(ClioError code);
  * @brief Generate JSON from a @ref rpc::WarningCode.
  *
  * @param code The warning code
+ * @param customMessage A custom error message
  * @return The JSON output
  */
 boost::json::object
-makeWarning(WarningCode code);
+makeWarning(WarningCode code, std::optional<std::string_view> customMessage = std::nullopt);
 
 /**
  * @brief Generate JSON from a @ref rpc::Status.

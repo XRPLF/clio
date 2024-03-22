@@ -59,6 +59,9 @@ getWarningInfo(WarningCode code)
          "'ledger_index':'current' in your request"},
         {warnRPC_OUTDATED, "This server may be out of date"},
         {warnRPC_RATE_LIMIT, "You are about to be rate limited"},
+        {warnRPC_DEPRECATED,
+         "Some fields from your request are deprecated. Please check the documentation at "
+         "https://xrpl.org/docs/references/http-websocket-apis/ and  update your request."}
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
@@ -69,14 +72,12 @@ getWarningInfo(WarningCode code)
 }
 
 boost::json::object
-makeWarning(WarningCode code)
+makeWarning(WarningCode code, std::optional<std::string_view> customMessage)
 {
     auto json = boost::json::object{};
     auto const& info = getWarningInfo(code);
-
     json["id"] = code;
-    json["message"] = static_cast<string>(info.message);
-
+    json["message"] = customMessage.value_or(info.message);
     return json;
 }
 
@@ -127,9 +128,9 @@ makeError(ClioError err, std::optional<std::string_view> customError, std::optio
     boost::json::object json;
     auto const& info = getErrorInfo(err);
 
-    json["error"] = customError.value_or(info.error).data();
+    json["error"] = customError.value_or(info.error);
     json["error_code"] = static_cast<uint32_t>(info.code);
-    json["error_message"] = customMessage.value_or(info.message).data();
+    json["error_message"] = customMessage.value_or(info.message);
     json["status"] = "error";
     json["type"] = "response";
 
