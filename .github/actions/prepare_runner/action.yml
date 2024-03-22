@@ -12,9 +12,7 @@ runs:
       shell: bash
       run: |
           brew install llvm@14 pkg-config ninja bison cmake ccache jq gh conan@1
-          if ! command -v conan &> /dev/null; then
-            echo "/opt/homebrew/opt/conan@1/bin" >> $GITHUB_PATH
-          fi
+          echo "/opt/homebrew/opt/conan@1/bin" >> $GITHUB_PATH
 
     - name: Fix git permissions on Linux
       if: ${{ runner.os == 'Linux' }}

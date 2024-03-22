@@ -283,7 +283,7 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerinfo));
 
-    auto const feeBlob = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(testing::Return(feeBlob));
     // check the function response
     // Information about the ledgers on hand and current fee schedule. This

@@ -20,6 +20,7 @@
 #include "data/Types.hpp"
 #include "etl/impl/CursorFromDiffProvider.hpp"
 #include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -66,7 +67,7 @@ std::vector<data::LedgerObject> const DIFFS_FOR_SEQ_MINUS1 = {
     {.key = ripple::uint256{"DCC8759A35CB946511763AA5553A82AA25F20B901C98C9BB74D423BCFAFF5F90"}, .blob = Blob{'s'}},
 };
 
-struct CursorFromDiffProviderTests : MockBackendTestNaggy {};
+struct CursorFromDiffProviderTests : util::prometheus::WithPrometheus, MockBackendTestNaggy {};
 }  // namespace
 
 TEST_F(CursorFromDiffProviderTests, MultipleDiffs)
