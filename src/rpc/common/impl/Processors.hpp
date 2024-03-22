@@ -20,7 +20,6 @@
 #pragma once
 
 #include "rpc/common/Concepts.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/value.hpp>
