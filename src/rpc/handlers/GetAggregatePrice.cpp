@@ -32,7 +32,9 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <ripple/basics/Number.h>
 #include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Issue.h>
 #include <ripple/protocol/LedgerFormats.h>
@@ -47,9 +49,10 @@
 
 #include <cstdint>
 #include <functional>
+#include <iterator>
+#include <numeric>
 #include <optional>
 #include <string>
-#include <utility>
 #include <variant>
 
 namespace rpc {
@@ -116,7 +119,75 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
         });
     }
 
-    return Output{};
+    if (timestampPricesBiMap.empty())
+        return Error{Status{ripple::rpcOBJECT_NOT_FOUND}};
+
+    auto const latestTime = timestampPricesBiMap.left.begin()->first;
+
+    Output out;
+    out.time = latestTime;
+
+    if (input.timeThreshold) {
+        auto const oldestTime = timestampPricesBiMap.left.rbegin()->first;
+        auto const upperBound = latestTime > *input.timeThreshold ? (latestTime - *input.timeThreshold) : oldestTime;
+        if (upperBound > oldestTime) {
+            timestampPricesBiMap.left.erase(
+                timestampPricesBiMap.left.upper_bound(upperBound), timestampPricesBiMap.left.end()
+            );
+        }
+
+        if (timestampPricesBiMap.empty())
+            return Error{Status{ripple::rpcOBJECT_NOT_FOUND}};
+    }
+
+    auto const getStats = [](TimestampPricesBiMap::right_const_iterator begin,
+                             TimestampPricesBiMap::right_const_iterator end) -> Stats {
+        ripple::STAmount avg{ripple::noIssue(), 0, 0};
+        ripple::Number sd{0};
+        std::uint16_t const size = std::distance(begin, end);
+        avg = std::accumulate(begin, end, avg, [&](ripple::STAmount const& acc, auto const& it) {
+            return acc + it.first;
+        });
+        avg = divide(avg, ripple::STAmount{ripple::noIssue(), size, 0}, ripple::noIssue());
+        if (size > 1) {
+            sd = std::accumulate(begin, end, sd, [&](ripple::Number const& acc, auto const& it) {
+                return acc + (it.first - avg) * (it.first - avg);
+            });
+            sd = root2(sd / (size - 1));
+        }
+        return {avg, sd, size};
+    };
+
+    out.extireStats = getStats(timestampPricesBiMap.right.begin(), timestampPricesBiMap.right.end());
+
+    auto itAdvance = [&](auto it, int distance) {
+        std::advance(it, distance);
+        return it;
+    };
+
+    if (input.trim) {
+        auto const trimCount = timestampPricesBiMap.size() * (*input.trim) / 100;
+
+        auto const [avg, sd, size] = getStats(
+            itAdvance(timestampPricesBiMap.right.begin(), trimCount),
+            itAdvance(timestampPricesBiMap.right.end(), -trimCount)
+        );
+    }
+
+    auto const median = [&, size = out.extireStats.size]() {
+        auto const middle = size / 2;
+        if ((size % 2) == 0) {
+            static ripple::STAmount two{ripple::noIssue(), 2, 0};
+            auto it = itAdvance(timestampPricesBiMap.right.begin(), middle - 1);
+            auto const& a1 = it->first;
+            auto const& a2 = (++it)->first;
+            return divide(a1 + a2, two, ripple::noIssue());
+        }
+        return itAdvance(timestampPricesBiMap.right.begin(), middle)->first;
+    }();
+    out.median = median.getText();
+
+    return out;
 }
 
 void
@@ -129,13 +200,16 @@ GetAggregatePriceHandler::tracebackOracleObject(
     auto constexpr maxHistory = 3;
 
     ripple::STObject const* ptrOracleObject = &oracleObject;
-    ripple::STObject const* ptrPrevObject = nullptr;
     ripple::STObject const* ptrCurrentObject = ptrOracleObject;
 
     bool isNew = false;
+    bool noOracleFound = false;
     auto history = 0;
 
     while (true) {
+        if (noOracleFound)
+            return;
+
         if (not callback(*ptrOracleObject))
             return;
 
@@ -149,14 +223,14 @@ GetAggregatePriceHandler::tracebackOracleObject(
         if (not prevTx)
             return;
 
-        auto [txn, meta] = deserializeTxPlusMeta(*prevTx);
+        noOracleFound = true;
+        auto [_, meta] = deserializeTxPlusMeta(*prevTx);
 
         for (ripple::STObject const& node : meta->getFieldArray(ripple::sfAffectedNodes)) {
             if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltORACLE) {
                 continue;
             }
-
-            ptrPrevObject = ptrCurrentObject;
+            noOracleFound = false;
             ptrCurrentObject = &node;
             isNew = node.isFieldPresent(ripple::sfNewFields);
             // if a meta is for the new and this is the first

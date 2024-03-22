@@ -29,6 +29,7 @@
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
+#include <ripple/basics/Number.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/STAmount.h>
 #include <ripple/protocol/STObject.h>
@@ -48,12 +49,22 @@ namespace rpc {
 class GetAggregatePriceHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
+    struct Stats {
+        ripple::STAmount avg;
+        ripple::Number sd;
+        uint32_t size{0};
+    };
+
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
+        uint32_t time;
+        Stats extireStats;
+        std::optional<Stats> trimStats;
         std::string ledgerHash;
         uint32_t ledgerIndex;
+        std::string median;
         bool validated = true;
     };
 
@@ -66,8 +77,8 @@ class GetAggregatePriceHandler {
         boost::json::array oracles;  // valid size is 1-200
         std::string baseAsset;
         std::string quoteAsset;
-        std::uint32_t timeThreshold;
-        std::uint8_t trim;  // valid 1-25
+        std::optional<std::uint32_t> timeThreshold;
+        std::optional<std::uint8_t> trim;  // valid 1-25
     };
 
     using Result = HandlerReturnType<Output>;
@@ -150,6 +161,7 @@ private:
         ripple::STObject oracleObject,
         std::function<bool(ripple::STObject const&)> const& callback
     ) const;
+
     /**
      * @brief Convert the Output to a JSON object
      *
