@@ -1,5 +1,5 @@
 CompileFlags:
-  Add: [-ftemplate-backtrace-limit=0, -g, -DNDEBUG, -D__cpp_concepts=202002]
+  Add: [-D__cpp_concepts=202002]
 
 Diagnostics:
   UnusedIncludes: Strict
