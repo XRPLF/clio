@@ -1850,13 +1850,11 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
     backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return null for ledger entry
     auto const key = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend, doFetchLedgerObject(key, RANGEMAX, _)).WillByDefault(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend, doFetchLedgerObject(key, RANGEMAX, _)).WillRepeatedly(Return(std::optional<Blob>{}));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2402,12 +2400,10 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
     backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
 
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend, doFetchLedgerObject(testBundle.expectedIndex, RANGEMAX, _))
-        .WillByDefault(Return(testBundle.mockedEntity.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject(testBundle.expectedIndex, RANGEMAX, _))
+        .WillRepeatedly(Return(testBundle.mockedEntity.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2454,14 +2450,12 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
     backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillByDefault(Return(ledgerEntry.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2482,14 +2476,12 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
     backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillByDefault(Return(ledgerEntry.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2510,8 +2502,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2535,8 +2526,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2560,8 +2550,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
