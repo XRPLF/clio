@@ -644,7 +644,7 @@ generateNormalPathBookOffersTestBundles()
         ACCOUNT
     );
 
-    auto const feeLedgerObject = CreateFeeSettingBlob(1, 2, 3, 4, 0);
+    auto const feeLedgerObject = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
 
     auto const trustline30Balance =
         CreateRippleStateLedgerObject("USD", ACCOUNT, -30, ACCOUNT2, 1000, ACCOUNT, 2000, INDEX1, 2, 0);
@@ -1303,7 +1303,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, seq, _))
-        .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
+        .WillByDefault(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(issuer).key, seq, _))
         .WillByDefault(
@@ -1377,7 +1377,7 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
         .WillByDefault(Return(CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX1, 2).getSerializer().peekData()));
 
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, seq, _))
-        .WillByDefault(Return(CreateFeeSettingBlob(1, 2, 3, 4, 0)));
+        .WillByDefault(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(issuer).key, seq, _))
         .WillByDefault(

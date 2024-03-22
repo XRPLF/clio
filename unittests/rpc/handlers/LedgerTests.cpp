@@ -1025,7 +1025,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
     ON_CALL(*backend, doFetchLedgerObject(accountKk, RANGEMAX, _)).WillByDefault(Return(accountObject));
 
     // fee object 2*2+3->7 ; balance 200 - 7 -> 193
-    auto feeBlob = CreateFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
+    auto feeBlob = CreateLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, RANGEMAX, _)).WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
@@ -1094,7 +1094,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
     ON_CALL(*backend, doFetchLedgerObject(accountKk, RANGEMAX, _)).WillByDefault(Return(accountObject));
 
     // fee object 2*2+3->7 ; balance 200 - 7 -> 193
-    auto feeBlob = CreateFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
+    auto feeBlob = CreateLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, RANGEMAX, _)).WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
@@ -1198,7 +1198,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
     ON_CALL(*backend, doFetchLedgerObject(accountKk, RANGEMAX, _)).WillByDefault(Return(accountObject));
 
     // fee object 2*2+3->7 ; balance 6 - 7 -> -1
-    auto feeBlob = CreateFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
+    auto feeBlob = CreateLegacyFeeSettingBlob(1, 2 /*reserve inc*/, 3 /*reserve base*/, 4, 0);
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, RANGEMAX, _)).WillByDefault(Return(feeBlob));
 
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
