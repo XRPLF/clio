@@ -1269,7 +1269,7 @@ generateTestValuesForParametersTest()
                 R"({{
                     "bridge_account": "{}",
                     "bridge": "invalid"
-                    }})",
+                }})",
                 ACCOUNT
             ),
             "malformedRequest",
@@ -1278,8 +1278,8 @@ generateTestValuesForParametersTest()
         ParamTestCaseBundle{
             "OwnedClaimIdInvalidType",
             R"({
-                    "xchain_owned_claim_id": 123
-                    })",
+                "xchain_owned_claim_id": 123
+            })",
             "malformedRequest",
             "Malformed request."
         },
@@ -1547,6 +1547,219 @@ generateTestValuesForParametersTest()
             "malformedRequest",
             "Malformed request."
         },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdMissing",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}"
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidNegative",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": -1
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidTypeString",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": "invalid"
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidTypeDouble",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": 3.21
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidTypeObject",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": {{}}
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidTypeArray",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": []
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectDocumentIdInvalidTypeNull",
+            fmt::format(
+                R"({{
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": null
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedDocumentID",
+            "Malformed oracle_document_id."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountMissing",
+            R"({
+                "oracle": {
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidTypeInteger",
+            R"({
+                "oracle": {
+                    "account": 123,
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidTypeDouble",
+            R"({
+                "oracle": {
+                    "account": 123.45,
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidTypeNull",
+            R"({
+                "oracle": {
+                    "account": null,
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidTypeObject",
+            R"({
+                "oracle": {
+                    "account": {"test": "test"},
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidTypeArray",
+            R"({
+                "oracle": {
+                    "account": [{"test": "test"}],
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleObjectAccountInvalidFormat",
+            R"({
+                "oracle": {
+                    "account": "NotHex",
+                    "oracle_document_id": 1
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleStringInvalidFormat",
+            R"({
+                "oracle": "NotHex"
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "OracleStringInvalidTypeInteger",
+            R"({
+                "oracle": 123
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OracleStringInvalidTypeDouble",
+            R"({
+                "oracle": 123.45
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OracleStringInvalidTypeArray",
+            R"({
+                "oracle": [{"test": "test"}]
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "OracleStringInvalidTypeNull",
+            R"({
+                "oracle": null
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
     };
 }
 
@@ -1637,13 +1850,11 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
     backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return null for ledger entry
     auto const key = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend, doFetchLedgerObject(key, RANGEMAX, _)).WillByDefault(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend, doFetchLedgerObject(key, RANGEMAX, _)).WillRepeatedly(Return(std::optional<Blob>{}));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2119,6 +2330,57 @@ generateTestValuesForNormalPathTest()
                 .key,
             CreateChainOwnedClaimIDObject(ACCOUNT, ACCOUNT, ACCOUNT2, "JPY", ACCOUNT3, ACCOUNT)
         },
+        NormalPathTestBundle{
+            "OracleEntryFoundViaObject",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": 1
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), 1).key,
+            CreateOracleObject(
+                ACCOUNT,
+                "70726F7669646572",
+                32u,
+                1234u,
+                ripple::Blob(8, 's'),
+                ripple::Blob(8, 's'),
+                RANGEMAX - 2,
+                ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
+                CreatePriceDataSeries(
+                    {CreateOraclePriceData(2e4, ripple::to_currency("XRP"), ripple::to_currency("USD"), 3)}
+                )
+            )
+        },
+        NormalPathTestBundle{
+            "OracleEntryFoundViaString",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "oracle": "{}"
+                }})",
+                ripple::to_string(ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), 1).key)
+            ),
+            ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), 1).key,
+            CreateOracleObject(
+                ACCOUNT,
+                "70726F7669646572",
+                64u,
+                4321u,
+                ripple::Blob(8, 'a'),
+                ripple::Blob(8, 'a'),
+                RANGEMAX - 4,
+                ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
+                CreatePriceDataSeries(
+                    {CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)}
+                )
+            )
+        },
     };
 }
 
@@ -2138,12 +2400,10 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
     backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
 
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend, doFetchLedgerObject(testBundle.expectedIndex, RANGEMAX, _))
-        .WillByDefault(Return(testBundle.mockedEntity.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject(testBundle.expectedIndex, RANGEMAX, _))
+        .WillRepeatedly(Return(testBundle.mockedEntity.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2190,14 +2450,12 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
     backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillByDefault(Return(ledgerEntry.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2218,14 +2476,12 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
     backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillByDefault(Return(ledgerEntry.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2246,8 +2502,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2271,8 +2526,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2296,8 +2550,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
