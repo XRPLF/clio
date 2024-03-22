@@ -2332,6 +2332,57 @@ generateTestValuesForNormalPathTest()
                 .key,
             CreateChainOwnedClaimIDObject(ACCOUNT, ACCOUNT, ACCOUNT2, "JPY", ACCOUNT3, ACCOUNT)
         },
+        NormalPathTestBundle{
+            "OracleEntryFoundViaObject",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": 1
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), 1).key,
+            CreateOracleObject(
+                ACCOUNT,
+                "70726F7669646572",
+                32u,
+                1234u,
+                ripple::Blob(8, 's'),
+                ripple::Blob(8, 's'),
+                RANGEMAX - 2,
+                ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
+                CreatePriceDataSeries(
+                    {CreateOraclePriceData(2e4, ripple::to_currency("XRP"), ripple::to_currency("USD"), 3)}
+                )
+            )
+        },
+        NormalPathTestBundle{
+            "OracleEntryFoundViaString",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "oracle": "{}"
+                }})",
+                ripple::to_string(ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), 1).key)
+            ),
+            ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), 1).key,
+            CreateOracleObject(
+                ACCOUNT,
+                "70726F7669646572",
+                64u,
+                4321u,
+                ripple::Blob(8, 'a'),
+                ripple::Blob(8, 'a'),
+                RANGEMAX - 4,
+                ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
+                CreatePriceDataSeries(
+                    {CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)}
+                )
+            )
+        },
     };
 }
 
