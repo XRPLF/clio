@@ -49,6 +49,10 @@ namespace rpc {
 class GetAggregatePriceHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
+public:
+    /**
+     * @brief A struct to hold the statistics
+     */
     struct Stats {
         ripple::STAmount avg;
         ripple::Number sd;
