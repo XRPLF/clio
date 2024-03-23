@@ -12,13 +12,16 @@ Clio is built with [CMake](https://cmake.org/) and uses [Conan](https://conan.io
 
 | Compiler    | Version |
 |-------------|---------|
-| GCC         | 11      |
-| Clang       | 14      |
-| Apple Clang | 14.0.3  |
+| GCC         | 12      |
+| Clang       | 16      |
+| Apple Clang | 15      |
 
 ### Conan Configuration
 
-Clio does not require anything but default settings in your (`~/.conan/profiles/default`) Conan profile. It's best to have no extra flags specified.
+Clio does not require anything other than `compiler.cppstd=20` in your (`~/.conan/profiles/default`) Conan profile.
+
+> [!NOTE]
+> Although Clio is built using C++23, it's required to set `compiler.cppstd=20` for the time being as some of Clio's dependencies are not yet capable of building under C++23.
 
 > Mac example:
 
@@ -29,7 +32,7 @@ os_build=Macos
 arch=armv8
 arch_build=armv8
 compiler=apple-clang
-compiler.version=14
+compiler.version=15
 compiler.libcxx=libc++
 build_type=Release
 compiler.cppstd=20
@@ -44,7 +47,7 @@ os_build=Linux
 arch=x86_64
 arch_build=x86_64
 compiler=gcc
-compiler.version=11
+compiler.version=12
 compiler.libcxx=libstdc++11
 build_type=Release
 compiler.cppstd=20

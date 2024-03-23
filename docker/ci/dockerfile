@@ -7,6 +7,7 @@ USER root
 WORKDIR /root/
 
 ENV GCC_VERSION=11 \
+    GCC12_VERSION=12.2.0 \
     CCACHE_VERSION=4.8.3 \
     LLVM_TOOLS_VERSION=17 \
     GH_VERSION=2.40.0 \
@@ -35,10 +36,20 @@ RUN apt update -qq \
     && update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-${GCC_VERSION} 100 \
     && update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${LLVM_TOOLS_VERSION} 100 \
     && apt-get clean && apt remove -y software-properties-common \
-    && pip3 install  -q --upgrade --no-cache-dir pip \
-    && pip3 install  -q --no-cache-dir conan==1.62 gcovr cmake-format
+    && pip3 install -q --upgrade --no-cache-dir pip \
+    && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake-format
 
 WORKDIR /tmp
+
+# Install gcc-12 from source
+RUN wget "http://mirrors.concertpass.com/gcc/releases/gcc-${GCC12_VERSION}/gcc-${GCC12_VERSION}.tar.gz" \
+    && tar xf "gcc-${GCC12_VERSION}.tar.gz" \
+    && cd "gcc-${GCC12_VERSION}" \
+    && mkdir build && cd build \
+    && apt-get install -y libmpc-dev libgmp3-dev libmpfr-dev \
+    && ../configure --enable-languages=c,c++ --disable-multilib \
+    && make -j$(($(nproc --all) * 2)) BOOT_CFLAGS='-O3 -g0' profiledbootstrap \
+    && make install-strip
 
 # Install ccache from source
 RUN wget "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}.tar.gz" \
@@ -61,8 +72,12 @@ RUN wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VER
     && tar xf gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
     && mv gh_${GH_VERSION}_linux_${TARGETARCH}/bin/gh /usr/bin/gh
 
-# Clean up
-RUN rm -rf  /tmp/* /var/tmp/*
+# Rewire to use gcc-12
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/local/bin/g++ 100 \
+    && update-alternatives --install /usr/bin/c++ c++ /usr/local/bin/g++ 100 \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/local/bin/gcc 100 \
+    && update-alternatives --install /usr/bin/cc cc /usr/local/bin/gcc 100 \
+    && update-alternatives --install /usr/bin/ccache ccache /usr/local/bin/ccache 100
 
 WORKDIR /root/
 # Using root by default is not very secure but github checkout action doesn't work with any other user
@@ -71,9 +86,11 @@ WORKDIR /root/
 # https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
 
 # Setup conan
+# Note: intentionally leaving cppstd=20
 RUN conan profile new default --detect \
     && conan profile update settings.compiler.cppstd=20 default \
     && conan profile update settings.compiler.libcxx=libstdc++11 default \
     && conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
 
-
+# Clean up
+RUN rm -rf /tmp/* /var/tmp/* 
