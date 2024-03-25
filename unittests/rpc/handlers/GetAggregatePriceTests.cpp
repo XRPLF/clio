@@ -26,6 +26,7 @@
 #include "util/Fixtures.hpp"
 #include "util/TestObject.hpp"
 
+#include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
@@ -182,4 +183,44 @@ TEST_P(GetAggregatePriceParameterTest, InvalidParams)
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
         std::cout << err << std::endl;
     });
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, OverOraclesMax)
+{
+    auto req = json::parse(R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": []})");
+    auto const maxOracles = 200;
+
+    for (auto i = 0; i < maxOracles + 1; ++i) {
+        req.at("oracles").as_array().push_back(
+            json::object{{"account", "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD"}, {"oracle_document_id", 2}}
+        );
+    }
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "oracleMalformed");
+        EXPECT_EQ(err.at("error_message").as_string(), "Oracle request is malformed.");
+    });
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntry)
+{
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
+{
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, NoMatchAssetPair)
+{
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, TwoTxHistory)
+{
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, TooManyTxHistory)
+{
 }
