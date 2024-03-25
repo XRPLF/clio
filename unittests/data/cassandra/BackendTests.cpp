@@ -27,6 +27,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "util/Fixtures.hpp"
 #include "util/LedgerUtils.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
 #include "util/StringUtils.hpp"
 #include "util/TestGlobals.hpp"

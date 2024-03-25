@@ -32,6 +32,7 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <ripple/basics/base_uint.h>
+#include <ripple/beast/core/LexicalCast.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Issue.h>
@@ -98,6 +99,7 @@ public:
         std::optional<std::string> bridgeAccount;
         std::optional<uint32_t> chainClaimId;
         std::optional<uint32_t> createAccountClaimId;
+        std::optional<ripple::uint256> oracleNode;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -278,6 +280,24 @@ public:
                  }},
                  Status(ClioError::rpcMALFORMED_REQUEST)
              }},
+            {JS(oracle),
+             meta::WithCustomError{
+                 validation::Type<std::string, boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
+             },
+             meta::IfType<std::string>{
+                 meta::WithCustomError{malformedRequestHexStringValidator, Status(ClioError::rpcMALFORMED_ADDRESS)}
+             },
+             meta::IfType<boost::json::object>{meta::Section{
+                 {JS(account),
+                  meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                  meta::WithCustomError{validation::AccountBase58Validator, Status(ClioError::rpcMALFORMED_ADDRESS)}},
+                 // note: Unlike `rippled`, Clio only supports UInt as input, no string, no `null`, etc.:
+                 {JS(oracle_document_id),
+                  meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                  meta::WithCustomError{
+                      validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID)
+                  }},
+             }}}
         };
 
         return rpcSpec;
