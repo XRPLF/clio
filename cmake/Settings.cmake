@@ -23,6 +23,7 @@ set(COMPILER_FLAGS
     -Wno-null-dereference
     -Wno-maybe-uninitialized
     -Wno-unknown-warning-option # and this to work with clang
+    # TODO: Address these and others in https://github.com/XRPLF/clio/issues/1273
 )
 
 # TODO: reenable when we change CI #884 if (is_gcc AND NOT lint) list(APPEND COMPILER_FLAGS -Wduplicated-branches
