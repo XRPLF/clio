@@ -28,6 +28,7 @@ include(CheckCXXCompilerFlag)
 include(ClangTidy)
 
 add_library(clio_options INTERFACE)
+target_compile_features(clio_options INTERFACE cxx_std_23) # Clio needs c++23 but deps can remain c++20 for now
 target_include_directories(clio_options INTERFACE ${CMAKE_SOURCE_DIR}/src)
 
 # Set coverage build options
