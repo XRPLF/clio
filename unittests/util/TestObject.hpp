@@ -407,3 +407,14 @@ CreateOracleObject(
     ripple::uint256 previousTxId,
     ripple::STArray priceDataSeries
 );
+
+[[nodiscard]] data::TransactionAndMetadata
+CreateOracleSetTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    uint32_t docId,
+    std::uint32_t lastUpdateTime,
+    ripple::STArray priceDataSeries,
+    std::string_view oracleIndex
+);

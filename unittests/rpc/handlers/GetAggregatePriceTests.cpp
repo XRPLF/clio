@@ -33,6 +33,7 @@
 #include <gtest/gtest.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/UintTypes.h>
 
 #include <optional>
 #include <string>
@@ -44,6 +45,9 @@ using namespace testing;
 
 constexpr static auto RANGEMIN = 10;
 constexpr static auto RANGEMAX = 30;
+constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr static auto TX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
 class RPCGetAggregatePriceHandlerTest : public HandlerBaseTest {};
 
@@ -207,6 +211,59 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OverOraclesMax)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntry)
 {
+    backend->setRange(RANGEMIN, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto oracleObject = CreateOracleObject(
+        ACCOUNT,
+        "70726F7669646572",
+        64u,
+        4321u,
+        ripple::Blob(8, 'a'),
+        ripple::Blob(8, 'a'),
+        RANGEMAX - 4,
+        ripple::uint256{TX1},
+        CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)})
+    );
+
+    auto const documentId = 1;
+    auto const oracleIndex = ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), documentId).key;
+    EXPECT_CALL(*backend, doFetchLedgerObject(oracleIndex, RANGEMAX, _))
+        .WillOnce(Return(oracleObject.getSerializer().peekData()));
+
+    // return a tx which contains NewFields
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
+        .WillOnce(Return(CreateOracleSetTxWithMetadata(
+            ACCOUNT,
+            RANGEMAX,
+            123,
+            1,
+            4321u,
+            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)
+            }),
+            ripple::to_string(oracleIndex)
+        )));
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                    "base_asset": "USD",
+                    "quote_asset": "XRP",
+                    "oracles": [
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }}
+                    ]
+                }})",
+        ACCOUNT,
+        documentId
+    ));
+
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+    });
 }
 
 TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)

@@ -264,6 +264,8 @@ tag_invoke(boost::json::value_to_tag<GetAggregatePriceHandler::Input>, boost::js
         }
     }
 
+    input.oracles = jsonObject.at(JS(oracles)).as_array();
+
     return input;
 }
 
