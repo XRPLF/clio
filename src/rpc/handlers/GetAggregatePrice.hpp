@@ -27,6 +27,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
 
+#include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <ripple/basics/Number.h>
@@ -55,7 +56,7 @@ public:
      */
     struct Stats {
         ripple::STAmount avg;
-        ripple::Number sd;
+        ripple::Number sd;  // standard deviation
         uint32_t size{0};
     };
 
@@ -109,24 +110,26 @@ public:
         static auto constexpr maxOracles = 200;
 
         static auto const oraclesValidator =
-            validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+            validation::CustomValidator{[](boost::json::value const& value, std::string_view) -> MaybeError {
                 if (!value.is_array() or value.as_array().empty() or value.as_array().size() > maxOracles)
                     return Error{Status{RippledError::rpcORACLE_MALFORMED}};
-
-                auto const oracleJsonValidator = meta::Section{
-                    {JS(oracle_document_id), validation::Required{}, validation::Type<std::string>{}},
-                    {JS(account), validation::Required{}, validation::AccountBase58Validator},
-                };
 
                 for (auto oracle : value.as_array()) {
                     if (!oracle.is_object() or !oracle.as_object().contains(JS(oracle_document_id)) or
                         !oracle.as_object().contains(JS(account)))
                         return Error{Status{RippledError::rpcORACLE_MALFORMED}};
 
-                    auto maybeError = oracleJsonValidator.verify(oracle, key);
+                    auto maybeError =
+                        validation::Type<std::uint32_t>{}.verify(oracle.as_object(), JS(oracle_document_id));
+
                     if (!maybeError)
                         return maybeError;
-                }
+
+                    maybeError = validation::AccountBase58Validator.verify(oracle.as_object(), JS(account));
+
+                    if (!maybeError)
+                        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+                };
 
                 return MaybeError{};
             }};
@@ -134,9 +137,13 @@ public:
         static auto const rpcSpec = RpcSpec{
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
+            // note: Rippled's base_asset and quote_asset can be non-string. It will eventually return
+            // "rpcOBJECT_NOT_FOUND". Clio will return "rpcINVALID_PARAMS" if the base_asset or quote_asset is not a
+            // string. User can clearly know there is a mistake in the input.
             {JS(base_asset), validation::Required{}, validation::Type<std::string>{}},
             {JS(quote_asset), validation::Required{}, validation::Type<std::string>{}},
             {JS(oracles), validation::Required{}, oraclesValidator},
+            // note: Unlike `rippled`, Clio only supports UInt as input, no string, no `null`, etc.
             {JS(time_threshold), validation::Type<std::uint32_t>{}},
             {
                 JS(trim),

@@ -88,13 +88,13 @@ generateTestValuesForParametersTest()
         },
         GetAggregatePriceParamTestCaseBundle{
             "no_base_asset",
-            R"({"quote_asset": "USD", "oracles": {"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}})",
+            R"({"quote_asset": "USD", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}]})",
             "invalidParams",
             "Required field 'base_asset' missing"
         },
         GetAggregatePriceParamTestCaseBundle{
             "no_quote_asset",
-            R"({"base_asset": "USD", "oracles": {"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}})",
+            R"({"base_asset": "USD", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}]})",
             "invalidParams",
             "Required field 'quote_asset' missing"
         },
@@ -107,6 +107,54 @@ generateTestValuesForParametersTest()
         GetAggregatePriceParamTestCaseBundle{
             "oraclesNotArray",
             R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": 1})",
+            "oracleMalformed",
+            "Oracle request is malformed."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "thresholdNotInt",
+            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}], "time_threshold": "x"})",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "trimNotInt",
+            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}], "trim": "x"})",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "trimTooSmall",
+            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}], "trim": 0})",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "trimTooLarge",
+            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}], "trim": 26})",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "oracleAccountInvalid",
+            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "invalid", "oracle_document_id": 2}]})",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "oracleDocumentIdNotInt",
+            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": "a"}]})",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "oracleMissingAccount",
+            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"oracle_document_id": 2}]})",
+            "oracleMalformed",
+            "Oracle request is malformed."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "oracleMissingDocumentId",
+            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD"}]})",
             "oracleMalformed",
             "Oracle request is malformed."
         },
