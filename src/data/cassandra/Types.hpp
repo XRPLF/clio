@@ -19,9 +19,8 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
-
 #include <cstdint>
+#include <expected>
 
 namespace data::cassandra {
 
@@ -59,8 +58,8 @@ struct Limit {
 class Handle;
 class CassandraError;
 
-using MaybeError = util::Expected<void, CassandraError>;
-using ResultOrError = util::Expected<Result, CassandraError>;
-using Error = util::Unexpected<CassandraError>;
+using MaybeError = std::expected<void, CassandraError>;
+using ResultOrError = std::expected<Result, CassandraError>;
+using Error = std::unexpected<CassandraError>;
 
 }  // namespace data::cassandra

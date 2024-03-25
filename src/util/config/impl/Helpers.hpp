@@ -24,6 +24,7 @@
 #include <queue>
 #include <stdexcept>
 #include <string>
+#include <typeinfo>
 
 namespace util::impl {
 

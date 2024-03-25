@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
 #include "util/async/Operation.hpp"
@@ -38,6 +37,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <expected>
 #include <optional>
 #include <type_traits>
 #include <utility>
@@ -82,9 +82,9 @@ struct AsioPoolContext {
  * @brief A highly configurable execution context.
  *
  * This execution context is used as the base for all specialized execution contexts.
- * Return values are handled by capturing them and returning them packaged as util::Expected.
+ * Return values are handled by capturing them and returning them packaged as std::expected.
  * Exceptions may or may not be caught and handled depending on the error strategy. The default behavior is to catch and
- * package them as the error channel of util::Expected.
+ * package them as the error channel of std::expected.
  */
 template <
     typename ContextType,
@@ -108,7 +108,7 @@ public:
     using ExecutorType = typename ContextHolderType::Executor;
 
     template <typename T>
-    using ValueType = util::Expected<T, ExecutionError>;
+    using ValueType = std::expected<T, ExecutionError>;
 
     using StopSource = StopSourceType;
 

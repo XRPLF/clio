@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/requests/Types.hpp"
 #include "util/requests/impl/SslContext.hpp"
 
@@ -33,6 +32,7 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/stream.hpp>
 
+#include <expected>
 #include <utility>
 
 namespace util::requests::impl {
@@ -58,12 +58,12 @@ class SslStreamData {
 public:
     static constexpr bool sslEnabled = true;
 
-    static Expected<SslStreamData, RequestError>
+    static std::expected<SslStreamData, RequestError>
     create(boost::asio::yield_context yield)
     {
         auto sslContext = makeSslContext();
         if (not sslContext.has_value()) {
-            return Unexpected{std::move(sslContext.error())};
+            return std::unexpected{std::move(sslContext.error())};
         }
         return SslStreamData{std::move(sslContext).value(), yield};
     }

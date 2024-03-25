@@ -29,10 +29,10 @@ os_build=Macos
 arch=armv8
 arch_build=armv8
 compiler=apple-clang
-compiler.version=14
+compiler.version=15
 compiler.libcxx=libc++
 build_type=Release
-compiler.cppstd=20
+compiler.cppstd=23
 ```
 
 > Linux example:
@@ -47,7 +47,7 @@ compiler=gcc
 compiler.version=11
 compiler.libcxx=libstdc++11
 build_type=Release
-compiler.cppstd=20
+compiler.cppstd=23
 ```
 
 #### Artifactory

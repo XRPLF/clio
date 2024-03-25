@@ -58,6 +58,7 @@
 #include <ripple/protocol/STObject.h>
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/SecretKey.h>
+#include <ripple/protocol/Seed.h>
 #include <ripple/protocol/TxMeta.h>
 #include <ripple/protocol/UintTypes.h>
 

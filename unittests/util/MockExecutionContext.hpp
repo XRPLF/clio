@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/MockOperation.hpp"
 #include "util/MockStopToken.hpp"
 #include "util/MockStrand.hpp"
@@ -30,12 +29,13 @@
 #include <gmock/gmock.h>
 
 #include <chrono>
+#include <expected>
 #include <functional>
 #include <optional>
 
 struct MockExecutionContext {
     template <typename T>
-    using ValueType = util::Expected<T, util::async::ExecutionError>;
+    using ValueType = std::expected<T, util::async::ExecutionError>;
 
     using StopSource = MockStopSource;
     using StopToken = MockStopToken;

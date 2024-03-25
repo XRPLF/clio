@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
 
@@ -27,6 +26,7 @@
 #include <fmt/std.h>
 
 #include <exception>
+#include <expected>
 #include <thread>
 
 namespace util::async::impl {
@@ -41,11 +41,11 @@ struct DefaultErrorHandler {
                     fn(outcome, std::forward<Args>(args)...);
                 } catch (std::exception const& e) {
                     outcome.setValue(
-                        util::Unexpected(ExecutionError{fmt::format("{}", std::this_thread::get_id()), e.what()})
+                        std::unexpected(ExecutionError{fmt::format("{}", std::this_thread::get_id()), e.what()})
                     );
                 } catch (...) {
                     outcome.setValue(
-                        util::Unexpected(ExecutionError{fmt::format("{}", std::this_thread::get_id()), "unknown"})
+                        std::unexpected(ExecutionError{fmt::format("{}", std::this_thread::get_id()), "unknown"})
                     );
                 }
             };
