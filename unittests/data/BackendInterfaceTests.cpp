@@ -17,12 +17,14 @@
 */
 //==============================================================================
 
-#include "data/BackendInterface.hpp"
 #include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <ripple/basics/XRPAmount.h>
+#include <ripple/protocol/Indexes.h>
 
 using namespace data;
 using namespace util::prometheus;

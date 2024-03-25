@@ -139,6 +139,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             key = ripple::keylet::xChainCreateAccountClaimID(input.bridge->value(), input.createAccountClaimId.value())
                       .key;
         }
+    } else if (input.oracleNode) {
+        key = input.oracleNode.value();
     } else {
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
@@ -257,6 +259,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(amm), ripple::ltAMM},
         {JS(xchain_owned_create_account_claim_id), ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
         {JS(xchain_owned_claim_id), ripple::ltXCHAIN_OWNED_CLAIM_ID},
+        {JS(oracle), ripple::ltORACLE},
     };
 
     auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {
@@ -272,6 +275,14 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
             parseIssue(bridgeJson.at(ripple::sfIssuingChainIssue.getJsonName().c_str()).as_object());
 
         return ripple::STXChainBridge{lockingDoor, lockingIssue, issuingDoor, issuingIssue};
+    };
+
+    auto const parseOracleFromJson = [](boost::json::value const& json) {
+        auto const account =
+            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(json.at(JS(account))));
+        auto const documentId = boost::json::value_to<uint32_t>(json.at(JS(oracle_document_id)));
+
+        return ripple::keylet::oracle(*account, documentId).key;
     };
 
     auto const indexFieldType =
@@ -318,6 +329,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.createAccountClaimId = boost::json::value_to<std::int32_t>(
             jv.at(JS(xchain_owned_create_account_claim_id)).at(JS(xchain_owned_create_account_claim_id))
         );
+    } else if (jsonObject.contains(JS(oracle))) {
+        input.oracleNode = parseOracleFromJson(jv.at(JS(oracle)));
     }
 
     return input;
