@@ -46,7 +46,7 @@ RUN wget "https://mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-${
     && tar xf "gcc-${GCC12_VERSION}.tar.gz" \
     && cd "gcc-${GCC12_VERSION}" \
     && mkdir build && cd build \
-    && ../configure --enable-languages=c,c++ --disable-multilib --with-build-config='bootstrap-lto' \
+    && ../configure --enable-languages=c,c++ --disable-multilib --with-build-config='bootstrap-03' \
     && make -j$(nproc) profiledbootstrap && make install-strip
 
 # Install ccache from source
