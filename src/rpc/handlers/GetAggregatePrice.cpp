@@ -33,6 +33,7 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <ripple/basics/Number.h>
+#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
@@ -108,6 +109,7 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
                 );
                 iter != series.end()) {
                 auto const price = iter->getFieldU64(ripple::sfAssetPrice);
+                // Asset price is after scale, so we need to get the negative of the scale
                 auto const scale =
                     iter->isFieldPresent(ripple::sfScale) ? -static_cast<int>(iter->getFieldU8(ripple::sfScale)) : 0;
                 timestampPricesBiMap.insert(TimestampPricesBiMap::value_type(
@@ -165,10 +167,11 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
         return it;
     };
 
+    // trim is [1,25], we can thin out the first and last trim% of the data
     if (input.trim) {
         auto const trimCount = timestampPricesBiMap.size() * (*input.trim) / 100;
 
-        auto const [avg, sd, size] = getStats(
+        out.trimStats = getStats(
             itAdvance(timestampPricesBiMap.right.begin(), trimCount),
             itAdvance(timestampPricesBiMap.right.end(), -trimCount)
         );
@@ -187,6 +190,8 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
     }();
     out.median = median.getText();
 
+    out.ledgerHash = ripple::to_string(lgrInfo.hash);
+    out.ledgerIndex = lgrInfo.seq;
     return out;
 }
 
@@ -265,6 +270,11 @@ tag_invoke(boost::json::value_to_tag<GetAggregatePriceHandler::Input>, boost::js
     }
 
     input.oracles = jsonObject.at(JS(oracles)).as_array();
+    input.baseAsset = boost::json::value_to<std::string>(jv.at(JS(base_asset)));
+    input.quoteAsset = boost::json::value_to<std::string>(jv.at(JS(quote_asset)));
+
+    if (jsonObject.contains(JS(trim)))
+        input.trim = jv.at(JS(trim)).as_int64();
 
     return input;
 }
@@ -276,7 +286,23 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GetAggregatePric
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
+        {JS(time), output.time},
+        {JS(entire_set),
+         boost::json::object{
+             {JS(mean), output.extireStats.avg.getText()},
+             {JS(standard_deviation), ripple::to_string(output.extireStats.sd)},
+             {JS(size), output.extireStats.size}
+         }},
+        {JS(median), output.median}
     };
+
+    if (output.trimStats) {
+        jv.as_object()[JS(trimmed_set)] = boost::json::object{
+            {JS(mean), output.trimStats->avg.getText()},
+            {JS(standard_deviation), ripple::to_string(output.trimStats->sd)},
+            {JS(size), output.trimStats->size}
+        };
+    }
 }
 
 }  // namespace rpc

@@ -1097,14 +1097,7 @@ CreateOraclePriceData(
 ripple::STArray
 CreatePriceDataSeries(std::vector<ripple::STObject> const& series)
 {
-    auto priceDataSeries = ripple::STArray{series.size()};
-
-    for (auto& data : series) {
-        auto serializer = data.getSerializer();
-        priceDataSeries.add(serializer);
-    }
-
-    return priceDataSeries;
+    return ripple::STArray{series.begin(), series.end()};
 }
 
 ripple::STObject
