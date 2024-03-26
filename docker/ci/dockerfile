@@ -39,7 +39,7 @@ RUN apt update -qq \
     && pip3 install -q --upgrade --no-cache-dir pip \
     && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake-format
 
-WORKDIR /tmp
+WORKDIR /root/build_gcc
 
 # Install gcc-12 from source
 RUN wget "https://mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-${GCC12_VERSION}/gcc-${GCC12_VERSION}.tar.gz" \
@@ -48,6 +48,8 @@ RUN wget "https://mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-${
     && mkdir build && cd build \
     && ../configure --enable-languages=c,c++ --disable-multilib --with-build-config='bootstrap-O3' \
     && make -j$(nproc) profiledbootstrap && make install-strip
+
+WORKDIR /tmp
 
 # Install ccache from source
 RUN wget "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}.tar.gz" \
@@ -91,4 +93,4 @@ RUN conan profile new default --detect \
     && conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
 
 # Clean up
-RUN rm -rf /tmp/* /var/tmp/* 
+RUN rm -rf /tmp/* /var/tmp/* /root/build_gcc
