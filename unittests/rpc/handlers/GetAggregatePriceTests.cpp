@@ -17,13 +17,12 @@
 */
 //==============================================================================
 
-#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/GetAggregatePrice.hpp"
-#include "rpc/handlers/LedgerData.hpp"
 #include "util/Fixtures.hpp"
+#include "util/MockBackend.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/object.hpp>
@@ -64,14 +63,15 @@ mockLedgerObject(
     std::uint32_t docId,
     char const* tx,
     std::uint32_t price,
-    std::uint32_t scale
+    std::uint32_t scale,
+    std::uint32_t time = 4321u
 )
 {
     auto oracleObject = CreateOracleObject(
         account,
         "70726F7669646572",
         64u,
-        4321u,
+        time,
         ripple::Blob(8, 'a'),
         ripple::Blob(8, 'a'),
         RANGEMAX - 4,
@@ -568,10 +568,344 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntryTrim)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
 {
+    backend->setRange(RANGEMIN, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto constexpr documentId = 1;
+    auto const oracleIndex = ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), documentId).key;
+    EXPECT_CALL(*backend, doFetchLedgerObject(oracleIndex, RANGEMAX, _)).WillOnce(Return(std::nullopt));
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                    "base_asset": "USD",
+                    "quote_asset": "XRP",
+                    "oracles": [
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }}
+                    ]
+                }})",
+        ACCOUNT,
+        documentId
+    ));
+
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "The requested object was not found.");
+    });
 }
 
 TEST_F(RPCGetAggregatePriceHandlerTest, NoMatchAssetPair)
 {
+    backend->setRange(RANGEMIN, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto constexpr documentId = 1;
+    mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                    "base_asset": "JPY",
+                    "quote_asset": "XRP",
+                    "oracles": [
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }}
+                    ]
+                }})",
+        ACCOUNT,
+        documentId
+    ));
+
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "The requested object was not found.");
+    });
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
+{
+    backend->setRange(RANGEMIN, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto constexpr documentId1 = 1;
+    auto constexpr documentId2 = 2;
+    auto constexpr documentId3 = 3;
+    auto constexpr documentId4 = 4;
+    auto constexpr timestamp1 = 1711461384u;
+    auto constexpr timestamp2 = 1711461383u;
+    auto constexpr timestamp3 = 1711461382u;
+    auto constexpr timestamp4 = 1711461381u;
+    mockLedgerObject(*backend, ACCOUNT, documentId1, TX1, 1e3, 2, timestamp1);  // 10
+    mockLedgerObject(*backend, ACCOUNT, documentId2, TX1, 2e3, 2, timestamp2);  // 20
+    mockLedgerObject(*backend, ACCOUNT, documentId4, TX1, 4e2, 1, timestamp3);  // 40
+    mockLedgerObject(*backend, ACCOUNT, documentId3, TX1, 3e3, 1, timestamp4);  // 300
+    // return a tx which contains NewFields
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
+        .WillRepeatedly(Return(CreateOracleSetTxWithMetadata(
+            ACCOUNT,
+            RANGEMAX,
+            123,
+            1,
+            4321u,
+            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)
+            }),
+            INDEX
+        )));
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                    "base_asset": "USD",
+                    "quote_asset": "XRP",
+                    "time_threshold": {},
+                    "oracles": [
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }},
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }},
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }},
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }}
+                    ]
+                }})",
+        0,
+        ACCOUNT,
+        documentId1,
+        ACCOUNT,
+        documentId2,
+        ACCOUNT,
+        documentId3,
+        ACCOUNT,
+        documentId4
+    ));
+
+    auto const expected = json::parse(fmt::format(
+        R"({{
+            "entire_set": 
+            {{
+                "mean": "10",
+                "size": 1,
+                "standard_deviation": "0"
+            }},
+            "median": "10",
+            "time": {},
+            "ledger_index": {},
+            "ledger_hash": "{}",
+            "validated": true
+        }})",
+        timestamp1,
+        RANGEMAX,
+        LEDGERHASH
+    ));
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        std::cout << output.value() << std::endl;
+        EXPECT_EQ(output.value(), expected);
+    });
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
+{
+    backend->setRange(RANGEMIN, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto constexpr documentId1 = 1;
+    auto constexpr documentId2 = 2;
+    auto constexpr documentId3 = 3;
+    auto constexpr documentId4 = 4;
+    auto constexpr timestamp1 = 1711461384u;
+    auto constexpr timestamp2 = 1711461383u;
+    auto constexpr timestamp3 = 1711461382u;
+    auto constexpr timestamp4 = 1711461381u;
+    mockLedgerObject(*backend, ACCOUNT, documentId1, TX1, 1e3, 2, timestamp1);  // 10
+    mockLedgerObject(*backend, ACCOUNT, documentId2, TX1, 2e3, 2, timestamp2);  // 20
+    mockLedgerObject(*backend, ACCOUNT, documentId4, TX1, 4e2, 1, timestamp3);  // 40
+    mockLedgerObject(*backend, ACCOUNT, documentId3, TX1, 3e3, 1, timestamp4);  // 300
+    // return a tx which contains NewFields
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
+        .WillRepeatedly(Return(CreateOracleSetTxWithMetadata(
+            ACCOUNT,
+            RANGEMAX,
+            123,
+            1,
+            4321u,
+            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)
+            }),
+            INDEX
+        )));
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                    "base_asset": "USD",
+                    "quote_asset": "XRP",
+                    "time_threshold": {},
+                    "oracles": [
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }},
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }},
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }},
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }}
+                    ]
+                }})",
+        timestamp1 - timestamp2,
+        ACCOUNT,
+        documentId1,
+        ACCOUNT,
+        documentId2,
+        ACCOUNT,
+        documentId3,
+        ACCOUNT,
+        documentId4
+    ));
+
+    auto const expected = json::parse(fmt::format(
+        R"({{
+            "entire_set": 
+            {{
+                "mean": "15",
+                "size": 2,
+                "standard_deviation": "7.071067811865475"
+            }},
+            "median": "15",
+            "time": {},
+            "ledger_index": {},
+            "ledger_hash": "{}",
+            "validated": true
+        }})",
+        timestamp1,
+        RANGEMAX,
+        LEDGERHASH
+    ));
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        std::cout << output.value() << std::endl;
+        EXPECT_EQ(output.value(), expected);
+    });
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
+{
+    backend->setRange(RANGEMIN, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto constexpr documentId1 = 1;
+    auto constexpr documentId2 = 2;
+    auto constexpr documentId3 = 3;
+    auto constexpr documentId4 = 4;
+    auto constexpr timestamp1 = 1711461384u;
+    auto constexpr timestamp2 = 1711461383u;
+    auto constexpr timestamp3 = 1711461382u;
+    auto constexpr timestamp4 = 1711461381u;
+    mockLedgerObject(*backend, ACCOUNT, documentId1, TX1, 1e3, 2, timestamp1);  // 10
+    mockLedgerObject(*backend, ACCOUNT, documentId2, TX1, 2e3, 2, timestamp2);  // 20
+    mockLedgerObject(*backend, ACCOUNT, documentId4, TX1, 4e2, 1, timestamp3);  // 40
+    mockLedgerObject(*backend, ACCOUNT, documentId3, TX1, 3e3, 1, timestamp4);  // 300
+    // return a tx which contains NewFields
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
+        .WillRepeatedly(Return(CreateOracleSetTxWithMetadata(
+            ACCOUNT,
+            RANGEMAX,
+            123,
+            1,
+            4321u,
+            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)
+            }),
+            INDEX
+        )));
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                    "base_asset": "USD",
+                    "quote_asset": "XRP",
+                    "time_threshold": {},
+                    "oracles": [
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }},
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }},
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }},
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }}
+                    ]
+                }})",
+        timestamp1 + 1,
+        ACCOUNT,
+        documentId1,
+        ACCOUNT,
+        documentId2,
+        ACCOUNT,
+        documentId3,
+        ACCOUNT,
+        documentId4
+    ));
+
+    auto const expected = json::parse(fmt::format(
+        R"({{
+            "entire_set": 
+            {{
+                "mean": "92.5",
+                "size": 4,
+                "standard_deviation": "138.8944443333378"
+            }},
+            "median": "30",
+            "time": 1711461384,
+            "ledger_index": {},
+            "ledger_hash": "{}",
+            "validated": true
+        }})",
+        RANGEMAX,
+        LEDGERHASH
+    ));
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        std::cout << output.value() << std::endl;
+        EXPECT_EQ(output.value(), expected);
+    });
 }
 
 TEST_F(RPCGetAggregatePriceHandlerTest, TwoTxHistory)

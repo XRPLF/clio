@@ -133,13 +133,11 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
         auto const oldestTime = timestampPricesBiMap.left.rbegin()->first;
         auto const upperBound = latestTime > *input.timeThreshold ? (latestTime - *input.timeThreshold) : oldestTime;
         if (upperBound > oldestTime) {
+            // note : upperBound must not be greater than the latestTime, so timestampPricesBiMap can not be empty
             timestampPricesBiMap.left.erase(
                 timestampPricesBiMap.left.upper_bound(upperBound), timestampPricesBiMap.left.end()
             );
         }
-
-        if (timestampPricesBiMap.empty())
-            return Error{Status{ripple::rpcOBJECT_NOT_FOUND}};
     }
 
     auto const getStats = [](TimestampPricesBiMap::right_const_iterator begin,
@@ -275,6 +273,9 @@ tag_invoke(boost::json::value_to_tag<GetAggregatePriceHandler::Input>, boost::js
 
     if (jsonObject.contains(JS(trim)))
         input.trim = jv.at(JS(trim)).as_int64();
+
+    if (jsonObject.contains(JS(time_threshold)))
+        input.timeThreshold = jv.at(JS(time_threshold)).as_int64();
 
     return input;
 }
