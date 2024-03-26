@@ -287,7 +287,7 @@ public:
                   ( 
                     mpt_id blob,
                     holder blob,
-                    PRIMARY KEY (mpt_id, holder)
+                   PRIMARY KEY (mpt_id, holder)
                   ) 
              WITH CLUSTERING ORDER BY (holder ASC)
               AND default_time_to_live = {}

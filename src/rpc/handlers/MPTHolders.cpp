@@ -55,14 +55,11 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
         return Error{*status};
 
     auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
-
     auto const limit = input.limit.value_or(MPTHoldersHandler::LIMIT_DEFAULT);
-
     auto const mptID = ripple::uint192{input.mptID.c_str()};
 
     auto const issuanceLedgerObject =
         sharedPtrBackend_->fetchLedgerObject(ripple::keylet::mptIssuance(mptID).key, lgrInfo.seq, ctx.yield);
-
     if (!issuanceLedgerObject)
         return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "objectNotFound"}};
 
@@ -71,9 +68,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
         cursor = ripple::AccountID{input.marker->c_str()};
 
     auto const dbResponse = sharedPtrBackend_->fetchMPTHolders(mptID, limit, cursor, lgrInfo.seq, ctx.yield);
-
     auto output = MPTHoldersHandler::Output{};
-
     output.mptID = to_string(mptID);
     output.limit = limit;
     output.ledgerIndex = lgrInfo.seq;

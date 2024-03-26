@@ -36,7 +36,7 @@ namespace etl {
  * @param txMeta Transaction metadata
  * @return MPT and holder account pair
  */
-static std::optional<std::pair<ripple::uint192, ripple::AccountID>>
+static std::optional<MPTHolderData>
 getMPTokenAuthorize(ripple::TxMeta const& txMeta)
 {
     for (ripple::STObject const& node : txMeta.getNodes()) {
@@ -45,13 +45,13 @@ getMPTokenAuthorize(ripple::TxMeta const& txMeta)
 
         if (node.getFName() == ripple::sfCreatedNode) {
             auto const& newMPT = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
-            return std::make_pair(newMPT[ripple::sfMPTokenIssuanceID], newMPT.getAccountID(ripple::sfAccount));
+            return MPTHolderData{newMPT[ripple::sfMPTokenIssuanceID], newMPT.getAccountID(ripple::sfAccount)};
         }
     }
     return {};
 }
 
-std::optional<std::pair<ripple::uint192, ripple::AccountID>>
+std::optional<MPTHolderData>
 getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
 {
     if (txMeta.getResultTER() != ripple::tesSUCCESS || sttx.getTxnType() != ripple::TxType::ttMPTOKEN_AUTHORIZE)
@@ -60,7 +60,7 @@ getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
     return getMPTokenAuthorize(txMeta);
 }
 
-std::optional<std::pair<ripple::uint192, ripple::AccountID>>
+std::optional<MPTHolderData>
 getMPTHolderFromObj(std::string const& key, std::string const& blob)
 {
     ripple::STLedgerEntry const sle =
@@ -72,7 +72,7 @@ getMPTHolderFromObj(std::string const& key, std::string const& blob)
     auto const mptIssuanceID = sle[ripple::sfMPTokenIssuanceID];
     auto const holder = sle.getAccountID(ripple::sfAccount);
 
-    return std::make_pair(mptIssuanceID, holder);
+    return MPTHolderData{mptIssuanceID, holder};
 }
 
 }  // namespace etl

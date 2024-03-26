@@ -56,7 +56,7 @@ struct FormattedTransactionsData {
     std::vector<AccountTransactionsData> accountTxData;
     std::vector<NFTTransactionsData> nfTokenTxData;
     std::vector<NFTsData> nfTokensData;
-    std::vector<std::pair<ripple::uint192, ripple::AccountID>> mptHoldersData;
+    std::vector<MPTHolderData> mptHoldersData;
 };
 
 namespace etl::impl {
@@ -262,7 +262,7 @@ public:
                 backend_->writeAccountTransactions(std::move(insertTxResult.accountTxData));
                 backend_->writeNFTs(insertTxResult.nfTokensData);
                 backend_->writeNFTTransactions(insertTxResult.nfTokenTxData);
-                backend_->writeMPTHolders(std::move(insertTxResult.mptHoldersData));
+                backend_->writeMPTHolders(insertTxResult.mptHoldersData);
             }
 
             backend_->finishWrites(sequence);

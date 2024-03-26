@@ -143,9 +143,11 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         auto const mptIssuanceID = ripple::uint192{std::string_view(*(input.mptIssuance))};
         key = ripple::keylet::mptIssuance(mptIssuanceID).key;
     } else if (input.mptoken) {
-        auto const holder = ripple::parseBase58<ripple::AccountID>(input.mptoken->at(JS(account)).as_string().c_str());
+        auto const holder =
+            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(input.mptoken->at(JS(account))));
         auto const mptIssuanceID =
-            ripple::uint192{std::string_view(input.mptoken->at(JS(mpt_issuance_id)).as_string().c_str())};
+            ripple::uint192{std::string_view(boost::json::value_to<std::string>(input.mptoken->at(JS(mpt_issuance_id))))
+            };
         key = ripple::keylet::mptoken(mptIssuanceID, *holder).key;
     } else {
         // Must specify 1 of the following fields to indicate what type

@@ -578,19 +578,17 @@ public:
             cursor = holder;
         }
 
-        auto const mptObjects = doFetchLedgerObjects(mptKeys, ledgerSequence, yield);
+        auto mptObjects = doFetchLedgerObjects(mptKeys, ledgerSequence, yield);
 
-        // need to filter out the objs that don't exist at the ledger seq because these MPT are in no particular time
-        // order. The MPToken at the specified ledger index may not exist.
-        std::vector<Blob> filteredMpt;
-        std::copy_if(mptObjects.begin(), mptObjects.end(), std::back_inserter(filteredMpt), [](Blob mpt) {
-            return mpt.size() != 0;
-        });
+        auto it = std::remove_if(mptObjects.begin(), mptObjects.end(), [](Blob mpt) { return mpt.size() == 0; });
 
+        mptObjects.erase(it, mptObjects.end());
+
+        ASSERT(mptKeys.size() <= limit, "Number of keys can't exceed the limit");
         if (mptKeys.size() == limit)
-            return {filteredMpt, cursor};
+            return {mptObjects, cursor};
 
-        return {filteredMpt, {}};
+        return {mptObjects, {}};
     }
 
     std::optional<Blob>
@@ -891,15 +889,11 @@ public:
     }
 
     void
-    writeMPTHolders(std::vector<std::pair<ripple::uint192, ripple::AccountID>> const& data) override
+    writeMPTHolders(std::vector<MPTHolderData> const& data) override
     {
         std::vector<Statement> statements;
-        for (auto const& record : data) {
-            auto const mptId = record.first;
-            auto const holder = record.second;
-
-            statements.push_back(schema_->insertMPTHolder.bind(mptId, holder));
-        }
+        for (auto [mptId, holder] : data)
+            statements.push_back(schema_->insertMPTHolder.bind(std::move(mptId), std::move(holder)));
 
         executor_.write(std::move(statements));
     }

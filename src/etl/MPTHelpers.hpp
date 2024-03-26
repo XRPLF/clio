@@ -34,7 +34,7 @@ namespace etl {
  * @param sttx The transaction
  * @return The MPTIssuanceID and holder pair as a optional
  */
-std::optional<std::pair<ripple::uint192, ripple::AccountID>>
+std::optional<MPTHolderData>
 getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 
 /**
@@ -44,7 +44,7 @@ getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
  * @param blob Object data as blob
  * @return The MPTIssuanceID and holder pair as a optional
  */
-std::optional<std::pair<ripple::uint192, ripple::AccountID>>
+std::optional<MPTHolderData>
 getMPTHolderFromObj(std::string const& key, std::string const& blob);
 
 }  // namespace etl

@@ -342,8 +342,7 @@ public:
      *
      * @param mptID MPTIssuanceID you wish you query.
      * @param limit Paging limit.
-     * @param cursorIn Optional cursor to allow us to pick up from where we
-     * last left off.
+     * @param cursorIn Optional cursor to allow us to pick up from where we last left off.
      * @param ledgerSequence The ledger sequence to fetch for
      * @param yield Currently executing coroutine.
      * @return std::vector<Blob> of MPToken balances and an optional marker
@@ -591,7 +590,7 @@ public:
      * @param data A vector of MPT ID and account pairs
      */
     virtual void
-    writeMPTHolders(std::vector<std::pair<ripple::uint192, ripple::AccountID>> const& data) = 0;
+    writeMPTHolders(std::vector<MPTHolderData> const& data) = 0;
 
     /**
      * @brief Write a new successor.
