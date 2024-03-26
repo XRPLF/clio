@@ -12,7 +12,7 @@ Clio is built with [CMake](https://cmake.org/) and uses [Conan](https://conan.io
 
 | Compiler    | Version |
 |-------------|---------|
-| GCC         | 12      |
+| GCC         | 12.3    |
 | Clang       | 16      |
 | Apple Clang | 15      |
 
