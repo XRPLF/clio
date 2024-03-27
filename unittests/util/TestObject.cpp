@@ -831,7 +831,9 @@ CreateOracleSetTxWithMetadata(
     uint32_t docId,
     std::uint32_t lastUpdateTime,
     ripple::STArray priceDataSeries,
-    std::string_view oracleIndex
+    std::string_view oracleIndex,
+    bool created,
+    std::string_view previousTxnId
 )
 {
     // tx
@@ -850,18 +852,18 @@ CreateOracleSetTxWithMetadata(
     tx.setFieldArray(ripple::sfPriceDataSeries, priceDataSeries);
 
     // meta
-    // create createdNode with LedgerIndex
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
     ripple::STArray metaArray{1};
 
-    ripple::STObject node(ripple::sfCreatedNode);
+    ripple::STObject node(created ? ripple::sfCreatedNode : ripple::sfModifiedNode);
     node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltORACLE);
     node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{oracleIndex});
-    ripple::STObject newFields(ripple::sfNewFields);
-    newFields.setFieldU32(ripple::sfOracleDocumentID, docId);
-    newFields.setFieldU32(ripple::sfLastUpdateTime, lastUpdateTime);
-    newFields.setFieldArray(ripple::sfPriceDataSeries, priceDataSeries);
-    node.emplace_back(std::move(newFields));
+    node.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{previousTxnId});
+    ripple::STObject fields(created ? ripple::sfNewFields : ripple::sfFinalFields);
+    fields.setFieldU32(ripple::sfOracleDocumentID, docId);
+    fields.setFieldU32(ripple::sfLastUpdateTime, lastUpdateTime);
+    fields.setFieldArray(ripple::sfPriceDataSeries, priceDataSeries);
+    node.emplace_back(std::move(fields));
 
     metaArray.push_back(node);
     metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);

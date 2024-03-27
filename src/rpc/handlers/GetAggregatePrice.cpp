@@ -186,8 +186,8 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
         }
         return itAdvance(timestampPricesBiMap.right.begin(), middle)->first;
     }();
-    out.median = median.getText();
 
+    out.median = median.getText();
     out.ledgerHash = ripple::to_string(lgrInfo.hash);
     out.ledgerIndex = lgrInfo.seq;
     return out;
@@ -196,33 +196,35 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
 void
 GetAggregatePriceHandler::tracebackOracleObject(
     boost::asio::yield_context yield,
-    ripple::STObject oracleObject,
+    ripple::STObject const& oracleObject,
     std::function<bool(ripple::STObject const&)> const& callback
 ) const
 {
-    auto constexpr maxHistory = 3;
+    auto constexpr HISTORYMAX = 3;
 
-    ripple::STObject const* ptrOracleObject = &oracleObject;
-    ripple::STObject const* ptrCurrentObject = ptrOracleObject;
+    std::optional<ripple::STObject> optOracleObject = oracleObject;
+    std::optional<ripple::STObject> optCurrentObject = optOracleObject;
 
     bool isNew = false;
     bool noOracleFound = false;
     auto history = 0;
 
     while (true) {
+        // No oracle found in metadata
         if (noOracleFound)
             return;
 
-        if (not callback(*ptrOracleObject))
+        // Found the price pair or this is a new object, exit early
+        if (callback(*optOracleObject) or isNew)
             return;
 
-        if (++history > maxHistory)
+        if (++history > HISTORYMAX)
             return;
 
-        auto const prevTxIndex = ptrCurrentObject->getFieldH256(ripple::sfPreviousTxnID);
+        auto const prevTxIndex = optCurrentObject->getFieldH256(ripple::sfPreviousTxnID);
 
         auto const prevTx = sharedPtrBackend_->fetchTransaction(prevTxIndex, yield);
-
+        std::cout << prevTxIndex << std::endl;
         if (not prevTx)
             return;
 
@@ -234,7 +236,7 @@ GetAggregatePriceHandler::tracebackOracleObject(
                 continue;
             }
             noOracleFound = false;
-            ptrCurrentObject = &node;
+            optCurrentObject = node;
             isNew = node.isFieldPresent(ripple::sfNewFields);
             // if a meta is for the new and this is the first
             // look-up then it's the meta for the tx that
@@ -243,8 +245,9 @@ GetAggregatePriceHandler::tracebackOracleObject(
             if (isNew and history == 1)
                 return;
 
-            ptrOracleObject = isNew ? &dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfNewFields))
-                                    : &dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfFinalFields));
+            optOracleObject = isNew ? dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfNewFields))
+                                    : dynamic_cast<ripple::STObject const&>(node.peekAtField(ripple::sfFinalFields));
+
             break;
         }
     }

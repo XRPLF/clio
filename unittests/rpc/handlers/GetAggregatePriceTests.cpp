@@ -52,7 +52,9 @@ constexpr static auto RANGEMAX = 30;
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto TX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
-constexpr static auto INDEX = "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8";
+constexpr static auto TX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
+
+// constexpr static auto INDEX = "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8";
 
 namespace {
 
@@ -247,26 +249,43 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OverOraclesMax)
     });
 }
 
-TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntrySinglePriceData)
+TEST_F(RPCGetAggregatePriceHandlerTest, LedgerNotFound)
+{
+    backend->setRange(RANGEMIN, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(std::nullopt));
+    auto constexpr documentId = 1;
+    auto const req = json::parse(fmt::format(
+        R"({{
+                    "base_asset": "USD",
+                    "quote_asset": "XRP",
+                    "oracles": [
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }}
+                    ]
+                }})",
+        ACCOUNT,
+        documentId
+    ));
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.error());
+        std::cout << err << std::endl;
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
+    });
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
-    auto const oracleIndex = ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), documentId).key;
     mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
-    // return a tx which contains NewFields
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
-        .WillOnce(Return(CreateOracleSetTxWithMetadata(
-            ACCOUNT,
-            RANGEMAX,
-            123,
-            1,
-            4321u,
-            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)
-            }),
-            ripple::to_string(oracleIndex)
-        )));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
     auto const req = json::parse(fmt::format(
@@ -309,7 +328,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntrySinglePriceData)
 }
 
 // median is the middle value of a set of numbers when there are odd number of price
-TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntryMultipleOraclesOdd)
+TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
@@ -320,18 +339,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntryMultipleOraclesOdd)
     mockLedgerObject(*backend, ACCOUNT, documentId1, TX1, 1e3, 2);  // 10
     mockLedgerObject(*backend, ACCOUNT, documentId2, TX1, 2e3, 2);  // 20
     mockLedgerObject(*backend, ACCOUNT, documentId3, TX1, 3e3, 1);  // 300
-    // return a tx which contains NewFields
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
-        .WillRepeatedly(Return(CreateOracleSetTxWithMetadata(
-            ACCOUNT,
-            RANGEMAX,
-            123,
-            1,
-            4321u,
-            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)
-            }),
-            INDEX
-        )));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
     auto const req = json::parse(fmt::format(
@@ -387,7 +394,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntryMultipleOraclesOdd)
 }
 
 // median is the middle value of a set of numbers when there are odd number of price
-TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntryMultipleOraclesEven)
+TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
@@ -400,18 +407,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntryMultipleOraclesEven)
     mockLedgerObject(*backend, ACCOUNT, documentId2, TX1, 2e3, 2);  // 20
     mockLedgerObject(*backend, ACCOUNT, documentId4, TX1, 4e2, 1);  // 40
     mockLedgerObject(*backend, ACCOUNT, documentId3, TX1, 3e3, 1);  // 300
-    // return a tx which contains NewFields
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
-        .WillRepeatedly(Return(CreateOracleSetTxWithMetadata(
-            ACCOUNT,
-            RANGEMAX,
-            123,
-            1,
-            4321u,
-            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)
-            }),
-            INDEX
-        )));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
     auto const req = json::parse(fmt::format(
@@ -472,7 +467,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntryMultipleOraclesEven)
     });
 }
 
-TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntryTrim)
+TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
@@ -486,18 +481,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewOracleLedgerEntryTrim)
     mockLedgerObject(*backend, ACCOUNT, documentId2, TX1, 2e3, 2);  // 20
     mockLedgerObject(*backend, ACCOUNT, documentId4, TX1, 4e2, 1);  // 40
     mockLedgerObject(*backend, ACCOUNT, documentId3, TX1, 3e3, 1);  // 300
-    // return a tx which contains NewFields
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
-        .WillRepeatedly(Return(CreateOracleSetTxWithMetadata(
-            ACCOUNT,
-            RANGEMAX,
-            123,
-            1,
-            4321u,
-            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)
-            }),
-            INDEX
-        )));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
     auto const req = json::parse(fmt::format(
@@ -650,18 +633,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
     mockLedgerObject(*backend, ACCOUNT, documentId2, TX1, 2e3, 2, timestamp2);  // 20
     mockLedgerObject(*backend, ACCOUNT, documentId4, TX1, 4e2, 1, timestamp3);  // 40
     mockLedgerObject(*backend, ACCOUNT, documentId3, TX1, 3e3, 1, timestamp4);  // 300
-    // return a tx which contains NewFields
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
-        .WillRepeatedly(Return(CreateOracleSetTxWithMetadata(
-            ACCOUNT,
-            RANGEMAX,
-            123,
-            1,
-            4321u,
-            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)
-            }),
-            INDEX
-        )));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
     auto const req = json::parse(fmt::format(
@@ -742,18 +713,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
     mockLedgerObject(*backend, ACCOUNT, documentId2, TX1, 2e3, 2, timestamp2);  // 20
     mockLedgerObject(*backend, ACCOUNT, documentId4, TX1, 4e2, 1, timestamp3);  // 40
     mockLedgerObject(*backend, ACCOUNT, documentId3, TX1, 3e3, 1, timestamp4);  // 300
-    // return a tx which contains NewFields
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
-        .WillRepeatedly(Return(CreateOracleSetTxWithMetadata(
-            ACCOUNT,
-            RANGEMAX,
-            123,
-            1,
-            4321u,
-            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)
-            }),
-            INDEX
-        )));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
     auto const req = json::parse(fmt::format(
@@ -834,18 +793,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
     mockLedgerObject(*backend, ACCOUNT, documentId2, TX1, 2e3, 2, timestamp2);  // 20
     mockLedgerObject(*backend, ACCOUNT, documentId4, TX1, 4e2, 1, timestamp3);  // 40
     mockLedgerObject(*backend, ACCOUNT, documentId3, TX1, 3e3, 1, timestamp4);  // 300
-    // return a tx which contains NewFields
-    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
-        .WillRepeatedly(Return(CreateOracleSetTxWithMetadata(
-            ACCOUNT,
-            RANGEMAX,
-            123,
-            1,
-            4321u,
-            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)
-            }),
-            INDEX
-        )));
 
     auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
     auto const req = json::parse(fmt::format(
@@ -908,10 +855,127 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
     });
 }
 
-TEST_F(RPCGetAggregatePriceHandlerTest, TwoTxHistory)
+// When the price pair is not available in the current oracle, trace back to previous transactions
+TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
 {
-}
+    backend->setRange(RANGEMIN, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
-TEST_F(RPCGetAggregatePriceHandlerTest, TooManyTxHistory)
+    auto constexpr documentId = 1;
+    auto const oracleIndex = ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), documentId).key;
+    mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
+    // return a tx which contains NewFields
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
+        .WillOnce(Return(CreateOracleSetTxWithMetadata(
+            ACCOUNT,
+            RANGEMAX,
+            123,
+            1,
+            4321u,
+            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("JPY"), ripple::to_currency("XRP"), 2)
+            }),
+            ripple::to_string(oracleIndex),
+            false,
+            TX1
+        )));
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                    "base_asset": "JPY",
+                    "quote_asset": "XRP",
+                    "oracles": [
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }}
+                    ]
+                }})",
+        ACCOUNT,
+        documentId
+    ));
+
+    auto const expected = json::parse(fmt::format(
+        R"({{
+            "entire_set": 
+            {{
+                "mean": "10",
+                "size": 1,
+                "standard_deviation": "0"
+            }},
+            "median": "10",
+            "time": 4321,
+            "ledger_index": {},
+            "ledger_hash": "{}",
+            "validated": true
+        }})",
+        RANGEMAX,
+        LEDGERHASH
+    ));
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.value(), expected);
+    });
+}
+TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
 {
+    backend->setRange(RANGEMIN, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto constexpr documentId = 1;
+    auto const oracleIndex = ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), documentId).key;
+    mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
+
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
+        .WillOnce(Return(CreateOracleSetTxWithMetadata(
+            ACCOUNT,
+            RANGEMAX,
+            123,
+            1,
+            4321u,
+            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)
+            }),
+            ripple::to_string(oracleIndex),
+            false,
+            TX2
+        )));
+
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX2), _))
+        .WillRepeatedly(Return(CreateOracleSetTxWithMetadata(
+            ACCOUNT,
+            RANGEMAX,
+            123,
+            1,
+            4321u,
+            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)
+            }),
+            ripple::to_string(oracleIndex),
+            false,
+            TX2
+        )));
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                    "base_asset": "JPY",
+                    "quote_asset": "XRP",
+                    "oracles": [
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }}
+                    ]
+                }})",
+        ACCOUNT,
+        documentId
+    ));
+
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "The requested object was not found.");
+    });
 }

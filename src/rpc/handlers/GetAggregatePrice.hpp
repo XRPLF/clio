@@ -165,10 +165,14 @@ public:
     process(Input input, Context const& ctx) const;
 
 private:
+    /**
+     * @brief Calls callback on the ledger-object sle and up to three previous
+     * metadata objects. Stops early if the callback returns true.
+     */
     void
     tracebackOracleObject(
         boost::asio::yield_context yield,
-        ripple::STObject oracleObject,
+        ripple::STObject const& oracleObject,
         std::function<bool(ripple::STObject const&)> const& callback
     ) const;
 

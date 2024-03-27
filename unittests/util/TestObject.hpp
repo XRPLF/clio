@@ -396,6 +396,7 @@ CreateOraclePriceData(
 CreatePriceDataSeries(std::vector<ripple::STObject> const& series);
 
 [[nodiscard]] ripple::STObject
+
 CreateOracleObject(
     std::string_view accountId,
     std::string_view provider,
@@ -416,5 +417,7 @@ CreateOracleSetTxWithMetadata(
     uint32_t docId,
     std::uint32_t lastUpdateTime,
     ripple::STArray priceDataSeries,
-    std::string_view oracleIndex
+    std::string_view oracleIndex,
+    bool created,
+    std::string_view previousTxnId
 );
