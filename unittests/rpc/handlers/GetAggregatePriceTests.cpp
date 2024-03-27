@@ -53,8 +53,7 @@ constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto TX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 constexpr static auto TX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
-
-// constexpr static auto INDEX = "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8";
+constexpr static auto INDEX = "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8";
 
 namespace {
 
@@ -127,79 +126,180 @@ generateTestValuesForParametersTest()
         },
         GetAggregatePriceParamTestCaseBundle{
             "no_oracles",
-            R"({"base_asset": "XRP", "quote_asset": "USD"})",
+            R"({
+                            "base_asset": "XRP",
+                            "quote_asset": "USD"
+                        })",
             "invalidParams",
             "Required field 'oracles' missing"
         },
         GetAggregatePriceParamTestCaseBundle{
             "no_base_asset",
-            R"({"quote_asset": "USD", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}]})",
+            R"({
+                            "quote_asset": "USD",
+                            "oracles": 
+                            [
+                                {
+                                    "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                                    "oracle_document_id": 2
+                                }
+                            ]
+                        })",
             "invalidParams",
             "Required field 'base_asset' missing"
         },
         GetAggregatePriceParamTestCaseBundle{
             "no_quote_asset",
-            R"({"base_asset": "USD", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}]})",
+            R"({
+                            "base_asset": "USD",
+                            "oracles": 
+                            [
+                                {
+                                    "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                                    "oracle_document_id": 2
+                                }
+                            ]
+                        })",
             "invalidParams",
             "Required field 'quote_asset' missing"
         },
         GetAggregatePriceParamTestCaseBundle{
             "oraclesIsEmpty",
-            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": {}})",
+            R"({
+                            "base_asset": "USD",
+                            "quote_asset": "XRP",
+                            "oracles": []
+                        })",
             "oracleMalformed",
             "Oracle request is malformed."
         },
         GetAggregatePriceParamTestCaseBundle{
             "oraclesNotArray",
-            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": 1})",
+            R"({
+                            "base_asset": "USD",
+                            "quote_asset": "XRP",
+                            "oracles": 1
+                        })",
             "oracleMalformed",
             "Oracle request is malformed."
         },
         GetAggregatePriceParamTestCaseBundle{
             "thresholdNotInt",
-            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}], "time_threshold": "x"})",
+            R"({
+                            "base_asset": "USD",
+                            "quote_asset": "XRP",
+                            "oracles": 
+                            [
+                                {
+                                    "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                                    "oracle_document_id": 2
+                                }
+                            ],
+                            "time_threshold": "x"
+                        })",
             "invalidParams",
             "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
             "trimNotInt",
-            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}], "trim": "x"})",
+            R"({
+                            "base_asset": "USD",
+                            "quote_asset": "XRP",
+                            "oracles": 
+                            [
+                                {
+                                    "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                                    "oracle_document_id": 2
+                                }
+                            ],
+                            "trim": "x"
+                        })",
             "invalidParams",
             "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
             "trimTooSmall",
-            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}], "trim": 0})",
+            R"({
+                            "base_asset": "USD",
+                            "quote_asset": "XRP",
+                            "oracles":
+                            [
+                                {
+                                    "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                                    "oracle_document_id": 2
+                                }
+                            ],
+                            "trim": 0
+                        })",
             "invalidParams",
             "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
             "trimTooLarge",
-            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": 2}], "trim": 26})",
+            R"({
+                            "base_asset": "USD",
+                            "quote_asset": "XRP",
+                            "oracles": 
+                            [
+                                {
+                                    "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                                    "oracle_document_id": 2
+                                }
+                            ],
+                            "trim": 26
+                        })",
             "invalidParams",
             "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
             "oracleAccountInvalid",
-            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "invalid", "oracle_document_id": 2}]})",
+            R"({
+                            "base_asset": "USD",
+                            "quote_asset": "XRP",
+                            "oracles": 
+                            [
+                                {
+                                    "account": "invalid",
+                                    "oracle_document_id": 2
+                                }
+                            ]
+                        })",
             "invalidParams",
             "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
             "oracleDocumentIdNotInt",
-            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD", "oracle_document_id": "a"}]})",
+            R"({
+                            "base_asset": "USD",
+                            "quote_asset": "XRP",
+                            "oracles":
+                            [
+                                {
+                                    "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                                    "oracle_document_id": "a"
+                                }
+                            ]
+                        })",
             "invalidParams",
             "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
             "oracleMissingAccount",
-            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"oracle_document_id": 2}]})",
+            R"({
+                            "base_asset": "USD",
+                            "quote_asset": "XRP",
+                            "oracles": [{"oracle_document_id": 2}]
+                        })",
             "oracleMalformed",
             "Oracle request is malformed."
         },
         GetAggregatePriceParamTestCaseBundle{
             "oracleMissingDocumentId",
-            R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD"}]})",
+            R"({
+                            "base_asset": "USD",
+                            "quote_asset": "XRP",
+                            "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD"}]
+                        })",
             "oracleMalformed",
             "Oracle request is malformed."
         },
@@ -231,7 +331,11 @@ TEST_P(GetAggregatePriceParameterTest, InvalidParams)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, OverOraclesMax)
 {
-    auto req = json::parse(R"({"base_asset": "USD", "quote_asset": "XRP", "oracles": []})");
+    auto req = json::parse(R"({
+                                            "base_asset": "USD",
+                                            "quote_asset": "XRP",
+                                            "oracles": []
+                                        })");
     auto const maxOracles = 200;
 
     for (auto i = 0; i < maxOracles + 1; ++i) {
@@ -258,7 +362,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, LedgerNotFound)
         R"({{
                     "base_asset": "USD",
                     "quote_asset": "XRP",
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}
@@ -292,7 +397,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
         R"({{
                     "base_asset": "USD",
                     "quote_asset": "XRP",
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}
@@ -305,18 +411,18 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-            "entire_set": 
-            {{
-                "mean": "10",
-                "size": 1,
-                "standard_deviation": "0"
-            }},
-            "median": "10",
-            "time": 4321,
-            "ledger_index": {},
-            "ledger_hash": "{}",
-            "validated": true
-        }})",
+                    "entire_set": 
+                    {{
+                        "mean": "10",
+                        "size": 1,
+                        "standard_deviation": "0"
+                    }},
+                    "median": "10",
+                    "time": 4321,
+                    "ledger_index": {},
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})",
         RANGEMAX,
         LEDGERHASH
     ));
@@ -324,6 +430,122 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.value(), expected);
+    });
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
+{
+    backend->setRange(RANGEMIN, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto constexpr documentId = 1;
+    mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                    "base_asset": "JPY",
+                    "quote_asset": "XRP",
+                    "oracles": 
+                    [
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }}
+                    ]
+                }})",
+        ACCOUNT,
+        documentId
+    ));
+
+    auto const expected = json::parse(fmt::format(
+        R"({{
+                    "entire_set": 
+                    {{
+                        "mean": "10",
+                        "size": 1,
+                        "standard_deviation": "0"
+                    }},
+                    "median": "10",
+                    "time": 4321,
+                    "ledger_index": {},
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})",
+        RANGEMAX,
+        LEDGERHASH
+    ));
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "The requested object was not found.");
+    });
+}
+
+TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
+{
+    backend->setRange(RANGEMIN, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto constexpr documentId = 1;
+    mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
+
+    EXPECT_CALL(*backend, fetchTransaction(ripple::uint256(TX1), _))
+        .WillRepeatedly(Return(CreateOracleSetTxWithMetadata(
+            ACCOUNT,
+            RANGEMAX,
+            123,
+            1,
+            4321u,
+            CreatePriceDataSeries({CreateOraclePriceData(1e3, ripple::to_currency("EUR"), ripple::to_currency("XRP"), 2)
+            }),
+            INDEX,
+            true,
+            TX2
+        )));
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                    "base_asset": "JPY",
+                    "quote_asset": "XRP",
+                    "oracles":
+                    [
+                        {{
+                            "account": "{}",
+                            "oracle_document_id": {}
+                        }}
+                    ]
+                }})",
+        ACCOUNT,
+        documentId
+    ));
+
+    auto const expected = json::parse(fmt::format(
+        R"({{
+                    "entire_set": 
+                    {{
+                        "mean": "10",
+                        "size": 1,
+                        "standard_deviation": "0"
+                    }},
+                    "median": "10",
+                    "time": 4321,
+                    "ledger_index": {},
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})",
+        RANGEMAX,
+        LEDGERHASH
+    ));
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.error());
+        EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
+        EXPECT_EQ(err.at("error_message").as_string(), "The requested object was not found.");
     });
 }
 
@@ -345,7 +567,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
         R"({{
                     "base_asset": "USD",
                     "quote_asset": "XRP",
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}
@@ -370,18 +593,18 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-            "entire_set": 
-            {{
-                "mean": "110",
-                "size": 3,
-                "standard_deviation": "164.6207763315433"
-            }},
-            "median": "20",
-            "time": 4321,
-            "ledger_index": {},
-            "ledger_hash": "{}",
-            "validated": true
-        }})",
+                    "entire_set": 
+                    {{
+                        "mean": "110",
+                        "size": 3,
+                        "standard_deviation": "164.6207763315433"
+                    }},
+                    "median": "20",
+                    "time": 4321,
+                    "ledger_index": {},
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})",
         RANGEMAX,
         LEDGERHASH
     ));
@@ -413,7 +636,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
         R"({{
                     "base_asset": "USD",
                     "quote_asset": "XRP",
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}
@@ -444,18 +668,18 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-            "entire_set": 
-            {{
-                "mean": "92.5",
-                "size": 4,
-                "standard_deviation": "138.8944443333378"
-            }},
-            "median": "30",
-            "time": 4321,
-            "ledger_index": {},
-            "ledger_hash": "{}",
-            "validated": true
-        }})",
+                    "entire_set": 
+                    {{
+                        "mean": "92.5",
+                        "size": 4,
+                        "standard_deviation": "138.8944443333378"
+                    }},
+                    "median": "30",
+                    "time": 4321,
+                    "ledger_index": {},
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})",
         RANGEMAX,
         LEDGERHASH
     ));
@@ -488,7 +712,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "trim": {},
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}
@@ -520,24 +745,24 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-            "entire_set": 
-            {{
-                "mean": "92.5",
-                "size": 4,
-                "standard_deviation": "138.8944443333378"
-            }},
-            "trimmed_set": 
-            {{
-                "mean": "30",
-                "size": 2,
-                "standard_deviation": "14.14213562373095"
-            }},
-            "median": "30",
-            "time": 4321,
-            "ledger_index": {},
-            "ledger_hash": "{}",
-            "validated": true
-        }})",
+                    "entire_set": 
+                    {{
+                        "mean": "92.5",
+                        "size": 4,
+                        "standard_deviation": "138.8944443333378"
+                    }},
+                    "trimmed_set": 
+                    {{
+                        "mean": "30",
+                        "size": 2,
+                        "standard_deviation": "14.14213562373095"
+                    }},
+                    "median": "30",
+                    "time": 4321,
+                    "ledger_index": {},
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})",
         RANGEMAX,
         LEDGERHASH
     ));
@@ -563,7 +788,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
         R"({{
                     "base_asset": "USD",
                     "quote_asset": "XRP",
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}
@@ -596,7 +822,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoMatchAssetPair)
         R"({{
                     "base_asset": "JPY",
                     "quote_asset": "XRP",
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}
@@ -640,7 +867,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "time_threshold": {},
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}
@@ -672,18 +900,18 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-            "entire_set": 
-            {{
-                "mean": "10",
-                "size": 1,
-                "standard_deviation": "0"
-            }},
-            "median": "10",
-            "time": {},
-            "ledger_index": {},
-            "ledger_hash": "{}",
-            "validated": true
-        }})",
+                    "entire_set": 
+                    {{
+                        "mean": "10",
+                        "size": 1,
+                        "standard_deviation": "0"
+                    }},
+                    "median": "10",
+                    "time": {},
+                    "ledger_index": {},
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})",
         timestamp1,
         RANGEMAX,
         LEDGERHASH
@@ -720,7 +948,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "time_threshold": {},
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}
@@ -752,18 +981,18 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-            "entire_set": 
-            {{
-                "mean": "15",
-                "size": 2,
-                "standard_deviation": "7.071067811865475"
-            }},
-            "median": "15",
-            "time": {},
-            "ledger_index": {},
-            "ledger_hash": "{}",
-            "validated": true
-        }})",
+                    "entire_set": 
+                    {{
+                        "mean": "15",
+                        "size": 2,
+                        "standard_deviation": "7.071067811865475"
+                    }},
+                    "median": "15",
+                    "time": {},
+                    "ledger_index": {},
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})",
         timestamp1,
         RANGEMAX,
         LEDGERHASH
@@ -800,7 +1029,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "time_threshold": {},
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}
@@ -832,18 +1062,18 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-            "entire_set": 
-            {{
-                "mean": "92.5",
-                "size": 4,
-                "standard_deviation": "138.8944443333378"
-            }},
-            "median": "30",
-            "time": 1711461384,
-            "ledger_index": {},
-            "ledger_hash": "{}",
-            "validated": true
-        }})",
+                    "entire_set": 
+                    {{
+                        "mean": "92.5",
+                        "size": 4,
+                        "standard_deviation": "138.8944443333378"
+                    }},
+                    "median": "30",
+                    "time": 1711461384,
+                    "ledger_index": {},
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})",
         RANGEMAX,
         LEDGERHASH
     ));
@@ -884,7 +1114,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
         R"({{
                     "base_asset": "JPY",
                     "quote_asset": "XRP",
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}
@@ -897,18 +1128,18 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
 
     auto const expected = json::parse(fmt::format(
         R"({{
-            "entire_set": 
-            {{
-                "mean": "10",
-                "size": 1,
-                "standard_deviation": "0"
-            }},
-            "median": "10",
-            "time": 4321,
-            "ledger_index": {},
-            "ledger_hash": "{}",
-            "validated": true
-        }})",
+                    "entire_set": 
+                    {{
+                        "mean": "10",
+                        "size": 1,
+                        "standard_deviation": "0"
+                    }},
+                    "median": "10",
+                    "time": 4321,
+                    "ledger_index": {},
+                    "ledger_hash": "{}",
+                    "validated": true
+                }})",
         RANGEMAX,
         LEDGERHASH
     ));
@@ -960,7 +1191,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
         R"({{
                     "base_asset": "JPY",
                     "quote_asset": "XRP",
-                    "oracles": [
+                    "oracles": 
+                    [
                         {{
                             "account": "{}",
                             "oracle_document_id": {}

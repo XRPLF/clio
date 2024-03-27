@@ -97,7 +97,7 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
 
         tracebackOracleObject(ctx.yield, oracleSle, [&](auto const& node) {
             auto const& series = node.getFieldArray(ripple::sfPriceDataSeries);
-            // find the token pair entry with the price
+            // Find the token pair entry with the price
             if (auto iter = std::find_if(
                     series.begin(),
                     series.end(),
@@ -112,6 +112,7 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
                 // Asset price is after scale, so we need to get the negative of the scale
                 auto const scale =
                     iter->isFieldPresent(ripple::sfScale) ? -static_cast<int>(iter->getFieldU8(ripple::sfScale)) : 0;
+
                 timestampPricesBiMap.insert(TimestampPricesBiMap::value_type(
                     node.getFieldU32(ripple::sfLastUpdateTime), ripple::STAmount{ripple::noIssue(), price, scale}
                 ));
@@ -160,7 +161,7 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
 
     out.extireStats = getStats(timestampPricesBiMap.right.begin(), timestampPricesBiMap.right.end());
 
-    auto itAdvance = [&](auto it, int distance) {
+    auto const itAdvance = [&](auto it, int distance) {
         std::advance(it, distance);
         return it;
     };
@@ -200,7 +201,7 @@ GetAggregatePriceHandler::tracebackOracleObject(
     std::function<bool(ripple::STObject const&)> const& callback
 ) const
 {
-    auto constexpr HISTORYMAX = 3;
+    static auto constexpr HISTORYMAX = 3;
 
     std::optional<ripple::STObject> optOracleObject = oracleObject;
     std::optional<ripple::STObject> optCurrentObject = optOracleObject;
@@ -224,7 +225,6 @@ GetAggregatePriceHandler::tracebackOracleObject(
         auto const prevTxIndex = optCurrentObject->getFieldH256(ripple::sfPreviousTxnID);
 
         auto const prevTx = sharedPtrBackend_->fetchTransaction(prevTxIndex, yield);
-        std::cout << prevTxIndex << std::endl;
         if (not prevTx)
             return;
 
