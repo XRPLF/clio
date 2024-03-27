@@ -37,9 +37,7 @@
 #include <ripple/protocol/UintTypes.h>
 
 #include <cstdint>
-#include <iostream>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <vector>
 
@@ -325,7 +323,6 @@ TEST_P(GetAggregatePriceParameterTest, InvalidParams)
         auto const err = rpc::makeError(output.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
-        std::cout << err << std::endl;
     });
 }
 
@@ -378,7 +375,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, LedgerNotFound)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.error());
-        std::cout << err << std::endl;
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -611,7 +607,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        std::cout << output.value() << std::endl;
         EXPECT_EQ(output.value(), expected);
     });
 }
@@ -686,7 +681,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        std::cout << output.value() << std::endl;
         EXPECT_EQ(output.value(), expected);
     });
 }
@@ -769,7 +763,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        std::cout << output.value() << std::endl;
         EXPECT_EQ(output.value(), expected);
     });
 }
@@ -919,7 +912,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        std::cout << output.value() << std::endl;
         EXPECT_EQ(output.value(), expected);
     });
 }
@@ -1000,7 +992,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        std::cout << output.value() << std::endl;
         EXPECT_EQ(output.value(), expected);
     });
 }
@@ -1080,7 +1071,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        std::cout << output.value() << std::endl;
         EXPECT_EQ(output.value(), expected);
     });
 }
