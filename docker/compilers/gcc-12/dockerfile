@@ -1,0 +1,56 @@
+FROM ubuntu:focal as build
+ARG TARGETARCH
+
+SHELL ["/bin/bash", "-c"]
+USER root
+WORKDIR /root
+
+ENV GCC_VERSION=11 GCC12_VERSION=12.3.0  
+
+# Add repositories
+RUN apt-get -qq update \
+    && apt-get -qq install -y --no-install-recommends --no-install-suggests gnupg wget software-properties-common \
+    && add-apt-repository -y ppa:ubuntu-toolchain-r/test \
+    && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - \
+    && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+
+# Install gcc-11
+RUN apt update -qq \
+    && apt install -y --no-install-recommends --no-install-suggests cmake sudo git libmpc-dev libgmp3-dev libmpfr-dev \
+    make pkg-config libzstd-dev libzstd1 g++-${GCC_VERSION} \
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} 100 \
+    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-${GCC_VERSION} 100 \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} 100 \
+    && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-${GCC_VERSION} 100 \
+    && update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-${GCC_VERSION} 100 \    
+    && apt-get clean && apt remove -y software-properties-common
+
+WORKDIR /root/build_gcc
+
+# Install gcc-12 from source
+RUN wget "https://mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-${GCC12_VERSION}/gcc-${GCC12_VERSION}.tar.gz" \
+    && tar xf "gcc-${GCC12_VERSION}.tar.gz" \
+    && cd "gcc-${GCC12_VERSION}" \
+    && mkdir build && cd build \
+    && ../configure --enable-languages=c,c++ --disable-multilib --with-build-config='bootstrap-O3' \
+    && make -j$(nproc) profiledbootstrap && make install-strip \
+    && rm -rf /root/build_gcc
+
+# Rewire to use gcc-12
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/local/bin/g++ 100 \
+    && update-alternatives --install /usr/bin/c++ c++ /usr/local/bin/g++ 100 \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/local/bin/gcc 100 \
+    && update-alternatives --install /usr/bin/cc cc /usr/local/bin/gcc 100
+
+# Clean up
+RUN rm -rf /tmp/* /var/tmp/* /root/build_gcc
+
+FROM ubuntu:focal as gcc
+WORKDIR /root
+
+# Copy gcc-12 stuff
+COPY --from=build /usr/local /usr/local
+
+# Install packages it needs
+RUN apt update -qq \
+    && apt install -y --no-install-recommends --no-install-suggests libmpc-dev libgmp3-dev libmpfr-dev libzstd-dev libzstd1
