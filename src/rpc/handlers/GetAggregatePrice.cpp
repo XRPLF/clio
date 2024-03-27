@@ -79,15 +79,9 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
     TimestampPricesBiMap timestampPricesBiMap;
 
     for (auto const& oracle : input.oracles) {
-        auto const account =
-            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(oracle.as_object().at(JS(account))
-            ));
-        auto const docId = boost::json::value_to<std::uint64_t>(oracle.as_object().at(JS(oracle_document_id)));
-
-        auto const oracleIndex = ripple::keylet::oracle(*account, docId).key;
+        auto const oracleIndex = ripple::keylet::oracle(oracle.account, oracle.documentId).key;
 
         auto const oracleObject = sharedPtrBackend_->fetchLedgerObject(oracleIndex, lgrInfo.seq, ctx.yield);
-
         if (not oracleObject)
             continue;
 
@@ -98,7 +92,7 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
         tracebackOracleObject(ctx.yield, oracleSle, [&](auto const& node) {
             auto const& series = node.getFieldArray(ripple::sfPriceDataSeries);
             // Find the token pair entry with the price
-            if (auto iter = std::find_if(
+            if (auto const iter = std::find_if(
                     series.begin(),
                     series.end(),
                     [&](ripple::STObject const& o) -> bool {
@@ -270,7 +264,14 @@ tag_invoke(boost::json::value_to_tag<GetAggregatePriceHandler::Input>, boost::js
         }
     }
 
-    input.oracles = jsonObject.at(JS(oracles)).as_array();
+    for (auto const& oracle : jsonObject.at(JS(oracles)).as_array()) {
+        input.oracles.push_back(GetAggregatePriceHandler::Oracle{
+            .documentId = boost::json::value_to<std::uint64_t>(oracle.as_object().at(JS(oracle_document_id))),
+            .account = *ripple::parseBase58<ripple::AccountID>(
+                boost::json::value_to<std::string>(oracle.as_object().at(JS(account)))
+            )
+        });
+    }
     input.baseAsset = boost::json::value_to<std::string>(jv.at(JS(base_asset)));
     input.quoteAsset = boost::json::value_to<std::string>(jv.at(JS(quote_asset)));
 

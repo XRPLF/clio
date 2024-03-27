@@ -30,6 +30,7 @@
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <ripple/basics/Number.h>
+#include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/STAmount.h>
 #include <ripple/protocol/STObject.h>
@@ -41,6 +42,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 namespace rpc {
 
 /**
@@ -73,12 +75,20 @@ public:
     };
 
     /**
+     * @brief A struct to hold the input oracle data
+     */
+    struct Oracle {
+        std::uint32_t documentId{0};
+        ripple::AccountID account;
+    };
+
+    /**
      * @brief A struct to hold the input data for the command
      */
     struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<std::uint32_t> ledgerIndex;
-        boost::json::array oracles;  // valid size is 1-200
+        std::vector<Oracle> oracles;  // valid size is 1-200
         std::string baseAsset;
         std::string quoteAsset;
         std::optional<std::uint32_t> timeThreshold;
