@@ -580,7 +580,7 @@ public:
 
         auto mptObjects = doFetchLedgerObjects(mptKeys, ledgerSequence, yield);
 
-        auto it = std::remove_if(mptObjects.begin(), mptObjects.end(), [](Blob mpt) { return mpt.size() == 0; });
+        auto it = std::remove_if(mptObjects.begin(), mptObjects.end(), [](Blob const& mpt) { return mpt.size() == 0; });
 
         mptObjects.erase(it, mptObjects.end());
 
