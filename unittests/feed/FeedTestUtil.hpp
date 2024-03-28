@@ -78,13 +78,13 @@ public:
     }
 
     void
-    DescribeTo(std::ostream* os) const
+    DescribeTo(std::ostream const* os) const
     {
         *os << "Contains json " << expected_;
     }
 
     void
-    DescribeNegationTo(std::ostream* os) const
+    DescribeNegationTo(std::ostream const* os) const
     {
         *os << "Expecting json " << expected_;
     }

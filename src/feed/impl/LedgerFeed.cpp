@@ -22,19 +22,16 @@
 #include "data/BackendInterface.hpp"
 #include "feed/Types.hpp"
 #include "feed/impl/SingleFeedBase.hpp"
-#include "rpc/RPCHelpers.hpp"
 #include "util/Assert.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
-#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Fees.h>
 #include <ripple/protocol/LedgerHeader.h>
 
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <string>
 
 namespace feed::impl {

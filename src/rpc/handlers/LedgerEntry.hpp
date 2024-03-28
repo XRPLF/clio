@@ -63,9 +63,9 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string index;
-        uint32_t ledgerIndex;
-        std::string ledgerHash;
+        std::string index{};
+        uint32_t ledgerIndex{};
+        std::string ledgerHash{};
         std::optional<boost::json::object> node;
         std::optional<std::string> nodeBinary;
         bool validated = true;
@@ -99,7 +99,7 @@ public:
         std::optional<std::string> bridgeAccount;
         std::optional<uint32_t> chainClaimId;
         std::optional<uint32_t> createAccountClaimId;
-        std::optional<ripple::uint256> oracleNode;
+        std::optional<ripple::uint256> oracleNode{};
     };
 
     using Result = HandlerReturnType<Output>;

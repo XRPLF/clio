@@ -91,7 +91,7 @@ public:
     serialize() const;
 
 private:
-    std::vector<Label> labels_;
+    std::vector<Label> labels_{};
 };
 
 }  // namespace util::prometheus

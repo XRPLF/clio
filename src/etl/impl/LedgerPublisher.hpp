@@ -74,7 +74,7 @@ class LedgerPublisher {
     std::shared_ptr<SubscriptionManagerType> subscriptions_;
     std::reference_wrapper<SystemState const> state_;  // shared state for ETL
 
-    std::chrono::time_point<ripple::NetClock> lastCloseTime_;
+    std::chrono::time_point<ripple::NetClock> lastCloseTime_{};
     mutable std::shared_mutex closeTimeMtx_;
 
     std::reference_wrapper<util::prometheus::CounterInt> lastPublishSeconds_ = PrometheusService::counterInt(

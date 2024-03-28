@@ -52,12 +52,12 @@ public:
      * @param yield The coroutine context
      * @return Response wrapped in an optional on success; nullopt otherwise
      */
-    std::optional<boost::json::object>
+    static std::optional<boost::json::object>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,
         boost::asio::yield_context yield
-    ) const;
+    );
 };
 
 }  // namespace etl::impl

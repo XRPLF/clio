@@ -42,7 +42,7 @@ namespace rpc::meta {
  * @brief A meta-processor that acts as a spec for a sub-object/section.
  */
 class Section final {
-    std::vector<FieldSpec> specs;
+    std::vector<FieldSpec> specs{};
 
 public:
     /**
@@ -61,8 +61,8 @@ public:
      * @param key The key used to retrieve the section from the outer object
      * @return Possibly an error
      */
-    [[nodiscard]] MaybeError
-    verify(boost::json::value& value, std::string_view key) const;
+    [[nodiscard]] static MaybeError
+    verify(boost::json::value& value, std::string_view key);
 };
 
 /**
@@ -70,7 +70,7 @@ public:
  */
 class ValidateArrayAt final {
     std::size_t idx_;
-    std::vector<FieldSpec> specs_;
+    std::vector<FieldSpec> specs_{};
 
 public:
     /**

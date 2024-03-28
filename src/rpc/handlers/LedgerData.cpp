@@ -19,7 +19,6 @@
 
 #include "rpc/handlers/LedgerData.hpp"
 
-#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -31,28 +30,21 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/jss.h>
-#include <ripple/protocol/serialize.h>
 
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <string>
 #include <utility>
-#include <variant>
-#include <vector>
 
 namespace rpc {
 
-LedgerDataHandler::Result
-LedgerDataHandler::process(Input input, Context const& ctx) const
+static LedgerDataHandler::Result
+LedgerDataHandler::process(Input input, Context const& ctx)
 {
     // marker must be int if outOfOrder is true
     if (input.outOfOrder && input.marker)

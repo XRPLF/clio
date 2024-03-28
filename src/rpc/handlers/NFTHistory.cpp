@@ -22,7 +22,6 @@
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
-#include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
@@ -30,28 +29,22 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
 #include <ripple/basics/base_uint.h>
-#include <ripple/basics/chrono.h>
-#include <ripple/basics/strHex.h>
 #include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/jss.h>
 
 #include <cstdint>
 #include <limits>
 #include <optional>
 #include <string>
-#include <utility>
-#include <variant>
 
 namespace rpc {
 
 // TODO: this is currently very similar to account_tx but its own copy for time
 // being. we should aim to reuse common logic in some way in the future.
-NFTHistoryHandler::Result
-NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) const
+static NFTHistoryHandler::Result
+NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx)
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto [minIndex, maxIndex] = *range;

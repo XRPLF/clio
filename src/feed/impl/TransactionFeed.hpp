@@ -64,16 +64,16 @@ class TransactionFeed {
     util::Logger logger_{"Subscriptions"};
 
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
-    std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_;
-    std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
-    std::reference_wrapper<util::prometheus::GaugeInt> subBookCount_;
+    std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_{};
+    std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_{};
+    std::reference_wrapper<util::prometheus::GaugeInt> subBookCount_{};
 
-    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountSignal_;
-    TrackableSignalMap<ripple::Book, Subscriber, AllVersionTransactionsType const&> bookSignal_;
+    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountSignal_{};
+    TrackableSignalMap<ripple::Book, Subscriber, AllVersionTransactionsType const&> bookSignal_{};
     TrackableSignal<Subscriber, AllVersionTransactionsType const&> signal_;
 
-    std::unordered_set<SubscriberPtr>
-        notified_;  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
+    std::unordered_set<SubscriberPtr> notified_{
+    };  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
 
 public:
     /**
@@ -93,7 +93,7 @@ public:
      * @param subscriber
      * @param apiVersion The api version of feed.
      */
-    void
+    static void
     sub(SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
 
     /**
@@ -102,7 +102,7 @@ public:
      * @param account The account to watch.
      * @param apiVersion The api version of feed.
      */
-    void
+    static void
     sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
 
     /**
@@ -111,14 +111,14 @@ public:
      * @param book The order book to watch.
      * @param apiVersion The api version of feed.
      */
-    void
+    static void
     sub(ripple::Book const& book, SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
 
     /**
      * @brief Unsubscribe to the transaction feed.
      * @param subscriber
      */
-    void
+    static void
     unsub(SubscriberSharedPtr const& subscriber);
 
     /**
@@ -126,7 +126,7 @@ public:
      * @param subscriber
      * @param account The account to unsubscribe.
      */
-    void
+    static void
     unsub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
@@ -134,7 +134,7 @@ public:
      * @param subscriber
      * @param book The book to unsubscribe.
      */
-    void
+    static void
     unsub(ripple::Book const& book, SubscriberSharedPtr const& subscriber);
 
     /**
@@ -143,7 +143,7 @@ public:
      * @param lgrInfo The ledger header.
      * @param backend The backend.
      */
-    void
+    static void
     pub(data::TransactionAndMetadata const& txMeta,
         ripple::LedgerHeader const& lgrInfo,
         std::shared_ptr<data::BackendInterface const> const& backend);
@@ -167,13 +167,13 @@ public:
     bookSubCount() const;
 
 private:
-    void
+    static void
     unsubInternal(SubscriberPtr subscriber);
 
-    void
+    static void
     unsubInternal(ripple::AccountID const& account, SubscriberPtr subscriber);
 
-    void
+    static void
     unsubInternal(ripple::Book const& book, SubscriberPtr subscriber);
 };
 }  // namespace feed::impl

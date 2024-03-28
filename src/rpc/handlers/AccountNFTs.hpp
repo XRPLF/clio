@@ -69,7 +69,7 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string account;
+        std::string account{};
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         uint32_t limit = LIMIT_DEFAULT;  // Limit the number of token pages to retrieve. [20,400]

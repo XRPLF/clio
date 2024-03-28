@@ -23,7 +23,6 @@
 #include <gtest/gtest.h>
 
 #include <atomic>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <thread>

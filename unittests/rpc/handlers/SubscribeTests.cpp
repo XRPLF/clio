@@ -17,34 +17,26 @@
 */
 //==============================================================================
 
-#include "data/Types.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
-#include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Subscribe.hpp"
-#include "util/Fixtures.hpp"
-#include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/Book.h>
-#include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/UintTypes.h>
 
 #include <chrono>
 #include <memory>
-#include <optional>
 #include <string>
 #include <thread>
-#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;

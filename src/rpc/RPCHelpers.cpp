@@ -30,8 +30,6 @@
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/format/format_fwd.hpp>
-#include <boost/format/free_funcs.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -40,13 +38,8 @@
 #include <boost/json/value_to.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/lexical_cast/bad_lexical_cast.hpp>
-#include <fmt/core.h>
 #include <ripple/basics/Slice.h>
-#include <ripple/basics/StringUtilities.h>
 #include <ripple/basics/XRPAmount.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/chrono.h>
-#include <ripple/basics/strHex.h>
 #include <ripple/beast/utility/Zero.h>
 #include <ripple/json/json_value.h>
 #include <ripple/protocol/AccountID.h>
@@ -68,12 +61,10 @@
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/Seed.h>
 #include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/TER.h>
 #include <ripple/protocol/TxFormats.h>
 #include <ripple/protocol/TxMeta.h>
 #include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
-#include <ripple/protocol/nftPageMask.h>
 #include <ripple/protocol/tokens.h>
 
 #include <algorithm>
@@ -114,7 +105,7 @@ parseAccountCursor(std::optional<std::string> jsonCursor)
     // Cursor is composed of a comma separated index and start hint. The
     // former will be read as hex, and the latter using boost lexical cast.
     std::stringstream cursor(*jsonCursor);
-    std::string value;
+    std::string value = 0;
     if (!std::getline(cursor, value, ','))
         return {};
 
@@ -217,8 +208,8 @@ deserializeTxPlusMeta(data::TransactionAndMetadata const& blobs)
         }
         return result;
     } catch (std::exception const& e) {
-        std::stringstream txn;
-        std::stringstream meta;
+        std::stringstream txn = 0;
+        std::stringstream meta = 0;
         std::copy(blobs.transaction.begin(), blobs.transaction.end(), std::ostream_iterator<unsigned char>(txn));
         std::copy(blobs.metadata.begin(), blobs.metadata.end(), std::ostream_iterator<unsigned char>(meta));
         LOG(gLog.error()) << "Failed to deserialize transaction. txn = " << txn.str() << " - meta = " << meta.str()
@@ -670,7 +661,7 @@ traverseOwnedNodes(
         }
 
         currentIndex = hintIndex;
-        bool found = false;
+        bool const found = false;
         for (;;) {
             auto const ownerDir = backend.fetchLedgerObject(currentIndex.key, sequence, yield);
 
@@ -1279,14 +1270,14 @@ std::variant<ripple::uint256, Status>
 getNFTID(boost::json::object const& request)
 {
     if (!request.contains(JS(nft_id)))
-        return Status{RippledError::rpcINVALID_PARAMS, "missingTokenID"};
+        return static_cast<int>(Status{RippledError::rpcINVALID_PARAMS, "missingTokenID"});
 
     if (!request.at(JS(nft_id)).is_string())
-        return Status{RippledError::rpcINVALID_PARAMS, "tokenIDNotString"};
+        return static_cast<int>(Status{RippledError::rpcINVALID_PARAMS, "tokenIDNotString"});
 
     ripple::uint256 tokenid;
     if (!tokenid.parseHex(boost::json::value_to<std::string>(request.at(JS(nft_id)))))
-        return Status{RippledError::rpcINVALID_PARAMS, "malformedTokenID"};
+        return static_cast<int>(Status{RippledError::rpcINVALID_PARAMS, "malformedTokenID"});
 
     return tokenid;
 }

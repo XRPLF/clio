@@ -19,7 +19,6 @@
 
 #include "rpc/handlers/BookOffers.hpp"
 
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
@@ -29,21 +28,18 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <ripple/basics/strHex.h>
-#include <ripple/beast/utility/Zero.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/Book.h>
-#include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
 
 #include <string>
-#include <variant>
 
 namespace rpc {
 
-BookOffersHandler::Result
-BookOffersHandler::process(Input input, Context const& ctx) const
+static BookOffersHandler::Result
+BookOffersHandler::process(Input input, Context const& ctx)
 {
     auto bookMaybe = parseBook(input.paysCurrency, input.paysID, input.getsCurrency, input.getsID);
     if (auto const status = std::get_if<Status>(&bookMaybe))

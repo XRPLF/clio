@@ -19,23 +19,19 @@
 
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
-#include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Unsubscribe.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockSubscriptionManager.hpp"
-#include "util/MockWsBase.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/protocol/Book.h>
 
 #include <memory>
 #include <string>
-#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;
@@ -556,7 +552,7 @@ TEST_F(RPCUnsubscribeTest, Streams)
         })"
     );
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubLedger).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubTransactions).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubValidation).Times(1);
@@ -582,7 +578,7 @@ TEST_F(RPCUnsubscribeTest, Accounts)
         ACCOUNT2
     ));
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(rpc::accountFromStringStrict(ACCOUNT).value(), _)).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubAccount(rpc::accountFromStringStrict(ACCOUNT2).value(), _)).Times(1);
 
@@ -604,7 +600,7 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
         ACCOUNT2
     ));
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedAccount(rpc::accountFromStringStrict(ACCOUNT).value(), _))
         .Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubProposedAccount(rpc::accountFromStringStrict(ACCOUNT2).value(), _))
@@ -641,7 +637,7 @@ TEST_F(RPCUnsubscribeTest, Books)
     auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = std::get<ripple::Book>(parsedBookMaybe);
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(book, _)).Times(1);
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(ripple::reversed(book), _)).Times(1);
 
@@ -675,7 +671,7 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
     auto const parsedBookMaybe = rpc::parseBook(input.as_object().at("books").as_array()[0].as_object());
     auto const book = std::get<ripple::Book>(parsedBookMaybe);
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr = mockSubscriptionManagerPtr.get();
     EXPECT_CALL(*rawSubscriptionManagerPtr, unsubBook(book, _)).Times(1);
 
     runSpawn([&, this](auto yield) {

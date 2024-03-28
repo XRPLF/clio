@@ -19,7 +19,6 @@
 
 #include "rpc/handlers/AccountInfo.hpp"
 
-#include "rpc/Amendments.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -44,13 +43,11 @@
 #include <iterator>
 #include <string>
 #include <string_view>
-#include <utility>
-#include <variant>
 #include <vector>
 
 namespace rpc {
-AccountInfoHandler::Result
-AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx) const
+static AccountInfoHandler::Result
+AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
 {
     if (!input.account && !input.ident)
         return Error{Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}};
@@ -159,7 +156,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
         lsFlags.emplace_back("allowTrustLineClawback", ripple::lsfAllowTrustLineClawback);
     }
 
-    boost::json::object acctFlags;
+    boost::json::object const acctFlags;
     for (auto const& lsf : lsFlags)
         acctFlags[lsf.first.data()] = output.accountData.isFlag(lsf.second);
 

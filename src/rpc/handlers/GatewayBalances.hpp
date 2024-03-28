@@ -64,14 +64,14 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string ledgerHash;
-        uint32_t ledgerIndex;
-        std::string accountID;
+        std::string ledgerHash{};
+        uint32_t ledgerIndex{};
+        std::string accountID{};
         bool overflow = false;
-        std::map<ripple::Currency, ripple::STAmount> sums;
-        std::map<ripple::AccountID, std::vector<ripple::STAmount>> hotBalances;
-        std::map<ripple::AccountID, std::vector<ripple::STAmount>> assets;
-        std::map<ripple::AccountID, std::vector<ripple::STAmount>> frozenBalances;
+        std::map<ripple::Currency, ripple::STAmount> sums{};
+        std::map<ripple::AccountID, std::vector<ripple::STAmount>> hotBalances{};
+        std::map<ripple::AccountID, std::vector<ripple::STAmount>> assets{};
+        std::map<ripple::AccountID, std::vector<ripple::STAmount>> frozenBalances{};
         // validated should be sent via framework
         bool validated = true;
     };
@@ -80,8 +80,8 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string account;
-        std::set<ripple::AccountID> hotWallets;
+        std::string account{};
+        std::set<ripple::AccountID> hotWallets{};
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
     };

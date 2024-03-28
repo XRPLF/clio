@@ -59,7 +59,7 @@ public:
         bool isDisallowIncomingEnabled = false;
         bool isClawbackEnabled = false;
         uint32_t apiVersion;
-        std::optional<std::vector<ripple::STLedgerEntry>> signerLists;
+        std::optional<std::vector<ripple::STLedgerEntry>> signerLists{};
         // validated should be sent via framework
         bool validated = true;
 

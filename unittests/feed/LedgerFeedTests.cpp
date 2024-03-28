@@ -19,11 +19,7 @@
 
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/LedgerFeed.hpp"
-#include "util/TestObject.hpp"
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/protocol/Fees.h>
@@ -31,7 +27,6 @@
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 
 using namespace feed::impl;
-namespace json = boost::json;
 using namespace testing;
 
 using FeedLedgerTest = FeedBaseTest<LedgerFeed>;

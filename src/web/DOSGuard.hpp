@@ -71,8 +71,8 @@ class BasicDOSGuard : public BaseDOSGuard {
     };
 
     mutable std::mutex mtx_;
-    std::unordered_map<std::string, ClientState> ipState_;
-    std::unordered_map<std::string, std::uint32_t> ipConnCount_;
+    std::unordered_map<std::string, ClientState> ipState_{};
+    std::unordered_map<std::string, std::uint32_t> ipConnCount_{};
     std::reference_wrapper<WhitelistHandlerType const> whitelistHandler_;
 
     std::uint32_t const maxFetches_;

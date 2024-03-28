@@ -33,18 +33,14 @@
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/role.hpp>
 #include <boost/beast/core/stream_traits.hpp>
-#include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
-#include <fmt/core.h>
 #include <fmt/format.h>
 #include <openssl/err.h>
 #include <openssl/tls1.h>
 
 #include <chrono>
-#include <iterator>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace util::requests {
 
@@ -116,8 +112,8 @@ WsConnectionBuilder::plainConnect(asio::yield_context yield) const
     return connectImpl(impl::WsStreamData{yield}, yield);
 }
 
-Expected<WsConnectionPtr, RequestError>
-WsConnectionBuilder::connect(asio::yield_context yield) const
+static Expected<WsConnectionPtr, RequestError>
+WsConnectionBuilder::connect(asio::yield_context yield)
 {
     auto sslConnection = sslConnect(yield);
     if (sslConnection.has_value())

@@ -309,8 +309,8 @@ public:
      * @return A prepared statement
      * @throws std::runtime_error with underlying error description on failure
      */
-    [[nodiscard]] PreparedStatementType
-    prepare(std::string_view query) const;
+    [[nodiscard]] static PreparedStatementType
+    prepare(std::string_view query);
 };
 
 /**

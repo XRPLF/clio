@@ -218,8 +218,8 @@ public:
      * @throws std::logic_error Thrown if there is no array under the desired
      * key or the key is of invalid format
      */
-    [[nodiscard]] ArrayType
-    array(KeyType key) const;
+    [[nodiscard]] static ArrayType
+    array(KeyType key);
 
     /**
      * @brief Interface for fetching an array by key with fallback.
@@ -234,8 +234,8 @@ public:
      * @return The array
      * @throws std::logic_error Thrown if the key is of invalid format
      */
-    [[nodiscard]] ArrayType
-    arrayOr(KeyType key, ArrayType fallback) const;
+    [[nodiscard]] static ArrayType
+    arrayOr(KeyType key, ArrayType fallback);
 
     /**
      * @brief Interface for fetching an array by key with custom error handling.
@@ -251,8 +251,8 @@ public:
      * @throws std::runtime_error Thrown if there is no array under the desired
      * key
      */
-    [[nodiscard]] ArrayType
-    arrayOrThrow(KeyType key, std::string_view err) const;
+    [[nodiscard]] static ArrayType
+    arrayOrThrow(KeyType key, std::string_view err);
 
     /**
      * @brief Interface for fetching a sub section by key.

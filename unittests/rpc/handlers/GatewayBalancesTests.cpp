@@ -17,22 +17,15 @@
 */
 //==============================================================================
 
-#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
-#include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/handlers/GatewayBalances.hpp"
-#include "util/Fixtures.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STAmount.h>
 #include <ripple/protocol/STObject.h>
@@ -40,9 +33,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <iterator>
-#include <optional>
 #include <string>
-#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;

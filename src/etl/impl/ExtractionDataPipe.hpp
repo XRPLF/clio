@@ -47,7 +47,7 @@ private:
     uint32_t stride_;
     uint32_t startSequence_;
 
-    std::vector<std::shared_ptr<QueueType>> queues_;
+    std::vector<std::shared_ptr<QueueType>> queues_{};
 
 public:
     /**

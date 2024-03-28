@@ -50,7 +50,7 @@ public:
 };
 
 class FakeBookSuccessors {
-    std::vector<FakeBook> books_;
+    std::vector<FakeBook> books_{};
 
 public:
     auto
@@ -71,10 +71,10 @@ public:
     enum ModType : int { MODIFIED, DELETED };
 
 private:
-    std::string key_;
-    std::string data_;
-    std::string predecessor_;
-    std::string successor_;
+    std::string key_{};
+    std::string data_{};
+    std::string predecessor_{};
+    std::string successor_{};
     ModType mod_ = MODIFIED;
 
 public:
@@ -122,7 +122,7 @@ public:
 };
 
 class FakeLedgerObjects {
-    std::vector<FakeLedgerObject> objects;
+    std::vector<FakeLedgerObject> objects{};
 
 public:
     std::vector<FakeLedgerObject>*
@@ -158,7 +158,7 @@ struct FakeFetchResponse {
     uint32_t id;
     bool objectNeighborsIncluded;
     FakeLedgerObjects ledgerObjects;
-    std::string ledgerHeader;
+    std::string ledgerHeader{};
     FakeBookSuccessors bookSuccessors;
 
     FakeFetchResponse(uint32_t id = 0, bool objectNeighborsIncluded = false)

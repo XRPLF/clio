@@ -73,7 +73,7 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string account;
+        std::string account{};
         uint32_t ledgerIndexMin{0};
         uint32_t ledgerIndexMax{0};
         std::optional<uint32_t> limit;
@@ -88,7 +88,7 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string account;
+        std::string account{};
         // You must use at least one of the following fields in your request:
         // ledger_index, ledger_hash, ledger_index_min, or ledger_index_max.
         std::optional<std::string> ledgerHash;

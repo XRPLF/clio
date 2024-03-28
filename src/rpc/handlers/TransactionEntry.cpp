@@ -21,14 +21,11 @@
 
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
-#include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/chrono.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/LedgerHeader.h>
@@ -36,12 +33,11 @@
 
 #include <string>
 #include <utility>
-#include <variant>
 
 namespace rpc {
 
-TransactionEntryHandler::Result
-TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context const& ctx) const
+static TransactionEntryHandler::Result
+TransactionEntryHandler::process(TransactionEntryHandler::Input input, Context const& ctx)
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(

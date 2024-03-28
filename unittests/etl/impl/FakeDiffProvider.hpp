@@ -53,7 +53,7 @@ struct DiffProvider {
         };
     }
 
-    std::optional<ripple::uint256>
+    static std::optional<ripple::uint256>
     nextKey(std::size_t keysSize)
     {
         // mock the result from doFetchSuccessorKey, be aware this function will be called from multiple threads

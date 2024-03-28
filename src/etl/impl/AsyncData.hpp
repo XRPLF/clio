@@ -47,16 +47,16 @@ namespace etl::impl {
 class AsyncCallData {
     util::Logger log_{"ETL"};
 
-    std::unique_ptr<org::xrpl::rpc::v1::GetLedgerDataResponse> cur_;
-    std::unique_ptr<org::xrpl::rpc::v1::GetLedgerDataResponse> next_;
+    std::unique_ptr<org::xrpl::rpc::v1::GetLedgerDataResponse> cur_{};
+    std::unique_ptr<org::xrpl::rpc::v1::GetLedgerDataResponse> next_{};
 
     org::xrpl::rpc::v1::GetLedgerDataRequest request_;
-    std::unique_ptr<grpc::ClientContext> context_;
+    std::unique_ptr<grpc::ClientContext> context_{};
 
     grpc::Status status_;
     unsigned char nextPrefix_;
 
-    std::string lastKey_;
+    std::string lastKey_{};
 
 public:
     AsyncCallData(uint32_t seq, ripple::uint256 const& marker, std::optional<ripple::uint256> const& nextMarker)
@@ -124,7 +124,7 @@ public:
             more = false;
 
         // if returned marker is greater than our end, we are done
-        unsigned char const prefix = cur_->marker()[0];
+        unsigned char const prefix = 0 = cur_->marker()[0];
         if (nextPrefix_ != 0x00 && prefix >= nextPrefix_)
             more = false;
 
@@ -165,7 +165,7 @@ public:
         return more ? CallStatus::MORE : CallStatus::DONE;
     }
 
-    void
+    static void
     call(std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub>& stub, grpc::CompletionQueue& cq)
     {
         context_ = std::make_unique<grpc::ClientContext>();
@@ -179,7 +179,7 @@ public:
         rpc->Finish(next_.get(), &status_, this);
     }
 
-    std::string
+    static std::string
     getMarkerPrefix()
     {
         if (next_->marker().empty()) {
@@ -189,7 +189,7 @@ public:
     }
 
     std::string
-    getLastKey()
+    getLastKey() const
     {
         return lastKey_;
     }

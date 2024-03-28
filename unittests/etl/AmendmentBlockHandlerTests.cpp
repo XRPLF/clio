@@ -26,9 +26,7 @@
 #include <boost/asio/io_context.hpp>
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <cstddef>
-#include <functional>
 
 using namespace testing;
 using namespace etl;
@@ -41,8 +39,8 @@ struct AmendmentBlockHandlerTest : util::prometheus::WithPrometheus, NoLoggerFix
 
 TEST_F(AmendmentBlockHandlerTest, CallToOnAmendmentBlockSetsStateAndRepeatedlyCallsAction)
 {
-    std::size_t callCount = 0;
-    SystemState state;
+    std::size_t const callCount = 0;
+    SystemState const state;
     AmendmentBlockHandlerType handler{ioc_, state, std::chrono::nanoseconds{1}, {std::ref(callCount)}};
 
     EXPECT_FALSE(state.isAmendmentBlocked);

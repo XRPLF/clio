@@ -89,7 +89,7 @@ class WsConnectionBuilder {
     util::Logger log_{"WsConnectionBuilder"};
     std::string host_;
     std::string port_;
-    std::vector<HttpHeader> headers_;
+    std::vector<HttpHeader> headers_{};
     std::chrono::steady_clock::duration connectionTimeout_{DEFAULT_TIMEOUT};
     std::chrono::steady_clock::duration wsHandshakeTimeout_{DEFAULT_TIMEOUT};
     std::string target_{"/"};

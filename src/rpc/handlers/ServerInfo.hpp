@@ -277,7 +277,7 @@ private:
         };
 
         if (info.isAmendmentBlocked)
-            jv.as_object()[JS(amendment_blocked)] = true;
+            jv.as_object()[JS(amendment_blocked)] = 1;
 
         if (info.rippledInfo) {
             auto const& rippledInfo = info.rippledInfo.value();

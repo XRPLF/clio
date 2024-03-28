@@ -17,24 +17,17 @@
 */
 //==============================================================================
 
-#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
-#include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/LedgerData.hpp"
-#include "util/Fixtures.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 
-#include <optional>
 #include <string>
-#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;

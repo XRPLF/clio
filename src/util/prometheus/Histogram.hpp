@@ -130,7 +130,7 @@ private:
         ImplType impl_;
     };
 
-    std::unique_ptr<Concept> pimpl_;
+    std::unique_ptr<Concept> pimpl_{};
 };
 
 using HistogramInt = AnyHistogram<std::int64_t>;

@@ -19,7 +19,6 @@
 
 #include "util/async/AnyStopToken.hpp"
 
-#include <boost/asio/spawn.hpp>
 #include <gtest/gtest.h>
 
 using namespace util::async;

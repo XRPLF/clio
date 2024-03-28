@@ -54,8 +54,8 @@ public:
     {
     }
 
-    void
-    sendError(rpc::Status const& err) const
+    static void
+    sendError(rpc::Status const& err)
     {
         if (connection_->upgraded) {
             connection_->send(boost::json::serialize(composeError(err)));
@@ -118,8 +118,8 @@ public:
         );
     }
 
-    void
-    sendTooBusyError() const
+    static void
+    sendTooBusyError()
     {
         if (connection_->upgraded) {
             connection_->send(
@@ -133,8 +133,8 @@ public:
         }
     }
 
-    void
-    sendJsonParsingError() const
+    static void
+    sendJsonParsingError()
     {
         if (connection_->upgraded) {
             connection_->send(boost::json::serialize(rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX)));

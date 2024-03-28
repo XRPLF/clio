@@ -53,7 +53,7 @@ public:
 
 private:
     /** Wrapped in a unique_ptr so it can survive std::move :/ */
-    FnPtrType cb_;
+    FnPtrType cb_{};
 };
 
 }  // namespace data::cassandra::impl

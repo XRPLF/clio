@@ -43,10 +43,10 @@ namespace rpc {
  */
 class WorkQueue {
     // these are cumulative for the lifetime of the process
-    std::reference_wrapper<util::prometheus::CounterInt> queued_;
-    std::reference_wrapper<util::prometheus::CounterInt> durationUs_;
+    std::reference_wrapper<util::prometheus::CounterInt> queued_{};
+    std::reference_wrapper<util::prometheus::CounterInt> durationUs_{};
 
-    std::reference_wrapper<util::prometheus::GaugeInt> curSize_;
+    std::reference_wrapper<util::prometheus::GaugeInt> curSize_{};
     uint32_t maxSize_ = std::numeric_limits<uint32_t>::max();
 
     util::Logger log_{"RPC"};
@@ -127,8 +127,8 @@ public:
      *
      * @return The report as a JSON object.
      */
-    boost::json::object
-    report() const
+    static boost::json::object
+    report()
     {
         auto obj = boost::json::object{};
 

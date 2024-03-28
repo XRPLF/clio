@@ -47,7 +47,7 @@ class RequestBuilder {
     std::string host_;
     std::string port_;
     std::chrono::milliseconds timeout_{DEFAULT_TIMEOUT};
-    boost::beast::http::request<boost::beast::http::string_body> request_;
+    boost::beast::http::request<boost::beast::http::string_body> request_{};
 
 public:
     /**
@@ -187,10 +187,10 @@ private:
     Expected<std::string, RequestError>
     doSslRequest(boost::asio::yield_context yield, boost::beast::http::verb method);
 
-    Expected<std::string, RequestError>
+    static Expected<std::string, RequestError>
     doPlainRequest(boost::asio::yield_context yield, boost::beast::http::verb method);
 
-    Expected<std::string, RequestError>
+    static Expected<std::string, RequestError>
     doRequest(boost::asio::yield_context yield, boost::beast::http::verb method);
 
     template <typename StreamDataType>

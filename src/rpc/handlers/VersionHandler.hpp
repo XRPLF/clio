@@ -70,8 +70,8 @@ public:
      * @param ctx The context of the request
      * @return The result of the command
      */
-    Result
-    process([[maybe_unused]] Context const& ctx) const
+    static Result
+    process([[maybe_unused]] Context const& ctx)
     {
         using namespace rpc;
 

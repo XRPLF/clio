@@ -24,13 +24,10 @@
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"
-#include "util/prometheus/Gauge.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Book.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Issue.h>

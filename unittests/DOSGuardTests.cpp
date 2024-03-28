@@ -25,8 +25,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <string_view>
-
 using namespace testing;
 using namespace util;
 using namespace std;

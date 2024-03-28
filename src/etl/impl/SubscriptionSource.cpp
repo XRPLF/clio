@@ -20,35 +20,26 @@
 #include "etl/impl/SubscriptionSource.hpp"
 
 #include "rpc/JS.hpp"
-#include "util/Expected.hpp"
 #include "util/Retry.hpp"
 #include "util/log/Logger.hpp"
 #include "util/requests/Types.hpp"
 
-#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/asio/error.hpp>
-#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/use_future.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 #include <boost/json/value_to.hpp>
-#include <fmt/core.h>
 #include <ripple/protocol/jss.h>
 
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <exception>
-#include <future>
-#include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace etl::impl {
 
@@ -68,7 +59,7 @@ SubscriptionSource::run()
 }
 
 bool
-SubscriptionSource::hasLedger(uint32_t sequence) const
+SubscriptionSource::hasLedger(uint32_t sequence)
 {
     auto validatedLedgersData = validatedLedgersData_.lock();
     for (auto& pair : validatedLedgersData->validatedLedgers) {
@@ -248,7 +239,7 @@ SubscriptionSource::handleError(util::requests::RequestError const& error, boost
 }
 
 void
-SubscriptionSource::logError(util::requests::RequestError const& error) const
+SubscriptionSource::logError(util::requests::RequestError const& error)
 {
     auto const& errorCodeOpt = error.errorCode();
 

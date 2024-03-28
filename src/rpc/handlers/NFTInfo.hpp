@@ -49,17 +49,17 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string nftID;
-        uint32_t ledgerIndex;
-        std::string owner;
-        bool isBurned;
-        uint32_t flags;
-        uint32_t transferFee;
-        std::string issuer;
-        uint32_t taxon;
-        uint32_t serial;  // TODO: documented as 'nft_sequence' atm.
-                          // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
-        std::string uri;
+        std::string nftID{};
+        uint32_t ledgerIndex{};
+        std::string owner{};
+        bool isBurned{};
+        uint32_t flags{};
+        uint32_t transferFee{};
+        std::string issuer{};
+        uint32_t taxon{};
+        uint32_t serial{};  // TODO: documented as 'nft_sequence' atm.
+                            // https://github.com/XRPLF/xrpl-dev-portal/issues/1841
+        std::string uri{};
 
         // validated should be sent via framework
         bool validated = true;
@@ -69,7 +69,7 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string nftID;
+        std::string nftID{};
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
     };

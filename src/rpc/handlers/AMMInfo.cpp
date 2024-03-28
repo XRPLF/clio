@@ -20,7 +20,6 @@
 #include "rpc/handlers/AMMInfo.hpp"
 
 #include "data/DBHelpers.hpp"
-#include "rpc/AMMHelpers.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -34,9 +33,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <date/date.h>
 #include <ripple/basics/base_uint.h>
-#include <ripple/basics/chrono.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AMMCore.h>
 #include <ripple/protocol/AccountID.h>
@@ -55,9 +52,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <utility>
-#include <variant>
 
 namespace {
 
@@ -77,8 +72,8 @@ toIso8601(ripple::NetClock::time_point tp)
 
 namespace rpc {
 
-AMMInfoHandler::Result
-AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
+static AMMInfoHandler::Result
+AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx)
 {
     using namespace ripple;
 
@@ -176,7 +171,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
     if (amm.isFieldPresent(sfAuctionSlot)) {
         auto const& auctionSlot = amm.peekAtField(sfAuctionSlot).downcast<STObject>();
         if (auctionSlot.isFieldPresent(sfAccount)) {
-            boost::json::object auction;
+            boost::json::object const auction;
             auto const timeSlot = ammAuctionTimeSlot(lgrInfo.parentCloseTime.time_since_epoch().count(), auctionSlot);
 
             auction[JS(time_interval)] = timeSlot ? *timeSlot : AUCTION_SLOT_TIME_INTERVALS;
@@ -186,7 +181,7 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
             auction[JS(expiration)] = toIso8601(NetClock::time_point{NetClock::duration{auctionSlot[sfExpiration]}});
 
             if (auctionSlot.isFieldPresent(sfAuthAccounts)) {
-                boost::json::array auth;
+                boost::json::array const auth;
                 for (auto const& acct : auctionSlot.getFieldArray(sfAuthAccounts)) {
                     boost::json::object accountData;
                     accountData[JS(account)] = to_string(acct.getAccountID(sfAccount));

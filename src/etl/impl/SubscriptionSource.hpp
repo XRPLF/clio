@@ -57,13 +57,13 @@ public:
 private:
     util::Logger log_;
     util::requests::WsConnectionBuilder wsConnectionBuilder_;
-    util::requests::WsConnectionPtr wsConnection_;
+    util::requests::WsConnectionPtr wsConnection_{};
 
     struct ValidatedLedgersData {
-        std::vector<std::pair<uint32_t, uint32_t>> validatedLedgers;
+        std::vector<std::pair<uint32_t, uint32_t>> validatedLedgers{};
         std::string validatedLedgersRaw{"N/A"};
     };
-    util::Mutex<ValidatedLedgersData> validatedLedgersData_;
+    util::Mutex<ValidatedLedgersData> validatedLedgersData_{};
 
     SubscriptionSourceDependencies dependencies_;
 
@@ -79,7 +79,7 @@ private:
     std::atomic_bool stop_{false};
     std::atomic_bool isForwarding_{false};
 
-    util::Mutex<std::chrono::steady_clock::time_point> lastMessageTime_;
+    util::Mutex<std::chrono::steady_clock::time_point> lastMessageTime_{};
 
     std::future<void> runFuture_;
 
@@ -151,8 +151,8 @@ public:
      * @param sequence The sequence of the ledger
      * @return true if the source has the ledger, false otherwise
      */
-    bool
-    hasLedger(uint32_t sequence) const;
+    static bool
+    hasLedger(uint32_t sequence);
 
     /**
      * @brief Check if the source is connected
@@ -204,13 +204,13 @@ private:
     void
     handleError(util::requests::RequestError const& error, boost::asio::yield_context yield);
 
-    void
-    logError(util::requests::RequestError const& error) const;
+    static void
+    logError(util::requests::RequestError const& error);
 
     void
     setLastMessageTime();
 
-    void
+    static void
     setValidatedRange(std::string range);
 
     static std::string const&

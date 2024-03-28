@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -29,10 +28,8 @@
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/SField.h>
@@ -47,7 +44,6 @@
 #include <string>
 #include <tuple>
 #include <variant>
-#include <vector>
 
 using namespace rpc;
 using namespace testing;

@@ -17,22 +17,17 @@
 */
 //==============================================================================
 
-#include "data/Types.hpp"
 #include "etl/CacheLoader.hpp"
 #include "etl/CacheLoaderSettings.hpp"
 #include "etl/impl/CacheLoader.hpp"
 #include "etl/impl/FakeDiffProvider.hpp"
-#include "util/Fixtures.hpp"
 #include "util/MockCache.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/async/context/BasicExecutionContext.hpp"
 #include "util/config/Config.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-
-#include <vector>
 
 namespace json = boost::json;
 using namespace etl;

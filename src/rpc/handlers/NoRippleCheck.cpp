@@ -30,7 +30,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <fmt/core.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
@@ -38,25 +37,19 @@
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/SField.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STBase.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/TxFlags.h>
-#include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
 
 #include <cstdint>
-#include <limits>
-#include <optional>
 #include <string>
 #include <utility>
-#include <variant>
 
 namespace rpc {
 
-NoRippleCheckHandler::Result
-NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& ctx) const
+static NoRippleCheckHandler::Result
+NoRippleCheckHandler::process(NoRippleCheckHandler::Input input, Context const& ctx)
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(

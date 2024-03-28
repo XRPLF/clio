@@ -20,19 +20,16 @@
 #include "util/Expected.hpp"
 #include "util/Fixtures.hpp"
 #include "util/TestWsServer.hpp"
-#include "util/requests/Types.hpp"
 #include "util/requests/WsConnection.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/field.hpp>
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <cstddef>
 #include <optional>
 #include <string>
 #include <thread>
-#include <vector>
 
 using namespace util::requests;
 namespace asio = boost::asio;
@@ -52,8 +49,8 @@ struct WsConnectionTestsBase : SyncAsioContextTest {
 };
 
 struct WsConnectionTestBundle {
-    std::string testName;
-    std::vector<HttpHeader> headers;
+    std::string testName{};
+    std::vector<HttpHeader> headers{};
     std::optional<std::string> target;
 };
 

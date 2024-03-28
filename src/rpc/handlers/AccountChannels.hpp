@@ -61,11 +61,11 @@ public:
      * @note type aligned with SField.h
      */
     struct ChannelResponse {
-        std::string channelID;
-        std::string account;
-        std::string accountDestination;
-        std::string amount;
-        std::string balance;
+        std::string channelID{};
+        std::string account{};
+        std::string accountDestination{};
+        std::string amount{};
+        std::string balance{};
         std::optional<std::string> publicKey;
         std::optional<std::string> publicKeyHex;
         uint32_t settleDelay{};
@@ -79,9 +79,9 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::vector<ChannelResponse> channels;
-        std::string account;
-        std::string ledgerHash;
+        std::vector<ChannelResponse> channels{};
+        std::string account{};
+        std::string ledgerHash{};
         uint32_t ledgerIndex{};
         // validated should be sent via framework
         bool validated = true;
@@ -93,7 +93,7 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string account;
+        std::string account{};
         std::optional<std::string> destinationAccount;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;

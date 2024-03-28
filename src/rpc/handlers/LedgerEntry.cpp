@@ -28,9 +28,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
-#include <ripple/json/json_value.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
@@ -48,15 +46,12 @@
 #include <algorithm>
 #include <cstdint>
 #include <string>
-#include <string_view>
-#include <unordered_map>
 #include <utility>
-#include <variant>
 
 namespace rpc {
 
-LedgerEntryHandler::Result
-LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx) const
+static LedgerEntryHandler::Result
+LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 {
     ripple::uint256 key;
 
@@ -182,16 +177,16 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     return output;
 }
 
-std::variant<ripple::uint256, Status>
+static std::variant<ripple::uint256, Status>
 LedgerEntryHandler::composeKeyFromDirectory(boost::json::object const& directory) noexcept
 {
     // can not specify both dir_root and owner.
     if (directory.contains(JS(dir_root)) && directory.contains(JS(owner)))
-        return Status{RippledError::rpcINVALID_PARAMS, "mayNotSpecifyBothDirRootAndOwner"};
+        return static_cast<int>(Status{RippledError::rpcINVALID_PARAMS, "mayNotSpecifyBothDirRootAndOwner"});
 
     // at least one should availiable
     if (!(directory.contains(JS(dir_root)) || directory.contains(JS(owner))))
-        return Status{RippledError::rpcINVALID_PARAMS, "missingOwnerOrDirRoot"};
+        return static_cast<int>(Status{RippledError::rpcINVALID_PARAMS, "missingOwnerOrDirRoot"});
 
     uint64_t const subIndex =
         directory.contains(JS(sub_index)) ? boost::json::value_to<uint64_t>(directory.at(JS(sub_index))) : 0;

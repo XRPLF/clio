@@ -96,11 +96,11 @@ struct RpcSpec final {
      * @param value The JSON value to validate and/or modify
      * @return Nothing on success; @ref Status on error
      */
-    [[nodiscard]] MaybeError
-    process(boost::json::value& value) const;
+    [[nodiscard]] static MaybeError
+    process(boost::json::value& value);
 
 private:
-    std::vector<FieldSpec> fields_;
+    std::vector<FieldSpec> fields_{};
 };
 
 }  // namespace rpc

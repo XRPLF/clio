@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "util/prometheus/Histogram.hpp"
 #include "util/prometheus/OStream.hpp"
 
 #include <gmock/gmock.h>
@@ -26,7 +25,6 @@
 #include <cstdint>
 #include <string>
 #include <utility>
-#include <vector>
 
 using namespace util::prometheus;
 
@@ -66,7 +64,7 @@ TEST_F(AnyHistogramTests, observe)
 
 TEST_F(AnyHistogramTests, serializeValue)
 {
-    OStream stream{false};
+    OStream const stream{false};
     EXPECT_CALL(mockHistogramImpl, serializeValue(name, labelsString, ::testing::_));
     histogram.serializeValue(stream);
 }
@@ -75,10 +73,10 @@ struct HistogramTests : ::testing::Test {
     std::string labelsString = R"({label1="value1",label2="value2"})";
     HistogramInt histogram{"t", labelsString, {1, 2, 3}};
 
-    std::string
-    serialize() const
+    static std::string
+    serialize()
     {
-        OStream stream{false};
+        OStream const stream{false};
         histogram.serializeValue(stream);
         return std::move(stream).data();
     }

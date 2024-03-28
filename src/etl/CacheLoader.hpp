@@ -54,7 +54,7 @@ class CacheLoader {
 
     CacheLoaderSettings settings_;
     ExecutionContextType ctx_;
-    std::unique_ptr<CacheLoaderType> loader_;
+    std::unique_ptr<CacheLoaderType> loader_{};
 
 public:
     /**

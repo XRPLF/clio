@@ -49,7 +49,7 @@ protected:
 public:
     std::string const clientIp;
     bool upgraded = false;
-    boost::signals2::signal<void(ConnectionBase*)> onDisconnect;
+    boost::signals2::signal<void(ConnectionBase*)> onDisconnect{};
     std::uint32_t apiSubVersion = 0;
 
     /**

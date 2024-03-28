@@ -179,12 +179,12 @@ struct MockPrometheusImpl : PrometheusInterface {
         return *metricPtr;
     }
 
-    std::unordered_map<std::string, std::unique_ptr<MetricBase>> metrics;
-    std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplInt>> counterIntImpls;
-    std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplUint>> counterUintImpls;
-    std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplDouble>> counterDoubleImpls;
-    std::unordered_map<std::string, ::testing::StrictMock<MockHistogramImplInt>> histogramIntImpls;
-    std::unordered_map<std::string, ::testing::StrictMock<MockHistogramImplDouble>> histogramDoubleImpls;
+    std::unordered_map<std::string, std::unique_ptr<MetricBase>> metrics{};
+    std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplInt>> counterIntImpls{};
+    std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplUint>> counterUintImpls{};
+    std::unordered_map<std::string, ::testing::StrictMock<MockCounterImplDouble>> counterDoubleImpls{};
+    std::unordered_map<std::string, ::testing::StrictMock<MockHistogramImplInt>> histogramIntImpls{};
+    std::unordered_map<std::string, ::testing::StrictMock<MockHistogramImplDouble>> histogramDoubleImpls{};
 };
 
 /**

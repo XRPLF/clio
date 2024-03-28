@@ -17,13 +17,8 @@
 */
 //==============================================================================
 
-#include "util/prometheus/Bool.hpp"
-#include "util/prometheus/Gauge.hpp"
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-
-#include <cstdint>
 
 using namespace util::prometheus;
 using testing::StrictMock;

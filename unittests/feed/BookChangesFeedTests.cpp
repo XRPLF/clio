@@ -23,12 +23,9 @@
 #include "feed/impl/ForwardFeed.hpp"
 #include "util/TestObject.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/protocol/STObject.h>
-
-#include <vector>
 
 using namespace feed::impl;
 

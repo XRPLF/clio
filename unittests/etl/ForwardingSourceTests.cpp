@@ -23,12 +23,8 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
-#include <boost/json/parse.hpp>
-#include <boost/json/serialize.hpp>
 #include <gtest/gtest.h>
 
-#include <chrono>
-#include <optional>
 #include <string>
 #include <utility>
 
@@ -51,7 +47,7 @@ struct ForwardingSourceOperationsTests : ForwardingSourceTests {
     std::string const message_ = R"({"data": "some_data"})";
     boost::json::object const reply_ = {{"reply", "some_reply"}};
 
-    TestWsConnection
+    static TestWsConnection
     serverConnection(boost::asio::yield_context yield)
     {
         // First connection attempt is SSL handshake so it will fail

@@ -19,9 +19,6 @@
 
 #include "rpc/WorkQueue.hpp"
 
-#include "util/prometheus/Label.hpp"
-#include "util/prometheus/Prometheus.hpp"
-
 #include <cstdint>
 
 namespace rpc {

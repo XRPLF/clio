@@ -17,28 +17,20 @@
 */
 //==============================================================================
 
-#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
-#include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AccountChannels.hpp"
-#include "util/Fixtures.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value_to.hpp>
-#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STObject.h>
 
-#include <optional>
 #include <string>
-#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;
@@ -729,7 +721,7 @@ TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
 
     // return two payment channel objects
     std::vector<Blob> bbs;
-    ripple::STObject channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
+    ripple::STObject const channel1 = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 10, 32, TXNID, 28);
     channel1.setFieldU32(ripple::sfExpiration, 100);
     channel1.setFieldU32(ripple::sfCancelAfter, 200);
     channel1.setFieldU32(ripple::sfSourceTag, 300);

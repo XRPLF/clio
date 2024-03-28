@@ -19,10 +19,6 @@
 
 #include "util/StringUtils.hpp"
 
-#include "rpc/RPCHelpers.hpp"
-
-#include <ripple/basics/StringUtilities.h>
-#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/LedgerHeader.h>
 
 #include <string>

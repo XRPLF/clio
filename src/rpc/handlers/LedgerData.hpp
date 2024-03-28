@@ -67,7 +67,7 @@ public:
      */
     struct Output {
         uint32_t ledgerIndex{};
-        std::string ledgerHash;
+        std::string ledgerHash{};
         std::optional<boost::json::object> header;
         boost::json::array states;
         std::optional<std::string> marker;
@@ -87,7 +87,7 @@ public:
         std::optional<uint32_t> ledgerIndex;
         bool binary = false;
         uint32_t limit = LedgerDataHandler::LIMITJSON;  // max 256 for json ; 2048 for binary
-        std::optional<ripple::uint256> marker;
+        std::optional<ripple::uint256> marker{};
         std::optional<uint32_t> diffMarker;
         bool outOfOrder = false;
         ripple::LedgerEntryType type = ripple::LedgerEntryType::ltANY;

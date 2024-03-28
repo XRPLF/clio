@@ -20,10 +20,8 @@
 #include "feed/impl/ProposedTransactionFeed.hpp"
 
 #include "feed/Types.hpp"
-#include "rpc/RPCHelpers.hpp"
 #include "util/log/Logger.hpp"
 
-#include <boost/asio/post.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
 #include <ripple/protocol/AccountID.h>
@@ -31,8 +29,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <unordered_set>
-#include <utility>
 
 namespace feed::impl {
 

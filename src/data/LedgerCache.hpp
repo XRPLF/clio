@@ -46,7 +46,7 @@ namespace data {
 class LedgerCache {
     struct CacheEntry {
         uint32_t seq = 0;
-        Blob blob;
+        Blob blob{};
     };
 
     // counters for fetchLedgerObject(s) hit rate
@@ -158,20 +158,20 @@ public:
     /**
      * @return The total size of the cache.
      */
-    size_t
-    size() const;
+    static size_t
+    size();
 
     /**
      * @return A number representing the success rate of hitting an object in the cache versus missing it.
      */
-    float
-    getObjectHitRate() const;
+    static float
+    getObjectHitRate();
 
     /**
      * @return A number representing the success rate of hitting a successor in the cache versus missing it.
      */
-    float
-    getSuccessorHitRate() const;
+    static float
+    getSuccessorHitRate();
 
     /**
      * @brief Waits until the cache contains a specific sequence.

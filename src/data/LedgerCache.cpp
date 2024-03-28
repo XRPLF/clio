@@ -22,14 +22,11 @@
 #include "data/Types.hpp"
 #include "util/Assert.hpp"
 
-#include <ripple/basics/base_uint.h>
-
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
-#include <vector>
 
 namespace data {
 
@@ -157,14 +154,14 @@ LedgerCache::isFull() const
 }
 
 size_t
-LedgerCache::size() const
+LedgerCache::size()
 {
     std::shared_lock const lck{mtx_};
     return map_.size();
 }
 
 float
-LedgerCache::getObjectHitRate() const
+LedgerCache::getObjectHitRate()
 {
     if (objectReqCounter_.get().value() == 0u)
         return 1;
@@ -172,7 +169,7 @@ LedgerCache::getObjectHitRate() const
 }
 
 float
-LedgerCache::getSuccessorHitRate() const
+LedgerCache::getSuccessorHitRate()
 {
     if (successorReqCounter_.get().value() == 0u)
         return 1;

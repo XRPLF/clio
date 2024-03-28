@@ -57,7 +57,7 @@ public:
     AnyStopToken&
     operator=(AnyStopToken const& rhs)
     {
-        AnyStopToken copy{rhs};
+        AnyStopToken const copy{rhs};
         pimpl_.swap(copy.pimpl_);
         return *this;
     }
@@ -116,7 +116,7 @@ private:
 
     template <SomeStopToken TokenType>
     struct Model : Concept {
-        TokenType token;
+        TokenType token{};
 
         Model(TokenType&& token) : token{std::move(token)}
         {
@@ -147,7 +147,7 @@ private:
     };
 
 private:
-    std::unique_ptr<Concept> pimpl_;
+    std::unique_ptr<Concept> pimpl_{};
 };
 
 }  // namespace util::async

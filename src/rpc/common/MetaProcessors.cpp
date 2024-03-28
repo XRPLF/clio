@@ -30,7 +30,7 @@
 namespace rpc::meta {
 
 [[nodiscard]] MaybeError
-Section::verify(boost::json::value& value, std::string_view key) const
+Section::verify(boost::json::value& value, std::string_view key)
 {
     if (not value.is_object() or not value.as_object().contains(key.data()))
         return {};  // ignore. field does not exist, let 'required' fail instead

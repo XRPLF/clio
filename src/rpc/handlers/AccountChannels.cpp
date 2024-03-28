@@ -32,7 +32,6 @@
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/PublicKey.h>
@@ -41,15 +40,12 @@
 #include <ripple/protocol/jss.h>
 #include <ripple/protocol/tokens.h>
 
-#include <optional>
 #include <string>
 #include <utility>
-#include <variant>
-#include <vector>
 
 namespace rpc {
 
-void
+static void
 AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, ripple::SLE const& channelSle)
 {
     ChannelResponse channel;
@@ -81,8 +77,8 @@ AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, r
     jsonChannels.push_back(channel);
 }
 
-AccountChannelsHandler::Result
-AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context const& ctx) const
+static AccountChannelsHandler::Result
+AccountChannelsHandler::process(AccountChannelsHandler::Input input, Context const& ctx)
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(

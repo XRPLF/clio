@@ -19,7 +19,6 @@
 
 #include "util/log/Logger.hpp"
 
-#include "util/SourceLocation.hpp"
 #include "util/config/Config.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -56,7 +55,6 @@
 #include <ostream>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
 #include <utility>
 
 namespace util {
@@ -220,7 +218,7 @@ Logger::fatal(SourceLocationType const& loc) const
     return {logger_, Severity::FTL, loc};
 };
 
-std::string
+static std::string
 Logger::Pump::pretty_path(SourceLocationType const& loc, size_t max_depth)
 {
     auto const file_path = std::string{loc.file_name()};

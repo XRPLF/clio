@@ -22,7 +22,6 @@
 #include "util/Expected.hpp"
 #include "util/requests/Types.hpp"
 
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -32,9 +31,7 @@
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/role.hpp>
-#include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/websocket/error.hpp>
-#include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
 #include <gtest/gtest.h>
 
@@ -52,7 +49,7 @@ TestWsConnection::TestWsConnection(websocket::stream<boost::beast::tcp_stream> w
 std::optional<std::string>
 TestWsConnection::send(std::string const& message, boost::asio::yield_context yield)
 {
-    boost::beast::error_code errorCode;
+    boost::beast::error_code const errorCode;
     ws_.async_write(asio::buffer(message), yield[errorCode]);
     if (errorCode)
         return errorCode.message();
@@ -76,7 +73,7 @@ TestWsConnection::receive(boost::asio::yield_context yield)
 std::optional<std::string>
 TestWsConnection::close(boost::asio::yield_context yield)
 {
-    boost::beast::error_code errorCode;
+    boost::beast::error_code const errorCode;
     ws_.async_close(websocket::close_code::normal, yield[errorCode]);
     if (errorCode)
         return errorCode.message();

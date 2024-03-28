@@ -45,9 +45,9 @@ namespace web {
  * @brief A whitelist to remove rate limits of certain IP addresses.
  */
 class Whitelist {
-    std::vector<boost::asio::ip::network_v4> subnetsV4_;
-    std::vector<boost::asio::ip::network_v6> subnetsV6_;
-    std::vector<boost::asio::ip::address> ips_;
+    std::vector<boost::asio::ip::network_v4> subnetsV4_{};
+    std::vector<boost::asio::ip::network_v6> subnetsV6_{};
+    std::vector<boost::asio::ip::address> ips_{};
 
 public:
     /**
@@ -56,7 +56,7 @@ public:
      * @param net Network part of the ip address
      * @throws std::runtime::error when the network address is not valid
      */
-    void
+    static void
     add(std::string_view net)
     {
         using namespace boost::asio;
@@ -82,8 +82,8 @@ public:
      * @throws std::runtime::error when the network address is not valid
      * @return true if the given IP is whitelisted; false otherwise
      */
-    bool
-    isWhiteListed(std::string_view ip) const
+    static bool
+    isWhiteListed(std::string_view ip)
     {
         using namespace boost::asio;
 

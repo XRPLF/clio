@@ -55,9 +55,9 @@ public:
      */
     struct Output {
         bool depositAuthorized = true;
-        std::string sourceAccount;
-        std::string destinationAccount;
-        std::string ledgerHash;
+        std::string sourceAccount{};
+        std::string destinationAccount{};
+        std::string ledgerHash{};
         uint32_t ledgerIndex{};
         // validated should be sent via framework
         bool validated = true;
@@ -67,8 +67,8 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string sourceAccount;
-        std::string destinationAccount;
+        std::string sourceAccount{};
+        std::string destinationAccount{};
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
     };

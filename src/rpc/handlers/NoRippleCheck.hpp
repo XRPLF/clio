@@ -63,9 +63,9 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string ledgerHash;
+        std::string ledgerHash{};
         uint32_t ledgerIndex{};
-        std::vector<std::string> problems;
+        std::vector<std::string> problems{};
         // TODO: use better type than json
         std::optional<boost::json::array> transactions;
         bool validated = true;
@@ -75,7 +75,7 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string account;
+        std::string account{};
         bool roleGateway = false;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;

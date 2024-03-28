@@ -29,7 +29,6 @@
 #include <optional>
 #include <shared_mutex>
 #include <string>
-#include <unordered_set>
 #include <utility>
 
 namespace etl::impl {

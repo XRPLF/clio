@@ -20,16 +20,10 @@
 #include "util/prometheus/MetricBuilder.hpp"
 
 #include "util/Assert.hpp"
-#include "util/prometheus/Counter.hpp"
-#include "util/prometheus/Gauge.hpp"
-#include "util/prometheus/Histogram.hpp"
 #include "util/prometheus/MetricBase.hpp"
 
-#include <cstdint>
-#include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace util::prometheus {
 
@@ -61,7 +55,7 @@ MetricBuilder::operator()(
     return makeHistogram(std::move(name), std::move(labelsString), type, buckets);
 }
 
-std::unique_ptr<MetricBase>
+static std::unique_ptr<MetricBase>
 MetricBuilder::makeMetric(std::string name, std::string labelsString, MetricType const type)
 {
     switch (type) {

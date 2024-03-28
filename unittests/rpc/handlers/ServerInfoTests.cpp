@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "rpc/Errors.hpp"
-#include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/ServerInfo.hpp"
 #include "util/Fixtures.hpp"
@@ -26,7 +25,6 @@
 #include "util/MockETLService.hpp"
 #include "util/MockLoadBalancer.hpp"
 #include "util/MockSubscriptionManager.hpp"
-#include "util/TestObject.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -35,7 +33,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <optional>
 #include <string>
 
@@ -198,9 +195,9 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
 
 TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 {
-    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
-    MockCounters* rawCountersPtr = mockCountersPtr.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
+    MockLoadBalancer* rawBalancerPtr = nullptr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = nullptr = mockCountersPtr.get();
+    MockETLService* rawETLServicePtr = nullptr = mockETLServicePtr.get();
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
@@ -235,9 +232,9 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
 
 TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
 {
-    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
-    MockCounters* rawCountersPtr = mockCountersPtr.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
+    MockLoadBalancer* rawBalancerPtr = nullptr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = nullptr = mockCountersPtr.get();
+    MockETLService* rawETLServicePtr = nullptr = mockETLServicePtr.get();
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
@@ -270,10 +267,10 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
 
 TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 {
-    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
-    MockCounters* rawCountersPtr = mockCountersPtr.get();
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
+    MockLoadBalancer* rawBalancerPtr = nullptr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = nullptr = mockCountersPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr = mockSubscriptionManagerPtr.get();
+    MockETLService* rawETLServicePtr = nullptr = mockETLServicePtr.get();
 
     auto const empty = json::object{};
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
@@ -310,10 +307,10 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 
 TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
 {
-    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
-    MockCounters* rawCountersPtr = mockCountersPtr.get();
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
+    MockLoadBalancer* rawBalancerPtr = nullptr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = nullptr = mockCountersPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr = mockSubscriptionManagerPtr.get();
+    MockETLService* rawETLServicePtr = nullptr = mockETLServicePtr.get();
 
     auto const empty = json::object{};
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
@@ -356,10 +353,10 @@ TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
 
 TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 {
-    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
-    MockCounters* rawCountersPtr = mockCountersPtr.get();
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
+    MockLoadBalancer* rawBalancerPtr = nullptr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = nullptr = mockCountersPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr = mockSubscriptionManagerPtr.get();
+    MockETLService* rawETLServicePtr = nullptr = mockETLServicePtr.get();
 
     auto const empty = json::object{};
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
@@ -407,10 +404,10 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 
 TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
 {
-    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
-    MockCounters* rawCountersPtr = mockCountersPtr.get();
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
-    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
+    MockLoadBalancer* rawBalancerPtr = nullptr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = nullptr = mockCountersPtr.get();
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr = mockSubscriptionManagerPtr.get();
+    MockETLService* rawETLServicePtr = nullptr = mockETLServicePtr.get();
 
     auto const empty = json::object{};
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old

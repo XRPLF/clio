@@ -122,7 +122,7 @@ public:
      *
      * @param startTime The time the operation was started
      */
-    void
+    static void
     registerWriteFinished(std::chrono::steady_clock::time_point startTime);
 
     /**
@@ -145,7 +145,7 @@ public:
      * @param startTime The time the operations were started
      * @param count The number of operations finished
      */
-    void
+    static void
     registerReadFinished(std::chrono::steady_clock::time_point startTime, std::uint64_t count = 1u);
 
     /**
@@ -169,8 +169,8 @@ public:
      *
      * @return The report
      */
-    boost::json::object
-    report() const;
+    static boost::json::object
+    report();
 
 private:
     BackendCounters();
@@ -196,22 +196,22 @@ private:
 
     private:
         std::string name_;
-        std::reference_wrapper<util::prometheus::GaugeInt> pendingCounter_;
-        std::reference_wrapper<util::prometheus::CounterInt> completedCounter_;
-        std::reference_wrapper<util::prometheus::CounterInt> retryCounter_;
-        std::reference_wrapper<util::prometheus::CounterInt> errorCounter_;
+        std::reference_wrapper<util::prometheus::GaugeInt> pendingCounter_{};
+        std::reference_wrapper<util::prometheus::CounterInt> completedCounter_{};
+        std::reference_wrapper<util::prometheus::CounterInt> retryCounter_{};
+        std::reference_wrapper<util::prometheus::CounterInt> errorCounter_{};
     };
 
-    std::reference_wrapper<util::prometheus::CounterInt> tooBusyCounter_;
+    std::reference_wrapper<util::prometheus::CounterInt> tooBusyCounter_{};
 
-    std::reference_wrapper<util::prometheus::CounterInt> writeSyncCounter_;
-    std::reference_wrapper<util::prometheus::CounterInt> writeSyncRetryCounter_;
+    std::reference_wrapper<util::prometheus::CounterInt> writeSyncCounter_{};
+    std::reference_wrapper<util::prometheus::CounterInt> writeSyncRetryCounter_{};
 
     AsyncOperationCounters asyncWriteCounters_{"write_async"};
     AsyncOperationCounters asyncReadCounters_{"read_async"};
 
-    std::reference_wrapper<util::prometheus::HistogramInt> readDurationHistogram_;
-    std::reference_wrapper<util::prometheus::HistogramInt> writeDurationHistogram_;
+    std::reference_wrapper<util::prometheus::HistogramInt> readDurationHistogram_{};
+    std::reference_wrapper<util::prometheus::HistogramInt> writeDurationHistogram_{};
 };
 
 }  // namespace data

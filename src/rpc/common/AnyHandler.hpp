@@ -60,7 +60,7 @@ public:
     AnyHandler&
     operator=(AnyHandler const& rhs)
     {
-        AnyHandler copy{rhs};
+        AnyHandler const copy{rhs};
         pimpl_.swap(copy.pimpl_);
         return *this;
     }
@@ -117,7 +117,7 @@ private:
     };
 
 private:
-    std::unique_ptr<Concept> pimpl_;
+    std::unique_ptr<Concept> pimpl_{};
 };
 
 }  // namespace rpc

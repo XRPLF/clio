@@ -310,7 +310,7 @@ class SubscriptionManagerRunner {
     util::Logger logger_{"Subscriptions"};
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_ =
         boost::asio::make_work_guard(ioContext_);
-    std::vector<std::thread> workers_;
+    std::vector<std::thread> workers_{};
 
 public:
     /**

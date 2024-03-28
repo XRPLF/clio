@@ -98,7 +98,7 @@ private:
         std::string target = "/"
     )
     {
-        boost::asio::io_context ioc;
+        boost::asio::io_context const ioc;
 
         net::ip::tcp::resolver resolver(ioc);
         boost::beast::tcp_stream stream(ioc);
@@ -123,7 +123,7 @@ private:
         http::response<http::string_body> res;
         http::read(stream, buffer, res);
 
-        boost::beast::error_code ec;
+        boost::beast::error_code const ec;
         stream.socket().shutdown(tcp::socket::shutdown_both, ec);
 
         return res.body();
@@ -136,7 +136,7 @@ class WebSocketSyncClient {
     boost::beast::websocket::stream<tcp::socket> ws_{ioc_};
 
 public:
-    void
+    static void
     connect(std::string const& host, std::string const& port, std::vector<WebHeader> additionalHeaders = {})
     {
         auto const results = resolver_.resolve(host, port);
@@ -164,7 +164,7 @@ public:
         ws_.close(boost::beast::websocket::close_code::normal);
     }
 
-    std::string
+    static std::string
     syncPost(std::string const& body)
     {
         boost::beast::flat_buffer buffer;
@@ -186,7 +186,7 @@ struct HttpsSyncClient {
     static std::string
     syncPost(std::string const& host, std::string const& port, std::string const& body)
     {
-        net::io_context ioc;
+        net::io_context const ioc;
         boost::asio::ssl::context ctx(boost::asio::ssl::context::sslv23);
         ctx.set_default_verify_paths();
         ctx.set_verify_mode(ssl::verify_none);
@@ -228,7 +228,7 @@ struct HttpsSyncClient {
 
 class WebServerSslSyncClient {
     net::io_context ioc_;
-    std::optional<boost::beast::websocket::stream<boost::beast::ssl_stream<tcp::socket>>> ws_;
+    std::optional<boost::beast::websocket::stream<boost::beast::ssl_stream<tcp::socket>>> ws_{};
 
 public:
     void
@@ -258,7 +258,7 @@ public:
         ws_->close(boost::beast::websocket::close_code::normal);
     }
 
-    std::string
+    static std::string
     syncPost(std::string const& body)
     {
         boost::beast::flat_buffer buffer;

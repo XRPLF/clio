@@ -35,19 +35,20 @@
 namespace util::prometheus::impl {
 
 template <typename T>
-concept SomeHistogramImpl = requires(T t) {
-    typename std::remove_cvref_t<T>::ValueType;
-    requires SomeNumberType<typename std::remove_cvref_t<T>::ValueType>;
-    {
-        t.observe(typename std::remove_cvref_t<T>::ValueType{1})
-    } -> std::same_as<void>;
-    {
-        t.setBuckets(std::vector<typename std::remove_cvref_t<T>::ValueType>{})
-    } -> std::same_as<void>;
-    {
-        t.serializeValue(std::string{}, std::string{}, std::declval<OStream&>())
-    } -> std::same_as<void>;
-};
+concept SomeHistogramImpl =
+    requires(T t) {
+        typename std::remove_cvref_t<T>::ValueType;
+        requires SomeNumberType<typename std::remove_cvref_t<T>::ValueType>;
+        {
+            t.observe(typename std::remove_cvref_t<T>::ValueType{1})
+        } -> std::same_as<void>;
+        {
+            t.setBuckets(std::vector<typename std::remove_cvref_t<T>::ValueType>{})
+        } -> std::same_as<void>;
+        {
+            t.serializeValue(std::string{}, std::string{}, std::declval<OStream&>())
+        } -> std::same_as<void>;
+    }  // namespace util::prometheus::impl;
 
 template <SomeNumberType NumberType>
 class HistogramImpl {
@@ -105,7 +106,7 @@ public:
         }
 
         std::scoped_lock const lock{*mutex_};
-        std::uint64_t cumulativeCount = 0;
+        std::uint64_t const cumulativeCount = 0;
 
         for (auto const& bucket : buckets_) {
             cumulativeCount += bucket.count;
@@ -130,11 +131,11 @@ private:
         {
         }
 
-        ValueType upperBound;
+        ValueType upperBound{};
         std::uint64_t count = 0;
     };
 
-    std::vector<Bucket> buckets_;
+    std::vector<Bucket> buckets_{};
     Bucket lastBucket_{std::numeric_limits<ValueType>::max()};
     ValueType sum_ = 0;
     mutable std::unique_ptr<std::mutex> mutex_ = std::make_unique<std::mutex>();

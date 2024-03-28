@@ -43,10 +43,10 @@
  * @brief Struct used to keep track of what to write to account_transactions/account_tx tables.
  */
 struct AccountTransactionsData {
-    boost::container::flat_set<ripple::AccountID> accounts;
+    boost::container::flat_set<ripple::AccountID> accounts{};
     std::uint32_t ledgerSequence{};
     std::uint32_t transactionIndex{};
-    ripple::uint256 txHash;
+    ripple::uint256 txHash{};
 
     /**
      * @brief Construct a new AccountTransactionsData object
@@ -71,10 +71,10 @@ struct AccountTransactionsData {
  * Gets written to nf_token_transactions table and the like.
  */
 struct NFTTransactionsData {
-    ripple::uint256 tokenID;
+    ripple::uint256 tokenID{};
     std::uint32_t ledgerSequence;
     std::uint32_t transactionIndex;
-    ripple::uint256 txHash;
+    ripple::uint256 txHash{};
 
     /**
      * @brief Construct a new NFTTransactionsData object
@@ -101,11 +101,11 @@ struct NFTTransactionsData {
  * We only set the uri if this is a mint tx, or if we are loading initial state from NFTokenPage objects.
  */
 struct NFTsData {
-    ripple::uint256 tokenID;
+    ripple::uint256 tokenID{};
     std::uint32_t ledgerSequence;
     std::optional<std::uint32_t> transactionIndex;
     ripple::AccountID owner;
-    std::optional<ripple::Blob> uri;
+    std::optional<ripple::Blob> uri{};
     bool isBurned = false;
 
     /**

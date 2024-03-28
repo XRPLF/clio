@@ -28,18 +28,12 @@
 #include <boost/asio/ssl/verify_mode.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/lexical_cast.hpp>
-#include <fmt/core.h>
 #include <openssl/err.h>
 
 #include <array>
 #include <cstddef>
-#include <filesystem>
-#include <fstream>
-#include <ios>
 #include <optional>
-#include <sstream>
 #include <string>
-#include <utility>
 
 namespace util::requests::impl {
 

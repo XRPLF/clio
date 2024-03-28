@@ -32,7 +32,6 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
-#include <ios>
 #include <iterator>
 #include <optional>
 #include <sstream>
@@ -119,7 +118,7 @@ Config::maybeArray(KeyType key) const
 }
 
 Config::ArrayType
-Config::array(KeyType key) const
+Config::array(KeyType key)
 {
     if (auto maybe_arr = maybeArray(key); maybe_arr)
         return maybe_arr.value();
@@ -127,7 +126,7 @@ Config::array(KeyType key) const
 }
 
 Config::ArrayType
-Config::arrayOr(KeyType key, ArrayType fallback) const
+Config::arrayOr(KeyType key, ArrayType fallback)
 {
     if (auto maybe_arr = maybeArray(key); maybe_arr)
         return maybe_arr.value();
@@ -135,7 +134,7 @@ Config::arrayOr(KeyType key, ArrayType fallback) const
 }
 
 Config::ArrayType
-Config::arrayOrThrow(KeyType key, std::string_view err) const
+Config::arrayOrThrow(KeyType key, std::string_view err)
 {
     try {
         return maybeArray(key).value();

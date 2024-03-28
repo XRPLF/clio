@@ -149,7 +149,7 @@ public:
         if (ec)
             return fail(ec, "detect");
 
-        std::string ip;
+        std::string ip = 0;
         try {
             ip = stream_.socket().remote_endpoint().address().to_string();
         } catch (std::exception const&) {

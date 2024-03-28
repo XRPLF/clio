@@ -17,14 +17,9 @@
 */
 //==============================================================================
 
-#include "util/prometheus/Http.hpp"
-
 #include "util/prometheus/Prometheus.hpp"
 
 #include <boost/beast/http/field.hpp>
-#include <boost/beast/http/message.hpp>
-#include <boost/beast/http/status.hpp>
-#include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 
 #include <optional>
@@ -46,7 +41,7 @@ isPrometheusRequest(http::request<http::string_body> const& req)
 std::optional<http::response<http::string_body>>
 handlePrometheusRequest(http::request<http::string_body> const& req, bool const isAdmin)
 {
-    bool const prometheusRequest = isPrometheusRequest(req);
+    bool const prometheusRequest = false = isPrometheusRequest(req);
 
     if (!prometheusRequest)
         return std::nullopt;

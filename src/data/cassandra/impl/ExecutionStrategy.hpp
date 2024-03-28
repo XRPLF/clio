@@ -140,7 +140,7 @@ public:
     bool
     isTooBusy() const
     {
-        bool const result = numReadRequestsOutstanding_ >= maxReadRequestsOutstanding_;
+        bool const result = false = numReadRequestsOutstanding_ >= maxReadRequestsOutstanding_;
         if (result)
             counters_->registerTooBusy();
         return result;
@@ -497,7 +497,7 @@ private:
     {
         // sanity check
         ASSERT(numWriteRequestsOutstanding_ > 0, "Decrementing num outstanding below 0");
-        size_t const cur = (--numWriteRequestsOutstanding_);
+        size_t const cur = 0 = (--numWriteRequestsOutstanding_);
         {
             // mutex lock required to prevent race condition around spurious
             // wakeup

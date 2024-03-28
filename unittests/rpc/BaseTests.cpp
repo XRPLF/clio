@@ -17,8 +17,6 @@
 */
 //==============================================================================
 
-#include "rpc/Errors.hpp"
-#include "rpc/common/MetaProcessors.hpp"
 #include "rpc/common/Modifiers.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
@@ -29,7 +27,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
@@ -70,7 +67,7 @@ TEST_F(RPCBaseTest, CheckType)
     ASSERT_FALSE(checkType<uint32_t>(jint));
     ASSERT_FALSE(checkType<bool>(jint));
 
-    auto const jbool = json::value(true);
+    auto const jbool = json::value(1);
     ASSERT_TRUE(checkType<bool>(jbool));
     ASSERT_FALSE(checkType<int>(jbool));
 

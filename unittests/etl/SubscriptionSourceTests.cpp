@@ -19,8 +19,6 @@
 
 #include "etl/impl/SubscriptionSource.hpp"
 #include "util/Fixtures.hpp"
-#include "util/MockNetworkValidatedLedgers.hpp"
-#include "util/MockSubscriptionManager.hpp"
 #include "util/TestWsServer.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -32,7 +30,6 @@
 
 #include <chrono>
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 
@@ -75,7 +72,7 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
         std::chrono::milliseconds(1)
     );
 
-    [[maybe_unused]] TestWsConnection
+    [[maybe_unused]] static TestWsConnection
     serverConnection(boost::asio::yield_context yield)
     {
         // The first one is an SSL attempt

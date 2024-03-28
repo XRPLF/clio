@@ -68,12 +68,12 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string account;
-        std::string ledgerHash;
+        std::string account{};
+        std::string ledgerHash{};
         uint32_t ledgerIndex{};
         std::optional<std::string> marker;
         uint32_t limit{};
-        std::vector<ripple::SLE> accountObjects;
+        std::vector<ripple::SLE> accountObjects{};
         bool validated = true;
     };
 
@@ -81,7 +81,7 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string account;
+        std::string account{};
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         uint32_t limit = LIMIT_DEFAULT;  // [10,400]

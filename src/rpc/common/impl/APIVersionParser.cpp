@@ -24,7 +24,6 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/json/object.hpp>
-#include <fmt/core.h>
 
 #include <cstdint>
 #include <string>

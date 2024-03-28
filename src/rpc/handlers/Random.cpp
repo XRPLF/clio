@@ -24,15 +24,14 @@
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
-#include <ripple/beast/utility/rngfill.h>
-#include <ripple/crypto/csprng.h>
 #include <ripple/protocol/jss.h>
+
+#include <cstdlib>
 
 namespace rpc {
 
-RandomHandler::Result
+static RandomHandler::Result
 RandomHandler::process([[maybe_unused]] Context const& ctx)
 {
     ripple::uint256 rand;

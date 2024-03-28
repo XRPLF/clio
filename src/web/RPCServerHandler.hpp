@@ -223,7 +223,7 @@ private:
                 }
 
                 if (isForwarded)
-                    response["forwarded"] = true;
+                    response["forwarded"] = 1;
 
                 // for ws there is an additional field "status" in the response,
                 // otherwise the "status" is in the "result" field
@@ -246,7 +246,7 @@ private:
                 }
             }
 
-            boost::json::array warnings;
+            boost::json::array const warnings;
             warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_CLIO));
 
             if (etl_->lastCloseAgeSeconds() >= 60)

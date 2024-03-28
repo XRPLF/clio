@@ -22,7 +22,6 @@
 #include "util/config/Config.hpp"
 
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 
 constexpr static auto DEFAULT_API_VERSION = 5u;

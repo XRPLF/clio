@@ -25,7 +25,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <any>
 #include <string>
 
 using namespace util::async;

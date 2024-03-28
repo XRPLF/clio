@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "data/cassandra/Error.hpp"
 #include "data/cassandra/impl/RetryPolicy.hpp"
 #include "util/Fixtures.hpp"
 

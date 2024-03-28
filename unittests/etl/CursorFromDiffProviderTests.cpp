@@ -17,16 +17,11 @@
 */
 //==============================================================================
 
-#include "data/Types.hpp"
 #include "etl/impl/CursorFromDiffProvider.hpp"
-#include "util/Fixtures.hpp"
 #include "util/MockPrometheus.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-
-#include <vector>
 
 using namespace etl;
 using namespace util;

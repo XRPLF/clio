@@ -34,9 +34,7 @@ struct MockSession : public web::ConnectionBase {
     MOCK_METHOD(void, send, (std::string&&, boost::beast::http::status), (override));
     util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
 
-    MockSession() : web::ConnectionBase(tagDecoratorFactory, "")
-    {
-    }
+    MockSession() : web::ConnectionBase(tagDecoratorFactory, "") = default;
 };
 
 struct MockDeadSession : public web::ConnectionBase {

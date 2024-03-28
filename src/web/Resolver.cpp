@@ -21,9 +21,7 @@
 
 #include <boost/asio/ip/address.hpp>
 
-#include <string>
 #include <string_view>
-#include <vector>
 
 namespace asio = boost::asio;
 
@@ -52,7 +50,7 @@ isAddress(std::string_view hostname)
 
 }  // namespace
 
-std::vector<std::string>
+static std::vector<std::string>
 Resolver::resolve(std::string_view hostname, std::string_view service)
 {
     if (isAddress(hostname)) {

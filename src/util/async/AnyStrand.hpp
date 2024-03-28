@@ -166,7 +166,7 @@ private:
     };
 
 private:
-    std::unique_ptr<Concept> pimpl_;
+    std::unique_ptr<Concept> pimpl_{};
 };
 
 }  // namespace util::async

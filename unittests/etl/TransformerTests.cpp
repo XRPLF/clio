@@ -20,7 +20,6 @@
 #include "etl/SystemState.hpp"
 #include "etl/impl/Transformer.hpp"
 #include "util/FakeFetchResponse.hpp"
-#include "util/Fixtures.hpp"
 #include "util/MockAmendmentBlockHandler.hpp"
 #include "util/MockExtractionDataPipe.hpp"
 #include "util/MockLedgerLoader.hpp"
@@ -31,8 +30,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <chrono>
-#include <memory>
 #include <optional>
 #include <thread>
 

@@ -112,7 +112,7 @@ public:
     void
     doClose()
     {
-        boost::beast::error_code ec;
+        boost::beast::error_code const ec;
         stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
     }
 
