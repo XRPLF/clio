@@ -27,16 +27,6 @@ RUN apt update -qq \
 
 WORKDIR /tmp
 
-# Install gcc-12 from source
-RUN wget "http://mirrors.concertpass.com/gcc/releases/gcc-${GCC12_VERSION}/gcc-${GCC12_VERSION}.tar.gz" \
-    && tar xf "gcc-${GCC12_VERSION}.tar.gz" \
-    && cd "gcc-${GCC12_VERSION}" \
-    && mkdir build && cd build \
-    && apt-get install -y libmpc-dev libgmp3-dev libmpfr-dev \
-    && ../configure --enable-languages=c,c++ --disable-multilib \
-    && make -j$(($(nproc --all) * 2)) BOOT_CFLAGS='-O3 -g0' profiledbootstrap \
-    && make install-strip
-
 # Install ccache from source
 RUN wget "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}.tar.gz" \
     && tar xf "ccache-${CCACHE_VERSION}.tar.gz" \
