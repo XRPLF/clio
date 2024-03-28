@@ -6,7 +6,7 @@ Clio is built with [CMake](https://cmake.org/) and uses [Conan](https://conan.io
 
 - [Python 3.7](https://www.python.org/downloads/)
 - [Conan 1.55](https://conan.io/downloads.html)
-- [CMake 3.16](https://cmake.org/download/)
+- [CMake 3.20](https://cmake.org/download/)
 - [**Optional**] [GCovr](https://gcc.gnu.org/onlinedocs/gcc/Gcov.html): needed for code coverage generation
 - [**Optional**] [CCache](https://ccache.dev/): speeds up compilation if you are going to compile Clio often
 
