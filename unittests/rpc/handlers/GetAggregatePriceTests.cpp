@@ -134,15 +134,15 @@ generateTestValuesForParametersTest()
         GetAggregatePriceParamTestCaseBundle{
             "no_base_asset",
             R"({
-                            "quote_asset": "USD",
-                            "oracles": 
-                            [
-                                {
-                                    "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
-                                    "oracle_document_id": 2
-                                }
-                            ]
-                        })",
+                        "quote_asset": "USD",
+                        "oracles": 
+                        [
+                            {
+                                "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                                "oracle_document_id": 2
+                            }
+                        ]
+                    })",
             "invalidParams",
             "Required field 'base_asset' missing"
         },

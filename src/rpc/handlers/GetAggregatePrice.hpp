@@ -88,11 +88,11 @@ public:
     struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<std::uint32_t> ledgerIndex;
-        std::vector<Oracle> oracles;  // valid size is 1-200
+        std::vector<Oracle> oracles;  // valid range is 1-200
         std::string baseAsset;
         std::string quoteAsset;
         std::optional<std::uint32_t> timeThreshold;
-        std::optional<std::uint8_t> trim;  // valid 1-25
+        std::optional<std::uint8_t> trim;  // valid range is 1-25
     };
 
     using Result = HandlerReturnType<Output>;
@@ -116,11 +116,11 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        static auto constexpr maxOracles = 200;
+        static auto constexpr ORACLES_MAX = 200;
 
         static auto const oraclesValidator =
             validation::CustomValidator{[](boost::json::value const& value, std::string_view) -> MaybeError {
-                if (!value.is_array() or value.as_array().empty() or value.as_array().size() > maxOracles)
+                if (!value.is_array() or value.as_array().empty() or value.as_array().size() > ORACLES_MAX)
                     return Error{Status{RippledError::rpcORACLE_MALFORMED}};
 
                 for (auto oracle : value.as_array()) {

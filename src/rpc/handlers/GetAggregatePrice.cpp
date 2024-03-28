@@ -66,7 +66,7 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
-    if (auto status = std::get_if<Status>(&lgrInfoOrStatus))
+    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
@@ -128,7 +128,7 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
         auto const oldestTime = timestampPricesBiMap.left.rbegin()->first;
         auto const upperBound = latestTime > *input.timeThreshold ? (latestTime - *input.timeThreshold) : oldestTime;
         if (upperBound > oldestTime) {
-            // note : upperBound must not be greater than the latestTime, so timestampPricesBiMap can not be empty
+            // Note : upperBound must not be greater than the latestTime, so timestampPricesBiMap can not be empty
             timestampPricesBiMap.left.erase(
                 timestampPricesBiMap.left.upper_bound(upperBound), timestampPricesBiMap.left.end()
             );
@@ -195,7 +195,7 @@ GetAggregatePriceHandler::tracebackOracleObject(
     std::function<bool(ripple::STObject const&)> const& callback
 ) const
 {
-    static auto constexpr HISTORYMAX = 3;
+    static auto constexpr HISTORY_MAX = 3;
 
     std::optional<ripple::STObject> optOracleObject = oracleObject;
     std::optional<ripple::STObject> optCurrentObject = optOracleObject;
@@ -213,7 +213,7 @@ GetAggregatePriceHandler::tracebackOracleObject(
         if (callback(*optOracleObject) or isNew)
             return;
 
-        if (++history > HISTORYMAX)
+        if (++history > HISTORY_MAX)
             return;
 
         auto const prevTxIndex = optCurrentObject->getFieldH256(ripple::sfPreviousTxnID);
