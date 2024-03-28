@@ -35,4 +35,7 @@ RUN update-alternatives --install /usr/bin/g++ g++ /opt/bin/g++ 100 \
     && update-alternatives --install /usr/bin/c++ c++ /opt/bin/g++ 100 \
     && update-alternatives --install /usr/bin/gcc gcc /opt/bin/gcc 100 \
     && update-alternatives --install /usr/bin/cc cc /opt/bin/gcc 100 \
+    && update-alternatives --install /usr/bin/gcov gcov /opt/bin/gcov 100 \
+    && update-alternatives --install /usr/bin/gcov-dump gcov-dump /opt/bin/gcov-dump 100 \
+    && update-alternatives --install /usr/bin/gcov-tool gcov-tool /opt/bin/gcov-tool 100 \
     && update-alternatives --install /lib/*-linux-gnu/libstdc++.so.6 libstdc++.so.6 /opt/lib64/libstdc++.so.6 100
