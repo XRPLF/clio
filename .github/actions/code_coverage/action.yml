@@ -11,6 +11,8 @@ runs:
     - name: Run gcovr
       shell: bash
       run: |
+        ls -l /opt/bin
+        ln -s /opt/bin/gcov /usr/bin/gcov
         gcovr -e unittests --xml build/coverage_report.xml -j8 --exclude-throw-branches
 
     - name: Archive coverage report
