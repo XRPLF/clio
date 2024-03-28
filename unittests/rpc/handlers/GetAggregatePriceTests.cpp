@@ -86,7 +86,15 @@ mockLedgerObject(
 }
 };  // namespace
 
-class RPCGetAggregatePriceHandlerTest : public HandlerBaseTest {};
+class RPCGetAggregatePriceHandlerTest : public HandlerBaseTest {
+protected:
+    void
+    SetUp() override
+    {
+        HandlerBaseTest::SetUp();
+        backend->setRange(RANGEMIN, RANGEMAX);
+    }
+};
 
 struct GetAggregatePriceParamTestCaseBundle {
     std::string testName;
@@ -313,7 +321,6 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_P(GetAggregatePriceParameterTest, InvalidParams)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
@@ -354,7 +361,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OverOraclesMax)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, LedgerNotFound)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(std::nullopt));
     auto constexpr documentId = 1;
     auto const req = json::parse(fmt::format(
@@ -384,7 +390,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, LedgerNotFound)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
@@ -433,7 +438,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
@@ -484,7 +488,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
@@ -550,7 +553,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
 // median is the middle value of a set of numbers when there are odd number of price
 TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId1 = 1;
@@ -616,7 +618,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
 // median is the middle value of a set of numbers when there are odd number of price
 TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId1 = 1;
@@ -689,7 +690,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     // prepare 4 prices, when trim is 25, the lowest(documentId1) and highest(documentId3) price will be removed
@@ -771,7 +771,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
@@ -806,7 +805,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, NoMatchAssetPair)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
@@ -840,7 +838,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoMatchAssetPair)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId1 = 1;
@@ -920,7 +917,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId1 = 1;
@@ -1000,7 +996,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId1 = 1;
@@ -1077,10 +1072,87 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
     });
 }
 
+TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIncludeOldest)
+{
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+
+    auto constexpr documentId1 = 1;
+    auto constexpr documentId2 = 2;
+    auto constexpr documentId3 = 3;
+    auto constexpr documentId4 = 4;
+    auto constexpr timestamp1 = 1711461384u;
+    auto constexpr timestamp2 = 1711461383u;
+    auto constexpr timestamp3 = 1711461382u;
+    auto constexpr timestamp4 = 1711461381u;
+    mockLedgerObject(*backend, ACCOUNT, documentId1, TX1, 1e3, 2, timestamp1);  // 10
+    mockLedgerObject(*backend, ACCOUNT, documentId2, TX1, 2e3, 2, timestamp2);  // 20
+    mockLedgerObject(*backend, ACCOUNT, documentId4, TX1, 4e2, 1, timestamp3);  // 40
+    mockLedgerObject(*backend, ACCOUNT, documentId3, TX1, 3e3, 1, timestamp4);  // 300
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                "base_asset": "USD",
+                "quote_asset": "XRP",
+                "time_threshold": {},
+                "oracles": 
+                [
+                    {{
+                        "account": "{}",
+                        "oracle_document_id": {}
+                    }},
+                    {{
+                        "account": "{}",
+                        "oracle_document_id": {}
+                    }},
+                    {{
+                        "account": "{}",
+                        "oracle_document_id": {}
+                    }},
+                    {{
+                        "account": "{}",
+                        "oracle_document_id": {}
+                    }}
+                ]
+            }})",
+        timestamp4 - timestamp1,
+        ACCOUNT,
+        documentId1,
+        ACCOUNT,
+        documentId2,
+        ACCOUNT,
+        documentId3,
+        ACCOUNT,
+        documentId4
+    ));
+
+    auto const expected = json::parse(fmt::format(
+        R"({{
+                "entire_set": 
+                {{
+                    "mean": "92.5",
+                    "size": 4,
+                    "standard_deviation": "138.8944443333378"
+                }},
+                "median": "30",
+                "time": 1711461384,
+                "ledger_index": {},
+                "ledger_hash": "{}",
+                "validated": true
+            }})",
+        RANGEMAX,
+        LEDGERHASH
+    ));
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.value(), expected);
+    });
+}
+
 // When the price pair is not available in the current oracle, trace back to previous transactions
 TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
@@ -1143,7 +1215,6 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
 }
 TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;

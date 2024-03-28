@@ -396,7 +396,6 @@ CreateOraclePriceData(
 CreatePriceDataSeries(std::vector<ripple::STObject> const& series);
 
 [[nodiscard]] ripple::STObject
-
 CreateOracleObject(
     std::string_view accountId,
     std::string_view provider,
