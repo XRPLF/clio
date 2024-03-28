@@ -125,24 +125,24 @@ generateTestValuesForParametersTest()
         GetAggregatePriceParamTestCaseBundle{
             "no_oracles",
             R"({
-                            "base_asset": "XRP",
-                            "quote_asset": "USD"
-                        })",
+                "base_asset": "XRP",
+                "quote_asset": "USD"
+                })",
             "invalidParams",
             "Required field 'oracles' missing"
         },
         GetAggregatePriceParamTestCaseBundle{
             "no_base_asset",
             R"({
-                        "quote_asset": "USD",
-                        "oracles": 
-                        [
-                            {
-                                "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
-                                "oracle_document_id": 2
-                            }
-                        ]
-                    })",
+                    "quote_asset": "USD",
+                    "oracles": 
+                    [
+                        {
+                            "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                            "oracle_document_id": 2
+                        }
+                    ]
+                })",
             "invalidParams",
             "Required field 'base_asset' missing"
         },
