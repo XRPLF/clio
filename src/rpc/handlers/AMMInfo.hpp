@@ -55,11 +55,11 @@ public:
         boost::json::array voteSlots;
         boost::json::value auctionSlot;
         std::uint16_t tradingFee = 0;
-        std::string ammAccount;
+        std::string ammAccount{};
         std::optional<bool> asset1Frozen;
         std::optional<bool> asset2Frozen;
 
-        std::string ledgerHash;
+        std::string ledgerHash{};
         uint32_t ledgerIndex{};
         bool validated = true;
     };

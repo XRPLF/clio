@@ -32,7 +32,7 @@ public:
     using ValueType = NumberType;
 
     template <SomeCounterImpl ImplType = CounterImpl<ValueType>>
-        requires std::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
+        requires boost::mpl::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
     AnyCounterBase(ImplType&& impl = ImplType{})
         : pimpl_(std::make_unique<Model<ImplType>>(std::forward<ImplType>(impl)))
     {
@@ -53,7 +53,7 @@ protected:
     template <SomeCounterImpl ImplType>
     struct Model : Concept {
         template <SomeCounterImpl SomeImplType>
-            requires std::same_as<ImplType, SomeImplType>
+            requires boost::mpl::same_as<ImplType, SomeImplType>
         Model(SomeImplType&& impl) : impl_(std::forward<SomeImplType>(impl))
         {
         }
@@ -79,7 +79,7 @@ protected:
         ImplType impl_;
     };
 
-    std::unique_ptr<Concept> pimpl_;
+    std::unique_ptr<Concept> pimpl_{};
 };
 
 }  // namespace util::prometheus::impl

@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "data/BackendInterface.hpp"
-#include "data/cassandra/Error.hpp"
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/ExecutionStrategy.hpp"
 #include "data/cassandra/impl/FakesAndMocks.hpp"
@@ -26,20 +25,14 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/json/object.hpp>
-#include <cassandra.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <functional>
 #include <memory>
-#include <optional>
 #include <stdexcept>
-#include <thread>
-#include <vector>
 
 using namespace data::cassandra;
 using namespace data::cassandra::impl;

@@ -61,7 +61,7 @@ public:
         uint32_t seq{};
         ripple::STAmount takerGets;
         ripple::STAmount takerPays;
-        std::string quality;
+        std::string quality{};
         std::optional<uint32_t> expiration;
     };
 
@@ -69,10 +69,10 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string account;
-        std::string ledgerHash;
+        std::string account{};
+        std::string ledgerHash{};
         uint32_t ledgerIndex{};
-        std::vector<Offer> offers;
+        std::vector<Offer> offers{};
         std::optional<std::string> marker;
         // validated should be sent via framework
         bool validated = true;
@@ -82,7 +82,7 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string account;
+        std::string account{};
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         uint32_t limit = LIMIT_DEFAULT;

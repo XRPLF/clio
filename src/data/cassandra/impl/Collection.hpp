@@ -76,8 +76,8 @@ public:
         throwErrorIfNeeded(rc, "Bind int64");
     }
 
-    void
-    append(ripple::uint256 const& value) const
+    static void
+    append(ripple::uint256 const& value)
     {
         auto const rc = cass_collection_append_bytes(
             *this,

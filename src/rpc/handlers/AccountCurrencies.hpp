@@ -52,10 +52,10 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string ledgerHash;
+        std::string ledgerHash{};
         uint32_t ledgerIndex{};
-        std::set<std::string> receiveCurrencies;
-        std::set<std::string> sendCurrencies;
+        std::set<std::string> receiveCurrencies{};
+        std::set<std::string> sendCurrencies{};
         // validated should be sent via framework
         bool validated = true;
     };
@@ -64,7 +64,7 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string account;
+        std::string account{};
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
     };

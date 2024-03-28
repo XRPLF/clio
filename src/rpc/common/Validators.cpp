@@ -26,8 +26,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <fmt/core.h>
-#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/UintTypes.h>
@@ -39,7 +37,6 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <unordered_set>
 
 namespace rpc::validation {
 
@@ -53,7 +50,7 @@ Required::verify(boost::json::value const& value, std::string_view key)
 }
 
 [[nodiscard]] MaybeError
-CustomValidator::verify(boost::json::value const& value, std::string_view key) const
+CustomValidator::verify(boost::json::value const& value, std::string_view key)
 {
     if (not value.is_object() or not value.as_object().contains(key.data()))
         return {};  // ignore. field does not exist, let 'required' fail instead
@@ -64,7 +61,7 @@ CustomValidator::verify(boost::json::value const& value, std::string_view key) c
 [[nodiscard]] bool
 checkIsU32Numeric(std::string_view sv)
 {
-    uint32_t unused = 0;
+    uint32_t const unused = 0;
     auto [_, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), unused);
 
     return ec == std::errc();

@@ -26,19 +26,20 @@
 namespace util::prometheus::impl {
 
 template <typename T>
-concept SomeCounterImpl = requires(T a) {
-    typename std::remove_cvref_t<T>::ValueType;
-    requires SomeNumberType<typename std::remove_cvref_t<T>::ValueType>;
-    {
-        a.add(typename std::remove_cvref_t<T>::ValueType{1})
-    } -> std::same_as<void>;
-    {
-        a.set(typename std::remove_cvref_t<T>::ValueType{1})
-    } -> std::same_as<void>;
-    {
-        a.value()
-    } -> SomeNumberType;
-};
+concept SomeCounterImpl =
+    requires(T a) {
+        typename std::remove_cvref_t<T>::ValueType;
+        requires SomeNumberType<typename std::remove_cvref_t<T>::ValueType>;
+        {
+            a.add(typename std::remove_cvref_t<T>::ValueType{1})
+        } -> boost::mpl::same_as<void>;
+        {
+            a.set(typename std::remove_cvref_t<T>::ValueType{1})
+        } -> boost::mpl::same_as<void>;
+        {
+            a.value()
+        } -> SomeNumberType;
+    }  // namespace util::prometheus::impl;
 
 template <SomeNumberType NumberType>
 class CounterImpl {

@@ -22,17 +22,13 @@
 #include "rpc/JS.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "util/prometheus/Label.hpp"
-#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/json/object.hpp>
-#include <fmt/core.h>
 #include <ripple/protocol/jss.h>
 
 #include <chrono>
-#include <functional>
 #include <mutex>
 #include <string>
-#include <utility>
 
 namespace rpc {
 
@@ -200,7 +196,7 @@ Counters::uptime() const
 }
 
 boost::json::object
-Counters::report() const
+Counters::report()
 {
     std::scoped_lock const lk(mutex_);
     auto obj = boost::json::object{};

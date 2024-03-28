@@ -27,8 +27,6 @@
 #include <boost/json/value.hpp>
 #include <ripple/protocol/jss.h>
 
-#include <optional>
-
 namespace rpc {
 
 LedgerRangeHandler::Result

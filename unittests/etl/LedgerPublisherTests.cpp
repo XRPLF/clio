@@ -25,19 +25,14 @@
 #include "util/MockCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
-#include "util/TestObject.hpp"
 #include "util/config/Config.hpp"
 
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/chrono.h>
-#include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerHeader.h>
 
 #include <chrono>
-#include <vector>
 
 using namespace testing;
 using namespace etl;
@@ -77,7 +72,7 @@ protected:
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingFalse)
 {
-    SystemState dummyState;
+    SystemState const dummyState;
     dummyState.isWriting = false;
     auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
@@ -100,7 +95,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingFalse)
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingTrue)
 {
-    SystemState dummyState;
+    SystemState const dummyState;
     dummyState.isWriting = true;
     auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
@@ -118,7 +113,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingTrue)
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoInRange)
 {
-    SystemState dummyState;
+    SystemState const dummyState;
     dummyState.isWriting = true;
 
     auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, 0);  // age is 0
@@ -147,7 +142,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoInRange)
     EXPECT_TRUE(publisher.getLastPublishedSequence());
     EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr =
         dynamic_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
 
     EXPECT_CALL(*rawSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", SEQ - 1, SEQ), 1)).Times(1);
@@ -162,7 +157,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoInRange)
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoCloseTimeGreaterThanNow)
 {
-    SystemState dummyState;
+    SystemState const dummyState;
     dummyState.isWriting = true;
 
     ripple::LedgerInfo dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, 0);
@@ -195,7 +190,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoCloseTimeGreaterThanNow)
     EXPECT_TRUE(publisher.getLastPublishedSequence());
     EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr =
         dynamic_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
 
     EXPECT_CALL(*rawSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", SEQ - 1, SEQ), 1)).Times(1);
@@ -210,7 +205,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoCloseTimeGreaterThanNow)
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsTrue)
 {
-    SystemState dummyState;
+    SystemState const dummyState;
     dummyState.isStopping = true;
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
     EXPECT_FALSE(publisher.publish(SEQ, {}));
@@ -218,7 +213,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsTrue)
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttampt)
 {
-    SystemState dummyState;
+    SystemState const dummyState;
     dummyState.isStopping = false;
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
 
@@ -233,7 +228,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttampt)
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
 {
-    SystemState dummyState;
+    SystemState const dummyState;
     dummyState.isStopping = false;
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
 
@@ -255,7 +250,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
 
 TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
 {
-    SystemState dummyState;
+    SystemState const dummyState;
     dummyState.isWriting = true;
 
     auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, 0);  // age is 0
@@ -291,7 +286,7 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
     EXPECT_TRUE(publisher.getLastPublishedSequence());
     EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
+    MockSubscriptionManager* rawSubscriptionManagerPtr = nullptr =
         dynamic_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
 
     EXPECT_CALL(*rawSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", SEQ - 1, SEQ), 2)).Times(1);

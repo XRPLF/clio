@@ -224,7 +224,7 @@ public:
     collectMetrics() override;
 
 private:
-    MetricsFamily&
+    static MetricsFamily&
     getMetricsFamily(std::string name, std::optional<std::string> description, MetricType type);
 
     MetricBase&
