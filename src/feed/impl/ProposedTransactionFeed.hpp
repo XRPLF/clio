@@ -49,13 +49,13 @@ namespace feed::impl {
 class ProposedTransactionFeed {
     util::Logger logger_{"Subscriptions"};
 
-    std::unordered_set<SubscriberPtr>
-        notified_;  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
+    std::unordered_set<SubscriberPtr> notified_{
+    };  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
-    std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_;
-    std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
+    std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_{};
+    std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_{};
 
-    TrackableSignalMap<ripple::AccountID, Subscriber, std::shared_ptr<std::string>> accountSignal_;
+    TrackableSignalMap<ripple::AccountID, Subscriber, std::shared_ptr<std::string>> accountSignal_{};
     TrackableSignal<Subscriber, std::shared_ptr<std::string>> signal_;
 
 public:
@@ -75,7 +75,7 @@ public:
      * @brief Subscribe to the proposed transaction feed.
      * @param subscriber
      */
-    void
+    static void
     sub(SubscriberSharedPtr const& subscriber);
 
     /**
@@ -83,14 +83,14 @@ public:
      * @param subscriber
      * @param account The account to watch.
      */
-    void
+    static void
     sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the proposed transaction feed.
      * @param subscriber
      */
-    void
+    static void
     unsub(SubscriberSharedPtr const& subscriber);
 
     /**
@@ -98,14 +98,14 @@ public:
      * @param subscriber
      * @param account The account to unsubscribe.
      */
-    void
+    static void
     unsub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Publishes the proposed transaction feed.
      * @param receivedTxJson The proposed transaction json.
      */
-    void
+    static void
     pub(boost::json::object const& receivedTxJson);
 
     /**
@@ -121,10 +121,10 @@ public:
     accountSubCount() const;
 
 private:
-    void
+    static void
     unsubInternal(SubscriberPtr subscriber);
 
-    void
+    static void
     unsubInternal(ripple::AccountID const& account, SubscriberPtr subscriber);
 };
 }  // namespace feed::impl

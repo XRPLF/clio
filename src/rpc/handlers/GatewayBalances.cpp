@@ -31,32 +31,24 @@
 #include <boost/json/value_to.hpp>
 #include <ripple/basics/strHex.h>
 #include <ripple/beast/utility/Zero.h>
-#include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STAmount.h>
 #include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
 
 #include <algorithm>
-#include <cstdint>
 #include <iterator>
-#include <limits>
-#include <map>
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <variant>
-#include <vector>
 
 namespace rpc {
 
-GatewayBalancesHandler::Result
-GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context const& ctx) const
+static GatewayBalancesHandler::Result
+GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context const& ctx)
 {
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
@@ -157,9 +149,9 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
 void
 tag_invoke(boost::json::value_from_tag, boost::json::value& jv, GatewayBalancesHandler::Output const& output)
 {
-    boost::json::object obj;
+    boost::json::object const obj;
     if (!output.sums.empty()) {
-        boost::json::object obligations;
+        boost::json::object const obligations;
         for (auto const& [k, v] : output.sums)
             obligations[ripple::to_string(k)] = v.getText();
 

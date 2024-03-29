@@ -30,7 +30,6 @@
 #include <gtest/gtest.h>
 
 #include <memory>
-#include <optional>
 
 using namespace testing;
 using namespace etl;

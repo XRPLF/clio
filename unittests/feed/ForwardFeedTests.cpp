@@ -25,8 +25,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <memory>
-
 using namespace feed::impl;
 namespace json = boost::json;
 using namespace util::prometheus;

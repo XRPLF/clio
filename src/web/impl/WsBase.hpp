@@ -74,7 +74,7 @@ class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase
     boost::beast::flat_buffer buffer_;
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     bool sending_ = false;
-    std::queue<std::shared_ptr<std::string>> messages_;
+    std::queue<std::shared_ptr<std::string>> messages_{};
     std::shared_ptr<HandlerType> const handler_;
 
 protected:
@@ -258,7 +258,7 @@ public:
             this->send(std::make_shared<std::string>(boost::json::serialize(e)));
         };
 
-        std::string requestStr{static_cast<char const*>(buffer_.data().data()), buffer_.size()};
+        std::string requestStr = 0 {static_cast<char const*>(buffer_.data().data()), buffer_.size()};
 
         // dosGuard served request++ and check ip address
         if (!dosGuard_.get().request(clientIp)) {

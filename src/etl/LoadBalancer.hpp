@@ -75,7 +75,7 @@ private:
     util::Logger log_{"ETL"};
     // Forwarding cache must be destroyed after sources because sources have a callnack to invalidate cache
     std::optional<impl::ForwardingCache> forwardingCache_;
-    std::vector<Source> sources_;
+    std::vector<Source> sources_{};
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
         DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
@@ -143,7 +143,7 @@ public:
      * @return The extracted data, if extraction was successful. If the ledger was found
      * in the database or the server is shutting down, the optional will be empty
      */
-    OptionalGetLedgerResponseType
+    static OptionalGetLedgerResponseType
     fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors);
 
     /**
@@ -151,8 +151,8 @@ public:
      *
      * @return JSON representation of the state of this load balancer.
      */
-    boost::json::value
-    toJson() const;
+    static boost::json::value
+    toJson();
 
     /**
      * @brief Forward a JSON RPC request to a randomly selected rippled node.
@@ -162,7 +162,7 @@ public:
      * @param yield The coroutine context
      * @return Response received from rippled node as JSON object on success; nullopt on failure
      */
-    std::optional<boost::json::object>
+    static std::optional<boost::json::object>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
@@ -173,7 +173,7 @@ public:
      * @brief Return state of ETL nodes.
      * @return ETL state, nullopt if etl nodes not available
      */
-    std::optional<ETLState>
+    static std::optional<ETLState>
     getETLState() noexcept;
 
 private:

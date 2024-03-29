@@ -22,12 +22,8 @@
 #include "util/Fixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
-#include "util/TestObject.hpp"
-#include "util/prometheus/Gauge.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
-#include <boost/asio/io_context.hpp>
-#include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -54,7 +50,6 @@ constexpr static auto DUMMY_TRANSACTION =
     })";
 
 using namespace feed::impl;
-namespace json = boost::json;
 using namespace util::prometheus;
 
 using FeedProposedTransactionTest = FeedBaseTest<ProposedTransactionFeed>;

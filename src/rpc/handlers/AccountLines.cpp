@@ -31,7 +31,6 @@
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/SField.h>
@@ -43,12 +42,10 @@
 #include <optional>
 #include <string>
 #include <utility>
-#include <variant>
-#include <vector>
 
 namespace rpc {
 
-void
+static void
 AccountLinesHandler::addLine(
     std::vector<LineResponse>& lines,
     ripple::SLE const& lineSle,
@@ -117,8 +114,8 @@ AccountLinesHandler::addLine(
     lines.push_back(line);
 }
 
-AccountLinesHandler::Result
-AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ctx) const
+static AccountLinesHandler::Result
+AccountLinesHandler::process(AccountLinesHandler::Input input, Context const& ctx)
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
