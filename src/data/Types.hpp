@@ -37,8 +37,8 @@ using Blob = std::vector<unsigned char>;
  * @brief Represents an object in the ledger.
  */
 struct LedgerObject {
-    ripple::uint256 key;
-    Blob blob;
+    ripple::uint256 key{};
+    Blob blob{};
 
     bool
     operator==(LedgerObject const& other) const = default;
@@ -48,24 +48,24 @@ struct LedgerObject {
  * @brief Represents a page of LedgerObjects.
  */
 struct LedgerPage {
-    std::vector<LedgerObject> objects;
-    std::optional<ripple::uint256> cursor;
+    std::vector<LedgerObject> objects{};
+    std::optional<ripple::uint256> cursor{};
 };
 
 /**
  * @brief Represents a page of book offer objects.
  */
 struct BookOffersPage {
-    std::vector<LedgerObject> offers;
-    std::optional<ripple::uint256> cursor;
+    std::vector<LedgerObject> offers{};
+    std::optional<ripple::uint256> cursor{};
 };
 
 /**
  * @brief Represents a transaction and its metadata bundled together.
  */
 struct TransactionAndMetadata {
-    Blob transaction;
-    Blob metadata;
+    Blob transaction{};
+    Blob metadata{};
     std::uint32_t ledgerSequence = 0;
     std::uint32_t date = 0;
 
@@ -160,7 +160,7 @@ struct TransactionsCursor {
  * @brief Represests a bundle of transactions with metadata and a cursor to the next page.
  */
 struct TransactionsAndCursor {
-    std::vector<TransactionAndMetadata> txns;
+    std::vector<TransactionAndMetadata> txns{};
     std::optional<TransactionsCursor> cursor;
 };
 
@@ -168,10 +168,10 @@ struct TransactionsAndCursor {
  * @brief Represents a NFToken.
  */
 struct NFT {
-    ripple::uint256 tokenID;
+    ripple::uint256 tokenID{};
     std::uint32_t ledgerSequence{};
     ripple::AccountID owner;
-    Blob uri;
+    Blob uri{};
     bool isBurned{};
 
     NFT() = default;
@@ -227,8 +227,8 @@ struct NFT {
  * @brief Represents a bundle of NFTs with a cursor to the next page
  */
 struct NFTsAndCursor {
-    std::vector<NFT> nfts;
-    std::optional<ripple::uint256> cursor;
+    std::vector<NFT> nfts{};
+    std::optional<ripple::uint256> cursor{};
 };
 
 /**

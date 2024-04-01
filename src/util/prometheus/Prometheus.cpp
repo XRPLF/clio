@@ -21,22 +21,16 @@
 
 #include "util/Assert.hpp"
 #include "util/config/Config.hpp"
-#include "util/prometheus/Bool.hpp"
-#include "util/prometheus/Counter.hpp"
-#include "util/prometheus/Gauge.hpp"
-#include "util/prometheus/Histogram.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/MetricBase.hpp"
 #include "util/prometheus/MetricsFamily.hpp"
 #include "util/prometheus/OStream.hpp"
 
-#include <cstdint>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace util::prometheus {
 
@@ -53,7 +47,7 @@ convertBaseTo(MetricBase& metricBase)
 
 }  // namespace
 
-Bool
+static Bool
 PrometheusImpl::boolMetric(std::string name, Labels labels, std::optional<std::string> description)
 {
     auto& metric = gaugeInt(std::move(name), std::move(labels), std::move(description));
@@ -183,19 +177,19 @@ PrometheusService::init(util::Config const& config)
     instance_ = std::make_unique<util::prometheus::PrometheusImpl>(enabled, compressReply);
 }
 
-util::prometheus::Bool
+static util::prometheus::Bool
 PrometheusService::boolMetric(std::string name, util::prometheus::Labels labels, std::optional<std::string> description)
 {
     return instance().boolMetric(std::move(name), std::move(labels), std::move(description));
 }
 
-util::prometheus::CounterInt&
+static util::prometheus::CounterInt&
 PrometheusService::counterInt(std::string name, util::prometheus::Labels labels, std::optional<std::string> description)
 {
     return instance().counterInt(std::move(name), std::move(labels), std::move(description));
 }
 
-util::prometheus::CounterDouble&
+static util::prometheus::CounterDouble&
 PrometheusService::counterDouble(
     std::string name,
     util::prometheus::Labels labels,
@@ -205,13 +199,13 @@ PrometheusService::counterDouble(
     return instance().counterDouble(std::move(name), std::move(labels), std::move(description));
 }
 
-util::prometheus::GaugeInt&
+static util::prometheus::GaugeInt&
 PrometheusService::gaugeInt(std::string name, util::prometheus::Labels labels, std::optional<std::string> description)
 {
     return instance().gaugeInt(std::move(name), std::move(labels), std::move(description));
 }
 
-util::prometheus::GaugeDouble&
+static util::prometheus::GaugeDouble&
 PrometheusService::gaugeDouble(
     std::string name,
     util::prometheus::Labels labels,
@@ -221,7 +215,7 @@ PrometheusService::gaugeDouble(
     return instance().gaugeDouble(std::move(name), std::move(labels), std::move(description));
 }
 
-util::prometheus::HistogramInt&
+static util::prometheus::HistogramInt&
 PrometheusService::histogramInt(
     std::string name,
     util::prometheus::Labels labels,
@@ -232,7 +226,7 @@ PrometheusService::histogramInt(
     return instance().histogramInt(std::move(name), std::move(labels), buckets, std::move(description));
 }
 
-util::prometheus::HistogramDouble&
+static util::prometheus::HistogramDouble&
 PrometheusService::histogramDouble(
     std::string name,
     util::prometheus::Labels labels,
@@ -261,7 +255,7 @@ PrometheusService::compressReplyEnabled()
     return instance().compressReplyEnabled();
 }
 
-void
+static void
 PrometheusService::replaceInstance(std::unique_ptr<util::prometheus::PrometheusInterface> instance)
 {
     instance_ = std::move(instance);

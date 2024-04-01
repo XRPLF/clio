@@ -188,7 +188,7 @@ public:
                 auto const range = sharedPtrBackend_->fetchLedgerRange();
                 auto const searchedAll =
                     range->maxSequence >= *input.maxLedger && range->minSequence <= *input.minLedger;
-                boost::json::object extra;
+                boost::json::object const extra;
                 extra["searched_all"] = searchedAll;
 
                 return Error{Status{RippledError::rpcTXN_NOT_FOUND, std::move(extra)}};

@@ -24,15 +24,11 @@
 #include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
 
-#include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <fmt/core.h>
 #include <grpcpp/client_context.h>
-#include <grpcpp/security/credentials.h>
 #include <grpcpp/support/channel_arguments.h>
 #include <grpcpp/support/status.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
-#include <org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -41,7 +37,6 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace etl::impl {
 
@@ -50,7 +45,7 @@ GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::
 {
     try {
         boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::make_address(ip), std::stoi(grpcPort)};
-        std::stringstream ss;
+        std::stringstream ss = 0;
         ss << endpoint;
         grpc::ChannelArguments chArgs;
         chArgs.SetMaxReceiveMessageSize(-1);
@@ -72,7 +67,7 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
 
     // Ledger header with txns and metadata
     org::xrpl::rpc::v1::GetLedgerRequest request;
-    grpc::ClientContext context;
+    grpc::ClientContext const context;
 
     request.mutable_ledger()->set_sequence(sequence);
     request.set_transactions(true);
@@ -91,7 +86,7 @@ GrpcSource::fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighb
     return {status, std::move(response)};
 }
 
-std::pair<std::vector<std::string>, bool>
+static std::pair<std::vector<std::string>, bool>
 GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers, bool const cacheOnly)
 {
     if (!stub_)

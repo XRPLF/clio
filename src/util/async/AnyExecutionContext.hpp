@@ -225,7 +225,7 @@ private:
 
     template <typename CtxType>
     struct Model : Concept {
-        std::reference_wrapper<std::decay_t<CtxType>> ctx;
+        std::reference_wrapper<std::decay_t<CtxType>> ctx{};
 
         Model(CtxType& ctx) : ctx{std::ref(ctx)}
         {
@@ -263,7 +263,7 @@ private:
     };
 
 private:
-    std::unique_ptr<Concept> pimpl_;
+    std::unique_ptr<Concept> pimpl_{};
 };
 
 }  // namespace util::async

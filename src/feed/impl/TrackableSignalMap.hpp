@@ -51,7 +51,7 @@ class TrackableSignalMap {
     using ConnectionSharedPtr = std::shared_ptr<Session>;
 
     mutable std::mutex mutex_;
-    std::unordered_map<Key, TrackableSignal<Session, Args...>> signalsMap_;
+    std::unordered_map<Key, TrackableSignal<Session, Args...>> signalsMap_{};
 
 public:
     /**

@@ -25,28 +25,20 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/field.hpp>
-#include <boost/beast/http/message.hpp>
-#include <boost/beast/http/status.hpp>
-#include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <gtest/gtest.h>
 
-#include <chrono>
-#include <optional>
 #include <string>
-#include <thread>
-#include <variant>
-#include <vector>
 
 using namespace util::requests;
 using namespace boost;
 using namespace boost::beast;
 
 struct RequestBuilderTestBundle {
-    std::string testName;
+    std::string testName{};
     http::verb method;
-    std::vector<HttpHeader> headers;
-    std::string target;
+    std::vector<HttpHeader> headers{};
+    std::string target{};
 };
 
 struct RequestBuilderTestBase : SyncAsioContextTest {

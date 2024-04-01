@@ -25,12 +25,9 @@
 #include "util/prometheus/MetricBuilder.hpp"
 #include "util/prometheus/OStream.hpp"
 
-#include <cstdint>
-#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace util::prometheus {
 
@@ -46,13 +43,13 @@ MetricsFamily::MetricsFamily(
 {
 }
 
-MetricBase&
+static MetricBase&
 MetricsFamily::getMetric(Labels labels, std::vector<std::int64_t> const& buckets)
 {
     return getMetricImpl(std::move(labels), buckets);
 }
 
-MetricBase&
+static MetricBase&
 MetricsFamily::getMetric(Labels labels, std::vector<double> const& buckets)
 {
     ASSERT(type_ == MetricType::HISTOGRAM_DOUBLE, "This method is for HISTOGRAM_DOUBLE only.");

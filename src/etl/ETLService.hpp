@@ -100,11 +100,11 @@ class ETLService {
     std::uint32_t extractorThreads_ = 1;
     std::thread worker_;
 
-    CacheLoaderType cacheLoader_;
+    CacheLoaderType cacheLoader_{};
     LedgerFetcherType ledgerFetcher_;
     LedgerLoaderType ledgerLoader_;
     LedgerPublisherType ledgerPublisher_;
-    AmendmentBlockHandlerType amendmentBlockHandler_;
+    AmendmentBlockHandlerType amendmentBlockHandler_{};
 
     SystemState state_;
 
@@ -206,8 +206,8 @@ public:
      *
      * @return The state of ETL as a JSON object
      */
-    boost::json::object
-    getInfo() const
+    static boost::json::object
+    getInfo()
     {
         boost::json::object result;
 
@@ -241,7 +241,7 @@ private:
      * @param numExtractors number of extractors to use
      * @return The last ledger written to the database, if any
      */
-    std::optional<uint32_t>
+    static std::optional<uint32_t>
     runETLPipeline(uint32_t startSequence, uint32_t numExtractors);
 
     /**
@@ -262,7 +262,7 @@ private:
      * @param nextSequence the ledger sequence to publish
      * @return The next ledger sequence to publish
      */
-    uint32_t
+    static uint32_t
     publishNextSequence(uint32_t nextSequence);
 
     /**

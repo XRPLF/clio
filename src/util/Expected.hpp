@@ -253,9 +253,7 @@ class [[nodiscard]] Expected<void, E> : private boost::outcome_v2::result<void, 
 public:
     // The default constructor makes a successful Expected<void, E>.
     // This aligns with std::expected behavior proposed in P0323R10.
-    constexpr Expected() : Base(boost::outcome_v2::success())
-    {
-    }
+    constexpr Expected() : Base(boost::outcome_v2::success()) = default;
 
     template <typename U, typename = std::enable_if_t<std::is_convertible_v<U, E>>>
     constexpr Expected(Unexpected<U> e) : Base(E(std::forward<U>(e.value())))

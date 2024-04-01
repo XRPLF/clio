@@ -50,7 +50,7 @@ class ProductionHandlerProvider final : public HandlerProvider {
         bool isClioOnly = false;
     };
 
-    std::unordered_map<std::string, Handler> handlerMap_;
+    std::unordered_map<std::string, Handler> handlerMap_{};
 
 public:
     ProductionHandlerProvider(

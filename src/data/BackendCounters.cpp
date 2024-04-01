@@ -20,8 +20,6 @@
 #include "data/BackendCounters.hpp"
 
 #include "util/Assert.hpp"
-#include "util/prometheus/Label.hpp"
-#include "util/prometheus/Prometheus.hpp"
 
 #include <boost/json/object.hpp>
 
@@ -30,7 +28,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace data {
 
@@ -77,9 +74,7 @@ BackendCounters::BackendCounters()
           Labels({Label{"operation", "write"}}),
           histogramBuckets,
           "The duration of backend write operations including retries"
-      ))
-{
-}
+      )) = default;
 
 BackendCounters::PtrType
 BackendCounters::make()
@@ -155,7 +150,7 @@ BackendCounters::registerReadError(std::uint64_t const count)
 }
 
 boost::json::object
-BackendCounters::report() const
+BackendCounters::report()
 {
     boost::json::object result;
     result["too_busy"] = tooBusyCounter_.get().value();

@@ -21,15 +21,12 @@
 
 #include "rpc/common/Types.hpp"
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Indexes.h>
-
 using namespace ripple;
 
 namespace rpc {
 
-NFTSellOffersHandler::Result
-NFTSellOffersHandler::process(NFTSellOffersHandler::Input input, Context const& ctx) const
+static NFTSellOffersHandler::Result
+NFTSellOffersHandler::process(NFTSellOffersHandler::Input input, Context const& ctx)
 {
     auto const tokenID = uint256{input.nftID.c_str()};
     auto const directory = keylet::nft_sells(tokenID);

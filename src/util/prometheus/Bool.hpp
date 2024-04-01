@@ -43,7 +43,7 @@ concept SomeBoolImpl = requires(T a) {
  */
 template <SomeBoolImpl ImplType>
 class AnyBool {
-    std::reference_wrapper<ImplType> impl_;
+    std::reference_wrapper<ImplType> impl_{};
 
 public:
     /**

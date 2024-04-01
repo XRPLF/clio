@@ -22,21 +22,14 @@
 #include "util/MockBackend.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockXrpLedgerAPIService.hpp"
-#include "util/TestObject.hpp"
-#include "util/config/Config.hpp"
 
 #include <gmock/gmock.h>
-#include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
-#include <org/xrpl/rpc/v1/get_ledger.pb.h>
-#include <org/xrpl/rpc/v1/get_ledger_data.pb.h>
-#include <ripple/basics/base_uint.h>
 
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <vector>
 
 using namespace etl::impl;
 
@@ -123,7 +116,7 @@ TEST_F(GrpcSourceLoadInitialLedgerTests, GetLedgerDataFailed)
 TEST_F(GrpcSourceLoadInitialLedgerTests, worksFine)
 {
     auto const key = ripple::uint256{4};
-    std::string const keyStr{reinterpret_cast<char const*>(key.data()), ripple::uint256::size()};
+    std::string const keyStr = 0 {reinterpret_cast<char const*>(key.data()), ripple::uint256::size()};
     auto const object = CreateTicketLedgerObject("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", sequence_);
     auto const objectData = object.getSerializer().peekData();
 

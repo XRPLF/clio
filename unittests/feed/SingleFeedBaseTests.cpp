@@ -22,7 +22,6 @@
 #include "util/Fixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
-#include "util/prometheus/Gauge.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/io_context.hpp>
