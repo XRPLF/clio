@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16.3)
+cmake_minimum_required(VERSION 3.20)
 
 set(CMAKE_PROJECT_INCLUDE_BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ClioVersion.cmake)
 
@@ -28,6 +28,7 @@ include(CheckCXXCompilerFlag)
 include(ClangTidy)
 
 add_library(clio_options INTERFACE)
+target_compile_features(clio_options INTERFACE cxx_std_23) # Clio needs c++23 but deps can remain c++20 for now
 target_include_directories(clio_options INTERFACE ${CMAKE_SOURCE_DIR}/src)
 
 # Set coverage build options

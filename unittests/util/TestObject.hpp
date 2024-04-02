@@ -383,3 +383,27 @@ CreateDidObject(std::string_view accountId, std::string_view didDoc, std::string
 
 [[nodiscard]] ripple::Currency
 CreateLPTCurrency(std::string_view assetCurrency, std::string_view asset2Currency);
+
+[[nodiscard]] ripple::STObject
+CreateOraclePriceData(
+    uint64_t assetPrice,
+    ripple::Currency baseAssetCurrency,
+    ripple::Currency quoteAssetCurrency,
+    uint8_t scale
+);
+
+[[nodiscard]] ripple::STArray
+CreatePriceDataSeries(std::vector<ripple::STObject> const& series);
+
+[[nodiscard]] ripple::STObject
+CreateOracleObject(
+    std::string_view accountId,
+    std::string_view provider,
+    uint64_t ownerNode,
+    uint32_t lastUpdateTime,
+    ripple::Blob uri,
+    ripple::Blob assetClass,
+    uint32_t previousTxSeq,
+    ripple::uint256 previousTxId,
+    ripple::STArray priceDataSeries
+);

@@ -1,13 +1,12 @@
-FROM ubuntu:focal
+FROM rippleci/clio_gcc:12.3.0
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 
 SHELL ["/bin/bash", "-c"]
 USER root
-WORKDIR /root/
+WORKDIR /root
 
-ENV GCC_VERSION=11 \
-    CCACHE_VERSION=4.8.3 \
+ENV CCACHE_VERSION=4.8.3 \
     LLVM_TOOLS_VERSION=17 \
     GH_VERSION=2.40.0 \
     DOXYGEN_VERSION=1.10.0
@@ -15,28 +14,16 @@ ENV GCC_VERSION=11 \
 # Add repositories
 RUN apt-get -qq update \
     && apt-get -qq install -y --no-install-recommends --no-install-suggests gnupg wget curl software-properties-common \
-    && add-apt-repository -y ppa:ubuntu-toolchain-r/test \
-    && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - \
-    && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
     && echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-${LLVM_TOOLS_VERSION} main" >> /etc/apt/sources.list \
     && wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 
 # Install packages
 RUN apt update -qq \
-    && apt install -y --no-install-recommends --no-install-suggests cmake python3 python3-pip sudo git git-lfs \
-    ninja-build make pkg-config libzstd-dev libzstd1 g++-${GCC_VERSION} flex bison jq graphviz \
-    clang-format-${LLVM_TOOLS_VERSION} clang-tidy-${LLVM_TOOLS_VERSION} clang-tools-${LLVM_TOOLS_VERSION} \
-    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} 100 \
-    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-${GCC_VERSION} 100 \
-    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} 100 \
-    && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-${GCC_VERSION} 100 \
-    && update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-${GCC_VERSION} 100 \
-    && update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-${GCC_VERSION} 100 \
-    && update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-${GCC_VERSION} 100 \
+    && apt install -y --no-install-recommends --no-install-suggests python3 python3-pip git git-lfs make ninja-build flex bison jq graphviz \
+    clang-format-${LLVM_TOOLS_VERSION} clang-tidy-${LLVM_TOOLS_VERSION} clang-tools-${LLVM_TOOLS_VERSION} \    
     && update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${LLVM_TOOLS_VERSION} 100 \
-    && apt-get clean && apt remove -y software-properties-common \
-    && pip3 install  -q --upgrade --no-cache-dir pip \
-    && pip3 install  -q --no-cache-dir conan==1.62 gcovr cmake-format
+    && pip3 install -q --upgrade --no-cache-dir pip && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake cmake-format \
+    && apt-get clean && apt remove -y software-properties-common
 
 WORKDIR /tmp
 
@@ -46,34 +33,37 @@ RUN wget "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/
     && cd "ccache-${CCACHE_VERSION}" \
     && mkdir build && cd build \
     && cmake -GNinja -DCMAKE_BUILD_TYPE=Release .. \
-    && cmake --build . --target install
+    && cmake --build . --target install \
+    && rm -rf /tmp/* /var/tmp/*
 
-# Install doxygen from sounce
+# Install doxygen from source
 RUN wget "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION//./_}/doxygen-${DOXYGEN_VERSION}.src.tar.gz" \
     && tar xf "doxygen-${DOXYGEN_VERSION}.src.tar.gz" \
     && cd "doxygen-${DOXYGEN_VERSION}" \
     && mkdir build && cd build \
     && cmake -GNinja -DCMAKE_BUILD_TYPE=Release .. \
-    && cmake --build . --target install
+    && cmake --build . --target install \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install gh
 RUN wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
     && tar xf gh_${GH_VERSION}_linux_${TARGETARCH}.tar.gz \
-    && mv gh_${GH_VERSION}_linux_${TARGETARCH}/bin/gh /usr/bin/gh
+    && mv gh_${GH_VERSION}_linux_${TARGETARCH}/bin/gh /usr/bin/gh \
+    && rm -rf /tmp/* /var/tmp/*
 
-# Clean up
-RUN rm -rf  /tmp/* /var/tmp/*
+# Libstdc++ from gcc-12 got lost, probably via apt update. Let's recover it
+RUN update-alternatives --install /usr/bin/ccache ccache /usr/local/bin/ccache 100 \
+    && update-alternatives --auto libstdc++.so.6
 
-WORKDIR /root/
+WORKDIR /root
 # Using root by default is not very secure but github checkout action doesn't work with any other user
 # https://github.com/actions/checkout/issues/956
 # And Github Actions doc recommends using root
 # https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
 
 # Setup conan
+# Note: intentionally leaving cppstd=20
 RUN conan profile new default --detect \
     && conan profile update settings.compiler.cppstd=20 default \
     && conan profile update settings.compiler.libcxx=libstdc++11 default \
     && conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
-
-

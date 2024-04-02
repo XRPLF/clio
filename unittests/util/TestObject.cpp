@@ -1025,3 +1025,62 @@ CreateLPTCurrency(std::string_view assetCurrency, std::string_view asset2Currenc
         ripple::to_currency(std::string(assetCurrency)), ripple::to_currency(std::string(asset2Currency))
     );
 }
+
+ripple::STObject
+CreateOraclePriceData(
+    uint64_t assetPrice,
+    ripple::Currency baseAssetCurrency,
+    ripple::Currency quoteAssetCurrency,
+    uint8_t scale
+)
+{
+    auto priceData = ripple::STObject(ripple::sfPriceData);
+    priceData.setFieldU64(ripple::sfAssetPrice, assetPrice);
+    priceData.setFieldCurrency(ripple::sfBaseAsset, ripple::STCurrency{ripple::sfBaseAsset, baseAssetCurrency});
+    priceData.setFieldCurrency(ripple::sfQuoteAsset, ripple::STCurrency{ripple::sfQuoteAsset, quoteAssetCurrency});
+    priceData.setFieldU8(ripple::sfScale, scale);
+
+    return priceData;
+}
+
+ripple::STArray
+CreatePriceDataSeries(std::vector<ripple::STObject> const& series)
+{
+    auto priceDataSeries = ripple::STArray{series.size()};
+
+    for (auto& data : series) {
+        auto serializer = data.getSerializer();
+        priceDataSeries.add(serializer);
+    }
+
+    return priceDataSeries;
+}
+
+ripple::STObject
+CreateOracleObject(
+    std::string_view accountId,
+    std::string_view provider,
+    uint64_t ownerNode,
+    uint32_t lastUpdateTime,
+    ripple::Blob uri,
+    ripple::Blob assetClass,
+    uint32_t previousTxSeq,
+    ripple::uint256 previousTxId,
+    ripple::STArray priceDataSeries
+)
+{
+    auto ledgerObject = ripple::STObject(ripple::sfLedgerEntry);
+    ledgerObject.setFieldU16(ripple::sfLedgerEntryType, ripple::ltORACLE);
+    ledgerObject.setFieldU32(ripple::sfFlags, 0);
+    ledgerObject.setAccountID(ripple::sfOwner, GetAccountIDWithString(accountId));
+    ledgerObject.setFieldVL(ripple::sfProvider, ripple::Blob{provider.begin(), provider.end()});
+    ledgerObject.setFieldU64(ripple::sfOwnerNode, ownerNode);
+    ledgerObject.setFieldU32(ripple::sfLastUpdateTime, lastUpdateTime);
+    ledgerObject.setFieldVL(ripple::sfURI, uri);
+    ledgerObject.setFieldVL(ripple::sfAssetClass, assetClass);
+    ledgerObject.setFieldU32(ripple::sfPreviousTxnLgrSeq, previousTxSeq);
+    ledgerObject.setFieldH256(ripple::sfPreviousTxnID, previousTxId);
+    ledgerObject.setFieldArray(ripple::sfPriceDataSeries, priceDataSeries);
+
+    return ledgerObject;
+}

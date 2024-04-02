@@ -3,7 +3,8 @@ on:
   push:
     branches: [develop]
     paths:
-      - 'docker/ci/**'
+      - 'docker/ci/**'        # CI image must update when either its dockerfile changes
+      - 'docker/compilers/**' # or any compilers changed and were pushed by hand
       - .github/workflows/update_docker_ci.yml
   workflow_dispatch:
 
@@ -27,7 +28,7 @@ jobs:
           images: rippleci/clio_ci
           tags: |
             type=raw,value=latest
-            type=raw,value=gcc_11
+            type=raw,value=gcc_12
             type=raw,value=${{ env.GITHUB_SHA }}
 
       - name: Build and push

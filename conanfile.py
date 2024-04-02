@@ -1,7 +1,6 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 
-
 class Clio(ConanFile):
     name = 'clio'
     license = 'ISC'
@@ -42,6 +41,7 @@ class Clio(ConanFile):
         'docs': False,
         
         'xrpl/*:tests': False,
+        'xrpl/*:rocksdb': False,
         'cassandra-cpp-driver/*:shared': False,
         'date/*:header_only': True,
         'grpc/*:shared': False,

@@ -1,0 +1,41 @@
+FROM ubuntu:focal as build
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TARGETARCH
+
+SHELL ["/bin/bash", "-c"]
+USER root
+WORKDIR /root
+
+ENV GCC_VERSION=12.3.0  
+
+RUN apt update -qq \
+    && apt install -qq -y --no-install-recommends --no-install-suggests \
+    gnupg wget software-properties-common build-essential
+
+WORKDIR /root
+
+# Install gcc-12 from source
+RUN wget "https://mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz" \
+    && tar xf "gcc-${GCC_VERSION}.tar.gz" \
+    && cd "gcc-${GCC_VERSION}" \
+    && ./contrib/download_prerequisites \
+    && mkdir build && cd build \
+    && ../configure --enable-languages=c,c++ --disable-multilib --with-build-config='bootstrap-O3' --prefix='/opt'  \
+    && make -j$(nproc) profiledbootstrap && make install-strip \
+    && rm -rf /root/*
+
+FROM ubuntu:focal as gcc
+WORKDIR /root
+
+RUN apt update -qq && apt autoclean -y && apt autoremove -y 
+COPY --from=build /opt /opt
+
+# Rewire to use gcc-12
+RUN update-alternatives --install /usr/bin/g++ g++ /opt/bin/g++ 100 \
+    && update-alternatives --install /usr/bin/c++ c++ /opt/bin/g++ 100 \
+    && update-alternatives --install /usr/bin/gcc gcc /opt/bin/gcc 100 \
+    && update-alternatives --install /usr/bin/cc cc /opt/bin/gcc 100 \
+    && update-alternatives --install /usr/bin/gcov gcov /opt/bin/gcov 100 \
+    && update-alternatives --install /usr/bin/gcov-dump gcov-dump /opt/bin/gcov-dump 100 \
+    && update-alternatives --install /usr/bin/gcov-tool gcov-tool /opt/bin/gcov-tool 100 \
+    && update-alternatives --install /lib/*-linux-gnu/libstdc++.so.6 libstdc++.so.6 /opt/lib64/libstdc++.so.6 100
