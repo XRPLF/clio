@@ -194,6 +194,7 @@ private:
             rpc::logDuration(*context, us);
 
             boost::json::object response;
+
             if (auto const status = std::get_if<rpc::Status>(&result)) {
                 // note: error statuses are counted/notified in buildResponse itself
                 response = web::impl::ErrorHelper(connection, request).composeError(*status);
@@ -246,7 +247,7 @@ private:
                 }
             }
 
-            boost::json::array warnings;
+            boost::json::array warnings = std::move(result.warnings);
             warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_CLIO));
 
             if (etl_->lastCloseAgeSeconds() >= 60)

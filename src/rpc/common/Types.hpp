@@ -23,6 +23,7 @@
 #include "util/Expected.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
@@ -33,6 +34,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <variant>
 
 namespace etl {
@@ -71,7 +73,20 @@ using HandlerReturnType = util::Expected<OutputType, Status>;
 /**
  * @brief The final return type out of RPC engine
  */
-using ReturnType = util::Expected<boost::json::value, Status>;
+struct ReturnType {
+    ReturnType(util::Expected<boost::json::value, Status> result, boost::json::array warnings = {})
+        : result{std::move(result)}, warnings{std::move(warnings)}
+    {
+    }
+
+    operator bool() const
+    {
+        return result.operator bool();
+    }
+
+    util::Expected<boost::json::value, Status> result;
+    boost::json::array warnings;
+};
 
 /**
  * @brief An alias for a const reference to @ref RpcSpec.
@@ -97,7 +112,24 @@ struct Context {
 /**
  * @brief Result type used to return responses or error statuses to the Webserver subsystem.
  */
-using Result = std::variant<Status, boost::json::object>;
+struct Result {
+    explicit Result(ReturnType returnType)
+    {
+        if (returnType) {
+            response = std::move(returnType.result).value().as_object();
+        } else {
+            response = std::move(returnType.result).error();
+        }
+        warnings = std::move(returnType.warnings);
+    }
+
+    explicit Result(Status status) : response{std::move(status)}
+    {
+    }
+
+    std::variant<Status, boost::json::object> response;
+    boost::json::array warnings;
+};
 
 /**
  * @brief A cursor object used to traverse nodes owned by an account.

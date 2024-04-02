@@ -61,7 +61,7 @@ getWarningInfo(WarningCode code)
         {warnRPC_RATE_LIMIT, "You are about to be rate limited"},
         {warnRPC_DEPRECATED,
          "Some fields from your request are deprecated. Please check the documentation at "
-         "https://xrpl.org/docs/references/http-websocket-apis/ and  update your request."}
+         "https://xrpl.org/docs/references/http-websocket-apis/ and update your request."}
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
@@ -72,12 +72,12 @@ getWarningInfo(WarningCode code)
 }
 
 boost::json::object
-makeWarning(WarningCode code, std::optional<std::string_view> customMessage)
+makeWarning(WarningCode code)
 {
     auto json = boost::json::object{};
     auto const& info = getWarningInfo(code);
     json["id"] = code;
-    json["message"] = customMessage.value_or(info.message);
+    json["message"] = info.message;
     return json;
 }
 

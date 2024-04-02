@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "rpc/Errors.hpp"
+#include "rpc/common/Checkers.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/value.hpp>
@@ -26,6 +28,7 @@
 #include <boost/json/value_to.hpp>
 
 #include <cstdint>
+#include <optional>
 #include <string>
 
 namespace rpc {
@@ -51,10 +54,20 @@ concept SomeModifier = requires(T a, boost::json::value lval) {
 };
 
 /**
+ * @brief Specifies what a check used with @ref rpc::FieldSpec must provide.
+ */
+template <typename T>
+concept SomeCheck = requires(T a, boost::json::value lval) {
+    {
+        a.check(lval, std::string{})
+    } -> std::same_as<std::optional<check::Warning>>;
+};
+
+/**
  * @brief The requirements of a processor to be used with @ref rpc::FieldSpec.
  */
 template <typename T>
-concept SomeProcessor = (SomeRequirement<T> or SomeModifier<T>);
+concept SomeProcessor = (SomeRequirement<T> or SomeModifier<T> or SomeCheck<T>);
 
 /**
  * @brief A process function that expects both some Input and a Context.

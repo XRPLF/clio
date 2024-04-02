@@ -275,11 +275,10 @@ getErrorInfo(ClioError code);
  * @brief Generate JSON from a @ref rpc::WarningCode.
  *
  * @param code The warning code
- * @param customMessage A custom error message
  * @return The JSON output
  */
 boost::json::object
-makeWarning(WarningCode code, std::optional<std::string_view> customMessage = std::nullopt);
+makeWarning(WarningCode code);
 
 /**
  * @brief Generate JSON from a @ref rpc::Status.
