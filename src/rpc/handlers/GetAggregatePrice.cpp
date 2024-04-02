@@ -223,7 +223,7 @@ GetAggregatePriceHandler::tracebackOracleObject(
             return;
 
         noOracleFound = true;
-        auto [_, meta] = deserializeTxPlusMeta(*prevTx);
+        auto const [_, meta] = deserializeTxPlusMeta(*prevTx);
 
         for (ripple::STObject const& node : meta->getFieldArray(ripple::sfAffectedNodes)) {
             if (node.getFieldU16(ripple::sfLedgerEntryType) != ripple::ltORACLE) {
