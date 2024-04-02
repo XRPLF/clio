@@ -30,7 +30,6 @@
 #include <functional>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -40,6 +39,8 @@ template <typename>
 static constexpr bool unsupported_v = false;
 
 using FieldSpecProcessor = std::function<MaybeError(boost::json::value&)>;
+
+static FieldSpecProcessor const EMPTY_FIELD_PROCESSOR = [](boost::json::value&) -> MaybeError { return {}; };
 
 template <SomeProcessor... Processors>
 [[nodiscard]] FieldSpecProcessor
@@ -61,8 +62,6 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
                 } else if constexpr (SomeModifier<decltype(*req)>) {
                     if (auto const res = req->modify(j, key); not res)
                         firstFailure = res.error();
-                } else if constexpr (SomeCheck<decltype(*req)>) {
-                    // Checks generate warnings instead of errors so they are skipped here
                 } else {
                     static_assert(unsupported_v<decltype(*req)>);
                 }
@@ -79,25 +78,20 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
 
 using FieldChecker = std::function<check::Warnings(boost::json::value const&)>;
 
-template <SomeProcessor... Processors>
+static FieldChecker const EMPTY_FIELD_CHECKER = [](boost::json::value const&) -> check::Warnings { return {}; };
+
+template <SomeCheck... Checks>
 [[nodiscard]] FieldChecker
-makeFieldChecker(std::string const& key, Processors&&... procs)
+makeFieldChecker(std::string const& key, Checks&&... checks)
 {
-    return [key, ... proc = std::forward<Processors>(procs)](boost::json::value const& j) -> check::Warnings {
+    // j is not used here if there is no checks in Processors
+    return [key, ... checks = std::forward<Checks>(checks)](boost::json::value const& j) -> check::Warnings {
         check::Warnings warnings;
         // This expands in order of Requirements and collects all warnings into a WarningsCollection
         (
-            [&j, &key, &warnings, req = &proc]() {
-                if constexpr (SomeCheck<decltype(*req)>) {
-                    if (auto res = req->check(j, key); res)
-                        warnings.push_back(std::move(res).value());
-                } else if constexpr (SomeRequirement<decltype(*req)>) {
-                    // Do nothing for requirements
-                } else if constexpr (SomeModifier<decltype(*req)>) {
-                    // Do nothing for modifiers
-                } else {
-                    static_assert(unsupported_v<decltype(*req)>);
-                }
+            [&j, &key, &warnings, req = &checks]() {
+                if (auto res = req->check(j, key); res)
+                    warnings.push_back(std::move(res).value());
             }(),
             ...
         );

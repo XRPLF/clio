@@ -245,7 +245,7 @@ TEST_P(NFTHistoryParameterTest, InvalidParams)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -305,12 +305,12 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
-        EXPECT_FALSE(output->as_object().contains("limit"));
+        EXPECT_EQ(output.result->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), MINSEQ + 1);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
+        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
+        EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
 }
 
@@ -450,7 +450,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), boost::json::parse(OUTPUT));
+        EXPECT_EQ(output.result.value(), boost::json::parse(OUTPUT));
     });
 }
 
@@ -605,7 +605,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
         ));
         auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), boost::json::parse(OUTPUT));
+        EXPECT_EQ(output.result.value(), boost::json::parse(OUTPUT));
     });
 }
 
@@ -639,12 +639,12 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
-        EXPECT_FALSE(output->as_object().contains("limit"));
+        EXPECT_EQ(output.result->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), MINSEQ);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), MAXSEQ);
+        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
+        EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
 }
 
@@ -682,12 +682,12 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
-        EXPECT_FALSE(output->as_object().contains("limit"));
+        EXPECT_EQ(output.result->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), MINSEQ);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), MAXSEQ);
+        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
+        EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
 }
 
@@ -725,26 +725,26 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
+        EXPECT_EQ(output.result->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), MINSEQ);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), MAXSEQ);
+        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_EQ(
-            output->at("transactions").as_array()[0].as_object().at("meta").as_string(),
+            output.result->at("transactions").as_array()[0].as_object().at("meta").as_string(),
             "201C00000000F8E5110061E762400000000000001681144B4E9C06F24296074F7B"
             "C48F92A97916C6DC5EA9E1E1E5110061E76240000000000000178114D31252CF90"
             "2EF8DD8451243869B38667CBD89DF3E1E1F1031000"
         );
         EXPECT_EQ(
-            output->at("transactions").as_array()[0].as_object().at("tx_blob").as_string(),
+            output.result->at("transactions").as_array()[0].as_object().at("tx_blob").as_string(),
             "120000240000002061400000000000000168400000000000000173047465737481"
             "144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451"
             "243869B38667CBD89DF3"
         );
-        EXPECT_EQ(output->at("transactions").as_array()[0].as_object().at("date").as_uint64(), 1);
+        EXPECT_EQ(output.result->at("transactions").as_array()[0].as_object().at("date").as_uint64(), 1);
 
-        EXPECT_FALSE(output->as_object().contains("limit"));
+        EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
 }
 
@@ -781,26 +781,26 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
         ));
         auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
+        EXPECT_EQ(output.result->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), MINSEQ);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), MAXSEQ);
+        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
         EXPECT_EQ(
-            output->at("transactions").as_array()[0].as_object().at("meta_blob").as_string(),
+            output.result->at("transactions").as_array()[0].as_object().at("meta_blob").as_string(),
             "201C00000000F8E5110061E762400000000000001681144B4E9C06F24296074F7B"
             "C48F92A97916C6DC5EA9E1E1E5110061E76240000000000000178114D31252CF90"
             "2EF8DD8451243869B38667CBD89DF3E1E1F1031000"
         );
         EXPECT_EQ(
-            output->at("transactions").as_array()[0].as_object().at("tx_blob").as_string(),
+            output.result->at("transactions").as_array()[0].as_object().at("tx_blob").as_string(),
             "120000240000002061400000000000000168400000000000000173047465737481"
             "144B4E9C06F24296074F7BC48F92A97916C6DC5EA98314D31252CF902EF8DD8451"
             "243869B38667CBD89DF3"
         );
-        EXPECT_EQ(output->at("transactions").as_array()[0].as_object().at("date").as_uint64(), 1);
+        EXPECT_EQ(output.result->at("transactions").as_array()[0].as_object().at("date").as_uint64(), 1);
 
-        EXPECT_FALSE(output->as_object().contains("limit"));
+        EXPECT_FALSE(output.result->as_object().contains("limit"));
     });
 }
 
@@ -836,12 +836,12 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ);
-        EXPECT_EQ(output->at("limit").as_uint64(), 2);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
+        EXPECT_EQ(output.result->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), MINSEQ);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), MAXSEQ);
+        EXPECT_EQ(output.result->at("limit").as_uint64(), 2);
+        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
     });
 }
 
@@ -881,12 +881,12 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_FALSE(output->as_object().contains("limit"));
-        EXPECT_FALSE(output->as_object().contains("marker"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 1);
+        EXPECT_EQ(output.result->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), MAXSEQ - 1);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
+        EXPECT_FALSE(output.result->as_object().contains("limit"));
+        EXPECT_FALSE(output.result->as_object().contains("marker"));
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
     });
 }
 
@@ -909,7 +909,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerIntIndex)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -934,7 +934,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerStringIndex)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -976,12 +976,12 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_FALSE(output->as_object().contains("limit"));
-        EXPECT_FALSE(output->as_object().contains("marker"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 1);
+        EXPECT_EQ(output.result->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), MAXSEQ - 1);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
+        EXPECT_FALSE(output.result->as_object().contains("limit"));
+        EXPECT_FALSE(output.result->as_object().contains("marker"));
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
     });
 }
 
@@ -1019,12 +1019,12 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 2);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(output->at("transactions").as_array().size(), 1);
-        EXPECT_FALSE(output->as_object().contains("limit"));
-        EXPECT_FALSE(output->as_object().contains("marker"));
+        EXPECT_EQ(output.result->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), MINSEQ + 2);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
+        EXPECT_FALSE(output.result->as_object().contains("limit"));
+        EXPECT_FALSE(output.result->as_object().contains("marker"));
     });
 }
 
@@ -1062,12 +1062,12 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 2);
-        EXPECT_EQ(output->at("transactions").as_array().size(), 1);
-        EXPECT_FALSE(output->as_object().contains("limit"));
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output.result->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), MINSEQ + 1);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), MAXSEQ - 2);
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 1);
+        EXPECT_FALSE(output.result->as_object().contains("limit"));
+        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
     });
 }
 
@@ -1107,11 +1107,11 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
         ));
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("nft_id").as_string(), NFTID);
-        EXPECT_EQ(output->at("ledger_index_min").as_uint64(), MINSEQ + 1);
-        EXPECT_EQ(output->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
-        EXPECT_EQ(output->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
-        EXPECT_EQ(output->at("transactions").as_array().size(), 2);
-        EXPECT_EQ(output->as_object().at("limit").as_uint64(), NFTHistoryHandler::LIMIT_MAX);
+        EXPECT_EQ(output.result->at("nft_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("ledger_index_min").as_uint64(), MINSEQ + 1);
+        EXPECT_EQ(output.result->at("ledger_index_max").as_uint64(), MAXSEQ - 1);
+        EXPECT_EQ(output.result->at("marker").as_object(), json::parse(R"({"ledger":12,"seq":34})"));
+        EXPECT_EQ(output.result->at("transactions").as_array().size(), 2);
+        EXPECT_EQ(output.result->as_object().at("limit").as_uint64(), NFTHistoryHandler::LIMIT_MAX);
     });
 }

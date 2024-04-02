@@ -587,7 +587,7 @@ TEST_P(SubscribeParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -599,7 +599,7 @@ TEST_F(RPCSubscribeHandlerTest, EmptyResponse)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(json::parse(R"({})"), Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
     });
 }
 
@@ -615,7 +615,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("transactions_proposed").as_uint64(), 1);
@@ -660,7 +660,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object(), json::parse(expectedOutput));
+        EXPECT_EQ(output.result->as_object(), json::parse(expectedOutput));
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("ledger").as_uint64(), 1);
@@ -681,7 +681,7 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // filter the duplicates
@@ -703,7 +703,7 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // filter the duplicates
@@ -736,7 +736,7 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("books").as_uint64(), 1);
@@ -769,7 +769,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
@@ -936,10 +936,10 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("bids").as_array().size(), 10);
-        EXPECT_EQ(output->as_object().at("asks").as_array().size(), 10);
-        EXPECT_EQ(output->as_object().at("bids").as_array()[0].as_object(), json::parse(expectedOffer));
-        EXPECT_EQ(output->as_object().at("asks").as_array()[0].as_object(), json::parse(expectedReversedOffer));
+        EXPECT_EQ(output.result->as_object().at("bids").as_array().size(), 10);
+        EXPECT_EQ(output.result->as_object().at("asks").as_array().size(), 10);
+        EXPECT_EQ(output.result->as_object().at("bids").as_array()[0].as_object(), json::parse(expectedOffer));
+        EXPECT_EQ(output.result->as_object().at("asks").as_array()[0].as_object(), json::parse(expectedReversedOffer));
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
@@ -1079,8 +1079,8 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("offers").as_array().size(), 10);
-        EXPECT_EQ(output->as_object().at("offers").as_array()[0].as_object(), json::parse(expectedOffer));
+        EXPECT_EQ(output.result->as_object().at("offers").as_array().size(), 10);
+        EXPECT_EQ(output.result->as_object().at("offers").as_array()[0].as_object(), json::parse(expectedOffer));
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book

@@ -118,7 +118,7 @@ TEST_P(AMMInfoParameterTest, InvalidParams)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -153,7 +153,7 @@ TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
@@ -178,7 +178,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
         EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
     });
@@ -204,7 +204,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
         EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
     });
@@ -232,7 +232,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFoundMissingAmmField)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
@@ -269,7 +269,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
@@ -310,7 +310,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
@@ -386,7 +386,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
         ));
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expectedResult);
+        EXPECT_EQ(output.result.value(), expectedResult);
     });
 }
 
@@ -470,7 +470,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
         ));
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expectedResult);
+        EXPECT_EQ(output.result.value(), expectedResult);
     });
 }
 
@@ -544,7 +544,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
         ));
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expectedResult);
+        EXPECT_EQ(output.result.value(), expectedResult);
     });
 }
 
@@ -623,7 +623,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
         ));
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expectedResult);
+        EXPECT_EQ(output.result.value(), expectedResult);
     });
 }
 
@@ -714,7 +714,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
         ));
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expectedResult);
+        EXPECT_EQ(output.result.value(), expectedResult);
     });
 }
 
@@ -806,7 +806,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
         ));
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expectedResult);
+        EXPECT_EQ(output.result.value(), expectedResult);
     });
 }
 
@@ -883,7 +883,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
         ));
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expectedResult);
+        EXPECT_EQ(output.result.value(), expectedResult);
     });
 }
 
@@ -976,7 +976,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
         ));
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expectedResult);
+        EXPECT_EQ(output.result.value(), expectedResult);
     });
 }
 
@@ -1075,7 +1075,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
         ));
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expectedResult);
+        EXPECT_EQ(output.result.value(), expectedResult);
     });
 }
 
@@ -1186,7 +1186,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
         ));
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expectedResult);
+        EXPECT_EQ(output.result.value(), expectedResult);
     });
 }
 
@@ -1298,6 +1298,6 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
         ));
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expectedResult);
+        EXPECT_EQ(output.result.value(), expectedResult);
     });
 }

@@ -17,6 +17,7 @@
 //==============================================================================
 
 #include "rpc/Errors.hpp"
+#include "rpc/common/Types.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockETLService.hpp"
 #include "util/MockPrometheus.hpp"
@@ -118,7 +119,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPDefaultPath)
                                         ]
                                     })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(boost::json::parse(result).as_object()));
+        .WillOnce(testing::Return(rpc::Result{boost::json::parse(result).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
@@ -153,7 +154,7 @@ TEST_F(WebRPCServerHandlerTest, WsNormalPath)
                                         ]
                                     })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(boost::json::parse(result).as_object()));
+        .WillOnce(testing::Return(rpc::Result{boost::json::parse(result).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
@@ -192,7 +193,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedPath)
                                         ]
                                     })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(boost::json::parse(result).as_object()));
+        .WillOnce(testing::Return(rpc::Result{boost::json::parse(result).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
@@ -236,7 +237,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPForwardedErrorPath)
                                         ]
                                     })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(boost::json::parse(result).as_object()));
+        .WillOnce(testing::Return(rpc::Result{boost::json::parse(result).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
@@ -278,7 +279,7 @@ TEST_F(WebRPCServerHandlerTest, WsForwardedPath)
                                         ]
                                     })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(boost::json::parse(result).as_object()));
+        .WillOnce(testing::Return(rpc::Result{boost::json::parse(result).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
@@ -323,7 +324,7 @@ TEST_F(WebRPCServerHandlerTest, WsForwardedErrorPath)
                                         ]
                                     })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(boost::json::parse(result).as_object()));
+        .WillOnce(testing::Return(rpc::Result{boost::json::parse(result).as_object()}));
 
     // Forwarded errors counted as successful:
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
@@ -370,7 +371,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPErrorPath)
                                             ]
                                         })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}));
+        .WillOnce(testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}}));
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
@@ -412,7 +413,7 @@ TEST_F(WebRPCServerHandlerTest, WsErrorPath)
                                             "api_version": 2
                                         })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}));
+        .WillOnce(testing::Return(rpc::Result{rpc::Status{rpc::RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}}));
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(45));
 
@@ -746,7 +747,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPOutDated)
                                         ]
                                     })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(boost::json::parse(result).as_object()));
+        .WillOnce(testing::Return(rpc::Result{boost::json::parse(result).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(61));
@@ -784,7 +785,7 @@ TEST_F(WebRPCServerHandlerTest, WsOutdated)
                                         ]
                                     })";
     EXPECT_CALL(*rpcEngine, buildResponse(testing::_))
-        .WillOnce(testing::Return(boost::json::parse(result).as_object()));
+        .WillOnce(testing::Return(rpc::Result{boost::json::parse(result).as_object()}));
     EXPECT_CALL(*rpcEngine, notifyComplete("server_info", testing::_)).Times(1);
 
     EXPECT_CALL(*etl, lastCloseAgeSeconds()).WillOnce(testing::Return(61));

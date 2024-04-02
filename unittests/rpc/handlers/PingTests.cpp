@@ -36,6 +36,6 @@ TEST_F(RPCPingHandlerTest, Default)
         auto const handler = AnyHandler{PingHandler{}};
         auto const output = handler.process(boost::json::parse(R"({})"), Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), boost::json::parse(R"({})"));
+        EXPECT_EQ(output.result.value(), boost::json::parse(R"({})"));
     });
 }

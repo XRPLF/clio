@@ -1566,7 +1566,7 @@ TEST_P(LedgerEntryParameterTest, InvalidParams)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -1606,7 +1606,7 @@ TEST_P(IndexTest, InvalidIndexUint256)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "malformedRequest");
         EXPECT_EQ(err.at("error_message").as_string(), "Malformed request.");
     });
@@ -1626,7 +1626,7 @@ TEST_P(IndexTest, InvalidIndexNotString)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "malformedRequest");
         EXPECT_EQ(err.at("error_message").as_string(), "Malformed request.");
     });
@@ -1655,7 +1655,7 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "entryNotFound");
     });
 }
@@ -2150,14 +2150,14 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value().at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output.value().at("ledger_index").as_uint64(), RANGEMAX);
+        EXPECT_EQ(output.result.value().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result.value().at("ledger_index").as_uint64(), RANGEMAX);
         EXPECT_EQ(
-            output.value().at("node_binary").as_string(),
+            output.result.value().at("node_binary").as_string(),
             ripple::strHex(testBundle.mockedEntity.getSerializer().peekData())
         );
         EXPECT_EQ(
-            ripple::uint256(boost::json::value_to<std::string>(output.value().at("index")).data()),
+            ripple::uint256(boost::json::value_to<std::string>(output.result.value().at("index")).data()),
             testBundle.expectedIndex
         );
     });
@@ -2209,7 +2209,7 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(OUT));
     });
 }
 
@@ -2237,7 +2237,7 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "unexpectedLedgerType");
     });
 }
@@ -2261,7 +2261,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -2286,7 +2286,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -2311,7 +2311,7 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -2324,7 +2324,7 @@ TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion2)
         auto const req = json::parse(R"({})");
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
     });
@@ -2337,7 +2337,7 @@ TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion1)
         auto const req = json::parse(R"({})");
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "unknownOption");
         EXPECT_EQ(err.at("error_message").as_string(), "Unknown option.");
     });

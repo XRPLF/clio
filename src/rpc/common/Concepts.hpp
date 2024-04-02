@@ -67,7 +67,7 @@ concept SomeCheck = requires(T a, boost::json::value lval) {
  * @brief The requirements of a processor to be used with @ref rpc::FieldSpec.
  */
 template <typename T>
-concept SomeProcessor = (SomeRequirement<T> or SomeModifier<T> or SomeCheck<T>);
+concept SomeProcessor = (SomeRequirement<T> or SomeModifier<T>);
 
 /**
  * @brief A process function that expects both some Input and a Context.

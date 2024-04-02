@@ -160,7 +160,7 @@ TEST_P(AccountOfferParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -186,7 +186,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaHash)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -213,7 +213,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -240,7 +240,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -266,7 +266,7 @@ TEST_F(RPCAccountOffersHandlerTest, AccountNotFound)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
@@ -344,7 +344,7 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -394,8 +394,8 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), 10);
-        EXPECT_EQ(output->at("marker").as_string(), fmt::format("{},0", INDEX1));
+        EXPECT_EQ(output.result->at("offers").as_array().size(), 10);
+        EXPECT_EQ(output.result->at("marker").as_string(), fmt::format("{},0", INDEX1));
     });
 }
 
@@ -450,8 +450,8 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), 19);
-        EXPECT_FALSE(output->as_object().contains("marker"));
+        EXPECT_EQ(output.result->at("offers").as_array().size(), 19);
+        EXPECT_FALSE(output.result->as_object().contains("marker"));
     });
 }
 
@@ -487,7 +487,7 @@ TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid marker.");
     });
@@ -544,7 +544,7 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MIN);
+        EXPECT_EQ(output.result->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MIN);
     });
 }
 
@@ -599,6 +599,6 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MAX);
+        EXPECT_EQ(output.result->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MAX);
     });
 }

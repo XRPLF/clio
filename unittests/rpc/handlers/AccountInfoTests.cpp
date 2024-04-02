@@ -124,7 +124,7 @@ TEST_P(AccountInfoParameterTest, InvalidParams)
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -144,7 +144,7 @@ TEST_F(AccountInfoParameterTest, ApiV1SignerListIsNotBool)
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -169,7 +169,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -193,7 +193,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -219,7 +219,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -245,7 +245,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Account not found.");
     });
@@ -272,7 +272,7 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "dbDeserialization");
         EXPECT_EQ(err.at("error_message").as_string(), "Database deserialization error.");
     });
@@ -308,7 +308,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "dbDeserialization");
         EXPECT_EQ(err.at("error_message").as_string(), "Database deserialization error.");
     });
@@ -412,7 +412,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 2});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -514,7 +514,7 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{.yield = yield, .apiVersion = 1});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -588,7 +588,7 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -618,7 +618,7 @@ TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_FALSE(output->as_object().contains("signer_lists"));
+        EXPECT_FALSE(output.result->as_object().contains("signer_lists"));
     });
 }
 
@@ -697,7 +697,7 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -772,6 +772,6 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }

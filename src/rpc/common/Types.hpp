@@ -126,6 +126,10 @@ struct Result {
     explicit Result(Status status) : response{std::move(status)}
     {
     }
+ 
+    explicit Result(boost::json::object response) : response{std::move(response)}
+    {
+    }
 
     std::variant<Status, boost::json::object> response;
     boost::json::array warnings;

@@ -47,9 +47,23 @@ struct FieldSpec final {
      */
     template <SomeProcessor... Processors>
     FieldSpec(std::string const& key, Processors&&... processors)
-        : processor_{impl::makeFieldProcessor<Processors...>(key, processors...)}
-        , checker_{impl::makeFieldChecker<Processors...>(key, std::forward<Processors>(processors)...)}
+        : processor_{impl::makeFieldProcessor<Processors...>(key, std::forward<Processors>(processors)...)}
+        , checker_{impl::EMPTY_FIELD_CHECKER}
 
+    {
+    }
+
+    /**
+     * @brief Construct a field specification out of a set of checkers.
+     *
+     * @tparam Checks The types of checkers
+     * @param key The key in a JSON object that the field validates
+     * @param checks The checks, each of them have to fulfil the @ref rpc::SomeCheck concept
+     */
+    template <SomeCheck... Checks>
+    FieldSpec(std::string const& key, Checks&&... checks)
+        : processor_{impl::EMPTY_FIELD_PROCESSOR}
+        , checker_{impl::makeFieldChecker<Checks...>(key, std::forward<Checks>(checks)...)}
     {
     }
 
