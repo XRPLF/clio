@@ -17,14 +17,10 @@
 */
 //==============================================================================
 
-#include "data/BackendInterface.hpp"
-#include "data/CassandraBackend.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
-#include "etl/NFTHelpers.hpp"
-#include "rpc/RPCHelpers.hpp"
 #include "util/Fixtures.hpp"
 #include "util/LedgerUtils.hpp"
 #include "util/MockPrometheus.hpp"
@@ -37,10 +33,8 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 #include <ripple/basics/Slice.h>
-#include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/LedgerHeader.h>
@@ -53,15 +47,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <map>
-#include <memory>
 #include <optional>
 #include <random>
 #include <string>
-#include <tuple>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 
 using namespace util;
 using namespace std;
@@ -469,7 +457,7 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_FALSE(obj);
         }
 
-        std::string accountBlobOld = accountBlob;
+        std::string const accountBlobOld = accountBlob;
         {
             lgrInfoNext.seq = lgrInfoNext.seq + 1;
             lgrInfoNext.parentHash = lgrInfoNext.hash;
@@ -667,7 +655,7 @@ TEST_F(BackendCassandraTest, Basic)
             EXPECT_EQ(ledgerInfoToBlob(*retLgr), ledgerInfoToBlob(lgrInfo));
             auto retTxns = backend->fetchAllTransactionsInLedger(seq, yield);
             for (auto [hash, txn, meta] : txns) {
-                bool found = false;
+                bool const found = false;
                 for (auto [retTxn, retMeta, retSeq, retDate] : retTxns) {
                     if (std::strncmp(
                             reinterpret_cast<const char*>(retTxn.data()),
@@ -733,7 +721,7 @@ TEST_F(BackendCassandraTest, Basic)
                 }
             }
 
-            data::LedgerPage page;
+            data::LedgerPage const page;
             std::vector<data::LedgerObject> retObjs;
             do {
                 uint32_t const limit = 10;
@@ -995,7 +983,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
             obj = backend->fetchLedgerObject(key256, lgrInfoOld.seq - 1, yield);
             EXPECT_FALSE(obj);
         }
-        std::string accountBlobOld = accountBlob;
+        std::string const accountBlobOld = accountBlob;
         {
             backend->startWrites();
             lgrInfoNext.seq = lgrInfoNext.seq + 1;
@@ -1182,7 +1170,7 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                     }
                 }
             }
-            data::LedgerPage page;
+            data::LedgerPage const page;
             std::vector<data::LedgerObject> retObjs;
             do {
                 uint32_t const limit = 10;

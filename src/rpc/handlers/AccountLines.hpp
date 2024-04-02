@@ -61,11 +61,11 @@ public:
      * @brief A struct to hold data for one line response
      */
     struct LineResponse {
-        std::string account;
-        std::string balance;
-        std::string currency;
-        std::string limit;
-        std::string limitPeer;
+        std::string account{};
+        std::string balance{};
+        std::string currency{};
+        std::string limit{};
+        std::string limitPeer{};
         uint32_t qualityIn{};
         uint32_t qualityOut{};
         bool noRipple{};
@@ -80,9 +80,9 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string account;
-        std::vector<LineResponse> lines;
-        std::string ledgerHash;
+        std::string account{};
+        std::vector<LineResponse> lines{};
+        std::string ledgerHash{};
         uint32_t ledgerIndex{};
         bool validated = true;  // should be sent via framework
         std::optional<std::string> marker;
@@ -93,7 +93,7 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string account;
+        std::string account{};
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
         std::optional<std::string> peer;

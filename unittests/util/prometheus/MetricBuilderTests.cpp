@@ -17,18 +17,11 @@
 */
 //==============================================================================
 
-#include "util/prometheus/Counter.hpp"
-#include "util/prometheus/Gauge.hpp"
-#include "util/prometheus/Histogram.hpp"
-#include "util/prometheus/MetricBase.hpp"
 #include "util/prometheus/MetricBuilder.hpp"
 
 #include <gtest/gtest.h>
 
-#include <cstdint>
-#include <memory>
 #include <string>
-#include <vector>
 
 using namespace util::prometheus;
 
@@ -36,7 +29,7 @@ TEST(MetricBuilderDeathTest, build)
 {
     std::string const name = "name";
     std::string const labelsString = "{label1=\"value1\"}";
-    MetricBuilder builder;
+    MetricBuilder const builder;
     for (auto const type :
          {MetricType::COUNTER_INT,
           MetricType::COUNTER_DOUBLE,

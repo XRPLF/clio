@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "data/cassandra/Error.hpp"
 #include "data/cassandra/impl/AsyncExecutor.hpp"
 #include "data/cassandra/impl/FakesAndMocks.hpp"
 #include "util/Fixtures.hpp"
@@ -29,8 +28,6 @@
 
 #include <atomic>
 #include <functional>
-#include <optional>
-#include <thread>
 #include <utility>
 
 using namespace data::cassandra;

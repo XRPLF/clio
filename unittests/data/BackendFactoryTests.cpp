@@ -24,11 +24,9 @@
 #include "util/config/Config.hpp"
 
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 
 #include <stdexcept>
-#include <string>
 
 namespace {
 constexpr auto keyspace = "factory_test";
