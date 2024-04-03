@@ -113,7 +113,7 @@ class HttpBase : public ConnectionBase {
 
 protected:
     boost::beast::flat_buffer buffer_;
-    http::request<http::string_body> req_;
+    http::request<http::string_body> req_{};
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
     util::Logger log_{"WebServer"};

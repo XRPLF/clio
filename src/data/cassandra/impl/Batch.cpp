@@ -23,12 +23,8 @@
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/ManagedObject.hpp"
 #include "data/cassandra/impl/Statement.hpp"
-#include "util/Expected.hpp"
 
 #include <cassandra.h>
-
-#include <stdexcept>
-#include <vector>
 
 namespace {
 constexpr auto batchDeleter = [](CassBatch* ptr) { cass_batch_free(ptr); };

@@ -21,13 +21,10 @@
 #include "web/impl/AdminVerificationStrategy.hpp"
 
 #include <boost/beast/http/field.hpp>
-#include <boost/beast/http/message.hpp>
-#include <boost/beast/http/string_body.hpp>
 #include <gtest/gtest.h>
 
 #include <optional>
 #include <string>
-#include <utility>
 
 namespace http = boost::beast::http;
 

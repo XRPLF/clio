@@ -25,10 +25,7 @@
 
 #include <functional>
 #include <stdexcept>
-#include <string>
 #include <string_view>
-#include <utility>
-#include <vector>
 
 namespace data::cassandra {
 
@@ -95,8 +92,8 @@ Handle::reconnect(std::string_view keyspace) const
     return asyncReconnect(keyspace).await();
 }
 
-std::vector<Handle::FutureType>
-Handle::asyncExecuteEach(std::vector<StatementType> const& statements) const
+static std::vector<Handle::FutureType>
+Handle::asyncExecuteEach(std::vector<StatementType> const& statements)
 {
     std::vector<Handle::FutureType> futures;
     futures.reserve(statements.size());
@@ -105,8 +102,8 @@ Handle::asyncExecuteEach(std::vector<StatementType> const& statements) const
     return futures;
 }
 
-Handle::MaybeErrorType
-Handle::executeEach(std::vector<StatementType> const& statements) const
+static Handle::MaybeErrorType
+Handle::executeEach(std::vector<StatementType> const& statements)
 {
     for (auto futures = asyncExecuteEach(statements); auto const& future : futures) {
         if (auto rc = future.await(); not rc)
@@ -140,8 +137,8 @@ Handle::asyncExecute(std::vector<StatementType> const& statements) const
     return cass_session_execute_batch(session_, Batch{statements});
 }
 
-Handle::MaybeErrorType
-Handle::execute(std::vector<StatementType> const& statements) const
+static Handle::MaybeErrorType
+Handle::execute(std::vector<StatementType> const& statements)
 {
     return asyncExecute(statements).await();
 }
@@ -153,7 +150,7 @@ Handle::asyncExecute(std::vector<StatementType> const& statements, std::function
 }
 
 Handle::PreparedStatementType
-Handle::prepare(std::string_view query) const
+Handle::prepare(std::string_view query)
 {
     Handle::FutureType const future = cass_session_prepare(session_, query.data());
     auto const rc = future.await();

@@ -52,9 +52,9 @@
  * @brief Account transactions, NFT transactions and NFT data bundled togeher.
  */
 struct FormattedTransactionsData {
-    std::vector<AccountTransactionsData> accountTxData;
-    std::vector<NFTTransactionsData> nfTokenTxData;
-    std::vector<NFTsData> nfTokensData;
+    std::vector<AccountTransactionsData> accountTxData{};
+    std::vector<NFTTransactionsData> nfTokenTxData{};
+    std::vector<NFTsData> nfTokensData{};
 };
 
 namespace etl::impl {

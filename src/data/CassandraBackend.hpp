@@ -71,7 +71,7 @@ template <SomeSettingsProvider SettingsProviderType, SomeExecutionStrategy Execu
 class BasicCassandraBackend : public BackendInterface {
     util::Logger log_{"Backend"};
 
-    SettingsProviderType settingsProvider_;
+    SettingsProviderType settingsProvider_{};
     Schema<SettingsProviderType> schema_;
     Handle handle_;
 
@@ -296,8 +296,8 @@ public:
             // TODO: this is probably a good place to use user type in
             // cassandra instead of having two rows with bool flag. or maybe at
             // least use tuple<int, int>?
-            LedgerRange range;
-            std::size_t idx = 0;
+            LedgerRange const range;
+            std::size_t const idx = 0;
             for (auto [seq] : extract<uint32_t>(results)) {
                 if (idx == 0) {
                     range.maxSequence = range.minSequence = seq;

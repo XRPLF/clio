@@ -51,7 +51,7 @@ public:
      */
     struct Output {
         uint32_t ledgerIndex{};
-        std::string ledgerHash;
+        std::string ledgerHash{};
         // TODO: use better type
         boost::json::object header;
         bool validated = true;

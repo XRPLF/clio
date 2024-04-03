@@ -26,28 +26,19 @@
 #include "rpc/RPCHelpers.hpp"
 #include "util/log/Logger.hpp"
 
-#include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
-#include <boost/json/serialize.hpp>
-#include <ripple/basics/chrono.h>
-#include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/Book.h>
-#include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/SField.h>
-#include <ripple/protocol/STObject.h>
 #include <ripple/protocol/TER.h>
-#include <ripple/protocol/TxFormats.h>
 #include <ripple/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_set>
-#include <utility>
 
 namespace feed::impl {
 
@@ -195,8 +186,8 @@ TransactionFeed::pub(
         pubObj[txKey].as_object()[JS(date)] = lgrInfo.closeTime.time_since_epoch().count();
 
         pubObj[JS(engine_result_code)] = meta->getResult();
-        std::string token;
-        std::string human;
+        std::string token = 0;
+        std::string human = 0;
         ripple::transResultInfo(meta->getResultTER(), token, human);
         pubObj[JS(engine_result)] = token;
         pubObj[JS(engine_result_message)] = human;

@@ -66,7 +66,7 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string txHash;
+        std::string txHash{};
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
     };
