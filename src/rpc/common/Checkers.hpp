@@ -47,6 +47,9 @@ struct Warning {
     {
     }
 
+    bool
+    operator==(Warning const& other) const = default;
+
     WarningCode warningCode;
     std::string extraMessage;
 };

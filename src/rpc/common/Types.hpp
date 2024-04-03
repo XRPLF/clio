@@ -60,6 +60,21 @@ struct FieldSpec;
 using MaybeError = util::Expected<void, Status>;
 
 /**
+ * @brief Check if two MaybeError objects are equal
+ *
+ * @param lhs The first MaybeError object
+ * @param rhs The second MaybeError object
+ * @return true if the two MaybeError objects are equal, false otherwise
+ */
+inline bool
+operator==(MaybeError const& lhs, MaybeError const& rhs)
+{
+    bool const lhsHasError = !static_cast<bool>(lhs);
+    bool const rhsHasError = !static_cast<bool>(rhs);
+    return lhsHasError == rhsHasError && (!lhsHasError || rhs.error() == lhs.error());
+}
+
+/**
  * @brief The type that represents just the error part of @ref MaybeError
  */
 using Error = util::Unexpected<Status>;

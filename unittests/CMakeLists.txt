@@ -53,6 +53,7 @@ target_sources(
           rpc/ErrorTests.cpp
           rpc/ForwardingProxyTests.cpp
           rpc/common/CheckersTests.cpp
+          rpc/common/SpecsTests.cpp
           rpc/handlers/AccountChannelsTests.cpp
           rpc/handlers/AccountCurrenciesTests.cpp
           rpc/handlers/AccountInfoTests.cpp

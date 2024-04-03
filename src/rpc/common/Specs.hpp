@@ -49,7 +49,6 @@ struct FieldSpec final {
     FieldSpec(std::string const& key, Processors&&... processors)
         : processor_{impl::makeFieldProcessor<Processors...>(key, std::forward<Processors>(processors)...)}
         , checker_{impl::EMPTY_FIELD_CHECKER}
-
     {
     }
 
