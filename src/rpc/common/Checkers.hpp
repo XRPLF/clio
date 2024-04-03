@@ -33,8 +33,16 @@
 #include <vector>
 
 namespace rpc::check {
-
+/**
+ * @brief Warning that checks can return
+ */
 struct Warning {
+    /**
+     * @brief Construct a new Warning object
+     *
+     * @param code The warning code
+     * @param message The warning message
+     */
     Warning(WarningCode code, std::string message) : warningCode(code), extraMessage(std::move(message))
     {
     }
@@ -44,12 +52,25 @@ struct Warning {
 };
 using Warnings = std::vector<Warning>;
 
+/**
+ * @brief Check for a deprecated fields
+ */
 template <typename... T>
 class Deprecated;
 
+/**
+ * @brief Check if a field is deprecated
+ */
 template <>
 class Deprecated<> final {
 public:
+    /**
+     * @brief Check if a field is deprecated
+     *
+     * @param value The json value to check
+     * @param key The key to check
+     * @return A warning if the field is deprecated or std::nullopt otherwise
+     */
     [[nodiscard]] static std::optional<Warning>
     check(boost::json::value const& value, std::string_view key)
     {
@@ -59,15 +80,31 @@ public:
     }
 };
 
+/**
+ * @brief Check if a value of a field is deprecated
+ * @tparam T The type of the field
+ */
 template <typename T>
 class Deprecated<T> final {
     T value_;
 
 public:
+    /**
+     * @brief Construct a new Deprecated object
+     *
+     * @param val The value that is deprecated
+     */
     Deprecated(T val) : value_(val)
     {
     }
 
+    /**
+     * @brief Check if a value of a field is deprecated
+     *
+     * @param value The json value to check
+     * @param key The key to check
+     * @return A warning if the field is deprecated or std::nullopt otherwise
+     */
     [[nodiscard]] std::optional<Warning>
     check(boost::json::value const& value, std::string_view key) const
     {
@@ -85,6 +122,9 @@ public:
     }
 };
 
+/**
+ * @brief Deduction guide for Deprecated
+ */
 template <typename... T>
 Deprecated(T&&...) -> Deprecated<T...>;
 

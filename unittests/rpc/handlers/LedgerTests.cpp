@@ -1158,7 +1158,9 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(
-            output.result->as_object()["ledger"].as_object()["transactions"].as_array()[0].as_object().contains("owner_funds")
+            output.result->as_object()["ledger"].as_object()["transactions"].as_array()[0].as_object().contains(
+                "owner_funds"
+            )
         );
     });
 }
