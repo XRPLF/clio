@@ -42,6 +42,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 namespace rpc {
 
@@ -72,6 +73,17 @@ public:
         uint32_t ledgerIndex;
         std::string median;
         bool validated = true;
+
+        /**
+         * @brief Construct a new Output object
+         * @param time The time of the latest oracle data
+         * @param ledgerHash The hash of the ledger
+         * @param ledgerIndex The index of the ledger
+         */
+        Output(uint32_t time, std::string ledgerHash, uint32_t ledgerIndex)
+            : time(time), ledgerHash(std::move(ledgerHash)), ledgerIndex(ledgerIndex)
+        {
+        }
     };
 
     /**
