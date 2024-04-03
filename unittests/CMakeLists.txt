@@ -63,12 +63,12 @@ target_sources(
           rpc/handlers/AccountOffersTests.cpp
           rpc/handlers/AccountTxTests.cpp
           rpc/handlers/AMMInfoTests.cpp
-          # Backend
           rpc/handlers/BookChangesTests.cpp
           rpc/handlers/BookOffersTests.cpp
           rpc/handlers/DefaultProcessorTests.cpp
           rpc/handlers/DepositAuthorizedTests.cpp
           rpc/handlers/GatewayBalancesTests.cpp
+          rpc/handlers/GetAggregatePriceTests.cpp
           rpc/handlers/LedgerDataTests.cpp
           rpc/handlers/LedgerEntryTests.cpp
           rpc/handlers/LedgerRangeTests.cpp
