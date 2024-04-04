@@ -128,6 +128,9 @@ struct Status {
     {
     }
 
+    bool
+    operator==(Status const& other) const = default;
+
     /**
      * @brief Check if the status is not OK
      *

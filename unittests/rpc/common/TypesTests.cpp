@@ -31,5 +31,5 @@ TEST(MaybeErrorTest, OperatorEquals)
     EXPECT_NE(MaybeError{}, MaybeError{Unexpected{Status{"Error"}}});
     EXPECT_NE(MaybeError{Unexpected{Status{"Error"}}}, MaybeError{});
     EXPECT_EQ(MaybeError{Unexpected{Status{"Error"}}}, MaybeError{Unexpected{Status{"Error"}}});
-    EXPECT_FALSE(MaybeError{Unexpected{Status{"Error"}}} == MaybeError{Unexpected{Status{"Another_error"}}});
+    EXPECT_NE(MaybeError{Unexpected{Status{"Error"}}}, MaybeError{Unexpected{Status{"Another_error"}}});
 }

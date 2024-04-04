@@ -77,6 +77,12 @@ TEST(RPCErrorsTest, StatusAsBool)
         EXPECT_TRUE(Status{ec});
 }
 
+TEST(RPCErrorsTest, StatusEquals)
+{
+    EXPECT_EQ(Status{RippledError::rpcUNKNOWN}, Status{RippledError::rpcUNKNOWN});
+    EXPECT_NE(Status{RippledError::rpcUNKNOWN}, Status{RippledError::rpcREPORTING_UNSUPPORTED});
+}
+
 TEST(RPCErrorsTest, SuccessToJSON)
 {
     auto const status = Status{RippledError::rpcSUCCESS};
