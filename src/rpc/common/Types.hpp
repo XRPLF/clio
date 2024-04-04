@@ -71,7 +71,7 @@ operator==(MaybeError const& lhs, MaybeError const& rhs)
 {
     bool const lhsHasError = !static_cast<bool>(lhs);
     bool const rhsHasError = !static_cast<bool>(rhs);
-    return lhsHasError == rhsHasError && (!lhsHasError || rhs.error() == lhs.error());
+    return lhsHasError == rhsHasError && (!lhsHasError || lhs.error() == rhs.error());
 }
 
 /**

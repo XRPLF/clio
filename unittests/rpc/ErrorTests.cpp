@@ -130,17 +130,48 @@ TEST(RPCErrorsTest, InvalidClioErrorToJSON)
     EXPECT_ANY_THROW((void)makeError(static_cast<ClioError>(999999)));
 }
 
-TEST(RPCErrorsTest, WarningToJSON)
+struct WarningCodeTestBundle {
+    std::string name;
+    WarningCode code;
+    std::string message;
+};
+
+struct WarningCodeTest : public ::testing::TestWithParam<WarningCodeTestBundle> {};
+
+INSTANTIATE_TEST_SUITE_P(
+    WarningCodeTestGroup,
+    WarningCodeTest,
+    testing::Values(
+        WarningCodeTestBundle{"Unknown", WarningCode::warnUNKNOWN, "Unknown warning"},
+        WarningCodeTestBundle{
+            "Clio",
+            WarningCode::warnRPC_CLIO,
+            "This is a clio server. clio only serves validated data. If you want to talk to rippled, include "
+            "'ledger_index':'current' in your request"
+        },
+        WarningCodeTestBundle{"Outdated", WarningCode::warnRPC_OUTDATED, "This server may be out of date"},
+        WarningCodeTestBundle{"RateLimit", WarningCode::warnRPC_RATE_LIMIT, "You are about to be rate limited"},
+        WarningCodeTestBundle{
+            "Deprecated",
+            WarningCode::warnRPC_DEPRECATED,
+            "Some fields from your request are deprecated. Please check the documentation at "
+            "https://xrpl.org/docs/references/http-websocket-apis/ and update your request."
+        }
+    ),
+    [](testing::TestParamInfo<WarningCodeTestBundle> const& info) { return info.param.name; }
+);
+
+TEST_P(WarningCodeTest, WarningToJSON)
 {
-    auto j = makeWarning(WarningCode::warnRPC_OUTDATED);
+    auto j = makeWarning(GetParam().code);
     EXPECT_TRUE(j.contains("id"));
     EXPECT_TRUE(j.contains("message"));
 
     EXPECT_TRUE(j.at("id").is_int64());
     EXPECT_TRUE(j.at("message").is_string());
 
-    EXPECT_EQ(j.at("id").as_int64(), static_cast<uint32_t>(WarningCode::warnRPC_OUTDATED));
-    EXPECT_EQ(boost::json::value_to<std::string>(j.at("message")), "This server may be out of date");
+    EXPECT_EQ(j.at("id").as_int64(), static_cast<int64_t>(GetParam().code));
+    EXPECT_EQ(boost::json::value_to<std::string>(j.at("message")), GetParam().message);
 }
 
 TEST(RPCErrorsTest, InvalidWarningToJSON)
