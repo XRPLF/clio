@@ -84,10 +84,9 @@ template <SomeCheck... Checks>
 [[nodiscard]] FieldChecker
 makeFieldChecker(std::string const& key, Checks&&... checks)
 {
-    // j is not used here if there is no checks in Processors
     return [key, ... checks = std::forward<Checks>(checks)](boost::json::value const& j) -> check::Warnings {
         check::Warnings warnings;
-        // This expands in order of Requirements and collects all warnings into a WarningsCollection
+        // This expands in order of Checks and collects all warnings into a WarningsCollection
         (
             [&j, &key, &warnings, req = &checks]() {
                 if (auto res = req->check(j, key); res)

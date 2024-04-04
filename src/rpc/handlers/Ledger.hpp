@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/Checkers.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
@@ -102,7 +103,9 @@ public:
     {
         static auto const rpcSpec = RpcSpec{
             {JS(full), validation::Type<bool>{}, validation::NotSupported{true}},
+            {JS(full), check::Deprecated{}},
             {JS(accounts), validation::Type<bool>{}, validation::NotSupported{true}},
+            {JS(accounts), check::Deprecated{}},
             {JS(owner_funds), validation::Type<bool>{}},
             {JS(queue), validation::Type<bool>{}, validation::NotSupported{true}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
@@ -111,6 +114,8 @@ public:
             {JS(expand), validation::Type<bool>{}},
             {JS(binary), validation::Type<bool>{}},
             {"diff", validation::Type<bool>{}},
+            {JS(ledger), check::Deprecated{}},
+            {JS(type), check::Deprecated{}},
         };
 
         return rpcSpec;
