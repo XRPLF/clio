@@ -48,7 +48,7 @@ struct AnyGauge : MetricBase, impl::AnyCounterBase<NumberType> {
      * @param impl The implementation of the counter inside the gauge
      */
     template <impl::SomeCounterImpl ImplType = impl::CounterImpl<ValueType>>
-        requires std::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
+        requires boost::mpl::same_as<ValueType, typename std::remove_cvref_t<ImplType>::ValueType>
     AnyGauge(std::string name, std::string labelsString, ImplType&& impl = ImplType{})
         : MetricBase(std::move(name), std::move(labelsString))
         , impl::AnyCounterBase<ValueType>(std::forward<ImplType>(impl))

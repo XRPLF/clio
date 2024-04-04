@@ -33,7 +33,7 @@
 #include <string>
 
 class TestWsConnection {
-    boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
+    boost::beast::websocket::stream<boost::beast::tcp_stream> ws_{};
 
 public:
     using SendCallback = std::function<void()>;
@@ -42,14 +42,14 @@ public:
     TestWsConnection(boost::beast::websocket::stream<boost::beast::tcp_stream> wsStream);
 
     // returns error message if error occurs
-    std::optional<std::string>
+    static std::optional<std::string>
     send(std::string const& message, boost::asio::yield_context yield);
 
     // returns nullopt if the connection is closed
-    std::optional<std::string>
+    static std::optional<std::string>
     receive(boost::asio::yield_context yield);
 
-    std::optional<std::string>
+    static std::optional<std::string>
     close(boost::asio::yield_context yield);
 };
 

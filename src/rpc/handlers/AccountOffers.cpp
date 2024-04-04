@@ -31,8 +31,6 @@
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STAmount.h>
@@ -41,12 +39,10 @@
 #include <ripple/protocol/jss.h>
 
 #include <string>
-#include <variant>
-#include <vector>
 
 namespace rpc {
 
-void
+static void
 AccountOffersHandler::addOffer(std::vector<Offer>& offers, ripple::SLE const& offerSle)
 {
     auto offer = AccountOffersHandler::Offer();
@@ -65,8 +61,8 @@ AccountOffersHandler::addOffer(std::vector<Offer>& offers, ripple::SLE const& of
     offers.push_back(offer);
 };
 
-AccountOffersHandler::Result
-AccountOffersHandler::process(AccountOffersHandler::Input input, Context const& ctx) const
+static AccountOffersHandler::Result
+AccountOffersHandler::process(AccountOffersHandler::Input input, Context const& ctx)
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(

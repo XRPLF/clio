@@ -239,7 +239,7 @@ private:
  */
 class Taggable {
     using DecoratorType = std::unique_ptr<BaseTagDecorator>;
-    DecoratorType tagDecorator_;
+    DecoratorType tagDecorator_{};
 
 protected:
     /**

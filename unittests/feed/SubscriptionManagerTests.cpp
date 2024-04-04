@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "data/Types.hpp"
-#include "feed/FeedTestUtil.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockPrometheus.hpp"
@@ -26,7 +25,6 @@
 #include "util/TestObject.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
-#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
@@ -39,9 +37,6 @@
 #include <ripple/protocol/STObject.h>
 
 #include <memory>
-#include <string>
-#include <thread>
-#include <vector>
 
 constexpr static auto ACCOUNT1 = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";

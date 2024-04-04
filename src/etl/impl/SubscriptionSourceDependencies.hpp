@@ -28,7 +28,7 @@ namespace etl::impl {
 
 class SubscriptionSourceDependencies {
     struct Concept;
-    std::unique_ptr<Concept> pImpl_;
+    std::unique_ptr<Concept> pImpl_{};
 
 public:
     template <typename NetworkValidatedLedgersType, typename SubscriptionManagerType>

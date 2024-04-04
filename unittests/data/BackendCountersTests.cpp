@@ -19,9 +19,6 @@
 
 #include "data/BackendCounters.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/prometheus/Counter.hpp"
-#include "util/prometheus/Gauge.hpp"
-#include "util/prometheus/Histogram.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>

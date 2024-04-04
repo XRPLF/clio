@@ -39,12 +39,11 @@
 #include <ripple/protocol/jss.h>
 
 #include <string>
-#include <variant>
 
 namespace rpc {
 
-DepositAuthorizedHandler::Result
-DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context const& ctx) const
+static DepositAuthorizedHandler::Result
+DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context const& ctx)
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(

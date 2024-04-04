@@ -21,14 +21,12 @@
 
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
-#include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
@@ -37,15 +35,14 @@
 #include <ripple/protocol/nft.h>
 
 #include <string>
-#include <variant>
 
 using namespace ripple;
 using namespace ::rpc;
 
 namespace rpc {
 
-NFTInfoHandler::Result
-NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
+static NFTInfoHandler::Result
+NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx)
 {
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
     auto const range = sharedPtrBackend_->fetchLedgerRange();

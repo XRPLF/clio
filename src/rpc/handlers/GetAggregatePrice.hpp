@@ -71,7 +71,7 @@ public:
         std::optional<Stats> trimStats;
         std::string ledgerHash;
         uint32_t ledgerIndex;
-        std::string median;
+        std::string median{};
         bool validated = true;
 
         /**
@@ -100,9 +100,9 @@ public:
     struct Input {
         std::optional<std::string> ledgerHash;
         std::optional<std::uint32_t> ledgerIndex;
-        std::vector<Oracle> oracles;  // valid range is 1-200
-        std::string baseAsset;
-        std::string quoteAsset;
+        std::vector<Oracle> oracles{};  // valid range is 1-200
+        std::string baseAsset{};
+        std::string quoteAsset{};
         std::optional<std::uint32_t> timeThreshold;
         std::optional<std::uint8_t> trim;  // valid range is 1-25
     };
@@ -192,12 +192,12 @@ private:
      If the oracle entry does not contains the price pair, search up to three previous metadata objects. Stops early if
      the callback returns true.
      */
-    void
+    static void
     tracebackOracleObject(
         boost::asio::yield_context yield,
         ripple::STObject const& oracleObject,
         std::function<bool(ripple::STObject const&)> const& callback
-    ) const;
+    );
 
     /**
      * @brief Convert the Output to a JSON object
