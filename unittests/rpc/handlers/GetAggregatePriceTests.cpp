@@ -327,7 +327,7 @@ TEST_P(GetAggregatePriceParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -353,7 +353,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OverOraclesMax)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "oracleMalformed");
         EXPECT_EQ(err.at("error_message").as_string(), "Oracle request is malformed.");
     });
@@ -382,7 +382,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, LedgerNotFound)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -432,7 +432,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expected);
+        EXPECT_EQ(output.result.value(), expected);
     });
 }
 
@@ -480,7 +480,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "The requested object was not found.");
     });
@@ -544,7 +544,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "The requested object was not found.");
     });
@@ -611,7 +611,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expected);
+        EXPECT_EQ(output.result.value(), expected);
     });
 }
 
@@ -684,7 +684,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expected);
+        EXPECT_EQ(output.result.value(), expected);
     });
 }
 
@@ -765,7 +765,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expected);
+        EXPECT_EQ(output.result.value(), expected);
     });
 }
 
@@ -797,7 +797,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "The requested object was not found.");
     });
@@ -830,7 +830,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoMatchAssetPair)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "The requested object was not found.");
     });
@@ -911,7 +911,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expected);
+        EXPECT_EQ(output.result.value(), expected);
     });
 }
 
@@ -990,7 +990,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expected);
+        EXPECT_EQ(output.result.value(), expected);
     });
 }
 
@@ -1068,7 +1068,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expected);
+        EXPECT_EQ(output.result.value(), expected);
     });
 }
 
@@ -1146,7 +1146,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIncludeOldest)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expected);
+        EXPECT_EQ(output.result.value(), expected);
     });
 }
 
@@ -1210,7 +1210,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), expected);
+        EXPECT_EQ(output.result.value(), expected);
     });
 }
 TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
@@ -1269,7 +1269,7 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
     runSpawn([&](auto yield) {
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "The requested object was not found.");
     });
