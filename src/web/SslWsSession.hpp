@@ -51,7 +51,7 @@ namespace web {
 template <SomeServerHandler HandlerType>
 class SslWsSession : public impl::WsBase<SslWsSession, HandlerType> {
     using StreamType = boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>;
-    StreamType ws_;
+    StreamType ws_{};
 
 public:
     /**
@@ -98,13 +98,13 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<HandlerT
     using std::enable_shared_from_this<SslWsUpgrader<HandlerType>>::shared_from_this;
 
     boost::beast::ssl_stream<boost::beast::tcp_stream> https_;
-    boost::optional<http::request_parser<http::string_body>> parser_;
+    boost::optional<http::request_parser<http::string_body>> parser_{};
     boost::beast::flat_buffer buffer_;
     std::string ip_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
-    http::request<http::string_body> req_;
+    http::request<http::string_body> req_{};
     bool isAdmin_;
 
 public:

@@ -19,13 +19,11 @@
 
 #include "rpc/Errors.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
-#include "util/Fixtures.hpp"
 #include "util/MockCounters.hpp"
 #include "util/MockHandlerProvider.hpp"
 #include "util/MockLoadBalancer.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
-#include "web/Context.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>

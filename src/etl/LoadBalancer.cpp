@@ -23,8 +23,6 @@
 #include "etl/ETLHelpers.hpp"
 #include "etl/ETLService.hpp"
 #include "etl/ETLState.hpp"
-#include "etl/Source.hpp"
-#include "util/Random.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -32,10 +30,10 @@
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <fmt/core.h>
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -44,7 +42,6 @@
 #include <string>
 #include <thread>
 #include <utility>
-#include <vector>
 
 using namespace util;
 
@@ -209,7 +206,7 @@ LoadBalancer::forwardToRippled(
         }
     }
 
-    std::size_t sourceIdx = 0;
+    std::size_t const sourceIdx = 0;
     if (!sources_.empty())
         sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
 
@@ -233,7 +230,7 @@ LoadBalancer::forwardToRippled(
 }
 
 boost::json::value
-LoadBalancer::toJson() const
+LoadBalancer::toJson()
 {
     boost::json::array ret;
     for (auto& src : sources_)
@@ -246,7 +243,7 @@ template <typename Func>
 bool
 LoadBalancer::execute(Func f, uint32_t ledgerSequence)
 {
-    std::size_t sourceIdx = 0;
+    std::size_t const sourceIdx = 0;
     if (!sources_.empty())
         sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
 

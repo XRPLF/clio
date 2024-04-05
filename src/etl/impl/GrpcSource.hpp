@@ -35,7 +35,7 @@ namespace etl::impl {
 
 class GrpcSource {
     util::Logger log_;
-    std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub> stub_;
+    std::unique_ptr<org::xrpl::rpc::v1::XRPLedgerAPIService::Stub> stub_{};
     std::shared_ptr<BackendInterface> backend_;
 
 public:
@@ -52,7 +52,7 @@ public:
      * @param getObjectNeighbors Whether to request object neighbors; defaults to false
      * @return A std::pair of the response status and the response itself
      */
-    std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
+    static std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
     fetchLedger(uint32_t sequence, bool getObjects = true, bool getObjectNeighbors = false);
 
     /**

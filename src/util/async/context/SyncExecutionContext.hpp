@@ -27,8 +27,7 @@
 
 #include <cstddef>
 
-namespace util::async {
-namespace impl {
+namespace util::async::impl {
 
 struct SameThreadContext {
     struct Executor {
@@ -67,7 +66,7 @@ struct SystemContextProvider {
     }
 };
 
-}  // namespace impl
+}  // namespace util::async::impl
 
 /**
  * @brief A synchronous execution context. Runs on the caller thread.
@@ -82,5 +81,3 @@ using SyncExecutionContext = BasicExecutionContext<
     impl::BasicStopSource,
     impl::SyncDispatchStrategy,
     impl::SystemContextProvider>;
-
-}  // namespace util::async

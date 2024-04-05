@@ -376,7 +376,7 @@ EqualTo(char const*) -> EqualTo<std::string>;
  */
 template <typename Type>
 class OneOf final {
-    std::vector<Type> options_;
+    std::vector<Type> options_{};
 
 public:
     /**
@@ -451,8 +451,8 @@ public:
      * @param key The key used to retrieve the tested value from the outer object
      * @return Any compatible user-provided error if validation failed; otherwise no error is returned
      */
-    [[nodiscard]] MaybeError
-    verify(boost::json::value const& value, std::string_view key) const;
+    [[nodiscard]] static MaybeError
+    verify(boost::json::value const& value, std::string_view key);
 };
 
 /**

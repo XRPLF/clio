@@ -17,8 +17,6 @@
 */
 //==============================================================================
 
-#include "etl/Source.hpp"
-
 #include "data/BackendInterface.hpp"
 #include "etl/ETLHelpers.hpp"
 #include "feed/SubscriptionManager.hpp"

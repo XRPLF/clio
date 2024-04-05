@@ -17,10 +17,7 @@
 */
 //==============================================================================
 
-#include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/handlers/LedgerRange.hpp"
-#include "util/Fixtures.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>

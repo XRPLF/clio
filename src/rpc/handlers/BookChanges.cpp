@@ -19,30 +19,23 @@
 
 #include "rpc/handlers/BookChanges.hpp"
 
-#include "data/Types.hpp"
-#include "rpc/BookChangesHelper.hpp"
-#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
-#include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/jss.h>
 
 #include <string>
-#include <variant>
-#include <vector>
 
 namespace rpc {
 
-BookChangesHandler::Result
-BookChangesHandler::process(BookChangesHandler::Input input, Context const& ctx) const
+static BookChangesHandler::Result
+BookChangesHandler::process(BookChangesHandler::Input input, Context const& ctx)
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(

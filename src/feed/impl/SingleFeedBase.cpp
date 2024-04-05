@@ -25,18 +25,14 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/asio/strand.hpp>
 
 #include <cstdint>
-#include <memory>
 #include <string>
-#include <utility>
 
 namespace feed::impl {
 
-SingleFeedBase::SingleFeedBase(boost::asio::io_context& ioContext, std::string const& name)
-    : strand_(boost::asio::make_strand(ioContext)), subCount_(getSubscriptionsGaugeInt(name)), name_(name)
+SingleFeedBase::SingleFeedBase(boost::asio::io_context& ioContext, std::string name)
+    : strand_(boost::asio::make_strand(ioContext)), subCount_(getSubscriptionsGaugeInt(name)), name_(std::move(name))
 {
 }
 

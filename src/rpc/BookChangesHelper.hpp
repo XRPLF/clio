@@ -148,7 +148,7 @@ private:
             transformAndStore(deltaGets, deltaPays);
         }
 
-        void
+        static void
         transformAndStore(ripple::STAmount const& deltaGets, ripple::STAmount const& deltaPays)
         {
             auto const g = to_string(deltaGets.issue());
@@ -197,7 +197,7 @@ private:
             }
         }
 
-        void
+        static void
         handleBookChange(data::TransactionAndMetadata const& blob)
         {
             auto const [tx, meta] = rpc::deserializeTxPlusMeta(blob);

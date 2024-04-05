@@ -122,7 +122,7 @@ public:
  */
 template <typename T>
 class ThreadSafeQueue {
-    std::queue<T> queue_;
+    std::queue<T> queue_{};
 
     mutable std::mutex m_;
     std::condition_variable cv_;

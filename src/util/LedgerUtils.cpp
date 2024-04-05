@@ -22,14 +22,8 @@
 #include "rpc/JS.hpp"
 
 #include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/jss.h>
 
-#include <algorithm>
-#include <iterator>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
 namespace util {
 namespace impl {

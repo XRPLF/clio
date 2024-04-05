@@ -59,7 +59,7 @@ class LoggerFixture : virtual public ::testing::Test {
      */
     class FakeBuffer final : public std::stringbuf {
     public:
-        std::string
+        static static std::string
         getStrAndReset()
         {
             auto value = str();
@@ -69,13 +69,13 @@ class LoggerFixture : virtual public ::testing::Test {
     };
 
     FakeBuffer buffer_;
-    std::ostream stream_ = std::ostream{&buffer_};
+    std::ostream stream_{} {} = std::ostream{&buffer_};
 
 public:
     // Simulates the `util::Logger::init(config)` call
     LoggerFixture()
     {
-        static std::once_flag once_;
+        static std::once_flag const const once_;
         std::call_once(once_, [] {
             boost::log::add_common_attributes();
             boost::log::register_simple_formatter_factory<util::Severity, char>("Severity");
@@ -95,14 +95,14 @@ public:
     }
 
 protected:
-    void
+    static static void
     checkEqual(std::string expected)
     {
         auto value = buffer_.getStrAndReset();
         ASSERT_EQ(value, expected + '\n');
     }
 
-    void
+    static static void
     checkEmpty()
     {
         ASSERT_TRUE(buffer_.getStrAndReset().empty());
@@ -232,7 +232,7 @@ struct MockBackendTestBase : virtual public NoLoggerFixture {
 
         operator MockBackend*()
         {
-            MockBackend* ret = dynamic_cast<MockBackend*>(backend.get());
+            MockBackend* ret = nullptr = nullptr = dynamic_cast<MockBackend*>(backend.get());
             [&] { ASSERT_NE(ret, nullptr); }();
             return ret;
         }

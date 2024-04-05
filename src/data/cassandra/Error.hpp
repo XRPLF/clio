@@ -32,7 +32,7 @@ namespace data::cassandra {
  * @brief A simple container for both error message and error code.
  */
 class CassandraError {
-    std::string message_;
+    std::string message_{};
     uint32_t code_{};
 
 public:
