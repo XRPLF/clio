@@ -19,6 +19,7 @@
 
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Ledger.hpp"
@@ -26,6 +27,7 @@
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -33,9 +35,12 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/UintTypes.h>
+#include <ripple/protocol/jss.h>
 
+#include <cstdint>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
@@ -1348,4 +1353,65 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
             "50"
         );
     });
+}
+struct RPCLedgerHandlerSpecCheckTestBundle {
+    std::string name;
+    boost::json::value json;
+    std::unordered_map<int64_t, std::vector<std::string>> expectedWarning;
+};
+
+struct RPCLedgerHandlerSpecCheckTest : ::testing::TestWithParam<RPCLedgerHandlerSpecCheckTestBundle> {
+    RpcSpec spec_ = LedgerHandler::spec(2);
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    RPCLedgerHandlerSpecCheckTestGroup,
+    RPCLedgerHandlerSpecCheckTest,
+    testing::Values(
+        RPCLedgerHandlerSpecCheckTestBundle{"ValidRequest", {{"ledger_index", 1}}, {}},
+        RPCLedgerHandlerSpecCheckTestBundle{
+            "FullWarning",
+            {{JS(full), false}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'full' is deprecated."}}},
+        },
+        RPCLedgerHandlerSpecCheckTestBundle{
+            "AccountsWarning",
+            {{JS(accounts), false}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'accounts' is deprecated."}}},
+        },
+        RPCLedgerHandlerSpecCheckTestBundle{
+            "LedgerWarning",
+            {{JS(ledger), false}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'ledger' is deprecated."}}},
+        },
+        RPCLedgerHandlerSpecCheckTestBundle{
+            "TypeWarning",
+            {{JS(type), false}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'type' is deprecated."}}},
+        },
+        RPCLedgerHandlerSpecCheckTestBundle{
+            "MultipleWarnings",
+            {{JS(full), false}, {JS(type), false}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED),
+              {"Field 'full' is deprecated.", "Field 'type' is deprecated."}}},
+        }
+    ),
+    [](testing::TestParamInfo<RPCLedgerHandlerSpecCheckTestBundle> const& info) { return info.param.name; }
+);
+
+TEST_P(RPCLedgerHandlerSpecCheckTest, CheckSpec)
+{
+    auto const warnings = spec_.check(GetParam().json);
+    ASSERT_EQ(warnings.size(), GetParam().expectedWarning.size());
+    for (auto const& warn : warnings) {
+        ASSERT_TRUE(warn.is_object());
+        auto const obj = warn.as_object();
+        ASSERT_TRUE(obj.contains("id"));
+        ASSERT_TRUE(obj.contains("message"));
+        auto const& it = GetParam().expectedWarning.find(obj.at("id").as_int64());
+        ASSERT_NE(it, GetParam().expectedWarning.end());
+        for (auto const& msg : it->second) {
+            EXPECT_NE(obj.at("message").as_string().find(msg), std::string::npos);
+        }
+    }
 }
