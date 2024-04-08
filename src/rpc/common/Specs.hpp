@@ -103,4 +103,9 @@ private:
     std::vector<FieldSpec> fields_;
 };
 
+/**
+ * @brief An alias for a const reference to @ref RpcSpec.
+ */
+using RpcSpecConstRef = RpcSpec const&;
+
 }  // namespace rpc
