@@ -64,6 +64,11 @@ WORKDIR /root
 # Setup conan
 # Note: intentionally leaving cppstd=20
 RUN conan profile new default --detect \
+    && conan profile update settings.compiler=gcc default \
+    && conan profile update settings.compiler.version=12 default \
     && conan profile update settings.compiler.cppstd=20 default \
     && conan profile update settings.compiler.libcxx=libstdc++11 default \
+    && conan profile update env.CC=/opt/bin/gcc default \
+    && conan profile update env.CXX=/opt/bin/g++ default \
+    && conan profile update "conf.tools.build:compiler_executables={\"c\": \"/opt/bin/gcc\", \"cpp\": \"/opt/bin/g++\"}" default \
     && conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod

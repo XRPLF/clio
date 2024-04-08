@@ -2,8 +2,8 @@ name: Build
 on:
   push:
     branches: [master, release/*, develop]
-  # pull_request:
-  #   branches: [master, release/*, develop]
+  pull_request:
+    branches: [master, release/*, develop]
   workflow_dispatch:
 
 jobs:
@@ -39,8 +39,8 @@ jobs:
 
   build:
     name: Build
-    needs: 
-      - check_format 
+    needs:
+      - check_format
       - check_docs
     strategy:
       fail-fast: false
