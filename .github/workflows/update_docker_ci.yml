@@ -1,6 +1,10 @@
 name: Update CI docker image
 on:
   pull_request:
+    paths:
+      - 'docker/ci/**'
+      - 'docker/compilers/**'
+      - .github/workflows/update_docker_ci.yml
   push:
     branches: [develop]
     paths:
