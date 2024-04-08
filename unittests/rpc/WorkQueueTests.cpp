@@ -21,8 +21,6 @@
 #include "util/Fixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/config/Config.hpp"
-#include "util/prometheus/Counter.hpp"
-#include "util/prometheus/Gauge.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
@@ -53,9 +51,9 @@ struct RPCWorkQueueTest : WithPrometheus, RPCWorkQueueTestBase {};
 TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
 {
     auto constexpr static TOTAL = 512u;
-    uint32_t executeCount = 0u;
+    uint32_t const executeCount = 0u;
 
-    std::mutex mtx;
+    std::mutex const mtx;
 
     for (auto i = 0u; i < TOTAL; ++i) {
         queue.postCoro(
@@ -83,7 +81,7 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
     auto expectedCount = 2u;
     auto unblocked = false;
 
-    std::mutex mtx;
+    std::mutex const mtx;
     std::condition_variable cv;
 
     for (auto i = 0u; i < TOTAL; ++i) {

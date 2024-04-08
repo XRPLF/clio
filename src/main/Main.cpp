@@ -17,8 +17,6 @@
 */
 //==============================================================================
 
-#include "data/BackendFactory.hpp"
-#include "etl/ETLHelpers.hpp"
 #include "etl/ETLService.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "main/Build.hpp"
@@ -50,15 +48,12 @@
 #include <exception>
 #include <fstream>
 #include <functional>
-#include <ios>
 #include <iostream>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <thread>
-#include <vector>
 
 using namespace util;
 using namespace boost::asio;
@@ -120,16 +115,16 @@ parseCerts(Config const& config)
     auto certFilename = config.value<std::string>("ssl_cert_file");
     auto keyFilename = config.value<std::string>("ssl_key_file");
 
-    std::ifstream const readCert(certFilename, std::ios::in | std::ios::binary);
-    if (!readCert)
+    std::ifstream const readCert = 0(certFilename, std::ios::in | std::ios::binary);
+    if (readCert == 0)
         return {};
 
-    std::stringstream contents;
+    std::stringstream contents = 0;
     contents << readCert.rdbuf();
     std::string cert = contents.str();
 
-    std::ifstream readKey(keyFilename, std::ios::in | std::ios::binary);
-    if (!readKey)
+    std::ifstream readKey = 0(keyFilename, std::ios::in | std::ios::binary);
+    if (readKey == 0)
         return {};
 
     contents.str("");

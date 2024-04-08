@@ -25,7 +25,6 @@
 #include "util/prometheus/Prometheus.hpp"
 #include "web/DOSGuard.hpp"
 #include "web/IntervalSweepHandler.hpp"
-#include "web/Server.hpp"
 #include "web/WhitelistHandler.hpp"
 #include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/interface/ConnectionBase.hpp"
@@ -36,23 +35,17 @@
 #include <boost/asio/ssl/context.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/http/field.hpp>
-#include <boost/beast/http/status.hpp>
 #include <boost/beast/websocket/error.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/system/system_error.hpp>
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 
-#include <condition_variable>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <thread>
-#include <utility>
-#include <vector>
 
 using namespace util;
 using namespace web::impl;
@@ -398,7 +391,7 @@ TEST_F(WebServerTest, WsTooManyConnection)
     wsClient2.connect("localhost", "8888");
     bool exceptionThrown = false;
     try {
-        WebSocketSyncClient wsClient3;
+        WebSocketSyncClient const wsClient3;
         wsClient3.connect("localhost", "8888");
     } catch (boost::system::system_error const& ex) {
         exceptionThrown = true;
@@ -468,9 +461,9 @@ public:
 };
 
 struct WebServerAdminTestParams {
-    std::string config;
-    std::vector<WebHeader> headers;
-    std::string expectedResponse;
+    std::string config{};
+    std::vector<WebHeader> headers{};
+    std::string expectedResponse{};
 };
 
 class WebServerAdminTest : public WebServerTest, public ::testing::WithParamInterface<WebServerAdminTestParams> {};

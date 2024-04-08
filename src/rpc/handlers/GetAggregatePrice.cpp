@@ -25,9 +25,6 @@
 #include "rpc/common/Types.hpp"
 
 #include <boost/asio/spawn.hpp>
-#include <boost/bimap.hpp>
-#include <boost/bimap/bimap.hpp>
-#include <boost/bimap/multiset_of.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
@@ -36,17 +33,12 @@
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Issue.h>
-#include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/STObject.h>
-#include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/jss.h>
-#include <ripple/protocol/tokens.h>
 
 #include <cstdint>
 #include <functional>
@@ -54,12 +46,11 @@
 #include <numeric>
 #include <optional>
 #include <string>
-#include <variant>
 
 namespace rpc {
 
-GetAggregatePriceHandler::Result
-GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context const& ctx) const
+static GetAggregatePriceHandler::Result
+GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context const& ctx)
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
@@ -172,7 +163,7 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
     auto const median = [&, size = out.extireStats.size]() {
         auto const middle = size / 2;
         if ((size % 2) == 0) {
-            static ripple::STAmount two{ripple::noIssue(), 2, 0};
+            static ripple::STAmount const two{ripple::noIssue(), 2, 0};
             auto it = itAdvance(timestampPricesBiMap.right.begin(), middle - 1);
             auto const& a1 = it->first;
             auto const& a2 = (++it)->first;
@@ -190,14 +181,14 @@ GetAggregatePriceHandler::tracebackOracleObject(
     boost::asio::yield_context yield,
     ripple::STObject const& oracleObject,
     std::function<bool(ripple::STObject const&)> const& callback
-) const
+)
 {
     static auto constexpr HISTORY_MAX = 3;
 
     std::optional<ripple::STObject> optOracleObject = oracleObject;
     std::optional<ripple::STObject> optCurrentObject = optOracleObject;
 
-    bool isNew = false;
+    bool const isNew = false;
     bool noOracleFound = false;
     auto history = 0;
 

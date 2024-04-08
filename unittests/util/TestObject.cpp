@@ -23,10 +23,7 @@
 #include "data/Types.hpp"
 #include "util/Assert.hpp"
 
-#include <ripple/basics/Blob.h>
 #include <ripple/basics/Slice.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/chrono.h>
 #include <ripple/json/json_value.h>
 #include <ripple/protocol/AMMCore.h>
 #include <ripple/protocol/AccountID.h>
@@ -38,7 +35,6 @@
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STAmount.h>
 #include <ripple/protocol/STArray.h>
-#include <ripple/protocol/STIssue.h>
 #include <ripple/protocol/STObject.h>
 #include <ripple/protocol/STVector256.h>
 #include <ripple/protocol/TER.h>
@@ -50,10 +46,8 @@
 #include <chrono>
 #include <cstdint>
 #include <optional>
-#include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
 
 constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 
@@ -176,11 +170,11 @@ CreatePaymentTransactionMetaObject(
     uint32_t transactionIndex
 )
 {
-    ripple::STObject finalFields(ripple::sfFinalFields);
+    ripple::STObject const finalFields(ripple::sfFinalFields);
     finalFields.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId1));
     finalFields.setFieldAmount(ripple::sfBalance, ripple::STAmount(finalBalance1));
 
-    ripple::STObject finalFields2(ripple::sfFinalFields);
+    ripple::STObject const finalFields2(ripple::sfFinalFields);
     finalFields2.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId2));
     finalFields2.setFieldAmount(ripple::sfBalance, ripple::STAmount(finalBalance2));
 
@@ -307,11 +301,11 @@ CreateMetaDataForBookChange(
     int perviousTakerPays
 )
 {
-    ripple::STObject finalFields(ripple::sfFinalFields);
+    ripple::STObject const finalFields(ripple::sfFinalFields);
     ripple::Issue const issue1 = GetIssue(currency, issueId);
     finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
     finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
-    ripple::STObject previousFields(ripple::sfPreviousFields);
+    ripple::STObject const previousFields(ripple::sfPreviousFields);
     previousFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, perviousTakerPays));
     previousFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(perviousTakerGets, false));
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
@@ -337,7 +331,7 @@ CreateMetaDataForCreateOffer(
     bool reverse
 )
 {
-    ripple::STObject finalFields(ripple::sfNewFields);
+    ripple::STObject const finalFields(ripple::sfNewFields);
     ripple::Issue const issue1 = GetIssue(currency, issueId);
     if (reverse) {
         finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(issue1, finalTakerPays));
@@ -367,7 +361,7 @@ CreateMetaDataForCancelOffer(
     int finalTakerPays
 )
 {
-    ripple::STObject finalFields(ripple::sfFinalFields);
+    ripple::STObject const finalFields(ripple::sfFinalFields);
     ripple::Issue const issue1 = GetIssue(currency, issueId);
     finalFields.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, finalTakerPays));
     finalFields.setFieldAmount(ripple::sfTakerGets, ripple::STAmount(finalTakerGets, false));
@@ -586,8 +580,8 @@ CreateSignerLists(std::vector<std::pair<std::string, uint32_t>> const& signers)
     signerlists.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256());
     signerlists.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
     signerlists.setFieldU32(ripple::sfSignerListID, 0);
-    uint32_t quorum = 0;
-    ripple::STArray list;
+    uint32_t const quorum = 0;
+    ripple::STArray const list;
     for (auto const& signer : signers) {
         auto entry = ripple::STObject(ripple::sfSignerEntry);
         entry.setAccountID(ripple::sfAccount, GetAccountIDWithString(signer.first));
@@ -613,7 +607,7 @@ CreateNFTTokenPage(
     tokenPage.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
     if (previousPage)
         tokenPage.setFieldH256(ripple::sfPreviousPageMin, *previousPage);
-    ripple::STArray list;
+    ripple::STArray const list;
     for (auto const& token : tokens) {
         auto entry = ripple::STObject(ripple::sfNFToken);
         entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{token.first.c_str()});
@@ -710,7 +704,7 @@ CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uin
     ripple::STObject node(ripple::sfDeletedNode);
     node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_OFFER);
 
-    ripple::STObject finalFields(ripple::sfFinalFields);
+    ripple::STObject const finalFields(ripple::sfFinalFields);
     finalFields.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
 
     node.emplace_back(std::move(finalFields));
@@ -808,7 +802,7 @@ CreateCreateNFTOfferTxWithMetadata(
     ripple::STObject metaObj(ripple::sfTransactionMetaData);
     ripple::STArray metaArray{1};
 
-    ripple::STObject node(ripple::sfCreatedNode);
+    ripple::STObject const node(ripple::sfCreatedNode);
     node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_OFFER);
     node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{offerId});
 
@@ -1059,7 +1053,7 @@ AMMSetAuctionSlot(
     auctionSlot.setFieldU32(ripple::sfExpiration, expiration);
 
     if (not authAccounts.empty()) {
-        ripple::STArray accounts;
+        ripple::STArray const accounts;
 
         for (auto const& acc : authAccounts) {
             ripple::STObject authAcc(ripple::sfAuthAccount);

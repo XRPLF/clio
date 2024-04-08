@@ -27,30 +27,23 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
-#include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Keylet.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/SField.h>
-#include <ripple/protocol/STBase.h>
 #include <ripple/protocol/STLedgerEntry.h>
 #include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/jss.h>
-#include <ripple/protocol/nft.h>
 
-#include <cstdint>
 #include <optional>
 #include <string>
-#include <variant>
 
 namespace rpc {
 
-AccountNFTsHandler::Result
-AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx) const
+static AccountNFTsHandler::Result
+AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(

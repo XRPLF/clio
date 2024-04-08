@@ -51,10 +51,10 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        std::string ledgerHash;
+        std::string ledgerHash{};
         uint32_t ledgerIndex{};
         uint32_t ledgerTime{};
-        std::vector<BookChange> bookChanges;
+        std::vector<BookChange> bookChanges{};
         bool validated = true;
     };
 

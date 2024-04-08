@@ -55,8 +55,8 @@ enum class ClioError {
 /** @brief Holds info about a particular @ref ClioError. */
 struct ClioErrorInfo {
     ClioError const code;
-    std::string_view const error;
-    std::string_view const message;
+    std::string_view const error{};
+    std::string_view const message{};
 };
 
 /** @brief Clio uses compatible Rippled error codes for most RPC errors. */
@@ -73,8 +73,8 @@ using CombinedError = std::variant<RippledError, ClioError>;
 /** @brief A status returned from any RPC handler. */
 struct Status {
     CombinedError code = RippledError::rpcSUCCESS;
-    std::string error;
-    std::string message;
+    std::string error{};
+    std::string message{};
     std::optional<boost::json::object> extraInfo;
 
     Status() = default;

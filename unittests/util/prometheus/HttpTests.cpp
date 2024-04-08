@@ -18,18 +18,14 @@
 //==============================================================================
 #include "util/MockPrometheus.hpp"
 #include "util/config/Config.hpp"
-#include "util/prometheus/Http.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
 #include <boost/beast/http/field.hpp>
-#include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
-#include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 
 #include <string>

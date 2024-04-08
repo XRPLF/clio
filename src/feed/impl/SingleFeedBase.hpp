@@ -39,7 +39,7 @@ namespace feed::impl {
  */
 class SingleFeedBase {
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
-    std::reference_wrapper<util::prometheus::GaugeInt> subCount_;
+    std::reference_wrapper<util::prometheus::GaugeInt> subCount_{};
     TrackableSignal<Subscriber, std::shared_ptr<std::string> const&> signal_;
     util::Logger logger_{"Subscriptions"};
     std::string name_;
@@ -50,13 +50,13 @@ public:
      * @param ioContext The actual publish will be called in the strand of this.
      * @param name The promethues counter name of the feed.
      */
-    SingleFeedBase(boost::asio::io_context& ioContext, std::string const& name);
+    SingleFeedBase(boost::asio::io_context& ioContext, std::string name);
 
     /**
      * @brief Subscribe the feed.
      * @param subscriber
      */
-    void
+    static void
     sub(SubscriberSharedPtr const& subscriber);
 
     /**

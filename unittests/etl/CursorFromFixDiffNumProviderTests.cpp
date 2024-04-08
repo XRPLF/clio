@@ -17,16 +17,12 @@
 */
 //==============================================================================
 
-#include "data/Types.hpp"
 #include "etl/impl/CursorFromFixDiffNumProvider.hpp"
 #include "etl/impl/FakeDiffProvider.hpp"
-#include "util/Fixtures.hpp"
 #include "util/MockPrometheus.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-
-#include <cstddef>
 
 using namespace etl;
 using namespace util;
