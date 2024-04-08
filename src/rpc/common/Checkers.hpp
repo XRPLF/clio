@@ -121,7 +121,7 @@ public:
                 };
             }
         }
-        return {};
+        return std::nullopt;
     }
 };
 

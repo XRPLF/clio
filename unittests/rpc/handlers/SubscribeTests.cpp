@@ -30,6 +30,7 @@
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -40,6 +41,7 @@
 #include <ripple/protocol/UintTypes.h>
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -1086,4 +1088,30 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 1);
     });
+}
+
+TEST(RPCSubscribeHandlerSpecTest, DeprecatedFields)
+{
+    boost::json::value const json{
+        {"streams", ACCOUNT},
+        {"accounts", {123}},
+        {"accounts_proposed", "abc"},
+        {"books", "1"},
+        {"user", "some"},
+        {"password", "secret"},
+        {"rt_accounts", true}
+    };
+    auto const spec = SubscribeHandler::spec(2);
+    auto const warnings = spec.check(json);
+    ASSERT_EQ(warnings.size(), 1);
+    auto const& warning = warnings[0];
+    ASSERT_TRUE(warning.is_object());
+    auto const obj = warning.as_object();
+    ASSERT_TRUE(obj.contains("id"));
+    ASSERT_TRUE(obj.contains("message"));
+    EXPECT_EQ(obj.at("id").as_int64(), static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED));
+    auto const& message = obj.at("message").as_string();
+    for (auto const& field : {"user", "password", "rt_accounts"}) {
+        EXPECT_NE(message.find(fmt::format("Field '{}' is deprecated", field)), std::string::npos) << message;
+    }
 }
