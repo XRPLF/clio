@@ -39,8 +39,8 @@ jobs:
 
   build:
     name: Build
-    needs: 
-      - check_format 
+    needs:
+      - check_format
       - check_docs
     strategy:
       fail-fast: false
