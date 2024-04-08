@@ -53,10 +53,10 @@ class CacheLoaderImpl {
     std::reference_wrapper<CacheType> cache_;
 
     etl::ThreadSafeQueue<CursorPair> queue_;
-    std::atomic_int16_t remaining_;
+    std::atomic_int16_t remaining_{};
 
     std::chrono::steady_clock::time_point startTime_ = std::chrono::steady_clock::now();
-    std::vector<util::async::AnyOperation<void>> tasks_;
+    std::vector<util::async::AnyOperation<void>> tasks_{};
 
 public:
     template <typename CtxType>

@@ -24,10 +24,8 @@
 #include "util/config/Config.hpp"
 
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <optional>
 #include <thread>
 #include <variant>

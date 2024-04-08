@@ -27,14 +27,12 @@
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
-#include <fmt/core.h>
 
 #include <chrono>
 #include <exception>
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include <utility>
 
 namespace etl::impl {
 
@@ -56,7 +54,7 @@ ForwardingSource::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& forwardToRippledClientIp,
     boost::asio::yield_context yield
-) const
+)
 {
     auto connectionBuilder = connectionBuilder_;
     if (forwardToRippledClientIp) {

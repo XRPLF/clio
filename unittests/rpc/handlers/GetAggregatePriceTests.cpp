@@ -18,28 +18,18 @@
 //==============================================================================
 
 #include "rpc/Errors.hpp"
-#include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/handlers/GetAggregatePrice.hpp"
-#include "util/Fixtures.hpp"
 #include "util/MockBackend.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
-#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/UintTypes.h>
 
 #include <cstdint>
-#include <optional>
 #include <string>
-#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;

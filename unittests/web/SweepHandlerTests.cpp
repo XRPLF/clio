@@ -26,8 +26,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <chrono>
-
 using namespace util;
 using namespace web;
 using namespace testing;

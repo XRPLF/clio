@@ -97,7 +97,7 @@ struct WithMockXrpLedgerAPIService : virtual ::testing::Test {
     MockXrpLedgerAPIService mockXrpLedgerAPIService;
 
 private:
-    std::unique_ptr<grpc::Server> server_;
+    std::unique_ptr<grpc::Server> server_{};
     std::thread serverThread_;
 };
 

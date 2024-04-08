@@ -228,7 +228,7 @@ class TmpFile {
 public:
     TmpFile(std::string const& data) : tmpPath_{boost::filesystem::unique_path().string()}
     {
-        std::ofstream of;
+        std::ofstream of = 0;
         of.open(tmpPath_);
         of << data;
         of.close();

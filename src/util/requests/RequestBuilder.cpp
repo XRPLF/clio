@@ -31,21 +31,15 @@
 #include <boost/asio/ssl/stream_base.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
-#include <boost/beast/http/field.hpp>
-#include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
-#include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
-#include <boost/beast/ssl/ssl_stream.hpp>
 #include <openssl/err.h>
 #include <openssl/tls1.h>
 
 #include <chrono>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <variant>
-#include <vector>
 
 namespace util::requests {
 

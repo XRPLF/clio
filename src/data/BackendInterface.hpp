@@ -196,8 +196,8 @@ public:
      *
      * @return The current ledger range if populated; nullopt otherwise
      */
-    std::optional<LedgerRange>
-    fetchLedgerRange() const;
+    static std::optional<LedgerRange>
+    fetchLedgerRange();
 
     /**
      * @brief Fetch the specified number of account root object indexes by page, the accounts need to exist for seq.
@@ -217,7 +217,7 @@ public:
      *
      * @param newMax The new maximum sequence available
      */
-    void
+    static void
     updateRange(uint32_t newMax);
 
     /**
@@ -227,7 +227,7 @@ public:
      * @param max The new maximum sequence available
      * @param force If set to true, the range will be set even if it's already set
      */
-    void
+    static void
     setRange(uint32_t min, uint32_t max, bool force = false);
 
     /**
@@ -237,8 +237,8 @@ public:
      * @param yield The coroutine context
      * @return Fees if fees are found; nullopt otherwise
      */
-    std::optional<ripple::Fees>
-    fetchFees(std::uint32_t seq, boost::asio::yield_context yield) const;
+    static std::optional<ripple::Fees>
+    fetchFees(std::uint32_t seq, boost::asio::yield_context yield);
 
     /**
      * @brief Fetches a specific transaction.
@@ -514,8 +514,8 @@ public:
      *
      * @return The ledger range if available; nullopt otherwise
      */
-    std::optional<LedgerRange>
-    hardFetchLedgerRangeNoThrow() const;
+    static std::optional<LedgerRange>
+    hardFetchLedgerRangeNoThrow();
 
     /**
      * @brief Writes to a specific ledger.
