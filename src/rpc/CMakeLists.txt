@@ -26,6 +26,7 @@ target_sources(
           handlers/BookOffers.cpp
           handlers/DepositAuthorized.cpp
           handlers/GatewayBalances.cpp
+          handlers/GetAggregatePrice.cpp
           handlers/Ledger.cpp
           handlers/LedgerData.cpp
           handlers/LedgerEntry.cpp

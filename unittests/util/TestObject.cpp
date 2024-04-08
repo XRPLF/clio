@@ -823,6 +823,59 @@ CreateCreateNFTOfferTxWithMetadata(
     return ret;
 }
 
+data::TransactionAndMetadata
+CreateOracleSetTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    uint32_t docId,
+    std::uint32_t lastUpdateTime,
+    ripple::STArray priceDataSeries,
+    std::string_view oracleIndex,
+    bool created,
+    std::string_view previousTxnId
+)
+{
+    // tx
+    ripple::STObject tx(ripple::sfTransaction);
+    tx.setFieldU16(ripple::sfTransactionType, ripple::ttORACLE_SET);
+    auto account = ripple::parseBase58<ripple::AccountID>(std::string(accountId));
+    tx.setAccountID(ripple::sfAccount, account.value());
+    auto amount = ripple::STAmount(fee, false);
+    tx.setFieldAmount(ripple::sfFee, amount);
+    tx.setFieldU32(ripple::sfLastUpdateTime, lastUpdateTime);
+    tx.setFieldU32(ripple::sfOracleDocumentID, docId);
+    tx.setFieldU32(ripple::sfSequence, seq);
+    char const* key = "test";
+    ripple::Slice const slice(key, 4);
+    tx.setFieldVL(ripple::sfSigningPubKey, slice);
+    tx.setFieldArray(ripple::sfPriceDataSeries, priceDataSeries);
+
+    // meta
+    ripple::STObject metaObj(ripple::sfTransactionMetaData);
+    ripple::STArray metaArray{1};
+
+    ripple::STObject node(created ? ripple::sfCreatedNode : ripple::sfModifiedNode);
+    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltORACLE);
+    node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{oracleIndex});
+    node.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{previousTxnId});
+    ripple::STObject fields(created ? ripple::sfNewFields : ripple::sfFinalFields);
+    fields.setFieldU32(ripple::sfOracleDocumentID, docId);
+    fields.setFieldU32(ripple::sfLastUpdateTime, lastUpdateTime);
+    fields.setFieldArray(ripple::sfPriceDataSeries, priceDataSeries);
+    node.emplace_back(std::move(fields));
+
+    metaArray.push_back(node);
+    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+
+    data::TransactionAndMetadata ret;
+    ret.transaction = tx.getSerializer().peekData();
+    ret.metadata = metaObj.getSerializer().peekData();
+    return ret;
+}
+
 ripple::STObject
 CreateAmendmentsObject(std::vector<ripple::uint256> const& enabledAmendments)
 {
@@ -1046,14 +1099,7 @@ CreateOraclePriceData(
 ripple::STArray
 CreatePriceDataSeries(std::vector<ripple::STObject> const& series)
 {
-    auto priceDataSeries = ripple::STArray{series.size()};
-
-    for (auto& data : series) {
-        auto serializer = data.getSerializer();
-        priceDataSeries.add(serializer);
-    }
-
-    return priceDataSeries;
+    return ripple::STArray{series.begin(), series.end()};
 }
 
 ripple::STObject
