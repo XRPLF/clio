@@ -20,8 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/common/Specs.hpp"  // tmp
-#include "rpc/common/Types.hpp"
+#include "rpc/common/Specs.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>

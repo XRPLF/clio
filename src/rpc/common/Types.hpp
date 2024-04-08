@@ -48,8 +48,6 @@ class SubscriptionManager;
 namespace rpc {
 
 class Counters;
-struct RpcSpec;
-struct FieldSpec;
 
 /**
  * @brief Return type used for Validators that can return error but don't have
@@ -72,11 +70,6 @@ using HandlerReturnType = std::expected<OutputType, Status>;
  * @brief The final return type out of RPC engine
  */
 using ReturnType = std::expected<boost::json::value, Status>;
-
-/**
- * @brief An alias for a const reference to @ref RpcSpec.
- */
-using RpcSpecConstRef = RpcSpec const&;
 
 /**
  * @brief An empty type used as Output for handlers than don't actually produce output.
