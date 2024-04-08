@@ -74,7 +74,7 @@ TransactionFeed::sub(SubscriberSharedPtr const& subscriber, std::uint32_t const 
 {
     auto const added = signal_.connectTrackableSlot(subscriber, TransactionSlot(*this, subscriber));
     if (added) {
-        LOG(logger_.debug()) << subscriber->tag() << "Subscribed transactions";
+        LOG(logger_.info()) << subscriber->tag() << "Subscribed transactions";
         ++subAllCount_.get();
         subscriber->apiSubVersion = apiVersion;
         subscriber->onDisconnect.connect([this](SubscriberPtr connection) { unsubInternal(connection); });
@@ -90,7 +90,7 @@ TransactionFeed::sub(
 {
     auto const added = accountSignal_.connectTrackableSlot(subscriber, account, TransactionSlot(*this, subscriber));
     if (added) {
-        LOG(logger_.debug()) << subscriber->tag() << "Subscribed account " << account;
+        LOG(logger_.info()) << subscriber->tag() << "Subscribed account " << account;
         ++subAccountCount_.get();
         subscriber->apiSubVersion = apiVersion;
         subscriber->onDisconnect.connect([this, account](SubscriberPtr connection) {
@@ -104,7 +104,7 @@ TransactionFeed::sub(ripple::Book const& book, SubscriberSharedPtr const& subscr
 {
     auto const added = bookSignal_.connectTrackableSlot(subscriber, book, TransactionSlot(*this, subscriber));
     if (added) {
-        LOG(logger_.debug()) << subscriber->tag() << "Subscribed book " << book;
+        LOG(logger_.info()) << subscriber->tag() << "Subscribed book " << book;
         ++subBookCount_.get();
         subscriber->apiSubVersion = apiVersion;
         subscriber->onDisconnect.connect([this, book](SubscriberPtr connection) { unsubInternal(book, connection); });
@@ -278,7 +278,7 @@ void
 TransactionFeed::unsubInternal(SubscriberPtr subscriber)
 {
     if (signal_.disconnect(subscriber)) {
-        LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed transactions";
+        LOG(logger_.info()) << subscriber->tag() << "Unsubscribed transactions";
         --subAllCount_.get();
     }
 }
@@ -287,7 +287,7 @@ void
 TransactionFeed::unsubInternal(ripple::AccountID const& account, SubscriberPtr subscriber)
 {
     if (accountSignal_.disconnect(subscriber, account)) {
-        LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed account " << account;
+        LOG(logger_.info()) << subscriber->tag() << "Unsubscribed account " << account;
         --subAccountCount_.get();
     }
 }
@@ -296,7 +296,7 @@ void
 TransactionFeed::unsubInternal(ripple::Book const& book, SubscriberPtr subscriber)
 {
     if (bookSignal_.disconnect(subscriber, book)) {
-        LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed book " << book;
+        LOG(logger_.info()) << subscriber->tag() << "Unsubscribed book " << book;
         --subBookCount_.get();
     }
 }

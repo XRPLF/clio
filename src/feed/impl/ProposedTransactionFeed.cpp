@@ -47,7 +47,7 @@ ProposedTransactionFeed::sub(SubscriberSharedPtr const& subscriber)
     });
 
     if (added) {
-        LOG(logger_.debug()) << subscriber->tag() << "Subscribed tx_proposed";
+        LOG(logger_.info()) << subscriber->tag() << "Subscribed tx_proposed";
         ++subAllCount_.get();
         subscriber->onDisconnect.connect([this](SubscriberPtr connection) { unsubInternal(connection); });
     }
@@ -72,7 +72,7 @@ ProposedTransactionFeed::sub(ripple::AccountID const& account, SubscriberSharedP
         }
     );
     if (added) {
-        LOG(logger_.debug()) << subscriber->tag() << "Subscribed accounts_proposed " << account;
+        LOG(logger_.info()) << subscriber->tag() << "Subscribed accounts_proposed " << account;
         ++subAccountCount_.get();
         subscriber->onDisconnect.connect([this, account](SubscriberPtr connection) {
             unsubInternal(account, connection);
@@ -129,7 +129,7 @@ void
 ProposedTransactionFeed::unsubInternal(SubscriberPtr subscriber)
 {
     if (signal_.disconnect(subscriber)) {
-        LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed tx_proposed";
+        LOG(logger_.info()) << subscriber->tag() << "Unsubscribed tx_proposed";
         --subAllCount_.get();
     }
 }
@@ -138,7 +138,7 @@ void
 ProposedTransactionFeed::unsubInternal(ripple::AccountID const& account, SubscriberPtr subscriber)
 {
     if (accountSignal_.disconnect(subscriber, account)) {
-        LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed accounts_proposed " << account;
+        LOG(logger_.info()) << subscriber->tag() << "Unsubscribed accounts_proposed " << account;
         --subAccountCount_.get();
     }
 }
