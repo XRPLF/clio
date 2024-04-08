@@ -48,8 +48,8 @@ struct AnyStrandTests : ::testing::Test {
 
 TEST_F(AnyStrandTests, ExecuteWithoutTokenAndVoid)
 {
-    auto mockOp = OperationType<impl::Any>{};
-    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any()>>())).WillOnce(ReturnRef(mockOp));
+    auto mockOp = OperationType<std::any>{};
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any()>>())).WillOnce(ReturnRef(mockOp));
 
     auto op = strand.execute([] {});
     static_assert(std::is_same_v<decltype(op), AnyOperation<void>>);
@@ -59,17 +59,17 @@ TEST_F(AnyStrandTests, ExecuteWithoutTokenAndVoid)
 
 TEST_F(AnyStrandTests, ExecuteWithoutTokenAndVoidThrowsException)
 {
-    auto mockOp = OperationType<impl::Any>{};
-    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any()>>()))
-        .WillOnce([](auto&&) -> OperationType<impl::Any> const& { throw 0; });
+    auto mockOp = OperationType<std::any>{};
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any()>>()))
+        .WillOnce([](auto&&) -> OperationType<std::any> const& { throw 0; });
 
     EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([] {}));
 }
 
 TEST_F(AnyStrandTests, ExecuteWithStopTokenAndVoid)
 {
-    auto mockOp = StoppableOperationType<impl::Any>{};
-    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
+    auto mockOp = StoppableOperationType<std::any>{};
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
 
     auto op = strand.execute([](auto) {});
     static_assert(std::is_same_v<decltype(op), AnyOperation<void>>);
@@ -79,17 +79,17 @@ TEST_F(AnyStrandTests, ExecuteWithStopTokenAndVoid)
 
 TEST_F(AnyStrandTests, ExecuteWithStopTokenAndVoidThrowsException)
 {
-    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _))
-        .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _))
+        .WillOnce([](auto&&, auto) -> StoppableOperationType<std::any> const& { throw 0; });
 
     EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([](auto) {}));
 }
 
 TEST_F(AnyStrandTests, ExecuteWithStopTokenAndReturnValue)
 {
-    auto mockOp = StoppableOperationType<impl::Any>{};
+    auto mockOp = StoppableOperationType<std::any>{};
     EXPECT_CALL(mockOp, get()).WillOnce(Return(std::make_any<int>(42)));
-    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
 
     auto op = strand.execute([](auto) { return 42; });
     static_assert(std::is_same_v<decltype(op), AnyOperation<int>>);
@@ -99,17 +99,17 @@ TEST_F(AnyStrandTests, ExecuteWithStopTokenAndReturnValue)
 
 TEST_F(AnyStrandTests, ExecuteWithStopTokenAndReturnValueThrowsException)
 {
-    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _))
-        .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _))
+        .WillOnce([](auto&&, auto) -> StoppableOperationType<std::any> const& { throw 0; });
 
     EXPECT_ANY_THROW([[maybe_unused]] auto unused = strand.execute([](auto) { return 42; }));
 }
 
 TEST_F(AnyStrandTests, ExecuteWithTimeoutAndStopTokenAndReturnValue)
 {
-    auto mockOp = StoppableOperationType<impl::Any>{};
+    auto mockOp = StoppableOperationType<std::any>{};
     EXPECT_CALL(mockOp, get()).WillOnce(Return(std::make_any<int>(42)));
-    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _)).WillOnce(ReturnRef(mockOp));
 
     auto op = strand.execute([](auto) { return 42; }, std::chrono::milliseconds{1});
     static_assert(std::is_same_v<decltype(op), AnyOperation<int>>);
@@ -119,8 +119,8 @@ TEST_F(AnyStrandTests, ExecuteWithTimeoutAndStopTokenAndReturnValue)
 
 TEST_F(AnyStrandTests, ExecuteWithTimoutAndStopTokenAndReturnValueThrowsException)
 {
-    EXPECT_CALL(mockStrand, execute(An<std::function<impl::Any(AnyStopToken)>>(), _))
-        .WillOnce([](auto&&, auto) -> StoppableOperationType<impl::Any> const& { throw 0; });
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any(AnyStopToken)>>(), _))
+        .WillOnce([](auto&&, auto) -> StoppableOperationType<std::any> const& { throw 0; });
 
     EXPECT_ANY_THROW(
         [[maybe_unused]] auto unused = strand.execute([](auto) { return 42; }, std::chrono::milliseconds{1})
