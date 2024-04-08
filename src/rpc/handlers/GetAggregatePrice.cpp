@@ -25,7 +25,6 @@
 #include "rpc/common/Types.hpp"
 
 #include <boost/asio/spawn.hpp>
-#include <boost/bimap.hpp>
 #include <boost/bimap/bimap.hpp>
 #include <boost/bimap/multiset_of.hpp>
 #include <boost/json/conversion.hpp>
@@ -172,7 +171,7 @@ GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context
     auto const median = [&, size = out.extireStats.size]() {
         auto const middle = size / 2;
         if ((size % 2) == 0) {
-            static ripple::STAmount two{ripple::noIssue(), 2, 0};
+            static ripple::STAmount const two{ripple::noIssue(), 2, 0};
             auto it = itAdvance(timestampPricesBiMap.right.begin(), middle - 1);
             auto const& a1 = it->first;
             auto const& a2 = (++it)->first;
