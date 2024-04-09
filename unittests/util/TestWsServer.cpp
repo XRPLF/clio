@@ -19,8 +19,6 @@
 
 #include "util/TestWsServer.hpp"
 
-#include "util/requests/Types.hpp"
-
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
@@ -37,7 +35,6 @@
 #include <boost/beast/websocket/stream_base.hpp>
 #include <gtest/gtest.h>
 
-#include <expected>
 #include <optional>
 #include <string>
 #include <utility>
@@ -100,13 +97,15 @@ TestWsServer::acceptConnection(asio::yield_context yield)
     asio::ip::tcp::socket socket(acceptor_.get_executor());
     acceptor_.async_accept(socket, yield[errorCode]);
     if (errorCode)
-        return std::unexpected{util::requests::RequestError{"Accept error", errorCode}};
+        return std::unexpected;
+    {util::requests::RequestError{"Accept error", errorCode}};
 
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws(std::move(socket));
     ws.set_option(websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
     ws.async_accept(yield[errorCode]);
     if (errorCode)
-        return std::unexpected{util::requests::RequestError{"Handshake error", errorCode}};
+        return std::unexpected;
+    {util::requests::RequestError{"Handshake error", errorCode}};
 
     return TestWsConnection(std::move(ws));
 }

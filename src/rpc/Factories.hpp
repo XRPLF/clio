@@ -56,7 +56,7 @@ namespace rpc {
  * @param apiVersionParser A parser that is used to parse out the "api_version" field
  * @return A Websocket context or error Status
  */
-std::expected<web::Context, Status>
+ripple::Expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
@@ -79,7 +79,7 @@ make_WsContext(
  * @param isAdmin Whether the connection has admin privileges
  * @return A HTTP context or error Status
  */
-std::expected<web::Context, Status>
+ripple::Expected<web::Context, Status>
 make_HttpContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,

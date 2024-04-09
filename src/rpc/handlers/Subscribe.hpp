@@ -94,10 +94,10 @@ public:
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::optional<std::vector<std::string>> accounts;
-        std::optional<std::vector<std::string>> streams;
-        std::optional<std::vector<std::string>> accountsProposed;
-        std::optional<std::vector<OrderBook>> books;
+        std::optional<std::vector<std::string>> accounts{};
+        std::optional<std::vector<std::string>> streams{};
+        std::optional<std::vector<std::string>> accountsProposed{};
+        std::optional<std::vector<OrderBook>> books{};
     };
 
     using Result = HandlerReturnType<Output>;
@@ -264,7 +264,7 @@ private:
     {
         static auto constexpr fetchLimit = 200;
 
-        std::optional<data::LedgerRange> rng;
+        std::optional<data::LedgerRange> const rng;
 
         for (auto const& internalBook : books) {
             if (internalBook.snapshot) {

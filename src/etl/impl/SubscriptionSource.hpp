@@ -63,7 +63,7 @@ private:
         std::vector<std::pair<uint32_t, uint32_t>> validatedLedgers;
         std::string validatedLedgersRaw{"N/A"};
     };
-    util::Mutex<ValidatedLedgersData> validatedLedgersData_;
+    util::Mutex<ValidatedLedgersData> validatedLedgersData_{};
 
     SubscriptionSourceDependencies dependencies_;
 
@@ -79,7 +79,7 @@ private:
     std::atomic_bool stop_{false};
     std::atomic_bool isForwarding_{false};
 
-    util::Mutex<std::chrono::steady_clock::time_point> lastMessageTime_;
+    util::Mutex<std::chrono::steady_clock::time_point> lastMessageTime_{};
 
     std::future<void> runFuture_;
 

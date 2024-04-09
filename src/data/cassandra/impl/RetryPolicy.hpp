@@ -58,7 +58,7 @@ public:
      *
      * @param err The cassandra error that triggered the retry
      */
-    [[nodiscard]] bool
+    [[nodiscard]] static bool
     shouldRetry([[maybe_unused]] CassandraError err)
     {
         auto const delayMs = std::chrono::duration_cast<std::chrono::milliseconds>(retry_.delayValue()).count();

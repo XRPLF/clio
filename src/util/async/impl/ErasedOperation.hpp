@@ -55,7 +55,7 @@ public:
         pimpl_->wait();
     }
 
-    std::expected<Any, ExecutionError>
+    ripple::Expected<Any, ExecutionError>
     get()
     {
         return pimpl_->get();
@@ -87,7 +87,7 @@ private:
 
         virtual void
         wait() noexcept = 0;
-        virtual std::expected<Any, ExecutionError>
+        virtual ripple::Expected<Any, ExecutionError>
         get() = 0;
         virtual void
         requestStop() = 0;
@@ -111,7 +111,7 @@ private:
             return operation.wait();
         }
 
-        std::expected<Any, ExecutionError>
+        ripple::Expected<Any, ExecutionError>
         get() override
         {
             // Note: return type of the operation was already wrapped to impl::Any by AnyExecutionContext

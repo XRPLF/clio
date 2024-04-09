@@ -20,10 +20,8 @@
 #include "data/Types.hpp"
 #include "etl/ETLState.hpp"
 #include "rpc/Errors.hpp"
-#include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Tx.hpp"
-#include "util/Fixtures.hpp"
 #include "util/MockETLService.hpp"
 #include "util/TestObject.hpp"
 
@@ -31,13 +29,11 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
 
 #include <algorithm>
 #include <cctype>
 #include <optional>
 #include <string>
-#include <vector>
 
 using namespace rpc;
 namespace json = boost::json;

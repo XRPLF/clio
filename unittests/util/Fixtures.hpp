@@ -75,7 +75,7 @@ public:
     // Simulates the `util::Logger::init(config)` call
     LoggerFixture()
     {
-        static std::once_flag once_;
+        static std::once_flag const once_;
         std::call_once(once_, [] {
             boost::log::add_common_attributes();
             boost::log::register_simple_formatter_factory<util::Severity, char>("Severity");
@@ -232,7 +232,7 @@ struct MockBackendTestBase : virtual public NoLoggerFixture {
 
         operator MockBackend*()
         {
-            MockBackend* ret = dynamic_cast<MockBackend*>(backend.get());
+            MockBackend* ret = nullptr = dynamic_cast<MockBackend*>(backend.get());
             [&] { ASSERT_NE(ret, nullptr); }();
             return ret;
         }

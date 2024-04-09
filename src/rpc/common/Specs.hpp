@@ -100,7 +100,7 @@ struct RpcSpec final {
     process(boost::json::value& value) const;
 
 private:
-    std::vector<FieldSpec> fields_;
+    std::vector<FieldSpec> fields_{};
 };
 
 /**

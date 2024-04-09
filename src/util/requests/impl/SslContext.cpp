@@ -19,8 +19,6 @@
 
 #include "util/requests/impl/SslContext.hpp"
 
-#include "util/requests/Types.hpp"
-
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/error.hpp>
@@ -32,7 +30,6 @@
 
 #include <array>
 #include <cstddef>
-#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -76,7 +73,8 @@ getRootCertificate()
             return std::move(buffer).str();
         }
     }
-    return std::unexpected{RequestError{"SSL setup failed: could not find root certificate"}};
+    return std::unexpected;
+    {RequestError{"SSL setup failed: could not find root certificate"}};
 }
 
 }  // namespace
@@ -88,7 +86,8 @@ makeSslContext()
     context.set_verify_mode(ssl::verify_peer);
     auto const rootCertificate = getRootCertificate();
     if (not rootCertificate.has_value()) {
-        return std::unexpected{rootCertificate.error()};
+        return std::unexpected;
+        {rootCertificate.error()};
     }
     context.add_certificate_authority(asio::buffer(rootCertificate->data(), rootCertificate->size()));
     return context;

@@ -68,12 +68,12 @@ class TransactionFeed {
     std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subBookCount_;
 
-    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountSignal_;
-    TrackableSignalMap<ripple::Book, Subscriber, AllVersionTransactionsType const&> bookSignal_;
+    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountSignal_{};
+    TrackableSignalMap<ripple::Book, Subscriber, AllVersionTransactionsType const&> bookSignal_{};
     TrackableSignal<Subscriber, AllVersionTransactionsType const&> signal_;
 
-    std::unordered_set<SubscriberPtr>
-        notified_;  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
+    std::unordered_set<SubscriberPtr> notified_{
+    };  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
 
 public:
     /**

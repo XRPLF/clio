@@ -50,7 +50,7 @@ public:
 };
 
 class FakeBookSuccessors {
-    std::vector<FakeBook> books_;
+    std::vector<FakeBook> books_{};
 
 public:
     auto
@@ -122,7 +122,7 @@ public:
 };
 
 class FakeLedgerObjects {
-    std::vector<FakeLedgerObject> objects;
+    std::vector<FakeLedgerObject> objects{};
 
 public:
     std::vector<FakeLedgerObject>*

@@ -52,9 +52,9 @@
  * @brief Account transactions, NFT transactions and NFT data bundled togeher.
  */
 struct FormattedTransactionsData {
-    std::vector<AccountTransactionsData> accountTxData;
-    std::vector<NFTTransactionsData> nfTokenTxData;
-    std::vector<NFTsData> nfTokensData;
+    std::vector<AccountTransactionsData> accountTxData{};
+    std::vector<NFTTransactionsData> nfTokenTxData{};
+    std::vector<NFTsData> nfTokensData{};
 };
 
 namespace etl::impl {
@@ -126,7 +126,7 @@ public:
 
             result.accountTxData.emplace_back(txMeta, sttx.getTransactionID());
             static constexpr std::size_t KEY_SIZE = 32;
-            std::string keyStr{reinterpret_cast<char const*>(sttx.getTransactionID().data()), KEY_SIZE};
+            std::string const keyStr{reinterpret_cast<char const*>(sttx.getTransactionID().data()), KEY_SIZE};
             backend_->writeTransaction(
                 std::move(keyStr),
                 ledger.seq,

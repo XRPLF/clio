@@ -100,11 +100,11 @@ class ETLService {
     std::uint32_t extractorThreads_ = 1;
     std::thread worker_;
 
-    CacheLoaderType cacheLoader_;
+    CacheLoaderType cacheLoader_{};
     LedgerFetcherType ledgerFetcher_;
     LedgerLoaderType ledgerLoader_;
     LedgerPublisherType ledgerPublisher_;
-    AmendmentBlockHandlerType amendmentBlockHandler_;
+    AmendmentBlockHandlerType amendmentBlockHandler_{};
 
     SystemState state_;
 
@@ -206,8 +206,8 @@ public:
      *
      * @return The state of ETL as a JSON object
      */
-    boost::json::object
-    getInfo() const
+    static boost::json::object
+    getInfo()
     {
         boost::json::object result;
 

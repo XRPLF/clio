@@ -79,7 +79,7 @@ protected:
         ImplType impl_;
     };
 
-    std::unique_ptr<Concept> pimpl_;
+    std::unique_ptr<Concept> pimpl_{};
 };
 
 }  // namespace util::prometheus::impl

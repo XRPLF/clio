@@ -19,7 +19,6 @@
 
 #include "util/MockOperation.hpp"
 #include "util/MockStrand.hpp"
-#include "util/async/AnyOperation.hpp"
 #include "util/async/AnyStopToken.hpp"
 #include "util/async/AnyStrand.hpp"
 
@@ -28,9 +27,7 @@
 
 #include <any>
 #include <chrono>
-#include <expected>
 #include <functional>
-#include <type_traits>
 
 using namespace util::async;
 using namespace ::testing;

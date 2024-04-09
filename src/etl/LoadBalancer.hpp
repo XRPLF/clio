@@ -151,8 +151,8 @@ public:
      *
      * @return JSON representation of the state of this load balancer.
      */
-    boost::json::value
-    toJson() const;
+    static boost::json::value
+    toJson();
 
     /**
      * @brief Forward a JSON RPC request to a randomly selected rippled node.

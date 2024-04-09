@@ -116,7 +116,7 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    std::expected<std::string, RequestError>
+    ripple::Expected<std::string, RequestError>
     getSsl(boost::asio::yield_context yield);
 
     /**
@@ -128,7 +128,7 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    std::expected<std::string, RequestError>
+    ripple::Expected<std::string, RequestError>
     getPlain(boost::asio::yield_context yield);
 
     /**
@@ -141,7 +141,7 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    std::expected<std::string, RequestError>
+    ripple::Expected<std::string, RequestError>
     get(boost::asio::yield_context yield);
 
     /**
@@ -153,7 +153,7 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    std::expected<std::string, RequestError>
+    ripple::Expected<std::string, RequestError>
     postSsl(boost::asio::yield_context yield);
 
     /**
@@ -165,7 +165,7 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    std::expected<std::string, RequestError>
+    ripple::Expected<std::string, RequestError>
     postPlain(boost::asio::yield_context yield);
 
     /**
@@ -178,23 +178,23 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    std::expected<std::string, RequestError>
+    ripple::Expected<std::string, RequestError>
     post(boost::asio::yield_context yield);
 
     static constexpr std::chrono::milliseconds DEFAULT_TIMEOUT{30000}; /**< Default timeout for requests */
 
 private:
-    std::expected<std::string, RequestError>
+    ripple::Expected<std::string, RequestError>
     doSslRequest(boost::asio::yield_context yield, boost::beast::http::verb method);
 
-    std::expected<std::string, RequestError>
+    ripple::Expected<std::string, RequestError>
     doPlainRequest(boost::asio::yield_context yield, boost::beast::http::verb method);
 
-    std::expected<std::string, RequestError>
+    ripple::Expected<std::string, RequestError>
     doRequest(boost::asio::yield_context yield, boost::beast::http::verb method);
 
     template <typename StreamDataType>
-    std::expected<std::string, RequestError>
+    ripple::Expected<std::string, RequestError>
     doRequestImpl(StreamDataType&& streamData, boost::asio::yield_context yield, boost::beast::http::verb method);
 };
 

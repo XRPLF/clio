@@ -57,8 +57,6 @@
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <thread>
-#include <vector>
 
 using namespace util;
 using namespace boost::asio;

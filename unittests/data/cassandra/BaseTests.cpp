@@ -26,16 +26,12 @@
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <chrono>
 #include <cstdint>
-#include <iterator>
 #include <optional>
 #include <semaphore>
 #include <string>
 #include <string_view>
-#include <type_traits>
-#include <vector>
 
 using namespace std;
 
@@ -95,7 +91,7 @@ protected:
         auto const insert = handle.prepare(q2);
 
         std::vector<Statement> statements;
-        int64_t idx = 1000;
+        int64_t const idx = 1000;
 
         statements.reserve(entries.size());
         for (auto const& entry : entries)
@@ -266,7 +262,7 @@ TEST_F(BackendCassandraBaseTest, CreateTableWithStrings)
     // write data
     {
         std::vector<Future> futures;
-        int64_t idx = 1000;
+        int64_t const idx = 1000;
 
         futures.reserve(entries.size());
         for (auto const& entry : entries)
@@ -330,7 +326,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsert)
     // write data in bulk
     {
         std::vector<Statement> statements;
-        int64_t idx = 1000;
+        int64_t const idx = 1000;
 
         statements.reserve(entries.size());
         for (auto const& entry : entries)
@@ -391,7 +387,7 @@ TEST_F(BackendCassandraBaseTest, BatchInsertAsync)
 
         {
             std::vector<Statement> statements;
-            int64_t idx = 1000;
+            int64_t const idx = 1000;
 
             statements.reserve(entries.size());
             for (auto const& entry : entries)

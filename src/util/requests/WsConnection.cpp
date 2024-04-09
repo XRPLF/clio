@@ -40,7 +40,6 @@
 #include <openssl/tls1.h>
 
 #include <chrono>
-#include <expected>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -97,7 +96,8 @@ WsConnectionBuilder::sslConnect(asio::yield_context yield) const
 {
     auto streamData = impl::SslWsStreamData::create(yield);
     if (not streamData.has_value())
-        return std::unexpected{std::move(streamData).error()};
+        return std::unexpected;
+    {std::move(streamData).error()};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
@@ -105,13 +105,14 @@ WsConnectionBuilder::sslConnect(asio::yield_context yield) const
 #pragma GCC diagnostic pop
         beast::error_code errorCode;
         errorCode.assign(static_cast<int>(::ERR_get_error()), beast::net::error::get_ssl_category());
-        return std::unexpected{RequestError{"SSL setup failed", errorCode}};
+        return std::unexpected;
+        {RequestError{"SSL setup failed", errorCode}};
     }
     return connectImpl(std::move(streamData).value(), yield);
 }
 
-std::expected<WsConnectionPtr, RequestError>
-WsConnectionBuilder::plainConnect(asio::yield_context yield) const
+static std::expected<WsConnectionPtr, RequestError>
+WsConnectionBuilder::plainConnect(asio::yield_context yield)
 {
     return connectImpl(impl::WsStreamData{yield}, yield);
 }

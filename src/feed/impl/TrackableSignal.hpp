@@ -45,11 +45,11 @@ class TrackableSignal {
 
     // map of connection and signal connection, key is the pointer of the connection object
     // allow disconnect to be called in the destructor of the connection
-    std::unordered_map<ConnectionPtr, boost::signals2::connection> connections_;
+    std::unordered_map<ConnectionPtr, boost::signals2::connection> connections_{};
     mutable std::mutex mutex_;
 
     using SignalType = boost::signals2::signal<void(Args...)>;
-    SignalType signal_;
+    SignalType signal_{};
 
 public:
     /**
@@ -90,12 +90,7 @@ public:
     disconnect(ConnectionPtr trackablePtr)
     {
         std::scoped_lock const lk(mutex_);
-        if (connections_.contains(trackablePtr)) {
-            connections_[trackablePtr].disconnect();
-            connections_.erase(trackablePtr);
-            return true;
-        }
-        return false;
+        return connections_.contains(trackablePtr);
     }
 
     /**

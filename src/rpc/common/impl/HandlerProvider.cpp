@@ -53,7 +53,6 @@
 #include "rpc/handlers/ServerInfo.hpp"
 #include "rpc/handlers/Subscribe.hpp"
 #include "rpc/handlers/TransactionEntry.hpp"
-#include "rpc/handlers/Tx.hpp"
 #include "rpc/handlers/Unsubscribe.hpp"
 #include "rpc/handlers/VersionHandler.hpp"
 #include "util/config/Config.hpp"

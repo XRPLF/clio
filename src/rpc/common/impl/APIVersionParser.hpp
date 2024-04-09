@@ -74,7 +74,7 @@ public:
 
     ProductionAPIVersionParser(util::Config const& config);
 
-    std::expected<uint32_t, std::string>
+    ripple::Expected<uint32_t, std::string>
     parse(boost::json::object const& request) const override;
 
     inline uint32_t

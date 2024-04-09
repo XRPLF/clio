@@ -134,7 +134,7 @@ private:
         std::uint64_t count = 0;
     };
 
-    std::vector<Bucket> buckets_;
+    std::vector<Bucket> buckets_{};
     Bucket lastBucket_{std::numeric_limits<ValueType>::max()};
     ValueType sum_ = 0;
     mutable std::unique_ptr<std::mutex> mutex_ = std::make_unique<std::mutex>();

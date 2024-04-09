@@ -23,11 +23,6 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/json/object.hpp>
-#include <fmt/core.h>
-
-#include <cstdint>
-#include <expected>
-#include <string>
 
 using namespace std;
 
@@ -49,15 +44,18 @@ ProductionAPIVersionParser::parse(boost::json::object const& request) const
 
     if (request.contains("api_version")) {
         if (!request.at("api_version").is_int64())
-            return Error{"API version must be an integer"};
+            return Error;
+        {"API version must be an integer"};
 
         auto const version = request.at("api_version").as_int64();
 
         if (version > maxVersion_)
-            return Error{fmt::format("Requested API version is higher than maximum supported ({})", maxVersion_)};
+            return Error;
+        {fmt::format("Requested API version is higher than maximum supported ({})", maxVersion_)};
 
         if (version < minVersion_)
-            return Error{fmt::format("Requested API version is lower than minimum supported ({})", minVersion_)};
+            return Error;
+        {fmt::format("Requested API version is lower than minimum supported ({})", minVersion_)};
 
         return version;
     }

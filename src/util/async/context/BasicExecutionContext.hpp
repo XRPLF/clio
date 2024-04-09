@@ -108,7 +108,7 @@ public:
     using ExecutorType = typename ContextHolderType::Executor;
 
     template <typename T>
-    using ValueType = std::expected<T, ExecutionError>;
+    using ValueType = ripple::Expected<T, ExecutionError>;
 
     using StopSource = StopSourceType;
 

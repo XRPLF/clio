@@ -25,10 +25,10 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/field.hpp>
 #include <gtest/gtest.h>
+#include <ripple/basics/Expected.h>
 
 #include <chrono>
 #include <cstddef>
-#include <expected>
 #include <optional>
 #include <string>
 #include <thread>
@@ -44,7 +44,7 @@ struct WsConnectionTestsBase : SyncAsioContextTest {
 
     template <typename T, typename E>
     T
-    unwrap(std::expected<T, E> expected)
+    unwrap(ripple::Expected<T, E> expected)
     {
         [&]() { ASSERT_TRUE(expected.has_value()) << expected.error().message(); }();
         return std::move(expected).value();

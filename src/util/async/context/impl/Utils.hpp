@@ -62,14 +62,14 @@ outcomeForHandler(auto&& fn)
 {
     if constexpr (SomeHandlerWith<decltype(fn), typename StopSourceType::Token>) {
         using FnRetType = decltype(fn(std::declval<typename StopSourceType::Token>()));
-        using RetType = std::expected<FnRetType, ExecutionError>;
+        using RetType = ripple::Expected<FnRetType, ExecutionError>;
 
-        return StoppableOutcome<RetType, StopSourceType>();
+        return StoppableOutcome<FnRetType, StopSourceType>();
     } else {
         using FnRetType = decltype(fn());
-        using RetType = std::expected<FnRetType, ExecutionError>;
+        using RetType = ripple::Expected<FnRetType, ExecutionError>;
 
-        return Outcome<RetType>();
+        return Outcome<FnRetType>();
     }
 }
 

@@ -58,8 +58,8 @@ struct Limit {
 class Handle;
 class CassandraError;
 
-using MaybeError = std::expected<void, CassandraError>;
-using ResultOrError = std::expected<Result, CassandraError>;
-using Error = std::unexpected<CassandraError>;
+using MaybeError = ripple::Expected<void, CassandraError>;
+using ResultOrError = ripple::Expected<Result, CassandraError>;
+using Error = ripple::Unexpected<CassandraError>;
 
 }  // namespace data::cassandra

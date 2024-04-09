@@ -32,15 +32,12 @@
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
-#include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
-#include <boost/beast/ssl/ssl_stream.hpp>
 #include <openssl/err.h>
 #include <openssl/tls1.h>
 
 #include <chrono>
-#include <expected>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -151,7 +148,7 @@ RequestBuilder::doSslRequest(asio::yield_context yield, beast::http::verb method
     return doRequestImpl(std::move(streamData).value(), yield, method);
 }
 
-std::expected<std::string, RequestError>
+static std::expected<std::string, RequestError>
 RequestBuilder::doPlainRequest(asio::yield_context yield, beast::http::verb method)
 {
     auto streamData = impl::TcpStreamData{yield};

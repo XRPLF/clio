@@ -149,7 +149,7 @@ public:
         if (ec)
             return fail(ec, "detect");
 
-        std::string ip;
+        std::string const ip;
         try {
             ip = stream_.socket().remote_endpoint().address().to_string();
         } catch (std::exception const&) {
@@ -237,7 +237,7 @@ public:
         , acceptor_(boost::asio::make_strand(ioc))
         , adminVerification_(impl::make_AdminVerificationStrategy(std::move(adminPassword)))
     {
-        boost::beast::error_code ec;
+        boost::beast::error_code const ec;
 
         acceptor_.open(endpoint.protocol(), ec);
         if (ec)

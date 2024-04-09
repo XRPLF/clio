@@ -29,9 +29,9 @@
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <gtest/gtest.h>
+#include <ripple/basics/Expected.h>
 
 #include <chrono>
-#include <expected>
 #include <optional>
 #include <string>
 #include <thread>
@@ -111,14 +111,15 @@ TEST_P(RequestBuilderTest, SimpleRequest)
     );
 
     runSpawn([this, replyBody](asio::yield_context yield) {
-        auto const response = [&]() -> std::expected<std::string, RequestError> {
+        auto const response = [&]() -> ripple::Expected<std::string, RequestError> {
             switch (GetParam().method) {
                 case http::verb::get:
                     return builder.getPlain(yield);
                 case http::verb::post:
                     return builder.postPlain(yield);
                 default:
-                    return std::unexpected{RequestError{"Invalid HTTP verb"}};
+                    return std::unexpected;
+                    {RequestError{"Invalid HTTP verb"}};
             }
         }();
         ASSERT_TRUE(response) << response.error().message();
@@ -243,14 +244,15 @@ TEST_P(RequestBuilderSslTest, TrySslUsePlain)
     );
 
     runSpawn([this](asio::yield_context yield) {
-        auto const response = [&]() -> std::expected<std::string, RequestError> {
+        auto const response = [&]() -> ripple::Expected<std::string, RequestError> {
             switch (GetParam().method) {
                 case http::verb::get:
                     return builder.get(yield);
                 case http::verb::post:
                     return builder.post(yield);
                 default:
-                    return std::unexpected{RequestError{"Invalid HTTP verb"}};
+                    return std::unexpected;
+                    {RequestError{"Invalid HTTP verb"}};
             }
         }();
         ASSERT_TRUE(response) << response.error().message();

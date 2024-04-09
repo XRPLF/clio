@@ -58,7 +58,7 @@ public:
      * @param request A JSON object representing the request
      * @return The specified API version if contained in the JSON object; error string otherwise
      */
-    std::expected<uint32_t, std::string> virtual parse(boost::json::object const& request) const = 0;
+    ripple::Expected<uint32_t, std::string> virtual parse(boost::json::object const& request) const = 0;
 };
 
 }  // namespace rpc

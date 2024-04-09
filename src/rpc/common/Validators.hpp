@@ -376,7 +376,7 @@ EqualTo(char const*) -> EqualTo<std::string>;
  */
 template <typename Type>
 class OneOf final {
-    std::vector<Type> options_;
+    std::vector<Type> options_{};
 
 public:
     /**

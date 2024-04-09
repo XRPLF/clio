@@ -74,7 +74,7 @@ class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase
     boost::beast::flat_buffer buffer_;
     std::reference_wrapper<web::DOSGuard> dosGuard_;
     bool sending_ = false;
-    std::queue<std::shared_ptr<std::string>> messages_;
+    std::queue<std::shared_ptr<std::string>> messages_{};
     std::shared_ptr<HandlerType> const handler_;
 
 protected:

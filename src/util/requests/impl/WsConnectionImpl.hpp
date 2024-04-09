@@ -59,7 +59,8 @@ public:
         ws_.async_read(buffer, yield[errorCode]);
 
         if (errorCode)
-            return std::unexpected{RequestError{"Read error", errorCode}};
+            return std::unexpected;
+        {RequestError{"Read error", errorCode}};
 
         return boost::beast::buffers_to_string(std::move(buffer).data());
     }

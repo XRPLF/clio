@@ -95,7 +95,7 @@ public:
      *
      * @return The result of the operation
      */
-    [[nodiscard]] std::expected<RetType, ExecutionError>
+    [[nodiscard]] ripple::Expected<RetType, ExecutionError>
     get()
     {
         try {
@@ -110,7 +110,8 @@ public:
             }
 
         } catch (std::bad_any_cast const& e) {
-            return std::unexpected{ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")};
+            return std::unexpected;
+            {ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")};
         }
     }
 

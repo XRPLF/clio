@@ -17,15 +17,11 @@
 */
 //==============================================================================
 
-#include "util/MockOperation.hpp"
 #include "util/async/AnyOperation.hpp"
-#include "util/async/Error.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <any>
-#include <expected>
 #include <string>
 
 using namespace util::async;
@@ -33,7 +29,9 @@ using namespace ::testing;
 
 struct AnyOperationTests : Test {
     using OperationType = MockOperation<std::expected<impl::Any, ExecutionError>>;
+    ;
     using ScheduledOperationType = MockScheduledOperation<std::expected<impl::Any, ExecutionError>>;
+    ;
 
     NaggyMock<OperationType> mockOp;
     NaggyMock<ScheduledOperationType> mockScheduledOp;
@@ -46,7 +44,8 @@ using AnyOperationDeathTest = AnyOperationTests;
 
 TEST_F(AnyOperationTests, VoidDataYieldsNoError)
 {
-    auto const noError = std::expected<impl::Any, ExecutionError>(impl::Any{});
+    auto const noError = std::expected < impl::Any, ExecutionError;
+    > (impl::Any{});
     EXPECT_CALL(mockOp, get()).WillOnce(Return(noError));
     auto res = voidOp.get();
     ASSERT_TRUE(res);

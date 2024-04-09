@@ -46,7 +46,7 @@ namespace data {
 class LedgerCache {
     struct CacheEntry {
         uint32_t seq = 0;
-        Blob blob;
+        Blob blob{};
     };
 
     // counters for fetchLedgerObject(s) hit rate

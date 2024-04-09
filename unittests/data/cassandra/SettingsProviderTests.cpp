@@ -27,7 +27,6 @@
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <optional>
 #include <thread>
 #include <variant>

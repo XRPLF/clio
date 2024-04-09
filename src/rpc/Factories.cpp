@@ -31,9 +31,9 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <ripple/basics/Expected.h>
 #include <ripple/protocol/ErrorCodes.h>
 
-#include <expected>
 #include <functional>
 #include <memory>
 #include <string>
@@ -43,7 +43,7 @@ using namespace util;
 
 namespace rpc {
 
-std::expected<web::Context, Status>
+ripple::Expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
@@ -72,7 +72,7 @@ make_WsContext(
     return web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp, session->isAdmin());
 }
 
-std::expected<web::Context, Status>
+ripple::Expected<web::Context, Status>
 make_HttpContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,

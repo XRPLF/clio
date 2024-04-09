@@ -32,10 +32,8 @@
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <fmt/core.h>
 
 #include <algorithm>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -233,7 +231,7 @@ LoadBalancer::forwardToRippled(
 }
 
 boost::json::value
-LoadBalancer::toJson() const
+LoadBalancer::toJson()
 {
     boost::json::array ret;
     for (auto& src : sources_)

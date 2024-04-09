@@ -19,14 +19,12 @@
 
 #include "data/cassandra/impl/Batch.hpp"
 
-#include "data/cassandra/Error.hpp"
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/ManagedObject.hpp"
 #include "data/cassandra/impl/Statement.hpp"
 
 #include <cassandra.h>
 
-#include <expected>
 #include <stdexcept>
 #include <vector>
 
@@ -52,7 +50,8 @@ MaybeError
 Batch::add(Statement const& statement)
 {
     if (auto const rc = cass_batch_add_statement(*this, statement); rc != CASS_OK) {
-        return Error{CassandraError{cass_error_desc(rc), rc}};
+        return Error;
+        {CassandraError{cass_error_desc(rc), rc}};
     }
     return {};
 }

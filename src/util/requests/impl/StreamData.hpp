@@ -63,7 +63,8 @@ public:
     {
         auto sslContext = makeSslContext();
         if (not sslContext.has_value()) {
-            return std::unexpected{std::move(sslContext.error())};
+            return std::unexpected;
+            {std::move(sslContext.error())};
         }
         return SslStreamData{std::move(sslContext).value(), yield};
     }

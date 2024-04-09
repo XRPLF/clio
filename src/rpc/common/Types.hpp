@@ -53,23 +53,23 @@ class Counters;
  * @brief Return type used for Validators that can return error but don't have
  * specific value to return
  */
-using MaybeError = std::expected<void, Status>;
+using MaybeError = ripple::Expected<void, Status>;
 
 /**
  * @brief The type that represents just the error part of @ref MaybeError
  */
-using Error = std::unexpected<Status>;
+using Error = ripple::Unexpected<Status>;
 
 /**
  * @brief Return type for each individual handler
  */
 template <typename OutputType>
-using HandlerReturnType = std::expected<OutputType, Status>;
+using HandlerReturnType = ripple::Expected<OutputType, Status>;
 
 /**
  * @brief The final return type out of RPC engine
  */
-using ReturnType = std::expected<boost::json::value, Status>;
+using ReturnType = ripple::Expected<boost::json::value, Status>;
 
 /**
  * @brief An empty type used as Output for handlers than don't actually produce output.

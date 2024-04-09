@@ -19,7 +19,6 @@
 
 #include "data/cassandra/impl/Future.hpp"
 
-#include "data/cassandra/Error.hpp"
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/ManagedObject.hpp"
 #include "data/cassandra/impl/Result.hpp"
@@ -27,9 +26,7 @@
 #include <cassandra.h>
 
 #include <cstddef>
-#include <memory>
 #include <string>
-#include <utility>
 
 namespace {
 constexpr auto futureDeleter = [](CassFuture* ptr) { cass_future_free(ptr); };
@@ -51,7 +48,8 @@ Future::await() const
             cass_future_error_message(*this, &message, &len);
             return label + ": " + std::string{message, len};
         }(cass_error_desc(rc));
-        return Error{CassandraError{errMsg, rc}};
+        return Error;
+        {CassandraError{errMsg, rc}};
     }
     return {};
 }
@@ -66,7 +64,8 @@ Future::get() const
             cass_future_error_message(*this, &message, &len);
             return label + ": " + std::string{message, len};
         }("future::get()");
-        return Error{CassandraError{errMsg, rc}};
+        return Error;
+        {CassandraError{errMsg, rc}};
     }
 
     return Result{cass_future_get_result(*this)};

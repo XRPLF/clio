@@ -55,7 +55,7 @@ public:
      * @param yield yield context
      * @return Message or error
      */
-    virtual std::expected<std::string, RequestError>
+    virtual ripple::Expected<std::string, RequestError>
     read(boost::asio::yield_context yield) = 0;
 
     /**
@@ -154,7 +154,7 @@ public:
      * @param yield yield context
      * @return WebSocket connection or error
      */
-    std::expected<WsConnectionPtr, RequestError>
+    ripple::Expected<WsConnectionPtr, RequestError>
     sslConnect(boost::asio::yield_context yield) const;
 
     /**
@@ -163,7 +163,7 @@ public:
      * @param yield yield context
      * @return WebSocket connection or error
      */
-    std::expected<WsConnectionPtr, RequestError>
+    ripple::Expected<WsConnectionPtr, RequestError>
     plainConnect(boost::asio::yield_context yield) const;
 
     /**
@@ -172,14 +172,14 @@ public:
      * @param yield yield context
      * @return WebSocket connection or error
      */
-    std::expected<WsConnectionPtr, RequestError>
+    ripple::Expected<WsConnectionPtr, RequestError>
     connect(boost::asio::yield_context yield) const;
 
     static constexpr std::chrono::seconds DEFAULT_TIMEOUT{5}; /**< Default timeout for connecting */
 
 private:
     template <typename StreamDataType>
-    std::expected<WsConnectionPtr, RequestError>
+    ripple::Expected<WsConnectionPtr, RequestError>
     connectImpl(StreamDataType&& streamData, boost::asio::yield_context yield) const;
 };
 

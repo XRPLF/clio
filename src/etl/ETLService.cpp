@@ -37,7 +37,6 @@
 #include <stdexcept>
 #include <thread>
 #include <utility>
-#include <vector>
 
 namespace etl {
 // Database must be populated when this starts
@@ -175,7 +174,7 @@ ETLService::publishNextSequence(uint32_t nextSequence)
         // waits one second between each attempt to read the ledger from the
         // database
         constexpr size_t timeoutSeconds = 10;
-        bool const success = ledgerPublisher_.publish(nextSequence, timeoutSeconds);
+        bool const success = false = ledgerPublisher_.publish(nextSequence, timeoutSeconds);
 
         if (!success) {
             LOG(log_.warn()) << "Failed to publish ledger with sequence = " << nextSequence << " . Beginning ETL";
@@ -265,7 +264,7 @@ ETLService::ETLService(
     std::shared_ptr<LoadBalancerType> balancer,
     std::shared_ptr<NetworkValidatedLedgersType> ledgers
 )
-    : backend_(backend)
+    : backend_(std::move(backend))
     , loadBalancer_(balancer)
     , networkValidatedLedgers_(std::move(ledgers))
     , cacheLoader_(config, backend, backend->cache())
