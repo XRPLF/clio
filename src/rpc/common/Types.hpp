@@ -20,7 +20,6 @@
 #pragma once
 
 #include "rpc/Errors.hpp"
-#include "util/Expected.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
@@ -32,6 +31,7 @@
 #include <ripple/basics/strHex.h>
 
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <string>
 #include <utility>
@@ -50,14 +50,12 @@ class SubscriptionManager;
 namespace rpc {
 
 class Counters;
-struct RpcSpec;
-struct FieldSpec;
 
 /**
  * @brief Return type used for Validators that can return error but don't have
  * specific value to return
  */
-using MaybeError = util::Expected<void, Status>;
+using MaybeError = std::expected<void, Status>;
 
 /**
  * @brief Check if two MaybeError objects are equal
@@ -77,13 +75,13 @@ operator==(MaybeError const& lhs, MaybeError const& rhs)
 /**
  * @brief The type that represents just the error part of @ref MaybeError
  */
-using Error = util::Unexpected<Status>;
+using Error = std::unexpected<Status>;
 
 /**
  * @brief Return type for each individual handler
  */
 template <typename OutputType>
-using HandlerReturnType = util::Expected<OutputType, Status>;
+using HandlerReturnType = std::expected<OutputType, Status>;
 
 /**
  * @brief The final return type out of RPC engine
@@ -108,7 +106,7 @@ struct ReturnType {
         return result.operator bool();
     }
 
-    util::Expected<boost::json::value, Status> result;
+    std::expected<boost::json::value, Status> result;
     boost::json::array warnings;
 };
 

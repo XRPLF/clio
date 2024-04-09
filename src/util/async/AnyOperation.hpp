@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
 #include "util/async/impl/Any.hpp"
@@ -29,6 +28,7 @@
 #include <fmt/std.h>
 
 #include <any>
+#include <expected>
 #include <thread>
 #include <type_traits>
 #include <utility>
@@ -95,13 +95,13 @@ public:
      *
      * @return The result of the operation
      */
-    [[nodiscard]] util::Expected<RetType, ExecutionError>
+    [[nodiscard]] std::expected<RetType, ExecutionError>
     get()
     {
         try {
             auto data = operation_.get();
             if (not data)
-                return util::Unexpected(std::move(data).error());
+                return std::unexpected(std::move(data).error());
 
             if constexpr (std::is_void_v<RetType>) {
                 return {};
@@ -110,7 +110,7 @@ public:
             }
 
         } catch (std::bad_any_cast const& e) {
-            return util::Unexpected{ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")};
+            return std::unexpected{ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")};
         }
     }
 

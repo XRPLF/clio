@@ -1,5 +1,10 @@
 name: Update CI docker image
 on:
+  pull_request:
+    paths:
+      - 'docker/ci/**'
+      - 'docker/compilers/**'
+      - .github/workflows/update_docker_ci.yml
   push:
     branches: [develop]
     paths:
@@ -11,9 +16,10 @@ on:
 jobs:
   build_and_push:
     name: Build and push docker image
-    runs-on: ubuntu-20.04
+    runs-on: [self-hosted, heavy]
     steps:
       - name: Login to DockerHub
+        if: ${{ github.event_name == 'push' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
@@ -36,6 +42,6 @@ jobs:
         with:
           context: ${{ github.workspace }}/docker/ci
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
 

@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-c"]
 USER root
 WORKDIR /root
 
-ENV GCC_VERSION=12.3.0  
+ENV GCC_VERSION=12.3.0
 
 RUN apt update -qq \
     && apt install -qq -y --no-install-recommends --no-install-suggests \

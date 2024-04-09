@@ -19,18 +19,18 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/requests/Types.hpp"
 
 #include <boost/asio/ssl/context.hpp>
 #include <boost/beast/core/error.hpp>
 
+#include <expected>
 #include <optional>
 #include <string>
 
 namespace util::requests::impl {
 
-Expected<boost::asio::ssl::context, RequestError>
+std::expected<boost::asio::ssl::context, RequestError>
 makeSslContext();
 
 std::optional<std::string>

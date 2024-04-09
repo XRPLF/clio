@@ -50,7 +50,7 @@ SingleFeedBase::sub(SubscriberSharedPtr const& subscriber)
     });
 
     if (added) {
-        LOG(logger_.debug()) << subscriber->tag() << "Subscribed " << name_;
+        LOG(logger_.info()) << subscriber->tag() << "Subscribed " << name_;
         ++subCount_.get();
         subscriber->onDisconnect.connect([this](SubscriberPtr connectionDisconnecting) {
             unsubInternal(connectionDisconnecting);
@@ -83,7 +83,7 @@ void
 SingleFeedBase::unsubInternal(SubscriberPtr subscriber)
 {
     if (signal_.disconnect(subscriber)) {
-        LOG(logger_.debug()) << subscriber->tag() << "Unsubscribed " << name_;
+        LOG(logger_.info()) << subscriber->tag() << "Unsubscribed " << name_;
         --subCount_.get();
     }
 }

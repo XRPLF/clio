@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/log/Logger.hpp"
 #include "util/requests/Types.hpp"
 
@@ -33,6 +32,7 @@
 #include <boost/beast/http/verb.hpp>
 
 #include <chrono>
+#include <expected>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -116,7 +116,7 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    Expected<std::string, RequestError>
+    std::expected<std::string, RequestError>
     getSsl(boost::asio::yield_context yield);
 
     /**
@@ -128,7 +128,7 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    Expected<std::string, RequestError>
+    std::expected<std::string, RequestError>
     getPlain(boost::asio::yield_context yield);
 
     /**
@@ -141,7 +141,7 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    Expected<std::string, RequestError>
+    std::expected<std::string, RequestError>
     get(boost::asio::yield_context yield);
 
     /**
@@ -153,7 +153,7 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    Expected<std::string, RequestError>
+    std::expected<std::string, RequestError>
     postSsl(boost::asio::yield_context yield);
 
     /**
@@ -165,7 +165,7 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    Expected<std::string, RequestError>
+    std::expected<std::string, RequestError>
     postPlain(boost::asio::yield_context yield);
 
     /**
@@ -178,23 +178,23 @@ public:
      * @param yield yield context
      * @return Expected response or error
      */
-    Expected<std::string, RequestError>
+    std::expected<std::string, RequestError>
     post(boost::asio::yield_context yield);
 
     static constexpr std::chrono::milliseconds DEFAULT_TIMEOUT{30000}; /**< Default timeout for requests */
 
 private:
-    Expected<std::string, RequestError>
+    std::expected<std::string, RequestError>
     doSslRequest(boost::asio::yield_context yield, boost::beast::http::verb method);
 
-    Expected<std::string, RequestError>
+    std::expected<std::string, RequestError>
     doPlainRequest(boost::asio::yield_context yield, boost::beast::http::verb method);
 
-    Expected<std::string, RequestError>
+    std::expected<std::string, RequestError>
     doRequest(boost::asio::yield_context yield, boost::beast::http::verb method);
 
     template <typename StreamDataType>
-    Expected<std::string, RequestError>
+    std::expected<std::string, RequestError>
     doRequestImpl(StreamDataType&& streamData, boost::asio::yield_context yield, boost::beast::http::verb method);
 };
 

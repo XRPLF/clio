@@ -33,6 +33,8 @@
 
 namespace rpc {
 
+struct RpcSpec;
+
 /**
  * @brief Specifies what a requirement used with @ref rpc::FieldSpec must provide.
  */
@@ -96,7 +98,7 @@ template <typename T>
 concept SomeHandlerWithInput = requires(T a, uint32_t version) {
     {
         a.spec(version)
-    } -> std::same_as<RpcSpecConstRef>;
+    } -> std::same_as<RpcSpec const&>;
 } and SomeContextProcessWithInput<T> and boost::json::has_value_to<typename T::Input>::value;
 
 /**
