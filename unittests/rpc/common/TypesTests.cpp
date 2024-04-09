@@ -22,14 +22,15 @@
 
 #include <gtest/gtest.h>
 
+#include <expected>
+
 using namespace rpc;
-using util::Unexpected;
 
 TEST(MaybeErrorTest, OperatorEquals)
 {
     EXPECT_EQ(MaybeError{}, MaybeError{});
-    EXPECT_NE(MaybeError{}, MaybeError{Unexpected{Status{"Error"}}});
-    EXPECT_NE(MaybeError{Unexpected{Status{"Error"}}}, MaybeError{});
-    EXPECT_EQ(MaybeError{Unexpected{Status{"Error"}}}, MaybeError{Unexpected{Status{"Error"}}});
-    EXPECT_NE(MaybeError{Unexpected{Status{"Error"}}}, MaybeError{Unexpected{Status{"Another_error"}}});
+    EXPECT_NE(MaybeError{}, MaybeError{std::unexpected{Status{"Error"}}});
+    EXPECT_NE(MaybeError{std::unexpected{Status{"Error"}}}, MaybeError{});
+    EXPECT_EQ(MaybeError{std::unexpected{Status{"Error"}}}, MaybeError{std::unexpected{Status{"Error"}}});
+    EXPECT_NE(MaybeError{std::unexpected{Status{"Error"}}}, MaybeError{std::unexpected{Status{"Another_error"}}});
 }

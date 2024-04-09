@@ -22,7 +22,6 @@
 #include "rpc/Errors.hpp"
 #include "rpc/common/Checkers.hpp"
 #include "rpc/common/Types.hpp"
-#include "util/Expected.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/value.hpp>

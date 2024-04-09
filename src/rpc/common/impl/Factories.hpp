@@ -27,6 +27,7 @@
 #include <boost/json/array.hpp>
 #include <boost/json/value.hpp>
 
+#include <expected>
 #include <functional>
 #include <optional>
 #include <string>
@@ -70,7 +71,7 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
         );
 
         if (firstFailure)
-            return Error{firstFailure.value()};
+            return std::unexpected{std::move(firstFailure).value()};
 
         return {};
     };
