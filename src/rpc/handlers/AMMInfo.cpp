@@ -25,6 +25,8 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/MetaProcessors.hpp"
+#include "rpc/common/Specs.hpp"
+#include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
 
 #include <boost/json/array.hpp>
