@@ -129,4 +129,6 @@ CheckOptions:
 
 HeaderFilterRegex: '^.*/(src|unittests)/.*\.(h|hpp)$'
 WarningsAsErrors: '*'
+ExtraArgs: 
+  - -D__cpp_concepts=202002
 
