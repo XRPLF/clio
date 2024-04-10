@@ -26,6 +26,7 @@
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
@@ -41,6 +42,7 @@
 #include <ripple/protocol/STXChainBridge.h>
 #include <ripple/protocol/UintTypes.h>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <utility>
@@ -2595,4 +2597,18 @@ TEST_F(RPCLedgerEntryTest, InvalidEntryTypeVersion1)
         EXPECT_EQ(err.at("error").as_string(), "unknownOption");
         EXPECT_EQ(err.at("error_message").as_string(), "Unknown option.");
     });
+}
+
+TEST(RPCLedgerEntrySpecTest, DeprecatedFields)
+{
+    boost::json::value const json{{"ledger", 2}};
+    auto const spec = LedgerEntryHandler::spec(2);
+    auto const warnings = spec.check(json);
+    ASSERT_EQ(warnings.size(), 1);
+    ASSERT_TRUE(warnings[0].is_object());
+    auto const& warning = warnings[0].as_object();
+    ASSERT_TRUE(warning.contains("id"));
+    ASSERT_TRUE(warning.contains("message"));
+    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::warnRPC_DEPRECATED));
+    EXPECT_NE(warning.at("message").as_string().find("Field 'ledger' is deprecated."), std::string::npos) << warning;
 }

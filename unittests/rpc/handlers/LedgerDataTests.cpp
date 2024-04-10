@@ -26,12 +26,14 @@
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -725,4 +727,27 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
         EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
         EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
     });
+}
+
+TEST(RPCLedgerDataHandlerSpecTest, DeprecatedFields)
+{
+    boost::json::value const json{
+        {"ledger", 1},
+        {"out_of_order", true},
+        {"ledger_hash", "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"},
+        {"ledger_index", 1},
+        {"limit", 10},
+        {"marker", "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"},
+        {"type", "state"},
+        {"ledger", "some"}
+    };
+    auto const spec = LedgerDataHandler::spec(2);
+    auto const warnings = spec.check(json);
+    ASSERT_EQ(warnings.size(), 1);
+    ASSERT_TRUE(warnings[0].is_object());
+    auto const& warning = warnings[0].as_object();
+    ASSERT_TRUE(warning.contains("id"));
+    ASSERT_TRUE(warning.contains("message"));
+    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::warnRPC_DEPRECATED));
+    EXPECT_NE(warning.at("message").as_string().find("Field 'ledger' is deprecated."), std::string::npos) << warning;
 }

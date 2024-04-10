@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/Checkers.hpp"
 #include "rpc/common/MetaProcessors.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
@@ -128,7 +129,7 @@ public:
                  validation::Type<std::string>{}, Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}
              },
              validation::OneOf<std::string>(ledgerTypeStrs.cbegin(), ledgerTypeStrs.cend())},
-
+            {JS(ledger), check::Deprecated{}},
         };
         return rpcSpec;
     }

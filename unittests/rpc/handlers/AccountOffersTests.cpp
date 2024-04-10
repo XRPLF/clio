@@ -26,6 +26,7 @@
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -36,6 +37,7 @@
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/UintTypes.h>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -601,4 +603,30 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MAX);
     });
+}
+
+TEST(RPCAccountOffersHandlerSpecTest, DeprecatedFields)
+{
+    boost::json::value const json{
+        {"account", "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"},
+        {"ledger_hash", "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"},
+        {"ledger_index", 30},
+        {"marker", "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun,0"},
+        {"limit", 200},
+        {"ledger", 123},
+        {"strict", true},
+    };
+    auto const spec = AccountOffersHandler::spec(2);
+    auto const warnings = spec.check(json);
+    ASSERT_EQ(warnings.size(), 1);
+    ASSERT_TRUE(warnings[0].is_object());
+    auto const& warning = warnings[0].as_object();
+    ASSERT_TRUE(warning.contains("id"));
+    ASSERT_TRUE(warning.contains("message"));
+    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::warnRPC_DEPRECATED));
+    for (auto const& field : {"ledger", "strict"}) {
+        EXPECT_NE(
+            warning.at("message").as_string().find(fmt::format("Field '{}' is deprecated.", field)), std::string::npos
+        ) << warning;
+    }
 }
