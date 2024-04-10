@@ -29,7 +29,6 @@ Checks: '-*,
   bugprone-posix-return,
   bugprone-redundant-branch-condition,
   bugprone-reserved-identifier,
-  bugprone-unused-return-value,
   bugprone-shared-ptr-array-mismatch,
   bugprone-signal-handler,
   bugprone-signed-char-misuse,
@@ -129,4 +128,7 @@ CheckOptions:
 
 HeaderFilterRegex: '^.*/(src|unittests)/.*\.(h|hpp)$'
 WarningsAsErrors: '*'
+ExtraArgs: 
+  - -D__cpp_concepts=202002
+  - -Wno-builtin-macro-redefined
 
