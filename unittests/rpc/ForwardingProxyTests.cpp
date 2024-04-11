@@ -398,7 +398,7 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
 
         auto const res = proxy.forward(ctx);
 
-        auto const data = std::get_if<json::object>(&res);
+        auto const data = std::get_if<json::object>(&res.response);
         EXPECT_TRUE(data != nullptr);
     });
 }
@@ -429,7 +429,7 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
 
         auto const res = proxy.forward(ctx);
 
-        auto const status = std::get_if<Status>(&res);
+        auto const status = std::get_if<Status>(&res.response);
         EXPECT_TRUE(status != nullptr);
         EXPECT_EQ(*status, ripple::rpcFAILED_TO_FORWARD);
     });

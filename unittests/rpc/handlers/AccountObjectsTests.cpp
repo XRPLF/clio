@@ -191,7 +191,7 @@ TEST_P(AccountObjectsParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -214,7 +214,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -237,7 +237,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -262,7 +262,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -286,7 +286,7 @@ TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
@@ -359,7 +359,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -404,8 +404,8 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), limit);
-        EXPECT_EQ(output->as_object().at("marker").as_string(), fmt::format("{},{}", INDEX1, 0));
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), limit);
+        EXPECT_EQ(output.result->as_object().at("marker").as_string(), fmt::format("{},{}", INDEX1, 0));
     });
 }
 
@@ -449,8 +449,8 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), limit - 1);
-        EXPECT_FALSE(output->as_object().contains("marker"));
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), limit - 1);
+        EXPECT_FALSE(output.result->as_object().contains("marker"));
     });
 }
 
@@ -501,8 +501,8 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), count * 2);
-        EXPECT_EQ(output->as_object().at("marker").as_string(), fmt::format("{},{}", INDEX1, nextpage));
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), count * 2);
+        EXPECT_EQ(output.result->as_object().at("marker").as_string(), fmt::format("{},{}", INDEX1, nextpage));
     });
 }
 
@@ -554,7 +554,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 1);
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 1);
     });
 }
 
@@ -598,7 +598,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        auto const& accountObjects = output->as_object().at("account_objects").as_array();
+        auto const& accountObjects = output.result->as_object().at("account_objects").as_array();
         ASSERT_EQ(accountObjects.size(), 1);
         EXPECT_EQ(accountObjects.front().at("LedgerEntryType").as_string(), "AMM");
     });
@@ -651,7 +651,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 0);
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 0);
     });
 }
 
@@ -707,7 +707,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 2);
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 2);
     });
 }
 
@@ -752,7 +752,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 1);
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 1);
     });
 }
 
@@ -814,7 +814,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 0);
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 0);
     });
 }
 
@@ -876,7 +876,7 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), 0);
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), 0);
     });
 }
 
@@ -986,7 +986,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -1026,9 +1026,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value().as_object().at("account_objects").as_array().size(), 10);
+        EXPECT_EQ(output.result.value().as_object().at("account_objects").as_array().size(), 10);
         EXPECT_EQ(
-            output.value().as_object().at("marker").as_string(),
+            output.result.value().as_object().at("marker").as_string(),
             fmt::format("{},{}", ripple::strHex(current), std::numeric_limits<uint32_t>::max())
         );
     });
@@ -1073,10 +1073,10 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value().as_object().at("account_objects").as_array().size(), 11);
+        EXPECT_EQ(output.result.value().as_object().at("account_objects").as_array().size(), 11);
         //"0000000000000000000000000000000000000000000000000000000000000000,4294967295"
         EXPECT_EQ(
-            output.value().as_object().at("marker").as_string(),
+            output.result.value().as_object().at("marker").as_string(),
             fmt::format("{},{}", ripple::strHex(ripple::uint256(beast::zero)), std::numeric_limits<uint32_t>::max())
         );
     });
@@ -1148,8 +1148,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value().as_object().at("account_objects").as_array().size(), 11 + 3);
-        EXPECT_FALSE(output.value().as_object().contains("marker"));
+        EXPECT_EQ(output.result.value().as_object().at("account_objects").as_array().size(), 11 + 3);
+        EXPECT_FALSE(output.result.value().as_object().contains("marker"));
     });
 }
 
@@ -1203,8 +1203,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value().as_object().at("account_objects").as_array().size(), 3);
-        EXPECT_FALSE(output.value().as_object().contains("marker"));
+        EXPECT_EQ(output.result.value().as_object().at("account_objects").as_array().size(), 3);
+        EXPECT_FALSE(output.result.value().as_object().contains("marker"));
     });
 }
 
@@ -1232,7 +1232,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid marker.");
     });
@@ -1266,7 +1266,7 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid marker.");
     });
@@ -1338,9 +1338,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value().as_object().at("account_objects").as_array().size(), 12);
+        EXPECT_EQ(output.result.value().as_object().at("account_objects").as_array().size(), 12);
         // marker not in NFT "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC,0"
-        EXPECT_EQ(output.value().as_object().at("marker").as_string(), fmt::format("{},{}", INDEX1, 0));
+        EXPECT_EQ(output.result.value().as_object().at("marker").as_string(), fmt::format("{},{}", INDEX1, 0));
     });
 }
 
@@ -1429,7 +1429,7 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -1473,8 +1473,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_objects").as_array().size(), limit);
-        EXPECT_EQ(output->as_object().at("marker").as_string(), fmt::format("{},{}", INDEX1, 0));
+        EXPECT_EQ(output.result->as_object().at("account_objects").as_array().size(), limit);
+        EXPECT_EQ(output.result->as_object().at("marker").as_string(), fmt::format("{},{}", INDEX1, 0));
     });
 }
 
@@ -1550,7 +1550,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -1626,6 +1626,6 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }

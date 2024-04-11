@@ -85,7 +85,7 @@ TEST_P(ParameterTest, CheckError)
     runSpawn([&](auto yield) {
         auto const output = handler.process(json::parse(bundle.testJson), Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), bundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), bundle.expectedErrorMessage);
     });
@@ -235,7 +235,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
             Context{yield}
         );
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -264,7 +264,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
             Context{yield}
         );
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -292,7 +292,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
             Context{yield}
         );
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -325,7 +325,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
             Context{yield}
         );
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
@@ -373,7 +373,7 @@ TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
             Context{yield}
         );
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidHotWallet");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid hot wallet.");
     });
@@ -445,7 +445,7 @@ TEST_P(NormalPathTest, CheckOutput)
             Context{yield}
         );
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), json::parse(bundle.expectedJson));
+        EXPECT_EQ(output.result.value(), json::parse(bundle.expectedJson));
     });
 }
 

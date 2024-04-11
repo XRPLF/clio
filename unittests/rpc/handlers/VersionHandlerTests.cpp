@@ -56,7 +56,7 @@ TEST_F(RPCVersionHandlerTest, Default)
         ASSERT_TRUE(output);
 
         // check all against all the correct values
-        auto const& result = output.value().as_object();
+        auto const& result = output.result.value().as_object();
         EXPECT_TRUE(result.contains("version"));
         auto const& info = result.at("version").as_object();
         EXPECT_TRUE(info.contains("first"));

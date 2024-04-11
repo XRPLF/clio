@@ -23,6 +23,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
+#include "rpc/common/Checkers.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
@@ -98,8 +99,8 @@ public:
      * @param apiVersion The api version to return the spec for
      * @return The spec for the given apiVersion
      */
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const booksValidator =
             validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
@@ -126,6 +127,9 @@ public:
             {JS(accounts), validation::SubscribeAccountsValidator},
             {JS(accounts_proposed), validation::SubscribeAccountsValidator},
             {JS(books), booksValidator},
+            {JS(url), check::Deprecated{}},
+            {JS(rt_accounts), check::Deprecated{}},
+            {"rt_transactions", check::Deprecated{}},
         };
 
         return rpcSpec;

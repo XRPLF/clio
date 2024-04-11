@@ -26,6 +26,7 @@
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -33,7 +34,9 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerHeader.h>
 
+#include <cstdint>
 #include <optional>
+#include <string>
 #include <vector>
 
 using namespace rpc;
@@ -70,7 +73,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
@@ -93,7 +96,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -120,7 +123,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -146,7 +149,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -210,7 +213,7 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(OUTPUT));
+        EXPECT_EQ(*output.result, json::parse(OUTPUT));
     });
 }
 
@@ -286,6 +289,30 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output).as_object().at("ledger_index").as_uint64(), ledgerSeq);
+        EXPECT_EQ((*output.result).as_object().at("ledger_index").as_uint64(), ledgerSeq);
     });
+}
+
+TEST(RPCAccountCurrenciesHandlerSpecTest, DeprecatedFields)
+{
+    boost::json::value const json{
+        {"account", "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59"},
+        {"ledger_hash", "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"},
+        {"ledger_index", 30},
+        {"account_index", 1},
+        {"strict", true}
+    };
+    auto const spec = AccountCurrenciesHandler::spec(2);
+    auto const warnings = spec.check(json);
+    ASSERT_EQ(warnings.size(), 1);
+    ASSERT_TRUE(warnings[0].is_object());
+    auto const& warning = warnings[0].as_object();
+    ASSERT_TRUE(warning.contains("id"));
+    ASSERT_TRUE(warning.contains("message"));
+    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::warnRPC_DEPRECATED));
+    for (auto const& field : {"account_index", "strict"}) {
+        EXPECT_NE(
+            warning.at("message").as_string().find(fmt::format("Field '{}' is deprecated.", field)), std::string::npos
+        );
+    }
 }

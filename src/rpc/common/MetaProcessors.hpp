@@ -106,7 +106,7 @@ public:
      * @param requirements The requirements to validate against
      */
     template <SomeRequirement... Requirements>
-    IfType(Requirements&&... requirements)
+    explicit IfType(Requirements&&... requirements)
         : processor_(
               [... r = std::forward<Requirements>(requirements
                )](boost::json::value& j, std::string_view key) -> MaybeError {
@@ -132,6 +132,9 @@ public:
           )
     {
     }
+
+    IfType(IfType const&) = default;
+    IfType(IfType&&) = default;
 
     /**
      * @brief Verify that the element is valid according to the stored requirements when type matches.

@@ -21,6 +21,7 @@
 
 #include "rpc/Errors.hpp"
 #include "rpc/common/Types.hpp"
+#include "rpc/common/ValidationHelpers.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
@@ -37,45 +38,6 @@
 #include <vector>
 
 namespace rpc::validation {
-
-/**
- * @brief Check that the type is the same as what was expected.
- *
- * @tparam Expected The expected type that value should be convertible to
- * @param value The json value to check the type of
- * @return true if convertible; false otherwise
- */
-template <typename Expected>
-[[nodiscard]] bool static checkType(boost::json::value const& value)
-{
-    auto hasError = false;
-    if constexpr (std::is_same_v<Expected, bool>) {
-        if (not value.is_bool())
-            hasError = true;
-    } else if constexpr (std::is_same_v<Expected, std::string>) {
-        if (not value.is_string())
-            hasError = true;
-    } else if constexpr (std::is_same_v<Expected, double> or std::is_same_v<Expected, float>) {
-        if (not value.is_double())
-            hasError = true;
-    } else if constexpr (std::is_same_v<Expected, boost::json::array>) {
-        if (not value.is_array())
-            hasError = true;
-    } else if constexpr (std::is_same_v<Expected, boost::json::object>) {
-        if (not value.is_object())
-            hasError = true;
-    } else if constexpr (std::is_convertible_v<Expected, uint64_t> or std::is_convertible_v<Expected, int64_t>) {
-        if (not value.is_int64() && not value.is_uint64())
-            hasError = true;
-        // specify the type is unsigened, it can not be negative
-        if constexpr (std::is_unsigned_v<Expected>) {
-            if (value.is_int64() and value.as_int64() < 0)
-                hasError = true;
-        }
-    }
-
-    return not hasError;
-}
 
 /**
  * @brief A validator that simply requires a field to be present.

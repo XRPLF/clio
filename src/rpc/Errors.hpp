@@ -128,6 +128,9 @@ struct Status {
     {
     }
 
+    bool
+    operator==(Status const& other) const = default;
+
     /**
      * @brief Check if the status is not OK
      *
@@ -173,7 +176,13 @@ struct Status {
 };
 
 /** @brief Warning codes that can be returned by clio. */
-enum WarningCode { warnUNKNOWN = -1, warnRPC_CLIO = 2001, warnRPC_OUTDATED = 2002, warnRPC_RATE_LIMIT = 2003 };
+enum WarningCode {
+    warnUNKNOWN = -1,
+    warnRPC_CLIO = 2001,
+    warnRPC_OUTDATED = 2002,
+    warnRPC_RATE_LIMIT = 2003,
+    warnRPC_DEPRECATED = 2004
+};
 
 /** @brief Holds information about a clio warning. */
 struct WarningInfo {

@@ -94,7 +94,7 @@ TEST_P(RPCBookOffersParameterTest, CheckError)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(json::parse(bundle.testJson), Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), bundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), bundle.expectedErrorMessage);
     });
@@ -560,7 +560,7 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(json::parse(bundle.inputJson), Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value(), json::parse(bundle.expectedJson));
+        EXPECT_EQ(output.result.value(), json::parse(bundle.expectedJson));
     });
 }
 
@@ -1202,7 +1202,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -1234,7 +1234,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -1268,7 +1268,7 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -1344,7 +1344,7 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value().as_object().at("offers").as_array().size(), 5);
+        EXPECT_EQ(output.result.value().as_object().at("offers").as_array().size(), 5);
     });
 }
 
@@ -1419,6 +1419,6 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
     runSpawn([&](boost::asio::yield_context yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.value().as_object().at("offers").as_array().size(), BookOffersHandler::LIMIT_MAX);
+        EXPECT_EQ(output.result.value().as_object().at("offers").as_array().size(), BookOffersHandler::LIMIT_MAX);
     });
 }

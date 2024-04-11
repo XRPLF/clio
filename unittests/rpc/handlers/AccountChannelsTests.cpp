@@ -68,7 +68,7 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitNotInt)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -87,7 +87,7 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitNagetive)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -106,7 +106,7 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitZero)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -126,7 +126,7 @@ TEST_F(RPCAccountChannelsHandlerTest, NonHexLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashMalformed");
     });
@@ -147,7 +147,7 @@ TEST_F(RPCAccountChannelsHandlerTest, NonStringLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashNotString");
     });
@@ -168,7 +168,7 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidLedgerIndexString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
     });
@@ -188,7 +188,7 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerNotString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "markerNotString");
     });
@@ -211,7 +211,7 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidMarker)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Malformed cursor.");
     });
@@ -227,7 +227,7 @@ TEST_F(RPCAccountChannelsHandlerTest, InvalidMarker)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -242,7 +242,7 @@ TEST_F(RPCAccountChannelsHandlerTest, AccountInvalidFormat)
         })");
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
         EXPECT_EQ(err.at("error_message").as_string(), "accountMalformed");
     });
@@ -259,7 +259,7 @@ TEST_F(RPCAccountChannelsHandlerTest, AccountNotString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotString");
     });
@@ -286,7 +286,7 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -310,7 +310,7 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerStringIndex)
         auto const handler = AnyHandler{AccountChannelsHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -333,7 +333,7 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIntIndex)
         auto const handler = AnyHandler{AccountChannelsHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -360,7 +360,7 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash2)
         auto const handler = AnyHandler{AccountChannelsHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -384,7 +384,7 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerIndex2)
         auto const handler = AnyHandler{AccountChannelsHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -412,7 +412,7 @@ TEST_F(RPCAccountChannelsHandlerTest, NonExistAccount)
         auto const handler = AnyHandler{AccountChannelsHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
@@ -489,7 +489,7 @@ TEST_F(RPCAccountChannelsHandlerTest, DefaultParameterTest)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(correctOutput), *output);
+        EXPECT_EQ(json::parse(correctOutput), *output.result);
     });
 }
 
@@ -540,8 +540,8 @@ TEST_F(RPCAccountChannelsHandlerTest, UseLimit)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
-        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 20);
-        EXPECT_THAT(boost::json::value_to<std::string>((*output).as_object().at("marker")), EndsWith(",0"));
+        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 20);
+        EXPECT_THAT(boost::json::value_to<std::string>((*output.result).as_object().at("marker")), EndsWith(",0"));
     });
 
     runSpawn([this](auto yield) {
@@ -627,7 +627,7 @@ TEST_F(RPCAccountChannelsHandlerTest, UseDestination)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 20);
+        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 20);
     });
 }
 
@@ -662,7 +662,7 @@ TEST_F(RPCAccountChannelsHandlerTest, EmptyChannel)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 0);
+        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 0);
     });
 }
 
@@ -748,7 +748,7 @@ TEST_F(RPCAccountChannelsHandlerTest, OptionalResponseField)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(correctOutput), *output);
+        EXPECT_EQ(json::parse(correctOutput), *output.result);
     });
 }
 
@@ -814,10 +814,10 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerOutput)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
-            boost::json::value_to<std::string>((*output).as_object().at("marker")),
+            boost::json::value_to<std::string>((*output.result).as_object().at("marker")),
             fmt::format("{},{}", INDEX1, nextPage)
         );
-        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 15);
+        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 15);
     });
 }
 
@@ -872,10 +872,10 @@ TEST_F(RPCAccountChannelsHandlerTest, MarkerInput)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE((*output).as_object().if_contains("marker") == nullptr);
+        EXPECT_TRUE((*output.result).as_object().if_contains("marker") == nullptr);
         // the first item is the marker itself, so the result will have limit-1
         // items
-        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), limit - 1);
+        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), limit - 1);
     });
 }
 
@@ -921,8 +921,8 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitLessThanMin)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 2);
-        EXPECT_EQ((*output).as_object().at("limit").as_uint64(), AccountChannelsHandler::LIMIT_MIN);
+        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 2);
+        EXPECT_EQ((*output.result).as_object().at("limit").as_uint64(), AccountChannelsHandler::LIMIT_MIN);
     });
 }
 
@@ -968,7 +968,7 @@ TEST_F(RPCAccountChannelsHandlerTest, LimitMoreThanMax)
         auto handler = AnyHandler{AccountChannelsHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output).as_object().at("channels").as_array().size(), 2);
-        EXPECT_EQ((*output).as_object().at("limit").as_uint64(), AccountChannelsHandler::LIMIT_MAX);
+        EXPECT_EQ((*output.result).as_object().at("channels").as_array().size(), 2);
+        EXPECT_EQ((*output.result).as_object().at("limit").as_uint64(), AccountChannelsHandler::LIMIT_MAX);
     });
 }

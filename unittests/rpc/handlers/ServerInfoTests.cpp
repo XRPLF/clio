@@ -78,7 +78,7 @@ protected:
     validateNormalOutput(rpc::ReturnType const& output)
     {
         ASSERT_TRUE(output);
-        auto const& result = output.value().as_object();
+        auto const& result = output.result.value().as_object();
         EXPECT_TRUE(result.contains("info"));
 
         auto const& info = result.at("info").as_object();
@@ -116,7 +116,7 @@ protected:
     static void
     validateAdminOutput(rpc::ReturnType const& output, bool shouldHaveBackendCounters = false)
     {
-        auto const& result = output.value().as_object();
+        auto const& result = output.result.value().as_object();
         auto const& info = result.at("info").as_object();
         EXPECT_TRUE(info.contains("etl"));
         EXPECT_TRUE(info.contains("counters"));
@@ -130,7 +130,7 @@ protected:
     static void
     validateRippledOutput(rpc::ReturnType const& output)
     {
-        auto const& result = output.value().as_object();
+        auto const& result = output.result.value().as_object();
         auto const& info = result.at("info").as_object();
         EXPECT_TRUE(info.contains("load_factor"));
         EXPECT_EQ(info.at("load_factor").as_int64(), 234);
@@ -145,7 +145,7 @@ protected:
     static void
     validateCacheOutput(rpc::ReturnType const& output)
     {
-        auto const& result = output.value().as_object();
+        auto const& result = output.result.value().as_object();
         auto const& info = result.at("info").as_object();
         auto const& cache = info.at("cache").as_object();
         EXPECT_EQ(cache.at("size").as_uint64(), 1u);
@@ -169,7 +169,7 @@ TEST_F(RPCServerInfoHandlerTest, NoLedgerInfoErrorsOutWithInternal)
         auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "internal");
         EXPECT_EQ(err.at("error_message").as_string(), "Internal error.");
     });
@@ -190,7 +190,7 @@ TEST_F(RPCServerInfoHandlerTest, NoFeesErrorsOutWithInternal)
         auto const output = handler.process(req, Context{yield});
 
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "internal");
         EXPECT_EQ(err.at("error_message").as_string(), "Internal error.");
     });
@@ -226,7 +226,7 @@ TEST_F(RPCServerInfoHandlerTest, DefaultOutputIsPresent)
         validateNormalOutput(output);
 
         // no admin section present by default
-        auto const& result = output.value().as_object();
+        auto const& result = output.result.value().as_object();
         auto const& info = result.at("info").as_object();
         EXPECT_FALSE(info.contains("etl"));
         EXPECT_FALSE(info.contains("counters"));
@@ -262,7 +262,7 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
 
         validateNormalOutput(output);
 
-        auto const& info = output.value().as_object().at("info").as_object();
+        auto const& info = output.result.value().as_object().at("info").as_object();
         EXPECT_TRUE(info.contains("amendment_blocked"));
         EXPECT_EQ(info.at("amendment_blocked").as_bool(), true);
     });

@@ -66,7 +66,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNotInt)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -85,7 +85,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNegative)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -104,7 +104,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitZero)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -123,7 +123,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonHexLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashMalformed");
     });
@@ -143,7 +143,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonStringLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashNotString");
     });
@@ -163,7 +163,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidLedgerIndexString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
     });
@@ -179,7 +179,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDInvalidFormat)
         })");
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "nft_idMalformed");
     });
@@ -196,7 +196,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDNotString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "nft_idNotString");
     });
@@ -223,7 +223,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -247,7 +247,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
         auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -274,7 +274,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
         auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -298,7 +298,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
         auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -325,7 +325,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
         auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "notFound");
     });
@@ -345,7 +345,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, MarkerNotString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "markerNotString");
     });
@@ -367,7 +367,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "markerMalformed");
     });
@@ -383,7 +383,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidMarker)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -442,7 +442,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(correctOutput), *output);
+        EXPECT_EQ(json::parse(correctOutput), *output.result);
     });
 }
 
@@ -484,10 +484,10 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), 50);
-        EXPECT_EQ(output->at("limit").as_uint64(), 50);
+        EXPECT_EQ(output.result->at("offers").as_array().size(), 50);
+        EXPECT_EQ(output.result->at("limit").as_uint64(), 50);
         EXPECT_EQ(
-            boost::json::value_to<std::string>(output->at("marker")),
+            boost::json::value_to<std::string>(output.result->at("marker")),
             "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC353"
         );
     });
@@ -544,11 +544,11 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), 50);
-        EXPECT_EQ(output->at("limit").as_uint64(), 50);
+        EXPECT_EQ(output.result->at("offers").as_array().size(), 50);
+        EXPECT_EQ(output.result->at("limit").as_uint64(), 50);
         // marker also progressed by 50
         EXPECT_EQ(
-            boost::json::value_to<std::string>(output->at("marker")),
+            boost::json::value_to<std::string>(output.result->at("marker")),
             "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC385"
         );
     });
@@ -606,10 +606,10 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), 50);
+        EXPECT_EQ(output.result->at("offers").as_array().size(), 50);
         // no marker/limit to output - we read all items already
-        EXPECT_FALSE(output->as_object().contains("limit"));
-        EXPECT_FALSE(output->as_object().contains("marker"));
+        EXPECT_FALSE(output.result->as_object().contains("limit"));
+        EXPECT_FALSE(output.result->as_object().contains("marker"));
     });
 
     runSpawn([this](auto yield) {
@@ -677,8 +677,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), NFTSellOffersHandler::LIMIT_MIN);
-        EXPECT_EQ(output->at("limit").as_uint64(), NFTSellOffersHandler::LIMIT_MIN);
+        EXPECT_EQ(output.result->at("offers").as_array().size(), NFTSellOffersHandler::LIMIT_MIN);
+        EXPECT_EQ(output.result->at("limit").as_uint64(), NFTSellOffersHandler::LIMIT_MIN);
     });
 }
 
@@ -720,7 +720,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), NFTSellOffersHandler::LIMIT_MAX);
-        EXPECT_EQ(output->at("limit").as_uint64(), NFTSellOffersHandler::LIMIT_MAX);
+        EXPECT_EQ(output.result->at("offers").as_array().size(), NFTSellOffersHandler::LIMIT_MAX);
+        EXPECT_EQ(output.result->at("limit").as_uint64(), NFTSellOffersHandler::LIMIT_MAX);
     });
 }

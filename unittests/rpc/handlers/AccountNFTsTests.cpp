@@ -166,7 +166,7 @@ TEST_P(AccountNFTParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -192,7 +192,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -219,7 +219,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -246,7 +246,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -272,7 +272,7 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
@@ -335,7 +335,7 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -372,8 +372,8 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_nfts").as_array().size(), 20);
-        EXPECT_EQ(output->as_object().at("marker").as_string(), ripple::strHex(firstPage));
+        EXPECT_EQ(output.result->as_object().at("account_nfts").as_array().size(), 20);
+        EXPECT_EQ(output.result->as_object().at("marker").as_string(), ripple::strHex(firstPage));
     });
 }
 
@@ -407,7 +407,7 @@ TEST_F(RPCAccountNFTsHandlerTest, Marker)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("account_nfts").as_array().size(), 1);
+        EXPECT_EQ(output.result->as_object().at("account_nfts").as_array().size(), 1);
     });
 }
 
@@ -471,7 +471,7 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -535,6 +535,6 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }

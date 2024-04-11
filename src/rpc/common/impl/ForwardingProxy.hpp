@@ -91,14 +91,14 @@ public:
         auto toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
+        auto res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
         if (not res) {
             notifyFailedToForward(ctx.method);
-            return Status{RippledError::rpcFAILED_TO_FORWARD};
+            return Result{Status{RippledError::rpcFAILED_TO_FORWARD}};
         }
 
         notifyForwarded(ctx.method);
-        return *res;
+        return Result{std::move(res).value()};
     }
 
     bool
