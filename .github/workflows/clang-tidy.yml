@@ -40,6 +40,7 @@ jobs:
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
           ccache_dir: ${{ env.CCACHE_DIR }}
+          conan_profile: gcc
 
       - name: Run conan and cmake
         uses: ./.github/actions/generate
