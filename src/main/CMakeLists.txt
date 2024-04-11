@@ -10,7 +10,9 @@ add_executable(clio_server)
 target_sources(clio_server PRIVATE Main.cpp)
 target_link_libraries(clio_server PRIVATE clio)
 target_link_options(
-  # For now let's assume that we only using libstdc++ under gcc
+  # For now let's assume that we only using libstdc++ under gcc.
+  #
+  # TODO: libc++ static linkage in https://github.com/XRPLF/clio/issues/1300
   clio_server PRIVATE $<$<AND:$<BOOL:${is_gcc}>,$<NOT:$<BOOL:${san}>>>:-static-libstdc++ -static-libgcc>
 )
 set_target_properties(clio_server PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
