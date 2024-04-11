@@ -32,8 +32,8 @@ using namespace util::async;
 using namespace ::testing;
 
 struct AnyOperationTests : Test {
-    using OperationType = MockOperation<std::expected<impl::Any, ExecutionError>>;
-    using ScheduledOperationType = MockScheduledOperation<std::expected<impl::Any, ExecutionError>>;
+    using OperationType = MockOperation<std::expected<std::any, ExecutionError>>;
+    using ScheduledOperationType = MockScheduledOperation<std::expected<std::any, ExecutionError>>;
 
     NaggyMock<OperationType> mockOp;
     NaggyMock<ScheduledOperationType> mockScheduledOp;
@@ -46,8 +46,7 @@ using AnyOperationDeathTest = AnyOperationTests;
 
 TEST_F(AnyOperationTests, VoidDataYieldsNoError)
 {
-    auto const noError = std::expected<impl::Any, ExecutionError>(impl::Any{});
-    EXPECT_CALL(mockOp, get()).WillOnce(Return(noError));
+    EXPECT_CALL(mockOp, get()).WillOnce(Return(std::any{}));
     auto res = voidOp.get();
     ASSERT_TRUE(res);
 }

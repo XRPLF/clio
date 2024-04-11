@@ -22,8 +22,8 @@
 #include "util/Assert.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
-#include "util/async/impl/Any.hpp"
 
+#include <any>
 #include <expected>
 #include <memory>
 #include <type_traits>
@@ -55,7 +55,7 @@ public:
         pimpl_->wait();
     }
 
-    std::expected<Any, ExecutionError>
+    std::expected<std::any, ExecutionError>
     get()
     {
         return pimpl_->get();
@@ -87,7 +87,7 @@ private:
 
         virtual void
         wait() noexcept = 0;
-        virtual std::expected<Any, ExecutionError>
+        virtual std::expected<std::any, ExecutionError>
         get() = 0;
         virtual void
         requestStop() = 0;
@@ -111,10 +111,10 @@ private:
             return operation.wait();
         }
 
-        std::expected<Any, ExecutionError>
+        std::expected<std::any, ExecutionError>
         get() override
         {
-            // Note: return type of the operation was already wrapped to impl::Any by AnyExecutionContext
+            // Note: return type of the operation was already wrapped to std::any by AnyExecutionContext
             return operation.get();
         }
 
