@@ -149,7 +149,7 @@ jobs:
         if: ${{ !matrix.code_coverage }}
         uses: actions/upload-artifact@v4
         with:
-          name: clio_tests_${{ runner.os }}
+          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ steps.conan.outputs.conan_profile }}
           path: build/clio_tests
 
       - name: Save cache
@@ -188,6 +188,13 @@ jobs:
           - os: heavy
             container:
               image: rippleci/clio_ci:latest
+            compiler: gcc
+            variant: Release
+          - os: heavy
+            container:
+              image: rippleci/clio_ci:latest
+            compiler: clang
+            variant: Release
           - os: macos14
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
@@ -199,7 +206,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: clio_tests_${{ runner.os }}
+          name: clio_tests_${{ runner.os }}_${{ matrix.variant }}_${{ matrix.compiler }}
       - name: Run clio_tests
         run: |
           chmod +x ./clio_tests
