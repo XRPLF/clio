@@ -28,11 +28,13 @@
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/protocol/Book.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -532,7 +534,7 @@ TEST_P(UnsubscribeParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -544,7 +546,7 @@ TEST_F(RPCUnsubscribeTest, EmptyResponse)
         auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(json::parse(R"({})"), Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
     });
 }
 
@@ -568,7 +570,7 @@ TEST_F(RPCUnsubscribeTest, Streams)
         auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
     });
 }
 
@@ -590,7 +592,7 @@ TEST_F(RPCUnsubscribeTest, Accounts)
         auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
     });
 }
 
@@ -614,7 +616,7 @@ TEST_F(RPCUnsubscribeTest, AccountsProposed)
         auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
     });
 }
 
@@ -649,7 +651,7 @@ TEST_F(RPCUnsubscribeTest, Books)
         auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
     });
 }
 
@@ -682,6 +684,32 @@ TEST_F(RPCUnsubscribeTest, SingleBooks)
         auto const handler = AnyHandler{TestUnsubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
     });
+}
+
+TEST(RPCUnsubscribeSpecTest, DeprecatedFields)
+{
+    boost::json::value const json{
+        {"streams", 1},
+        {"accounts", {"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"}},
+        {"accounts_proposed", {"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"}},
+        {"books", {}},
+        {"url", "some_url"},
+        {"rt_accounts", {"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"}},
+        {"rt_transactions", {"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"}},
+    };
+    auto const spec = UnsubscribeHandler::spec(2);
+    auto const warnings = spec.check(json);
+    ASSERT_EQ(warnings.size(), 1);
+    ASSERT_TRUE(warnings[0].is_object());
+    auto const& warning = warnings[0].as_object();
+    ASSERT_TRUE(warning.contains("id"));
+    ASSERT_TRUE(warning.contains("message"));
+    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::warnRPC_DEPRECATED));
+    for (auto const& field : {"url", "rt_accounts", "rt_accounts"}) {
+        EXPECT_NE(
+            warning.at("message").as_string().find(fmt::format("Field '{}' is deprecated.", field)), std::string::npos
+        ) << warning;
+    }
 }

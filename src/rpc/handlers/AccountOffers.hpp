@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/Checkers.hpp"
 #include "rpc/common/Modifiers.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
@@ -118,7 +119,9 @@ public:
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}}
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
+            {JS(ledger), check::Deprecated{}},
+            {JS(strict), check::Deprecated{}},
         };
 
         return rpcSpec;

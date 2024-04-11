@@ -151,3 +151,21 @@ jobs:
           gh release create nightly --prerelease --title "Clio development (nightly) build" \
             --target $GITHUB_SHA --notes-file "${RUNNER_TEMP}/nightly_notes.md" \
             ./nightly_release/clio_server*
+
+  create_issue_on_failure:
+    needs: [build, run_tests, nightly_release]
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - name: Create an issue
+        uses: ./.github/actions/create_issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          title: 'Nightly release failed 🌙'
+          body: >
+            Nightly release failed:
+            Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/

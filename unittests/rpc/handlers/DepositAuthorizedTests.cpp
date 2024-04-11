@@ -185,7 +185,7 @@ TEST_P(DepositAuthorizedParameterTest, InvalidParams)
 
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -214,7 +214,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -243,7 +243,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -272,7 +272,7 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -307,7 +307,7 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "srcActNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "source_accountNotFound");
     });
@@ -346,7 +346,7 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
 
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "dstActNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "destination_accountNotFound");
     });
@@ -391,7 +391,7 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -439,7 +439,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -488,7 +488,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -537,6 +537,6 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
         auto const output = handler.process(input, Context{yield});
 
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }

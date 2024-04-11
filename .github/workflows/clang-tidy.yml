@@ -79,16 +79,14 @@ jobs:
       - name: Create an issue
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
         id: create_issue
-        shell: bash
+        uses: ./.github/actions/create_issue
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          echo -e 'Clang-tidy found issues in the code:\n' > issue.md
-          echo -e "List of the issues found: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/" >> issue.md
-          gh issue create --assignee 'cindyyan317,godexsoft,kuznetsss' --label bug --title 'Clang-tidy found bugs in code🐛' --body-file ./issue.md > create_issue.log
-          created_issue=$(cat create_issue.log | sed 's|.*/||')
-          echo "created_issue=$created_issue" >> $GITHUB_OUTPUT
-          rm create_issue.log issue.md
+        with:
+          title: 'Clang-tidy found bugs in code 🐛'
+          body: >
+            Clang-tidy found issues in the code:
+            List of the issues found: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
 
       - uses: crazy-max/ghaction-import-gpg@v5
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
@@ -111,7 +109,7 @@ jobs:
           branch-suffix: timestamp
           delete-branch: true
           title: "[CI] clang-tidy auto fixes"
-          body: "Fixes #${{ steps.create_issue.outputs.created_issue }}. Please review and commit clang-tidy fixes."
+          body: "Fixes #${{ steps.create_issue.outputs.created_issue_id }}. Please review and commit clang-tidy fixes."
           reviewers: "cindyyan317,godexsoft,kuznetsss"
 
       - name: Fail the job

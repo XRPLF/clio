@@ -26,6 +26,7 @@
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -36,6 +37,7 @@
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/UintTypes.h>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -160,7 +162,7 @@ TEST_P(AccountOfferParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -186,7 +188,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaHash)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -213,7 +215,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaStringIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -240,7 +242,7 @@ TEST_F(RPCAccountOffersHandlerTest, LedgerNotFoundViaIntIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -266,7 +268,7 @@ TEST_F(RPCAccountOffersHandlerTest, AccountNotFound)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
@@ -344,7 +346,7 @@ TEST_F(RPCAccountOffersHandlerTest, DefaultParams)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -394,8 +396,8 @@ TEST_F(RPCAccountOffersHandlerTest, Limit)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), 10);
-        EXPECT_EQ(output->at("marker").as_string(), fmt::format("{},0", INDEX1));
+        EXPECT_EQ(output.result->at("offers").as_array().size(), 10);
+        EXPECT_EQ(output.result->at("marker").as_string(), fmt::format("{},0", INDEX1));
     });
 }
 
@@ -450,8 +452,8 @@ TEST_F(RPCAccountOffersHandlerTest, Marker)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), 19);
-        EXPECT_FALSE(output->as_object().contains("marker"));
+        EXPECT_EQ(output.result->at("offers").as_array().size(), 19);
+        EXPECT_FALSE(output.result->as_object().contains("marker"));
     });
 }
 
@@ -487,7 +489,7 @@ TEST_F(RPCAccountOffersHandlerTest, MarkerNotExists)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid marker.");
     });
@@ -544,7 +546,7 @@ TEST_F(RPCAccountOffersHandlerTest, LimitLessThanMin)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MIN);
+        EXPECT_EQ(output.result->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MIN);
     });
 }
 
@@ -599,6 +601,32 @@ TEST_F(RPCAccountOffersHandlerTest, LimitMoreThanMax)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MAX);
+        EXPECT_EQ(output.result->at("offers").as_array().size(), AccountOffersHandler::LIMIT_MAX);
     });
+}
+
+TEST(RPCAccountOffersHandlerSpecTest, DeprecatedFields)
+{
+    boost::json::value const json{
+        {"account", "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"},
+        {"ledger_hash", "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"},
+        {"ledger_index", 30},
+        {"marker", "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun,0"},
+        {"limit", 200},
+        {"ledger", 123},
+        {"strict", true},
+    };
+    auto const spec = AccountOffersHandler::spec(2);
+    auto const warnings = spec.check(json);
+    ASSERT_EQ(warnings.size(), 1);
+    ASSERT_TRUE(warnings[0].is_object());
+    auto const& warning = warnings[0].as_object();
+    ASSERT_TRUE(warning.contains("id"));
+    ASSERT_TRUE(warning.contains("message"));
+    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::warnRPC_DEPRECATED));
+    for (auto const& field : {"ledger", "strict"}) {
+        EXPECT_NE(
+            warning.at("message").as_string().find(fmt::format("Field '{}' is deprecated.", field)), std::string::npos
+        ) << warning;
+    }
 }

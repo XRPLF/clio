@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/Checkers.hpp"
 #include "rpc/common/JsonBool.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
@@ -131,8 +132,11 @@ public:
         static auto const rpcSpecV1 = RpcSpec{
             {JS(account), validation::AccountValidator},
             {JS(ident), validation::AccountValidator},
+            {JS(ident), check::Deprecated{}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator}
+            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(ledger), check::Deprecated{}},
+            {JS(strict), check::Deprecated{}}
         };
 
         static auto const rpcSpec = RpcSpec{rpcSpecV1, {{JS(signer_lists), validation::Type<bool>{}}}};

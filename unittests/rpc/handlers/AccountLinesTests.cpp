@@ -26,6 +26,7 @@
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
@@ -37,6 +38,7 @@
 #include <ripple/protocol/SField.h>
 #include <ripple/protocol/STObject.h>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -75,7 +77,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonHexLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashMalformed");
     });
@@ -96,7 +98,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonStringLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledger_hashNotString");
     });
@@ -117,7 +119,7 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidLedgerIndexString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerIndexMalformed");
     });
@@ -137,7 +139,7 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerNotString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "markerNotString");
     });
@@ -160,7 +162,7 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Malformed cursor.");
     });
@@ -176,7 +178,7 @@ TEST_F(RPCAccountLinesHandlerTest, InvalidMarker)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -193,7 +195,7 @@ TEST_F(RPCAccountLinesHandlerTest, AccountInvalidFormat)
         );
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
         EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
     });
@@ -212,7 +214,7 @@ TEST_F(RPCAccountLinesHandlerTest, AccountNotString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
         EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
     });
@@ -230,7 +232,7 @@ TEST_F(RPCAccountLinesHandlerTest, PeerInvalidFormat)
         );
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
         EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
     });
@@ -249,7 +251,7 @@ TEST_F(RPCAccountLinesHandlerTest, PeerNotString)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actMalformed");
         EXPECT_EQ(err.at("error_message").as_string(), "Account malformed.");
     });
@@ -268,7 +270,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitNotInt)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -286,7 +288,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitNagetive)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -304,7 +306,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitZero)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
     });
 }
@@ -330,7 +332,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash)
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -354,7 +356,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerStringIndex)
         auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -377,7 +379,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIntIndex)
         auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -404,7 +406,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash2)
         auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -428,7 +430,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex2)
         auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -456,7 +458,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
         auto const handler = AnyHandler{AccountLinesHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
@@ -537,7 +539,7 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
         auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(correctOutput), *output);
+        EXPECT_EQ(json::parse(correctOutput), *output.result);
     });
 }
 
@@ -588,8 +590,8 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
 
-        EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 20);
-        EXPECT_THAT(boost::json::value_to<std::string>((*output).as_object().at("marker")), EndsWith(",0"));
+        EXPECT_EQ((*output.result).as_object().at("lines").as_array().size(), 20);
+        EXPECT_THAT(boost::json::value_to<std::string>((*output.result).as_object().at("marker")), EndsWith(",0"));
     });
 
     runSpawn([this](auto yield) {
@@ -675,7 +677,7 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
         auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 20);
+        EXPECT_EQ((*output.result).as_object().at("lines").as_array().size(), 20);
     });
 }
 
@@ -710,7 +712,7 @@ TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
         auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 0);
+        EXPECT_EQ((*output.result).as_object().at("lines").as_array().size(), 0);
     });
 }
 
@@ -799,7 +801,7 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
         auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(correctOutput), *output);
+        EXPECT_EQ(json::parse(correctOutput), *output.result);
     });
 }
 
@@ -866,10 +868,10 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
-            boost::json::value_to<std::string>((*output).as_object().at("marker")),
+            boost::json::value_to<std::string>((*output.result).as_object().at("marker")),
             fmt::format("{},{}", INDEX1, nextPage)
         );
-        EXPECT_EQ((*output).as_object().at("lines").as_array().size(), 15);
+        EXPECT_EQ((*output.result).as_object().at("lines").as_array().size(), 15);
     });
 }
 
@@ -924,10 +926,10 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
         auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE((*output).as_object().if_contains("marker") == nullptr);
+        EXPECT_TRUE((*output.result).as_object().if_contains("marker") == nullptr);
         // the first item is the marker itself, so the result will have limit-1
         // items
-        EXPECT_EQ((*output).as_object().at("lines").as_array().size(), limit - 1);
+        EXPECT_EQ((*output.result).as_object().at("lines").as_array().size(), limit - 1);
     });
 }
 
@@ -1009,7 +1011,7 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
         auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(correctOutput), *output);
+        EXPECT_EQ(json::parse(correctOutput), *output.result);
     });
 }
 
@@ -1091,6 +1093,35 @@ TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
         auto handler = AnyHandler{AccountLinesHandler{this->backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(json::parse(correctOutput), *output);
+        EXPECT_EQ(json::parse(correctOutput), *output.result);
     });
+}
+
+TEST(RPCAccountLinesHandlerSpecTest, DeprecatedFields)
+{
+    boost::json::value const json{
+        {"account", "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"},
+        {"peer", "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"},
+        {"ignore_default", false},
+        {"ledger_hash", "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"},
+        {"limit", 200},
+        {"ledger_index", 30},
+        {"marker", "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun,0"},
+        {"ledger", 123},
+        {"strict", true},
+        {"peer_index", 456}
+    };
+    auto const spec = AccountLinesHandler::spec(2);
+    auto const warnings = spec.check(json);
+    ASSERT_EQ(warnings.size(), 1);
+    ASSERT_TRUE(warnings[0].is_object());
+    auto const& warning = warnings[0].as_object();
+    ASSERT_TRUE(warning.contains("id"));
+    ASSERT_TRUE(warning.contains("message"));
+    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::warnRPC_DEPRECATED));
+    for (auto const& field : {"ledger", "peer_index"}) {
+        EXPECT_NE(
+            warning.at("message").as_string().find(fmt::format("Field '{}' is deprecated.", field)), std::string::npos
+        ) << warning;
+    }
 }

@@ -43,7 +43,7 @@ TEST_F(RPCLedgerRangeTest, LedgerRangeMinMaxSame)
         auto const req = json::parse("{}");
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        auto const json = output.value();
+        auto const json = output.result.value();
         EXPECT_EQ(json.at("ledger_index_min").as_uint64(), RANGEMIN);
         EXPECT_EQ(json.at("ledger_index_max").as_uint64(), RANGEMIN);
     });
@@ -58,7 +58,7 @@ TEST_F(RPCLedgerRangeTest, LedgerRangeFullySet)
         auto const req = json::parse("{}");
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        auto const json = output.value();
+        auto const json = output.result.value();
         EXPECT_EQ(json.at("ledger_index_min").as_uint64(), RANGEMIN);
         EXPECT_EQ(json.at("ledger_index_max").as_uint64(), RANGEMAX);
     });
