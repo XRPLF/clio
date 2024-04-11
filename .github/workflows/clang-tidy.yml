@@ -33,6 +33,8 @@ jobs:
       - name: Setup conan
         uses: ./.github/actions/setup_conan
         id: conan
+        with:
+          conan_profile: gcc
 
       - name: Restore cache
         uses: ./.github/actions/restore_cache
@@ -40,7 +42,7 @@ jobs:
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
           ccache_dir: ${{ env.CCACHE_DIR }}
-          conan_profile: gcc
+          conan_profile: ${{ steps.conan.outputs.conan_profile }}
 
       - name: Run conan and cmake
         uses: ./.github/actions/generate

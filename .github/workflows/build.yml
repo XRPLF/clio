@@ -102,13 +102,15 @@ jobs:
       - name: Setup conan
         uses: ./.github/actions/setup_conan
         id: conan
+        with:
+          conan_profile: ${{ matrix.conan_profile }}
 
       - name: Restore cache
         uses: ./.github/actions/restore_cache
         id: restore_cache
         with:
           conan_dir: ${{ env.CONAN_USER_HOME }}/.conan
-          conan_profile: ${{ matrix.conan_profile }}
+          conan_profile: ${{ steps.conan.outputs.conan_profile }}
           ccache_dir: ${{ env.CCACHE_DIR }}
           build_type: ${{ matrix.build_type }}
           code_coverage: ${{ matrix.code_coverage }}
@@ -116,7 +118,7 @@ jobs:
       - name: Run conan and cmake
         uses: ./.github/actions/generate
         with:
-          conan_profile: ${{ matrix.conan_profile }}
+          conan_profile: ${{ steps.conan.outputs.conan_profile }}
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           build_type: ${{ matrix.build_type }}
           code_coverage: ${{ matrix.code_coverage }}
@@ -140,7 +142,7 @@ jobs:
       - name: Upload clio_server
         uses: actions/upload-artifact@v4
         with:
-          name: clio_server_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
+          name: clio_server_${{ runner.os }}_${{ matrix.build_type }}_${{ steps.conan.outputs.conan_profile }}
           path: build/clio_server
 
       - name: Upload clio_tests
@@ -161,7 +163,7 @@ jobs:
           ccache_cache_miss_rate: ${{ steps.ccache_stats.outputs.miss_rate }}
           build_type: ${{ matrix.build_type }}
           code_coverage: ${{ matrix.code_coverage }}
-          conan_profile: ${{ matrix.conan_profile }}
+          conan_profile: ${{ steps.conan.outputs.conan_profile }}
 
       # TODO: This is not a part of build process but it is the easiest way to do it here.
       # It will be refactored in https://github.com/XRPLF/clio/issues/1075
