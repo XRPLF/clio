@@ -49,7 +49,7 @@ TEST_F(DeprecatedTests, Field)
 
 TEST_F(DeprecatedTests, FieldWithStringValue)
 {
-    Deprecated<std::string> checker{"some_value"};
+    Deprecated<std::string> const checker{"some_value"};
     auto warning = checker.check(json, "some_string");
     ASSERT_TRUE(warning);
     EXPECT_EQ(warning->warningCode, WarningCode::warnRPC_DEPRECATED);
@@ -59,7 +59,7 @@ TEST_F(DeprecatedTests, FieldWithStringValue)
 
 TEST_F(DeprecatedTests, FieldWithIntValue)
 {
-    Deprecated<int> checker{42};
+    Deprecated<int> const checker{42};
     auto warning = checker.check(json, "some_number");
     ASSERT_TRUE(warning);
     EXPECT_EQ(warning->warningCode, WarningCode::warnRPC_DEPRECATED);
@@ -69,7 +69,7 @@ TEST_F(DeprecatedTests, FieldWithIntValue)
 
 TEST_F(DeprecatedTests, FieldWithBoolValue)
 {
-    Deprecated<bool> checker{false};
+    Deprecated<bool> const checker{false};
     auto warning = checker.check(json, "some_bool");
     ASSERT_TRUE(warning);
     EXPECT_EQ(warning->warningCode, WarningCode::warnRPC_DEPRECATED);
@@ -79,7 +79,7 @@ TEST_F(DeprecatedTests, FieldWithBoolValue)
 
 TEST_F(DeprecatedTests, FieldWithFloatValue)
 {
-    Deprecated<float> checker{3.14};
+    Deprecated<float> const checker{3.14};
     auto warning = checker.check(json, "some_float");
     ASSERT_TRUE(warning);
     EXPECT_EQ(warning->warningCode, WarningCode::warnRPC_DEPRECATED);

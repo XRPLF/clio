@@ -34,7 +34,6 @@
 
 using namespace rpc;
 
-using testing::Return;
 using testing::StrictMock;
 
 struct SpecsTests : testing::Test {

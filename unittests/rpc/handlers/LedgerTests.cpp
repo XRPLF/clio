@@ -21,6 +21,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/AnyHandler.hpp"
+#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Ledger.hpp"
 #include "util/Fixtures.hpp"
