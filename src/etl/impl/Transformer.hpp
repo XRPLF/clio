@@ -258,7 +258,7 @@ private:
 
                 if (isDeleted) {
                     auto const old = backend_->cache().get(*key, lgrInfo.seq - 1);
-                    ASSERT(old.has_value(), "Deleted object must be in cache");
+                    ASSERT(old.has_value(), "Deleted object {} must be in cache", ripple::strHex(*key));
                     checkBookBase = isBookDir(*key, *old);
                 } else {
                     checkBookBase = isBookDir(*key, *blob);
