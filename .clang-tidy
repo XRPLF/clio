@@ -124,11 +124,7 @@ CheckOptions:
   readability-braces-around-statements.ShortStatementLines: 2
   bugprone-unsafe-functions.ReportMoreUnsafeFunctions: true
   bugprone-unused-return-value.CheckedReturnTypes: ::std::error_code;::std::error_condition;::std::errc;::std::expected
-  misc-include-cleaner.IgnoreHeaders: '.*/(detail|impl)/.*'
+  misc-include-cleaner.IgnoreHeaders: '.*/(detail|impl)/.*';'expected'
 
 HeaderFilterRegex: '^.*/(src|unittests)/.*\.(h|hpp)$'
 WarningsAsErrors: '*'
-ExtraArgs: 
-  - -D__cpp_concepts=202002
-  - -Wno-builtin-macro-redefined
-

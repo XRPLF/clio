@@ -195,6 +195,16 @@ jobs:
               image: rippleci/clio_ci:latest
             conan_profile: clang
             build_type: Release
+          - os: heavy
+            container:
+              image: rippleci/clio_ci:latest
+            conan_profile: gcc
+            build_type: Debug
+          - os: heavy
+            container:
+              image: rippleci/clio_ci:latest
+            conan_profile: clang
+            build_type: Debug
           - os: macos14
             conan_profile: apple_clang_15
             build_type: Release
