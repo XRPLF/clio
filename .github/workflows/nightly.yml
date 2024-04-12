@@ -160,6 +160,8 @@ jobs:
       contents: write
       issues: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Create an issue
         uses: ./.github/actions/create_issue
         env:
@@ -168,4 +170,5 @@ jobs:
           title: 'Nightly release failed 🌙'
           body: >
             Nightly release failed:
+
             Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
