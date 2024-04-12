@@ -22,6 +22,7 @@
 #include "rpc/common/Modifiers.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
+#include "rpc/common/ValidationHelpers.hpp"
 #include "rpc/common/Validators.hpp"
 #include "util/Fixtures.hpp"
 

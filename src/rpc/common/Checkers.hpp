@@ -97,7 +97,7 @@ public:
      *
      * @param val The value that is deprecated
      */
-    Deprecated(T val) : value_(val)
+    Deprecated(T val) : value_(std::move(val))
     {
     }
 
