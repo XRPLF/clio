@@ -188,16 +188,16 @@ jobs:
           - os: heavy
             container:
               image: rippleci/clio_ci:latest
-            profile: gcc
-            variant: Release
+            conan_profile: gcc
+            build_type: Release
           - os: heavy
             container:
               image: rippleci/clio_ci:latest
-            profile: clang
-            variant: Release
+            conan_profile: clang
+            build_type: Release
           - os: macos14
-            profile: clio_apple_clang_15
-            variant: Release
+            conan_profile: apple_clang_15
+            build_type: Release
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
@@ -208,7 +208,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: clio_tests_${{ runner.os }}_${{ matrix.variant }}_${{ matrix.profile }}
+          name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
       - name: Run clio_tests
         run: |
           chmod +x ./clio_tests

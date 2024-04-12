@@ -15,7 +15,7 @@ runs:
       if: ${{ runner.os == 'macOS' }}
       shell: bash
       env:
-        CONAN_PROFILE: clio_apple_clang_15
+        CONAN_PROFILE: apple_clang_15
       id: conan_setup_mac
       run: |
         echo "Creating $CONAN_PROFILE conan profile";
