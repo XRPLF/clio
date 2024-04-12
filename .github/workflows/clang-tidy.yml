@@ -83,6 +83,7 @@ jobs:
           title: 'Clang-tidy found bugs in code 🐛'
           body: >
             Clang-tidy found issues in the code:
+
             List of the issues found: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
 
       - uses: crazy-max/ghaction-import-gpg@v5
