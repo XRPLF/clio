@@ -25,11 +25,13 @@ RUN apt update -qq \
     && pip3 install -q --upgrade --no-cache-dir pip && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake cmake-format \
     && apt-get clean && apt remove -y software-properties-common
 
-# Install gcc-12
+# Install gcc-12 and make ldconfig aware of the new libstdc++ location (for gcc)
+# Note: Clang is using libc++ instead
 COPY --from=rippleci/clio_gcc:12.3.0 /gcc12.deb /
 RUN apt update && apt-get install -y binutils libc6-dev \
     && dpkg -i /gcc12.deb \
-    && rm -rf /gcc12.deb
+    && rm -rf /gcc12.deb \
+    && ldconfig
 
 # Rewire to use gcc-12 as default compiler
 RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100 \
@@ -96,7 +98,3 @@ RUN conan profile new clang --detect \
     && conan profile update "conf.tools.build:compiler_executables={\"c\": \"/usr/bin/clang-16\", \"cpp\": \"/usr/bin/clang++-16\"}" clang 
 
 RUN echo "include(gcc)" >> .conan/profiles/default
-
-# Finally, make ldconfig aware of the new libstdc++ location (for gcc)
-# Clang is using libc++ instead
-RUN ldconfig

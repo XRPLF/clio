@@ -34,7 +34,7 @@ jobs:
         uses: ./.github/actions/setup_conan
         id: conan
         with:
-          conan_profile: gcc
+          conan_profile: clang
 
       - name: Restore cache
         uses: ./.github/actions/restore_cache
