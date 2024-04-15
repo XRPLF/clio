@@ -75,11 +75,8 @@ public:
         };
 
         auto const checkLedgerForward = [&]() {
-            return ctx.method == "ledger" and
-                ((request.contains("queue") and request.at("queue").is_bool() and request.at("queue").as_bool()) or
-                 (request.contains("full") and request.at("full").is_bool() and request.at("full").as_bool()) or
-                 (request.contains("accounts") and request.at("accounts").is_bool() and request.at("accounts").as_bool()
-                 ));
+            return ctx.method == "ledger" and request.contains("queue") and request.at("queue").is_bool() and
+                request.at("queue").as_bool();
         };
 
         return static_cast<bool>(checkAccountInfoForward() or checkLedgerForward());

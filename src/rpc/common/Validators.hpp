@@ -121,7 +121,7 @@ public:
     verify(boost::json::value const& value, std::string_view key)
     {
         if (value.is_object() and value.as_object().contains(key.data()))
-            return Error{Status{RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key}}};
+            return Error{Status{RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key} + '\''}};
 
         return {};
     }
