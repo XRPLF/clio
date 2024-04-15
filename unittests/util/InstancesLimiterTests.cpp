@@ -25,6 +25,9 @@ using namespace util;
 
 TEST(InstancesLimiterDeathTest, AssertFailsIfTooManyInstances)
 {
-    InstancesLimiter<1> limiter1;
-    EXPECT_DEATH({ InstancesLimiter<1>{}; }, ".*");
+    InstancesLimiter<int, 2> limiter1;
+    InstancesLimiter<int, 2> limiter2;
+    InstancesLimiter<float, 2> limiter_float;
+    using InstancesLimiterInt = InstancesLimiter<int, 2>;  // gtest macros don't like "<>"
+    EXPECT_DEATH({ InstancesLimiterInt{}; }, ".*");
 }

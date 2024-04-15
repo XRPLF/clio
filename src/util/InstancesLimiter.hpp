@@ -30,8 +30,9 @@ namespace util {
  * @brief Class limiting the number of instances of itself.
  *
  * @tparam MaxInstances The maximum number of instances allowed.
+ * @tparam T The type of the instances.
  */
-template <size_t MaxInstances = 1>
+template <typename T, size_t MaxInstances = 1>
 class InstancesLimiter {
     static std::atomic<size_t> instancesCount_;
 
@@ -60,7 +61,7 @@ public:
     }
 };
 
-template <size_t MaxInstances>
-std::atomic<size_t> InstancesLimiter<MaxInstances>::instancesCount_ = 0;
+template <typename T, size_t MaxInstances>
+std::atomic<size_t> InstancesLimiter<T, MaxInstances>::instancesCount_ = 0;
 
 }  // namespace util

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,69 +19,95 @@
 
 #pragma once
 
-#include "util/Assert.hpp"
+#include "util/InstancesLimiter.hpp"
 #include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/signals2/signal.hpp>
 #include <boost/signals2/variadic_signal.hpp>
-#include <sys/signal.h>
 
 #include <chrono>
+#include <concepts>
 #include <csignal>
+#include <cstdlib>
 #include <functional>
+#include <string>
 #include <thread>
 
 namespace util {
 
-class SignalsHandler {
-    boost::asio::steady_timer timer_;
+/**
+ * @brief Class handling signals.
+ * @note There could be only one instance of this class.
+ */
+class SignalsHandler : InstancesLimiter<SignalsHandler> {
     boost::asio::io_context ioContext_;
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard_ =
-        boost::asio::make_work_guard(ioContext_);
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard_;
+    std::chrono::seconds gracefulPeriod_;
+    boost::asio::steady_timer timer_;
     std::thread timerThread_;
 
     boost::signals2::signal<void()> stopSignal_;
-    std::function<void(int)> stopHandler_ = [this](int) {
-        stopSignal_();
-        timer_.async_wait([this](auto) { ioContext_.stop(); });
-        resetHandler();
-    };
+    std::function<void(int)> stopHandler_;
 
 public:
+    /**
+     * @brief Enum for stop priority.
+     */
     enum class Priority { StopFirst = 0, Normal = 1, StopLast = 2 };
-    SignalsHandler(Config const& config)
-        : timer_(ioContext_, std::chrono::seconds{config.valueOr("graceful_period", 10)})
-    {
-        auto callablePtr = stopHandler_.target<void(int)>();
-        ASSERT(callablePtr != nullptr, "Can't get callable pointer");
-        std::signal(SIGINT, callablePtr);
-        std::signal(SIGHUP, callablePtr);
-    }
 
-    ~SignalsHandler()
-    {
-        resetHandler();
-        workGuard_.reset();
-        timerThread_.join();
-    }
+    /**
+     * @brief Create SignalsHandler object.
+     *
+     * @param config The configuration.
+     * @param forceExitHandler The handler for forced exit.
+     */
+    SignalsHandler(Config const& config, std::function<void(std::string)> forceExitHandler = defaultForceExitHandler_);
 
-    template <typename SomeCallback>
+    SignalsHandler(SignalsHandler const&) = delete;
+    SignalsHandler(SignalsHandler&&) = delete;
+    SignalsHandler&
+    operator=(SignalsHandler const&) = delete;
+    SignalsHandler&
+    operator=(SignalsHandler&&) = delete;
+
+    /**
+     * @brief Destructor of SignalsHandler.
+     */
+    ~SignalsHandler() override;
+
+    /**
+     * @brief Subscribe to stop signal.
+     *
+     * @tparam SomeCallback The type of the callback.
+     * @param callback The callback to call on stop signal.
+     * @param priority The priority of the callback. Default is Normal.
+     */
+    template <std::invocable SomeCallback>
     void
     subscribeToStop(SomeCallback&& callback, Priority priority = Priority::Normal)
     {
         stopSignal_.connect(static_cast<int>(priority), std::forward<SomeCallback>(callback));
     }
 
+    static constexpr auto HANDLED_SIGNALS = {SIGINT, SIGTERM};
+
 private:
+    /**
+     * @brief Set signal handler for handled signals.
+     *
+     * @param handler The handler to set. Default is nullptr.
+     */
     static void
-    resetHandler()
-    {
-        std::signal(SIGINT, SIG_DFL);
-        std::signal(SIGINT, SIG_DFL);
-    }
+    setHandler(void (*handler)(int) = nullptr);
+
+    static auto constexpr defaultForceExitHandler_ = [](std::string message) {
+        LOG(LogService::warn()) << message;
+        std::exit(EXIT_FAILURE);
+    };
 };
 
 }  // namespace util
