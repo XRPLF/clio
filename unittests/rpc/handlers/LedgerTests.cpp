@@ -85,28 +85,28 @@ generateTestValuesForParametersTest()
 {
     return std::vector<LedgerParamTestCaseBundle>{
         {
-            "AccountsNotBool",
-            R"({"accounts": 123})",
-            "invalidParams",
-            "Invalid parameters.",
-        },
-        {
-            "AccountsInvalid",
+            "AccountsInvalidBool",
             R"({"accounts": true})",
             "notSupported",
-            "Not supported field 'accounts's value 'true'",
+            "Not supported field 'accounts'",
         },
         {
-            "FullExist",
+            "AccountsInvalidInt",
+            R"({"accounts": 123})",
+            "notSupported",
+            "Not supported field 'accounts'",
+        },
+        {
+            "FullInvalidBool",
             R"({"full": true})",
             "notSupported",
-            "Not supported field 'full's value 'true'",
+            "Not supported field 'full'",
         },
         {
-            "FullNotBool",
+            "FullInvalidInt",
             R"({"full": 123})",
-            "invalidParams",
-            "Invalid parameters.",
+            "notSupported",
+            "Not supported field 'full'",
         },
         {
             "QueueExist",
@@ -301,21 +301,18 @@ TEST_F(RPCLedgerHandlerTest, Default)
     });
 }
 
-// not supported fields can be set to its default value
-TEST_F(RPCLedgerHandlerTest, NotSupportedFieldsDefaultValue)
+// fields not supported for specific value can be set to its default value
+TEST_F(RPCLedgerHandlerTest, ConditionallyNotSupportedFieldsDefaultValue)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend}};
         auto const req = json::parse(
             R"({
-                "full": false,
-                "accounts": false,
                 "queue": false
             })"
         );
