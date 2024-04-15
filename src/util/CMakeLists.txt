@@ -36,9 +36,7 @@ target_link_libraries(
          clio_options
 )
 
-if (is_gcc)
-  # FIXME: needed on gcc for now
-  #
-  # For some reason cmake doesn't propagate the compile definitions from clio_options so we need to add them here
-  target_compile_definitions(clio_util PUBLIC BOOST_ASIO_DISABLE_CONCEPTS)
-endif ()
+# FIXME: needed on gcc-12, clang-16 and AppleClang for now (known boost 1.82 issue for some compilers)
+#
+# For some reason cmake doesn't propagate the compile definitions from clio_options so we need to add them here
+target_compile_definitions(clio_util PUBLIC BOOST_ASIO_DISABLE_CONCEPTS)

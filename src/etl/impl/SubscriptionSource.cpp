@@ -234,9 +234,9 @@ SubscriptionSource::handleError(util::requests::RequestError const& error, boost
     }
 
     if (wsConnection_ != nullptr) {
-        auto const error = wsConnection_->close(yield);
-        if (error) {
-            LOG(log_.error()) << "Error closing websocket connection: " << error->message();
+        auto const err = wsConnection_->close(yield);
+        if (err) {
+            LOG(log_.error()) << "Error closing websocket connection: " << err->message();
         }
         wsConnection_.reset();
     }

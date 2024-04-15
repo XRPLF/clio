@@ -1,4 +1,4 @@
-FROM rippleci/clio_gcc:12.3.0
+FROM rippleci/clio_clang:16
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 
@@ -24,6 +24,23 @@ RUN apt update -qq \
     && update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${LLVM_TOOLS_VERSION} 100 \
     && pip3 install -q --upgrade --no-cache-dir pip && pip3 install -q --no-cache-dir conan==1.62 gcovr cmake cmake-format \
     && apt-get clean && apt remove -y software-properties-common
+
+# Install gcc-12 and make ldconfig aware of the new libstdc++ location (for gcc)
+# Note: Clang is using libc++ instead
+COPY --from=rippleci/clio_gcc:12.3.0 /gcc12.deb /
+RUN apt update && apt-get install -y binutils libc6-dev \
+    && dpkg -i /gcc12.deb \
+    && rm -rf /gcc12.deb \
+    && ldconfig
+
+# Rewire to use gcc-12 as default compiler
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100 \
+    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-12 100 \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 \
+    && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-12 100 \
+    && update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-12 100 \
+    && update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-12 100 \
+    && update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-12 100
 
 WORKDIR /tmp
 
@@ -51,10 +68,6 @@ RUN wget https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VER
     && mv gh_${GH_VERSION}_linux_${TARGETARCH}/bin/gh /usr/bin/gh \
     && rm -rf /tmp/* /var/tmp/*
 
-# Libstdc++ from gcc-12 got lost, probably via apt update. Let's recover it
-RUN update-alternatives --install /usr/bin/ccache ccache /usr/local/bin/ccache 100 \
-    && update-alternatives --auto libstdc++.so.6
-
 WORKDIR /root
 # Using root by default is not very secure but github checkout action doesn't work with any other user
 # https://github.com/actions/checkout/issues/956
@@ -62,13 +75,26 @@ WORKDIR /root
 # https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
 
 # Setup conan
+RUN conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
+
 # Note: intentionally leaving cppstd=20
-RUN conan profile new default --detect \
-    && conan profile update settings.compiler=gcc default \
-    && conan profile update settings.compiler.version=12 default \
-    && conan profile update settings.compiler.cppstd=20 default \
-    && conan profile update settings.compiler.libcxx=libstdc++11 default \
-    && conan profile update env.CC=/opt/bin/gcc default \
-    && conan profile update env.CXX=/opt/bin/g++ default \
-    && conan profile update "conf.tools.build:compiler_executables={\"c\": \"/opt/bin/gcc\", \"cpp\": \"/opt/bin/g++\"}" default \
-    && conan remote add --insert 0 conan-non-prod http://18.143.149.228:8081/artifactory/api/conan/conan-non-prod
+RUN conan profile new gcc --detect \
+    && conan profile update settings.compiler=gcc gcc \
+    && conan profile update settings.compiler.version=12 gcc \
+    && conan profile update settings.compiler.cppstd=20 gcc \
+    && conan profile update settings.compiler.libcxx=libstdc++11 gcc \
+    && conan profile update env.CC=/usr/bin/gcc-12 gcc \
+    && conan profile update env.CXX=/usr/bin/g++-12 gcc \
+    && conan profile update "conf.tools.build:compiler_executables={\"c\": \"/usr/bin/gcc-12\", \"cpp\": \"/usr/bin/g++-12\"}" gcc
+
+RUN conan profile new clang --detect \
+    && conan profile update settings.compiler=clang clang \
+    && conan profile update settings.compiler.version=16 clang \
+    && conan profile update settings.compiler.cppstd=20 clang \
+    && conan profile update settings.compiler.libcxx=libc++ clang \
+    && conan profile update env.CC=/usr/bin/clang-16 clang \
+    && conan profile update env.CXX=/usr/bin/clang++-16 clang \
+    && conan profile update env.CXXFLAGS="-DBOOST_ASIO_DISABLE_CONCEPTS" clang \
+    && conan profile update "conf.tools.build:compiler_executables={\"c\": \"/usr/bin/clang-16\", \"cpp\": \"/usr/bin/clang++-16\"}" clang 
+
+RUN echo "include(gcc)" >> .conan/profiles/default

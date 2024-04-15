@@ -1,0 +1,19 @@
+FROM ubuntu:focal 
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TARGETARCH
+
+SHELL ["/bin/bash", "-c"]
+USER root
+WORKDIR /root
+
+ENV CLANG_VERSION=16
+
+RUN apt update -qq \
+    && apt install -qq -y --no-install-recommends --no-install-suggests \
+    wget software-properties-common gnupg
+
+RUN wget https://apt.llvm.org/llvm.sh \
+    && chmod +x llvm.sh \
+    && ./llvm.sh ${CLANG_VERSION} \
+    && rm -rf llvm.sh \
+    && apt-get install -y libc++-16-dev libc++abi-16-dev

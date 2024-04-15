@@ -203,8 +203,8 @@ public:
                 size_t numWrites = 0;
                 backend_->cache().setFull();
 
-                auto seconds = ::util::timed<std::chrono::seconds>([this, edgeKeys = &edgeKeys, sequence, &numWrites] {
-                    for (auto& key : *edgeKeys) {
+                auto seconds = ::util::timed<std::chrono::seconds>([this, keys = &edgeKeys, sequence, &numWrites] {
+                    for (auto& key : *keys) {
                         LOG(log_.debug()) << "Writing edge key = " << ripple::strHex(key);
                         auto succ = backend_->cache().getSuccessor(*ripple::uint256::fromVoidChecked(key), sequence);
                         if (succ)

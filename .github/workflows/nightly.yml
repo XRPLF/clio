@@ -41,6 +41,8 @@ jobs:
       - name: Setup conan
         uses: ./.github/actions/setup_conan
         id: conan
+        with:
+          conan_profile: gcc
 
       - name: Run conan and cmake
         uses: ./.github/actions/generate
