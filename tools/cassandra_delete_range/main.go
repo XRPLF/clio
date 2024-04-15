@@ -484,8 +484,6 @@ func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, qu
 
 					var pageState []byte
 					var rowsRetrieved uint64
-					var key []byte
-					var seq uint64
 
 					for {
 						iter := preparedQuery.PageSize(*clusterPageSize).PageState(pageState).Iter()
@@ -493,6 +491,9 @@ func prepareDeleteQueries(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, qu
 						scanner := iter.Scanner()
 
 						for scanner.Next() {
+							var key []byte
+							var seq uint64
+
 							err = scanner.Scan(&key, &seq)
 							if err == nil {
 								rowsRetrieved++
