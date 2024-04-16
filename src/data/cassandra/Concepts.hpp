@@ -53,9 +53,6 @@ concept SomeSettingsProvider = requires(T a) {
     {
         a.getReplicationFactor()
     } -> std::same_as<uint16_t>;
-    {
-        a.getTtl()
-    } -> std::same_as<uint16_t>;
 };
 
 /**
