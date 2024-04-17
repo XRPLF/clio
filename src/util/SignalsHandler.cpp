@@ -34,26 +34,67 @@
 
 namespace util {
 
+namespace impl {
+
+class SignalsHandlerStatic {
+    static SignalsHandler* handler_;
+
+public:
+    static void
+    registerHandler(SignalsHandler& handler)
+    {
+        ASSERT(handler_ == nullptr, "There could be only one instance of SignalsHandler");
+        handler_ = &handler;
+    }
+
+    static void
+    handleSignal(int signal)
+    {
+        ASSERT(handler_ != nullptr, "SignalsHandler is not initialized");
+        handler_->stopHandler_(signal);
+    }
+
+    static void
+    handleSecondSignal(int signal)
+    {
+        ASSERT(handler_ != nullptr, "SignalsHandler is not initialized");
+        handler_->secondSignalHandler_(signal);
+    }
+};
+
+SignalsHandler* SignalsHandlerStatic::handler_ = nullptr;
+
+}  // namespace impl
+
 SignalsHandler::SignalsHandler(Config const& config, std::function<void(std::string)> forceExitHandler)
     : workGuard_(boost::asio::make_work_guard(ioContext_))
-    , gracefulPeriod_(config.valueOr("graceful_period", 10))
+    , gracefulPeriod_(0)
     , timer_(ioContext_, gracefulPeriod_)
     , timerThread_([this] { ioContext_.run(); })
-    , stopHandler_([this, forceExitHandler = std::move(forceExitHandler)](int) mutable {
-        LOG(LogService::info()) << "Got stop signal. Stopping Clio. Graceful period is " << gracefulPeriod_.count()
-                                << " seconds.";
+    , stopHandler_([this, forceExitHandler](int) mutable {
+        LOG(LogService::info()) << "Got stop signal. Stopping Clio. Graceful period is "
+                                << std::chrono::duration_cast<std::chrono::milliseconds>(gracefulPeriod_).count()
+                                << " milliseconds.";
         timer_.async_wait([forceExitHandler = std::move(forceExitHandler)](const boost::system::error_code& ec) {
             if (ec != boost::asio::error::operation_aborted) {
-                forceExitHandler("Forced exit at the end of graceful period.");
+                forceExitHandler("Force exit at the end of graceful period.");
             }
         });
         stopSignal_();
+        setHandler(impl::SignalsHandlerStatic::handleSecondSignal);
+    })
+    , secondSignalHandler_([forceExitHandler = std::move(forceExitHandler)](int) {
+        LOG(LogService::info()) << "Got second signal. Stopping Clio immediately.";
+        forceExitHandler("Force exit on second signal.");
         setHandler();
     })
 {
-    auto callablePtr = stopHandler_.target<void(int)>();
-    ASSERT(callablePtr != nullptr, "Can't get callable pointer");
-    setHandler(callablePtr);
+    auto const gracefulPeriod = config.valueOr("graceful_period", 10.f);
+    ASSERT(gracefulPeriod >= 0.f, "Graceful period must be non-negative");
+    gracefulPeriod_ =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<float>(gracefulPeriod));
+
+    setHandler(impl::SignalsHandlerStatic::handleSignal);
 }
 
 SignalsHandler::~SignalsHandler()

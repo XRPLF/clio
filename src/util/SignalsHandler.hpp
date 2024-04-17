@@ -39,6 +39,10 @@
 
 namespace util {
 
+namespace impl {
+class SignalsHandlerStatic;
+}  // namespace impl
+
 /**
  * @brief Class handling signals.
  * @note There could be only one instance of this class.
@@ -46,12 +50,15 @@ namespace util {
 class SignalsHandler : InstancesLimiter<SignalsHandler> {
     boost::asio::io_context ioContext_;
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard_;
-    std::chrono::seconds gracefulPeriod_;
+    std::chrono::steady_clock::duration gracefulPeriod_;
     boost::asio::steady_timer timer_;
     std::thread timerThread_;
 
     boost::signals2::signal<void()> stopSignal_;
     std::function<void(int)> stopHandler_;
+    std::function<void(int)> secondSignalHandler_;
+
+    friend class impl::SignalsHandlerStatic;
 
 public:
     /**

@@ -8,13 +8,13 @@ target_sources(
           data/BackendFactoryTests.cpp
           data/BackendInterfaceTests.cpp
           data/cassandra/AsyncExecutorTests.cpp
-          # Webserver
           data/cassandra/BackendTests.cpp
           data/cassandra/BaseTests.cpp
           data/cassandra/ExecutionStrategyTests.cpp
           data/cassandra/RetryPolicyTests.cpp
           data/cassandra/SettingsProviderTests.cpp
           DOSGuardTests.cpp
+          # ETL
           etl/AmendmentBlockHandlerTests.cpp
           etl/CacheLoaderSettingsTests.cpp
           etl/CacheLoaderTests.cpp
@@ -32,7 +32,7 @@ target_sources(
           etl/SubscriptionSourceDependenciesTests.cpp
           etl/SubscriptionSourceTests.cpp
           etl/TransformerTests.cpp
-          # RPC
+          # Feed
           feed/BookChangesFeedTests.cpp
           feed/ForwardFeedTests.cpp
           feed/LedgerFeedTests.cpp
@@ -46,6 +46,7 @@ target_sources(
           Main.cpp
           Playground.cpp
           ProfilerTests.cpp
+          # RPC
           rpc/AmendmentsTests.cpp
           rpc/APIVersionTests.cpp
           rpc/BaseTests.cpp
@@ -87,10 +88,10 @@ target_sources(
           rpc/handlers/UnsubscribeTests.cpp
           rpc/handlers/VersionHandlerTests.cpp
           rpc/JsonBoolTests.cpp
-          # RPC handlers
           rpc/RPCHelpersTests.cpp
           rpc/WorkQueueTests.cpp
           util/AssertTests.cpp
+          # Async framework
           util/async/AnyExecutionContextTests.cpp
           util/async/AnyOperationTests.cpp
           util/async/AnyStopTokenTests.cpp
@@ -113,20 +114,19 @@ target_sources(
           util/requests/RequestBuilderTests.cpp
           util/requests/SslContextTests.cpp
           util/requests/WsConnectionTests.cpp
-          # ETL
           util/RetryTests.cpp
-          # Async framework
+          util/SignalsHandlerTests.cpp
           util/StringUtils.cpp
           util/TestGlobals.cpp
           util/TestHttpServer.cpp
           util/TestObject.cpp
           util/TestWsServer.cpp
           util/TxUtilTests.cpp
+          # Webserver
           web/AdminVerificationTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
           web/SweepHandlerTests.cpp
-          # Feed
           web/WhitelistHandlerTests.cpp
 )
 
