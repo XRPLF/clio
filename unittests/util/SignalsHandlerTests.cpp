@@ -134,9 +134,3 @@ TEST_P(SignalsHandlerPriorityTests, Priority)
     EXPECT_CALL(anotherStopHandler_, Call()).WillOnce([&] { EXPECT_TRUE(stopHandlerCalled); });
     std::raise(SIGINT);
 }
-
-// no signal test
-// one signal no timeout test
-// one signal timeout test
-// two signals test
-// priority test

@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/InstancesLimiter.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
@@ -47,7 +46,7 @@ class SignalsHandlerStatic;
  * @brief Class handling signals.
  * @note There could be only one instance of this class.
  */
-class SignalsHandler : InstancesLimiter<SignalsHandler> {
+class SignalsHandler {
     boost::asio::io_context ioContext_;
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard_;
     std::chrono::steady_clock::duration gracefulPeriod_;
@@ -84,7 +83,7 @@ public:
     /**
      * @brief Destructor of SignalsHandler.
      */
-    ~SignalsHandler() override;
+    ~SignalsHandler();
 
     /**
      * @brief Subscribe to stop signal.
