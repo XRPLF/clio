@@ -19,13 +19,16 @@
 
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
 #include "rpc/common/AnyHandler.hpp"
+#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Ledger.hpp"
 #include "util/Fixtures.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -33,9 +36,12 @@
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/UintTypes.h>
+#include <ripple/protocol/jss.h>
 
+#include <cstdint>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
@@ -79,28 +85,28 @@ generateTestValuesForParametersTest()
 {
     return std::vector<LedgerParamTestCaseBundle>{
         {
-            "AccountsNotBool",
-            R"({"accounts": 123})",
-            "invalidParams",
-            "Invalid parameters.",
-        },
-        {
-            "AccountsInvalid",
+            "AccountsInvalidBool",
             R"({"accounts": true})",
             "notSupported",
-            "Not supported field 'accounts's value 'true'",
+            "Not supported field 'accounts'",
         },
         {
-            "FullExist",
+            "AccountsInvalidInt",
+            R"({"accounts": 123})",
+            "notSupported",
+            "Not supported field 'accounts'",
+        },
+        {
+            "FullInvalidBool",
             R"({"full": true})",
             "notSupported",
-            "Not supported field 'full's value 'true'",
+            "Not supported field 'full'",
         },
         {
-            "FullNotBool",
+            "FullInvalidInt",
             R"({"full": 123})",
-            "invalidParams",
-            "Invalid parameters.",
+            "notSupported",
+            "Not supported field 'full'",
         },
         {
             "QueueExist",
@@ -180,7 +186,7 @@ TEST_P(LedgerParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -203,7 +209,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -226,7 +232,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -249,7 +255,7 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -290,26 +296,23 @@ TEST_F(RPCLedgerHandlerTest, Default)
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
-        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
-// not supported fields can be set to its default value
-TEST_F(RPCLedgerHandlerTest, NotSupportedFieldsDefaultValue)
+// fields not supported for specific value can be set to its default value
+TEST_F(RPCLedgerHandlerTest, ConditionallyNotSupportedFieldsDefaultValue)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend}};
         auto const req = json::parse(
             R"({
-                "full": false,
-                "accounts": false,
                 "queue": false
             })"
         );
@@ -331,7 +334,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
         auto const req = json::parse(R"({"ledger_index": 15})");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("ledger"));
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
     });
 }
 
@@ -348,7 +351,7 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
         auto const req = json::parse(fmt::format(R"({{"ledger_hash": "{}" }})", INDEX1));
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("ledger"));
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
     });
 }
 
@@ -380,7 +383,7 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -432,7 +435,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -484,7 +487,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
         );
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -575,8 +578,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
-        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -675,8 +678,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
         auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
-        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -722,8 +725,8 @@ TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
         auto output2 = handler.process(req2, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output2);
         EXPECT_NE(
-            output->at("ledger").at("transactions").as_array()[0].at("close_time_iso"),
-            output2->at("ledger").at("transactions").as_array()[0].at("close_time_iso")
+            output.result->at("ledger").at("transactions").as_array()[0].at("close_time_iso"),
+            output2.result->at("ledger").at("transactions").as_array()[0].at("close_time_iso")
         );
     });
 }
@@ -750,7 +753,7 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
-            output->as_object().at("ledger").at("transactions"),
+            output.result->as_object().at("ledger").at("transactions"),
             json::parse(fmt::format(R"(["{}","{}"])", INDEX1, INDEX2))
         );
     });
@@ -808,7 +811,7 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("ledger").at("diff"), json::parse(expectedOut));
+        EXPECT_EQ(output.result->at("ledger").at("diff"), json::parse(expectedOut));
     });
 }
 
@@ -854,7 +857,7 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("ledger").at("diff"), json::parse(expectedOut));
+        EXPECT_EQ(output.result->at("ledger").at("diff"), json::parse(expectedOut));
     });
 }
 
@@ -946,8 +949,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
-        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -1054,8 +1057,8 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         // remove human readable time, it is sightly different cross the platform
-        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -1122,7 +1125,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -1158,7 +1161,9 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_FALSE(
-            output->as_object()["ledger"].as_object()["transactions"].as_array()[0].as_object().contains("owner_funds")
+            output.result->as_object()["ledger"].as_object()["transactions"].as_array()[0].as_object().contains(
+                "owner_funds"
+            )
         );
     });
 }
@@ -1226,7 +1231,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
         );
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOut));
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
     });
 }
 
@@ -1274,7 +1279,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
-            output->as_object()["ledger"]
+            output.result->as_object()["ledger"]
                 .as_object()["transactions"]
                 .as_array()[0]
                 .as_object()["owner_funds"]
@@ -1338,7 +1343,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
         EXPECT_EQ(
-            output->as_object()["ledger"]
+            output.result->as_object()["ledger"]
                 .as_object()["transactions"]
                 .as_array()[0]
                 .as_object()["owner_funds"]
@@ -1346,4 +1351,65 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
             "50"
         );
     });
+}
+struct RPCLedgerHandlerSpecCheckTestBundle {
+    std::string name;
+    boost::json::value json;
+    std::unordered_map<int64_t, std::vector<std::string>> expectedWarning;
+};
+
+struct RPCLedgerHandlerSpecCheckTest : ::testing::TestWithParam<RPCLedgerHandlerSpecCheckTestBundle> {
+    RpcSpec spec_ = LedgerHandler::spec(2);
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    RPCLedgerHandlerSpecCheckTestGroup,
+    RPCLedgerHandlerSpecCheckTest,
+    testing::Values(
+        RPCLedgerHandlerSpecCheckTestBundle{"ValidRequest", {{"ledger_index", 1}}, {}},
+        RPCLedgerHandlerSpecCheckTestBundle{
+            "FullWarning",
+            {{JS(full), false}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'full' is deprecated."}}},
+        },
+        RPCLedgerHandlerSpecCheckTestBundle{
+            "AccountsWarning",
+            {{JS(accounts), false}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'accounts' is deprecated."}}},
+        },
+        RPCLedgerHandlerSpecCheckTestBundle{
+            "LedgerWarning",
+            {{JS(ledger), false}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'ledger' is deprecated."}}},
+        },
+        RPCLedgerHandlerSpecCheckTestBundle{
+            "TypeWarning",
+            {{JS(type), false}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'type' is deprecated."}}},
+        },
+        RPCLedgerHandlerSpecCheckTestBundle{
+            "MultipleWarnings",
+            {{JS(full), false}, {JS(type), false}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED),
+              {"Field 'full' is deprecated.", "Field 'type' is deprecated."}}},
+        }
+    ),
+    [](testing::TestParamInfo<RPCLedgerHandlerSpecCheckTestBundle> const& info) { return info.param.name; }
+);
+
+TEST_P(RPCLedgerHandlerSpecCheckTest, CheckSpec)
+{
+    auto const warnings = spec_.check(GetParam().json);
+    ASSERT_EQ(warnings.size(), GetParam().expectedWarning.size());
+    for (auto const& warn : warnings) {
+        ASSERT_TRUE(warn.is_object());
+        auto const obj = warn.as_object();
+        ASSERT_TRUE(obj.contains("id"));
+        ASSERT_TRUE(obj.contains("message"));
+        auto const& it = GetParam().expectedWarning.find(obj.at("id").as_int64());
+        ASSERT_NE(it, GetParam().expectedWarning.end());
+        for (auto const& msg : it->second) {
+            EXPECT_NE(obj.at("message").as_string().find(msg), std::string::npos);
+        }
+    }
 }

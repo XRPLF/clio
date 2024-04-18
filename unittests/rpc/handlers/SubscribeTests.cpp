@@ -30,6 +30,7 @@
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -40,6 +41,7 @@
 #include <ripple/protocol/UintTypes.h>
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -587,7 +589,7 @@ TEST_P(SubscribeParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -599,7 +601,7 @@ TEST_F(RPCSubscribeHandlerTest, EmptyResponse)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(json::parse(R"({})"), Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
     });
 }
 
@@ -615,7 +617,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("transactions_proposed").as_uint64(), 1);
@@ -660,7 +662,7 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object(), json::parse(expectedOutput));
+        EXPECT_EQ(output.result->as_object(), json::parse(expectedOutput));
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("ledger").as_uint64(), 1);
@@ -681,7 +683,7 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // filter the duplicates
@@ -703,7 +705,7 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // filter the duplicates
@@ -736,7 +738,7 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("books").as_uint64(), 1);
@@ -769,7 +771,7 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().empty());
+        EXPECT_TRUE(output.result->as_object().empty());
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
@@ -936,10 +938,10 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("bids").as_array().size(), 10);
-        EXPECT_EQ(output->as_object().at("asks").as_array().size(), 10);
-        EXPECT_EQ(output->as_object().at("bids").as_array()[0].as_object(), json::parse(expectedOffer));
-        EXPECT_EQ(output->as_object().at("asks").as_array()[0].as_object(), json::parse(expectedReversedOffer));
+        EXPECT_EQ(output.result->as_object().at("bids").as_array().size(), 10);
+        EXPECT_EQ(output.result->as_object().at("asks").as_array().size(), 10);
+        EXPECT_EQ(output.result->as_object().at("bids").as_array()[0].as_object(), json::parse(expectedOffer));
+        EXPECT_EQ(output.result->as_object().at("asks").as_array()[0].as_object(), json::parse(expectedReversedOffer));
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
@@ -1079,11 +1081,37 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("offers").as_array().size(), 10);
-        EXPECT_EQ(output->as_object().at("offers").as_array()[0].as_object(), json::parse(expectedOffer));
+        EXPECT_EQ(output.result->as_object().at("offers").as_array().size(), 10);
+        EXPECT_EQ(output.result->as_object().at("offers").as_array()[0].as_object(), json::parse(expectedOffer));
         std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 1);
     });
+}
+
+TEST(RPCSubscribeHandlerSpecTest, DeprecatedFields)
+{
+    boost::json::value const json{
+        {"streams", ACCOUNT},
+        {"accounts", {123}},
+        {"accounts_proposed", "abc"},
+        {"books", "1"},
+        {"user", "some"},
+        {"password", "secret"},
+        {"rt_accounts", true}
+    };
+    auto const spec = SubscribeHandler::spec(2);
+    auto const warnings = spec.check(json);
+    ASSERT_EQ(warnings.size(), 1);
+    auto const& warning = warnings[0];
+    ASSERT_TRUE(warning.is_object());
+    auto const obj = warning.as_object();
+    ASSERT_TRUE(obj.contains("id"));
+    ASSERT_TRUE(obj.contains("message"));
+    EXPECT_EQ(obj.at("id").as_int64(), static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED));
+    auto const& message = obj.at("message").as_string();
+    for (auto const& field : {"user", "password", "rt_accounts"}) {
+        EXPECT_NE(message.find(fmt::format("Field '{}' is deprecated", field)), std::string::npos) << message;
+    }
 }

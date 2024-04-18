@@ -171,7 +171,7 @@ TransactionFeed::pub(
         }
     }
 
-    auto const genJsonByVersion = [&, tx = tx, meta = meta](std::uint32_t version) {
+    auto const genJsonByVersion = [&, tx, meta](std::uint32_t version) {
         boost::json::object pubObj;
         auto const txKey = version < 2u ? JS(transaction) : JS(tx_json);
         pubObj[txKey] = rpc::toJson(*tx);

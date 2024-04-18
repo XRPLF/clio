@@ -152,7 +152,7 @@ TEST_F(RPCTxTest, ExcessiveLgrRange)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "excessiveLgrRange");
         EXPECT_EQ(err.at("error_message").as_string(), "Ledger range exceeds 1000.");
     });
@@ -202,7 +202,7 @@ TEST_F(RPCTxTest, InvalidBinaryV2)
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
     });
@@ -224,7 +224,7 @@ TEST_F(RPCTxTest, InvalidLgrRange)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidLgrRange");
         EXPECT_EQ(err.at("error_message").as_string(), "Ledger range is invalid.");
     });
@@ -251,7 +251,7 @@ TEST_F(RPCTxTest, TxnNotFound)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
     });
@@ -281,7 +281,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllFalse)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
         EXPECT_EQ(err.at("searched_all").as_bool(), false);
@@ -312,7 +312,7 @@ TEST_F(RPCTxTest, TxnNotFoundInGivenRangeSearchAllTrue)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
         EXPECT_EQ(err.at("searched_all").as_bool(), true);
@@ -343,7 +343,7 @@ TEST_F(RPCTxTest, CtidNotFoundSearchAllFalse)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "txnNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "Transaction not found.");
         EXPECT_FALSE(err.contains("searched_all"));
@@ -377,7 +377,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v1)
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
 
-        EXPECT_EQ(*output, json::parse(DEFAULT_OUT_1));
+        EXPECT_EQ(*output.result, json::parse(DEFAULT_OUT_1));
     });
 }
 
@@ -406,8 +406,8 @@ TEST_F(RPCTxTest, PaymentTx_API_v1)
         ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1u});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("DeliverMax"));
-        EXPECT_EQ(output->at("Amount"), output->at("DeliverMax"));
+        EXPECT_TRUE(output.result->as_object().contains("DeliverMax"));
+        EXPECT_EQ(output.result->at("Amount"), output.result->at("DeliverMax"));
     });
 }
 
@@ -437,9 +437,9 @@ TEST_F(RPCTxTest, PaymentTx_API_v2)
         ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("tx_json"));
-        EXPECT_TRUE(output->as_object().at("tx_json").as_object().contains("DeliverMax"));
-        EXPECT_FALSE(output->as_object().at("tx_json").as_object().contains("Amount"));
+        EXPECT_TRUE(output.result->as_object().contains("tx_json"));
+        EXPECT_TRUE(output.result->as_object().at("tx_json").as_object().contains("DeliverMax"));
+        EXPECT_FALSE(output.result->as_object().at("tx_json").as_object().contains("Amount"));
     });
 }
 
@@ -471,7 +471,7 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
         ));
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2u});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(DEFAULT_OUT_2));
+        EXPECT_EQ(*output.result, json::parse(DEFAULT_OUT_2));
     });
 }
 
@@ -512,7 +512,7 @@ TEST_F(RPCTxTest, ReturnBinary)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(OUT));
     });
 }
 
@@ -555,7 +555,7 @@ TEST_F(RPCTxTest, ReturnBinaryWithCTID)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(OUT));
     });
 }
 
@@ -641,7 +641,7 @@ TEST_F(RPCTxTest, MintNFT)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(OUT));
     });
 }
 
@@ -668,7 +668,7 @@ TEST_F(RPCTxTest, NFTAcceptOffer)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("meta").at("nftoken_id").as_string(), NFTID);
+        EXPECT_EQ(output.result->at("meta").at("nftoken_id").as_string(), NFTID);
     });
 }
 
@@ -697,7 +697,7 @@ TEST_F(RPCTxTest, NFTCancelOffer)
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
 
-        for (auto const& id : output->at("meta").at("nftoken_ids").as_array()) {
+        for (auto const& id : output.result->at("meta").at("nftoken_ids").as_array()) {
             auto const idStr = id.as_string();
             const auto it = std::find(ids.begin(), ids.end(), idStr);
             ASSERT_NE(it, ids.end()) << "Unexpected NFT ID: " << idStr;
@@ -731,7 +731,7 @@ TEST_F(RPCTxTest, NFTCreateOffer)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->at("meta").at("offer_id").as_string() == NFTID2);
+        EXPECT_TRUE(output.result->at("meta").at("offer_id").as_string() == NFTID2);
     });
 }
 
@@ -751,7 +751,7 @@ TEST_F(RPCTxTest, CTIDAndTransactionBothProvided)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
     });
@@ -765,7 +765,7 @@ TEST_F(RPCTxTest, CTIDAndTransactionBothNotProvided)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
     });
@@ -779,7 +779,7 @@ TEST_F(RPCTxTest, CTIDInvalidType)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
     });
@@ -797,7 +797,7 @@ TEST_F(RPCTxTest, CTIDInvalidString)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Invalid parameters.");
     });
@@ -821,7 +821,7 @@ TEST_F(RPCTxTest, CTIDNotMatch)
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error_code").as_uint64(), 4);
         EXPECT_EQ(
             err.at("error_message").as_string(),
@@ -900,7 +900,7 @@ TEST_F(RPCTxTest, ReturnCTIDForTxInput)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(OUT));
     });
 }
 
@@ -973,7 +973,7 @@ TEST_F(RPCTxTest, NotReturnCTIDIfETLNotAvaiable)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(OUT));
     });
 }
 
@@ -1058,7 +1058,7 @@ TEST_F(RPCTxTest, ViaCTID)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(OUT));
+        EXPECT_EQ(*output.result, json::parse(OUT));
     });
 }
 
@@ -1096,6 +1096,6 @@ TEST_F(RPCTxTest, ViaLowercaseCTID)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->at("ctid").as_string(), CTID);
+        EXPECT_EQ(output.result->at("ctid").as_string(), CTID);
     });
 }

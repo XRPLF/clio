@@ -160,66 +160,6 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfAccountInfoWithQueueSpe
     });
 }
 
-TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithQueueSpecified)
-{
-    auto const rawHandlerProviderPtr = handlerProvider.get();
-    auto const apiVersion = 2u;
-    auto const method = "ledger";
-    auto const params = json::parse(R"({"queue": true})");
-
-    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
-    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
-
-    runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
-        auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
-
-        auto const res = proxy.shouldForward(ctx);
-        ASSERT_TRUE(res);
-    });
-}
-
-TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithFullSpecified)
-{
-    auto const rawHandlerProviderPtr = handlerProvider.get();
-    auto const apiVersion = 2u;
-    auto const method = "ledger";
-    auto const params = json::parse(R"({"full": true})");
-
-    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
-    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
-
-    runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
-        auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
-
-        auto const res = proxy.shouldForward(ctx);
-        ASSERT_TRUE(res);
-    });
-}
-
-TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithAccountsSpecified)
-{
-    auto const rawHandlerProviderPtr = handlerProvider.get();
-    auto const apiVersion = 2u;
-    auto const method = "ledger";
-    auto const params = json::parse(R"({"accounts": true})");
-
-    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
-    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
-
-    runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
-        auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
-
-        auto const res = proxy.shouldForward(ctx);
-        ASSERT_TRUE(res);
-    });
-}
-
 TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAccountInfoQueueIsFalse)
 {
     auto const rawHandlerProviderPtr = handlerProvider.get();
@@ -240,52 +180,32 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAccountInfoQueueIsFals
     });
 }
 
+TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsTrueIfLedgerWithQueueSpecified)
+{
+    auto const rawHandlerProviderPtr = handlerProvider.get();
+    auto const apiVersion = 2u;
+    auto const method = "ledger";
+    auto const params = json::parse(R"({"queue": true})");
+
+    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
+    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
+
+    runSpawn([&](auto yield) {
+        auto const range = backend->fetchLedgerRange();
+        auto const ctx =
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
+
+        auto const res = proxy.shouldForward(ctx);
+        ASSERT_TRUE(res);
+    });
+}
+
 TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerQueueIsFalse)
 {
     auto const rawHandlerProviderPtr = handlerProvider.get();
     auto const apiVersion = 2u;
     auto const method = "ledger";
     auto const params = json::parse(R"({"queue": false})");
-
-    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
-    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
-
-    runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
-        auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
-
-        auto const res = proxy.shouldForward(ctx);
-        ASSERT_FALSE(res);
-    });
-}
-
-TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerFullIsFalse)
-{
-    auto const rawHandlerProviderPtr = handlerProvider.get();
-    auto const apiVersion = 2u;
-    auto const method = "ledger";
-    auto const params = json::parse(R"({"full": false})");
-
-    ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
-    EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
-
-    runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
-        auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
-
-        auto const res = proxy.shouldForward(ctx);
-        ASSERT_FALSE(res);
-    });
-}
-
-TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfLedgerAccountsIsFalse)
-{
-    auto const rawHandlerProviderPtr = handlerProvider.get();
-    auto const apiVersion = 2u;
-    auto const method = "ledger";
-    auto const params = json::parse(R"({"accounts": false})");
 
     ON_CALL(*rawHandlerProviderPtr, isClioOnly(_)).WillByDefault(Return(false));
     EXPECT_CALL(*rawHandlerProviderPtr, isClioOnly(method)).Times(1);
@@ -398,7 +318,7 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
 
         auto const res = proxy.forward(ctx);
 
-        auto const data = std::get_if<json::object>(&res);
+        auto const data = std::get_if<json::object>(&res.response);
         EXPECT_TRUE(data != nullptr);
     });
 }
@@ -429,7 +349,7 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
 
         auto const res = proxy.forward(ctx);
 
-        auto const status = std::get_if<Status>(&res);
+        auto const status = std::get_if<Status>(&res.response);
         EXPECT_TRUE(status != nullptr);
         EXPECT_EQ(*status, ripple::rpcFAILED_TO_FORWARD);
     });

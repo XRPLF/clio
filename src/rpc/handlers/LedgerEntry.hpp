@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/Checkers.hpp"
 #include "rpc/common/MetaProcessors.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
@@ -297,7 +298,8 @@ public:
                   meta::WithCustomError{
                       validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID)
                   }},
-             }}}
+             }}},
+            {JS(ledger), check::Deprecated{}},
         };
 
         return rpcSpec;

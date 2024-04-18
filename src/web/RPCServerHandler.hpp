@@ -194,7 +194,8 @@ private:
             rpc::logDuration(*context, us);
 
             boost::json::object response;
-            if (auto const status = std::get_if<rpc::Status>(&result)) {
+
+            if (auto const status = std::get_if<rpc::Status>(&result.response)) {
                 // note: error statuses are counted/notified in buildResponse itself
                 response = web::impl::ErrorHelper(connection, request).composeError(*status);
                 auto const responseStr = boost::json::serialize(response);
@@ -205,7 +206,7 @@ private:
                 // This can still technically be an error. Clio counts forwarded requests as successful.
                 rpcEngine_->notifyComplete(context->method, us);
 
-                auto& json = std::get<boost::json::object>(result);
+                auto& json = std::get<boost::json::object>(result.response);
                 auto const isForwarded =
                     json.contains("forwarded") && json.at("forwarded").is_bool() && json.at("forwarded").as_bool();
 
@@ -246,7 +247,7 @@ private:
                 }
             }
 
-            boost::json::array warnings;
+            boost::json::array warnings = std::move(result.warnings);
             warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_CLIO));
 
             if (etl_->lastCloseAgeSeconds() >= 60)

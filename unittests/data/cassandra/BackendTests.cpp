@@ -82,7 +82,7 @@ protected:
         TestGlobals::instance().backendHost,
         TestGlobals::instance().backendKeyspace
     ))};
-    SettingsProvider settingsProvider{cfg, 0};
+    SettingsProvider settingsProvider{cfg};
 
     // recreated for each test
     std::unique_ptr<BackendInterface> backend;

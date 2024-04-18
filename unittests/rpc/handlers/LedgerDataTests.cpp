@@ -26,12 +26,14 @@
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -123,7 +125,7 @@ TEST_P(LedgerDataParameterTest, InvalidParams)
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -146,7 +148,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -169,7 +171,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -192,7 +194,7 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -218,7 +220,7 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "markerDoesNotExist");
     });
@@ -270,16 +272,16 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
         auto const req = json::parse(R"({"limit":10})");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("ledger"));
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
 
         // Note: the format of "close_time_human" depends on the platform and might differ per platform. It is however
         // guaranteed to be consistent on the same platform.
-        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(output->as_object().at("ledger"), json::parse(ledgerExpected));
-        EXPECT_EQ(output->as_object().at("marker").as_string(), INDEX2);
-        EXPECT_EQ(output->as_object().at("state").as_array().size(), 10);
-        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+        EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(output.result->as_object().at("ledger"), json::parse(ledgerExpected));
+        EXPECT_EQ(output.result->as_object().at("marker").as_string(), INDEX2);
+        EXPECT_EQ(output.result->as_object().at("state").as_array().size(), 10);
+        EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
     });
 }
 
@@ -329,12 +331,12 @@ TEST_F(RPCLedgerDataHandlerTest, Version2)
         auto const req = json::parse(R"({"limit":10})");
         auto output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("ledger"));
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
 
         // Note: the format of "close_time_human" depends on the platform and might differ per platform. It is however
         // guaranteed to be consistent on the same platform.
-        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(output->as_object().at("ledger"), json::parse(ledgerExpected));
+        EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(output.result->as_object().at("ledger"), json::parse(ledgerExpected));
     });
 }
 
@@ -389,16 +391,16 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
 
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("ledger"));
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
 
         // Note: the format of "close_time_human" depends on the platform and might differ per platform. It is however
         // guaranteed to be consistent on the same platform.
-        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(output->as_object().at("ledger"), json::parse(ledgerExpected));
-        EXPECT_EQ(output->as_object().at("marker").as_string(), INDEX2);
-        EXPECT_EQ(output->as_object().at("state").as_array().size(), 5);
-        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+        EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(output.result->as_object().at("ledger"), json::parse(ledgerExpected));
+        EXPECT_EQ(output.result->as_object().at("marker").as_string(), INDEX2);
+        EXPECT_EQ(output.result->as_object().at("state").as_array().size(), 5);
+        EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
     });
 }
 
@@ -450,16 +452,16 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
 
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("ledger"));
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
 
         // Note: the format of "close_time_human" depends on the platform and might differ per platform. It is however
         // guaranteed to be consistent on the same platform.
-        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(output->as_object().at("ledger"), json::parse(ledgerExpected));
-        EXPECT_EQ(output->as_object().at("marker").as_string(), INDEX2);
-        EXPECT_EQ(output->as_object().at("state").as_array().size(), 1);
-        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+        EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(output.result->as_object().at("ledger"), json::parse(ledgerExpected));
+        EXPECT_EQ(output.result->as_object().at("marker").as_string(), INDEX2);
+        EXPECT_EQ(output.result->as_object().at("state").as_array().size(), 1);
+        EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
     });
 }
 
@@ -503,13 +505,13 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
         auto const req = json::parse(R"({"limit":10, "out_of_order":true})");
         auto output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("ledger"));
-        EXPECT_EQ(output->as_object().at("ledger").as_object().erase("close_time_human"), 1);
-        EXPECT_EQ(output->as_object().at("ledger"), json::parse(ledgerExpected));
-        EXPECT_EQ(output->as_object().at("marker").as_uint64(), RANGEMAX);
-        EXPECT_EQ(output->as_object().at("state").as_array().size(), 1);
-        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
+        EXPECT_EQ(output.result->as_object().at("ledger").as_object().erase("close_time_human"), 1);
+        EXPECT_EQ(output.result->as_object().at("ledger"), json::parse(ledgerExpected));
+        EXPECT_EQ(output.result->as_object().at("marker").as_uint64(), RANGEMAX);
+        EXPECT_EQ(output.result->as_object().at("state").as_array().size(), 1);
+        EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
     });
 }
 
@@ -555,11 +557,11 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_FALSE(output->as_object().contains("ledger"));
-        EXPECT_EQ(output->as_object().at("marker").as_string(), INDEX2);
-        EXPECT_EQ(output->as_object().at("state").as_array().size(), 10);
-        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+        EXPECT_FALSE(output.result->as_object().contains("ledger"));
+        EXPECT_EQ(output.result->as_object().at("marker").as_string(), INDEX2);
+        EXPECT_EQ(output.result->as_object().at("state").as_array().size(), 10);
+        EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
     });
 }
 
@@ -598,11 +600,11 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_FALSE(output->as_object().contains("ledger"));
-        EXPECT_EQ(output->as_object().at("state").as_array().size(), 10);
-        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
-        EXPECT_FALSE(output->as_object().at("cache_full").as_bool());
+        EXPECT_FALSE(output.result->as_object().contains("ledger"));
+        EXPECT_EQ(output.result->as_object().at("state").as_array().size(), 10);
+        EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+        EXPECT_FALSE(output.result->as_object().at("cache_full").as_bool());
     });
 }
 
@@ -637,12 +639,12 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
         );
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("ledger"));
-        EXPECT_TRUE(output->as_object().at("ledger").as_object().contains("ledger_data"));
-        EXPECT_TRUE(output->as_object().at("ledger").as_object().at("closed").as_bool());
-        EXPECT_EQ(output->as_object().at("state").as_array().size(), 10);
-        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
+        EXPECT_TRUE(output.result->as_object().at("ledger").as_object().contains("ledger_data"));
+        EXPECT_TRUE(output.result->as_object().at("ledger").as_object().at("closed").as_bool());
+        EXPECT_EQ(output.result->as_object().at("state").as_array().size(), 10);
+        EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
     });
 }
 
@@ -678,12 +680,12 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("ledger"));
-        EXPECT_TRUE(output->as_object().at("ledger").as_object().contains("ledger_data"));
-        EXPECT_TRUE(output->as_object().at("ledger").as_object().at("closed").as_bool());
-        EXPECT_EQ(output->as_object().at("state").as_array().size(), LedgerDataHandler::LIMITBINARY);
-        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
+        EXPECT_TRUE(output.result->as_object().at("ledger").as_object().contains("ledger_data"));
+        EXPECT_TRUE(output.result->as_object().at("ledger").as_object().at("closed").as_bool());
+        EXPECT_EQ(output.result->as_object().at("state").as_array().size(), LedgerDataHandler::LIMITBINARY);
+        EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
     });
 }
 
@@ -719,10 +721,33 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
         ));
         auto const output = handler.process(req, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_TRUE(output->as_object().contains("ledger"));
-        EXPECT_TRUE(output->as_object().at("ledger").as_object().at("closed").as_bool());
-        EXPECT_EQ(output->as_object().at("state").as_array().size(), LedgerDataHandler::LIMITJSON);
-        EXPECT_EQ(output->as_object().at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
+        EXPECT_TRUE(output.result->as_object().at("ledger").as_object().at("closed").as_bool());
+        EXPECT_EQ(output.result->as_object().at("state").as_array().size(), LedgerDataHandler::LIMITJSON);
+        EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
     });
+}
+
+TEST(RPCLedgerDataHandlerSpecTest, DeprecatedFields)
+{
+    boost::json::value const json{
+        {"ledger", 1},
+        {"out_of_order", true},
+        {"ledger_hash", "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"},
+        {"ledger_index", 1},
+        {"limit", 10},
+        {"marker", "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652"},
+        {"type", "state"},
+        {"ledger", "some"}
+    };
+    auto const spec = LedgerDataHandler::spec(2);
+    auto const warnings = spec.check(json);
+    ASSERT_EQ(warnings.size(), 1);
+    ASSERT_TRUE(warnings[0].is_object());
+    auto const& warning = warnings[0].as_object();
+    ASSERT_TRUE(warning.contains("id"));
+    ASSERT_TRUE(warning.contains("message"));
+    EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::warnRPC_DEPRECATED));
+    EXPECT_NE(warning.at("message").as_string().find("Field 'ledger' is deprecated."), std::string::npos) << warning;
 }

@@ -178,7 +178,7 @@ TEST_P(NoRippleCheckParameterTest, InvalidParams)
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 2});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), testBundle.expectedError);
         EXPECT_EQ(err.at("error_message").as_string(), testBundle.expectedErrorMessage);
     });
@@ -201,7 +201,7 @@ TEST_F(NoRippleCheckParameterTest, V1ApiTransactionsIsNotBool)
         auto const output = handler.process(req, Context{.yield = yield, .apiVersion = 1});
         ASSERT_FALSE(output);
 
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -227,7 +227,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -255,7 +255,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -283,7 +283,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "ledgerNotFound");
     });
@@ -311,7 +311,7 @@ TEST_F(RPCNoRippleCheckTest, AccountNotExist)
         auto const handler = AnyHandler{NoRippleCheckHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.error());
+        auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "actNotFound");
         EXPECT_EQ(err.at("error_message").as_string(), "accountNotFound");
     });
@@ -375,7 +375,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
         auto const handler = AnyHandler{NoRippleCheckHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -431,7 +431,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
         auto const handler = AnyHandler{NoRippleCheckHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -494,7 +494,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
         auto const handler = AnyHandler{NoRippleCheckHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -550,7 +550,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
         auto const handler = AnyHandler{NoRippleCheckHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -599,8 +599,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
         auto const handler = AnyHandler{NoRippleCheckHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("transactions").as_array().size(), 1);
-        EXPECT_EQ(output->as_object().at("problems").as_array().size(), 1);
+        EXPECT_EQ(output.result->as_object().at("transactions").as_array().size(), 1);
+        EXPECT_EQ(output.result->as_object().at("problems").as_array().size(), 1);
     });
 }
 
@@ -653,7 +653,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
         auto const handler = AnyHandler{NoRippleCheckHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("problems").as_array().size(), 1);
+        EXPECT_EQ(output.result->as_object().at("problems").as_array().size(), 1);
     });
 }
 
@@ -759,7 +759,7 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
         auto const handler = AnyHandler{NoRippleCheckHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(*output, json::parse(expectedOutput));
+        EXPECT_EQ(*output.result, json::parse(expectedOutput));
     });
 }
 
@@ -812,6 +812,6 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
         auto const handler = AnyHandler{NoRippleCheckHandler{backend}};
         auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output->as_object().at("problems").as_array().size(), NoRippleCheckHandler::LIMIT_MAX);
+        EXPECT_EQ(output.result->as_object().at("problems").as_array().size(), NoRippleCheckHandler::LIMIT_MAX);
     });
 }

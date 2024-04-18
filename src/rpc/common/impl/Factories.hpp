@@ -20,21 +20,31 @@
 #pragma once
 
 #include "rpc/Errors.hpp"
+#include "rpc/common/Checkers.hpp"
 #include "rpc/common/Concepts.hpp"
 #include "rpc/common/Types.hpp"
 
+#include <boost/json/array.hpp>
 #include <boost/json/value.hpp>
 
+#include <expected>
+#include <functional>
 #include <optional>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace rpc::impl {
 
 template <typename>
 static constexpr bool unsupported_v = false;
 
+using FieldSpecProcessor = std::function<MaybeError(boost::json::value&)>;
+
+static FieldSpecProcessor const EMPTY_FIELD_PROCESSOR = [](boost::json::value&) -> MaybeError { return {}; };
+
 template <SomeProcessor... Processors>
-[[nodiscard]] auto
+[[nodiscard]] FieldSpecProcessor
 makeFieldProcessor(std::string const& key, Processors&&... procs)
 {
     return [key, ... proc = std::forward<Processors>(procs)](boost::json::value& j) -> MaybeError {
@@ -61,9 +71,31 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
         );
 
         if (firstFailure)
-            return Error{firstFailure.value()};
+            return std::unexpected{std::move(firstFailure).value()};
 
         return {};
+    };
+}
+
+using FieldChecker = std::function<check::Warnings(boost::json::value const&)>;
+
+static FieldChecker const EMPTY_FIELD_CHECKER = [](boost::json::value const&) -> check::Warnings { return {}; };
+
+template <SomeCheck... Checks>
+[[nodiscard]] FieldChecker
+makeFieldChecker(std::string const& key, Checks&&... checks)
+{
+    return [key, ... checks = std::forward<Checks>(checks)](boost::json::value const& j) -> check::Warnings {
+        check::Warnings warnings;
+        // This expands in order of Checks and collects all warnings into a WarningsCollection
+        (
+            [&j, &key, &warnings, req = &checks]() {
+                if (auto res = req->check(j, key); res)
+                    warnings.push_back(std::move(res).value());
+            }(),
+            ...
+        );
+        return warnings;
     };
 }
 

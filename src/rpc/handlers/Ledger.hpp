@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/Checkers.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
@@ -61,13 +62,16 @@ public:
      * @brief A struct to hold the input data for the command
      *
      * Clio does not support:
-     * - accounts
-     * - full
-     * - owner_finds
      * - queue
+     *
+     * And the following are deprecated altogether:
+     * - full
+     * - accounts
+     * - ledger
      * - type
      *
-     * Clio will throw an error when any of `accounts`/`full`/`owner_funds`/`queue` are set to `true`
+     * Clio will throw an error when `queue` is set to `true`
+     * or if `full` or `accounts` are used.
      * @see https://github.com/XRPLF/clio/issues/603
      */
     struct Input {
@@ -101,8 +105,10 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(full), validation::Type<bool>{}, validation::NotSupported{true}},
-            {JS(accounts), validation::Type<bool>{}, validation::NotSupported{true}},
+            {JS(full), validation::NotSupported{}},
+            {JS(full), check::Deprecated{}},
+            {JS(accounts), validation::NotSupported{}},
+            {JS(accounts), check::Deprecated{}},
             {JS(owner_funds), validation::Type<bool>{}},
             {JS(queue), validation::Type<bool>{}, validation::NotSupported{true}},
             {JS(ledger_hash), validation::Uint256HexStringValidator},
@@ -111,6 +117,8 @@ public:
             {JS(expand), validation::Type<bool>{}},
             {JS(binary), validation::Type<bool>{}},
             {"diff", validation::Type<bool>{}},
+            {JS(ledger), check::Deprecated{}},
+            {JS(type), check::Deprecated{}},
         };
 
         return rpcSpec;

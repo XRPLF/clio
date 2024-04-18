@@ -19,15 +19,17 @@
 
 #pragma once
 
+#include "rpc/common/Checkers.hpp"
 #include "rpc/common/Concepts.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/impl/Factories.hpp"
 
+#include <boost/json/array.hpp>
 #include <boost/json/value.hpp>
 
-#include <functional>
 #include <initializer_list>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace rpc {
@@ -46,11 +48,26 @@ struct FieldSpec final {
     template <SomeProcessor... Processors>
     FieldSpec(std::string const& key, Processors&&... processors)
         : processor_{impl::makeFieldProcessor<Processors...>(key, std::forward<Processors>(processors)...)}
+        , checker_{impl::EMPTY_FIELD_CHECKER}
     {
     }
 
     /**
-     * @brief Processos the passed JSON value using the stored processors.
+     * @brief Construct a field specification out of a set of checkers.
+     *
+     * @tparam Checks The types of checkers
+     * @param key The key in a JSON object that the field validates
+     * @param checks The checks, each of them have to fulfil the @ref rpc::SomeCheck concept
+     */
+    template <SomeCheck... Checks>
+    FieldSpec(std::string const& key, Checks&&... checks)
+        : processor_{impl::EMPTY_FIELD_PROCESSOR}
+        , checker_{impl::makeFieldChecker<Checks...>(key, std::forward<Checks>(checks)...)}
+    {
+    }
+
+    /**
+     * @brief Processes the passed JSON value using the stored processors.
      *
      * @param value The JSON value to validate and/or modify
      * @return Nothing on success; @ref Status on error
@@ -58,8 +75,18 @@ struct FieldSpec final {
     [[nodiscard]] MaybeError
     process(boost::json::value& value) const;
 
+    /**
+     * @brief Checks the passed JSON value using the stored checkers.
+     *
+     * @param value The JSON value to validate
+     * @return A vector of warnings (empty if no warnings)
+     */
+    [[nodiscard]] check::Warnings
+    check(boost::json::value const& value) const;
+
 private:
-    std::function<MaybeError(boost::json::value&)> processor_;
+    impl::FieldSpecProcessor processor_;
+    impl::FieldChecker checker_;
 };
 
 /**
@@ -91,13 +118,22 @@ struct RpcSpec final {
     }
 
     /**
-     * @brief Processos the passed JSON value using the stored field specs.
+     * @brief Processes the passed JSON value using the stored field specs.
      *
      * @param value The JSON value to validate and/or modify
      * @return Nothing on success; @ref Status on error
      */
     [[nodiscard]] MaybeError
     process(boost::json::value& value) const;
+
+    /**
+     * @brief Checks the passed JSON value using the stored field specs.
+     *
+     * @param value The JSON value to validate
+     * @return JSON array of warnings (empty if no warnings)
+     */
+    [[nodiscard]] boost::json::array
+    check(boost::json::value const& value) const;
 
 private:
     std::vector<FieldSpec> fields_;
