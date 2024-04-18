@@ -20,6 +20,7 @@
 #include "util/SignalsHandler.hpp"
 
 #include "util/Assert.hpp"
+#include "util/Constants.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
@@ -27,7 +28,9 @@
 #include <boost/asio/executor_work_guard.hpp>
 
 #include <chrono>
+#include <cmath>
 #include <csignal>
+#include <cstddef>
 #include <functional>
 #include <string>
 #include <utility>
@@ -45,6 +48,12 @@ public:
     {
         ASSERT(handler_ == nullptr, "There could be only one instance of SignalsHandler");
         handler_ = &handler;
+    }
+
+    static void
+    resetHandler()
+    {
+        handler_ = nullptr;
     }
 
     static void
@@ -75,24 +84,26 @@ SignalsHandler::SignalsHandler(Config const& config, std::function<void(std::str
         LOG(LogService::info()) << "Got stop signal. Stopping Clio. Graceful period is "
                                 << std::chrono::duration_cast<std::chrono::milliseconds>(gracefulPeriod_).count()
                                 << " milliseconds.";
+        setHandler(impl::SignalsHandlerStatic::handleSecondSignal);
         timer_.async_wait([forceExitHandler = std::move(forceExitHandler)](const boost::system::error_code& ec) {
             if (ec != boost::asio::error::operation_aborted) {
                 forceExitHandler("Force exit at the end of graceful period.");
             }
         });
         stopSignal_();
-        setHandler(impl::SignalsHandlerStatic::handleSecondSignal);
     })
     , secondSignalHandler_([forceExitHandler = std::move(forceExitHandler)](int) {
-        LOG(LogService::info()) << "Got second signal. Stopping Clio immediately.";
         forceExitHandler("Force exit on second signal.");
         setHandler();
     })
 {
-    auto const gracefulPeriod = config.valueOr("graceful_period", 10.f);
+    impl::SignalsHandlerStatic::registerHandler(*this);
+
+    auto const gracefulPeriod =
+        std::round(config.valueOr("graceful_period", 10.f) * static_cast<float>(util::MILLISECONDS_PER_SECOND));
     ASSERT(gracefulPeriod >= 0.f, "Graceful period must be non-negative");
-    gracefulPeriod_ =
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<float>(gracefulPeriod));
+    gracefulPeriod_ = std::chrono::milliseconds{static_cast<size_t>(gracefulPeriod)};
+    timer_.expires_after(gracefulPeriod_);
 
     setHandler(impl::SignalsHandlerStatic::handleSignal);
 }
@@ -103,6 +114,7 @@ SignalsHandler::~SignalsHandler()
     setHandler();
     workGuard_.reset();
     timerThread_.join();
+    impl::SignalsHandlerStatic::resetHandler();
 }
 
 void
