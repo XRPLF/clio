@@ -435,7 +435,7 @@ public:
         std::uint32_t limit,
         bool outOfOrder,
         boost::asio::yield_context yield
-    ) const;
+    );
 
     /**
      * @brief Fetches the successor object.

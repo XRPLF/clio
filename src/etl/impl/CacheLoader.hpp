@@ -112,7 +112,7 @@ private:
     spawnWorker(uint32_t const seq, size_t cachePageFetchSize)
     {
         return ctx_.execute([this, seq, cachePageFetchSize](auto token) {
-            while (not token.isStopRequested()) {
+            while (not token.isStopRequested() && not cache_.get().isDisabled()) {
                 auto cursor = queue_.tryPop();
                 if (not cursor.has_value()) {
                     return;  // queue is empty

@@ -297,7 +297,7 @@ BackendInterface::fetchLedgerPage(
     std::uint32_t const limit,
     bool outOfOrder,
     boost::asio::yield_context yield
-) const
+)
 {
     LedgerPage page;
 
@@ -326,6 +326,8 @@ BackendInterface::fetchLedgerPage(
                 msg << " - " << ripple::strHex(keys[j]);
             }
             LOG(gLog.error()) << msg.str();
+            LOG(gLog.error()) << "Disabling the cache to avoid corrupting the DB.";
+            cache_.setDisabled();
         }
     }
     if (!keys.empty() && !reachedEnd)

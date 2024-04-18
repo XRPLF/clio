@@ -139,6 +139,12 @@ LedgerCache::setDisabled()
     disabled_ = true;
 }
 
+bool
+LedgerCache::isDisabled() const
+{
+    return disabled_;
+}
+
 void
 LedgerCache::setFull()
 {
