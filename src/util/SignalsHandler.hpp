@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/async/context/BasicExecutionContext.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
@@ -33,8 +34,8 @@
 #include <csignal>
 #include <cstdlib>
 #include <functional>
+#include <optional>
 #include <string>
-#include <thread>
 
 namespace util {
 
@@ -47,11 +48,9 @@ class SignalsHandlerStatic;
  * @note There could be only one instance of this class.
  */
 class SignalsHandler {
-    boost::asio::io_context ioContext_;
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard_;
     std::chrono::steady_clock::duration gracefulPeriod_;
-    boost::asio::steady_timer timer_;
-    std::thread timerThread_;
+    async::PoolExecutionContext context_;
+    std::optional<async::PoolExecutionContext::ScheduledOperation<void>> timer_;
 
     boost::signals2::signal<void()> stopSignal_;
     std::function<void(int)> stopHandler_;

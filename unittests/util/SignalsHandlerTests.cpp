@@ -106,6 +106,7 @@ struct SignalsHandlerPriorityTests : SignalsHandlerTestsBase,
         forceExitHandler_.AsStdFunction()
     };
 };
+
 INSTANTIATE_TEST_SUITE_P(
     SignalsHandlerPriorityTestsGroup,
     SignalsHandlerPriorityTests,

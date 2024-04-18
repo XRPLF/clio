@@ -32,6 +32,7 @@
 #include <csignal>
 #include <cstddef>
 #include <functional>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -76,20 +77,21 @@ SignalsHandler* SignalsHandlerStatic::handler_ = nullptr;
 }  // namespace impl
 
 SignalsHandler::SignalsHandler(Config const& config, std::function<void(std::string)> forceExitHandler)
-    : workGuard_(boost::asio::make_work_guard(ioContext_))
-    , gracefulPeriod_(0)
-    , timer_(ioContext_, gracefulPeriod_)
-    , timerThread_([this] { ioContext_.run(); })
+    : gracefulPeriod_(0)
+    , context_(1)
     , stopHandler_([this, forceExitHandler](int) mutable {
         LOG(LogService::info()) << "Got stop signal. Stopping Clio. Graceful period is "
                                 << std::chrono::duration_cast<std::chrono::milliseconds>(gracefulPeriod_).count()
                                 << " milliseconds.";
         setHandler(impl::SignalsHandlerStatic::handleSecondSignal);
-        timer_.async_wait([forceExitHandler = std::move(forceExitHandler)](const boost::system::error_code& ec) {
-            if (ec != boost::asio::error::operation_aborted) {
-                forceExitHandler("Force exit at the end of graceful period.");
+        timer_.emplace(context_.scheduleAfter(
+            gracefulPeriod_,
+            [forceExitHandler = std::move(forceExitHandler)](auto&& stopToken) {
+                if (not stopToken.isStopRequested()) {
+                    forceExitHandler("Force exit at the end of graceful period.");
+                }
             }
-        });
+        ));
         stopSignal_();
     })
     , secondSignalHandler_([forceExitHandler = std::move(forceExitHandler)](int) {
@@ -103,18 +105,18 @@ SignalsHandler::SignalsHandler(Config const& config, std::function<void(std::str
         std::round(config.valueOr("graceful_period", 10.f) * static_cast<float>(util::MILLISECONDS_PER_SECOND));
     ASSERT(gracefulPeriod >= 0.f, "Graceful period must be non-negative");
     gracefulPeriod_ = std::chrono::milliseconds{static_cast<size_t>(gracefulPeriod)};
-    timer_.expires_after(gracefulPeriod_);
 
     setHandler(impl::SignalsHandlerStatic::handleSignal);
 }
 
 SignalsHandler::~SignalsHandler()
 {
-    timer_.cancel();
+    if (timer_.has_value()) {
+        timer_->requestStop();
+        timer_->cancel();
+    }
     setHandler();
-    workGuard_.reset();
-    timerThread_.join();
-    impl::SignalsHandlerStatic::resetHandler();
+    impl::SignalsHandlerStatic::resetHandler();  // This is needed mostly for tests to reset static state
 }
 
 void
