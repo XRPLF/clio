@@ -68,12 +68,11 @@ tag_invoke(boost::json::value_to_tag<Settings::SecureConnectionBundle>, boost::j
 }
 }  // namespace impl
 
-SettingsProvider::SettingsProvider(util::Config const& cfg, uint16_t ttl)
+SettingsProvider::SettingsProvider(util::Config const& cfg)
     : config_{cfg}
     , keyspace_{cfg.valueOr<std::string>("keyspace", "clio")}
     , tablePrefix_{cfg.maybeValue<std::string>("table_prefix")}
     , replicationFactor_{cfg.valueOr<uint16_t>("replication_factor", 3)}
-    , ttl_{ttl}
     , settings_{parseSettings()}
 {
 }
