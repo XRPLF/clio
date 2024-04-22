@@ -86,8 +86,9 @@ SignalsHandler::SignalsHandler(Config const& config, std::function<void()> force
         setHandler(impl::SignalsHandlerStatic::handleSecondSignal);
         timer_.emplace(context_.scheduleAfter(
             gracefulPeriod_,
-            [forceExitHandler = std::move(forceExitHandler)](auto&& stopToken) {
-                if (not stopToken.isStopRequested()) {
+            [forceExitHandler = std::move(forceExitHandler)](auto&& stopToken, bool canceled) {
+                // TODO: Update this after https://github.com/XRPLF/clio/issues/1367
+                if (not stopToken.isStopRequested() and not canceled) {
                     LOG(LogService::warn()) << "Force exit at the end of graceful period.";
                     forceExitHandler();
                 }
@@ -95,9 +96,10 @@ SignalsHandler::SignalsHandler(Config const& config, std::function<void()> force
         ));
         stopSignal_();
     })
-    , secondSignalHandler_([forceExitHandler = std::move(forceExitHandler)](int) {
+    , secondSignalHandler_([this, forceExitHandler = std::move(forceExitHandler)](int) {
         LOG(LogService::warn()) << "Force exit on second signal.";
         forceExitHandler();
+        cancelTimer();
         setHandler();
     })
 {
@@ -113,12 +115,18 @@ SignalsHandler::SignalsHandler(Config const& config, std::function<void()> force
 
 SignalsHandler::~SignalsHandler()
 {
-    if (timer_.has_value()) {
-        timer_->requestStop();
-        timer_->cancel();
-    }
+    cancelTimer();
     setHandler();
     impl::SignalsHandlerStatic::resetHandler();  // This is needed mostly for tests to reset static state
+}
+
+void
+SignalsHandler::cancelTimer()
+{
+    if (timer_.has_value()) {
+        timer_->cancel();
+        timer_->requestStop();
+    }
 }
 
 void

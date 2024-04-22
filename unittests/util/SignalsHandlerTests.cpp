@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/Fixtures.hpp"
 #include "util/SignalsHandler.hpp"
 #include "util/config/Config.hpp"
 
@@ -26,6 +27,8 @@
 
 #include <chrono>
 #include <csignal>
+#include <cstddef>
+#include <memory>
 #include <string>
 #include <thread>
 
@@ -33,7 +36,7 @@ using namespace util;
 using testing::MockFunction;
 using testing::StrictMock;
 
-struct SignalsHandlerTestsBase : ::testing::Test {
+struct SignalsHandlerTestsBase : NoLoggerFixture {
     StrictMock<MockFunction<void()>> forceExitHandler_;
     StrictMock<MockFunction<void()>> stopHandler_;
     StrictMock<MockFunction<void()>> anotherStopHandler_;
@@ -47,25 +50,24 @@ TEST(SignalsHandlerDeathTest, CantCreateTwoSignalsHandlers)
 }
 
 struct SignalsHandlerTests : SignalsHandlerTestsBase {
-    SignalsHandler handler_{
-        util::Config{boost::json::value{{"graceful_period", 2.0}}},
+    std::unique_ptr<SignalsHandler> handler_ = std::make_unique<SignalsHandler>(
+        util::Config{boost::json::value{{"graceful_period", 3.0}}},
         forceExitHandler_.AsStdFunction()
-    };
+    );
 };
 
 TEST_F(SignalsHandlerTests, NoSignal)
 {
-    handler_.subscribeToStop(stopHandler_.AsStdFunction());
-    handler_.subscribeToStop(anotherStopHandler_.AsStdFunction());
+    handler_->subscribeToStop(stopHandler_.AsStdFunction());
+    handler_->subscribeToStop(anotherStopHandler_.AsStdFunction());
 }
 
 TEST_F(SignalsHandlerTests, OneSignal)
 {
-    handler_.subscribeToStop(stopHandler_.AsStdFunction());
-    handler_.subscribeToStop(anotherStopHandler_.AsStdFunction());
-
+    handler_->subscribeToStop(stopHandler_.AsStdFunction());
+    handler_->subscribeToStop(anotherStopHandler_.AsStdFunction());
     EXPECT_CALL(stopHandler_, Call());
-    EXPECT_CALL(anotherStopHandler_, Call());
+    EXPECT_CALL(anotherStopHandler_, Call()).WillOnce([this]() { handler_.reset(); });
     std::raise(SIGINT);
 }
 
@@ -86,9 +88,9 @@ TEST_F(SignalsHandlerTimeoutTests, OneSignalTimeout)
 
 TEST_F(SignalsHandlerTests, TwoSignals)
 {
-    handler_.subscribeToStop(stopHandler_.AsStdFunction());
+    handler_->subscribeToStop(stopHandler_.AsStdFunction());
     EXPECT_CALL(stopHandler_, Call()).WillOnce([] { std::this_thread::sleep_for(std::chrono::milliseconds(2)); });
-    EXPECT_CALL(forceExitHandler_, Call());
+    EXPECT_CALL(forceExitHandler_, Call()).WillOnce([this]() { handler_.reset(); });
     std::raise(SIGINT);
     std::raise(SIGTERM);
 }
@@ -123,10 +125,13 @@ TEST_P(SignalsHandlerPriorityTests, Priority)
 {
     bool stopHandlerCalled = false;
 
-    handler_.subscribeToStop(anotherStopHandler_.AsStdFunction(), GetParam().anotherStopHandlerPriority);
-    handler_.subscribeToStop(stopHandler_.AsStdFunction(), GetParam().stopHandlerPriority);
+    handler_->subscribeToStop(anotherStopHandler_.AsStdFunction(), GetParam().anotherStopHandlerPriority);
+    handler_->subscribeToStop(stopHandler_.AsStdFunction(), GetParam().stopHandlerPriority);
 
     EXPECT_CALL(stopHandler_, Call()).WillOnce([&] { stopHandlerCalled = true; });
-    EXPECT_CALL(anotherStopHandler_, Call()).WillOnce([&] { EXPECT_TRUE(stopHandlerCalled); });
+    EXPECT_CALL(anotherStopHandler_, Call()).WillOnce([&] {
+        EXPECT_TRUE(stopHandlerCalled);
+        handler_.reset();
+    });
     std::raise(SIGINT);
 }

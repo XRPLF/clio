@@ -102,6 +102,12 @@ public:
 
 private:
     /**
+     * @brief Cancel scheduled force exit if any.
+     */
+    void
+    cancelTimer();
+
+    /**
      * @brief Set signal handler for handled signals.
      *
      * @param handler The handler to set. Default is nullptr.
