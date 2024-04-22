@@ -89,10 +89,9 @@ TEST_F(SignalsHandlerTimeoutTests, OneSignalTimeout)
 TEST_F(SignalsHandlerTests, TwoSignals)
 {
     handler_->subscribeToStop(stopHandler_.AsStdFunction());
-    EXPECT_CALL(stopHandler_, Call()).WillOnce([] { std::this_thread::sleep_for(std::chrono::milliseconds(2)); });
+    EXPECT_CALL(stopHandler_, Call()).WillOnce([] { std::raise(SIGTERM); });
     EXPECT_CALL(forceExitHandler_, Call()).WillOnce([this]() { handler_.reset(); });
     std::raise(SIGINT);
-    std::raise(SIGTERM);
 }
 
 struct SignalsHandlerPriorityTestsBundle {
