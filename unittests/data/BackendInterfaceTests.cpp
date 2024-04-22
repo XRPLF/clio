@@ -81,27 +81,23 @@ TEST_F(BackendInterfaceTest, FetchFeesLegacySuccessPath)
 TEST_F(BackendInterfaceTest, FetchLedgerPageSuccessPath)
 {
     using namespace ripple;
-
     backend->setRange(MINSEQ, MAXSEQ);
+
     EXPECT_FALSE(backend->cache().isDisabled());
     EXPECT_CALL(*backend, doFetchSuccessorKey(_, _, _))
         .Times(10)
         .WillRepeatedly(Return(uint256{"1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"}));
-    EXPECT_CALL(*backend, doFetchLedgerObjects(_, _, _))
-        .WillOnce(Return(std::vector<Blob>{
-            Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}
-        }));
+    EXPECT_CALL(*backend, doFetchLedgerObjects(_, _, _)).WillOnce(Return(std::vector<Blob>(10, Blob{'s'})));
 
     runSpawn([this](auto yield) { backend->fetchLedgerPage(std::nullopt, MAXSEQ, 10, false, yield); });
-
     EXPECT_FALSE(backend->cache().isDisabled());
 }
 
 TEST_F(BackendInterfaceTest, FetchLedgerPageDisablesCacheOnMissingData)
 {
     using namespace ripple;
-
     backend->setRange(MINSEQ, MAXSEQ);
+
     EXPECT_FALSE(backend->cache().isDisabled());
     EXPECT_CALL(*backend, doFetchSuccessorKey(_, _, _))
         .Times(10)
@@ -112,6 +108,5 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageDisablesCacheOnMissingData)
         }));
 
     runSpawn([this](auto yield) { backend->fetchLedgerPage(std::nullopt, MAXSEQ, 10, false, yield); });
-
     EXPECT_TRUE(backend->cache().isDisabled());
 }
