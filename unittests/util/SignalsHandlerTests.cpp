@@ -34,21 +34,21 @@ using testing::MockFunction;
 using testing::StrictMock;
 
 struct SignalsHandlerTestsBase : ::testing::Test {
-    StrictMock<MockFunction<void(std::string)>> forceExitHandler_;
+    StrictMock<MockFunction<void()>> forceExitHandler_;
     StrictMock<MockFunction<void()>> stopHandler_;
     StrictMock<MockFunction<void()>> anotherStopHandler_;
 };
 
 TEST(SignalsHandlerDeathTest, CantCreateTwoSignalsHandlers)
 {
-    auto makeHandler = []() { return SignalsHandler{Config{}, [](std::string) {}}; };
+    auto makeHandler = []() { return SignalsHandler{Config{}, []() {}}; };
     auto const handler = makeHandler();
     EXPECT_DEATH({ makeHandler(); }, ".*");
 }
 
 struct SignalsHandlerTests : SignalsHandlerTestsBase {
     SignalsHandler handler_{
-        util::Config{boost::json::value{{"graceful_period", 0.05}}},
+        util::Config{boost::json::value{{"graceful_period", 2.0}}},
         forceExitHandler_.AsStdFunction()
     };
 };
@@ -80,7 +80,7 @@ TEST_F(SignalsHandlerTimeoutTests, OneSignalTimeout)
 {
     handler_.subscribeToStop(stopHandler_.AsStdFunction());
     EXPECT_CALL(stopHandler_, Call()).WillOnce([] { std::this_thread::sleep_for(std::chrono::milliseconds(2)); });
-    EXPECT_CALL(forceExitHandler_, Call("Force exit at the end of graceful period."));
+    EXPECT_CALL(forceExitHandler_, Call());
     std::raise(SIGINT);
 }
 
@@ -88,7 +88,7 @@ TEST_F(SignalsHandlerTests, TwoSignals)
 {
     handler_.subscribeToStop(stopHandler_.AsStdFunction());
     EXPECT_CALL(stopHandler_, Call()).WillOnce([] { std::this_thread::sleep_for(std::chrono::milliseconds(2)); });
-    EXPECT_CALL(forceExitHandler_, Call("Force exit on second signal."));
+    EXPECT_CALL(forceExitHandler_, Call());
     std::raise(SIGINT);
     std::raise(SIGTERM);
 }
@@ -99,13 +99,8 @@ struct SignalsHandlerPriorityTestsBundle {
     SignalsHandler::Priority anotherStopHandlerPriority;
 };
 
-struct SignalsHandlerPriorityTests : SignalsHandlerTestsBase,
-                                     testing::WithParamInterface<SignalsHandlerPriorityTestsBundle> {
-    SignalsHandler handler_{
-        util::Config{boost::json::value{{"graceful_period", 0.05}}},
-        forceExitHandler_.AsStdFunction()
-    };
-};
+struct SignalsHandlerPriorityTests : SignalsHandlerTests,
+                                     testing::WithParamInterface<SignalsHandlerPriorityTestsBundle> {};
 
 INSTANTIATE_TEST_SUITE_P(
     SignalsHandlerPriorityTestsGroup,

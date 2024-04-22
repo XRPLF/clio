@@ -76,7 +76,7 @@ SignalsHandler* SignalsHandlerStatic::handler_ = nullptr;
 
 }  // namespace impl
 
-SignalsHandler::SignalsHandler(Config const& config, std::function<void(std::string)> forceExitHandler)
+SignalsHandler::SignalsHandler(Config const& config, std::function<void()> forceExitHandler)
     : gracefulPeriod_(0)
     , context_(1)
     , stopHandler_([this, forceExitHandler](int) mutable {
@@ -88,14 +88,16 @@ SignalsHandler::SignalsHandler(Config const& config, std::function<void(std::str
             gracefulPeriod_,
             [forceExitHandler = std::move(forceExitHandler)](auto&& stopToken) {
                 if (not stopToken.isStopRequested()) {
-                    forceExitHandler("Force exit at the end of graceful period.");
+                    LOG(LogService::warn()) << "Force exit at the end of graceful period.";
+                    forceExitHandler();
                 }
             }
         ));
         stopSignal_();
     })
     , secondSignalHandler_([forceExitHandler = std::move(forceExitHandler)](int) {
-        forceExitHandler("Force exit on second signal.");
+        LOG(LogService::warn()) << "Force exit on second signal.";
+        forceExitHandler();
         setHandler();
     })
 {

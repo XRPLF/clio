@@ -70,7 +70,7 @@ public:
      * @param config The configuration.
      * @param forceExitHandler The handler for forced exit.
      */
-    SignalsHandler(Config const& config, std::function<void(std::string)> forceExitHandler = defaultForceExitHandler_);
+    SignalsHandler(Config const& config, std::function<void()> forceExitHandler = defaultForceExitHandler_);
 
     SignalsHandler(SignalsHandler const&) = delete;
     SignalsHandler(SignalsHandler&&) = delete;
@@ -109,10 +109,7 @@ private:
     static void
     setHandler(void (*handler)(int) = nullptr);
 
-    static auto constexpr defaultForceExitHandler_ = [](std::string message) {
-        LOG(LogService::warn()) << message;
-        std::exit(EXIT_FAILURE);
-    };
+    static auto constexpr defaultForceExitHandler_ = []() { std::exit(EXIT_FAILURE); };
 };
 
 }  // namespace util
