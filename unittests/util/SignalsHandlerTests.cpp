@@ -89,7 +89,7 @@ TEST_F(SignalsHandlerTimeoutTests, OneSignalTimeout)
 TEST_F(SignalsHandlerTests, TwoSignals)
 {
     handler_->subscribeToStop(stopHandler_.AsStdFunction());
-    EXPECT_CALL(stopHandler_, Call()).WillOnce([] { std::raise(SIGTERM); });
+    EXPECT_CALL(stopHandler_, Call()).WillOnce([] { std::raise(SIGINT); });
     EXPECT_CALL(forceExitHandler_, Call()).WillOnce([this]() { handler_.reset(); });
     std::raise(SIGINT);
 }
