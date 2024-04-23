@@ -24,6 +24,7 @@
 #include "etl/ETLService.hpp"
 #include "etl/ETLState.hpp"
 #include "etl/Source.hpp"
+#include "util/Constants.hpp"
 #include "util/Random.hpp"
 #include "util/log/Logger.hpp"
 
@@ -36,6 +37,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -72,9 +74,9 @@ LoadBalancer::LoadBalancer(
 {
     auto const forwardingCacheTimeout = config.valueOr<float>("forwarding_cache_timeout", 0.f);
     if (forwardingCacheTimeout > 0.f) {
-        forwardingCache_ = impl::ForwardingCache{
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<float>{forwardingCacheTimeout})
-        };
+        forwardingCache_ = impl::ForwardingCache{std::chrono::milliseconds{
+            std::lroundf(forwardingCacheTimeout * static_cast<float>(util::MILLISECONDS_PER_SECOND))
+        }};
     }
 
     static constexpr std::uint32_t MAX_DOWNLOAD = 256;

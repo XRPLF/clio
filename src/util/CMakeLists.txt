@@ -13,6 +13,7 @@ target_sources(
           prometheus/Prometheus.cpp
           Random.cpp
           Retry.cpp
+          SignalsHandler.cpp
           requests/RequestBuilder.cpp
           requests/Types.cpp
           requests/WsConnection.cpp

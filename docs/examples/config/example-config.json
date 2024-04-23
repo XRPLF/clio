@@ -66,6 +66,8 @@
         // It's true by default unless admin_password is set,'local_admin' : true and 'admin_password' can not be set at the same time
         "local_amdin": false
     },
+    // Time in seconds for graceful shutdown. Defaults to 10 seconds. Not fully implemented yet.
+    "graceful_period": 10.,
     // Overrides log level on a per logging channel.
     // Defaults to global "log_level" for each unspecified channel.
     "log_channels": [
