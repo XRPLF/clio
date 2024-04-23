@@ -97,3 +97,11 @@ To enable the caching for a source, `forwarding_cache_timeout` value should be a
 
 `forwarding_cache_timeout` defines for how long (in seconds) a cache entry will be valid after being placed into the cache.
 Zero value turns off the cache feature.
+
+## Graceful shutdown (not fully implemented yet)
+
+Clio can be gracefully shut down by sending a `SIGINT` (Ctrl+C) or `SIGTERM` signal.
+The process will stop accepting new connections and will wait for the time specified in `graceful_period` config value (or 10 seconds by default).
+If Clio finishes all the scheduled operations before the end of the period, it will stop immediately.
+Otherwise, it will wait for the period to finish and then exit without finishing operations.
+If Clio receives a second signal during the period, it will stop immediately.
