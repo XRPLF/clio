@@ -308,10 +308,12 @@ protected:
  * @brief Fixture with a mock subscription manager
  */
 struct MockETLServiceTest : virtual public NoLoggerFixture {
+    using Mock = ::testing::NiceMock<MockETLService>;
+
     void
     SetUp() override
     {
-        mockETLServicePtr = std::make_shared<MockETLService>();
+        mockETLServicePtr = std::make_shared<Mock>();
     }
     void
     TearDown() override
@@ -320,7 +322,7 @@ struct MockETLServiceTest : virtual public NoLoggerFixture {
     }
 
 protected:
-    std::shared_ptr<MockETLService> mockETLServicePtr;
+    std::shared_ptr<Mock> mockETLServicePtr;
 };
 
 /**

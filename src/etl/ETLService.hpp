@@ -202,6 +202,17 @@ public:
     }
 
     /**
+     * @brief Check whether Clio detected DB corruptions.
+     *
+     * @return true if corruption of DB was detected and cache was stopped.
+     */
+    bool
+    isCorruptionDetected() const
+    {
+        return state_.isCorruptionDetected;
+    }
+
+    /**
      * @brief Get state of ETL as a JSON object
      *
      * @return The state of ETL as a JSON object

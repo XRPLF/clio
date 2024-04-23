@@ -21,6 +21,7 @@ target_sources(
           etl/CursorFromAccountProviderTests.cpp
           etl/CursorFromDiffProviderTests.cpp
           etl/CursorFromFixDiffNumProviderTests.cpp
+          etl/CorruptionDetectorTests.cpp
           etl/ETLStateTests.cpp
           etl/ExtractionDataPipeTests.cpp
           etl/ExtractorTests.cpp

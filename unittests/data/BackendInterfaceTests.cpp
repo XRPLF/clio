@@ -17,6 +17,8 @@
 */
 //==============================================================================
 
+#include "etl/CorruptionDetector.hpp"
+#include "etl/SystemState.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
@@ -83,6 +85,9 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageSuccessPath)
     using namespace ripple;
     backend->setRange(MINSEQ, MAXSEQ);
 
+    auto state = etl::SystemState{};
+    backend->setCorruptionDetector(etl::CorruptionDetector{state, backend->cache()});
+
     EXPECT_FALSE(backend->cache().isDisabled());
     EXPECT_CALL(*backend, doFetchSuccessorKey(_, _, _))
         .Times(10)
@@ -98,6 +103,9 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageDisablesCacheOnMissingData)
     using namespace ripple;
     backend->setRange(MINSEQ, MAXSEQ);
 
+    auto state = etl::SystemState{};
+    backend->setCorruptionDetector(etl::CorruptionDetector{state, backend->cache()});
+
     EXPECT_FALSE(backend->cache().isDisabled());
     EXPECT_CALL(*backend, doFetchSuccessorKey(_, _, _))
         .Times(10)
@@ -109,4 +117,22 @@ TEST_F(BackendInterfaceTest, FetchLedgerPageDisablesCacheOnMissingData)
 
     runSpawn([this](auto yield) { backend->fetchLedgerPage(std::nullopt, MAXSEQ, 10, false, yield); });
     EXPECT_TRUE(backend->cache().isDisabled());
+}
+
+TEST_F(BackendInterfaceTest, FetchLedgerPageWithoutCorruptionDetectorDoesNotDisableCacheOnMissingData)
+{
+    using namespace ripple;
+    backend->setRange(MINSEQ, MAXSEQ);
+
+    EXPECT_FALSE(backend->cache().isDisabled());
+    EXPECT_CALL(*backend, doFetchSuccessorKey(_, _, _))
+        .Times(10)
+        .WillRepeatedly(Return(uint256{"1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"}));
+    EXPECT_CALL(*backend, doFetchLedgerObjects(_, _, _))
+        .WillOnce(Return(std::vector<Blob>{
+            Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{'s'}, Blob{}
+        }));
+
+    runSpawn([this](auto yield) { backend->fetchLedgerPage(std::nullopt, MAXSEQ, 10, false, yield); });
+    EXPECT_FALSE(backend->cache().isDisabled());
 }

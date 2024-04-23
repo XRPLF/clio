@@ -326,8 +326,9 @@ BackendInterface::fetchLedgerPage(
                 msg << " - " << ripple::strHex(keys[j]);
             }
             LOG(gLog.error()) << msg.str();
-            LOG(gLog.error()) << "Disabling the cache to avoid corrupting the DB further. Please investigate.";
-            cache_.setDisabled();
+
+            if (corruptionDetector_.has_value())
+                corruptionDetector_->onCorruptionDetected();
         }
     }
     if (!keys.empty() && !reachedEnd)
