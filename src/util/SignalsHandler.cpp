@@ -24,16 +24,12 @@
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
-#include <boost/asio/error.hpp>
-#include <boost/asio/executor_work_guard.hpp>
-
 #include <chrono>
 #include <cmath>
 #include <csignal>
 #include <cstddef>
 #include <functional>
 #include <optional>
-#include <string>
 #include <utility>
 
 namespace util {
