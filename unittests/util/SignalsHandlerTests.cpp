@@ -28,8 +28,6 @@
 #include <chrono>
 #include <condition_variable>
 #include <csignal>
-#include <cstddef>
-#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -46,7 +44,7 @@ struct SignalsHandlerTestsBase : NoLoggerFixture {
     void
     allowTestToFinish()
     {
-        std::unique_lock lock{mutex_};
+        std::unique_lock const lock{mutex_};
         testCanBeFinished_ = true;
         cv_.notify_one();
     }
