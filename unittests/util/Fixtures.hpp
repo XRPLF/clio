@@ -270,76 +270,55 @@ using MockBackendTestStrict = MockBackendTestBase<::testing::StrictMock>;
  * @brief Fixture with a mock subscription manager
  */
 struct MockSubscriptionManagerTest : virtual public NoLoggerFixture {
-    void
-    SetUp() override
-    {
-        mockSubscriptionManagerPtr = std::make_shared<MockSubscriptionManager>();
-    }
-    void
-    TearDown() override
-    {
-        mockSubscriptionManagerPtr.reset();
-    }
-
 protected:
-    std::shared_ptr<MockSubscriptionManager> mockSubscriptionManagerPtr;
+    std::shared_ptr<MockSubscriptionManager> mockSubscriptionManagerPtr = std::make_shared<MockSubscriptionManager>();
 };
 
 /**
  * @brief Fixture with a mock etl balancer
  */
 struct MockLoadBalancerTest : virtual public NoLoggerFixture {
-    void
-    SetUp() override
-    {
-        mockLoadBalancerPtr = std::make_shared<MockLoadBalancer>();
-    }
-    void
-    TearDown() override
-    {
-        mockLoadBalancerPtr.reset();
-    }
-
 protected:
-    std::shared_ptr<MockLoadBalancer> mockLoadBalancerPtr;
+    std::shared_ptr<MockLoadBalancer> mockLoadBalancerPtr = std::make_shared<MockLoadBalancer>();
 };
 
 /**
  * @brief Fixture with a mock subscription manager
  */
-struct MockETLServiceTest : virtual public NoLoggerFixture {
-    void
-    SetUp() override
-    {
-        mockETLServicePtr = std::make_shared<MockETLService>();
-    }
-    void
-    TearDown() override
-    {
-        mockETLServicePtr.reset();
-    }
+template <template <typename> typename MockType = ::testing::NiceMock>
+struct MockETLServiceTestBase : virtual public NoLoggerFixture {
+    using Mock = MockType<MockETLService>;
 
 protected:
-    std::shared_ptr<MockETLService> mockETLServicePtr;
+    std::shared_ptr<Mock> mockETLServicePtr = std::make_shared<Mock>();
 };
+
+/**
+ * @brief Fixture with a "nice" ETLService mock.
+ *
+ * Use @see MockETLServiceTestNaggy during development to get unset call expectation warnings from the embeded mock.
+ * Once the test is ready and you are happy you can switch to this fixture to mute the warnings.
+ */
+using MockETLServiceTest = MockETLServiceTestBase<::testing::NiceMock>;
+
+/**
+ * @brief Fixture with a "naggy" ETLService mock.
+ *
+ * Use this during development to get unset call expectation warnings from the embedded mock.
+ */
+using MockETLServiceTestNaggy = MockETLServiceTestBase<::testing::NaggyMock>;
+
+/**
+ * @brief Fixture with a "strict" ETLService mock.
+ */
+using MockETLServiceTestStrict = MockETLServiceTestBase<::testing::StrictMock>;
 
 /**
  * @brief Fixture with mock counters
  */
 struct MockCountersTest : virtual public NoLoggerFixture {
-    void
-    SetUp() override
-    {
-        mockCountersPtr = std::make_shared<MockCounters>();
-    }
-    void
-    TearDown() override
-    {
-        mockCountersPtr.reset();
-    }
-
 protected:
-    std::shared_ptr<MockCounters> mockCountersPtr;
+    std::shared_ptr<MockCounters> mockCountersPtr = std::make_shared<MockCounters>();
 };
 
 /**
@@ -352,20 +331,20 @@ template <template <typename> typename MockType = ::testing::NiceMock>
 struct HandlerBaseTestBase : public MockBackendTestBase<MockType>,
                              public util::prometheus::WithPrometheus,
                              public SyncAsioContextTest,
-                             public MockETLServiceTest {
+                             public MockETLServiceTestBase<MockType> {
 protected:
     void
     SetUp() override
     {
         MockBackendTestBase<MockType>::SetUp();
         SyncAsioContextTest::SetUp();
-        MockETLServiceTest::SetUp();
+        MockETLServiceTestBase<MockType>::SetUp();
     }
 
     void
     TearDown() override
     {
-        MockETLServiceTest::TearDown();
+        MockETLServiceTestBase<MockType>::TearDown();
         SyncAsioContextTest::TearDown();
         MockBackendTestBase<MockType>::TearDown();
     }

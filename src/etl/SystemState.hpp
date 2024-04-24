@@ -65,6 +65,18 @@ struct SystemState {
         util::prometheus::Labels{},
         "Whether clio detected an amendment block"
     );
+
+    /**
+     * @brief Whether clio detected a corruption that needs manual attention.
+     *
+     * When corruption is detected, Clio should disable cache and stop the cache loading process in order to prevent
+     * further corruption.
+     */
+    util::prometheus::Bool isCorruptionDetected = PrometheusService::boolMetric(
+        "etl_corruption_detected",
+        util::prometheus::Labels{},
+        "Whether clio detected a corruption that needs manual attention"
+    );
 };
 
 }  // namespace etl

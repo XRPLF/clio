@@ -111,6 +111,7 @@ public:
      */
     struct CacheSection {
         std::size_t size = 0;
+        bool isEnabled = false;
         bool isFull = false;
         ripple::LedgerIndex latestLedgerSeq = {};
         float objectHitRate = 1.0;
@@ -132,6 +133,7 @@ public:
         ValidatedLedgerSection validatedLedger = {};
         CacheSection cache = {};
         bool isAmendmentBlocked = false;
+        bool isCorruptionDetected = false;
     };
 
     /**
@@ -241,8 +243,10 @@ public:
         output.info.cache.latestLedgerSeq = backend_->cache().latestLedgerSequence();
         output.info.cache.objectHitRate = backend_->cache().getObjectHitRate();
         output.info.cache.successorHitRate = backend_->cache().getSuccessorHitRate();
+        output.info.cache.isEnabled = not backend_->cache().isDisabled();
         output.info.uptime = counters_.get().uptime();
         output.info.isAmendmentBlocked = etl_->isAmendmentBlocked();
+        output.info.isCorruptionDetected = etl_->isCorruptionDetected();
 
         return output;
     }
@@ -278,6 +282,9 @@ private:
 
         if (info.isAmendmentBlocked)
             jv.as_object()[JS(amendment_blocked)] = true;
+
+        if (info.isCorruptionDetected)
+            jv.as_object()["corruption_detected"] = true;
 
         if (info.rippledInfo) {
             auto const& rippledInfo = info.rippledInfo.value();
@@ -320,6 +327,7 @@ private:
     {
         jv = {
             {"size", cache.size},
+            {"is_enabled", cache.isEnabled},
             {"is_full", cache.isFull},
             {"latest_ledger_seq", cache.latestLedgerSeq},
             {"object_hit_rate", cache.objectHitRate},

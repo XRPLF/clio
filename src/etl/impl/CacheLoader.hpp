@@ -27,6 +27,7 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/context/detail/config.hpp>
 #include <ripple/basics/Blob.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
@@ -112,7 +113,7 @@ private:
     spawnWorker(uint32_t const seq, size_t cachePageFetchSize)
     {
         return ctx_.execute([this, seq, cachePageFetchSize](auto token) {
-            while (not token.isStopRequested()) {
+            while (not token.isStopRequested() and not cache_.get().isDisabled()) {
                 auto cursor = queue_.tryPop();
                 if (not cursor.has_value()) {
                     return;  // queue is empty
@@ -121,7 +122,7 @@ private:
                 auto [start, end] = cursor.value();
                 LOG(log_.debug()) << "Starting a cursor: " << ripple::strHex(start);
 
-                while (not token.isStopRequested()) {
+                while (not token.isStopRequested() and not cache_.get().isDisabled()) {
                     auto res = data::retryOnTimeout([this, seq, cachePageFetchSize, &start, token]() {
                         return backend_->fetchLedgerPage(start, seq, cachePageFetchSize, false, token);
                     });

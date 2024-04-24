@@ -297,7 +297,7 @@ BackendInterface::fetchLedgerPage(
     std::uint32_t const limit,
     bool outOfOrder,
     boost::asio::yield_context yield
-) const
+)
 {
     LedgerPage page;
 
@@ -326,6 +326,9 @@ BackendInterface::fetchLedgerPage(
                 msg << " - " << ripple::strHex(keys[j]);
             }
             LOG(gLog.error()) << msg.str();
+
+            if (corruptionDetector_.has_value())
+                corruptionDetector_->onCorruptionDetected();
         }
     }
     if (!keys.empty() && !reachedEnd)

@@ -48,6 +48,8 @@ struct MockCache {
 
     MOCK_METHOD(void, setDisabled, (), ());
 
+    MOCK_METHOD(bool, isDisabled, (), (const));
+
     MOCK_METHOD(void, setFull, (), ());
 
     MOCK_METHOD(bool, isFull, (), (const));
