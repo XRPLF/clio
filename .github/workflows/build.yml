@@ -52,27 +52,32 @@ jobs:
             build_type: Release
             conan_profile: gcc
             code_coverage: false
+            static: true
           - os: heavy
             container:
               image: rippleci/clio_ci:latest
             build_type: Debug
             conan_profile: gcc
             code_coverage: true
+            static: true
           - os: heavy
             container:
               image: rippleci/clio_ci:latest
             build_type: Release
             conan_profile: clang
             code_coverage: false
+            static: true
           - os: heavy
             container:
               image: rippleci/clio_ci:latest
             build_type: Debug
             conan_profile: clang
             code_coverage: false
+            static: true
           - os: macos14
             build_type: Release
             code_coverage: false
+            static: false
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
