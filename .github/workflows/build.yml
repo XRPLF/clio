@@ -127,6 +127,7 @@ jobs:
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           build_type: ${{ matrix.build_type }}
           code_coverage: ${{ matrix.code_coverage }}
+          static: ${{ matrix.static }}
 
       - name: Build Clio
         uses: ./.github/actions/build_clio
