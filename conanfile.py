@@ -9,7 +9,8 @@ class Clio(ConanFile):
     description = 'Clio RPC server'
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {
-        'fPIC': [True, False],
+        'static': [True, False],    # static linkage
+        'fPIC': [True, False],      # unused?
         'verbose': [True, False],
         'tests': [True, False],     # build unit tests; create `clio_tests` binary
         'benchmark': [True, False], # build benchmarks; create `clio_benchmarks` binary
@@ -31,6 +32,7 @@ class Clio(ConanFile):
     ]
 
     default_options = {
+        'static': False,
         'fPIC': True,
         'verbose': False,
         'tests': False,
@@ -79,6 +81,7 @@ class Clio(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables['verbose'] = self.options.verbose
+        tc.variables['static'] = self.options.static
         tc.variables['tests'] = self.options.tests
         tc.variables['coverage'] = self.options.coverage
         tc.variables['lint'] = self.options.lint
