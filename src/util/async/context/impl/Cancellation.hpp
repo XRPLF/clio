@@ -63,8 +63,8 @@ public:
 
     public:
         Token(Token const&) = default;
-
         Token(Token&&) = default;
+
         [[nodiscard]] bool
         isStopRequested() const noexcept
         {
@@ -111,9 +111,9 @@ public:
 
     public:
         Token(Token const&) = default;
-
         Token(Token&&) = default;
         [[nodiscard]] bool
+
         isStopRequested() const noexcept
         {
             return shared_->isStopRequested();

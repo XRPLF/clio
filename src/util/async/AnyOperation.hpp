@@ -75,18 +75,15 @@ public:
         operation_.wait();
     }
 
-    /** @brief Request the operation to be stopped as soon as possible */
+    /**
+     * @brief Abort the operation
+     *
+     * Used to cancel the timer for scheduled operations and request the operation to be stopped as soon as possible
+     */
     void
-    requestStop() noexcept
+    abort() noexcept
     {
-        operation_.requestStop();
-    }
-
-    /** @brief Cancel the operation. Used to cancel the timer for scheduled operations */
-    void
-    cancel() noexcept
-    {
-        operation_.cancel();
+        operation_.abort();
     }
 
     /**

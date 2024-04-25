@@ -119,10 +119,8 @@ SignalsHandler::~SignalsHandler()
 void
 SignalsHandler::cancelTimer()
 {
-    if (timer_.has_value()) {
-        timer_->cancel();
-        timer_->requestStop();
-    }
+    if (timer_.has_value())
+        timer_->abort();
 }
 
 void

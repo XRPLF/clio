@@ -120,6 +120,16 @@ struct BasicScheduledOperation {
     {
         state_->get().requestStop();
     }
+
+    void
+    abort() noexcept
+    {
+        if constexpr (SomeCancellableOperation<OpType>)
+            timer_.cancel();
+
+        if constexpr (SomeCancellableOperation<OpType>)
+            state_->get().requestStop();
+    }
 };
 
 }  // namespace impl
