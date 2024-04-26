@@ -206,7 +206,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttampt)
     LedgerRange const range{.minSequence = SEQ - 1, .maxSequence = SEQ - 1};
     EXPECT_CALL(*backend, hardFetchLedgerRange).Times(MAX_ATTEMPT).WillRepeatedly(Return(range));
 
-    EXPECT_FALSE(publisher.publish(SEQ, MAX_ATTEMPT));
+    EXPECT_FALSE(publisher.publish(SEQ, MAX_ATTEMPT, std::chrono::milliseconds{1}));
 }
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)

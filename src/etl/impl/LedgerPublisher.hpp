@@ -111,11 +111,16 @@ public:
      * stream.
      *
      * @param ledgerSequence the sequence of the ledger to publish
-     * @param maxAttempts the number of times to attempt to read the ledger from the database. 1 attempt per second
+     * @param maxAttempts the number of times to attempt to read the ledger from the database
+     * @param attemptsDelay the delay between attempts to read the ledger from the database
      * @return Whether the ledger was found in the database and published
      */
     bool
-    publish(uint32_t ledgerSequence, std::optional<uint32_t> maxAttempts)
+    publish(
+        uint32_t ledgerSequence,
+        std::optional<uint32_t> maxAttempts,
+        std::chrono::steady_clock::duration attemptsDelay = std::chrono::seconds{1}
+    )
     {
         LOG(log_.info()) << "Attempting to publish ledger = " << ledgerSequence;
         size_t numAttempts = 0;
@@ -131,7 +136,7 @@ public:
                     LOG(log_.debug()) << "Failed to publish ledger after " << numAttempts << " attempts.";
                     return false;
                 }
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+                std::this_thread::sleep_for(attemptsDelay);
                 continue;
             }
 
