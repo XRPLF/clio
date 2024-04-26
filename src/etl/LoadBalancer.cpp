@@ -24,6 +24,7 @@
 #include "etl/ETLService.hpp"
 #include "etl/ETLState.hpp"
 #include "etl/Source.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Constants.hpp"
 #include "util/Random.hpp"
 #include "util/log/Logger.hpp"
@@ -57,18 +58,20 @@ LoadBalancer::make_LoadBalancer(
     Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<feed::SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
 )
 {
-    return std::make_shared<LoadBalancer>(config, ioc, backend, subscriptions, validatedLedgers);
+    return std::make_shared<LoadBalancer>(
+        config, ioc, std::move(backend), std::move(subscriptions), std::move(validatedLedgers)
+    );
 }
 
 LoadBalancer::LoadBalancer(
     Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<feed::SubscriptionManager> subscriptions,
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
     std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
 )
 {

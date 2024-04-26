@@ -24,7 +24,7 @@
 #include "etl/ETLState.hpp"
 #include "etl/Source.hpp"
 #include "etl/impl/ForwardingCache.hpp"
-#include "feed/SubscriptionManager.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
@@ -95,7 +95,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
     );
 
@@ -114,7 +114,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManager> subscriptions,
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
     );
 
