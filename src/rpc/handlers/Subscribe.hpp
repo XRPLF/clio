@@ -20,15 +20,9 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "data/Types.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "rpc/Errors.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/RPCHelpers.hpp"
-#include "rpc/common/Checkers.hpp"
-#include "rpc/common/MetaProcessors.hpp"
+#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
@@ -45,8 +39,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
-#include <variant>
 #include <vector>
 
 namespace feed {
@@ -114,10 +106,7 @@ public:
     SubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
         std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
-    )
-        : sharedPtrBackend_(sharedPtrBackend), subscriptions_(subscriptions)
-    {
-    }
+    );
 
     /**
      * @brief Returns the API specification for the command
@@ -126,53 +115,7 @@ public:
      * @return The spec for the given apiVersion
      */
     static RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion)
-    {
-        static auto const booksValidator =
-            validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-                if (!value.is_array())
-                    return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
-
-                for (auto const& book : value.as_array()) {
-                    if (!book.is_object())
-                        return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}};
-
-                    if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
-                        return Error{Status{RippledError::rpcINVALID_PARAMS, "bothNotBool"}};
-
-                    if (book.as_object().contains("snapshot") && !book.as_object().at("snapshot").is_bool())
-                        return Error{Status{RippledError::rpcINVALID_PARAMS, "snapshotNotBool"}};
-
-                    if (book.as_object().contains("taker")) {
-                        if (auto err = meta::WithCustomError(
-                                           validation::AccountValidator,
-                                           Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."}
-                            )
-                                           .verify(book.as_object(), "taker");
-                            !err)
-                            return err;
-                    }
-
-                    auto const parsedBook = parseBook(book.as_object());
-                    if (auto const status = std::get_if<Status>(&parsedBook))
-                        return Error(*status);
-                }
-
-                return MaybeError{};
-            }};
-
-        static auto const rpcSpec = RpcSpec{
-            {JS(streams), validation::SubscribeStreamValidator},
-            {JS(accounts), validation::SubscribeAccountsValidator},
-            {JS(accounts_proposed), validation::SubscribeAccountsValidator},
-            {JS(books), booksValidator},
-            {"user", check::Deprecated{}},
-            {JS(password), check::Deprecated{}},
-            {JS(rt_accounts), check::Deprecated{}}
-        };
-
-        return rpcSpec;
-    }
+    spec([[maybe_unused]] uint32_t apiVersion);
 
     /**
      * @brief Process the Subscribe command
@@ -182,27 +125,7 @@ public:
      * @return The result of the operation
      */
     Result
-    process(Input input, Context const& ctx) const
-    {
-        auto output = Output{};
-
-        if (input.streams) {
-            auto const ledger = subscribeToStreams(ctx.yield, *(input.streams), ctx.session, ctx.apiVersion);
-            if (!ledger.empty())
-                output.ledger = ledger;
-        }
-
-        if (input.accounts)
-            subscribeToAccounts(*(input.accounts), ctx.session, ctx.apiVersion);
-
-        if (input.accountsProposed)
-            subscribeToAccountsProposed(*(input.accountsProposed), ctx.session);
-
-        if (input.books)
-            subscribeToBooks(*(input.books), ctx.session, ctx.yield, ctx.apiVersion, output);
-
-        return output;
-    }
+    process(Input input, Context const& ctx) const;
 
 private:
     boost::json::object
@@ -211,53 +134,20 @@ private:
         std::vector<std::string> const& streams,
         std::shared_ptr<web::ConnectionBase> const& session,
         std::uint32_t apiVersion
-    ) const
-    {
-        auto response = boost::json::object{};
-
-        for (auto const& stream : streams) {
-            if (stream == "ledger") {
-                response = subscriptions_->subLedger(yield, session);
-            } else if (stream == "transactions") {
-                subscriptions_->subTransactions(session, apiVersion);
-            } else if (stream == "transactions_proposed") {
-                subscriptions_->subProposedTransactions(session);
-            } else if (stream == "validations") {
-                subscriptions_->subValidation(session);
-            } else if (stream == "manifests") {
-                subscriptions_->subManifest(session);
-            } else if (stream == "book_changes") {
-                subscriptions_->subBookChanges(session);
-            }
-        }
-
-        return response;
-    }
+    ) const;
 
     void
     subscribeToAccounts(
         std::vector<std::string> const& accounts,
         std::shared_ptr<web::ConnectionBase> const& session,
         std::uint32_t apiVersion
-    ) const
-    {
-        for (auto const& account : accounts) {
-            auto const accountID = accountFromStringStrict(account);
-            subscriptions_->subAccount(*accountID, session, apiVersion);
-        }
-    }
+    ) const;
 
     void
     subscribeToAccountsProposed(
         std::vector<std::string> const& accounts,
         std::shared_ptr<web::ConnectionBase> const& session
-    ) const
-    {
-        for (auto const& account : accounts) {
-            auto const accountID = accountFromStringStrict(account);
-            subscriptions_->subProposedAccount(*accountID, session);
-        }
-    }
+    ) const;
 
     void
     subscribeToBooks(
@@ -266,114 +156,25 @@ private:
         boost::asio::yield_context yield,
         uint32_t apiVersion,
         Output& output
-    ) const
-    {
-        static auto constexpr fetchLimit = 200;
+    ) const;
 
-        std::optional<data::LedgerRange> rng;
-
-        for (auto const& internalBook : books) {
-            if (internalBook.snapshot) {
-                if (!rng)
-                    rng = sharedPtrBackend_->fetchLedgerRange();
-
-                auto const getOrderBook = [&](auto const& book, auto& snapshots) {
-                    auto const bookBase = getBookBase(book);
-                    auto const [offers, _] =
-                        sharedPtrBackend_->fetchBookOffers(bookBase, rng->maxSequence, fetchLimit, yield);
-
-                    // the taker is not really uesed, same issue with
-                    // https://github.com/XRPLF/xrpl-dev-portal/issues/1818
-                    auto const takerID =
-                        internalBook.taker ? accountFromStringStrict(*(internalBook.taker)) : beast::zero;
-
-                    auto const orderBook =
-                        postProcessOrderBook(offers, book, *takerID, *sharedPtrBackend_, rng->maxSequence, yield);
-                    std::copy(orderBook.begin(), orderBook.end(), std::back_inserter(snapshots));
-                };
-
-                if (internalBook.both) {
-                    if (!output.bids)
-                        output.bids = boost::json::array();
-                    if (!output.asks)
-                        output.asks = boost::json::array();
-                    getOrderBook(internalBook.book, *(output.bids));
-                    getOrderBook(ripple::reversed(internalBook.book), *(output.asks));
-                } else {
-                    if (!output.offers)
-                        output.offers = boost::json::array();
-                    getOrderBook(internalBook.book, *(output.offers));
-                }
-            }
-
-            subscriptions_->subBook(internalBook.book, session, apiVersion);
-
-            if (internalBook.both)
-                subscriptions_->subBook(ripple::reversed(internalBook.book), session, apiVersion);
-        }
-    }
-
+    /**
+     * @brief Convert output to json value
+     *
+     * @param jv The json value to convert to
+     * @param output The output to convert from
+     */
     friend void
-    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output)
-    {
-        jv = output.ledger ? *(output.ledger) : boost::json::object();
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
 
-        if (output.offers)
-            jv.as_object().emplace(JS(offers), *(output.offers));
-        if (output.asks)
-            jv.as_object().emplace(JS(asks), *(output.asks));
-        if (output.bids)
-            jv.as_object().emplace(JS(bids), *(output.bids));
-    }
-
+    /**
+     * @brief Convert json value to input
+     *
+     * @param jv The json value to convert from
+     * @return The input to convert to
+     */
     friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv)
-    {
-        auto input = Input{};
-        auto const& jsonObject = jv.as_object();
-
-        if (auto const& streams = jsonObject.find(JS(streams)); streams != jsonObject.end()) {
-            input.streams = std::vector<std::string>();
-            for (auto const& stream : streams->value().as_array())
-                input.streams->push_back(boost::json::value_to<std::string>(stream));
-        }
-
-        if (auto const& accounts = jsonObject.find(JS(accounts)); accounts != jsonObject.end()) {
-            input.accounts = std::vector<std::string>();
-            for (auto const& account : accounts->value().as_array())
-                input.accounts->push_back(boost::json::value_to<std::string>(account));
-        }
-
-        if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed));
-            accountsProposed != jsonObject.end()) {
-            input.accountsProposed = std::vector<std::string>();
-            for (auto const& account : accountsProposed->value().as_array())
-                input.accountsProposed->push_back(boost::json::value_to<std::string>(account));
-        }
-
-        if (auto const& books = jsonObject.find(JS(books)); books != jsonObject.end()) {
-            input.books = std::vector<OrderBook>();
-            for (auto const& book : books->value().as_array()) {
-                auto internalBook = OrderBook{};
-                auto const& bookObject = book.as_object();
-
-                if (auto const& taker = bookObject.find(JS(taker)); taker != bookObject.end())
-                    internalBook.taker = boost::json::value_to<std::string>(taker->value());
-
-                if (auto const& both = bookObject.find(JS(both)); both != bookObject.end())
-                    internalBook.both = both->value().as_bool();
-
-                if (auto const& snapshot = bookObject.find(JS(snapshot)); snapshot != bookObject.end())
-                    internalBook.snapshot = snapshot->value().as_bool();
-
-                auto const parsedBookMaybe = parseBook(book.as_object());
-                internalBook.book = std::get<ripple::Book>(parsedBookMaybe);
-                input.books->push_back(internalBook);
-            }
-        }
-
-        return input;
-    }
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
 
 }  // namespace rpc
