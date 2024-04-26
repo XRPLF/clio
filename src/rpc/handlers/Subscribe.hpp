@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -55,14 +56,15 @@ class SubscriptionManager;
 namespace rpc {
 
 /**
- * @brief Contains functionality for handling the `subscribe` command
+ * @brief Contains functionality for handling the `subscribe` command.
+ * The subscribe method requests periodic notifications from the server when certain events happen.
  *
- * @tparam SubscriptionManagerType The type of the subscription manager to use
+ * For more details see: https://xrpl.org/subscribe.html
  */
-template <typename SubscriptionManagerType>
-class BaseSubscribeHandler {
+
+class SubscribeHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    std::shared_ptr<SubscriptionManagerType> subscriptions_;
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
 
 public:
     /**
@@ -109,9 +111,9 @@ public:
      * @param sharedPtrBackend The backend to use
      * @param subscriptions The subscription manager to use
      */
-    BaseSubscribeHandler(
+    SubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<SubscriptionManagerType> const& subscriptions
+        std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
     )
         : sharedPtrBackend_(sharedPtrBackend), subscriptions_(subscriptions)
     {
@@ -373,12 +375,5 @@ private:
         return input;
     }
 };
-
-/**
- * @brief The subscribe method requests periodic notifications from the server when certain events happen.
- *
- * For more details see: https://xrpl.org/subscribe.html
- */
-using SubscribeHandler = BaseSubscribeHandler<feed::SubscriptionManager>;
 
 }  // namespace rpc

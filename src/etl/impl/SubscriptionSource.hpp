@@ -20,6 +20,7 @@
 #pragma once
 
 #include "etl/impl/SubscriptionSourceDependencies.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Mutex.hpp"
 #include "util/Retry.hpp"
 #include "util/log/Logger.hpp"
@@ -92,7 +93,6 @@ public:
      * @brief Construct a new Subscription Source object
      *
      * @tparam NetworkValidatedLedgersType The type of the network validated ledgers object
-     * @tparam SubscriptionManagerType The type of the subscription manager object
      * @param ioContext The io_context to use
      * @param ip The ip address of the source
      * @param wsPort The port of the source
@@ -105,13 +105,13 @@ public:
      * @param connectionTimeout The connection timeout. Defaults to 30 seconds
      * @param retryDelay The retry delay. Defaults to 1 second
      */
-    template <typename NetworkValidatedLedgersType, typename SubscriptionManagerType>
+    template <typename NetworkValidatedLedgersType>
     SubscriptionSource(
         boost::asio::io_context& ioContext,
         std::string const& ip,
         std::string const& wsPort,
         std::shared_ptr<NetworkValidatedLedgersType> validatedLedgers,
-        std::shared_ptr<SubscriptionManagerType> subscriptions,
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         OnConnectHook onConnect,
         OnDisconnectHook onDisconnect,
         OnLedgerClosedHook onLedgerClosed,

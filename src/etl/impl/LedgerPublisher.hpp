@@ -23,6 +23,7 @@
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
 #include "etl/SystemState.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Counter.hpp"
@@ -63,7 +64,7 @@ namespace etl::impl {
  * includes reading all of the transactions from the database) is done from the application wide asio io_service, and a
  * strand is used to ensure ledgers are published in order.
  */
-template <typename SubscriptionManagerType, typename CacheType>
+template <typename CacheType>
 class LedgerPublisher {
     util::Logger log_{"ETL"};
 
@@ -71,7 +72,7 @@ class LedgerPublisher {
 
     std::shared_ptr<BackendInterface> backend_;
     std::reference_wrapper<CacheType> cache_;
-    std::shared_ptr<SubscriptionManagerType> subscriptions_;
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
     std::reference_wrapper<SystemState const> state_;  // shared state for ETL
 
     std::chrono::time_point<ripple::NetClock> lastCloseTime_;
@@ -94,7 +95,7 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         CacheType& cache,
-        std::shared_ptr<SubscriptionManagerType> subscriptions,
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         SystemState const& state
     )
         : publishStrand_{boost::asio::make_strand(ioc)}

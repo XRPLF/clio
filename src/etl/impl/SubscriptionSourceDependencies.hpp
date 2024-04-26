@@ -19,10 +19,13 @@
 
 #pragma once
 
+#include "feed/SubscriptionManagerInterface.hpp"
+
 #include <boost/json/object.hpp>
 
 #include <cstdint>
 #include <memory>
+#include <utility>
 
 namespace etl::impl {
 
@@ -31,12 +34,12 @@ class SubscriptionSourceDependencies {
     std::unique_ptr<Concept> pImpl_;
 
 public:
-    template <typename NetworkValidatedLedgersType, typename SubscriptionManagerType>
+    template <typename NetworkValidatedLedgersType>
     SubscriptionSourceDependencies(
         std::shared_ptr<NetworkValidatedLedgersType> networkValidatedLedgers,
-        std::shared_ptr<SubscriptionManagerType> subscriptions
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions
     )
-        : pImpl_{std::make_unique<Model<NetworkValidatedLedgersType, SubscriptionManagerType>>(
+        : pImpl_{std::make_unique<Model<NetworkValidatedLedgersType>>(
               std::move(networkValidatedLedgers),
               std::move(subscriptions)
           )}
@@ -79,15 +82,15 @@ private:
         pushValidatedLedger(uint32_t idx) = 0;
     };
 
-    template <typename SomeNetworkValidatedLedgersType, typename SomeSubscriptionManagerType>
+    template <typename SomeNetworkValidatedLedgersType>
     class Model : public Concept {
         std::shared_ptr<SomeNetworkValidatedLedgersType> networkValidatedLedgers_;
-        std::shared_ptr<SomeSubscriptionManagerType> subscriptions_;
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
 
     public:
         Model(
             std::shared_ptr<SomeNetworkValidatedLedgersType> networkValidatedLedgers,
-            std::shared_ptr<SomeSubscriptionManagerType> subscriptions
+            std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions
         )
             : networkValidatedLedgers_{std::move(networkValidatedLedgers)}, subscriptions_{std::move(subscriptions)}
         {

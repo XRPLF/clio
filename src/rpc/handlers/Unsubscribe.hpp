@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -31,6 +32,7 @@
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <ripple/protocol/Book.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/jss.h>
@@ -50,12 +52,16 @@ class SubscriptionManager;
 namespace rpc {
 
 /**
- * @brief Handles the `unsubscribe` command which is used to disconnect a subscriber from a feed
+ * @brief Handles the `unsubscribe` command which is used to disconnect a subscriber from a feed.
+ * The unsubscribe command tells the server to stop sending messages for a particular subscription or set of
+ * subscriptions.
+ *
+ * For more details see: https://xrpl.org/unsubscribe.html
  */
-template <typename SubscriptionManagerType>
-class BaseUnsubscribeHandler {
+
+class UnsubscribeHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    std::shared_ptr<SubscriptionManagerType> subscriptions_;
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
 
 public:
     /**
@@ -85,9 +91,9 @@ public:
      * @param sharedPtrBackend The backend to use
      * @param subscriptions The subscription manager to use
      */
-    BaseUnsubscribeHandler(
+    UnsubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<SubscriptionManagerType> const& subscriptions
+        std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
     )
         : sharedPtrBackend_(sharedPtrBackend), subscriptions_(subscriptions)
     {
@@ -257,13 +263,5 @@ private:
         return input;
     }
 };
-
-/**
- * @brief The unsubscribe command tells the server to stop sending messages for a particular subscription or set of
- * subscriptions.
- *
- * For more details see: https://xrpl.org/unsubscribe.html
- */
-using UnsubscribeHandler = BaseUnsubscribeHandler<feed::SubscriptionManager>;
 
 }  // namespace rpc

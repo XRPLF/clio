@@ -34,6 +34,7 @@
 #include "etl/impl/LedgerPublisher.hpp"
 #include "etl/impl/Transformer.hpp"
 #include "feed/SubscriptionManager.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -77,7 +78,6 @@ namespace etl {
  */
 class ETLService {
     // TODO: make these template parameters in ETLService
-    using SubscriptionManagerType = feed::SubscriptionManager;
     using LoadBalancerType = LoadBalancer;
     using NetworkValidatedLedgersType = NetworkValidatedLedgers;
     using DataPipeType = etl::impl::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
@@ -86,7 +86,7 @@ class ETLService {
     using LedgerFetcherType = etl::impl::LedgerFetcher<LoadBalancerType>;
     using ExtractorType = etl::impl::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
     using LedgerLoaderType = etl::impl::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
-    using LedgerPublisherType = etl::impl::LedgerPublisher<SubscriptionManagerType, CacheType>;
+    using LedgerPublisherType = etl::impl::LedgerPublisher<CacheType>;
     using AmendmentBlockHandlerType = etl::impl::AmendmentBlockHandler<>;
     using TransformerType =
         etl::impl::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;
@@ -128,7 +128,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManagerType> subscriptions,
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
         std::shared_ptr<NetworkValidatedLedgersType> ledgers
     );
@@ -151,7 +151,7 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManagerType> subscriptions,
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
         std::shared_ptr<NetworkValidatedLedgersType> ledgers
     )

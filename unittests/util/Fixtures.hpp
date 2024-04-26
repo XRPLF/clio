@@ -267,25 +267,6 @@ using MockBackendTestNaggy = MockBackendTestBase<::testing::NaggyMock>;
 using MockBackendTestStrict = MockBackendTestBase<::testing::StrictMock>;
 
 /**
- * @brief Fixture with a mock subscription manager
- */
-struct MockSubscriptionManagerTest : virtual public NoLoggerFixture {
-    void
-    SetUp() override
-    {
-        mockSubscriptionManagerPtr = std::make_shared<MockSubscriptionManager>();
-    }
-    void
-    TearDown() override
-    {
-        mockSubscriptionManagerPtr.reset();
-    }
-
-protected:
-    std::shared_ptr<MockSubscriptionManager> mockSubscriptionManagerPtr;
-};
-
-/**
  * @brief Fixture with a mock etl balancer
  */
 struct MockLoadBalancerTest : virtual public NoLoggerFixture {

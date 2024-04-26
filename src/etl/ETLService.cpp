@@ -20,6 +20,7 @@
 #include "etl/ETLService.hpp"
 
 #include "data/BackendInterface.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/Constants.hpp"
 #include "util/config/Config.hpp"
@@ -261,7 +262,7 @@ ETLService::ETLService(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManagerType> subscriptions,
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
     std::shared_ptr<LoadBalancerType> balancer,
     std::shared_ptr<NetworkValidatedLedgersType> ledgers
 )

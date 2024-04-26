@@ -194,4 +194,20 @@ SubscriptionManager::pubTransaction(data::TransactionAndMetadata const& txMeta, 
     transactionFeed_.pub(txMeta, lgrInfo, backend_);
 }
 
+boost::json::object
+SubscriptionManager::report() const
+{
+    return {
+        {"ledger", ledgerFeed_.count()},
+        {"transactions", transactionFeed_.transactionSubCount()},
+        {"transactions_proposed", proposedTransactionFeed_.transactionSubcount()},
+        {"manifests", manifestFeed_.count()},
+        {"validations", validationsFeed_.count()},
+        {"account", transactionFeed_.accountSubCount()},
+        {"accounts_proposed", proposedTransactionFeed_.accountSubCount()},
+        {"books", transactionFeed_.bookSubCount()},
+        {"book_changes", bookChangesFeed_.count()},
+    };
+}
+
 }  // namespace feed
