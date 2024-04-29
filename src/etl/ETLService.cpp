@@ -20,6 +20,8 @@
 #include "etl/ETLService.hpp"
 
 #include "data/BackendInterface.hpp"
+#include "data/LedgerCache.hpp"
+#include "etl/CorruptionDetector.hpp"
 #include "etl/ETLHelpers.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
@@ -281,5 +283,8 @@ ETLService::ETLService(
     state_.isReadOnly = config.valueOr("read_only", static_cast<bool>(state_.isReadOnly));
     extractorThreads_ = config.valueOr<uint32_t>("extractor_threads", extractorThreads_);
     txnThreshold_ = config.valueOr<size_t>("txn_threshold", txnThreshold_);
+
+    // This should probably be done in the backend factory but we don't have state available until here
+    backend_->setCorruptionDetector(CorruptionDetector<data::LedgerCache>{state_, backend->cache()});
 }
 }  // namespace etl

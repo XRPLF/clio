@@ -134,6 +134,12 @@ public:
     setDisabled();
 
     /**
+     * @return true if the cache is disabled; false otherwise
+     */
+    bool
+    isDisabled() const;
+
+    /**
      * @brief Sets the full flag to true.
      *
      * This is used when cache loaded in its entirety at startup of the application. This can be either loaded from DB,

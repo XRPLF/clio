@@ -22,6 +22,7 @@
 #include "data/DBHelpers.hpp"
 #include "data/LedgerCache.hpp"
 #include "data/Types.hpp"
+#include "etl/CorruptionDetector.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
@@ -44,6 +45,7 @@
 #include <string>
 #include <thread>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace data {
@@ -138,6 +140,7 @@ protected:
     mutable std::shared_mutex rngMtx_;
     std::optional<LedgerRange> range;
     LedgerCache cache_;
+    std::optional<etl::CorruptionDetector<LedgerCache>> corruptionDetector_;
 
 public:
     BackendInterface() = default;
@@ -160,6 +163,17 @@ public:
     cache()
     {
         return cache_;
+    }
+
+    /**
+     * @brief Sets the corruption detector.
+     *
+     * @param detector The corruption detector to set
+     */
+    void
+    setCorruptionDetector(etl::CorruptionDetector<LedgerCache> detector)
+    {
+        corruptionDetector_ = std::move(detector);
     }
 
     /**
@@ -435,7 +449,7 @@ public:
         std::uint32_t limit,
         bool outOfOrder,
         boost::asio::yield_context yield
-    ) const;
+    );
 
     /**
      * @brief Fetches the successor object.

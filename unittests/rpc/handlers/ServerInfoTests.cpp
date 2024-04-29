@@ -106,6 +106,7 @@ struct RPCServerInfoHandlerTest : HandlerBaseTest, MockLoadBalancerTest, MockCou
         EXPECT_TRUE(cache.contains("latest_ledger_seq"));
         EXPECT_TRUE(cache.contains("object_hit_rate"));
         EXPECT_TRUE(cache.contains("successor_hit_rate"));
+        EXPECT_TRUE(cache.contains("is_enabled"));
     }
 
     static void
@@ -135,19 +136,6 @@ struct RPCServerInfoHandlerTest : HandlerBaseTest, MockLoadBalancerTest, MockCou
         EXPECT_EQ(boost::json::value_to<std::string>(info.at("rippled_version")), "1234");
         EXPECT_TRUE(info.contains("network_id"));
         EXPECT_EQ(info.at("network_id").as_int64(), 2);
-    }
-
-    static void
-    validateCacheOutput(rpc::ReturnType const& output)
-    {
-        auto const& result = output.result.value().as_object();
-        auto const& info = result.at("info").as_object();
-        auto const& cache = info.at("cache").as_object();
-        EXPECT_EQ(cache.at("size").as_uint64(), 1u);
-        EXPECT_EQ(cache.at("is_full").as_bool(), false);
-        EXPECT_EQ(cache.at("latest_ledger_seq").as_uint64(), 30u);
-        EXPECT_EQ(cache.at("object_hit_rate").as_double(), 1.0);
-        EXPECT_EQ(cache.at("successor_hit_rate").as_double(), 1.0);
     }
 };
 
@@ -260,6 +248,87 @@ TEST_F(RPCServerInfoHandlerTest, AmendmentBlockedIsPresentIfSet)
         auto const& info = output.result.value().as_object().at("info").as_object();
         EXPECT_TRUE(info.contains("amendment_blocked"));
         EXPECT_EQ(info.at("amendment_blocked").as_bool(), true);
+    });
+}
+
+TEST_F(RPCServerInfoHandlerTest, CorruptionDetectedIsPresentIfSet)
+{
+    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = mockCountersPtr.get();
+    MockETLService* rawETLServicePtr = mockETLServicePtr.get();
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+
+    auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
+    EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(Return(feeBlob));
+
+    EXPECT_CALL(*rawBalancerPtr, forwardToRippled(testing::_, testing::Eq(CLIENTIP), testing::_))
+        .WillOnce(Return(std::nullopt));
+
+    EXPECT_CALL(*rawCountersPtr, uptime).WillOnce(Return(std::chrono::seconds{1234}));
+
+    EXPECT_CALL(*rawETLServicePtr, isCorruptionDetected).WillOnce(Return(true));
+
+    auto const handler = AnyHandler{TestServerInfoHandler{
+        backend, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr
+    }};
+
+    runSpawn([&](auto yield) {
+        auto const req = json::parse("{}");
+        auto const output = handler.process(req, Context{yield, {}, false, CLIENTIP});
+
+        validateNormalOutput(output);
+
+        auto const& info = output.result.value().as_object().at("info").as_object();
+        EXPECT_TRUE(info.contains("corruption_detected"));
+        EXPECT_EQ(info.at("corruption_detected").as_bool(), true);
+    });
+}
+
+TEST_F(RPCServerInfoHandlerTest, CacheReportsEnabledFlagCorrectly)
+{
+    MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
+    MockCounters* rawCountersPtr = mockCountersPtr.get();
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30, 3);  // 3 seconds old
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(2).WillRepeatedly(Return(ledgerinfo));
+
+    auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2).WillRepeatedly(Return(feeBlob));
+
+    EXPECT_CALL(*rawBalancerPtr, forwardToRippled(testing::_, testing::Eq(CLIENTIP), testing::_))
+        .Times(2)
+        .WillRepeatedly(Return(std::nullopt));
+
+    EXPECT_CALL(*rawCountersPtr, uptime).Times(2).WillRepeatedly(Return(std::chrono::seconds{1234}));
+
+    auto const handler = AnyHandler{TestServerInfoHandler{
+        backend, mockSubscriptionManagerPtr, mockLoadBalancerPtr, mockETLServicePtr, *mockCountersPtr
+    }};
+
+    runSpawn([&](auto yield) {
+        auto const req = json::parse("{}");
+        auto const output = handler.process(req, Context{yield, {}, false, CLIENTIP});
+
+        validateNormalOutput(output);
+
+        auto const& cache = output.result.value().as_object().at("info").as_object().at("cache").as_object();
+        EXPECT_TRUE(cache.contains("is_enabled"));
+        EXPECT_EQ(cache.at("is_enabled").as_bool(), true);
+    });
+
+    backend->cache().setDisabled();
+
+    runSpawn([&](auto yield) {
+        auto const req = json::parse("{}");
+        auto const output = handler.process(req, Context{yield, {}, false, CLIENTIP});
+
+        validateNormalOutput(output);
+
+        auto const& cache = output.result.value().as_object().at("info").as_object().at("cache").as_object();
+        EXPECT_TRUE(cache.contains("is_enabled"));
+        EXPECT_EQ(cache.at("is_enabled").as_bool(), false);
     });
 }
 

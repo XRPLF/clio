@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,24 +17,31 @@
 */
 //==============================================================================
 
-#pragma once
+#include "etl/CorruptionDetector.hpp"
+#include "etl/SystemState.hpp"
+#include "util/Fixtures.hpp"
+#include "util/MockCache.hpp"
+#include "util/MockPrometheus.hpp"
 
-#include "etl/ETLState.hpp"
-
-#include <boost/json.hpp>
-#include <boost/json/object.hpp>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
-#include <chrono>
-#include <cstdint>
-#include <optional>
+using namespace data;
+using namespace util::prometheus;
+using namespace testing;
 
-struct MockETLService {
-    MOCK_METHOD(boost::json::object, getInfo, (), (const));
-    MOCK_METHOD(std::chrono::time_point<std::chrono::system_clock>, getLastPublish, (), (const));
-    MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
-    MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const));
-    MOCK_METHOD(bool, isAmendmentBlocked, (), (const));
-    MOCK_METHOD(bool, isCorruptionDetected, (), (const));
-    MOCK_METHOD(std::optional<etl::ETLState>, getETLState, (), (const));
-};
+struct CorruptionDetectorTest : NoLoggerFixture, WithPrometheus {};
+
+TEST_F(CorruptionDetectorTest, DisableCacheOnCorruption)
+{
+    using namespace ripple;
+    auto state = etl::SystemState{};
+    auto cache = MockCache{};
+    auto detector = etl::CorruptionDetector{state, cache};
+
+    EXPECT_CALL(cache, setDisabled()).Times(1);
+
+    detector.onCorruptionDetected();
+
+    EXPECT_TRUE(state.isCorruptionDetected);
+}

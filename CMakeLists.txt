@@ -14,6 +14,7 @@ option(docs "Generate doxygen docs" FALSE)
 option(coverage "Build test coverage report" FALSE)
 option(packaging "Create distribution packages" FALSE)
 option(lint "Run clang-tidy checks during compilation" FALSE)
+option(static "Statically linked Clio" FALSE)
 # ========================================================================== #
 set(san "" CACHE STRING "Add sanitizer instrumentation")
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
