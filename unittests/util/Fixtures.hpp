@@ -275,7 +275,7 @@ protected:
 };
 
 /**
- * @brief Fixture with a mock subscription manager
+ * @brief Fixture with a mock etl service
  */
 template <template <typename> typename MockType = ::testing::NiceMock>
 struct MockETLServiceTestBase : virtual public NoLoggerFixture {

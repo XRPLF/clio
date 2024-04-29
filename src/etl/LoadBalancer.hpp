@@ -47,14 +47,6 @@
 #include <vector>
 
 namespace etl {
-class ProbingSource;
-}  // namespace etl
-
-namespace feed {
-class SubscriptionManager;
-}  // namespace feed
-
-namespace etl {
 
 /**
  * @brief This class is used to manage connections to transaction processing processes.
@@ -73,9 +65,9 @@ private:
     static constexpr std::uint32_t DEFAULT_DOWNLOAD_RANGES = 16;
 
     util::Logger log_{"ETL"};
-    // Forwarding cache must be destroyed after sources because sources have a callnack to invalidate cache
+    // Forwarding cache must be destroyed after sources because sources have a callback to invalidate cache
     std::optional<impl::ForwardingCache> forwardingCache_;
-    std::vector<Source> sources_;
+    std::vector<SourcePtr> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
         DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
@@ -90,13 +82,15 @@ public:
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
      * @param validatedLedgers The network validated ledgers datastructure
+     * @param sourceFactory A factory function to create a source
      */
     LoadBalancer(
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers
+        std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+        SourceFactory sourceFactory = make_Source
     );
 
     /**
@@ -107,6 +101,7 @@ public:
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
      * @param validatedLedgers The network validated ledgers datastructure
+     * @param sourceFactory A factory function to create a source
      * @return A shared pointer to a new instance of LoadBalancer
      */
     static std::shared_ptr<LoadBalancer>
@@ -115,7 +110,8 @@ public:
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers
+        std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+        SourceFactory sourceFactory = make_Source
     );
 
     ~LoadBalancer();

@@ -20,6 +20,7 @@
 #pragma once
 
 #include "etl/ETLHelpers.hpp"
+#include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Mutex.hpp"
 #include "util/Retry.hpp"
@@ -36,7 +37,6 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <functional>
 #include <future>
 #include <memory>
 #include <optional>
@@ -51,9 +51,9 @@ namespace etl::impl {
  */
 class SubscriptionSource {
 public:
-    using OnConnectHook = std::function<void()>;
-    using OnDisconnectHook = std::function<void()>;
-    using OnLedgerClosedHook = std::function<void()>;
+    using OnConnectHook = SourceBase::OnConnectHook;
+    using OnDisconnectHook = SourceBase::OnDisconnectHook;
+    using OnLedgerClosedHook = SourceBase::OnLedgerClosedHook;
 
 private:
     util::Logger log_;
