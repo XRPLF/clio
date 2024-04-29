@@ -50,13 +50,8 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
 
     TestWsServer wsServer_{ioContext_, "0.0.0.0", 11113};
 
-    template <typename T>
-    using StrictMockPtr = std::shared_ptr<StrictMock<T>>;
-
-    StrictMockPtr<MockNetworkValidatedLedgers> networkValidatedLedgers_ =
-        std::make_shared<StrictMock<MockNetworkValidatedLedgers>>();
-    StrictMockPtr<MockSubscriptionManager> subscriptionManager_ =
-        std::make_shared<StrictMock<MockSubscriptionManager>>();
+    StrictMockNetworkValidatedLedgersPtr networkValidatedLedgers_;
+    StrictMockSubscriptionManagerSharedPtr subscriptionManager_;
 
     StrictMock<MockFunction<void()>> onConnectHook_;
     StrictMock<MockFunction<void()>> onDisconnectHook_;

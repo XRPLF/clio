@@ -29,7 +29,6 @@ target_sources(
           etl/GrpcSourceTests.cpp
           etl/LedgerPublisherTests.cpp
           etl/SourceTests.cpp
-          etl/SubscriptionSourceDependenciesTests.cpp
           etl/SubscriptionSourceTests.cpp
           etl/TransformerTests.cpp
           # Feed

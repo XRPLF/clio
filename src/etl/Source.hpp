@@ -252,7 +252,7 @@ make_Source(
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
+    std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
     Source::OnDisconnectHook onDisconnect,
     Source::OnConnectHook onConnect,
     Source::OnLedgerClosedHook onLedgerClosed

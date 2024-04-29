@@ -20,6 +20,7 @@
 #include "etl/ETLService.hpp"
 
 #include "data/BackendInterface.hpp"
+#include "etl/ETLHelpers.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/Constants.hpp"
@@ -264,7 +265,7 @@ ETLService::ETLService(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
     std::shared_ptr<LoadBalancerType> balancer,
-    std::shared_ptr<NetworkValidatedLedgersType> ledgers
+    std::shared_ptr<NetworkValidatedLedgersInterface> ledgers
 )
     : backend_(backend)
     , loadBalancer_(balancer)

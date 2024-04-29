@@ -33,7 +33,6 @@
 #include "etl/impl/LedgerLoader.hpp"
 #include "etl/impl/LedgerPublisher.hpp"
 #include "etl/impl/Transformer.hpp"
-#include "feed/SubscriptionManager.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/log/Logger.hpp"
 
@@ -79,12 +78,11 @@ namespace etl {
 class ETLService {
     // TODO: make these template parameters in ETLService
     using LoadBalancerType = LoadBalancer;
-    using NetworkValidatedLedgersType = NetworkValidatedLedgers;
     using DataPipeType = etl::impl::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
     using CacheType = data::LedgerCache;
     using CacheLoaderType = etl::CacheLoader<CacheType>;
     using LedgerFetcherType = etl::impl::LedgerFetcher<LoadBalancerType>;
-    using ExtractorType = etl::impl::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
+    using ExtractorType = etl::impl::Extractor<DataPipeType, LedgerFetcherType>;
     using LedgerLoaderType = etl::impl::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
     using LedgerPublisherType = etl::impl::LedgerPublisher<CacheType>;
     using AmendmentBlockHandlerType = etl::impl::AmendmentBlockHandler<>;
@@ -95,7 +93,7 @@ class ETLService {
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<LoadBalancerType> loadBalancer_;
-    std::shared_ptr<NetworkValidatedLedgersType> networkValidatedLedgers_;
+    std::shared_ptr<NetworkValidatedLedgersInterface> networkValidatedLedgers_;
 
     std::uint32_t extractorThreads_ = 1;
     std::thread worker_;
@@ -130,7 +128,7 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
-        std::shared_ptr<NetworkValidatedLedgersType> ledgers
+        std::shared_ptr<NetworkValidatedLedgersInterface> ledgers
     );
 
     /**
@@ -153,7 +151,7 @@ public:
         std::shared_ptr<BackendInterface> backend,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
-        std::shared_ptr<NetworkValidatedLedgersType> ledgers
+        std::shared_ptr<NetworkValidatedLedgersInterface> ledgers
     )
     {
         auto etl = std::make_shared<ETLService>(config, ioc, backend, subscriptions, balancer, ledgers);

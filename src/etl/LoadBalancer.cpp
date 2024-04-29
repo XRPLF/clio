@@ -59,7 +59,7 @@ LoadBalancer::make_LoadBalancer(
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+    std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers
 )
 {
     return std::make_shared<LoadBalancer>(
@@ -72,7 +72,7 @@ LoadBalancer::LoadBalancer(
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+    std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers
 )
 {
     auto const forwardingCacheTimeout = config.valueOr<float>("forwarding_cache_timeout", 0.f);

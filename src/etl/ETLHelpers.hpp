@@ -20,11 +20,8 @@
 /** @file */
 #pragma once
 
-#include "util/Assert.hpp"
-
 #include <ripple/basics/base_uint.h>
 
-#include <chrono>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -35,6 +32,44 @@
 #include <vector>
 
 namespace etl {
+
+/**
+ * @brief An interface for NetworkValidatedLedgers
+ */
+class NetworkValidatedLedgersInterface {
+public:
+    virtual ~NetworkValidatedLedgersInterface() = default;
+
+    /**
+     * @brief Notify the datastructure that idx has been validated by the network.
+     *
+     * @param idx Sequence validated by network
+     */
+    virtual void
+    push(uint32_t idx) = 0;
+
+    /**
+     * @brief Get most recently validated sequence.
+     *
+     * If no ledgers are known to have been validated, this function waits until the next ledger is validated
+     *
+     * @return Sequence of most recently validated ledger. empty optional if the datastructure has been stopped
+     */
+    virtual std::optional<uint32_t>
+    getMostRecent() = 0;
+
+    /**
+     * @brief Waits for the sequence to be validated by the network.
+     *
+     * @param sequence The sequence to wait for
+     * @param maxWaitMs Maximum time to wait for the sequence to be validated. If empty, wait indefinitely
+     * @return true if sequence was validated, false otherwise a return value of false means the datastructure has been
+     * stopped
+     */
+    virtual bool
+    waitUntilValidatedByNetwork(uint32_t sequence, std::optional<uint32_t> maxWaitMs = {}) = 0;
+};
+
 /**
  * @brief This datastructure is used to keep track of the sequence of the most recent ledger validated by the network.
  *
@@ -43,7 +78,7 @@ namespace etl {
  * Any later calls to methods of this datastructure will not wait. Once the datastructure is stopped, the datastructure
  * remains stopped for the rest of its lifetime.
  */
-class NetworkValidatedLedgers {
+class NetworkValidatedLedgers : public NetworkValidatedLedgersInterface {
     // max sequence validated by network
     std::optional<uint32_t> max_;
 
@@ -57,10 +92,7 @@ public:
      * @return A shared pointer to a new instance of NetworkValidatedLedgers
      */
     static std::shared_ptr<NetworkValidatedLedgers>
-    make_ValidatedLedgers()
-    {
-        return std::make_shared<NetworkValidatedLedgers>();
-    }
+    make_ValidatedLedgers();
 
     /**
      * @brief Notify the datastructure that idx has been validated by the network.
@@ -68,13 +100,7 @@ public:
      * @param idx Sequence validated by network
      */
     void
-    push(uint32_t idx)
-    {
-        std::lock_guard const lck(m_);
-        if (!max_ || idx > *max_)
-            max_ = idx;
-        cv_.notify_all();
-    }
+    push(uint32_t idx) final;
 
     /**
      * @brief Get most recently validated sequence.
@@ -84,12 +110,7 @@ public:
      * @return Sequence of most recently validated ledger. empty optional if the datastructure has been stopped
      */
     std::optional<uint32_t>
-    getMostRecent()
-    {
-        std::unique_lock lck(m_);
-        cv_.wait(lck, [this]() { return max_; });
-        return max_;
-    }
+    getMostRecent() final;
 
     /**
      * @brief Waits for the sequence to be validated by the network.
@@ -100,17 +121,7 @@ public:
      * stopped
      */
     bool
-    waitUntilValidatedByNetwork(uint32_t sequence, std::optional<uint32_t> maxWaitMs = {})
-    {
-        std::unique_lock lck(m_);
-        auto pred = [sequence, this]() -> bool { return (max_ && sequence <= *max_); };
-        if (maxWaitMs) {
-            cv_.wait_for(lck, std::chrono::milliseconds(*maxWaitMs));
-        } else {
-            cv_.wait(lck, pred);
-        }
-        return pred();
-    }
+    waitUntilValidatedByNetwork(uint32_t sequence, std::optional<uint32_t> maxWaitMs = {}) final;
 };
 
 // TODO: does the note make sense? lockfree queues provide the same blocking behaviour just without mutex, don't they?
@@ -228,20 +239,7 @@ public:
  * @param numMarkers Total markers to partition for
  * @return The markers
  */
-inline std::vector<ripple::uint256>
-getMarkers(size_t numMarkers)
-{
-    ASSERT(numMarkers <= 256, "Number of markers must be <= 256. Got: {}", numMarkers);
+std::vector<ripple::uint256>
+getMarkers(size_t numMarkers);
 
-    unsigned char const incr = 256 / numMarkers;
-
-    std::vector<ripple::uint256> markers;
-    markers.reserve(numMarkers);
-    ripple::uint256 base{0};
-    for (size_t i = 0; i < numMarkers; ++i) {
-        markers.push_back(base);
-        base.data()[0] += incr;
-    }
-    return markers;
-}
 }  // namespace etl

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "etl/impl/SubscriptionSourceDependencies.hpp"
+#include "etl/ETLHelpers.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Mutex.hpp"
 #include "util/Retry.hpp"
@@ -66,7 +66,8 @@ private:
     };
     util::Mutex<ValidatedLedgersData> validatedLedgersData_;
 
-    SubscriptionSourceDependencies dependencies_;
+    std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers_;
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
 
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
 
@@ -105,32 +106,18 @@ public:
      * @param connectionTimeout The connection timeout. Defaults to 30 seconds
      * @param retryDelay The retry delay. Defaults to 1 second
      */
-    template <typename NetworkValidatedLedgersType>
     SubscriptionSource(
         boost::asio::io_context& ioContext,
         std::string const& ip,
         std::string const& wsPort,
-        std::shared_ptr<NetworkValidatedLedgersType> validatedLedgers,
+        std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
         std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         OnConnectHook onConnect,
         OnDisconnectHook onDisconnect,
         OnLedgerClosedHook onLedgerClosed,
         std::chrono::steady_clock::duration const connectionTimeout = CONNECTION_TIMEOUT,
         std::chrono::steady_clock::duration const retryDelay = RETRY_DELAY
-    )
-        : log_(fmt::format("GrpcSource[{}:{}]", ip, wsPort))
-        , wsConnectionBuilder_(ip, wsPort)
-        , dependencies_(std::move(validatedLedgers), std::move(subscriptions))
-        , strand_(boost::asio::make_strand(ioContext))
-        , retry_(util::makeRetryExponentialBackoff(retryDelay, RETRY_MAX_DELAY, strand_))
-        , onConnect_(std::move(onConnect))
-        , onDisconnect_(std::move(onDisconnect))
-        , onLedgerClosed_(std::move(onLedgerClosed))
-    {
-        wsConnectionBuilder_.addHeader({boost::beast::http::field::user_agent, "clio-client"})
-            .addHeader({"X-User", "clio-client"})
-            .setConnectionTimeout(connectionTimeout);
-    }
+    );
 
     /**
      * @brief Destroy the Subscription Source object
