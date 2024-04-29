@@ -159,7 +159,11 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
             auto [data, res] = source.loadInitialLedger(sequence, downloadRanges_, cacheOnly);
 
             if (!res) {
+<<<<<<< HEAD
                 LOG(log_.error()) << "Failed to download initial ledger." << " Sequence = " << sequence
+=======
+                LOG(log_.error()) << "Failed to download initial ledger. Sequence = " << sequence
+>>>>>>> 0eb2867 (Use llvm 18 tooling)
                                   << " source = " << source.toString();
             } else {
                 response = std::move(data);
@@ -282,7 +286,7 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
         numAttempts++;
         if (numAttempts % sources_.size() == 0) {
             LOG(log_.info()) << "Ledger sequence " << ledgerSequence
-                             << " is not yet available from any configured sources. " << "Sleeping and trying again";
+                             << " is not yet available from any configured sources. Sleeping and trying again";
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }
     }

@@ -152,7 +152,7 @@ ETLService::monitor()
     ASSERT(rng.has_value(), "Ledger range can't be null");
     uint32_t nextSequence = rng->maxSequence + 1;
 
-    LOG(log_.debug()) << "Database is populated. " << "Starting monitor loop. sequence = " << nextSequence;
+    LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
 
     while (not isStopping()) {
         nextSequence = publishNextSequence(nextSequence);

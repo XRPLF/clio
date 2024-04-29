@@ -21,7 +21,7 @@ git config --local core.hooksPath .githooks
 ```
 
 ## Git hooks dependencies
-The pre-commit hook requires `clang-format >= 17.0.0` and `cmake-format` to be installed on your machine.
+The pre-commit hook requires `clang-format >= 18.0.0` and `cmake-format` to be installed on your machine.
 `clang-format` can be installed using `brew` on macOS and default package manager on Linux.
 `cmake-format` can be installed using `pip`.
 The hook will also attempt to automatically use `doxygen` to verify that everything public in the codebase is covered by doc comments. If `doxygen` is not installed, the hook will raise a warning suggesting to install `doxygen` for future commits.
@@ -102,7 +102,7 @@ The button for that is near the bottom of the PR's page on GitHub.
 This is a non-exhaustive list of recommended style guidelines. These are not always strictly enforced and serve as a way to keep the codebase coherent.
 
 ## Formatting
-Code must conform to `clang-format` version 17, unless the result would be unreasonably difficult to read or maintain.
+Code must conform to `clang-format` version 18, unless the result would be unreasonably difficult to read or maintain.
 In most cases the pre-commit hook will take care of formatting and will fix any issues automatically.
 To manually format your code, use `clang-format -i <your changed files>` for C++ files and `cmake-format -i <your changed files>` for CMake files.
 

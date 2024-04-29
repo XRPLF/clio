@@ -127,7 +127,7 @@ GrpcSource::loadInitialLedger(uint32_t const sequence, uint32_t const numMarkers
         auto result = ptr->process(stub_, cq, *backend_, abort, cacheOnly);
         if (result != etl::impl::AsyncCallData::CallStatus::MORE) {
             ++numFinished;
-            LOG(log_.debug()) << "Finished a marker. " << "Current number of finished = " << numFinished;
+            LOG(log_.debug()) << "Finished a marker. Current number of finished = " << numFinished;
 
             if (auto lastKey = ptr->getLastKey(); !lastKey.empty())
                 edgeKeys.push_back(std::move(lastKey));

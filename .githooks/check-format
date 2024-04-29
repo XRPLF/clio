@@ -12,12 +12,12 @@ sources="src unittests"
 formatter="clang-format -i"
 version=$($formatter --version | grep -o '[0-9\.]*')
 
-if [[ "17.0.0" > "$version" ]]; then
+if [[ "18.0.0" > "$version" ]]; then
     cat <<EOF
 
                                     ERROR
 -----------------------------------------------------------------------------
-            A minimum of version 17 of `which clang-format` is required.
+            A minimum of version 18 of `which clang-format` is required.
             Your version is $version.
             Please fix paths and run again.
 -----------------------------------------------------------------------------

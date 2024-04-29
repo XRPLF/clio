@@ -105,7 +105,7 @@ public:
             return CallStatus::ERRORED;
         }
         if (!status_.ok()) {
-            LOG(log_.error()) << "AsyncCallData status_ not ok: " << " code = " << status_.error_code()
+            LOG(log_.error()) << "AsyncCallData status_ not ok: code = " << status_.error_code()
                               << " message = " << status_.error_message();
             return CallStatus::ERRORED;
         }
