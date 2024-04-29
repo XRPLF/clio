@@ -34,7 +34,7 @@ jobs:
           images: rippleci/clio_ci
           tags: |
             type=raw,value=latest
-            type=raw,value=gcc_12
+            type=raw,value=gcc_12_clang_16
             type=raw,value=${{ env.GITHUB_SHA }}
 
       - name: Build and push
