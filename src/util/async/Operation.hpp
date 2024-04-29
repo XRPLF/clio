@@ -127,7 +127,7 @@ struct BasicScheduledOperation {
         if constexpr (SomeCancellableOperation<OpType>)
             timer_.cancel();
 
-        if constexpr (SomeCancellableOperation<OpType>)
+        if constexpr (SomeStoppableOperation<OpType>)
             state_->get().requestStop();
     }
 };

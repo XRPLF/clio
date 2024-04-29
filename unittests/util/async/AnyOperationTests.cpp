@@ -33,12 +33,15 @@ using namespace ::testing;
 
 struct AnyOperationTests : Test {
     using OperationType = MockOperation<std::expected<std::any, ExecutionError>>;
+    using StoppableOperationType = MockStoppableOperation<std::expected<std::any, ExecutionError>>;
     using ScheduledOperationType = MockScheduledOperation<std::expected<std::any, ExecutionError>>;
 
     NaggyMock<OperationType> mockOp;
+    NaggyMock<StoppableOperationType> mockStoppableOp;
     NaggyMock<ScheduledOperationType> mockScheduledOp;
 
     AnyOperation<void> voidOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
+    AnyOperation<void> voidStoppableOp{impl::ErasedOperation(static_cast<StoppableOperationType&>(mockStoppableOp))};
     AnyOperation<int> intOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
     AnyOperation<void> scheduledVoidOp{impl::ErasedOperation(static_cast<ScheduledOperationType&>(mockScheduledOp))};
 };
@@ -73,6 +76,14 @@ TEST_F(AnyOperationTests, CancelAndRequestStopCallPropagated)
     EXPECT_CALL(mockScheduledOp, cancel()).WillOnce([&] { callback.Call(); });
     EXPECT_CALL(mockScheduledOp, requestStop()).WillOnce([&] { callback.Call(); });
     scheduledVoidOp.abort();
+}
+
+TEST_F(AnyOperationTests, RequestStopCallPropagatedOnStoppableOperation)
+{
+    StrictMock<MockFunction<void()>> callback;
+    EXPECT_CALL(callback, Call());
+    EXPECT_CALL(mockStoppableOp, requestStop()).WillOnce([&] { callback.Call(); });
+    voidStoppableOp.abort();
 }
 
 TEST_F(AnyOperationTests, GetPropagatesError)
