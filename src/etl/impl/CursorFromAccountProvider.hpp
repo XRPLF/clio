@@ -72,9 +72,7 @@ public:
             std::prev(std::end(cursors)),
             std::next(std::begin(cursors)),
             std::back_inserter(pairs),
-            [](auto&& a, auto&& b) -> CursorPair {
-                return {a, b};
-            }
+            [](auto&& a, auto&& b) -> CursorPair { return {a, b}; }
         );
 
         return pairs;
