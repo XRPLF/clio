@@ -30,10 +30,9 @@ target_sources(
           etl/GrpcSourceTests.cpp
           etl/LedgerPublisherTests.cpp
           etl/LoadBalancerTests.cpp
-          etl/SourceTests.cpp
+          etl/SourceImplTests.cpp
           etl/SubscriptionSourceTests.cpp
           etl/TransformerTests.cpp
-          etl/impl/SourceImplTests.cpp
           # Feed
           feed/BookChangesFeedTests.cpp
           feed/ForwardFeedTests.cpp

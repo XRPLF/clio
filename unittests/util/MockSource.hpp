@@ -18,41 +18,160 @@
 //==============================================================================
 #pragma once
 
+#include "data/BackendInterface.hpp"
+#include "etl/ETLHelpers.hpp"
+#include "etl/Source.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
+#include "util/config/Config.hpp"
+
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <gmock/gmock.h>
 #include <grpcpp/support/status.h>
+#include <gtest/gtest.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
-class MockSource {
-public:
-    MOCK_METHOD(bool, isConnected, (), (const));
-    MOCK_METHOD(boost::json::object, toJson, (), (const));
-    MOCK_METHOD(void, run, ());
-    MOCK_METHOD(void, pause, ());
-    MOCK_METHOD(void, resume, ());
-    MOCK_METHOD(std::string, toString, (), (const));
-    MOCK_METHOD(bool, hasLedger, (uint32_t), (const));
-    MOCK_METHOD((std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>), fetchLedger, (uint32_t, bool, bool));
-    MOCK_METHOD((std::pair<std::vector<std::string>, bool>), loadInitialLedger, (uint32_t, uint32_t, bool));
+struct MockSource : etl::SourceBase {
+    MOCK_METHOD(void, run, (), (override));
+    MOCK_METHOD(bool, isConnected, (), (const, override));
+    MOCK_METHOD(void, setForwarding, (bool), (override));
+    MOCK_METHOD(boost::json::object, toJson, (), (const, override));
+    MOCK_METHOD(std::string, toString, (), (const, override));
+    MOCK_METHOD(bool, hasLedger, (uint32_t), (const, override));
+    MOCK_METHOD(
+        (std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>),
+        fetchLedger,
+        (uint32_t, bool, bool),
+        (override)
+    );
+    MOCK_METHOD((std::pair<std::vector<std::string>, bool>), loadInitialLedger, (uint32_t, uint32_t, bool), (override));
     MOCK_METHOD(
         std::optional<boost::json::object>,
         forwardToRippled,
         (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
-        (const)
+        (const, override)
     );
-    MOCK_METHOD(
-        std::optional<boost::json::object>,
-        requestFromRippled,
-        (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
-        (const)
-    );
-    MOCK_METHOD(boost::uuids::uuid, token, (), (const));
+};
+template <template <typename> typename MockType>
+struct MockSourceData {
+    MockSourceData(
+        etl::SourceBase::OnDisconnectHook onDisconnect,
+        etl::SourceBase::OnConnectHook onConnect,
+        etl::SourceBase::OnLedgerClosedHook onLedgerClosed
+    )
+        : onDisconnect(std::move(onDisconnect))
+        , onConnect(std::move(onConnect))
+        , onLedgerClosed(std::move(onLedgerClosed))
+    {
+    }
+
+    MockType<MockSource> mockSource;
+    etl::SourceBase::OnDisconnectHook onDisconnect;
+    etl::SourceBase::OnConnectHook onConnect;
+    etl::SourceBase::OnLedgerClosedHook onLedgerClosed;
+};
+
+template <template <typename> typename MockType>
+using MockSourceDataPtr = std::shared_ptr<MockSourceData<MockType>>;
+
+template <template <typename> typename MockType>
+class MockSourceWrapper : etl::SourceBase {
+    MockSourceDataPtr<MockType> mockData;
+
+public:
+    MockSourceWrapper(MockSourceDataPtr<MockType> mockData) : mockData(std::move(mockData))
+    {
+    }
+
+    void
+    run() override
+    {
+        mockData->run();
+    }
+
+    bool
+    isConnected() const override
+    {
+        return mockData->isConnected();
+    }
+
+    void
+    setForwarding(bool isForwarding) override
+    {
+        mockData->setForwarding(isForwarding);
+    }
+
+    boost::json::object
+    toJson() const override
+    {
+        return mockData->toJson();
+    }
+
+    std::string
+    toString() const override
+    {
+        return mockData->toString();
+    }
+
+    bool
+    hasLedger(uint32_t sequence) const override
+    {
+        return mockData->hasLedger(sequence);
+    }
+
+    std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
+    fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighbors) override
+    {
+        return mockData->fetchLedger(sequence, getObjects, getObjectNeighbors);
+    }
+
+    std::pair<std::vector<std::string>, bool>
+    loadInitialLedger(uint32_t sequence, uint32_t maxLedger, bool getObjects) override
+    {
+        return mockData->loadInitialLedger(sequence, maxLedger, getObjects);
+    }
+
+    std::optional<boost::json::object>
+    forwardToRippled(
+        boost::json::object const& request,
+        std::optional<std::string> const& forwardToRippledClientIp,
+        boost::asio::yield_context yield
+    ) const override
+    {
+        return mockData->forwardToRippled(request, forwardToRippledClientIp, yield);
+    }
+};
+
+template <template <typename> typename MockType>
+struct MockSourceFactory {
+    std::vector<MockSourceDataPtr<MockType>> mockData_;
+
+    etl::SourcePtr
+    makeSourceMock(
+        util::Config const&,
+        boost::asio::io_context&,
+        std::shared_ptr<BackendInterface>,
+        std::shared_ptr<feed::SubscriptionManagerInterface>,
+        std::shared_ptr<etl::NetworkValidatedLedgersInterface>,
+        etl::SourceBase::OnDisconnectHook onDisconnect,
+        etl::SourceBase::OnConnectHook onConnect,
+        etl::SourceBase::OnLedgerClosedHook onLedgerClosed
+    )
+    {
+        auto mockSourceData = std::make_shared<MockSourceData<MockType>>(
+            std::move(onDisconnect), std::move(onConnect), std::move(onLedgerClosed)
+        );
+        mockData_.push_back(mockSourceData);
+
+        return std::make_unique<MockSourceWrapper<MockType>>(mockSourceData);
+    }
 };
