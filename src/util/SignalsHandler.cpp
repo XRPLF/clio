@@ -84,7 +84,7 @@ SignalsHandler::SignalsHandler(Config const& config, std::function<void()> force
             gracefulPeriod_,
             [forceExitHandler = std::move(forceExitHandler)](auto&& stopToken, bool canceled) {
                 // TODO: Update this after https://github.com/XRPLF/clio/issues/1380
-                if (not stopToken.isStopRequested() and not canceled) {
+                if (not stopToken.isStopRequested() or not canceled) {
                     LOG(LogService::warn()) << "Force exit at the end of graceful period.";
                     forceExitHandler();
                 }

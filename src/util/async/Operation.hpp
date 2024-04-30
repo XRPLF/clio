@@ -124,11 +124,10 @@ struct BasicScheduledOperation {
     void
     abort() noexcept
     {
-        if constexpr (SomeCancellableOperation<OpType>)
-            timer_.cancel();
+        cancel();
 
         if constexpr (SomeStoppableOperation<OpType>)
-            state_->get().requestStop();
+            requestStop();
     }
 };
 
