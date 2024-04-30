@@ -39,39 +39,17 @@ namespace data {
 template <typename T>
 concept SomeBackendCounters = requires(T a) {
     typename T::PtrType;
-    {
-        a.registerTooBusy()
-    } -> std::same_as<void>;
-    {
-        a.registerWriteSync(std::chrono::steady_clock::time_point{})
-    } -> std::same_as<void>;
-    {
-        a.registerWriteSyncRetry()
-    } -> std::same_as<void>;
-    {
-        a.registerWriteStarted()
-    } -> std::same_as<void>;
-    {
-        a.registerWriteFinished(std::chrono::steady_clock::time_point{})
-    } -> std::same_as<void>;
-    {
-        a.registerWriteRetry()
-    } -> std::same_as<void>;
-    {
-        a.registerReadStarted(std::uint64_t{})
-    } -> std::same_as<void>;
-    {
-        a.registerReadFinished(std::chrono::steady_clock::time_point{}, std::uint64_t{})
-    } -> std::same_as<void>;
-    {
-        a.registerReadRetry(std::uint64_t{})
-    } -> std::same_as<void>;
-    {
-        a.registerReadError(std::uint64_t{})
-    } -> std::same_as<void>;
-    {
-        a.report()
-    } -> std::same_as<boost::json::object>;
+    { a.registerTooBusy() } -> std::same_as<void>;
+    { a.registerWriteSync(std::chrono::steady_clock::time_point{}) } -> std::same_as<void>;
+    { a.registerWriteSyncRetry() } -> std::same_as<void>;
+    { a.registerWriteStarted() } -> std::same_as<void>;
+    { a.registerWriteFinished(std::chrono::steady_clock::time_point{}) } -> std::same_as<void>;
+    { a.registerWriteRetry() } -> std::same_as<void>;
+    { a.registerReadStarted(std::uint64_t{}) } -> std::same_as<void>;
+    { a.registerReadFinished(std::chrono::steady_clock::time_point{}, std::uint64_t{}) } -> std::same_as<void>;
+    { a.registerReadRetry(std::uint64_t{}) } -> std::same_as<void>;
+    { a.registerReadError(std::uint64_t{}) } -> std::same_as<void>;
+    { a.report() } -> std::same_as<boost::json::object>;
 };
 
 /**

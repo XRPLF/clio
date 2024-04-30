@@ -235,8 +235,7 @@ BackendInterface::fetchBookOffers(
     LOG(gLog.debug()) << "Fetching " << std::to_string(keys.size()) << " offers took "
                       << std::to_string(getMillis(mid - begin)) << " milliseconds. Fetching next dir took "
                       << std::to_string(succMillis) << " milliseonds. Fetched next dir " << std::to_string(numSucc)
-                      << " times"
-                      << " Fetching next page of dir took " << std::to_string(pageMillis) << " milliseconds"
+                      << " times" << " Fetching next page of dir took " << std::to_string(pageMillis) << " milliseconds"
                       << ". num pages = " << std::to_string(numPages) << ". Fetching all objects took "
                       << std::to_string(getMillis(end - mid))
                       << " milliseconds. total time = " << std::to_string(getMillis(end - begin)) << " milliseconds"

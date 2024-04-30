@@ -84,7 +84,7 @@ struct Status {
      *
      * @param code The error code
      */
-    /* implicit */ Status(CombinedError code) : code(code){};
+    /* implicit */ Status(CombinedError code) : code(code) {};
 
     /**
      * @brief Construct a new Status object
@@ -92,7 +92,7 @@ struct Status {
      * @param code The error code
      * @param extraInfo The extra info
      */
-    Status(CombinedError code, boost::json::object&& extraInfo) : code(code), extraInfo(std::move(extraInfo)){};
+    Status(CombinedError code, boost::json::object&& extraInfo) : code(code), extraInfo(std::move(extraInfo)) {};
 
     /**
      * @brief Construct a new Status object with a custom message
