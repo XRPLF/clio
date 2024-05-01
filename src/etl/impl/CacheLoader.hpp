@@ -86,7 +86,7 @@ public:
     stop() noexcept
     {
         for (auto& t : tasks_)
-            t.requestStop();
+            t.abort();
     }
 
     void

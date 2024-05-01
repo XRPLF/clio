@@ -83,7 +83,7 @@ SignalsHandler::SignalsHandler(Config const& config, std::function<void()> force
         timer_.emplace(context_.scheduleAfter(
             gracefulPeriod_,
             [forceExitHandler = std::move(forceExitHandler)](auto&& stopToken, bool canceled) {
-                // TODO: Update this after https://github.com/XRPLF/clio/issues/1367
+                // TODO: Update this after https://github.com/XRPLF/clio/issues/1380
                 if (not stopToken.isStopRequested() and not canceled) {
                     LOG(LogService::warn()) << "Force exit at the end of graceful period.";
                     forceExitHandler();
@@ -119,10 +119,8 @@ SignalsHandler::~SignalsHandler()
 void
 SignalsHandler::cancelTimer()
 {
-    if (timer_.has_value()) {
-        timer_->cancel();
-        timer_->requestStop();
-    }
+    if (timer_.has_value())
+        timer_->abort();
 }
 
 void

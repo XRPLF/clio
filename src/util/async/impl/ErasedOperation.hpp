@@ -62,23 +62,12 @@ public:
     }
 
     /**
-     * @brief Request the operation to be stopped as soon as possible
-     * @note ASSERTs if the operation is not stoppable
+     * @brief Cancel if needed and request stop as soon as possible.
      */
     void
-    requestStop()
+    abort()
     {
-        pimpl_->requestStop();
-    }
-
-    /**
-     * @brief Cancel the operation if it is scheduled and not yet started
-     * @note ASSERTs if the operation is not cancellable
-     */
-    void
-    cancel()
-    {
-        pimpl_->cancel();
+        pimpl_->abort();
     }
 
 private:
@@ -90,9 +79,7 @@ private:
         virtual std::expected<std::any, ExecutionError>
         get() = 0;
         virtual void
-        requestStop() = 0;
-        virtual void
-        cancel() = 0;
+        abort() = 0;
     };
 
     template <SomeOperation OpType>
@@ -119,22 +106,15 @@ private:
         }
 
         void
-        requestStop() override
+        abort() override
         {
-            if constexpr (SomeStoppableOperation<OpType>) {
-                operation.requestStop();
+            if constexpr (not SomeCancellableOperation<OpType> and not SomeStoppableOperation<OpType>) {
+                ASSERT(false, "Called abort() on an operation that can't be cancelled nor stopped");
             } else {
-                ASSERT(false, "Stop requested on non-stoppable operation");
-            }
-        }
-
-        void
-        cancel() override
-        {
-            if constexpr (SomeCancellableOperation<OpType>) {
-                operation.cancel();
-            } else {
-                ASSERT(false, "Cancellation requested on non-cancellable operation");
+                if constexpr (SomeCancellableOperation<OpType>)
+                    operation.cancel();
+                if constexpr (SomeStoppableOperation<OpType>)
+                    operation.requestStop();
             }
         }
     };
