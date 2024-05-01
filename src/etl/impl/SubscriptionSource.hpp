@@ -150,6 +150,14 @@ public:
     isConnected() const;
 
     /**
+     * @brief Get whther the source is forwarding
+     *
+     * @return true if the source is forwarding, false otherwise
+     */
+    bool
+    isForwarding() const;
+
+    /**
      * @brief Set source forwarding
      *
      * @note If forwarding is true the source will forward messages to the subscription manager. Forwarding is being

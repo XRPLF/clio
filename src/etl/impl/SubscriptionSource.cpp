@@ -123,6 +123,12 @@ SubscriptionSource::isConnected() const
     return isConnected_;
 }
 
+bool
+SubscriptionSource::isForwarding() const
+{
+    return isForwarding_;
+}
+
 void
 SubscriptionSource::setForwarding(bool isForwarding)
 {
@@ -260,9 +266,9 @@ void
 SubscriptionSource::handleError(util::requests::RequestError const& error, boost::asio::yield_context yield)
 {
     isConnected_ = false;
+    isForwarding_ = false;
     if (not stop_) {
         onDisconnect_();
-        isForwarding_ = false;
     }
 
     if (wsConnection_ != nullptr) {
