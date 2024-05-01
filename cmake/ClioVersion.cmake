@@ -22,7 +22,12 @@ endif ()
 
 if (NOT (BRANCH MATCHES master OR BRANCH MATCHES release/*)) # for develop and any other branch name
                                                              # YYYYMMDDHMS-<branch>-<git-rev>
-  execute_process(COMMAND date +%Y%m%d%H%M%S OUTPUT_VARIABLE DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
+  set(GIT_COMMAND show -s --date=format:%Y%m%d%H%M%S --format=%cd)
+  execute_process(
+    COMMAND ${GIT_EXECUTABLE} ${GIT_COMMAND}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE DATE OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
   set(CLIO_VERSION "${DATE}-${BRANCH}-${REV}")
   set(DOC_CLIO_VERSION "develop")
 else ()
