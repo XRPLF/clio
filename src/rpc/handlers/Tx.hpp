@@ -66,14 +66,16 @@ public:
      */
     struct Output {
         uint32_t date = 0u;
-        std::string hash;
+        std::string hash = {};  // NOLINT(readability-redundant-member-init)
         uint32_t ledgerIndex = 0u;
-        std::optional<boost::json::object> meta;
-        std::optional<boost::json::object> tx;
-        std::optional<std::string> metaStr;
-        std::optional<std::string> txStr;
-        std::optional<std::string> ctid;                   // ctid when binary=true
-        std::optional<ripple::LedgerHeader> ledgerHeader;  // ledger hash when apiVersion >= 2
+        std::optional<boost::json::object> meta = std::nullopt;  // NOLINT(readability-redundant-member-init)
+        std::optional<boost::json::object> tx = std::nullopt;    // NOLINT(readability-redundant-member-init)
+        std::optional<std::string> metaStr = std::nullopt;       // NOLINT(readability-redundant-member-init)
+        std::optional<std::string> txStr = std::nullopt;         // NOLINT(readability-redundant-member-init)
+        std::optional<std::string> ctid =
+            std::nullopt;  // NOLINT(readability-redundant-member-init) ctid when binary=true
+        std::optional<ripple::LedgerHeader> ledgerHeader =
+            std::nullopt;  // NOLINT(readability-redundant-member-init) ledger hash when apiVersion >= 2
         uint32_t apiVersion = 0u;
         bool validated = true;
     };

@@ -120,9 +120,9 @@ struct VoidOutput {};
  */
 struct Context {
     boost::asio::yield_context yield;
-    std::shared_ptr<web::ConnectionBase> session = {};  // NOLINT
+    std::shared_ptr<web::ConnectionBase> session = {};  // NOLINT(readability-redundant-member-init)
     bool isAdmin = false;
-    std::string clientIp = {};  // NOLINT
+    std::string clientIp = {};  // NOLINT(readability-redundant-member-init)
     uint32_t apiVersion = 0u;   // invalid by default
 };
 
