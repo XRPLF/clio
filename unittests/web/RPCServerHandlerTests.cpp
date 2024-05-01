@@ -67,26 +67,15 @@ struct MockWsBase : public web::ConnectionBase {
     }
 };
 
-class WebRPCServerHandlerTest : public util::prometheus::WithPrometheus,
-                                public MockBackendTest,
-                                public SyncAsioContextTest {
-protected:
+struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTest, SyncAsioContextTest {
     void
     SetUp() override
     {
-        MockBackendTest::SetUp();
-
         etl = std::make_shared<MockETLService>();
         rpcEngine = std::make_shared<MockAsyncRPCEngine>();
         tagFactory = std::make_shared<util::TagDecoratorFactory>(cfg);
         session = std::make_shared<MockWsBase>(*tagFactory);
         handler = std::make_shared<RPCServerHandler<MockAsyncRPCEngine, MockETLService>>(cfg, backend, rpcEngine, etl);
-    }
-
-    void
-    TearDown() override
-    {
-        MockBackendTest::TearDown();
     }
 
     std::shared_ptr<MockAsyncRPCEngine> rpcEngine;

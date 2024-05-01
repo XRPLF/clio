@@ -67,7 +67,6 @@ struct ETLTransformerTest : util::prometheus::WithPrometheus, MockBackendTest {
     void
     SetUp() override
     {
-        MockBackendTest::SetUp();
         state_.isStopping = false;
         state_.writeConflict = false;
         state_.isReadOnly = false;
@@ -78,7 +77,6 @@ struct ETLTransformerTest : util::prometheus::WithPrometheus, MockBackendTest {
     TearDown() override
     {
         transformer_.reset();
-        MockBackendTest::TearDown();
     }
 };
 

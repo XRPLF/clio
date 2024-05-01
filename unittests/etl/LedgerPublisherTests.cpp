@@ -54,7 +54,6 @@ struct ETLLedgerPublisherTest : util::prometheus::WithPrometheus, MockBackendTes
     void
     SetUp() override
     {
-        MockBackendTestStrict::SetUp();
         SyncAsioContextTest::SetUp();
     }
 
@@ -62,7 +61,6 @@ struct ETLLedgerPublisherTest : util::prometheus::WithPrometheus, MockBackendTes
     TearDown() override
     {
         SyncAsioContextTest::TearDown();
-        MockBackendTestStrict::TearDown();
     }
 
     util::Config cfg{json::parse("{}")};

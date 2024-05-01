@@ -195,23 +195,8 @@ protected:
 
 template <template <typename> typename MockType = ::testing::NiceMock>
 struct MockBackendTestBase : virtual public NoLoggerFixture {
-    void
-    SetUp() override
-    {
-        backend.reset();
-    }
-
     class BackendProxy {
-        std::shared_ptr<BackendInterface> backend;
-
-    private:
-        void
-        reset()
-        {
-            backend = std::make_shared<MockType<MockBackend>>(util::Config{});
-        }
-
-        friend MockBackendTestBase;
+        std::shared_ptr<MockType<MockBackend>> backend = std::make_shared<MockType<MockBackend>>(util::Config{});
 
     public:
         auto
@@ -230,11 +215,10 @@ struct MockBackendTestBase : virtual public NoLoggerFixture {
             return backend;
         }
 
-        operator MockBackend*()
+        MockType<MockBackend>&
+        operator*()
         {
-            MockBackend* ret = dynamic_cast<MockBackend*>(backend.get());
-            [&] { ASSERT_NE(ret, nullptr); }();
-            return ret;
+            return *backend;
         }
     };
 
@@ -320,15 +304,14 @@ protected:
  * HandlerBaseTestStrict.
  */
 template <template <typename> typename MockType = ::testing::NiceMock>
-struct HandlerBaseTestBase : public MockBackendTestBase<MockType>,
-                             public util::prometheus::WithPrometheus,
-                             public SyncAsioContextTest,
-                             public MockETLServiceTestBase<MockType> {
+struct HandlerBaseTestBase : util::prometheus::WithPrometheus,
+                             MockBackendTestBase<MockType>,
+                             SyncAsioContextTest,
+                             MockETLServiceTestBase<MockType> {
 protected:
     void
     SetUp() override
     {
-        MockBackendTestBase<MockType>::SetUp();
         SyncAsioContextTest::SetUp();
         MockETLServiceTestBase<MockType>::SetUp();
     }
@@ -338,7 +321,6 @@ protected:
     {
         MockETLServiceTestBase<MockType>::TearDown();
         SyncAsioContextTest::TearDown();
-        MockBackendTestBase<MockType>::TearDown();
     }
 };
 
