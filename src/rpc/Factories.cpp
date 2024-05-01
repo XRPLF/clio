@@ -31,7 +31,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/protocol/ErrorCodes.h>
 
 #include <expected>
 #include <functional>

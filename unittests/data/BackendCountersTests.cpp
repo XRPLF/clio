@@ -54,7 +54,7 @@ struct BackendCountersTest : WithPrometheus {
     }
 
     BackendCounters::PtrType const counters = BackendCounters::make();
-    std::chrono::steady_clock::time_point startTime{};
+    std::chrono::steady_clock::time_point startTime;
 };
 
 TEST_F(BackendCountersTest, EmptyByDefault)

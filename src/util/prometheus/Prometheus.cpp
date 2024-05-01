@@ -30,6 +30,7 @@
 #include "util/prometheus/MetricsFamily.hpp"
 #include "util/prometheus/OStream.hpp"
 
+#include <concepts>
 #include <cstdint>
 #include <memory>
 #include <optional>

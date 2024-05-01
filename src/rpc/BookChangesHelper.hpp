@@ -85,8 +85,8 @@ public:
 
 private:
     class HandlerImpl final {
-        std::map<std::string, BookChange> tally_ = {};
-        std::optional<uint32_t> offerCancel_ = {};
+        std::map<std::string, BookChange> tally_;
+        std::optional<uint32_t> offerCancel_;
 
     public:
         [[nodiscard]] std::vector<BookChange>

@@ -25,6 +25,7 @@
 #include "util/prometheus/Histogram.hpp"
 #include "util/prometheus/MetricBase.hpp"
 
+#include <concepts>
 #include <cstdint>
 #include <memory>
 #include <string>

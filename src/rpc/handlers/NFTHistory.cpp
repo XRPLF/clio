@@ -35,7 +35,6 @@
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/chrono.h>
 #include <ripple/basics/strHex.h>
-#include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/jss.h>
 

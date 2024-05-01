@@ -31,7 +31,6 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/protocol/ErrorCodes.h>
 
 #include <memory>
 #include <stdexcept>
