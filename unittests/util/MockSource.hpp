@@ -33,10 +33,13 @@
 #include <gtest/gtest.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -61,83 +64,65 @@ struct MockSource : etl::SourceBase {
         (const, override)
     );
 };
-template <template <typename> typename MockType>
-struct MockSourceData {
-    MockSourceData(
-        etl::SourceBase::OnDisconnectHook onDisconnect,
-        etl::SourceBase::OnConnectHook onConnect,
-        etl::SourceBase::OnLedgerClosedHook onLedgerClosed
-    )
-        : onDisconnect(std::move(onDisconnect))
-        , onConnect(std::move(onConnect))
-        , onLedgerClosed(std::move(onLedgerClosed))
-    {
-    }
-
-    MockType<MockSource> mockSource;
-    etl::SourceBase::OnDisconnectHook onDisconnect;
-    etl::SourceBase::OnConnectHook onConnect;
-    etl::SourceBase::OnLedgerClosedHook onLedgerClosed;
-};
 
 template <template <typename> typename MockType>
-using MockSourceDataPtr = std::shared_ptr<MockSourceData<MockType>>;
+using MockSourcePtr = std::shared_ptr<MockType<MockSource>>;
 
 template <template <typename> typename MockType>
-class MockSourceWrapper : etl::SourceBase {
-    MockSourceDataPtr<MockType> mockData;
+class MockSourceWrapper : public etl::SourceBase {
+    MockSourcePtr<MockType> mock_;
 
 public:
-    MockSourceWrapper(MockSourceDataPtr<MockType> mockData) : mockData(std::move(mockData))
+    MockSourceWrapper(MockSourcePtr<MockType> mockData) : mock_(std::move(mockData))
     {
     }
 
     void
     run() override
     {
-        mockData->run();
+        mock_->run();
     }
 
     bool
     isConnected() const override
     {
-        return mockData->isConnected();
+        return mock_->isConnected();
     }
 
     void
     setForwarding(bool isForwarding) override
     {
-        mockData->setForwarding(isForwarding);
+        mock_->setForwarding(isForwarding);
     }
 
     boost::json::object
     toJson() const override
     {
-        return mockData->toJson();
+        return mock_->toJson();
     }
 
     std::string
     toString() const override
     {
-        return mockData->toString();
+        return mock_->toString();
     }
 
     bool
     hasLedger(uint32_t sequence) const override
     {
-        return mockData->hasLedger(sequence);
+        return mock_->hasLedger(sequence);
     }
 
     std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
     fetchLedger(uint32_t sequence, bool getObjects, bool getObjectNeighbors) override
     {
-        return mockData->fetchLedger(sequence, getObjects, getObjectNeighbors);
+        return mock_->fetchLedger(sequence, getObjects, getObjectNeighbors);
     }
 
     std::pair<std::vector<std::string>, bool>
     loadInitialLedger(uint32_t sequence, uint32_t maxLedger, bool getObjects) override
     {
-        return mockData->loadInitialLedger(sequence, maxLedger, getObjects);
+        return mock_->loadInitialLedger(sequence, maxLedger, getObjects);
     }
 
     std::optional<boost::json::object>
@@ -147,13 +132,32 @@ public:
         boost::asio::yield_context yield
     ) const override
     {
-        return mockData->forwardToRippled(request, forwardToRippledClientIp, yield);
+        return mock_->forwardToRippled(request, forwardToRippledClientIp, yield);
     }
 };
 
+struct MockSourceCallbacks {
+    etl::SourceBase::OnDisconnectHook onDisconnect;
+    etl::SourceBase::OnConnectHook onConnect;
+    etl::SourceBase::OnLedgerClosedHook onLedgerClosed;
+};
+
 template <template <typename> typename MockType>
-struct MockSourceFactory {
-    std::vector<MockSourceDataPtr<MockType>> mockData_;
+struct MockSourceData {
+    MockSourcePtr<MockType> source = std::make_shared<MockType<MockSource>>();
+    std::optional<MockSourceCallbacks> callbacks;
+};
+
+template <template <typename> typename MockType = testing::NiceMock>
+class MockSourceFactoryImpl {
+    std::vector<MockSourceData<MockType>> mockData_;
+
+public:
+    MockSourceFactoryImpl(size_t numSources)
+    {
+        mockData_.reserve(numSources);
+        std::ranges::generate_n(std::back_inserter(mockData_), numSources, [] { return MockSourceData<MockType>{}; });
+    }
 
     etl::SourcePtr
     makeSourceMock(
@@ -167,11 +171,27 @@ struct MockSourceFactory {
         etl::SourceBase::OnLedgerClosedHook onLedgerClosed
     )
     {
-        auto mockSourceData = std::make_shared<MockSourceData<MockType>>(
-            std::move(onDisconnect), std::move(onConnect), std::move(onLedgerClosed)
-        );
-        mockData_.push_back(mockSourceData);
+        auto it = std::ranges::find_if(mockData_, [](auto const& d) { return not d.callbacks.has_value(); });
+        [&]() { ASSERT_NE(it, mockData_.end()) << "Make source called more than expected"; }();
+        it->callbacks = MockSourceCallbacks{std::move(onDisconnect), std::move(onConnect), std::move(onLedgerClosed)};
 
-        return std::make_unique<MockSourceWrapper<MockType>>(mockSourceData);
+        return std::make_unique<MockSourceWrapper<MockType>>(it->source);
+    }
+
+    MockType<MockSource>&
+    sourceAt(size_t index)
+    {
+        return *mockData_.at(index).source;
+    }
+
+    MockSourceCallbacks&
+    callbacksAt(size_t index)
+    {
+        auto& callbacks = mockData_.at(index).callbacks;
+        [this]() { ASSERT_TRUE(callbacks.has_value()) << "Callbacks not set"; }();
+        return *callbacks;
     }
 };
+
+using MockSourceFactory = MockSourceFactoryImpl<>;
+using StrictMockSourceFactory = MockSourceFactoryImpl<testing::StrictMock>;
