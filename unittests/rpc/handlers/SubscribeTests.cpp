@@ -1109,7 +1109,7 @@ TEST(RPCSubscribeHandlerSpecTest, DeprecatedFields)
     auto const obj = warning.as_object();
     ASSERT_TRUE(obj.contains("id"));
     ASSERT_TRUE(obj.contains("message"));
-    EXPECT_EQ(obj.at("id").as_int64(), static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED));
+    EXPECT_EQ(obj.at("id").as_uint64(), static_cast<uint64_t>(WarningCode::warnRPC_DEPRECATED));
     auto const& message = obj.at("message").as_string();
     for (auto const& field : {"user", "password", "rt_accounts"}) {
         EXPECT_NE(message.find(fmt::format("Field '{}' is deprecated", field)), std::string::npos) << message;

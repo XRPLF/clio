@@ -22,6 +22,7 @@
 #include "util/config/Config.hpp"
 
 #include <cstddef>
+#include <cstdint>
 
 namespace etl {
 
@@ -30,7 +31,7 @@ namespace etl {
  */
 struct CacheLoaderSettings {
     /** @brief Ways to load the cache */
-    enum class LoadStyle { ASYNC, SYNC, NONE };
+    enum class LoadStyle : std::uint8_t { ASYNC, SYNC, NONE };
 
     size_t numCacheDiffs = 32;             /**< number of diffs to use to generate cursors */
     size_t numCacheMarkers = 48;           /**< number of markers to use at one time to traverse the ledger */

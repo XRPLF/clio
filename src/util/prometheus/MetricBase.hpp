@@ -21,6 +21,7 @@
 
 #include "util/prometheus/OStream.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace util::prometheus {
@@ -83,7 +84,7 @@ private:
     std::string labelsString_;
 };
 
-enum class MetricType {
+enum class MetricType : std::uint8_t {
     COUNTER_INT,
     COUNTER_DOUBLE,
     GAUGE_INT,

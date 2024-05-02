@@ -45,6 +45,7 @@
 #include <boost/log/utility/setup/formatter_parser.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -70,7 +71,7 @@ class Config;
 /**
  * @brief Custom severity levels for @ref util::Logger.
  */
-enum class Severity {
+enum class Severity : std::uint8_t {
     TRC,
     DBG,
     NFO,

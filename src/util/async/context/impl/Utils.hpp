@@ -42,7 +42,7 @@ inline constexpr struct AssociatedExecutorExtractor {
 } extractAssociatedExecutor;
 
 template <typename CtxType>
-[[nodiscard]] inline constexpr auto
+[[nodiscard]] constexpr auto
 getTimeoutHandleIfNeeded(CtxType& ctx, SomeOptStdDuration auto timeout, SomeStopSource auto& stopSource)
 {
     using TimerType = typename CtxType::Timer;
@@ -57,7 +57,7 @@ getTimeoutHandleIfNeeded(CtxType& ctx, SomeOptStdDuration auto timeout, SomeStop
 }
 
 template <SomeStopSource StopSourceType>
-[[nodiscard]] inline constexpr auto
+[[nodiscard]] constexpr auto
 outcomeForHandler(auto&& fn)
 {
     if constexpr (SomeHandlerWith<decltype(fn), typename StopSourceType::Token>) {

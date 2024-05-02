@@ -23,6 +23,7 @@
 #include <boost/json/object.hpp>
 #include <ripple/protocol/ErrorCodes.h>
 
+#include <cstdint>
 #include <exception>
 #include <optional>
 #include <string>
@@ -33,7 +34,7 @@
 namespace rpc {
 
 /** @brief Custom clio RPC Errors. */
-enum class ClioError {
+enum class ClioError : std::uint16_t {
     // normal clio errors start with 5000
     rpcMALFORMED_CURRENCY = 5000,
     rpcMALFORMED_REQUEST = 5001,
@@ -176,7 +177,7 @@ struct Status {
 };
 
 /** @brief Warning codes that can be returned by clio. */
-enum WarningCode {
+enum WarningCode : std::uint16_t {
     warnUNKNOWN = -1,
     warnRPC_CLIO = 2001,
     warnRPC_OUTDATED = 2002,
