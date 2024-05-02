@@ -302,10 +302,17 @@ BackendInterface::fetchLedgerPage(
 
     std::vector<ripple::uint256> keys;
     bool reachedEnd = false;
+
     while (keys.size() < limit && !reachedEnd) {
-        ripple::uint256 const& curCursor = !keys.empty() ? keys.back() : (cursor ? *cursor : firstKey);
+        ripple::uint256 const& curCursor = [&]() {
+            if (!keys.empty())
+                return keys.back();
+            return (cursor ? *cursor : firstKey);
+        }();
+
         std::uint32_t const seq = outOfOrder ? range->maxSequence : ledgerSequence;
         auto succ = fetchSuccessorKey(curCursor, seq, yield);
+
         if (!succ) {
             reachedEnd = true;
         } else {

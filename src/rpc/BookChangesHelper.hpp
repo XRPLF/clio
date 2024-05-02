@@ -154,7 +154,11 @@ private:
             auto const g = to_string(deltaGets.issue());
             auto const p = to_string(deltaPays.issue());
 
-            auto const noswap = isXRP(deltaGets) ? true : (isXRP(deltaPays) ? false : (g < p));
+            auto const noswap = [&]() {
+                if (isXRP(deltaGets))
+                    return true;
+                return isXRP(deltaPays) ? false : (g < p);
+            }();
 
             auto first = noswap ? deltaGets : deltaPays;
             auto second = noswap ? deltaPays : deltaGets;
