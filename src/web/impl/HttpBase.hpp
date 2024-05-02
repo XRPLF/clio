@@ -119,7 +119,7 @@ protected:
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
 
-    inline void
+    void
     httpFail(boost::beast::error_code ec, char const* what)
     {
         // ssl::error::stream_truncated, also known as an SSL "short read",

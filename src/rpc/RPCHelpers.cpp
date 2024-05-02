@@ -197,7 +197,7 @@ accountFromStringStrict(std::string const& account)
     }
 
     if (result) {
-        return result.value();
+        return result;
     }
     return {};
 }

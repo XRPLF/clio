@@ -205,7 +205,7 @@ ETLService::monitorReadOnly()
 
         if (!rng) {
             if (auto net = networkValidatedLedgers_->getMostRecent()) {
-                return *net;
+                return net;
             }
             return std::nullopt;
         }

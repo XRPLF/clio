@@ -77,19 +77,19 @@ public:
     std::expected<uint32_t, std::string>
     parse(boost::json::object const& request) const override;
 
-    inline uint32_t
+    uint32_t
     getDefaultVersion() const
     {
         return defaultVersion_;
     }
 
-    inline uint32_t
+    uint32_t
     getMinVersion() const
     {
         return minVersion_;
     }
 
-    inline uint32_t
+    uint32_t
     getMaxVersion() const
     {
         return maxVersion_;

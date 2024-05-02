@@ -90,7 +90,7 @@ BackendInterface::fetchLedgerObject(
     auto obj = cache_.get(key, sequence);
     if (obj) {
         LOG(gLog.trace()) << "Cache hit - " << ripple::strHex(key);
-        return *obj;
+        return obj;
     }
 
     LOG(gLog.trace()) << "Cache miss - " << ripple::strHex(key);

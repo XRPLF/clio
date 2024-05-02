@@ -66,16 +66,16 @@ AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, r
     }
 
     if (auto const& v = channelSle[~ripple::sfExpiration])
-        channel.expiration = *v;
+        channel.expiration = v;
 
     if (auto const& v = channelSle[~ripple::sfCancelAfter])
-        channel.cancelAfter = *v;
+        channel.cancelAfter = v;
 
     if (auto const& v = channelSle[~ripple::sfSourceTag])
-        channel.sourceTag = *v;
+        channel.sourceTag = v;
 
     if (auto const& v = channelSle[~ripple::sfDestinationTag])
-        channel.destinationTag = *v;
+        channel.destinationTag = v;
 
     jsonChannels.push_back(channel);
 }
