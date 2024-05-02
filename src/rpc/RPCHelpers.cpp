@@ -196,10 +196,7 @@ accountFromStringStrict(std::string const& account)
         result = ripple::parseBase58<ripple::AccountID>(account);
     }
 
-    if (result) {
-        return result;
-    }
-    return {};
+    return result;
 }
 
 std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>>
