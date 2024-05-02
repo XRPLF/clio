@@ -1355,7 +1355,7 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
 struct RPCLedgerHandlerSpecCheckTestBundle {
     std::string name;
     boost::json::value json;
-    std::unordered_map<uint16_t, std::vector<std::string>> expectedWarning;
+    std::unordered_map<int64_t, std::vector<std::string>> expectedWarning;
 };
 
 struct RPCLedgerHandlerSpecCheckTest : ::testing::TestWithParam<RPCLedgerHandlerSpecCheckTestBundle> {
@@ -1370,27 +1370,27 @@ INSTANTIATE_TEST_SUITE_P(
         RPCLedgerHandlerSpecCheckTestBundle{
             "FullWarning",
             {{JS(full), false}},
-            {{static_cast<uint16_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'full' is deprecated."}}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'full' is deprecated."}}},
         },
         RPCLedgerHandlerSpecCheckTestBundle{
             "AccountsWarning",
             {{JS(accounts), false}},
-            {{static_cast<uint16_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'accounts' is deprecated."}}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'accounts' is deprecated."}}},
         },
         RPCLedgerHandlerSpecCheckTestBundle{
             "LedgerWarning",
             {{JS(ledger), false}},
-            {{static_cast<uint16_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'ledger' is deprecated."}}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'ledger' is deprecated."}}},
         },
         RPCLedgerHandlerSpecCheckTestBundle{
             "TypeWarning",
             {{JS(type), false}},
-            {{static_cast<uint16_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'type' is deprecated."}}},
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED), {"Field 'type' is deprecated."}}},
         },
         RPCLedgerHandlerSpecCheckTestBundle{
             "MultipleWarnings",
             {{JS(full), false}, {JS(type), false}},
-            {{static_cast<uint16_t>(WarningCode::warnRPC_DEPRECATED),
+            {{static_cast<int64_t>(WarningCode::warnRPC_DEPRECATED),
               {"Field 'full' is deprecated.", "Field 'type' is deprecated."}}},
         }
     ),
@@ -1406,7 +1406,7 @@ TEST_P(RPCLedgerHandlerSpecCheckTest, CheckSpec)
         auto const obj = warn.as_object();
         ASSERT_TRUE(obj.contains("id"));
         ASSERT_TRUE(obj.contains("message"));
-        auto const& it = GetParam().expectedWarning.find(obj.at("id").as_uint64());
+        auto const& it = GetParam().expectedWarning.find(obj.at("id").as_int64());
         ASSERT_NE(it, GetParam().expectedWarning.end());
         for (auto const& msg : it->second) {
             EXPECT_NE(obj.at("message").as_string().find(msg), std::string::npos);

@@ -32,7 +32,6 @@
 #include <chrono>
 #include <concepts>
 #include <csignal>
-#include <cstdint>
 #include <cstdlib>
 #include <functional>
 #include <optional>
@@ -63,7 +62,7 @@ public:
     /**
      * @brief Enum for stop priority.
      */
-    enum class Priority : std::uint8_t { StopFirst = 0, Normal = 1, StopLast = 2 };
+    enum class Priority { StopFirst = 0, Normal = 1, StopLast = 2 };
 
     /**
      * @brief Create SignalsHandler object.

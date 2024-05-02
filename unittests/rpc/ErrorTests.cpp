@@ -172,10 +172,10 @@ TEST_P(WarningCodeTest, WarningToJSON)
     EXPECT_TRUE(j.contains("id"));
     EXPECT_TRUE(j.contains("message"));
 
-    EXPECT_TRUE(j.at("id").is_uint64());
+    EXPECT_TRUE(j.at("id").is_int64());
     EXPECT_TRUE(j.at("message").is_string());
 
-    EXPECT_EQ(j.at("id").as_uint64(), static_cast<int64_t>(GetParam().code));
+    EXPECT_EQ(j.at("id").as_int64(), static_cast<int64_t>(GetParam().code));
     EXPECT_EQ(boost::json::value_to<std::string>(j.at("message")), GetParam().message);
 }
 

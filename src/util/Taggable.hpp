@@ -29,7 +29,6 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include <atomic>
-#include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -170,7 +169,7 @@ class TagDecoratorFactory final {
     /**
      * @brief Represents the type of tag decorator.
      */
-    enum class Type : std::uint8_t {
+    enum class Type {
         NONE, /**< No decoration and no tag */
         UUID, /**< Tag based on `boost::uuids::uuid`, thread-safe via mutex */
         UINT  /**< atomic_uint64_t tag, thread-safe, lock-free */

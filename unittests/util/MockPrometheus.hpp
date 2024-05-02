@@ -138,10 +138,10 @@ struct MockPrometheusImpl : PrometheusInterface {
     getMetric(std::string name, Labels labels)
     {
         auto const labelsString = labels.serialize();
-        auto const key = name + labelsString;
+        auto const key = name + labels.serialize();
         auto it = metrics.find(key);
         if (it == metrics.end()) {
-            return makeMetric<MetricType>(std::move(name), labelsString);
+            return makeMetric<MetricType>(std::move(name), labels.serialize());
         }
         auto* basePtr = it->second.get();
         auto* metricPtr = dynamic_cast<MetricType*>(basePtr);

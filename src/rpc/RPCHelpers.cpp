@@ -430,11 +430,8 @@ ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backe
             } else {
                 ledgerSequence = parseStringAsUInt(stringIndex);
             }
-        } else if (indexValue.is_int64()) {
+        } else if (indexValue.is_int64())
             ledgerSequence = indexValue.as_int64();
-        } else if (indexValue.is_uint64()) {
-            ledgerSequence = indexValue.as_uint64();
-        }
     } else {
         ledgerSequence = ctx.range.maxSequence;
     }

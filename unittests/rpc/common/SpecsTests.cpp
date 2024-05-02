@@ -27,7 +27,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <cstdint>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -227,7 +226,7 @@ struct RpcSpecCheckTestBundle {
     std::string name;
     std::optional<check::Warning> checkResult;
     std::optional<check::Warning> otherCheckResult;
-    std::unordered_map<std::uint16_t, std::vector<std::string>> expectedWarnings;
+    std::unordered_map<int, std::vector<std::string>> expectedWarnings;
 };
 
 struct RpcSpecCheckTests : SpecsTests, testing::WithParamInterface<RpcSpecCheckTestBundle> {
@@ -280,10 +279,10 @@ TEST_P(RpcSpecCheckTests, Check)
         ASSERT_TRUE(entry.is_object());
         auto const& object = entry.as_object();
         ASSERT_TRUE(object.contains("id"));
-        ASSERT_TRUE(object.at("id").is_uint64());
+        ASSERT_TRUE(object.at("id").is_int64());
         ASSERT_TRUE(object.contains("message"));
         ASSERT_TRUE(object.at("message").is_string());
-        auto it = GetParam().expectedWarnings.find(object.at("id").as_uint64());
+        auto it = GetParam().expectedWarnings.find(object.at("id").as_int64());
         ASSERT_NE(it, GetParam().expectedWarnings.end());
         for (auto const& message : it->second) {
             EXPECT_NE(object.at("message").as_string().find(message), std::string::npos);
