@@ -33,15 +33,6 @@ add_library(clio_options INTERFACE)
 target_compile_features(clio_options INTERFACE cxx_std_23) # Clio needs c++23 but deps can remain c++20 for now
 target_include_directories(clio_options INTERFACE ${CMAKE_SOURCE_DIR}/src)
 
-# Set coverage build options
-if (coverage)
-  if (NOT tests)
-    message(FATAL_ERROR "Coverage requires tests to be enabled")
-  endif ()
-  include(CodeCoverage)
-  append_coverage_compiler_flags_to_target(clio_options INTERFACE)
-endif ()
-
 if (verbose)
   set(CMAKE_VERBOSE_MAKEFILE TRUE)
 endif ()
@@ -66,14 +57,7 @@ include(deps/cassandra)
 include(deps/libbacktrace)
 
 add_subdirectory(src)
-
-if (tests)
-  add_subdirectory(unittests)
-endif ()
-
-if (dbtests)
-  add_subdirectory(dbtests)
-endif ()
+add_subdirectory(tests)
 
 if (benchmark)
   add_subdirectory(benchmarks)
