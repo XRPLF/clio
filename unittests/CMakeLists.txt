@@ -5,11 +5,8 @@ target_sources(
   PRIVATE # Common
           ConfigTests.cpp
           data/BackendCountersTests.cpp
-          data/BackendFactoryTests.cpp
           data/BackendInterfaceTests.cpp
           data/cassandra/AsyncExecutorTests.cpp
-          data/cassandra/BackendTests.cpp
-          data/cassandra/BaseTests.cpp
           data/cassandra/ExecutionStrategyTests.cpp
           data/cassandra/RetryPolicyTests.cpp
           data/cassandra/SettingsProviderTests.cpp

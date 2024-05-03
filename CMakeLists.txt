@@ -8,7 +8,8 @@ project(clio VERSION ${CLIO_VERSION} HOMEPAGE_URL "https://github.com/XRPLF/clio
 
 # =========================== Options ====================================== #
 option(verbose "Verbose build" FALSE)
-option(tests "Build tests" FALSE)
+option(tests "Build unit tests" FALSE)
+option(dbtests "Build database tests" FALSE)
 option(benchmark "Build benchmarks" FALSE)
 option(docs "Generate doxygen docs" FALSE)
 option(coverage "Build test coverage report" FALSE)
@@ -68,6 +69,10 @@ add_subdirectory(src)
 
 if (tests)
   add_subdirectory(unittests)
+endif ()
+
+if (dbtests)
+  add_subdirectory(dbtests)
 endif ()
 
 if (benchmark)

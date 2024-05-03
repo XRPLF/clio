@@ -13,6 +13,7 @@ class Clio(ConanFile):
         'fPIC': [True, False],      # unused?
         'verbose': [True, False],
         'tests': [True, False],     # build unit tests; create `clio_tests` binary
+        'dbtests': [True, False],   # build database tests; create `clio_dbtests` binary
         'benchmark': [True, False], # build benchmarks; create `clio_benchmarks` binary
         'docs': [True, False],      # doxygen API docs; create custom target 'docs'
         'packaging': [True, False], # create distribution packages
@@ -36,6 +37,7 @@ class Clio(ConanFile):
         'fPIC': True,
         'verbose': False,
         'tests': False,
+        'dbtests': False,
         'benchmark': False,
         'packaging': False,
         'coverage': False,
@@ -62,7 +64,7 @@ class Clio(ConanFile):
     )
 
     def requirements(self):
-        if self.options.tests:
+        if self.options.tests or self.options.dbtests:
             self.requires('gtest/1.14.0')
         if self.options.benchmark:
             self.requires('benchmark/1.8.3')
@@ -83,6 +85,7 @@ class Clio(ConanFile):
         tc.variables['verbose'] = self.options.verbose
         tc.variables['static'] = self.options.static
         tc.variables['tests'] = self.options.tests
+        tc.variables['dbtests'] = self.options.dbtests
         tc.variables['coverage'] = self.options.coverage
         tc.variables['lint'] = self.options.lint
         tc.variables['docs'] = self.options.docs

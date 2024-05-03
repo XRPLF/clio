@@ -20,6 +20,7 @@
 #include "data/BackendFactory.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "util/Fixtures.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/TestGlobals.hpp"
 #include "util/config/Config.hpp"
 
@@ -34,7 +35,7 @@ namespace {
 constexpr auto keyspace = "factory_test";
 }  // namespace
 
-class BackendCassandraFactoryTest : public SyncAsioContextTest {
+class BackendCassandraFactoryTest : public SyncAsioContextTest, public util::prometheus::WithPrometheus {
 protected:
     void
     SetUp() override
