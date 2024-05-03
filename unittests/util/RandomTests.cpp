@@ -25,7 +25,6 @@
 #include <cstddef>
 #include <iterator>
 #include <ranges>
-#include <tuple>
 #include <vector>
 
 using namespace util;
@@ -57,7 +56,7 @@ TEST_F(RandomTests, FixedSeed)
     Random::setSeed(42);
     std::vector<int> const v2 = generateRandoms();
 
-    std::ranges::for_each(std::views::zip(v1, v2), [](std::tuple<int, int> const& t) {
-        EXPECT_EQ(std::get<0>(t), std::get<1>(t));
-    });
+    for (auto const& [e1, e2] : std::views::zip(v1, v2)) {
+        EXPECT_EQ(e1, e2);
+    };
 }

@@ -39,6 +39,7 @@
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -118,14 +119,19 @@ public:
 
     /**
      * @brief Load the initial ledger, writing data to the queue.
+     * @note This function will retry indefinitely until the ledger is downloaded.
      *
      * @param sequence Sequence of ledger to download
      * @param cacheOnly Whether to only write to cache and not to the DB; defaults to false
-     * @return A std::pair<std::vector<std::string>, bool> The ledger data and a bool indicating whether the download
-     * was successful
+     * @param retryTime Time to wait between retries (2 seconds by default)
+     * @return A std::vector<std::string> The ledger data
      */
-    std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(uint32_t sequence, bool cacheOnly = false);
+    std::vector<std::string>
+    loadInitialLedger(
+        uint32_t sequence,
+        bool cacheOnly = false,
+        std::chrono::steady_clock::duration retryTime = std::chrono::seconds{2}
+    );
 
     /**
      * @brief Fetch data for a specific ledger.
@@ -136,11 +142,17 @@ public:
      * @param ledgerSequence Sequence of the ledger to fetch
      * @param getObjects Whether to get the account state diff between this ledger and the prior one
      * @param getObjectNeighbors Whether to request object neighbors
+     * @param retryTime Time to wait between retries (2 seconds by default)
      * @return The extracted data, if extraction was successful. If the ledger was found
      * in the database or the server is shutting down, the optional will be empty
      */
     OptionalGetLedgerResponseType
-    fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors);
+    fetchLedger(
+        uint32_t ledgerSequence,
+        bool getObjects,
+        bool getObjectNeighbors,
+        std::chrono::steady_clock::duration retryTime = std::chrono::seconds{2}
+    );
 
     /**
      * @brief Represent the state of this load balancer as a JSON object
@@ -182,12 +194,12 @@ private:
      *
      * @param f Function to execute. This function takes the ETL source as an argument, and returns a bool
      * @param ledgerSequence f is executed for each Source that has this ledger
-     * @return true if f was eventually executed successfully. false if the ledger was found in the database or the
+     * @param retryTime Time to wait between retries (2 seconds by default)
      * server is shutting down
      */
     template <typename Func>
-    bool
-    execute(Func f, uint32_t ledgerSequence);
+    void
+    execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock::duration retryTime = std::chrono::seconds{2});
 
     /**
      * @brief Choose a new source to forward requests

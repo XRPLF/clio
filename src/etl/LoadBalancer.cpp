@@ -24,6 +24,7 @@
 #include "etl/ETLState.hpp"
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
+#include "util/Assert.hpp"
 #include "util/Constants.hpp"
 #include "util/Random.hpp"
 #include "util/log/Logger.hpp"
@@ -85,7 +86,8 @@ LoadBalancer::LoadBalancer(
 
     static constexpr std::uint32_t MAX_DOWNLOAD = 256;
     if (auto value = config.maybeValue<uint32_t>("num_markers"); value) {
-        downloadRanges_ = std::clamp(*value, 1u, MAX_DOWNLOAD);
+        ASSERT(*value > 0 and *value <= MAX_DOWNLOAD, "'num_markers' value in config must be in range 1-256");
+        downloadRanges_ = *value;
     } else if (backend->fetchLedgerRange()) {
         downloadRanges_ = 4;
     }
@@ -154,11 +156,11 @@ LoadBalancer::~LoadBalancer()
     sources_.clear();
 }
 
-std::pair<std::vector<std::string>, bool>
-LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
+std::vector<std::string>
+LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly, std::chrono::steady_clock::duration retryTime)
 {
     std::vector<std::string> response;
-    auto const success = execute(
+    execute(
         [this, &response, &sequence, cacheOnly](auto& source) {
             auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
 
@@ -171,16 +173,22 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
 
             return res;
         },
-        sequence
+        sequence,
+        retryTime
     );
-    return {std::move(response), success};
+    return response;
 }
 
 LoadBalancer::OptionalGetLedgerResponseType
-LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors)
+LoadBalancer::fetchLedger(
+    uint32_t ledgerSequence,
+    bool getObjects,
+    bool getObjectNeighbors,
+    std::chrono::steady_clock::duration retryTime
+)
 {
     GetLedgerResponseType response;
-    bool const success = execute(
+    execute(
         [&response, ledgerSequence, getObjects, getObjectNeighbors, log = log_](auto& source) {
             auto [status, data] = source->fetchLedger(ledgerSequence, getObjects, getObjectNeighbors);
             response = std::move(data);
@@ -195,12 +203,10 @@ LoadBalancer::fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObje
                             << ", source = " << source->toString();
             return false;
         },
-        ledgerSequence
+        ledgerSequence,
+        retryTime
     );
-    if (success) {
-        return response;
-    }
-    return {};
+    return response;
 }
 
 std::optional<boost::json::object>
@@ -216,9 +222,8 @@ LoadBalancer::forwardToRippled(
         }
     }
 
-    std::size_t sourceIdx = 0;
-    if (!sources_.empty())
-        sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
+    ASSERT(not sources_.empty(), "ETL sources must be configured to forward requests.");
+    std::size_t sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
 
     auto numAttempts = 0u;
 
@@ -250,14 +255,13 @@ LoadBalancer::toJson() const
 }
 
 template <typename Func>
-bool
-LoadBalancer::execute(Func f, uint32_t ledgerSequence)
+void
+LoadBalancer::execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock::duration retryTime)
 {
-    std::size_t sourceIdx = 0;
-    if (!sources_.empty())
-        sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
+    ASSERT(not sources_.empty(), "ETL sources must be configured to execute functions.");
+    size_t sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
 
-    auto numAttempts = 0;
+    size_t numAttempts = 0;
 
     while (true) {
         auto& source = sources_[sourceIdx];
@@ -287,10 +291,9 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
         if (numAttempts % sources_.size() == 0) {
             LOG(log_.info()) << "Ledger sequence " << ledgerSequence
                              << " is not yet available from any configured sources. Sleeping and trying again";
-            std::this_thread::sleep_for(std::chrono::seconds(2));
+            std::this_thread::sleep_for(retryTime);
         }
     }
-    return true;
 }
 
 std::optional<ETLState>
