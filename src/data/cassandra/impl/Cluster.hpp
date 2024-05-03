@@ -49,7 +49,7 @@ struct Settings {
      */
     struct ContactPoints {
         std::string contactPoints = "127.0.0.1";  // defaults to localhost
-        std::optional<uint16_t> port = {};
+        std::optional<uint16_t> port;
     };
 
     /**
@@ -87,16 +87,16 @@ struct Settings {
     std::size_t writeBatchSize = DEFAULT_BATCH_SIZE;
 
     /** @brief Size of the IO queue */
-    std::optional<uint32_t> queueSizeIO{};
+    std::optional<uint32_t> queueSizeIO = std::nullopt;  // NOLINT(readability-redundant-member-init)
 
     /** @brief SSL certificate */
-    std::optional<std::string> certificate{};  // ssl context
+    std::optional<std::string> certificate = std::nullopt;  // NOLINT(readability-redundant-member-init)
 
     /** @brief Username/login */
-    std::optional<std::string> username{};
+    std::optional<std::string> username = std::nullopt;  // NOLINT(readability-redundant-member-init)
 
     /** @brief Password to match the `username` */
-    std::optional<std::string> password{};
+    std::optional<std::string> password = std::nullopt;  // NOLINT(readability-redundant-member-init)
 
     /**
      * @brief Creates a new Settings object as a copy of the current one with overridden contact points.
@@ -105,7 +105,7 @@ struct Settings {
     withContactPoints(std::string_view contactPoints)
     {
         auto tmp = *this;
-        tmp.connectionInfo = ContactPoints{std::string{contactPoints}};
+        tmp.connectionInfo = ContactPoints{.contactPoints = std::string{contactPoints}, .port = std::nullopt};
         return tmp;
     }
 

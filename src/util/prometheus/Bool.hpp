@@ -29,12 +29,8 @@ namespace util::prometheus {
 
 template <typename T>
 concept SomeBoolImpl = requires(T a) {
-    {
-        a.set(0)
-    } -> std::same_as<void>;
-    {
-        a.value()
-    } -> std::same_as<int64_t>;
+    { a.set(0) } -> std::same_as<void>;
+    { a.value() } -> std::same_as<int64_t>;
 };
 
 /**

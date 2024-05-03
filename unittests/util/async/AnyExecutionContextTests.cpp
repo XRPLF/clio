@@ -128,7 +128,7 @@ TEST_F(AnyExecutionContextTests, TimerCancellation)
     auto timer = ctx.scheduleAfter(std::chrono::milliseconds{12}, [](auto) { throw 0; });
     static_assert(std::is_same_v<decltype(timer), AnyOperation<void>>);
 
-    timer.cancel();
+    timer.abort();
 }
 
 TEST_F(AnyExecutionContextTests, TimerExecuted)
@@ -162,7 +162,7 @@ TEST_F(AnyExecutionContextTests, TimerWithBoolHandlerCancellation)
     auto timer = ctx.scheduleAfter(std::chrono::milliseconds{12}, [](auto, bool) { throw 0; });
     static_assert(std::is_same_v<decltype(timer), AnyOperation<void>>);
 
-    timer.cancel();
+    timer.abort();
 }
 
 TEST_F(AnyExecutionContextTests, TimerWithBoolHandlerExecuted)

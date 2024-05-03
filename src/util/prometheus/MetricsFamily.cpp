@@ -25,6 +25,7 @@
 #include "util/prometheus/MetricBuilder.hpp"
 #include "util/prometheus/OStream.hpp"
 
+#include <concepts>
 #include <cstdint>
 #include <memory>
 #include <optional>

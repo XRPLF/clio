@@ -33,12 +33,15 @@ using namespace ::testing;
 
 struct AnyOperationTests : Test {
     using OperationType = MockOperation<std::expected<std::any, ExecutionError>>;
+    using StoppableOperationType = MockStoppableOperation<std::expected<std::any, ExecutionError>>;
     using ScheduledOperationType = MockScheduledOperation<std::expected<std::any, ExecutionError>>;
 
     NaggyMock<OperationType> mockOp;
+    NaggyMock<StoppableOperationType> mockStoppableOp;
     NaggyMock<ScheduledOperationType> mockScheduledOp;
 
     AnyOperation<void> voidOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
+    AnyOperation<void> voidStoppableOp{impl::ErasedOperation(static_cast<StoppableOperationType&>(mockStoppableOp))};
     AnyOperation<int> intOp{impl::ErasedOperation(static_cast<OperationType&>(mockOp))};
     AnyOperation<void> scheduledVoidOp{impl::ErasedOperation(static_cast<ScheduledOperationType&>(mockScheduledOp))};
 };
@@ -66,20 +69,21 @@ TEST_F(AnyOperationTests, WaitCallPropagated)
     voidOp.wait();
 }
 
-TEST_F(AnyOperationTests, CancelCallPropagated)
+TEST_F(AnyOperationTests, CancelAndRequestStopCallPropagated)
 {
     StrictMock<MockFunction<void()>> callback;
-    EXPECT_CALL(callback, Call());
+    EXPECT_CALL(callback, Call()).Times(2);
     EXPECT_CALL(mockScheduledOp, cancel()).WillOnce([&] { callback.Call(); });
-    scheduledVoidOp.cancel();
+    EXPECT_CALL(mockScheduledOp, requestStop()).WillOnce([&] { callback.Call(); });
+    scheduledVoidOp.abort();
 }
 
-TEST_F(AnyOperationTests, RequestStopCallPropagated)
+TEST_F(AnyOperationTests, RequestStopCallPropagatedOnStoppableOperation)
 {
     StrictMock<MockFunction<void()>> callback;
     EXPECT_CALL(callback, Call());
-    EXPECT_CALL(mockScheduledOp, requestStop()).WillOnce([&] { callback.Call(); });
-    scheduledVoidOp.requestStop();
+    EXPECT_CALL(mockStoppableOp, requestStop()).WillOnce([&] { callback.Call(); });
+    voidStoppableOp.abort();
 }
 
 TEST_F(AnyOperationTests, GetPropagatesError)
@@ -100,12 +104,7 @@ TEST_F(AnyOperationTests, GetIncorrectDataReturnsError)
     EXPECT_TRUE(std::string{res.error()}.ends_with("Bad any cast"));
 }
 
-TEST_F(AnyOperationDeathTest, CallRequestStopOnNonStoppableOperation)
+TEST_F(AnyOperationDeathTest, CallAbortOnNonStoppableOrCancellableOperation)
 {
-    EXPECT_DEATH(voidOp.requestStop(), ".*");
-}
-
-TEST_F(AnyOperationDeathTest, CallCancelForNonCancellableOperation)
-{
-    EXPECT_DEATH(voidOp.cancel(), ".*");
+    EXPECT_DEATH(voidOp.abort(), ".*");
 }

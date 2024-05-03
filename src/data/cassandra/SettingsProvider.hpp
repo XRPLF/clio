@@ -58,7 +58,7 @@ public:
     /**
      * @return The specified keyspace
      */
-    [[nodiscard]] inline std::string
+    [[nodiscard]] std::string
     getKeyspace() const
     {
         return keyspace_;
@@ -67,7 +67,7 @@ public:
     /**
      * @return The optional table prefix to use in all queries
      */
-    [[nodiscard]] inline std::optional<std::string>
+    [[nodiscard]] std::optional<std::string>
     getTablePrefix() const
     {
         return tablePrefix_;
@@ -76,7 +76,7 @@ public:
     /**
      * @return The replication factor
      */
-    [[nodiscard]] inline uint16_t
+    [[nodiscard]] uint16_t
     getReplicationFactor() const
     {
         return replicationFactor_;

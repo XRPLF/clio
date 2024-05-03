@@ -292,7 +292,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
@@ -437,7 +437,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV1)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
@@ -592,7 +592,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
@@ -626,7 +626,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
@@ -669,7 +669,7 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexNotSpecificForwardFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
@@ -712,7 +712,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV1)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
@@ -768,7 +768,7 @@ TEST_F(RPCNFTHistoryHandlerTest, BinaryTrueV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
@@ -821,7 +821,7 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitAndMarker)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
@@ -871,7 +871,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index":{}
@@ -899,7 +899,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerIntIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index":{}
@@ -924,7 +924,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificNonexistLedgerStringIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index":"{}"
@@ -966,7 +966,7 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_hash":"{}"
@@ -1006,7 +1006,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLessThanMinSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
@@ -1049,7 +1049,7 @@ TEST_F(RPCNFTHistoryHandlerTest, TxLargerThanMaxSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},
@@ -1092,7 +1092,7 @@ TEST_F(RPCNFTHistoryHandlerTest, LimitMoreThanMax)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "nft_id":"{}",
                 "ledger_index_min": {},

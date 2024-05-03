@@ -561,7 +561,7 @@ public:
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res) {
             if (auto const result = res->template get<Blob>(); result) {
                 if (result->size())
-                    return *result;
+                    return result;
             } else {
                 LOG(log_.debug()) << "Could not fetch ledger object - no rows";
             }
@@ -597,7 +597,7 @@ public:
             if (auto const result = res->template get<ripple::uint256>(); result) {
                 if (*result == lastKey)
                     return std::nullopt;
-                return *result;
+                return result;
             }
 
             LOG(log_.debug()) << "Could not fetch successor - no rows";
@@ -777,9 +777,7 @@ public:
             std::cend(keys),
             std::cbegin(objs),
             std::back_inserter(results),
-            [](auto const& key, auto const& obj) {
-                return LedgerObject{key, obj};
-            }
+            [](auto const& key, auto const& obj) { return LedgerObject{key, obj}; }
         );
 
         return results;
@@ -799,8 +797,8 @@ public:
     void
     writeSuccessor(std::string&& key, std::uint32_t const seq, std::string&& successor) override
     {
-        LOG(log_.trace()) << "Writing successor. key = " << key.size() << " bytes. "
-                          << " seq = " << std::to_string(seq) << " successor = " << successor.size() << " bytes.";
+        LOG(log_.trace()) << "Writing successor. key = " << key.size() << " bytes. " << " seq = " << std::to_string(seq)
+                          << " successor = " << successor.size() << " bytes.";
         ASSERT(!key.empty(), "Key must not be empty");
         ASSERT(!successor.empty(), "Successor must not be empty");
 

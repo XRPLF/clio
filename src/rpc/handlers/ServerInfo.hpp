@@ -87,10 +87,10 @@ public:
      * @brief A struct to hold the admin section of the output
      */
     struct AdminSection {
-        boost::json::object counters = {};
-        std::optional<boost::json::object> backendCounters = {};
-        boost::json::object subscriptions = {};
-        boost::json::object etl = {};
+        boost::json::object counters;
+        std::optional<boost::json::object> backendCounters;
+        boost::json::object subscriptions;
+        boost::json::object etl;
     };
 
     /**
@@ -98,7 +98,7 @@ public:
      */
     struct ValidatedLedgerSection {
         uint32_t age = 0;
-        std::string hash = {};
+        std::string hash;
         ripple::LedgerIndex seq = {};
         std::optional<ripple::Fees> fees = std::nullopt;
     };
@@ -120,7 +120,7 @@ public:
      */
     struct InfoSection {
         std::optional<AdminSection> adminSection = std::nullopt;
-        std::string completeLedgers = {};
+        std::string completeLedgers;
         uint32_t loadFactor = 1u;
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         std::chrono::seconds uptime = {};

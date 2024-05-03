@@ -124,7 +124,8 @@ LoadBalancer::LoadBalancer(
                 "Failed to fetch ETL state from source = {} Please check the configuration and network",
                 source->toString()
             ));
-        } else if (etlState_ && etlState_->networkID && stateOpt->networkID && etlState_->networkID != stateOpt->networkID) {
+        } else if (etlState_ && etlState_->networkID && stateOpt->networkID &&
+                   etlState_->networkID != stateOpt->networkID) {
             checkOnETLFailure(fmt::format(
                 "ETL sources must be on the same network. Source network id = {} does not match others network id = {}",
                 *(stateOpt->networkID),
@@ -162,8 +163,8 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly)
             auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
 
             if (!res) {
-                LOG(log_.error()) << "Failed to download initial ledger."
-                                  << " Sequence = " << sequence << " source = " << source->toString();
+                LOG(log_.error()) << "Failed to download initial ledger." << " Sequence = " << sequence
+                                  << " source = " << source->toString();
             } else {
                 response = std::move(data);
             }
@@ -285,8 +286,7 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence)
         numAttempts++;
         if (numAttempts % sources_.size() == 0) {
             LOG(log_.info()) << "Ledger sequence " << ledgerSequence
-                             << " is not yet available from any configured sources. "
-                             << "Sleeping and trying again";
+                             << " is not yet available from any configured sources. Sleeping and trying again";
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }
     }

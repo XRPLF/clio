@@ -32,9 +32,7 @@ namespace util::async {
  */
 template <typename T>
 concept SomeStoppable = requires(T v) {
-    {
-        v.requestStop()
-    } -> std::same_as<void>;
+    { v.requestStop() } -> std::same_as<void>;
 };
 
 /**
@@ -42,9 +40,7 @@ concept SomeStoppable = requires(T v) {
  */
 template <typename T>
 concept SomeCancellable = requires(T v) {
-    {
-        v.cancel()
-    } -> std::same_as<void>;
+    { v.cancel() } -> std::same_as<void>;
 };
 
 /**
@@ -52,12 +48,8 @@ concept SomeCancellable = requires(T v) {
  */
 template <typename T>
 concept SomeOperation = requires(T v) {
-    {
-        v.wait()
-    } -> std::same_as<void>;
-    {
-        v.get()
-    };
+    { v.wait() } -> std::same_as<void>;
+    { v.get() };
 };
 
 /**
@@ -77,9 +69,7 @@ concept SomeCancellableOperation = SomeOperation<T> and SomeCancellable<T>;
  */
 template <typename T>
 concept SomeOutcome = requires(T v) {
-    {
-        v.getOperation()
-    } -> SomeOperation;
+    { v.getOperation() } -> SomeOperation;
 };
 
 /**
@@ -87,9 +77,7 @@ concept SomeOutcome = requires(T v) {
  */
 template <typename T>
 concept SomeStopToken = requires(T v) {
-    {
-        v.isStopRequested()
-    } -> std::same_as<bool>;
+    { v.isStopRequested() } -> std::same_as<bool>;
 };
 
 /**
@@ -97,9 +85,7 @@ concept SomeStopToken = requires(T v) {
  */
 template <typename T>
 concept SomeYieldStopSource = requires(T v, boost::asio::yield_context yield) {
-    {
-        v[yield]
-    } -> SomeStopToken;
+    { v[yield] } -> SomeStopToken;
 };
 
 /**
@@ -107,25 +93,21 @@ concept SomeYieldStopSource = requires(T v, boost::asio::yield_context yield) {
  */
 template <typename T>
 concept SomeSimpleStopSource = requires(T v) {
-    {
-        v.getToken()
-    } -> SomeStopToken;
+    { v.getToken() } -> SomeStopToken;
 };
 
 /**
  * @brief Specifies the interface for a stop source
  */
 template <typename T>
-concept SomeStopSource = (SomeSimpleStopSource<T> or SomeYieldStopSource<T>)and SomeStoppable<T>;
+concept SomeStopSource = (SomeSimpleStopSource<T> or SomeYieldStopSource<T>) and SomeStoppable<T>;
 
 /**
  * @brief Specifies the interface for a provider of stop sources
  */
 template <typename T>
 concept SomeStopSourceProvider = requires(T v) {
-    {
-        v.getStopSource()
-    } -> SomeStopSource;
+    { v.getStopSource() } -> SomeStopSource;
 };
 
 /**
@@ -139,9 +121,7 @@ concept SomeStoppableOutcome = SomeOutcome<T> and SomeStopSourceProvider<T>;
  */
 template <typename T>
 concept SomeHandlerWithoutStopToken = requires(T fn) {
-    {
-        std::invoke(fn)
-    };
+    { std::invoke(fn) };
 };
 
 /**
@@ -149,9 +129,7 @@ concept SomeHandlerWithoutStopToken = requires(T fn) {
  */
 template <typename T, typename... Args>
 concept SomeHandlerWith = requires(T fn) {
-    {
-        std::invoke(fn, std::declval<Args>()...)
-    };
+    { std::invoke(fn, std::declval<Args>()...) };
 };
 
 /**

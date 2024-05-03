@@ -40,7 +40,6 @@
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AMMCore.h>
 #include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Issue.h>
 #include <ripple/protocol/LedgerHeader.h>
