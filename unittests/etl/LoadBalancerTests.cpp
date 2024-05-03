@@ -73,7 +73,7 @@ struct LoadBalancerConstructorTests : util::prometheus::WithPrometheus, MockBack
     }
 };
 
-TEST_F(LoadBalancerConstructorTests, Construct)
+TEST_F(LoadBalancerConstructorTests, construct)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
@@ -82,14 +82,14 @@ TEST_F(LoadBalancerConstructorTests, Construct)
     makeLoadBalancer();
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLStateFromSource0Failed)
+TEST_F(LoadBalancerConstructorTests, fetchETLState_Source0Fails)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(std::nullopt));
     EXPECT_CALL(sourceFactory_.sourceAt(0), toString);
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLStateFromSource0ReturnedError)
+TEST_F(LoadBalancerConstructorTests, fetchETLState_Source0ReturnsError)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
         .WillOnce(Return(boost::json::object{{"error", "some error"}}));
@@ -97,7 +97,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLStateFromSource0ReturnedError)
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLStateFromSource1Failed)
+TEST_F(LoadBalancerConstructorTests, fetchETLState_Source1Fails)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(std::nullopt));
@@ -105,7 +105,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLStateFromSource1Failed)
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLStateFromSourceDifferentNetworkID)
+TEST_F(LoadBalancerConstructorTests, fetchETLState_DifferentNetworkID)
 {
     auto const source1Json = boost::json::parse(R"({"result": {"info": {"network_id": 0}}})");
     auto const source2Json = boost::json::parse(R"({"result": {"info": {"network_id": 1}}})");
@@ -115,7 +115,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLStateFromSourceDifferentNetworkID)
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLStateFromSourceFailedButAllowNoEtlIsTrue)
+TEST_F(LoadBalancerConstructorTests, fetchETLState_Source1FailsButAllowNoEtlIsTrue)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
@@ -127,7 +127,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLStateFromSourceFailedButAllowNoEtlI
     makeLoadBalancer();
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLStateFromSourceDifferentNetworkIDButAllowNoEtlIsTrue)
+TEST_F(LoadBalancerConstructorTests, fetchETLState_DifferentNetworkIDButAllowNoEtlIsTrue)
 {
     auto const source1Json = boost::json::parse(R"({"result": {"info": {"network_id": 0}}})");
     auto const source2Json = boost::json::parse(R"({"result": {"info": {"network_id": 1}}})");
@@ -222,7 +222,7 @@ struct LoadBalancerOnDisconnectHookTests : LoadBalancerOnConnectHookTests {
     }
 };
 
-TEST_F(LoadBalancerOnDisconnectHookTests, source0Disconnected)
+TEST_F(LoadBalancerOnDisconnectHookTests, source0Disconnects)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false));
@@ -231,7 +231,7 @@ TEST_F(LoadBalancerOnDisconnectHookTests, source0Disconnected)
     sourceFactory_.callbacksAt(0).onDisconnect();
 }
 
-TEST_F(LoadBalancerOnDisconnectHookTests, source1Disconnected)
+TEST_F(LoadBalancerOnDisconnectHookTests, source1Disconnects)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(true));
@@ -239,7 +239,7 @@ TEST_F(LoadBalancerOnDisconnectHookTests, source1Disconnected)
     sourceFactory_.callbacksAt(1).onDisconnect();
 }
 
-TEST_F(LoadBalancerOnDisconnectHookTests, source0DisconnectedAndConnectedBack)
+TEST_F(LoadBalancerOnDisconnectHookTests, source0DisconnectsAndConnectsBack)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false));
@@ -250,7 +250,7 @@ TEST_F(LoadBalancerOnDisconnectHookTests, source0DisconnectedAndConnectedBack)
     sourceFactory_.callbacksAt(0).onConnect();
 }
 
-TEST_F(LoadBalancerOnDisconnectHookTests, source1DisconnectedAndConnectedBack)
+TEST_F(LoadBalancerOnDisconnectHookTests, source1DisconnectsAndConnectsBack)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(true));
@@ -260,7 +260,7 @@ TEST_F(LoadBalancerOnDisconnectHookTests, source1DisconnectedAndConnectedBack)
     sourceFactory_.callbacksAt(1).onConnect();
 }
 
-TEST_F(LoadBalancerOnConnectHookTests, bothSourcesDisconnectsAndConnectsBack)
+TEST_F(LoadBalancerOnConnectHookTests, bothSourcesDisconnectAndConnectBack)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).Times(2).WillRepeatedly(Return(false));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false)).Times(2);
@@ -293,7 +293,7 @@ struct LoadBalancer3SourcesTests : LoadBalancerConstructorTests {
     std::unique_ptr<LoadBalancer> loadBalancer_;
 };
 
-TEST_F(LoadBalancer3SourcesTests, ForwardingUpdate)
+TEST_F(LoadBalancer3SourcesTests, forwardingUpdate)
 {
     // Source 2 is connected first
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(false));
@@ -358,7 +358,7 @@ TEST_F(LoadBalancerLoadInitialLedgerTests, load_bothSourcesDontHaveLedger)
     EXPECT_EQ(loadBalancer_->loadInitialLedger(sequence_, cacheOnly_, std::chrono::milliseconds{1}), response_.first);
 }
 
-TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0ReturnedStatusFalse)
+TEST_F(LoadBalancerLoadInitialLedgerTests, load_source0ReturnsStatusFalse)
 {
     EXPECT_CALL(sourceFactory_.sourceAt(0), hasLedger(sequence_)).WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(0), loadInitialLedger(sequence_, numMarkers_, cacheOnly_))
@@ -417,7 +417,7 @@ TEST_F(LoadBalancerFetchLegerTests, fetch)
     EXPECT_TRUE(loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value());
 }
 
-TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnedBadStatus)
+TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnsBadStatus)
 {
     auto source0Response = response_;
     source0Response.first = grpc::Status::CANCELLED;
@@ -433,7 +433,7 @@ TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnedBadStatus)
     EXPECT_TRUE(loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value());
 }
 
-TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnedNotValidated)
+TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnsNotValidated)
 {
     auto source0Response = response_;
     source0Response.second.set_validated(false);
@@ -449,7 +449,7 @@ TEST_F(LoadBalancerFetchLegerTests, fetch_Source0ReturnedNotValidated)
     EXPECT_TRUE(loadBalancer_->fetchLedger(sequence_, getObjects_, getObjectNeighbors_).has_value());
 }
 
-TEST_F(LoadBalancerFetchLegerTests, fetch_bothSourcesFailed)
+TEST_F(LoadBalancerFetchLegerTests, fetch_bothSourcesFail)
 {
     auto badResponse = response_;
     badResponse.second.set_validated(false);
@@ -493,7 +493,7 @@ TEST_F(LoadBalancerForwardToRippledTests, forward)
     });
 }
 
-TEST_F(LoadBalancerForwardToRippledTests, source0Failed)
+TEST_F(LoadBalancerForwardToRippledTests, source0Fails)
 {
     auto loadBalancer = makeLoadBalancer();
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled(request_, clientIP_, testing::_))
@@ -506,7 +506,7 @@ TEST_F(LoadBalancerForwardToRippledTests, source0Failed)
     });
 }
 
-TEST_F(LoadBalancerForwardToRippledTests, bothSourcesFailed)
+TEST_F(LoadBalancerForwardToRippledTests, bothSourcesFail)
 {
     auto loadBalancer = makeLoadBalancer();
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled(request_, clientIP_, testing::_))
