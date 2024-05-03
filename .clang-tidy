@@ -144,5 +144,5 @@ CheckOptions:
   bugprone-unused-return-value.CheckedReturnTypes: ::std::error_code;::std::error_condition;::std::errc
   misc-include-cleaner.IgnoreHeaders: '.*/(detail|impl)/.*;.*(expected|unexpected).*'
 
-HeaderFilterRegex: '^.*/(src|unittests)/.*\.(h|hpp)$'
+HeaderFilterRegex: '^.*/(src|tests)/.*\.(h|hpp)$'
 WarningsAsErrors: '*'

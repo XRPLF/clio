@@ -1,6 +1,6 @@
-# DB functional testing
+# Integration testing
 
-Tests that hit the real database are separate from the unit test suite found under `unittests`.
+Tests that hit the real database are separate from the unit test suite found under `tests/unit`.
 
 ## Requirements
 ### Cassandra/ScyllaDB cluster

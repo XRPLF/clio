@@ -164,7 +164,7 @@ if (coverage)
     --gtest_brief=1
     ${TESTS_ADDITIONAL_ARGS}
     EXCLUDE
-    "unittests"
+    "tests"
     DEPENDENCIES
     clio_tests
   )

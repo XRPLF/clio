@@ -36,7 +36,7 @@
 #include <string>
 #include <thread>
 
-namespace unittests::util {
+namespace tests::util {
 
 struct MockXrpLedgerAPIService final : public org::xrpl::rpc::v1::XRPLedgerAPIService::Service {
     ~MockXrpLedgerAPIService() override = default;
@@ -101,4 +101,4 @@ private:
     std::thread serverThread_;
 };
 
-}  // namespace unittests::util
+}  // namespace tests::util
