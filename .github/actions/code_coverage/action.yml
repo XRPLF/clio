@@ -6,12 +6,12 @@ runs:
     - name: Run tests
       shell: bash
       run: |
-        build/clio_tests --backend_host=scylladb
+        build/clio_tests
 
     - name: Run gcovr
       shell: bash
       run: |
-        gcovr -e tests --xml build/coverage_report.xml -j8 --exclude-throw-branches
+        gcovr -e tests -e src/data/cassandra --xml build/coverage_report.xml -j8 --exclude-throw-branches
 
     - name: Archive coverage report
       uses: actions/upload-artifact@v4

@@ -121,7 +121,7 @@ jobs:
       - name: Run clio_dbtests
         run: |
           chmod +x ./clio_dbtests
-          ./clio_dbtests
+          ./clio_dbtests --backend_host=scylladb
 
   nightly_release:
     needs: run_tests
