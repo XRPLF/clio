@@ -146,8 +146,8 @@ using SourceFactory = std::function<SourcePtr(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
-    SourceBase::OnDisconnectHook onDisconnect,
     SourceBase::OnConnectHook onConnect,
+    SourceBase::OnDisconnectHook onDisconnect,
     SourceBase::OnLedgerClosedHook onLedgerClosed
 )>;
 
@@ -159,8 +159,8 @@ using SourceFactory = std::function<SourcePtr(
  * @param backend BackendInterface implementation
  * @param subscriptions Subscription manager
  * @param validatedLedgers The network validated ledgers data structure
- * @param onDisconnect The hook to call on disconnect
  * @param onConnect The hook to call on connect
+ * @param onDisconnect The hook to call on disconnect
  * @param onLedgerClosed The hook to call on ledger closed. This is called when a ledger is closed and the source is set
  * as forwarding.
  * @return The created source
@@ -172,8 +172,8 @@ make_Source(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
-    SourceBase::OnDisconnectHook onDisconnect,
     SourceBase::OnConnectHook onConnect,
+    SourceBase::OnDisconnectHook onDisconnect,
     SourceBase::OnLedgerClosedHook onLedgerClosed
 );
 

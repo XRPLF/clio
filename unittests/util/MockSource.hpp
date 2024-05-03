@@ -166,8 +166,8 @@ public:
         std::shared_ptr<BackendInterface>,
         std::shared_ptr<feed::SubscriptionManagerInterface>,
         std::shared_ptr<etl::NetworkValidatedLedgersInterface>,
-        etl::SourceBase::OnDisconnectHook onDisconnect,
         etl::SourceBase::OnConnectHook onConnect,
+        etl::SourceBase::OnDisconnectHook onDisconnect,
         etl::SourceBase::OnLedgerClosedHook onLedgerClosed
     )
     {
@@ -188,7 +188,7 @@ public:
     callbacksAt(size_t index)
     {
         auto& callbacks = mockData_.at(index).callbacks;
-        [this]() { ASSERT_TRUE(callbacks.has_value()) << "Callbacks not set"; }();
+        [&]() { ASSERT_TRUE(callbacks.has_value()) << "Callbacks not set"; }();
         return *callbacks;
     }
 };

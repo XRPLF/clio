@@ -43,8 +43,8 @@ make_Source(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
-    SourceBase::OnDisconnectHook onDisconnect,
     SourceBase::OnConnectHook onConnect,
+    SourceBase::OnDisconnectHook onDisconnect,
     SourceBase::OnLedgerClosedHook onLedgerClosed
 )
 {

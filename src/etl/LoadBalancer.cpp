@@ -308,10 +308,11 @@ LoadBalancer::chooseForwardingSource()
 {
     hasForwardingSource_ = false;
     for (auto& source : sources_) {
-        if (source->isConnected()) {
+        if (not hasForwardingSource_ and source->isConnected()) {
             source->setForwarding(true);
             hasForwardingSource_ = true;
-            return;
+        } else {
+            source->setForwarding(false);
         }
     }
 }

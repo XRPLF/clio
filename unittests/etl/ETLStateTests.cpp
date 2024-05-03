@@ -76,3 +76,15 @@ TEST_F(ETLStateTest, NetworkIdInvalid)
     ASSERT_TRUE(state.has_value());
     EXPECT_FALSE(state->networkID.has_value());
 }
+
+TEST_F(ETLStateTest, ResponseHasError)
+{
+    auto const json = json::parse(
+        R"JSON({
+            "error": "error"
+        })JSON"
+    );
+    EXPECT_CALL(source, forwardToRippled).WillOnce(Return(json.as_object()));
+    auto const state = etl::ETLState::fetchETLStateFromSource(source);
+    EXPECT_FALSE(state.has_value());
+}
