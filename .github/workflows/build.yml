@@ -134,7 +134,7 @@ jobs:
 
       - name: Strip tests
         if: ${{ !matrix.code_coverage }}
-        run: strip build/clio_tests
+        run: strip build/clio_tests && strip build/clio_integration_tests
 
       - name: Upload clio_server
         uses: actions/upload-artifact@v4
@@ -147,7 +147,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ steps.conan.outputs.conan_profile }}
-          path: build/clio_tests
+          path: build/clio_*tests
 
       - name: Save cache
         uses: ./.github/actions/save_cache

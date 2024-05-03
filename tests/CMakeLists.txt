@@ -7,7 +7,7 @@ if (coverage)
   append_coverage_compiler_flags_to_target(clio_options INTERFACE)
 endif ()
 
-if (tests OR dbtests)
+if (tests OR integration_tests)
   add_subdirectory(common)
 endif ()
 
@@ -15,6 +15,6 @@ if (tests)
   add_subdirectory(unit)
 endif ()
 
-if (dbtests)
+if (integration_tests)
   add_subdirectory(integration)
 endif ()

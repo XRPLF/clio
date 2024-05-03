@@ -118,10 +118,10 @@ jobs:
           chmod +x ./clio_tests
           ./clio_tests
   
-      - name: Run clio_dbtests
+      - name: Run clio_integration_tests
         run: |
-          chmod +x ./clio_dbtests
-          ./clio_dbtests --backend_host=scylladb
+          chmod +x ./clio_integration_tests
+          ./clio_integration_tests --backend_host=scylladb
 
   nightly_release:
     needs: run_tests
@@ -143,7 +143,7 @@ jobs:
         run: |
           cp ${{ github.workspace }}/.github/workflows/nightly_notes.md "${RUNNER_TEMP}/nightly_notes.md"
           cd nightly_release
-          rm -r clio_tests*
+          rm -r clio_*tests*
           for d in $(ls); do
             archive_name=$(ls $d)
             mv ${d}/${archive_name} ./
