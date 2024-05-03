@@ -95,6 +95,15 @@ jobs:
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
+    services:
+      scylladb:
+        image: 'scylladb/scylla'
+        options: >-
+          --health-cmd "cqlsh -e 'describe cluster'" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
     steps:
       - name: Clean workdir
         if: ${{ runner.os == 'macOS' }}
@@ -107,7 +116,12 @@ jobs:
       - name: Run clio_tests
         run: |
           chmod +x ./clio_tests
-          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+          ./clio_tests
+  
+      - name: Run clio_dbtests
+        run: |
+          chmod +x ./clio_dbtests
+          ./clio_dbtests
 
   nightly_release:
     needs: run_tests
