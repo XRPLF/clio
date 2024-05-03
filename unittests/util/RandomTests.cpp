@@ -24,7 +24,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
-#include <ranges>
 #include <vector>
 
 using namespace util;
@@ -56,7 +55,8 @@ TEST_F(RandomTests, FixedSeed)
     Random::setSeed(42);
     std::vector<int> const v2 = generateRandoms();
 
-    for (auto const& [e1, e2] : std::views::zip(v1, v2)) {
-        EXPECT_EQ(e1, e2);
+    ASSERT_EQ(v1.size(), v2.size());
+    for (size_t i = 0; i < v1.size(); ++i) {
+        EXPECT_EQ(v1[i], v2[i]);
     };
 }
