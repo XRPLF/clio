@@ -172,11 +172,6 @@ public:
             if (--numRows == 0) {
                 LOG(log_.debug()) << "Setting cursor";
                 cursor = data;
-
-                // forward queries by ledger/tx sequence `>=`
-                // so we have to advance the index by one
-                if (forward)
-                    ++cursor->transactionIndex;
             }
         }
 
