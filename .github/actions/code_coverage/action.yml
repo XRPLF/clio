@@ -11,7 +11,11 @@ runs:
     - name: Run gcovr
       shell: bash
       run: |
-        gcovr -e tests -e src/data/cassandra --xml build/coverage_report.xml -j8 --exclude-throw-branches
+        gcovr -e tests \
+          -e src/data/cassandra \
+          -e src/data/CassandraBackend.hpp \
+          -e 'src/data/BackendFactory.*' \
+          --xml build/coverage_report.xml -j8 --exclude-throw-branches
 
     - name: Archive coverage report
       uses: actions/upload-artifact@v4
