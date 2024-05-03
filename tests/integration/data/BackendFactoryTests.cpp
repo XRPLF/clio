@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "TestGlobals.hpp"
 #include "data/BackendFactory.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/config/Config.hpp"
 
+#include <TestGlobals.hpp>
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>

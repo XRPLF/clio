@@ -2,12 +2,9 @@ add_executable(clio_dbtests)
 
 target_sources(
   clio_dbtests
-  PRIVATE data/BackendFactoryTests.cpp
-          data/cassandra/BackendTests.cpp
-          data/cassandra/BaseTests.cpp
+  PRIVATE data/BackendFactoryTests.cpp data/cassandra/BackendTests.cpp data/cassandra/BaseTests.cpp
           # Test runner
-          TestGlobals.cpp
-          Main.cpp
+          TestGlobals.cpp Main.cpp
 )
 
 # Fix for dwarf5 bug on ci. IS STILL NEEDED???

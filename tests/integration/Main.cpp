@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "TestGlobals.hpp"
 #include "util/TerminationHandler.hpp"
 
+#include <TestGlobals.hpp>
 #include <gtest/gtest.h>
 
 /*

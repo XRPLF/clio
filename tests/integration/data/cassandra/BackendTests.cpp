@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "TestGlobals.hpp"
 #include "data/BackendInterface.hpp"
 #include "data/CassandraBackend.hpp"
 #include "data/DBHelpers.hpp"
@@ -33,6 +32,7 @@
 #include "util/StringUtils.hpp"
 #include "util/config/Config.hpp"
 
+#include <TestGlobals.hpp>
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>

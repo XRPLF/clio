@@ -17,11 +17,11 @@
 */
 //==============================================================================
 
-#include "TestGlobals.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Types.hpp"
 #include "util/Fixtures.hpp"
 
+#include <TestGlobals.hpp>
 #include <cassandra.h>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
