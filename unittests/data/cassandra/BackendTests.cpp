@@ -625,7 +625,7 @@ TEST_F(BackendCassandraTest, Basic)
                     std::move(meta)
                 );
             }
-            for (auto [key, obj] : objs) {
+            for (auto const& [key, obj] : objs) {
                 backend->writeLedgerObject(std::string{key}, lgrInfo.seq, std::string{obj});
             }
             if (state.count(lgrInfo.seq - 1) == 0 ||
@@ -819,8 +819,8 @@ TEST_F(BackendCassandraTest, Basic)
         auto flatten = [&](uint32_t max) {
             std::vector<std::pair<std::string, std::string>> flat;
             std::map<std::string, std::string> objs;
-            for (auto [seq, diff] : state) {
-                for (auto [k, v] : diff) {
+            for (auto const& [seq, diff] : state) {
+                for (auto const& [k, v] : diff) {
                     if (seq > max) {
                         if (!objs.contains(k))
                             objs[k] = "";
@@ -830,7 +830,7 @@ TEST_F(BackendCassandraTest, Basic)
                 }
             }
             flat.reserve(objs.size());
-            for (auto [key, value] : objs) {
+            for (auto const& [key, value] : objs) {
                 flat.emplace_back(key, value);
             }
             return flat;
@@ -839,7 +839,7 @@ TEST_F(BackendCassandraTest, Basic)
         auto flattenAccountTx = [&](uint32_t max) {
             std::unordered_map<ripple::AccountID, std::vector<std::tuple<std::string, std::string, std::string>>>
                 accountTx;
-            for (auto [seq, map] : allAccountTx) {
+            for (auto const& [seq, map] : allAccountTx) {
                 if (seq > max)
                     break;
                 for (auto& [account, hashes] : map) {
@@ -854,7 +854,7 @@ TEST_F(BackendCassandraTest, Basic)
             return accountTx;
         };
 
-        for (auto [seq, diff] : state) {
+        for (auto const& [seq, diff] : state) {
             auto flat = flatten(seq);
             checkLedger(lgrInfos[seq], allTxns[seq], flat, flattenAccountTx(seq));
         }
@@ -1234,8 +1234,8 @@ TEST_F(BackendCassandraTest, CacheIntegration)
         auto flatten = [&](uint32_t max) {
             std::vector<std::pair<std::string, std::string>> flat;
             std::map<std::string, std::string> objs;
-            for (auto [seq, diff] : state) {
-                for (auto [k, v] : diff) {
+            for (auto const& [seq, diff] : state) {
+                for (auto const& [k, v] : diff) {
                     if (seq > max) {
                         if (!objs.contains(k))
                             objs[k] = "";
@@ -1245,13 +1245,13 @@ TEST_F(BackendCassandraTest, CacheIntegration)
                 }
             }
             flat.reserve(objs.size());
-            for (auto [key, value] : objs) {
+            for (auto const& [key, value] : objs) {
                 flat.emplace_back(key, value);
             }
             return flat;
         };
 
-        for (auto [seq, diff] : state) {
+        for (auto const& [seq, diff] : state) {
             auto flat = flatten(seq);
             checkLedger(lgrInfos[seq], flat);
         }

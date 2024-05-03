@@ -132,7 +132,8 @@ ETLService::monitor()
             }
         } catch (std::runtime_error const& e) {
             LOG(log_.fatal()) << "Failed to load initial ledger: " << e.what();
-            return amendmentBlockHandler_.onAmendmentBlock();
+            amendmentBlockHandler_.onAmendmentBlock();
+            return;
         }
 
         if (ledger) {
@@ -152,7 +153,7 @@ ETLService::monitor()
     ASSERT(rng.has_value(), "Ledger range can't be null");
     uint32_t nextSequence = rng->maxSequence + 1;
 
-    LOG(log_.debug()) << "Database is populated. " << "Starting monitor loop. sequence = " << nextSequence;
+    LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
 
     while (not isStopping()) {
         nextSequence = publishNextSequence(nextSequence);
@@ -205,7 +206,7 @@ ETLService::monitorReadOnly()
 
         if (!rng) {
             if (auto net = networkValidatedLedgers_->getMostRecent()) {
-                return *net;
+                return net;
             }
             return std::nullopt;
         }

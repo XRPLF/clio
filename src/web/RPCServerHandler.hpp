@@ -151,7 +151,9 @@ private:
             if (!range) {
                 // for error that happened before the handler, we don't attach any warnings
                 rpcEngine_->notifyNotReady();
-                return web::impl::ErrorHelper(connection, std::move(request)).sendNotReadyError();
+                web::impl::ErrorHelper(connection, std::move(request)).sendNotReadyError();
+
+                return;
             }
 
             auto const context = [&] {
@@ -185,7 +187,9 @@ private:
                 // we count all those as BadSyntax - as the WS path would.
                 // Although over HTTP these will yield a 400 status with a plain text response (for most).
                 rpcEngine_->notifyBadSyntax();
-                return web::impl::ErrorHelper(connection, std::move(request)).sendError(err);
+                web::impl::ErrorHelper(connection, std::move(request)).sendError(err);
+
+                return;
             }
 
             auto [result, timeDiff] = util::timed([&]() { return rpcEngine_->buildResponse(*context); });
@@ -262,7 +266,9 @@ private:
             LOG(log_.error()) << connection->tag() << "Caught exception: " << ex.what();
 
             rpcEngine_->notifyInternalError();
-            return web::impl::ErrorHelper(connection, std::move(request)).sendInternalError();
+            web::impl::ErrorHelper(connection, std::move(request)).sendInternalError();
+
+            return;
         }
     }
 

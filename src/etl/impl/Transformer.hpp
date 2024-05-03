@@ -158,7 +158,7 @@ private:
                 auto const end = std::chrono::system_clock::now();
                 auto const duration = ((end - start).count()) / 1000000000.0;
 
-                LOG(log_.info()) << "Load phase of etl : " << "Successfully wrote ledger! Ledger info: "
+                LOG(log_.info()) << "Load phase of ETL. Successfully wrote ledger! Ledger info: "
                                  << util::toString(lgrInfo) << ". txn count = " << numTxns
                                  << ". object count = " << numObjects << ". load time = " << duration
                                  << ". load txns per second = " << numTxns / duration

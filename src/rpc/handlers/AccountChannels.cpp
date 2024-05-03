@@ -31,7 +31,6 @@
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerFormats.h>
 #include <ripple/protocol/LedgerHeader.h>
@@ -67,16 +66,16 @@ AccountChannelsHandler::addChannel(std::vector<ChannelResponse>& jsonChannels, r
     }
 
     if (auto const& v = channelSle[~ripple::sfExpiration])
-        channel.expiration = *v;
+        channel.expiration = v;
 
     if (auto const& v = channelSle[~ripple::sfCancelAfter])
-        channel.cancelAfter = *v;
+        channel.cancelAfter = v;
 
     if (auto const& v = channelSle[~ripple::sfSourceTag])
-        channel.sourceTag = *v;
+        channel.sourceTag = v;
 
     if (auto const& v = channelSle[~ripple::sfDestinationTag])
-        channel.destinationTag = *v;
+        channel.destinationTag = v;
 
     jsonChannels.push_back(channel);
 }

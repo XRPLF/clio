@@ -34,7 +34,7 @@ namespace http = boost::beast::http;
 class IPAdminVerificationStrategyTest : public NoLoggerFixture {
 protected:
     web::impl::IPAdminVerificationStrategy strat_;
-    http::request<http::string_body> request_ = {};
+    http::request<http::string_body> request_;
 };
 
 TEST_F(IPAdminVerificationStrategyTest, IsAdminOnlyForIP_127_0_0_1)

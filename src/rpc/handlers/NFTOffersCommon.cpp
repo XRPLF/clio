@@ -31,7 +31,6 @@
 #include <boost/json/value_to.hpp>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/Keylet.h>
 #include <ripple/protocol/LedgerFormats.h>
@@ -103,7 +102,7 @@ NFTOffersHandlerBase::iterateOfferDirectory(
     if (not sharedPtrBackend_->fetchLedgerObject(directory.key, lgrInfo.seq, yield))
         return Error{Status{RippledError::rpcOBJECT_NOT_FOUND, "notFound"}};
 
-    auto output = Output{input.nftID};
+    auto output = Output{.nftID = input.nftID, .offers = {}, .limit = {}, .marker = {}};
     auto offers = std::vector<ripple::SLE>{};
     auto reserve = input.limit;
     auto cursor = uint256{};

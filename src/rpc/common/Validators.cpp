@@ -29,7 +29,6 @@
 #include <fmt/core.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/tokens.h>
 

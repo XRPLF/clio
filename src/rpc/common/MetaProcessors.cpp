@@ -23,7 +23,6 @@
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/value.hpp>
-#include <ripple/protocol/ErrorCodes.h>
 
 #include <string_view>
 

@@ -85,8 +85,8 @@ public:
 
 private:
     class HandlerImpl final {
-        std::map<std::string, BookChange> tally_ = {};
-        std::optional<uint32_t> offerCancel_ = {};
+        std::map<std::string, BookChange> tally_;
+        std::optional<uint32_t> offerCancel_;
 
     public:
         [[nodiscard]] std::vector<BookChange>
@@ -154,7 +154,11 @@ private:
             auto const g = to_string(deltaGets.issue());
             auto const p = to_string(deltaPays.issue());
 
-            auto const noswap = isXRP(deltaGets) ? true : (isXRP(deltaPays) ? false : (g < p));
+            auto const noswap = [&]() {
+                if (isXRP(deltaGets))
+                    return true;
+                return isXRP(deltaPays) ? false : (g < p);
+            }();
 
             auto first = noswap ? deltaGets : deltaPays;
             auto second = noswap ? deltaPays : deltaGets;

@@ -561,7 +561,7 @@ public:
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res) {
             if (auto const result = res->template get<Blob>(); result) {
                 if (result->size())
-                    return *result;
+                    return result;
             } else {
                 LOG(log_.debug()) << "Could not fetch ledger object - no rows";
             }
@@ -597,7 +597,7 @@ public:
             if (auto const result = res->template get<ripple::uint256>(); result) {
                 if (*result == lastKey)
                     return std::nullopt;
-                return *result;
+                return result;
             }
 
             LOG(log_.debug()) << "Could not fetch successor - no rows";
