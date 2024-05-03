@@ -19,7 +19,6 @@
 
 #include "etl/LoadBalancer.hpp"
 #include "etl/Source.hpp"
-#include "gmock/gmock.h"
 #include "util/Fixtures.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockPrometheus.hpp"
@@ -34,6 +33,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
+#include <gmock/gmock.h>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
