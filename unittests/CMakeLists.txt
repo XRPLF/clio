@@ -117,6 +117,7 @@ target_sources(
           util/requests/RequestBuilderTests.cpp
           util/requests/SslContextTests.cpp
           util/requests/WsConnectionTests.cpp
+          util/RandomTests.cpp
           util/RetryTests.cpp
           util/SignalsHandlerTests.cpp
           util/StringUtils.cpp
