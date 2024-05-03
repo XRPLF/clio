@@ -9,7 +9,7 @@ project(clio VERSION ${CLIO_VERSION} HOMEPAGE_URL "https://github.com/XRPLF/clio
 # =========================== Options ====================================== #
 option(verbose "Verbose build" FALSE)
 option(tests "Build unit tests" FALSE)
-option(integration_tests "Build database tests" FALSE)
+option(integration_tests "Build integration tests" FALSE)
 option(benchmark "Build benchmarks" FALSE)
 option(docs "Generate doxygen docs" FALSE)
 option(coverage "Build test coverage report" FALSE)

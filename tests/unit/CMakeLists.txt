@@ -165,6 +165,9 @@ if (coverage)
     ${TESTS_ADDITIONAL_ARGS}
     EXCLUDE
     "tests"
+    "src/data/cassandra"
+    "src/data/CassandraBackend.hpp"
+    "src/data/BackendFactory.*"
     DEPENDENCIES
     clio_tests
   )
