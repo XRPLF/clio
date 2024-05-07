@@ -6,7 +6,7 @@ To contribute, please:
 2. Create a new branch on which to commit/push your changes.
 3. Write and test your code.
 4. Ensure that your code compiles with the provided build engine and update the provided build engine as part of your PR where needed and where appropriate.
-5. Where applicable, write test cases for your code and include those in `unittests`.
+5. Where applicable, write test cases for your code and include those in the relevant subfolder under `tests`.
 6. Ensure your code passes automated checks (e.g. clang-format)
 7. Squash your commits (i.e. rebase) into as few commits as is reasonable to describe your changes at a high level (typically a single commit for a small change). See below for more details.
 8. Open a PR to the main repository onto the _develop_ branch, and follow the provided template.

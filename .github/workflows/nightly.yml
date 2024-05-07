@@ -95,6 +95,15 @@ jobs:
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
+    services:
+      scylladb:
+        image: 'scylladb/scylla'
+        options: >-
+          --health-cmd "cqlsh -e 'describe cluster'" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
     steps:
       - name: Clean workdir
         if: ${{ runner.os == 'macOS' }}
@@ -107,7 +116,12 @@ jobs:
       - name: Run clio_tests
         run: |
           chmod +x ./clio_tests
-          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+          ./clio_tests
+  
+      - name: Run clio_integration_tests
+        run: |
+          chmod +x ./clio_integration_tests
+          ./clio_integration_tests --backend_host=scylladb
 
   nightly_release:
     needs: run_tests
@@ -129,7 +143,7 @@ jobs:
         run: |
           cp ${{ github.workspace }}/.github/workflows/nightly_notes.md "${RUNNER_TEMP}/nightly_notes.md"
           cd nightly_release
-          rm -r clio_tests*
+          rm -r clio_*tests*
           for d in $(ls); do
             archive_name=$(ls $d)
             mv ${d}/${archive_name} ./

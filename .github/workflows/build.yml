@@ -81,15 +81,6 @@ jobs:
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
-    services:
-      scylladb:
-        image: ${{ (matrix.code_coverage) && 'scylladb/scylla' || '' }}
-        options: >-
-          --health-cmd "cqlsh -e 'describe cluster'" 
-          --health-interval 10s 
-          --health-timeout 5s 
-          --health-retries 5
-
     steps:
       - name: Clean workdir
         if: ${{ runner.os == 'macOS' }}
@@ -143,7 +134,7 @@ jobs:
 
       - name: Strip tests
         if: ${{ !matrix.code_coverage }}
-        run: strip build/clio_tests
+        run: strip build/clio_tests && strip build/clio_integration_tests
 
       - name: Upload clio_server
         uses: actions/upload-artifact@v4
@@ -156,7 +147,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ steps.conan.outputs.conan_profile }}
-          path: build/clio_tests
+          path: build/clio_*tests
 
       - name: Save cache
         uses: ./.github/actions/save_cache
@@ -223,4 +214,4 @@ jobs:
       - name: Run clio_tests
         run: |
           chmod +x ./clio_tests
-          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+          ./clio_tests

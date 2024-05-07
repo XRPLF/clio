@@ -27,15 +27,6 @@ In case of a spurious failure of unit tests, it is possible to re-run the `cover
 
 The default coverage report format is `html-details`, but developers can override it to any of the formats listed in `cmake/CodeCoverage.cmake` by setting `CODE_COVERAGE_REPORT_FORMAT` variable in `cmake`. For example, CI is setting this parameter to `xml` for the [codecov](https://codecov.io) integration.
 
-If some unit tests predictably fail (e.g., due to absence of a Cassandra database), it is possible to set unit tests options in the `CODE_COVERAGE_TESTS_ARGS` cmake variable, as demonstrated below:
-
-```sh
-cd .build
-conan install .. --output-folder . --build missing --settings build_type=Debug -o tests=True -o coverage=True
-cmake -DCODE_COVERAGE_REPORT_FORMAT=json-details -DCMAKE_BUILD_TYPE=Debug -DCODE_COVERAGE_TESTS_ARGS="--gtest_filter=-BackendCassandra*" -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake ..
-cmake --build . --target coverage_report
-```
-
 After the `coverage_report` target is completed, the generated coverage report will be stored inside the build directory as either:
 
 - A File named `coverage_report.*`, with a suitable extension for the report format.
