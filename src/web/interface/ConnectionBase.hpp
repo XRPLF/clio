@@ -50,6 +50,11 @@ public:
     std::string const clientIp;
     bool upgraded = false;
     boost::signals2::signal<void(ConnectionBase*)> onDisconnect;
+    /**
+     * @brief The API version of the web stream client.
+     * This is used to track the api version of this connection, which mainly is used by subscription. It is different
+     * from the api version in Context, which is only used for the current request.
+     */
     std::uint32_t apiSubVersion = 0;
 
     /**

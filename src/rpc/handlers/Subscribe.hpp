@@ -184,7 +184,7 @@ public:
     {
         auto output = Output{};
 
-        // Mimic rippled. No matter what the request is, the api version changes for the session
+        // Mimic rippled. No matter what the request is, the api version changes for the whole session
         ctx.session->apiSubVersion = ctx.apiVersion;
 
         if (input.streams) {

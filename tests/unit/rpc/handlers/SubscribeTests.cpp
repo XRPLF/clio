@@ -1089,13 +1089,13 @@ TEST_F(RPCSubscribeHandlerTest, APIVersion)
             "streams": ["transactions_proposed"]
         })"
     );
-    auto const API_VERSION = 2;
+    auto const apiVersion = 2;
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
         auto const output =
-            handler.process(input, Context{.yield = yield, .session = session_, .apiVersion = API_VERSION});
+            handler.process(input, Context{.yield = yield, .session = session_, .apiVersion = apiVersion});
         ASSERT_TRUE(output);
-        EXPECT_EQ(session_->apiSubVersion, API_VERSION);
+        EXPECT_EQ(session_->apiSubVersion, apiVersion);
     });
 }
 
