@@ -21,6 +21,7 @@
 
 #include <gtest/gtest.h>
 #include <ripple/basics/base_uint.h>
+#include <ripple/protocol/Feature.h>
 
 using namespace rpc;
 
@@ -31,4 +32,15 @@ TEST(RPCAmendmentsTest, GenerateAmendmentId)
         ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"),
         Amendments::GetAmendmentId("DisallowIncoming")
     );
+}
+
+TEST(RPCTEST, test_name)
+{
+    // featureCollections
+    auto amendments = ripple::detail::supportedAmendments();
+    for (auto [name, _] : amendments) {
+        std::cout << "amendment: " << name << '\n';
+        // auto const registered = ripple::detail::getRegisteredFeature(name);
+        std::cout << "-- " << rpc::Amendments::GetAmendmentId(name) << '\n';
+    }
 }
