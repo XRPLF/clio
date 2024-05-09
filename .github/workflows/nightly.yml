@@ -84,20 +84,23 @@ jobs:
         include:
           - os: macos14
             build_type: Release
+            integration_tests: false
           - os: heavy
             build_type: Release
             container:
-              image: rippleci/clio_ci:latest
+              image: rippleci/cio_ci:latest
+            integration_tests: true  
           - os: heavy
             build_type: Debug
             container:
               image: rippleci/clio_ci:latest
+            integration_tests: true  
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
 
     services:
       scylladb:
-        image: 'scylladb/scylla'
+        image: ${{ (matrix.integration_tests) && 'scylladb/scylla' || '' }}
         options: >-
           --health-cmd "cqlsh -e 'describe cluster'" 
           --health-interval 10s 
@@ -118,7 +121,9 @@ jobs:
           chmod +x ./clio_tests
           ./clio_tests
   
+  # To be enabled back once docker in mac runner arrives
       - name: Run clio_integration_tests
+        if: matrix.integration_tests 
         run: |
           chmod +x ./clio_integration_tests
           ./clio_integration_tests --backend_host=scylladb
