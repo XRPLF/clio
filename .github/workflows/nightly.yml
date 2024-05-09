@@ -122,6 +122,7 @@ jobs:
           ./clio_tests
   
   # To be enabled back once docker in mac runner arrives
+  # https://github.com/XRPLF/clio/issues/1400
       - name: Run clio_integration_tests
         if: matrix.integration_tests 
         run: |
