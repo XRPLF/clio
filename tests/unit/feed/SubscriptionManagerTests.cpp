@@ -68,6 +68,7 @@ protected:
         SyncAsioContextTest::SetUp();
         SubscriptionManagerPtr = std::make_shared<SubscriptionManager>(ctx, backend);
         session = std::make_shared<MockSession>();
+        session->apiSubVersion = 1;
         sessionPtr = dynamic_cast<MockSession*>(session.get());
     }
 
@@ -159,19 +160,20 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     SubscriptionManagerPtr->subManifest(session2);
     SubscriptionManagerPtr->subProposedTransactions(session1);
     SubscriptionManagerPtr->subProposedTransactions(session2);
-    SubscriptionManagerPtr->subTransactions(session1, 1);
-    SubscriptionManagerPtr->subTransactions(session2, 2);
+    SubscriptionManagerPtr->subTransactions(session1);
+    session2->apiSubVersion = 2;
+    SubscriptionManagerPtr->subTransactions(session2);
     SubscriptionManagerPtr->subValidation(session1);
     SubscriptionManagerPtr->subValidation(session2);
     auto const account = GetAccountIDWithString(ACCOUNT1);
-    SubscriptionManagerPtr->subAccount(account, session1, 1);
-    SubscriptionManagerPtr->subAccount(account, session2, 2);
+    SubscriptionManagerPtr->subAccount(account, session1);
+    SubscriptionManagerPtr->subAccount(account, session2);
     SubscriptionManagerPtr->subProposedAccount(account, session1);
     SubscriptionManagerPtr->subProposedAccount(account, session2);
     auto const issue1 = GetIssue(CURRENCY, ISSUER);
     ripple::Book const book{ripple::xrpIssue(), issue1};
-    SubscriptionManagerPtr->subBook(book, session1, 1);
-    SubscriptionManagerPtr->subBook(book, session2, 2);
+    SubscriptionManagerPtr->subBook(book, session1);
+    SubscriptionManagerPtr->subBook(book, session2);
     EXPECT_EQ(SubscriptionManagerPtr->report(), json::parse(ReportReturn));
 
     // count down when unsub manually
@@ -338,9 +340,9 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
     auto const issue1 = GetIssue(CURRENCY, ISSUER);
     auto const account = GetAccountIDWithString(ISSUER);
     ripple::Book const book{ripple::xrpIssue(), issue1};
-    SubscriptionManagerPtr->subBook(book, session, 1);
-    SubscriptionManagerPtr->subTransactions(session, 1);
-    SubscriptionManagerPtr->subAccount(account, session, 1);
+    SubscriptionManagerPtr->subBook(book, session);
+    SubscriptionManagerPtr->subTransactions(session);
+    SubscriptionManagerPtr->subAccount(account, session);
     EXPECT_EQ(SubscriptionManagerPtr->report()["account"], 1);
     EXPECT_EQ(SubscriptionManagerPtr->report()["transactions"], 1);
     EXPECT_EQ(SubscriptionManagerPtr->report()["books"], 1);
