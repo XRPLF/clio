@@ -150,7 +150,7 @@ public:
     isConnected() const;
 
     /**
-     * @brief Get whther the source is forwarding
+     * @brief Get whether the source is forwarding
      *
      * @return true if the source is forwarding, false otherwise
      */

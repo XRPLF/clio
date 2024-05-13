@@ -157,7 +157,7 @@ LoadBalancer::~LoadBalancer()
 }
 
 std::vector<std::string>
-LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly, std::chrono::steady_clock::duration retryTime)
+LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly, std::chrono::steady_clock::duration retryAfter)
 {
     std::vector<std::string> response;
     execute(
@@ -165,8 +165,8 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly, std::chrono::
             auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
 
             if (!res) {
-                LOG(log_.error()) << "Failed to download initial ledger." << " Sequence = " << sequence
-                                  << " source = " << source->toString();
+                LOG(log_.error()) << "Failed to download initial ledger."
+                                  << " Sequence = " << sequence << " source = " << source->toString();
             } else {
                 response = std::move(data);
             }
@@ -174,7 +174,7 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly, std::chrono::
             return res;
         },
         sequence,
-        retryTime
+        retryAfter
     );
     return response;
 }
@@ -184,7 +184,7 @@ LoadBalancer::fetchLedger(
     uint32_t ledgerSequence,
     bool getObjects,
     bool getObjectNeighbors,
-    std::chrono::steady_clock::duration retryTime
+    std::chrono::steady_clock::duration retryAfter
 )
 {
     GetLedgerResponseType response;
@@ -204,7 +204,7 @@ LoadBalancer::fetchLedger(
             return false;
         },
         ledgerSequence,
-        retryTime
+        retryAfter
     );
     return response;
 }
@@ -256,7 +256,7 @@ LoadBalancer::toJson() const
 
 template <typename Func>
 void
-LoadBalancer::execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock::duration retryTime)
+LoadBalancer::execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock::duration retryAfter)
 {
     ASSERT(not sources_.empty(), "ETL sources must be configured to execute functions.");
     size_t sourceIdx = util::Random::uniform(0ul, sources_.size() - 1);
@@ -291,7 +291,7 @@ LoadBalancer::execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock
         if (numAttempts % sources_.size() == 0) {
             LOG(log_.info()) << "Ledger sequence " << ledgerSequence
                              << " is not yet available from any configured sources. Sleeping and trying again";
-            std::this_thread::sleep_for(retryTime);
+            std::this_thread::sleep_for(retryAfter);
         }
     }
 }

@@ -123,14 +123,14 @@ public:
      *
      * @param sequence Sequence of ledger to download
      * @param cacheOnly Whether to only write to cache and not to the DB; defaults to false
-     * @param retryTime Time to wait between retries (2 seconds by default)
+     * @param retryAfter Time to wait between retries (2 seconds by default)
      * @return A std::vector<std::string> The ledger data
      */
     std::vector<std::string>
     loadInitialLedger(
         uint32_t sequence,
         bool cacheOnly = false,
-        std::chrono::steady_clock::duration retryTime = std::chrono::seconds{2}
+        std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
     );
 
     /**
@@ -142,7 +142,7 @@ public:
      * @param ledgerSequence Sequence of the ledger to fetch
      * @param getObjects Whether to get the account state diff between this ledger and the prior one
      * @param getObjectNeighbors Whether to request object neighbors
-     * @param retryTime Time to wait between retries (2 seconds by default)
+     * @param retryAfter Time to wait between retries (2 seconds by default)
      * @return The extracted data, if extraction was successful. If the ledger was found
      * in the database or the server is shutting down, the optional will be empty
      */
@@ -151,7 +151,7 @@ public:
         uint32_t ledgerSequence,
         bool getObjects,
         bool getObjectNeighbors,
-        std::chrono::steady_clock::duration retryTime = std::chrono::seconds{2}
+        std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
     );
 
     /**
@@ -194,12 +194,12 @@ private:
      *
      * @param f Function to execute. This function takes the ETL source as an argument, and returns a bool
      * @param ledgerSequence f is executed for each Source that has this ledger
-     * @param retryTime Time to wait between retries (2 seconds by default)
+     * @param retryAfter Time to wait between retries (2 seconds by default)
      * server is shutting down
      */
     template <typename Func>
     void
-    execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock::duration retryTime = std::chrono::seconds{2});
+    execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2});
 
     /**
      * @brief Choose a new source to forward requests
