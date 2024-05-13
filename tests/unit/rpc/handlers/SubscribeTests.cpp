@@ -618,7 +618,6 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
-        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("transactions_proposed").as_uint64(), 1);
         EXPECT_EQ(report.at("transactions").as_uint64(), 1);
@@ -663,7 +662,6 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object(), json::parse(expectedOutput));
-        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("ledger").as_uint64(), 1);
     });
@@ -684,7 +682,6 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
-        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // filter the duplicates
         EXPECT_EQ(report.at("account").as_uint64(), 2);
@@ -706,7 +703,6 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
-        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // filter the duplicates
         EXPECT_EQ(report.at("accounts_proposed").as_uint64(), 2);
@@ -739,7 +735,6 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
-        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         EXPECT_EQ(report.at("books").as_uint64(), 1);
     });
@@ -772,7 +767,6 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
-        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 2);
@@ -942,7 +936,6 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         EXPECT_EQ(output.result->as_object().at("asks").as_array().size(), 10);
         EXPECT_EQ(output.result->as_object().at("bids").as_array()[0].as_object(), json::parse(expectedOffer));
         EXPECT_EQ(output.result->as_object().at("asks").as_array()[0].as_object(), json::parse(expectedReversedOffer));
-        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 2);
@@ -1083,10 +1076,26 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("offers").as_array().size(), 10);
         EXPECT_EQ(output.result->as_object().at("offers").as_array()[0].as_object(), json::parse(expectedOffer));
-        std::this_thread::sleep_for(milliseconds(20));
         auto const report = subManager_->report();
         // original book + reverse book
         EXPECT_EQ(report.at("books").as_uint64(), 1);
+    });
+}
+
+TEST_F(RPCSubscribeHandlerTest, APIVersion)
+{
+    auto const input = json::parse(
+        R"({
+            "streams": ["transactions_proposed"]
+        })"
+    );
+    auto const apiVersion = 2;
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const output =
+            handler.process(input, Context{.yield = yield, .session = session_, .apiVersion = apiVersion});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(session_->apiSubVersion, apiVersion);
     });
 }
 

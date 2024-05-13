@@ -145,9 +145,9 @@ SubscriptionManager::forwardValidation(boost::json::object const& validationJson
 }
 
 void
-SubscriptionManager::subTransactions(SubscriberSharedPtr const& subscriber, std::uint32_t const apiVersion)
+SubscriptionManager::subTransactions(SubscriberSharedPtr const& subscriber)
 {
-    transactionFeed_.sub(subscriber, apiVersion);
+    transactionFeed_.sub(subscriber);
 }
 
 void
@@ -157,13 +157,9 @@ SubscriptionManager::unsubTransactions(SubscriberSharedPtr const& subscriber)
 }
 
 void
-SubscriptionManager::subAccount(
-    ripple::AccountID const& account,
-    SubscriberSharedPtr const& subscriber,
-    std::uint32_t const apiVersion
-)
+SubscriptionManager::subAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
-    transactionFeed_.sub(account, subscriber, apiVersion);
+    transactionFeed_.sub(account, subscriber);
 }
 
 void
@@ -173,13 +169,9 @@ SubscriptionManager::unsubAccount(ripple::AccountID const& account, SubscriberSh
 }
 
 void
-SubscriptionManager::subBook(
-    ripple::Book const& book,
-    SubscriberSharedPtr const& subscriber,
-    std::uint32_t const apiVersion
-)
+SubscriptionManager::subBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber)
 {
-    transactionFeed_.sub(book, subscriber, apiVersion);
+    transactionFeed_.sub(book, subscriber);
 }
 
 void

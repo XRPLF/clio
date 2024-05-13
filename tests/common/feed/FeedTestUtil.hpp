@@ -47,6 +47,7 @@ protected:
         MockBackendTest::SetUp();
         testFeedPtr = std::make_shared<TestedFeed>(ctx);
         sessionPtr = std::make_shared<MockSession>();
+        sessionPtr->apiSubVersion = 1;
         mockSessionPtr = dynamic_cast<MockSession*>(sessionPtr.get());
     }
 
