@@ -91,28 +91,25 @@ public:
     /**
      * @brief Subscribe to the transaction feed.
      * @param subscriber
-     * @param apiVersion The api version of feed.
      */
     void
-    sub(SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
+    sub(SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Subscribe to the transaction feed, only receive the feed when particular account is affected.
      * @param subscriber
      * @param account The account to watch.
-     * @param apiVersion The api version of feed.
      */
     void
-    sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
+    sub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Subscribe to the transaction feed, only receive the feed when particular order book is affected.
      * @param subscriber
      * @param book The order book to watch.
-     * @param apiVersion The api version of feed.
      */
     void
-    sub(ripple::Book const& book, SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion);
+    sub(ripple::Book const& book, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the transaction feed.

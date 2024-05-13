@@ -114,20 +114,23 @@ SubscribeHandler::process(Input input, Context const& ctx) const
 {
     auto output = Output{};
 
+    // Mimic rippled. No matter what the request is, the api version changes for the whole session
+    ctx.session->apiSubVersion = ctx.apiVersion;
+
     if (input.streams) {
-        auto const ledger = subscribeToStreams(ctx.yield, *(input.streams), ctx.session, ctx.apiVersion);
+        auto const ledger = subscribeToStreams(ctx.yield, *(input.streams), ctx.session);
         if (!ledger.empty())
             output.ledger = ledger;
     }
 
     if (input.accounts)
-        subscribeToAccounts(*(input.accounts), ctx.session, ctx.apiVersion);
+        subscribeToAccounts(*(input.accounts), ctx.session);
 
     if (input.accountsProposed)
         subscribeToAccountsProposed(*(input.accountsProposed), ctx.session);
 
     if (input.books)
-        subscribeToBooks(*(input.books), ctx.session, ctx.yield, ctx.apiVersion, output);
+        subscribeToBooks(*(input.books), ctx.session, ctx.yield, output);
 
     return output;
 }
@@ -136,8 +139,7 @@ boost::json::object
 SubscribeHandler::subscribeToStreams(
     boost::asio::yield_context yield,
     std::vector<std::string> const& streams,
-    std::shared_ptr<web::ConnectionBase> const& session,
-    std::uint32_t apiVersion
+    std::shared_ptr<web::ConnectionBase> const& session
 ) const
 {
     auto response = boost::json::object{};
@@ -146,7 +148,7 @@ SubscribeHandler::subscribeToStreams(
         if (stream == "ledger") {
             response = subscriptions_->subLedger(yield, session);
         } else if (stream == "transactions") {
-            subscriptions_->subTransactions(session, apiVersion);
+            subscriptions_->subTransactions(session);
         } else if (stream == "transactions_proposed") {
             subscriptions_->subProposedTransactions(session);
         } else if (stream == "validations") {
@@ -164,25 +166,12 @@ SubscribeHandler::subscribeToStreams(
 void
 SubscribeHandler::subscribeToAccounts(
     std::vector<std::string> const& accounts,
-    std::shared_ptr<web::ConnectionBase> const& session,
-    std::uint32_t apiVersion
-) const
-{
-    for (auto const& account : accounts) {
-        auto const accountID = accountFromStringStrict(account);
-        subscriptions_->subAccount(*accountID, session, apiVersion);
-    }
-}
-
-void
-SubscribeHandler::subscribeToAccountsProposed(
-    std::vector<std::string> const& accounts,
     std::shared_ptr<web::ConnectionBase> const& session
 ) const
 {
     for (auto const& account : accounts) {
         auto const accountID = accountFromStringStrict(account);
-        subscriptions_->subProposedAccount(*accountID, session);
+        subscriptions_->subAccount(*accountID, session);
     }
 }
 
@@ -191,7 +180,6 @@ SubscribeHandler::subscribeToBooks(
     std::vector<OrderBook> const& books,
     std::shared_ptr<web::ConnectionBase> const& session,
     boost::asio::yield_context yield,
-    uint32_t apiVersion,
     Output& output
 ) const
 {
@@ -232,10 +220,10 @@ SubscribeHandler::subscribeToBooks(
             }
         }
 
-        subscriptions_->subBook(internalBook.book, session, apiVersion);
+        subscriptions_->subBook(internalBook.book, session);
 
         if (internalBook.both)
-            subscriptions_->subBook(ripple::reversed(internalBook.book), session, apiVersion);
+            subscriptions_->subBook(ripple::reversed(internalBook.book), session);
     }
 }
 

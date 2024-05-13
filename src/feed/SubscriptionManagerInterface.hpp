@@ -181,10 +181,9 @@ public:
     /**
      * @brief Subscribe to the transactions feed.
      * @param subscriber
-     * @param apiVersion The api version of feed to subscribe.
      */
     virtual void
-    subTransactions(SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion) = 0;
+    subTransactions(SubscriberSharedPtr const& subscriber) = 0;
 
     /**
      * @brief Unsubscribe to the transactions feed.
@@ -197,10 +196,9 @@ public:
      * @brief Subscribe to the transactions feed, only receive the feed when particular account is affected.
      * @param account The account to watch.
      * @param subscriber
-     * @param apiVersion The api version of feed to subscribe.
      */
     virtual void
-    subAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion) = 0;
+    subAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) = 0;
 
     /**
      * @brief Unsubscribe to the transactions feed for particular account.
@@ -214,10 +212,9 @@ public:
      * @brief Subscribe to the transactions feed, only receive feed when particular order book is affected.
      * @param book The book to watch.
      * @param subscriber
-     * @param apiVersion The api version of feed to subscribe.
      */
     virtual void
-    subBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber, std::uint32_t apiVersion) = 0;
+    subBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber) = 0;
 
     /**
      * @brief Unsubscribe to the transactions feed for particular order book.

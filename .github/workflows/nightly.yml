@@ -55,13 +55,13 @@ jobs:
         uses: ./.github/actions/build_clio
 
       - name: Strip tests
-        run: strip build/clio_tests
+        run: strip build/clio_tests && strip build/clio_integration_tests
 
       - name: Upload clio_tests
         uses: actions/upload-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
-          path: build/clio_tests
+          path: build/clio_*tests
 
       - name: Compress clio_server
         shell: bash
@@ -84,16 +84,28 @@ jobs:
         include:
           - os: macos14
             build_type: Release
+            integration_tests: false
           - os: heavy
             build_type: Release
             container:
               image: rippleci/clio_ci:latest
+            integration_tests: true  
           - os: heavy
             build_type: Debug
             container:
               image: rippleci/clio_ci:latest
+            integration_tests: true  
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
+
+    services:
+      scylladb:
+        image: ${{ (matrix.integration_tests) && 'scylladb/scylla' || '' }}
+        options: >-
+          --health-cmd "cqlsh -e 'describe cluster'" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
 
     steps:
       - name: Clean workdir
@@ -107,7 +119,15 @@ jobs:
       - name: Run clio_tests
         run: |
           chmod +x ./clio_tests
-          ./clio_tests --gtest_filter="-BackendCassandraBaseTest*:BackendCassandraTest*:BackendCassandraFactoryTestWithDB*"
+          ./clio_tests
+  
+  # To be enabled back once docker in mac runner arrives
+  # https://github.com/XRPLF/clio/issues/1400
+      - name: Run clio_integration_tests
+        if: matrix.integration_tests 
+        run: |
+          chmod +x ./clio_integration_tests
+          ./clio_integration_tests --backend_host=scylladb
 
   nightly_release:
     needs: run_tests
@@ -129,7 +149,7 @@ jobs:
         run: |
           cp ${{ github.workspace }}/.github/workflows/nightly_notes.md "${RUNNER_TEMP}/nightly_notes.md"
           cd nightly_release
-          rm -r clio_tests*
+          rm -r clio_*tests*
           for d in $(ls); do
             archive_name=$(ls $d)
             mv ${d}/${archive_name} ./

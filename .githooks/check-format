@@ -8,7 +8,7 @@
 echo "+ Checking code format..."
 
 # paths to check and re-format
-sources="src unittests"
+sources="src tests"
 formatter="clang-format -i"
 version=$($formatter --version | grep -o '[0-9\.]*')
 

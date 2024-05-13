@@ -128,16 +128,12 @@ private:
     subscribeToStreams(
         boost::asio::yield_context yield,
         std::vector<std::string> const& streams,
-        std::shared_ptr<web::ConnectionBase> const& session,
-        std::uint32_t apiVersion
+        std::shared_ptr<web::ConnectionBase> const& session
     ) const;
 
     void
-    subscribeToAccounts(
-        std::vector<std::string> const& accounts,
-        std::shared_ptr<web::ConnectionBase> const& session,
-        std::uint32_t apiVersion
-    ) const;
+    subscribeToAccounts(std::vector<std::string> const& accounts, std::shared_ptr<web::ConnectionBase> const& session)
+        const;
 
     void
     subscribeToAccountsProposed(
@@ -150,7 +146,6 @@ private:
         std::vector<OrderBook> const& books,
         std::shared_ptr<web::ConnectionBase> const& session,
         boost::asio::yield_context yield,
-        uint32_t apiVersion,
         Output& output
     ) const;
 

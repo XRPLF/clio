@@ -35,7 +35,7 @@ runs:
         STATIC_OPTION: "${{ inputs.static == 'true' && 'True' || 'False' }}"
       run: |
         cd build
-        conan install .. -of . -b $BUILD_OPTION -s build_type=${{ inputs.build_type }} -o clio:static="${STATIC_OPTION}" -o clio:tests=True -o clio:lint=False -o clio:coverage="${CODE_COVERAGE}" --profile ${{ inputs.conan_profile }}
+        conan install .. -of . -b $BUILD_OPTION -s build_type=${{ inputs.build_type }} -o clio:static="${STATIC_OPTION}" -o clio:tests=True -o clio:integration_tests=True -o clio:lint=False -o clio:coverage="${CODE_COVERAGE}" --profile ${{ inputs.conan_profile }}
 
     - name: Run cmake
       shell: bash
