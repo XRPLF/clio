@@ -85,9 +85,10 @@ first=$(git diff $sources $cmake_files)
 find $sources -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.ipp' \) -print0 | xargs -0 $formatter
 cmake-format -i $cmake_files
 second=$(git diff $sources $cmake_files)
-changes=$(diff <(echo "$first") <(echo "$second") | wc -l | sed -e 's/^[[:space:]]*//')
+changes=$(diff <(echo "$first") <(echo "$second"))
+changes_number=$(echo -n "$changes" | wc -l | sed -e 's/^[[:space:]]*//')
 
-if [ "$changes" != "0" ]; then
+if [ "$changes_number" != "0" ]; then
     cat <<\EOF
 
                                    WARNING
@@ -97,5 +98,8 @@ if [ "$changes" != "0" ]; then
 -----------------------------------------------------------------------------
 
 EOF
+    if [[ "$1" == "--diff" ]]; then
+        echo "$changes"
+    fi
     exit 1
 fi
