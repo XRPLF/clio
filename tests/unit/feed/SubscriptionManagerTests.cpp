@@ -442,8 +442,79 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
                 "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
             }
         })";
+    constexpr static auto OrderbookPublish =
+        R"({
+            "transaction":
+            {
+                "Account":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "Amount":"1",
+                "DeliverMax":"1",
+                "Destination":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "Fee":"1",
+                "Sequence":32,
+                "SigningPubKey":"74657374",
+                "TransactionType":"Payment",
+                "hash":"51D2AAA6B8E4E16EF22F6424854283D8391B56875858A711B8CE4D5B9A422CC2",
+                "date":0
+            },
+            "meta":
+            {
+                "AffectedNodes":
+                [
+                    {
+                        "ModifiedNode":
+                        {
+                            "FinalFields":
+                            {
+                                "TakerGets":"3",
+                                "TakerPays":
+                                {
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "value":"1"
+                                }
+                            },
+                            "LedgerEntryType":"Offer",
+                            "PreviousFields":
+                            {
+                                "TakerGets":"1",
+                                "TakerPays":
+                                {
+                                    "currency":"0158415500000000C1F76FF6ECB0BAC600000000",
+                                    "issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                                    "value":"3"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "TransactionIndex":22,
+                "TransactionResult":"tesSUCCESS",
+                "delivered_amount":"unavailable"
+            },
+            "type":"transaction",
+            "validated":true,
+            "status":"closed",
+            "ledger_index":33,
+            "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "engine_result_code":0,
+            "engine_result":"tesSUCCESS",
+            "close_time_iso": "2000-01-01T00:00:00Z",
+            "engine_result_message":"The transaction was applied. Only final in a validated ledger."
+        })";
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummyTransaction))).Times(2);
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(OrderbookPublish))).Times(2);
     SubscriptionManagerPtr->forwardProposedTransaction(json::parse(dummyTransaction).get_object());
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto trans1 = TransactionAndMetadata();
+    auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
+    trans1.transaction = obj.getSerializer().peekData();
+    trans1.ledgerSequence = 32;
+
+    auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
+    trans1.metadata = metaObj.getSerializer().peekData();
+    SubscriptionManagerPtr->pubTransaction(trans1, ledgerinfo);
     ctx.run();
 
     // unsub account1
@@ -451,4 +522,58 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
     EXPECT_EQ(SubscriptionManagerPtr->report()["accounts_proposed"], 0);
     SubscriptionManagerPtr->unsubProposedTransactions(session);
     EXPECT_EQ(SubscriptionManagerPtr->report()["transactions_proposed"], 0);
+}
+
+TEST_F(SubscriptionManagerTest, DuplicateResponseSubTxAndProposedTx)
+{
+    SubscriptionManagerPtr->subProposedTransactions(session);
+    SubscriptionManagerPtr->subTransactions(session);
+    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions"], 1);
+    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions_proposed"], 1);
+
+    EXPECT_CALL(*sessionPtr, send(testing::_)).Times(2);
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto trans1 = TransactionAndMetadata();
+    auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
+    trans1.transaction = obj.getSerializer().peekData();
+    trans1.ledgerSequence = 32;
+
+    auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
+    trans1.metadata = metaObj.getSerializer().peekData();
+    SubscriptionManagerPtr->pubTransaction(trans1, ledgerinfo);
+    ctx.run();
+
+    SubscriptionManagerPtr->unsubTransactions(session);
+    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions"], 0);
+    SubscriptionManagerPtr->unsubProposedTransactions(session);
+    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions_proposed"], 0);
+}
+
+TEST_F(SubscriptionManagerTest, NoDuplicateResponseSubAccountAndProposedAccount)
+{
+    auto const account = GetAccountIDWithString(ACCOUNT1);
+    SubscriptionManagerPtr->subProposedAccount(account, session);
+    SubscriptionManagerPtr->subAccount(account, session);
+    EXPECT_EQ(SubscriptionManagerPtr->report()["accounts_proposed"], 1);
+    EXPECT_EQ(SubscriptionManagerPtr->report()["account"], 1);
+
+    EXPECT_CALL(*sessionPtr, send(testing::_)).Times(1);
+
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto trans1 = TransactionAndMetadata();
+    auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
+    trans1.transaction = obj.getSerializer().peekData();
+    trans1.ledgerSequence = 32;
+
+    auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
+    trans1.metadata = metaObj.getSerializer().peekData();
+    SubscriptionManagerPtr->pubTransaction(trans1, ledgerinfo);
+    ctx.run();
+
+    // unsub account1
+    SubscriptionManagerPtr->unsubProposedAccount(account, session);
+    EXPECT_EQ(SubscriptionManagerPtr->report()["accounts_proposed"], 0);
+    SubscriptionManagerPtr->unsubAccount(account, session);
+    EXPECT_EQ(SubscriptionManagerPtr->report()["account"], 0);
 }

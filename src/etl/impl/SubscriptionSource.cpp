@@ -240,7 +240,8 @@ SubscriptionSource::handleMessage(std::string const& message)
 
         } else {
             if (isForwarding_) {
-                if (object.contains(JS(transaction))) {
+                // Only forward proposed transactions, validated transactions are sent by Clio itself
+                if (object.contains(JS(transaction)) and !object.contains(JS(meta))) {
                     subscriptions_->forwardProposedTransaction(object);
                 } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_ValidationReceived) {
                     subscriptions_->forwardValidation(object);

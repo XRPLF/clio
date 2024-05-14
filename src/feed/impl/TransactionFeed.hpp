@@ -72,6 +72,10 @@ class TransactionFeed {
     TrackableSignalMap<ripple::Book, Subscriber, AllVersionTransactionsType const&> bookSignal_;
     TrackableSignal<Subscriber, AllVersionTransactionsType const&> signal_;
 
+    // Signals for proposed tx subscribers
+    TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountProposedSignal_;
+    TrackableSignal<Subscriber, AllVersionTransactionsType const&> txProposedsignal_;
+
     std::unordered_set<SubscriberPtr>
         notified_;  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
 
@@ -112,6 +116,22 @@ public:
     sub(ripple::Book const& book, SubscriberSharedPtr const& subscriber);
 
     /**
+     * @brief Subscribe to the transaction feed for proposed transaction stream.
+     * @param subscriber
+     */
+    void
+    subProposed(SubscriberSharedPtr const& subscriber);
+
+    /**
+     * @brief Subscribe to the transaction feed for proposed account, only receive the feed when particular account is
+     * affected.
+     * @param subscriber
+     * @param account The account to watch.
+     */
+    void
+    subProposed(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+
+    /**
      * @brief Unsubscribe to the transaction feed.
      * @param subscriber
      */
@@ -125,6 +145,21 @@ public:
      */
     void
     unsub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+
+    /**
+     * @brief Unsubscribe to the transaction feed for proposed transaction stream.
+     * @param subscriber
+     */
+    void
+    unsubProposed(SubscriberSharedPtr const& subscriber);
+
+    /**
+     * @brief Unsubscribe to the transaction for particular proposed account.
+     * @param subscriber
+     * @param account The account to unsubscribe.
+     */
+    void
+    unsubProposed(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
 
     /**
      * @brief Unsubscribe to the transaction feed for particular order book.
@@ -169,6 +204,12 @@ private:
 
     void
     unsubInternal(ripple::AccountID const& account, SubscriberPtr subscriber);
+
+    void
+    unsubProposedInternal(SubscriberPtr subscriber);
+
+    void
+    unsubProposedInternal(ripple::AccountID const& account, SubscriberPtr subscriber);
 
     void
     unsubInternal(ripple::Book const& book, SubscriberPtr subscriber);

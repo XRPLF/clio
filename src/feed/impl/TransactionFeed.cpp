@@ -94,6 +94,27 @@ TransactionFeed::sub(ripple::AccountID const& account, SubscriberSharedPtr const
 }
 
 void
+TransactionFeed::subProposed(SubscriberSharedPtr const& subscriber)
+{
+    auto const added = txProposedsignal_.connectTrackableSlot(subscriber, TransactionSlot(*this, subscriber));
+    if (added) {
+        subscriber->onDisconnect.connect([this](SubscriberPtr connection) { unsubProposedInternal(connection); });
+    }
+}
+
+void
+TransactionFeed::subProposed(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+{
+    auto const added =
+        accountProposedSignal_.connectTrackableSlot(subscriber, account, TransactionSlot(*this, subscriber));
+    if (added) {
+        subscriber->onDisconnect.connect([this, account](SubscriberPtr connection) {
+            unsubProposedInternal(account, connection);
+        });
+    }
+}
+
+void
 TransactionFeed::sub(ripple::Book const& book, SubscriberSharedPtr const& subscriber)
 {
     auto const added = bookSignal_.connectTrackableSlot(subscriber, book, TransactionSlot(*this, subscriber));
@@ -114,6 +135,18 @@ void
 TransactionFeed::unsub(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     unsubInternal(account, subscriber.get());
+}
+
+void
+TransactionFeed::unsubProposed(SubscriberSharedPtr const& subscriber)
+{
+    unsubProposedInternal(subscriber.get());
+}
+
+void
+TransactionFeed::unsubProposed(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
+{
+    unsubProposedInternal(account, subscriber.get());
 }
 
 void
@@ -251,14 +284,19 @@ TransactionFeed::pub(
          affectedBooks = std::move(affectedBooks)]() {
             notified_.clear();
             signal_.emit(allVersionsMsgs);
+            // clear the notified set. If the same connection subscribes both transactions + proposed_transactions,
+            // rippled SENDS the same message twice
             notified_.clear();
-            // check duplicate for accounts, this prevents sending the same message multiple times if it touches
-            // multiple accounts watched by the same connection
+            txProposedsignal_.emit(allVersionsMsgs);
+            notified_.clear();
+            // check duplicate for account and proposed_account, this prevents sending the same message multiple times
+            // if it affacts multiple accounts watched by the same connection
             for (auto const& account : affectedAccounts) {
                 accountSignal_.emit(account, allVersionsMsgs);
+                accountProposedSignal_.emit(account, allVersionsMsgs);
             }
             notified_.clear();
-            // check duplicate for books, this prevents sending the same message multiple times if it touches multiple
+            // check duplicate for books, this prevents sending the same message multiple times if it affacts multiple
             // books watched by the same connection
             for (auto const& book : affectedBooks) {
                 bookSignal_.emit(book, allVersionsMsgs);
@@ -283,6 +321,18 @@ TransactionFeed::unsubInternal(ripple::AccountID const& account, SubscriberPtr s
         LOG(logger_.info()) << subscriber->tag() << "Unsubscribed account " << account;
         --subAccountCount_.get();
     }
+}
+
+void
+TransactionFeed::unsubProposedInternal(SubscriberPtr subscriber)
+{
+    txProposedsignal_.disconnect(subscriber);
+}
+
+void
+TransactionFeed::unsubProposedInternal(ripple::AccountID const& account, SubscriberPtr subscriber)
+{
+    accountProposedSignal_.disconnect(subscriber, account);
 }
 
 void
