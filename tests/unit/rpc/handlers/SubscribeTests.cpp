@@ -45,7 +45,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <thread>
 #include <vector>
 
 using namespace rpc;
