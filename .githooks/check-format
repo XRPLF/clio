@@ -59,7 +59,9 @@ function grep_code {
     grep -l "${1}" ${sources} -r --include \*.hpp --include \*.cpp
 }
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
+GNU_SED=$(sed --version 2>&1 | grep -q 'GNU' && echo true || echo false)
+
+if [[ "$GNU_SED" == "false" ]]; then # macOS sed
     # make all includes to be <...> style
     grep_code '#include ".*"' | xargs sed -i '' -E 's|#include "(.*)"|#include <\1>|g'
 
