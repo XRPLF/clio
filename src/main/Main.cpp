@@ -18,8 +18,8 @@
 //==============================================================================
 
 #include "data/BackendFactory.hpp"
-#include "etl/ETLHelpers.hpp"
 #include "etl/ETLService.hpp"
+#include "etl/NetworkValidatedLedgers.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "main/Build.hpp"
 #include "rpc/Counters.hpp"
@@ -34,7 +34,6 @@
 #include "web/IntervalSweepHandler.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/Server.hpp"
-#include "web/WhitelistHandler.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>

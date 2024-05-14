@@ -164,6 +164,18 @@ SubscribeHandler::subscribeToStreams(
 }
 
 void
+SubscribeHandler::subscribeToAccountsProposed(
+    std::vector<std::string> const& accounts,
+    std::shared_ptr<web::ConnectionBase> const& session
+) const
+{
+    for (auto const& account : accounts) {
+        auto const accountID = accountFromStringStrict(account);
+        subscriptions_->subProposedAccount(*accountID, session);
+    }
+}
+
+void
 SubscribeHandler::subscribeToAccounts(
     std::vector<std::string> const& accounts,
     std::shared_ptr<web::ConnectionBase> const& session

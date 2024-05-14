@@ -20,7 +20,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "etl/ETLHelpers.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"

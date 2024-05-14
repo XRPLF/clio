@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "etl/ETLHelpers.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/SystemState.hpp"
 #include "util/Assert.hpp"
 #include "util/Profiler.hpp"
