@@ -33,14 +33,3 @@ TEST(RPCAmendmentsTest, GenerateAmendmentId)
         Amendments::GetAmendmentId("DisallowIncoming")
     );
 }
-
-TEST(RPCTEST, test_name)
-{
-    // featureCollections
-    auto amendments = ripple::detail::supportedAmendments();
-    for (auto [name, _] : amendments) {
-        std::cout << "amendment: " << name << '\n';
-        // auto const registered = ripple::detail::getRegisteredFeature(name);
-        std::cout << "-- " << rpc::Amendments::GetAmendmentId(name) << '\n';
-    }
-}
