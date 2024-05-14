@@ -165,7 +165,7 @@ using FeedTransactionTest = FeedBaseTest<TransactionFeed>;
 
 TEST_F(FeedTransactionTest, SubTransactionV1)
 {
-    testFeedPtr->sub(sessionPtr, 1);
+    testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
@@ -189,7 +189,8 @@ TEST_F(FeedTransactionTest, SubTransactionV1)
 
 TEST_F(FeedTransactionTest, SubTransactionV2)
 {
-    testFeedPtr->sub(sessionPtr, 2);
+    sessionPtr->apiSubVersion = 2;
+    testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
@@ -214,7 +215,7 @@ TEST_F(FeedTransactionTest, SubTransactionV2)
 TEST_F(FeedTransactionTest, SubAccountV1)
 {
     auto const account = GetAccountIDWithString(ACCOUNT1);
-    testFeedPtr->sub(account, sessionPtr, 1);
+    testFeedPtr->sub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
@@ -239,7 +240,8 @@ TEST_F(FeedTransactionTest, SubAccountV1)
 TEST_F(FeedTransactionTest, SubAccountV2)
 {
     auto const account = GetAccountIDWithString(ACCOUNT1);
-    testFeedPtr->sub(account, sessionPtr, 2);
+    sessionPtr->apiSubVersion = 2;
+    testFeedPtr->sub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
@@ -265,8 +267,9 @@ TEST_F(FeedTransactionTest, SubAccountV2)
 TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
 {
     auto const account = GetAccountIDWithString(ACCOUNT1);
-    testFeedPtr->sub(account, sessionPtr, 2);
-    testFeedPtr->sub(sessionPtr, 2);
+    sessionPtr->apiSubVersion = 2;
+    testFeedPtr->sub(account, sessionPtr);
+    testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
@@ -297,7 +300,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
 {
     auto const issue1 = GetIssue(CURRENCY, ISSUER);
     ripple::Book const book{ripple::xrpIssue(), issue1};
-    testFeedPtr->sub(book, sessionPtr, 1);
+    testFeedPtr->sub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
@@ -498,7 +501,8 @@ TEST_F(FeedTransactionTest, SubBookV2)
 {
     auto const issue1 = GetIssue(CURRENCY, ISSUER);
     ripple::Book const book{ripple::xrpIssue(), issue1};
-    testFeedPtr->sub(book, sessionPtr, 2);
+    sessionPtr->apiSubVersion = 2;
+    testFeedPtr->sub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
@@ -584,11 +588,12 @@ TEST_F(FeedTransactionTest, SubBookV2)
 
 TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
 {
+    sessionPtr->apiSubVersion = 2;
     auto const account = GetAccountIDWithString(ACCOUNT1);
-    testFeedPtr->sub(account, sessionPtr, 2);
+    testFeedPtr->sub(account, sessionPtr);
 
     auto const account2 = GetAccountIDWithString(ACCOUNT2);
-    testFeedPtr->sub(account2, sessionPtr, 2);
+    testFeedPtr->sub(account2, sessionPtr);
 
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
@@ -620,10 +625,11 @@ TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
 TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
 {
     auto const account = GetAccountIDWithString(ACCOUNT1);
-    testFeedPtr->sub(account, sessionPtr, 1);
+    testFeedPtr->sub(account, sessionPtr);
 
     auto const account2 = GetAccountIDWithString(ACCOUNT2);
-    testFeedPtr->sub(account2, sessionPtr, 2);
+    sessionPtr->apiSubVersion = 2;
+    testFeedPtr->sub(account2, sessionPtr);
 
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
@@ -656,9 +662,11 @@ TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
 TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
 {
     // sub version 1 first
-    testFeedPtr->sub(sessionPtr, 1);
+    sessionPtr->apiSubVersion = 1;
+    testFeedPtr->sub(sessionPtr);
     // sub version 2 later
-    testFeedPtr->sub(sessionPtr, 2);
+    sessionPtr->apiSubVersion = 2;
+    testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
@@ -669,7 +677,7 @@ TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
 
     testFeedPtr->pub(trans1, ledgerinfo, backend);
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
 
     testFeedPtr->unsub(sessionPtr);
@@ -683,13 +691,14 @@ TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
 TEST_F(FeedTransactionTest, SubRepeat)
 {
     auto const session2 = std::make_shared<MockSession>();
+    session2->apiSubVersion = 1;
 
-    testFeedPtr->sub(sessionPtr, 1);
-    testFeedPtr->sub(session2, 1);
+    testFeedPtr->sub(sessionPtr);
+    testFeedPtr->sub(session2);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 2);
 
-    testFeedPtr->sub(sessionPtr, 1);
-    testFeedPtr->sub(session2, 1);
+    testFeedPtr->sub(sessionPtr);
+    testFeedPtr->sub(session2);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 2);
 
     testFeedPtr->unsub(sessionPtr);
@@ -701,12 +710,12 @@ TEST_F(FeedTransactionTest, SubRepeat)
 
     auto const account = GetAccountIDWithString(ACCOUNT1);
     auto const account2 = GetAccountIDWithString(ACCOUNT2);
-    testFeedPtr->sub(account, sessionPtr, 1);
-    testFeedPtr->sub(account2, session2, 1);
+    testFeedPtr->sub(account, sessionPtr);
+    testFeedPtr->sub(account2, session2);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
-    testFeedPtr->sub(account, sessionPtr, 1);
-    testFeedPtr->sub(account2, session2, 1);
+    testFeedPtr->sub(account, sessionPtr);
+    testFeedPtr->sub(account2, session2);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
     testFeedPtr->unsub(account, sessionPtr);
@@ -718,9 +727,9 @@ TEST_F(FeedTransactionTest, SubRepeat)
 
     auto const issue1 = GetIssue(CURRENCY, ISSUER);
     ripple::Book const book{ripple::xrpIssue(), issue1};
-    testFeedPtr->sub(book, sessionPtr, 1);
+    testFeedPtr->sub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 1);
-    testFeedPtr->sub(book, session2, 1);
+    testFeedPtr->sub(book, session2);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 2);
 
     testFeedPtr->unsub(book, sessionPtr);
@@ -733,7 +742,7 @@ TEST_F(FeedTransactionTest, SubRepeat)
 
 TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
 {
-    testFeedPtr->sub(sessionPtr, 1);
+    testFeedPtr->sub(sessionPtr);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
@@ -846,7 +855,7 @@ constexpr static auto TRAN_FROZEN =
 
 TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
 {
-    testFeedPtr->sub(sessionPtr, 1);
+    testFeedPtr->sub(sessionPtr);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
@@ -884,7 +893,7 @@ TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
 
 TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
 {
-    testFeedPtr->sub(sessionPtr, 1);
+    testFeedPtr->sub(sessionPtr);
 
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
@@ -955,16 +964,16 @@ TEST_F(TransactionFeedMockPrometheusTest, subUnsub)
     EXPECT_CALL(counterBook, add(1));
     EXPECT_CALL(counterBook, add(-1));
 
-    testFeedPtr->sub(sessionPtr, 1);
+    testFeedPtr->sub(sessionPtr);
     testFeedPtr->unsub(sessionPtr);
 
     auto const account = GetAccountIDWithString(ACCOUNT1);
-    testFeedPtr->sub(account, sessionPtr, 1);
+    testFeedPtr->sub(account, sessionPtr);
     testFeedPtr->unsub(account, sessionPtr);
 
     auto const issue1 = GetIssue(CURRENCY, ISSUER);
     ripple::Book const book{ripple::xrpIssue(), issue1};
-    testFeedPtr->sub(book, sessionPtr, 1);
+    testFeedPtr->sub(book, sessionPtr);
     testFeedPtr->unsub(book, sessionPtr);
 }
 
@@ -981,14 +990,14 @@ TEST_F(TransactionFeedMockPrometheusTest, AutoDisconnect)
     EXPECT_CALL(counterBook, add(1));
     EXPECT_CALL(counterBook, add(-1));
 
-    testFeedPtr->sub(sessionPtr, 1);
+    testFeedPtr->sub(sessionPtr);
 
     auto const account = GetAccountIDWithString(ACCOUNT1);
-    testFeedPtr->sub(account, sessionPtr, 1);
+    testFeedPtr->sub(account, sessionPtr);
 
     auto const issue1 = GetIssue(CURRENCY, ISSUER);
     ripple::Book const book{ripple::xrpIssue(), issue1};
-    testFeedPtr->sub(book, sessionPtr, 1);
+    testFeedPtr->sub(book, sessionPtr);
 
     sessionPtr.reset();
 }
