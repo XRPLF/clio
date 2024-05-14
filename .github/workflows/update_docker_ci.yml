@@ -19,7 +19,7 @@ jobs:
     runs-on: [self-hosted, heavy]
     steps:
       - name: Login to DockerHub
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name != 'pull_request' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
@@ -42,6 +42,6 @@ jobs:
         with:
           context: ${{ github.workspace }}/docker/ci
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name == 'push' }}
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
 
