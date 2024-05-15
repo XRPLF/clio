@@ -20,6 +20,7 @@
 
 #include "util/Assert.hpp"
 
+#include <cstddef>
 #include <random>
 
 namespace util {
@@ -49,6 +50,14 @@ public:
         std::uniform_int_distribution<T> distribution(min, max);
         return distribution(generator_);
     }
+
+    /**
+     * @brief Set the seed for the random number generator
+     *
+     * @param seed Seed to set
+     */
+    static void
+    setSeed(size_t seed);
 
 private:
     static std::mt19937_64 generator_;

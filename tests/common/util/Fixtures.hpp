@@ -195,23 +195,8 @@ protected:
 
 template <template <typename> typename MockType = ::testing::NiceMock>
 struct MockBackendTestBase : virtual public NoLoggerFixture {
-    void
-    SetUp() override
-    {
-        backend.reset();
-    }
-
     class BackendProxy {
-        std::shared_ptr<BackendInterface> backend;
-
-    private:
-        void
-        reset()
-        {
-            backend = std::make_shared<MockType<MockBackend>>(util::Config{});
-        }
-
-        friend MockBackendTestBase;
+        std::shared_ptr<MockType<MockBackend>> backend = std::make_shared<MockType<MockBackend>>(util::Config{});
 
     public:
         auto
@@ -230,11 +215,10 @@ struct MockBackendTestBase : virtual public NoLoggerFixture {
             return backend;
         }
 
-        operator MockBackend*()
+        MockType<MockBackend>&
+        operator*()
         {
-            MockBackend* ret = dynamic_cast<MockBackend*>(backend.get());
-            [&] { ASSERT_NE(ret, nullptr); }();
-            return ret;
+            return *backend;
         }
     };
 
@@ -267,14 +251,6 @@ using MockBackendTestNaggy = MockBackendTestBase<::testing::NaggyMock>;
 using MockBackendTestStrict = MockBackendTestBase<::testing::StrictMock>;
 
 /**
- * @brief Fixture with a mock subscription manager
- */
-struct MockSubscriptionManagerTest : virtual public NoLoggerFixture {
-protected:
-    std::shared_ptr<MockSubscriptionManager> mockSubscriptionManagerPtr = std::make_shared<MockSubscriptionManager>();
-};
-
-/**
  * @brief Fixture with a mock etl balancer
  */
 struct MockLoadBalancerTest : virtual public NoLoggerFixture {
@@ -283,7 +259,7 @@ protected:
 };
 
 /**
- * @brief Fixture with a mock subscription manager
+ * @brief Fixture with a mock etl service
  */
 template <template <typename> typename MockType = ::testing::NiceMock>
 struct MockETLServiceTestBase : virtual public NoLoggerFixture {
@@ -328,15 +304,14 @@ protected:
  * HandlerBaseTestStrict.
  */
 template <template <typename> typename MockType = ::testing::NiceMock>
-struct HandlerBaseTestBase : public MockBackendTestBase<MockType>,
-                             public util::prometheus::WithPrometheus,
-                             public SyncAsioContextTest,
-                             public MockETLServiceTestBase<MockType> {
+struct HandlerBaseTestBase : util::prometheus::WithPrometheus,
+                             MockBackendTestBase<MockType>,
+                             SyncAsioContextTest,
+                             MockETLServiceTestBase<MockType> {
 protected:
     void
     SetUp() override
     {
-        MockBackendTestBase<MockType>::SetUp();
         SyncAsioContextTest::SetUp();
         MockETLServiceTestBase<MockType>::SetUp();
     }
@@ -346,7 +321,6 @@ protected:
     {
         MockETLServiceTestBase<MockType>::TearDown();
         SyncAsioContextTest::TearDown();
-        MockBackendTestBase<MockType>::TearDown();
     }
 };
 

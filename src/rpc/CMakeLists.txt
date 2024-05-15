@@ -39,7 +39,9 @@ target_sources(
           handlers/NFTSellOffers.cpp
           handlers/NoRippleCheck.cpp
           handlers/Random.cpp
+          handlers/Subscribe.cpp
           handlers/TransactionEntry.cpp
+          handlers/Unsubscribe.cpp
 )
 
 target_link_libraries(clio_rpc PRIVATE clio_util)

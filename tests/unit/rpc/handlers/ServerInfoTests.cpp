@@ -43,23 +43,19 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-using TestServerInfoHandler =
-    BaseServerInfoHandler<MockSubscriptionManager, MockLoadBalancer, MockETLService, MockCounters>;
+using TestServerInfoHandler = BaseServerInfoHandler<MockLoadBalancer, MockETLService, MockCounters>;
 
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto CLIENTIP = "1.1.1.1";
 
-class RPCServerInfoHandlerTest : public HandlerBaseTest,
-                                 public MockLoadBalancerTest,
-                                 public MockSubscriptionManagerTest,
-                                 public MockCountersTest {
-protected:
+struct RPCServerInfoHandlerTest : HandlerBaseTest, MockLoadBalancerTest, MockCountersTest {
+    StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
+
     void
     SetUp() override
     {
         HandlerBaseTest::SetUp();
         MockLoadBalancerTest::SetUp();
-        MockSubscriptionManagerTest::SetUp();
         MockCountersTest::SetUp();
 
         backend->setRange(10, 30);
@@ -69,7 +65,6 @@ protected:
     TearDown() override
     {
         MockCountersTest::TearDown();
-        MockSubscriptionManagerTest::TearDown();
         MockLoadBalancerTest::TearDown();
         HandlerBaseTest::TearDown();
     }
@@ -341,7 +336,6 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
 {
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
     MockCounters* rawCountersPtr = mockCountersPtr.get();
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     MockETLService* rawETLServicePtr = mockETLServicePtr.get();
 
     auto const empty = json::object{};
@@ -360,7 +354,7 @@ TEST_F(RPCServerInfoHandlerTest, AdminSectionPresentWhenAdminFlagIsSet)
     // admin calls
     EXPECT_CALL(*rawCountersPtr, report).WillOnce(Return(empty));
 
-    EXPECT_CALL(*rawSubscriptionManagerPtr, report).WillOnce(Return(empty));
+    EXPECT_CALL(*mockSubscriptionManagerPtr, report).WillOnce(Return(empty));
 
     EXPECT_CALL(*rawETLServicePtr, getInfo).WillOnce(Return(empty));
 
@@ -381,7 +375,6 @@ TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
 {
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
     MockCounters* rawCountersPtr = mockCountersPtr.get();
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     MockETLService* rawETLServicePtr = mockETLServicePtr.get();
 
     auto const empty = json::object{};
@@ -400,7 +393,7 @@ TEST_F(RPCServerInfoHandlerTest, BackendCountersPresentWhenRequestWithParam)
     // admin calls
     EXPECT_CALL(*rawCountersPtr, report).WillOnce(Return(empty));
 
-    EXPECT_CALL(*rawSubscriptionManagerPtr, report).WillOnce(Return(empty));
+    EXPECT_CALL(*mockSubscriptionManagerPtr, report).WillOnce(Return(empty));
 
     EXPECT_CALL(*rawETLServicePtr, getInfo).WillOnce(Return(empty));
 
@@ -427,7 +420,6 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
 {
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
     MockCounters* rawCountersPtr = mockCountersPtr.get();
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     MockETLService* rawETLServicePtr = mockETLServicePtr.get();
 
     auto const empty = json::object{};
@@ -456,7 +448,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesPresent)
     // admin calls
     EXPECT_CALL(*rawCountersPtr, report).WillOnce(Return(empty));
 
-    EXPECT_CALL(*rawSubscriptionManagerPtr, report).WillOnce(Return(empty));
+    EXPECT_CALL(*mockSubscriptionManagerPtr, report).WillOnce(Return(empty));
 
     EXPECT_CALL(*rawETLServicePtr, getInfo).WillOnce(Return(empty));
 
@@ -478,7 +470,6 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
 {
     MockLoadBalancer* rawBalancerPtr = mockLoadBalancerPtr.get();
     MockCounters* rawCountersPtr = mockCountersPtr.get();
-    MockSubscriptionManager* rawSubscriptionManagerPtr = mockSubscriptionManagerPtr.get();
     MockETLService* rawETLServicePtr = mockETLServicePtr.get();
 
     auto const empty = json::object{};
@@ -502,7 +493,7 @@ TEST_F(RPCServerInfoHandlerTest, RippledForwardedValuesMissingNoExceptionThrown)
     // admin calls
     EXPECT_CALL(*rawCountersPtr, report).WillOnce(Return(empty));
 
-    EXPECT_CALL(*rawSubscriptionManagerPtr, report).WillOnce(Return(empty));
+    EXPECT_CALL(*mockSubscriptionManagerPtr, report).WillOnce(Return(empty));
 
     EXPECT_CALL(*rawETLServicePtr, getInfo).WillOnce(Return(empty));
 

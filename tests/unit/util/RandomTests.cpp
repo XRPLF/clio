@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,36 +17,46 @@
 */
 //==============================================================================
 
-#include "etl/ETLState.hpp"
+#include "util/Random.hpp"
 
-#include "rpc/JS.hpp"
+#include <gtest/gtest.h>
 
-#include <boost/json/conversion.hpp>
-#include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
-#include <ripple/protocol/jss.h>
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+#include <vector>
 
-#include <cstdint>
-#include <optional>
+using namespace util;
 
-namespace etl {
-
-std::optional<ETLState>
-tag_invoke(boost::json::value_to_tag<std::optional<ETLState>>, boost::json::value const& jv)
-{
-    ETLState state;
-    auto const& jsonObject = jv.as_object();
-
-    if (jsonObject.contains(JS(error)))
-        return std::nullopt;
-
-    if (jsonObject.contains(JS(result)) && jsonObject.at(JS(result)).as_object().contains(JS(info))) {
-        auto const rippledInfo = jsonObject.at(JS(result)).as_object().at(JS(info)).as_object();
-        if (rippledInfo.contains(JS(network_id)))
-            state.networkID.emplace(boost::json::value_to<int64_t>(rippledInfo.at(JS(network_id))));
+struct RandomTests : public ::testing::Test {
+    static std::vector<int>
+    generateRandoms(size_t const numRandoms = 1000)
+    {
+        std::vector<int> v;
+        v.reserve(numRandoms);
+        std::ranges::generate_n(std::back_inserter(v), numRandoms, []() { return Random::uniform(0, 1000); });
+        return v;
     }
+};
 
-    return state;
+TEST_F(RandomTests, Uniform)
+{
+    std::ranges::for_each(generateRandoms(), [](int const& e) {
+        EXPECT_GE(e, 0);
+        EXPECT_LE(e, 1000);
+    });
 }
 
-}  // namespace etl
+TEST_F(RandomTests, FixedSeed)
+{
+    Random::setSeed(42);
+    std::vector<int> const v1 = generateRandoms();
+
+    Random::setSeed(42);
+    std::vector<int> const v2 = generateRandoms();
+
+    ASSERT_EQ(v1.size(), v2.size());
+    for (size_t i = 0; i < v1.size(); ++i) {
+        EXPECT_EQ(v1[i], v2[i]);
+    };
+}

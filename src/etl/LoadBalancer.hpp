@@ -24,7 +24,7 @@
 #include "etl/ETLState.hpp"
 #include "etl/Source.hpp"
 #include "etl/impl/ForwardingCache.hpp"
-#include "feed/SubscriptionManager.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
@@ -39,20 +39,13 @@
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
-
-namespace etl {
-class ProbingSource;
-}  // namespace etl
-
-namespace feed {
-class SubscriptionManager;
-}  // namespace feed
 
 namespace etl {
 
@@ -73,9 +66,9 @@ private:
     static constexpr std::uint32_t DEFAULT_DOWNLOAD_RANGES = 16;
 
     util::Logger log_{"ETL"};
-    // Forwarding cache must be destroyed after sources because sources have a callnack to invalidate cache
+    // Forwarding cache must be destroyed after sources because sources have a callback to invalidate cache
     std::optional<impl::ForwardingCache> forwardingCache_;
-    std::vector<Source> sources_;
+    std::vector<SourcePtr> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
         DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
@@ -90,13 +83,15 @@ public:
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
      * @param validatedLedgers The network validated ledgers datastructure
+     * @param sourceFactory A factory function to create a source
      */
     LoadBalancer(
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+        std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+        SourceFactory sourceFactory = make_Source
     );
 
     /**
@@ -107,6 +102,7 @@ public:
      * @param backend BackendInterface implementation
      * @param subscriptions Subscription manager
      * @param validatedLedgers The network validated ledgers datastructure
+     * @param sourceFactory A factory function to create a source
      * @return A shared pointer to a new instance of LoadBalancer
      */
     static std::shared_ptr<LoadBalancer>
@@ -114,22 +110,28 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<feed::SubscriptionManager> subscriptions,
-        std::shared_ptr<NetworkValidatedLedgers> validatedLedgers
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+        std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+        SourceFactory sourceFactory = make_Source
     );
 
     ~LoadBalancer();
 
     /**
      * @brief Load the initial ledger, writing data to the queue.
+     * @note This function will retry indefinitely until the ledger is downloaded.
      *
      * @param sequence Sequence of ledger to download
      * @param cacheOnly Whether to only write to cache and not to the DB; defaults to false
-     * @return A std::pair<std::vector<std::string>, bool> The ledger data and a bool indicating whether the download
-     * was successful
+     * @param retryAfter Time to wait between retries (2 seconds by default)
+     * @return A std::vector<std::string> The ledger data
      */
-    std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(uint32_t sequence, bool cacheOnly = false);
+    std::vector<std::string>
+    loadInitialLedger(
+        uint32_t sequence,
+        bool cacheOnly = false,
+        std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
+    );
 
     /**
      * @brief Fetch data for a specific ledger.
@@ -140,11 +142,17 @@ public:
      * @param ledgerSequence Sequence of the ledger to fetch
      * @param getObjects Whether to get the account state diff between this ledger and the prior one
      * @param getObjectNeighbors Whether to request object neighbors
+     * @param retryAfter Time to wait between retries (2 seconds by default)
      * @return The extracted data, if extraction was successful. If the ledger was found
      * in the database or the server is shutting down, the optional will be empty
      */
     OptionalGetLedgerResponseType
-    fetchLedger(uint32_t ledgerSequence, bool getObjects, bool getObjectNeighbors);
+    fetchLedger(
+        uint32_t ledgerSequence,
+        bool getObjects,
+        bool getObjectNeighbors,
+        std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2}
+    );
 
     /**
      * @brief Represent the state of this load balancer as a JSON object
@@ -186,12 +194,12 @@ private:
      *
      * @param f Function to execute. This function takes the ETL source as an argument, and returns a bool
      * @param ledgerSequence f is executed for each Source that has this ledger
-     * @return true if f was eventually executed successfully. false if the ledger was found in the database or the
+     * @param retryAfter Time to wait between retries (2 seconds by default)
      * server is shutting down
      */
     template <typename Func>
-    bool
-    execute(Func f, uint32_t ledgerSequence);
+    void
+    execute(Func f, uint32_t ledgerSequence, std::chrono::steady_clock::duration retryAfter = std::chrono::seconds{2});
 
     /**
      * @brief Choose a new source to forward requests

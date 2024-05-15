@@ -50,29 +50,22 @@ static auto constexpr LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A
 static auto constexpr SEQ = 30;
 static auto constexpr AGE = 800;
 
-struct ETLLedgerPublisherTest : util::prometheus::WithPrometheus,
-                                MockBackendTest,
-                                SyncAsioContextTest,
-                                MockSubscriptionManagerTest {
+struct ETLLedgerPublisherTest : util::prometheus::WithPrometheus, MockBackendTestStrict, SyncAsioContextTest {
     void
     SetUp() override
     {
-        MockBackendTest::SetUp();
         SyncAsioContextTest::SetUp();
-        MockSubscriptionManagerTest::SetUp();
     }
 
     void
     TearDown() override
     {
-        MockSubscriptionManagerTest::TearDown();
         SyncAsioContextTest::TearDown();
-        MockBackendTest::TearDown();
     }
 
-protected:
     util::Config cfg{json::parse("{}")};
     MockCache mockCache;
+    StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
 };
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingFalse)
@@ -83,14 +76,13 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingFalse)
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerInfo);
 
-    ON_CALL(*backend, fetchLedgerDiff(SEQ, _)).WillByDefault(Return(std::vector<LedgerObject>{}));
-    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).Times(1);
+    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).WillOnce(Return(std::vector<LedgerObject>{}));
 
     // setLastPublishedSequence not in strand, should verify before run
     EXPECT_TRUE(publisher.getLastPublishedSequence());
     EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
 
-    EXPECT_CALL(mockCache, updateImp).Times(1);
+    EXPECT_CALL(mockCache, updateImp);
 
     ctx.run();
     EXPECT_TRUE(backend->fetchLedgerRange());
@@ -105,8 +97,6 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingTrue)
     auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerInfo);
-
-    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(0);
 
     // setLastPublishedSequence not in strand, should verify before run
     EXPECT_TRUE(publisher.getLastPublishedSequence());
@@ -127,33 +117,26 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoInRange)
 
     publisher.publish(dummyLedgerInfo);
 
-    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(0);
-
     // mock fetch fee
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
-        .WillByDefault(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
+        .WillOnce(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
-    // mock fetch transactions
-    EXPECT_CALL(*backend, fetchAllTransactionsInLedger).Times(1);
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, SEQ).getSerializer().peekData();
     t1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
     t1.ledgerSequence = SEQ;
-    ON_CALL(*backend, fetchAllTransactionsInLedger(SEQ, _))
-        .WillByDefault(Return(std::vector<TransactionAndMetadata>{t1}));
+
+    // mock fetch transactions
+    EXPECT_CALL(*backend, fetchAllTransactionsInLedger).WillOnce(Return(std::vector<TransactionAndMetadata>{t1}));
 
     // setLastPublishedSequence not in strand, should verify before run
     EXPECT_TRUE(publisher.getLastPublishedSequence());
     EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
-        dynamic_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
-
-    EXPECT_CALL(*rawSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", SEQ - 1, SEQ), 1)).Times(1);
-    EXPECT_CALL(*rawSubscriptionManagerPtr, pubBookChanges).Times(1);
+    EXPECT_CALL(*mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", SEQ - 1, SEQ), 1));
+    EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges);
     // mock 1 transaction
-    EXPECT_CALL(*rawSubscriptionManagerPtr, pubTransaction).Times(1);
+    EXPECT_CALL(*mockSubscriptionManagerPtr, pubTransaction);
 
     ctx.run();
     // last publish time should be set
@@ -175,33 +158,27 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoCloseTimeGreaterThanNow)
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerInfo);
 
-    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(0);
-
     // mock fetch fee
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
-        .WillByDefault(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
+        .WillOnce(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
-    // mock fetch transactions
-    EXPECT_CALL(*backend, fetchAllTransactionsInLedger).Times(1);
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, SEQ).getSerializer().peekData();
     t1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30).getSerializer().peekData();
     t1.ledgerSequence = SEQ;
-    ON_CALL(*backend, fetchAllTransactionsInLedger(SEQ, _))
-        .WillByDefault(Return(std::vector<TransactionAndMetadata>{t1}));
+
+    // mock fetch transactions
+    EXPECT_CALL(*backend, fetchAllTransactionsInLedger(SEQ, _))
+        .WillOnce(Return(std::vector<TransactionAndMetadata>{t1}));
 
     // setLastPublishedSequence not in strand, should verify before run
     EXPECT_TRUE(publisher.getLastPublishedSequence());
     EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
-        dynamic_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
-
-    EXPECT_CALL(*rawSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", SEQ - 1, SEQ), 1)).Times(1);
-    EXPECT_CALL(*rawSubscriptionManagerPtr, pubBookChanges).Times(1);
+    EXPECT_CALL(*mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", SEQ - 1, SEQ), 1));
+    EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges);
     // mock 1 transaction
-    EXPECT_CALL(*rawSubscriptionManagerPtr, pubTransaction).Times(1);
+    EXPECT_CALL(*mockSubscriptionManagerPtr, pubTransaction);
 
     ctx.run();
     // last publish time should be set
@@ -224,11 +201,10 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqMaxAttampt)
 
     static auto constexpr MAX_ATTEMPT = 2;
 
-    EXPECT_CALL(*backend, hardFetchLedgerRange).Times(MAX_ATTEMPT);
-
     LedgerRange const range{.minSequence = SEQ - 1, .maxSequence = SEQ - 1};
-    ON_CALL(*backend, hardFetchLedgerRange(_)).WillByDefault(Return(range));
-    EXPECT_FALSE(publisher.publish(SEQ, MAX_ATTEMPT));
+    EXPECT_CALL(*backend, hardFetchLedgerRange).Times(MAX_ATTEMPT).WillRepeatedly(Return(range));
+
+    EXPECT_FALSE(publisher.publish(SEQ, MAX_ATTEMPT, std::chrono::milliseconds{1}));
 }
 
 TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
@@ -238,16 +214,13 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
 
     LedgerRange const range{.minSequence = SEQ, .maxSequence = SEQ};
-    ON_CALL(*backend, hardFetchLedgerRange(_)).WillByDefault(Return(range));
-    EXPECT_CALL(*backend, hardFetchLedgerRange).Times(1);
+    EXPECT_CALL(*backend, hardFetchLedgerRange).WillOnce(Return(range));
 
     auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
-    ON_CALL(*backend, fetchLedgerBySequence(SEQ, _)).WillByDefault(Return(dummyLedgerInfo));
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(SEQ, _)).WillOnce(Return(dummyLedgerInfo));
 
-    ON_CALL(*backend, fetchLedgerDiff(SEQ, _)).WillByDefault(Return(std::vector<LedgerObject>{}));
-    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).Times(1);
-    EXPECT_CALL(mockCache, updateImp).Times(1);
+    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).WillOnce(Return(std::vector<LedgerObject>{}));
+    EXPECT_CALL(mockCache, updateImp);
 
     EXPECT_TRUE(publisher.publish(SEQ, {}));
     ctx.run();
@@ -264,15 +237,10 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
 
     publisher.publish(dummyLedgerInfo);
 
-    EXPECT_CALL(*backend, fetchLedgerDiff(_, _)).Times(0);
-
     // mock fetch fee
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
-        .WillByDefault(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
+        .WillOnce(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
 
-    // mock fetch transactions
-    EXPECT_CALL(*backend, fetchAllTransactionsInLedger).Times(1);
     // t1 index > t2 index
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, SEQ).getSerializer().peekData();
@@ -284,22 +252,21 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
     t2.metadata = CreatePaymentTransactionMetaObject(ACCOUNT, ACCOUNT2, 110, 30, 1).getSerializer().peekData();
     t2.ledgerSequence = SEQ;
     t2.date = 2;
-    ON_CALL(*backend, fetchAllTransactionsInLedger(SEQ, _))
-        .WillByDefault(Return(std::vector<TransactionAndMetadata>{t1, t2}));
+
+    // mock fetch transactions
+    EXPECT_CALL(*backend, fetchAllTransactionsInLedger(SEQ, _))
+        .WillOnce(Return(std::vector<TransactionAndMetadata>{t1, t2}));
 
     // setLastPublishedSequence not in strand, should verify before run
     EXPECT_TRUE(publisher.getLastPublishedSequence());
     EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
 
-    MockSubscriptionManager* rawSubscriptionManagerPtr =
-        dynamic_cast<MockSubscriptionManager*>(mockSubscriptionManagerPtr.get());
-
-    EXPECT_CALL(*rawSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", SEQ - 1, SEQ), 2)).Times(1);
-    EXPECT_CALL(*rawSubscriptionManagerPtr, pubBookChanges).Times(1);
+    EXPECT_CALL(*mockSubscriptionManagerPtr, pubLedger(_, _, fmt::format("{}-{}", SEQ - 1, SEQ), 2));
+    EXPECT_CALL(*mockSubscriptionManagerPtr, pubBookChanges);
     // should call pubTransaction t2 first (greater tx index)
     Sequence const s;
-    EXPECT_CALL(*rawSubscriptionManagerPtr, pubTransaction(t2, _)).InSequence(s);
-    EXPECT_CALL(*rawSubscriptionManagerPtr, pubTransaction(t1, _)).InSequence(s);
+    EXPECT_CALL(*mockSubscriptionManagerPtr, pubTransaction(t2, _)).InSequence(s);
+    EXPECT_CALL(*mockSubscriptionManagerPtr, pubTransaction(t1, _)).InSequence(s);
 
     ctx.run();
     // last publish time should be set
