@@ -22,137 +22,20 @@
  * Note: Please don't push your temporary work to the repo.
  */
 
-#include "data/BackendInterface.hpp"
-#include "rpc/Amendments.hpp"
-#include "rpc/RPCHelpers.hpp"
+#include "data/AmendmentCenter.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
 
-#include <boost/asio/spawn.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/Slice.h>
-#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Feature.h>
 #include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/digest.h>
 
-#include <algorithm>
-#include <array>
-#include <cstdint>
-#include <iostream>
-#include <iterator>
-#include <memory>
-#include <ranges>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <utility>
 #include <vector>
 
 using namespace testing;
-
-struct Amendment {
-    std::string name;
-    ripple::uint256 feature;
-    bool supportedByClio;
-
-    Amendment(std::string n, bool supported = false)
-        : name{std::move(n)}, feature{GetAmendmentId(name)}, supportedByClio{supported}
-    {
-    }
-
-    static ripple::uint256
-    GetAmendmentId(std::string_view const name)
-    {
-        return ripple::sha512Half(ripple::Slice(name.data(), name.size()));
-    }
-};
-
-auto
-xrplAmendments()
-{
-    namespace rg = std::ranges;
-    namespace vs = std::views;
-
-    std::vector<Amendment> amendments;
-
-    rg::copy(
-        ripple::detail::supportedAmendments() | vs::transform([&](auto const& p) { return Amendment{p.first}; }),
-        std::back_inserter(amendments)
-    );
-
-    return amendments;
-}
-
-auto
-mockAmendments()
-{
-    return std::vector<Amendment>{Amendment("foo"), Amendment("bar")};
-}
-
-class AmendmentCenter {
-    std::shared_ptr<data::BackendInterface> backend_;
-
-    std::unordered_map<std::string, Amendment> supported_;
-    std::vector<Amendment> all_;
-
-public:
-    AmendmentCenter(
-        std::shared_ptr<data::BackendInterface> const& backend,
-        auto provider,
-        std::vector<std::string> amendments
-    )
-        : backend_{backend}
-    {
-        namespace rg = std::ranges;
-        namespace vs = std::views;
-
-        rg::copy(
-            provider() | vs::transform([&](auto const& a) {
-                auto const supported = rg::find(amendments, a.name) != rg::end(amendments);
-                return Amendment{a.name, supported};
-            }),
-            std::back_inserter(all_)
-        );
-
-        for (auto const& am : all_ | vs::filter([](auto const& am) { return am.supportedByClio; }))
-            supported_.insert_or_assign(am.name, am);
-    }
-
-    bool
-    isSupported(std::string name) const
-    {
-        return supported_.contains(name) && supported_.at(name).supportedByClio;
-    }
-
-    std::unordered_map<std::string, Amendment> const&
-    getSupported() const
-    {
-        return supported_;
-    }
-
-    std::vector<Amendment> const&
-    getAll() const
-    {
-        return all_;
-    }
-
-    bool
-    isEnabled(std::string name, uint32_t seq) const
-    {
-        namespace rg = std::ranges;
-
-        if (auto am = rg::find(all_, name, [](auto const& am) { return am.name; }); am != rg::end(all_)) {
-            return data::synchronous([this, feature = am->feature, seq](auto yield) {
-                return rpc::isAmendmentEnabled(backend_, yield, seq, feature);
-            });
-        }
-
-        return false;
-    }
-};
+using namespace data;
 
 constexpr auto SEQ = 30;
 
@@ -178,6 +61,7 @@ TEST_F(PlaygroundTest, Amendments)
 
 TEST_F(PlaygroundTest, AmendmentsFoobar)
 {
+    auto mockAmendments = []() { return std::vector<Amendment>{Amendment("foo"), Amendment("bar")}; };
     auto man = AmendmentCenter{backend, mockAmendments, {"foo"}};
 
     EXPECT_EQ(man.getAll().size(), mockAmendments().size());

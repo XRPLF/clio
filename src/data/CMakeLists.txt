@@ -1,7 +1,8 @@
 add_library(clio_data)
 target_sources(
   clio_data
-  PRIVATE BackendCounters.cpp
+  PRIVATE AmendmentCenter.cpp
+          BackendCounters.cpp
           BackendInterface.cpp
           LedgerCache.cpp
           cassandra/impl/Future.cpp
