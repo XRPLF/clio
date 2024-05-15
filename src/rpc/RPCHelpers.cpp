@@ -1288,25 +1288,6 @@ getNFTID(boost::json::object const& request)
     return tokenid;
 }
 
-bool
-isAmendmentEnabled(
-    std::shared_ptr<data::BackendInterface const> const& backend,
-    boost::asio::yield_context yield,
-    uint32_t seq,
-    ripple::uint256 amendmentId
-)
-{
-    // the amendments should always be present in ledger
-    auto const& amendments = backend->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
-
-    ripple::SLE const amendmentsSLE{
-        ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key
-    };
-
-    auto const listAmendments = amendmentsSLE.getFieldV256(ripple::sfAmendments);
-    return std::find(listAmendments.begin(), listAmendments.end(), amendmentId) != listAmendments.end();
-}
-
 boost::json::object
 toJsonWithBinaryTx(data::TransactionAndMetadata const& txnPlusMeta, std::uint32_t const apiVersion)
 {

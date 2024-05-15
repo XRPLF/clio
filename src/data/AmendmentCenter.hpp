@@ -164,9 +164,16 @@ public:
     bool
     isEnabled(std::string name, uint32_t seq) const;
 
-private:
+    /**
+     * @brief Check whether an amendment was/is enabled for a given sequence
+     *
+     * @param yield The coroutine context to use
+     * @param name The name of the amendment to check
+     * @param seq The sequence to check for
+     * @return true if enabled; false otherwise
+     */
     bool
-    isAmendmentEnabled(boost::asio::yield_context yield, uint32_t seq, Amendment const& amendment) const;
+    isEnabled(boost::asio::yield_context yield, std::string name, uint32_t seq) const;
 };
 
 }  // namespace data

@@ -75,17 +75,11 @@ AmendmentCenter::getAll() const
 bool
 AmendmentCenter::isEnabled(std::string name, uint32_t seq) const
 {
-    namespace rg = std::ranges;
-
-    if (auto am = rg::find(all_, name, [](auto const& am) { return am.name; }); am != rg::end(all_)) {
-        return data::synchronous([this, am = *am, seq](auto yield) { return isAmendmentEnabled(yield, seq, am); });
-    }
-
-    return false;
+    return data::synchronous([this, name, seq](auto yield) { return isEnabled(yield, name, seq); });
 }
 
 bool
-AmendmentCenter::isAmendmentEnabled(boost::asio::yield_context yield, uint32_t seq, Amendment const& amendment) const
+AmendmentCenter::isEnabled(boost::asio::yield_context yield, std::string name, uint32_t seq) const
 {
     namespace rg = std::ranges;
 
@@ -97,7 +91,12 @@ AmendmentCenter::isAmendmentEnabled(boost::asio::yield_context yield, uint32_t s
     };
 
     auto const listAmendments = amendmentsSLE.getFieldV256(ripple::sfAmendments);
-    return rg::find(listAmendments, amendment.feature) != rg::end(listAmendments);
+
+    if (auto am = rg::find(all_, name, [](auto const& am) { return am.name; }); am != rg::end(all_)) {
+        return rg::find(listAmendments, am->feature) != rg::end(listAmendments);
+    }
+
+    return false;
 }
 
 }  // namespace data

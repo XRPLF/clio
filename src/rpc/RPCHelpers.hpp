@@ -567,23 +567,6 @@ std::variant<ripple::uint256, Status>
 getNFTID(boost::json::object const& request);
 
 /**
- * @brief Check if the amendment is enabled
- *
- * @param backend The backend to use
- * @param yield The yield context
- * @param seq The ledger sequence
- * @param amendmentId The amendment ID
- * @return true if the amendment is enabled
- */
-bool
-isAmendmentEnabled(
-    std::shared_ptr<data::BackendInterface const> const& backend,
-    boost::asio::yield_context yield,
-    uint32_t seq,
-    ripple::uint256 amendmentId
-);
-
-/**
  * @brief Encode CTID as string
  *
  * @param ledgerSeq The ledger sequence

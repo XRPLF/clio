@@ -79,11 +79,8 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
     if (!accountKeylet.check(sle))
         return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
-    auto const isDisallowIncomingEnabled =
-        rpc::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, rpc::Amendments::DisallowIncoming);
-
-    auto const isClawbackEnabled =
-        rpc::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, rpc::Amendments::Clawback);
+    auto const isDisallowIncomingEnabled = amendmentCenter_.get().isEnabled(ctx.yield, "DisallowIncoming", lgrInfo.seq);
+    auto const isClawbackEnabled = amendmentCenter_.get().isEnabled(ctx.yield, "Clawback", lgrInfo.seq);
 
     // Return SignerList(s) if that is requested.
     if (input.signerLists) {

@@ -41,6 +41,9 @@ class Counters;
 namespace feed {
 class SubscriptionManager;
 }  // namespace feed
+namespace data {
+class AmendmentCenter;
+}  // namespace data
 
 namespace rpc::impl {
 
@@ -59,7 +62,8 @@ public:
         std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
         std::shared_ptr<etl::ETLService const> const& etl,
-        Counters const& counters
+        Counters const& counters,
+        data::AmendmentCenter const& amendmentCenter
     );
 
     bool
