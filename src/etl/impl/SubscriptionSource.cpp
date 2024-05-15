@@ -19,6 +19,8 @@
 
 #include "etl/impl/SubscriptionSource.hpp"
 
+#include "etl/ETLHelpers.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/JS.hpp"
 #include "util/Retry.hpp"
 #include "util/log/Logger.hpp"
@@ -28,8 +30,11 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/asio/use_future.hpp>
+#include <boost/beast/http/field.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
@@ -51,6 +56,33 @@
 #include <vector>
 
 namespace etl::impl {
+
+SubscriptionSource::SubscriptionSource(
+    boost::asio::io_context& ioContext,
+    std::string const& ip,
+    std::string const& wsPort,
+    std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+    OnConnectHook onConnect,
+    OnDisconnectHook onDisconnect,
+    OnLedgerClosedHook onLedgerClosed,
+    std::chrono::steady_clock::duration const connectionTimeout,
+    std::chrono::steady_clock::duration const retryDelay
+)
+    : log_(fmt::format("GrpcSource[{}:{}]", ip, wsPort))
+    , wsConnectionBuilder_(ip, wsPort)
+    , validatedLedgers_(std::move(validatedLedgers))
+    , subscriptions_(std::move(subscriptions))
+    , strand_(boost::asio::make_strand(ioContext))
+    , retry_(util::makeRetryExponentialBackoff(retryDelay, RETRY_MAX_DELAY, strand_))
+    , onConnect_(std::move(onConnect))
+    , onDisconnect_(std::move(onDisconnect))
+    , onLedgerClosed_(std::move(onLedgerClosed))
+{
+    wsConnectionBuilder_.addHeader({boost::beast::http::field::user_agent, "clio-client"})
+        .addHeader({"X-User", "clio-client"})
+        .setConnectionTimeout(connectionTimeout);
+}
 
 SubscriptionSource::~SubscriptionSource()
 {
@@ -89,6 +121,12 @@ bool
 SubscriptionSource::isConnected() const
 {
     return isConnected_;
+}
+
+bool
+SubscriptionSource::isForwarding() const
+{
+    return isForwarding_;
 }
 
 void
@@ -203,18 +241,18 @@ SubscriptionSource::handleMessage(std::string const& message)
         } else {
             if (isForwarding_) {
                 if (object.contains(JS(transaction))) {
-                    dependencies_.forwardProposedTransaction(object);
+                    subscriptions_->forwardProposedTransaction(object);
                 } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_ValidationReceived) {
-                    dependencies_.forwardValidation(object);
+                    subscriptions_->forwardValidation(object);
                 } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_ManifestReceived) {
-                    dependencies_.forwardManifest(object);
+                    subscriptions_->forwardManifest(object);
                 }
             }
         }
 
         if (ledgerIndex != 0) {
             LOG(log_.trace()) << "Pushing ledger sequence = " << ledgerIndex;
-            dependencies_.pushValidatedLedger(ledgerIndex);
+            validatedLedgers_->push(ledgerIndex);
         }
 
         return std::nullopt;
@@ -228,9 +266,9 @@ void
 SubscriptionSource::handleError(util::requests::RequestError const& error, boost::asio::yield_context yield)
 {
     isConnected_ = false;
+    isForwarding_ = false;
     if (not stop_) {
         onDisconnect_();
-        isForwarding_ = false;
     }
 
     if (wsConnection_ != nullptr) {

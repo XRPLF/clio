@@ -20,7 +20,8 @@
 #pragma once
 
 #include "data/Types.hpp"
-#include "web/interface/ConnectionBase.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
+#include "feed/Types.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -36,70 +37,89 @@
 #include <string>
 #include <vector>
 
-struct MockSubscriptionManager {
-public:
-    using session_ptr = std::shared_ptr<web::ConnectionBase>;
-    MockSubscriptionManager() = default;
-
-    MOCK_METHOD(boost::json::object, subLedger, (boost::asio::yield_context, session_ptr), ());
+struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
+    MOCK_METHOD(
+        boost::json::object,
+        subLedger,
+        (boost::asio::yield_context, feed::SubscriberSharedPtr const&),
+        (override)
+    );
 
     MOCK_METHOD(
         void,
         pubLedger,
-        (ripple::LedgerInfo const&, ripple::Fees const&, std::string const&, std::uint32_t),
-        ()
+        (ripple::LedgerHeader const&, ripple::Fees const&, std::string const&, std::uint32_t),
+        (const, override)
     );
 
     MOCK_METHOD(
         void,
         pubBookChanges,
         (ripple::LedgerInfo const&, std::vector<data::TransactionAndMetadata> const&),
-        ()
+        (const, override)
     );
 
-    MOCK_METHOD(void, unsubLedger, (session_ptr), ());
+    MOCK_METHOD(void, unsubLedger, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, subTransactions, (session_ptr), ());
+    MOCK_METHOD(void, subTransactions, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, unsubTransactions, (session_ptr), ());
+    MOCK_METHOD(void, unsubTransactions, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, pubTransaction, (data::TransactionAndMetadata const&, ripple::LedgerInfo const&), ());
+    MOCK_METHOD(void, pubTransaction, (data::TransactionAndMetadata const&, ripple::LedgerInfo const&), (override));
 
-    MOCK_METHOD(void, subAccount, (ripple::AccountID const&, session_ptr&), ());
+    MOCK_METHOD(void, subAccount, (ripple::AccountID const&, feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, unsubAccount, (ripple::AccountID const&, session_ptr const&), ());
+    MOCK_METHOD(void, unsubAccount, (ripple::AccountID const&, feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, subBook, (ripple::Book const&, session_ptr), ());
+    MOCK_METHOD(void, subBook, (ripple::Book const&, feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, unsubBook, (ripple::Book const&, session_ptr), ());
+    MOCK_METHOD(void, unsubBook, (ripple::Book const&, feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, subBookChanges, (session_ptr), ());
+    MOCK_METHOD(void, subBookChanges, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, unsubBookChanges, (session_ptr), ());
+    MOCK_METHOD(void, unsubBookChanges, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, subManifest, (session_ptr), ());
+    MOCK_METHOD(void, subManifest, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, unsubManifest, (session_ptr), ());
+    MOCK_METHOD(void, unsubManifest, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, subValidation, (session_ptr), ());
+    MOCK_METHOD(void, subValidation, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, unsubValidation, (session_ptr), ());
+    MOCK_METHOD(void, unsubValidation, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, forwardProposedTransaction, (boost::json::object const&), ());
+    MOCK_METHOD(void, forwardProposedTransaction, (boost::json::object const&), (override));
 
-    MOCK_METHOD(void, forwardManifest, (boost::json::object const&), ());
+    MOCK_METHOD(void, forwardManifest, (boost::json::object const&), (const, override));
 
-    MOCK_METHOD(void, forwardValidation, (boost::json::object const&), ());
+    MOCK_METHOD(void, forwardValidation, (boost::json::object const&), (const, override));
 
-    MOCK_METHOD(void, subProposedAccount, (ripple::AccountID const&, session_ptr), ());
+    MOCK_METHOD(void, subProposedAccount, (ripple::AccountID const&, feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, unsubProposedAccount, (ripple::AccountID const&, session_ptr), ());
+    MOCK_METHOD(void, unsubProposedAccount, (ripple::AccountID const&, feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, subProposedTransactions, (session_ptr), ());
+    MOCK_METHOD(void, subProposedTransactions, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, unsubProposedTransactions, (session_ptr), ());
+    MOCK_METHOD(void, unsubProposedTransactions, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, cleanup, (session_ptr), ());
-
-    MOCK_METHOD(boost::json::object, report, (), (const));
+    MOCK_METHOD(boost::json::object, report, (), (const, override));
 };
+
+template <template <typename> typename MockType = ::testing::NiceMock>
+struct MockSubscriptionManagerSharedPtrImpl {
+    std::shared_ptr<MockType<MockSubscriptionManager>> subscriptionManagerMock =
+        std::make_shared<MockType<MockSubscriptionManager>>();
+
+    operator std::shared_ptr<feed::SubscriptionManagerInterface>()
+    {
+        return subscriptionManagerMock;
+    }
+
+    MockType<MockSubscriptionManager>&
+    operator*()
+    {
+        return *subscriptionManagerMock;
+    }
+};
+
+using MockSubscriptionManagerSharedPtr = MockSubscriptionManagerSharedPtrImpl<>;
+using StrictMockSubscriptionManagerSharedPtr = MockSubscriptionManagerSharedPtrImpl<testing::StrictMock>;

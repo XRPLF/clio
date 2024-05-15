@@ -64,7 +64,6 @@ protected:
     void
     SetUp() override
     {
-        MockBackendTest::SetUp();
         SyncAsioContextTest::SetUp();
         SubscriptionManagerPtr = std::make_shared<SubscriptionManager>(ctx, backend);
         session = std::make_shared<MockSession>();
@@ -78,7 +77,6 @@ protected:
         session.reset();
         SubscriptionManagerPtr.reset();
         SyncAsioContextTest::TearDown();
-        MockBackendTest::TearDown();
     }
 };
 

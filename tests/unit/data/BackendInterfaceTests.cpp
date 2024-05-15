@@ -40,7 +40,7 @@ using namespace testing;
 constexpr static auto MAXSEQ = 30;
 constexpr static auto MINSEQ = 10;
 
-struct BackendInterfaceTest : MockBackendTestNaggy, SyncAsioContextTest, WithPrometheus {};
+struct BackendInterfaceTest : WithPrometheus, MockBackendTestNaggy, SyncAsioContextTest {};
 
 TEST_F(BackendInterfaceTest, FetchFeesSuccessPath)
 {

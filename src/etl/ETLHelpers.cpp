@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,36 +17,30 @@
 */
 //==============================================================================
 
-#include "etl/ETLState.hpp"
+#include "etl/ETLHelpers.hpp"
 
-#include "rpc/JS.hpp"
+#include "util/Assert.hpp"
 
-#include <boost/json/conversion.hpp>
-#include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
-#include <ripple/protocol/jss.h>
+#include <ripple/basics/base_uint.h>
 
-#include <cstdint>
-#include <optional>
+#include <cstddef>
+#include <vector>
 
 namespace etl {
-
-std::optional<ETLState>
-tag_invoke(boost::json::value_to_tag<std::optional<ETLState>>, boost::json::value const& jv)
+std::vector<ripple::uint256>
+getMarkers(size_t numMarkers)
 {
-    ETLState state;
-    auto const& jsonObject = jv.as_object();
+    ASSERT(numMarkers <= 256, "Number of markers must be <= 256. Got: {}", numMarkers);
 
-    if (jsonObject.contains(JS(error)))
-        return std::nullopt;
+    unsigned char const incr = 256 / numMarkers;
 
-    if (jsonObject.contains(JS(result)) && jsonObject.at(JS(result)).as_object().contains(JS(info))) {
-        auto const rippledInfo = jsonObject.at(JS(result)).as_object().at(JS(info)).as_object();
-        if (rippledInfo.contains(JS(network_id)))
-            state.networkID.emplace(boost::json::value_to<int64_t>(rippledInfo.at(JS(network_id))));
+    std::vector<ripple::uint256> markers;
+    markers.reserve(numMarkers);
+    ripple::uint256 base{0};
+    for (size_t i = 0; i < numMarkers; ++i) {
+        markers.push_back(base);
+        base.data()[0] += incr;
     }
-
-    return state;
+    return markers;
 }
-
 }  // namespace etl
