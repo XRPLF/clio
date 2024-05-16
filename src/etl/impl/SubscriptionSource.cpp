@@ -19,7 +19,7 @@
 
 #include "etl/impl/SubscriptionSource.hpp"
 
-#include "etl/ETLHelpers.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/JS.hpp"
 #include "util/Retry.hpp"

@@ -20,7 +20,7 @@
 #include "etl/Source.hpp"
 
 #include "data/BackendInterface.hpp"
-#include "etl/ETLHelpers.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/impl/ForwardingSource.hpp"
 #include "etl/impl/GrpcSource.hpp"
 #include "etl/impl/SourceImpl.hpp"

@@ -22,7 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/LedgerCache.hpp"
 #include "etl/CorruptionDetector.hpp"
-#include "etl/ETLHelpers.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/Constants.hpp"
