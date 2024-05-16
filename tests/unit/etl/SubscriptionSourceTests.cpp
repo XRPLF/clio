@@ -31,7 +31,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
