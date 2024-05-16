@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
 #include "etl/ETLService.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
@@ -217,8 +218,9 @@ try {
 
     auto workQueue = rpc::WorkQueue::make_WorkQueue(config);
     auto counters = rpc::Counters::make_Counters(workQueue);
+    auto const amendmentCenter = data::AmendmentCenter{backend};
     auto const handlerProvider = std::make_shared<rpc::impl::ProductionHandlerProvider const>(
-        config, backend, subscriptions, balancer, etl, counters
+        config, backend, subscriptions, balancer, etl, counters, amendmentCenter
     );
     auto const rpcEngine =
         rpc::RPCEngine::make_RPCEngine(backend, balancer, dosGuard, workQueue, counters, handlerProvider);

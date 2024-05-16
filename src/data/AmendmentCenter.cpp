@@ -20,8 +20,10 @@
 #include "data/AmendmentCenter.hpp"
 
 #include "data/BackendInterface.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <fmt/compile.h>
 #include <ripple/protocol/Feature.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/SField.h>
@@ -46,6 +48,7 @@ xrplAmendments()
 
     std::vector<Amendment> amendments;
 
+    // TODO: some day we will be able to do | std::to<std::vector>() but gcc still got some catching up to do
     rg::copy(
         ripple::detail::supportedAmendments() | vs::transform([&](auto const& p) { return Amendment{p.first}; }),
         std::back_inserter(amendments)
@@ -97,6 +100,14 @@ AmendmentCenter::isEnabled(boost::asio::yield_context yield, std::string name, u
     }
 
     return false;
+}
+
+Amendment const&
+AmendmentCenter::getAmendment(std::string name) const
+{
+    // todo: fix string contains \0
+    ASSERT(supported_.contains(name.data()), "The amendment '{}' must be present in supported amendments list", name);
+    return supported_.at(name.data());
 }
 
 }  // namespace data

@@ -165,8 +165,8 @@ LoadBalancer::loadInitialLedger(uint32_t sequence, bool cacheOnly, std::chrono::
             auto [data, res] = source->loadInitialLedger(sequence, downloadRanges_, cacheOnly);
 
             if (!res) {
-                LOG(log_.error()) << "Failed to download initial ledger."
-                                  << " Sequence = " << sequence << " source = " << source->toString();
+                LOG(log_.error()) << "Failed to download initial ledger." << " Sequence = " << sequence
+                                  << " source = " << source->toString();
             } else {
                 response = std::move(data);
             }

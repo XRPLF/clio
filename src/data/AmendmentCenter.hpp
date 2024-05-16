@@ -22,6 +22,10 @@
 #include "data/BackendInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/preprocessor.hpp>
+#include <boost/preprocessor/seq/for_each.hpp>
+#include <boost/preprocessor/stringize.hpp>
+#include <boost/preprocessor/variadic/to_seq.hpp>
 #include <ripple/basics/Slice.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Feature.h>
@@ -32,8 +36,9 @@
 #include <ripple/protocol/digest.h>
 
 #include <algorithm>
-#include <concepts>
+#include <array>
 #include <cstdint>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <ranges>
@@ -42,6 +47,16 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#define REGISTER_AMENDMENT_PROXY(r, data, name) \
+    impl::AmendmentProxy<std::to_array(BOOST_PP_STRINGIZE(name)), AmendmentCenter> const name{*this};
+#define STRINGIZE(r, data, name) BOOST_PP_STRINGIZE(name),
+#define REGISTER_AMENDMENTS(...)                                                             \
+    BOOST_PP_SEQ_FOR_EACH(REGISTER_AMENDMENT_PROXY, , BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
+    constexpr static auto const SUPPORTED_AMENDMENTS = std::array                            \
+    {                                                                                        \
+        BOOST_PP_SEQ_FOR_EACH(STRINGIZE, , BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))            \
+    }
 
 namespace data {
 
@@ -77,10 +92,36 @@ struct Amendment {
     }
 };
 
-template <typename T>
-concept SomeAmendmentProvider = requires(T a) {
-    { a() } -> std::same_as<std::vector<Amendment>>;
+namespace impl {
+
+template <std::array Name, typename AmendmentCenterType>
+class AmendmentProxy {
+    std::reference_wrapper<AmendmentCenterType const> center_;
+
+public:
+    explicit AmendmentProxy(AmendmentCenterType const& center) : center_{std::cref(center)}
+    {
+    }
+
+    Amendment const&
+    get() const
+    {
+        static auto const& am = center_.get().getAmendment(std::string{Name.begin(), Name.end()});
+        return am;
+    }
+
+    operator std::string() const
+    {
+        return get().name;
+    }
+
+    operator ripple::uint256() const
+    {
+        return get().feature;
+    }
 };
+
+}  // namespace impl
 
 /**
  * @brief Provides all amendments supported by libxrpl
@@ -91,43 +132,11 @@ std::vector<Amendment>
 xrplAmendments();
 
 /**
- * @brief Knowledge center for amendments within XRPL
+ * @brief The interface of an amendment center
  */
-class AmendmentCenter {
-    std::shared_ptr<data::BackendInterface> backend_;
-
-    std::unordered_map<std::string, Amendment> supported_;
-    std::vector<Amendment> all_;
-
+class AmentmentCenterInterface {
 public:
-    /**
-     * @brief Construct a new AmendmentCenter instance
-     *
-     * @param backend The backend
-     * @param provider Provides the full list of amendments to consider
-     * @param amendments A list of features and fixes supported by Clio
-     */
-    AmendmentCenter(
-        std::shared_ptr<data::BackendInterface> const& backend,
-        SomeAmendmentProvider auto provider,
-        std::vector<std::string> amendments
-    )
-        : backend_{backend}
-    {
-        namespace rg = std::ranges;
-        namespace vs = std::views;
-
-        rg::copy(
-            provider() | vs::transform([&](auto const& a) {
-                auto const supported = rg::find(amendments, a.name) != rg::end(amendments);
-                return Amendment{a.name, supported};
-            }),
-            std::back_inserter(all_)
-        );
-
-        for (auto const& am : all_ | vs::filter([](auto const& am) { return am.supportedByClio; }))
-            supported_.insert_or_assign(am.name, am);
-    }
+    virtual ~AmentmentCenterInterface() = default;
 
     /**
      * @brief Check whether an amendment is supported by Clio
@@ -135,24 +144,24 @@ public:
      * @param name The name of the amendment to check
      * @return true if supported; false otherwise
      */
-    bool
-    isSupported(std::string name) const;
+    virtual bool
+    isSupported(std::string name) const = 0;
 
     /**
      * @brief Get all supported amendments as a map
      *
      * @return The amendments supported by Clio
      */
-    std::unordered_map<std::string, Amendment> const&
-    getSupported() const;
+    virtual std::unordered_map<std::string, Amendment> const&
+    getSupported() const = 0;
 
     /**
      * @brief Get all known amendments
      *
      * @return All known amendments as a vector
      */
-    std::vector<Amendment> const&
-    getAll() const;
+    virtual std::vector<Amendment> const&
+    getAll() const = 0;
 
     /**
      * @brief Check whether an amendment was/is enabled for a given sequence
@@ -161,8 +170,8 @@ public:
      * @param seq The sequence to check for
      * @return true if enabled; false otherwise
      */
-    bool
-    isEnabled(std::string name, uint32_t seq) const;
+    virtual bool
+    isEnabled(std::string name, uint32_t seq) const = 0;
 
     /**
      * @brief Check whether an amendment was/is enabled for a given sequence
@@ -172,8 +181,129 @@ public:
      * @param seq The sequence to check for
      * @return true if enabled; false otherwise
      */
+    virtual bool
+    isEnabled(boost::asio::yield_context yield, std::string name, uint32_t seq) const = 0;
+
+    /**
+     * @brief Get an amendment
+     *
+     * @param name The name of the amendment to get
+     * @return The amendment as a const ref; asserts if the amendment is unknown
+     */
+    virtual Amendment const&
+    getAmendment(std::string name) const = 0;
+};
+
+/**
+ * @brief Knowledge center for amendments within XRPL
+ */
+class AmendmentCenter : public AmentmentCenterInterface {
+    std::shared_ptr<data::BackendInterface> backend_;
+
+    std::unordered_map<std::string, Amendment> supported_;
+    std::vector<Amendment> all_;
+
+public:
+    // NOTE: everytime Clio adds support for an Amendment it should also be listed here
+    /** @cond */
+    REGISTER_AMENDMENTS(
+        OwnerPaysFee,
+        Flow,
+        FlowCross,
+        fix1513,
+        DepositAuth,
+        Checks,
+        fix1571,
+        fix1543,
+        fix1623,
+        DepositPreauth,
+        fix1515,
+        fix1578,
+        MultiSignReserve,
+        fixTakerDryOfferRemoval,
+        fixMasterKeyAsRegularKey,
+        fixCheckThreading,
+        fixPayChanRecipientOwnerDir,
+        DeletableAccounts,
+        fixQualityUpperBound,
+        RequireFullyCanonicalSig,
+        fix1781,
+        HardenedValidations,
+        fixAmendmentMajorityCalc,
+        NegativeUNL,
+        TicketBatch,
+        FlowSortStrands,
+        fixSTAmountCanonicalize,
+        fixRmSmallIncreasedQOffers,
+        CheckCashMakesTrustLine,
+        ExpandedSignerList,
+        NonFungibleTokensV1_1,
+        fixTrustLinesToSelf,
+        fixRemoveNFTokenAutoTrustLine,
+        ImmediateOfferKilled,
+        DisallowIncoming,
+        XRPFees,
+        fixUniversalNumber,
+        fixNonFungibleTokensV1_2,
+        fixNFTokenRemint,
+        fixReducedOffersV1,
+        Clawback,
+        AMM,
+        XChainBridge,
+        fixDisallowIncomingV1,
+        DID,
+        fixFillOrKill,
+        fixNFTokenReserve,
+        fixInnerObjTemplate,
+        fixAMMOverflowOffer,
+        PriceOracle,
+        fixEmptyDID,
+        fixXChainRewardRounding,
+        fixPreviousTxnID,
+        fixAMMRounding
+    );
+    /** @endcond */
+
+public:
+    /**
+     * @brief Construct a new AmendmentCenter instance
+     *
+     * @param backend The backend
+     */
+    explicit AmendmentCenter(std::shared_ptr<data::BackendInterface> const& backend) : backend_{backend}
+    {
+        namespace rg = std::ranges;
+        namespace vs = std::views;
+
+        rg::copy(
+            xrplAmendments() | vs::transform([&](auto const& a) {
+                auto const supported = rg::find(SUPPORTED_AMENDMENTS, a.name) != rg::end(SUPPORTED_AMENDMENTS);
+                return Amendment{a.name, supported};
+            }),
+            std::back_inserter(all_)
+        );
+
+        for (auto const& am : all_ | vs::filter([](auto const& am) { return am.supportedByClio; }))
+            supported_.insert_or_assign(am.name, am);
+    }
+
     bool
-    isEnabled(boost::asio::yield_context yield, std::string name, uint32_t seq) const;
+    isSupported(std::string name) const override;
+
+    std::unordered_map<std::string, Amendment> const&
+    getSupported() const override;
+
+    std::vector<Amendment> const&
+    getAll() const override;
+
+    bool
+    isEnabled(std::string name, uint32_t seq) const override;
+
+    bool
+    isEnabled(boost::asio::yield_context yield, std::string name, uint32_t seq) const override;
+
+    Amendment const&
+    getAmendment(std::string name) const override;
 };
 
 }  // namespace data

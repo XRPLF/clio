@@ -19,7 +19,7 @@
 
 #include "rpc/handlers/AccountInfo.hpp"
 
-#include "rpc/Amendments.hpp"
+#include "data/AmendmentCenter.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -79,8 +79,9 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
     if (!accountKeylet.check(sle))
         return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
-    auto const isDisallowIncomingEnabled = amendmentCenter_.get().isEnabled(ctx.yield, "DisallowIncoming", lgrInfo.seq);
-    auto const isClawbackEnabled = amendmentCenter_.get().isEnabled(ctx.yield, "Clawback", lgrInfo.seq);
+    auto const& ac = amendmentCenter_.get();
+    auto const isDisallowIncomingEnabled = ac.isEnabled(ctx.yield, ac.DisallowIncoming, lgrInfo.seq);
+    auto const isClawbackEnabled = ac.isEnabled(ctx.yield, ac.Clawback, lgrInfo.seq);
 
     // Return SignerList(s) if that is requested.
     if (input.signerLists) {

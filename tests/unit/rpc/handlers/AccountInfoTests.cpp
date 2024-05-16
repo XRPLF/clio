@@ -19,7 +19,6 @@
 
 #include "data/AmendmentCenter.hpp"
 #include "data/Types.hpp"
-#include "rpc/Amendments.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
@@ -54,7 +53,7 @@ constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B2501
 
 struct RPCAccountInfoHandlerTest : HandlerBaseTest {
 protected:
-    data::AmendmentCenter amendmentCenter{backend, xrplAmendments, {"Clawback", "DisallowIncoming"}};
+    data::AmendmentCenter amendmentCenter{backend};
 };
 
 struct AccountInfoParamTestCaseBundle {
@@ -690,7 +689,7 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
     ON_CALL(*backend, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
-        .WillByDefault(Return(CreateAmendmentsObject({rpc::Amendments::DisallowIncoming}).getSerializer().peekData()));
+        .WillByDefault(Return(CreateAmendmentsObject({amendmentCenter.DisallowIncoming}).getSerializer().peekData()));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
 
     auto static const input = json::parse(fmt::format(
@@ -765,7 +764,7 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
     ON_CALL(*backend, doFetchLedgerObject(accountKk, 30, _))
         .WillByDefault(Return(accountRoot.getSerializer().peekData()));
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, 30, _))
-        .WillByDefault(Return(CreateAmendmentsObject({rpc::Amendments::Clawback}).getSerializer().peekData()));
+        .WillByDefault(Return(CreateAmendmentsObject({amendmentCenter.Clawback}).getSerializer().peekData()));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
 
     auto static const input = json::parse(fmt::format(

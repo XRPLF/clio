@@ -29,6 +29,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Feature.h>
 #include <ripple/protocol/Indexes.h>
 
@@ -43,38 +44,27 @@ struct PlaygroundTest : util::prometheus::WithPrometheus, MockBackendTest {};
 
 TEST_F(PlaygroundTest, Amendments)
 {
-    auto man = AmendmentCenter{backend, xrplAmendments, {"fixUniversalNumber", "ImmediateOfferKilled"}};
-    EXPECT_TRUE(man.isSupported("fixUniversalNumber"));
-    EXPECT_FALSE(man.isSupported("unknown"));
+    auto amendmentCenter = AmendmentCenter{backend};
+    EXPECT_TRUE(amendmentCenter.isSupported("fixUniversalNumber"));
+    EXPECT_FALSE(amendmentCenter.isSupported("unknown"));
 
-    EXPECT_EQ(man.getAll().size(), ripple::detail::supportedAmendments().size());
-    EXPECT_EQ(man.getSupported().size(), 2);
+    EXPECT_EQ(amendmentCenter.getAll().size(), ripple::detail::supportedAmendments().size());
+    EXPECT_EQ(amendmentCenter.getSupported().size(), 2);
 
     auto const amendments = CreateAmendmentsObject({Amendment::GetAmendmentId("fixUniversalNumber")});
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, _))
         .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
 
-    EXPECT_TRUE(man.isEnabled("fixUniversalNumber", SEQ));
-    EXPECT_FALSE(man.isEnabled("unknown", SEQ));
-    EXPECT_FALSE(man.isEnabled("ImmediateOfferKilled", SEQ));
+    EXPECT_TRUE(amendmentCenter.isEnabled("fixUniversalNumber", SEQ));
+    EXPECT_FALSE(amendmentCenter.isEnabled("unknown", SEQ));
+    EXPECT_FALSE(amendmentCenter.isEnabled("ImmediateOfferKilled", SEQ));
 }
 
-TEST_F(PlaygroundTest, AmendmentsFoobar)
+TEST_F(PlaygroundTest, GenerateAmendmentId)
 {
-    auto mockAmendments = []() { return std::vector<Amendment>{Amendment("foo"), Amendment("bar")}; };
-    auto man = AmendmentCenter{backend, mockAmendments, {"foo"}};
-
-    EXPECT_EQ(man.getAll().size(), mockAmendments().size());
-    EXPECT_EQ(man.getSupported().size(), 1);
-
-    auto const amendments =
-        CreateAmendmentsObject({Amendment::GetAmendmentId("foo"), Amendment::GetAmendmentId("bar")});
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, _))
-        .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
-
-    EXPECT_TRUE(man.isSupported("foo"));
-    EXPECT_TRUE(man.isEnabled("foo", SEQ));
-    EXPECT_FALSE(man.isEnabled("fixUniversalNumber1", SEQ));
-    EXPECT_FALSE(man.isSupported("bar"));  // this can be used to check an amendment block too
-    EXPECT_TRUE(man.isEnabled("bar", SEQ));
+    // https://xrpl.org/known-amendments.html#disallowincoming refer to the published id
+    EXPECT_EQ(
+        ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"),
+        Amendment::GetAmendmentId("DisallowIncoming")
+    );
 }

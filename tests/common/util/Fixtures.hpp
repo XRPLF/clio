@@ -307,22 +307,7 @@ template <template <typename> typename MockType = ::testing::NiceMock>
 struct HandlerBaseTestBase : util::prometheus::WithPrometheus,
                              MockBackendTestBase<MockType>,
                              SyncAsioContextTest,
-                             MockETLServiceTestBase<MockType> {
-protected:
-    void
-    SetUp() override
-    {
-        SyncAsioContextTest::SetUp();
-        MockETLServiceTestBase<MockType>::SetUp();
-    }
-
-    void
-    TearDown() override
-    {
-        MockETLServiceTestBase<MockType>::TearDown();
-        SyncAsioContextTest::TearDown();
-    }
-};
+                             MockETLServiceTestBase<MockType> {};
 
 /**
  * @brief Fixture with a "nice" backend mock and an embedded boost::asio context.
