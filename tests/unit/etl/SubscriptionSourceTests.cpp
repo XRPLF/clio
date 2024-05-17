@@ -446,7 +446,7 @@ TEST_F(SubscriptionSourceReadTests, GotTransactionIsForwardingTrue)
 
 TEST_F(SubscriptionSourceReadTests, GotTransactionWithMetaIsForwardingFalse)
 {
-    subscriptionSource_->setForwarding(true);
+    subscriptionSource_.setForwarding(true);
     boost::json::object const message = {{"transaction", "some_transaction_data"}, {"meta", "some_meta_data"}};
 
     boost::asio::spawn(ioContext_, [&message, this](boost::asio::yield_context yield) {
@@ -455,7 +455,7 @@ TEST_F(SubscriptionSourceReadTests, GotTransactionWithMetaIsForwardingFalse)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     EXPECT_CALL(*subscriptionManager_, forwardProposedTransaction(message)).Times(0);
     ioContext_.run();
 }

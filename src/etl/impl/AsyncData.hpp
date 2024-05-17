@@ -99,8 +99,7 @@ public:
         bool cacheOnly = false
     )
     {
-        LOG(log_.trace()) << "Processing response. "
-                          << "Marker prefix = " << getMarkerPrefix();
+        LOG(log_.trace()) << "Processing response. " << "Marker prefix = " << getMarkerPrefix();
         if (abort) {
             LOG(log_.error()) << "AsyncCallData aborted";
             return CallStatus::ERRORED;
