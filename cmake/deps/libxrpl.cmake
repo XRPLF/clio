@@ -1,1 +1,1 @@
-find_package(xrpl REQUIRED CONFIG)
+find_package(xrpl-tmp REQUIRED CONFIG)
