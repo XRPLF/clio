@@ -19,7 +19,9 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
+#include "data/Types.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/preprocessor.hpp>
@@ -35,93 +37,110 @@
 #include <ripple/protocol/Serializer.h>
 #include <ripple/protocol/digest.h>
 
-#include <algorithm>
-#include <array>
 #include <cstdint>
-#include <functional>
-#include <iterator>
 #include <memory>
-#include <ranges>
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
-#define REGISTER_AMENDMENT_PROXY(r, data, name) \
-    impl::AmendmentProxy<std::to_array(BOOST_PP_STRINGIZE(name)), AmendmentCenter> const name{*this};
-#define STRINGIZE(r, data, name) BOOST_PP_STRINGIZE(name),
-#define REGISTER_AMENDMENTS(...)                                                             \
-    BOOST_PP_SEQ_FOR_EACH(REGISTER_AMENDMENT_PROXY, , BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
-    constexpr static auto const SUPPORTED_AMENDMENTS = std::array                            \
-    {                                                                                        \
-        BOOST_PP_SEQ_FOR_EACH(STRINGIZE, , BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))            \
+#define REGISTER(name)                                       \
+    inline static AmendmentKey const name = std::string_view \
+    {                                                        \
+        BOOST_PP_STRINGIZE(name)                             \
     }
 
 namespace data {
 
 /**
- * @brief Represents an amendment in the XRPL
+ * @brief List of supported amendments
  */
-struct Amendment {
-    std::string name;
-    ripple::uint256 feature;
-    bool supportedByClio;
+struct Amendments {
+    // NOTE: if Clio wants to report it supports an Amendment it should be listed here.
+    // Whether an amendment is obsolete and/or supported by libxrpl is extracted directly from libxrpl.
+    // If an amendment is in the list below it just means Clio did whatever changes needed to support it.
+    // Most of the time it's going to be no changes at all.
 
-    /**
-     * @brief Construct a new Amendment
-     *
-     * @param amendmentName The name of the amendment
-     * @param supported Whether Clio supports this amendment; defaults to false
-     */
-    Amendment(std::string amendmentName, bool supported = false)
-        : name{std::move(amendmentName)}, feature{GetAmendmentId(name)}, supportedByClio{supported}
-    {
-    }
+    /** @cond */
+    REGISTER(OwnerPaysFee);
+    REGISTER(Flow);
+    REGISTER(FlowCross);
+    REGISTER(fix1513);
+    REGISTER(DepositAuth);
+    REGISTER(Checks);
+    REGISTER(fix1571);
+    REGISTER(fix1543);
+    REGISTER(fix1623);
+    REGISTER(DepositPreauth);
+    REGISTER(fix1515);
+    REGISTER(fix1578);
+    REGISTER(MultiSignReserve);
+    REGISTER(fixTakerDryOfferRemoval);
+    REGISTER(fixMasterKeyAsRegularKey);
+    REGISTER(fixCheckThreading);
+    REGISTER(fixPayChanRecipientOwnerDir);
+    REGISTER(DeletableAccounts);
+    REGISTER(fixQualityUpperBound);
+    REGISTER(RequireFullyCanonicalSig);
+    REGISTER(fix1781);
+    REGISTER(HardenedValidations);
+    REGISTER(fixAmendmentMajorityCalc);
+    REGISTER(NegativeUNL);
+    REGISTER(TicketBatch);
+    REGISTER(FlowSortStrands);
+    REGISTER(fixSTAmountCanonicalize);
+    REGISTER(fixRmSmallIncreasedQOffers);
+    REGISTER(CheckCashMakesTrustLine);
+    REGISTER(ExpandedSignerList);
+    REGISTER(NonFungibleTokensV1_1);
+    REGISTER(fixTrustLinesToSelf);
+    REGISTER(fixRemoveNFTokenAutoTrustLine);
+    REGISTER(ImmediateOfferKilled);
+    REGISTER(DisallowIncoming);
+    REGISTER(XRPFees);
+    REGISTER(fixUniversalNumber);
+    REGISTER(fixNonFungibleTokensV1_2);
+    REGISTER(fixNFTokenRemint);
+    REGISTER(fixReducedOffersV1);
+    REGISTER(Clawback);
+    REGISTER(AMM);
+    REGISTER(XChainBridge);
+    REGISTER(fixDisallowIncomingV1);
+    REGISTER(DID);
+    REGISTER(fixFillOrKill);
+    REGISTER(fixNFTokenReserve);
+    REGISTER(fixInnerObjTemplate);
+    REGISTER(fixAMMOverflowOffer);
+    REGISTER(PriceOracle);
+    REGISTER(fixEmptyDID);
+    REGISTER(fixXChainRewardRounding);
+    REGISTER(fixPreviousTxnID);
+    REGISTER(fixAMMRounding);
 
-    /**
-     * @brief Get the amendment Id from its name
-     *
-     * @param name The name of the amendment
-     * @return The amendment Id as uint256
-     */
-    static ripple::uint256
-    GetAmendmentId(std::string_view const name)
-    {
-        return ripple::sha512Half(ripple::Slice(name.data(), name.size()));
-    }
+    // Obsolete but supported by libxrpl
+    REGISTER(CryptoConditionsSuite);
+    REGISTER(NonFungibleTokensV1);
+    REGISTER(fixNFTokenDirV1);
+    REGISTER(fixNFTokenNegOffer);
+
+    // Retired amendments
+    REGISTER(MultiSign);
+    REGISTER(TrustSetAuth);
+    REGISTER(FeeEscalation);
+    REGISTER(PayChan);
+    REGISTER(fix1368);
+    REGISTER(CryptoConditions);
+    REGISTER(Escrow);
+    REGISTER(TickSize);
+    REGISTER(fix1373);
+    REGISTER(EnforceInvariants);
+    REGISTER(SortedDirectories);
+    REGISTER(fix1201);
+    REGISTER(fix1512);
+    REGISTER(fix1523);
+    REGISTER(fix1528);
 };
-
-namespace impl {
-
-template <std::array Name, typename AmendmentCenterType>
-class AmendmentProxy {
-    std::reference_wrapper<AmendmentCenterType const> center_;
-
-public:
-    explicit AmendmentProxy(AmendmentCenterType const& center) : center_{std::cref(center)}
-    {
-    }
-
-    Amendment const&
-    get() const
-    {
-        static auto const& am = center_.get().getAmendment(std::string{Name.begin(), Name.end()});
-        return am;
-    }
-
-    operator std::string() const
-    {
-        return get().name;
-    }
-
-    operator ripple::uint256() const
-    {
-        return get().feature;
-    }
-};
-
-}  // namespace impl
+/** @endcond */
 
 /**
  * @brief Provides all amendments supported by libxrpl
@@ -132,137 +151,13 @@ std::vector<Amendment>
 xrplAmendments();
 
 /**
- * @brief The interface of an amendment center
- */
-class AmentmentCenterInterface {
-public:
-    virtual ~AmentmentCenterInterface() = default;
-
-    /**
-     * @brief Check whether an amendment is supported by Clio
-     *
-     * @param name The name of the amendment to check
-     * @return true if supported; false otherwise
-     */
-    virtual bool
-    isSupported(std::string name) const = 0;
-
-    /**
-     * @brief Get all supported amendments as a map
-     *
-     * @return The amendments supported by Clio
-     */
-    virtual std::unordered_map<std::string, Amendment> const&
-    getSupported() const = 0;
-
-    /**
-     * @brief Get all known amendments
-     *
-     * @return All known amendments as a vector
-     */
-    virtual std::vector<Amendment> const&
-    getAll() const = 0;
-
-    /**
-     * @brief Check whether an amendment was/is enabled for a given sequence
-     *
-     * @param name The name of the amendment to check
-     * @param seq The sequence to check for
-     * @return true if enabled; false otherwise
-     */
-    virtual bool
-    isEnabled(std::string name, uint32_t seq) const = 0;
-
-    /**
-     * @brief Check whether an amendment was/is enabled for a given sequence
-     *
-     * @param yield The coroutine context to use
-     * @param name The name of the amendment to check
-     * @param seq The sequence to check for
-     * @return true if enabled; false otherwise
-     */
-    virtual bool
-    isEnabled(boost::asio::yield_context yield, std::string name, uint32_t seq) const = 0;
-
-    /**
-     * @brief Get an amendment
-     *
-     * @param name The name of the amendment to get
-     * @return The amendment as a const ref; asserts if the amendment is unknown
-     */
-    virtual Amendment const&
-    getAmendment(std::string name) const = 0;
-};
-
-/**
  * @brief Knowledge center for amendments within XRPL
  */
-class AmendmentCenter : public AmentmentCenterInterface {
+class AmendmentCenter : public AmendmentCenterInterface {
     std::shared_ptr<data::BackendInterface> backend_;
 
     std::unordered_map<std::string, Amendment> supported_;
     std::vector<Amendment> all_;
-
-public:
-    // NOTE: everytime Clio adds support for an Amendment it should also be listed here
-    /** @cond */
-    REGISTER_AMENDMENTS(
-        OwnerPaysFee,
-        Flow,
-        FlowCross,
-        fix1513,
-        DepositAuth,
-        Checks,
-        fix1571,
-        fix1543,
-        fix1623,
-        DepositPreauth,
-        fix1515,
-        fix1578,
-        MultiSignReserve,
-        fixTakerDryOfferRemoval,
-        fixMasterKeyAsRegularKey,
-        fixCheckThreading,
-        fixPayChanRecipientOwnerDir,
-        DeletableAccounts,
-        fixQualityUpperBound,
-        RequireFullyCanonicalSig,
-        fix1781,
-        HardenedValidations,
-        fixAmendmentMajorityCalc,
-        NegativeUNL,
-        TicketBatch,
-        FlowSortStrands,
-        fixSTAmountCanonicalize,
-        fixRmSmallIncreasedQOffers,
-        CheckCashMakesTrustLine,
-        ExpandedSignerList,
-        NonFungibleTokensV1_1,
-        fixTrustLinesToSelf,
-        fixRemoveNFTokenAutoTrustLine,
-        ImmediateOfferKilled,
-        DisallowIncoming,
-        XRPFees,
-        fixUniversalNumber,
-        fixNonFungibleTokensV1_2,
-        fixNFTokenRemint,
-        fixReducedOffersV1,
-        Clawback,
-        AMM,
-        XChainBridge,
-        fixDisallowIncomingV1,
-        DID,
-        fixFillOrKill,
-        fixNFTokenReserve,
-        fixInnerObjTemplate,
-        fixAMMOverflowOffer,
-        PriceOracle,
-        fixEmptyDID,
-        fixXChainRewardRounding,
-        fixPreviousTxnID,
-        fixAMMRounding
-    );
-    /** @endcond */
 
 public:
     /**
@@ -270,40 +165,71 @@ public:
      *
      * @param backend The backend
      */
-    explicit AmendmentCenter(std::shared_ptr<data::BackendInterface> const& backend) : backend_{backend}
-    {
-        namespace rg = std::ranges;
-        namespace vs = std::views;
+    explicit AmendmentCenter(std::shared_ptr<data::BackendInterface> const& backend);
 
-        rg::copy(
-            xrplAmendments() | vs::transform([&](auto const& a) {
-                auto const supported = rg::find(SUPPORTED_AMENDMENTS, a.name) != rg::end(SUPPORTED_AMENDMENTS);
-                return Amendment{a.name, supported};
-            }),
-            std::back_inserter(all_)
-        );
-
-        for (auto const& am : all_ | vs::filter([](auto const& am) { return am.supportedByClio; }))
-            supported_.insert_or_assign(am.name, am);
-    }
-
+    /**
+     * @brief Check whether an amendment is supported by Clio
+     *
+     * @param name The name of the amendment to check
+     * @return true if supported; false otherwise
+     */
     bool
-    isSupported(std::string name) const override;
+    isSupported(std::string name) const final;
 
+    /**
+     * @brief Get all supported amendments as a map
+     *
+     * @return The amendments supported by Clio
+     */
     std::unordered_map<std::string, Amendment> const&
-    getSupported() const override;
+    getSupported() const final;
 
+    /**
+     * @brief Get all known amendments
+     *
+     * @return All known amendments as a vector
+     */
     std::vector<Amendment> const&
-    getAll() const override;
+    getAll() const final;
 
+    /**
+     * @brief Check whether an amendment was/is enabled for a given sequence
+     *
+     * @param name The name of the amendment to check
+     * @param seq The sequence to check for
+     * @return true if enabled; false otherwise
+     */
     bool
-    isEnabled(std::string name, uint32_t seq) const override;
+    isEnabled(std::string name, uint32_t seq) const final;
 
+    /**
+     * @brief Check whether an amendment was/is enabled for a given sequence
+     *
+     * @param yield The coroutine context to use
+     * @param key The key of the amendment to check
+     * @param seq The sequence to check for
+     * @return true if enabled; false otherwise
+     */
     bool
-    isEnabled(boost::asio::yield_context yield, std::string name, uint32_t seq) const override;
+    isEnabled(boost::asio::yield_context yield, AmendmentKey const& key, uint32_t seq) const final;
 
+    /**
+     * @brief Get an amendment
+     *
+     * @param name The name of the amendment to get
+     * @return The amendment as a const ref; asserts if the amendment is unknown
+     */
     Amendment const&
-    getAmendment(std::string name) const override;
+    getAmendment(std::string name) const final;
+
+    /**
+     * @brief Get an amendment by its key
+
+     * @param key The amendment key from @see Amendments
+     * @return The amendment as a const ref; asserts if the amendment is unknown
+     */
+    Amendment const&
+    operator[](AmendmentKey const& key) const final;
 };
 
 }  // namespace data

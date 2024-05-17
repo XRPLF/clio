@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <tuple>
 #include <utility>
@@ -237,6 +238,52 @@ struct NFTsAndCursor {
 struct LedgerRange {
     std::uint32_t minSequence = 0;
     std::uint32_t maxSequence = 0;
+};
+
+/**
+ * @brief Represents an amendment in the XRPL
+ */
+struct Amendment {
+    std::string name;
+    ripple::uint256 feature;
+    bool supportedByClio;
+
+    /**
+     * @brief Construct a new Amendment
+     *
+     * @param amendmentName The name of the amendment
+     * @param supported Whether Clio supports this amendment; defaults to false
+     */
+    Amendment(std::string amendmentName, bool supported = false)
+        : name{std::move(amendmentName)}, feature{GetAmendmentId(name)}, supportedByClio{supported}
+    {
+    }
+
+    /**
+     * @brief Get the amendment Id from its name
+     *
+     * @param name The name of the amendment
+     * @return The amendment Id as uint256
+     */
+    static ripple::uint256
+    GetAmendmentId(std::string_view const name);
+};
+
+/**
+ * @brief A helper for amendment name to feature conversions
+ */
+struct AmendmentKey {
+    std::string_view name;
+
+    /** @cond */
+    AmendmentKey(std::string_view amendmentName);
+    AmendmentKey(std::string const& amendmentName);
+    operator std::string() const;
+    operator ripple::uint256() const;
+
+    auto
+    operator<=>(AmendmentKey const&) const = default;
+    /** @endcond */
 };
 
 constexpr ripple::uint256 firstKey{"0000000000000000000000000000000000000000000000000000000000000000"};

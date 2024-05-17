@@ -33,6 +33,7 @@
 #include <ripple/protocol/Feature.h>
 #include <ripple/protocol/Indexes.h>
 
+#include <ranges>
 #include <vector>
 
 using namespace testing;
@@ -49,9 +50,8 @@ TEST_F(PlaygroundTest, Amendments)
     EXPECT_FALSE(amendmentCenter.isSupported("unknown"));
 
     EXPECT_EQ(amendmentCenter.getAll().size(), ripple::detail::supportedAmendments().size());
-    EXPECT_EQ(amendmentCenter.getSupported().size(), 2);
 
-    auto const amendments = CreateAmendmentsObject({Amendment::GetAmendmentId("fixUniversalNumber")});
+    auto const amendments = CreateAmendmentsObject({Amendments::fixUniversalNumber});
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, _))
         .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
 

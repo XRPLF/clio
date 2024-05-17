@@ -52,6 +52,8 @@ namespace rpc {
 AccountInfoHandler::Result
 AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx) const
 {
+    using namespace data;
+
     if (!input.account && !input.ident)
         return Error{Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}};
 
@@ -79,9 +81,12 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
     if (!accountKeylet.check(sle))
         return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
-    auto const& ac = amendmentCenter_.get();
-    auto const isDisallowIncomingEnabled = ac.isEnabled(ctx.yield, ac.DisallowIncoming, lgrInfo.seq);
-    auto const isClawbackEnabled = ac.isEnabled(ctx.yield, ac.Clawback, lgrInfo.seq);
+    auto isEnabled = [this, &ctx, seq = lgrInfo.seq](auto key) {
+        return amendmentCenter_->isEnabled(ctx.yield, key, seq);
+    };
+
+    auto const isDisallowIncomingEnabled = isEnabled(Amendments::DisallowIncoming);
+    auto const isClawbackEnabled = isEnabled(Amendments::Clawback);
 
     // Return SignerList(s) if that is requested.
     if (input.signerLists) {

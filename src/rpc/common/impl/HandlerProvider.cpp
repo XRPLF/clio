@@ -20,6 +20,7 @@
 #include "rpc/common/impl/HandlerProvider.hpp"
 
 #include "data/AmendmentCenter.hpp"
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "etl/ETLService.hpp"
 #include "feed/SubscriptionManager.hpp"
@@ -71,8 +72,8 @@ ProductionHandlerProvider::ProductionHandlerProvider(
     std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
     std::shared_ptr<etl::LoadBalancer> const& balancer,
     std::shared_ptr<etl::ETLService const> const& etl,
-    Counters const& counters,
-    data::AmendmentCenter const& amendmentCenter
+    std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
+    Counters const& counters
 )
     : handlerMap_{
           {"account_channels", {AccountChannelsHandler{backend}}},

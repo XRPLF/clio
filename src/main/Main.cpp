@@ -218,9 +218,9 @@ try {
 
     auto workQueue = rpc::WorkQueue::make_WorkQueue(config);
     auto counters = rpc::Counters::make_Counters(workQueue);
-    auto const amendmentCenter = data::AmendmentCenter{backend};
+    auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
     auto const handlerProvider = std::make_shared<rpc::impl::ProductionHandlerProvider const>(
-        config, backend, subscriptions, balancer, etl, counters, amendmentCenter
+        config, backend, subscriptions, balancer, etl, amendmentCenter, counters
     );
     auto const rpcEngine =
         rpc::RPCEngine::make_RPCEngine(backend, balancer, dosGuard, workQueue, counters, handlerProvider);

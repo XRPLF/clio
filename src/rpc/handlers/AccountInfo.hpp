@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/AmendmentCenter.hpp"
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Checkers.hpp"
@@ -34,7 +35,6 @@
 #include <ripple/protocol/jss.h>
 
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -50,7 +50,7 @@ namespace rpc {
  */
 class AccountInfoHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    std::reference_wrapper<data::AmendmentCenter const> amendmentCenter_;
+    std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
 public:
     /**
@@ -122,9 +122,9 @@ public:
      */
     AccountInfoHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        data::AmendmentCenter const& amendmentCenter
+        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
     )
-        : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_{std::cref(amendmentCenter)}
+        : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_{amendmentCenter}
     {
     }
 
