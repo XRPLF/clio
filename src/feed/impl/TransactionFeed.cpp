@@ -290,13 +290,13 @@ TransactionFeed::pub(
             txProposedsignal_.emit(allVersionsMsgs);
             notified_.clear();
             // check duplicate for account and proposed_account, this prevents sending the same message multiple times
-            // if it affacts multiple accounts watched by the same connection
+            // if it affects multiple accounts watched by the same connection
             for (auto const& account : affectedAccounts) {
                 accountSignal_.emit(account, allVersionsMsgs);
                 accountProposedSignal_.emit(account, allVersionsMsgs);
             }
             notified_.clear();
-            // check duplicate for books, this prevents sending the same message multiple times if it affacts multiple
+            // check duplicate for books, this prevents sending the same message multiple times if it affects multiple
             // books watched by the same connection
             for (auto const& book : affectedBooks) {
                 bookSignal_.emit(book, allVersionsMsgs);
