@@ -30,16 +30,18 @@ func fire(ammoProvider *AmmoProvider, requestMaker RequestMaker, load uint) {
 	do_shot := func() {
 		defer wg.Done()
 		bullet := ammoProvider.GetBullet()
-		response, status_code, err := requestMaker.MakeRequest(bullet)
-		statistics.add(response, status_code, err)
+		response_data := requestMaker.MakeRequest(bullet)
+		statistics.add(response_data)
 	}
 
 	for !stop.Load() {
-		secondStart := time.Now()
+		second_start := time.Now()
 		requests_number := uint(0)
-		for requests_number < load && time.Since(secondStart) < time.Second {
+        sleep_time := time.Second / time.Duration(load)
+		for requests_number < load && time.Since(second_start) < time.Second {
 			wg.Add(1)
 			go do_shot()
+            time.Sleep(sleep_time)
 		}
 		statistics.print()
 	}
@@ -53,13 +55,13 @@ type Statistics struct {
 	start_time           time.Time
 }
 
-func (s *Statistics) add(response JsonMap, status StatusCode, err error) {
+func (s *Statistics) add(response ResponseData) {
 	s.total_requests_count.Add(1)
-	if err != nil {
+	if response.error != nil {
 		s.errors_count.Add(1)
 		return
 	}
-	if status != 200 || response["error"] != nil {
+	if response.statusCode != 200 || response.body["error"] != nil {
 		s.bad_reply_count.Add(1)
 	} else {
 		s.good_reply_count.Add(1)

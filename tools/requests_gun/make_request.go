@@ -6,44 +6,62 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type RequestMaker interface {
-    MakeRequest(request string) (JsonMap, StatusCode, error)
+	MakeRequest(request string) ResponseData
 }
 
 type HttpRequestMaker struct {
-    url string
+	url string
 }
 
 type JsonMap map[string]interface{}
 type StatusCode int
 
+type ResponseData struct {
+	body       JsonMap
+	statusCode StatusCode
+	duration   time.Duration
+	error      error
+}
 
-func (h *HttpRequestMaker) MakeRequest(request string) (JsonMap, StatusCode, error) {
-    response, err := http.Post(h.url, "application/json", strings.NewReader(request))
-    if err != nil {
-        return JsonMap{}, StatusCode(0), err
-    }
+func newResponseData_fromError(err error) ResponseData {
+	return ResponseData{JsonMap{}, StatusCode(0), 0, err}
+}
 
-    if response.StatusCode != 200 {
-        return JsonMap{}, StatusCode(response.StatusCode), nil
-    }
+func newResponseData_fromStatusCode(statusCode StatusCode) ResponseData {
+	return ResponseData{JsonMap{}, statusCode, 0, nil}
+}
 
-    body, err := io.ReadAll(response.Body)
-    if err != nil {
-        return JsonMap{}, StatusCode(0), err
-    }
+func (h *HttpRequestMaker) MakeRequest(request string) ResponseData {
+	startTime := time.Now()
+	response, err := http.Post(h.url, "application/json", strings.NewReader(request))
+	requestDuration := time.Since(startTime)
 
-    var result JsonMap
-    err = json.Unmarshal(body, &result)
-    if err != nil {
-        return JsonMap{}, StatusCode(0), err
-    }
+	if err != nil {
+		return newResponseData_fromError(err)
+	}
 
-    return result, StatusCode(response.StatusCode), nil
+	if response.StatusCode != 200 {
+		return newResponseData_fromStatusCode(StatusCode(response.StatusCode))
+	}
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return newResponseData_fromError(err)
+	}
+
+	var bodyParsed JsonMap
+	err = json.Unmarshal(body, &bodyParsed)
+	if err != nil {
+		return newResponseData_fromError(err)
+	}
+
+	return ResponseData{bodyParsed, StatusCode(response.StatusCode), requestDuration, nil}
 }
 
 func NewHttpRequestMaker(host string, port uint) HttpRequestMaker {
-    return HttpRequestMaker{host + ":" + fmt.Sprintf("%d",port)}
+	return HttpRequestMaker{host + ":" + fmt.Sprintf("%d", port)}
 }
