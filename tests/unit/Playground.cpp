@@ -22,49 +22,11 @@
  * Note: Please don't push your temporary work to the repo.
  */
 
-#include "data/AmendmentCenter.hpp"
-#include "util/Fixtures.hpp"
-#include "util/MockPrometheus.hpp"
-#include "util/TestObject.hpp"
+// #include <gmock/gmock.h>
+// #include <gtest/gtest.h>
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Feature.h>
-#include <ripple/protocol/Indexes.h>
+// using namespace testing;
 
-#include <ranges>
-#include <vector>
-
-using namespace testing;
-using namespace data;
-
-constexpr auto SEQ = 30;
-
-struct PlaygroundTest : util::prometheus::WithPrometheus, MockBackendTest {};
-
-TEST_F(PlaygroundTest, Amendments)
-{
-    auto amendmentCenter = AmendmentCenter{backend};
-    EXPECT_TRUE(amendmentCenter.isSupported("fixUniversalNumber"));
-    EXPECT_FALSE(amendmentCenter.isSupported("unknown"));
-
-    EXPECT_EQ(amendmentCenter.getAll().size(), ripple::detail::supportedAmendments().size());
-
-    auto const amendments = CreateAmendmentsObject({Amendments::fixUniversalNumber});
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, _))
-        .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
-
-    EXPECT_TRUE(amendmentCenter.isEnabled("fixUniversalNumber", SEQ));
-    EXPECT_FALSE(amendmentCenter.isEnabled("unknown", SEQ));
-    EXPECT_FALSE(amendmentCenter.isEnabled("ImmediateOfferKilled", SEQ));
-}
-
-TEST_F(PlaygroundTest, GenerateAmendmentId)
-{
-    // https://xrpl.org/known-amendments.html#disallowincoming refer to the published id
-    EXPECT_EQ(
-        ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"),
-        Amendment::GetAmendmentId("DisallowIncoming")
-    );
-}
+// TEST(PlaygroundTest, Test)
+// {
+// }
