@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/SystemState.hpp"
 #include "util/Assert.hpp"
 #include "util/Profiler.hpp"
@@ -39,12 +40,12 @@ namespace etl::impl {
 /**
  * @brief Extractor thread that is fetching GRPC data and enqueue it on the DataPipeType
  */
-template <typename DataPipeType, typename NetworkValidatedLedgersType, typename LedgerFetcherType>
+template <typename DataPipeType, typename LedgerFetcherType>
 class Extractor {
     util::Logger log_{"ETL"};
 
     std::reference_wrapper<DataPipeType> pipe_;
-    std::shared_ptr<NetworkValidatedLedgersType> networkValidatedLedgers_;
+    std::shared_ptr<NetworkValidatedLedgersInterface> networkValidatedLedgers_;
     std::reference_wrapper<LedgerFetcherType> ledgerFetcher_;
     uint32_t startSequence_;
     std::optional<uint32_t> finishSequence_;
@@ -55,7 +56,7 @@ class Extractor {
 public:
     Extractor(
         DataPipeType& pipe,
-        std::shared_ptr<NetworkValidatedLedgersType> networkValidatedLedgers,
+        std::shared_ptr<NetworkValidatedLedgersInterface> networkValidatedLedgers,
         LedgerFetcherType& ledgerFetcher,
         uint32_t startSequence,
         std::optional<uint32_t> finishSequence,

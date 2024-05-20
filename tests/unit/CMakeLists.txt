@@ -26,8 +26,8 @@ target_sources(
           etl/ForwardingSourceTests.cpp
           etl/GrpcSourceTests.cpp
           etl/LedgerPublisherTests.cpp
-          etl/SourceTests.cpp
-          etl/SubscriptionSourceDependenciesTests.cpp
+          etl/LoadBalancerTests.cpp
+          etl/SourceImplTests.cpp
           etl/SubscriptionSourceTests.cpp
           etl/TransformerTests.cpp
           # Feed
@@ -114,6 +114,7 @@ target_sources(
           util/requests/RequestBuilderTests.cpp
           util/requests/SslContextTests.cpp
           util/requests/WsConnectionTests.cpp
+          util/RandomTests.cpp
           util/RetryTests.cpp
           util/SignalsHandlerTests.cpp
           util/TxUtilTests.cpp

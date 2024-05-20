@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,36 +17,49 @@
 */
 //==============================================================================
 
-#include "etl/ETLState.hpp"
+#include "etl/NetworkValidatedLedgers.hpp"
 
-#include "rpc/JS.hpp"
-
-#include <boost/json/conversion.hpp>
-#include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
-#include <ripple/protocol/jss.h>
-
+#include <chrono>
 #include <cstdint>
+#include <memory>
+#include <mutex>
 #include <optional>
 
 namespace etl {
-
-std::optional<ETLState>
-tag_invoke(boost::json::value_to_tag<std::optional<ETLState>>, boost::json::value const& jv)
+std::shared_ptr<NetworkValidatedLedgers>
+NetworkValidatedLedgers::make_ValidatedLedgers()
 {
-    ETLState state;
-    auto const& jsonObject = jv.as_object();
+    return std::make_shared<NetworkValidatedLedgers>();
+}
 
-    if (jsonObject.contains(JS(error)))
-        return std::nullopt;
+void
+NetworkValidatedLedgers::push(uint32_t idx)
+{
+    std::lock_guard const lck(m_);
+    if (!max_ || idx > *max_)
+        max_ = idx;
+    cv_.notify_all();
+}
 
-    if (jsonObject.contains(JS(result)) && jsonObject.at(JS(result)).as_object().contains(JS(info))) {
-        auto const rippledInfo = jsonObject.at(JS(result)).as_object().at(JS(info)).as_object();
-        if (rippledInfo.contains(JS(network_id)))
-            state.networkID.emplace(boost::json::value_to<int64_t>(rippledInfo.at(JS(network_id))));
+std::optional<uint32_t>
+NetworkValidatedLedgers::getMostRecent()
+{
+    std::unique_lock lck(m_);
+    cv_.wait(lck, [this]() { return max_; });
+    return max_;
+}
+
+bool
+NetworkValidatedLedgers::waitUntilValidatedByNetwork(uint32_t sequence, std::optional<uint32_t> maxWaitMs)
+{
+    std::unique_lock lck(m_);
+    auto pred = [sequence, this]() -> bool { return (max_ && sequence <= *max_); };
+    if (maxWaitMs) {
+        cv_.wait_for(lck, std::chrono::milliseconds(*maxWaitMs));
+    } else {
+        cv_.wait(lck, pred);
     }
-
-    return state;
+    return pred();
 }
 
 }  // namespace etl

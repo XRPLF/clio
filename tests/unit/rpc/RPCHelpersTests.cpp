@@ -62,13 +62,11 @@ class RPCHelpersTest : public util::prometheus::WithPrometheus, public MockBacke
     void
     SetUp() override
     {
-        MockBackendTest::SetUp();
         SyncAsioContextTest::SetUp();
     }
     void
     TearDown() override
     {
-        MockBackendTest::TearDown();
         SyncAsioContextTest::TearDown();
     }
 };

@@ -45,19 +45,6 @@ namespace {
 constexpr auto SEQ = 30;
 
 struct CacheLoaderTest : util::prometheus::WithPrometheus, MockBackendTest {
-    void
-    SetUp() override
-    {
-        MockBackendTest::SetUp();
-    }
-
-    void
-    TearDown() override
-    {
-        MockBackendTest::TearDown();
-    }
-
-protected:
     DiffProvider diffProvider;
     MockCache cache;
 };

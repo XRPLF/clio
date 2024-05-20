@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "feed/Types.hpp"
 #include "feed/impl/BookChangesFeed.hpp"
 #include "feed/impl/ForwardFeed.hpp"
@@ -55,7 +56,7 @@ namespace feed {
 /**
  * @brief A subscription manager is responsible for managing the subscriptions and publishing the feeds
  */
-class SubscriptionManager {
+class SubscriptionManager : public SubscriptionManagerInterface {
     std::reference_wrapper<boost::asio::io_context> ioContext_;
     std::shared_ptr<data::BackendInterface const> backend_;
 
@@ -93,14 +94,14 @@ public:
      * @param subscriber
      */
     void
-    subBookChanges(SubscriberSharedPtr const& subscriber);
+    subBookChanges(SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the book changes feed.
      * @param subscriber
      */
     void
-    unsubBookChanges(SubscriberSharedPtr const& subscriber);
+    unsubBookChanges(SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Publish the book changes feed.
@@ -109,21 +110,21 @@ public:
      */
     void
     pubBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions)
-        const;
+        const final;
 
     /**
      * @brief Subscribe to the proposed transactions feed.
      * @param subscriber
      */
     void
-    subProposedTransactions(SubscriberSharedPtr const& subscriber);
+    subProposedTransactions(SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the proposed transactions feed.
      * @param subscriber
      */
     void
-    unsubProposedTransactions(SubscriberSharedPtr const& subscriber);
+    unsubProposedTransactions(SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Subscribe to the proposed transactions feed, only receive the feed when particular account is affected.
@@ -131,7 +132,7 @@ public:
      * @param subscriber
      */
     void
-    subProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+    subProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the proposed transactions feed for particular account.
@@ -139,14 +140,14 @@ public:
      * @param subscriber
      */
     void
-    unsubProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+    unsubProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Forward the proposed transactions feed.
      * @param receivedTxJson The proposed transaction json.
      */
     void
-    forwardProposedTransaction(boost::json::object const& receivedTxJson);
+    forwardProposedTransaction(boost::json::object const& receivedTxJson) final;
 
     /**
      * @brief Subscribe to the ledger feed.
@@ -155,14 +156,14 @@ public:
      * @return The ledger feed
      */
     boost::json::object
-    subLedger(boost::asio::yield_context yield, SubscriberSharedPtr const& subscriber);
+    subLedger(boost::asio::yield_context yield, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the ledger feed.
      * @param subscriber
      */
     void
-    unsubLedger(SubscriberSharedPtr const& subscriber);
+    unsubLedger(SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Publish the ledger feed.
@@ -177,63 +178,63 @@ public:
         ripple::Fees const& fees,
         std::string const& ledgerRange,
         std::uint32_t txnCount
-    ) const;
+    ) const final;
 
     /**
      * @brief Subscribe to the manifest feed.
      * @param subscriber
      */
     void
-    subManifest(SubscriberSharedPtr const& subscriber);
+    subManifest(SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the manifest feed.
      * @param subscriber
      */
     void
-    unsubManifest(SubscriberSharedPtr const& subscriber);
+    unsubManifest(SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Forward the manifest feed.
      * @param manifestJson The manifest json to forward.
      */
     void
-    forwardManifest(boost::json::object const& manifestJson) const;
+    forwardManifest(boost::json::object const& manifestJson) const final;
 
     /**
      * @brief Subscribe to the validation feed.
      * @param subscriber
      */
     void
-    subValidation(SubscriberSharedPtr const& subscriber);
+    subValidation(SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the validation feed.
      * @param subscriber
      */
     void
-    unsubValidation(SubscriberSharedPtr const& subscriber);
+    unsubValidation(SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Forward the validation feed.
      * @param validationJson The validation feed json to forward.
      */
     void
-    forwardValidation(boost::json::object const& validationJson) const;
+    forwardValidation(boost::json::object const& validationJson) const final;
 
     /**
      * @brief Subscribe to the transactions feed.
      * @param subscriber
      */
     void
-    subTransactions(SubscriberSharedPtr const& subscriber);
+    subTransactions(SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the transactions feed.
      * @param subscriber
      */
     void
-    unsubTransactions(SubscriberSharedPtr const& subscriber);
+    unsubTransactions(SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Subscribe to the transactions feed, only receive the feed when particular account is affected.
@@ -241,7 +242,7 @@ public:
      * @param subscriber
      */
     void
-    subAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+    subAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the transactions feed for particular account.
@@ -249,7 +250,7 @@ public:
      * @param subscriber The subscriber to unsubscribe
      */
     void
-    unsubAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber);
+    unsubAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Subscribe to the transactions feed, only receive feed when particular order book is affected.
@@ -257,7 +258,7 @@ public:
      * @param subscriber
      */
     void
-    subBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber);
+    subBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Unsubscribe to the transactions feed for particular order book.
@@ -265,7 +266,7 @@ public:
      * @param subscriber
      */
     void
-    unsubBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber);
+    unsubBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber) final;
 
     /**
      * @brief Forward the transactions feed.
@@ -273,7 +274,7 @@ public:
      * @param lgrInfo The ledger header.
      */
     void
-    pubTransaction(data::TransactionAndMetadata const& txMeta, ripple::LedgerHeader const& lgrInfo);
+    pubTransaction(data::TransactionAndMetadata const& txMeta, ripple::LedgerHeader const& lgrInfo) final;
 
     /**
      * @brief Get the number of subscribers.
@@ -281,20 +282,7 @@ public:
      * @return The report of the number of subscribers
      */
     boost::json::object
-    report() const
-    {
-        return {
-            {"ledger", ledgerFeed_.count()},
-            {"transactions", transactionFeed_.transactionSubCount()},
-            {"transactions_proposed", proposedTransactionFeed_.transactionSubcount()},
-            {"manifests", manifestFeed_.count()},
-            {"validations", validationsFeed_.count()},
-            {"account", transactionFeed_.accountSubCount()},
-            {"accounts_proposed", proposedTransactionFeed_.accountSubCount()},
-            {"books", transactionFeed_.bookSubCount()},
-            {"book_changes", bookChangesFeed_.count()},
-        };
-    }
+    report() const final;
 };
 
 /**

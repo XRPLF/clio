@@ -20,11 +20,8 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "etl/ETLHelpers.hpp"
-#include "etl/impl/ForwardingSource.hpp"
-#include "etl/impl/GrpcSource.hpp"
-#include "etl/impl/SubscriptionSource.hpp"
-#include "feed/SubscriptionManager.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
@@ -35,8 +32,8 @@
 #include <grpcpp/support/status.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 
-#include <chrono>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -48,122 +45,48 @@ namespace etl {
 /**
  * @brief Provides an implementation of a ETL source
  *
- * @tparam GrpcSourceType The type of the gRPC source
- * @tparam SubscriptionSourceTypePtr The type of the subscription source
- * @tparam ForwardingSourceType The type of the forwarding source
  */
-template <
-    typename GrpcSourceType = impl::GrpcSource,
-    typename SubscriptionSourceTypePtr = std::unique_ptr<impl::SubscriptionSource>,
-    typename ForwardingSourceType = impl::ForwardingSource>
-class SourceImpl {
-    std::string ip_;
-    std::string wsPort_;
-    std::string grpcPort_;
-
-    GrpcSourceType grpcSource_;
-    SubscriptionSourceTypePtr subscriptionSource_;
-    ForwardingSourceType forwardingSource_;
-
+class SourceBase {
 public:
-    using OnConnectHook = impl::SubscriptionSource::OnConnectHook;
-    using OnDisconnectHook = impl::SubscriptionSource::OnDisconnectHook;
-    using OnLedgerClosedHook = impl::SubscriptionSource::OnLedgerClosedHook;
+    using OnConnectHook = std::function<void()>;
+    using OnDisconnectHook = std::function<void()>;
+    using OnLedgerClosedHook = std::function<void()>;
 
-    /**
-     * @brief Construct a new SourceImpl object
-     *
-     * @param ip The IP of the source
-     * @param wsPort The web socket port of the source
-     * @param grpcPort The gRPC port of the source
-     * @param grpcSource The gRPC source
-     * @param subscriptionSource The subscription source
-     * @param forwardingSource The forwarding source
-     */
-    template <typename SomeGrpcSourceType, typename SomeForwardingSourceType>
-        requires std::is_same_v<GrpcSourceType, SomeGrpcSourceType> and
-                     std::is_same_v<ForwardingSourceType, SomeForwardingSourceType>
-    SourceImpl(
-        std::string ip,
-        std::string wsPort,
-        std::string grpcPort,
-        SomeGrpcSourceType&& grpcSource,
-        SubscriptionSourceTypePtr subscriptionSource,
-        SomeForwardingSourceType&& forwardingSource
-    )
-        : ip_(std::move(ip))
-        , wsPort_(std::move(wsPort))
-        , grpcPort_(std::move(grpcPort))
-        , grpcSource_(std::forward<SomeGrpcSourceType>(grpcSource))
-        , subscriptionSource_(std::move(subscriptionSource))
-        , forwardingSource_(std::forward<SomeForwardingSourceType>(forwardingSource))
-    {
-    }
+    virtual ~SourceBase() = default;
 
     /**
      * @brief Run subscriptions loop of the source
      */
-    void
-    run()
-    {
-        subscriptionSource_->run();
-    }
+    virtual void
+    run() = 0;
 
     /**
      * @brief Check if source is connected
      *
      * @return true if source is connected; false otherwise
      */
-    bool
-    isConnected() const
-    {
-        return subscriptionSource_->isConnected();
-    }
+    virtual bool
+    isConnected() const = 0;
 
     /**
      * @brief Set the forwarding state of the source.
      *
      * @param isForwarding Whether to forward or not
      */
-    void
-    setForwarding(bool isForwarding)
-    {
-        subscriptionSource_->setForwarding(isForwarding);
-    }
+    virtual void
+    setForwarding(bool isForwarding) = 0;
 
     /**
      * @brief Represent the source as a JSON object
      *
      * @return JSON representation of the source
      */
-    boost::json::object
-    toJson() const
-    {
-        boost::json::object res;
-
-        res["validated_range"] = subscriptionSource_->validatedRange();
-        res["is_connected"] = std::to_string(static_cast<int>(subscriptionSource_->isConnected()));
-        res["ip"] = ip_;
-        res["ws_port"] = wsPort_;
-        res["grpc_port"] = grpcPort_;
-
-        auto last = subscriptionSource_->lastMessageTime();
-        if (last.time_since_epoch().count() != 0) {
-            res["last_msg_age_seconds"] = std::to_string(
-                std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - last).count()
-            );
-        }
-
-        return res;
-    }
+    virtual boost::json::object
+    toJson() const = 0;
 
     /** @return String representation of the source (for debug) */
-    std::string
-    toString() const
-    {
-        return "{validated range: " + subscriptionSource_->validatedRange() + ", ip: " + ip_ +
-            ", web socket port: " + wsPort_ + ", grpc port: " + grpcPort_ + "}";
-    }
+    virtual std::string
+    toString() const = 0;
 
     /**
      * @brief Check if ledger is known by this source.
@@ -171,11 +94,8 @@ public:
      * @param sequence The ledger sequence to check
      * @return true if ledger is in the range of this source; false otherwise
      */
-    bool
-    hasLedger(uint32_t sequence) const
-    {
-        return subscriptionSource_->hasLedger(sequence);
-    }
+    virtual bool
+    hasLedger(uint32_t sequence) const = 0;
 
     /**
      * @brief Fetch data for a specific ledger.
@@ -188,11 +108,8 @@ public:
      * @param getObjectNeighbors Whether to request object neighbors; defaults to false
      * @return A std::pair of the response status and the response itself
      */
-    std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
-    fetchLedger(uint32_t sequence, bool getObjects = true, bool getObjectNeighbors = false)
-    {
-        return grpcSource_.fetchLedger(sequence, getObjects, getObjectNeighbors);
-    }
+    virtual std::pair<grpc::Status, org::xrpl::rpc::v1::GetLedgerResponse>
+    fetchLedger(uint32_t sequence, bool getObjects = true, bool getObjectNeighbors = false) = 0;
 
     /**
      * @brief Download a ledger in full.
@@ -202,11 +119,8 @@ public:
      * @param cacheOnly Only insert into cache, not the DB; defaults to false
      * @return A std::pair of the data and a bool indicating whether the download was successful
      */
-    std::pair<std::vector<std::string>, bool>
-    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly = false)
-    {
-        return grpcSource_.loadInitialLedger(sequence, numMarkers, cacheOnly);
-    }
+    virtual std::pair<std::vector<std::string>, bool>
+    loadInitialLedger(uint32_t sequence, std::uint32_t numMarkers, bool cacheOnly = false) = 0;
 
     /**
      * @brief Forward a request to rippled.
@@ -216,20 +130,26 @@ public:
      * @param yield The coroutine context
      * @return Response wrapped in an optional on success; nullopt otherwise
      */
-    std::optional<boost::json::object>
+    virtual std::optional<boost::json::object>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,
         boost::asio::yield_context yield
-    ) const
-    {
-        return forwardingSource_.forwardToRippled(request, forwardToRippledClientIp, yield);
-    }
+    ) const = 0;
 };
 
-extern template class SourceImpl<>;
+using SourcePtr = std::unique_ptr<SourceBase>;
 
-using Source = SourceImpl<>;
+using SourceFactory = std::function<SourcePtr(
+    util::Config const& config,
+    boost::asio::io_context& ioc,
+    std::shared_ptr<BackendInterface> backend,
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+    std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+    SourceBase::OnConnectHook onConnect,
+    SourceBase::OnDisconnectHook onDisconnect,
+    SourceBase::OnLedgerClosedHook onLedgerClosed
+)>;
 
 /**
  * @brief Create a source
@@ -239,22 +159,22 @@ using Source = SourceImpl<>;
  * @param backend BackendInterface implementation
  * @param subscriptions Subscription manager
  * @param validatedLedgers The network validated ledgers data structure
- * @param onDisconnect The hook to call on disconnect
  * @param onConnect The hook to call on connect
+ * @param onDisconnect The hook to call on disconnect
  * @param onLedgerClosed The hook to call on ledger closed. This is called when a ledger is closed and the source is set
  * as forwarding.
  * @return The created source
  */
-Source
+SourcePtr
 make_Source(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<feed::SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-    Source::OnDisconnectHook onDisconnect,
-    Source::OnConnectHook onConnect,
-    Source::OnLedgerClosedHook onLedgerClosed
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+    std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+    SourceBase::OnConnectHook onConnect,
+    SourceBase::OnDisconnectHook onDisconnect,
+    SourceBase::OnLedgerClosedHook onLedgerClosed
 );
 
 }  // namespace etl

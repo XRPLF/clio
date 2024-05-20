@@ -31,7 +31,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -43,26 +42,21 @@ using testing::StrictMock;
 struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
     SubscriptionSourceConnectionTests()
     {
-        subscriptionSource_->run();
+        subscriptionSource_.run();
     }
 
     boost::asio::io_context ioContext_;
 
     TestWsServer wsServer_{ioContext_, "0.0.0.0", 11113};
 
-    template <typename T>
-    using StrictMockPtr = std::shared_ptr<StrictMock<T>>;
-
-    StrictMockPtr<MockNetworkValidatedLedgers> networkValidatedLedgers_ =
-        std::make_shared<StrictMock<MockNetworkValidatedLedgers>>();
-    StrictMockPtr<MockSubscriptionManager> subscriptionManager_ =
-        std::make_shared<StrictMock<MockSubscriptionManager>>();
+    StrictMockNetworkValidatedLedgersPtr networkValidatedLedgers_;
+    StrictMockSubscriptionManagerSharedPtr subscriptionManager_;
 
     StrictMock<MockFunction<void()>> onConnectHook_;
     StrictMock<MockFunction<void()>> onDisconnectHook_;
     StrictMock<MockFunction<void()>> onLedgerClosedHook_;
 
-    std::unique_ptr<SubscriptionSource> subscriptionSource_ = std::make_unique<SubscriptionSource>(
+    SubscriptionSource subscriptionSource_{
         ioContext_,
         "127.0.0.1",
         "11113",
@@ -73,7 +67,7 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
         onLedgerClosedHook_.AsStdFunction(),
         std::chrono::milliseconds(1),
         std::chrono::milliseconds(1)
-    );
+    };
 
     [[maybe_unused]] TestWsConnection
     serverConnection(boost::asio::yield_context yield)
@@ -99,13 +93,13 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
 
 TEST_F(SubscriptionSourceConnectionTests, ConnectionFailed)
 {
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
 TEST_F(SubscriptionSourceConnectionTests, ConnectionFailed_Retry_ConnectionFailed)
 {
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
@@ -117,7 +111,7 @@ TEST_F(SubscriptionSourceConnectionTests, ReadError)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
@@ -131,21 +125,23 @@ TEST_F(SubscriptionSourceConnectionTests, ReadError_Reconnect)
     });
 
     EXPECT_CALL(onConnectHook_, Call()).Times(2);
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
 TEST_F(SubscriptionSourceConnectionTests, IsConnected)
 {
-    EXPECT_FALSE(subscriptionSource_->isConnected());
+    EXPECT_FALSE(subscriptionSource_.isConnected());
     boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
         auto connection = serverConnection(yield);
-        EXPECT_TRUE(subscriptionSource_->isConnected());
         connection.close(yield);
     });
 
-    EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onConnectHook_, Call()).WillOnce([this]() { EXPECT_TRUE(subscriptionSource_.isConnected()); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() {
+        EXPECT_FALSE(subscriptionSource_.isConnected());
+        subscriptionSource_.stop();
+    });
     ioContext_.run();
 }
 
@@ -170,7 +166,7 @@ TEST_F(SubscriptionSourceReadTests, GotWrongMessage_Reconnect)
     });
 
     EXPECT_CALL(onConnectHook_, Call()).Times(2);
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
@@ -182,7 +178,7 @@ TEST_F(SubscriptionSourceReadTests, GotResult)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
@@ -194,7 +190,7 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithLedgerIndex)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
 }
@@ -209,7 +205,7 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithLedgerIndexAsString_Reconnect)
     });
 
     EXPECT_CALL(onConnectHook_, Call()).Times(2);
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
@@ -223,21 +219,21 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithValidatedLedgersAsNumber_Reconn
     });
 
     EXPECT_CALL(onConnectHook_, Call()).Times(2);
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
 TEST_F(SubscriptionSourceReadTests, GotResultWithValidatedLedgers)
 {
-    EXPECT_FALSE(subscriptionSource_->hasLedger(123));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(124));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(455));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(456));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(457));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(32));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(31));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(789));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(790));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(123));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(124));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(455));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(456));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(457));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(32));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(31));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(789));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(790));
 
     boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
         auto connection = connectAndSendMessage(R"({"result":{"validated_ledgers":"123-456,789,32"}})", yield);
@@ -245,20 +241,20 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithValidatedLedgers)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 
-    EXPECT_TRUE(subscriptionSource_->hasLedger(123));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(124));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(455));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(456));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(457));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(32));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(31));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(789));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(790));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(123));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(124));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(455));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(456));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(457));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(32));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(31));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(789));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(790));
 
-    EXPECT_EQ(subscriptionSource_->validatedRange(), "123-456,789,32");
+    EXPECT_EQ(subscriptionSource_.validatedRange(), "123-456,789,32");
 }
 
 TEST_F(SubscriptionSourceReadTests, GotResultWithValidatedLedgersWrongValue_Reconnect)
@@ -271,17 +267,17 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithValidatedLedgersWrongValue_Reco
     });
 
     EXPECT_CALL(onConnectHook_, Call()).Times(2);
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
 TEST_F(SubscriptionSourceReadTests, GotResultWithLedgerIndexAndValidatedLedgers)
 {
-    EXPECT_FALSE(subscriptionSource_->hasLedger(1));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(1));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(2));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(3));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(4));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(1));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(1));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(2));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(3));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(4));
 
     boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
         auto connection = connectAndSendMessage(R"({"result":{"ledger_index":123,"validated_ledgers":"1-3"}})", yield);
@@ -289,16 +285,16 @@ TEST_F(SubscriptionSourceReadTests, GotResultWithLedgerIndexAndValidatedLedgers)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
 
-    EXPECT_EQ(subscriptionSource_->validatedRange(), "1-3");
-    EXPECT_FALSE(subscriptionSource_->hasLedger(0));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(1));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(2));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(3));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(4));
+    EXPECT_EQ(subscriptionSource_.validatedRange(), "1-3");
+    EXPECT_FALSE(subscriptionSource_.hasLedger(0));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(1));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(2));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(3));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(4));
 }
 
 TEST_F(SubscriptionSourceReadTests, GotLedgerClosed)
@@ -309,13 +305,13 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosed)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
 TEST_F(SubscriptionSourceReadTests, GotLedgerClosedForwardingIsSet)
 {
-    subscriptionSource_->setForwarding(true);
+    subscriptionSource_.setForwarding(true);
 
     boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
         auto connection = connectAndSendMessage(R"({"type": "ledgerClosed"})", yield);
@@ -324,7 +320,10 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedForwardingIsSet)
 
     EXPECT_CALL(onConnectHook_, Call());
     EXPECT_CALL(onLedgerClosedHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() {
+        EXPECT_FALSE(subscriptionSource_.isForwarding());
+        subscriptionSource_.stop();
+    });
     ioContext_.run();
 }
 
@@ -336,7 +335,7 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndex)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
 }
@@ -351,7 +350,7 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndexAsString_Recon
     });
 
     EXPECT_CALL(onConnectHook_, Call()).Times(2);
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
@@ -365,16 +364,16 @@ TEST_F(SubscriptionSourceReadTests, GorLedgerClosedWithValidatedLedgersAsNumber_
     });
 
     EXPECT_CALL(onConnectHook_, Call()).Times(2);
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([]() {}).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
 TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithValidatedLedgers)
 {
-    EXPECT_FALSE(subscriptionSource_->hasLedger(0));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(1));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(2));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(3));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(0));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(1));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(2));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(3));
 
     boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
         auto connection = connectAndSendMessage(R"({"type":"ledgerClosed","validated_ledgers":"1-2"})", yield);
@@ -382,22 +381,22 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithValidatedLedgers)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 
-    EXPECT_FALSE(subscriptionSource_->hasLedger(0));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(1));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(2));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(3));
-    EXPECT_EQ(subscriptionSource_->validatedRange(), "1-2");
+    EXPECT_FALSE(subscriptionSource_.hasLedger(0));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(1));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(2));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(3));
+    EXPECT_EQ(subscriptionSource_.validatedRange(), "1-2");
 }
 
 TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndexAndValidatedLedgers)
 {
-    EXPECT_FALSE(subscriptionSource_->hasLedger(0));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(1));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(2));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(3));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(0));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(1));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(2));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(3));
 
     boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
         auto connection =
@@ -406,15 +405,15 @@ TEST_F(SubscriptionSourceReadTests, GotLedgerClosedWithLedgerIndexAndValidatedLe
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     EXPECT_CALL(*networkValidatedLedgers_, push(123));
     ioContext_.run();
 
-    EXPECT_FALSE(subscriptionSource_->hasLedger(0));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(1));
-    EXPECT_TRUE(subscriptionSource_->hasLedger(2));
-    EXPECT_FALSE(subscriptionSource_->hasLedger(3));
-    EXPECT_EQ(subscriptionSource_->validatedRange(), "1-2");
+    EXPECT_FALSE(subscriptionSource_.hasLedger(0));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(1));
+    EXPECT_TRUE(subscriptionSource_.hasLedger(2));
+    EXPECT_FALSE(subscriptionSource_.hasLedger(3));
+    EXPECT_EQ(subscriptionSource_.validatedRange(), "1-2");
 }
 
 TEST_F(SubscriptionSourceReadTests, GotTransactionIsForwardingFalse)
@@ -425,13 +424,13 @@ TEST_F(SubscriptionSourceReadTests, GotTransactionIsForwardingFalse)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
 TEST_F(SubscriptionSourceReadTests, GotTransactionIsForwardingTrue)
 {
-    subscriptionSource_->setForwarding(true);
+    subscriptionSource_.setForwarding(true);
     boost::json::object const message = {{"transaction", "some_transaction_data"}};
 
     boost::asio::spawn(ioContext_, [&message, this](boost::asio::yield_context yield) {
@@ -440,7 +439,7 @@ TEST_F(SubscriptionSourceReadTests, GotTransactionIsForwardingTrue)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     EXPECT_CALL(*subscriptionManager_, forwardProposedTransaction(message));
     ioContext_.run();
 }
@@ -453,13 +452,13 @@ TEST_F(SubscriptionSourceReadTests, GotValidationReceivedIsForwardingFalse)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
 TEST_F(SubscriptionSourceReadTests, GotValidationReceivedIsForwardingTrue)
 {
-    subscriptionSource_->setForwarding(true);
+    subscriptionSource_.setForwarding(true);
     boost::json::object const message = {{"type", "validationReceived"}};
 
     boost::asio::spawn(ioContext_, [&message, this](boost::asio::yield_context yield) {
@@ -468,7 +467,7 @@ TEST_F(SubscriptionSourceReadTests, GotValidationReceivedIsForwardingTrue)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     EXPECT_CALL(*subscriptionManager_, forwardValidation(message));
     ioContext_.run();
 }
@@ -481,13 +480,13 @@ TEST_F(SubscriptionSourceReadTests, GotManiefstReceivedIsForwardingFalse)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 }
 
 TEST_F(SubscriptionSourceReadTests, GotManifestReceivedIsForwardingTrue)
 {
-    subscriptionSource_->setForwarding(true);
+    subscriptionSource_.setForwarding(true);
     boost::json::object const message = {{"type", "manifestReceived"}};
 
     boost::asio::spawn(ioContext_, [&message, this](boost::asio::yield_context yield) {
@@ -496,7 +495,7 @@ TEST_F(SubscriptionSourceReadTests, GotManifestReceivedIsForwardingTrue)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     EXPECT_CALL(*subscriptionManager_, forwardManifest(message));
     ioContext_.run();
 }
@@ -509,10 +508,10 @@ TEST_F(SubscriptionSourceReadTests, LastMessageTime)
     });
 
     EXPECT_CALL(onConnectHook_, Call());
-    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_->stop(); });
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
     ioContext_.run();
 
-    auto const actualLastTimeMessage = subscriptionSource_->lastMessageTime();
+    auto const actualLastTimeMessage = subscriptionSource_.lastMessageTime();
     auto const now = std::chrono::steady_clock::now();
     auto const diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - actualLastTimeMessage);
     EXPECT_LT(diff, std::chrono::milliseconds(100));

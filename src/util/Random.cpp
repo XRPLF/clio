@@ -16,12 +16,20 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #include "util/Random.hpp"
 
 #include <chrono>
+#include <cstddef>
 #include <random>
 
 namespace util {
+
+void
+Random::setSeed(size_t seed)
+{
+    generator_.seed(seed);
+}
 
 std::mt19937_64 Random::generator_{std::chrono::system_clock::now().time_since_epoch().count()};
 

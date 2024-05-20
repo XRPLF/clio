@@ -34,7 +34,7 @@
 
 // Base class for feed tests, providing easy way to access the received feed
 template <typename TestedFeed>
-class FeedBaseTest : public util::prometheus::WithPrometheus, public SyncAsioContextTest, public MockBackendTest {
+struct FeedBaseTest : util::prometheus::WithPrometheus, SyncAsioContextTest, MockBackendTest {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
     std::shared_ptr<TestedFeed> testFeedPtr;
@@ -44,7 +44,6 @@ protected:
     SetUp() override
     {
         SyncAsioContextTest::SetUp();
-        MockBackendTest::SetUp();
         testFeedPtr = std::make_shared<TestedFeed>(ctx);
         sessionPtr = std::make_shared<MockSession>();
         sessionPtr->apiSubVersion = 1;
@@ -56,7 +55,6 @@ protected:
     {
         sessionPtr.reset();
         testFeedPtr.reset();
-        MockBackendTest::TearDown();
         SyncAsioContextTest::TearDown();
     }
 };

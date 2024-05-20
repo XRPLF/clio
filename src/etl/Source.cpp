@@ -20,8 +20,12 @@
 #include "etl/Source.hpp"
 
 #include "data/BackendInterface.hpp"
-#include "etl/ETLHelpers.hpp"
-#include "feed/SubscriptionManager.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
+#include "etl/impl/ForwardingSource.hpp"
+#include "etl/impl/GrpcSource.hpp"
+#include "etl/impl/SourceImpl.hpp"
+#include "etl/impl/SubscriptionSource.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/config/Config.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -32,18 +36,16 @@
 
 namespace etl {
 
-template class SourceImpl<>;
-
-Source
+SourcePtr
 make_Source(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<feed::SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-    Source::OnDisconnectHook onDisconnect,
-    Source::OnConnectHook onConnect,
-    Source::OnLedgerClosedHook onLedgerClosed
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+    std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+    SourceBase::OnConnectHook onConnect,
+    SourceBase::OnDisconnectHook onDisconnect,
+    SourceBase::OnLedgerClosedHook onLedgerClosed
 )
 {
     auto const ip = config.valueOr<std::string>("ip", {});
@@ -63,9 +65,9 @@ make_Source(
         std::move(onLedgerClosed)
     );
 
-    return Source{
+    return std::make_unique<impl::SourceImpl<>>(
         ip, wsPort, grpcPort, std::move(grpcSource), std::move(subscriptionSource), std::move(forwardingSource)
-    };
+    );
 }
 
 }  // namespace etl

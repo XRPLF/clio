@@ -792,8 +792,8 @@ public:
     void
     writeSuccessor(std::string&& key, std::uint32_t const seq, std::string&& successor) override
     {
-        LOG(log_.trace()) << "Writing successor. key = " << key.size() << " bytes. " << " seq = " << std::to_string(seq)
-                          << " successor = " << successor.size() << " bytes.";
+        LOG(log_.trace()) << "Writing successor. key = " << key.size() << " bytes. "
+                          << " seq = " << std::to_string(seq) << " successor = " << successor.size() << " bytes.";
         ASSERT(!key.empty(), "Key must not be empty");
         ASSERT(!successor.empty(), "Successor must not be empty");
 

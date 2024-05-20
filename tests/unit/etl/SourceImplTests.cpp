@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "etl/Source.hpp"
+#include "etl/impl/SourceImpl.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -36,7 +36,7 @@
 #include <utility>
 #include <vector>
 
-using namespace etl;
+using namespace etl::impl;
 
 using testing::Return;
 using testing::StrictMock;
@@ -72,7 +72,7 @@ struct ForwardingSourceMock {
     );
 };
 
-struct SourceTest : public ::testing::Test {
+struct SourceImplTest : public ::testing::Test {
     boost::asio::io_context ioc_;
 
     StrictMock<GrpcSourceMock> grpcSourceMock_;
@@ -94,25 +94,25 @@ struct SourceTest : public ::testing::Test {
         };
 };
 
-TEST_F(SourceTest, run)
+TEST_F(SourceImplTest, run)
 {
     EXPECT_CALL(*subscriptionSourceMock_, run());
     source_.run();
 }
 
-TEST_F(SourceTest, isConnected)
+TEST_F(SourceImplTest, isConnected)
 {
     EXPECT_CALL(*subscriptionSourceMock_, isConnected()).WillOnce(testing::Return(true));
     EXPECT_TRUE(source_.isConnected());
 }
 
-TEST_F(SourceTest, setForwarding)
+TEST_F(SourceImplTest, setForwarding)
 {
     EXPECT_CALL(*subscriptionSourceMock_, setForwarding(true));
     source_.setForwarding(true);
 }
 
-TEST_F(SourceTest, toJson)
+TEST_F(SourceImplTest, toJson)
 {
     EXPECT_CALL(*subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
     EXPECT_CALL(*subscriptionSourceMock_, isConnected()).WillOnce(Return(true));
@@ -130,7 +130,7 @@ TEST_F(SourceTest, toJson)
     EXPECT_GE(std::stoi(lastMessageAgeStr), 0);
 }
 
-TEST_F(SourceTest, toString)
+TEST_F(SourceImplTest, toString)
 {
     EXPECT_CALL(*subscriptionSourceMock_, validatedRange()).WillOnce(Return(std::string("some_validated_range")));
 
@@ -141,14 +141,14 @@ TEST_F(SourceTest, toString)
     );
 }
 
-TEST_F(SourceTest, hasLedger)
+TEST_F(SourceImplTest, hasLedger)
 {
     uint32_t const ledgerSeq = 123;
     EXPECT_CALL(*subscriptionSourceMock_, hasLedger(ledgerSeq)).WillOnce(Return(true));
     EXPECT_TRUE(source_.hasLedger(ledgerSeq));
 }
 
-TEST_F(SourceTest, fetchLedger)
+TEST_F(SourceImplTest, fetchLedger)
 {
     uint32_t const ledgerSeq = 123;
 
@@ -158,7 +158,7 @@ TEST_F(SourceTest, fetchLedger)
     EXPECT_EQ(actualStatus.error_code(), grpc::StatusCode::OK);
 }
 
-TEST_F(SourceTest, loadInitialLedger)
+TEST_F(SourceImplTest, loadInitialLedger)
 {
     uint32_t const ledgerSeq = 123;
     uint32_t const numMarkers = 3;
@@ -171,7 +171,7 @@ TEST_F(SourceTest, loadInitialLedger)
     EXPECT_TRUE(actualSuccess);
 }
 
-TEST_F(SourceTest, forwardToRippled)
+TEST_F(SourceImplTest, forwardToRippled)
 {
     boost::json::object const request = {{"some_key", "some_value"}};
     std::optional<std::string> const clientIp = "some_client_ip";
