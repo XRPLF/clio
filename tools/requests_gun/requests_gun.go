@@ -5,7 +5,6 @@ import (
 	"os"
 	"requests_gun/internal/ammo_provider"
 	"requests_gun/internal/parse_args"
-	"requests_gun/internal/request_maker"
 	"requests_gun/internal/trigger"
 )
 
@@ -26,8 +25,6 @@ func main() {
 	ammoProvider := ammo_provider.New(f)
 	fmt.Println("Done")
 
-	requestMaker := request_maker.NewHttp(args.Url, args.Port)
-
 	fmt.Println("Firing requests...")
-	trigger.Fire(ammoProvider, requestMaker, args.TargetLoad, args.PrintErrors)
+	trigger.Fire(ammoProvider, args)
 }
