@@ -1,1 +1,1 @@
-{ "method": "ledger", "params": [ {"ledger_index": "current"} ] }
+{ "method": "server_info", "params": [ {} ] }

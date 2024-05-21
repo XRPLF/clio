@@ -29,5 +29,5 @@ func main() {
 	requestMaker := request_maker.NewHttp(args.Url, args.Port)
 
 	fmt.Println("Firing requests...")
-	trigger.Fire(ammoProvider, requestMaker, args.Target_load)
+	trigger.Fire(ammoProvider, requestMaker, args.TargetLoad, args.PrintErrors)
 }
