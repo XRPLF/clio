@@ -1,15 +1,17 @@
-package main
+package trigger
 
 import (
 	"fmt"
 	"os"
 	"os/signal"
+	"requests_gun/internal/ammo_provider"
+	"requests_gun/internal/request_maker"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-func fire(ammoProvider *AmmoProvider, requestMaker RequestMaker, load uint) {
+func Fire(ammoProvider *ammo_provider.AmmoProvider, requestMaker request_maker.RequestMaker, load uint) {
 	wg := sync.WaitGroup{}
 
 	stop := atomic.Bool{}
@@ -26,28 +28,29 @@ func fire(ammoProvider *AmmoProvider, requestMaker RequestMaker, load uint) {
 		stop.Store(true)
 	}()
 
-	statistics := Statistics{start_time: time.Now()}
+	statistics := statistics{start_time: time.Now()}
 	do_shot := func() {
 		defer wg.Done()
 		bullet := ammoProvider.GetBullet()
-		response_data := requestMaker.MakeRequest(bullet)
-		statistics.add(response_data)
+		response_data, err := requestMaker.MakeRequest(bullet)
+		statistics.add(response_data, err)
 	}
 
 	for !stop.Load() {
 		second_start := time.Now()
 		requests_number := uint(0)
-        sleep_time := time.Second / time.Duration(load)
+		// sleep_time := time.Second / time.Duration(load+1)
 		for requests_number < load && time.Since(second_start) < time.Second {
 			wg.Add(1)
 			go do_shot()
-            time.Sleep(sleep_time)
+			requests_number++
+			// time.Sleep(sleep_time)
 		}
 		statistics.print()
 	}
 }
 
-type Statistics struct {
+type statistics struct {
 	total_requests_count atomic.Uint64
 	errors_count         atomic.Uint64
 	bad_reply_count      atomic.Uint64
@@ -55,23 +58,29 @@ type Statistics struct {
 	start_time           time.Time
 }
 
-func (s *Statistics) add(response ResponseData) {
+func (s *statistics) add(response *request_maker.ResponseData, err error) {
 	s.total_requests_count.Add(1)
-	if response.error != nil {
+	if err != nil {
+		// fmt.Println("Error making request:", response.error)
 		s.errors_count.Add(1)
 		return
 	}
-	if response.statusCode != 200 || response.body["error"] != nil {
+	if response.StatusCode != 200 || response.Body["error"] != nil {
+		// fmt.Print("Response contains error: ", response.statusStr)
+		// if response.body["error"] != nil {
+		// 	fmt.Println(" ", response.body["error"])
+		// } else {
+		// 	fmt.Println()
+		// }
 		s.bad_reply_count.Add(1)
 	} else {
 		s.good_reply_count.Add(1)
 	}
-
 }
 
-func (s *Statistics) print() {
+func (s *statistics) print() {
 	elapsed := time.Since(s.start_time)
-	fmt.Printf("Rps: %f Errors: %f%%, Bad responce: %f%%, Good responce: %f%%\n",
+	fmt.Printf("Rps: %.1f Errors: %.1f%%, Bad response: %.1f%%, Good response: %.1f%%\n",
 		float64(s.total_requests_count.Load())/elapsed.Seconds(),
 		float64(s.errors_count.Load())/float64(s.total_requests_count.Load())*100,
 		float64(s.bad_reply_count.Load())/float64(s.total_requests_count.Load())*100,

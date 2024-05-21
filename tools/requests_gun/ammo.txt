@@ -1,1 +1,1 @@
-{ "command": "ledger", "ledger_index": "current" }
+{ "method": "ledger", "params": [ {"ledger_index": "current"} ] }

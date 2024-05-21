@@ -1,13 +1,33 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"requests_gun/internal/ammo_provider"
+	"requests_gun/internal/parse_args"
+	"requests_gun/internal/request_maker"
+	"requests_gun/internal/trigger"
+)
 
 func main() {
-    args := ParseArgs()
-    fmt.Print("Loading ammo... ")
-	ammoProvider := NewAmmoProvider(args.ammo)
-    fmt.Println("Done")
-    requestMaker := NewHttpRequestMaker(args.url, args.port)
-    fmt.Println("Firing requests...")
-    fire(&ammoProvider, &requestMaker, args.target_load)
+	args, err := parse_args.Parse()
+    if err != nil {
+        fmt.Fprintln(os.Stderr, "Error: ", err)
+        parse_args.PrintUsage()
+        os.Exit(1)
+    }
+
+	fmt.Print("Loading ammo... ")
+    f, err := os.Open(args.Ammo)
+    if err != nil {
+        fmt.Println("Error opening file '", args.Ammo, "': ", err)
+        os.Exit(1)
+    }
+	ammoProvider := ammo_provider.New(f)
+	fmt.Println("Done")
+
+	requestMaker := request_maker.NewHttp(args.Url, args.Port)
+
+	fmt.Println("Firing requests...")
+	trigger.Fire(ammoProvider, requestMaker, args.Target_load)
 }
