@@ -59,24 +59,32 @@ void
 SubscriptionManager::subProposedTransactions(SubscriberSharedPtr const& subscriber)
 {
     proposedTransactionFeed_.sub(subscriber);
+    // proposed_transactions subscribers not only receive the transaction json when it is proposed, but also the
+    // transaction json when it is validated. So the subscriber also subscribes to the transaction feed.
+    transactionFeed_.subProposed(subscriber);
 }
 
 void
 SubscriptionManager::unsubProposedTransactions(SubscriberSharedPtr const& subscriber)
 {
     proposedTransactionFeed_.unsub(subscriber);
+    transactionFeed_.unsubProposed(subscriber);
 }
 
 void
 SubscriptionManager::subProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     proposedTransactionFeed_.sub(account, subscriber);
+    // Same as proposed_transactions subscribers, proposed_account subscribers also subscribe to the transaction feed to
+    // receive validated transaction feed. TransactionFeed class will filter out the sessions that have been sent to.
+    transactionFeed_.subProposed(account, subscriber);
 }
 
 void
 SubscriptionManager::unsubProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber)
 {
     proposedTransactionFeed_.unsub(account, subscriber);
+    transactionFeed_.unsubProposed(account, subscriber);
 }
 
 void
