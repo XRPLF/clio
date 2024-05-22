@@ -32,7 +32,12 @@ type ResponseData struct {
 
 func (h *HttpRequestMaker) MakeRequest(request string) (*ResponseData, error) {
 	startTime := time.Now()
-	response, err := h.client.Post(h.url, "application/json", strings.NewReader(request))
+    req, err := http.NewRequest("POST", h.url, strings.NewReader(request))
+    if err != nil {
+        return nil, errors.New("Error creating request: " + err.Error())
+    }
+
+	response, err := h.client.Do(req)
 	requestDuration := time.Since(startTime)
 
 	if err != nil {
@@ -59,11 +64,10 @@ func (h *HttpRequestMaker) MakeRequest(request string) (*ResponseData, error) {
 }
 
 func NewHttp(host string, port uint) *HttpRequestMaker {
-	if !strings.HasPrefix(host, "http://") {
+	if !strings.HasPrefix(host, "http://") && !strings.HasPrefix(host, "https://") {
 		host = "http://" + host
 	}
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	// transport.DisableKeepAlives = true
 	client := &http.Client{Transport: transport}
 
 	return &HttpRequestMaker{host + ":" + fmt.Sprintf("%d", port), transport, client}
