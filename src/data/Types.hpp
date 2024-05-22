@@ -275,15 +275,31 @@ struct Amendment {
 struct AmendmentKey {
     std::string_view name;
 
-    /** @cond */
+    /**
+     * @brief Create a new AmendmentKey object
+     * @param amendmentName The name of the amendment
+     */
     AmendmentKey(std::string_view amendmentName);
+
+    /**
+     * @brief Create a new AmendmentKey object
+     * @param amendmentName The name of the amendment
+     */
     AmendmentKey(std::string const& amendmentName);
+
+    /** @brief Conversion to string */
     operator std::string() const;
+
+    /** @brief Conversion to uint256 */
     operator ripple::uint256() const;
 
+    /**
+     * @brief Comparison operators
+     * @param other The object to compare to
+     * @return Whether the objects are equal, greater or less
+     */
     auto
-    operator<=>(AmendmentKey const&) const = default;
-    /** @endcond */
+    operator<=>(AmendmentKey const& other) const = default;
 };
 
 constexpr ripple::uint256 firstKey{"0000000000000000000000000000000000000000000000000000000000000000"};

@@ -139,8 +139,8 @@ struct Amendments {
     REGISTER(fix1512);
     REGISTER(fix1523);
     REGISTER(fix1528);
+    /** @endcond */
 };
-/** @endcond */
 
 /**
  * @brief Provides all amendments supported by libxrpl

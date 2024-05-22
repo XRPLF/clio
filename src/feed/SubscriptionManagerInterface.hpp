@@ -234,7 +234,6 @@ public:
 
     /**
      * @brief Get the number of subscribers.
-     *
      * @return The report of the number of subscribers
      */
     virtual boost::json::object
