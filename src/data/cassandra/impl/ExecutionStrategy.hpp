@@ -484,7 +484,8 @@ private:
         {
             std::unique_lock<std::mutex> lck(throttleMutex_);
             if (!canAddWriteRequest()) {
-                LOG(log_.trace()) << "Max outstanding requests reached. " << "Waiting for other requests to finish";
+                LOG(log_.trace()) << "Max outstanding requests reached. "
+                                  << "Waiting for other requests to finish";
                 throttleCv_.wait(lck, [this]() { return canAddWriteRequest(); });
             }
         }
