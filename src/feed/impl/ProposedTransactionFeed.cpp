@@ -102,6 +102,7 @@ ProposedTransactionFeed::pub(boost::json::object const& receivedTxJson)
     auto affectedAccounts = std::unordered_set<ripple::AccountID>(accounts.cbegin(), accounts.cend());
 
     boost::asio::post(strand_, [this, pubMsg = std::move(pubMsg), affectedAccounts = std::move(affectedAccounts)]() {
+        notified_.clear();
         signal_.emit(pubMsg);
         // Prevent the same connection from receiving the same message twice if it is subscribed to multiple accounts
         // However, if the same connection subscribe both stream and account, it will still receive the message twice.

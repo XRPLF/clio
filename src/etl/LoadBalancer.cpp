@@ -20,8 +20,8 @@
 #include "etl/LoadBalancer.hpp"
 
 #include "data/BackendInterface.hpp"
-#include "etl/ETLHelpers.hpp"
 #include "etl/ETLState.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
