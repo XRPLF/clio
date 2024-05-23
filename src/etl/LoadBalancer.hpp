@@ -20,8 +20,8 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "etl/ETLHelpers.hpp"
 #include "etl/ETLState.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
 #include "etl/impl/ForwardingCache.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
@@ -44,7 +44,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace etl {
@@ -167,6 +166,7 @@ public:
      *
      * @param request JSON-RPC request to forward
      * @param clientIp The IP address of the peer, if known
+     * @param isAdmin Whether the request is from an admin
      * @param yield The coroutine context
      * @return Response received from rippled node as JSON object on success; nullopt on failure
      */
@@ -174,6 +174,7 @@ public:
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
+        bool isAdmin,
         boost::asio::yield_context yield
     );
 

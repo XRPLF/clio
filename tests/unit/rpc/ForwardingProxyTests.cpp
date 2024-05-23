@@ -301,15 +301,14 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
     auto const params = json::parse(R"({"test": true})");
     auto const forwarded = json::parse(R"({"test": true, "command": "submit"})");
 
-    ON_CALL(*rawBalancerPtr, forwardToRippled).WillByDefault(Return(std::make_optional<json::object>()));
-    EXPECT_CALL(*rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), _))
-        .Times(1);
+    EXPECT_CALL(
+        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), true, _)
+    )
+        .WillOnce(Return(std::make_optional<json::object>()));
 
-    ON_CALL(*rawHandlerProviderPtr, contains).WillByDefault(Return(true));
-    EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).Times(1);
+    EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
-    ON_CALL(counters, rpcForwarded).WillByDefault(Return());
-    EXPECT_CALL(counters, rpcForwarded(method)).Times(1);
+    EXPECT_CALL(counters, rpcForwarded(method));
 
     runSpawn([&](auto yield) {
         auto const range = backend->fetchLedgerRange();
@@ -332,15 +331,14 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
     auto const params = json::parse(R"({"test": true})");
     auto const forwarded = json::parse(R"({"test": true, "command": "submit"})");
 
-    ON_CALL(*rawBalancerPtr, forwardToRippled).WillByDefault(Return(std::nullopt));
-    EXPECT_CALL(*rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), _))
-        .Times(1);
+    EXPECT_CALL(
+        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), true, _)
+    )
+        .WillOnce(Return(std::nullopt));
 
-    ON_CALL(*rawHandlerProviderPtr, contains).WillByDefault(Return(true));
-    EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).Times(1);
+    EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
-    ON_CALL(counters, rpcFailedToForward).WillByDefault(Return());
-    EXPECT_CALL(counters, rpcFailedToForward(method)).Times(1);
+    EXPECT_CALL(counters, rpcFailedToForward(method));
 
     runSpawn([&](auto yield) {
         auto const range = backend->fetchLedgerRange();

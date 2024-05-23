@@ -55,6 +55,7 @@ std::optional<boost::json::object>
 ForwardingSource::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& forwardToRippledClientIp,
+    bool isAdmin,
     boost::asio::yield_context yield
 ) const
 {
@@ -64,6 +65,11 @@ ForwardingSource::forwardToRippled(
             {boost::beast::http::field::forwarded, fmt::format("for={}", *forwardToRippledClientIp)}
         );
     }
+
+    if (isAdmin) {
+        connectionBuilder.addHeader({"X-User", "clio_admin"});
+    }
+
     auto expectedConnection = connectionBuilder.connect(yield);
     if (not expectedConnection) {
         return std::nullopt;

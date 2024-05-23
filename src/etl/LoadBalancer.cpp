@@ -213,6 +213,7 @@ std::optional<boost::json::object>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
+    bool isAdmin,
     boost::asio::yield_context yield
 )
 {
@@ -229,7 +230,7 @@ LoadBalancer::forwardToRippled(
 
     std::optional<boost::json::object> response;
     while (numAttempts < sources_.size()) {
-        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, yield)) {
+        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, isAdmin, yield)) {
             response = std::move(res);
             break;
         }

@@ -222,7 +222,7 @@ public:
         }
 
         auto const serverInfoRippled =
-            balancer_->forwardToRippled({{"command", "server_info"}}, ctx.clientIp, ctx.yield);
+            balancer_->forwardToRippled({{"command", "server_info"}}, ctx.clientIp, ctx.isAdmin, ctx.yield);
 
         if (serverInfoRippled && !serverInfoRippled->contains(JS(error))) {
             if (serverInfoRippled->contains(JS(result)) &&

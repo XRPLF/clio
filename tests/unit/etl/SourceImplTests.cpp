@@ -67,7 +67,7 @@ struct ForwardingSourceMock {
     MOCK_METHOD(
         ForwardToRippledReturnType,
         forwardToRippled,
-        (boost::json::object const&, ClientIpOpt const&, boost::asio::yield_context),
+        (boost::json::object const&, ClientIpOpt const&, bool, boost::asio::yield_context),
         (const)
     );
 };
@@ -176,11 +176,12 @@ TEST_F(SourceImplTest, forwardToRippled)
     boost::json::object const request = {{"some_key", "some_value"}};
     std::optional<std::string> const clientIp = "some_client_ip";
 
-    EXPECT_CALL(forwardingSourceMock_, forwardToRippled(request, clientIp, testing::_)).WillOnce(Return(request));
+    EXPECT_CALL(forwardingSourceMock_, forwardToRippled(request, clientIp, false, testing::_))
+        .WillOnce(Return(request));
 
     boost::asio::io_context ioContext;
     boost::asio::spawn(ioContext, [&](boost::asio::yield_context yield) {
-        auto const response = source_.forwardToRippled(request, clientIp, yield);
+        auto const response = source_.forwardToRippled(request, clientIp, false, yield);
         EXPECT_EQ(response, request);
     });
     ioContext.run();
