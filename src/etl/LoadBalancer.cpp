@@ -77,7 +77,7 @@ LoadBalancer::LoadBalancer(
     SourceFactory sourceFactory
 )
 {
-    auto const forwardingCacheTimeout = config.valueOr<float>("forwarding_cache_timeout", 0.f);
+    auto const forwardingCacheTimeout = config.valueOr<float>("forwarding.cache_timeout", 0.f);
     if (forwardingCacheTimeout > 0.f) {
         forwardingCache_ = impl::ForwardingCache{std::chrono::milliseconds{
             std::lroundf(forwardingCacheTimeout * static_cast<float>(util::MILLISECONDS_PER_SECOND))
