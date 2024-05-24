@@ -391,6 +391,7 @@ public:
             // TODO: user-agent can be clio-[version]
             ws->set_option(websocket::stream_base::decorator([&clientIp](websocket::request_type& req) {
                 req.set(http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-coro");
+                req.set("X-User", "clio");
                 if (clientIp)
                     req.set(http::field::forwarded, "for=" + *clientIp);
             }));
