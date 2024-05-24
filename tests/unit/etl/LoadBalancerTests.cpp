@@ -44,6 +44,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -485,7 +486,15 @@ struct LoadBalancerForwardToRippledTests : LoadBalancerConstructorTests, SyncAsi
 TEST_F(LoadBalancerForwardToRippledTests, forward)
 {
     auto loadBalancer = makeLoadBalancer();
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled(request_, clientIP_, true, testing::_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(
+            request_,
+            clientIP_,
+            std::make_optional<std::string>(LoadBalancer::ADMIN_FORWARDING_X_USER_VALUE),
+            testing::_
+        )
+    )
         .WillOnce(Return(response_));
 
     runSpawn([&](boost::asio::yield_context yield) {
@@ -493,12 +502,32 @@ TEST_F(LoadBalancerForwardToRippledTests, forward)
     });
 }
 
+TEST_F(LoadBalancerForwardToRippledTests, forwardWithXUserHeader)
+{
+    std::string_view const xUserValue = "some_user";
+    configJson_.as_object()["forwarding"] = boost::json::object{{"x_user_value", xUserValue}};
+    auto loadBalancer = makeLoadBalancer();
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(request_, clientIP_, std::make_optional<std::string>(xUserValue), testing::_)
+    )
+        .WillOnce(Return(response_));
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_EQ(loadBalancer->forwardToRippled(request_, clientIP_, false, yield), response_);
+    });
+}
+
 TEST_F(LoadBalancerForwardToRippledTests, source0Fails)
 {
     auto loadBalancer = makeLoadBalancer();
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled(request_, clientIP_, false, testing::_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0), forwardToRippled(request_, clientIP_, std::optional<std::string>{}, testing::_)
+    )
         .WillOnce(Return(std::nullopt));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled(request_, clientIP_, false, testing::_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(1), forwardToRippled(request_, clientIP_, std::optional<std::string>{}, testing::_)
+    )
         .WillOnce(Return(response_));
 
     runSpawn([&](boost::asio::yield_context yield) {
@@ -509,13 +538,17 @@ TEST_F(LoadBalancerForwardToRippledTests, source0Fails)
 TEST_F(LoadBalancerForwardToRippledTests, bothSourcesFail)
 {
     auto loadBalancer = makeLoadBalancer();
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled(request_, clientIP_, true, testing::_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0), forwardToRippled(request_, clientIP_, std::optional<std::string>{}, testing::_)
+    )
         .WillOnce(Return(std::nullopt));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled(request_, clientIP_, true, testing::_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(1), forwardToRippled(request_, clientIP_, std::optional<std::string>{}, testing::_)
+    )
         .WillOnce(Return(std::nullopt));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        EXPECT_EQ(loadBalancer->forwardToRippled(request_, clientIP_, true, yield), std::nullopt);
+        EXPECT_EQ(loadBalancer->forwardToRippled(request_, clientIP_, false, yield), std::nullopt);
     });
 }
 
@@ -526,12 +559,14 @@ TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheEnabled)
 
     auto const request = boost::json::object{{"command", "server_info"}};
 
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled(request, clientIP_, true, testing::_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0), forwardToRippled(request, clientIP_, std::optional<std::string>{}, testing::_)
+    )
         .WillOnce(Return(response_));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, true, yield), response_);
-        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, true, yield), response_);
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
+        EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
     });
 }
 
@@ -542,9 +577,13 @@ TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
 
     auto const request = boost::json::object{{"command", "server_info"}};
 
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled(request, clientIP_, false, testing::_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(0), forwardToRippled(request, clientIP_, std::optional<std::string>{}, testing::_)
+    )
         .WillOnce(Return(response_));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled(request, clientIP_, false, testing::_))
+    EXPECT_CALL(
+        sourceFactory_.sourceAt(1), forwardToRippled(request, clientIP_, std::optional<std::string>{}, testing::_)
+    )
         .WillOnce(Return(boost::json::object{}));
 
     runSpawn([&](boost::asio::yield_context yield) {

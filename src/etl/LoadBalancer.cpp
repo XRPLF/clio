@@ -84,6 +84,11 @@ LoadBalancer::LoadBalancer(
         }};
     }
 
+    auto const forwardingXUserValue = config.valueOr<std::string>("forwarding.x_user_value", {});
+    if (not forwardingXUserValue.empty()) {
+        forwardingXUserValue_ = forwardingXUserValue;
+    }
+
     static constexpr std::uint32_t MAX_DOWNLOAD = 256;
     if (auto value = config.maybeValue<uint32_t>("num_markers"); value) {
         ASSERT(*value > 0 and *value <= MAX_DOWNLOAD, "'num_markers' value in config must be in range 1-256");
@@ -228,9 +233,11 @@ LoadBalancer::forwardToRippled(
 
     auto numAttempts = 0u;
 
+    auto const xUserValue = isAdmin ? std::optional<std::string>{ADMIN_FORWARDING_X_USER_VALUE} : forwardingXUserValue_;
+
     std::optional<boost::json::object> response;
     while (numAttempts < sources_.size()) {
-        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, isAdmin, yield)) {
+        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield)) {
             response = std::move(res);
             break;
         }

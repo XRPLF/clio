@@ -44,6 +44,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace etl {
@@ -67,6 +68,8 @@ private:
     util::Logger log_{"ETL"};
     // Forwarding cache must be destroyed after sources because sources have a callback to invalidate cache
     std::optional<impl::ForwardingCache> forwardingCache_;
+    std::optional<std::string> forwardingXUserValue_;
+
     std::vector<SourcePtr> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
@@ -74,6 +77,11 @@ private:
     std::atomic_bool hasForwardingSource_{false};
 
 public:
+    /**
+     * @brief Value for the X-User header when forwarding admin requests
+     */
+    static constexpr std::string_view ADMIN_FORWARDING_X_USER_VALUE = "clio_admin";
+
     /**
      * @brief Create an instance of the load balancer.
      *

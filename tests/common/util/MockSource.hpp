@@ -19,6 +19,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/config/Config.hpp"
@@ -58,7 +59,10 @@ struct MockSource : etl::SourceBase {
     MOCK_METHOD(
         std::optional<boost::json::object>,
         forwardToRippled,
-        (boost::json::object const&, std::optional<std::string> const&, bool, boost::asio::yield_context),
+        (boost::json::object const&,
+         std::optional<std::string> const&,
+         std::optional<std::string> const&,
+         boost::asio::yield_context),
         (const, override)
     );
 };
@@ -127,11 +131,11 @@ public:
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,
-        bool isAdmin,
+        std::optional<std::string> const& xUserValue,
         boost::asio::yield_context yield
     ) const override
     {
-        return mock_->forwardToRippled(request, forwardToRippledClientIp, isAdmin, yield);
+        return mock_->forwardToRippled(request, forwardToRippledClientIp, xUserValue, yield);
     }
 };
 

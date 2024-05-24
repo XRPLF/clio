@@ -49,7 +49,7 @@ public:
      *
      * @param request The request to forward
      * @param forwardToRippledClientIp IP of the client forwarding this request if known
-     * @param isAdmin Whether the request is from an admin
+     * @param xUserValue Optional value for X-User header
      * @param yield The coroutine context
      * @return Response wrapped in an optional on success; nullopt otherwise
      */
@@ -57,7 +57,7 @@ public:
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,
-        bool isAdmin,
+        std::optional<std::string> const& xUserValue,
         boost::asio::yield_context yield
     ) const;
 };
