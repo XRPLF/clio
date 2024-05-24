@@ -427,7 +427,7 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV2)
 
 TEST_F(RPCHelpersTest, LedgerHeaderJson)
 {
-    auto const ledgerHeader = CreateLedgerInfo(INDEX1, 30);
+    auto const ledgerHeader = CreateLedgerHeader(INDEX1, 30);
     auto const binJson = toJson(ledgerHeader, true, 1u);
 
     auto constexpr EXPECTBIN = R"({
@@ -462,7 +462,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderJson)
 
 TEST_F(RPCHelpersTest, LedgerHeaderJsonV2)
 {
-    auto const ledgerHeader = CreateLedgerInfo(INDEX1, 30);
+    auto const ledgerHeader = CreateLedgerHeader(INDEX1, 30);
 
     auto const EXPECTJSON = fmt::format(
         R"({{

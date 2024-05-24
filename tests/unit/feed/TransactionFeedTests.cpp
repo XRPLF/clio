@@ -168,13 +168,13 @@ TEST_F(FeedTransactionTest, SubTransactionV1)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
     ctx.run();
@@ -182,7 +182,7 @@ TEST_F(FeedTransactionTest, SubTransactionV1)
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     ctx.run();
 }
@@ -215,13 +215,13 @@ TEST_F(FeedTransactionTest, SubTransactionV2)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
 
     ctx.run();
@@ -229,7 +229,7 @@ TEST_F(FeedTransactionTest, SubTransactionV2)
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     ctx.run();
 }
@@ -240,21 +240,21 @@ TEST_F(FeedTransactionTest, SubAccountV1)
     testFeedPtr->sub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
 
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
     ctx.run();
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     ctx.run();
 }
@@ -289,7 +289,7 @@ TEST_F(FeedTransactionTest, SubAccountV2)
     testFeedPtr->sub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
 
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
@@ -297,14 +297,14 @@ TEST_F(FeedTransactionTest, SubAccountV2)
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     ctx.run();
 }
@@ -318,7 +318,7 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
 
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
@@ -326,7 +326,7 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(2);
 
     ctx.run();
@@ -336,7 +336,7 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     ctx.run();
 }
@@ -348,7 +348,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
     testFeedPtr->sub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -356,7 +356,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
 
     auto metaObj = CreateMetaDataForBookChange(CURRENCY, ISSUER, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     constexpr static auto OrderbookPublish =
         R"({
@@ -424,7 +424,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
     // trigger by offer cancel meta data
     metaObj = CreateMetaDataForCancelOffer(CURRENCY, ISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     constexpr static auto OrderbookCancelPublish =
         R"({
@@ -529,7 +529,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
         })";
     metaObj = CreateMetaDataForCreateOffer(CURRENCY, ISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(OrderbookCreatePublish))).Times(1);
     ctx.restart();
     ctx.run();
@@ -537,7 +537,7 @@ TEST_F(FeedTransactionTest, SubBookV1)
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     ctx.run();
 }
@@ -550,7 +550,7 @@ TEST_F(FeedTransactionTest, SubBookV2)
     testFeedPtr->sub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -558,7 +558,7 @@ TEST_F(FeedTransactionTest, SubBookV2)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ISSUER, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     constexpr static auto OrderbookPublish =
         R"({
@@ -626,7 +626,7 @@ TEST_F(FeedTransactionTest, SubBookV2)
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     ctx.run();
 }
@@ -642,27 +642,27 @@ TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
 
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
 
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     ctx.run();
 }
@@ -678,20 +678,20 @@ TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
 
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
@@ -699,7 +699,7 @@ TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     ctx.run();
 }
@@ -714,21 +714,21 @@ TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
     ctx.run();
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     ctx.restart();
     ctx.run();
 }
@@ -789,7 +789,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
 {
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreateCreateOfferTransactionObject(ACCOUNT1, 1, 32, CURRENCY, ISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
@@ -820,7 +820,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
     ON_CALL(*backend, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
 
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     constexpr static auto TransactionForOwnerFund =
         R"({
             "transaction":
@@ -902,7 +902,7 @@ TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
 {
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreateCreateOfferTransactionObject(ACCOUNT1, 1, 32, CURRENCY, ISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
@@ -931,7 +931,7 @@ TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
     ripple::STObject const accountRoot = CreateAccountRootObject(ISSUER, 0, 1, 10, 2, TXNID, 3);
     ON_CALL(*backend, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_FROZEN))).Times(1);
     ctx.run();
 }
@@ -940,7 +940,7 @@ TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
 {
     testFeedPtr->sub(sessionPtr);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreateCreateOfferTransactionObject(ACCOUNT1, 1, 32, CURRENCY, ISSUER, 1, 3);
     trans1.transaction = obj.getSerializer().peekData();
@@ -969,7 +969,7 @@ TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
     ripple::STObject const accountRoot = CreateAccountRootObject(ISSUER, ripple::lsfGlobalFreeze, 1, 10, 2, TXNID, 3);
     ON_CALL(*backend, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
-    testFeedPtr->pub(trans1, ledgerinfo, backend);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_FROZEN))).Times(1);
     ctx.run();

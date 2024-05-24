@@ -61,7 +61,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
         return Error{Status{RippledError::rpcINVALID_PARAMS, "markerNotString"}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
-    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 

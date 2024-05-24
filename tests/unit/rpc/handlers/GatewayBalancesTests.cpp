@@ -218,8 +218,8 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
 
     backend->setRange(10, 300);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    // return empty ledgerHeader
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend}};
     runSpawn([&](auto yield) {
@@ -247,8 +247,8 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
 
     backend->setRange(10, 300);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    // return empty ledgerHeader
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend}};
     runSpawn([&](auto yield) {
@@ -274,9 +274,9 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
 {
     backend->setRange(10, 300);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend}};
     runSpawn([&](auto yield) {
@@ -304,9 +304,9 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
 
     backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
 
     // return empty account
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -337,9 +337,9 @@ TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
 
     backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
 
     // return valid account
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -406,9 +406,9 @@ TEST_P(NormalPathTest, CheckOutput)
 
     backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
 
     // return valid account
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;

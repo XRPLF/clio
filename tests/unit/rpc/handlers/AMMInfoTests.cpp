@@ -128,7 +128,7 @@ TEST_F(RPCAMMInfoHandlerTest, AccountNotFound)
 {
     backend->setRange(10, 30);
 
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, 30);
     auto const missingAccountKey = GetAccountKey(NOTFOUND_ACCOUNT);
     auto const accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto const accountKey = GetAccountKey(AMM_ACCOUNT);
@@ -163,7 +163,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotExist)
 {
     backend->setRange(10, 30);
 
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, 30);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
 
@@ -188,7 +188,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotInDBIsMalformed)
 {
     backend->setRange(10, 30);
 
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, 30);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
 
@@ -214,7 +214,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountNotFoundMissingAmmField)
 {
     backend->setRange(10, 30);
 
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, 30);
     auto const accountRoot = CreateAccountRootObject(AMM_ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
 
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(lgrInfo));
@@ -242,7 +242,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAmmBlobNotFound)
 {
     backend->setRange(10, 30);
 
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, 30);
     auto const accountKey = GetAccountKey(AMM_ACCOUNT);
     auto const ammId = ripple::uint256{AMMID};
     auto const ammKeylet = ripple::keylet::amm(ammId);
@@ -279,7 +279,7 @@ TEST_F(RPCAMMInfoHandlerTest, AMMAccountAccBlobNotFound)
 {
     backend->setRange(10, 30);
 
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, 30);
     auto const accountKey = GetAccountKey(AMM_ACCOUNT);
     auto const account2Key = GetAccountKey(AMM_ACCOUNT2);
     auto const ammId = ripple::uint256{AMMID};
@@ -322,7 +322,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalFirstXRPNoTrustline)
 
     auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
     auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, SEQ);
     auto const ammKey = ripple::uint256{AMMID};
     auto const ammKeylet = ripple::keylet::amm(ammKey);
     auto const feesKey = ripple::keylet::fees().key;
@@ -396,7 +396,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAccount)
 
     auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
     auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, SEQ);
     auto const ammKey = ripple::uint256{AMMID};
     auto const ammKeylet = ripple::keylet::amm(ammKey);
     auto const feesKey = ripple::keylet::fees().key;
@@ -480,7 +480,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathMinimalSecondXRPNoTrustline)
 
     auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
     auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, SEQ);
     auto const ammKey = ripple::uint256{AMMID};
     auto const ammKeylet = ripple::keylet::amm(ammKey);
     auto const feesKey = ripple::keylet::fees().key;
@@ -554,7 +554,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathNonXRPNoTrustlines)
 
     auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
     auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, SEQ);
     auto const ammKey = ripple::uint256{AMMID};
     auto const ammKeylet = ripple::keylet::amm(ammKey);
     auto const feesKey = ripple::keylet::fees().key;
@@ -633,7 +633,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozen)
 
     auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
     auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, SEQ);
     auto const ammKey = ripple::uint256{AMMID};
     auto const ammKeylet = ripple::keylet::amm(ammKey);
     auto const feesKey = ripple::keylet::fees().key;
@@ -724,7 +724,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathFrozenIssuer)
 
     auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
     auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, SEQ);
     auto const ammKey = ripple::uint256{AMMID};
     auto const ammKeylet = ripple::keylet::amm(ammKey);
     auto const feesKey = ripple::keylet::fees().key;
@@ -816,7 +816,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithTrustline)
 
     auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
     auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, SEQ);
     auto const ammKey = ripple::uint256{AMMID};
     auto const ammKeylet = ripple::keylet::amm(ammKey);
     auto const feesKey = ripple::keylet::fees().key;
@@ -893,7 +893,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithVoteSlots)
 
     auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
     auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, SEQ);
     auto const ammKey = ripple::uint256{AMMID};
     auto const ammKeylet = ripple::keylet::amm(ammKey);
     auto const feesKey = ripple::keylet::fees().key;
@@ -986,7 +986,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAuctionSlot)
 
     auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
     auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, SEQ);
     auto const ammKey = ripple::uint256{AMMID};
     auto const ammKeylet = ripple::keylet::amm(ammKey);
     auto const feesKey = ripple::keylet::fees().key;
@@ -1083,7 +1083,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsMatchingInputOrder)
 {
     backend->setRange(10, 30);
 
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, SEQ);
     auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
     auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
     auto const issue1 = ripple::Issue(ripple::to_currency("JPY"), account1);
@@ -1194,7 +1194,7 @@ TEST_F(RPCAMMInfoHandlerTest, HappyPathWithAssetsPreservesInputOrder)
 {
     backend->setRange(10, 30);
 
-    auto const lgrInfo = CreateLedgerInfo(LEDGERHASH, SEQ);
+    auto const lgrInfo = CreateLedgerHeader(LEDGERHASH, SEQ);
     auto const account1 = GetAccountIDWithString(AMM_ACCOUNT);
     auto const account2 = GetAccountIDWithString(AMM_ACCOUNT2);
     auto const issue1 = ripple::Issue(ripple::to_currency("USD"), account1);

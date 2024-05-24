@@ -1851,9 +1851,9 @@ TEST_P(IndexTest, InvalidIndexNotString)
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     // return null for ledger entry
     auto const key = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -2401,9 +2401,9 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
     auto const testBundle = GetParam();
 
     backend->setRange(RANGEMIN, RANGEMAX);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     EXPECT_CALL(*backend, doFetchLedgerObject(testBundle.expectedIndex, RANGEMAX, _))
         .WillRepeatedly(Return(testBundle.mockedEntity.getSerializer().peekData()));
@@ -2451,9 +2451,9 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
     })";
 
     backend->setRange(RANGEMIN, RANGEMAX);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
@@ -2477,9 +2477,9 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
 TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);

@@ -206,13 +206,13 @@ public:
     }
 
     void
-    writeLedger(ripple::LedgerHeader const& ledgerInfo, std::string&& blob) override
+    writeLedger(ripple::LedgerHeader const& ledgerHeader, std::string&& blob) override
     {
-        executor_.write(schema_->insertLedgerHeader, ledgerInfo.seq, std::move(blob));
+        executor_.write(schema_->insertLedgerHeader, ledgerHeader.seq, std::move(blob));
 
-        executor_.write(schema_->insertLedgerHash, ledgerInfo.hash, ledgerInfo.seq);
+        executor_.write(schema_->insertLedgerHash, ledgerHeader.hash, ledgerHeader.seq);
 
-        ledgerSequence_ = ledgerInfo.seq;
+        ledgerSequence_ = ledgerHeader.seq;
     }
 
     std::optional<std::uint32_t>

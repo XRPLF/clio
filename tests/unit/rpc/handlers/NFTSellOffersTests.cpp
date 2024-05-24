@@ -207,7 +207,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
 {
     // mock fetchLedgerByHash return empty
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const input = json::parse(fmt::format(
@@ -234,7 +234,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
 {
     backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
@@ -259,8 +259,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     backend->setRange(10, 30);
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 31);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 31);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
@@ -308,8 +308,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
 TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
 {
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::nullopt));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
@@ -411,8 +411,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
     })";
 
     backend->setRange(10, 30);
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // return owner index containing 2 indexes
@@ -450,8 +450,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, DefaultParameters)
 TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
 {
     backend->setRange(10, 30);
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // return owner index
@@ -497,8 +497,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, MultipleResultsWithMarkerAndLimitOutput)
 TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
 {
     backend->setRange(10, 30);
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // return owner index
@@ -559,8 +559,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsForInputWithMarkerAndLimit)
 TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLimit)
 {
     backend->setRange(10, 30);
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(3);
 
     // return owner index
@@ -642,8 +642,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, ResultsWithoutMarkerForInputWithMarkerAndLim
 TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
 {
     backend->setRange(10, 30);
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // return owner index containing 2 indexes
@@ -685,8 +685,8 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitLessThanMin)
 TEST_F(RPCNFTSellOffersHandlerTest, LimitMoreThanMax)
 {
     backend->setRange(10, 30);
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // return owner index containing 2 indexes

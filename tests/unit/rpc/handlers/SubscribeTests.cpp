@@ -641,9 +641,9 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
     backend->setRange(MINSEQ, MAXSEQ);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerHeader));
     // fee
     auto feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(feeBlob));

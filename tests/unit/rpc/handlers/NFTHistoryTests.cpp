@@ -586,8 +586,8 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
     )
         .WillOnce(Return(transCursor));
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(2);
 
     runSpawn([&, this](auto yield) {
@@ -865,9 +865,9 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
     )
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ - 1);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
@@ -960,9 +960,9 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
     )
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ - 1);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};

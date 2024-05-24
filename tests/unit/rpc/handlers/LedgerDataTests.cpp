@@ -205,7 +205,8 @@ TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
     backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
     ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _)).WillByDefault(Return(std::nullopt));
@@ -245,7 +246,7 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     // when 'type' not specified, default to all the types
     auto limitLine = 5;
@@ -304,7 +305,7 @@ TEST_F(RPCLedgerDataHandlerTest, Version2)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     // When 'type' not specified, default to all the types
     auto limitLine = 5;
@@ -360,7 +361,8 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
     backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto limitLine = 5;
     auto limitTicket = 5;
@@ -424,7 +426,8 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
     backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto limitLine = 5;
 
@@ -485,7 +488,8 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
     backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     // page end
     // marker return seq
@@ -520,7 +524,8 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
     backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
     ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
@@ -570,7 +575,8 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
     backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto limit = 10;
     std::vector<LedgerObject> los;
@@ -613,7 +619,8 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
     backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto limit = 10;
     std::vector<Blob> bbs;
@@ -653,7 +660,8 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
     backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto limit = LedgerDataHandler::LIMITBINARY + 1;
     std::vector<Blob> bbs;
@@ -694,7 +702,8 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
     backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto limit = LedgerDataHandler::LIMITJSON + 1;
     std::vector<Blob> bbs;
