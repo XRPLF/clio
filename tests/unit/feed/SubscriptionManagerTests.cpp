@@ -506,7 +506,7 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(OrderbookPublish))).Times(2);
     SubscriptionManagerPtr->forwardProposedTransaction(json::parse(dummyTransaction).get_object());
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -514,7 +514,7 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    SubscriptionManagerPtr->pubTransaction(trans1, ledgerinfo);
+    SubscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
     ctx.run();
 
     // unsub account1
@@ -533,7 +533,7 @@ TEST_F(SubscriptionManagerTest, DuplicateResponseSubTxAndProposedTx)
 
     EXPECT_CALL(*sessionPtr, send(testing::_)).Times(2);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -541,7 +541,7 @@ TEST_F(SubscriptionManagerTest, DuplicateResponseSubTxAndProposedTx)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    SubscriptionManagerPtr->pubTransaction(trans1, ledgerinfo);
+    SubscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
     ctx.run();
 
     SubscriptionManagerPtr->unsubTransactions(session);
@@ -560,7 +560,7 @@ TEST_F(SubscriptionManagerTest, NoDuplicateResponseSubAccountAndProposedAccount)
 
     EXPECT_CALL(*sessionPtr, send(testing::_)).Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -568,7 +568,7 @@ TEST_F(SubscriptionManagerTest, NoDuplicateResponseSubAccountAndProposedAccount)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    SubscriptionManagerPtr->pubTransaction(trans1, ledgerinfo);
+    SubscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
     ctx.run();
 
     // unsub account1
