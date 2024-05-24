@@ -8,16 +8,16 @@ import (
 
 type AmmoProvider struct {
 	ammo           []string
-	current_bullet atomic.Uint64
+	currentBullet atomic.Uint64
 }
 
 func (ap *AmmoProvider) getIndex() uint64 {
-	if ap.current_bullet.Load() >= uint64(len(ap.ammo)) {
-		ap.current_bullet.Store(1)
+	if ap.currentBullet.Load() >= uint64(len(ap.ammo)) {
+		ap.currentBullet.Store(1)
 		return 0
 	}
-	result := ap.current_bullet.Load()
-	ap.current_bullet.Add(1)
+	result := ap.currentBullet.Load()
+	ap.currentBullet.Add(1)
 	return result
 }
 

@@ -23,6 +23,7 @@ func main() {
         os.Exit(1)
     }
 	ammoProvider := ammo_provider.New(f)
+    f.Close()
 	fmt.Println("Done")
 
 	fmt.Println("Firing requests...")
