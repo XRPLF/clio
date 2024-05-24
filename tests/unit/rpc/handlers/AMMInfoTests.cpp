@@ -23,6 +23,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AMMInfo.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -66,15 +67,7 @@ struct AMMInfoParamTestCaseBundle {
     std::string expectedErrorMessage;
 };
 
-struct AMMInfoParameterTest : public RPCAMMInfoHandlerTest, public WithParamInterface<AMMInfoParamTestCaseBundle> {
-    struct NameGenerator {
-        std::string
-        operator()(auto const& info) const
-        {
-            return static_cast<AMMInfoParamTestCaseBundle>(info.param).testName;
-        }
-    };
-};
+struct AMMInfoParameterTest : public RPCAMMInfoHandlerTest, public WithParamInterface<AMMInfoParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -106,7 +99,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCAMMInfoGroup1,
     AMMInfoParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    AMMInfoParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(AMMInfoParameterTest, InvalidParams)

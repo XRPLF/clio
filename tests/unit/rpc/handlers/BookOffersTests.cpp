@@ -24,6 +24,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/BookOffers.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -75,17 +76,7 @@ struct ParameterTestBundle {
     std::string expectedErrorMessage;
 };
 
-struct RPCBookOffersParameterTest : public RPCBookOffersHandlerTest, public WithParamInterface<ParameterTestBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<ParameterTestBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct RPCBookOffersParameterTest : public RPCBookOffersHandlerTest, public WithParamInterface<ParameterTestBundle> {};
 
 TEST_P(RPCBookOffersParameterTest, CheckError)
 {
@@ -497,7 +488,7 @@ INSTANTIATE_TEST_SUITE_P(
     RPCBookOffersHandler,
     RPCBookOffersParameterTest,
     testing::ValuesIn(generateParameterBookOffersTestBundles()),
-    RPCBookOffersParameterTest::NameGenerator()
+    tests::util::NameGenerator
 );
 
 struct BookOffersNormalTestBundle {
@@ -511,17 +502,7 @@ struct BookOffersNormalTestBundle {
 };
 
 struct RPCBookOffersNormalPathTest : public RPCBookOffersHandlerTest,
-                                     public WithParamInterface<BookOffersNormalTestBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<BookOffersNormalTestBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                     public WithParamInterface<BookOffersNormalTestBundle> {};
 
 TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
 {
@@ -1172,7 +1153,7 @@ INSTANTIATE_TEST_SUITE_P(
     RPCBookOffersHandler,
     RPCBookOffersNormalPathTest,
     testing::ValuesIn(generateNormalPathBookOffersTestBundles()),
-    RPCBookOffersNormalPathTest::NameGenerator()
+    tests::util::NameGenerator
 );
 
 // ledger not exist

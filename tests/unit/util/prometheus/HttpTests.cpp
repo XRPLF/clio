@@ -17,6 +17,7 @@
 */
 //==============================================================================
 #include "util/MockPrometheus.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/config/Config.hpp"
 #include "util/prometheus/Http.hpp"
 #include "util/prometheus/Label.hpp"
@@ -46,17 +47,7 @@ struct PrometheusCheckRequestTestsParams {
     bool expected;
 };
 
-struct PrometheusCheckRequestTests : public ::testing::TestWithParam<PrometheusCheckRequestTestsParams> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<PrometheusCheckRequestTestsParams>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct PrometheusCheckRequestTests : public ::testing::TestWithParam<PrometheusCheckRequestTestsParams> {};
 
 TEST_P(PrometheusCheckRequestTests, isPrometheusRequest)
 {
@@ -113,7 +104,7 @@ INSTANTIATE_TEST_CASE_P(
             .expected = false
         },
     }),
-    PrometheusCheckRequestTests::NameGenerator()
+    tests::util::NameGenerator
 );
 
 struct PrometheusHandleRequestTests : util::prometheus::WithPrometheus {
