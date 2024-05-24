@@ -1,22 +1,22 @@
 set(COMPILER_FLAGS
-  -Wall
-  -Wcast-align
-  -Wdouble-promotion
-  -Wextra
-  -Werror
-  -Wformat=2
-  -Wimplicit-fallthrough
-  -Wmisleading-indentation
-  -Wno-narrowing
-  -Wno-deprecated-declarations
-  -Wno-dangling-else
-  -Wno-unused-but-set-variable
-  -Wnon-virtual-dtor
-  -Wnull-dereference
-  -Wold-style-cast
-  -pedantic
-  -Wpedantic
-  -Wunused
+  # -Wall
+  # -Wcast-align
+  # -Wdouble-promotion
+  # -Wextra
+  # -Werror
+  # -Wformat=2
+  # -Wimplicit-fallthrough
+  # -Wmisleading-indentation
+  # -Wno-narrowing
+  # -Wno-deprecated-declarations
+  # -Wno-dangling-else
+  # -Wno-unused-but-set-variable
+  # -Wnon-virtual-dtor
+  # -Wnull-dereference
+  # -Wold-style-cast
+  # -pedantic
+  # -Wpedantic
+  # -Wunused
 )
 
 #TODO: reenable when we change CI #884
