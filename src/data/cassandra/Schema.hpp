@@ -484,7 +484,19 @@ public:
                 qualifiedTableName(settingsProvider_.get(), "objects")
             ));
         }();
-
+        PreparedStatement selectLastTwoObjects = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT object, sequence 
+                  FROM {}               
+                 WHERE key = ?
+                   AND sequence <= ?
+              ORDER BY sequence DESC 
+                 LIMIT 2
+                )",
+                qualifiedTableName(settingsProvider_.get(), "objects")
+            ));
+        }();
         PreparedStatement selectTransaction = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
