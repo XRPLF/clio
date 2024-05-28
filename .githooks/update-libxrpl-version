@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Note: This script is intended to be run from the root of the repository.
+# 
+# This script modifies conanfile.py such that the specified version of libXRPL is used.
+
+
+if [[ -z "$1" ]]; then
+    cat <<EOF
+
+                                    ERROR
+-----------------------------------------------------------------------------
+            Version should be passed as first argument to the script.
+-----------------------------------------------------------------------------
+
+EOF
+    exit 1
+fi
+
+VERSION=$1
+GNU_SED=$(sed --version 2>&1 | grep -q 'GNU' && echo true || echo false)
+
+echo "+ Updating required libXRPL version to $VERSION"
+
+if [[ "$GNU_SED" == "false" ]]; then
+    sed -i '' -E "s|'xrpl/[a-zA-Z0-9\\.\\-]+'|'xrpl/$VERSION'|g" conanfile.py
+else
+    sed -i -E "s|'xrpl/[a-zA-Z0-9\\.\\-]+'|'xrpl/$VERSION'|g" conanfile.py
+fi

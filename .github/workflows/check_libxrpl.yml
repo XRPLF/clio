@@ -1,0 +1,91 @@
+name: Check new libXRPL
+on:
+  repository_dispatch:
+    types: [check_libxrpl]
+
+jobs:
+  build:
+    name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
+    runs-on: [self-hosted, heavy]
+    container: 
+      image: rippleci/clio_ci:latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+
+      - name: Update libXRPL version requirement
+        shell: bash
+        run: |
+          ./.githooks/update-libxrpl-version ${{ github.event.client_payload.version }}
+
+      - name: Prepare runner
+        uses: ./.github/actions/prepare_runner
+        with:
+            disable_ccache: true
+
+      - name: Setup conan
+        uses: ./.github/actions/setup_conan
+        id: conan
+        with:
+          conan_profile: gcc
+
+      - name: Run conan and cmake
+        uses: ./.github/actions/generate
+        with:
+          conan_profile: ${{ steps.conan.outputs.conan_profile }}
+          conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
+          build_type: Release
+
+      - name: Build Clio
+        uses: ./.github/actions/build_clio
+
+      - name: Strip tests
+        run: strip build/clio_tests
+
+      - name: Upload clio_tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: clio_tests_libxrpl-${{ github.event.client_payload.version }}
+          path: build/clio_tests
+
+  run_tests:
+    name: Run tests
+    needs: build
+    runs-on: [self-hosted, heavy]
+    container: 
+      image: rippleci/clio_ci:latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: clio_tests_libxrpl-${{ github.event.client_payload.version }}
+
+      - name: Run clio_tests
+        run: |
+          chmod +x ./clio_tests
+          ./clio_tests
+
+  create_issue_on_failure:
+    name: Create an issue on failure
+    needs: [build, run_tests]
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create an issue
+        uses: ./.github/actions/create_issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          labels: 'compatibility,bug'
+          title: 'Proposed libXRPL check failed'
+          body: >
+            Clio build or tests failed against `libXRPL ${{ github.event.client_payload.version }}`.
+
+            Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
