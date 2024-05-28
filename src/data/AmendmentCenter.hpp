@@ -115,7 +115,7 @@ struct Amendments {
     REGISTER(fixEmptyDID);
     REGISTER(fixXChainRewardRounding);
     REGISTER(fixPreviousTxnID);
-    REGISTER(fixAMMRounding);
+    REGISTER(fixAMMv1_1);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);
@@ -141,14 +141,6 @@ struct Amendments {
     REGISTER(fix1528);
     /** @endcond */
 };
-
-/**
- * @brief Provides all amendments supported by libxrpl
- *
- * @return A vector of amendments
- */
-std::vector<Amendment>
-xrplAmendments();
 
 /**
  * @brief Knowledge center for amendments within XRPL

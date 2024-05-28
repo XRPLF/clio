@@ -34,15 +34,26 @@ using namespace data;
 
 constexpr auto SEQ = 30;
 
-struct AmendmentCenterTest : util::prometheus::WithPrometheus, MockBackendTest {};
+struct AmendmentCenterTest : util::prometheus::WithPrometheus, MockBackendTest {
+    AmendmentCenter amendmentCenter{backend};
+};
 
-TEST_F(AmendmentCenterTest, Amendments)
+// This is a safety net test that will fail anytime we built Clio against a new libXRPL that added some Amendment that
+// we forgot to register in data::Amendments.
+TEST_F(AmendmentCenterTest, AllAmendmentsFromLibXRPLAreSupported)
 {
-    auto amendmentCenter = AmendmentCenter{backend};
+    for (auto const& [name, _] : ripple::allAmendments()) {
+        ASSERT_TRUE(amendmentCenter.isSupported(name)) << "XRPL amendment not supported by Clio: " << name;
+    }
+
+    ASSERT_EQ(amendmentCenter.getSupported().size(), ripple::allAmendments().size());
+    ASSERT_EQ(amendmentCenter.getAll().size(), ripple::allAmendments().size());
+}
+
+TEST_F(AmendmentCenterTest, IsEnabled)
+{
     EXPECT_TRUE(amendmentCenter.isSupported("fixUniversalNumber"));
     EXPECT_FALSE(amendmentCenter.isSupported("unknown"));
-
-    EXPECT_EQ(amendmentCenter.getAll().size(), ripple::detail::supportedAmendments().size());
 
     auto const amendments = CreateAmendmentsObject({Amendments::fixUniversalNumber});
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, _))
@@ -53,7 +64,7 @@ TEST_F(AmendmentCenterTest, Amendments)
     EXPECT_FALSE(amendmentCenter.isEnabled("ImmediateOfferKilled", SEQ));
 }
 
-TEST_F(AmendmentCenterTest, GenerateAmendmentId)
+TEST(AmendmentTest, GenerateAmendmentId)
 {
     // https://xrpl.org/known-amendments.html#disallowincoming refer to the published id
     EXPECT_EQ(

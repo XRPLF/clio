@@ -70,44 +70,33 @@ AmendmentKey::operator ripple::uint256() const
     return Amendment::GetAmendmentId(name);
 }
 
-std::vector<Amendment>
-xrplAmendments()
-{
-    namespace rg = std::ranges;
-    namespace vs = std::views;
-
-    std::vector<Amendment> amendments;
-
-    // TODO: some day we will be able to do | std::to<std::vector>() but gcc still got some catching up to do
-    rg::copy(
-        ripple::detail::supportedAmendments() | vs::transform([&](auto const& p) { return Amendment{p.first}; }),
-        std::back_inserter(amendments)
-    );
-
-    return amendments;
-}
-
 AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& backend) : backend_{backend}
 {
     namespace rg = std::ranges;
     namespace vs = std::views;
 
     rg::copy(
-        xrplAmendments() | vs::transform([&](auto const& a) {
-            auto const supported = rg::find(SUPPORTED_AMENDMENTS, a.name) != rg::end(SUPPORTED_AMENDMENTS);
-            return Amendment{a.name, supported};
+        ripple::allAmendments() | vs::transform([&](auto const& p) {
+            auto const& [name, support] = p;
+            return Amendment{
+                .name = name,
+                .feature = Amendment::GetAmendmentId(name),
+                .isSupportedByXRPL = p.second != ripple::AmendmentSupport::Unsupported,
+                .isSupportedByClio = rg::find(SUPPORTED_AMENDMENTS, p.first) != rg::end(SUPPORTED_AMENDMENTS),
+                .isRetired = p.second == ripple::AmendmentSupport::Retired
+            };
         }),
         std::back_inserter(all_)
     );
 
-    for (auto const& am : all_ | vs::filter([](auto const& am) { return am.supportedByClio; }))
+    for (auto const& am : all_ | vs::filter([](auto const& am) { return am.isSupportedByClio; }))
         supported_.insert_or_assign(am.name, am);
 }
 
 bool
 AmendmentCenter::isSupported(std::string name) const
 {
-    return supported_.contains(name) && supported_.at(name).supportedByClio;
+    return supported_.contains(name) && supported_.at(name).isSupportedByClio;
 }
 
 std::unordered_map<std::string, Amendment> const&

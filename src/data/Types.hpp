@@ -246,18 +246,9 @@ struct LedgerRange {
 struct Amendment {
     std::string name;
     ripple::uint256 feature;
-    bool supportedByClio;
-
-    /**
-     * @brief Construct a new Amendment
-     *
-     * @param amendmentName The name of the amendment
-     * @param supported Whether Clio supports this amendment; defaults to false
-     */
-    Amendment(std::string amendmentName, bool supported = false)
-        : name{std::move(amendmentName)}, feature{GetAmendmentId(name)}, supportedByClio{supported}
-    {
-    }
+    bool isSupportedByXRPL;
+    bool isSupportedByClio;
+    bool isRetired;
 
     /**
      * @brief Get the amendment Id from its name
