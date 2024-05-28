@@ -1,9 +1,8 @@
 #!/bin/bash
 
 # Note: This script is intended to be run from the root of the repository.
-# 
+#
 # This script modifies conanfile.py such that the specified version of libXRPL is used.
-
 
 if [[ -z "$1" ]]; then
     cat <<EOF

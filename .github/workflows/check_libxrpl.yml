@@ -7,7 +7,7 @@ jobs:
   build:
     name: Build Clio / `libXRPL ${{ github.event.client_payload.version }}`
     runs-on: [self-hosted, heavy]
-    container: 
+    container:
       image: rippleci/clio_ci:latest
 
     steps:
@@ -54,7 +54,7 @@ jobs:
     name: Run tests
     needs: build
     runs-on: [self-hosted, heavy]
-    container: 
+    container:
       image: rippleci/clio_ci:latest
 
     steps:
