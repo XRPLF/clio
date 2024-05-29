@@ -120,7 +120,10 @@ LoadBalancer::LoadBalancer(
                     chooseForwardingSource();
             },
             [this]() { chooseForwardingSource(); },
-            [this]() { forwardingCache_->invalidate(); }
+            [this]() {
+                if (forwardingCache_.has_value())
+                    forwardingCache_->invalidate();
+            }
         );
 
         // checking etl node validity
