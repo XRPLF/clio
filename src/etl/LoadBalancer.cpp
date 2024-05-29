@@ -84,8 +84,8 @@ LoadBalancer::LoadBalancer(
         }};
     }
 
-    auto const forwardingXUserValue = config.valueOr<std::string>("forwarding.x_user_value", {});
-    if (not forwardingXUserValue.empty()) {
+    if (auto const forwardingXUserValue = config.valueOr<std::string>("forwarding.x_user_value", {});
+        not forwardingXUserValue.empty()) {
         forwardingXUserValue_ = forwardingXUserValue;
     }
 
