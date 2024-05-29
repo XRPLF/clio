@@ -570,6 +570,12 @@ TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheEnabled)
     });
 }
 
+TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheDisabledOnLedgerClosedHookCalled)
+{
+    auto loadBalancer = makeLoadBalancer();
+    EXPECT_NO_THROW(sourceFactory_.callbacksAt(0).onLedgerClosed());
+}
+
 TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
 {
     configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
