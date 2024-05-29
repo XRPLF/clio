@@ -23,6 +23,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AccountObjects.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -71,17 +72,7 @@ struct AccountObjectsParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct AccountObjectsParameterTest : public RPCAccountObjectsHandlerTest,
-                                     public WithParamInterface<AccountObjectsParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<AccountObjectsParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                     public WithParamInterface<AccountObjectsParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -180,7 +171,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountObjectsGroup1,
     AccountObjectsParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    AccountObjectsParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(AccountObjectsParameterTest, InvalidParams)

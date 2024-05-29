@@ -26,6 +26,7 @@
 #include "rpc/handlers/Subscribe.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -91,17 +92,7 @@ struct SubscribeParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct SubscribeParameterTest : public RPCSubscribeHandlerTest,
-                                public WithParamInterface<SubscribeParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<SubscribeParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                public WithParamInterface<SubscribeParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -577,7 +568,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCSubscribe,
     SubscribeParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    SubscribeParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(SubscribeParameterTest, InvalidParams)

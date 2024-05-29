@@ -23,6 +23,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/NFTHistory.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -59,17 +60,7 @@ struct NFTHistoryParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct NFTHistoryParameterTest : public RPCNFTHistoryHandlerTest,
-                                 public WithParamInterface<NFTHistoryParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<NFTHistoryParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                 public WithParamInterface<NFTHistoryParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -232,7 +223,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCNFTHistoryGroup1,
     NFTHistoryParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    NFTHistoryParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(NFTHistoryParameterTest, InvalidParams)
