@@ -17,6 +17,7 @@
 */
 //==============================================================================
 #include "rpc/common/JsonBool.hpp"
+#include "util/NameGenerator.hpp"
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value_to.hpp>
@@ -37,16 +38,6 @@ struct JsonBoolTestsCaseBundle {
 
 class JsonBoolTests : public TestWithParam<JsonBoolTestsCaseBundle> {
 public:
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<JsonBoolTestsCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-
     static auto
     generateTestValuesForParametersTest()
     {
@@ -72,7 +63,7 @@ INSTANTIATE_TEST_CASE_P(
     JsonBoolCheckGroup,
     JsonBoolTests,
     ValuesIn(JsonBoolTests::generateTestValuesForParametersTest()),
-    JsonBoolTests::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(JsonBoolTests, Parse)

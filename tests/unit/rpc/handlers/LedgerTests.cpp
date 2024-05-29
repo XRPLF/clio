@@ -25,6 +25,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Ledger.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -68,17 +69,7 @@ struct LedgerParamTestCaseBundle {
 };
 
 // parameterized test cases for parameters check
-struct LedgerParameterTest : public RPCLedgerHandlerTest, public WithParamInterface<LedgerParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<LedgerParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct LedgerParameterTest : public RPCLedgerHandlerTest, public WithParamInterface<LedgerParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -175,7 +166,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerGroup1,
     LedgerParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    LedgerParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(LedgerParameterTest, InvalidParams)

@@ -23,6 +23,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/GatewayBalances.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -66,17 +67,7 @@ struct ParameterTestBundle {
     std::string expectedErrorMessage;
 };
 
-struct ParameterTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<ParameterTestBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<ParameterTestBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct ParameterTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<ParameterTestBundle> {};
 
 TEST_P(ParameterTest, CheckError)
 {
@@ -209,7 +200,7 @@ INSTANTIATE_TEST_SUITE_P(
     RPCGatewayBalancesHandler,
     ParameterTest,
     testing::ValuesIn(generateParameterTestBundles()),
-    ParameterTest::NameGenerator()
+    tests::util::NameGenerator
 );
 
 TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
@@ -387,17 +378,7 @@ struct NormalTestBundle {
     std::string hotwallet;
 };
 
-struct NormalPathTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<NormalTestBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<NormalTestBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct NormalPathTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<NormalTestBundle> {};
 
 TEST_P(NormalPathTest, CheckOutput)
 {
@@ -661,5 +642,5 @@ INSTANTIATE_TEST_SUITE_P(
     RPCGatewayBalancesHandler,
     NormalPathTest,
     testing::ValuesIn(generateNormalPathTestBundles()),
-    NormalPathTest::NameGenerator()
+    tests::util::NameGenerator
 );

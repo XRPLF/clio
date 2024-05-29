@@ -23,6 +23,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AccountTx.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -63,15 +64,6 @@ struct AccountTxParamTestCaseBundle {
 // parameterized test cases for parameters check
 struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                                 public WithParamInterface<AccountTxParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            return info.param.testName;
-        }
-    };
-
     static auto
     generateTestValuesForParametersTest()
     {
@@ -401,7 +393,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountTxGroup1,
     AccountTxParameterTest,
     ValuesIn(AccountTxParameterTest::generateTestValuesForParametersTest()),
-    AccountTxParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(AccountTxParameterTest, CheckParams)
@@ -1564,17 +1556,7 @@ struct AccountTxTransactionBundle {
 
 // parameterized test cases for parameters check
 struct AccountTxTransactionTypeTest : public RPCAccountTxHandlerTest,
-                                      public WithParamInterface<AccountTxTransactionBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<AccountTxTransactionBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                      public WithParamInterface<AccountTxTransactionBundle> {};
 
 static auto
 generateTransactionTypeTestValues()
@@ -2049,7 +2031,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountTxTransactionTypeTest,
     AccountTxTransactionTypeTest,
     ValuesIn(generateTransactionTypeTestValues()),
-    AccountTxTransactionTypeTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)

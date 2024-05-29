@@ -23,6 +23,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/LedgerEntry.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -71,17 +72,7 @@ struct ParamTestCaseBundle {
 };
 
 // parameterized test cases for parameters check
-struct LedgerEntryParameterTest : public RPCLedgerEntryTest, public WithParamInterface<ParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<ParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct LedgerEntryParameterTest : public RPCLedgerEntryTest, public WithParamInterface<ParamTestCaseBundle> {};
 
 // TODO: because we extract the error generation from the handler to framework
 // the error messages need one round fine tuning
@@ -1770,7 +1761,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup1,
     LedgerEntryParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    LedgerEntryParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(LedgerEntryParameterTest, InvalidParams)
@@ -1881,17 +1872,7 @@ struct NormalPathTestBundle {
     ripple::STObject mockedEntity;
 };
 
-struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithParamInterface<NormalPathTestBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<NormalPathTestBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithParamInterface<NormalPathTestBundle> {};
 
 static auto
 generateTestValuesForNormalPathTest()
@@ -2391,7 +2372,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup2,
     RPCLedgerEntryNormalPathTest,
     ValuesIn(generateTestValuesForNormalPathTest()),
-    RPCLedgerEntryNormalPathTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 // Test for normal path

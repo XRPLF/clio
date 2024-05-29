@@ -22,6 +22,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/NoRippleCheck.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -60,17 +61,7 @@ struct NoRippleParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct NoRippleCheckParameterTest : public RPCNoRippleCheckTest,
-                                    public WithParamInterface<NoRippleParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<NoRippleParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                    public WithParamInterface<NoRippleParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -166,7 +157,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCNoRippleCheckGroup1,
     NoRippleCheckParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    NoRippleCheckParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(NoRippleCheckParameterTest, InvalidParams)
