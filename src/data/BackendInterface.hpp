@@ -379,6 +379,29 @@ public:
     fetchLedgerObject(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield) const;
 
     /**
+     * @brief Fetches Last two ledger objects.
+     *
+     *
+     * @param key The key of the object
+     * @param sequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return A vector containing two Blobs, representing last two ledger objects
+     */
+    std::vector<std::pair<std::uint32_t, Blob>> 
+    fetchLastTwoLedgerObjects(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield) const;
+
+    /**
+     * @brief The database-specific implementation for fetching last two ledger objects.
+     *
+     * @param key The key to fetch for
+     * @param sequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return  A vector containing two Blobs, representing last two ledger objects
+     */
+    virtual std::vector<std::pair<std::uint32_t, Blob>> 
+    doFetchLastTwoLedgerObjects(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield) const = 0;
+    
+    /**
      * @brief Fetches all ledger objects by their keys.
      *
      * Currently the real fetch happens in doFetchLedgerObjects and fetchLedgerObjects attempts to fetch from Cache
