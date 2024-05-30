@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/AssignRandomPort.hpp"
 #include "util/Fixtures.hpp"
 #include "util/TestWsServer.hpp"
 #include "util/requests/Types.hpp"
@@ -39,8 +40,9 @@ namespace asio = boost::asio;
 namespace http = boost::beast::http;
 
 struct WsConnectionTestsBase : SyncAsioContextTest {
-    WsConnectionBuilder builder{"localhost", "11112"};
-    TestWsServer server{ctx, "0.0.0.0", 11112};
+    uint32_t port = tests::util::generateFreePort();
+    WsConnectionBuilder builder{"localhost", std::to_string(port)};
+    TestWsServer server{ctx, "0.0.0.0", port};
 
     template <typename T, typename E>
     T

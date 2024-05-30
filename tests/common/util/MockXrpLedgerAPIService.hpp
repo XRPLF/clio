@@ -82,7 +82,7 @@ struct WithMockXrpLedgerAPIService : virtual ::testing::Test {
     WithMockXrpLedgerAPIService(std::string serverAddress)
     {
         grpc::ServerBuilder builder;
-        builder.AddListeningPort(serverAddress, grpc::InsecureServerCredentials());
+        builder.AddListeningPort(serverAddress, grpc::InsecureServerCredentials(), &port_);
         builder.RegisterService(&mockXrpLedgerAPIService);
         server_ = builder.BuildAndStart();
         serverThread_ = std::thread([this] { server_->Wait(); });
@@ -94,11 +94,17 @@ struct WithMockXrpLedgerAPIService : virtual ::testing::Test {
         serverThread_.join();
     }
 
+    int
+    getXRPLMockPort()
+    {
+        return port_;
+    }
     MockXrpLedgerAPIService mockXrpLedgerAPIService;
 
 private:
     std::unique_ptr<grpc::Server> server_;
     std::thread serverThread_;
+    int port_;
 };
 
 }  // namespace tests::util

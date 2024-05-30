@@ -42,9 +42,9 @@ using namespace etl::impl;
 
 struct GrpcSourceTests : NoLoggerFixture, util::prometheus::WithPrometheus, tests::util::WithMockXrpLedgerAPIService {
     GrpcSourceTests()
-        : WithMockXrpLedgerAPIService("localhost:55051")
+        : WithMockXrpLedgerAPIService("localhost:0")
         , mockBackend_(std::make_shared<testing::StrictMock<MockBackend>>(util::Config{}))
-        , grpcSource_("127.0.0.1", "55051", mockBackend_)
+        , grpcSource_("127.0.0.1", std::to_string(getXRPLMockPort()), mockBackend_)
     {
     }
 
