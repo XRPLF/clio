@@ -23,6 +23,7 @@
 #include "rpc/handlers/GetAggregatePrice.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockBackend.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/object.hpp>
@@ -104,17 +105,7 @@ struct GetAggregatePriceParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct GetAggregatePriceParameterTest : public RPCGetAggregatePriceHandlerTest,
-                                        public WithParamInterface<GetAggregatePriceParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<GetAggregatePriceParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                        public WithParamInterface<GetAggregatePriceParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -315,7 +306,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCGetAggregatePriceGroup1,
     GetAggregatePriceParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    GetAggregatePriceParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(GetAggregatePriceParameterTest, InvalidParams)

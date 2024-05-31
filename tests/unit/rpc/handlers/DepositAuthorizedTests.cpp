@@ -23,6 +23,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/DepositAuthorized.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -61,17 +62,7 @@ struct DepositAuthorizedTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct DepositAuthorizedParameterTest : public RPCDepositAuthorizedTest,
-                                        public WithParamInterface<DepositAuthorizedTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<DepositAuthorizedTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                        public WithParamInterface<DepositAuthorizedTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -172,7 +163,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCDepositAuthorizedGroup,
     DepositAuthorizedParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    DepositAuthorizedParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(DepositAuthorizedParameterTest, InvalidParams)

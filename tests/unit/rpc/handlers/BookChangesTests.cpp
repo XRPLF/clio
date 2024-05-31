@@ -23,6 +23,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/BookChanges.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -60,17 +61,7 @@ struct BookChangesParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct BookChangesParameterTest : public RPCBookChangesHandlerTest,
-                                  public WithParamInterface<BookChangesParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<BookChangesParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                  public WithParamInterface<BookChangesParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -92,7 +83,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCBookChangesGroup1,
     BookChangesParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    BookChangesParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(BookChangesParameterTest, InvalidParams)
