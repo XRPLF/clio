@@ -46,9 +46,9 @@ binaryStringToUint256(std::string const& bin)
 }
 
 std::string
-ledgerInfoToBinaryString(ripple::LedgerInfo const& info)
+ledgerHeaderToBinaryString(ripple::LedgerHeader const& info)
 {
-    auto const blob = rpc::ledgerInfoToBlob(info, true);
+    auto const blob = rpc::ledgerHeaderToBlob(info, true);
     std::string strBlob;
     for (auto c : blob)
         strBlob += c;

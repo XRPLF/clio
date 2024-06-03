@@ -358,7 +358,7 @@ toJson(ripple::LedgerHeader const& lgrInfo, bool const binary, std::uint32_t con
 {
     boost::json::object header;
     if (binary) {
-        header[JS(ledger_data)] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
+        header[JS(ledger_data)] = ripple::strHex(ledgerHeaderToBlob(lgrInfo));
     } else {
         header[JS(account_hash)] = ripple::strHex(lgrInfo.accountHash);
         header[JS(close_flags)] = lgrInfo.closeFlags;
@@ -396,7 +396,7 @@ parseStringAsUInt(std::string const& value)
 }
 
 std::variant<Status, ripple::LedgerHeader>
-ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx)
+ledgerHeaderFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx)
 {
     auto hashValue = ctx.params.contains("ledger_hash") ? ctx.params.at("ledger_hash") : nullptr;
 
@@ -444,9 +444,9 @@ ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backe
     return *lgrInfo;
 }
 
-// extract ledgerInfoFromRequest's parameter from context
+// extract ledgerHeaderFromRequest's parameter from context
 std::variant<Status, ripple::LedgerHeader>
-getLedgerInfoFromHashOrSeq(
+getLedgerHeaderFromHashOrSeq(
     BackendInterface const& backend,
     boost::asio::yield_context yield,
     std::optional<std::string> ledgerHash,
@@ -479,7 +479,7 @@ getLedgerInfoFromHashOrSeq(
 }
 
 std::vector<unsigned char>
-ledgerInfoToBlob(ripple::LedgerHeader const& info, bool includeHash)
+ledgerHeaderToBlob(ripple::LedgerHeader const& info, bool includeHash)
 {
     ripple::Serializer s;
     s.add32(info.seq);

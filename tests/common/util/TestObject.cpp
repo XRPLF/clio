@@ -75,22 +75,22 @@ GetAccountKey(ripple::AccountID const& acc)
     return ripple::keylet::account(acc).key;
 }
 
-ripple::LedgerInfo
-CreateLedgerInfo(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age)
+ripple::LedgerHeader
+CreateLedgerHeader(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age)
 {
     using namespace std::chrono;
 
-    auto ledgerinfo = ripple::LedgerInfo();
-    ledgerinfo.hash = ripple::uint256{ledgerHash};
-    ledgerinfo.seq = seq;
+    auto ledgerHeader = ripple::LedgerHeader();
+    ledgerHeader.hash = ripple::uint256{ledgerHash};
+    ledgerHeader.seq = seq;
 
     if (age) {
         auto const now = duration_cast<seconds>(system_clock::now().time_since_epoch());
         auto const closeTime = (now - seconds{age.value()}).count() - rippleEpochStart;
-        ledgerinfo.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
+        ledgerHeader.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
     }
 
-    return ledgerinfo;
+    return ledgerHeader;
 }
 
 ripple::STObject

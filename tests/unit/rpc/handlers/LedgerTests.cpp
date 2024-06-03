@@ -277,9 +277,9 @@ TEST_F(RPCLedgerHandlerTest, Default)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend}};
@@ -297,8 +297,8 @@ TEST_F(RPCLedgerHandlerTest, ConditionallyNotSupportedFieldsDefaultValue)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend}};
@@ -316,9 +316,9 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(15, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(15, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend}};
@@ -333,9 +333,9 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{INDEX1}, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{INDEX1}, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend}};
@@ -361,9 +361,9 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerHandler{backend}};
@@ -403,9 +403,9 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, RANGEMAX).getSerializer().peekData();
@@ -457,8 +457,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerHeader));
 
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, RANGEMAX).getSerializer().peekData();
@@ -545,9 +545,9 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, RANGEMAX).getSerializer().peekData();
@@ -647,8 +647,8 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerHeader));
 
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, RANGEMAX).getSerializer().peekData();
@@ -678,11 +678,11 @@ TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerHeader));
 
-    auto const ledgerinfo2 = CreateLedgerInfo(LEDGERHASH, RANGEMAX - 1, 10);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX - 1, _)).WillOnce(Return(ledgerinfo2));
+    auto const ledgerHeader2 = CreateLedgerHeader(LEDGERHASH, RANGEMAX - 1, 10);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX - 1, _)).WillOnce(Return(ledgerHeader2));
 
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, RANGEMAX).getSerializer().peekData();
@@ -726,9 +726,9 @@ TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     EXPECT_CALL(*backend, fetchAllTransactionHashesInLedger).Times(1);
     ON_CALL(*backend, fetchAllTransactionHashesInLedger(RANGEMAX, _))
@@ -777,9 +777,9 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     std::vector<LedgerObject> los;
 
@@ -822,9 +822,9 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     std::vector<LedgerObject> los;
 
@@ -915,9 +915,9 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     TransactionAndMetadata t1;
     t1.transaction = CreatePaymentTransactionObject(ACCOUNT, ACCOUNT2, 100, 3, RANGEMAX).getSerializer().peekData();
@@ -1006,9 +1006,9 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     // account doFetchLedgerObject
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -1075,9 +1075,9 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     // account doFetchLedgerObject
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -1124,9 +1124,9 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     // issuer is self
     TransactionAndMetadata tx;
@@ -1181,9 +1181,9 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
 
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     // account doFetchLedgerObject
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -1230,9 +1230,9 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     // mock line
     auto const line =
@@ -1284,9 +1284,9 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
 
     // mock line freeze
     auto const line = CreateRippleStateLedgerObject(

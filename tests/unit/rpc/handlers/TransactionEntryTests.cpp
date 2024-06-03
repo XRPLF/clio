@@ -74,7 +74,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 {
     // mock fetchLedgerByHash return empty
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{INDEX}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const input = json::parse(fmt::format(
@@ -100,7 +100,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 {
     backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
@@ -122,7 +122,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerIndex)
 TEST_F(RPCTransactionEntryHandlerTest, TXNotFound)
 {
     backend->setRange(10, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, 30)));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerHeader(INDEX, 30)));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _))
         .WillByDefault(Return(std::optional<TransactionAndMetadata>{}));
@@ -155,7 +155,7 @@ TEST_F(RPCTransactionEntryHandlerTest, LedgerSeqNotMatch)
     EXPECT_CALL(*backend, fetchTransaction).Times(1);
 
     backend->setRange(10, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, 30)));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerHeader(INDEX, 30)));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     runSpawn([this](auto yield) {
@@ -233,7 +233,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPath)
     EXPECT_CALL(*backend, fetchTransaction).Times(1);
 
     backend->setRange(10, tx.ledgerSequence);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerInfo(INDEX, tx.ledgerSequence)));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(CreateLedgerHeader(INDEX, tx.ledgerSequence)));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     runSpawn([&, this](auto yield) {
@@ -310,7 +310,7 @@ TEST_F(RPCTransactionEntryHandlerTest, NormalPathV2)
     EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
 
     backend->setRange(10, tx.ledgerSequence);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(CreateLedgerInfo(INDEX, tx.ledgerSequence)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(CreateLedgerHeader(INDEX, tx.ledgerSequence)));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TransactionEntryHandler{backend}};

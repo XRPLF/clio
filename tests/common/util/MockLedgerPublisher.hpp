@@ -28,7 +28,7 @@
 
 struct MockLedgerPublisher {
     MOCK_METHOD(bool, publish, (uint32_t, std::optional<uint32_t>), ());
-    MOCK_METHOD(void, publish, (ripple::LedgerInfo const&), ());
+    MOCK_METHOD(void, publish, (ripple::LedgerHeader const&), ());
     MOCK_METHOD(std::uint32_t, lastPublishAgeSeconds, (), (const));
     MOCK_METHOD(std::chrono::time_point<std::chrono::system_clock>, getLastPublish, (), (const));
     MOCK_METHOD(std::uint32_t, lastCloseAgeSeconds, (), (const));

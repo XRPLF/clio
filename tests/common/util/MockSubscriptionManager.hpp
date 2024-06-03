@@ -55,7 +55,7 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
     MOCK_METHOD(
         void,
         pubBookChanges,
-        (ripple::LedgerInfo const&, std::vector<data::TransactionAndMetadata> const&),
+        (ripple::LedgerHeader const&, std::vector<data::TransactionAndMetadata> const&),
         (const, override)
     );
 
@@ -65,7 +65,7 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
 
     MOCK_METHOD(void, unsubTransactions, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, pubTransaction, (data::TransactionAndMetadata const&, ripple::LedgerInfo const&), (override));
+    MOCK_METHOD(void, pubTransaction, (data::TransactionAndMetadata const&, ripple::LedgerHeader const&), (override));
 
     MOCK_METHOD(void, subAccount, (ripple::AccountID const&, feed::SubscriberSharedPtr const&), (override));
 

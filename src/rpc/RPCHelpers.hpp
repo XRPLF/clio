@@ -265,7 +265,7 @@ generatePubLedgerMessage(
  * @return The ledger info or an error status
  */
 std::variant<Status, ripple::LedgerHeader>
-ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx);
+ledgerHeaderFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx);
 
 /**
  * @brief Get ledger info from hash or sequence
@@ -278,7 +278,7 @@ ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backe
  * @return The ledger info or an error status
  */
 std::variant<Status, ripple::LedgerHeader>
-getLedgerInfoFromHashOrSeq(
+getLedgerHeaderFromHashOrSeq(
     BackendInterface const& backend,
     boost::asio::yield_context yield,
     std::optional<std::string> ledgerHash,
@@ -372,7 +372,7 @@ getAccountsFromTransaction(boost::json::object const& transaction);
  * @return The blob
  */
 std::vector<unsigned char>
-ledgerInfoToBlob(ripple::LedgerHeader const& info, bool includeHash = false);
+ledgerHeaderToBlob(ripple::LedgerHeader const& info, bool includeHash = false);
 
 /**
  * @brief Whether global frozen is set

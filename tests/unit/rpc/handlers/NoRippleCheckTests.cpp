@@ -202,7 +202,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaHash)
 {
     backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
 
     auto static const input = json::parse(fmt::format(
@@ -230,7 +230,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaIntIndex)
 
     backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::nullopt));
 
     auto static const input = json::parse(fmt::format(
@@ -258,7 +258,7 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
 
     backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::nullopt));
 
     auto static const input = json::parse(fmt::format(
@@ -283,8 +283,8 @@ TEST_F(RPCNoRippleCheckTest, LedgerNotExistViaStringIndex)
 TEST_F(RPCNoRippleCheckTest, AccountNotExist)
 {
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch account object return emtpy
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
@@ -323,8 +323,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleSetTrustLineNoRipple
         })";
 
     backend->setRange(10, seq);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 
@@ -385,8 +385,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleUserDefaultRippleUnsetTrustLineNoRipp
         })";
 
     backend->setRange(10, seq);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 
@@ -442,8 +442,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleSetTrustLineNoRip
         })";
 
     backend->setRange(10, seq);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 
@@ -504,8 +504,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
         })";
 
     backend->setRange(10, seq);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 
@@ -550,8 +550,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathRoleGatewayDefaultRippleUnsetTrustLineNoR
     static auto constexpr seq = 30;
 
     backend->setRange(10, seq);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 
@@ -600,8 +600,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathLimit)
     constexpr auto seq = 30;
 
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 
@@ -704,8 +704,8 @@ TEST_F(RPCNoRippleCheckTest, NormalPathTransactions)
     );
 
     backend->setRange(10, seq);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 
@@ -759,8 +759,8 @@ TEST_F(RPCNoRippleCheckTest, LimitMoreThanMax)
     constexpr auto seq = 30;
 
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch account object return valid account with DefaultRippleSet flag
 

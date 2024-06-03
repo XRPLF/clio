@@ -94,14 +94,14 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
-    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<LedgerHeader>(lgrInfoOrStatus);
 
     if (input.accountID) {
         auto keylet = keylet::account(*input.accountID);
