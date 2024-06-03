@@ -23,10 +23,10 @@ class Clio(ConanFile):
         'boost/1.82.0',
         'cassandra-cpp-driver/2.17.0',
         'fmt/10.1.1',
-        'protobuf/3.21.12',
+        'protobuf/3.21.9',
         'grpc/1.50.1',
         'openssl/1.1.1u',
-        'xrpl/2.1.0',
+        'xrpl/2.2.0-rc3',
         'libbacktrace/cci.20210118'
     ]
 
