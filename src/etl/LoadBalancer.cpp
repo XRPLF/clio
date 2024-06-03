@@ -117,7 +117,8 @@ LoadBalancer::LoadBalancer(
                 "Failed to fetch ETL state from source = {} Please check the configuration and network",
                 source->toString()
             ));
-        } else if (etlState_ && etlState_->networkID && stateOpt->networkID && etlState_->networkID != stateOpt->networkID) {
+        } else if (etlState_ && etlState_->networkID && stateOpt->networkID &&
+                   etlState_->networkID != stateOpt->networkID) {
             checkOnETLFailure(fmt::format(
                 "ETL sources must be on the same network. Source network id = {} does not match others network id = {}",
                 *(stateOpt->networkID),

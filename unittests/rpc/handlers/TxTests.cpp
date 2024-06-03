@@ -699,7 +699,7 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 
         for (auto const& id : output->at("meta").at("nftoken_ids").as_array()) {
             auto const idStr = id.as_string();
-            const auto it = std::find(ids.begin(), ids.end(), idStr);
+            auto const it = std::find(ids.begin(), ids.end(), idStr);
             ASSERT_NE(it, ids.end()) << "Unexpected NFT ID: " << idStr;
             ids.erase(it);
         }

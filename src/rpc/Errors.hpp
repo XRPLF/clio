@@ -77,8 +77,8 @@ struct Status {
     std::optional<boost::json::object> extraInfo;
 
     Status() = default;
-    /* implicit */ Status(CombinedError code) : code(code){};
-    Status(CombinedError code, boost::json::object&& extraInfo) : code(code), extraInfo(std::move(extraInfo)){};
+    /* implicit */ Status(CombinedError code) : code(code) {};
+    Status(CombinedError code, boost::json::object&& extraInfo) : code(code), extraInfo(std::move(extraInfo)) {};
 
     // HACK. Some rippled handlers explicitly specify errors.
     // This means that we have to be able to duplicate this functionality.

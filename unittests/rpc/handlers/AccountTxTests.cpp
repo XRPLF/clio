@@ -507,7 +507,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -550,7 +550,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexSpecificForwardFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -593,7 +593,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -636,7 +636,7 @@ TEST_F(RPCAccountTxHandlerTest, IndexNotSpecificForwardFalse)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -679,7 +679,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrue)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -735,7 +735,7 @@ TEST_F(RPCAccountTxHandlerTest, BinaryTrueV2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -788,7 +788,7 @@ TEST_F(RPCAccountTxHandlerTest, LimitAndMarker)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -838,7 +838,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index": {}
@@ -866,7 +866,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerIntIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index": {}
@@ -891,7 +891,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificNonexistLedgerStringIndex)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index": "{}"
@@ -933,7 +933,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_hash": "{}"
@@ -978,7 +978,7 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index": "validated"
@@ -1017,7 +1017,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLessThanMinSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -1060,7 +1060,7 @@ TEST_F(RPCAccountTxHandlerTest, TxLargerThanMaxSeq)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -1295,7 +1295,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v1)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},
@@ -1537,7 +1537,7 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
-        auto const static input = json::parse(fmt::format(
+        auto static const input = json::parse(fmt::format(
             R"({{
                 "account": "{}",
                 "ledger_index_min": {},

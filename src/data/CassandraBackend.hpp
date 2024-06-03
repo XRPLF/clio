@@ -732,9 +732,7 @@ public:
             std::cend(keys),
             std::cbegin(objs),
             std::back_inserter(results),
-            [](auto const& key, auto const& obj) {
-                return LedgerObject{key, obj};
-            }
+            [](auto const& key, auto const& obj) { return LedgerObject{key, obj}; }
         );
 
         return results;

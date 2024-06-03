@@ -41,21 +41,11 @@ namespace data::cassandra {
  */
 template <typename T>
 concept SomeSettingsProvider = requires(T a) {
-    {
-        a.getSettings()
-    } -> std::same_as<Settings>;
-    {
-        a.getKeyspace()
-    } -> std::same_as<std::string>;
-    {
-        a.getTablePrefix()
-    } -> std::same_as<std::optional<std::string>>;
-    {
-        a.getReplicationFactor()
-    } -> std::same_as<uint16_t>;
-    {
-        a.getTtl()
-    } -> std::same_as<uint16_t>;
+    { a.getSettings() } -> std::same_as<Settings>;
+    { a.getKeyspace() } -> std::same_as<std::string>;
+    { a.getTablePrefix() } -> std::same_as<std::optional<std::string>>;
+    { a.getReplicationFactor() } -> std::same_as<uint16_t>;
+    { a.getTtl() } -> std::same_as<uint16_t>;
 };
 
 /**
@@ -71,42 +61,18 @@ concept SomeExecutionStrategy = requires(
     PreparedStatement prepared,
     boost::asio::yield_context token
 ) {
-    {
-        T(settings, handle)
-    };
-    {
-        a.sync()
-    } -> std::same_as<void>;
-    {
-        a.isTooBusy()
-    } -> std::same_as<bool>;
-    {
-        a.writeSync(statement)
-    } -> std::same_as<ResultOrError>;
-    {
-        a.writeSync(prepared)
-    } -> std::same_as<ResultOrError>;
-    {
-        a.write(prepared)
-    } -> std::same_as<void>;
-    {
-        a.write(std::move(statements))
-    } -> std::same_as<void>;
-    {
-        a.read(token, prepared)
-    } -> std::same_as<ResultOrError>;
-    {
-        a.read(token, statement)
-    } -> std::same_as<ResultOrError>;
-    {
-        a.read(token, statements)
-    } -> std::same_as<ResultOrError>;
-    {
-        a.readEach(token, statements)
-    } -> std::same_as<std::vector<Result>>;
-    {
-        a.stats()
-    } -> std::same_as<boost::json::object>;
+    { T(settings, handle) };
+    { a.sync() } -> std::same_as<void>;
+    { a.isTooBusy() } -> std::same_as<bool>;
+    { a.writeSync(statement) } -> std::same_as<ResultOrError>;
+    { a.writeSync(prepared) } -> std::same_as<ResultOrError>;
+    { a.write(prepared) } -> std::same_as<void>;
+    { a.write(std::move(statements)) } -> std::same_as<void>;
+    { a.read(token, prepared) } -> std::same_as<ResultOrError>;
+    { a.read(token, statement) } -> std::same_as<ResultOrError>;
+    { a.read(token, statements) } -> std::same_as<ResultOrError>;
+    { a.readEach(token, statements) } -> std::same_as<std::vector<Result>>;
+    { a.stats() } -> std::same_as<boost::json::object>;
 };
 
 /**
@@ -114,18 +80,12 @@ concept SomeExecutionStrategy = requires(
  */
 template <typename T>
 concept SomeRetryPolicy = requires(T a, boost::asio::io_context ioc, CassandraError err, uint32_t attempt) {
-    {
-        T(ioc)
-    };
-    {
-        a.shouldRetry(err)
-    } -> std::same_as<bool>;
+    { T(ioc) };
+    { a.shouldRetry(err) } -> std::same_as<bool>;
     {
         a.retry([]() {})
     } -> std::same_as<void>;
-    {
-        a.calculateDelay(attempt)
-    } -> std::same_as<std::chrono::milliseconds>;
+    { a.calculateDelay(attempt) } -> std::same_as<std::chrono::milliseconds>;
 };
 
 }  // namespace data::cassandra
