@@ -36,7 +36,9 @@ template <typename T>
 concept SomeServerHandler =
     requires(T handler, std::string req, std::shared_ptr<ConnectionBase> ws, boost::beast::error_code ec) {
         // the callback when server receives a request
-        { handler(req, ws) };
+        {
+            handler(req, ws)
+        };
     };
 
 }  // namespace web

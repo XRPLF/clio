@@ -35,7 +35,9 @@ namespace rpc {
  */
 template <typename T>
 concept SomeRequirement = requires(T a, boost::json::value lval) {
-    { a.verify(lval, std::string{}) } -> std::same_as<MaybeError>;
+    {
+        a.verify(lval, std::string{})
+    } -> std::same_as<MaybeError>;
 };
 
 /**
@@ -43,7 +45,9 @@ concept SomeRequirement = requires(T a, boost::json::value lval) {
  */
 template <typename T>
 concept SomeModifier = requires(T a, boost::json::value lval) {
-    { a.modify(lval, std::string{}) } -> std::same_as<MaybeError>;
+    {
+        a.modify(lval, std::string{})
+    } -> std::same_as<MaybeError>;
 };
 
 /**
@@ -57,7 +61,9 @@ concept SomeProcessor = (SomeRequirement<T> or SomeModifier<T>);
  */
 template <typename T>
 concept SomeContextProcessWithInput = requires(T a, typename T::Input in, typename T::Output out, Context const& ctx) {
-    { a.process(in, ctx) } -> std::same_as<HandlerReturnType<decltype(out)>>;
+    {
+        a.process(in, ctx)
+    } -> std::same_as<HandlerReturnType<decltype(out)>>;
 };
 
 /**
@@ -65,7 +71,9 @@ concept SomeContextProcessWithInput = requires(T a, typename T::Input in, typena
  */
 template <typename T>
 concept SomeContextProcessWithoutInput = requires(T a, typename T::Output out, Context const& ctx) {
-    { a.process(ctx) } -> std::same_as<HandlerReturnType<decltype(out)>>;
+    {
+        a.process(ctx)
+    } -> std::same_as<HandlerReturnType<decltype(out)>>;
 };
 
 /**
@@ -73,7 +81,9 @@ concept SomeContextProcessWithoutInput = requires(T a, typename T::Output out, C
  */
 template <typename T>
 concept SomeHandlerWithInput = requires(T a, uint32_t version) {
-    { a.spec(version) } -> std::same_as<RpcSpecConstRef>;
+    {
+        a.spec(version)
+    } -> std::same_as<RpcSpecConstRef>;
 } and SomeContextProcessWithInput<T> and boost::json::has_value_to<typename T::Input>::value;
 
 /**
@@ -87,6 +97,6 @@ concept SomeHandlerWithoutInput = SomeContextProcessWithoutInput<T>;
  */
 template <typename T>
 concept SomeHandler =
-    (SomeHandlerWithInput<T> or SomeHandlerWithoutInput<T>) and boost::json::has_value_from<typename T::Output>::value;
+    (SomeHandlerWithInput<T> or SomeHandlerWithoutInput<T>)and boost::json::has_value_from<typename T::Output>::value;
 
 }  // namespace rpc

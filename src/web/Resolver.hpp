@@ -33,7 +33,9 @@ namespace web {
 template <typename T>
 concept SomeResolver = requires(T t) {
     std::is_default_constructible_v<T>;
-    { t.resolve(std::string_view{}, std::string_view{}) } -> std::same_as<std::vector<std::string>>;
+    {
+        t.resolve(std::string_view{}, std::string_view{})
+    } -> std::same_as<std::vector<std::string>>;
 };
 
 /**

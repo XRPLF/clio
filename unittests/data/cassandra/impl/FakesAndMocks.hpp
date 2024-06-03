@@ -106,7 +106,7 @@ struct MockHandle {
 };
 
 struct FakeRetryPolicy {
-    FakeRetryPolicy(boost::asio::io_context&) {};  // required by concept
+    FakeRetryPolicy(boost::asio::io_context&){};  // required by concept
 
     static std::chrono::milliseconds
     calculateDelay(uint32_t /* attempt */)
