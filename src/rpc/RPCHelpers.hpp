@@ -657,7 +657,10 @@ logDuration(web::Context const& ctx, T const& dur)
     auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
     auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
     auto const msg = fmt::format(
-        "Request processing duration = {} milliseconds. request = {}", millis, serialize(util::removeSecret(ctx.params))
+        "Request processing duration = {} milliseconds. request = {} from ip = {}",
+        millis,
+        serialize(util::removeSecret(ctx.params)),
+        ctx.clientIp
     );
 
     if (seconds > DURATION_ERROR_THRESHOLD_SECONDS) {
