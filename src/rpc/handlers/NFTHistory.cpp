@@ -77,7 +77,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
         if (input.ledgerIndexMax || input.ledgerIndexMin)
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
 
-        auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
             *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
         );
 

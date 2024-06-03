@@ -39,8 +39,8 @@ using FeedLedgerTest = FeedBaseTest<LedgerFeed>;
 TEST_F(FeedLedgerTest, SubPub)
 {
     backend->setRange(10, 30);
-    auto const ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerInfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
     auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(testing::Return(feeBlob));
@@ -81,10 +81,10 @@ TEST_F(FeedLedgerTest, SubPub)
 
     // test publish
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(ledgerPub))).Times(1);
-    auto const ledgerinfo2 = CreateLedgerInfo(LEDGERHASH, 31);
+    auto const ledgerHeader2 = CreateLedgerHeader(LEDGERHASH, 31);
     auto fee2 = ripple::Fees();
     fee2.reserve = 10;
-    testFeedPtr->pub(ledgerinfo2, fee2, "10-31", 8);
+    testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8);
     ctx.restart();
     ctx.run();
 
@@ -92,7 +92,7 @@ TEST_F(FeedLedgerTest, SubPub)
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
     EXPECT_CALL(*mockSessionPtr, send(_)).Times(0);
-    testFeedPtr->pub(ledgerinfo2, fee2, "10-31", 8);
+    testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8);
     ctx.restart();
     ctx.run();
 }
@@ -100,8 +100,8 @@ TEST_F(FeedLedgerTest, SubPub)
 TEST_F(FeedLedgerTest, AutoDisconnect)
 {
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
     auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(testing::Return(feeBlob));
@@ -127,11 +127,11 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     sessionPtr.reset();
     EXPECT_EQ(testFeedPtr->count(), 0);
 
-    auto const ledgerinfo2 = CreateLedgerInfo(LEDGERHASH, 31);
+    auto const ledgerHeader2 = CreateLedgerHeader(LEDGERHASH, 31);
     auto fee2 = ripple::Fees();
     fee2.reserve = 10;
     // no error
-    testFeedPtr->pub(ledgerinfo2, fee2, "10-31", 8);
+    testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8);
     ctx.restart();
     ctx.run();
 }
