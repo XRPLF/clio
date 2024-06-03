@@ -32,6 +32,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cstdint>
 #include <expected>
 #include <optional>
 #include <string>
@@ -184,7 +185,7 @@ TEST_F(RequestBuilderTest, ResolveError)
 
 TEST_F(RequestBuilderTest, ConnectionError)
 {
-    builder = RequestBuilder{"localhost", "11112"};
+    builder = RequestBuilder{"localhost", std::to_string(tests::util::generateFreePort())};
     builder.setTimeout(std::chrono::milliseconds{1});
     runSpawn([this](asio::yield_context yield) {
         auto const response = builder.getPlain(yield);

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,13 @@
 
 #include "util/AssignRandomPort.hpp"
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
+
+#include <cstdint>
+
+using tcp = boost::asio::ip::tcp;
+
 namespace tests::util {
 
 uint32_t
@@ -32,8 +39,8 @@ generateFreePort()
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     acceptor.bind(endpoint);
 
-    tcp::endpoint endPoint = acceptor.local_endpoint();
-    return endPoint.port();
+    tcp::endpoint localEndPoint = acceptor.local_endpoint();
+    return localEndPoint.port();
 }
 
 }  // namespace tests::util

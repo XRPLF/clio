@@ -95,7 +95,7 @@ struct WithMockXrpLedgerAPIService : virtual ::testing::Test {
     }
 
     int
-    getXRPLMockPort()
+    getXRPLMockPort() const
     {
         return port_;
     }
@@ -104,7 +104,7 @@ struct WithMockXrpLedgerAPIService : virtual ::testing::Test {
 private:
     std::unique_ptr<grpc::Server> server_;
     std::thread serverThread_;
-    int port_;
+    int port_{};
 };
 
 }  // namespace tests::util

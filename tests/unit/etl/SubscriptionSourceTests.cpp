@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "etl/impl/SubscriptionSource.hpp"
+#include "util/AssignRandomPort.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockSubscriptionManager.hpp"
@@ -31,6 +32,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <utility>
@@ -46,8 +48,8 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
     }
 
     boost::asio::io_context ioContext_;
-
-    TestWsServer wsServer_{ioContext_, "0.0.0.0", 11113};
+    uint32_t port = tests::util::generateFreePort();
+    TestWsServer wsServer_{ioContext_, "0.0.0.0", port};
 
     StrictMockNetworkValidatedLedgersPtr networkValidatedLedgers_;
     StrictMockSubscriptionManagerSharedPtr subscriptionManager_;
@@ -59,7 +61,7 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
     SubscriptionSource subscriptionSource_{
         ioContext_,
         "127.0.0.1",
-        "11113",
+        std::to_string(port),
         networkValidatedLedgers_,
         subscriptionManager_,
         onConnectHook_.AsStdFunction(),
