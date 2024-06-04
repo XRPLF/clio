@@ -56,6 +56,12 @@ public:
     void
     handleRequest(RequestHandler handler, bool allowToFail = false);
 
+    /**
+     * @brief Return the port HTTP server is connected to
+     */
+    int
+    port() const;
+
 private:
     boost::asio::ip::tcp::acceptor acceptor_;
 };

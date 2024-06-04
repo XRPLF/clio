@@ -39,8 +39,7 @@ generateFreePort()
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     acceptor.bind(endpoint);
 
-    tcp::endpoint localEndPoint = acceptor.local_endpoint();
-    return localEndPoint.port();
+    return acceptor.local_endpoint().port();
 }
 
 }  // namespace tests::util

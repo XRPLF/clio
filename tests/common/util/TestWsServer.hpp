@@ -21,6 +21,7 @@
 
 #include "util/requests/Types.hpp"
 
+#include <__expected/expected.h>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
@@ -39,6 +40,11 @@ public:
     using SendCallback = std::function<void()>;
     using ReceiveCallback = std::function<void(std::string)>;
 
+    /**
+     * @brief Construct a new TestWsConnection
+     *
+     * @param wsStream websocket stream for connection
+     */
     TestWsConnection(boost::beast::websocket::stream<boost::beast::tcp_stream> wsStream);
 
     // returns error message if error occurs
@@ -58,6 +64,9 @@ class TestWsServer {
 
 public:
     TestWsServer(boost::asio::io_context& context, std::string const& host, int port);
+
+    int
+    port() const;
 
     std::expected<TestWsConnection, util::requests::RequestError>
     acceptConnection(boost::asio::yield_context yield);

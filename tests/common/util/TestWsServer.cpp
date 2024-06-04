@@ -21,6 +21,7 @@
 
 #include "util/requests/Types.hpp"
 
+#include <__expected/expected.h>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
@@ -89,6 +90,12 @@ TestWsServer::TestWsServer(asio::io_context& context, std::string const& host, i
     acceptor_.open(endpoint.protocol());
     acceptor_.set_option(asio::socket_base::reuse_address(true));
     acceptor_.bind(endpoint);
+}
+
+int
+TestWsServer::port() const
+{
+    return this->acceptor_.local_endpoint().port();
 }
 
 std::expected<TestWsConnection, util::requests::RequestError>

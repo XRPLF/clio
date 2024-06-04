@@ -52,9 +52,8 @@ struct RequestBuilderTestBundle {
 };
 
 struct RequestBuilderTestBase : SyncAsioContextTest {
-    uint32_t port{tests::util::generateFreePort()};
-    TestHttpServer server{ctx, "0.0.0.0", port};
-    RequestBuilder builder{"localhost", std::to_string(port)};
+    TestHttpServer server{ctx, "0.0.0.0", 0};
+    RequestBuilder builder{"localhost", std::to_string(server.port())};
 };
 
 struct RequestBuilderTest : RequestBuilderTestBase, testing::WithParamInterface<RequestBuilderTestBundle> {};

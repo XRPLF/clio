@@ -65,7 +65,7 @@ using namespace web;
 using namespace boost::json;
 
 std::string
-generateJSONWithDynamicPort(uint32_t const port)
+generateJSONWithDynamicPort(std::string_view port)
 {
     return fmt::format(
         R"JSON({{
@@ -86,7 +86,7 @@ generateJSONWithDynamicPort(uint32_t const port)
 }
 
 std::string
-generateJSONDataOverload(uint32_t const port)
+generateJSONDataOverload(std::string_view port)
 {
     return fmt::format(
         R"JSON({{
@@ -182,15 +182,9 @@ protected:
         runner.emplace([this] { ctx.run(); });
     }
 
-    std::string
-    portToString() const
-    {
-        return std::to_string(port);
-    }
-
     // this ctx is for dos timer
     boost::asio::io_context ctxSync;
-    uint32_t port = tests::util::generateFreePort();
+    std::string const port = std::to_string(tests::util::generateFreePort());
     Config cfg{parse(generateJSONWithDynamicPort(port))};
     IntervalSweepHandler sweepHandler = web::IntervalSweepHandler{cfg, ctxSync};
     WhitelistHandler whitelistHandler = web::WhitelistHandler{cfg};
@@ -273,7 +267,7 @@ TEST_F(WebServerTest, Http)
 {
     auto e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
-    auto const res = HttpSyncClient::syncPost("localhost", portToString(), R"({"Hello":1})");
+    auto const res = HttpSyncClient::syncPost("localhost", port, R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
 }
 
@@ -282,7 +276,7 @@ TEST_F(WebServerTest, Ws)
     auto e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
     WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", portToString());
+    wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost(R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
     wsClient.disconnect();
@@ -292,7 +286,7 @@ TEST_F(WebServerTest, HttpInternalError)
 {
     auto e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
-    auto const res = HttpSyncClient::syncPost("localhost", portToString(), R"({})");
+    auto const res = HttpSyncClient::syncPost("localhost", port, R"({})");
     EXPECT_EQ(
         res,
         R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"})"
@@ -304,7 +298,7 @@ TEST_F(WebServerTest, WsInternalError)
     auto e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
     WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", portToString());
+    wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost(R"({"id":"id1"})");
     wsClient.disconnect();
     EXPECT_EQ(
@@ -318,7 +312,7 @@ TEST_F(WebServerTest, WsInternalErrorNotJson)
     auto e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
     WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", portToString());
+    wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost("not json");
     wsClient.disconnect();
     EXPECT_EQ(
@@ -333,7 +327,7 @@ TEST_F(WebServerTest, Https)
     auto sslCtx = parseCertsForTest();
     auto const ctxSslRef = sslCtx ? std::optional<std::reference_wrapper<ssl::context>>{sslCtx.value()} : std::nullopt;
     auto const server = makeServerSync(cfg, ctx, ctxSslRef, dosGuard, e);
-    auto const res = HttpsSyncClient::syncPost("localhost", portToString(), R"({"Hello":1})");
+    auto const res = HttpsSyncClient::syncPost("localhost", port, R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
 }
 
@@ -345,7 +339,7 @@ TEST_F(WebServerTest, Wss)
 
     auto server = makeServerSync(cfg, ctx, ctxSslRef, dosGuard, e);
     WebServerSslSyncClient wsClient;
-    wsClient.connect("localhost", portToString());
+    wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost(R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
     wsClient.disconnect();
@@ -355,9 +349,9 @@ TEST_F(WebServerTest, HttpRequestOverload)
 {
     auto e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
-    auto res = HttpSyncClient::syncPost("localhost", portToString(), R"({})");
+    auto res = HttpSyncClient::syncPost("localhost", port, R"({})");
     EXPECT_EQ(res, "{}");
-    res = HttpSyncClient::syncPost("localhost", portToString(), R"({})");
+    res = HttpSyncClient::syncPost("localhost", port, R"({})");
     EXPECT_EQ(
         res,
         R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response"})"
@@ -369,12 +363,12 @@ TEST_F(WebServerTest, WsRequestOverload)
     auto e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", portToString());
+    wsClient.connect("localhost", port);
     auto res = wsClient.syncPost(R"({})");
     wsClient.disconnect();
     EXPECT_EQ(res, "{}");
     WebSocketSyncClient wsClient2;
-    wsClient2.connect("localhost", portToString());
+    wsClient2.connect("localhost", port);
     res = wsClient2.syncPost(R"({})");
     wsClient2.disconnect();
     EXPECT_EQ(
@@ -388,7 +382,7 @@ TEST_F(WebServerTest, HttpPayloadOverload)
     std::string const s100(100, 'a');
     auto e = std::make_shared<EchoExecutor>();
     auto server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
-    auto const res = HttpSyncClient::syncPost("localhost", portToString(), fmt::format(R"({{"payload":"{}"}})", s100));
+    auto const res = HttpSyncClient::syncPost("localhost", port, fmt::format(R"({{"payload":"{}"}})", s100));
     EXPECT_EQ(
         res,
         R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})"
@@ -401,7 +395,7 @@ TEST_F(WebServerTest, WsPayloadOverload)
     auto e = std::make_shared<EchoExecutor>();
     auto server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
-    wsClient.connect("localhost", portToString());
+    wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost(fmt::format(R"({{"payload":"{}"}})", s100));
     wsClient.disconnect();
     EXPECT_EQ(
@@ -416,13 +410,13 @@ TEST_F(WebServerTest, WsTooManyConnection)
     auto server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
     // max connection is 2, exception should happen when the third connection is made
     WebSocketSyncClient wsClient1;
-    wsClient1.connect("localhost", portToString());
+    wsClient1.connect("localhost", port);
     WebSocketSyncClient wsClient2;
-    wsClient2.connect("localhost", portToString());
+    wsClient2.connect("localhost", port);
     bool exceptionThrown = false;
     try {
         WebSocketSyncClient wsClient3;
-        wsClient3.connect("localhost", portToString());
+        wsClient3.connect("localhost", port);
     } catch (boost::system::system_error const& ex) {
         exceptionThrown = true;
         EXPECT_EQ(ex.code(), boost::beast::websocket::error::upgrade_declined);

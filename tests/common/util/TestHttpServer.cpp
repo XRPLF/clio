@@ -134,3 +134,9 @@ TestHttpServer::handleRequest(TestHttpServer::RequestHandler handler, bool const
         boost::asio::detached
     );
 }
+
+int
+TestHttpServer::port() const
+{
+    return acceptor_.local_endpoint().port();
+}
