@@ -21,7 +21,6 @@
 
 #include "util/requests/Types.hpp"
 
-#include <__expected/expected.h>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
