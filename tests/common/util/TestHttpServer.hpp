@@ -43,7 +43,7 @@ public:
      * @param host host to bind to
      * @param port port to bind to
      */
-    TestHttpServer(boost::asio::io_context& context, std::string host, int port);
+    TestHttpServer(boost::asio::io_context& context, std::string host);
 
     /**
      * @brief Start the server
@@ -58,8 +58,10 @@ public:
 
     /**
      * @brief Return the port HTTP server is connected to
+     *
+     * @return string port number
      */
-    int
+    std::string
     port() const;
 
 private:

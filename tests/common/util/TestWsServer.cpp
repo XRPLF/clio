@@ -83,18 +83,18 @@ TestWsConnection::close(boost::asio::yield_context yield)
     return std::nullopt;
 }
 
-TestWsServer::TestWsServer(asio::io_context& context, std::string const& host, int port) : acceptor_(context)
+TestWsServer::TestWsServer(asio::io_context& context, std::string const& host) : acceptor_(context)
 {
-    auto endpoint = asio::ip::tcp::endpoint(boost::asio::ip::make_address(host), port);
+    auto endpoint = asio::ip::tcp::endpoint(boost::asio::ip::make_address(host), 0);
     acceptor_.open(endpoint.protocol());
     acceptor_.set_option(asio::socket_base::reuse_address(true));
     acceptor_.bind(endpoint);
 }
 
-int
+std::string
 TestWsServer::port() const
 {
-    return this->acceptor_.local_endpoint().port();
+    return std::to_string(this->acceptor_.local_endpoint().port());
 }
 
 std::expected<TestWsConnection, util::requests::RequestError>

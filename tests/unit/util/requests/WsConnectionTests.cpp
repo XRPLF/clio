@@ -41,9 +41,8 @@ namespace asio = boost::asio;
 namespace http = boost::beast::http;
 
 struct WsConnectionTestsBase : SyncAsioContextTest {
-    uint32_t port = tests::util::generateFreePort();
-    WsConnectionBuilder builder{"localhost", std::to_string(port)};
-    TestWsServer server{ctx, "0.0.0.0", port};
+    TestWsServer server{ctx, "0.0.0.0"};
+    WsConnectionBuilder builder{"localhost", server.port()};
 
     template <typename T, typename E>
     T

@@ -35,8 +35,8 @@
 using namespace etl::impl;
 
 struct ForwardingSourceTests : SyncAsioContextTest {
-    TestWsServer server_{ctx, "0.0.0.0", 0};
-    ForwardingSource forwardingSource{"127.0.0.1", std::to_string(server_.port()), std::chrono::milliseconds{1}};
+    TestWsServer server_{ctx, "0.0.0.0"};
+    ForwardingSource forwardingSource{"127.0.0.1", server_.port(), std::chrono::milliseconds{1}};
 };
 
 TEST_F(ForwardingSourceTests, ConnectionFailed)

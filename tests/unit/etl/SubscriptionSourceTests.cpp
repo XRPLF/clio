@@ -48,7 +48,7 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
     }
 
     boost::asio::io_context ioContext_;
-    TestWsServer wsServer_{ioContext_, "0.0.0.0", 0};
+    TestWsServer wsServer_{ioContext_, "0.0.0.0"};
 
     StrictMockNetworkValidatedLedgersPtr networkValidatedLedgers_;
     StrictMockSubscriptionManagerSharedPtr subscriptionManager_;
@@ -60,7 +60,7 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
     SubscriptionSource subscriptionSource_{
         ioContext_,
         "127.0.0.1",
-        std::to_string(wsServer_.port()),
+        wsServer_.port(),
         networkValidatedLedgers_,
         subscriptionManager_,
         onConnectHook_.AsStdFunction(),
