@@ -48,13 +48,13 @@ NFTsByIssuerHandler::Result
 NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
-    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};
 
-    auto const lgrInfo = std::get<LedgerInfo>(lgrInfoOrStatus);
+    auto const lgrInfo = std::get<LedgerHeader>(lgrInfoOrStatus);
 
     auto const limit = input.limit.value_or(NFTsByIssuerHandler::LIMIT_DEFAULT);
 

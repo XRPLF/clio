@@ -56,7 +56,7 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
         return Error{Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
-    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 

@@ -59,7 +59,7 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
 {
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
-    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 

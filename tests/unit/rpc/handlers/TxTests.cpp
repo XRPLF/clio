@@ -453,8 +453,8 @@ TEST_F(RPCTxTest, DefaultParameter_API_v2)
     tx.ledgerSequence = 100;
 
     EXPECT_CALL(*backend, fetchTransaction(ripple::uint256{TXNID}, _)).WillOnce(Return(tx));
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, tx.ledgerSequence);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, tx.ledgerSequence);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(tx.ledgerSequence, _)).WillOnce(Return(ledgerHeader));
 
     auto const rawETLPtr = dynamic_cast<MockETLService*>(mockETLServicePtr.get());
     ASSERT_NE(rawETLPtr, nullptr);
