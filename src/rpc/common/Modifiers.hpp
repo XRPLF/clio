@@ -105,13 +105,13 @@ struct ToLower final {
 };
 
 /**
- * @brief Convert input string to lower case.
+ * @brief Convert input string to integer.
  *
  * Note: the conversion is only performed if the input value is a string.
  */
 struct ToNumber final {
     /**
-     * @brief Update the input string to lower case.
+     * @brief Update the input string to integer if it can be converted to integer by stoi.
      *
      * @param value The JSON value representing the outer object
      * @param key The key used to retrieve the modified value from the outer object
