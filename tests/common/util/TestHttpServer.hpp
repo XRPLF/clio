@@ -41,7 +41,6 @@ public:
      *
      * @param context boost::asio::io_context to use for networking
      * @param host host to bind to
-     * @param port port to bind to
      */
     TestHttpServer(boost::asio::io_context& context, std::string host);
 
