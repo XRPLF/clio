@@ -604,3 +604,25 @@ TEST_F(RPCBaseTest, ToLowerModifier)
     ASSERT_TRUE(spec.process(passingInput4));  // empty str no problem
     ASSERT_EQ(passingInput4.at("str").as_string(), "");
 }
+
+TEST_F(RPCBaseTest, CustomModifier)
+{
+    auto customModifier = CustomModifier{[](json::value& value, std::string_view /* key */) -> MaybeError {
+        if (value.is_string()) {
+            value = json::value("modified");
+            return MaybeError{};
+        }
+        return Error{rpc::Status{"Uh oh"}};
+    }};
+
+    auto spec = RpcSpec{
+        {"str", customModifier},
+    };
+
+    auto passingInput = json::parse(R"({ "str": "sss" })");
+    ASSERT_TRUE(spec.process(passingInput));
+    ASSERT_EQ(passingInput.at("str").as_string(), "modified");
+
+    auto failingInput = json::parse(R"({ "str": 1 })");
+    ASSERT_FALSE(spec.process(failingInput));
+}

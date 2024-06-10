@@ -19,12 +19,16 @@
 
 #pragma once
 
+#include "rpc/Errors.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/JsonUtils.hpp"
 
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <ripple/protocol/ErrorCodes.h>
 
+#include <exception>
+#include <functional>
 #include <string>
 #include <string_view>
 
@@ -98,6 +102,73 @@ struct ToLower final {
             util::toLower(boost::json::value_to<std::string>(value.as_object().at(key.data())));
         return {};
     }
+};
+
+/**
+ * @brief Convert input string to lower case.
+ *
+ * Note: the conversion is only performed if the input value is a string.
+ */
+struct ToNumber final {
+    /**
+     * @brief Update the input string to lower case.
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the modified value from the outer object
+     * @return Possibly an error
+     */
+    [[nodiscard]] static MaybeError
+    modify(boost::json::value& value, std::string_view key)
+    {
+        if (not value.is_object() or not value.as_object().contains(key.data()))
+            return {};  // ignore. field does not exist, let 'required' fail instead
+
+        if (not value.as_object().at(key.data()).is_string())
+            return {};  // ignore for non-string types
+
+        try {
+            value.as_object()[key.data()] =
+                std::stoi(boost::json::value_to<std::string>(value.as_object().at(key.data())));
+        } catch (std::exception& e) {
+            return Error{Status{RippledError::rpcINVALID_PARAMS}};
+        }
+        return {};
+    }
+};
+
+/**
+ * @brief Customised modifier allowing user define how to modify input in provided callable.
+ */
+class CustomModifier final {
+    std::function<MaybeError(boost::json::value&, std::string_view)> modifier_;
+
+public:
+    /**
+     * @brief Constructs a custom modifier from any supported callable.
+     *
+     * @tparam Fn The type of callable
+     * @param fn The callable/function object
+     */
+    template <typename Fn>
+    explicit CustomModifier(Fn&& fn) : modifier_{std::forward<Fn>(fn)}
+    {
+    }
+
+    /**
+     * @brief Modify the JSON value according to the custom modifier function stored.
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return Any compatible user-provided error if modify/verify failed; otherwise no error is returned
+     */
+    [[nodiscard]] MaybeError
+    modify(boost::json::value& value, std::string_view key) const
+    {
+        if (not value.is_object() or not value.as_object().contains(key.data()))
+            return {};  // ignore. field does not exist, let 'required' fail instead
+
+        return modifier_(value.as_object().at(key.data()), key);
+    };
 };
 
 }  // namespace rpc::modifiers

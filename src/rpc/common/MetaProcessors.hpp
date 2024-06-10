@@ -38,6 +38,9 @@
 
 namespace rpc::meta {
 
+template <typename>
+static constexpr bool unsupported_v = false;
+
 /**
  * @brief A meta-processor that acts as a spec for a sub-object/section.
  */
@@ -162,9 +165,9 @@ private:
 /**
  * @brief A meta-processor that wraps a validator and produces a custom error in case the wrapped validator fails.
  */
-template <typename SomeRequirement>
+template <typename SomeRequirementOrModifier>
 class WithCustomError final {
-    SomeRequirement requirement;
+    SomeRequirementOrModifier requirement;
     Status error;
 
 public:
@@ -175,7 +178,7 @@ public:
      * @param req The requirement to validate against
      * @param err The custom error to return in case `req` fails
      */
-    WithCustomError(SomeRequirement req, Status err) : requirement{std::move(req)}, error{std::move(err)}
+    WithCustomError(SomeRequirementOrModifier req, Status err) : requirement{std::move(req)}, error{std::move(err)}
     {
     }
 
@@ -189,9 +192,12 @@ public:
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
     {
-        if (auto const res = requirement.verify(value, key); not res)
-            return Error{error};
-
+        if constexpr (SomeRequirement<decltype(requirement)>) {
+            if (auto const res = requirement.verify(value, key); not res)
+                return Error{error};
+        } else {
+            static_assert(unsupported_v<decltype(requirement)>);
+        }
         return {};
     }
 
@@ -206,9 +212,15 @@ public:
     [[nodiscard]] MaybeError
     verify(boost::json::value& value, std::string_view key) const
     {
-        if (auto const res = requirement.verify(value, key); not res)
-            return Error{error};
-
+        if constexpr (SomeRequirement<decltype(requirement)>) {
+            if (auto const res = requirement.verify(value, key); not res)
+                return Error{error};
+        } else if constexpr (SomeModifier<decltype(requirement)>) {
+            if (auto const res = requirement.modify(value, key); not res)
+                return Error{error};
+        } else {
+            static_assert(unsupported_v<decltype(requirement)>);
+        }
         return {};
     }
 };
