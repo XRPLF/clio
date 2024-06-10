@@ -36,10 +36,12 @@
 #include <ripple/protocol/STObject.h>
 #include <ripple/protocol/jss.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
+#include <regex>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -129,6 +131,8 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto constexpr ORACLES_MAX = 200;
+        // The length of an ISO-4217 like code
+        static constexpr std::size_t isoCodeLength = 3;
 
         static auto const oraclesValidator =
             validation::CustomValidator{[](boost::json::value const& value, std::string_view) -> MaybeError {
@@ -155,6 +159,19 @@ public:
                 return MaybeError{};
             }};
 
+        // validate quoteAsset in accordance to the currency code found in XRPL doc:
+        // https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
+        static std::regex const currency_code_pattern("^[A-Za-z0-9?!@#$%^&*<>(){}\\[\\]|]{3}$");
+
+        static auto const validateQuoteAsset =
+            validation::CustomValidator{[&](boost::json::value const& value, std::string_view) -> MaybeError {
+                if (!value.is_string() || !(value.get_string().size() == isoCodeLength) ||
+                    !std::regex_match(static_cast<std::string>(value.get_string()), currency_code_pattern))
+                    return Error{Status{RippledError::rpcINVALID_PARAMS}};
+
+                return MaybeError{};
+            }};
+
         static auto const rpcSpec = RpcSpec{
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
@@ -162,7 +179,7 @@ public:
             // "rpcOBJECT_NOT_FOUND". Clio will return "rpcINVALID_PARAMS" if the base_asset or quote_asset is not a
             // string. User can clearly know there is a mistake in the input.
             {JS(base_asset), validation::Required{}, validation::Type<std::string>{}},
-            {JS(quote_asset), validation::Required{}, validation::Type<std::string>{}},
+            {JS(quote_asset), validation::Required{}, validateQuoteAsset},
             {JS(oracles), validation::Required{}, oraclesValidator},
             // note: Unlike `rippled`, Clio only supports UInt as input, no string, no `null`, etc.
             {JS(time_threshold), validation::Type<std::uint32_t>{}},
