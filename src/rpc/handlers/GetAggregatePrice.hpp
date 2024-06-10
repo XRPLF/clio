@@ -166,10 +166,9 @@ public:
 
         // validate quoteAsset in accordance to the currency code found in XRPL doc:
         // https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
-        ripple::Currency currency;
-
         static auto const validateQuoteAsset =
             validation::CustomValidator{[&](boost::json::value const& value, std::string_view) -> MaybeError {
+                ripple::Currency currency;
                 if (!value.is_string() || !(value.get_string().size() == isoCodeLength) ||
                     !ripple::to_currency(currency, boost::json::value_to<std::string>(value)))
                     return Error{Status{RippledError::rpcINVALID_PARAMS}};
