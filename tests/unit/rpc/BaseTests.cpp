@@ -607,7 +607,7 @@ TEST_F(RPCBaseTest, ToLowerModifier)
 
 TEST_F(RPCBaseTest, CustomModifier)
 {
-    auto customModifier = CustomModifier{[](json::value& value, std::string_view /* key */) -> MaybeError {
+    auto const customModifier = CustomModifier{[](json::value& value, std::string_view /* key */) -> MaybeError {
         if (value.is_string()) {
             value = json::value("modified");
             return MaybeError{};
@@ -615,7 +615,7 @@ TEST_F(RPCBaseTest, CustomModifier)
         return Error{rpc::Status{"Uh oh"}};
     }};
 
-    auto spec = RpcSpec{
+    auto const spec = RpcSpec{
         {"str", customModifier},
     };
 
