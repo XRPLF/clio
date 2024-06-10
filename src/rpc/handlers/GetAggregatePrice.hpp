@@ -29,12 +29,19 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
+#include <boost/json/value_to.hpp>
+#include <boost/regex.hpp>
+#include <boost/regex/v5/regex_fwd.hpp>
+#include <boost/regex/v5/regex_match.hpp>
 #include <ripple/basics/Number.h>
+#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/STAmount.h>
 #include <ripple/protocol/STObject.h>
+#include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
+#include <ripple/protocol/tokens.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -161,12 +168,12 @@ public:
 
         // validate quoteAsset in accordance to the currency code found in XRPL doc:
         // https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
-        static std::regex const currency_code_pattern("^[A-Za-z0-9?!@#$%^&*<>(){}\\[\\]|]{3}$");
+        ripple::Currency currency;
 
         static auto const validateQuoteAsset =
             validation::CustomValidator{[&](boost::json::value const& value, std::string_view) -> MaybeError {
                 if (!value.is_string() || !(value.get_string().size() == isoCodeLength) ||
-                    !std::regex_match(static_cast<std::string>(value.get_string()), currency_code_pattern))
+                    !ripple::to_currency(currency, boost::json::value_to<std::string>(value)))
                     return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
                 return MaybeError{};
