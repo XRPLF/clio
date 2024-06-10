@@ -44,7 +44,6 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -488,12 +487,7 @@ TEST_F(LoadBalancerForwardToRippledTests, forward)
     auto loadBalancer = makeLoadBalancer();
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
-        forwardToRippled(
-            request_,
-            clientIP_,
-            std::make_optional<std::string>(LoadBalancer::ADMIN_FORWARDING_X_USER_VALUE),
-            testing::_
-        )
+        forwardToRippled(request_, clientIP_, LoadBalancer::ADMIN_FORWARDING_X_USER_VALUE, testing::_)
     )
         .WillOnce(Return(response_));
 
@@ -504,12 +498,10 @@ TEST_F(LoadBalancerForwardToRippledTests, forward)
 
 TEST_F(LoadBalancerForwardToRippledTests, forwardWithXUserHeader)
 {
-    std::string_view const xUserValue = "some_user";
-    configJson_.as_object()["forwarding"] = boost::json::object{{"x_user_value", xUserValue}};
     auto loadBalancer = makeLoadBalancer();
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
-        forwardToRippled(request_, clientIP_, std::make_optional<std::string>(xUserValue), testing::_)
+        forwardToRippled(request_, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
         .WillOnce(Return(response_));
 
@@ -522,11 +514,13 @@ TEST_F(LoadBalancerForwardToRippledTests, source0Fails)
 {
     auto loadBalancer = makeLoadBalancer();
     EXPECT_CALL(
-        sourceFactory_.sourceAt(0), forwardToRippled(request_, clientIP_, std::optional<std::string>{}, testing::_)
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(request_, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
         .WillOnce(Return(std::nullopt));
     EXPECT_CALL(
-        sourceFactory_.sourceAt(1), forwardToRippled(request_, clientIP_, std::optional<std::string>{}, testing::_)
+        sourceFactory_.sourceAt(1),
+        forwardToRippled(request_, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
         .WillOnce(Return(response_));
 
@@ -539,11 +533,13 @@ TEST_F(LoadBalancerForwardToRippledTests, bothSourcesFail)
 {
     auto loadBalancer = makeLoadBalancer();
     EXPECT_CALL(
-        sourceFactory_.sourceAt(0), forwardToRippled(request_, clientIP_, std::optional<std::string>{}, testing::_)
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(request_, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
         .WillOnce(Return(std::nullopt));
     EXPECT_CALL(
-        sourceFactory_.sourceAt(1), forwardToRippled(request_, clientIP_, std::optional<std::string>{}, testing::_)
+        sourceFactory_.sourceAt(1),
+        forwardToRippled(request_, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
         .WillOnce(Return(std::nullopt));
 
@@ -554,13 +550,14 @@ TEST_F(LoadBalancerForwardToRippledTests, bothSourcesFail)
 
 TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheEnabled)
 {
-    configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
+    configJson_.as_object()["forwarding_cache_timeout"] = 10.;
     auto loadBalancer = makeLoadBalancer();
 
     auto const request = boost::json::object{{"command", "server_info"}};
 
     EXPECT_CALL(
-        sourceFactory_.sourceAt(0), forwardToRippled(request, clientIP_, std::optional<std::string>{}, testing::_)
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(request, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
         .WillOnce(Return(response_));
 
@@ -578,17 +575,19 @@ TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheDisabledOnLedgerClosedH
 
 TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
 {
-    configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
+    configJson_.as_object()["forwarding_cache_timeout"] = 10.;
     auto loadBalancer = makeLoadBalancer();
 
     auto const request = boost::json::object{{"command", "server_info"}};
 
     EXPECT_CALL(
-        sourceFactory_.sourceAt(0), forwardToRippled(request, clientIP_, std::optional<std::string>{}, testing::_)
+        sourceFactory_.sourceAt(0),
+        forwardToRippled(request, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
         .WillOnce(Return(response_));
     EXPECT_CALL(
-        sourceFactory_.sourceAt(1), forwardToRippled(request, clientIP_, std::optional<std::string>{}, testing::_)
+        sourceFactory_.sourceAt(1),
+        forwardToRippled(request, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
         .WillOnce(Return(boost::json::object{}));
 

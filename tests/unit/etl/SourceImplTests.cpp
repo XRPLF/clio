@@ -33,6 +33,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -64,11 +65,10 @@ struct ForwardingSourceMock {
 
     using ForwardToRippledReturnType = std::optional<boost::json::object>;
     using ClientIpOpt = std::optional<std::string>;
-    using XUserOpt = std::optional<std::string>;
     MOCK_METHOD(
         ForwardToRippledReturnType,
         forwardToRippled,
-        (boost::json::object const&, ClientIpOpt const&, XUserOpt const&, boost::asio::yield_context),
+        (boost::json::object const&, ClientIpOpt const&, std::string_view, boost::asio::yield_context),
         (const)
     );
 };
@@ -176,7 +176,7 @@ TEST_F(SourceImplTest, forwardToRippled)
 {
     boost::json::object const request = {{"some_key", "some_value"}};
     std::optional<std::string> const clientIp = "some_client_ip";
-    std::optional<std::string> const xUserValue = "some_user";
+    std::string_view xUserValue = "some_user";
 
     EXPECT_CALL(forwardingSourceMock_, forwardToRippled(request, clientIp, xUserValue, testing::_))
         .WillOnce(Return(request));

@@ -83,6 +83,11 @@ public:
     static constexpr std::string_view ADMIN_FORWARDING_X_USER_VALUE = "clio_admin";
 
     /**
+     * @brief Value for the X-User header when forwarding user requests
+     */
+    static constexpr std::string_view USER_FORWARDING_X_USER_VALUE = "clio_user";
+
+    /**
      * @brief Create an instance of the load balancer.
      *
      * @param config The configuration to use

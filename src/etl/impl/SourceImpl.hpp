@@ -34,6 +34,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 namespace etl::impl {
@@ -210,7 +211,7 @@ public:
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,
-        std::optional<std::string> const& xUserValue,
+        std::string_view xUserValue,
         boost::asio::yield_context yield
     ) const final
     {

@@ -77,16 +77,11 @@ LoadBalancer::LoadBalancer(
     SourceFactory sourceFactory
 )
 {
-    auto const forwardingCacheTimeout = config.valueOr<float>("forwarding.cache_timeout", 0.f);
+    auto const forwardingCacheTimeout = config.valueOr<float>("forwarding_cache_timeout", 0.f);
     if (forwardingCacheTimeout > 0.f) {
         forwardingCache_ = impl::ForwardingCache{std::chrono::milliseconds{
             std::lroundf(forwardingCacheTimeout * static_cast<float>(util::MILLISECONDS_PER_SECOND))
         }};
-    }
-
-    if (auto const forwardingXUserValue = config.valueOr<std::string>("forwarding.x_user_value", {});
-        not forwardingXUserValue.empty()) {
-        forwardingXUserValue_ = forwardingXUserValue;
     }
 
     static constexpr std::uint32_t MAX_DOWNLOAD = 256;
@@ -236,7 +231,7 @@ LoadBalancer::forwardToRippled(
 
     auto numAttempts = 0u;
 
-    auto const xUserValue = isAdmin ? std::optional<std::string>{ADMIN_FORWARDING_X_USER_VALUE} : forwardingXUserValue_;
+    auto xUserValue = isAdmin ? ADMIN_FORWARDING_X_USER_VALUE : USER_FORWARDING_X_USER_VALUE;
 
     std::optional<boost::json::object> response;
     while (numAttempts < sources_.size()) {
