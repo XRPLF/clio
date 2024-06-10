@@ -157,21 +157,39 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         return Error{*status};
 
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
-    auto const ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
-
-    if (!ledgerObject || ledgerObject->empty())
-        return Error{Status{"entryNotFound"}};
+    std::optional<data::Blob> ledgerObject;
+    auto output = LedgerEntryHandler::Output{};
+    output.deleted_ledger_index = std::nullopt;
+    if (input.include_deleted.has_value() && input.include_deleted.value() == true){
+        auto const lastTwoObjects = sharedPtrBackend_->fetchLastTwoLedgerObjects(key, lgrInfo.seq, ctx.yield);
+        if (lastTwoObjects.empty()) {
+            return Error{Status{"entryNotFound"}};
+        }
+        else if (lastTwoObjects.size() == 1) {
+            ledgerObject = std::make_optional(lastTwoObjects[0].second);
+            if (!ledgerObject || ledgerObject->empty())
+                return Error{Status{"entryNotFound"}};
+        } 
+        else if (lastTwoObjects.size() == 2) {
+            // return the lastest object that is not deleted
+            bool const isDeleted  = lastTwoObjects[0].second.empty();
+            ledgerObject = isDeleted? std::make_optional(lastTwoObjects[1].second) : std::make_optional(lastTwoObjects[0].second);
+            output.deleted_ledger_index = isDeleted? std::optional(lastTwoObjects[0].first) : std::nullopt;
+        } 
+    } else {
+        ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
+        if (!ledgerObject || ledgerObject->empty())
+            return Error{Status{"entryNotFound"}};
+    }
 
     ripple::STLedgerEntry const sle{ripple::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
 
     if (input.expectedType != ripple::ltANY && sle.getType() != input.expectedType)
         return Error{Status{"unexpectedLedgerType"}};
 
-    auto output = LedgerEntryHandler::Output{};
     output.index = ripple::strHex(key);
     output.ledgerIndex = lgrInfo.seq;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
-
     if (input.binary) {
         output.nodeBinary = ripple::strHex(*ledgerObject);
     } else {
@@ -214,7 +232,9 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerEntryHandl
         {JS(validated), output.validated},
         {JS(index), output.index},
     };
-
+    if (output.deleted_ledger_index) {
+        object["deleted_ledger_index"] = *(output.deleted_ledger_index);
+    }
     if (output.nodeBinary) {
         object[JS(node_binary)] = *(output.nodeBinary);
     } else {
@@ -229,7 +249,6 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
 {
     auto input = LedgerEntryHandler::Input{};
     auto const& jsonObject = jv.as_object();
-
     if (jsonObject.contains(JS(ledger_hash)))
         input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
 
@@ -331,7 +350,9 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
     } else if (jsonObject.contains(JS(oracle))) {
         input.oracleNode = parseOracleFromJson(jv.at(JS(oracle)));
     }
-
+    if (jsonObject.contains("include_deleted")) {
+        input.include_deleted = jv.at("include_deleted").as_bool();
+    }
     return input;
 }
 

@@ -573,14 +573,17 @@ public:
     {
         LOG(log_.debug()) << "Fetching last two ledger objects for seq " << sequence << ", key = " << ripple::to_string(key);
         if (auto const res = executor_.read(yield, schema_->selectLastTwoObjects, key, sequence); res) {
-            auto const& result = res.value();
-            if (not result.hasRows()) {
+            auto const& results = res.value();
+            if (not results.hasRows()) {
                 LOG(log_.error()) << "Could not fetch last two ledger objects - no rows";
                 return {};
+            }  
+            std::vector<std::pair<std::uint32_t, Blob>> objects;
+            for (auto [obj, seq] : extract<Blob, std::uint32_t>(results))
+                objects.push_back({seq, obj});
+            if (objects.size() > 2) {
+                LOG(log_.error()) << "Entries returned exceeded the expected";
             }
-            std::vector<std::pair<std::uint32_t, Blob>>  objects;
-            for (auto [seq, object] : extract<std::uint32_t, Blob> (result))
-                objects.push_back(std::make_pair(seq, object));
             return objects;
         } else {
             LOG(log_.error()) << "Could not fetch last two ledger objects: " << res.error();
