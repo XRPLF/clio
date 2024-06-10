@@ -32,4 +32,4 @@ ripple::uint256
 binaryStringToUint256(std::string const& bin);
 
 std::string
-ledgerInfoToBinaryString(ripple::LedgerInfo const& info);
+ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);

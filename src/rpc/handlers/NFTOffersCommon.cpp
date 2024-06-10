@@ -90,8 +90,9 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 ) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
-    auto const lgrInfoOrStatus =
-        getLedgerInfoFromHashOrSeq(*sharedPtrBackend_, yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+        *sharedPtrBackend_, yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};

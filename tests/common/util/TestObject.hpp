@@ -60,10 +60,10 @@ GetAccountKey(std::string_view id);
 GetAccountKey(ripple::AccountID const& acc);
 
 /*
- * Create a simple ledgerInfo object with only hash and seq
+ * Create a simple ledgerHeader object with only hash and seq
  */
-[[nodiscard]] ripple::LedgerInfo
-CreateLedgerInfo(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age = std::nullopt);
+[[nodiscard]] ripple::LedgerHeader
+CreateLedgerHeader(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age = std::nullopt);
 
 /*
  * Create a Legacy (pre XRPFees amendment) FeeSetting ledger object

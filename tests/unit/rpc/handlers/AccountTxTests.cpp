@@ -824,9 +824,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
     )
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ - 1);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
@@ -919,9 +919,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
     )
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ - 1);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
@@ -964,9 +964,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
     )
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
@@ -1524,8 +1524,8 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
     )
         .Times(1);
 
-    auto const ledgerInfo = CreateLedgerInfo(LEDGERHASH, 11);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(transactions.size()).WillRepeatedly(Return(ledgerInfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 11);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(transactions.size()).WillRepeatedly(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
@@ -2044,8 +2044,8 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
     EXPECT_CALL(*backend, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{MAXSEQ, INT32_MAX})), _))
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).Times(Between(1, 2));
 
     auto const testBundle = GetParam();

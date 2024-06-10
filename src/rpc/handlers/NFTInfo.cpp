@@ -48,7 +48,7 @@ NFTInfoHandler::process(NFTInfoHandler::Input input, Context const& ctx) const
 {
     auto const tokenID = ripple::uint256{input.nftID.c_str()};
     auto const range = sharedPtrBackend_->fetchLedgerRange();
-    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 

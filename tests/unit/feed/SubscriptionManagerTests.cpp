@@ -239,7 +239,7 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
     SubscriptionManagerPtr->subBookChanges(session);
     EXPECT_EQ(SubscriptionManagerPtr->report()["book_changes"], 1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 32);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 32);
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
@@ -249,7 +249,7 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
 
-    SubscriptionManagerPtr->pubBookChanges(ledgerinfo, transactions);
+    SubscriptionManagerPtr->pubBookChanges(ledgerHeader, transactions);
     constexpr static auto bookChangePublish =
         R"({
             "type":"bookChanges",
@@ -280,8 +280,8 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
 TEST_F(SubscriptionManagerTest, LedgerTest)
 {
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
     auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(testing::Return(feeBlob));
@@ -308,10 +308,10 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
     EXPECT_EQ(SubscriptionManagerPtr->report()["ledger"], 1);
 
     // test publish
-    auto const ledgerinfo2 = CreateLedgerInfo(LEDGERHASH, 31);
+    auto const ledgerHeader2 = CreateLedgerHeader(LEDGERHASH, 31);
     auto fee2 = ripple::Fees();
     fee2.reserve = 10;
-    SubscriptionManagerPtr->pubLedger(ledgerinfo2, fee2, "10-31", 8);
+    SubscriptionManagerPtr->pubLedger(ledgerHeader2, fee2, "10-31", 8);
     constexpr static auto ledgerPub =
         R"({
             "type":"ledgerClosed",
@@ -345,7 +345,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
     EXPECT_EQ(SubscriptionManagerPtr->report()["transactions"], 1);
     EXPECT_EQ(SubscriptionManagerPtr->report()["books"], 1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -353,7 +353,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ISSUER, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    SubscriptionManagerPtr->pubTransaction(trans1, ledgerinfo);
+    SubscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
 
     constexpr static auto OrderbookPublish =
         R"({
@@ -506,7 +506,7 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(OrderbookPublish))).Times(2);
     SubscriptionManagerPtr->forwardProposedTransaction(json::parse(dummyTransaction).get_object());
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -514,7 +514,7 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    SubscriptionManagerPtr->pubTransaction(trans1, ledgerinfo);
+    SubscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
     ctx.run();
 
     // unsub account1
@@ -533,7 +533,7 @@ TEST_F(SubscriptionManagerTest, DuplicateResponseSubTxAndProposedTx)
 
     EXPECT_CALL(*sessionPtr, send(testing::_)).Times(2);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -541,7 +541,7 @@ TEST_F(SubscriptionManagerTest, DuplicateResponseSubTxAndProposedTx)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    SubscriptionManagerPtr->pubTransaction(trans1, ledgerinfo);
+    SubscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
     ctx.run();
 
     SubscriptionManagerPtr->unsubTransactions(session);
@@ -560,7 +560,7 @@ TEST_F(SubscriptionManagerTest, NoDuplicateResponseSubAccountAndProposedAccount)
 
     EXPECT_CALL(*sessionPtr, send(testing::_)).Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 33);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
     auto obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
     trans1.transaction = obj.getSerializer().peekData();
@@ -568,7 +568,7 @@ TEST_F(SubscriptionManagerTest, NoDuplicateResponseSubAccountAndProposedAccount)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    SubscriptionManagerPtr->pubTransaction(trans1, ledgerinfo);
+    SubscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
     ctx.run();
 
     // unsub account1
