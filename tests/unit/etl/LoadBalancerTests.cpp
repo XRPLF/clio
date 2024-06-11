@@ -521,7 +521,7 @@ TEST_F(LoadBalancerForwardToRippledTests, bothSourcesFail)
 
 TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheEnabled)
 {
-    configJson_.as_object()["forwarding_cache_timeout"] = 10.;
+    configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
     auto loadBalancer = makeLoadBalancer();
 
     auto const request = boost::json::object{{"command", "server_info"}};
@@ -537,7 +537,7 @@ TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheEnabled)
 
 TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
 {
-    configJson_.as_object()["forwarding_cache_timeout"] = 10.;
+    configJson_.as_object()["forwarding"] = boost::json::object{{"cache_timeout", 10.}};
     auto loadBalancer = makeLoadBalancer();
 
     auto const request = boost::json::object{{"command", "server_info"}};
