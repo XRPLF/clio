@@ -34,6 +34,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace etl::impl {
@@ -55,6 +56,7 @@ std::optional<boost::json::object>
 ForwardingSource::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& forwardToRippledClientIp,
+    std::string_view xUserValue,
     boost::asio::yield_context yield
 ) const
 {
@@ -64,6 +66,9 @@ ForwardingSource::forwardToRippled(
             {boost::beast::http::field::forwarded, fmt::format("for={}", *forwardToRippledClientIp)}
         );
     }
+
+    connectionBuilder.addHeader({"X-User", std::string{xUserValue}});
+
     auto expectedConnection = connectionBuilder.connect(yield);
     if (not expectedConnection) {
         return std::nullopt;

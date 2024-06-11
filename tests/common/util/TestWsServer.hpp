@@ -31,15 +31,20 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <vector>
 
 class TestWsConnection {
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
+    std::vector<util::requests::HttpHeader> headers_;
 
 public:
     using SendCallback = std::function<void()>;
     using ReceiveCallback = std::function<void(std::string)>;
 
-    TestWsConnection(boost::beast::websocket::stream<boost::beast::tcp_stream> wsStream);
+    TestWsConnection(
+        boost::beast::websocket::stream<boost::beast::tcp_stream> wsStream,
+        std::vector<util::requests::HttpHeader> headers
+    );
 
     // returns error message if error occurs
     std::optional<std::string>
@@ -51,6 +56,9 @@ public:
 
     std::optional<std::string>
     close(boost::asio::yield_context yield);
+
+    std::vector<util::requests::HttpHeader> const&
+    headers() const;
 };
 
 class TestWsServer {
