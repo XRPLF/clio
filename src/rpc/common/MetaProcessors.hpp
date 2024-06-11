@@ -38,9 +38,6 @@
 
 namespace rpc::meta {
 
-template <typename>
-static constexpr bool unsupported_v = false;
-
 /**
  * @brief A meta-processor that acts as a spec for a sub-object/section.
  */
@@ -149,10 +146,10 @@ public:
     [[nodiscard]] MaybeError
     verify(boost::json::value& value, std::string_view key) const
     {
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        if (not rpc::validation::checkType<Type>(value.as_object().at(key.data())))
+        if (not rpc::validation::checkType<Type>(value.as_object().at(key)))
             return {};  // ignore if type does not match
 
         return processor_(value, key);
@@ -163,23 +160,23 @@ private:
 };
 
 /**
- * @brief A meta-processor that wraps a validator or modifier and produces a custom error in case the wrapped validator
- * or modifier fails.
+ * @brief A meta-processor that wraps a validator and produces a custom error in case the wrapped validator fails.
  */
-template <typename SomeRequirementOrModifier>
+template <typename RequirementOrModifierType>
+    requires SomeRequirement<RequirementOrModifierType> or SomeModifier<RequirementOrModifierType>
 class WithCustomError final {
-    SomeRequirementOrModifier reqOrModifier;
+    RequirementOrModifierType reqOrModifier;
     Status error;
 
 public:
     /**
-     * @brief Constructs a validator that calls the given validator or modifier `reqOrModifier` and returns a custom
-     * error `err` in case `reqOrModifier` fails.
+     * @brief Constructs a validator that calls the given validator `req` and returns a custom error `err` in case `req`
+     * fails.
      *
-     * @param reqOrModifier The requirement to validate against or modifier to modify the value
-     * @param err The custom error to return in case `reqOrModifier` fails
+     * @param req The requirement to validate against
+     * @param err The custom error to return in case `req` fails
      */
-    WithCustomError(SomeRequirementOrModifier reqOrModifier, Status err)
+    WithCustomError(RequirementOrModifierType reqOrModifier, Status err)
         : reqOrModifier{std::move(reqOrModifier)}, error{std::move(err)}
     {
     }
@@ -193,37 +190,39 @@ public:
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value const& value, std::string_view key) const
+        requires SomeRequirement<RequirementOrModifierType>
     {
-        if constexpr (SomeRequirement<decltype(reqOrModifier)>) {
-            if (auto const res = reqOrModifier.verify(value, key); not res)
-                return Error{error};
-        } else {
-            static_assert(unsupported_v<decltype(reqOrModifier)>);
-        }
+        if (auto const res = reqOrModifier.verify(value, key); not res)
+            return Error{error};
+
         return {};
     }
 
     /**
-     * @brief Runs the stored validator or modifier and produces a custom error if the wrapped validator fails. This is
-     * an overload for the requirement which can modify the value. Such as IfType.
+     * @brief Runs the stored validator and produces a custom error if the wrapped validator fails. This is an overload
+     * for the requirement which can modify the value. Such as IfType.
      *
-     * @param value The JSON value representing the outer object, this value can be modified by the requirement/modifier
-     * inside
+     * @param value The JSON value representing the outer object, this value can be modified by the requirement inside
      * @param key The key used to retrieve the element from the outer object
      * @return Possibly an error
      */
     [[nodiscard]] MaybeError
     verify(boost::json::value& value, std::string_view key) const
+        requires SomeRequirement<RequirementOrModifierType>
     {
-        if constexpr (SomeRequirement<decltype(reqOrModifier)>) {
-            if (auto const res = reqOrModifier.verify(value, key); not res)
-                return Error{error};
-        } else if constexpr (SomeModifier<decltype(reqOrModifier)>) {
-            if (auto const res = reqOrModifier.modify(value, key); not res)
-                return Error{error};
-        } else {
-            static_assert(unsupported_v<decltype(reqOrModifier)>);
-        }
+        if (auto const res = reqOrModifier.verify(value, key); not res)
+            return Error{error};
+
+        return {};
+    }
+
+    MaybeError
+    modify(boost::json::value& value, std::string_view key) const
+        requires SomeModifier<RequirementOrModifierType>
+
+    {
+        if (auto const res = reqOrModifier.modify(value, key); not res)
+            return Error{error};
         return {};
     }
 };

@@ -120,15 +120,18 @@ struct ToNumber final {
     [[nodiscard]] static MaybeError
     modify(boost::json::value& value, std::string_view key)
     {
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
-        if (not value.as_object().at(key.data()).is_string())
+        if (not value.as_object().at(key).is_string())
             return {};  // ignore for non-string types
 
+        auto const strInt = boost::json::value_to<std::string>(value.as_object().at(key));
+        if (strInt.find('.') != std::string::npos)
+            return Error{Status{RippledError::rpcINVALID_PARAMS}};  // maybe a float
+
         try {
-            value.as_object()[key.data()] =
-                std::stoi(boost::json::value_to<std::string>(value.as_object().at(key.data())));
+            value.as_object()[key.data()] = std::stoi(strInt);
         } catch (std::exception& e) {
             return Error{Status{RippledError::rpcINVALID_PARAMS}};
         }
@@ -150,6 +153,7 @@ public:
      * @param fn The callable/function object
      */
     template <typename Fn>
+        requires std::invocable<Fn, boost::json::value&, std::string_view>
     explicit CustomModifier(Fn&& fn) : modifier_{std::forward<Fn>(fn)}
     {
     }
@@ -164,7 +168,7 @@ public:
     [[nodiscard]] MaybeError
     modify(boost::json::value& value, std::string_view key) const
     {
-        if (not value.is_object() or not value.as_object().contains(key.data()))
+        if (not value.is_object() or not value.as_object().contains(key))
             return {};  // ignore. field does not exist, let 'required' fail instead
 
         return modifier_(value.as_object().at(key.data()), key);

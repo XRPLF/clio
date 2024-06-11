@@ -607,7 +607,7 @@ TEST_F(RPCBaseTest, ToLowerModifier)
 
 TEST_F(RPCBaseTest, ToNumberModifier)
 {
-    auto spec = RpcSpec{
+    auto const spec = RpcSpec{
         {"str", ToNumber{}},
     };
 
@@ -625,6 +625,9 @@ TEST_F(RPCBaseTest, ToNumberModifier)
     ASSERT_EQ(passingInput.at("str").as_int64(), 123);
 
     auto failingInput = json::parse(R"({ "str": "ok" })");
+    ASSERT_FALSE(spec.process(failingInput));
+
+    failingInput = json::parse(R"({ "str": "123.123" })");
     ASSERT_FALSE(spec.process(failingInput));
 }
 
