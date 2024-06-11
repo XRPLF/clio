@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/MetaProcessors.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
@@ -30,9 +31,6 @@
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value_to.hpp>
-#include <boost/regex.hpp>
-#include <boost/regex/v5/regex_fwd.hpp>
-#include <boost/regex/v5/regex_match.hpp>
 #include <ripple/basics/Number.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
@@ -42,7 +40,6 @@
 #include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
 
-#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -136,8 +133,6 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto constexpr ORACLES_MAX = 200;
-        // The length of an ISO-4217 like code
-        static constexpr std::size_t isoCodeLength = 3;
 
         static auto const oraclesValidator =
             validation::CustomValidator{[](boost::json::value const& value, std::string_view) -> MaybeError {
@@ -164,26 +159,15 @@ public:
                 return MaybeError{};
             }};
 
-        // validate quoteAsset in accordance to the currency code found in XRPL doc:
-        // https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
-        static auto const validateQuoteAsset =
-            validation::CustomValidator{[&](boost::json::value const& value, std::string_view) -> MaybeError {
-                ripple::Currency currency;
-                if (!value.is_string() || !(value.get_string().size() == isoCodeLength) ||
-                    !ripple::to_currency(currency, boost::json::value_to<std::string>(value)))
-                    return Error{Status{RippledError::rpcINVALID_PARAMS}};
-
-                return MaybeError{};
-            }};
-
         static auto const rpcSpec = RpcSpec{
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            // note: Rippled's base_asset and quote_asset can be non-string. It will eventually return
-            // "rpcOBJECT_NOT_FOUND". Clio will return "rpcINVALID_PARAMS" if the base_asset or quote_asset is not a
-            // string. User can clearly know there is a mistake in the input.
+            // validate quoteAsset in accordance to the currency code found in XRPL doc:
+            // https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
             {JS(base_asset), validation::Required{}, validation::Type<std::string>{}},
-            {JS(quote_asset), validation::Required{}, validateQuoteAsset},
+            {JS(quote_asset),
+             validation::Required{},
+             meta::WithCustomError{validation::CurrencyValidator, Status(RippledError::rpcINVALID_PARAMS)}},
             {JS(oracles), validation::Required{}, oraclesValidator},
             // note: Unlike `rippled`, Clio only supports UInt as input, no string, no `null`, etc.
             {JS(time_threshold), validation::Type<std::uint32_t>{}},
