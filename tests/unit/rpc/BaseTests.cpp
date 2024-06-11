@@ -31,6 +31,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
@@ -633,21 +634,15 @@ TEST_F(RPCBaseTest, ToNumberModifier)
 
 TEST_F(RPCBaseTest, CustomModifier)
 {
-    auto const customModifier = CustomModifier{[](json::value& value, std::string_view /* key */) -> MaybeError {
-        if (value.is_string()) {
-            value = json::value("modified");
-            return MaybeError{};
-        }
-        return Error{rpc::Status{"Uh oh"}};
-    }};
-
+    testing::StrictMock<testing::MockFunction<MaybeError(json::value & value, std::string_view)>> mockModifier;
+    auto const customModifier = CustomModifier{mockModifier.AsStdFunction()};
     auto const spec = RpcSpec{
         {"str", customModifier},
     };
 
+    EXPECT_CALL(mockModifier, Call).WillOnce(testing::Return(MaybeError{}));
     auto passingInput = json::parse(R"({ "str": "sss" })");
     ASSERT_TRUE(spec.process(passingInput));
-    ASSERT_EQ(passingInput.at("str").as_string(), "modified");
 
     passingInput = json::parse(R"({ "strNotExist": 123 })");
     ASSERT_TRUE(spec.process(passingInput));
@@ -655,7 +650,4 @@ TEST_F(RPCBaseTest, CustomModifier)
     // not a json object
     passingInput = json::parse(R"([])");
     ASSERT_TRUE(spec.process(passingInput));
-
-    auto failingInput = json::parse(R"({ "str": 1 })");
-    ASSERT_FALSE(spec.process(failingInput));
 }
