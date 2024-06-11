@@ -173,7 +173,7 @@ public:
      * @brief Constructs a validator that calls the given validator `req` and returns a custom error `err` in case `req`
      * fails.
      *
-     * @param req The requirement to validate against
+     * @param reqOrModifier The requirement to validate against
      * @param err The custom error to return in case `req` fails
      */
     WithCustomError(RequirementOrModifierType reqOrModifier, Status err)
@@ -216,6 +216,13 @@ public:
         return {};
     }
 
+    /**
+     * @brief Runs the stored modifier and produces a custom error if the wrapped modifier fails.
+     *
+     * @param value The JSON value representing the outer object. This value can be modified by the modifier.
+     * @param key The key used to retrieve the element from the outer object
+     * @return Possibly an error
+     */
     MaybeError
     modify(boost::json::value& value, std::string_view key) const
         requires SomeModifier<RequirementOrModifierType>
