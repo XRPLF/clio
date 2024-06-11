@@ -30,14 +30,10 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
-#include <boost/json/value_to.hpp>
 #include <ripple/basics/Number.h>
-#include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/STAmount.h>
 #include <ripple/protocol/STObject.h>
-#include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/jss.h>
 
 #include <cstdint>
@@ -48,6 +44,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 namespace rpc {
 
 /**
@@ -164,6 +161,7 @@ public:
             {JS(ledger_index), validation::LedgerIndexValidator},
             // validate quoteAsset in accordance to the currency code found in XRPL doc:
             // https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
+            // usually Clio returns rpcMALFORMED_CURRENCY , return InvalidParam here just to mimic rippled
             {JS(base_asset), validation::Required{}, validation::Type<std::string>{}},
             {JS(quote_asset),
              validation::Required{},
