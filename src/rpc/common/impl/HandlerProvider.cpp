@@ -36,6 +36,7 @@
 #include "rpc/handlers/BookChanges.hpp"
 #include "rpc/handlers/BookOffers.hpp"
 #include "rpc/handlers/DepositAuthorized.hpp"
+#include "rpc/handlers/Feature.hpp"
 #include "rpc/handlers/GatewayBalances.hpp"
 #include "rpc/handlers/GetAggregatePrice.hpp"
 #include "rpc/handlers/Ledger.hpp"
@@ -85,6 +86,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"book_changes", {BookChangesHandler{backend}}},
           {"book_offers", {BookOffersHandler{backend}}},
           {"deposit_authorized", {DepositAuthorizedHandler{backend}}},
+          {"feature", {FeatureHandler{}}},
           {"gateway_balances", {GatewayBalancesHandler{backend}}},
           {"get_aggregate_price", {GetAggregatePriceHandler{backend}}},
           {"ledger", {LedgerHandler{backend}}},
