@@ -23,6 +23,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/MetaProcessors.hpp"
+#include "rpc/common/Modifiers.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
@@ -132,23 +133,26 @@ public:
         static auto constexpr ORACLES_MAX = 200;
 
         static auto const oraclesValidator =
-            validation::CustomValidator{[](boost::json::value const& value, std::string_view) -> MaybeError {
+            modifiers::CustomModifier{[](boost::json::value& value, std::string_view) -> MaybeError {
                 if (!value.is_array() or value.as_array().empty() or value.as_array().size() > ORACLES_MAX)
                     return Error{Status{RippledError::rpcORACLE_MALFORMED}};
 
-                for (auto oracle : value.as_array()) {
+                for (auto& oracle : value.as_array()) {
                     if (!oracle.is_object() or !oracle.as_object().contains(JS(oracle_document_id)) or
                         !oracle.as_object().contains(JS(account)))
                         return Error{Status{RippledError::rpcORACLE_MALFORMED}};
 
-                    auto maybeError =
-                        validation::Type<std::uint32_t>{}.verify(oracle.as_object(), JS(oracle_document_id));
+                    auto maybeError = validation::Type<std::uint32_t, std::string>{}.verify(
+                        oracle.as_object(), JS(oracle_document_id)
+                    );
+                    if (!maybeError)
+                        return maybeError;
 
+                    maybeError = modifiers::ToNumber::modify(oracle, JS(oracle_document_id));
                     if (!maybeError)
                         return maybeError;
 
                     maybeError = validation::AccountBase58Validator.verify(oracle.as_object(), JS(account));
-
                     if (!maybeError)
                         return Error{Status{RippledError::rpcINVALID_PARAMS}};
                 };

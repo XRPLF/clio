@@ -459,6 +459,55 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
     });
 }
 
+TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryStrOracleDocumentId)
+{
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
+
+    auto constexpr documentId = 1;
+    mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                "base_asset": "USD",
+                "quote_asset": "XRP",
+                "oracles": 
+                [
+                    {{
+                        "account": "{}",
+                        "oracle_document_id": "{}"
+                    }}
+                ]
+            }})",
+        ACCOUNT,
+        documentId
+    ));
+
+    auto const expected = json::parse(fmt::format(
+        R"({{
+                "entire_set": 
+                {{
+                    "mean": "10",
+                    "size": 1,
+                    "standard_deviation": "0"
+                }},
+                "median": "10",
+                "time": 4321,
+                "ledger_index": {},
+                "ledger_hash": "{}",
+                "validated": true
+            }})",
+        RANGEMAX,
+        LEDGERHASH
+    ));
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result.value(), expected);
+    });
+}
+
 TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
 {
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))

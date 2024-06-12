@@ -37,7 +37,7 @@
 namespace rpc {
 
 FeatureHandler::Result
-FeatureHandler::process([[maybe_unused]] FeatureHandler::Input input, [[maybe_unused]] Context const& ctx) const
+FeatureHandler::process([[maybe_unused]] FeatureHandler::Input input, [[maybe_unused]] Context const& ctx)
 {
     // For now this handler only fires when "vetoed" is set in the request.
     // This always leads to a `notSupported` error as we don't want anyone to be able to

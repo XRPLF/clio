@@ -93,7 +93,7 @@ public:
         auto toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        auto res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
+        auto res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.isAdmin, ctx.yield);
         if (not res) {
             notifyFailedToForward(ctx.method);
             return Result{Status{RippledError::rpcFAILED_TO_FORWARD}};
