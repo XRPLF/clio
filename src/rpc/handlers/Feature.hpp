@@ -69,8 +69,8 @@ public:
      * @param ctx The context of the request
      * @return The result of the operation
      */
-    Result
-    process(Input input, Context const& ctx) const;  // NOLINT(readability-convert-member-functions-to-static)
+    static Result
+    process(Input input, Context const& ctx);  // NOLINT(readability-convert-member-functions-to-static)
 
 private:
     /**
