@@ -67,6 +67,7 @@ target_sources(
           rpc/handlers/BookOffersTests.cpp
           rpc/handlers/DefaultProcessorTests.cpp
           rpc/handlers/DepositAuthorizedTests.cpp
+          rpc/handlers/FeatureTests.cpp
           rpc/handlers/GatewayBalancesTests.cpp
           rpc/handlers/GetAggregatePriceTests.cpp
           rpc/handlers/LedgerDataTests.cpp

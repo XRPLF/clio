@@ -55,16 +55,21 @@ public:
     bool
     shouldForward(web::Context const& ctx) const
     {
+        auto const& request = ctx.params;
+
         if (ctx.method == "subscribe" || ctx.method == "unsubscribe")
             return false;
+
+        // TODO https://github.com/XRPLF/clio/issues/1131 - remove once clio-native feature is
+        // implemented fully. For now we disallow forwarding of the admin api, only user api is allowed.
+        if (ctx.method == "feature" and not request.contains("vetoed"))
+            return true;
 
         if (handlerProvider_->isClioOnly(ctx.method))
             return false;
 
         if (isProxied(ctx.method))
             return true;
-
-        auto const& request = ctx.params;
 
         if (specifiesCurrentOrClosedLedger(request))
             return true;
@@ -88,7 +93,7 @@ public:
         auto toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        auto res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
+        auto res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.isAdmin, ctx.yield);
         if (not res) {
             notifyFailedToForward(ctx.method);
             return Result{Status{RippledError::rpcFAILED_TO_FORWARD}};

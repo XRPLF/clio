@@ -402,6 +402,7 @@ public:
      * @param fn The callable/function object
      */
     template <typename Fn>
+        requires std::invocable<Fn, boost::json::value const&, std::string_view>
     explicit CustomValidator(Fn&& fn) : validator_{std::forward<Fn>(fn)}
     {
     }
