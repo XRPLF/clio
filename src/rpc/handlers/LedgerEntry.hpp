@@ -24,6 +24,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/common/Checkers.hpp"
 #include "rpc/common/MetaProcessors.hpp"
+#include "rpc/common/Modifiers.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
@@ -296,8 +297,9 @@ public:
                  {JS(oracle_document_id),
                   meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
                   meta::WithCustomError{
-                      validation::Type<uint32_t>{}, Status(ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID)
-                  }},
+                      validation::Type<uint32_t, std::string>{}, Status(ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID)
+                  },
+                  meta::WithCustomError{modifiers::ToNumber{}, Status(ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID)}},
              }}},
             {JS(ledger), check::Deprecated{}},
         };

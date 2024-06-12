@@ -29,6 +29,7 @@
 #include <fmt/core.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/tokens.h>
 
@@ -45,7 +46,7 @@ namespace rpc::validation {
 [[nodiscard]] MaybeError
 Required::verify(boost::json::value const& value, std::string_view key)
 {
-    if (not value.is_object() or not value.as_object().contains(key.data()))
+    if (not value.is_object() or not value.as_object().contains(key))
         return Error{Status{RippledError::rpcINVALID_PARAMS, "Required field '" + std::string{key} + "' missing"}};
 
     return {};
@@ -54,10 +55,10 @@ Required::verify(boost::json::value const& value, std::string_view key)
 [[nodiscard]] MaybeError
 CustomValidator::verify(boost::json::value const& value, std::string_view key) const
 {
-    if (not value.is_object() or not value.as_object().contains(key.data()))
+    if (not value.is_object() or not value.as_object().contains(key))
         return {};  // ignore. field does not exist, let 'required' fail instead
 
-    return validator_(value.as_object().at(key.data()), key);
+    return validator_(value.as_object().at(key), key);
 }
 
 [[nodiscard]] bool
