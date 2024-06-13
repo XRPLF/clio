@@ -128,12 +128,8 @@ private:
 
         boost::asio::steady_timer timer{boost::asio::get_associated_executor(cyield), timeout};
         timer.async_wait([&cancellationSignal](boost::system::error_code errorCode) {
-            if (!errorCode) {
-                std::cout << "Timeout" << std::endl;
+            if (!errorCode)
                 cancellationSignal.emit(boost::asio::cancellation_type::terminal);
-            } else {
-                std::cout << "Timer error: " << errorCode.message() << std::endl;
-            }
         });
         operation(cyield);
     }

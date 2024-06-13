@@ -29,8 +29,10 @@
 
 #include <expected>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 
 class TestWsConnection {
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
@@ -40,6 +42,8 @@ public:
     using ReceiveCallback = std::function<void(std::string)>;
 
     TestWsConnection(boost::beast::websocket::stream<boost::beast::tcp_stream> wsStream);
+
+    TestWsConnection(TestWsConnection&& other);
 
     // returns error message if error occurs
     std::optional<std::string>
@@ -52,6 +56,7 @@ public:
     std::optional<std::string>
     close(boost::asio::yield_context yield);
 };
+using TestWsConnectionPtr = std::unique_ptr<TestWsConnection>;
 
 class TestWsServer {
     boost::asio::ip::tcp::acceptor acceptor_;

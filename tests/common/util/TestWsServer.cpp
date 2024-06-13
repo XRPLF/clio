@@ -34,18 +34,25 @@
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/websocket/error.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
+#include <boost/beast/websocket/stream.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
 #include <gtest/gtest.h>
 
 #include <expected>
+#include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace asio = boost::asio;
 namespace websocket = boost::beast::websocket;
 
 TestWsConnection::TestWsConnection(websocket::stream<boost::beast::tcp_stream> wsStream) : ws_(std::move(wsStream))
+{
+}
+
+TestWsConnection::TestWsConnection(TestWsConnection&& other) : ws_(std::move(other.ws_))
 {
 }
 
@@ -108,7 +115,7 @@ TestWsServer::acceptConnection(asio::yield_context yield)
     if (errorCode)
         return std::unexpected{util::requests::RequestError{"Handshake error", errorCode}};
 
-    return TestWsConnection(std::move(ws));
+    return TestWsConnection{std::move(ws)};
 }
 
 void
