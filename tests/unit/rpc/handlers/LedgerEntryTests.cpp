@@ -2615,8 +2615,6 @@ TEST(RPCLedgerEntrySpecTest, DeprecatedFields)
     EXPECT_NE(warning.at("message").as_string().find("Field 'ledger' is deprecated."), std::string::npos) << warning;
 }
 
-
-
 TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
 {
     static auto constexpr OUT = R"({
@@ -2667,7 +2665,6 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
     });
 }
 
-
 TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
 {
     static auto constexpr OUT = R"({
@@ -2715,7 +2712,6 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
     });
 }
 
-
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
 {
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
@@ -2724,6 +2720,34 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
     auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
     EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
+        }));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "index": "{}",
+                "include_deleted": true
+            }})",
+            INDEX1
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        auto const myerr = err.at("error").as_string();
+        EXPECT_EQ(myerr, "entryNotFound");
+    });
+}
+
+TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist2)
+{
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+
+    auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
+    EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
+            {}
         }));
 
     runSpawn([&, this](auto yield) {
@@ -2792,7 +2816,7 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
 }
 
 
-TEST_F(RPCLedgerEntryTest, TwoObjectsIncludeDeleteFalse)
+TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
 {
     static auto constexpr OUT = R"({
         "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
