@@ -194,7 +194,7 @@ public:
     operator()(Args&&... args)
     {
         return makeSource(std::forward<Args>(args)...);
-    };
+    }
 
     MOCK_METHOD(
         etl::SourcePtr,
