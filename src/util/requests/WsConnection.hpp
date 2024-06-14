@@ -53,6 +53,7 @@ public:
      * @brief Read a message from the WebSocket
      *
      * @param yield yield context
+     * @param timeout timeout for the operation
      * @return Message or error
      */
     virtual std::expected<std::string, RequestError>
@@ -66,6 +67,7 @@ public:
      *
      * @param message message to write
      * @param yield yield context
+     * @param timeout timeout for the operation
      * @return Error if any
      */
     virtual std::optional<RequestError>

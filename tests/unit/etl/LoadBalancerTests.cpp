@@ -533,6 +533,7 @@ TEST_F(LoadBalancerForwardToRippledTests, forward)
 
 TEST_F(LoadBalancerForwardToRippledTests, forwardWithXUserHeader)
 {
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     auto loadBalancer = makeLoadBalancer();
     EXPECT_CALL(
         sourceFactory_.sourceAt(0),
@@ -607,6 +608,7 @@ TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheEnabled)
 
 TEST_F(LoadBalancerForwardToRippledTests, forwardingCacheDisabledOnLedgerClosedHookCalled)
 {
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     auto loadBalancer = makeLoadBalancer();
     EXPECT_NO_THROW(sourceFactory_.callbacksAt(0).onLedgerClosed());
 }
