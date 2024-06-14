@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -37,7 +38,7 @@ using namespace etl::impl;
 
 struct ForwardingSourceTests : SyncAsioContextTest {
     TestWsServer server_{ctx, "0.0.0.0", 11114};
-    ForwardingSource forwardingSource{"127.0.0.1", "11114", std::chrono::milliseconds{1}};
+    ForwardingSource forwardingSource{"127.0.0.1", "11114", std::chrono::milliseconds{1}, std::chrono::milliseconds{1}};
 };
 
 TEST_F(ForwardingSourceTests, ConnectionFailed)
@@ -93,6 +94,19 @@ TEST_F(ForwardingSourceOperationsTests, ReadFailed)
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
         auto connection = serverConnection(yield);
         connection.close(yield);
+    });
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
+        EXPECT_FALSE(result);
+    });
+}
+
+TEST_F(ForwardingSourceOperationsTests, ReadTimeout)
+{
+    TestWsConnectionPtr connection;
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        connection = std::make_unique<TestWsConnection>(serverConnection(yield));
     });
 
     runSpawn([&](boost::asio::yield_context yield) {

@@ -19,6 +19,8 @@
 
 #include "util/config/Config.hpp"
 
+#include "util/Assert.hpp"
+#include "util/Constants.hpp"
 #include "util/config/impl/Helpers.hpp"
 #include "util/log/Logger.hpp"
 
@@ -28,6 +30,8 @@
 #include <boost/json/value.hpp>
 
 #include <algorithm>
+#include <chrono>
+#include <cmath>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -176,6 +180,13 @@ Config::array() const
         return Config{element};
     });
     return out;
+}
+
+std::chrono::milliseconds
+Config::toMilliseconds(float value)
+{
+    ASSERT(value >= 0.0f, "Floating point value of seconds must be non-negative, got: {}", value);
+    return std::chrono::milliseconds{std::lroundf(value * static_cast<float>(util::MILLISECONDS_PER_SECOND))};
 }
 
 Config

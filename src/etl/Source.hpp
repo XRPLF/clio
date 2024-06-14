@@ -32,6 +32,7 @@
 #include <grpcpp/support/status.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -149,6 +150,7 @@ using SourceFactory = std::function<SourcePtr(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+    std::chrono::steady_clock::duration forwardingTimeout,
     SourceBase::OnConnectHook onConnect,
     SourceBase::OnDisconnectHook onDisconnect,
     SourceBase::OnLedgerClosedHook onLedgerClosed
@@ -162,6 +164,7 @@ using SourceFactory = std::function<SourcePtr(
  * @param backend BackendInterface implementation
  * @param subscriptions Subscription manager
  * @param validatedLedgers The network validated ledgers data structure
+ * @param forwardingTimeout The timeout for forwarding to rippled
  * @param onConnect The hook to call on connect
  * @param onDisconnect The hook to call on disconnect
  * @param onLedgerClosed The hook to call on ledger closed. This is called when a ledger is closed and the source is set
@@ -175,6 +178,7 @@ make_Source(
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
     std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+    std::chrono::steady_clock::duration forwardingTimeout,
     SourceBase::OnConnectHook onConnect,
     SourceBase::OnDisconnectHook onDisconnect,
     SourceBase::OnLedgerClosedHook onLedgerClosed

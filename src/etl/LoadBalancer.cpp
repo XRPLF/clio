@@ -77,11 +77,9 @@ LoadBalancer::LoadBalancer(
     SourceFactory sourceFactory
 )
 {
-    auto const forwardingCacheTimeout = config.valueOr<float>("forwarding_cache_timeout", 0.f);
+    auto const forwardingCacheTimeout = config.valueOr<float>("forwarding.cache_timeout", 0.f);
     if (forwardingCacheTimeout > 0.f) {
-        forwardingCache_ = impl::ForwardingCache{std::chrono::milliseconds{
-            std::lroundf(forwardingCacheTimeout * static_cast<float>(util::MILLISECONDS_PER_SECOND))
-        }};
+        forwardingCache_ = impl::ForwardingCache{Config::toMilliseconds(forwardingCacheTimeout)};
     }
 
     static constexpr std::uint32_t MAX_DOWNLOAD = 256;
@@ -103,6 +101,7 @@ LoadBalancer::LoadBalancer(
         }
     };
 
+    auto const forwardingTimeout = Config::toMilliseconds(config.valueOr<float>("forwarding.request_timeout", 10.));
     for (auto const& entry : config.array("etl_sources")) {
         auto source = sourceFactory(
             entry,
@@ -110,6 +109,7 @@ LoadBalancer::LoadBalancer(
             backend,
             subscriptions,
             validatedLedgers,
+            forwardingTimeout,
             [this]() {
                 if (not hasForwardingSource_)
                     chooseForwardingSource();

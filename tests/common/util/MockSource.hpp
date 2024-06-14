@@ -19,6 +19,7 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
+#include "etl/ETLHelpers.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
@@ -34,6 +35,7 @@
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -156,28 +158,57 @@ class MockSourceFactoryImpl {
 public:
     MockSourceFactoryImpl(size_t numSources)
     {
+        setSourcesNumber(numSources);
+
+        ON_CALL(*this, makeSource)
+            .WillByDefault([this](
+                               util::Config const&,
+                               boost::asio::io_context&,
+                               std::shared_ptr<BackendInterface>,
+                               std::shared_ptr<feed::SubscriptionManagerInterface>,
+                               std::shared_ptr<etl::NetworkValidatedLedgersInterface>,
+                               std::chrono::steady_clock::duration,
+                               etl::SourceBase::OnConnectHook onConnect,
+                               etl::SourceBase::OnDisconnectHook onDisconnect,
+                               etl::SourceBase::OnLedgerClosedHook onLedgerClosed
+                           ) {
+                auto it = std::ranges::find_if(mockData_, [](auto const& d) { return not d.callbacks.has_value(); });
+                [&]() { ASSERT_NE(it, mockData_.end()) << "Make source called more than expected"; }();
+                it->callbacks =
+                    MockSourceCallbacks{std::move(onDisconnect), std::move(onConnect), std::move(onLedgerClosed)};
+
+                return std::make_unique<MockSourceWrapper<MockType>>(it->source);
+            });
+    }
+
+    void
+    setSourcesNumber(size_t numSources)
+    {
+        mockData_.clear();
         mockData_.reserve(numSources);
         std::ranges::generate_n(std::back_inserter(mockData_), numSources, [] { return MockSourceData<MockType>{}; });
     }
 
+    template <typename... Args>
     etl::SourcePtr
-    makeSourceMock(
-        util::Config const&,
-        boost::asio::io_context&,
-        std::shared_ptr<BackendInterface>,
-        std::shared_ptr<feed::SubscriptionManagerInterface>,
-        std::shared_ptr<etl::NetworkValidatedLedgersInterface>,
-        etl::SourceBase::OnConnectHook onConnect,
-        etl::SourceBase::OnDisconnectHook onDisconnect,
-        etl::SourceBase::OnLedgerClosedHook onLedgerClosed
-    )
+    operator()(Args&&... args)
     {
-        auto it = std::ranges::find_if(mockData_, [](auto const& d) { return not d.callbacks.has_value(); });
-        [&]() { ASSERT_NE(it, mockData_.end()) << "Make source called more than expected"; }();
-        it->callbacks = MockSourceCallbacks{std::move(onDisconnect), std::move(onConnect), std::move(onLedgerClosed)};
-
-        return std::make_unique<MockSourceWrapper<MockType>>(it->source);
+        return makeSource(std::forward<Args>(args)...);
     }
+
+    MOCK_METHOD(
+        etl::SourcePtr,
+        makeSource,
+        (util::Config const&,
+         boost::asio::io_context&,
+         std::shared_ptr<BackendInterface>,
+         std::shared_ptr<feed::SubscriptionManagerInterface>,
+         std::shared_ptr<etl::NetworkValidatedLedgersInterface>,
+         std::chrono::steady_clock::duration,
+         etl::SourceBase::OnConnectHook,
+         etl::SourceBase::OnDisconnectHook,
+         etl::SourceBase::OnLedgerClosedHook)
+    );
 
     MockType<MockSource>&
     sourceAt(size_t index)
@@ -194,5 +225,5 @@ public:
     }
 };
 
-using MockSourceFactory = MockSourceFactoryImpl<>;
-using StrictMockSourceFactory = MockSourceFactoryImpl<testing::StrictMock>;
+using MockSourceFactory = testing::NiceMock<MockSourceFactoryImpl<>>;
+using StrictMockSourceFactory = testing::StrictMock<MockSourceFactoryImpl<testing::StrictMock>>;
