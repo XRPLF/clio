@@ -23,6 +23,7 @@
 #include "rpc/handlers/Feature.hpp"
 #include "util/Fixtures.hpp"
 
+#include <boost/asio/io_context.hpp>
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
 
@@ -45,4 +46,14 @@ TEST_F(RPCFeatureHandlerTest, AlwaysNoPermissionForVetoed)
             err.at("error_message").as_string(), "The admin portion of feature API is not available through Clio."
         );
     });
+}
+
+TEST(RPCFeatureHandlerDeathTest, ProcessCausesDeath)
+{
+    FeatureHandler handler{};
+    boost::asio::io_context ioContext;
+    boost::asio::spawn(ioContext, [&](auto yield) {
+        EXPECT_DEATH(handler.process(FeatureHandler::Input{"foo"}, Context{yield}), "");
+    });
+    ioContext.run();
 }

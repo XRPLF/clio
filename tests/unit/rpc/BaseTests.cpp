@@ -31,6 +31,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ripple/protocol/AccountID.h>
 #include <ripple/protocol/ErrorCodes.h>
@@ -603,4 +604,50 @@ TEST_F(RPCBaseTest, ToLowerModifier)
     auto passingInput4 = json::parse(R"({ "str": "" })");
     ASSERT_TRUE(spec.process(passingInput4));  // empty str no problem
     ASSERT_EQ(passingInput4.at("str").as_string(), "");
+}
+
+TEST_F(RPCBaseTest, ToNumberModifier)
+{
+    auto const spec = RpcSpec{
+        {"str", ToNumber{}},
+    };
+
+    auto passingInput = json::parse(R"({ "str": [] })");
+    ASSERT_TRUE(spec.process(passingInput));
+
+    passingInput = json::parse(R"({ "str2": "TesT" })");
+    ASSERT_TRUE(spec.process(passingInput));
+
+    passingInput = json::parse(R"([])");
+    ASSERT_TRUE(spec.process(passingInput));
+
+    passingInput = json::parse(R"({ "str": "123" })");
+    ASSERT_TRUE(spec.process(passingInput));
+    ASSERT_EQ(passingInput.at("str").as_int64(), 123);
+
+    auto failingInput = json::parse(R"({ "str": "ok" })");
+    ASSERT_FALSE(spec.process(failingInput));
+
+    failingInput = json::parse(R"({ "str": "123.123" })");
+    ASSERT_FALSE(spec.process(failingInput));
+}
+
+TEST_F(RPCBaseTest, CustomModifier)
+{
+    testing::StrictMock<testing::MockFunction<MaybeError(json::value & value, std::string_view)>> mockModifier;
+    auto const customModifier = CustomModifier{mockModifier.AsStdFunction()};
+    auto const spec = RpcSpec{
+        {"str", customModifier},
+    };
+
+    EXPECT_CALL(mockModifier, Call).WillOnce(testing::Return(MaybeError{}));
+    auto passingInput = json::parse(R"({ "str": "sss" })");
+    ASSERT_TRUE(spec.process(passingInput));
+
+    passingInput = json::parse(R"({ "strNotExist": 123 })");
+    ASSERT_TRUE(spec.process(passingInput));
+
+    // not a json object
+    passingInput = json::parse(R"([])");
+    ASSERT_TRUE(spec.process(passingInput));
 }

@@ -25,6 +25,7 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
@@ -36,10 +37,11 @@
 namespace rpc {
 
 FeatureHandler::Result
-FeatureHandler::process([[maybe_unused]] FeatureHandler::Input input, [[maybe_unused]] Context const& ctx) const
+FeatureHandler::process([[maybe_unused]] FeatureHandler::Input input, [[maybe_unused]] Context const& ctx)
 {
     // For now this handler only fires when "vetoed" is set in the request.
     // This always leads to a `notSupported` error as we don't want anyone to be able to
+    ASSERT(false, "FeatureHandler::process is not implemented.");
     return Output{};
 }
 

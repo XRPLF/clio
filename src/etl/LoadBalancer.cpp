@@ -115,7 +115,10 @@ LoadBalancer::LoadBalancer(
                     chooseForwardingSource();
             },
             [this]() { chooseForwardingSource(); },
-            [this]() { forwardingCache_->invalidate(); }
+            [this]() {
+                if (forwardingCache_.has_value())
+                    forwardingCache_->invalidate();
+            }
         );
 
         // checking etl node validity
@@ -213,6 +216,7 @@ std::optional<boost::json::object>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
+    bool isAdmin,
     boost::asio::yield_context yield
 )
 {
@@ -227,9 +231,11 @@ LoadBalancer::forwardToRippled(
 
     auto numAttempts = 0u;
 
+    auto xUserValue = isAdmin ? ADMIN_FORWARDING_X_USER_VALUE : USER_FORWARDING_X_USER_VALUE;
+
     std::optional<boost::json::object> response;
     while (numAttempts < sources_.size()) {
-        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, yield)) {
+        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield)) {
             response = std::move(res);
             break;
         }

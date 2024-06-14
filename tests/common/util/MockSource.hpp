@@ -41,7 +41,7 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_map>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -62,7 +62,7 @@ struct MockSource : etl::SourceBase {
     MOCK_METHOD(
         std::optional<boost::json::object>,
         forwardToRippled,
-        (boost::json::object const&, std::optional<std::string> const&, boost::asio::yield_context),
+        (boost::json::object const&, std::optional<std::string> const&, std::string_view, boost::asio::yield_context),
         (const, override)
     );
 };
@@ -131,10 +131,11 @@ public:
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,
+        std::string_view xUserValue,
         boost::asio::yield_context yield
     ) const override
     {
-        return mock_->forwardToRippled(request, forwardToRippledClientIp, yield);
+        return mock_->forwardToRippled(request, forwardToRippledClientIp, xUserValue, yield);
     }
 };
 

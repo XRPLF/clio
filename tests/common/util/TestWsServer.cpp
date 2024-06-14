@@ -32,27 +32,37 @@
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/role.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/http/field.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
 #include <boost/beast/websocket/error.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <expected>
 #include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 namespace asio = boost::asio;
 namespace websocket = boost::beast::websocket;
 
-TestWsConnection::TestWsConnection(websocket::stream<boost::beast::tcp_stream> wsStream) : ws_(std::move(wsStream))
+TestWsConnection::TestWsConnection(
+    websocket::stream<boost::beast::tcp_stream> wsStream,
+    std::vector<util::requests::HttpHeader> headers
+)
+    : ws_(std::move(wsStream)), headers_(std::move(headers))
 {
 }
 
-TestWsConnection::TestWsConnection(TestWsConnection&& other) : ws_(std::move(other.ws_))
+TestWsConnection::TestWsConnection(TestWsConnection&& other)
+    : ws_(std::move(other.ws_)), headers_(std::move(other.headers_))
 {
 }
 
@@ -90,6 +100,12 @@ TestWsConnection::close(boost::asio::yield_context yield)
     return std::nullopt;
 }
 
+std::vector<util::requests::HttpHeader> const&
+TestWsConnection::headers() const
+{
+    return headers_;
+}
+
 TestWsServer::TestWsServer(asio::io_context& context, std::string const& host, int port) : acceptor_(context)
 {
     auto endpoint = asio::ip::tcp::endpoint(boost::asio::ip::make_address(host), port);
@@ -109,13 +125,28 @@ TestWsServer::acceptConnection(asio::yield_context yield)
     if (errorCode)
         return std::unexpected{util::requests::RequestError{"Accept error", errorCode}};
 
+    boost::beast::flat_buffer buffer;
+    boost::beast::http::request<boost::beast::http::string_body> request;
+    boost::beast::http::async_read(socket, buffer, request, yield[errorCode]);
+    if (errorCode)
+        return std::unexpected{util::requests::RequestError{"Read error", errorCode}};
+    std::vector<util::requests::HttpHeader> headers;
+    std::transform(request.begin(), request.end(), std::back_inserter(headers), [](auto const& header) {
+        if (header.name() == boost::beast::http::field::unknown)
+            return util::requests::HttpHeader{header.name_string(), header.value()};
+
+        return util::requests::HttpHeader{header.name(), header.value()};
+    });
+    if (not boost::beast::websocket::is_upgrade(request))
+        return std::unexpected{util::requests::RequestError{"Not a websocket request"}};
+
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws(std::move(socket));
     ws.set_option(websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
-    ws.async_accept(yield[errorCode]);
+    ws.async_accept(request, yield[errorCode]);
     if (errorCode)
         return std::unexpected{util::requests::RequestError{"Handshake error", errorCode}};
 
-    return TestWsConnection{std::move(ws)};
+    return TestWsConnection(std::move(ws), std::move(headers));
 }
 
 void
