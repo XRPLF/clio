@@ -34,13 +34,15 @@ namespace etl::impl {
 class ForwardingSource {
     util::Logger log_;
     util::requests::WsConnectionBuilder connectionBuilder_;
+    std::chrono::steady_clock::duration forwardingTimeout_;
 
     static constexpr std::chrono::seconds CONNECTION_TIMEOUT{3};
 
 public:
     ForwardingSource(
-        std::string ip_,
-        std::string wsPort_,
+        std::string ip,
+        std::string wsPort,
+        std::chrono::steady_clock::duration forwardingTimeout,
         std::chrono::steady_clock::duration connectionTimeout = CONNECTION_TIMEOUT
     );
 
