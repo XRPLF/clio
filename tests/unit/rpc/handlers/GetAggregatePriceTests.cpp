@@ -145,6 +145,38 @@ generateTestValuesForParametersTest()
             "Required field 'base_asset' missing"
         },
         GetAggregatePriceParamTestCaseBundle{
+            "invalid_base_asset",
+            R"({
+                    "quote_asset" : "USD",
+                    "base_asset": "asdf",
+                    "oracles": 
+                    [
+                        {
+                            "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                            "oracle_document_id": 2
+                        }
+                    ]
+                })",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "invalid_base_asset2",
+            R"({
+                    "quote_asset" : "USD",
+                    "base_asset": "+aa",
+                    "oracles": 
+                    [
+                        {
+                            "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                            "oracle_document_id": 2
+                        }
+                    ]
+                })",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
             "no_quote_asset",
             R"({
                     "base_asset": "USD",
