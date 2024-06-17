@@ -25,7 +25,6 @@
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
-#include "util/Constants.hpp"
 #include "util/Random.hpp"
 #include "util/log/Logger.hpp"
 
@@ -38,7 +37,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
