@@ -5,6 +5,32 @@
 # This script checks the format of the code and cmake files.
 # In many cases it will automatically fix the issues and abort the commit.
 
+no_formatted_files_staged() {
+    staged_files=$(git diff-index --cached --name-only HEAD)
+    for file in $staged_files; do
+        extension=${file##*.}
+        if [[ "$extension" =~ (h|hpp|c|cpp)$ ]]; then
+            formatted_file_found=true
+        fi
+        if [[ "$extension" =~ (cmake|txt)$ ]]; then
+            if [ "$extension" = "cmake" ]; then
+                formatted_file_found=true
+            fi
+            if [ "$(basename $file .txt)" = "CMakeLists" ]; then
+                formatted_file_found=true
+            fi
+        fi
+        if [ "$formatted_file_found" = "true" ] ; then
+            return 1
+        fi
+    done
+    return 0
+}
+
+if no_formatted_files_staged ; then
+    exit 0
+fi
+
 echo "+ Checking code format..."
 
 # paths to check and re-format
