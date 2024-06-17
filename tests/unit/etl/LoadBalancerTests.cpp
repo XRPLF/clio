@@ -115,7 +115,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesFail)
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_SourceAllReturnError)
+TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesReturnError)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
