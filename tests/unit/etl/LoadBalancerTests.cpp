@@ -109,7 +109,7 @@ TEST_F(LoadBalancerConstructorTests, forwardingTimeoutPassedToSourceFactory)
 
 TEST_F(LoadBalancerConstructorTests, fetchETLState_SourceAllFail)
 {
-    EXPECT_CALL(sourceFactory_, makeSource).Times(1);
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(std::nullopt));
     EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(std::nullopt));
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
@@ -117,7 +117,7 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_SourceAllFail)
 
 TEST_F(LoadBalancerConstructorTests, fetchETLState_SourceAllReturnError)
 {
-    EXPECT_CALL(sourceFactory_, makeSource).Times(1);
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
         .WillOnce(Return(boost::json::object{{"error", "some error"}}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
