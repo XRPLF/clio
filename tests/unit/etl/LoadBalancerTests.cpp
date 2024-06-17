@@ -107,30 +107,42 @@ TEST_F(LoadBalancerConstructorTests, forwardingTimeoutPassedToSourceFactory)
     makeLoadBalancer();
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_Source0Fails)
+TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesFail)
 {
-    EXPECT_CALL(sourceFactory_, makeSource).Times(1);
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(std::nullopt));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), toString);
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(std::nullopt));
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_Source0ReturnsError)
+TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesReturnError)
 {
-    EXPECT_CALL(sourceFactory_, makeSource).Times(1);
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
         .WillOnce(Return(boost::json::object{{"error", "some error"}}));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), toString);
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+        .WillOnce(Return(boost::json::object{{"error", "some error"}}));
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_Source1Fails)
+TEST_F(LoadBalancerConstructorTests, fetchETLState_Source1Fails0OK)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(std::nullopt));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), toString);
-    EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
+    EXPECT_CALL(sourceFactory_.sourceAt(0), run);
+    EXPECT_CALL(sourceFactory_.sourceAt(1), run);
+    makeLoadBalancer();
+}
+
+TEST_F(LoadBalancerConstructorTests, fetchETLState_Source0Fails1OK)
+{
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
+    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(boost::json::object{}));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), run);
+    EXPECT_CALL(sourceFactory_.sourceAt(1), run);
+    makeLoadBalancer();
 }
 
 TEST_F(LoadBalancerConstructorTests, fetchETLState_DifferentNetworkID)
@@ -144,13 +156,12 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_DifferentNetworkID)
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
-TEST_F(LoadBalancerConstructorTests, fetchETLState_Source1FailsButAllowNoEtlIsTrue)
+TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesFailButAllowNoEtlIsTrue)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
     EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(std::nullopt));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), toString);
     EXPECT_CALL(sourceFactory_.sourceAt(1), run);
 
     configJson_.as_object()["allow_no_etl"] = true;
