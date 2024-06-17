@@ -29,8 +29,10 @@
 
 #include <expected>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 class TestWsConnection {
@@ -46,6 +48,8 @@ public:
         std::vector<util::requests::HttpHeader> headers
     );
 
+    TestWsConnection(TestWsConnection&& other);
+
     // returns error message if error occurs
     std::optional<std::string>
     send(std::string const& message, boost::asio::yield_context yield);
@@ -60,6 +64,7 @@ public:
     std::vector<util::requests::HttpHeader> const&
     headers() const;
 };
+using TestWsConnectionPtr = std::unique_ptr<TestWsConnection>;
 
 class TestWsServer {
     boost::asio::ip::tcp::acceptor acceptor_;

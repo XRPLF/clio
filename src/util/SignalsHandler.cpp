@@ -20,12 +20,10 @@
 #include "util/SignalsHandler.hpp"
 
 #include "util/Assert.hpp"
-#include "util/Constants.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
 #include <chrono>
-#include <cmath>
 #include <csignal>
 #include <cstddef>
 #include <functional>
@@ -101,10 +99,8 @@ SignalsHandler::SignalsHandler(Config const& config, std::function<void()> force
 {
     impl::SignalsHandlerStatic::registerHandler(*this);
 
-    auto const gracefulPeriod =
-        std::round(config.valueOr("graceful_period", 10.f) * static_cast<float>(util::MILLISECONDS_PER_SECOND));
-    ASSERT(gracefulPeriod >= 0.f, "Graceful period must be non-negative");
-    gracefulPeriod_ = std::chrono::milliseconds{static_cast<size_t>(gracefulPeriod)};
+    gracefulPeriod_ = Config::toMilliseconds(config.valueOr("graceful_period", 10.f));
+    ASSERT(gracefulPeriod_.count() >= 0, "Graceful period must be non-negative");
 
     setHandler(impl::SignalsHandlerStatic::handleSignal);
 }

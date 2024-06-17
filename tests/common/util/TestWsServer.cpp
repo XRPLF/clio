@@ -37,6 +37,7 @@
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/websocket/error.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
+#include <boost/beast/websocket/stream.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
 #include <gtest/gtest.h>
 
@@ -56,6 +57,11 @@ TestWsConnection::TestWsConnection(
     std::vector<util::requests::HttpHeader> headers
 )
     : ws_(std::move(wsStream)), headers_(std::move(headers))
+{
+}
+
+TestWsConnection::TestWsConnection(TestWsConnection&& other)
+    : ws_(std::move(other.ws_)), headers_(std::move(other.headers_))
 {
 }
 
