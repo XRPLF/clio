@@ -284,7 +284,7 @@ TEST_F(WsConnectionTests, CloseConnection)
 
 TEST_F(WsConnectionTests, CloseConnectionTimeout)
 {
-    TestWsConnectionPtr serverConnection;
+    TestWsConnectionPtr const serverConnection;
     asio::spawn(ctx, [&](asio::yield_context yield) {
         auto serverConnection = std::make_unique<TestWsConnection>(unwrap(server.acceptConnection(yield)));
     });
