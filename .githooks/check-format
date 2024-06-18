@@ -4,12 +4,6 @@
 #
 # This script checks the format of the code and cmake files.
 # In many cases it will automatically fix the issues and abort the commit.
-#!/bin/bash
-
-# Note: This script is intended to be run from the root of the repository.
-#
-# This script checks the format of the code and cmake files.
-# In many cases it will automatically fix the issues and abort the commit.
 
 no_formatted_directories_staged() {
     staged_directories=$(git diff-index --cached --name-only HEAD | awk -F/ '{print $1}')
