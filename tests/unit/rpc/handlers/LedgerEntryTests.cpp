@@ -2767,6 +2767,35 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist2)
     });
 }
 
+TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist3)
+{
+    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+
+    auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
+    EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
+            {ledgerinfo.seq, {}}
+        }));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "index": "{}",
+                "include_deleted": true
+            }})",
+            INDEX1
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        auto const myerr = err.at("error").as_string();
+        EXPECT_EQ(myerr, "entryNotFound");
+    });
+}
+
+
 TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
 {
     static auto constexpr OUT = R"({
