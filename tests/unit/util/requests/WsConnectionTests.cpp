@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/AssignRandomPort.hpp"
 #include "util/Fixtures.hpp"
 #include "util/TestWsServer.hpp"
 #include "util/requests/Types.hpp"
@@ -29,6 +30,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <expected>
 #include <memory>
 #include <optional>
@@ -41,8 +43,8 @@ namespace asio = boost::asio;
 namespace http = boost::beast::http;
 
 struct WsConnectionTestsBase : SyncAsioContextTest {
-    WsConnectionBuilder builder{"localhost", "11112"};
-    TestWsServer server{ctx, "0.0.0.0", 11112};
+    TestWsServer server{ctx, "0.0.0.0"};
+    WsConnectionBuilder builder{"localhost", server.port()};
 
     template <typename T, typename E>
     T

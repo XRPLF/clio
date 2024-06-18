@@ -41,9 +41,8 @@ public:
      *
      * @param context boost::asio::io_context to use for networking
      * @param host host to bind to
-     * @param port port to bind to
      */
-    TestHttpServer(boost::asio::io_context& context, std::string host, int port);
+    TestHttpServer(boost::asio::io_context& context, std::string host);
 
     /**
      * @brief Start the server
@@ -55,6 +54,14 @@ public:
      */
     void
     handleRequest(RequestHandler handler, bool allowToFail = false);
+
+    /**
+     * @brief Return the port HTTP server is connected to
+     *
+     * @return string port number
+     */
+    std::string
+    port() const;
 
 private:
     boost::asio::ip::tcp::acceptor acceptor_;

@@ -105,9 +105,9 @@ doSession(
 
 }  // namespace
 
-TestHttpServer::TestHttpServer(boost::asio::io_context& context, std::string host, int const port) : acceptor_(context)
+TestHttpServer::TestHttpServer(boost::asio::io_context& context, std::string host) : acceptor_(context)
 {
-    boost::asio::ip::tcp::endpoint const endpoint(boost::asio::ip::make_address(host), port);
+    boost::asio::ip::tcp::endpoint const endpoint(boost::asio::ip::make_address(host), 0);
     acceptor_.open(endpoint.protocol());
     acceptor_.set_option(asio::socket_base::reuse_address(true));
     acceptor_.bind(endpoint);
@@ -133,4 +133,10 @@ TestHttpServer::handleRequest(TestHttpServer::RequestHandler handler, bool const
         },
         boost::asio::detached
     );
+}
+
+std::string
+TestHttpServer::port() const
+{
+    return std::to_string(acceptor_.local_endpoint().port());
 }

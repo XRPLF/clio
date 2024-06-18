@@ -70,7 +70,10 @@ class TestWsServer {
     boost::asio::ip::tcp::acceptor acceptor_;
 
 public:
-    TestWsServer(boost::asio::io_context& context, std::string const& host, int port);
+    TestWsServer(boost::asio::io_context& context, std::string const& host);
+
+    std::string
+    port() const;
 
     std::expected<TestWsConnection, util::requests::RequestError>
     acceptConnection(boost::asio::yield_context yield);
