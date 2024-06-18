@@ -163,10 +163,12 @@ public:
         static auto const rpcSpec = RpcSpec{
             {JS(ledger_hash), validation::Uint256HexStringValidator},
             {JS(ledger_index), validation::LedgerIndexValidator},
-            // validate quoteAsset in accordance to the currency code found in XRPL doc:
+            // validate quoteAsset and base_asset in accordance to the currency code found in XRPL doc:
             // https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
             // usually Clio returns rpcMALFORMED_CURRENCY , return InvalidParam here just to mimic rippled
-            {JS(base_asset), validation::Required{}, validation::Type<std::string>{}},
+            {JS(base_asset),
+             validation::Required{},
+             meta::WithCustomError{validation::CurrencyValidator, Status(RippledError::rpcINVALID_PARAMS)}},
             {JS(quote_asset),
              validation::Required{},
              meta::WithCustomError{validation::CurrencyValidator, Status(RippledError::rpcINVALID_PARAMS)}},
