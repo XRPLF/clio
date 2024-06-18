@@ -4,30 +4,24 @@
 #
 # This script checks the format of the code and cmake files.
 # In many cases it will automatically fix the issues and abort the commit.
+#!/bin/bash
 
-no_formatted_files_staged() {
-    staged_files=$(git diff-index --cached --name-only HEAD)
-    for file in $staged_files; do
-        extension=${file##*.}
-        if [[ "$extension" =~ (h|hpp|c|cpp)$ ]]; then
-            formatted_file_found=true
-        fi
-        if [[ "$extension" =~ (cmake|txt)$ ]]; then
-            if [ "$extension" = "cmake" ]; then
-                formatted_file_found=true
-            fi
-            if [ "$(basename $file .txt)" = "CMakeLists" ]; then
-                formatted_file_found=true
-            fi
-        fi
-        if [ "$formatted_file_found" = "true" ] ; then
+# Note: This script is intended to be run from the root of the repository.
+#
+# This script checks the format of the code and cmake files.
+# In many cases it will automatically fix the issues and abort the commit.
+
+no_formatted_directories_staged() {
+    staged_directories=$(git diff-index --cached --name-only HEAD | awk -F/ '{print $1}')
+    for sd in $staged_directories; do
+        if [[ "$sd" =~ ^(benchmark|cmake|src|tests)$ ]]; then
             return 1
         fi
     done
     return 0
 }
 
-if no_formatted_files_staged ; then
+if no_formatted_directories_staged ; then
     exit 0
 fi
 
