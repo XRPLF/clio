@@ -32,7 +32,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <cstdint>
 #include <expected>
 #include <optional>
 #include <string>
