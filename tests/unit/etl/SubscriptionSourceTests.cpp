@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "etl/impl/SubscriptionSource.hpp"
-#include "util/AssignRandomPort.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockSubscriptionManager.hpp"
@@ -32,7 +31,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <cstdint>
 #include <optional>
 #include <string>
 #include <utility>

@@ -44,11 +44,9 @@
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <condition_variable>
 #include <cstdint>
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -518,7 +516,7 @@ TEST_P(WebServerAdminTest, WsAdminCheck)
     Config const serverConfig{parse(GetParam().config)};
     auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
-    uint32_t webServerPort = serverConfig.value<uint32_t>("server.port");
+    uint32_t const webServerPort = serverConfig.value<uint32_t>("server.port");
     wsClient.connect("localhost", std::to_string(webServerPort), GetParam().headers);
     std::string const request = "Why hello";
     auto const res = wsClient.syncPost(request);
@@ -532,7 +530,7 @@ TEST_P(WebServerAdminTest, HttpAdminCheck)
     Config const serverConfig{parse(GetParam().config)};
     auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
     std::string const request = "Why hello";
-    uint32_t webServerPort = serverConfig.value<uint32_t>("server.port");
+    uint32_t const webServerPort = serverConfig.value<uint32_t>("server.port");
     auto const res = HttpSyncClient::syncPost("localhost", std::to_string(webServerPort), request, GetParam().headers);
     EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
 }
@@ -607,7 +605,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminSet)
 {
     uint32_t webServerPort = tests::util::generateFreePort();
-    std::string JSONServerConfigWithBothAdminPasswordAndLocalAdmin = fmt::format(
+    std::string const JSONServerConfigWithBothAdminPasswordAndLocalAdmin = fmt::format(
         R"JSON({{
         "server":{{
                 "ip": "0.0.0.0",
@@ -627,7 +625,7 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminSet)
 TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
 {
     uint32_t webServerPort = tests::util::generateFreePort();
-    std::string JSONServerConfigWithNoAdminPasswordAndLocalAdminFalse = fmt::format(
+    std::string const JSONServerConfigWithNoAdminPasswordAndLocalAdminFalse = fmt::format(
         R"JSON({{
         "server": {{
             "ip": "0.0.0.0",
@@ -648,7 +646,7 @@ struct WebServerPrometheusTest : util::prometheus::WithPrometheus, WebServerTest
 TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
 {
     auto e = std::make_shared<EchoExecutor>();
-    uint32_t webServerPort = tests::util::generateFreePort();
+    uint32_t const webServerPort = tests::util::generateFreePort();
     Config const serverConfig{parse(JSONServerConfigWithAdminPassword(webServerPort))};
     auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
     auto const res = HttpSyncClient::syncGet("localhost", std::to_string(webServerPort), "", "/metrics");
@@ -658,7 +656,7 @@ TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
 TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
 {
     uint32_t webServerPort = tests::util::generateFreePort();
-    std::string JSONServerConfigWithDisabledPrometheus = fmt::format(
+    std::string const JSONServerConfigWithDisabledPrometheus = fmt::format(
         R"JSON({{
         "server":{{
                 "ip": "0.0.0.0",
@@ -689,7 +687,7 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
 
 TEST_F(WebServerPrometheusTest, validResponse)
 {
-    uint32_t webServerPort = tests::util::generateFreePort();
+    uint32_t const webServerPort = tests::util::generateFreePort();
     auto& testCounter = PrometheusService::counterInt("test_counter", util::prometheus::Labels());
     ++testCounter;
     auto e = std::make_shared<EchoExecutor>();
