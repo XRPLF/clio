@@ -51,7 +51,8 @@ TEST(LedgerUtilsTests, LedgerObjectTypeList)
         JS(xchain_owned_claim_id),
         JS(xchain_owned_create_account_claim_id),
         JS(did),
-        JS(oracle)
+        JS(oracle),
+        JS(nunl)
     };
     ASSERT_TRUE(std::size(typesList) == types.size());
     EXPECT_TRUE(std::all_of(std::cbegin(typesList), std::cend(typesList), [&types](auto const& type) {
