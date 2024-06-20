@@ -30,8 +30,11 @@
 #include <xrpl/protocol/ErrorCodes.h>
 
 #include <cstdint>
+#include <ctime>
 #include <functional>
 #include <initializer_list>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -286,6 +289,33 @@ public:
 
         return {};
     }
+};
+
+/**
+ * @brief Validate that value can be converted to time according to the given format.
+ */
+class TimeFormatValidator final {
+    std::string format_;
+
+public:
+    /**
+     * @brief Construct the validator storing format value.
+     *
+     * @param format The format to use for time conversion
+     */
+    explicit TimeFormatValidator(std::string format) : format_{std::move(format)}
+    {
+    }
+
+    /**
+     * @brief Verify that the JSON value is valid formatted time.
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+     */
+    [[nodiscard]] MaybeError
+    verify(boost::json::value const& value, std::string_view key) const;
 };
 
 /**

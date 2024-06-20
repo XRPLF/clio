@@ -34,6 +34,9 @@
 
 #include <charconv>
 #include <cstdint>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -47,6 +50,26 @@ Required::verify(boost::json::value const& value, std::string_view key)
 {
     if (not value.is_object() or not value.as_object().contains(key))
         return Error{Status{RippledError::rpcINVALID_PARAMS, "Required field '" + std::string{key} + "' missing"}};
+
+    return {};
+}
+
+[[nodiscard]] MaybeError
+TimeFormatValidator::verify(boost::json::value const& value, std::string_view key) const
+{
+    using boost::json::value_to;
+
+    if (not value.is_object() or not value.as_object().contains(key))
+        return {};  // ignore. field does not exist, let 'required' fail instead
+
+    if (not value.as_object().at(key).is_string())
+        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+
+    std::tm time = {};
+    std::stringstream stream(value_to<std::string>(value.as_object().at(key)));
+    stream >> std::get_time(&time, format_.c_str());
+    if (stream.fail())
+        return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
     return {};
 }

@@ -72,6 +72,7 @@ target_sources(
           rpc/handlers/GetAggregatePriceTests.cpp
           rpc/handlers/LedgerDataTests.cpp
           rpc/handlers/LedgerEntryTests.cpp
+          rpc/handlers/LedgerIndexTests.cpp
           rpc/handlers/LedgerRangeTests.cpp
           rpc/handlers/LedgerTests.cpp
           rpc/handlers/NFTBuyOffersTests.cpp
@@ -112,6 +113,7 @@ target_sources(
           util/prometheus/MetricsFamilyTests.cpp
           util/prometheus/OStreamTests.cpp
           # Requests framework
+          util/IotaIteratorTests.cpp
           util/requests/RequestBuilderTests.cpp
           util/requests/SslContextTests.cpp
           util/requests/WsConnectionTests.cpp

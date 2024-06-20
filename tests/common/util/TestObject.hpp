@@ -66,6 +66,12 @@ GetAccountKey(ripple::AccountID const& acc);
 CreateLedgerHeader(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age = std::nullopt);
 
 /*
+ * Create a simple ledgerHeader object with hash, seq and unix timestamp
+ */
+[[nodiscard]] ripple::LedgerHeader
+CreateLedgerHeaderWithUnixTime(std::string_view ledgerHash, ripple::LedgerIndex seq, uint64_t closeTimeUnixStamp);
+
+/*
  * Create a Legacy (pre XRPFees amendment) FeeSetting ledger object
  */
 [[nodiscard]] ripple::STObject

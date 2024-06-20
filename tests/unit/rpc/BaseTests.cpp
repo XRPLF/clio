@@ -355,6 +355,42 @@ TEST_F(RPCBaseTest, WithCustomError)
     ASSERT_EQ(err.error(), ripple::rpcALREADY_MULTISIG);
 }
 
+TEST_F(RPCBaseTest, TimeFormatValidator)
+{
+    auto const spec = RpcSpec{
+        {"date", TimeFormatValidator{"%Y-%m-%dT%H:%M:%SZ"}},
+    };
+
+    auto passingInput = json::parse(R"({ "date": "2023-01-01T00:00:00Z" })");
+    EXPECT_TRUE(spec.process(passingInput));
+
+    passingInput = json::parse("123");
+    EXPECT_TRUE(spec.process(passingInput));
+
+    // key not exists
+    passingInput = json::parse(R"({ "date1": "2023-01-01T00:00:00Z" })");
+    EXPECT_TRUE(spec.process(passingInput));
+
+    auto failingInput = json::parse(R"({ "date": "2023-01-01-00:00:00" })");
+    auto err = spec.process(failingInput);
+    EXPECT_FALSE(err);
+    EXPECT_EQ(err.error(), ripple::rpcINVALID_PARAMS);
+
+    failingInput = json::parse(R"({ "date": "01-01-2024T00:00:00" })");
+    EXPECT_FALSE(spec.process(failingInput));
+
+    failingInput = json::parse(R"({ "date": "2024-01-01T29:00:00" })");
+    EXPECT_FALSE(spec.process(failingInput));
+
+    failingInput = json::parse(R"({ "date": "" })");
+    EXPECT_FALSE(spec.process(failingInput));
+
+    failingInput = json::parse(R"({ "date": 1 })");
+    err = spec.process(failingInput);
+    EXPECT_FALSE(err);
+    EXPECT_EQ(err.error(), ripple::rpcINVALID_PARAMS);
+}
+
 TEST_F(RPCBaseTest, CustomValidator)
 {
     auto customFormatCheck = CustomValidator{[](json::value const& value, std::string_view /* key */) -> MaybeError {
