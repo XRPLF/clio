@@ -2779,7 +2779,7 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist3)
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
     EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
-            {ledgerinfo.seq, {}}
+            {ledgerinfo.seq, Blob{}}
         }));
 
     runSpawn([&, this](auto yield) {
