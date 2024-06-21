@@ -25,8 +25,11 @@ target_sources(
           LedgerUtils.cpp
           newconfig/ConfigDefinition.cpp
           newconfig/ConfigFileJson.cpp
+<<<<<<< HEAD
           newconfig/ConfigConstraints.cpp
           newconfig/Object.cpp
+=======
+>>>>>>> e62e648 (first draft of config)
 )
 
 target_link_libraries(

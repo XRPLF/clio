@@ -20,10 +20,15 @@
 #include "util/newconfig/ConfigFileJson.hpp"
 
 #include "util/log/Logger.hpp"
+<<<<<<< HEAD
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 
 #include <boost/json/array.hpp>
+=======
+#include "util/newconfig/ConfigValue.hpp"
+
+>>>>>>> e62e648 (first draft of config)
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/parse_options.hpp>
@@ -34,6 +39,7 @@
 #include <ios>
 #include <optional>
 #include <sstream>
+<<<<<<< HEAD
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -45,6 +51,12 @@ namespace util::config {
 
 using json = boost::json::object;
 
+=======
+#include <string_view>
+
+namespace util::config {
+
+>>>>>>> e62e648 (first draft of config)
 void
 ConfigFileJson::parse(std::string_view configFilePath)
 {
@@ -55,7 +67,11 @@ ConfigFileJson::parse(std::string_view configFilePath)
             contents << in.rdbuf();
             auto opts = boost::json::parse_options{};
             opts.allow_comments = true;
+<<<<<<< HEAD
             jsonObject_ = boost::json::parse(contents.str(), {}, opts).as_object();
+=======
+            object_ = boost::json::parse(contents.str(), {}, opts).as_object();
+>>>>>>> e62e648 (first draft of config)
         }
     } catch (std::exception const& e) {
         LOG(util::LogService::error()) << "Could not read configuration file from '" << configFilePath
@@ -63,6 +79,7 @@ ConfigFileJson::parse(std::string_view configFilePath)
     }
 }
 
+<<<<<<< HEAD
 static ConfigValue
 convertJsonToConfigValue(boost::json::value const& jsonValue)
 {
@@ -154,6 +171,28 @@ ConfigFileJson::getArray(std::string_view key) const
         }
     }
     return configValues;
+=======
+std::optional<ValueData<ConfigType>>
+ConfigFileJson::getValue(std::string_view key) const
+{
+    if (!object_.contains(key))
+        return std::nullopt;
+
+    /*
+    auto jsonValue = object_.at(key);
+        if (jsonValue.is_int64()) {
+            return ValueData<getType<int>()>{jsonValue.as_int64()};
+        } else if (jsonValue.is_string()) {
+            return ValueData<ConfigType::String>{jsonValue.as_string()};
+        } else if (jsonValue.is_double()) {
+            return ValueData<ConfigType::Float>{jsonValue.as_double()};
+        } else if (jsonValue.is_bool()) {
+            return ValueData<ConfigType::Boolean>{jsonValue.as_bool()};
+        }
+
+     */
+    return std::nullopt;
+>>>>>>> e62e648 (first draft of config)
 }
 
 }  // namespace util::config

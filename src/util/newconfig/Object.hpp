@@ -19,6 +19,7 @@
 
 #pragma once
 
+<<<<<<< HEAD
 #include "util/newconfig/ConfigValue.hpp"
 
 #include <algorithm>
@@ -30,6 +31,9 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+=======
+#include <tuple>
+>>>>>>> e62e648 (first draft of config)
 
 namespace util::config {
 
@@ -38,6 +42,7 @@ namespace util::config {
  *
  * Used in ClioConfigDefinition to represent key-value(s) pair.
  */
+<<<<<<< HEAD
 /*
 template <typename Key, typename Value, std::size_t Size>
 struct Map {
@@ -132,6 +137,28 @@ public:
 private:
     std::unordered_map<std::string_view, ConfigValue> map_;
     // Map<std::string_view, ConfigValue, configSize> map_;
+=======
+template <typename Key, typename... Args>
+class Object {
+public:
+    constexpr Object(Key key, Args... args) : key_{key}, fields_{args...}
+    {
+    }
+    constexpr Key&
+    key() const
+    {
+        return key_;
+    }
+    constexpr std::tuple<Args...>&
+    Val() const
+    {
+        return fields_;
+    }
+
+private:
+    Key key_;
+    std::tuple<Args...> fields_{};
+>>>>>>> e62e648 (first draft of config)
 };
 
 }  // namespace util::config

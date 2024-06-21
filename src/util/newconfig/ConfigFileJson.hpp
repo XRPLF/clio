@@ -19,22 +19,34 @@
 
 #pragma once
 
+<<<<<<< HEAD
 #include "util/newconfig/ConfigFileInterface.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+=======
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigFileInterface.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Errors.hpp"
+>>>>>>> e62e648 (first draft of config)
 
 #include <boost/json/object.hpp>
 
 #include <optional>
+<<<<<<< HEAD
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+=======
+#include <string_view>
+>>>>>>> e62e648 (first draft of config)
 
 namespace util::config {
 
 /** @brief Json representation of config */
 class ConfigFileJson final : public ConfigFileInterface {
 public:
+<<<<<<< HEAD
     using configVal = std::pair<std::string, ConfigValue>;
     ConfigFileJson(std::string_view configFilePath)
     {
@@ -56,6 +68,20 @@ public:
 
 private:
     boost::json::object jsonObject_;
+=======
+    ConfigFileJson() = default;
+
+    void
+    parse(std::string_view configFilePath) override;
+    std::optional<ValueData<ConfigType>>
+    getValue(std::string_view key) const override;
+    std::optional<Array<ConfigType>>
+    getArray(std::string_view key) const override;
+
+private:
+    // ValueData<ConfigType> getType(const boost::json::value& jsonValue) const;
+    boost::json::object object_;
+>>>>>>> e62e648 (first draft of config)
 };
 
 }  // namespace util::config

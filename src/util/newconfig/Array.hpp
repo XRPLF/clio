@@ -19,32 +19,34 @@
 
 #pragma once
 
-#include "util/newconfig/Array.hpp"
-#include "util/newconfig/ConfigFileInterface.hpp"
-#include "util/newconfig/ConfigValue.hpp"
-
-#include <optional>
-#include <string_view>
+#include <tuple>
 
 namespace util::config {
 
-/** @brief Json representation of config */
-class ConfigFileJson final : public ConfigFileInterface {
+/**
+ * @brief Array definition for Json/Yaml config
+ *
+ * Used in ClioConfigDefinition to represent multiple potential values (like whitelist)
+ */
+template <typename... Args>
+class Array {
 public:
-    ConfigFileJson() = default;
+    constexpr Array(Args... args) : elements_{args...}
+    {
+    }
+    constexpr auto
+    begin()
+    {
+        return elements_.begin();
+    }
+    constexpr auto
+    end()
+    {
+        return elements_.end();
+    }
 
-    void parse(std::string_view) override;
-<<<<<<< HEAD
-
-    std::optional<Array>
-=======
-    std::optional<ValueData<ConfigType>>
-    getValue(std::string_view val) const override;
-    std::optional<Array<ConfigType>>
->>>>>>> e62e648 (first draft of config)
-    getArray(std::string_view val) const override;
-
-    // TODO: implement when we support yaml
+private:
+    std::tuple<Args...> elements_{};
 };
 
 }  // namespace util::config

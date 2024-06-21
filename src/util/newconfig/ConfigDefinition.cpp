@@ -19,6 +19,7 @@
 
 #include "util/newconfig/ConfigDefinition.hpp"
 
+<<<<<<< HEAD
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Object.hpp"
 
@@ -185,4 +186,8 @@ std::optional<Error> ConfigFileDefinition::parse(ConfigFileInterface const& conf
 }
 */
 
+=======
+namespace util::config {
+
+>>>>>>> e62e648 (first draft of config)
 }  // namespace util::config

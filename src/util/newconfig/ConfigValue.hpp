@@ -19,6 +19,7 @@
 
 #pragma once
 
+<<<<<<< HEAD
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
@@ -33,6 +34,15 @@ constexpr bool always_false = false;
 
 /** @brief Custom clio config types. */
 enum class ConfigType { Integer, String, Double, Boolean };
+=======
+#include <string>
+#include <type_traits>
+
+namespace util::config {
+
+/** @brief Custom clio config types. */
+enum class ConfigType { Integer, String, Float, Boolean, Error };
+>>>>>>> e62e648 (first draft of config)
 
 /** @brief get the corresponding clio config type */
 template <typename Type>
@@ -41,6 +51,7 @@ getType()
 {
     if constexpr (std::is_same_v<Type, int>) {
         return ConfigType::Integer;
+<<<<<<< HEAD
     } else if constexpr (std::is_same_v<Type, char const*>) {
         return ConfigType::String;
     } else if constexpr (std::is_same_v<Type, double>) {
@@ -50,6 +61,16 @@ getType()
     } else {
         static_assert(always_false<Type>, "Wrong config type");
     }
+=======
+    } else if constexpr (std::is_same_v<Type, std::string>) {
+        return ConfigType::String;
+    } else if constexpr (std::is_same_v<Type, float>) {
+        return ConfigType::Float;
+    } else if constexpr (std::is_same_v<Type, bool>) {
+        return ConfigType::Boolean;
+    }
+    return ConfigType::Error;
+>>>>>>> e62e648 (first draft of config)
 }
 
 /**
@@ -58,6 +79,7 @@ getType()
  * Used in ClioConfigDefinition to indicate the required type of value and
  * whether it is mandatory to specify in the configuration.
  */
+<<<<<<< HEAD
 class ConfigValue {
 public:
     using Type = std::variant<int, char const*, bool, double>;
@@ -74,11 +96,20 @@ public:
         return *this;
     }
 
+=======
+template <typename Type>
+class ConfigValue {
+public:
+    constexpr ConfigValue(bool required) : type_{getType<Type>()}, required_{required}
+    {
+    }
+>>>>>>> e62e648 (first draft of config)
     constexpr ConfigType
     type() const
     {
         return type_;
     }
+<<<<<<< HEAD
 
     constexpr ConfigValue&
     required()
@@ -144,6 +175,45 @@ private:
     ConfigType type_{};
     bool required_{false};
     std::optional<Type> value_;
+=======
+    constexpr bool
+    required() const
+    {
+        return required_;
+    }
+
+private:
+    ConfigType type_;
+    bool required_;
+};
+
+/**
+ * @brief Represents the user's value for Json/Yaml config
+ *
+ */
+
+// don't know if this can be templated?
+template <typename Type>
+class ValueData {
+public:
+    ValueData(Type value) : type_{getType<Type>()}, value_{value}
+    {
+    }
+    ConfigType
+    type() const
+    {
+        return type_;
+    }
+    Type
+    value() const
+    {
+        return value_;
+    }
+
+private:
+    ConfigType type_;
+    Type value_;
+>>>>>>> e62e648 (first draft of config)
 };
 
 }  // namespace util::config
