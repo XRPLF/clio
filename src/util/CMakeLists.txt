@@ -22,6 +22,8 @@ target_sources(
           TerminationHandler.cpp
           TxUtils.cpp
           LedgerUtils.cpp
+          newconfig/ConfigDefinition.cpp
+          newconfig/ConfigFileJson.cpp
 )
 
 target_link_libraries(
