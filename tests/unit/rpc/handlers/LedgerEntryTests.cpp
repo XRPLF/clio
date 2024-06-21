@@ -2615,6 +2615,8 @@ TEST(RPCLedgerEntrySpecTest, DeprecatedFields)
     EXPECT_NE(warning.at("message").as_string().find("Field 'ledger' is deprecated."), std::string::npos) << warning;
 }
 
+// Same as BinaryFalse with include_deleted set to true
+// Expected Result: same as BinaryFalse
 TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
 {
     static auto constexpr OUT = R"({
@@ -2665,6 +2667,8 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
     });
 }
 
+// Test for object is deleted in the latest sequence
+// Expected Result: return the latest object that is not deleted
 TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
 {
     static auto constexpr OUT = R"({
@@ -2712,12 +2716,12 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
     });
 }
 
+// Test for object not exist in database
+// Expected Result: return entryNotFound error
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
 {
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
-
-    auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
     EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
         }));
@@ -2739,12 +2743,12 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
     });
 }
 
+// Another Test for object not exist in database, should not happen in normal case
+// Expected Result: return entryNotFound error
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist2)
 {
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
-
-    auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
     EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
             {}
@@ -2767,12 +2771,12 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist2)
     });
 }
 
+// Test for object not exist but seq exists in database, should not happen in normal case
+// Expected Result: return entryNotFound error
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist3)
 {
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
-
-    auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
     EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
             {ledgerinfo.seq, {}}
@@ -2795,7 +2799,8 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist3)
     });
 }
 
-
+// Same as BinaryFalse with include_deleted set to false
+// Expected Result: same as BinaryFalse
 TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
 {
     static auto constexpr OUT = R"({
@@ -2844,7 +2849,8 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
     });
 }
 
-
+// Test when an object is updated and include_deleted is set to true
+// Expected Result: return the latest object that is not deleted (latest object in this test)
 TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
 {
     static auto constexpr OUT = R"({
