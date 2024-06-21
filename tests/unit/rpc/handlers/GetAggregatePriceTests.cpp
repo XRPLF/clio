@@ -161,6 +161,22 @@ generateTestValuesForParametersTest()
             "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
+            "emtpy_base_asset",
+            R"({
+                    "quote_asset" : "USD",
+                    "base_asset": "",
+                    "oracles": 
+                    [
+                        {
+                            "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                            "oracle_document_id": 2
+                        }
+                    ]
+                })",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
             "invalid_base_asset2",
             R"({
                     "quote_asset" : "USD",
@@ -195,6 +211,22 @@ generateTestValuesForParametersTest()
             "invalid_quote_asset",
             R"({
                     "quote_asset" : "asdf",
+                    "base_asset": "USD",
+                    "oracles": 
+                    [
+                        {
+                            "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                            "oracle_document_id": 2
+                        }
+                    ]
+                })",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "empty_quote_asset",
+            R"({
+                    "quote_asset" : "",
                     "base_asset": "USD",
                     "oracles": 
                     [

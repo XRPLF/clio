@@ -29,6 +29,7 @@
 #include <fmt/core.h>
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/AccountID.h>
+#include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/UintTypes.h>
 #include <ripple/protocol/tokens.h>
 
@@ -140,8 +141,12 @@ CustomValidator CurrencyValidator =
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
+        auto const currencyStr = boost::json::value_to<std::string>(value);
+        if (currencyStr.empty())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "IsEmpty"}};
+
         ripple::Currency currency;
-        if (!ripple::to_currency(currency, boost::json::value_to<std::string>(value)))
+        if (!ripple::to_currency(currency, currencyStr))
             return Error{Status{ClioError::rpcMALFORMED_CURRENCY, "malformedCurrency"}};
 
         return MaybeError{};
