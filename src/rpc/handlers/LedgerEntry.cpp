@@ -159,8 +159,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     std::optional<data::Blob> ledgerObject;
     auto output = LedgerEntryHandler::Output{};
-    output.deleted_ledger_index = std::nullopt;
-    if (input.include_deleted.has_value() && input.include_deleted.value() == true){
+    output.deletedLedgerIndex = std::nullopt;
+    if (input.includeDeleted == true){
         auto const lastTwoObjects = sharedPtrBackend_->fetchLastTwoLedgerObjects(key, lgrInfo.seq, ctx.yield);
         if (lastTwoObjects.empty()) {
             return Error{Status{"entryNotFound"}};
@@ -174,7 +174,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             // return the lastest object that is not deleted
             bool const isDeleted  = lastTwoObjects[0].second.empty();
             ledgerObject = isDeleted? std::make_optional(lastTwoObjects[1].second) : std::make_optional(lastTwoObjects[0].second);
-            output.deleted_ledger_index = isDeleted? std::optional(lastTwoObjects[0].first) : std::nullopt;
+            output.deletedLedgerIndex = isDeleted? std::optional(lastTwoObjects[0].first) : std::nullopt;
         } 
     } else {
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
@@ -232,8 +232,8 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerEntryHandl
         {JS(validated), output.validated},
         {JS(index), output.index},
     };
-    if (output.deleted_ledger_index) {
-        object["deleted_ledger_index"] = *(output.deleted_ledger_index);
+    if (output.deletedLedgerIndex) {
+        object["deleted_ledger_index"] = *(output.deletedLedgerIndex);
     }
     if (output.nodeBinary) {
         object[JS(node_binary)] = *(output.nodeBinary);
@@ -351,7 +351,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.oracleNode = parseOracleFromJson(jv.at(JS(oracle)));
     }
     if (jsonObject.contains("include_deleted")) {
-        input.include_deleted = jv.at("include_deleted").as_bool();
+        input.includeDeleted = jv.at("include_deleted").as_bool();
     }
     return input;
 }

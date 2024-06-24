@@ -70,7 +70,7 @@ public:
         std::optional<boost::json::object> node;
         std::optional<std::string> nodeBinary;
         bool validated = true;
-        std::optional<uint32_t> deleted_ledger_index;
+        std::optional<uint32_t> deletedLedgerIndex;
     };
 
     /**
@@ -102,7 +102,7 @@ public:
         std::optional<uint32_t> chainClaimId;
         std::optional<uint32_t> createAccountClaimId;
         std::optional<ripple::uint256> oracleNode;
-        std::optional<bool> include_deleted;
+        bool includeDeleted;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -313,7 +313,6 @@ public:
      *
      * @param input The input data for the command
      * @param ctx The context of the request
-     * @param include_deleted Whether to include deleted entries
      * @return The result of the operation
      */
     Result
