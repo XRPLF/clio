@@ -336,8 +336,8 @@ public:
 
         auto const& result = res.value();
         if (not result.hasRows()) {
-            LOG(log_.error()) << "Could not fetch all transaction hashes - no rows; ledger = "
-                              << std::to_string(ledgerSequence);
+            LOG(log_.warn()) << "Could not fetch all transaction hashes - no rows; ledger = "
+                             << std::to_string(ledgerSequence);
             return {};
         }
 
