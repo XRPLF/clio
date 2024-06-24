@@ -109,7 +109,7 @@ jobs:
           branch: "clang_tidy/autofix"
           branch-suffix: timestamp
           delete-branch: true
-          title: "[CI] clang-tidy auto fixes"
+          title: "style: clang-tidy auto fixes"
           body: "Fixes #${{ steps.create_issue.outputs.created_issue_id }}. Please review and commit clang-tidy fixes."
           reviewers: "cindyyan317,godexsoft,kuznetsss"
 
