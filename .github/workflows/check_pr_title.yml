@@ -9,9 +9,9 @@ on:
 jobs:
   check_title:
     runs-on: ubuntu-20.04
-  steps:
-    - uses: ytanikin/PRConventionalCommits@1.2.0
-      with:
-        task_types: '["feat","fix","docs","test","ci","style","refactor","perf","chore","revert"]'
-        add_label: true
-        custom_labels: '{"feat":"enhancement", "fix":"bug", "docs":"documentation", "test":"testability", "ci":"ci", "style":"refactoring", "perf":"performance", "chore":"tooling"}'
+    steps:
+      - uses: ytanikin/PRConventionalCommits@1.2.0
+        with:
+          task_types: '["feat","fix","docs","test","ci","style","refactor","perf","chore","revert"]'
+          add_label: true
+          custom_labels: '{"feat":"enhancement", "fix":"bug", "docs":"documentation", "test":"testability", "ci":"ci", "style":"refactoring", "perf":"performance", "chore":"tooling"}'

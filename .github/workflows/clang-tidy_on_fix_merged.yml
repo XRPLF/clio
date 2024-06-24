@@ -17,7 +17,7 @@ jobs:
         id: check
         shell: bash
         run: |
-          passed=$(if [[ $(git log -1 --pretty=format:%s | grep '\[CI\] clang-tidy auto fixes') ]]; then echo 'true' ; else echo 'false' ; fi)
+          passed=$(if [[ $(git log -1 --pretty=format:%s | grep 'style: clang-tidy auto fixes') ]]; then echo 'true' ; else echo 'false' ; fi)
           echo "passed=$passed" >> $GITHUB_OUTPUT
 
       - name: Run clang-tidy workflow
