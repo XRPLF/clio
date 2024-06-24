@@ -93,7 +93,6 @@ BackendInterface::fetchLedgerObject(
         return obj;
     }
 
-    LOG(gLog.trace()) << "Cache miss - " << ripple::strHex(key);
     auto dbObj = doFetchLedgerObject(key, sequence, yield);
     if (!dbObj) {
         LOG(gLog.trace()) << "Missed cache and missed in db";

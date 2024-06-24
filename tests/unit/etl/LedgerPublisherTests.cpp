@@ -68,15 +68,35 @@ struct ETLLedgerPublisherTest : util::prometheus::WithPrometheus, MockBackendTes
     StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
 };
 
-TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderIsWritingFalse)
+TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderIsWritingFalseAndCacheDisabled)
 {
     SystemState dummyState;
     dummyState.isWriting = false;
     auto const dummyLedgerHeader = CreateLedgerHeader(LEDGERHASH, SEQ, AGE);
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
     publisher.publish(dummyLedgerHeader);
+    EXPECT_CALL(mockCache, isDisabled).WillOnce(Return(true));
+    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).Times(0);
 
-    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).WillOnce(Return(std::vector<LedgerObject>{}));
+    // setLastPublishedSequence not in strand, should verify before run
+    EXPECT_TRUE(publisher.getLastPublishedSequence());
+    EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
+
+    ctx.run();
+    EXPECT_TRUE(backend->fetchLedgerRange());
+    EXPECT_EQ(backend->fetchLedgerRange().value().minSequence, SEQ);
+    EXPECT_EQ(backend->fetchLedgerRange().value().maxSequence, SEQ);
+}
+
+TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderIsWritingFalseAndCacheEnabled)
+{
+    SystemState dummyState;
+    dummyState.isWriting = false;
+    auto const dummyLedgerHeader = CreateLedgerHeader(LEDGERHASH, SEQ, AGE);
+    impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
+    publisher.publish(dummyLedgerHeader);
+    EXPECT_CALL(mockCache, isDisabled).WillOnce(Return(false));
+    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).Times(1);
 
     // setLastPublishedSequence not in strand, should verify before run
     EXPECT_TRUE(publisher.getLastPublishedSequence());
@@ -218,7 +238,7 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
 
     auto const dummyLedgerHeader = CreateLedgerHeader(LEDGERHASH, SEQ, AGE);
     EXPECT_CALL(*backend, fetchLedgerBySequence(SEQ, _)).WillOnce(Return(dummyLedgerHeader));
-
+    EXPECT_CALL(mockCache, isDisabled).WillOnce(Return(false));
     EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).WillOnce(Return(std::vector<LedgerObject>{}));
     EXPECT_CALL(mockCache, updateImp);
 
