@@ -2647,10 +2647,8 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
-    EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
-            {ledgerinfo.seq, ledgerEntry.getSerializer().peekData()}
-        }));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2695,12 +2693,10 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
     // return valid ledger entry which can be deserialized
     auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
-    EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
-            {ledgerinfo.seq, {}},
-            {ledgerinfo.seq - 1, offer.getSerializer().peekData()}
-        }));
-
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillOnce(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 1, _))
+        .WillOnce(Return(offer.getSerializer().peekData()));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
         auto const req = json::parse(fmt::format(
@@ -2722,66 +2718,10 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
 {
     auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
-    EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
-        }));
-
-    runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
-        auto const req = json::parse(fmt::format(
-            R"({{
-                "index": "{}",
-                "include_deleted": true
-            }})",
-            INDEX1
-        ));
-        auto const output = handler.process(req, Context{yield});
-        ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.result.error());
-        auto const myerr = err.at("error").as_string();
-        EXPECT_EQ(myerr, "entryNotFound");
-    });
-}
-
-// Another Test for object not exist in database, should not happen in normal case
-// Expected Result: return entryNotFound error
-TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist2)
-{
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
-    EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
-            {}
-        }));
-
-    runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
-        auto const req = json::parse(fmt::format(
-            R"({{
-                "index": "{}",
-                "include_deleted": true
-            }})",
-            INDEX1
-        ));
-        auto const output = handler.process(req, Context{yield});
-        ASSERT_FALSE(output);
-        auto const err = rpc::makeError(output.result.error());
-        auto const myerr = err.at("error").as_string();
-        EXPECT_EQ(myerr, "entryNotFound");
-    });
-}
-
-// Test for object not exist but seq exists in database, should not happen in normal case
-// Expected Result: return entryNotFound error
-TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist3)
-{
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
-    EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
-            {ledgerinfo.seq, Blob{}}
-        }));
-
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillOnce(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 1, _))
+        .WillOnce(Return(std::optional<Blob>{}));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
         auto const req = json::parse(fmt::format(
@@ -2851,7 +2791,7 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
 
 // Test when an object is updated and include_deleted is set to true
 // Expected Result: return the latest object that is not deleted (latest object in this test)
-TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
+ TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
 {
     static auto constexpr OUT = R"({
         "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
@@ -2890,12 +2830,10 @@ TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
     // return valid ledger entry which can be deserialized
     auto const line1 = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
     auto const line2 = CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
-    EXPECT_CALL(*backend, doFetchLastTwoLedgerObjects(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillRepeatedly(Return(std::vector<std::pair<std::uint32_t, Blob>>{
-            {ledgerinfo.seq, line1.getSerializer().peekData()},
-            {ledgerinfo.seq - 1, line2.getSerializer().peekData()}
-        }));
-
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillRepeatedly(Return(line1.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 1, _))
+        .WillRepeatedly(Return(line2.getSerializer().peekData()));
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
         auto const req = json::parse(fmt::format(

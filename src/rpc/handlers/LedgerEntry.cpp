@@ -160,28 +160,18 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     std::optional<data::Blob> ledgerObject;
     auto output = LedgerEntryHandler::Output{};
     output.deletedLedgerIndex = std::nullopt;
-    if (input.includeDeleted == true){
-        auto const lastTwoObjects = sharedPtrBackend_->fetchLastTwoLedgerObjects(key, lgrInfo.seq, ctx.yield);
-        if (lastTwoObjects.empty()) {
+    ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
+    if (!ledgerObject || ledgerObject->empty()) {
+        if (input.includeDeleted == false) {
             return Error{Status{"entryNotFound"}};
         }
-        else if (lastTwoObjects.size() == 1) {
-            ledgerObject = std::make_optional(lastTwoObjects[0].second);
-            if (!ledgerObject || ledgerObject->empty())
-                return Error{Status{"entryNotFound"}};
-        } 
-        else if (lastTwoObjects.size() == 2) {
-            // return the lastest object that is not deleted
-            bool const isDeleted  = lastTwoObjects[0].second.empty();
-            ledgerObject = isDeleted? std::make_optional(lastTwoObjects[1].second) : std::make_optional(lastTwoObjects[0].second);
-            output.deletedLedgerIndex = isDeleted? std::optional(lastTwoObjects[0].first) : std::nullopt;
-        } 
-    } else {
-        ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
-        if (!ledgerObject || ledgerObject->empty())
+        ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq - 1, ctx.yield);
+        if (!ledgerObject || ledgerObject->empty()) {
             return Error{Status{"entryNotFound"}};
+        }
+        output.deletedLedgerIndex = lgrInfo.seq;
     }
-
+    
     ripple::STLedgerEntry const sle{ripple::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
 
     if (input.expectedType != ripple::ltANY && sle.getType() != input.expectedType)

@@ -567,30 +567,6 @@ public:
         return std::nullopt;
     }
 
-    std::vector<std::pair<std::uint32_t, Blob>> 
-    doFetchLastTwoLedgerObjects(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
-        const override
-    {
-        LOG(log_.debug()) << "Fetching last two ledger objects for seq " << sequence << ", key = " << ripple::to_string(key);
-        if (auto const res = executor_.read(yield, schema_->selectLastTwoObjects, key, sequence); res) {
-            auto const& results = res.value();
-            if (not results.hasRows()) {
-                LOG(log_.error()) << "Could not fetch last two ledger objects - no rows";
-                return {};
-            }  
-            std::vector<std::pair<std::uint32_t, Blob>> objects;
-            for (auto [obj, seq] : extract<Blob, std::uint32_t>(results))
-                objects.push_back({seq, obj});
-            if (objects.size() > 2) {
-                LOG(log_.error()) << "Entries returned exceeded the expected";
-            }
-            return objects;
-        } else {
-            LOG(log_.error()) << "Could not fetch last two ledger objects: " << res.error();
-        }
-        return {};
-    }
-
     std::optional<TransactionAndMetadata>
     fetchTransaction(ripple::uint256 const& hash, boost::asio::yield_context yield) const override
     {

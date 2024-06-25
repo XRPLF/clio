@@ -103,21 +103,6 @@ BackendInterface::fetchLedgerObject(
     return dbObj;
 }
 
-std::vector<std::pair<std::uint32_t, Blob>> 
-BackendInterface::fetchLastTwoLedgerObjects(
-    ripple::uint256 const& key,
-    std::uint32_t const sequence,
-    boost::asio::yield_context yield
-) const
-{
-    auto dbObjs = doFetchLastTwoLedgerObjects(key, sequence, yield);
-    if (dbObjs.empty()) {
-        LOG(gLog.trace()) << "Missed in db";
-    } else {
-        LOG(gLog.trace()) << "Found in db";
-    }
-    return dbObjs;
-}
 
 std::vector<Blob>
 BackendInterface::fetchLedgerObjects(
