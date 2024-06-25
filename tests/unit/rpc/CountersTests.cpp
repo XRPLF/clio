@@ -27,7 +27,7 @@
 #include <boost/json/value_to.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/jss.h>
 
 #include <chrono>
 #include <string>

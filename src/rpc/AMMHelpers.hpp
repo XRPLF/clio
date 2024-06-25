@@ -22,11 +22,11 @@
 #include "data/BackendInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/UintTypes.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <utility>

@@ -21,9 +21,9 @@
 
 #include "rpc/RPCHelpers.hpp"
 
-#include <ripple/basics/StringUtilities.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/StringUtilities.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <string>
 

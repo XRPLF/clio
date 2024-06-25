@@ -41,7 +41,7 @@
 #include <boost/json/object.hpp>
 #include <grpcpp/grpcpp.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <cstddef>
 #include <cstdint>

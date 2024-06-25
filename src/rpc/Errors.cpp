@@ -22,8 +22,8 @@
 #include "rpc/JS.hpp"
 
 #include <boost/json/object.hpp>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <algorithm>
 #include <cstdint>

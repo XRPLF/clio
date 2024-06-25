@@ -36,7 +36,7 @@
 #include <grpcpp/grpcpp.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 #include <org/xrpl/rpc/v1/ledger.pb.h>
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <atomic>
 #include <chrono>

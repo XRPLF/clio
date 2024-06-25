@@ -21,8 +21,8 @@
 #include "util/LedgerUtils.hpp"
 
 #include <gtest/gtest.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/jss.h>
 
 #include <algorithm>
 #include <iterator>

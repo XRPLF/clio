@@ -28,9 +28,9 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/context/detail/config.hpp>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
 
 #include <algorithm>
 #include <atomic>

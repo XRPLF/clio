@@ -37,9 +37,9 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/beast/utility/Zero.h>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/beast/utility/Zero.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>

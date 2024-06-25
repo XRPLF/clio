@@ -21,7 +21,7 @@
 #include "util/TxUtils.hpp"
 
 #include <gtest/gtest.h>
-#include <ripple/protocol/TxFormats.h>
+#include <xrpl/protocol/TxFormats.h>
 
 #include <algorithm>
 #include <cstddef>

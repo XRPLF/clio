@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
 
 #include <cstdint>
 #include <optional>

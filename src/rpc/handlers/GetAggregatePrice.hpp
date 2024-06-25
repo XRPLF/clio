@@ -31,11 +31,11 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
-#include <ripple/basics/Number.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/Number.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <functional>

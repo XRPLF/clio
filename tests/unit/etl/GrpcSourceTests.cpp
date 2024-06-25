@@ -31,7 +31,7 @@
 #include <gtest/gtest.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 #include <org/xrpl/rpc/v1/get_ledger_data.pb.h>
-#include <ripple/basics/base_uint.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <cstdint>
 #include <memory>

@@ -40,7 +40,7 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
 #include <boost/system/system_error.hpp>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/jss.h>
 
 #include <chrono>
 #include <exception>

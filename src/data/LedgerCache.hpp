@@ -24,8 +24,8 @@
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/hardened_hash.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/hardened_hash.h>
 
 #include <atomic>
 #include <condition_variable>

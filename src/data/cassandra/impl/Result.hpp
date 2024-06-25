@@ -23,8 +23,8 @@
 #include "data/cassandra/impl/Tuple.hpp"
 
 #include <cassandra.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
 
 #include <cstddef>
 #include <cstdint>

@@ -27,9 +27,9 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>

@@ -25,7 +25,7 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/jss.h>
 
 #include <optional>
 

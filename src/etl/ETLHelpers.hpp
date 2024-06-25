@@ -20,7 +20,7 @@
 /** @file */
 #pragma once
 
-#include <ripple/basics/base_uint.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <condition_variable>
 #include <cstddef>

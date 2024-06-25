@@ -21,18 +21,18 @@
 
 #include "data/Types.hpp"
 
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/Protocol.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STBase.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/TxMeta.h>
-#include <ripple/protocol/UintTypes.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/Protocol.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STBase.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/TxMeta.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <optional>

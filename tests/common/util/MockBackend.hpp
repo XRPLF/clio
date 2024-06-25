@@ -27,9 +27,9 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <gmock/gmock.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
 #include <optional>

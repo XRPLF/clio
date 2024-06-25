@@ -33,15 +33,15 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/beast/core/LexicalCast.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/jss.h>
-#include <ripple/protocol/tokens.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/beast/core/LexicalCast.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/jss.h>
+#include <xrpl/protocol/tokens.h>
 
 #include <cstdint>
 #include <memory>

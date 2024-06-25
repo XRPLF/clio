@@ -30,7 +30,7 @@
 #include <org/xrpl/rpc/v1/get_ledger_data.pb.h>
 #include <org/xrpl/rpc/v1/get_ledger_diff.pb.h>
 #include <org/xrpl/rpc/v1/get_ledger_entry.pb.h>
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <memory>
 #include <string>
