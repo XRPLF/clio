@@ -33,7 +33,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
 #include <fmt/core.h>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <chrono>
 #include <exception>

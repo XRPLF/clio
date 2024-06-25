@@ -30,10 +30,10 @@
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>

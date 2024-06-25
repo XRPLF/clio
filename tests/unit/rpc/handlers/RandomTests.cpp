@@ -25,7 +25,7 @@
 
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/jss.h>
 
 using namespace rpc;
 

@@ -44,7 +44,7 @@
 #include <boost/json/array.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <cstddef>
 #include <exception>

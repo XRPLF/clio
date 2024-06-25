@@ -23,12 +23,12 @@
 #include "rpc/RPCHelpers.hpp"
 
 #include <boost/asio/spawn.hpp>
-#include <ripple/protocol/AMMCore.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/UintTypes.h>
+#include <xrpl/protocol/AMMCore.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <utility>

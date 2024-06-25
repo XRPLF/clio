@@ -30,8 +30,8 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
-#include <ripple/beast/core/CurrentThreadName.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/beast/core/CurrentThreadName.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>
 #include <cstddef>

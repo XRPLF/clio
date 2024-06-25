@@ -31,12 +31,12 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
-#include <ripple/basics/chrono.h>
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/Serializer.h>
+#include <xrpl/basics/chrono.h>
+#include <xrpl/protocol/Fees.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/Serializer.h>
 
 #include <chrono>
 #include <cstddef>

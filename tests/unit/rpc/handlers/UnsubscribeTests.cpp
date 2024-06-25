@@ -33,7 +33,7 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/protocol/Book.h>
+#include <xrpl/protocol/Book.h>
 
 #include <cstdint>
 #include <memory>

@@ -24,10 +24,10 @@
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/Fees.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
 #include <string>

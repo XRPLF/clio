@@ -40,7 +40,7 @@
 #include <boost/json/serialize.hpp>
 #include <boost/json/value_to.hpp>
 #include <fmt/core.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/jss.h>
 
 #include <algorithm>
 #include <chrono>

@@ -21,8 +21,8 @@
 
 #include "rpc/common/Types.hpp"
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Indexes.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Indexes.h>
 
 using namespace ripple;
 

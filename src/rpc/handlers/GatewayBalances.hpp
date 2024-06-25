@@ -29,13 +29,13 @@
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/PublicKey.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/UintTypes.h>
-#include <ripple/protocol/jss.h>
-#include <ripple/protocol/tokens.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/PublicKey.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/jss.h>
+#include <xrpl/protocol/tokens.h>
 
 #include <cstdint>
 #include <map>

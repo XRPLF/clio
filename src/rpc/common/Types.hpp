@@ -27,8 +27,8 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
 
 #include <cstdint>
 #include <expected>

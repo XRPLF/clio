@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <ripple/basics/base_uint.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <cstdint>
 #include <vector>
