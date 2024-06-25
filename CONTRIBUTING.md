@@ -72,6 +72,9 @@ git push --force
 Clio uses `ccache` to speed up compilation. If you want to use it, please make sure it is installed on your machine.
 CMake will automatically detect it and use it if it is available.
 
+## Opening a pull request
+When a pull request is open CI will perform checks on the new code.
+Title of the pull request and squashed commit should follow [conventional commits specification](https://www.conventionalcommits.org/en/v1.0.0/).
 
 ## Fixing issues found during code review
 While your code is in review, it's possible that some changes will be requested by reviewer(s).
