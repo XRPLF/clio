@@ -30,15 +30,15 @@
 #include <ripple/protocol/LedgerHeader.h>
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 struct MockAmendmentCenter : public data::AmendmentCenterInterface {
     MOCK_METHOD(bool, isSupported, (std::string), (const, override));
 
-    MOCK_METHOD((std::unordered_map<std::string, data::Amendment> const&), getSupported, (), (const, override));
+    MOCK_METHOD((std::map<std::string, data::Amendment> const&), getSupported, (), (const, override));
 
     MOCK_METHOD(std::vector<data::Amendment> const&, getAll, (), (const, override));
 
@@ -46,7 +46,7 @@ struct MockAmendmentCenter : public data::AmendmentCenterInterface {
 
     MOCK_METHOD(bool, isEnabled, (boost::asio::yield_context, data::AmendmentKey const&, uint32_t), (const, override));
 
-    MOCK_METHOD(data::Amendment const&, getAmendment, (std::string), (const, override));
+    MOCK_METHOD(data::Amendment const&, getAmendment, (std::string const&), (const, override));
 
     MOCK_METHOD(data::Amendment const&, IndexOperator, (data::AmendmentKey const&), (const));
 

@@ -24,8 +24,8 @@
 #include <boost/asio/spawn.hpp>
 
 #include <cstdint>
+#include <map>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace data {
@@ -51,7 +51,7 @@ public:
      *
      * @return The amendments supported by Clio
      */
-    virtual std::unordered_map<std::string, Amendment> const&
+    virtual std::map<std::string, Amendment> const&
     getSupported() const = 0;
 
     /**
@@ -90,7 +90,7 @@ public:
      * @return The amendment as a const ref; asserts if the amendment is unknown
      */
     virtual Amendment const&
-    getAmendment(std::string name) const = 0;
+    getAmendment(std::string const& name) const = 0;
 
     /**
      * @brief Get an amendment by its key

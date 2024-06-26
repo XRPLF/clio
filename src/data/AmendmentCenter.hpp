@@ -38,10 +38,10 @@
 #include <ripple/protocol/digest.h>
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 
 #define REGISTER(name)                                       \
@@ -145,13 +145,15 @@ struct Amendments {
     /** @endcond */
 };
 
+#undef REGISTER
+
 /**
  * @brief Knowledge center for amendments within XRPL
  */
 class AmendmentCenter : public AmendmentCenterInterface {
     std::shared_ptr<data::BackendInterface> backend_;
 
-    std::unordered_map<std::string, Amendment> supported_;
+    std::map<std::string, Amendment> supported_;
     std::vector<Amendment> all_;
 
 public:
@@ -176,7 +178,7 @@ public:
      *
      * @return The amendments supported by Clio
      */
-    std::unordered_map<std::string, Amendment> const&
+    std::map<std::string, Amendment> const&
     getSupported() const final;
 
     /**
@@ -215,7 +217,7 @@ public:
      * @return The amendment as a const ref; asserts if the amendment is unknown
      */
     Amendment const&
-    getAmendment(std::string name) const final;
+    getAmendment(std::string const& name) const final;
 
     /**
      * @brief Get an amendment by its key

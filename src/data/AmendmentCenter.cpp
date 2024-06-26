@@ -37,11 +37,11 @@
 #include <algorithm>
 #include <cstdint>
 #include <iterator>
+#include <map>
 #include <memory>
 #include <ranges>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 
 namespace {
@@ -99,7 +99,7 @@ AmendmentCenter::isSupported(std::string name) const
     return supported_.contains(name) && supported_.at(name).isSupportedByClio;
 }
 
-std::unordered_map<std::string, Amendment> const&
+std::map<std::string, Amendment> const&
 AmendmentCenter::getSupported() const
 {
     return supported_;
@@ -139,11 +139,10 @@ AmendmentCenter::isEnabled(boost::asio::yield_context yield, AmendmentKey const&
 }
 
 Amendment const&
-AmendmentCenter::getAmendment(std::string name) const
+AmendmentCenter::getAmendment(std::string const& name) const
 {
-    // todo: fix string contains \0
-    ASSERT(supported_.contains(name.data()), "The amendment '{}' must be present in supported amendments list", name);
-    return supported_.at(name.data());
+    ASSERT(supported_.contains(name), "The amendment '{}' must be present in supported amendments list", name);
+    return supported_.at(name);
 }
 
 Amendment const&
