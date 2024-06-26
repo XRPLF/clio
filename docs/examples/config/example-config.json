@@ -35,7 +35,10 @@
             "grpc_port": "50051"
         }
     ],
-    "forwarding_cache_timeout": 0.250, // in seconds, could be 0, which means no cache
+    "forwarding": {
+        "cache_timeout": 0.250, // in seconds, could be 0, which means no cache
+        "request_timeout": 10.0 // time for Clio to wait for rippled to reply on a forwarded request (default is 10 seconds)
+    },
     "dos_guard": {
         // Comma-separated list of IPs to exclude from rate limiting
         "whitelist": [
@@ -64,7 +67,7 @@
         "admin_password": "xrp",
         // If local_admin is true, Clio will consider requests come from 127.0.0.1 as admin requests
         // It's true by default unless admin_password is set,'local_admin' : true and 'admin_password' can not be set at the same time
-        "local_amdin": false
+        "local_admin": false
     },
     // Time in seconds for graceful shutdown. Defaults to 10 seconds. Not fully implemented yet.
     "graceful_period": 10.0,

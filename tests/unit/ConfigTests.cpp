@@ -195,6 +195,13 @@ TEST_F(ConfigTest, Array)
     ASSERT_TRUE(exp.empty());
 }
 
+TEST_F(ConfigTest, toMilliseconds)
+{
+    EXPECT_EQ(Config::toMilliseconds(0.0f).count(), 0);
+    EXPECT_EQ(Config::toMilliseconds(0.123f).count(), 123);
+    EXPECT_EQ(Config::toMilliseconds(3.45f).count(), 3450);
+}
+
 /**
  * @brief Simple custom data type with json parsing support
  */

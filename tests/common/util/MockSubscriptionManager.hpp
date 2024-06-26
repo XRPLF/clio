@@ -27,10 +27,10 @@
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 #include <gmock/gmock.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/Fees.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
 #include <memory>
@@ -55,7 +55,7 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
     MOCK_METHOD(
         void,
         pubBookChanges,
-        (ripple::LedgerInfo const&, std::vector<data::TransactionAndMetadata> const&),
+        (ripple::LedgerHeader const&, std::vector<data::TransactionAndMetadata> const&),
         (const, override)
     );
 
@@ -65,7 +65,7 @@ struct MockSubscriptionManager : feed::SubscriptionManagerInterface {
 
     MOCK_METHOD(void, unsubTransactions, (feed::SubscriberSharedPtr const&), (override));
 
-    MOCK_METHOD(void, pubTransaction, (data::TransactionAndMetadata const&, ripple::LedgerInfo const&), (override));
+    MOCK_METHOD(void, pubTransaction, (data::TransactionAndMetadata const&, ripple::LedgerHeader const&), (override));
 
     MOCK_METHOD(void, subAccount, (ripple::AccountID const&, feed::SubscriberSharedPtr const&), (override));
 

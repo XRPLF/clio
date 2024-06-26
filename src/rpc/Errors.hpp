@@ -21,7 +21,7 @@
 #pragma once
 
 #include <boost/json/object.hpp>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <exception>
 #include <optional>

@@ -22,6 +22,7 @@
 #include "util/requests/Types.hpp"
 #include "util/requests/WsConnection.hpp"
 
+#include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/field.hpp>
 #include <gtest/gtest.h>
@@ -29,6 +30,7 @@
 #include <chrono>
 #include <cstddef>
 #include <expected>
+#include <memory>
 #include <optional>
 #include <string>
 #include <thread>
@@ -39,8 +41,8 @@ namespace asio = boost::asio;
 namespace http = boost::beast::http;
 
 struct WsConnectionTestsBase : SyncAsioContextTest {
-    WsConnectionBuilder builder{"localhost", "11112"};
-    TestWsServer server{ctx, "0.0.0.0", 11112};
+    TestWsServer server{ctx, "0.0.0.0"};
+    WsConnectionBuilder builder{"localhost", server.port()};
 
     template <typename T, typename E>
     T
@@ -119,6 +121,75 @@ TEST_P(WsConnectionTests, SendAndReceive)
     });
 }
 
+TEST_F(WsConnectionTests, ReadTimeout)
+{
+    TestWsConnectionPtr serverConnection;
+    asio::spawn(ctx, [&](asio::yield_context yield) {
+        serverConnection = std::make_unique<TestWsConnection>(unwrap(server.acceptConnection(yield)));
+    });
+
+    runSpawn([&](asio::yield_context yield) {
+        auto connection = unwrap(builder.plainConnect(yield));
+        auto message = connection->read(yield, std::chrono::milliseconds{1});
+        ASSERT_FALSE(message.has_value());
+        ASSERT_TRUE(message.error().errorCode().has_value());
+        EXPECT_EQ(message.error().errorCode().value().value(), asio::error::timed_out);
+    });
+}
+
+TEST_F(WsConnectionTests, ReadWithTimeoutWorksFine)
+{
+    asio::spawn(ctx, [&](asio::yield_context yield) {
+        auto serverConnection = unwrap(server.acceptConnection(yield));
+        auto maybeError = serverConnection.send("hello", yield);
+        EXPECT_FALSE(maybeError.has_value()) << *maybeError;
+    });
+
+    runSpawn([&](asio::yield_context yield) {
+        auto connection = unwrap(builder.plainConnect(yield));
+        auto message = connection->read(yield, std::chrono::seconds{1});
+        ASSERT_TRUE(message.has_value()) << message.error().message();
+        EXPECT_EQ(message.value(), "hello");
+    });
+}
+
+TEST_F(WsConnectionTests, WriteTimeout)
+{
+    TestWsConnectionPtr serverConnection;
+    asio::spawn(ctx, [&](asio::yield_context yield) {
+        serverConnection = std::make_unique<TestWsConnection>(unwrap(server.acceptConnection(yield)));
+    });
+
+    runSpawn([&](asio::yield_context yield) {
+        auto connection = unwrap(builder.plainConnect(yield));
+        std::optional<RequestError> error;
+
+        // Write is success even if the other side is not reading.
+        // It seems we need to fill some socket buffer before the timeout occurs.
+        while (not error.has_value()) {
+            error = connection->write("hello", yield, std::chrono::milliseconds{1});
+        }
+        ASSERT_TRUE(error.has_value());
+        EXPECT_EQ(error->errorCode().value().value(), asio::error::timed_out);
+    });
+}
+
+TEST_F(WsConnectionTests, WriteWithTimeoutWorksFine)
+{
+    asio::spawn(ctx, [&](asio::yield_context yield) {
+        auto serverConnection = unwrap(server.acceptConnection(yield));
+        auto message = serverConnection.receive(yield);
+        ASSERT_TRUE(message.has_value());
+        EXPECT_EQ(message, "hello");
+    });
+
+    runSpawn([&](asio::yield_context yield) {
+        auto connection = unwrap(builder.plainConnect(yield));
+        auto error = connection->write("hello", yield, std::chrono::seconds{1});
+        ASSERT_FALSE(error.has_value()) << error->message();
+    });
+}
+
 TEST_F(WsConnectionTests, TrySslUsePlain)
 {
     asio::spawn(ctx, [&](asio::yield_context yield) {
@@ -148,7 +219,7 @@ TEST_F(WsConnectionTests, TrySslUsePlain)
     });
 }
 
-TEST_F(WsConnectionTests, Timeout)
+TEST_F(WsConnectionTests, ConnectionTimeout)
 {
     builder.setConnectionTimeout(std::chrono::milliseconds{1});
     runSpawn([&](asio::yield_context yield) {
@@ -213,9 +284,9 @@ TEST_F(WsConnectionTests, CloseConnection)
 
 TEST_F(WsConnectionTests, CloseConnectionTimeout)
 {
+    TestWsConnectionPtr const serverConnection;
     asio::spawn(ctx, [&](asio::yield_context yield) {
-        auto serverConnection = unwrap(server.acceptConnection(yield));
-        std::this_thread::sleep_for(std::chrono::milliseconds{10});
+        auto serverConnection = std::make_unique<TestWsConnection>(unwrap(server.acceptConnection(yield)));
     });
 
     runSpawn([&](asio::yield_context yield) {

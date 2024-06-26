@@ -23,15 +23,16 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/BookChanges.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/STObject.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/STObject.h>
 
 #include <optional>
 #include <string>
@@ -60,17 +61,7 @@ struct BookChangesParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct BookChangesParameterTest : public RPCBookChangesHandlerTest,
-                                  public WithParamInterface<BookChangesParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<BookChangesParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                  public WithParamInterface<BookChangesParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -92,7 +83,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCBookChangesGroup1,
     BookChangesParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    BookChangesParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(BookChangesParameterTest, InvalidParams)
@@ -113,8 +104,8 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaIntSequence)
 {
     backend->setRange(MINSEQ, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    // return empty ledgerHeader
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(R"({"ledger_index":30})");
     auto const handler = AnyHandler{BookChangesHandler{backend}};
@@ -131,7 +122,7 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaStringSequence)
 {
     backend->setRange(MINSEQ, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(std::nullopt));
 
     auto static const input = json::parse(R"({"ledger_index":"30"})");
@@ -149,9 +140,9 @@ TEST_F(RPCBookChangesHandlerTest, LedgerNonExistViaHash)
 {
     backend->setRange(MINSEQ, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -194,7 +185,7 @@ TEST_F(RPCBookChangesHandlerTest, NormalPath)
 
     backend->setRange(MINSEQ, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(CreateLedgerInfo(LEDGERHASH, MAXSEQ)));
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, MAXSEQ)));
 
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();

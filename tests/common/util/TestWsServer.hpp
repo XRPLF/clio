@@ -29,17 +29,26 @@
 
 #include <expected>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <vector>
 
 class TestWsConnection {
     boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
+    std::vector<util::requests::HttpHeader> headers_;
 
 public:
     using SendCallback = std::function<void()>;
     using ReceiveCallback = std::function<void(std::string)>;
 
-    TestWsConnection(boost::beast::websocket::stream<boost::beast::tcp_stream> wsStream);
+    TestWsConnection(
+        boost::beast::websocket::stream<boost::beast::tcp_stream> wsStream,
+        std::vector<util::requests::HttpHeader> headers
+    );
+
+    TestWsConnection(TestWsConnection&& other);
 
     // returns error message if error occurs
     std::optional<std::string>
@@ -51,13 +60,20 @@ public:
 
     std::optional<std::string>
     close(boost::asio::yield_context yield);
+
+    std::vector<util::requests::HttpHeader> const&
+    headers() const;
 };
+using TestWsConnectionPtr = std::unique_ptr<TestWsConnection>;
 
 class TestWsServer {
     boost::asio::ip::tcp::acceptor acceptor_;
 
 public:
-    TestWsServer(boost::asio::io_context& context, std::string const& host, int port);
+    TestWsServer(boost::asio::io_context& context, std::string const& host);
+
+    std::string
+    port() const;
 
     std::expected<TestWsConnection, util::requests::RequestError>
     acceptConnection(boost::asio::yield_context yield);

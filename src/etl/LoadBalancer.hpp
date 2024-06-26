@@ -20,8 +20,8 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "etl/ETLHelpers.hpp"
 #include "etl/ETLState.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
 #include "etl/impl/ForwardingCache.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
@@ -36,7 +36,7 @@
 #include <grpcpp/grpcpp.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 #include <org/xrpl/rpc/v1/ledger.pb.h>
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <atomic>
 #include <chrono>
@@ -44,7 +44,7 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <utility>
+#include <string_view>
 #include <vector>
 
 namespace etl {
@@ -68,6 +68,8 @@ private:
     util::Logger log_{"ETL"};
     // Forwarding cache must be destroyed after sources because sources have a callback to invalidate cache
     std::optional<impl::ForwardingCache> forwardingCache_;
+    std::optional<std::string> forwardingXUserValue_;
+
     std::vector<SourcePtr> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
@@ -75,6 +77,16 @@ private:
     std::atomic_bool hasForwardingSource_{false};
 
 public:
+    /**
+     * @brief Value for the X-User header when forwarding admin requests
+     */
+    static constexpr std::string_view ADMIN_FORWARDING_X_USER_VALUE = "clio_admin";
+
+    /**
+     * @brief Value for the X-User header when forwarding user requests
+     */
+    static constexpr std::string_view USER_FORWARDING_X_USER_VALUE = "clio_user";
+
     /**
      * @brief Create an instance of the load balancer.
      *
@@ -167,6 +179,7 @@ public:
      *
      * @param request JSON-RPC request to forward
      * @param clientIp The IP address of the peer, if known
+     * @param isAdmin Whether the request is from an admin
      * @param yield The coroutine context
      * @return Response received from rippled node as JSON object on success; nullopt on failure
      */
@@ -174,6 +187,7 @@ public:
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,
+        bool isAdmin,
         boost::asio::yield_context yield
     );
 

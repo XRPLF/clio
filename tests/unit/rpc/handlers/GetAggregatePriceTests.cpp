@@ -23,6 +23,7 @@
 #include "rpc/handlers/GetAggregatePrice.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockBackend.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/object.hpp>
@@ -30,10 +31,10 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/UintTypes.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <optional>
@@ -104,17 +105,7 @@ struct GetAggregatePriceParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct GetAggregatePriceParameterTest : public RPCGetAggregatePriceHandlerTest,
-                                        public WithParamInterface<GetAggregatePriceParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<GetAggregatePriceParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                        public WithParamInterface<GetAggregatePriceParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -154,6 +145,54 @@ generateTestValuesForParametersTest()
             "Required field 'base_asset' missing"
         },
         GetAggregatePriceParamTestCaseBundle{
+            "invalid_base_asset",
+            R"({
+                    "quote_asset" : "USD",
+                    "base_asset": "asdf",
+                    "oracles": 
+                    [
+                        {
+                            "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                            "oracle_document_id": 2
+                        }
+                    ]
+                })",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "emtpy_base_asset",
+            R"({
+                    "quote_asset" : "USD",
+                    "base_asset": "",
+                    "oracles": 
+                    [
+                        {
+                            "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                            "oracle_document_id": 2
+                        }
+                    ]
+                })",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "invalid_base_asset2",
+            R"({
+                    "quote_asset" : "USD",
+                    "base_asset": "+aa",
+                    "oracles": 
+                    [
+                        {
+                            "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                            "oracle_document_id": 2
+                        }
+                    ]
+                })",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
             "no_quote_asset",
             R"({
                     "base_asset": "USD",
@@ -167,6 +206,54 @@ generateTestValuesForParametersTest()
                 })",
             "invalidParams",
             "Required field 'quote_asset' missing"
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "invalid_quote_asset",
+            R"({
+                    "quote_asset" : "asdf",
+                    "base_asset": "USD",
+                    "oracles": 
+                    [
+                        {
+                            "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                            "oracle_document_id": 2
+                        }
+                    ]
+                })",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "empty_quote_asset",
+            R"({
+                    "quote_asset" : "",
+                    "base_asset": "USD",
+                    "oracles": 
+                    [
+                        {
+                            "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                            "oracle_document_id": 2
+                        }
+                    ]
+                })",
+            "invalidParams",
+            "Invalid parameters."
+        },
+        GetAggregatePriceParamTestCaseBundle{
+            "invalid_quote_asset2",
+            R"({
+                    "quote_asset" : "+aa",
+                    "base_asset": "USD",
+                    "oracles": 
+                    [
+                        {
+                            "account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD",
+                            "oracle_document_id": 2
+                        }
+                    ]
+                })",
+            "invalidParams",
+            "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
             "oraclesIsEmpty",
@@ -315,7 +402,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCGetAggregatePriceGroup1,
     GetAggregatePriceParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    GetAggregatePriceParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(GetAggregatePriceParameterTest, InvalidParams)
@@ -389,7 +476,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, LedgerNotFound)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
     mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
@@ -435,9 +523,59 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntrySinglePriceData)
     });
 }
 
+TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryStrOracleDocumentId)
+{
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
+
+    auto constexpr documentId = 1;
+    mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
+
+    auto const handler = AnyHandler{GetAggregatePriceHandler{backend}};
+    auto const req = json::parse(fmt::format(
+        R"({{
+                "base_asset": "USD",
+                "quote_asset": "XRP",
+                "oracles": 
+                [
+                    {{
+                        "account": "{}",
+                        "oracle_document_id": "{}"
+                    }}
+                ]
+            }})",
+        ACCOUNT,
+        documentId
+    ));
+
+    auto const expected = json::parse(fmt::format(
+        R"({{
+                "entire_set": 
+                {{
+                    "mean": "10",
+                    "size": 1,
+                    "standard_deviation": "0"
+                }},
+                "median": "10",
+                "time": 4321,
+                "ledger_index": {},
+                "ledger_hash": "{}",
+                "validated": true
+            }})",
+        RANGEMAX,
+        LEDGERHASH
+    ));
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result.value(), expected);
+    });
+}
+
 TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
     mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
@@ -487,7 +625,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, PreviousTxNotFound)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
     mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
@@ -552,7 +691,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NewLedgerObjectHasNoPricePair)
 // median is the middle value of a set of numbers when there are odd number of price
 TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId1 = 1;
     auto constexpr documentId2 = 2;
@@ -617,7 +757,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesOdd)
 // median is the middle value of a set of numbers when there are odd number of price
 TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId1 = 1;
     auto constexpr documentId2 = 2;
@@ -689,7 +830,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryMultipleOraclesEven)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     // prepare 4 prices, when trim is 25, the lowest(documentId1) and highest(documentId3) price will be removed
     auto constexpr documentId1 = 1;
@@ -770,7 +912,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, OracleLedgerEntryTrim)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
     auto const oracleIndex = ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), documentId).key;
@@ -804,7 +947,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoOracleEntryFound)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, NoMatchAssetPair)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
     mockLedgerObject(*backend, ACCOUNT, documentId, TX1, 1e3, 2);  // 10
@@ -837,7 +981,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, NoMatchAssetPair)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId1 = 1;
     auto constexpr documentId2 = 2;
@@ -916,7 +1061,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIsZero)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId1 = 1;
     auto constexpr documentId2 = 2;
@@ -995,7 +1141,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, ValidTimeThreshold)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId1 = 1;
     auto constexpr documentId2 = 2;
@@ -1073,7 +1220,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdTooLong)
 
 TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIncludeOldest)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId1 = 1;
     auto constexpr documentId2 = 2;
@@ -1152,7 +1300,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, TimeThresholdIncludeOldest)
 // When the price pair is not available in the current oracle, trace back to previous transactions
 TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
     auto const oracleIndex = ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), documentId).key;
@@ -1214,7 +1363,8 @@ TEST_F(RPCGetAggregatePriceHandlerTest, FromTx)
 }
 TEST_F(RPCGetAggregatePriceHandlerTest, NotFoundInTxHistory)
 {
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(CreateLedgerInfo(LEDGERHASH, RANGEMAX)));
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     auto constexpr documentId = 1;
     auto const oracleIndex = ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), documentId).key;

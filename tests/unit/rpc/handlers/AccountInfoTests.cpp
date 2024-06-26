@@ -26,6 +26,7 @@
 #include "rpc/handlers/AccountInfo.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockAmendmentCenter.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -33,10 +34,10 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
 #include <optional>
@@ -67,17 +68,7 @@ struct AccountInfoParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct AccountInfoParameterTest : public RPCAccountInfoHandlerTest,
-                                  public WithParamInterface<AccountInfoParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<AccountInfoParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                  public WithParamInterface<AccountInfoParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -119,7 +110,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountInfoGroup1,
     AccountInfoParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    AccountInfoParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(AccountInfoParameterTest, InvalidParams)
@@ -162,8 +153,8 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
     backend->setRange(10, 30);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
-    ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    // return empty ledgerHeader
+    ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -186,7 +177,7 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
 {
     backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::nullopt));
 
     auto static const input = json::parse(fmt::format(
@@ -210,9 +201,9 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
 {
     backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -235,10 +226,10 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
 TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
 {
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
 
@@ -261,10 +252,10 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
 TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
 {
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     // return a valid ledger object but not account root
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0)));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
@@ -288,10 +279,10 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
 TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
 {
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
     auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
@@ -392,9 +383,9 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
     );
 
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -494,9 +485,9 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
     );
 
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -562,9 +553,9 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
     );
 
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -602,9 +593,9 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
 TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
 {
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -670,9 +661,9 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
     );
 
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -746,9 +737,9 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
     );
 
     backend->setRange(10, 30);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;

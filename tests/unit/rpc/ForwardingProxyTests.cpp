@@ -31,7 +31,7 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <memory>
 #include <optional>
@@ -260,6 +260,38 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAPIVersionIsV2)
     });
 }
 
+TEST_F(RPCForwardingProxyTest, ShouldForwardFeatureWithoutVetoedFlag)
+{
+    auto const apiVersion = 1u;
+    auto const method = "feature";
+    auto const params = json::parse(R"({"feature": "foo"})");
+
+    runSpawn([&](auto yield) {
+        auto const range = backend->fetchLedgerRange();
+        auto const ctx =
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
+
+        auto const res = proxy.shouldForward(ctx);
+        ASSERT_TRUE(res);
+    });
+}
+
+TEST_F(RPCForwardingProxyTest, ShouldNeverForwardFeatureWithVetoedFlag)
+{
+    auto const apiVersion = 1u;
+    auto const method = "feature";
+    auto const params = json::parse(R"({"vetoed": true, "feature": "foo"})");
+
+    runSpawn([&](auto yield) {
+        auto const range = backend->fetchLedgerRange();
+        auto const ctx =
+            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
+
+        auto const res = proxy.shouldForward(ctx);
+        ASSERT_FALSE(res);
+    });
+}
+
 TEST_F(RPCForwardingProxyTest, ShouldNeverForwardSubscribe)
 {
     auto const apiVersion = 1u;
@@ -301,15 +333,14 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
     auto const params = json::parse(R"({"test": true})");
     auto const forwarded = json::parse(R"({"test": true, "command": "submit"})");
 
-    ON_CALL(*rawBalancerPtr, forwardToRippled).WillByDefault(Return(std::make_optional<json::object>()));
-    EXPECT_CALL(*rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), _))
-        .Times(1);
+    EXPECT_CALL(
+        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), true, _)
+    )
+        .WillOnce(Return(std::make_optional<json::object>()));
 
-    ON_CALL(*rawHandlerProviderPtr, contains).WillByDefault(Return(true));
-    EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).Times(1);
+    EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
-    ON_CALL(counters, rpcForwarded).WillByDefault(Return());
-    EXPECT_CALL(counters, rpcForwarded(method)).Times(1);
+    EXPECT_CALL(counters, rpcForwarded(method));
 
     runSpawn([&](auto yield) {
         auto const range = backend->fetchLedgerRange();
@@ -332,15 +363,14 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
     auto const params = json::parse(R"({"test": true})");
     auto const forwarded = json::parse(R"({"test": true, "command": "submit"})");
 
-    ON_CALL(*rawBalancerPtr, forwardToRippled).WillByDefault(Return(std::nullopt));
-    EXPECT_CALL(*rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), _))
-        .Times(1);
+    EXPECT_CALL(
+        *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), true, _)
+    )
+        .WillOnce(Return(std::nullopt));
 
-    ON_CALL(*rawHandlerProviderPtr, contains).WillByDefault(Return(true));
-    EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).Times(1);
+    EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
-    ON_CALL(counters, rpcFailedToForward).WillByDefault(Return());
-    EXPECT_CALL(counters, rpcFailedToForward(method)).Times(1);
+    EXPECT_CALL(counters, rpcFailedToForward(method));
 
     runSpawn([&](auto yield) {
         auto const range = backend->fetchLedgerRange();

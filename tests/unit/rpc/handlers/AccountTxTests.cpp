@@ -23,14 +23,15 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AccountTx.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/STObject.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/STObject.h>
 
 #include <cstdint>
 #include <optional>
@@ -63,15 +64,6 @@ struct AccountTxParamTestCaseBundle {
 // parameterized test cases for parameters check
 struct AccountTxParameterTest : public RPCAccountTxHandlerTest,
                                 public WithParamInterface<AccountTxParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            return info.param.testName;
-        }
-    };
-
     static auto
     generateTestValuesForParametersTest()
     {
@@ -401,7 +393,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountTxGroup1,
     AccountTxParameterTest,
     ValuesIn(AccountTxParameterTest::generateTestValuesForParametersTest()),
-    AccountTxParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(AccountTxParameterTest, CheckParams)
@@ -832,9 +824,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndex)
     )
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ - 1);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
@@ -927,9 +919,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerHash)
     )
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ - 1);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
@@ -972,9 +964,9 @@ TEST_F(RPCAccountTxHandlerTest, SpecificLedgerIndexValidated)
     )
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
@@ -1532,8 +1524,8 @@ TEST_F(RPCAccountTxHandlerTest, NFTTxs_API_v2)
     )
         .Times(1);
 
-    auto const ledgerInfo = CreateLedgerInfo(LEDGERHASH, 11);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(transactions.size()).WillRepeatedly(Return(ledgerInfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 11);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(transactions.size()).WillRepeatedly(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{AccountTxHandler{backend}};
@@ -1564,17 +1556,7 @@ struct AccountTxTransactionBundle {
 
 // parameterized test cases for parameters check
 struct AccountTxTransactionTypeTest : public RPCAccountTxHandlerTest,
-                                      public WithParamInterface<AccountTxTransactionBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<AccountTxTransactionBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                      public WithParamInterface<AccountTxTransactionBundle> {};
 
 static auto
 generateTransactionTypeTestValues()
@@ -2049,7 +2031,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountTxTransactionTypeTest,
     AccountTxTransactionTypeTest,
     ValuesIn(generateTransactionTypeTestValues()),
-    AccountTxTransactionTypeTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
@@ -2062,8 +2044,8 @@ TEST_P(AccountTxTransactionTypeTest, SpecificTransactionType)
     EXPECT_CALL(*backend, fetchAccountTransactions(_, _, false, Optional(Eq(TransactionsCursor{MAXSEQ, INT32_MAX})), _))
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).Times(Between(1, 2));
 
     auto const testBundle = GetParam();

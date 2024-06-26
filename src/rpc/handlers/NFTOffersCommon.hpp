@@ -29,10 +29,10 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Keylet.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Keylet.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>

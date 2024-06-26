@@ -53,20 +53,29 @@ public:
      * @brief Read a message from the WebSocket
      *
      * @param yield yield context
+     * @param timeout timeout for the operation
      * @return Message or error
      */
     virtual std::expected<std::string, RequestError>
-    read(boost::asio::yield_context yield) = 0;
+    read(
+        boost::asio::yield_context yield,
+        std::optional<std::chrono::steady_clock::duration> timeout = std::nullopt
+    ) = 0;
 
     /**
      * @brief Write a message to the WebSocket
      *
      * @param message message to write
      * @param yield yield context
+     * @param timeout timeout for the operation
      * @return Error if any
      */
     virtual std::optional<RequestError>
-    write(std::string const& message, boost::asio::yield_context yield) = 0;
+    write(
+        std::string const& message,
+        boost::asio::yield_context yield,
+        std::optional<std::chrono::steady_clock::duration> timeout = std::nullopt
+    ) = 0;
 
     /**
      * @brief Close the WebSocket

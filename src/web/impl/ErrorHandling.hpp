@@ -28,7 +28,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
 #include <fmt/core.h>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <memory>
 #include <optional>

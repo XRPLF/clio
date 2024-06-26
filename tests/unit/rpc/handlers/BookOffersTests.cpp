@@ -24,6 +24,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/BookOffers.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -31,15 +32,15 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/UintTypes.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -75,17 +76,7 @@ struct ParameterTestBundle {
     std::string expectedErrorMessage;
 };
 
-struct RPCBookOffersParameterTest : public RPCBookOffersHandlerTest, public WithParamInterface<ParameterTestBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<ParameterTestBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct RPCBookOffersParameterTest : public RPCBookOffersHandlerTest, public WithParamInterface<ParameterTestBundle> {};
 
 TEST_P(RPCBookOffersParameterTest, CheckError)
 {
@@ -497,7 +488,7 @@ INSTANTIATE_TEST_SUITE_P(
     RPCBookOffersHandler,
     RPCBookOffersParameterTest,
     testing::ValuesIn(generateParameterBookOffersTestBundles()),
-    RPCBookOffersParameterTest::NameGenerator()
+    tests::util::NameGenerator
 );
 
 struct BookOffersNormalTestBundle {
@@ -511,17 +502,7 @@ struct BookOffersNormalTestBundle {
 };
 
 struct RPCBookOffersNormalPathTest : public RPCBookOffersHandlerTest,
-                                     public WithParamInterface<BookOffersNormalTestBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<BookOffersNormalTestBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                     public WithParamInterface<BookOffersNormalTestBundle> {};
 
 TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
 {
@@ -530,9 +511,9 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
 
     backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
 
     // return valid book dir
     EXPECT_CALL(*backend, doFetchSuccessorKey).Times(bundle.mockedSuccessors.size());
@@ -1172,7 +1153,7 @@ INSTANTIATE_TEST_SUITE_P(
     RPCBookOffersHandler,
     RPCBookOffersNormalPathTest,
     testing::ValuesIn(generateNormalPathBookOffersTestBundles()),
-    RPCBookOffersNormalPathTest::NameGenerator()
+    tests::util::NameGenerator
 );
 
 // ledger not exist
@@ -1180,8 +1161,8 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
 {
     backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
-    ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    // return empty ledgerHeader
+    ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -1212,8 +1193,8 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
 {
     backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
-    ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    // return empty ledgerHeader
+    ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -1244,9 +1225,9 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
 {
     backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -1280,9 +1261,9 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
 
     backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
 
     auto const issuer = GetAccountIDWithString(ACCOUNT);
     // return valid book dir
@@ -1354,9 +1335,9 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
 
     backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
 
     auto const issuer = GetAccountIDWithString(ACCOUNT);
     // return valid book dir

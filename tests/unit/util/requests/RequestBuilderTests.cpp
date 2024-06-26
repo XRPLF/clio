@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/AssignRandomPort.hpp"
 #include "util/Fixtures.hpp"
 #include "util/TestHttpServer.hpp"
 #include "util/requests/RequestBuilder.hpp"
@@ -50,8 +51,8 @@ struct RequestBuilderTestBundle {
 };
 
 struct RequestBuilderTestBase : SyncAsioContextTest {
-    TestHttpServer server{ctx, "0.0.0.0", 11111};
-    RequestBuilder builder{"localhost", "11111"};
+    TestHttpServer server{ctx, "0.0.0.0"};
+    RequestBuilder builder{"localhost", server.port()};
 };
 
 struct RequestBuilderTest : RequestBuilderTestBase, testing::WithParamInterface<RequestBuilderTestBundle> {};
@@ -182,7 +183,7 @@ TEST_F(RequestBuilderTest, ResolveError)
 
 TEST_F(RequestBuilderTest, ConnectionError)
 {
-    builder = RequestBuilder{"localhost", "11112"};
+    builder = RequestBuilder{"localhost", std::to_string(tests::util::generateFreePort())};
     builder.setTimeout(std::chrono::milliseconds{1});
     runSpawn([this](asio::yield_context yield) {
         auto const response = builder.getPlain(yield);

@@ -27,7 +27,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <fmt/core.h>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <cstdint>
 #include <functional>
@@ -402,6 +402,7 @@ public:
      * @param fn The callable/function object
      */
     template <typename Fn>
+        requires std::invocable<Fn, boost::json::value const&, std::string_view>
     explicit CustomValidator(Fn&& fn) : validator_{std::forward<Fn>(fn)}
     {
     }

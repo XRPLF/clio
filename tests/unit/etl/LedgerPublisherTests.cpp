@@ -32,9 +32,9 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/chrono.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/chrono.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>
 #include <vector>
@@ -68,15 +68,35 @@ struct ETLLedgerPublisherTest : util::prometheus::WithPrometheus, MockBackendTes
     StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
 };
 
-TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingFalse)
+TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderIsWritingFalseAndCacheDisabled)
 {
     SystemState dummyState;
     dummyState.isWriting = false;
-    auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
+    auto const dummyLedgerHeader = CreateLedgerHeader(LEDGERHASH, SEQ, AGE);
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
-    publisher.publish(dummyLedgerInfo);
+    publisher.publish(dummyLedgerHeader);
+    EXPECT_CALL(mockCache, isDisabled).WillOnce(Return(true));
+    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).Times(0);
 
-    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).WillOnce(Return(std::vector<LedgerObject>{}));
+    // setLastPublishedSequence not in strand, should verify before run
+    EXPECT_TRUE(publisher.getLastPublishedSequence());
+    EXPECT_EQ(publisher.getLastPublishedSequence().value(), SEQ);
+
+    ctx.run();
+    EXPECT_TRUE(backend->fetchLedgerRange());
+    EXPECT_EQ(backend->fetchLedgerRange().value().minSequence, SEQ);
+    EXPECT_EQ(backend->fetchLedgerRange().value().maxSequence, SEQ);
+}
+
+TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderIsWritingFalseAndCacheEnabled)
+{
+    SystemState dummyState;
+    dummyState.isWriting = false;
+    auto const dummyLedgerHeader = CreateLedgerHeader(LEDGERHASH, SEQ, AGE);
+    impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
+    publisher.publish(dummyLedgerHeader);
+    EXPECT_CALL(mockCache, isDisabled).WillOnce(Return(false));
+    EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).Times(1);
 
     // setLastPublishedSequence not in strand, should verify before run
     EXPECT_TRUE(publisher.getLastPublishedSequence());
@@ -90,13 +110,13 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingFalse)
     EXPECT_EQ(backend->fetchLedgerRange().value().maxSequence, SEQ);
 }
 
-TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingTrue)
+TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderIsWritingTrue)
 {
     SystemState dummyState;
     dummyState.isWriting = true;
-    auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
+    auto const dummyLedgerHeader = CreateLedgerHeader(LEDGERHASH, SEQ, AGE);
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
-    publisher.publish(dummyLedgerInfo);
+    publisher.publish(dummyLedgerHeader);
 
     // setLastPublishedSequence not in strand, should verify before run
     EXPECT_TRUE(publisher.getLastPublishedSequence());
@@ -106,16 +126,16 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoIsWritingTrue)
     EXPECT_FALSE(backend->fetchLedgerRange());
 }
 
-TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoInRange)
+TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderInRange)
 {
     SystemState dummyState;
     dummyState.isWriting = true;
 
-    auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, 0);  // age is 0
+    auto const dummyLedgerHeader = CreateLedgerHeader(LEDGERHASH, SEQ, 0);  // age is 0
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
     backend->setRange(SEQ - 1, SEQ);
 
-    publisher.publish(dummyLedgerInfo);
+    publisher.publish(dummyLedgerHeader);
 
     // mock fetch fee
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
@@ -143,20 +163,20 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoInRange)
     EXPECT_TRUE(publisher.lastPublishAgeSeconds() <= 1);
 }
 
-TEST_F(ETLLedgerPublisherTest, PublishLedgerInfoCloseTimeGreaterThanNow)
+TEST_F(ETLLedgerPublisherTest, PublishLedgerHeaderCloseTimeGreaterThanNow)
 {
     SystemState dummyState;
     dummyState.isWriting = true;
 
-    ripple::LedgerInfo dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, 0);
+    ripple::LedgerHeader dummyLedgerHeader = CreateLedgerHeader(LEDGERHASH, SEQ, 0);
     auto const nowPlus10 = system_clock::now() + seconds(10);
     auto const closeTime = duration_cast<seconds>(nowPlus10.time_since_epoch()).count() - rippleEpochStart;
-    dummyLedgerInfo.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
+    dummyLedgerHeader.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
 
     backend->setRange(SEQ - 1, SEQ);
 
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
-    publisher.publish(dummyLedgerInfo);
+    publisher.publish(dummyLedgerHeader);
 
     // mock fetch fee
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))
@@ -216,9 +236,9 @@ TEST_F(ETLLedgerPublisherTest, PublishLedgerSeqStopIsFalse)
     LedgerRange const range{.minSequence = SEQ, .maxSequence = SEQ};
     EXPECT_CALL(*backend, hardFetchLedgerRange).WillOnce(Return(range));
 
-    auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, AGE);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(SEQ, _)).WillOnce(Return(dummyLedgerInfo));
-
+    auto const dummyLedgerHeader = CreateLedgerHeader(LEDGERHASH, SEQ, AGE);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(SEQ, _)).WillOnce(Return(dummyLedgerHeader));
+    EXPECT_CALL(mockCache, isDisabled).WillOnce(Return(false));
     EXPECT_CALL(*backend, fetchLedgerDiff(SEQ, _)).WillOnce(Return(std::vector<LedgerObject>{}));
     EXPECT_CALL(mockCache, updateImp);
 
@@ -231,11 +251,11 @@ TEST_F(ETLLedgerPublisherTest, PublishMultipleTxInOrder)
     SystemState dummyState;
     dummyState.isWriting = true;
 
-    auto const dummyLedgerInfo = CreateLedgerInfo(LEDGERHASH, SEQ, 0);  // age is 0
+    auto const dummyLedgerHeader = CreateLedgerHeader(LEDGERHASH, SEQ, 0);  // age is 0
     impl::LedgerPublisher publisher(ctx, backend, mockCache, mockSubscriptionManagerPtr, dummyState);
     backend->setRange(SEQ - 1, SEQ);
 
-    publisher.publish(dummyLedgerInfo);
+    publisher.publish(dummyLedgerHeader);
 
     // mock fetch fee
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::fees().key, SEQ, _))

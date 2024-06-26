@@ -23,19 +23,20 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/GatewayBalances.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STObject.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STObject.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -66,17 +67,7 @@ struct ParameterTestBundle {
     std::string expectedErrorMessage;
 };
 
-struct ParameterTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<ParameterTestBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<ParameterTestBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct ParameterTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<ParameterTestBundle> {};
 
 TEST_P(ParameterTest, CheckError)
 {
@@ -209,7 +200,7 @@ INSTANTIATE_TEST_SUITE_P(
     RPCGatewayBalancesHandler,
     ParameterTest,
     testing::ValuesIn(generateParameterTestBundles()),
-    ParameterTest::NameGenerator()
+    tests::util::NameGenerator
 );
 
 TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
@@ -218,8 +209,8 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaStringIndex)
 
     backend->setRange(10, 300);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    // return empty ledgerHeader
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend}};
     runSpawn([&](auto yield) {
@@ -247,8 +238,8 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaIntIndex)
 
     backend->setRange(10, 300);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    // return empty ledgerHeader
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend}};
     runSpawn([&](auto yield) {
@@ -274,9 +265,9 @@ TEST_F(RPCGatewayBalancesHandlerTest, LedgerNotFoundViaHash)
 {
     backend->setRange(10, 300);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto const handler = AnyHandler{GatewayBalancesHandler{backend}};
     runSpawn([&](auto yield) {
@@ -304,9 +295,9 @@ TEST_F(RPCGatewayBalancesHandlerTest, AccountNotFound)
 
     backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
 
     // return empty account
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -337,9 +328,9 @@ TEST_F(RPCGatewayBalancesHandlerTest, InvalidHotWallet)
 
     backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
 
     // return valid account
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -387,17 +378,7 @@ struct NormalTestBundle {
     std::string hotwallet;
 };
 
-struct NormalPathTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<NormalTestBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<NormalTestBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct NormalPathTest : public RPCGatewayBalancesHandlerTest, public WithParamInterface<NormalTestBundle> {};
 
 TEST_P(NormalPathTest, CheckOutput)
 {
@@ -406,9 +387,9 @@ TEST_P(NormalPathTest, CheckOutput)
 
     backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, seq);
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(ledgerHeader));
 
     // return valid account
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -661,5 +642,5 @@ INSTANTIATE_TEST_SUITE_P(
     RPCGatewayBalancesHandler,
     NormalPathTest,
     testing::ValuesIn(generateNormalPathTestBundles()),
-    NormalPathTest::NameGenerator()
+    tests::util::NameGenerator
 );

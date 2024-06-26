@@ -34,6 +34,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace etl::impl {
@@ -41,9 +42,12 @@ namespace etl::impl {
 ForwardingSource::ForwardingSource(
     std::string ip,
     std::string wsPort,
+    std::chrono::steady_clock::duration forwardingTimeout,
     std::chrono::steady_clock::duration connectionTimeout
 )
-    : log_(fmt::format("ForwardingSource[{}:{}]", ip, wsPort)), connectionBuilder_(std::move(ip), std::move(wsPort))
+    : log_(fmt::format("ForwardingSource[{}:{}]", ip, wsPort))
+    , connectionBuilder_(std::move(ip), std::move(wsPort))
+    , forwardingTimeout_{forwardingTimeout}
 {
     connectionBuilder_.setConnectionTimeout(connectionTimeout)
         .addHeader(
@@ -55,6 +59,7 @@ std::optional<boost::json::object>
 ForwardingSource::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& forwardToRippledClientIp,
+    std::string_view xUserValue,
     boost::asio::yield_context yield
 ) const
 {
@@ -64,18 +69,21 @@ ForwardingSource::forwardToRippled(
             {boost::beast::http::field::forwarded, fmt::format("for={}", *forwardToRippledClientIp)}
         );
     }
+
+    connectionBuilder.addHeader({"X-User", std::string{xUserValue}});
+
     auto expectedConnection = connectionBuilder.connect(yield);
     if (not expectedConnection) {
         return std::nullopt;
     }
     auto& connection = expectedConnection.value();
 
-    auto writeError = connection->write(boost::json::serialize(request), yield);
+    auto writeError = connection->write(boost::json::serialize(request), yield, forwardingTimeout_);
     if (writeError) {
         return std::nullopt;
     }
 
-    auto response = connection->read(yield);
+    auto response = connection->read(yield, forwardingTimeout_);
     if (not response) {
         return std::nullopt;
     }

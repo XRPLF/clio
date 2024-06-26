@@ -33,8 +33,8 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>

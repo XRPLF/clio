@@ -32,11 +32,11 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_from.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/chrono.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/chrono.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <limits>
@@ -77,7 +77,7 @@ NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) c
         if (input.ledgerIndexMax || input.ledgerIndexMin)
             return Error{Status{RippledError::rpcINVALID_PARAMS, "containsLedgerSpecifierAndRange"}};
 
-        auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+        auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
             *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
         );
 

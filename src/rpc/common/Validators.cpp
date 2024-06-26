@@ -27,10 +27,10 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <fmt/core.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/UintTypes.h>
-#include <ripple/protocol/tokens.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/tokens.h>
 
 #include <charconv>
 #include <cstdint>
@@ -45,7 +45,7 @@ namespace rpc::validation {
 [[nodiscard]] MaybeError
 Required::verify(boost::json::value const& value, std::string_view key)
 {
-    if (not value.is_object() or not value.as_object().contains(key.data()))
+    if (not value.is_object() or not value.as_object().contains(key))
         return Error{Status{RippledError::rpcINVALID_PARAMS, "Required field '" + std::string{key} + "' missing"}};
 
     return {};
@@ -54,10 +54,10 @@ Required::verify(boost::json::value const& value, std::string_view key)
 [[nodiscard]] MaybeError
 CustomValidator::verify(boost::json::value const& value, std::string_view key) const
 {
-    if (not value.is_object() or not value.as_object().contains(key.data()))
+    if (not value.is_object() or not value.as_object().contains(key))
         return {};  // ignore. field does not exist, let 'required' fail instead
 
-    return validator_(value.as_object().at(key.data()), key);
+    return validator_(value.as_object().at(key), key);
 }
 
 [[nodiscard]] bool
@@ -140,8 +140,12 @@ CustomValidator CurrencyValidator =
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
+        auto const currencyStr = boost::json::value_to<std::string>(value);
+        if (currencyStr.empty())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "IsEmpty"}};
+
         ripple::Currency currency;
-        if (!ripple::to_currency(currency, boost::json::value_to<std::string>(value)))
+        if (!ripple::to_currency(currency, currencyStr))
             return Error{Status{ClioError::rpcMALFORMED_CURRENCY, "malformedCurrency"}};
 
         return MaybeError{};

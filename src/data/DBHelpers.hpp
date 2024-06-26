@@ -23,16 +23,16 @@
 #include "util/Assert.hpp"
 
 #include <boost/container/flat_set.hpp>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/Log.h>
-#include <ripple/basics/StringUtilities.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STAccount.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/TxMeta.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/Log.h>
+#include <xrpl/basics/StringUtilities.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STAccount.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/Serializer.h>
+#include <xrpl/protocol/TxMeta.h>
 
 #include <cstddef>
 #include <cstdint>

@@ -27,7 +27,7 @@ If you're running Clio and `rippled` on separate machines, in addition to uncomm
 
 2. Open a public, unencrypted WebSocket port on your `rippled` server.
 
-3. In the `rippled` config, change the IP specified for `secure_gateway`, under the `port_grpc` section, to the IP of your Clio server. This entry can take the form of a comma-separated list if you are running multiple Clio nodes.
+3. In the `rippled` config, change the IP specified for `secure_gateway`, under the `port_grpc` and websocket server sections, to the IP of your Clio server. This entry can take the form of a comma-separated list if you are running multiple Clio nodes.
 
 ## Ledger sequence
 

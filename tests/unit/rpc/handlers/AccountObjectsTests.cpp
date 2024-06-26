@@ -23,20 +23,21 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AccountObjects.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/beast/utility/Zero.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/UintTypes.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/beast/utility/Zero.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -71,17 +72,7 @@ struct AccountObjectsParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct AccountObjectsParameterTest : public RPCAccountObjectsHandlerTest,
-                                     public WithParamInterface<AccountObjectsParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<AccountObjectsParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                     public WithParamInterface<AccountObjectsParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -180,7 +171,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountObjectsGroup1,
     AccountObjectsParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    AccountObjectsParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(AccountObjectsParameterTest, InvalidParams)
@@ -200,8 +191,8 @@ TEST_P(AccountObjectsParameterTest, InvalidParams)
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    // return empty ledgerinfo
-    EXPECT_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
+    // return empty ledgerHeader
+    EXPECT_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -223,7 +214,7 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     EXPECT_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillOnce(Return(std::nullopt));
 
     auto static const input = json::parse(fmt::format(
@@ -246,9 +237,9 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillOnce(Return(std::optional<ripple::LedgerInfo>{}));
+        .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -271,9 +262,9 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
 TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
 
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
     EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(Return(std::optional<Blob>{}));
 
     auto static const input = json::parse(fmt::format(
@@ -327,8 +318,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
                                         })";
 
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -366,8 +357,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
 TEST_F(RPCAccountObjectsHandlerTest, Limit)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -412,8 +403,8 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
 TEST_F(RPCAccountObjectsHandlerTest, Marker)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
     EXPECT_CALL(*backend, doFetchLedgerObject(accountKk, MAXSEQ, _)).WillOnce(Return(Blob{'f', 'a', 'k', 'e'}));
@@ -457,8 +448,8 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
 TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -509,8 +500,8 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -561,8 +552,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -607,8 +598,8 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -659,8 +650,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
 {
     backend->setRange(MINSEQ, MAXSEQ);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
 
@@ -715,8 +706,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
 {
     backend->setRange(MINSEQ, MAXSEQ);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -760,8 +751,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
 {
     backend->setRange(MINSEQ, MAXSEQ);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -822,8 +813,8 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleT
 {
     backend->setRange(MINSEQ, MAXSEQ);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -946,8 +937,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
                                         })";
 
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -993,8 +984,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
 TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -1037,8 +1028,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
 TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -1085,8 +1076,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -1157,8 +1148,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -1211,8 +1202,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -1241,8 +1232,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -1275,8 +1266,8 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
 TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -1388,8 +1379,8 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
                                         })";
 
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -1436,8 +1427,8 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
 TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -1516,8 +1507,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
     );
 
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;
@@ -1592,8 +1583,8 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
     );
 
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const account = GetAccountIDWithString(ACCOUNT);
     auto const accountKk = ripple::keylet::account(account).key;

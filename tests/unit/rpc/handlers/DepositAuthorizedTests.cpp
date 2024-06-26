@@ -23,15 +23,16 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/DepositAuthorized.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerFormats.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
 
 #include <optional>
 #include <string>
@@ -61,17 +62,7 @@ struct DepositAuthorizedTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct DepositAuthorizedParameterTest : public RPCDepositAuthorizedTest,
-                                        public WithParamInterface<DepositAuthorizedTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<DepositAuthorizedTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                        public WithParamInterface<DepositAuthorizedTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -172,7 +163,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCDepositAuthorizedGroup,
     DepositAuthorizedParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    DepositAuthorizedParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(DepositAuthorizedParameterTest, InvalidParams)
@@ -282,9 +273,9 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 {
     backend->setRange(10, 30);
 
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
@@ -317,9 +308,9 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
 {
     backend->setRange(10, 30);
 
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
@@ -366,9 +357,9 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
 
     backend->setRange(10, 30);
 
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
@@ -409,9 +400,9 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
 
     backend->setRange(10, 30);
 
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
@@ -457,9 +448,9 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
 
     backend->setRange(10, 30);
 
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
@@ -506,9 +497,9 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
 
     backend->setRange(10, 30);
 
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);

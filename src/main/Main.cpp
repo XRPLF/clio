@@ -137,7 +137,7 @@ parseCerts(Config const& config)
     readKey.close();
     std::string key = contents.str();
 
-    ssl::context ctx{ssl::context::tlsv12};
+    ssl::context ctx{ssl::context::tls_server};
     ctx.set_options(ssl::context::default_workarounds | ssl::context::no_sslv2);
     ctx.use_certificate_chain(buffer(cert.data(), cert.size()));
     ctx.use_private_key(buffer(key.data(), key.size()), ssl::context::file_format::pem);

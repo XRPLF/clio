@@ -30,9 +30,9 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <optional>
 
@@ -145,7 +145,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash)
 {
     // mock fetchLedgerByHash return empty
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const input = json::parse(fmt::format(
@@ -172,7 +172,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
@@ -195,7 +195,7 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
@@ -220,8 +220,8 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     backend->setRange(10, 30);
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 31);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 31);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
@@ -269,8 +269,8 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
 TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
 {
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch nft return emtpy
     ON_CALL(*backend, fetchNFT).WillByDefault(Return(std::optional<NFT>{}));
@@ -311,12 +311,12 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
     })";
 
     backend->setRange(10, 30);
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // fetch nft return something
-    auto const nft = std::make_optional<NFT>(CreateNFT(NFTID, ACCOUNT, ledgerInfo.seq));
+    auto const nft = std::make_optional<NFT>(CreateNFT(NFTID, ACCOUNT, ledgerHeader.seq));
     ON_CALL(*backend, fetchNFT).WillByDefault(Return(nft));
     EXPECT_CALL(*backend, fetchNFT(ripple::uint256{NFTID}, 30, _)).Times(1);
 
@@ -352,13 +352,13 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
     })";
 
     backend->setRange(10, 30);
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // fetch nft return something
     auto const nft =
-        std::make_optional<NFT>(CreateNFT(NFTID, ACCOUNT, ledgerInfo.seq, ripple::Blob{'u', 'r', 'i'}, true));
+        std::make_optional<NFT>(CreateNFT(NFTID, ACCOUNT, ledgerHeader.seq, ripple::Blob{'u', 'r', 'i'}, true));
     ON_CALL(*backend, fetchNFT).WillByDefault(Return(nft));
     EXPECT_CALL(*backend, fetchNFT(ripple::uint256{NFTID}, 30, _)).Times(1);
 
@@ -394,12 +394,12 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
     })";
 
     backend->setRange(10, 30);
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // fetch nft return something
-    auto const nft = std::make_optional<NFT>(CreateNFT(NFTID, ACCOUNT, ledgerInfo.seq, ripple::Blob{}));
+    auto const nft = std::make_optional<NFT>(CreateNFT(NFTID, ACCOUNT, ledgerHeader.seq, ripple::Blob{}));
     ON_CALL(*backend, fetchNFT).WillByDefault(Return(nft));
     EXPECT_CALL(*backend, fetchNFT(ripple::uint256{NFTID}, 30, _)).Times(1);
 
@@ -435,12 +435,12 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
     })";
 
     backend->setRange(10, 30);
-    auto ledgerInfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerInfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
     // fetch nft return something
-    auto const nft = std::make_optional<NFT>(CreateNFT(NFTID2, ACCOUNT, ledgerInfo.seq));
+    auto const nft = std::make_optional<NFT>(CreateNFT(NFTID2, ACCOUNT, ledgerHeader.seq));
     ON_CALL(*backend, fetchNFT).WillByDefault(Return(nft));
     EXPECT_CALL(*backend, fetchNFT(ripple::uint256{NFTID2}, 30, _)).Times(1);
 

@@ -23,6 +23,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/LedgerEntry.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
@@ -31,16 +32,16 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/STXChainBridge.h>
-#include <ripple/protocol/UintTypes.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/STXChainBridge.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <optional>
@@ -71,17 +72,7 @@ struct ParamTestCaseBundle {
 };
 
 // parameterized test cases for parameters check
-struct LedgerEntryParameterTest : public RPCLedgerEntryTest, public WithParamInterface<ParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<ParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct LedgerEntryParameterTest : public RPCLedgerEntryTest, public WithParamInterface<ParamTestCaseBundle> {};
 
 // TODO: because we extract the error generation from the handler to framework
 // the error messages need one round fine tuning
@@ -1770,7 +1761,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup1,
     LedgerEntryParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    LedgerEntryParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(LedgerEntryParameterTest, InvalidParams)
@@ -1851,9 +1842,9 @@ TEST_P(IndexTest, InvalidIndexNotString)
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     // return null for ledger entry
     auto const key = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -1881,17 +1872,7 @@ struct NormalPathTestBundle {
     ripple::STObject mockedEntity;
 };
 
-struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithParamInterface<NormalPathTestBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<NormalPathTestBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct RPCLedgerEntryNormalPathTest : public RPCLedgerEntryTest, public WithParamInterface<NormalPathTestBundle> {};
 
 static auto
 generateTestValuesForNormalPathTest()
@@ -2334,13 +2315,40 @@ generateTestValuesForNormalPathTest()
             CreateChainOwnedClaimIDObject(ACCOUNT, ACCOUNT, ACCOUNT2, "JPY", ACCOUNT3, ACCOUNT)
         },
         NormalPathTestBundle{
-            "OracleEntryFoundViaObject",
+            "OracleEntryFoundViaIntOracleDocumentId",
             fmt::format(
                 R"({{
                     "binary": true,
                     "oracle": {{
                         "account": "{}",
                         "oracle_document_id": 1
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            ripple::keylet::oracle(GetAccountIDWithString(ACCOUNT), 1).key,
+            CreateOracleObject(
+                ACCOUNT,
+                "70726F7669646572",
+                32u,
+                1234u,
+                ripple::Blob(8, 's'),
+                ripple::Blob(8, 's'),
+                RANGEMAX - 2,
+                ripple::uint256{"E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321"},
+                CreatePriceDataSeries(
+                    {CreateOraclePriceData(2e4, ripple::to_currency("XRP"), ripple::to_currency("USD"), 3)}
+                )
+            )
+        },
+        NormalPathTestBundle{
+            "OracleEntryFoundViaStrOracleDocumentId",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "oracle": {{
+                        "account": "{}",
+                        "oracle_document_id": "1"
                     }}
                 }})",
                 ACCOUNT
@@ -2391,7 +2399,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCLedgerEntryGroup2,
     RPCLedgerEntryNormalPathTest,
     ValuesIn(generateTestValuesForNormalPathTest()),
-    RPCLedgerEntryNormalPathTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 // Test for normal path
@@ -2401,9 +2409,9 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
     auto const testBundle = GetParam();
 
     backend->setRange(RANGEMIN, RANGEMAX);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     EXPECT_CALL(*backend, doFetchLedgerObject(testBundle.expectedIndex, RANGEMAX, _))
         .WillRepeatedly(Return(testBundle.mockedEntity.getSerializer().peekData()));
@@ -2451,9 +2459,9 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
     })";
 
     backend->setRange(RANGEMIN, RANGEMAX);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
@@ -2477,9 +2485,9 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
 TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 {
     backend->setRange(RANGEMIN, RANGEMAX);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, RANGEMAX);
-    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
 
     // return valid ledger entry which can be deserialized
     auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);

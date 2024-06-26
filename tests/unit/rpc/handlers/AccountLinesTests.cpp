@@ -31,12 +31,12 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STObject.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STObject.h>
 
 #include <cstdint>
 #include <optional>
@@ -316,7 +316,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash)
 {
     // mock fetchLedgerByHash return empty
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     auto const input = json::parse(fmt::format(
@@ -343,7 +343,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
     backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
@@ -366,7 +366,7 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
     backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
@@ -391,8 +391,8 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerHash2)
 {
     backend->setRange(10, 30);
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 31);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 31);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     auto const input = json::parse(fmt::format(
         R"({{ 
@@ -440,8 +440,8 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistLedgerViaLedgerIndex2)
 TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
 {
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // fetch account object return emtpy
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
@@ -468,8 +468,8 @@ TEST_F(RPCAccountLinesHandlerTest, NonExistAccount)
 TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
 {
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
@@ -547,8 +547,8 @@ TEST_F(RPCAccountLinesHandlerTest, DefaultParameterTest)
 TEST_F(RPCAccountLinesHandlerTest, UseLimit)
 {
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(3);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
@@ -625,8 +625,8 @@ TEST_F(RPCAccountLinesHandlerTest, UseLimit)
 TEST_F(RPCAccountLinesHandlerTest, UseDestination)
 {
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
@@ -685,8 +685,8 @@ TEST_F(RPCAccountLinesHandlerTest, UseDestination)
 TEST_F(RPCAccountLinesHandlerTest, EmptyChannel)
 {
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
@@ -755,8 +755,8 @@ TEST_F(RPCAccountLinesHandlerTest, OptionalResponseField)
     })";
 
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
@@ -815,8 +815,8 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerOutput)
     constexpr static auto nextPage = 99;
     constexpr static auto limit = 15;
     auto ownerDir2Kk = ripple::keylet::page(ripple::keylet::ownerDir(account), nextPage).key;
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto fake = Blob{'f', 'a', 'k', 'e'};
@@ -884,8 +884,8 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
     constexpr static auto nextPage = 99;
     constexpr static auto limit = 15;
     auto ownerDirKk = ripple::keylet::page(ripple::keylet::ownerDir(account), nextPage).key;
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto fake = Blob{'f', 'a', 'k', 'e'};
@@ -936,8 +936,8 @@ TEST_F(RPCAccountLinesHandlerTest, MarkerInput)
 TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
 {
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);
@@ -1018,8 +1018,8 @@ TEST_F(RPCAccountLinesHandlerTest, LimitLessThanMin)
 TEST_F(RPCAccountLinesHandlerTest, LimitMoreThanMax)
 {
     backend->setRange(10, 30);
-    auto ledgerinfo = CreateLedgerInfo(LEDGERHASH, 30);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // fetch account object return something
     auto account = GetAccountIDWithString(ACCOUNT);

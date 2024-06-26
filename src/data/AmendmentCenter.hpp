@@ -116,6 +116,9 @@ struct Amendments {
     REGISTER(fixXChainRewardRounding);
     REGISTER(fixPreviousTxnID);
     REGISTER(fixAMMv1_1);
+    REGISTER(NFTokenMintOffer);
+    REGISTER(fixReducedOffersV2);
+    REGISTER(fixEnforceNFTokenTrustline);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);

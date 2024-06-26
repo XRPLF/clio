@@ -21,8 +21,8 @@
 
 #include "rpc/JS.hpp"
 
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/jss.h>
 
 #include <algorithm>
 #include <iterator>
@@ -68,6 +68,7 @@ static std::unordered_map<std::string, LedgerTypeAttributes> const LEDGER_TYPES_
      LedgerTypeAttributes(ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID, true)},
     {JS(did), LedgerTypeAttributes(ripple::ltDID)},
     {JS(oracle), LedgerTypeAttributes(ripple::ltORACLE)},
+    {JS(nunl), LedgerTypeAttributes(ripple::ltNEGATIVE_UNL)},
 }};
 }  // namespace impl
 

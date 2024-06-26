@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/Protocol.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/Protocol.h>
 
 #include <string>
 
@@ -32,4 +32,4 @@ ripple::uint256
 binaryStringToUint256(std::string const& bin);
 
 std::string
-ledgerInfoToBinaryString(ripple::LedgerInfo const& info);
+ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);

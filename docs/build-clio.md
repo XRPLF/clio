@@ -36,6 +36,8 @@ compiler.version=15
 compiler.libcxx=libc++
 build_type=Release
 compiler.cppstd=20
+[conf]
+tools.build:cxxflags+=["-DBOOST_ASIO_DISABLE_CONCEPTS"]
 ```
 
 > Linux example:
@@ -90,6 +92,9 @@ If successful, `conan install` will find the required packages and `cmake` will 
 
 > [!TIP]
 > To generate a Code Coverage report, include `-o coverage=True` in the `conan install` command above, along with `-o tests=True` to enable tests. After running the `cmake` commands, execute `make clio_tests-ccov`. The coverage report will be found at `clio_tests-llvm-cov/index.html`.
+
+> [!NOTE]
+> If you've built Clio before and the build is now failing, it's likely due to updated dependencies. Try deleting the build folder and then rerunning the Conan and CMake commands mentioned above.
 
 ### Generating API docs for Clio
 

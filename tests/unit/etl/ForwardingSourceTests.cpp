@@ -27,7 +27,9 @@
 #include <boost/json/serialize.hpp>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <chrono>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -35,14 +37,19 @@
 using namespace etl::impl;
 
 struct ForwardingSourceTests : SyncAsioContextTest {
-    TestWsServer server_{ctx, "0.0.0.0", 11114};
-    ForwardingSource forwardingSource{"127.0.0.1", "11114", std::chrono::milliseconds{1}};
+    TestWsServer server_{ctx, "0.0.0.0"};
+    ForwardingSource forwardingSource{
+        "127.0.0.1",
+        server_.port(),
+        std::chrono::milliseconds{1},
+        std::chrono::milliseconds{1}
+    };
 };
 
 TEST_F(ForwardingSourceTests, ConnectionFailed)
 {
     runSpawn([&](boost::asio::yield_context yield) {
-        auto result = forwardingSource.forwardToRippled({}, {}, yield);
+        auto result = forwardingSource.forwardToRippled({}, {}, {}, yield);
         EXPECT_FALSE(result);
     });
 }
@@ -59,10 +66,33 @@ struct ForwardingSourceOperationsTests : ForwardingSourceTests {
         [&]() { ASSERT_FALSE(failedConnection); }();
 
         auto connection = server_.acceptConnection(yield);
-        [&]() { ASSERT_TRUE(connection); }();
+        [&]() { ASSERT_TRUE(connection) << connection.error().message(); }();
         return std::move(connection).value();
     }
 };
+
+TEST_F(ForwardingSourceOperationsTests, XUserHeader)
+{
+    std::string const xUserValue = "some_user";
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto connection = serverConnection(yield);
+        auto headers = connection.headers();
+        ASSERT_FALSE(headers.empty());
+        auto it = std::find_if(headers.begin(), headers.end(), [](auto const& header) {
+            return std::holds_alternative<std::string>(header.name) && std::get<std::string>(header.name) == "X-User";
+        });
+        ASSERT_FALSE(it == headers.end());
+        EXPECT_EQ(std::get<std::string>(it->name), "X-User");
+        EXPECT_EQ(it->value, xUserValue);
+        connection.close(yield);
+    });
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto result =
+            forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, xUserValue, yield);
+        EXPECT_FALSE(result);
+    });
+}
 
 TEST_F(ForwardingSourceOperationsTests, ReadFailed)
 {
@@ -72,7 +102,20 @@ TEST_F(ForwardingSourceOperationsTests, ReadFailed)
     });
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, yield);
+        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
+        EXPECT_FALSE(result);
+    });
+}
+
+TEST_F(ForwardingSourceOperationsTests, ReadTimeout)
+{
+    TestWsConnectionPtr connection;
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        connection = std::make_unique<TestWsConnection>(serverConnection(yield));
+    });
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
         EXPECT_FALSE(result);
     });
 }
@@ -93,7 +136,7 @@ TEST_F(ForwardingSourceOperationsTests, ParseFailed)
     });
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, yield);
+        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
         EXPECT_FALSE(result);
     });
 }
@@ -115,7 +158,7 @@ TEST_F(ForwardingSourceOperationsTests, GotNotAnObject)
     });
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, yield);
+        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
         EXPECT_FALSE(result);
     });
 }
@@ -134,7 +177,7 @@ TEST_F(ForwardingSourceOperationsTests, Success)
     });
 
     runSpawn([&](boost::asio::yield_context yield) {
-        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), "some_ip", yield);
+        auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), "some_ip", {}, yield);
         [&]() { ASSERT_TRUE(result); }();
         auto expectedReply = reply_;
         expectedReply["forwarded"] = true;

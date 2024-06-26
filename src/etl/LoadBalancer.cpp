@@ -25,7 +25,6 @@
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
-#include "util/Constants.hpp"
 #include "util/Random.hpp"
 #include "util/log/Logger.hpp"
 
@@ -38,7 +37,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -77,11 +75,9 @@ LoadBalancer::LoadBalancer(
     SourceFactory sourceFactory
 )
 {
-    auto const forwardingCacheTimeout = config.valueOr<float>("forwarding_cache_timeout", 0.f);
+    auto const forwardingCacheTimeout = config.valueOr<float>("forwarding.cache_timeout", 0.f);
     if (forwardingCacheTimeout > 0.f) {
-        forwardingCache_ = impl::ForwardingCache{std::chrono::milliseconds{
-            std::lroundf(forwardingCacheTimeout * static_cast<float>(util::MILLISECONDS_PER_SECOND))
-        }};
+        forwardingCache_ = impl::ForwardingCache{Config::toMilliseconds(forwardingCacheTimeout)};
     }
 
     static constexpr std::uint32_t MAX_DOWNLOAD = 256;
@@ -103,6 +99,7 @@ LoadBalancer::LoadBalancer(
         }
     };
 
+    auto const forwardingTimeout = Config::toMilliseconds(config.valueOr<float>("forwarding.request_timeout", 10.));
     for (auto const& entry : config.array("etl_sources")) {
         auto source = sourceFactory(
             entry,
@@ -110,22 +107,24 @@ LoadBalancer::LoadBalancer(
             backend,
             subscriptions,
             validatedLedgers,
+            forwardingTimeout,
             [this]() {
                 if (not hasForwardingSource_)
                     chooseForwardingSource();
             },
             [this]() { chooseForwardingSource(); },
-            [this]() { forwardingCache_->invalidate(); }
+            [this]() {
+                if (forwardingCache_.has_value())
+                    forwardingCache_->invalidate();
+            }
         );
 
         // checking etl node validity
         auto const stateOpt = ETLState::fetchETLStateFromSource(*source);
 
         if (!stateOpt) {
-            checkOnETLFailure(fmt::format(
-                "Failed to fetch ETL state from source = {} Please check the configuration and network",
-                source->toString()
-            ));
+            LOG(log_.warn()) << "Failed to fetch ETL state from source = " << source->toString()
+                             << " Please check the configuration and network";
         } else if (etlState_ && etlState_->networkID && stateOpt->networkID &&
                    etlState_->networkID != stateOpt->networkID) {
             checkOnETLFailure(fmt::format(
@@ -140,6 +139,9 @@ LoadBalancer::LoadBalancer(
         sources_.push_back(std::move(source));
         LOG(log_.info()) << "Added etl source - " << sources_.back()->toString();
     }
+
+    if (!etlState_)
+        checkOnETLFailure("Failed to fetch ETL state from any source. Please check the configuration and network");
 
     if (sources_.empty())
         checkOnETLFailure("No ETL sources configured. Please check the configuration");
@@ -213,6 +215,7 @@ std::optional<boost::json::object>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
+    bool isAdmin,
     boost::asio::yield_context yield
 )
 {
@@ -227,9 +230,11 @@ LoadBalancer::forwardToRippled(
 
     auto numAttempts = 0u;
 
+    auto xUserValue = isAdmin ? ADMIN_FORWARDING_X_USER_VALUE : USER_FORWARDING_X_USER_VALUE;
+
     std::optional<boost::json::object> response;
     while (numAttempts < sources_.size()) {
-        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, yield)) {
+        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield)) {
             response = std::move(res);
             break;
         }

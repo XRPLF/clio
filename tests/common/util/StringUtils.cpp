@@ -21,9 +21,9 @@
 
 #include "rpc/RPCHelpers.hpp"
 
-#include <ripple/basics/StringUtilities.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/StringUtilities.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <string>
 
@@ -46,9 +46,9 @@ binaryStringToUint256(std::string const& bin)
 }
 
 std::string
-ledgerInfoToBinaryString(ripple::LedgerInfo const& info)
+ledgerHeaderToBinaryString(ripple::LedgerHeader const& info)
 {
-    auto const blob = rpc::ledgerInfoToBlob(info, true);
+    auto const blob = rpc::ledgerHeaderToBlob(info, true);
     std::string strBlob;
     for (auto c : blob)
         strBlob += c;

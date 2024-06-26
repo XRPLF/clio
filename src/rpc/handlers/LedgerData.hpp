@@ -34,10 +34,10 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>

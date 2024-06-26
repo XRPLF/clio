@@ -25,6 +25,7 @@
 #include "util/Fixtures.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/NameGenerator.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/json/parse.hpp>
@@ -32,7 +33,7 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/protocol/Book.h>
+#include <xrpl/protocol/Book.h>
 
 #include <cstdint>
 #include <memory>
@@ -73,17 +74,8 @@ struct UnsubscribeParamTestCaseBundle {
 };
 
 // parameterized test cases for parameters check
-struct UnsubscribeParameterTest : public RPCUnsubscribeTest, public WithParamInterface<UnsubscribeParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<UnsubscribeParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+struct UnsubscribeParameterTest : public RPCUnsubscribeTest,
+                                  public WithParamInterface<UnsubscribeParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -519,7 +511,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCUnsubscribe,
     UnsubscribeParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    UnsubscribeParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(UnsubscribeParameterTest, InvalidParams)

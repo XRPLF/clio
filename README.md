@@ -36,6 +36,7 @@ Below are some useful docs to learn more about Clio.
 - [How to configure Clio and rippled](./docs/configure-clio.md)
 - [How to run Clio](./docs/run-clio.md)
 - [Logging](./docs/logging.md)
+- [Troubleshooting guide](./docs/trouble_shooting.md)
 
 **General reference material:**
 

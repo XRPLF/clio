@@ -23,28 +23,28 @@
 #include "data/Types.hpp"
 #include "util/Assert.hpp"
 
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/Slice.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/chrono.h>
-#include <ripple/json/json_value.h>
-#include <ripple/protocol/AMMCore.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/Protocol.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STArray.h>
-#include <ripple/protocol/STIssue.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/STVector256.h>
-#include <ripple/protocol/TER.h>
-#include <ripple/protocol/TxFormats.h>
-#include <ripple/protocol/UintTypes.h>
-#include <ripple/protocol/tokens.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/Slice.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/chrono.h>
+#include <xrpl/json/json_value.h>
+#include <xrpl/protocol/AMMCore.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/Protocol.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STArray.h>
+#include <xrpl/protocol/STIssue.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/STVector256.h>
+#include <xrpl/protocol/TER.h>
+#include <xrpl/protocol/TxFormats.h>
+#include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/tokens.h>
 
 #include <algorithm>
 #include <chrono>
@@ -75,22 +75,22 @@ GetAccountKey(ripple::AccountID const& acc)
     return ripple::keylet::account(acc).key;
 }
 
-ripple::LedgerInfo
-CreateLedgerInfo(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age)
+ripple::LedgerHeader
+CreateLedgerHeader(std::string_view ledgerHash, ripple::LedgerIndex seq, std::optional<uint32_t> age)
 {
     using namespace std::chrono;
 
-    auto ledgerinfo = ripple::LedgerInfo();
-    ledgerinfo.hash = ripple::uint256{ledgerHash};
-    ledgerinfo.seq = seq;
+    auto ledgerHeader = ripple::LedgerHeader();
+    ledgerHeader.hash = ripple::uint256{ledgerHash};
+    ledgerHeader.seq = seq;
 
     if (age) {
         auto const now = duration_cast<seconds>(system_clock::now().time_since_epoch());
         auto const closeTime = (now - seconds{age.value()}).count() - rippleEpochStart;
-        ledgerinfo.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
+        ledgerHeader.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
     }
 
-    return ledgerinfo;
+    return ledgerHeader;
 }
 
 ripple::STObject

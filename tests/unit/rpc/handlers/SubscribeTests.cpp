@@ -26,6 +26,7 @@
 #include "rpc/handlers/Subscribe.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -34,11 +35,11 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/UintTypes.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <chrono>
 #include <cstdint>
@@ -91,17 +92,7 @@ struct SubscribeParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct SubscribeParameterTest : public RPCSubscribeHandlerTest,
-                                public WithParamInterface<SubscribeParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<SubscribeParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                public WithParamInterface<SubscribeParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -577,7 +568,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCSubscribe,
     SubscribeParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    SubscribeParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(SubscribeParameterTest, InvalidParams)
@@ -641,9 +632,9 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
     backend->setRange(MINSEQ, MAXSEQ);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerinfo
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerinfo));
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerHeader));
     // fee
     auto feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(feeBlob));

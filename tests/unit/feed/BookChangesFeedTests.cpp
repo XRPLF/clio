@@ -26,7 +26,7 @@
 #include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/protocol/STObject.h>
+#include <xrpl/protocol/STObject.h>
 
 #include <vector>
 
@@ -45,7 +45,7 @@ TEST_F(FeedBookChangeTest, Pub)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, 32);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 32);
     auto transactions = std::vector<TransactionAndMetadata>{};
     auto trans1 = TransactionAndMetadata();
     ripple::STObject const obj = CreatePaymentTransactionObject(ACCOUNT1, ACCOUNT2, 1, 1, 32);
@@ -55,7 +55,7 @@ TEST_F(FeedBookChangeTest, Pub)
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
 
-    testFeedPtr->pub(ledgerinfo, transactions);
+    testFeedPtr->pub(ledgerHeader, transactions);
     constexpr static auto bookChangePublish =
         R"({
             "type":"bookChanges",
@@ -82,7 +82,7 @@ TEST_F(FeedBookChangeTest, Pub)
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
-    testFeedPtr->pub(ledgerinfo, transactions);
+    testFeedPtr->pub(ledgerHeader, transactions);
     ctx.restart();
     ctx.run();
 }

@@ -23,16 +23,17 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AccountNFTs.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <optional>
 #include <string>
@@ -66,17 +67,7 @@ struct AccountNFTParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct AccountNFTParameterTest : public RPCAccountNFTsHandlerTest,
-                                 public WithParamInterface<AccountNFTParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<AccountNFTParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                 public WithParamInterface<AccountNFTParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -155,7 +146,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCAccountNFTsGroup1,
     AccountNFTParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    AccountNFTParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(AccountNFTParameterTest, InvalidParams)
@@ -176,9 +167,9 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaHash)
 {
     backend->setRange(MINSEQ, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    // return empty ledgerinfo
+    // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
-        .WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+        .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -204,8 +195,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaStringIndex)
 
     backend->setRange(MINSEQ, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    // return empty ledgerHeader
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -231,8 +222,8 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
 
     backend->setRange(MINSEQ, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return empty ledgerinfo
-    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerInfo>{}));
+    // return empty ledgerHeader
+    ON_CALL(*backend, fetchLedgerBySequence(seq, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
 
     auto static const input = json::parse(fmt::format(
         R"({{
@@ -255,10 +246,10 @@ TEST_F(RPCAccountNFTsHandlerTest, LedgerNotFoundViaIntIndex)
 TEST_F(RPCAccountNFTsHandlerTest, AccountNotFound)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
 
@@ -309,9 +300,9 @@ TEST_F(RPCAccountNFTsHandlerTest, NormalPath)
     );
 
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const accountObject = CreateAccountRootObject(ACCOUNT, 0, 1, 10, 2, TXNID, 3);
     auto const accountID = GetAccountIDWithString(ACCOUNT);
@@ -344,9 +335,9 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
     static auto constexpr limit = 20;
 
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const accountObject = CreateAccountRootObject(ACCOUNT, 0, 1, 10, 2, TXNID, 3);
     auto const accountID = GetAccountIDWithString(ACCOUNT);
@@ -380,9 +371,9 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
 TEST_F(RPCAccountNFTsHandlerTest, Marker)
 {
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const accountObject = CreateAccountRootObject(ACCOUNT, 0, 1, 10, 2, TXNID, 3);
     auto const accountID = GetAccountIDWithString(ACCOUNT);
@@ -443,9 +434,9 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
     );
 
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const accountObject = CreateAccountRootObject(ACCOUNT, 0, 1, 10, 2, TXNID, 3);
     auto const accountID = GetAccountIDWithString(ACCOUNT);
@@ -507,9 +498,9 @@ TEST_F(RPCAccountNFTsHandlerTest, LimitMoreThanMax)
     );
 
     backend->setRange(MINSEQ, MAXSEQ);
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
 
     auto const accountObject = CreateAccountRootObject(ACCOUNT, 0, 1, 10, 2, TXNID, 3);
     auto const accountID = GetAccountIDWithString(ACCOUNT);

@@ -23,14 +23,15 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/NFTHistory.hpp"
 #include "util/Fixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/STObject.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/STObject.h>
 
 #include <cstdint>
 #include <optional>
@@ -59,17 +60,7 @@ struct NFTHistoryParamTestCaseBundle {
 
 // parameterized test cases for parameters check
 struct NFTHistoryParameterTest : public RPCNFTHistoryHandlerTest,
-                                 public WithParamInterface<NFTHistoryParamTestCaseBundle> {
-    struct NameGenerator {
-        template <class ParamType>
-        std::string
-        operator()(testing::TestParamInfo<ParamType> const& info) const
-        {
-            auto bundle = static_cast<NFTHistoryParamTestCaseBundle>(info.param);
-            return bundle.testName;
-        }
-    };
-};
+                                 public WithParamInterface<NFTHistoryParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -232,7 +223,7 @@ INSTANTIATE_TEST_CASE_P(
     RPCNFTHistoryGroup1,
     NFTHistoryParameterTest,
     ValuesIn(generateTestValuesForParametersTest()),
-    NFTHistoryParameterTest::NameGenerator{}
+    tests::util::NameGenerator
 );
 
 TEST_P(NFTHistoryParameterTest, InvalidParams)
@@ -586,8 +577,8 @@ TEST_F(RPCNFTHistoryHandlerTest, IndexSpecificForwardFalseV2)
     )
         .WillOnce(Return(transCursor));
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ);
-    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerinfo));
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(2);
 
     runSpawn([&, this](auto yield) {
@@ -865,9 +856,9 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerIndex)
     )
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ - 1);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ - 1, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};
@@ -960,9 +951,9 @@ TEST_F(RPCNFTHistoryHandlerTest, SpecificLedgerHash)
     )
         .Times(1);
 
-    auto const ledgerinfo = CreateLedgerInfo(LEDGERHASH, MAXSEQ - 1);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ - 1);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerinfo));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{NFTHistoryHandler{backend}};

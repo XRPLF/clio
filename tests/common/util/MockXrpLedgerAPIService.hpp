@@ -30,7 +30,7 @@
 #include <org/xrpl/rpc/v1/get_ledger_data.pb.h>
 #include <org/xrpl/rpc/v1/get_ledger_diff.pb.h>
 #include <org/xrpl/rpc/v1/get_ledger_entry.pb.h>
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <memory>
 #include <string>
@@ -82,7 +82,7 @@ struct WithMockXrpLedgerAPIService : virtual ::testing::Test {
     WithMockXrpLedgerAPIService(std::string serverAddress)
     {
         grpc::ServerBuilder builder;
-        builder.AddListeningPort(serverAddress, grpc::InsecureServerCredentials());
+        builder.AddListeningPort(serverAddress, grpc::InsecureServerCredentials(), &port_);
         builder.RegisterService(&mockXrpLedgerAPIService);
         server_ = builder.BuildAndStart();
         serverThread_ = std::thread([this] { server_->Wait(); });
@@ -94,11 +94,17 @@ struct WithMockXrpLedgerAPIService : virtual ::testing::Test {
         serverThread_.join();
     }
 
+    int
+    getXRPLMockPort() const
+    {
+        return port_;
+    }
     MockXrpLedgerAPIService mockXrpLedgerAPIService;
 
 private:
     std::unique_ptr<grpc::Server> server_;
     std::thread serverThread_;
+    int port_{};
 };
 
 }  // namespace tests::util

@@ -1,1 +1,1 @@
-find_package(xrpl-alex REQUIRED CONFIG)
+find_package(xrpl REQUIRED CONFIG)

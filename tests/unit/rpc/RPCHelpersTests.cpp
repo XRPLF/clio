@@ -32,13 +32,13 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/UintTypes.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <array>
 #include <cstddef>
@@ -427,7 +427,7 @@ TEST_F(RPCHelpersTest, DeliverMaxAliasV2)
 
 TEST_F(RPCHelpersTest, LedgerHeaderJson)
 {
-    auto const ledgerHeader = CreateLedgerInfo(INDEX1, 30);
+    auto const ledgerHeader = CreateLedgerHeader(INDEX1, 30);
     auto const binJson = toJson(ledgerHeader, true, 1u);
 
     auto constexpr EXPECTBIN = R"({
@@ -462,7 +462,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderJson)
 
 TEST_F(RPCHelpersTest, LedgerHeaderJsonV2)
 {
-    auto const ledgerHeader = CreateLedgerInfo(INDEX1, 30);
+    auto const ledgerHeader = CreateLedgerHeader(INDEX1, 30);
 
     auto const EXPECTJSON = fmt::format(
         R"({{

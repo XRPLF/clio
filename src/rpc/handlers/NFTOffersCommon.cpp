@@ -29,17 +29,17 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/Keylet.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STBase.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Keylet.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STBase.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/Serializer.h>
+#include <xrpl/protocol/jss.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -90,8 +90,9 @@ NFTOffersHandlerBase::iterateOfferDirectory(
 ) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
-    auto const lgrInfoOrStatus =
-        getLedgerInfoFromHashOrSeq(*sharedPtrBackend_, yield, input.ledgerHash, input.ledgerIndex, range->maxSequence);
+    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+        *sharedPtrBackend_, yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
 
     if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
         return Error{*status};

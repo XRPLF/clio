@@ -19,7 +19,7 @@
 
 #include "util/JsonUtils.hpp"
 
-#include <ripple/protocol/TxFormats.h>
+#include <xrpl/protocol/TxFormats.h>
 
 #include <algorithm>
 #include <iterator>
