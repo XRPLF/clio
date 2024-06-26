@@ -29,7 +29,6 @@
 #include <ripple/protocol/Feature.h>
 #include <ripple/protocol/Indexes.h>
 
-using namespace testing;
 using namespace data;
 
 constexpr auto SEQ = 30;
@@ -56,7 +55,7 @@ TEST_F(AmendmentCenterTest, IsEnabled)
     EXPECT_FALSE(amendmentCenter.isSupported("unknown"));
 
     auto const amendments = CreateAmendmentsObject({Amendments::fixUniversalNumber});
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, _))
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
         .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
 
     EXPECT_TRUE(amendmentCenter.isEnabled("fixUniversalNumber", SEQ));
