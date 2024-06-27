@@ -259,6 +259,17 @@ struct Amendment {
      */
     static ripple::uint256
     GetAmendmentId(std::string_view const name);
+
+    /**
+     * @brief Equality operator
+     * @param other The object to compare to
+     * @return Whether the objects are equal
+     */
+    bool
+    operator==(Amendment const& rhs) const
+    {
+        return name == rhs.name;
+    }
 };
 
 /**

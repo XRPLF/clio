@@ -42,11 +42,19 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
 namespace {
-std::vector<std::string> SUPPORTED_AMENDMENTS = {};
+
+std::unordered_set<std::string>&
+SUPPORTED_AMENDMENTS()
+{
+    static std::unordered_set<std::string> amendments = {};
+    return amendments;
+}
+
 }  // namespace
 
 namespace data {
@@ -54,7 +62,8 @@ namespace impl {
 
 WritingAmendmentKey::WritingAmendmentKey(std::string amendmentName) : AmendmentKey{std::move(amendmentName)}
 {
-    SUPPORTED_AMENDMENTS.push_back(name);
+    ASSERT(not SUPPORTED_AMENDMENTS().contains(name), "Attempt to register the same amendment twice");
+    SUPPORTED_AMENDMENTS().insert(name);
 }
 
 }  // namespace impl
@@ -81,7 +90,7 @@ AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& 
                 .name = name,
                 .feature = Amendment::GetAmendmentId(name),
                 .isSupportedByXRPL = support != ripple::AmendmentSupport::Unsupported,
-                .isSupportedByClio = rg::find(SUPPORTED_AMENDMENTS, name) != rg::end(SUPPORTED_AMENDMENTS),
+                .isSupportedByClio = rg::find(SUPPORTED_AMENDMENTS(), name) != rg::end(SUPPORTED_AMENDMENTS()),
                 .isRetired = support == ripple::AmendmentSupport::Retired
             };
         }),
