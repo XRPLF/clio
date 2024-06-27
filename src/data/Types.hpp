@@ -267,6 +267,10 @@ struct Amendment {
 struct AmendmentKey {
     std::string name;
 
+    /**
+     * @brief Construct a new AmendmentKey
+     * @param val Anything convertible to a string
+     */
     AmendmentKey(std::convertible_to<std::string> auto&& val) : name{std::forward<decltype(val)>(val)}
     {
     }
