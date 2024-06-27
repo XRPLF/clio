@@ -29,6 +29,8 @@
 #include <xrpl/protocol/Feature.h>
 #include <xrpl/protocol/Indexes.h>
 
+#include <string>
+
 using namespace data;
 
 constexpr auto SEQ = 30;
@@ -47,6 +49,18 @@ TEST_F(AmendmentCenterTest, AllAmendmentsFromLibXRPLAreSupported)
 
     ASSERT_EQ(amendmentCenter.getSupported().size(), ripple::allAmendments().size());
     ASSERT_EQ(amendmentCenter.getAll().size(), ripple::allAmendments().size());
+}
+
+TEST_F(AmendmentCenterTest, GetAmendment)
+{
+    {
+        auto const am = amendmentCenter.getAmendment("DisallowIncoming");
+        EXPECT_EQ(am.feature, ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"));
+    }
+    {
+        auto const am = amendmentCenter["DisallowIncoming"];
+        EXPECT_EQ(am.feature, ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"));
+    }
 }
 
 TEST_F(AmendmentCenterTest, IsEnabled)
@@ -70,4 +84,42 @@ TEST(AmendmentTest, GenerateAmendmentId)
         ripple::uint256("47C3002ABA31628447E8E9A8B315FAA935CE30183F9A9B86845E469CA2CDC3DF"),
         Amendment::GetAmendmentId("DisallowIncoming")
     );
+}
+
+struct AmendmentCenterDeathTest : AmendmentCenterTest {};
+
+TEST_F(AmendmentCenterDeathTest, GetInvalidAmendmentAsserts)
+{
+    EXPECT_DEATH({ amendmentCenter.getAmendment("invalidAmendmentKey"); }, ".*");
+    EXPECT_DEATH({ amendmentCenter["invalidAmendmentKey"]; }, ".*");
+}
+
+struct AmendmentKeyTest : testing::Test {};
+
+TEST_F(AmendmentKeyTest, Convertible)
+{
+    std::string key1 = "key1";
+    auto key2 = "key2";
+
+    EXPECT_NO_THROW({
+        auto const first = AmendmentKey(key1);
+        auto const second = AmendmentKey(key2);
+        auto const third = AmendmentKey("test");
+
+        std::string s1 = first;
+        EXPECT_EQ(s1, key1);
+
+        ripple::uint256 k1 = first;
+        ripple::uint256 k2 = second;
+
+        EXPECT_EQ(k1, ripple::uint256{"7E365F775657DC0EB960E6295A1F44B3F67479F54D5D12C5D87E6DB234F072E3"});
+        EXPECT_EQ(k2, ripple::uint256{"B4F33541E0E2FC2F7AA17D2D2E6A9B424809123485251D3413E91CC462309772"});
+    });
+}
+
+TEST_F(AmendmentKeyTest, Comparison)
+{
+    auto const first = AmendmentKey("1");
+    auto const second = AmendmentKey("2");
+    EXPECT_GT(second, first);
 }
