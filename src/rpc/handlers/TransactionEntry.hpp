@@ -95,9 +95,9 @@ public:
         static auto const rpcSpec = RpcSpec{
             {JS(tx_hash),
              meta::WithCustomError{validation::Required{}, Status(ClioError::rpcFIELD_NOT_FOUND_TRANSACTION)},
-             validation::Uint256HexStringValidator},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+             validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
         };
 
         return rpcSpec;

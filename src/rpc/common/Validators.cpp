@@ -69,7 +69,7 @@ checkIsU32Numeric(std::string_view sv)
     return ec == std::errc();
 }
 
-CustomValidator Uint256HexStringValidator =
+CustomValidator CustomValidators::Uint256HexStringValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -81,7 +81,7 @@ CustomValidator Uint256HexStringValidator =
         return MaybeError{};
     }};
 
-CustomValidator LedgerIndexValidator =
+CustomValidator CustomValidators::LedgerIndexValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
         auto err = Error{Status{RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}};
 
@@ -95,7 +95,7 @@ CustomValidator LedgerIndexValidator =
         return MaybeError{};
     }};
 
-CustomValidator AccountValidator =
+CustomValidator CustomValidators::AccountValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -108,7 +108,7 @@ CustomValidator AccountValidator =
         return MaybeError{};
     }};
 
-CustomValidator AccountBase58Validator =
+CustomValidator CustomValidators::AccountBase58Validator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -120,7 +120,7 @@ CustomValidator AccountBase58Validator =
         return MaybeError{};
     }};
 
-CustomValidator AccountMarkerValidator =
+CustomValidator CustomValidators::AccountMarkerValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -135,7 +135,7 @@ CustomValidator AccountMarkerValidator =
         return MaybeError{};
     }};
 
-CustomValidator CurrencyValidator =
+CustomValidator CustomValidators::CurrencyValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -151,7 +151,7 @@ CustomValidator CurrencyValidator =
         return MaybeError{};
     }};
 
-CustomValidator IssuerValidator =
+CustomValidator CustomValidators::IssuerValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -171,7 +171,7 @@ CustomValidator IssuerValidator =
         return MaybeError{};
     }};
 
-CustomValidator SubscribeStreamValidator =
+CustomValidator CustomValidators::SubscribeStreamValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_array())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
@@ -197,7 +197,7 @@ CustomValidator SubscribeStreamValidator =
         return MaybeError{};
     }};
 
-CustomValidator SubscribeAccountsValidator =
+CustomValidator CustomValidators::SubscribeAccountsValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_array())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
@@ -218,7 +218,7 @@ CustomValidator SubscribeAccountsValidator =
         return MaybeError{};
     }};
 
-CustomValidator CurrencyIssueValidator =
+CustomValidator CustomValidators::CurrencyIssueValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (not value.is_object())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotObject"}};

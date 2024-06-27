@@ -138,9 +138,9 @@ public:
             }};
 
         static auto const rpcSpec = RpcSpec{
-            {JS(account), validation::Required{}, validation::AccountValidator},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(account), validation::Required{}, validation::CustomValidators::AccountValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
             {JS(hotwallet), hotWalletValidator}
         };
 
