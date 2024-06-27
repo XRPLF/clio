@@ -19,7 +19,7 @@
 
 #include "rpc/handlers/AccountInfo.hpp"
 
-#include "rpc/Amendments.hpp"
+#include "data/AmendmentCenter.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -52,6 +52,8 @@ namespace rpc {
 AccountInfoHandler::Result
 AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx) const
 {
+    using namespace data;
+
     if (!input.account && !input.ident)
         return Error{Status{RippledError::rpcINVALID_PARAMS, ripple::RPC::missing_field_message(JS(account))}};
 
@@ -79,11 +81,12 @@ AccountInfoHandler::process(AccountInfoHandler::Input input, Context const& ctx)
     if (!accountKeylet.check(sle))
         return Error{Status{RippledError::rpcDB_DESERIALIZATION}};
 
-    auto const isDisallowIncomingEnabled =
-        rpc::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, rpc::Amendments::DisallowIncoming);
+    auto isEnabled = [this, &ctx, seq = lgrInfo.seq](auto key) {
+        return amendmentCenter_->isEnabled(ctx.yield, key, seq);
+    };
 
-    auto const isClawbackEnabled =
-        rpc::isAmendmentEnabled(sharedPtrBackend_, ctx.yield, lgrInfo.seq, rpc::Amendments::Clawback);
+    auto const isDisallowIncomingEnabled = isEnabled(Amendments::DisallowIncoming);
+    auto const isClawbackEnabled = isEnabled(Amendments::Clawback);
 
     // Return SignerList(s) if that is requested.
     if (input.signerLists) {
