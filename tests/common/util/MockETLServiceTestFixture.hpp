@@ -21,6 +21,7 @@
 
 #include "util/Fixtures.hpp"
 #include "util/MockETLService.hpp"
+#include "util/MockLoadBalancer.hpp"
 
 #include <gmock/gmock.h>
 

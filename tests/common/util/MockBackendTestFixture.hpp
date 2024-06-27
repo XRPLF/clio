@@ -21,7 +21,6 @@
 
 #include "util/Fixtures.hpp"
 #include "util/MockBackend.hpp"
-#include "util/MockLoadBalancer.hpp"
 
 template <template <typename> typename MockType = ::testing::NiceMock>
 struct MockBackendTestBase : virtual public NoLoggerFixture {
@@ -79,11 +78,3 @@ using MockBackendTestNaggy = MockBackendTestBase<::testing::NaggyMock>;
  * @brief Fixture with a "strict" mock backend.
  */
 using MockBackendTestStrict = MockBackendTestBase<::testing::StrictMock>;
-
-/**
- * @brief Fixture with a mock etl balancer
- */
-struct MockLoadBalancerTest : virtual public NoLoggerFixture {
-protected:
-    std::shared_ptr<MockLoadBalancer> mockLoadBalancerPtr = std::make_shared<MockLoadBalancer>();
-};
