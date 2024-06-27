@@ -25,14 +25,14 @@
 
 #include <boost/asio/spawn.hpp>
 #include <fmt/compile.h>
-#include <ripple/basics/Slice.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Feature.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/digest.h>
+#include <xrpl/basics/Slice.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Feature.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/Serializer.h>
+#include <xrpl/protocol/digest.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -45,24 +45,22 @@
 #include <vector>
 
 namespace {
-std::vector<std::string_view> SUPPORTED_AMENDMENTS = {};
+std::vector<std::string> SUPPORTED_AMENDMENTS = {};
 }  // namespace
 
 namespace data {
+namespace impl {
 
-AmendmentKey::AmendmentKey(std::string_view amendmentName) : name(amendmentName)
+WritingAmendmentKey::WritingAmendmentKey(std::string const& amendmentName) : AmendmentKey{amendmentName}
 {
     SUPPORTED_AMENDMENTS.push_back(amendmentName);
 }
 
-AmendmentKey::AmendmentKey(std::string const& amendmentName) : name(amendmentName)
-{
-    SUPPORTED_AMENDMENTS.push_back(amendmentName);
-}
+}  // namespace impl
 
-AmendmentKey::operator std::string() const
+AmendmentKey::operator std::string const&() const
 {
-    return std::string{name};
+    return name;
 }
 
 AmendmentKey::operator ripple::uint256() const
@@ -81,9 +79,9 @@ AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& 
             return Amendment{
                 .name = name,
                 .feature = Amendment::GetAmendmentId(name),
-                .isSupportedByXRPL = p.second != ripple::AmendmentSupport::Unsupported,
-                .isSupportedByClio = rg::find(SUPPORTED_AMENDMENTS, p.first) != rg::end(SUPPORTED_AMENDMENTS),
-                .isRetired = p.second == ripple::AmendmentSupport::Retired
+                .isSupportedByXRPL = support != ripple::AmendmentSupport::Unsupported,
+                .isSupportedByClio = rg::find(SUPPORTED_AMENDMENTS, name) != rg::end(SUPPORTED_AMENDMENTS),
+                .isRetired = support == ripple::AmendmentSupport::Retired
             };
         }),
         std::back_inserter(all_)
@@ -94,9 +92,9 @@ AmendmentCenter::AmendmentCenter(std::shared_ptr<data::BackendInterface> const& 
 }
 
 bool
-AmendmentCenter::isSupported(std::string name) const
+AmendmentCenter::isSupported(AmendmentKey const& key) const
 {
-    return supported_.contains(name) && supported_.at(name).isSupportedByClio;
+    return supported_.contains(key);
 }
 
 std::map<std::string, Amendment> const&
@@ -112,9 +110,9 @@ AmendmentCenter::getAll() const
 }
 
 bool
-AmendmentCenter::isEnabled(std::string name, uint32_t seq) const
+AmendmentCenter::isEnabled(AmendmentKey const& key, uint32_t seq) const
 {
-    return data::synchronous([this, name, seq](auto yield) { return isEnabled(yield, name, seq); });
+    return data::synchronous([this, &key, seq](auto yield) { return isEnabled(yield, key, seq); });
 }
 
 bool
@@ -122,12 +120,16 @@ AmendmentCenter::isEnabled(boost::asio::yield_context yield, AmendmentKey const&
 {
     namespace rg = std::ranges;
 
-    // the amendments should always be present in ledger
+    // the amendments should always be present on the ledger
     auto const& amendments = backend_->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
+    ASSERT(amendments.has_value(), "Amendments ledger object must be present in the database");
 
     ripple::SLE const amendmentsSLE{
         ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key
     };
+
+    if (not amendmentsSLE.isFieldPresent(ripple::sfAmendments))
+        return false;
 
     auto const listAmendments = amendmentsSLE.getFieldV256(ripple::sfAmendments);
 
@@ -139,10 +141,10 @@ AmendmentCenter::isEnabled(boost::asio::yield_context yield, AmendmentKey const&
 }
 
 Amendment const&
-AmendmentCenter::getAmendment(std::string const& name) const
+AmendmentCenter::getAmendment(AmendmentKey const& key) const
 {
-    ASSERT(supported_.contains(name), "The amendment '{}' must be present in supported amendments list", name);
-    return supported_.at(name);
+    ASSERT(supported_.contains(key), "The amendment '{}' must be present in supported amendments list", key.name);
+    return supported_.at(key);
 }
 
 Amendment const&
@@ -152,7 +154,7 @@ AmendmentCenter::operator[](AmendmentKey const& key) const
 }
 
 ripple::uint256
-Amendment::GetAmendmentId(std::string_view const name)
+Amendment::GetAmendmentId(std::string_view name)
 {
     return ripple::sha512Half(ripple::Slice(name.data(), name.size()));
 }

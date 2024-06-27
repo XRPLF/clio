@@ -109,6 +109,7 @@ public:
      * @brief Subscribe to the ledger feed.
      * @param yield The coroutine context
      * @param subscriber The subscriber to the ledger feed
+     *
      * @return The ledger feed
      */
     virtual boost::json::object
@@ -234,6 +235,7 @@ public:
 
     /**
      * @brief Get the number of subscribers.
+     *
      * @return The report of the number of subscribers
      */
     virtual boost::json::object

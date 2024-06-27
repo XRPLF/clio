@@ -28,29 +28,31 @@
 #include <boost/preprocessor/seq/for_each.hpp>
 #include <boost/preprocessor/stringize.hpp>
 #include <boost/preprocessor/variadic/to_seq.hpp>
-#include <ripple/basics/Slice.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Feature.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/digest.h>
+#include <xrpl/basics/Slice.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Feature.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/Serializer.h>
+#include <xrpl/protocol/digest.h>
 
 #include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
 
-#define REGISTER(name)                                       \
-    inline static AmendmentKey const name = std::string_view \
-    {                                                        \
-        BOOST_PP_STRINGIZE(name)                             \
-    }
+#define REGISTER(name) inline static impl::WritingAmendmentKey const name = std::string(BOOST_PP_STRINGIZE(name))
 
 namespace data {
+namespace impl {
+
+struct WritingAmendmentKey : AmendmentKey {
+    WritingAmendmentKey(std::string const& amendmentName);
+};
+
+}  // namespace impl
 
 /**
  * @brief List of supported amendments
@@ -167,11 +169,11 @@ public:
     /**
      * @brief Check whether an amendment is supported by Clio
      *
-     * @param name The name of the amendment to check
+     * @param key The key of the amendment to check
      * @return true if supported; false otherwise
      */
     bool
-    isSupported(std::string name) const final;
+    isSupported(AmendmentKey const& key) const final;
 
     /**
      * @brief Get all supported amendments as a map
@@ -192,12 +194,12 @@ public:
     /**
      * @brief Check whether an amendment was/is enabled for a given sequence
      *
-     * @param name The name of the amendment to check
+     * @param key The key of the amendment to check
      * @param seq The sequence to check for
      * @return true if enabled; false otherwise
      */
     bool
-    isEnabled(std::string name, uint32_t seq) const final;
+    isEnabled(AmendmentKey const& key, uint32_t seq) const final;
 
     /**
      * @brief Check whether an amendment was/is enabled for a given sequence
@@ -213,11 +215,11 @@ public:
     /**
      * @brief Get an amendment
      *
-     * @param name The name of the amendment to get
+     * @param key The key of the amendment to get
      * @return The amendment as a const ref; asserts if the amendment is unknown
      */
     Amendment const&
-    getAmendment(std::string const& name) const final;
+    getAmendment(AmendmentKey const& key) const final;
 
     /**
      * @brief Get an amendment by its key

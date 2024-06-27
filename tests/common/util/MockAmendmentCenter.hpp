@@ -25,9 +25,9 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <gmock/gmock.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
 #include <map>
@@ -36,17 +36,17 @@
 #include <vector>
 
 struct MockAmendmentCenter : public data::AmendmentCenterInterface {
-    MOCK_METHOD(bool, isSupported, (std::string), (const, override));
+    MOCK_METHOD(bool, isSupported, (data::AmendmentKey const&), (const, override));
 
     MOCK_METHOD((std::map<std::string, data::Amendment> const&), getSupported, (), (const, override));
 
     MOCK_METHOD(std::vector<data::Amendment> const&, getAll, (), (const, override));
 
-    MOCK_METHOD(bool, isEnabled, (std::string, uint32_t), (const, override));
+    MOCK_METHOD(bool, isEnabled, (data::AmendmentKey const&, uint32_t), (const, override));
 
     MOCK_METHOD(bool, isEnabled, (boost::asio::yield_context, data::AmendmentKey const&, uint32_t), (const, override));
 
-    MOCK_METHOD(data::Amendment const&, getAmendment, (std::string const&), (const, override));
+    MOCK_METHOD(data::Amendment const&, getAmendment, (data::AmendmentKey const&), (const, override));
 
     MOCK_METHOD(data::Amendment const&, IndexOperator, (data::AmendmentKey const&), (const));
 

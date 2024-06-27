@@ -40,11 +40,11 @@ public:
     /**
      * @brief Check whether an amendment is supported by Clio
      *
-     * @param name The name of the amendment to check
+     * @param key The key of the amendment to check
      * @return true if supported; false otherwise
      */
     virtual bool
-    isSupported(std::string name) const = 0;
+    isSupported(AmendmentKey const& key) const = 0;
 
     /**
      * @brief Get all supported amendments as a map
@@ -65,12 +65,12 @@ public:
     /**
      * @brief Check whether an amendment was/is enabled for a given sequence
      *
-     * @param name The name of the amendment to check
+     * @param key The key of the amendment to check
      * @param seq The sequence to check for
      * @return true if enabled; false otherwise
      */
     virtual bool
-    isEnabled(std::string name, uint32_t seq) const = 0;
+    isEnabled(AmendmentKey const& key, uint32_t seq) const = 0;
 
     /**
      * @brief Check whether an amendment was/is enabled for a given sequence
@@ -86,11 +86,11 @@ public:
     /**
      * @brief Get an amendment
      *
-     * @param name The name of the amendment to get
+     * @param key The key of the amendment to get
      * @return The amendment as a const ref; asserts if the amendment is unknown
      */
     virtual Amendment const&
-    getAmendment(std::string const& name) const = 0;
+    getAmendment(AmendmentKey const& key) const = 0;
 
     /**
      * @brief Get an amendment by its key

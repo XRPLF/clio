@@ -42,9 +42,6 @@ class Counters;
 namespace feed {
 class SubscriptionManager;
 }  // namespace feed
-namespace data {
-class AmendmentCenter;
-}  // namespace data
 
 namespace rpc::impl {
 

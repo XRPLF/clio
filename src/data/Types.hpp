@@ -22,6 +22,7 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
 
+#include <concepts>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -264,22 +265,14 @@ struct Amendment {
  * @brief A helper for amendment name to feature conversions
  */
 struct AmendmentKey {
-    std::string_view name;
+    std::string name;
 
-    /**
-     * @brief Create a new AmendmentKey object
-     * @param amendmentName The name of the amendment
-     */
-    AmendmentKey(std::string_view amendmentName);
-
-    /**
-     * @brief Create a new AmendmentKey object
-     * @param amendmentName The name of the amendment
-     */
-    AmendmentKey(std::string const& amendmentName);
+    AmendmentKey(std::convertible_to<std::string> auto&& val) : name{std::forward<decltype(val)>(val)}
+    {
+    }
 
     /** @brief Conversion to string */
-    operator std::string() const;
+    operator std::string const&() const;
 
     /** @brief Conversion to uint256 */
     operator ripple::uint256() const;

@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "data/AmendmentCenter.hpp"
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "rpc/JS.hpp"
