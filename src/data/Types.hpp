@@ -261,14 +261,14 @@ struct Amendment {
     GetAmendmentId(std::string_view const name);
 
     /**
-     * @brief Equality operator
+     * @brief Equality comparison operator
      * @param other The object to compare to
      * @return Whether the objects are equal
      */
     bool
-    operator==(Amendment const& rhs) const
+    operator==(Amendment const& other) const
     {
-        return name == rhs.name;
+        return name == other.name;
     }
 };
 
