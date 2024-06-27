@@ -42,6 +42,7 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -51,9 +52,9 @@ std::vector<std::string> SUPPORTED_AMENDMENTS = {};
 namespace data {
 namespace impl {
 
-WritingAmendmentKey::WritingAmendmentKey(std::string const& amendmentName) : AmendmentKey{amendmentName}
+WritingAmendmentKey::WritingAmendmentKey(std::string amendmentName) : AmendmentKey{std::move(amendmentName)}
 {
-    SUPPORTED_AMENDMENTS.push_back(amendmentName);
+    SUPPORTED_AMENDMENTS.push_back(name);
 }
 
 }  // namespace impl

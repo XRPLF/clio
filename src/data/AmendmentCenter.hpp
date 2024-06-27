@@ -49,7 +49,7 @@ namespace data {
 namespace impl {
 
 struct WritingAmendmentKey : AmendmentKey {
-    WritingAmendmentKey(std::string const& amendmentName);
+    WritingAmendmentKey(std::string amendmentName);
 };
 
 }  // namespace impl
