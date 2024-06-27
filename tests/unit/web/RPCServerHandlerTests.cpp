@@ -18,7 +18,8 @@
 
 #include "rpc/Errors.hpp"
 #include "rpc/common/Types.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
+#include "util/MockBackendTestFixture.hpp"
 #include "util/MockETLService.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockRPCEngine.hpp"

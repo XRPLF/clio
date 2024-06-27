@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/TestWsServer.hpp"
 #include "util/requests/Types.hpp"
 #include "util/requests/WsConnection.hpp"

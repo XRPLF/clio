@@ -19,7 +19,7 @@
 
 #include "rpc/Errors.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockCounters.hpp"
 #include "util/MockHandlerProvider.hpp"
 #include "util/MockLoadBalancer.hpp"

@@ -24,7 +24,7 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Ledger.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 

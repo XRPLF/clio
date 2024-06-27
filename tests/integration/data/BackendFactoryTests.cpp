@@ -19,7 +19,7 @@
 
 #include "data/BackendFactory.hpp"
 #include "data/cassandra/Handle.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/config/Config.hpp"
 
