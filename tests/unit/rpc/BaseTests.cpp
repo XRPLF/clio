@@ -294,7 +294,7 @@ TEST_F(RPCBaseTest, IfTypeValidator)
              Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
              Section{{"limit2", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}}
          },
-         IfType<std::string>{Uint256HexStringValidator}},
+         IfType<std::string>{CustomValidators::Uint256HexStringValidator}},
         {"mix2",
          Section{{"limit", Required{}, Type<uint32_t>{}, Between<uint32_t>{0, 100}}},
          Type<std::string, json::object>{}},
@@ -329,8 +329,10 @@ TEST_F(RPCBaseTest, IfTypeValidator)
 TEST_F(RPCBaseTest, WithCustomError)
 {
     auto const spec = RpcSpec{
-        {"transaction", WithCustomError{Uint256HexStringValidator, rpc::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}}
-        },
+        {"transaction",
+         WithCustomError{
+             CustomValidators::Uint256HexStringValidator, rpc::Status{ripple::rpcBAD_FEATURE, "MyCustomError"}
+         }},
         {"other", WithCustomError{Type<std::string>{}, rpc::Status{ripple::rpcALREADY_MULTISIG, "MyCustomError2"}}}
     };
 
@@ -390,7 +392,7 @@ TEST_F(RPCBaseTest, NotSupported)
 TEST_F(RPCBaseTest, LedgerIndexValidator)
 {
     auto spec = RpcSpec{
-        {"ledgerIndex", LedgerIndexValidator},
+        {"ledgerIndex", CustomValidators::LedgerIndexValidator},
     };
     auto passingInput = json::parse(R"({ "ledgerIndex": "validated" })");
     ASSERT_TRUE(spec.process(passingInput));
@@ -415,7 +417,7 @@ TEST_F(RPCBaseTest, LedgerIndexValidator)
 TEST_F(RPCBaseTest, AccountValidator)
 {
     auto spec = RpcSpec{
-        {"account", AccountValidator},
+        {"account", CustomValidators::AccountValidator},
     };
     auto failingInput = json::parse(R"({ "account": 256 })");
     ASSERT_FALSE(spec.process(failingInput));
@@ -437,7 +439,7 @@ TEST_F(RPCBaseTest, AccountValidator)
 TEST_F(RPCBaseTest, AccountMarkerValidator)
 {
     auto spec = RpcSpec{
-        {"marker", AccountMarkerValidator},
+        {"marker", CustomValidators::AccountMarkerValidator},
     };
     auto failingInput = json::parse(R"({ "marker": 256 })");
     ASSERT_FALSE(spec.process(failingInput));
@@ -454,7 +456,7 @@ TEST_F(RPCBaseTest, AccountMarkerValidator)
 
 TEST_F(RPCBaseTest, Uint256HexStringValidator)
 {
-    auto const spec = RpcSpec{{"transaction", Uint256HexStringValidator}};
+    auto const spec = RpcSpec{{"transaction", CustomValidators::Uint256HexStringValidator}};
     auto passingInput =
         json::parse(R"({ "transaction": "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC"})");
     ASSERT_TRUE(spec.process(passingInput));
@@ -472,7 +474,7 @@ TEST_F(RPCBaseTest, Uint256HexStringValidator)
 
 TEST_F(RPCBaseTest, CurrencyValidator)
 {
-    auto const spec = RpcSpec{{"currency", CurrencyValidator}};
+    auto const spec = RpcSpec{{"currency", CustomValidators::CurrencyValidator}};
     auto passingInput = json::parse(R"({ "currency": "GBP"})");
     ASSERT_TRUE(spec.process(passingInput));
 
@@ -500,7 +502,7 @@ TEST_F(RPCBaseTest, CurrencyValidator)
 
 TEST_F(RPCBaseTest, IssuerValidator)
 {
-    auto const spec = RpcSpec{{"issuer", IssuerValidator}};
+    auto const spec = RpcSpec{{"issuer", CustomValidators::IssuerValidator}};
     auto passingInput = json::parse(R"({ "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"})");
     ASSERT_TRUE(spec.process(passingInput));
 
@@ -516,7 +518,7 @@ TEST_F(RPCBaseTest, IssuerValidator)
 
 TEST_F(RPCBaseTest, SubscribeStreamValidator)
 {
-    auto const spec = RpcSpec{{"streams", SubscribeStreamValidator}};
+    auto const spec = RpcSpec{{"streams", CustomValidators::SubscribeStreamValidator}};
     auto passingInput = json::parse(
         R"({ 
             "streams": 
@@ -548,7 +550,7 @@ TEST_F(RPCBaseTest, SubscribeStreamValidator)
 
 TEST_F(RPCBaseTest, SubscribeAccountsValidator)
 {
-    auto const spec = RpcSpec{{"accounts", SubscribeAccountsValidator}};
+    auto const spec = RpcSpec{{"accounts", CustomValidators::SubscribeAccountsValidator}};
     auto passingInput =
         json::parse(R"({ "accounts": ["rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn","rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"]})");
     ASSERT_TRUE(spec.process(passingInput));

@@ -231,15 +231,17 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
         }};
 
     static auto const rpcSpec = RpcSpec{
-        {JS(ledger_hash), validation::Uint256HexStringValidator},
-        {JS(ledger_index), validation::LedgerIndexValidator},
+        {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+        {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
         {JS(asset),
          meta::WithCustomError{
              validation::Type<std::string, boost::json::object>{}, Status(RippledError::rpcISSUE_MALFORMED)
          },
          meta::IfType<std::string>{stringIssueValidator},
          meta::IfType<boost::json::object>{
-             meta::WithCustomError{validation::CurrencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)},
+             meta::WithCustomError{
+                 validation::CustomValidators::CurrencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)
+             },
          }},
         {JS(asset2),
          meta::WithCustomError{
@@ -247,10 +249,14 @@ AMMInfoHandler::spec([[maybe_unused]] uint32_t apiVersion)
          },
          meta::IfType<std::string>{stringIssueValidator},
          meta::IfType<boost::json::object>{
-             meta::WithCustomError{validation::CurrencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)},
+             meta::WithCustomError{
+                 validation::CustomValidators::CurrencyIssueValidator, Status(RippledError::rpcISSUE_MALFORMED)
+             },
          }},
-        {JS(amm_account), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
-        {JS(account), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+        {JS(amm_account),
+         meta::WithCustomError{validation::CustomValidators::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+        {JS(account),
+         meta::WithCustomError{validation::CustomValidators::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
     };
 
     return rpcSpec;

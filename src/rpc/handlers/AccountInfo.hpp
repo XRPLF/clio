@@ -130,11 +130,11 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpecV1 = RpcSpec{
-            {JS(account), validation::AccountValidator},
-            {JS(ident), validation::AccountValidator},
+            {JS(account), validation::CustomValidators::AccountValidator},
+            {JS(ident), validation::CustomValidators::AccountValidator},
             {JS(ident), check::Deprecated{}},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
             {JS(ledger), check::Deprecated{}},
             {JS(strict), check::Deprecated{}}
         };

@@ -117,7 +117,7 @@ public:
     spec(uint32_t apiVersion)
     {
         static RpcSpec const rpcSpecForV1 = {
-            {JS(transaction), validation::Uint256HexStringValidator},
+            {JS(transaction), validation::CustomValidators::Uint256HexStringValidator},
             {JS(min_ledger), validation::Type<uint32_t>{}},
             {JS(max_ledger), validation::Type<uint32_t>{}},
             {JS(ctid), validation::Type<std::string>{}},

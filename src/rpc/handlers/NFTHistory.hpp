@@ -119,9 +119,9 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(nft_id), validation::Required{}, validation::Uint256HexStringValidator},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(nft_id), validation::Required{}, validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
             {JS(ledger_index_min), validation::Type<int32_t>{}},
             {JS(ledger_index_max), validation::Type<int32_t>{}},
             {JS(binary), validation::Type<bool>{}},

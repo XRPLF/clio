@@ -118,12 +118,12 @@ public:
         static auto const rpcSpec = RpcSpec{
             {JS(binary), validation::Type<bool>{}},
             {"out_of_order", validation::Type<bool>{}},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
             {JS(limit), validation::Type<uint32_t>{}, validation::Min(1u)},
             {JS(marker),
              validation::Type<uint32_t, std::string>{},
-             meta::IfType<std::string>{validation::Uint256HexStringValidator}},
+             meta::IfType<std::string>{validation::CustomValidators::Uint256HexStringValidator}},
             {JS(type),
              meta::WithCustomError{
                  validation::Type<std::string>{}, Status{ripple::rpcINVALID_PARAMS, "Invalid field 'type', not string."}
