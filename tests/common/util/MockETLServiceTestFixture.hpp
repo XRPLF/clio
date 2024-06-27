@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -54,3 +54,11 @@ using MockETLServiceTestNaggy = MockETLServiceTestBase<::testing::NaggyMock>;
  * @brief Fixture with a "strict" ETLService mock.
  */
 using MockETLServiceTestStrict = MockETLServiceTestBase<::testing::StrictMock>;
+
+/**
+ * @brief Fixture with a mock etl balancer
+ */
+struct MockLoadBalancerTest : virtual public NoLoggerFixture {
+protected:
+    std::shared_ptr<MockLoadBalancer> mockLoadBalancerPtr = std::make_shared<MockLoadBalancer>();
+};
