@@ -19,7 +19,6 @@
 
 #include "rpc/common/impl/HandlerProvider.hpp"
 
-#include "data/AmendmentCenter.hpp"
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "etl/ETLService.hpp"
