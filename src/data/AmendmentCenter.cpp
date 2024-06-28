@@ -24,7 +24,6 @@
 #include "util/Assert.hpp"
 
 #include <boost/asio/spawn.hpp>
-#include <fmt/compile.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/Feature.h>

@@ -102,7 +102,7 @@ struct AmendmentKeyTest : testing::Test {};
 
 TEST_F(AmendmentKeyTest, Convertible)
 {
-    std::string key1 = "key1";
+    std::string const key1 = "key1";
     auto key2 = "key2";
 
     EXPECT_NO_THROW({

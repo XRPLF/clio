@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "data/AmendmentCenter.hpp"
-#include "data/AmendmentCenterInterface.hpp"
 #include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
