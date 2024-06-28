@@ -1,10 +1,12 @@
 FROM ubuntu:20.04
 
 COPY ./clio_server /opt/clio/bin/clio_server
+RUN ln -s /opt/clio/bin/clio_server /usr/local/bin/clio_server
 
 RUN useradd -ms /bin/bash clio
-
 USER clio
 WORKDIR /home/clio
+
+RUN mkdir -p /opt/clio/log/
 
 ENTRYPOINT ["/opt/clio/bin/clio_server", "--config", "/opt/clio/etc/config.json"]

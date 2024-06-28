@@ -1,0 +1,39 @@
+# Clio official docker image
+
+[Clio](https://github.com/XRPLF/clio) is an XRP Ledger API server optimized for RPC calls over WebSocket or JSON-RPC.
+It stores validated historical ledger and transaction data in a space efficient format.
+
+This image contains `clio_server` binary allowing users to run Clio easily.
+
+## Clio configuration file
+
+Please note that while Clio requires a configuration file, this image doesn't include any default config.
+Your configuration file should be mounted to the path `/opt/clio/etc/config.json`.
+Clio repository has an [example](https://github.com/XRPLF/clio/blob/develop/docs/examples/config/example-config.json) of the configuration file.
+
+Config file recommendations:
+- Set `log_to_console` to `false` to avoid logs being written to stdout.
+- Set `log_directory` to `/opt/clio/log` to store logs in a volume.
+
+## Usage from command line
+
+To run Clio using this image use command (assuming server's port is `51233` in your config):
+```bash
+docker run -b <path to your config.json>:/opt/clio/etc/config.json -b <path to store logs>:/opt/clio/log -p 51233:51233 rippleci/clio
+
+```
+
+## Docker compose
+
+Here is an example of a docker compose file to run Clio:
+
+```yaml
+services:
+  clio:
+    image: rippleci/clio
+    volumes:
+      - <path to your config.json>:/opt/clio/etc/config.json
+      - <path to store logs>:/opt/clio/log
+    ports:
+      - "51233:51233"
+```

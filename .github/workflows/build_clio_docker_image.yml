@@ -1,0 +1,58 @@
+name: Build and publish Clio docker image
+on:
+  workflow_call:
+    inputs:
+      tags:
+        required: true
+        type: string
+        description: Comma separated tags for docker image
+      artifact_name:
+        type: string
+        description: Name of Github artifact to put into docker image
+  workflow_dispatch:
+      tags:
+        required: true
+        type: string
+        description: Comma separated tags for docker image
+      clio_server_binary_url:
+        required: true
+        type: string
+        description: Url to download clio_server binary from
+      binary_sha256:
+        required: true
+        type: string
+        description: sha256 hash of the binary
+
+jobs:
+  build_and_publish_image:
+    name: Build and publish image
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Clio binary from artifact
+        if: ${{ inputs.artifact_name != null }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ./docker/clio/
+
+      - name: Download Clio binary from url
+        if: ${{ inputs.clio_server_binary_url != null }}
+        shell: bash
+        run: |
+          wget ${{inputs.clio_server_binary_url}} -P ./docker/clio/
+          if [ "$(sha256sum ./docker/clio/clio_server | awk '{print $1}')" != "${{inputs.binary_sha256}}" ]; then
+            echo "Binary sha256 sum doesn't match"
+            exit 1
+          fi
+
+      - name: Build Docker image
+        uses: ./docker/build_docker_image
+        with:
+          image_name: rippleci/clio
+          push_image: true
+          directory: docker/clio
+          tags: ${{ inputs.tags }}
+          platforms: linux/amd64
+          description: Clio is an XRP Ledger API server.
