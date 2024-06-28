@@ -20,6 +20,7 @@
 #include "data/AmendmentCenter.hpp"
 #include "data/Types.hpp"
 #include "util/Fixtures.hpp"
+#include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
 
