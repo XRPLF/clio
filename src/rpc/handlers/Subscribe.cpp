@@ -79,7 +79,7 @@ SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
 
                 if (book.as_object().contains("taker")) {
                     if (auto err = meta::WithCustomError(
-                                       validation::AccountValidator,
+                                       validation::CustomValidators::AccountValidator,
                                        Status{RippledError::rpcBAD_ISSUER, "Issuer account malformed."}
                         )
                                        .verify(book.as_object(), "taker");
@@ -96,9 +96,9 @@ SubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
         }};
 
     static auto const rpcSpec = RpcSpec{
-        {JS(streams), validation::SubscribeStreamValidator},
-        {JS(accounts), validation::SubscribeAccountsValidator},
-        {JS(accounts_proposed), validation::SubscribeAccountsValidator},
+        {JS(streams), validation::CustomValidators::SubscribeStreamValidator},
+        {JS(accounts), validation::CustomValidators::SubscribeAccountsValidator},
+        {JS(accounts_proposed), validation::CustomValidators::SubscribeAccountsValidator},
         {JS(books), booksValidator},
         {"user", check::Deprecated{}},
         {JS(password), check::Deprecated{}},

@@ -123,15 +123,15 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(account), validation::Required{}, validation::AccountValidator},
-            {JS(destination_account), validation::Type<std::string>{}, validation::AccountValidator},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
+            {JS(account), validation::Required{}, validation::CustomValidators::AccountValidator},
+            {JS(destination_account), validation::Type<std::string>{}, validation::CustomValidators::AccountValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
              modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
-            {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(marker), validation::AccountMarkerValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+            {JS(marker), validation::CustomValidators::AccountMarkerValidator},
         };
 
         return rpcSpec;

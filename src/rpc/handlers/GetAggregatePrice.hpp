@@ -152,7 +152,8 @@ public:
                     if (!maybeError)
                         return maybeError;
 
-                    maybeError = validation::AccountBase58Validator.verify(oracle.as_object(), JS(account));
+                    maybeError =
+                        validation::CustomValidators::AccountBase58Validator.verify(oracle.as_object(), JS(account));
                     if (!maybeError)
                         return Error{Status{RippledError::rpcINVALID_PARAMS}};
                 };
@@ -161,17 +162,21 @@ public:
             }};
 
         static auto const rpcSpec = RpcSpec{
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
             // validate quoteAsset and base_asset in accordance to the currency code found in XRPL doc:
             // https://xrpl.org/docs/references/protocol/data-types/currency-formats#currency-codes
             // usually Clio returns rpcMALFORMED_CURRENCY , return InvalidParam here just to mimic rippled
             {JS(base_asset),
              validation::Required{},
-             meta::WithCustomError{validation::CurrencyValidator, Status(RippledError::rpcINVALID_PARAMS)}},
+             meta::WithCustomError{
+                 validation::CustomValidators::CurrencyValidator, Status(RippledError::rpcINVALID_PARAMS)
+             }},
             {JS(quote_asset),
              validation::Required{},
-             meta::WithCustomError{validation::CurrencyValidator, Status(RippledError::rpcINVALID_PARAMS)}},
+             meta::WithCustomError{
+                 validation::CustomValidators::CurrencyValidator, Status(RippledError::rpcINVALID_PARAMS)
+             }},
             {JS(oracles), validation::Required{}, oraclesValidator},
             // note: Unlike `rippled`, Clio only supports UInt as input, no string, no `null`, etc.
             {JS(time_threshold), validation::Type<std::uint32_t>{}},

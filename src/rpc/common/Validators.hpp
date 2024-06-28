@@ -428,70 +428,75 @@ public:
 checkIsU32Numeric(std::string_view sv);
 
 /**
- * @brief Provides a commonly used validator for ledger index.
- *
- * LedgerIndex must be a string or an int. If the specified LedgerIndex is a string, its value must be either
- * "validated" or a valid integer value represented as a string.
+ * @brief A group of custom validation functions
  */
-extern CustomValidator LedgerIndexValidator;
+struct CustomValidators final {
+    /**
+     * @brief Provides a commonly used validator for ledger index.
+     *
+     * LedgerIndex must be a string or an int. If the specified LedgerIndex is a string, its value must be either
+     * "validated" or a valid integer value represented as a string.
+     */
+    static CustomValidator LedgerIndexValidator;
 
-/**
- * @brief Provides a commonly used validator for accounts.
- *
- * Account must be a string and the converted public key is valid.
- */
-extern CustomValidator AccountValidator;
+    /**
+     * @brief Provides a commonly used validator for accounts.
+     *
+     * Account must be a string and the converted public key is valid.
+     */
+    static CustomValidator AccountValidator;
 
-/**
- * @brief Provides a commonly used validator for accounts.
- *
- * Account must be a string and can convert to base58.
- */
-extern CustomValidator AccountBase58Validator;
+    /**
+     * @brief Provides a commonly used validator for accounts.
+     *
+     * Account must be a string and can convert to base58.
+     */
+    static CustomValidator AccountBase58Validator;
 
-/**
- * @brief Provides a commonly used validator for markers.
- *
- * A marker is composed of a comma-separated index and a start hint.
- * The former will be read as hex, and the latter can be cast to uint64.
- */
-extern CustomValidator AccountMarkerValidator;
+    /**
+     * @brief Provides a commonly used validator for markers.
+     *
+     * A marker is composed of a comma-separated index and a start hint.
+     * The former will be read as hex, and the latter can be cast to uint64.
+     */
+    static CustomValidator AccountMarkerValidator;
 
-/**
- * @brief Provides a commonly used validator for uint256 hex string.
- *
- * It must be a string and also a decodable hex.
- * Transaction index, ledger hash all use this validator.
- */
-extern CustomValidator Uint256HexStringValidator;
+    /**
+     * @brief Provides a commonly used validator for uint256 hex string.
+     *
+     * It must be a string and also a decodable hex.
+     * Transaction index, ledger hash all use this validator.
+     */
+    static CustomValidator Uint256HexStringValidator;
 
-/**
- * @brief Provides a commonly used validator for currency, including standard currency code and token code.
- */
-extern CustomValidator CurrencyValidator;
+    /**
+     * @brief Provides a commonly used validator for currency, including standard currency code and token code.
+     */
+    static CustomValidator CurrencyValidator;
 
-/**
- * @brief Provides a commonly used validator for issuer type.
- *
- * It must be a hex string or base58 string.
- */
-extern CustomValidator IssuerValidator;
+    /**
+     * @brief Provides a commonly used validator for issuer type.
+     *
+     * It must be a hex string or base58 string.
+     */
+    static CustomValidator IssuerValidator;
 
-/**
- * @brief Provides a validator for validating streams used in subscribe/unsubscribe.
- */
-extern CustomValidator SubscribeStreamValidator;
+    /**
+     * @brief Provides a validator for validating streams used in subscribe/unsubscribe.
+     */
+    static CustomValidator SubscribeStreamValidator;
 
-/**
- * @brief Provides a validator for validating accounts used in subscribe/unsubscribe.
- */
-extern CustomValidator SubscribeAccountsValidator;
+    /**
+     * @brief Provides a validator for validating accounts used in subscribe/unsubscribe.
+     */
+    static CustomValidator SubscribeAccountsValidator;
 
-/**
- * @brief Validates an asset (ripple::Issue).
- *
- * Used by amm_info.
- */
-extern CustomValidator CurrencyIssueValidator;
+    /**
+     * @brief Validates an asset (ripple::Issue).
+     *
+     * Used by amm_info.
+     */
+    static CustomValidator CurrencyIssueValidator;
+};
 
 }  // namespace rpc::validation
