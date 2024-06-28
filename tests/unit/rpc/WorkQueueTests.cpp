@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "rpc/WorkQueue.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/config/Config.hpp"
 #include "util/prometheus/Counter.hpp"

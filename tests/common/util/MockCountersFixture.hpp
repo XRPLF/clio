@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockCounters.hpp"
 
 /**

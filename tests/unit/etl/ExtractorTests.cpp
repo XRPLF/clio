@@ -20,7 +20,7 @@
 #include "etl/SystemState.hpp"
 #include "etl/impl/Extractor.hpp"
 #include "util/FakeFetchResponse.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockExtractionDataPipe.hpp"
 #include "util/MockLedgerFetcher.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"

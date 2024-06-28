@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/io_service.hpp>

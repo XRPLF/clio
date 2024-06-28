@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockBackend.hpp"
 
 template <template <typename> typename MockType = ::testing::NiceMock>
