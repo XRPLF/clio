@@ -19,7 +19,7 @@
 
 #include "etl/CorruptionDetector.hpp"
 #include "etl/SystemState.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockCache.hpp"
 #include "util/MockPrometheus.hpp"
 

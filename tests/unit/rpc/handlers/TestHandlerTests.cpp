@@ -21,7 +21,7 @@
 #include "rpc/FakesAndMocks.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>

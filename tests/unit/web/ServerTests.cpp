@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "util/AssignRandomPort.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestHttpSyncClient.hpp"
 #include "util/config/Config.hpp"

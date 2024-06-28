@@ -20,7 +20,7 @@
 #include "etl/SystemState.hpp"
 #include "etl/impl/AmendmentBlock.hpp"
 #include "util/FakeAmendmentBlockAction.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 
 #include <boost/asio/io_context.hpp>

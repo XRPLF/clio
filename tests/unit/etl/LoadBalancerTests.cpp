@@ -19,7 +19,8 @@
 
 #include "etl/LoadBalancer.hpp"
 #include "etl/Source.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
+#include "util/MockBackendTestFixture.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockSource.hpp"

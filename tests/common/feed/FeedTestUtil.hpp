@@ -19,7 +19,8 @@
 
 #pragma once
 
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
+#include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
 #include "web/interface/ConnectionBase.hpp"

@@ -25,7 +25,7 @@
 #include "data/cassandra/SettingsProvider.hpp"
 #include "etl/NFTHelpers.hpp"
 #include "rpc/RPCHelpers.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/LedgerUtils.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"

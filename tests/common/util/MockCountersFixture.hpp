@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,25 +17,15 @@
 */
 //==============================================================================
 
-#include "rpc/common/AnyHandler.hpp"
-#include "rpc/common/Types.hpp"
-#include "rpc/handlers/Ping.hpp"
-#include "util/HandlerBaseTestFixture.hpp"
+#pragma once
 
-#include <boost/json/parse.hpp>
-#include <gtest/gtest.h>
+#include "util/LoggerFixtures.hpp"
+#include "util/MockCounters.hpp"
 
-using namespace rpc;
-
-class RPCPingHandlerTest : public HandlerBaseTest {};
-
-// example handler tests
-TEST_F(RPCPingHandlerTest, Default)
-{
-    runSpawn([](auto yield) {
-        auto const handler = AnyHandler{PingHandler{}};
-        auto const output = handler.process(boost::json::parse(R"({})"), Context{yield});
-        ASSERT_TRUE(output);
-        EXPECT_EQ(output.result.value(), boost::json::parse(R"({})"));
-    });
-}
+/**
+ * @brief Fixture with mock counters
+ */
+struct MockCountersTest : virtual public NoLoggerFixture {
+protected:
+    std::shared_ptr<MockCounters> mockCountersPtr = std::make_shared<MockCounters>();
+};

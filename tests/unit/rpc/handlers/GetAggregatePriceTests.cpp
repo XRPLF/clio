@@ -21,7 +21,7 @@
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/GetAggregatePrice.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockBackend.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"

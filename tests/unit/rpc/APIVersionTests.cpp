@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "rpc/common/impl/APIVersionParser.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/config/Config.hpp"
 
 #include <boost/json/parse.hpp>

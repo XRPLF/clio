@@ -19,7 +19,7 @@
 
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/ProposedTransactionFeed.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"

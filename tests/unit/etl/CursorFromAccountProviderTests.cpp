@@ -19,7 +19,7 @@
 
 #include "data/Types.hpp"
 #include "etl/impl/CursorFromAccountProvider.hpp"
-#include "util/Fixtures.hpp"
+#include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 
 #include <gmock/gmock.h>

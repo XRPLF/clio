@@ -22,7 +22,7 @@
 #include "etl/CacheLoaderSettings.hpp"
 #include "etl/FakeDiffProvider.hpp"
 #include "etl/impl/CacheLoader.hpp"
-#include "util/Fixtures.hpp"
+#include "util/MockBackendTestFixture.hpp"
 #include "util/MockCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
