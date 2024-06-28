@@ -34,6 +34,16 @@
 namespace etl {
 
 /**
+ * @brief Get the NFT URI change data from a NFToken Modify transaction
+ *
+ * @param txMeta Transaction metadata
+ * @param sttx The transaction
+ * @return NFT URI change data as a pair of transactions and optional NFTsData
+ */
+std::pair<std::vector<NFTTransactionsData>, std::optional<NFTsData>>
+getNFTokenMofidyData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
+
+/**
  * @brief Get the NFT Token mint data from a transaction
  *
  * @param txMeta Transaction metadata
