@@ -5,7 +5,7 @@ inputs:
     description: Name of the image to build
     required: true
   push_image:
-    description: Whether to push the image to the registry
+    description: Whether to push the image to the registry (true/false)
     required: true
   directory:
     description: The directory containing the Dockerfile
@@ -16,15 +16,26 @@ inputs:
   platforms:
     description: Platforms to build the image for (e.g. linux/amd64,linux/arm64)
     required: true
+  description:
+    description: Short description of the image
+    required: true
 runs:
   using: composite
   steps:
       - name: Login to DockerHub
-        if: ${{ inputs.push_image }}
+        if: ${{ inputs.push_image == 'true' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PW }}
+
+      - name: Login to GitHub Container Registry
+        if: ${{ inputs.push_image == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
@@ -40,5 +51,16 @@ runs:
         with:
           context: ${{ inputs.directory }}
           platforms: ${{ inputs.platforms }}
-          push: ${{ inputs.push_image }}
+          push: ${{ inputs.push_image == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Update DockerHub description
+        if: ${{ inputs.push_image == 'true' }}
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PW }}
+          repository: ${{ inputs.image_name }}
+          short-description: ${{ inputs.description }}
+          readme-filepath: ${{ inputs.directory }}/README.md
+

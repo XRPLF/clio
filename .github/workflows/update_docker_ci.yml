@@ -29,3 +29,4 @@ jobs:
             type=raw,value=gcc_12_clang_16
             type=ref,value=${{ env.GITHUB_SHA }}
           platforms: linux/amd64,linux/arm64
+          description: CI image for XRPLF/clio.
