@@ -107,6 +107,7 @@ struct NFTsData {
     ripple::AccountID owner;
     std::optional<ripple::Blob> uri;
     bool isBurned = false;
+    bool onlyUriChanged = false;  // Whether only the URI was changed
 
     /**
      * @brief Construct a new NFTsData object
@@ -168,6 +169,23 @@ struct NFTsData {
         ripple::Blob const& uri
     )
         : tokenID(tokenID), ledgerSequence(ledgerSequence), owner(owner), uri(uri)
+    {
+    }
+
+    /**
+     * @brief Construct a new NFTsData object with only the URI changed
+     *
+     * @param tokenID The token ID
+     * @param meta The transaction metadata
+     * @param uri The new URI
+     *
+     */
+    NFTsData(ripple::uint256 const& tokenID, ripple::TxMeta const& meta, ripple::Blob const& uri)
+        : tokenID(tokenID)
+        , ledgerSequence(meta.getLgrSeq())
+        , transactionIndex(meta.getIndex())
+        , uri(uri)
+        , onlyUriChanged(true)
     {
     }
 };

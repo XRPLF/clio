@@ -133,6 +133,7 @@ auto constexpr static DEFAULT_OUT_2 = R"({
     "close_time_iso": "2000-01-01T00:00:00Z",
     "validated": true
 })";
+constexpr static auto INDEX = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 
 class RPCTxTest : public HandlerBaseTest {};
 
@@ -647,7 +648,7 @@ TEST_F(RPCTxTest, MintNFT)
 
 TEST_F(RPCTxTest, NFTAcceptOffer)
 {
-    TransactionAndMetadata tx = CreateAcceptNFTOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID);
+    TransactionAndMetadata tx = CreateAcceptNFTBuyerOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID, INDEX);
 
     tx.date = 123456;
     tx.ledgerSequence = 100;
