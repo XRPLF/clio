@@ -23,7 +23,6 @@
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AccountInfo.hpp"
-#include "util/LoggerFixtures.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockAmendmentCenter.hpp"
 #include "util/NameGenerator.hpp"
