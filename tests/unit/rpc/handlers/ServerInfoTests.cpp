@@ -25,6 +25,7 @@
 #include "util/MockCounters.hpp"
 #include "util/MockCountersFixture.hpp"
 #include "util/MockETLService.hpp"
+#include "util/MockETLServiceTestFixture.hpp"
 #include "util/MockLoadBalancer.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/TestObject.hpp"
