@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/SignalsHandler.hpp"
 #include "util/config/Config.hpp"
 

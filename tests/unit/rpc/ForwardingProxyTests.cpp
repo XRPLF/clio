@@ -19,7 +19,7 @@
 
 #include "rpc/Errors.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockCounters.hpp"
 #include "util/MockHandlerProvider.hpp"
 #include "util/MockLoadBalancer.hpp"
@@ -31,7 +31,7 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <memory>
 #include <optional>

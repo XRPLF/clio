@@ -21,7 +21,7 @@
 #include "data/cassandra/FakesAndMocks.hpp"
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/ExecutionStrategy.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -151,7 +151,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineThrowsOnTimeoutF
 
     runSpawn([&strat](boost::asio::yield_context yield) {
         auto statement = FakeStatement{};
-        EXPECT_THROW(strat.read(yield, statement), DatabaseTimeout);
+        EXPECT_THROW(strat.read(yield, statement), data::DatabaseTimeout);
     });
 }
 
@@ -219,7 +219,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineThrowsOnTimeou
 
     runSpawn([&strat](boost::asio::yield_context yield) {
         auto statements = std::vector<FakeStatement>(NUM_STATEMENTS);
-        EXPECT_THROW(strat.read(yield, statements), DatabaseTimeout);
+        EXPECT_THROW(strat.read(yield, statements), data::DatabaseTimeout);
     });
 }
 
@@ -331,7 +331,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineThrowsOnFailure
 
     runSpawn([&strat](boost::asio::yield_context yield) {
         auto statements = std::vector<FakeStatement>(NUM_STATEMENTS);
-        EXPECT_THROW(strat.readEach(yield, statements), DatabaseTimeout);
+        EXPECT_THROW(strat.readEach(yield, statements), data::DatabaseTimeout);
     });
 }
 

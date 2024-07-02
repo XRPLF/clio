@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,31 +19,13 @@
 
 #pragma once
 
-#include <ripple/basics/Slice.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/digest.h>
-
-#include <string_view>
-
-namespace rpc {
-
-#define REGISTER_AMENDMENT(name) inline static const ripple::uint256 name = GetAmendmentId(#name);
+#include "util/LoggerFixtures.hpp"
+#include "util/MockCounters.hpp"
 
 /**
- * @brief Represents a list of amendments in the XRPL.
+ * @brief Fixture with mock counters
  */
-struct Amendments {
-    /**
-     * @param name The name of the amendment
-     * @return The corresponding amendment Id
-     */
-    static ripple::uint256
-    GetAmendmentId(std::string_view const name)
-    {
-        return ripple::sha512Half(ripple::Slice(name.data(), name.size()));
-    }
-
-    REGISTER_AMENDMENT(DisallowIncoming)
-    REGISTER_AMENDMENT(Clawback)
+struct MockCountersTest : virtual public NoLoggerFixture {
+protected:
+    std::shared_ptr<MockCounters> mockCountersPtr = std::make_shared<MockCounters>();
 };
-}  // namespace rpc

@@ -22,7 +22,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
 #include "rpc/common/impl/Processors.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>

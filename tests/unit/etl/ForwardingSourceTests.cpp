@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "etl/impl/ForwardingSource.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/TestWsServer.hpp"
 
 #include <boost/asio/spawn.hpp>

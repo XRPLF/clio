@@ -19,16 +19,17 @@
 
 #include "etl/CorruptionDetector.hpp"
 #include "etl/SystemState.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
+#include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/XRPAmount.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Indexes.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/XRPAmount.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Indexes.h>
 
 #include <optional>
 #include <vector>

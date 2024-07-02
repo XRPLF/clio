@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Checkers.hpp"
@@ -29,8 +30,8 @@
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
@@ -48,6 +49,7 @@ namespace rpc {
  */
 class AccountInfoHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
+    std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
 
 public:
     /**
@@ -115,8 +117,13 @@ public:
      * @brief Construct a new AccountInfoHandler object
      *
      * @param sharedPtrBackend The backend to use
+     * @param amendmentCenter The amendment center to use
      */
-    AccountInfoHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
+    AccountInfoHandler(
+        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
+        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
+    )
+        : sharedPtrBackend_(sharedPtrBackend), amendmentCenter_{amendmentCenter}
     {
     }
 
@@ -130,11 +137,11 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpecV1 = RpcSpec{
-            {JS(account), validation::AccountValidator},
-            {JS(ident), validation::AccountValidator},
+            {JS(account), validation::CustomValidators::AccountValidator},
+            {JS(ident), validation::CustomValidators::AccountValidator},
             {JS(ident), check::Deprecated{}},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
             {JS(ledger), check::Deprecated{}},
             {JS(strict), check::Deprecated{}}
         };

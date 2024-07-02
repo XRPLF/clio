@@ -20,14 +20,14 @@
 #include "rpc/Counters.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/WorkQueue.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/prometheus/Counter.hpp"
 
 #include <boost/json/value_to.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/jss.h>
 
 #include <chrono>
 #include <string>

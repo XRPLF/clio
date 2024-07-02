@@ -19,7 +19,7 @@
 
 #include "data/BackendFactory.hpp"
 #include "data/cassandra/Handle.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/config/Config.hpp"
 
@@ -79,7 +79,7 @@ TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
             }
         })"
     )};
-    EXPECT_THROW(make_Backend(cfg), std::runtime_error);
+    EXPECT_THROW(data::make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
@@ -100,7 +100,7 @@ TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
         "127.0.0.2",
         keyspace
     ))};
-    EXPECT_THROW(make_Backend(cfg), std::runtime_error);
+    EXPECT_THROW(data::make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
@@ -122,7 +122,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
     ))};
 
     {
-        auto backend = make_Backend(cfg);
+        auto backend = data::make_Backend(cfg);
         EXPECT_TRUE(backend);
 
         // empty db does not have ledger range
@@ -136,7 +136,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
     }
 
     {
-        auto backend = make_Backend(cfg);
+        auto backend = data::make_Backend(cfg);
         EXPECT_TRUE(backend);
 
         auto const range = backend->fetchLedgerRange();
@@ -163,7 +163,7 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmpt
         TestGlobals::instance().backendHost,
         keyspace
     ))};
-    EXPECT_THROW(make_Backend(cfg), std::runtime_error);
+    EXPECT_THROW(data::make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBReady)
@@ -202,6 +202,6 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBRe
         keyspace
     ))};
 
-    EXPECT_TRUE(make_Backend(cfgWrite));
-    EXPECT_TRUE(make_Backend(cfgReadOnly));
+    EXPECT_TRUE(data::make_Backend(cfgWrite));
+    EXPECT_TRUE(data::make_Backend(cfgReadOnly));
 }

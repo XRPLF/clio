@@ -26,7 +26,7 @@
 
 #include <boost/json/object.hpp>
 #include <fmt/core.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/jss.h>
 
 #include <chrono>
 #include <functional>

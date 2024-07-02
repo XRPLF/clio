@@ -19,6 +19,7 @@
 
 #include "rpc/common/impl/HandlerProvider.hpp"
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "etl/ETLService.hpp"
 #include "feed/SubscriptionManager.hpp"
@@ -42,6 +43,7 @@
 #include "rpc/handlers/Ledger.hpp"
 #include "rpc/handlers/LedgerData.hpp"
 #include "rpc/handlers/LedgerEntry.hpp"
+#include "rpc/handlers/LedgerIndex.hpp"
 #include "rpc/handlers/LedgerRange.hpp"
 #include "rpc/handlers/NFTBuyOffers.hpp"
 #include "rpc/handlers/NFTHistory.hpp"
@@ -71,12 +73,13 @@ ProductionHandlerProvider::ProductionHandlerProvider(
     std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
     std::shared_ptr<etl::LoadBalancer> const& balancer,
     std::shared_ptr<etl::ETLService const> const& etl,
+    std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
     Counters const& counters
 )
     : handlerMap_{
           {"account_channels", {AccountChannelsHandler{backend}}},
           {"account_currencies", {AccountCurrenciesHandler{backend}}},
-          {"account_info", {AccountInfoHandler{backend}}},
+          {"account_info", {AccountInfoHandler{backend, amendmentCenter}}},
           {"account_lines", {AccountLinesHandler{backend}}},
           {"account_nfts", {AccountNFTsHandler{backend}}},
           {"account_objects", {AccountObjectsHandler{backend}}},
@@ -92,6 +95,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"ledger", {LedgerHandler{backend}}},
           {"ledger_data", {LedgerDataHandler{backend}}},
           {"ledger_entry", {LedgerEntryHandler{backend}}},
+          {"ledger_index", {LedgerIndexHandler{backend}, true}},  // clio only
           {"ledger_range", {LedgerRangeHandler{backend}}},
           {"nfts_by_issuer", {NFTsByIssuerHandler{backend}, true}},  // clio only
           {"nft_history", {NFTHistoryHandler{backend}, true}},       // clio only

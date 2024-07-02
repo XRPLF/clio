@@ -25,7 +25,7 @@
 #include "data/cassandra/SettingsProvider.hpp"
 #include "etl/NFTHelpers.hpp"
 #include "rpc/RPCHelpers.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/LedgerUtils.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
@@ -39,14 +39,14 @@
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/Slice.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/TxMeta.h>
+#include <xrpl/basics/Slice.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/Serializer.h>
+#include <xrpl/protocol/TxMeta.h>
 
 #include <algorithm>
 #include <atomic>

@@ -29,7 +29,7 @@
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
@@ -95,15 +95,15 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(issuer), validation::Required{}, validation::AccountValidator},
+            {JS(issuer), validation::Required{}, validation::CustomValidators::AccountValidator},
             {"nft_taxon", validation::Type<uint32_t>{}},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
              modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
-            {JS(marker), validation::Uint256HexStringValidator},
+            {JS(marker), validation::CustomValidators::Uint256HexStringValidator},
         };
 
         return rpcSpec;

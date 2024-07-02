@@ -23,7 +23,7 @@
 #include "util/FakeFetchResponse.hpp"
 
 #include <gmock/gmock.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
 #include <optional>

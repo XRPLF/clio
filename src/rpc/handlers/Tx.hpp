@@ -36,11 +36,11 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
@@ -117,7 +117,7 @@ public:
     spec(uint32_t apiVersion)
     {
         static RpcSpec const rpcSpecForV1 = {
-            {JS(transaction), validation::Uint256HexStringValidator},
+            {JS(transaction), validation::CustomValidators::Uint256HexStringValidator},
             {JS(min_ledger), validation::Type<uint32_t>{}},
             {JS(max_ledger), validation::Type<uint32_t>{}},
             {JS(ctid), validation::Type<std::string>{}},

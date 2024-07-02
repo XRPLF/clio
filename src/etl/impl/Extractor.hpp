@@ -25,7 +25,7 @@
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
-#include <ripple/beast/core/CurrentThreadName.h>
+#include <xrpl/beast/core/CurrentThreadName.h>
 
 #include <chrono>
 #include <cstdint>

@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "rpc/common/AnyHandler.hpp"
@@ -59,6 +60,7 @@ public:
         std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
         std::shared_ptr<etl::ETLService const> const& etl,
+        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,
         Counters const& counters
     );
 

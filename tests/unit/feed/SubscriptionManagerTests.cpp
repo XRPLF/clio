@@ -20,7 +20,8 @@
 #include "data/Types.hpp"
 #include "feed/FeedTestUtil.hpp"
 #include "feed/SubscriptionManager.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
+#include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"
@@ -33,10 +34,10 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/STObject.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/Fees.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/STObject.h>
 
 #include <memory>
 #include <string>

@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "util/Assert.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/config/Config.hpp"
 
 #include <boost/filesystem/operations.hpp>

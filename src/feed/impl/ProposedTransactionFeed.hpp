@@ -30,9 +30,9 @@
 #include <boost/asio/strand.hpp>
 #include <boost/json/object.hpp>
 #include <fmt/core.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
 #include <functional>

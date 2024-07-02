@@ -21,8 +21,8 @@
 
 #include "data/Types.hpp"
 
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <cstddef>
 #include <cstdint>

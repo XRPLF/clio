@@ -21,11 +21,11 @@
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Random.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/jss.h>
 
 using namespace rpc;
 

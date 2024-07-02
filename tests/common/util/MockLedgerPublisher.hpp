@@ -20,7 +20,7 @@
 #pragma once
 
 #include <gmock/gmock.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>
 #include <cstdint>

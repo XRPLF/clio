@@ -22,7 +22,7 @@
 #include "data/Types.hpp"
 
 #include <gmock/gmock.h>
-#include <ripple/basics/base_uint.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <cstddef>
 #include <cstdint>

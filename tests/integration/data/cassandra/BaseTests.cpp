@@ -19,7 +19,7 @@
 
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Types.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 
 #include <TestGlobals.hpp>
 #include <cassandra.h>

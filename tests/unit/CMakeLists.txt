@@ -4,6 +4,7 @@ target_sources(
   clio_tests
   PRIVATE # Common
           ConfigTests.cpp
+          data/AmendmentCenterTests.cpp
           data/BackendCountersTests.cpp
           data/BackendInterfaceTests.cpp
           data/cassandra/AsyncExecutorTests.cpp
@@ -45,7 +46,6 @@ target_sources(
           Playground.cpp
           ProfilerTests.cpp
           # RPC
-          rpc/AmendmentsTests.cpp
           rpc/APIVersionTests.cpp
           rpc/BaseTests.cpp
           rpc/CountersTests.cpp
@@ -72,6 +72,7 @@ target_sources(
           rpc/handlers/GetAggregatePriceTests.cpp
           rpc/handlers/LedgerDataTests.cpp
           rpc/handlers/LedgerEntryTests.cpp
+          rpc/handlers/LedgerIndexTests.cpp
           rpc/handlers/LedgerRangeTests.cpp
           rpc/handlers/LedgerTests.cpp
           rpc/handlers/NFTBuyOffersTests.cpp

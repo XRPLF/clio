@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "etl/impl/ExtractionDataPipe.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 
 #include <gtest/gtest.h>
 

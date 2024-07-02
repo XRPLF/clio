@@ -17,8 +17,8 @@
 */
 //==============================================================================
 
+#include "util/AsioContextTestFixture.hpp"
 #include "util/AssignRandomPort.hpp"
-#include "util/Fixtures.hpp"
 #include "util/TestHttpServer.hpp"
 #include "util/requests/RequestBuilder.hpp"
 #include "util/requests/Types.hpp"

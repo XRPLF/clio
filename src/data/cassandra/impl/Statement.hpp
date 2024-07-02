@@ -26,9 +26,9 @@
 
 #include <cassandra.h>
 #include <fmt/core.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/STAccount.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/STAccount.h>
 
 #include <cstddef>
 #include <cstdint>

@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/log/Logger.hpp"
 
 #include <gtest/gtest.h>

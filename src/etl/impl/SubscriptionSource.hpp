@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "etl/ETLHelpers.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Mutex.hpp"
@@ -99,8 +99,8 @@ public:
      * @param wsPort The port of the source
      * @param validatedLedgers The network validated ledgers object
      * @param subscriptions The subscription manager object
+     * @param onConnect The onConnect hook. Called when the connection is established
      * @param onDisconnect The onDisconnect hook. Called when the connection is lost
-     * @param onNewLedger The onNewLedger hook. Called when a new ledger is received
      * @param onLedgerClosed The onLedgerClosed hook. Called when the ledger is closed but only if the source is
      * forwarding
      * @param connectionTimeout The connection timeout. Defaults to 30 seconds

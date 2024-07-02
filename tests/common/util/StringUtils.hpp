@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/Protocol.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/Protocol.h>
 
 #include <string>
 
