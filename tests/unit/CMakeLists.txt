@@ -72,6 +72,7 @@ target_sources(
           rpc/handlers/GetAggregatePriceTests.cpp
           rpc/handlers/LedgerDataTests.cpp
           rpc/handlers/LedgerEntryTests.cpp
+          rpc/handlers/LedgerIndexTests.cpp
           rpc/handlers/LedgerRangeTests.cpp
           rpc/handlers/LedgerTests.cpp
           rpc/handlers/NFTBuyOffersTests.cpp

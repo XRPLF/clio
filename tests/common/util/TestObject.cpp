@@ -93,6 +93,21 @@ CreateLedgerHeader(std::string_view ledgerHash, ripple::LedgerIndex seq, std::op
     return ledgerHeader;
 }
 
+ripple::LedgerHeader
+CreateLedgerHeaderWithUnixTime(std::string_view ledgerHash, ripple::LedgerIndex seq, uint64_t closeTimeUnixStamp)
+{
+    using namespace std::chrono;
+
+    auto ledgerHeader = ripple::LedgerHeader();
+    ledgerHeader.hash = ripple::uint256{ledgerHash};
+    ledgerHeader.seq = seq;
+
+    auto const closeTime = closeTimeUnixStamp - seconds{rippleEpochStart}.count();
+    ledgerHeader.closeTime = ripple::NetClock::time_point{seconds{closeTime}};
+
+    return ledgerHeader;
+}
+
 ripple::STObject
 CreateLegacyFeeSettingLedgerObject(
     uint64_t base,
