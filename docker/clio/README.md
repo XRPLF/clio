@@ -15,25 +15,10 @@ Config file recommendations:
 - Set `log_to_console` to `false` if you want to avoid logs being written to stdout.
 - Set `log_directory` to `/opt/clio/log` to store logs in a volume.
 
-## Usage from command line
+## Usage
 
 To run Clio using this image use command (assuming server's port is `51233` in your config):
 ```bash
 docker run -d -v <path to your config.json>:/opt/clio/etc/config.json -v <path to store logs>:/opt/clio/log -p 51233:51233 rippleci/clio
 
-```
-
-## Docker compose
-
-Here is an example of a docker compose file to run Clio:
-
-```yaml
-services:
-  clio:
-    image: rippleci/clio
-    volumes:
-      - <path to your config.json>:/opt/clio/etc/config.json
-      - <path to store logs>:/opt/clio/log
-    ports:
-      - "51233:51233"
 ```

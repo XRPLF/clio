@@ -172,6 +172,15 @@ jobs:
             --target $GITHUB_SHA --notes-file "${RUNNER_TEMP}/nightly_notes.md" \
             ./nightly_release/clio_server*
 
+  build_and_publish_docker_image:
+    uses: ./.github/workflows/build_clio_docker_image.yml
+    with:
+      tags: |
+          type=raw,value=nightly
+          type=ref,value=${{ env.GITHUB_SHA }}
+      artifact_name: clio_server_Linux_Release
+      strip_binary: true
+
   create_issue_on_failure:
     needs: [build, run_tests, nightly_release]
     if: ${{ always() && contains(needs.*.result, 'failure') }}

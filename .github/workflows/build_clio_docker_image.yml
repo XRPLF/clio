@@ -9,7 +9,13 @@ on:
       artifact_name:
         type: string
         description: Name of Github artifact to put into docker image
+      strip_binary:
+        type: boolean
+        description: Whether to strip clio binary
+        default: true
+
   workflow_dispatch:
+    inputs:
       tags:
         required: true
         type: string
@@ -22,6 +28,10 @@ on:
         required: true
         type: string
         description: sha256 hash of the binary
+      strip_binary:
+        type: boolean
+        description: Whether to strip clio binary
+        default: true
 
 jobs:
   build_and_publish_image:
@@ -35,20 +45,34 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
-          path: ./docker/clio/
+          path: ./docker/clio/artifact/
 
       - name: Download Clio binary from url
         if: ${{ inputs.clio_server_binary_url != null }}
         shell: bash
         run: |
-          wget ${{inputs.clio_server_binary_url}} -P ./docker/clio/
+          wget ${{inputs.clio_server_binary_url}} -P ./docker/clio/artifact/
           if [ "$(sha256sum ./docker/clio/clio_server | awk '{print $1}')" != "${{inputs.binary_sha256}}" ]; then
             echo "Binary sha256 sum doesn't match"
             exit 1
           fi
+      - name: Unpack binary
+        shell: bash
+        run: |
+          cd docker/clio/artifact
+          artifact=$(find . -type file)
+          tar -xvf $artifact
+          mv clio_server ../clio_server
+          cd ../
+          rm -rf ./artifact
+
+      - name: Strip binary
+        if: ${{ inputs.strip_binary }}
+        shell: bash
+        run: strip ./docker/clio/clio_server
 
       - name: Build Docker image
-        uses: ./docker/build_docker_image
+        uses: ./.github/actions/build_docker_image
         with:
           image_name: rippleci/clio
           push_image: true
