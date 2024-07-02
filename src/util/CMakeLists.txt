@@ -13,7 +13,6 @@ target_sources(
           prometheus/Prometheus.cpp
           Random.cpp
           Retry.cpp
-          IotaIterator.cpp
           SignalsHandler.cpp
           requests/RequestBuilder.cpp
           requests/Types.cpp

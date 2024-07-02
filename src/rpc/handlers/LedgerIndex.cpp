@@ -22,7 +22,6 @@
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
-#include "util/IotaIterator.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -37,6 +36,7 @@
 #include <cstdint>
 #include <ctime>
 #include <numeric>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -82,14 +82,13 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input input, Context const& ctx)
     if (earlierThan(minIndex))
         return Error{Status{RippledError::rpcLGR_NOT_FOUND, "ledgerNotInRange"}};
 
-    auto const startIter = util::IotaIterator(minIndex);
-    auto const endIter = util::IotaIterator(maxIndex + 1);
+    auto const view = std::ranges::iota_view{minIndex, maxIndex + 1};
 
-    auto const greaterEqLedgerIter = std::lower_bound(
-        startIter, endIter, ticks, [&](std::uint32_t ledgerIndex, std::int64_t) { return not earlierThan(ledgerIndex); }
+    auto const greaterEqLedgerIter = std::ranges::lower_bound(
+        view, ticks, [&](std::uint32_t ledgerIndex, std::int64_t) { return not earlierThan(ledgerIndex); }
     );
 
-    if (greaterEqLedgerIter != endIter)
+    if (greaterEqLedgerIter != view.end())
         return fillOutputByIndex(std::max(static_cast<std::uint32_t>(*greaterEqLedgerIter) - 1, minIndex));
 
     return fillOutputByIndex(maxIndex);

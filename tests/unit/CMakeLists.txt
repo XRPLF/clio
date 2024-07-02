@@ -113,7 +113,6 @@ target_sources(
           util/prometheus/MetricsFamilyTests.cpp
           util/prometheus/OStreamTests.cpp
           # Requests framework
-          util/IotaIteratorTests.cpp
           util/requests/RequestBuilderTests.cpp
           util/requests/SslContextTests.cpp
           util/requests/WsConnectionTests.cpp
