@@ -12,14 +12,14 @@ Your configuration file should be mounted to the path `/opt/clio/etc/config.json
 Clio repository has an [example](https://github.com/XRPLF/clio/blob/develop/docs/examples/config/example-config.json) of the configuration file.
 
 Config file recommendations:
-- Set `log_to_console` to `false` to avoid logs being written to stdout.
+- Set `log_to_console` to `false` if you want to avoid logs being written to stdout.
 - Set `log_directory` to `/opt/clio/log` to store logs in a volume.
 
 ## Usage from command line
 
 To run Clio using this image use command (assuming server's port is `51233` in your config):
 ```bash
-docker run -b <path to your config.json>:/opt/clio/etc/config.json -b <path to store logs>:/opt/clio/log -p 51233:51233 rippleci/clio
+docker run -d -v <path to your config.json>:/opt/clio/etc/config.json -v <path to store logs>:/opt/clio/log -p 51233:51233 rippleci/clio
 
 ```
 

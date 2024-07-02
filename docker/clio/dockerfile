@@ -1,12 +1,16 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 COPY ./clio_server /opt/clio/bin/clio_server
-RUN ln -s /opt/clio/bin/clio_server /usr/local/bin/clio_server
 
-RUN useradd -ms /bin/bash clio
+RUN ln -s /opt/clio/bin/clio_server /usr/local/bin/clio_server && \
+    mkdir -p /opt/clio/etc/ && \
+    mkdir -p /opt/clio/log/ && \
+    groupadd -g 10001 clio && \
+    useradd -u 10000 -g 10001 -s /bin/bash clio && \
+    chown clio:clio /opt/clio/log && \
+    apt update && \
+    apt install -y libatomic1
+
 USER clio
-WORKDIR /home/clio
-
-RUN mkdir -p /opt/clio/log/
-
-ENTRYPOINT ["/opt/clio/bin/clio_server", "--config", "/opt/clio/etc/config.json"]
+ENTRYPOINT ["/opt/clio/bin/clio_server"]
+CMD ["--conf", "/opt/clio/etc/config.json"]
