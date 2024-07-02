@@ -73,6 +73,10 @@ jobs:
 
       - name: Build Docker image
         uses: ./.github/actions/build_docker_image
+        env:
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+          DOCKERHUB_PW: ${{ secrets.DOCKERHUB_PW }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           image_name: rippleci/clio
           push_image: true
