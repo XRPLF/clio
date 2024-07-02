@@ -1,4 +1,3 @@
-version: '3.7'
 services:
   clio_develop:
     image: rippleci/clio_ci:latest

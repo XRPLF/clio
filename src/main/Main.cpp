@@ -27,6 +27,7 @@
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
+#include "util/SignalsHandler.hpp"
 #include "util/TerminationHandler.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -168,12 +169,14 @@ int
 main(int argc, char* argv[])
 try {
     util::setTerminationHandler();
+
     auto const configPath = parseCli(argc, argv);
     auto const config = ConfigReader::open(configPath);
     if (!config) {
         std::cerr << "Couldnt parse config '" << configPath << "'." << std::endl;
         return EXIT_FAILURE;
     }
+    util::SignalsHandler signalsHandler{config};
 
     LogService::init(config);
     LOG(LogService::info()) << "Clio version: " << Build::getClioFullVersionString();

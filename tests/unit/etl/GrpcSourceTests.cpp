@@ -44,7 +44,7 @@ struct GrpcSourceTests : NoLoggerFixture, util::prometheus::WithPrometheus, test
     GrpcSourceTests()
         : WithMockXrpLedgerAPIService("localhost:0")
         , mockBackend_(std::make_shared<testing::StrictMock<MockBackend>>(util::Config{}))
-        , grpcSource_("127.0.0.1", std::to_string(getXRPLMockPort()), mockBackend_)
+        , grpcSource_("localhost", std::to_string(getXRPLMockPort()), mockBackend_)
     {
     }
 

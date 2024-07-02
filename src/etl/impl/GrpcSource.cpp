@@ -24,6 +24,7 @@
 #include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
 
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <fmt/core.h>
@@ -39,6 +40,7 @@
 #include <exception>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -49,9 +51,14 @@ GrpcSource::GrpcSource(std::string const& ip, std::string const& grpcPort, std::
     : log_(fmt::format("ETL_Grpc[{}:{}]", ip, grpcPort)), backend_(std::move(backend))
 {
     try {
-        boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::make_address(ip), std::stoi(grpcPort)};
+        boost::asio::io_context ctx;
+        boost::asio::ip::tcp::resolver resolver{ctx};
+        auto const resolverResult = resolver.resolve(ip, grpcPort);
+        if (resolverResult.empty()) {
+            throw std::runtime_error("Failed to resolve " + ip + ":" + grpcPort);
+        }
         std::stringstream ss;
-        ss << endpoint;
+        ss << resolverResult.begin()->endpoint();
         grpc::ChannelArguments chArgs;
         chArgs.SetMaxReceiveMessageSize(-1);
         stub_ = org::xrpl::rpc::v1::XRPLedgerAPIService::NewStub(
