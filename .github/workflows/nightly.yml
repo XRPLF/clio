@@ -3,6 +3,10 @@ on:
   schedule:
     - cron:  '0 5 * * 1-5'
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/nightly.yml'
+      - '.github/workflows/build_clio_docker_image.yml'
 
 jobs:
   build:
@@ -130,6 +134,7 @@ jobs:
           ./clio_integration_tests --backend_host=scylladb
 
   nightly_release:
+    if: ${{ github.event_name != 'pull_request' }}
     needs: run_tests
     runs-on: ubuntu-20.04
     env:
@@ -178,9 +183,9 @@ jobs:
     with:
       tags: |
           type=raw,value=nightly
-          type=ref,value=${{ env.GITHUB_SHA }}
       artifact_name: clio_server_Linux_Release
       strip_binary: true
+      publish_image: ${{ github.event_name != 'pull_request' }}
 
   create_issue_on_failure:
     needs: [build, run_tests, nightly_release]

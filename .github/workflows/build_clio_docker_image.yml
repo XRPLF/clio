@@ -13,6 +13,10 @@ on:
         type: boolean
         description: Whether to strip clio binary
         default: true
+      publish_image:
+        type: boolean
+        description: Whether to publish docker image
+        required: true
 
   workflow_dispatch:
     inputs:
@@ -79,7 +83,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           image_name: rippleci/clio
-          push_image: true
+          push_image: ${{ inputs.publish_image }}
           directory: docker/clio
           tags: ${{ inputs.tags }}
           platforms: linux/amd64
