@@ -19,14 +19,13 @@
 
 #include "rpc/handlers/LedgerIndex.hpp"
 
+#include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
-#include "util/Assert.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <fmt/core.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/jss.h>
@@ -35,11 +34,10 @@
 #include <chrono>
 #include <cstdint>
 #include <ctime>
-#include <numeric>
+#include <iomanip>
 #include <ranges>
 #include <sstream>
 #include <string>
-#include <utility>
 
 namespace rpc {
 

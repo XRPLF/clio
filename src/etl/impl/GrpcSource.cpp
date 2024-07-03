@@ -25,7 +25,6 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <fmt/core.h>
 #include <grpcpp/client_context.h>

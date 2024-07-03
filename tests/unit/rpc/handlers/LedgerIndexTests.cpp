@@ -27,14 +27,12 @@
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
-#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/Indexes.h>
-#include <xrpl/protocol/LedgerFormats.h>
-#include <xrpl/protocol/UintTypes.h>
-#include <xrpl/protocol/jss.h>
+
+#include <cstdint>
+#include <string>
+#include <vector>
 
 constexpr static auto RANGEMIN = 10;
 constexpr static auto RANGEMAX = 30;
