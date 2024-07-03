@@ -110,11 +110,11 @@ TEST_F(AmendmentKeyTest, Convertible)
         auto const second = AmendmentKey(key2);
         auto const third = AmendmentKey("test");
 
-        std::string s1 = first;
+        std::string const s1 = first;
         EXPECT_EQ(s1, key1);
 
-        ripple::uint256 k1 = first;
-        ripple::uint256 k2 = second;
+        ripple::uint256 const k1 = first;
+        ripple::uint256 const k2 = second;
 
         EXPECT_EQ(k1, ripple::uint256{"7E365F775657DC0EB960E6295A1F44B3F67479F54D5D12C5D87E6DB234F072E3"});
         EXPECT_EQ(k2, ripple::uint256{"B4F33541E0E2FC2F7AA17D2D2E6A9B424809123485251D3413E91CC462309772"});
