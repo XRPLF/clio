@@ -131,9 +131,10 @@ TEST_P(LedgerIndexTests, SearchFromLedgerRange)
     // step 2
     for (uint32_t i = RANGEMIN; i <= RANGEMAX; i++) {
         auto const ledgerHeader = CreateLedgerHeaderWithUnixTime(LEDGERHASH, i, 1719318190 + 2 * (i - RANGEMIN));
-        ON_CALL(*backend, fetchLedgerBySequence(i, _)).WillByDefault(Return(ledgerHeader));
+        auto const exactNumberOfCalls = i == RANGEMIN ? Exactly(3) : Exactly(2);
         EXPECT_CALL(*backend, fetchLedgerBySequence(i, _))
-            .Times(i == testBundle.expectedLedgerIndex ? (i == RANGEMIN ? Exactly(3) : Exactly(2)) : AtMost(1));
+            .Times(i == testBundle.expectedLedgerIndex ? exactNumberOfCalls : AtMost(1))
+            .WillRepeatedly(Return(ledgerHeader));
     }
 
     auto const handler = AnyHandler{LedgerIndexHandler{backend}};
