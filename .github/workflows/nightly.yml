@@ -179,6 +179,7 @@ jobs:
 
   build_and_publish_docker_image:
     uses: ./.github/workflows/build_clio_docker_image.yml
+    needs: run_tests
     secrets: inherit
     with:
       tags: |
