@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
 #include "etl/ETLService.hpp"
 #include "etl/NetworkValidatedLedgers.hpp"
@@ -26,6 +27,7 @@
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
+#include "util/SignalsHandler.hpp"
 #include "util/TerminationHandler.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -167,12 +169,14 @@ int
 main(int argc, char* argv[])
 try {
     util::setTerminationHandler();
+
     auto const configPath = parseCli(argc, argv);
     auto const config = ConfigReader::open(configPath);
     if (!config) {
         std::cerr << "Couldnt parse config '" << configPath << "'." << std::endl;
         return EXIT_FAILURE;
     }
+    util::SignalsHandler signalsHandler{config};
 
     LogService::init(config);
     LOG(LogService::info()) << "Clio version: " << Build::getClioFullVersionString();
@@ -217,8 +221,9 @@ try {
 
     auto workQueue = rpc::WorkQueue::make_WorkQueue(config);
     auto counters = rpc::Counters::make_Counters(workQueue);
+    auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
     auto const handlerProvider = std::make_shared<rpc::impl::ProductionHandlerProvider const>(
-        config, backend, subscriptions, balancer, etl, counters
+        config, backend, subscriptions, balancer, etl, amendmentCenter, counters
     );
     auto const rpcEngine =
         rpc::RPCEngine::make_RPCEngine(backend, balancer, dosGuard, workQueue, counters, handlerProvider);

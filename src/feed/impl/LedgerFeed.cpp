@@ -28,9 +28,9 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Fees.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
 #include <memory>

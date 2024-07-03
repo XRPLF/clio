@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "etl/impl/GrpcSource.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockBackend.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockXrpLedgerAPIService.hpp"
@@ -31,7 +31,7 @@
 #include <gtest/gtest.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
 #include <org/xrpl/rpc/v1/get_ledger_data.pb.h>
-#include <ripple/basics/base_uint.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <cstdint>
 #include <memory>
@@ -44,7 +44,7 @@ struct GrpcSourceTests : NoLoggerFixture, util::prometheus::WithPrometheus, test
     GrpcSourceTests()
         : WithMockXrpLedgerAPIService("localhost:0")
         , mockBackend_(std::make_shared<testing::StrictMock<MockBackend>>(util::Config{}))
-        , grpcSource_("127.0.0.1", std::to_string(getXRPLMockPort()), mockBackend_)
+        , grpcSource_("localhost", std::to_string(getXRPLMockPort()), mockBackend_)
     {
     }
 

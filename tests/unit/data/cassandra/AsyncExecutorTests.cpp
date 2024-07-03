@@ -20,7 +20,7 @@
 #include "data/cassandra/Error.hpp"
 #include "data/cassandra/FakesAndMocks.hpp"
 #include "data/cassandra/impl/AsyncExecutor.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <cassandra.h>

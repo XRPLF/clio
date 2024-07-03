@@ -22,7 +22,7 @@
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/LedgerEntry.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
@@ -32,16 +32,16 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/STXChainBridge.h>
-#include <ripple/protocol/UintTypes.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/STXChainBridge.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <cstdint>
 #include <optional>

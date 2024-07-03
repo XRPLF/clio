@@ -25,7 +25,7 @@
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
 
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <functional>
 #include <memory>

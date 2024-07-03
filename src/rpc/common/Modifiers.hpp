@@ -25,7 +25,7 @@
 
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <exception>
 #include <functional>

@@ -22,7 +22,7 @@
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/GatewayBalances.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
@@ -30,13 +30,13 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STObject.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STObject.h>
 
 #include <algorithm>
 #include <cstdint>

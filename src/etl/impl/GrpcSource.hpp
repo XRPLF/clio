@@ -24,7 +24,7 @@
 
 #include <grpcpp/support/status.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <cstdint>
 #include <memory>

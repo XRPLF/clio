@@ -19,7 +19,7 @@
 
 #include "data/cassandra/Error.hpp"
 #include "data/cassandra/impl/RetryPolicy.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 
 #include <cassandra.h>
 #include <gmock/gmock.h>

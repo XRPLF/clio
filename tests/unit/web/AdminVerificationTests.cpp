@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "web/impl/AdminVerificationStrategy.hpp"
 
 #include <boost/beast/http/field.hpp>

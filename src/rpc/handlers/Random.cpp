@@ -24,11 +24,11 @@
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/beast/utility/rngfill.h>
-#include <ripple/crypto/csprng.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/beast/utility/rngfill.h>
+#include <xrpl/crypto/csprng.h>
+#include <xrpl/protocol/jss.h>
 
 namespace rpc {
 

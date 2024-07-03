@@ -27,14 +27,14 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/UintTypes.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <limits>

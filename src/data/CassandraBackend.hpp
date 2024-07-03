@@ -36,13 +36,13 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <cassandra.h>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/nft.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/nft.h>
 
 #include <atomic>
 #include <chrono>
@@ -336,8 +336,8 @@ public:
 
         auto const& result = res.value();
         if (not result.hasRows()) {
-            LOG(log_.error()) << "Could not fetch all transaction hashes - no rows; ledger = "
-                              << std::to_string(ledgerSequence);
+            LOG(log_.warn()) << "Could not fetch all transaction hashes - no rows; ledger = "
+                             << std::to_string(ledgerSequence);
             return {};
         }
 

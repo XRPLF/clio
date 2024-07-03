@@ -22,8 +22,8 @@
 
 #include "data/DBHelpers.hpp"
 
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/TxMeta.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/TxMeta.h>
 
 #include <cstdint>
 #include <optional>

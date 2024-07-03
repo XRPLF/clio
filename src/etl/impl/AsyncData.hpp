@@ -30,9 +30,9 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/support/status.h>
 #include <org/xrpl/rpc/v1/get_ledger_data.pb.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <cstddef>
 #include <cstdint>

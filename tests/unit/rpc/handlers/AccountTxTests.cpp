@@ -22,7 +22,7 @@
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/AccountTx.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
@@ -30,8 +30,8 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/STObject.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/STObject.h>
 
 #include <cstdint>
 #include <optional>

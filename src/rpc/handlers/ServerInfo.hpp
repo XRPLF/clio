@@ -32,13 +32,13 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <fmt/core.h>
-#include <ripple/basics/chrono.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/BuildInfo.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/Protocol.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/chrono.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/BuildInfo.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/Fees.h>
+#include <xrpl/protocol/Protocol.h>
+#include <xrpl/protocol/jss.h>
 
 #include <chrono>
 #include <cstddef>

@@ -21,7 +21,7 @@
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Feature.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/json/parse.hpp>

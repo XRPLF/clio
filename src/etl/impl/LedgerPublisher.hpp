@@ -31,12 +31,12 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
-#include <ripple/basics/chrono.h>
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/Serializer.h>
+#include <xrpl/basics/chrono.h>
+#include <xrpl/protocol/Fees.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/Serializer.h>
 
 #include <chrono>
 #include <cstddef>
@@ -166,13 +166,16 @@ public:
             LOG(log_.info()) << "Publishing ledger " << std::to_string(lgrInfo.seq);
 
             if (!state_.get().isWriting) {
-                LOG(log_.info()) << "Updating cache";
+                LOG(log_.info()) << "Updating ledger range for read node.";
 
-                std::vector<data::LedgerObject> const diff = data::synchronousAndRetryOnTimeout([&](auto yield) {
-                    return backend_->fetchLedgerDiff(lgrInfo.seq, yield);
-                });
+                if (!cache_.get().isDisabled()) {
+                    std::vector<data::LedgerObject> const diff = data::synchronousAndRetryOnTimeout([&](auto yield) {
+                        return backend_->fetchLedgerDiff(lgrInfo.seq, yield);
+                    });
 
-                cache_.get().update(diff, lgrInfo.seq);
+                    cache_.get().update(diff, lgrInfo.seq);
+                }
+
                 backend_->updateRange(lgrInfo.seq);
             }
 

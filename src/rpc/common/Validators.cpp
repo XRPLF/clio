@@ -27,14 +27,16 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <fmt/core.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/UintTypes.h>
-#include <ripple/protocol/tokens.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/tokens.h>
 
 #include <charconv>
 #include <cstdint>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -48,6 +50,26 @@ Required::verify(boost::json::value const& value, std::string_view key)
 {
     if (not value.is_object() or not value.as_object().contains(key))
         return Error{Status{RippledError::rpcINVALID_PARAMS, "Required field '" + std::string{key} + "' missing"}};
+
+    return {};
+}
+
+[[nodiscard]] MaybeError
+TimeFormatValidator::verify(boost::json::value const& value, std::string_view key) const
+{
+    using boost::json::value_to;
+
+    if (not value.is_object() or not value.as_object().contains(key))
+        return {};  // ignore. field does not exist, let 'required' fail instead
+
+    if (not value.as_object().at(key).is_string())
+        return Error{Status{RippledError::rpcINVALID_PARAMS}};
+
+    std::tm time = {};
+    std::stringstream stream(value_to<std::string>(value.as_object().at(key)));
+    stream >> std::get_time(&time, format_.c_str());
+    if (stream.fail())
+        return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
     return {};
 }
@@ -70,7 +92,7 @@ checkIsU32Numeric(std::string_view sv)
     return ec == std::errc();
 }
 
-CustomValidator Uint256HexStringValidator =
+CustomValidator CustomValidators::Uint256HexStringValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -82,7 +104,7 @@ CustomValidator Uint256HexStringValidator =
         return MaybeError{};
     }};
 
-CustomValidator LedgerIndexValidator =
+CustomValidator CustomValidators::LedgerIndexValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view /* key */) -> MaybeError {
         auto err = Error{Status{RippledError::rpcINVALID_PARAMS, "ledgerIndexMalformed"}};
 
@@ -96,7 +118,7 @@ CustomValidator LedgerIndexValidator =
         return MaybeError{};
     }};
 
-CustomValidator AccountValidator =
+CustomValidator CustomValidators::AccountValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -109,7 +131,7 @@ CustomValidator AccountValidator =
         return MaybeError{};
     }};
 
-CustomValidator AccountBase58Validator =
+CustomValidator CustomValidators::AccountBase58Validator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -121,7 +143,7 @@ CustomValidator AccountBase58Validator =
         return MaybeError{};
     }};
 
-CustomValidator AccountMarkerValidator =
+CustomValidator CustomValidators::AccountMarkerValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -136,7 +158,7 @@ CustomValidator AccountMarkerValidator =
         return MaybeError{};
     }};
 
-CustomValidator CurrencyValidator =
+CustomValidator CustomValidators::CurrencyValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -152,7 +174,7 @@ CustomValidator CurrencyValidator =
         return MaybeError{};
     }};
 
-CustomValidator IssuerValidator =
+CustomValidator CustomValidators::IssuerValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
@@ -172,7 +194,7 @@ CustomValidator IssuerValidator =
         return MaybeError{};
     }};
 
-CustomValidator SubscribeStreamValidator =
+CustomValidator CustomValidators::SubscribeStreamValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_array())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
@@ -198,7 +220,7 @@ CustomValidator SubscribeStreamValidator =
         return MaybeError{};
     }};
 
-CustomValidator SubscribeAccountsValidator =
+CustomValidator CustomValidators::SubscribeAccountsValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (!value.is_array())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
@@ -219,7 +241,7 @@ CustomValidator SubscribeAccountsValidator =
         return MaybeError{};
     }};
 
-CustomValidator CurrencyIssueValidator =
+CustomValidator CustomValidators::CurrencyIssueValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (not value.is_object())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotObject"}};

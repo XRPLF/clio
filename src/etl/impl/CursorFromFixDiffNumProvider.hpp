@@ -25,8 +25,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/io_context.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
 
 #include <algorithm>
 #include <cstddef>

@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "etl/impl/SubscriptionSource.hpp"
-#include "util/Fixtures.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/TestWsServer.hpp"

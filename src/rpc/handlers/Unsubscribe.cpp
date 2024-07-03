@@ -33,8 +33,8 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
@@ -77,9 +77,9 @@ UnsubscribeHandler::spec([[maybe_unused]] uint32_t apiVersion)
         }};
 
     static auto const rpcSpec = RpcSpec{
-        {JS(streams), validation::SubscribeStreamValidator},
-        {JS(accounts), validation::SubscribeAccountsValidator},
-        {JS(accounts_proposed), validation::SubscribeAccountsValidator},
+        {JS(streams), validation::CustomValidators::SubscribeStreamValidator},
+        {JS(accounts), validation::CustomValidators::SubscribeAccountsValidator},
+        {JS(accounts_proposed), validation::CustomValidators::SubscribeAccountsValidator},
         {JS(books), booksValidator},
         {JS(url), check::Deprecated{}},
         {JS(rt_accounts), check::Deprecated{}},

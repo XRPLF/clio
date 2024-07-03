@@ -20,7 +20,7 @@
 #include "data/Types.hpp"
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/TransactionFeed.hpp"
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"
@@ -30,15 +30,15 @@
 #include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/TER.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/TER.h>
 
 #include <memory>
 

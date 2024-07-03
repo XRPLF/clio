@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/Fixtures.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/Retry.hpp"
 
 #include <boost/asio/strand.hpp>

@@ -22,7 +22,7 @@
 #include "data/Types.hpp"
 #include "util/Assert.hpp"
 
-#include <ripple/basics/base_uint.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <cstddef>
 #include <cstdint>

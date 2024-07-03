@@ -26,7 +26,7 @@
 #include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/protocol/STObject.h>
+#include <xrpl/protocol/STObject.h>
 
 #include <vector>
 

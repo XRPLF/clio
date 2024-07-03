@@ -23,7 +23,7 @@
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Tx.hpp"
-#include "util/Fixtures.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockETLService.hpp"
 #include "util/TestObject.hpp"
 
@@ -31,7 +31,7 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ripple/basics/base_uint.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <algorithm>
 #include <cctype>

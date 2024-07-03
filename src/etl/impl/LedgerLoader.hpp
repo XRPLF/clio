@@ -30,13 +30,13 @@
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/beast/core/CurrentThreadName.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/TxMeta.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/beast/core/CurrentThreadName.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/Serializer.h>
+#include <xrpl/protocol/TxMeta.h>
 
 #include <chrono>
 #include <cstddef>

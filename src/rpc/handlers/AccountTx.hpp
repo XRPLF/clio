@@ -34,9 +34,9 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/TxFormats.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/TxFormats.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <limits>
@@ -125,9 +125,9 @@ public:
     {
         auto const& typesKeysInLowercase = util::getTxTypesInLowercase();
         static auto const rpcSpecForV1 = RpcSpec{
-            {JS(account), validation::Required{}, validation::AccountValidator},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(account), validation::Required{}, validation::CustomValidators::AccountValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
             {JS(ledger_index_min), validation::Type<int32_t>{}},
             {JS(ledger_index_max), validation::Type<int32_t>{}},
             {JS(limit),

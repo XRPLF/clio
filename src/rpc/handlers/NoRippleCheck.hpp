@@ -32,8 +32,8 @@
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
@@ -105,14 +105,14 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpecV1 = RpcSpec{
-            {JS(account), validation::Required{}, validation::AccountValidator},
+            {JS(account), validation::Required{}, validation::CustomValidators::AccountValidator},
             {JS(role),
              validation::Required{},
              meta::WithCustomError{
                  validation::OneOf{"gateway", "user"}, Status{RippledError::rpcINVALID_PARAMS, "role field is invalid"}
              }},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
             {JS(limit),
              validation::Type<uint32_t>(),
              validation::Min(1u),
