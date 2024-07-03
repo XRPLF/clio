@@ -23,7 +23,6 @@
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
 
-#include <__algorithm/ranges_lower_bound.h>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>

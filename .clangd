@@ -8,3 +8,4 @@ Diagnostics:
     IgnoreHeader:
       - ".*/(detail|impl)/.*"
       - ".*expected.*"
+      - ".*ranges_lower_bound.h"
