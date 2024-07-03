@@ -63,10 +63,15 @@ jobs:
       - name: Unpack binary
         shell: bash
         run: |
+          sudo apt update && sudo apt install -y tar unzip
           cd docker/clio/artifact
-          artifact=$(find . -type file)
-          tar -xvf $artifact
-          mv clio_server ../clio_server
+          artifact=$(find . -type f)
+          if [[ $artifact == *.zip ]]; then
+            unzip $artifact
+          elif [[ $artifact == *.tar.gz ]]; then
+            tar -xvf $artifact
+          fi
+          mv clio_server ../
           cd ../
           rm -rf ./artifact
 
