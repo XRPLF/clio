@@ -19,13 +19,20 @@
 
 #pragma once
 
-#include <string>
+#include <cstddef>
+#include <optional>
+#include <stdexcept>
+#include <string_view>
 #include <type_traits>
+#include <variant>
 
 namespace util::config {
 
+template <typename>
+constexpr bool always_false = false;
+
 /** @brief Custom clio config types. */
-enum class ConfigType { Integer, String, Float, Boolean, Error };
+enum class ConfigType { Integer, String, Double, Boolean };
 
 /** @brief get the corresponding clio config type */
 template <typename Type>
@@ -34,14 +41,15 @@ getType()
 {
     if constexpr (std::is_same_v<Type, int>) {
         return ConfigType::Integer;
-    } else if constexpr (std::is_same_v<Type, std::string>) {
+    } else if constexpr (std::is_same_v<Type, char const*>) {
         return ConfigType::String;
-    } else if constexpr (std::is_same_v<Type, float>) {
-        return ConfigType::Float;
+    } else if constexpr (std::is_same_v<Type, double>) {
+        return ConfigType::Double;
     } else if constexpr (std::is_same_v<Type, bool>) {
         return ConfigType::Boolean;
+    } else {
+        static_assert(always_false<Type>, "Wrong config type");
     }
-    return ConfigType::Error;
 }
 
 /**
@@ -50,54 +58,92 @@ getType()
  * Used in ClioConfigDefinition to indicate the required type of value and
  * whether it is mandatory to specify in the configuration.
  */
-template <typename Type>
 class ConfigValue {
 public:
-    constexpr ConfigValue(bool required) : type_{getType<Type>()}, required_{required}
+    using Type = std::variant<int, char const*, bool, double>;
+
+    constexpr ConfigValue() = default;
+    constexpr ConfigValue(ConfigType type) : type_(type)
     {
     }
+
+    constexpr ConfigValue&
+    defaultValue(Type value)
+    {
+        setValue(value);
+        return *this;
+    }
+
     constexpr ConfigType
     type() const
     {
         return type_;
     }
-    constexpr bool
-    required() const
+
+    constexpr ConfigValue&
+    required()
     {
-        return required_;
+        required_ = true;
+        return *this;
+    }
+
+    std::string_view
+    asString() const
+    {
+        if (type_ == ConfigType::String && value_.has_value())
+            return std::get<char const*>(value_.value());
+        throw std::bad_variant_access();
+    }
+
+    bool
+    asBool() const
+    {
+        if (type_ == ConfigType::Boolean && value_.has_value())
+            return std::get<bool>(value_.value());
+        throw std::bad_variant_access();
+    }
+
+    int
+    asInt() const
+    {
+        if (type_ == ConfigType::Integer && value_.has_value())
+            return std::get<int>(value_.value());
+        throw std::bad_variant_access();
+    }
+
+    double
+    asDouble() const
+    {
+        if (type_ == ConfigType::Double && value_.has_value())
+            return std::get<double>(value_.value());
+        throw std::bad_variant_access();
     }
 
 private:
-    ConfigType type_;
-    bool required_;
-};
-
-/**
- * @brief Represents the user's value for Json/Yaml config
- *
- */
-
-// don't know if this can be templated?
-template <typename Type>
-class ValueData {
-public:
-    ValueData(Type value) : type_{getType<Type>()}, value_{value}
+    static void
+    checkTypeConsistency(ConfigType type, Type const* value = nullptr)
     {
-    }
-    ConfigType
-    type() const
-    {
-        return type_;
-    }
-    Type
-    value() const
-    {
-        return value_;
+        if (value != nullptr) {
+            if ((type == ConfigType::Integer && !std::holds_alternative<int>(*value)) ||
+                (type == ConfigType::String && !std::holds_alternative<char const*>(*value)) ||
+                (type == ConfigType::Double && !std::holds_alternative<double>(*value)) ||
+                (type == ConfigType::Boolean && !std::holds_alternative<bool>(*value))) {
+                throw std::invalid_argument("Type mismatch");
+            }
+        }
     }
 
-private:
-    ConfigType type_;
-    Type value_;
+    constexpr Type
+    setValue(Type value)
+    {
+        checkTypeConsistency(type_, &value);
+        value_ = value;
+        return value;
+    }
+
+    ConfigType type_{};
+    bool required_{false};
+    std::optional<Type> value_;
 };
 
 }  // namespace util::config

@@ -34,9 +34,8 @@ public:
     ConfigFileJson() = default;
 
     void parse(std::string_view) override;
-    std::optional<ValueData<ConfigType>>
-    getValue(std::string_view val) const override;
-    std::optional<Array<ConfigType>>
+
+    std::optional<Array>
     getArray(std::string_view val) const override;
 
     // TODO: implement when we support yaml

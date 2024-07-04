@@ -19,7 +19,17 @@
 
 #pragma once
 
-#include <tuple>
+#include "util/newconfig/ConfigValue.hpp"
+
+#include <algorithm>
+#include <cstddef>
+#include <initializer_list>
+#include <iostream>
+#include <stdexcept>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace util::config {
 
@@ -28,26 +38,100 @@ namespace util::config {
  *
  * Used in ClioConfigDefinition to represent key-value(s) pair.
  */
-template <typename Key, typename... Args>
+/*
+template <typename Key, typename Value, std::size_t Size>
+struct Map {
+   using Item = std::pair<Key, Value>;
+   std::array<Item, Size> data;
+
+   constexpr Map(std::initializer_list<Item> init_list)
+   {
+       if (init_list.size() != Size) {
+           throw std::invalid_argument("Initializer list size does not match array size");
+       }
+       std::copy(init_list.begin(), init_list.end(), data.begin());
+   }
+
+   [[nodiscard]] constexpr Value
+   at(Key const& key) const
+   {
+       auto const itr = std::find_if(begin(data), end(data), [&key](auto const& v) { return v.first == key; });
+       if (itr != end(data)) {
+           return itr->second;
+       }
+       throw std::range_error("Not Found");
+   }
+
+   constexpr std::size_t
+   size() const
+   {
+       return data.size();
+   }
+
+   constexpr size_t
+   countWithPrefix(std::string_view s) const
+   {
+       return std::ranges::count_if(data, [&s](Item const& i) { return i.first.starts_with(s); });
+   }
+
+   [[nodiscard]] std::vector<Item>
+   withPrefix(std::string_view subStr, std::size_t configSize) const;
+}; */
+
 class Object {
+    // A Predetermined number of Clio Configs
+    static int const configSize = 24U;
+
 public:
-    constexpr Object(Key key, Args... args) : key_{key}, fields_{args...}
+    using KeyValuePair = std::pair<std::string_view, ConfigValue>;
+    // constexpr Object(std::initializer_list<KeyValuePair> pair) : map_{pair}
+
+    Object(std::initializer_list<KeyValuePair> pair)
     {
+        for (auto const& p : pair)
+            map_.insert(p);
     }
-    constexpr Key&
-    key() const
+
+    size_t
+    countWithPrefix(std::string_view prefix) const
     {
-        return key_;
+        return std::count_if(map_.begin(), map_.end(), [&prefix](auto const& pair) {
+            return pair.first.starts_with(prefix);
+        });
     }
-    constexpr std::tuple<Args...>&
-    Val() const
+
+    /** @brief return the specified Array key-values with prefix "key"
+     *
+     * Returns an array with all key-value pairs where key starts with "prefix"
+     */
+    std::vector<KeyValuePair>
+    getArray(std::string_view prefix) const;
+
+    /** @brief return the specified value associated with key
+     *
+     * @param key The config key to search for
+     * @return Returns config value associated with the given key.
+     * @throws if no valid key exists in config
+     */
+    constexpr ConfigValue
+    getValue(std::string_view key) const
     {
-        return fields_;
+        if (map_.contains(key))
+            return map_.at(key);
+        throw std::invalid_argument("no matching key");
+    }
+
+    void
+    printMap()
+    {
+        for (auto& pair : map_) {
+            std::cout << pair.first << " " << std::endl;
+        }
     }
 
 private:
-    Key key_;
-    std::tuple<Args...> fields_{};
+    std::unordered_map<std::string_view, ConfigValue> map_;
+    // Map<std::string_view, ConfigValue, configSize> map_;
 };
 
 }  // namespace util::config

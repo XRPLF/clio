@@ -19,11 +19,13 @@
 
 #pragma once
 
-#include "util/newconfig/Array.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Object.hpp"
 
 #include <optional>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 namespace util::config {
 
@@ -33,8 +35,8 @@ public:
     virtual ~ConfigFileInterface() = default;
 
     virtual void parse(std::string_view) = 0;
-    virtual std::optional<ValueData<ConfigType>> getValue(std::string_view) const = 0;
-    virtual std::optional<Array<ConfigType>> getArray(std::string_view) const = 0;
+    virtual std::optional<ConfigValue> getValue(std::string_view) const = 0;
+    virtual std::optional<std::vector<std::pair<std::string, ConfigValue>>> getArray(std::string_view) const = 0;
 };
 
 }  // namespace util::config

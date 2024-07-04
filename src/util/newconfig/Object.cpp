@@ -17,36 +17,41 @@
 */
 //==============================================================================
 
-#pragma once
+#include "util/newconfig/Object.hpp"
 
-#include <tuple>
+#include <cstddef>
+#include <string_view>
+#include <vector>
 
 namespace util::config {
 
-/**
- * @brief Array definition for Json/Yaml config
- *
- * Used in ClioConfigDefinition to represent multiple potential values (like whitelist)
- */
-template <typename... Args>
-class Array {
-public:
-    constexpr Array(Args... args) : elements_{args...}
-    {
-    }
-    constexpr auto
-    begin()
-    {
-        return elements_.begin();
-    }
-    constexpr auto
-    end()
-    {
-        return elements_.end();
-    }
+/*
+template <typename Key, typename Value, std::size_t Size>
+[[nodiscard]] std::vector<typename Map<Key, Value, Size>::Item>
+Map<Key, Value, Size>::withPrefix(std::string_view subStr, std::size_t configSize) const
+{
+    std::vector<Item> result{};
+    result.reserve(configSize);
+    auto it_result = result.begin();
 
-private:
-    std::tuple<Args...> elements_{};
-};
+    for (auto it = begin(data); it != end(data); ++it) {
+        if (it->first.substr(0, subStr.size()) == subStr) {
+            *it_result++ = *it;
+        }
+    }
+    return result;
+} */
+
+std::vector<Object::KeyValuePair>
+Object::getArray(std::string_view prefix) const
+{
+    std::vector<KeyValuePair> arr;
+    for (auto const& [key, value] : map_) {
+        if (key.starts_with(prefix)) {
+            arr.emplace_back(key, value);
+        }
+    }
+    return arr;
+}
 
 }  // namespace util::config

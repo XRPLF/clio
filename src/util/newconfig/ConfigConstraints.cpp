@@ -17,52 +17,23 @@
 */
 //==============================================================================
 
-#pragma once
+#include "util/newconfig/ConfigConstraints.hpp"
 
-#include "util/newconfig/ConfigFileInterface.hpp"
-#include "util/newconfig/Errors.hpp"
-#include "util/newconfig/Object.hpp"
-
-#include <algorithm>
-#include <array>
-#include <cstddef>
-#include <optional>
+#include <cstdint>
+#include <string>
 #include <string_view>
+#include <variant>
 
 namespace util::config {
 
-/** @brief All the config data will be stored and extracted from here.
- *
- * Represents all the data of config
- */
-class ConfigFileDefinition {
-public:
-    ConfigFileDefinition() = default;
-    std::optional<Error>
-    parse(ConfigFileInterface const& config);
-    std::optional<Error>
-    validate(ConfigFileInterface const& config) const;
-};
-extern Object ClioConfig;
+bool
+ConfigConstraints::checkPortRange(std::variant<std::string_view, int> port) const
+{
+    std::uint32_t portNum = std::holds_alternative<std::string_view>(port)
+        ? portNum = std::stoi(std::string(std::get<std::string_view>(port)))
+        : portNum = std::get<int>(port);
 
-struct ClioConfigDescription {
-public:
-    constexpr std::string_view
-    get(std::string_view key) const
-    {
-        auto const itr = std::find_if(a.begin(), a.end(), [&key](auto const& v) { return v.key == key; });
-        if (itr != a.end()) {
-            return itr->value;
-        }
-        return "Not Found";
-    }
-
-    struct KV {
-        std::string_view key;
-        std::string_view value;
-    };
-    std::array<KV, 4> a;
-};
-extern ClioConfigDescription const DESCRIPTIONS;
+    return portMin <= portNum && portMax >= portNum;
+}
 
 }  // namespace util::config

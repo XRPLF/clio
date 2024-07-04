@@ -52,9 +52,7 @@ make_Backend(util::Config const& config)
     std::shared_ptr<BackendInterface> backend = nullptr;
 
     // TODO: retire `cassandra-new` by next release after 2.0
-    // This code is leading me to believe we can directly use 'cassandra {}' in config file instead of
-    // database {} and type{} before it. Also we are on 2.2 right?
-    if (boost::iequals(type, "cassandra")) {
+    if (boost::iequals(type, "cassandra") or boost::iequals(type, "cassandra-new")) {
         auto cfg = config.section("database." + type);
         backend = std::make_shared<data::cassandra::CassandraBackend>(data::cassandra::SettingsProvider{cfg}, readOnly);
     }

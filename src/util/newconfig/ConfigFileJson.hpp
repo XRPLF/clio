@@ -19,33 +19,43 @@
 
 #pragma once
 
-#include "util/newconfig/Array.hpp"
 #include "util/newconfig/ConfigFileInterface.hpp"
 #include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Errors.hpp"
 
 #include <boost/json/object.hpp>
 
 #include <optional>
+#include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 namespace util::config {
 
 /** @brief Json representation of config */
 class ConfigFileJson final : public ConfigFileInterface {
 public:
-    ConfigFileJson() = default;
+    using configVal = std::pair<std::string, ConfigValue>;
+    ConfigFileJson(std::string_view configFilePath)
+    {
+        parse(configFilePath);
+    }
+
+    ConfigFileJson(boost::json::object obj) : jsonObject_{std::move(obj)}
+    {
+    }
 
     void
     parse(std::string_view configFilePath) override;
-    std::optional<ValueData<ConfigType>>
+
+    std::optional<ConfigValue>
     getValue(std::string_view key) const override;
-    std::optional<Array<ConfigType>>
+
+    std::optional<std::vector<configVal>>
     getArray(std::string_view key) const override;
 
 private:
-    // ValueData<ConfigType> getType(const boost::json::value& jsonValue) const;
-    boost::json::object object_;
+    boost::json::object jsonObject_;
 };
 
 }  // namespace util::config

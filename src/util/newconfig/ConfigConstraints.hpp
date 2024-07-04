@@ -19,50 +19,39 @@
 
 #pragma once
 
-#include "util/newconfig/ConfigFileInterface.hpp"
-#include "util/newconfig/Errors.hpp"
-#include "util/newconfig/Object.hpp"
-
-#include <algorithm>
-#include <array>
-#include <cstddef>
-#include <optional>
+#include <cstdint>
 #include <string_view>
+#include <variant>
 
 namespace util::config {
 
-/** @brief All the config data will be stored and extracted from here.
- *
- * Represents all the data of config
- */
-class ConfigFileDefinition {
+class ConfigConstraints {
 public:
-    ConfigFileDefinition() = default;
-    std::optional<Error>
-    parse(ConfigFileInterface const& config);
-    std::optional<Error>
-    validate(ConfigFileInterface const& config) const;
-};
-extern Object ClioConfig;
+    /** @brief make sure port is in a valid range
+     *
+     * @param port port to check valid range. Clio config uses both string and int
+     */
+    bool
+    checkPortRange(std::variant<std::string_view, int> port) const;
 
-struct ClioConfigDescription {
-public:
-    constexpr std::string_view
-    get(std::string_view key) const
-    {
-        auto const itr = std::find_if(a.begin(), a.end(), [&key](auto const& v) { return v.key == key; });
-        if (itr != a.end()) {
-            return itr->value;
-        }
-        return "Not Found";
-    }
-
-    struct KV {
-        std::string_view key;
-        std::string_view value;
+    /*
+    auto defaultSeverity = config.valueOr<Severity>("log_level", Severity::NFO);
+    static constexpr std::array<char const*, 7> channels = {
+        "General",
+        "WebServer",
+        "Backend",
+        "RPC",
+        "ETL",
+        "Subscriptions",
+        "Performance",
     };
-    std::array<KV, 4> a;
+     */
+    bool
+    checkLogChannels() const;
+
+private:
+    uint32_t const portMin = 1024;
+    uint32_t const portMax = 65535;
 };
-extern ClioConfigDescription const DESCRIPTIONS;
 
 }  // namespace util::config
