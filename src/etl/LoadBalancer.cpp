@@ -24,6 +24,7 @@
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
+#include "rpc/Errors.hpp"
 #include "util/Assert.hpp"
 #include "util/Random.hpp"
 #include "util/log/Logger.hpp"
@@ -39,6 +40,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -211,7 +213,7 @@ LoadBalancer::fetchLedger(
     return response;
 }
 
-std::optional<boost::json::object>
+std::expected<boost::json::object, rpc::ClioError>
 LoadBalancer::forwardToRippled(
     boost::json::object const& request,
     std::optional<std::string> const& clientIp,
@@ -221,7 +223,7 @@ LoadBalancer::forwardToRippled(
 {
     if (forwardingCache_) {
         if (auto cachedResponse = forwardingCache_->get(request); cachedResponse) {
-            return cachedResponse;
+            return std::move(cachedResponse).value();
         }
     }
 
@@ -233,20 +235,26 @@ LoadBalancer::forwardToRippled(
     auto xUserValue = isAdmin ? ADMIN_FORWARDING_X_USER_VALUE : USER_FORWARDING_X_USER_VALUE;
 
     std::optional<boost::json::object> response;
+    rpc::ClioError error = rpc::ClioError::etlCONNECTION_ERROR;
     while (numAttempts < sources_.size()) {
-        if (auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield)) {
-            response = std::move(res);
+        auto res = sources_[sourceIdx]->forwardToRippled(request, clientIp, xUserValue, yield);
+        if (res) {
+            response = std::move(res).value();
             break;
         }
+        error = std::max(error, res.error());  // Choose the best result between all sources
 
         sourceIdx = (sourceIdx + 1) % sources_.size();
         ++numAttempts;
     }
 
-    if (response and forwardingCache_ and not response->contains("error"))
-        forwardingCache_->put(request, *response);
+    if (response) {
+        if (forwardingCache_ and not response->contains("error"))
+            forwardingCache_->put(request, *response);
+        return std::move(response).value();
+    }
 
-    return response;
+    return std::unexpected{error};
 }
 
 boost::json::value

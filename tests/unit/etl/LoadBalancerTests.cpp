@@ -19,6 +19,7 @@
 
 #include "etl/LoadBalancer.hpp"
 #include "etl/Source.hpp"
+#include "rpc/Errors.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
@@ -41,6 +42,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -111,8 +113,10 @@ TEST_F(LoadBalancerConstructorTests, forwardingTimeoutPassedToSourceFactory)
 TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesFail)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(std::nullopt));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+        .WillOnce(Return(std::unexpected{rpc::ClioError::etlCONNECTION_ERROR}));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+        .WillOnce(Return(std::unexpected{rpc::ClioError::etlCONNECTION_ERROR}));
     EXPECT_THROW({ makeLoadBalancer(); }, std::logic_error);
 }
 
@@ -130,7 +134,8 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_Source1Fails0OK)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+        .WillOnce(Return(std::unexpected{rpc::ClioError::etlCONNECTION_ERROR}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
     EXPECT_CALL(sourceFactory_.sourceAt(1), run);
     makeLoadBalancer();
@@ -139,7 +144,8 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_Source1Fails0OK)
 TEST_F(LoadBalancerConstructorTests, fetchETLState_Source0Fails1OK)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
-    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled)
+        .WillOnce(Return(std::unexpected{rpc::ClioError::etlCONNECTION_ERROR}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
     EXPECT_CALL(sourceFactory_.sourceAt(1), run);
@@ -162,7 +168,8 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_AllSourcesFailButAllowNoEtlIs
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
     EXPECT_CALL(sourceFactory_.sourceAt(0), run);
-    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), forwardToRippled)
+        .WillOnce(Return(std::unexpected{rpc::ClioError::etlCONNECTION_ERROR}));
     EXPECT_CALL(sourceFactory_.sourceAt(1), run);
 
     configJson_.as_object()["allow_no_etl"] = true;
@@ -566,7 +573,7 @@ TEST_F(LoadBalancerForwardToRippledTests, source0Fails)
         sourceFactory_.sourceAt(0),
         forwardToRippled(request_, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
-        .WillOnce(Return(std::nullopt));
+        .WillOnce(Return(std::unexpected{rpc::ClioError::etlCONNECTION_ERROR}));
     EXPECT_CALL(
         sourceFactory_.sourceAt(1),
         forwardToRippled(request_, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
@@ -586,12 +593,12 @@ TEST_F(LoadBalancerForwardToRippledTests, bothSourcesFail)
         sourceFactory_.sourceAt(0),
         forwardToRippled(request_, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
-        .WillOnce(Return(std::nullopt));
+        .WillOnce(Return(std::unexpected{rpc::ClioError::etlCONNECTION_ERROR}));
     EXPECT_CALL(
         sourceFactory_.sourceAt(1),
         forwardToRippled(request_, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
-        .WillOnce(Return(std::nullopt));
+        .WillOnce(Return(std::unexpected{rpc::ClioError::etlCONNECTION_ERROR}));
 
     runSpawn([&](boost::asio::yield_context yield) {
         EXPECT_EQ(loadBalancer->forwardToRippled(request_, clientIP_, false, yield), std::nullopt);

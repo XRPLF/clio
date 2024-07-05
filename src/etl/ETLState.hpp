@@ -47,7 +47,10 @@ struct ETLState {
     fetchETLStateFromSource(Forward& source) noexcept
     {
         auto const serverInfoRippled = data::synchronous([&source](auto yield) {
-            return source.forwardToRippled({{"command", "server_info"}}, std::nullopt, {}, yield);
+            if (auto result = source.forwardToRippled({{"command", "server_info"}}, std::nullopt, {}, yield)) {
+                return std::move(result).value();
+            }
+            return std::nullopt;
         });
 
         if (serverInfoRippled)
