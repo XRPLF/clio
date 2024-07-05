@@ -58,7 +58,7 @@ runs:
         if: ${{ inputs.push_image == 'true' }}
         uses: peter-evans/dockerhub-description@v4
         with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
+          username: ${{ env.DOCKERHUB_USER }}
           password: ${{ env.DOCKERHUB_PW }}
           repository: ${{ inputs.image_name }}
           short-description: ${{ inputs.description }}
