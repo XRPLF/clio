@@ -19,13 +19,11 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
-
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 
 #include <cstdint>
-#include <string>
+#include <expected>
 
 namespace rpc {
 
@@ -60,7 +58,7 @@ public:
      * @param request A JSON object representing the request
      * @return The specified API version if contained in the JSON object; error string otherwise
      */
-    util::Expected<uint32_t, std::string> virtual parse(boost::json::object const& request) const = 0;
+    std::expected<uint32_t, std::string> virtual parse(boost::json::object const& request) const = 0;
 };
 
 }  // namespace rpc

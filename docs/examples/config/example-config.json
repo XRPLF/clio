@@ -35,7 +35,10 @@
             "grpc_port": "50051"
         }
     ],
-    "forwarding_cache_timeout": 0.250, // in seconds, could be 0, which means no cache
+    "forwarding": {
+        "cache_timeout": 0.250, // in seconds, could be 0, which means no cache
+        "request_timeout": 10.0 // time for Clio to wait for rippled to reply on a forwarded request (default is 10 seconds)
+    },
     "dos_guard": {
         // Comma-separated list of IPs to exclude from rate limiting
         "whitelist": [
@@ -64,8 +67,10 @@
         "admin_password": "xrp",
         // If local_admin is true, Clio will consider requests come from 127.0.0.1 as admin requests
         // It's true by default unless admin_password is set,'local_admin' : true and 'admin_password' can not be set at the same time
-        "local_amdin": false
+        "local_admin": false
     },
+    // Time in seconds for graceful shutdown. Defaults to 10 seconds. Not fully implemented yet.
+    "graceful_period": 10.0,
     // Overrides log level on a per logging channel.
     // Defaults to global "log_level" for each unspecified channel.
     "log_channels": [
@@ -94,6 +99,15 @@
             "log_level": "trace"
         }
     ],
+    "cache": {
+        // Configure this to use either "num_diffs", "num_cursors_from_diff", or "num_cursors_from_account". By default, Clio uses "num_diffs".
+        "num_diffs": 32, // Generate the cursors from the latest ledger diff, then use the cursors to partition the ledger to load concurrently. The cursors number is affected by the busyness of the network.
+        // "num_cursors_from_diff": 3200, // Read the cursors from the diff table until we have enough cursors to partition the ledger to load concurrently. 
+        // "num_cursors_from_account": 3200, // Read the cursors from the account table until we have enough cursors to partition the ledger to load concurrently.
+        "num_markers": 48, // The number of markers is the number of coroutines to load the cache concurrently.
+        "page_fetch_size": 512, // The number of rows to load for each page.
+        "load": "async" // "sync" to load cache synchronously  or "async" to load cache asynchronously or "none"/"no" to turn off the cache.
+    },
     "prometheus": {
         "enabled": true,
         "compress_reply": true

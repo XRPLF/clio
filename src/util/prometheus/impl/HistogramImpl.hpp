@@ -38,15 +38,9 @@ template <typename T>
 concept SomeHistogramImpl = requires(T t) {
     typename std::remove_cvref_t<T>::ValueType;
     requires SomeNumberType<typename std::remove_cvref_t<T>::ValueType>;
-    {
-        t.observe(typename std::remove_cvref_t<T>::ValueType{1})
-    } -> std::same_as<void>;
-    {
-        t.setBuckets(std::vector<typename std::remove_cvref_t<T>::ValueType>{})
-    } -> std::same_as<void>;
-    {
-        t.serializeValue(std::string{}, std::string{}, std::declval<OStream&>())
-    } -> std::same_as<void>;
+    { t.observe(typename std::remove_cvref_t<T>::ValueType{1}) } -> std::same_as<void>;
+    { t.setBuckets(std::vector<typename std::remove_cvref_t<T>::ValueType>{}) } -> std::same_as<void>;
+    { t.serializeValue(std::string{}, std::string{}, std::declval<OStream&>()) } -> std::same_as<void>;
 };
 
 template <SomeNumberType NumberType>

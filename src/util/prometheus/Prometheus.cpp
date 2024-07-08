@@ -21,6 +21,7 @@
 
 #include "util/Assert.hpp"
 #include "util/config/Config.hpp"
+#include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Histogram.hpp"
@@ -29,6 +30,7 @@
 #include "util/prometheus/MetricsFamily.hpp"
 #include "util/prometheus/OStream.hpp"
 
+#include <concepts>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -51,6 +53,13 @@ convertBaseTo(MetricBase& metricBase)
 }
 
 }  // namespace
+
+Bool
+PrometheusImpl::boolMetric(std::string name, Labels labels, std::optional<std::string> description)
+{
+    auto& metric = gaugeInt(std::move(name), std::move(labels), std::move(description));
+    return Bool{metric};
+}
 
 CounterInt&
 PrometheusImpl::counterInt(std::string name, Labels labels, std::optional<std::string> description)
@@ -173,6 +182,12 @@ PrometheusService::init(util::Config const& config)
     bool const compressReply = config.valueOr("prometheus.compress_reply", true);
 
     instance_ = std::make_unique<util::prometheus::PrometheusImpl>(enabled, compressReply);
+}
+
+util::prometheus::Bool
+PrometheusService::boolMetric(std::string name, util::prometheus::Labels labels, std::optional<std::string> description)
+{
+    return instance().boolMetric(std::move(name), std::move(labels), std::move(description));
 }
 
 util::prometheus::CounterInt&

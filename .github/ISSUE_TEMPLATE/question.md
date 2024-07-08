@@ -9,6 +9,7 @@ assignees: ''
 
 <!-- Please search existing issues to avoid creating duplicates. -->
 <!-- Consider starting a [discussion](https://github.com/XRPLF/clio/discussions) instead. -->
+<!-- Kindly refrain from posting any credentials or sensitive information in this issue -->
 
 ## Question
 <!-- Your question -->

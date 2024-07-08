@@ -28,7 +28,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
 #include <fmt/core.h>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <memory>
 #include <optional>
@@ -89,6 +89,7 @@ public:
                     case rpc::ClioError::rpcMALFORMED_ADDRESS:
                     case rpc::ClioError::rpcINVALID_HOT_WALLET:
                     case rpc::ClioError::rpcFIELD_NOT_FOUND_TRANSACTION:
+                    case rpc::ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID:
                         ASSERT(
                             false, "Unknown rpc error code {}", static_cast<int>(*clioCode)
                         );  // this should never happen

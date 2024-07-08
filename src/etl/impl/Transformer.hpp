@@ -31,11 +31,11 @@
 #include "util/log/Logger.hpp"
 
 #include <grpcpp/grpcpp.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/beast/core/CurrentThreadName.h>
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/beast/core/CurrentThreadName.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>
 #include <cstdint>
@@ -158,10 +158,10 @@ private:
                 auto const end = std::chrono::system_clock::now();
                 auto const duration = ((end - start).count()) / 1000000000.0;
 
-                LOG(log_.info()) << "Load phase of etl : "
-                                 << "Successfully wrote ledger! Ledger info: " << util::toString(lgrInfo)
-                                 << ". txn count = " << numTxns << ". object count = " << numObjects
-                                 << ". load time = " << duration << ". load txns per second = " << numTxns / duration
+                LOG(log_.info()) << "Load phase of ETL. Successfully wrote ledger! Ledger info: "
+                                 << util::toString(lgrInfo) << ". txn count = " << numTxns
+                                 << ". object count = " << numObjects << ". load time = " << duration
+                                 << ". load txns per second = " << numTxns / duration
                                  << ". load objs per second = " << numObjects / duration;
 
                 // success is false if the ledger was already written
@@ -259,7 +259,7 @@ private:
 
                 if (isDeleted) {
                     auto const old = backend_->cache().get(*key, lgrInfo.seq - 1);
-                    ASSERT(old.has_value(), "Deleted object must be in cache");
+                    ASSERT(old.has_value(), "Deleted object {} must be in cache", ripple::strHex(*key));
                     checkBookBase = isBookDir(*key, *old);
                 } else {
                     checkBookBase = isBookDir(*key, *blob);

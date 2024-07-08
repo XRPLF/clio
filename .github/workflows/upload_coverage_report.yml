@@ -16,16 +16,16 @@ jobs:
           fetch-depth: 0
 
       - name: Download report artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: coverage-report.xml
           path: build
 
       - name: Upload coverage report
         if: ${{ hashFiles('build/coverage_report.xml') != '' }}
-        uses: wandalen/wretry.action@v1.3.0
+        uses: wandalen/wretry.action@v1.4.10
         with:
-          action: codecov/codecov-action@v3
+          action: codecov/codecov-action@v4
           with: |
             files: build/coverage_report.xml 
             fail_ci_if_error: false

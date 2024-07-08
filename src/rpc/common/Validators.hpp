@@ -21,61 +21,26 @@
 
 #include "rpc/Errors.hpp"
 #include "rpc/common/Types.hpp"
+#include "rpc/common/ValidationHelpers.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <fmt/core.h>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <cstdint>
+#include <ctime>
 #include <functional>
 #include <initializer_list>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 namespace rpc::validation {
-
-/**
- * @brief Check that the type is the same as what was expected.
- *
- * @tparam Expected The expected type that value should be convertible to
- * @param value The json value to check the type of
- * @return true if convertible; false otherwise
- */
-template <typename Expected>
-[[nodiscard]] bool static checkType(boost::json::value const& value)
-{
-    auto hasError = false;
-    if constexpr (std::is_same_v<Expected, bool>) {
-        if (not value.is_bool())
-            hasError = true;
-    } else if constexpr (std::is_same_v<Expected, std::string>) {
-        if (not value.is_string())
-            hasError = true;
-    } else if constexpr (std::is_same_v<Expected, double> or std::is_same_v<Expected, float>) {
-        if (not value.is_double())
-            hasError = true;
-    } else if constexpr (std::is_same_v<Expected, boost::json::array>) {
-        if (not value.is_array())
-            hasError = true;
-    } else if constexpr (std::is_same_v<Expected, boost::json::object>) {
-        if (not value.is_object())
-            hasError = true;
-    } else if constexpr (std::is_convertible_v<Expected, uint64_t> or std::is_convertible_v<Expected, int64_t>) {
-        if (not value.is_int64() && not value.is_uint64())
-            hasError = true;
-        // specify the type is unsigened, it can not be negative
-        if constexpr (std::is_unsigned_v<Expected>) {
-            if (value.is_int64() and value.as_int64() < 0)
-                hasError = true;
-        }
-    }
-
-    return not hasError;
-}
 
 /**
  * @brief A validator that simply requires a field to be present.
@@ -159,7 +124,7 @@ public:
     verify(boost::json::value const& value, std::string_view key)
     {
         if (value.is_object() and value.as_object().contains(key.data()))
-            return Error{Status{RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key}}};
+            return Error{Status{RippledError::rpcNOT_SUPPORTED, "Not supported field '" + std::string{key} + '\''}};
 
         return {};
     }
@@ -327,6 +292,33 @@ public:
 };
 
 /**
+ * @brief Validate that value can be converted to time according to the given format.
+ */
+class TimeFormatValidator final {
+    std::string format_;
+
+public:
+    /**
+     * @brief Construct the validator storing format value.
+     *
+     * @param format The format to use for time conversion
+     */
+    explicit TimeFormatValidator(std::string format) : format_{std::move(format)}
+    {
+    }
+
+    /**
+     * @brief Verify that the JSON value is valid formatted time.
+     *
+     * @param value The JSON value representing the outer object
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+     */
+    [[nodiscard]] MaybeError
+    verify(boost::json::value const& value, std::string_view key) const;
+};
+
+/**
  * @brief Validates that the value is equal to the one passed in.
  */
 template <typename Type>
@@ -440,6 +432,7 @@ public:
      * @param fn The callable/function object
      */
     template <typename Fn>
+        requires std::invocable<Fn, boost::json::value const&, std::string_view>
     explicit CustomValidator(Fn&& fn) : validator_{std::forward<Fn>(fn)}
     {
     }
@@ -480,86 +473,91 @@ makeHexStringValidator(boost::json::value const& value, std::string_view key)
 }
 
 /**
- * @brief Provides a commonly used validator for ledger index.
- *
- * LedgerIndex must be a string or an int. If the specified LedgerIndex is a string, its value must be either
- * "validated" or a valid integer value represented as a string.
+ * @brief A group of custom validation functions
  */
-extern CustomValidator LedgerIndexValidator;
+struct CustomValidators final {
+    /**
+     * @brief Provides a commonly used validator for ledger index.
+     *
+     * LedgerIndex must be a string or an int. If the specified LedgerIndex is a string, its value must be either
+     * "validated" or a valid integer value represented as a string.
+     */
+    static CustomValidator LedgerIndexValidator;
 
-/**
- * @brief Provides a commonly used validator for accounts.
- *
- * Account must be a string and the converted public key is valid.
- */
-extern CustomValidator AccountValidator;
+    /**
+     * @brief Provides a commonly used validator for accounts.
+     *
+     * Account must be a string and the converted public key is valid.
+     */
+    static CustomValidator AccountValidator;
 
-/**
- * @brief Provides a commonly used validator for accounts.
- *
- * Account must be a string and can convert to base58.
- */
-extern CustomValidator AccountBase58Validator;
+    /**
+     * @brief Provides a commonly used validator for accounts.
+     *
+     * Account must be a string and can convert to base58.
+     */
+    static CustomValidator AccountBase58Validator;
 
-/**
- * @brief Provides a commonly used validator for markers.
- *
- * A marker is composed of a comma-separated index and a start hint.
- * The former will be read as hex, and the latter can be cast to uint64.
- */
-extern CustomValidator AccountMarkerValidator;
+    /**
+     * @brief Provides a commonly used validator for markers.
+     *
+     * A marker is composed of a comma-separated index and a start hint.
+     * The former will be read as hex, and the latter can be cast to uint64.
+     */
+    static CustomValidator AccountMarkerValidator;
 
-/**
- * @brief Provides a commonly used validator for uint160(AccountID) hex string.
- *
- * It must be a string and also a decodable hex.
- * AccountID uses this validator.
- */
-extern CustomValidator Uint160HexStringValidator;
+    /**
+     * @brief Provides a commonly used validator for uint160(AccountID) hex string.
+     *
+     * It must be a string and also a decodable hex.
+     * AccountID uses this validator.
+     */
+    static CustomValidator Uint160HexStringValidator;
 
-/**
- * @brief Provides a commonly used validator for uint192 hex string.
- *
- * It must be a string and also a decodable hex.
- * MPTIssuanceID uses this validator.
- */
-extern CustomValidator Uint192HexStringValidator;
+    /**
+     * @brief Provides a commonly used validator for uint192 hex string.
+     *
+     * It must be a string and also a decodable hex.
+     * MPTIssuanceID uses this validator.
+     */
+    static CustomValidator Uint192HexStringValidator;
 
-/**
- * @brief Provides a commonly used validator for uint256 hex string.
- *
- * It must be a string and also a decodable hex.
- * Transaction index, ledger hash all use this validator.
- */
-extern CustomValidator Uint256HexStringValidator;
+    /**
+     * @brief Provides a commonly used validator for uint256 hex string.
+     *
+     * It must be a string and also a decodable hex.
+     * Transaction index, ledger hash all use this validator.
+     */
+    static CustomValidator Uint256HexStringValidator;
 
-/**
- * @brief Provides a commonly used validator for currency, including standard currency code and token code.
- */
-extern CustomValidator CurrencyValidator;
+    /**
+     * @brief Provides a commonly used validator for currency, including standard currency code and token code.
+     */
+    static CustomValidator CurrencyValidator;
 
-/**
- * @brief Provides a commonly used validator for issuer type.
- *
- * It must be a hex string or base58 string.
- */
-extern CustomValidator IssuerValidator;
+    /**
+     * @brief Provides a commonly used validator for issuer type.
+     *
+     * It must be a hex string or base58 string.
+     */
+    static CustomValidator IssuerValidator;
 
-/**
- * @brief Provides a validator for validating streams used in subscribe/unsubscribe.
- */
-extern CustomValidator SubscribeStreamValidator;
+    /**
+     * @brief Provides a validator for validating streams used in subscribe/unsubscribe.
+     */
+    static CustomValidator SubscribeStreamValidator;
 
-/**
- * @brief Provides a validator for validating accounts used in subscribe/unsubscribe.
- */
-extern CustomValidator SubscribeAccountsValidator;
+    /**
+     * @brief Provides a validator for validating accounts used in subscribe/unsubscribe.
+     */
+    static CustomValidator SubscribeAccountsValidator;
 
-/**
- * @brief Validates an asset (ripple::Issue).
- *
- * Used by amm_info.
- */
-extern CustomValidator CurrencyIssueValidator;
+    /**
+     * @brief Validates an asset (ripple::Issue).
+     *
+     * Used by amm_info.
+     */
+    static CustomValidator CurrencyIssueValidator;
+};
 
 }  // namespace rpc::validation

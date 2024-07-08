@@ -25,7 +25,7 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/json/serialize.hpp>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <vector>
 

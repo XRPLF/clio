@@ -21,15 +21,16 @@
 
 #include "data/BackendInterface.hpp"
 #include "etl/ETLHelpers.hpp"
-#include "etl/impl/CursorProvider.hpp"
+#include "etl/impl/BaseCursorProvider.hpp"
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/async/AnyOperation.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
+#include <boost/context/detail/config.hpp>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
 
 #include <algorithm>
 #include <atomic>
@@ -38,7 +39,6 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <optional>
 #include <ranges>
 #include <string>
 #include <vector>
@@ -86,7 +86,7 @@ public:
     stop() noexcept
     {
         for (auto& t : tasks_)
-            t.requestStop();
+            t.abort();
     }
 
     void
@@ -113,7 +113,7 @@ private:
     spawnWorker(uint32_t const seq, size_t cachePageFetchSize)
     {
         return ctx_.execute([this, seq, cachePageFetchSize](auto token) {
-            while (not token.isStopRequested()) {
+            while (not token.isStopRequested() and not cache_.get().isDisabled()) {
                 auto cursor = queue_.tryPop();
                 if (not cursor.has_value()) {
                     return;  // queue is empty
@@ -122,7 +122,7 @@ private:
                 auto [start, end] = cursor.value();
                 LOG(log_.debug()) << "Starting a cursor: " << ripple::strHex(start);
 
-                while (not token.isStopRequested()) {
+                while (not token.isStopRequested() and not cache_.get().isDisabled()) {
                     auto res = data::retryOnTimeout([this, seq, cachePageFetchSize, &start, token]() {
                         return backend_->fetchLedgerPage(start, seq, cachePageFetchSize, false, token);
                     });

@@ -24,8 +24,8 @@
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/hardened_hash.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/hardened_hash.h>
 
 #include <atomic>
 #include <condition_variable>
@@ -132,6 +132,12 @@ public:
      */
     void
     setDisabled();
+
+    /**
+     * @return true if the cache is disabled; false otherwise
+     */
+    bool
+    isDisabled() const;
 
     /**
      * @brief Sets the full flag to true.

@@ -36,10 +36,12 @@ Below are some useful docs to learn more about Clio.
 - [How to configure Clio and rippled](./docs/configure-clio.md)
 - [How to run Clio](./docs/run-clio.md)
 - [Logging](./docs/logging.md)
+- [Troubleshooting guide](./docs/trouble_shooting.md)
 
 **General reference material:**
 
 - [API reference](https://xrpl.org/http-websocket-apis.html)
+- [Developer docs](https://xrplf.github.io/clio)
 - [Clio documentation](https://xrpl.org/the-clio-server.html#the-clio-server)
 
 ## 🆘 Help

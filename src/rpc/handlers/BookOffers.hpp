@@ -32,10 +32,10 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/UintTypes.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
@@ -112,9 +112,13 @@ public:
              meta::Section{
                  {JS(currency),
                   validation::Required{},
-                  meta::WithCustomError{validation::CurrencyValidator, Status(RippledError::rpcDST_AMT_MALFORMED)}},
+                  meta::WithCustomError{
+                      validation::CustomValidators::CurrencyValidator, Status(RippledError::rpcDST_AMT_MALFORMED)
+                  }},
                  {JS(issuer),
-                  meta::WithCustomError{validation::IssuerValidator, Status(RippledError::rpcDST_ISR_MALFORMED)}}
+                  meta::WithCustomError{
+                      validation::CustomValidators::IssuerValidator, Status(RippledError::rpcDST_ISR_MALFORMED)
+                  }}
              }},
             {JS(taker_pays),
              validation::Required{},
@@ -122,21 +126,26 @@ public:
              meta::Section{
                  {JS(currency),
                   validation::Required{},
-                  meta::WithCustomError{validation::CurrencyValidator, Status(RippledError::rpcSRC_CUR_MALFORMED)}},
+                  meta::WithCustomError{
+                      validation::CustomValidators::CurrencyValidator, Status(RippledError::rpcSRC_CUR_MALFORMED)
+                  }},
                  {JS(issuer),
-                  meta::WithCustomError{validation::IssuerValidator, Status(RippledError::rpcSRC_ISR_MALFORMED)}}
+                  meta::WithCustomError{
+                      validation::CustomValidators::IssuerValidator, Status(RippledError::rpcSRC_ISR_MALFORMED)
+                  }}
              }},
             // return INVALID_PARAMS if account format is wrong for "taker"
             {JS(taker),
              meta::WithCustomError{
-                 validation::AccountValidator, Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'.")
+                 validation::CustomValidators::AccountValidator,
+                 Status(RippledError::rpcINVALID_PARAMS, "Invalid field 'taker'.")
              }},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
              modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
         };
 
         return rpcSpec;

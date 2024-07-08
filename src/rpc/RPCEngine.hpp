@@ -33,7 +33,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
 #include <fmt/core.h>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <chrono>
 #include <exception>
@@ -41,6 +41,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 // forward declarations
 namespace feed {
@@ -139,38 +140,37 @@ public:
         if (backend_->isTooBusy()) {
             LOG(log_.error()) << "Database is too busy. Rejecting request";
             notifyTooBusy();  // TODO: should we add ctx.method if we have it?
-            return Status{RippledError::rpcTOO_BUSY};
+            return Result{Status{RippledError::rpcTOO_BUSY}};
         }
 
         auto const method = handlerProvider_->getHandler(ctx.method);
         if (!method) {
             notifyUnknownCommand();
-            return Status{RippledError::rpcUNKNOWN_COMMAND};
+            return Result{Status{RippledError::rpcUNKNOWN_COMMAND}};
         }
 
         try {
             LOG(perfLog_.debug()) << ctx.tag() << " start executing rpc `" << ctx.method << '`';
 
             auto const context = Context{ctx.yield, ctx.session, ctx.isAdmin, ctx.clientIp, ctx.apiVersion};
-            auto const v = (*method).process(ctx.params, context);
+            auto v = (*method).process(ctx.params, context);
 
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
-            if (v)
-                return v->as_object();
+            if (not v)
+                notifyErrored(ctx.method);
 
-            notifyErrored(ctx.method);
-            return Status{v.error()};
+            return Result{std::move(v)};
         } catch (data::DatabaseTimeout const& t) {
             LOG(log_.error()) << "Database timeout";
             notifyTooBusy();
 
-            return Status{RippledError::rpcTOO_BUSY};
+            return Result{Status{RippledError::rpcTOO_BUSY}};
         } catch (std::exception const& ex) {
             LOG(log_.error()) << ctx.tag() << "Caught exception: " << ex.what();
             notifyInternalError();
 
-            return Status{RippledError::rpcINTERNAL};
+            return Result{Status{RippledError::rpcINTERNAL}};
         }
     }
 

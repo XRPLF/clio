@@ -83,14 +83,14 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(mpt_issuance_id), validation::Required{}, validation::Uint192HexStringValidator},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+            {JS(mpt_issuance_id), validation::Required{}, validation::CustomValidators::Uint192HexStringValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
              modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
-            {JS(marker), validation::Uint160HexStringValidator},
+            {JS(marker), validation::CustomValidators::Uint160HexStringValidator},
         };
 
         return rpcSpec;

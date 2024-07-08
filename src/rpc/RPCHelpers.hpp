@@ -40,26 +40,27 @@
 #include <boost/regex/v5/regex_fwd.hpp>
 #include <boost/regex/v5/regex_match.hpp>
 #include <fmt/core.h>
-#include <ripple/basics/XRPAmount.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/json/json_value.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/Keylet.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/PublicKey.h>
-#include <ripple/protocol/Rate.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STBase.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/SecretKey.h>
-#include <ripple/protocol/TxMeta.h>
-#include <ripple/protocol/UintTypes.h>
+#include <xrpl/basics/XRPAmount.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/json/json_value.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/Fees.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/Keylet.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/PublicKey.h>
+#include <xrpl/protocol/Rate.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STBase.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/SecretKey.h>
+#include <xrpl/protocol/Seed.h>
+#include <xrpl/protocol/TxMeta.h>
+#include <xrpl/protocol/UintTypes.h>
 
 #include <chrono>
 #include <cstddef>
@@ -279,7 +280,7 @@ generatePubLedgerMessage(
  * @return The ledger info or an error status
  */
 std::variant<Status, ripple::LedgerHeader>
-ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx);
+ledgerHeaderFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx);
 
 /**
  * @brief Get ledger info from hash or sequence
@@ -292,7 +293,7 @@ ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backe
  * @return The ledger info or an error status
  */
 std::variant<Status, ripple::LedgerHeader>
-getLedgerInfoFromHashOrSeq(
+getLedgerHeaderFromHashOrSeq(
     BackendInterface const& backend,
     boost::asio::yield_context yield,
     std::optional<std::string> ledgerHash,
@@ -386,7 +387,7 @@ getAccountsFromTransaction(boost::json::object const& transaction);
  * @return The blob
  */
 std::vector<unsigned char>
-ledgerInfoToBlob(ripple::LedgerHeader const& info, bool includeHash = false);
+ledgerHeaderToBlob(ripple::LedgerHeader const& info, bool includeHash = false);
 
 /**
  * @brief Whether global frozen is set
@@ -579,23 +580,6 @@ specifiesCurrentOrClosedLedger(boost::json::object const& request);
  */
 std::variant<ripple::uint256, Status>
 getNFTID(boost::json::object const& request);
-
-/**
- * @brief Check if the amendment is enabled
- *
- * @param backend The backend to use
- * @param yield The yield context
- * @param seq The ledger sequence
- * @param amendmentId The amendment ID
- * @return true if the amendment is enabled
- */
-bool
-isAmendmentEnabled(
-    std::shared_ptr<data::BackendInterface const> const& backend,
-    boost::asio::yield_context yield,
-    uint32_t seq,
-    ripple::uint256 amendmentId
-);
 
 /**
  * @brief Encode CTID as string

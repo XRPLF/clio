@@ -22,7 +22,7 @@
 #include "data/Types.hpp"
 #include "util/Assert.hpp"
 
-#include <ripple/basics/base_uint.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -45,6 +45,7 @@ LedgerCache::waitUntilCacheContainsSeq(uint32_t seq)
 {
     if (disabled_)
         return;
+
     std::unique_lock lock(mtx_);
     cv_.wait(lock, [this, seq] { return latestSeq_ >= seq; });
     return;
@@ -89,8 +90,9 @@ LedgerCache::update(std::vector<LedgerObject> const& objs, uint32_t seq, bool is
 std::optional<LedgerObject>
 LedgerCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 {
-    if (!full_)
+    if (disabled_ or not full_)
         return {};
+
     std::shared_lock const lck{mtx_};
     ++successorReqCounter_.get();
     if (seq != latestSeq_)
@@ -105,8 +107,9 @@ LedgerCache::getSuccessor(ripple::uint256 const& key, uint32_t seq) const
 std::optional<LedgerObject>
 LedgerCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 {
-    if (!full_)
+    if (disabled_ or not full_)
         return {};
+
     std::shared_lock const lck{mtx_};
     if (seq != latestSeq_)
         return {};
@@ -120,6 +123,9 @@ LedgerCache::getPredecessor(ripple::uint256 const& key, uint32_t seq) const
 std::optional<Blob>
 LedgerCache::get(ripple::uint256 const& key, uint32_t seq) const
 {
+    if (disabled_)
+        return {};
+
     std::shared_lock const lck{mtx_};
     if (seq > latestSeq_)
         return {};
@@ -137,6 +143,12 @@ void
 LedgerCache::setDisabled()
 {
     disabled_ = true;
+}
+
+bool
+LedgerCache::isDisabled() const
+{
+    return disabled_;
 }
 
 void

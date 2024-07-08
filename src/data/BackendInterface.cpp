@@ -24,13 +24,13 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/Serializer.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/Fees.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/Serializer.h>
 
 #include <chrono>
 #include <cstddef>
@@ -90,10 +90,9 @@ BackendInterface::fetchLedgerObject(
     auto obj = cache_.get(key, sequence);
     if (obj) {
         LOG(gLog.trace()) << "Cache hit - " << ripple::strHex(key);
-        return *obj;
+        return obj;
     }
 
-    LOG(gLog.trace()) << "Cache miss - " << ripple::strHex(key);
     auto dbObj = doFetchLedgerObject(key, sequence, yield);
     if (!dbObj) {
         LOG(gLog.trace()) << "Missed cache and missed in db";
@@ -297,16 +296,23 @@ BackendInterface::fetchLedgerPage(
     std::uint32_t const limit,
     bool outOfOrder,
     boost::asio::yield_context yield
-) const
+)
 {
     LedgerPage page;
 
     std::vector<ripple::uint256> keys;
     bool reachedEnd = false;
+
     while (keys.size() < limit && !reachedEnd) {
-        ripple::uint256 const& curCursor = !keys.empty() ? keys.back() : (cursor ? *cursor : firstKey);
+        ripple::uint256 const& curCursor = [&]() {
+            if (!keys.empty())
+                return keys.back();
+            return (cursor ? *cursor : firstKey);
+        }();
+
         std::uint32_t const seq = outOfOrder ? range->maxSequence : ledgerSequence;
         auto succ = fetchSuccessorKey(curCursor, seq, yield);
+
         if (!succ) {
             reachedEnd = true;
         } else {
@@ -326,6 +332,9 @@ BackendInterface::fetchLedgerPage(
                 msg << " - " << ripple::strHex(keys[j]);
             }
             LOG(gLog.error()) << msg.str();
+
+            if (corruptionDetector_.has_value())
+                corruptionDetector_->onCorruptionDetected();
         }
     }
     if (!keys.empty() && !reachedEnd)
@@ -350,14 +359,42 @@ BackendInterface::fetchFees(std::uint32_t const seq, boost::asio::yield_context 
     ripple::SerialIter it(bytes->data(), bytes->size());
     ripple::SLE const sle{it, key};
 
-    if (sle.getFieldIndex(ripple::sfBaseFee) != -1)
-        fees.base = sle.getFieldU64(ripple::sfBaseFee);
+    // XRPFees amendment introduced new fields for fees calculations.
+    // New fields are set and the old fields are removed via `set_fees` tx.
+    // Fallback to old fields if `set_fees` was not yet used to update the fields on this tx.
+    auto hasNewFields = false;
+    {
+        auto const baseFeeXRP = sle.at(~ripple::sfBaseFeeDrops);
+        auto const reserveBaseXRP = sle.at(~ripple::sfReserveBaseDrops);
+        auto const reserveIncrementXRP = sle.at(~ripple::sfReserveIncrementDrops);
 
-    if (sle.getFieldIndex(ripple::sfReserveBase) != -1)
-        fees.reserve = sle.getFieldU32(ripple::sfReserveBase);
+        if (baseFeeXRP)
+            fees.base = baseFeeXRP->xrp();
 
-    if (sle.getFieldIndex(ripple::sfReserveIncrement) != -1)
-        fees.increment = sle.getFieldU32(ripple::sfReserveIncrement);
+        if (reserveBaseXRP)
+            fees.reserve = reserveBaseXRP->xrp();
+
+        if (reserveIncrementXRP)
+            fees.increment = reserveIncrementXRP->xrp();
+
+        hasNewFields = baseFeeXRP || reserveBaseXRP || reserveIncrementXRP;
+    }
+
+    if (not hasNewFields) {
+        // Fallback to old fields
+        auto const baseFee = sle.at(~ripple::sfBaseFee);
+        auto const reserveBase = sle.at(~ripple::sfReserveBase);
+        auto const reserveIncrement = sle.at(~ripple::sfReserveIncrement);
+
+        if (baseFee)
+            fees.base = baseFee.value();
+
+        if (reserveBase)
+            fees.reserve = reserveBase.value();
+
+        if (reserveIncrement)
+            fees.increment = reserveIncrement.value();
+    }
 
     return fees;
 }

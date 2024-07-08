@@ -84,6 +84,18 @@ struct AnyCounter : MetricBase, impl::AnyCounterBase<NumberType> {
     }
 
     /**
+     * @brief Set the value of the counter
+     *
+     * @param value The value to set the counter to
+     */
+    void
+    set(ValueType value)
+    {
+        ASSERT(value >= this->value(), "Cannot decrease a counter {}", this->name());
+        this->pimpl_->set(value);
+    }
+
+    /**
      * @brief Reset the counter to zero
      */
     void

@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/jss.h>
 
 /** @brief Helper macro for borrowing from ripple::jss static (J)son (S)trings. */
 #define JS(x) ripple::jss::x.c_str()

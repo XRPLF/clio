@@ -1,5 +1,11 @@
+CompileFlags:
+  Add: [-D__cpp_concepts=202002]
+
 Diagnostics:
   UnusedIncludes: Strict
   MissingIncludes: Strict
   Includes:
-    IgnoreHeader: ".*/(detail|impl)/.*"
+    IgnoreHeader:
+      - ".*/(detail|impl)/.*"
+      - ".*expected.*"
+      - ".*ranges_lower_bound.h"

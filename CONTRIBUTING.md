@@ -6,7 +6,7 @@ To contribute, please:
 2. Create a new branch on which to commit/push your changes.
 3. Write and test your code.
 4. Ensure that your code compiles with the provided build engine and update the provided build engine as part of your PR where needed and where appropriate.
-5. Where applicable, write test cases for your code and include those in `unittests`.
+5. Where applicable, write test cases for your code and include those in the relevant subfolder under `tests`.
 6. Ensure your code passes automated checks (e.g. clang-format)
 7. Squash your commits (i.e. rebase) into as few commits as is reasonable to describe your changes at a high level (typically a single commit for a small change). See below for more details.
 8. Open a PR to the main repository onto the _develop_ branch, and follow the provided template.
@@ -21,7 +21,7 @@ git config --local core.hooksPath .githooks
 ```
 
 ## Git hooks dependencies
-The pre-commit hook requires `clang-format >= 17.0.0` and `cmake-format` to be installed on your machine.
+The pre-commit hook requires `clang-format >= 18.0.0` and `cmake-format` to be installed on your machine.
 `clang-format` can be installed using `brew` on macOS and default package manager on Linux.
 `cmake-format` can be installed using `pip`.
 The hook will also attempt to automatically use `doxygen` to verify that everything public in the codebase is covered by doc comments. If `doxygen` is not installed, the hook will raise a warning suggesting to install `doxygen` for future commits.
@@ -72,6 +72,9 @@ git push --force
 Clio uses `ccache` to speed up compilation. If you want to use it, please make sure it is installed on your machine.
 CMake will automatically detect it and use it if it is available.
 
+## Opening a pull request
+When a pull request is open CI will perform checks on the new code.
+Title of the pull request and squashed commit should follow [conventional commits specification](https://www.conventionalcommits.org/en/v1.0.0/).
 
 ## Fixing issues found during code review
 While your code is in review, it's possible that some changes will be requested by reviewer(s).
@@ -102,7 +105,7 @@ The button for that is near the bottom of the PR's page on GitHub.
 This is a non-exhaustive list of recommended style guidelines. These are not always strictly enforced and serve as a way to keep the codebase coherent.
 
 ## Formatting
-Code must conform to `clang-format` version 17, unless the result would be unreasonably difficult to read or maintain.
+Code must conform to `clang-format` version 18, unless the result would be unreasonably difficult to read or maintain.
 In most cases the pre-commit hook will take care of formatting and will fix any issues automatically.
 To manually format your code, use `clang-format -i <your changed files>` for C++ files and `cmake-format -i <your changed files>` for CMake files.
 

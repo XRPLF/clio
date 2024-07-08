@@ -20,7 +20,6 @@
 #pragma once
 
 #include "rpc/common/Concepts.hpp"
-#include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 
 #include <boost/json/value.hpp>
@@ -39,27 +38,29 @@ struct DefaultProcessor final {
         using boost::json::value_to;
         if constexpr (SomeHandlerWithInput<HandlerType>) {
             // first we run validation against specified API version
+
             auto const spec = handler.spec(ctx.apiVersion);
+            auto warnings = spec.check(value);
             auto input = value;  // copy here, spec require mutable data
 
             if (auto const ret = spec.process(input); not ret)
-                return Error{ret.error()};  // forward Status
+                return ReturnType{Error{ret.error()}, std::move(warnings)};  // forward Status
 
             auto const inData = value_to<typename HandlerType::Input>(input);
-            auto const ret = handler.process(inData, ctx);
+            auto ret = handler.process(inData, ctx);
 
             // real handler is given expected Input, not json
             if (!ret) {
-                return Error{ret.error()};  // forward Status
+                return ReturnType{Error{std::move(ret).error()}, std::move(warnings)};  // forward Status
             }
-            return value_from(ret.value());
+            return ReturnType{value_from(std::move(ret).value()), std::move(warnings)};
         } else if constexpr (SomeHandlerWithoutInput<HandlerType>) {
             // no input to pass, ignore the value
             auto const ret = handler.process(ctx);
             if (not ret) {
-                return Error{ret.error()};  // forward Status
+                return ReturnType{Error{ret.error()}};  // forward Status
             }
-            return value_from(ret.value());
+            return ReturnType{value_from(ret.value())};
         } else {
             // when concept SomeHandlerWithInput and SomeHandlerWithoutInput not cover all Handler case
             static_assert(unsupported_handler_v<HandlerType>);

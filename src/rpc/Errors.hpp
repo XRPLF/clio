@@ -21,7 +21,7 @@
 #pragma once
 
 #include <boost/json/object.hpp>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <exception>
 #include <optional>
@@ -42,6 +42,7 @@ enum class ClioError {
     rpcINVALID_HOT_WALLET = 5004,
     rpcUNKNOWN_OPTION = 5005,
     rpcFIELD_NOT_FOUND_TRANSACTION = 5006,
+    rpcMALFORMED_ORACLE_DOCUMENT_ID = 5007,
 
     // special system errors start with 6000
     rpcINVALID_API_VERSION = 6000,
@@ -83,7 +84,7 @@ struct Status {
      *
      * @param code The error code
      */
-    /* implicit */ Status(CombinedError code) : code(code){};
+    /* implicit */ Status(CombinedError code) : code(code) {};
 
     /**
      * @brief Construct a new Status object
@@ -91,7 +92,7 @@ struct Status {
      * @param code The error code
      * @param extraInfo The extra info
      */
-    Status(CombinedError code, boost::json::object&& extraInfo) : code(code), extraInfo(std::move(extraInfo)){};
+    Status(CombinedError code, boost::json::object&& extraInfo) : code(code), extraInfo(std::move(extraInfo)) {};
 
     /**
      * @brief Construct a new Status object with a custom message
@@ -126,6 +127,9 @@ struct Status {
         : code(code), error(std::move(error)), message(std::move(message))
     {
     }
+
+    bool
+    operator==(Status const& other) const = default;
 
     /**
      * @brief Check if the status is not OK
@@ -172,7 +176,13 @@ struct Status {
 };
 
 /** @brief Warning codes that can be returned by clio. */
-enum WarningCode { warnUNKNOWN = -1, warnRPC_CLIO = 2001, warnRPC_OUTDATED = 2002, warnRPC_RATE_LIMIT = 2003 };
+enum WarningCode {
+    warnUNKNOWN = -1,
+    warnRPC_CLIO = 2001,
+    warnRPC_OUTDATED = 2002,
+    warnRPC_RATE_LIMIT = 2003,
+    warnRPC_DEPRECATED = 2004
+};
 
 /** @brief Holds information about a clio warning. */
 struct WarningInfo {

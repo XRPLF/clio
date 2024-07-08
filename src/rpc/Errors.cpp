@@ -22,8 +22,8 @@
 #include "rpc/JS.hpp"
 
 #include <boost/json/object.hpp>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -59,6 +59,9 @@ getWarningInfo(WarningCode code)
          "'ledger_index':'current' in your request"},
         {warnRPC_OUTDATED, "This server may be out of date"},
         {warnRPC_RATE_LIMIT, "You are about to be rate limited"},
+        {warnRPC_DEPRECATED,
+         "Some fields from your request are deprecated. Please check the documentation at "
+         "https://xrpl.org/docs/references/http-websocket-apis/ and update your request."}
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };
@@ -73,10 +76,8 @@ makeWarning(WarningCode code)
 {
     auto json = boost::json::object{};
     auto const& info = getWarningInfo(code);
-
     json["id"] = code;
-    json["message"] = static_cast<string>(info.message);
-
+    json["message"] = info.message;
     return json;
 }
 
@@ -91,6 +92,7 @@ getErrorInfo(ClioError code)
         {ClioError::rpcINVALID_HOT_WALLET, "invalidHotWallet", "Invalid hot wallet."},
         {ClioError::rpcUNKNOWN_OPTION, "unknownOption", "Unknown option."},
         {ClioError::rpcFIELD_NOT_FOUND_TRANSACTION, "fieldNotFoundTransaction", "Missing field."},
+        {ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID, "malformedDocumentID", "Malformed oracle_document_id."},
         // special system errors
         {ClioError::rpcINVALID_API_VERSION, JS(invalid_API_version), "Invalid API version."},
         {ClioError::rpcCOMMAND_IS_MISSING, JS(missingCommand), "Method is not specified or is not a string."},
@@ -127,9 +129,9 @@ makeError(ClioError err, std::optional<std::string_view> customError, std::optio
     boost::json::object json;
     auto const& info = getErrorInfo(err);
 
-    json["error"] = customError.value_or(info.error).data();
+    json["error"] = customError.value_or(info.error);
     json["error_code"] = static_cast<uint32_t>(info.code);
-    json["error_message"] = customMessage.value_or(info.message).data();
+    json["error_message"] = customMessage.value_or(info.message);
     json["status"] = "error";
     json["type"] = "response";
 

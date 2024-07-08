@@ -25,7 +25,7 @@
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
 
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <functional>
 #include <memory>
@@ -55,16 +55,21 @@ public:
     bool
     shouldForward(web::Context const& ctx) const
     {
+        auto const& request = ctx.params;
+
         if (ctx.method == "subscribe" || ctx.method == "unsubscribe")
             return false;
+
+        // TODO https://github.com/XRPLF/clio/issues/1131 - remove once clio-native feature is
+        // implemented fully. For now we disallow forwarding of the admin api, only user api is allowed.
+        if (ctx.method == "feature" and not request.contains("vetoed"))
+            return true;
 
         if (handlerProvider_->isClioOnly(ctx.method))
             return false;
 
         if (isProxied(ctx.method))
             return true;
-
-        auto const& request = ctx.params;
 
         if (specifiesCurrentOrClosedLedger(request))
             return true;
@@ -75,11 +80,8 @@ public:
         };
 
         auto const checkLedgerForward = [&]() {
-            return ctx.method == "ledger" and
-                ((request.contains("queue") and request.at("queue").is_bool() and request.at("queue").as_bool()) or
-                 (request.contains("full") and request.at("full").is_bool() and request.at("full").as_bool()) or
-                 (request.contains("accounts") and request.at("accounts").is_bool() and request.at("accounts").as_bool()
-                 ));
+            return ctx.method == "ledger" and request.contains("queue") and request.at("queue").is_bool() and
+                request.at("queue").as_bool();
         };
 
         return static_cast<bool>(checkAccountInfoForward() or checkLedgerForward());
@@ -91,14 +93,14 @@ public:
         auto toForward = ctx.params;
         toForward["command"] = ctx.method;
 
-        auto const res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.yield);
+        auto res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.isAdmin, ctx.yield);
         if (not res) {
             notifyFailedToForward(ctx.method);
-            return Status{RippledError::rpcFAILED_TO_FORWARD};
+            return Result{Status{RippledError::rpcFAILED_TO_FORWARD}};
         }
 
         notifyForwarded(ctx.method);
-        return *res;
+        return Result{std::move(res).value()};
     }
 
     bool

@@ -20,7 +20,6 @@
 #pragma once
 
 #include "rpc/common/APIVersion.hpp"
-#include "util/Expected.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
@@ -28,6 +27,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <expected>
 #include <string>
 
 namespace rpc::impl {
@@ -74,22 +74,22 @@ public:
 
     ProductionAPIVersionParser(util::Config const& config);
 
-    util::Expected<uint32_t, std::string>
+    std::expected<uint32_t, std::string>
     parse(boost::json::object const& request) const override;
 
-    inline uint32_t
+    uint32_t
     getDefaultVersion() const
     {
         return defaultVersion_;
     }
 
-    inline uint32_t
+    uint32_t
     getMinVersion() const
     {
         return minVersion_;
     }
 
-    inline uint32_t
+    uint32_t
     getMaxVersion() const
     {
         return maxVersion_;

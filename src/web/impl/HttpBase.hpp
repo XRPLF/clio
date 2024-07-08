@@ -48,7 +48,7 @@
 #include <boost/json/array.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <chrono>
 #include <cstddef>
@@ -119,7 +119,7 @@ protected:
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
 
-    inline void
+    void
     httpFail(boost::beast::error_code ec, char const* what)
     {
         // ssl::error::stream_truncated, also known as an SSL "short read",

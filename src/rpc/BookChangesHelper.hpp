@@ -27,18 +27,18 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/basics/IOUAmount.h>
-#include <ripple/basics/XRPAmount.h>
-#include <ripple/beast/utility/Zero.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/TxFormats.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/IOUAmount.h>
+#include <xrpl/basics/XRPAmount.h>
+#include <xrpl/beast/utility/Zero.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/TxFormats.h>
+#include <xrpl/protocol/jss.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -85,8 +85,8 @@ public:
 
 private:
     class HandlerImpl final {
-        std::map<std::string, BookChange> tally_ = {};
-        std::optional<uint32_t> offerCancel_ = {};
+        std::map<std::string, BookChange> tally_;
+        std::optional<uint32_t> offerCancel_;
 
     public:
         [[nodiscard]] std::vector<BookChange>
@@ -154,7 +154,11 @@ private:
             auto const g = to_string(deltaGets.issue());
             auto const p = to_string(deltaPays.issue());
 
-            auto const noswap = isXRP(deltaGets) ? true : (isXRP(deltaPays) ? false : (g < p));
+            auto const noswap = [&]() {
+                if (isXRP(deltaGets))
+                    return true;
+                return isXRP(deltaPays) ? false : (g < p);
+            }();
 
             auto first = noswap ? deltaGets : deltaPays;
             auto second = noswap ? deltaPays : deltaGets;

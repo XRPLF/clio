@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
 #include "util/async/context/impl/Timer.hpp"
@@ -28,6 +27,7 @@
 #include <boost/asio/strand.hpp>
 #include <boost/asio/thread_pool.hpp>
 
+#include <expected>
 #include <optional>
 
 namespace util::async::impl {
@@ -42,7 +42,7 @@ inline constexpr struct AssociatedExecutorExtractor {
 } extractAssociatedExecutor;
 
 template <typename CtxType>
-[[nodiscard]] inline constexpr auto
+[[nodiscard]] constexpr auto
 getTimeoutHandleIfNeeded(CtxType& ctx, SomeOptStdDuration auto timeout, SomeStopSource auto& stopSource)
 {
     using TimerType = typename CtxType::Timer;
@@ -57,17 +57,17 @@ getTimeoutHandleIfNeeded(CtxType& ctx, SomeOptStdDuration auto timeout, SomeStop
 }
 
 template <SomeStopSource StopSourceType>
-[[nodiscard]] inline constexpr auto
+[[nodiscard]] constexpr auto
 outcomeForHandler(auto&& fn)
 {
     if constexpr (SomeHandlerWith<decltype(fn), typename StopSourceType::Token>) {
         using FnRetType = decltype(fn(std::declval<typename StopSourceType::Token>()));
-        using RetType = util::Expected<FnRetType, ExecutionError>;
+        using RetType = std::expected<FnRetType, ExecutionError>;
 
         return StoppableOutcome<RetType, StopSourceType>();
     } else {
         using FnRetType = decltype(fn());
-        using RetType = util::Expected<FnRetType, ExecutionError>;
+        using RetType = std::expected<FnRetType, ExecutionError>;
 
         return Outcome<RetType>();
     }

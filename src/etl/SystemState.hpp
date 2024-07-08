@@ -19,6 +19,10 @@
 
 #pragma once
 
+#include "util/prometheus/Bool.hpp"
+#include "util/prometheus/Label.hpp"
+#include "util/prometheus/Prometheus.hpp"
+
 #include <atomic>
 
 namespace etl {
@@ -33,9 +37,19 @@ struct SystemState {
      * In strict read-only mode, the process will never attempt to become the ETL writer, and will only publish ledgers
      * as they are written to the database.
      */
-    bool isReadOnly = false;
+    util::prometheus::Bool isReadOnly = PrometheusService::boolMetric(
+        "read_only",
+        util::prometheus::Labels{},
+        "Whether the process is in strict read-only mode"
+    );
 
-    std::atomic_bool isWriting = false;     /**< @brief Whether the process is writing to the database. */
+    /** @brief Whether the process is writing to the database. */
+    util::prometheus::Bool isWriting = PrometheusService::boolMetric(
+        "etl_writing",
+        util::prometheus::Labels{},
+        "Whether the process is writing to the database"
+    );
+
     std::atomic_bool isStopping = false;    /**< @brief Whether the software is stopping. */
     std::atomic_bool writeConflict = false; /**< @brief Whether a write conflict was detected. */
 
@@ -46,7 +60,23 @@ struct SystemState {
      * arrived from rippled and therefore can't extract the ledger diff. When this happens, Clio can't proceed with ETL
      * and should log this error and only handle RPC requests.
      */
-    std::atomic_bool isAmendmentBlocked = false;
+    util::prometheus::Bool isAmendmentBlocked = PrometheusService::boolMetric(
+        "etl_amendment_blocked",
+        util::prometheus::Labels{},
+        "Whether clio detected an amendment block"
+    );
+
+    /**
+     * @brief Whether clio detected a corruption that needs manual attention.
+     *
+     * When corruption is detected, Clio should disable cache and stop the cache loading process in order to prevent
+     * further corruption.
+     */
+    util::prometheus::Bool isCorruptionDetected = PrometheusService::boolMetric(
+        "etl_corruption_detected",
+        util::prometheus::Labels{},
+        "Whether clio detected a corruption that needs manual attention"
+    );
 };
 
 }  // namespace etl

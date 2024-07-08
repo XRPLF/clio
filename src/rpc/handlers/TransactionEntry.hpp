@@ -30,8 +30,8 @@
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
@@ -95,9 +95,9 @@ public:
         static auto const rpcSpec = RpcSpec{
             {JS(tx_hash),
              meta::WithCustomError{validation::Required{}, Status(ClioError::rpcFIELD_NOT_FOUND_TRANSACTION)},
-             validation::Uint256HexStringValidator},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
-            {JS(ledger_index), validation::LedgerIndexValidator},
+             validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
         };
 
         return rpcSpec;

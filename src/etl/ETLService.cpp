@@ -20,14 +20,18 @@
 #include "etl/ETLService.hpp"
 
 #include "data/BackendInterface.hpp"
+#include "data/LedgerCache.hpp"
+#include "etl/CorruptionDetector.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/Constants.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
-#include <ripple/beast/core/CurrentThreadName.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/beast/core/CurrentThreadName.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>
 #include <cstddef>
@@ -130,7 +134,8 @@ ETLService::monitor()
             }
         } catch (std::runtime_error const& e) {
             LOG(log_.fatal()) << "Failed to load initial ledger: " << e.what();
-            return amendmentBlockHandler_.onAmendmentBlock();
+            amendmentBlockHandler_.onAmendmentBlock();
+            return;
         }
 
         if (ledger) {
@@ -150,8 +155,7 @@ ETLService::monitor()
     ASSERT(rng.has_value(), "Ledger range can't be null");
     uint32_t nextSequence = rng->maxSequence + 1;
 
-    LOG(log_.debug()) << "Database is populated. "
-                      << "Starting monitor loop. sequence = " << nextSequence;
+    LOG(log_.debug()) << "Database is populated. Starting monitor loop. sequence = " << nextSequence;
 
     while (not isStopping()) {
         nextSequence = publishNextSequence(nextSequence);
@@ -204,7 +208,7 @@ ETLService::monitorReadOnly()
 
         if (!rng) {
             if (auto net = networkValidatedLedgers_->getMostRecent()) {
-                return *net;
+                return net;
             }
             return std::nullopt;
         }
@@ -261,9 +265,9 @@ ETLService::ETLService(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<SubscriptionManagerType> subscriptions,
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
     std::shared_ptr<LoadBalancerType> balancer,
-    std::shared_ptr<NetworkValidatedLedgersType> ledgers
+    std::shared_ptr<NetworkValidatedLedgersInterface> ledgers
 )
     : backend_(backend)
     , loadBalancer_(balancer)
@@ -276,8 +280,11 @@ ETLService::ETLService(
 {
     startSequence_ = config.maybeValue<uint32_t>("start_sequence");
     finishSequence_ = config.maybeValue<uint32_t>("finish_sequence");
-    state_.isReadOnly = config.valueOr("read_only", state_.isReadOnly);
+    state_.isReadOnly = config.valueOr("read_only", static_cast<bool>(state_.isReadOnly));
     extractorThreads_ = config.valueOr<uint32_t>("extractor_threads", extractorThreads_);
     txnThreshold_ = config.valueOr<size_t>("txn_threshold", txnThreshold_);
+
+    // This should probably be done in the backend factory but we don't have state available until here
+    backend_->setCorruptionDetector(CorruptionDetector<data::LedgerCache>{state_, backend->cache()});
 }
 }  // namespace etl

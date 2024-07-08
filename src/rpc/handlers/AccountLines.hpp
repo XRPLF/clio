@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/Checkers.hpp"
 #include "rpc/common/MetaProcessors.hpp"
 #include "rpc/common/Modifiers.hpp"
 #include "rpc/common/Types.hpp"
@@ -29,10 +30,10 @@
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
@@ -126,16 +127,23 @@ public:
         static auto const rpcSpec = RpcSpec{
             {JS(account),
              validation::Required{},
-             meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
-            {JS(peer), meta::WithCustomError{validation::AccountValidator, Status(RippledError::rpcACT_MALFORMED)}},
+             meta::WithCustomError{
+                 validation::CustomValidators::AccountValidator, Status(RippledError::rpcACT_MALFORMED)
+             }},
+            {JS(peer),
+             meta::WithCustomError{
+                 validation::CustomValidators::AccountValidator, Status(RippledError::rpcACT_MALFORMED)
+             }},
             {JS(ignore_default), validation::Type<bool>{}},
-            {JS(ledger_hash), validation::Uint256HexStringValidator},
+            {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
              modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
-            {JS(ledger_index), validation::LedgerIndexValidator},
-            {JS(marker), validation::AccountMarkerValidator},
+            {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
+            {JS(marker), validation::CustomValidators::AccountMarkerValidator},
+            {JS(ledger), check::Deprecated{}},
+            {"peer_index", check::Deprecated{}},
         };
 
         return rpcSpec;

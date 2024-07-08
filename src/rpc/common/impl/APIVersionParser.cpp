@@ -20,13 +20,13 @@
 #include "rpc/common/impl/APIVersionParser.hpp"
 
 #include "rpc/common/APIVersion.hpp"
-#include "util/Expected.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/json/object.hpp>
 #include <fmt/core.h>
 
 #include <cstdint>
+#include <expected>
 #include <string>
 
 using namespace std;
@@ -42,10 +42,10 @@ ProductionAPIVersionParser::ProductionAPIVersionParser(util::Config const& confi
 {
 }
 
-util::Expected<uint32_t, std::string>
+std::expected<uint32_t, std::string>
 ProductionAPIVersionParser::parse(boost::json::object const& request) const
 {
-    using Error = util::Unexpected<std::string>;
+    using Error = std::unexpected<std::string>;
 
     if (request.contains("api_version")) {
         if (!request.at("api_version").is_int64())

@@ -41,40 +41,40 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/lexical_cast/bad_lexical_cast.hpp>
 #include <fmt/core.h>
-#include <ripple/basics/Slice.h>
-#include <ripple/basics/StringUtilities.h>
-#include <ripple/basics/XRPAmount.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/chrono.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/beast/utility/Zero.h>
-#include <ripple/json/json_value.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/Keylet.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/NFTSyntheticSerializer.h>
-#include <ripple/protocol/PublicKey.h>
-#include <ripple/protocol/Rate.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STAmount.h>
-#include <ripple/protocol/STBase.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/STObject.h>
-#include <ripple/protocol/STTx.h>
-#include <ripple/protocol/Seed.h>
-#include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/TER.h>
-#include <ripple/protocol/TxFormats.h>
-#include <ripple/protocol/TxMeta.h>
-#include <ripple/protocol/UintTypes.h>
-#include <ripple/protocol/jss.h>
-#include <ripple/protocol/nftPageMask.h>
-#include <ripple/protocol/tokens.h>
+#include <xrpl/basics/Slice.h>
+#include <xrpl/basics/StringUtilities.h>
+#include <xrpl/basics/XRPAmount.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/chrono.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/beast/utility/Zero.h>
+#include <xrpl/json/json_value.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/Keylet.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/NFTSyntheticSerializer.h>
+#include <xrpl/protocol/PublicKey.h>
+#include <xrpl/protocol/Rate.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STAmount.h>
+#include <xrpl/protocol/STBase.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/Seed.h>
+#include <xrpl/protocol/Serializer.h>
+#include <xrpl/protocol/TER.h>
+#include <xrpl/protocol/TxFormats.h>
+#include <xrpl/protocol/TxMeta.h>
+#include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/jss.h>
+#include <xrpl/protocol/nftPageMask.h>
+#include <xrpl/protocol/tokens.h>
 
 #include <algorithm>
 #include <array>
@@ -196,10 +196,7 @@ accountFromStringStrict(std::string const& account)
         result = ripple::parseBase58<ripple::AccountID>(account);
     }
 
-    if (result) {
-        return result.value();
-    }
-    return {};
+    return result;
 }
 
 std::pair<std::shared_ptr<ripple::STTx const>, std::shared_ptr<ripple::STObject const>>
@@ -429,7 +426,7 @@ toJson(ripple::LedgerHeader const& lgrInfo, bool const binary, std::uint32_t con
 {
     boost::json::object header;
     if (binary) {
-        header[JS(ledger_data)] = ripple::strHex(ledgerInfoToBlob(lgrInfo));
+        header[JS(ledger_data)] = ripple::strHex(ledgerHeaderToBlob(lgrInfo));
     } else {
         header[JS(account_hash)] = ripple::strHex(lgrInfo.accountHash);
         header[JS(close_flags)] = lgrInfo.closeFlags;
@@ -467,7 +464,7 @@ parseStringAsUInt(std::string const& value)
 }
 
 std::variant<Status, ripple::LedgerHeader>
-ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx)
+ledgerHeaderFromRequest(std::shared_ptr<data::BackendInterface const> const& backend, web::Context const& ctx)
 {
     auto hashValue = ctx.params.contains("ledger_hash") ? ctx.params.at("ledger_hash") : nullptr;
 
@@ -515,9 +512,9 @@ ledgerInfoFromRequest(std::shared_ptr<data::BackendInterface const> const& backe
     return *lgrInfo;
 }
 
-// extract ledgerInfoFromRequest's parameter from context
+// extract ledgerHeaderFromRequest's parameter from context
 std::variant<Status, ripple::LedgerHeader>
-getLedgerInfoFromHashOrSeq(
+getLedgerHeaderFromHashOrSeq(
     BackendInterface const& backend,
     boost::asio::yield_context yield,
     std::optional<std::string> ledgerHash,
@@ -550,7 +547,7 @@ getLedgerInfoFromHashOrSeq(
 }
 
 std::vector<unsigned char>
-ledgerInfoToBlob(ripple::LedgerHeader const& info, bool includeHash)
+ledgerHeaderToBlob(ripple::LedgerHeader const& info, bool includeHash)
 {
     ripple::Serializer s;
     s.add32(info.seq);
@@ -1357,25 +1354,6 @@ getNFTID(boost::json::object const& request)
         return Status{RippledError::rpcINVALID_PARAMS, "malformedTokenID"};
 
     return tokenid;
-}
-
-bool
-isAmendmentEnabled(
-    std::shared_ptr<data::BackendInterface const> const& backend,
-    boost::asio::yield_context yield,
-    uint32_t seq,
-    ripple::uint256 amendmentId
-)
-{
-    // the amendments should always be present in ledger
-    auto const& amendments = backend->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
-
-    ripple::SLE const amendmentsSLE{
-        ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key
-    };
-
-    auto const listAmendments = amendmentsSLE.getFieldV256(ripple::sfAmendments);
-    return std::find(listAmendments.begin(), listAmendments.end(), amendmentId) != listAmendments.end();
 }
 
 boost::json::object

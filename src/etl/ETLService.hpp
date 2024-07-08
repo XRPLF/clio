@@ -33,7 +33,7 @@
 #include "etl/impl/LedgerLoader.hpp"
 #include "etl/impl/LedgerPublisher.hpp"
 #include "etl/impl/Transformer.hpp"
-#include "feed/SubscriptionManager.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -41,7 +41,7 @@
 #include <boost/json/object.hpp>
 #include <grpcpp/grpcpp.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -77,16 +77,14 @@ namespace etl {
  */
 class ETLService {
     // TODO: make these template parameters in ETLService
-    using SubscriptionManagerType = feed::SubscriptionManager;
     using LoadBalancerType = LoadBalancer;
-    using NetworkValidatedLedgersType = NetworkValidatedLedgers;
     using DataPipeType = etl::impl::ExtractionDataPipe<org::xrpl::rpc::v1::GetLedgerResponse>;
     using CacheType = data::LedgerCache;
     using CacheLoaderType = etl::CacheLoader<CacheType>;
     using LedgerFetcherType = etl::impl::LedgerFetcher<LoadBalancerType>;
-    using ExtractorType = etl::impl::Extractor<DataPipeType, NetworkValidatedLedgersType, LedgerFetcherType>;
+    using ExtractorType = etl::impl::Extractor<DataPipeType, LedgerFetcherType>;
     using LedgerLoaderType = etl::impl::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
-    using LedgerPublisherType = etl::impl::LedgerPublisher<SubscriptionManagerType, CacheType>;
+    using LedgerPublisherType = etl::impl::LedgerPublisher<CacheType>;
     using AmendmentBlockHandlerType = etl::impl::AmendmentBlockHandler<>;
     using TransformerType =
         etl::impl::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;
@@ -95,7 +93,7 @@ class ETLService {
 
     std::shared_ptr<BackendInterface> backend_;
     std::shared_ptr<LoadBalancerType> loadBalancer_;
-    std::shared_ptr<NetworkValidatedLedgersType> networkValidatedLedgers_;
+    std::shared_ptr<NetworkValidatedLedgersInterface> networkValidatedLedgers_;
 
     std::uint32_t extractorThreads_ = 1;
     std::thread worker_;
@@ -128,9 +126,9 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManagerType> subscriptions,
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
-        std::shared_ptr<NetworkValidatedLedgersType> ledgers
+        std::shared_ptr<NetworkValidatedLedgersInterface> ledgers
     );
 
     /**
@@ -151,9 +149,9 @@ public:
         util::Config const& config,
         boost::asio::io_context& ioc,
         std::shared_ptr<BackendInterface> backend,
-        std::shared_ptr<SubscriptionManagerType> subscriptions,
+        std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
         std::shared_ptr<LoadBalancerType> balancer,
-        std::shared_ptr<NetworkValidatedLedgersType> ledgers
+        std::shared_ptr<NetworkValidatedLedgersInterface> ledgers
     )
     {
         auto etl = std::make_shared<ETLService>(config, ioc, backend, subscriptions, balancer, ledgers);
@@ -202,6 +200,17 @@ public:
     }
 
     /**
+     * @brief Check whether Clio detected DB corruptions.
+     *
+     * @return true if corruption of DB was detected and cache was stopped.
+     */
+    bool
+    isCorruptionDetected() const
+    {
+        return state_.isCorruptionDetected;
+    }
+
+    /**
      * @brief Get state of ETL as a JSON object
      *
      * @return The state of ETL as a JSON object
@@ -212,8 +221,8 @@ public:
         boost::json::object result;
 
         result["etl_sources"] = loadBalancer_->toJson();
-        result["is_writer"] = state_.isWriting.load();
-        result["read_only"] = state_.isReadOnly;
+        result["is_writer"] = static_cast<int>(state_.isWriting);
+        result["read_only"] = static_cast<int>(state_.isReadOnly);
         auto last = ledgerPublisher_.getLastPublish();
         if (last.time_since_epoch().count() != 0)
             result["last_publish_age_seconds"] = std::to_string(ledgerPublisher_.lastPublishAgeSeconds());

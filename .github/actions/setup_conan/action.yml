@@ -1,5 +1,9 @@
 name: Setup conan
 description: Setup conan profile and artifactory
+inputs:
+  conan_profile:
+    description: Conan profile name
+    required: true
 outputs:
   conan_profile:
     description: Created conan profile name
@@ -11,7 +15,7 @@ runs:
       if: ${{ runner.os == 'macOS' }}
       shell: bash
       env:
-        CONAN_PROFILE: clio_apple_clang_15
+        CONAN_PROFILE: apple_clang_15
       id: conan_setup_mac
       run: |
         echo "Creating $CONAN_PROFILE conan profile";
@@ -27,7 +31,7 @@ runs:
       shell: bash
       id: conan_setup_linux
       run: |
-        echo "created_conan_profile=default" >> $GITHUB_OUTPUT
+        echo "created_conan_profile=${{ inputs.conan_profile }}" >> $GITHUB_OUTPUT
 
     - name: Export output variable
       shell: bash

@@ -20,26 +20,21 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/Errors.hpp"
-#include "rpc/JS.hpp"
-#include "rpc/RPCHelpers.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
-#include "rpc/common/Validators.hpp"
-#include "util/Assert.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/Book.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/jss.h>
+#include <boost/json/value_to.hpp>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
-#include <variant>
 #include <vector>
 
 namespace feed {
@@ -49,12 +44,16 @@ class SubscriptionManager;
 namespace rpc {
 
 /**
- * @brief Handles the `unsubscribe` command which is used to disconnect a subscriber from a feed
+ * @brief Handles the `unsubscribe` command which is used to disconnect a subscriber from a feed.
+ * The unsubscribe command tells the server to stop sending messages for a particular subscription or set of
+ * subscriptions.
+ *
+ * For more details see: https://xrpl.org/unsubscribe.html
  */
-template <typename SubscriptionManagerType>
-class BaseUnsubscribeHandler {
+
+class UnsubscribeHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
-    std::shared_ptr<SubscriptionManagerType> subscriptions_;
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
 
 public:
     /**
@@ -84,13 +83,10 @@ public:
      * @param sharedPtrBackend The backend to use
      * @param subscriptions The subscription manager to use
      */
-    BaseUnsubscribeHandler(
+    UnsubscribeHandler(
         std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<SubscriptionManagerType> const& subscriptions
-    )
-        : sharedPtrBackend_(sharedPtrBackend), subscriptions_(subscriptions)
-    {
-    }
+        std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
+    );
 
     /**
      * @brief Returns the API specification for the command
@@ -98,38 +94,8 @@ public:
      * @param apiVersion The api version to return the spec for
      * @return The spec for the given apiVersion
      */
-    RpcSpecConstRef
-    spec([[maybe_unused]] uint32_t apiVersion) const
-    {
-        static auto const booksValidator =
-            validation::CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-                if (!value.is_array())
-                    return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotArray"}};
-
-                for (auto const& book : value.as_array()) {
-                    if (!book.is_object())
-                        return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "ItemNotObject"}};
-
-                    if (book.as_object().contains("both") && !book.as_object().at("both").is_bool())
-                        return Error{Status{RippledError::rpcINVALID_PARAMS, "bothNotBool"}};
-
-                    auto const parsedBook = parseBook(book.as_object());
-                    if (auto const status = std::get_if<Status>(&parsedBook))
-                        return Error(*status);
-                }
-
-                return MaybeError{};
-            }};
-
-        static auto const rpcSpec = RpcSpec{
-            {JS(streams), validation::SubscribeStreamValidator},
-            {JS(accounts), validation::SubscribeAccountsValidator},
-            {JS(accounts_proposed), validation::SubscribeAccountsValidator},
-            {JS(books), booksValidator},
-        };
-
-        return rpcSpec;
-    }
+    static RpcSpecConstRef
+    spec([[maybe_unused]] uint32_t apiVersion);
 
     /**
      * @brief Process the Unsubscribe command
@@ -139,127 +105,35 @@ public:
      * @return The result of the operation
      */
     Result
-    process(Input input, Context const& ctx) const
-    {
-        if (input.streams)
-            unsubscribeFromStreams(*(input.streams), ctx.session);
-
-        if (input.accounts)
-            unsubscribeFromAccounts(*(input.accounts), ctx.session);
-
-        if (input.accountsProposed)
-            unsubscribeFromProposedAccounts(*(input.accountsProposed), ctx.session);
-
-        if (input.books)
-            unsubscribeFromBooks(*(input.books), ctx.session);
-
-        return Output{};
-    }
+    process(Input input, Context const& ctx) const;
 
 private:
     void
     unsubscribeFromStreams(std::vector<std::string> const& streams, std::shared_ptr<web::ConnectionBase> const& session)
-        const
-    {
-        for (auto const& stream : streams) {
-            if (stream == "ledger") {
-                subscriptions_->unsubLedger(session);
-            } else if (stream == "transactions") {
-                subscriptions_->unsubTransactions(session);
-            } else if (stream == "transactions_proposed") {
-                subscriptions_->unsubProposedTransactions(session);
-            } else if (stream == "validations") {
-                subscriptions_->unsubValidation(session);
-            } else if (stream == "manifests") {
-                subscriptions_->unsubManifest(session);
-            } else if (stream == "book_changes") {
-                subscriptions_->unsubBookChanges(session);
-            } else {
-                ASSERT(false, "Unknown stream: {}", stream);
-            }
-        }
-    }
+        const;
 
     void
     unsubscribeFromAccounts(std::vector<std::string> accounts, std::shared_ptr<web::ConnectionBase> const& session)
-        const
-    {
-        for (auto const& account : accounts) {
-            auto const accountID = accountFromStringStrict(account);
-            subscriptions_->unsubAccount(*accountID, session);
-        }
-    }
+        const;
 
     void
     unsubscribeFromProposedAccounts(
         std::vector<std::string> accountsProposed,
         std::shared_ptr<web::ConnectionBase> const& session
-    ) const
-    {
-        for (auto const& account : accountsProposed) {
-            auto const accountID = accountFromStringStrict(account);
-            subscriptions_->unsubProposedAccount(*accountID, session);
-        }
-    }
+    ) const;
 
     void
-    unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<web::ConnectionBase> const& session) const
-    {
-        for (auto const& orderBook : books) {
-            subscriptions_->unsubBook(orderBook.book, session);
+    unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<web::ConnectionBase> const& session)
+        const;
 
-            if (orderBook.both)
-                subscriptions_->unsubBook(ripple::reversed(orderBook.book), session);
-        }
-    }
-
+    /**
+     * @brief Convert a JSON object to an Input
+     *
+     * @param jv The JSON object to convert
+     * @return The Input object
+     */
     friend Input
-    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv)
-    {
-        auto input = Input{};
-        auto const& jsonObject = jv.as_object();
-
-        if (auto const& streams = jsonObject.find(JS(streams)); streams != jsonObject.end()) {
-            input.streams = std::vector<std::string>();
-            for (auto const& stream : streams->value().as_array())
-                input.streams->push_back(boost::json::value_to<std::string>(stream));
-        }
-        if (auto const& accounts = jsonObject.find(JS(accounts)); accounts != jsonObject.end()) {
-            input.accounts = std::vector<std::string>();
-            for (auto const& account : accounts->value().as_array())
-                input.accounts->push_back(boost::json::value_to<std::string>(account));
-        }
-        if (auto const& accountsProposed = jsonObject.find(JS(accounts_proposed));
-            accountsProposed != jsonObject.end()) {
-            input.accountsProposed = std::vector<std::string>();
-            for (auto const& account : accountsProposed->value().as_array())
-                input.accountsProposed->push_back(boost::json::value_to<std::string>(account));
-        }
-        if (auto const& books = jsonObject.find(JS(books)); books != jsonObject.end()) {
-            input.books = std::vector<OrderBook>();
-            for (auto const& book : books->value().as_array()) {
-                auto internalBook = OrderBook{};
-                auto const& bookObject = book.as_object();
-
-                if (auto const& both = bookObject.find(JS(both)); both != bookObject.end())
-                    internalBook.both = both->value().as_bool();
-
-                auto const parsedBookMaybe = parseBook(book.as_object());
-                internalBook.book = std::get<ripple::Book>(parsedBookMaybe);
-                input.books->push_back(internalBook);
-            }
-        }
-
-        return input;
-    }
+    tag_invoke(boost::json::value_to_tag<Input>, boost::json::value const& jv);
 };
-
-/**
- * @brief The unsubscribe command tells the server to stop sending messages for a particular subscription or set of
- * subscriptions.
- *
- * For more details see: https://xrpl.org/unsubscribe.html
- */
-using UnsubscribeHandler = BaseUnsubscribeHandler<feed::SubscriptionManager>;
 
 }  // namespace rpc

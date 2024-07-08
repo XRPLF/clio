@@ -20,13 +20,13 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/common/Types.hpp"
+#include "rpc/common/Specs.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Issue.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Issue.h>
 
 #include <cstdint>
 #include <memory>

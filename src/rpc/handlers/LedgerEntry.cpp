@@ -28,22 +28,21 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/json/json_value.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/Indexes.h>
-#include <ripple/protocol/Issue.h>
-#include <ripple/protocol/LedgerFormats.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/SField.h>
-#include <ripple/protocol/STLedgerEntry.h>
-#include <ripple/protocol/STXChainBridge.h>
-#include <ripple/protocol/Serializer.h>
-#include <ripple/protocol/UintTypes.h>
-#include <ripple/protocol/jss.h>
-#include <ripple/protocol/tokens.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/json/json_value.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/Issue.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/STXChainBridge.h>
+#include <xrpl/protocol/Serializer.h>
+#include <xrpl/protocol/UintTypes.h>
+#include <xrpl/protocol/jss.h>
+#include <xrpl/protocol/tokens.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -139,6 +138,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             key = ripple::keylet::xChainCreateAccountClaimID(input.bridge->value(), input.createAccountClaimId.value())
                       .key;
         }
+    } else if (input.oracleNode) {
+        key = input.oracleNode.value();
     } else if (input.mptIssuance) {
         auto const mptIssuanceID = ripple::uint192{std::string_view(*(input.mptIssuance))};
         key = ripple::keylet::mptIssuance(mptIssuanceID).key;
@@ -158,7 +159,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 
     // check ledger exists
     auto const range = sharedPtrBackend_->fetchLedgerRange();
-    auto const lgrInfoOrStatus = getLedgerInfoFromHashOrSeq(
+    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
 
@@ -267,6 +268,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(amm), ripple::ltAMM},
         {JS(xchain_owned_create_account_claim_id), ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
         {JS(xchain_owned_claim_id), ripple::ltXCHAIN_OWNED_CLAIM_ID},
+        {JS(oracle), ripple::ltORACLE},
         {JS(mptoken), ripple::ltMPTOKEN},
     };
 
@@ -283,6 +285,14 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
             parseIssue(bridgeJson.at(ripple::sfIssuingChainIssue.getJsonName().c_str()).as_object());
 
         return ripple::STXChainBridge{lockingDoor, lockingIssue, issuingDoor, issuingIssue};
+    };
+
+    auto const parseOracleFromJson = [](boost::json::value const& json) {
+        auto const account =
+            ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(json.at(JS(account))));
+        auto const documentId = boost::json::value_to<uint32_t>(json.at(JS(oracle_document_id)));
+
+        return ripple::keylet::oracle(*account, documentId).key;
     };
 
     auto const indexFieldType =
@@ -331,6 +341,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         input.createAccountClaimId = boost::json::value_to<std::int32_t>(
             jv.at(JS(xchain_owned_create_account_claim_id)).at(JS(xchain_owned_create_account_claim_id))
         );
+    } else if (jsonObject.contains(JS(oracle))) {
+        input.oracleNode = parseOracleFromJson(jv.at(JS(oracle)));
     } else if (jsonObject.contains(JS(mptoken))) {
         input.mptoken = jv.at(JS(mptoken)).as_object();
     }

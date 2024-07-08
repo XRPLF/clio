@@ -22,6 +22,9 @@
 #include "data/BackendInterface.hpp"
 #include "etl/CacheLoaderSettings.hpp"
 #include "etl/impl/CacheLoader.hpp"
+#include "etl/impl/CursorFromAccountProvider.hpp"
+#include "etl/impl/CursorFromDiffProvider.hpp"
+#include "etl/impl/CursorFromFixDiffNumProvider.hpp"
 #include "util/Assert.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/log/Logger.hpp"
@@ -41,10 +44,7 @@ namespace etl {
  * @tparam CursorProviderType The type of the cursor provider to use
  * @tparam ExecutionContextType The type of the execution context to use
  */
-template <
-    typename CacheType,
-    typename CursorProviderType = impl::CursorProvider,
-    typename ExecutionContextType = util::async::CoroExecutionContext>
+template <typename CacheType, typename ExecutionContextType = util::async::CoroExecutionContext>
 class CacheLoader {
     using CacheLoaderType = impl::CacheLoaderImpl<CacheType>;
 
@@ -88,7 +88,22 @@ public:
             return;
         }
 
-        auto const provider = CursorProviderType{backend_, settings_.numCacheDiffs};
+        std::shared_ptr<impl::BaseCursorProvider> provider;
+        if (settings_.numCacheCursorsFromDiff != 0) {
+            LOG(log_.info()) << "Loading cache with cursor from num_cursors_from_diff="
+                             << settings_.numCacheCursorsFromDiff;
+            provider = std::make_shared<impl::CursorFromDiffProvider>(backend_, settings_.numCacheCursorsFromDiff);
+        } else if (settings_.numCacheCursorsFromAccount != 0) {
+            LOG(log_.info()) << "Loading cache with cursor from num_cursors_from_account="
+                             << settings_.numCacheCursorsFromAccount;
+            provider = std::make_shared<impl::CursorFromAccountProvider>(
+                backend_, settings_.numCacheCursorsFromAccount, settings_.cachePageFetchSize
+            );
+        } else {
+            LOG(log_.info()) << "Loading cache with cursor from num_diffs=" << settings_.numCacheDiffs;
+            provider = std::make_shared<impl::CursorFromFixDiffNumProvider>(backend_, settings_.numCacheDiffs);
+        }
+
         loader_ = std::make_unique<CacheLoaderType>(
             ctx_,
             backend_,
@@ -96,7 +111,7 @@ public:
             seq,
             settings_.numCacheMarkers,
             settings_.cachePageFetchSize,
-            provider.getCursors(seq)
+            provider->getCursors(seq)
         );
 
         if (settings_.isSync()) {

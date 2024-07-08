@@ -26,9 +26,9 @@
 
 #include <cassandra.h>
 #include <fmt/core.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/STAccount.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/STAccount.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -121,7 +121,8 @@ public:
             // reinterpret_cast is needed here :'(
             auto const rc = bindBytes(reinterpret_cast<unsigned char const*>(value.data()), value.size());
             throwErrorIfNeeded(rc, "Bind string (as bytes)");
-        } else if constexpr (std::is_same_v<DecayedType, UintTupleType> || std::is_same_v<DecayedType, UintByteTupleType>) {
+        } else if constexpr (std::is_same_v<DecayedType, UintTupleType> ||
+                             std::is_same_v<DecayedType, UintByteTupleType>) {
             auto const rc = cass_statement_bind_tuple(*this, idx, Tuple{std::forward<Type>(value)});
             throwErrorIfNeeded(rc, "Bind tuple<uint32, uint32> or <uint32_t, ripple::uint256>");
         } else if constexpr (std::is_same_v<DecayedType, ByteVectorType>) {

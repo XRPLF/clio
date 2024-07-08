@@ -19,16 +19,15 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
-#include "util/async/impl/Any.hpp"
 #include "util/async/impl/ErasedOperation.hpp"
 
 #include <fmt/core.h>
 #include <fmt/std.h>
 
 #include <any>
+#include <expected>
 #include <thread>
 #include <type_traits>
 #include <utility>
@@ -76,18 +75,15 @@ public:
         operation_.wait();
     }
 
-    /** @brief Request the operation to be stopped as soon as possible */
+    /**
+     * @brief Abort the operation
+     *
+     * Used to cancel the timer for scheduled operations and request the operation to be stopped as soon as possible
+     */
     void
-    requestStop() noexcept
+    abort() noexcept
     {
-        operation_.requestStop();
-    }
-
-    /** @brief Cancel the operation. Used to cancel the timer for scheduled operations */
-    void
-    cancel() noexcept
-    {
-        operation_.cancel();
+        operation_.abort();
     }
 
     /**
@@ -95,13 +91,13 @@ public:
      *
      * @return The result of the operation
      */
-    [[nodiscard]] util::Expected<RetType, ExecutionError>
+    [[nodiscard]] std::expected<RetType, ExecutionError>
     get()
     {
         try {
             auto data = operation_.get();
             if (not data)
-                return util::Unexpected(std::move(data).error());
+                return std::unexpected(std::move(data).error());
 
             if constexpr (std::is_void_v<RetType>) {
                 return {};
@@ -110,7 +106,7 @@ public:
             }
 
         } catch (std::bad_any_cast const& e) {
-            return util::Unexpected{ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")};
+            return std::unexpected{ExecutionError(fmt::format("{}", std::this_thread::get_id()), "Bad any cast")};
         }
     }
 

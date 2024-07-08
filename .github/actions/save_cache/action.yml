@@ -4,6 +4,9 @@ inputs:
   conan_dir:
     description: Path to .conan directory
     required: true
+  conan_profile:
+    description: Conan profile name
+    required: true
   conan_hash:
     description: Hash to use as a part of conan cache key
     required: true
@@ -41,16 +44,16 @@ runs:
 
     - name: Save conan cache
       if: ${{ inputs.conan_cache_hit != 'true' }}
-      uses: actions/cache/save@v3
+      uses: actions/cache/save@v4
       with:
         path: ${{ inputs.conan_dir }}/data
-        key: clio-conan_data-${{ runner.os }}-${{ inputs.build_type }}-develop-${{ inputs.conan_hash }}
+        key: clio-conan_data-${{ runner.os }}-${{ inputs.build_type }}-${{ inputs.conan_profile }}-develop-${{ inputs.conan_hash }}
 
     - name: Save ccache cache
       if: ${{ inputs.ccache_cache_hit != 'true' || inputs.ccache_cache_miss_rate == '100.0' }}
-      uses: actions/cache/save@v3
+      uses: actions/cache/save@v4
       with:
         path: ${{ inputs.ccache_dir }}
-        key: clio-ccache-${{ runner.os }}-${{ inputs.build_type }}${{ inputs.code_coverage == 'true' && '-code_coverage' || '' }}-develop-${{ steps.git_common_ancestor.outputs.commit }}
+        key: clio-ccache-${{ runner.os }}-${{ inputs.build_type }}${{ inputs.code_coverage == 'true' && '-code_coverage' || '' }}-${{ inputs.conan_profile }}-develop-${{ steps.git_common_ancestor.outputs.commit }}
 
 

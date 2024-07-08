@@ -36,11 +36,11 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/ErrorCodes.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/jss.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/ErrorCodes.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <memory>
@@ -66,14 +66,16 @@ public:
      */
     struct Output {
         uint32_t date = 0u;
-        std::string hash{};
+        std::string hash = {};  // NOLINT(readability-redundant-member-init)
         uint32_t ledgerIndex = 0u;
-        std::optional<boost::json::object> meta{};
-        std::optional<boost::json::object> tx{};
-        std::optional<std::string> metaStr{};
-        std::optional<std::string> txStr{};
-        std::optional<std::string> ctid{};                   // ctid when binary=true
-        std::optional<ripple::LedgerHeader> ledgerHeader{};  // ledger hash when apiVersion >= 2
+        std::optional<boost::json::object> meta = std::nullopt;  // NOLINT(readability-redundant-member-init)
+        std::optional<boost::json::object> tx = std::nullopt;    // NOLINT(readability-redundant-member-init)
+        std::optional<std::string> metaStr = std::nullopt;       // NOLINT(readability-redundant-member-init)
+        std::optional<std::string> txStr = std::nullopt;         // NOLINT(readability-redundant-member-init)
+        std::optional<std::string> ctid =
+            std::nullopt;  // NOLINT(readability-redundant-member-init) ctid when binary=true
+        std::optional<ripple::LedgerHeader> ledgerHeader =
+            std::nullopt;  // NOLINT(readability-redundant-member-init) ledger hash when apiVersion >= 2
         uint32_t apiVersion = 0u;
         bool validated = true;
     };
@@ -115,7 +117,7 @@ public:
     spec(uint32_t apiVersion)
     {
         static RpcSpec const rpcSpecForV1 = {
-            {JS(transaction), validation::Uint256HexStringValidator},
+            {JS(transaction), validation::CustomValidators::Uint256HexStringValidator},
             {JS(min_ledger), validation::Type<uint32_t>{}},
             {JS(max_ledger), validation::Type<uint32_t>{}},
             {JS(ctid), validation::Type<std::string>{}},

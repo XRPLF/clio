@@ -27,7 +27,7 @@ If you're running Clio and `rippled` on separate machines, in addition to uncomm
 
 2. Open a public, unencrypted WebSocket port on your `rippled` server.
 
-3. In the `rippled` config, change the IP specified for `secure_gateway`, under the `port_grpc` section, to the IP of your Clio server. This entry can take the form of a comma-separated list if you are running multiple Clio nodes.
+3. In the `rippled` config, change the IP specified for `secure_gateway`, under the `port_grpc` and websocket server sections, to the IP of your Clio server. This entry can take the form of a comma-separated list if you are running multiple Clio nodes.
 
 ## Ledger sequence
 
@@ -97,3 +97,11 @@ To enable the caching for a source, `forwarding_cache_timeout` value should be a
 
 `forwarding_cache_timeout` defines for how long (in seconds) a cache entry will be valid after being placed into the cache.
 Zero value turns off the cache feature.
+
+## Graceful shutdown (not fully implemented yet)
+
+Clio can be gracefully shut down by sending a `SIGINT` (Ctrl+C) or `SIGTERM` signal.
+The process will stop accepting new connections and will wait for the time specified in `graceful_period` config value (or 10 seconds by default).
+If Clio finishes all the scheduled operations before the end of the period, it will stop immediately.
+Otherwise, it will wait for the period to finish and then exit without finishing operations.
+If Clio receives a second signal during the period, it will stop immediately.

@@ -21,7 +21,6 @@
 
 #include "util/async/AnyStopToken.hpp"
 #include "util/async/Concepts.hpp"
-#include "util/async/impl/Any.hpp"
 #include "util/async/impl/ErasedOperation.hpp"
 
 #include <any>
@@ -64,10 +63,10 @@ public:
     execute(SomeHandlerWithoutStopToken auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn())>;
-        static_assert(not std::is_same_v<RetType, impl::Any>);
+        static_assert(not std::is_same_v<RetType, std::any>);
 
         return AnyOperation<RetType>(  //
-            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)]() -> impl::Any {
+            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)]() -> std::any {
                 if constexpr (std::is_void_v<RetType>) {
                     fn();
                     return {};
@@ -88,10 +87,10 @@ public:
     execute(SomeHandlerWith<AnyStopToken> auto&& fn)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
-        static_assert(not std::is_same_v<RetType, impl::Any>);
+        static_assert(not std::is_same_v<RetType, std::any>);
 
         return AnyOperation<RetType>(  //
-            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> impl::Any {
+            pimpl_->execute([fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> std::any {
                 if constexpr (std::is_void_v<RetType>) {
                     fn(std::move(stopToken));
                     return {};
@@ -113,11 +112,11 @@ public:
     execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
-        static_assert(not std::is_same_v<RetType, impl::Any>);
+        static_assert(not std::is_same_v<RetType, std::any>);
 
         return AnyOperation<RetType>(  //
             pimpl_->execute(
-                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> impl::Any {
+                [fn = std::forward<decltype(fn)>(fn)](auto stopToken) -> std::any {
                     if constexpr (std::is_void_v<RetType>) {
                         fn(std::move(stopToken));
                         return {};
@@ -136,10 +135,10 @@ private:
 
         [[nodiscard]] virtual impl::ErasedOperation
         execute(
-            std::function<impl::Any(AnyStopToken)>,
+            std::function<std::any(AnyStopToken)>,
             std::optional<std::chrono::milliseconds> timeout = std::nullopt
         ) = 0;
-        [[nodiscard]] virtual impl::ErasedOperation execute(std::function<impl::Any()>) = 0;
+        [[nodiscard]] virtual impl::ErasedOperation execute(std::function<std::any()>) = 0;
     };
 
     template <typename StrandType>
@@ -153,13 +152,13 @@ private:
         }
 
         [[nodiscard]] impl::ErasedOperation
-        execute(std::function<impl::Any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
+        execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
         {
             return strand.execute(std::move(fn), timeout);
         }
 
         [[nodiscard]] impl::ErasedOperation
-        execute(std::function<impl::Any()> fn) override
+        execute(std::function<std::any()> fn) override
         {
             return strand.execute(std::move(fn));
         }

@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Expected.hpp"
 #include "util/log/Logger.hpp"
 #include "util/requests/Types.hpp"
 
@@ -32,6 +31,7 @@
 #include <boost/beast/websocket/stream.hpp>
 
 #include <chrono>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <string>
@@ -53,20 +53,29 @@ public:
      * @brief Read a message from the WebSocket
      *
      * @param yield yield context
+     * @param timeout timeout for the operation
      * @return Message or error
      */
-    virtual Expected<std::string, RequestError>
-    read(boost::asio::yield_context yield) = 0;
+    virtual std::expected<std::string, RequestError>
+    read(
+        boost::asio::yield_context yield,
+        std::optional<std::chrono::steady_clock::duration> timeout = std::nullopt
+    ) = 0;
 
     /**
      * @brief Write a message to the WebSocket
      *
      * @param message message to write
      * @param yield yield context
+     * @param timeout timeout for the operation
      * @return Error if any
      */
     virtual std::optional<RequestError>
-    write(std::string const& message, boost::asio::yield_context yield) = 0;
+    write(
+        std::string const& message,
+        boost::asio::yield_context yield,
+        std::optional<std::chrono::steady_clock::duration> timeout = std::nullopt
+    ) = 0;
 
     /**
      * @brief Close the WebSocket
@@ -154,7 +163,7 @@ public:
      * @param yield yield context
      * @return WebSocket connection or error
      */
-    Expected<WsConnectionPtr, RequestError>
+    std::expected<WsConnectionPtr, RequestError>
     sslConnect(boost::asio::yield_context yield) const;
 
     /**
@@ -163,7 +172,7 @@ public:
      * @param yield yield context
      * @return WebSocket connection or error
      */
-    Expected<WsConnectionPtr, RequestError>
+    std::expected<WsConnectionPtr, RequestError>
     plainConnect(boost::asio::yield_context yield) const;
 
     /**
@@ -172,14 +181,14 @@ public:
      * @param yield yield context
      * @return WebSocket connection or error
      */
-    Expected<WsConnectionPtr, RequestError>
+    std::expected<WsConnectionPtr, RequestError>
     connect(boost::asio::yield_context yield) const;
 
     static constexpr std::chrono::seconds DEFAULT_TIMEOUT{5}; /**< Default timeout for connecting */
 
 private:
     template <typename StreamDataType>
-    Expected<WsConnectionPtr, RequestError>
+    std::expected<WsConnectionPtr, RequestError>
     connectImpl(StreamDataType&& streamData, boost::asio::yield_context yield) const;
 };
 

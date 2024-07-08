@@ -17,15 +17,17 @@
 */
 //==============================================================================
 
+#include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
-#include "etl/ETLHelpers.hpp"
 #include "etl/ETLService.hpp"
+#include "etl/NetworkValidatedLedgers.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "main/Build.hpp"
 #include "rpc/Counters.hpp"
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
+#include "util/SignalsHandler.hpp"
 #include "util/TerminationHandler.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -34,7 +36,6 @@
 #include "web/IntervalSweepHandler.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/Server.hpp"
-#include "web/WhitelistHandler.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
@@ -137,7 +138,7 @@ parseCerts(Config const& config)
     readKey.close();
     std::string key = contents.str();
 
-    ssl::context ctx{ssl::context::tlsv12};
+    ssl::context ctx{ssl::context::tls_server};
     ctx.set_options(ssl::context::default_workarounds | ssl::context::no_sslv2);
     ctx.use_certificate_chain(buffer(cert.data(), cert.size()));
     ctx.use_private_key(buffer(key.data(), key.size()), ssl::context::file_format::pem);
@@ -168,12 +169,14 @@ int
 main(int argc, char* argv[])
 try {
     util::setTerminationHandler();
+
     auto const configPath = parseCli(argc, argv);
     auto const config = ConfigReader::open(configPath);
     if (!config) {
         std::cerr << "Couldnt parse config '" << configPath << "'." << std::endl;
         return EXIT_FAILURE;
     }
+    util::SignalsHandler signalsHandler{config};
 
     LogService::init(config);
     LOG(LogService::info()) << "Clio version: " << Build::getClioFullVersionString();
@@ -218,8 +221,9 @@ try {
 
     auto workQueue = rpc::WorkQueue::make_WorkQueue(config);
     auto counters = rpc::Counters::make_Counters(workQueue);
+    auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
     auto const handlerProvider = std::make_shared<rpc::impl::ProductionHandlerProvider const>(
-        config, backend, subscriptions, balancer, etl, counters
+        config, backend, subscriptions, balancer, etl, amendmentCenter, counters
     );
     auto const rpcEngine =
         rpc::RPCEngine::make_RPCEngine(backend, balancer, dosGuard, workQueue, counters, handlerProvider);

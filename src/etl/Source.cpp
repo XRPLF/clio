@@ -20,37 +20,41 @@
 #include "etl/Source.hpp"
 
 #include "data/BackendInterface.hpp"
-#include "etl/ETLHelpers.hpp"
-#include "feed/SubscriptionManager.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
+#include "etl/impl/ForwardingSource.hpp"
+#include "etl/impl/GrpcSource.hpp"
+#include "etl/impl/SourceImpl.hpp"
+#include "etl/impl/SubscriptionSource.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "util/config/Config.hpp"
 
 #include <boost/asio/io_context.hpp>
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <utility>
 
 namespace etl {
 
-template class SourceImpl<>;
-
-Source
+SourcePtr
 make_Source(
     util::Config const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
-    std::shared_ptr<feed::SubscriptionManager> subscriptions,
-    std::shared_ptr<NetworkValidatedLedgers> validatedLedgers,
-    Source::OnDisconnectHook onDisconnect,
-    Source::OnConnectHook onConnect,
-    Source::OnLedgerClosedHook onLedgerClosed
+    std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
+    std::shared_ptr<NetworkValidatedLedgersInterface> validatedLedgers,
+    std::chrono::steady_clock::duration forwardingTimeout,
+    SourceBase::OnConnectHook onConnect,
+    SourceBase::OnDisconnectHook onDisconnect,
+    SourceBase::OnLedgerClosedHook onLedgerClosed
 )
 {
     auto const ip = config.valueOr<std::string>("ip", {});
     auto const wsPort = config.valueOr<std::string>("ws_port", {});
     auto const grpcPort = config.valueOr<std::string>("grpc_port", {});
 
-    impl::ForwardingSource forwardingSource{ip, wsPort};
+    impl::ForwardingSource forwardingSource{ip, wsPort, forwardingTimeout};
     impl::GrpcSource grpcSource{ip, grpcPort, std::move(backend)};
     auto subscriptionSource = std::make_unique<impl::SubscriptionSource>(
         ioc,
@@ -63,9 +67,9 @@ make_Source(
         std::move(onLedgerClosed)
     );
 
-    return Source{
+    return std::make_unique<impl::SourceImpl<>>(
         ip, wsPort, grpcPort, std::move(grpcSource), std::move(subscriptionSource), std::move(forwardingSource)
-    };
+    );
 }
 
 }  // namespace etl

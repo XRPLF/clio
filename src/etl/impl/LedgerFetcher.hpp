@@ -23,7 +23,7 @@
 #include "util/log/Logger.hpp"
 
 #include <grpcpp/grpcpp.h>
-#include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
+#include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
 #include <cstdint>
 #include <memory>

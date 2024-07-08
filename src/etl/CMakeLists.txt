@@ -2,11 +2,13 @@ add_library(clio_etl)
 
 target_sources(
   clio_etl
-  PRIVATE NFTHelpers.cpp
+  PRIVATE CacheLoaderSettings.cpp
+          ETLHelpers.cpp
           ETLService.cpp
           ETLState.cpp
           LoadBalancer.cpp
-          CacheLoaderSettings.cpp
+          NetworkValidatedLedgers.cpp
+          NFTHelpers.cpp
           Source.cpp
           MPTHelpers.cpp
           impl/ForwardingCache.cpp

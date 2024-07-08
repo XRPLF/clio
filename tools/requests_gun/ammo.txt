@@ -1,0 +1,1 @@
+{ "method": "server_definitions", "params": [ {} ] }

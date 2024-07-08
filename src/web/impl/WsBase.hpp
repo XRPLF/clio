@@ -44,7 +44,7 @@
 #include <boost/json/array.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
-#include <ripple/protocol/ErrorCodes.h>
+#include <xrpl/protocol/ErrorCodes.h>
 
 #include <cstddef>
 #include <exception>
@@ -84,7 +84,11 @@ protected:
     void
     wsFail(boost::beast::error_code ec, char const* what)
     {
-        LOG(perfLog_.error()) << tag() << ": " << what << ": " << ec.message();
+        // Don't log if the WebSocket stream was gracefully closed at both endpoints
+        if (ec != boost::beast::websocket::error::closed) {
+            LOG(perfLog_.error()) << tag() << ": " << what << ": " << ec.message() << ": " << ec.value();
+        }
+
         if (!ec_ && ec != boost::asio::error::operation_aborted) {
             ec_ = ec;
             boost::beast::get_lowest_layer(derived().ws()).socket().close(ec);

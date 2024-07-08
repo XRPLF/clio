@@ -23,7 +23,6 @@
 #include "rpc/Errors.hpp"
 #include "rpc/common/APIVersion.hpp"
 #include "rpc/common/Types.hpp"
-#include "util/Expected.hpp"
 #include "util/Taggable.hpp"
 #include "web/Context.hpp"
 
@@ -32,8 +31,8 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
-#include <ripple/protocol/ErrorCodes.h>
 
+#include <expected>
 #include <functional>
 #include <memory>
 #include <string>
@@ -43,7 +42,7 @@ using namespace util;
 
 namespace rpc {
 
-util::Expected<web::Context, Status>
+std::expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
@@ -72,7 +71,7 @@ make_WsContext(
     return web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp, session->isAdmin());
 }
 
-Expected<web::Context, Status>
+std::expected<web::Context, Status>
 make_HttpContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,

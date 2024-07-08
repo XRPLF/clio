@@ -22,7 +22,7 @@
 #include "data/cassandra/impl/ManagedObject.hpp"
 
 #include <cassandra.h>
-#include <ripple/basics/base_uint.h>
+#include <xrpl/basics/base_uint.h>
 
 #include <cstddef>
 #include <cstdint>

@@ -26,6 +26,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 
+#include <chrono>
 #include <cstdint>
 #include <exception>
 #include <filesystem>
@@ -361,6 +362,15 @@ public:
      */
     [[nodiscard]] ArrayType
     array() const;
+
+    /**
+     * @brief Method to convert a float seconds value to milliseconds.
+     *
+     * @param value The value to convert
+     * @return The value in milliseconds
+     */
+    static std::chrono::milliseconds
+    toMilliseconds(float value);
 
 private:
     template <typename Return>

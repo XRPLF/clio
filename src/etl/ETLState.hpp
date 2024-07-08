@@ -47,11 +47,11 @@ struct ETLState {
     fetchETLStateFromSource(Forward& source) noexcept
     {
         auto const serverInfoRippled = data::synchronous([&source](auto yield) {
-            return source.forwardToRippled({{"command", "server_info"}}, std::nullopt, yield);
+            return source.forwardToRippled({{"command", "server_info"}}, std::nullopt, {}, yield);
         });
 
         if (serverInfoRippled)
-            return boost::json::value_to<ETLState>(boost::json::value(*serverInfoRippled));
+            return boost::json::value_to<std::optional<ETLState>>(boost::json::value(*serverInfoRippled));
 
         return std::nullopt;
     }
@@ -63,7 +63,7 @@ struct ETLState {
  * @param jv The json value to convert
  * @return The ETLState
  */
-ETLState
-tag_invoke(boost::json::value_to_tag<ETLState>, boost::json::value const& jv);
+std::optional<ETLState>
+tag_invoke(boost::json::value_to_tag<std::optional<ETLState>>, boost::json::value const& jv);
 
 }  // namespace etl

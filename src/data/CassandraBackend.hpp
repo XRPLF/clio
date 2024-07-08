@@ -36,12 +36,13 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <cassandra.h>
-#include <ripple/basics/Blob.h>
-#include <ripple/basics/base_uint.h>
-#include <ripple/basics/strHex.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/LedgerHeader.h>
-#include <ripple/protocol/nft.h>
+#include <xrpl/basics/Blob.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/nft.h>
 
 #include <atomic>
 #include <chrono>
@@ -171,11 +172,6 @@ public:
             if (--numRows == 0) {
                 LOG(log_.debug()) << "Setting cursor";
                 cursor = data;
-
-                // forward queries by ledger/tx sequence `>=`
-                // so we have to advance the index by one
-                if (forward)
-                    ++cursor->transactionIndex;
             }
         }
 
@@ -210,13 +206,13 @@ public:
     }
 
     void
-    writeLedger(ripple::LedgerHeader const& ledgerInfo, std::string&& blob) override
+    writeLedger(ripple::LedgerHeader const& ledgerHeader, std::string&& blob) override
     {
-        executor_.write(schema_->insertLedgerHeader, ledgerInfo.seq, std::move(blob));
+        executor_.write(schema_->insertLedgerHeader, ledgerHeader.seq, std::move(blob));
 
-        executor_.write(schema_->insertLedgerHash, ledgerInfo.hash, ledgerInfo.seq);
+        executor_.write(schema_->insertLedgerHash, ledgerHeader.hash, ledgerHeader.seq);
 
-        ledgerSequence_ = ledgerInfo.seq;
+        ledgerSequence_ = ledgerHeader.seq;
     }
 
     std::optional<std::uint32_t>
@@ -340,8 +336,8 @@ public:
 
         auto const& result = res.value();
         if (not result.hasRows()) {
-            LOG(log_.error()) << "Could not fetch all transaction hashes - no rows; ledger = "
-                              << std::to_string(ledgerSequence);
+            LOG(log_.warn()) << "Could not fetch all transaction hashes - no rows; ledger = "
+                             << std::to_string(ledgerSequence);
             return {};
         }
 
@@ -599,7 +595,7 @@ public:
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res) {
             if (auto const result = res->template get<Blob>(); result) {
                 if (result->size())
-                    return *result;
+                    return result;
             } else {
                 LOG(log_.debug()) << "Could not fetch ledger object - no rows";
             }
@@ -635,7 +631,7 @@ public:
             if (auto const result = res->template get<ripple::uint256>(); result) {
                 if (*result == lastKey)
                     return std::nullopt;
-                return *result;
+                return result;
             }
 
             LOG(log_.debug()) << "Could not fetch successor - no rows";
@@ -732,6 +728,50 @@ public:
         return results;
     }
 
+    std::vector<ripple::uint256>
+    fetchAccountRoots(std::uint32_t number, std::uint32_t pageSize, std::uint32_t seq, boost::asio::yield_context yield)
+        const override
+    {
+        std::vector<ripple::uint256> liveAccounts;
+        std::optional<ripple::AccountID> lastItem;
+
+        while (liveAccounts.size() < number) {
+            Statement const statement = lastItem ? schema_->selectAccountFromToken.bind(*lastItem, Limit{pageSize})
+                                                 : schema_->selectAccountFromBegining.bind(Limit{pageSize});
+
+            auto const res = executor_.read(yield, statement);
+            if (res) {
+                auto const& results = res.value();
+                if (not results.hasRows()) {
+                    LOG(log_.debug()) << "No rows returned";
+                    break;
+                }
+                // The results should not contain duplicates, we just filter out deleted accounts
+                std::vector<ripple::uint256> fullAccounts;
+                for (auto [account] : extract<ripple::AccountID>(results)) {
+                    fullAccounts.push_back(ripple::keylet::account(account).key);
+                    lastItem = account;
+                }
+                auto const objs = doFetchLedgerObjects(fullAccounts, seq, yield);
+
+                for (auto i = 0u; i < fullAccounts.size(); i++) {
+                    if (not objs[i].empty()) {
+                        if (liveAccounts.size() < number) {
+                            liveAccounts.push_back(fullAccounts[i]);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            } else {
+                LOG(log_.error()) << "Could not fetch account from account_tx: " << res.error();
+                break;
+            }
+        }
+
+        return liveAccounts;
+    }
+
     std::vector<LedgerObject>
     fetchLedgerDiff(std::uint32_t const ledgerSequence, boost::asio::yield_context yield) const override
     {
@@ -771,9 +811,7 @@ public:
             std::cend(keys),
             std::cbegin(objs),
             std::back_inserter(results),
-            [](auto const& key, auto const& obj) {
-                return LedgerObject{key, obj};
-            }
+            [](auto const& key, auto const& obj) { return LedgerObject{key, obj}; }
         );
 
         return results;

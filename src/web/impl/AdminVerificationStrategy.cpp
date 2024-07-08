@@ -22,8 +22,8 @@
 #include "util/JsonUtils.hpp"
 
 #include <boost/beast/http/field.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/digest.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/digest.h>
 
 #include <cstring>
 #include <memory>

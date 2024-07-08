@@ -120,7 +120,7 @@ public:
      * @param ec The error code
      * @param message The message to include in the log
      */
-    inline void
+    void
     fail(boost::system::error_code ec, char const* message)
     {
         if (ec == boost::asio::ssl::error::stream_truncated)
@@ -285,8 +285,7 @@ private:
     onAccept(boost::beast::error_code ec, tcp::socket socket)
     {
         if (!ec) {
-            auto ctxRef =
-                ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;
+            auto ctxRef = ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_} : std::nullopt;
 
             std::make_shared<Detector<PlainSessionType, SslSessionType, HandlerType>>(
                 std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_, adminVerification_

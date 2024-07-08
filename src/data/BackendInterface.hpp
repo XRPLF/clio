@@ -22,6 +22,7 @@
 #include "data/DBHelpers.hpp"
 #include "data/LedgerCache.hpp"
 #include "data/Types.hpp"
+#include "etl/CorruptionDetector.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
@@ -30,10 +31,10 @@
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 #include <boost/utility/result_of.hpp>
-#include <ripple/basics/base_uint.h>
-#include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/Fees.h>
-#include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Fees.h>
+#include <xrpl/protocol/LedgerHeader.h>
 
 #include <chrono>
 #include <cstddef>
@@ -44,6 +45,7 @@
 #include <string>
 #include <thread>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace data {
@@ -138,6 +140,7 @@ protected:
     mutable std::shared_mutex rngMtx_;
     std::optional<LedgerRange> range;
     LedgerCache cache_;
+    std::optional<etl::CorruptionDetector<LedgerCache>> corruptionDetector_;
 
 public:
     BackendInterface() = default;
@@ -160,6 +163,17 @@ public:
     cache()
     {
         return cache_;
+    }
+
+    /**
+     * @brief Sets the corruption detector.
+     *
+     * @param detector The corruption detector to set
+     */
+    void
+    setCorruptionDetector(etl::CorruptionDetector<LedgerCache> detector)
+    {
+        corruptionDetector_ = std::move(detector);
     }
 
     /**
@@ -198,6 +212,19 @@ public:
      */
     std::optional<LedgerRange>
     fetchLedgerRange() const;
+
+    /**
+     * @brief Fetch the specified number of account root object indexes by page, the accounts need to exist for seq.
+     *
+     * @param number The number of accounts to fetch
+     * @param pageSize The maximum number of accounts per page
+     * @param seq The accounts need to exist for this sequence
+     * @param yield The coroutine context
+     * @return A vector of ripple::uint256 representing the account roots
+     */
+    virtual std::vector<ripple::uint256>
+    fetchAccountRoots(std::uint32_t number, std::uint32_t pageSize, std::uint32_t seq, boost::asio::yield_context yield)
+        const = 0;
 
     /**
      * @brief Updates the range of sequences that are stored in the DB.
@@ -441,7 +468,7 @@ public:
         std::uint32_t limit,
         bool outOfOrder,
         boost::asio::yield_context yield
-    ) const;
+    );
 
     /**
      * @brief Fetches the successor object.

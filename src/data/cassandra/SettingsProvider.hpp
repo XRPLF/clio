@@ -39,7 +39,6 @@ class SettingsProvider {
     std::string keyspace_;
     std::optional<std::string> tablePrefix_;
     uint16_t replicationFactor_;
-    uint16_t ttl_;
     Settings settings_;
 
 public:
@@ -47,9 +46,8 @@ public:
      * @brief Create a settings provider from the specified config.
      *
      * @param cfg The config of Clio to use
-     * @param ttl Time to live setting
      */
-    explicit SettingsProvider(util::Config const& cfg, uint16_t ttl = 0);
+    explicit SettingsProvider(util::Config const& cfg);
 
     /**
      * @return The cluster settings
@@ -60,7 +58,7 @@ public:
     /**
      * @return The specified keyspace
      */
-    [[nodiscard]] inline std::string
+    [[nodiscard]] std::string
     getKeyspace() const
     {
         return keyspace_;
@@ -69,7 +67,7 @@ public:
     /**
      * @return The optional table prefix to use in all queries
      */
-    [[nodiscard]] inline std::optional<std::string>
+    [[nodiscard]] std::optional<std::string>
     getTablePrefix() const
     {
         return tablePrefix_;
@@ -78,19 +76,10 @@ public:
     /**
      * @return The replication factor
      */
-    [[nodiscard]] inline uint16_t
+    [[nodiscard]] uint16_t
     getReplicationFactor() const
     {
         return replicationFactor_;
-    }
-
-    /**
-     * @return The default time to live to use in all `create` queries
-     */
-    [[nodiscard]] inline uint16_t
-    getTtl() const
-    {
-        return ttl_;
     }
 
 private:

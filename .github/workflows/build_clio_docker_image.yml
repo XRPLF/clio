@@ -1,0 +1,95 @@
+name: Build and publish Clio docker image
+on:
+  workflow_call:
+    inputs:
+      tags:
+        required: true
+        type: string
+        description: Comma separated tags for docker image
+      artifact_name:
+        type: string
+        description: Name of Github artifact to put into docker image
+      strip_binary:
+        type: boolean
+        description: Whether to strip clio binary
+        default: true
+      publish_image:
+        type: boolean
+        description: Whether to publish docker image
+        required: true
+
+  workflow_dispatch:
+    inputs:
+      tags:
+        required: true
+        type: string
+        description: Comma separated tags for docker image
+      clio_server_binary_url:
+        required: true
+        type: string
+        description: Url to download clio_server binary from
+      binary_sha256:
+        required: true
+        type: string
+        description: sha256 hash of the binary
+      strip_binary:
+        type: boolean
+        description: Whether to strip clio binary
+        default: true
+
+jobs:
+  build_and_publish_image:
+    name: Build and publish image
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Clio binary from artifact
+        if: ${{ inputs.artifact_name != null }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ./docker/clio/artifact/
+
+      - name: Download Clio binary from url
+        if: ${{ inputs.clio_server_binary_url != null }}
+        shell: bash
+        run: |
+          wget ${{inputs.clio_server_binary_url}} -P ./docker/clio/artifact/
+          if [ "$(sha256sum ./docker/clio/clio_server | awk '{print $1}')" != "${{inputs.binary_sha256}}" ]; then
+            echo "Binary sha256 sum doesn't match"
+            exit 1
+          fi
+      - name: Unpack binary
+        shell: bash
+        run: |
+          sudo apt update && sudo apt install -y tar unzip
+          cd docker/clio/artifact
+          artifact=$(find . -type f)
+          if [[ $artifact == *.zip ]]; then
+            unzip $artifact
+          elif [[ $artifact == *.tar.gz ]]; then
+            tar -xvf $artifact
+          fi
+          mv clio_server ../
+          cd ../
+          rm -rf ./artifact
+
+      - name: Strip binary
+        if: ${{ inputs.strip_binary }}
+        shell: bash
+        run: strip ./docker/clio/clio_server
+
+      - name: Build Docker image
+        uses: ./.github/actions/build_docker_image
+        env:
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+          DOCKERHUB_PW: ${{ secrets.DOCKERHUB_PW }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          image_name: rippleci/clio
+          push_image: ${{ inputs.publish_image }}
+          directory: docker/clio
+          tags: ${{ inputs.tags }}
+          platforms: linux/amd64
+          description: Clio is an XRP Ledger API server.
