@@ -23,6 +23,7 @@
 
 #include <boost/json.hpp>
 #include <boost/json/conversion.hpp>
+#include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 
@@ -46,7 +47,7 @@ struct ETLState {
     static std::optional<ETLState>
     fetchETLStateFromSource(Forward& source) noexcept
     {
-        auto const serverInfoRippled = data::synchronous([&source](auto yield) {
+        auto const serverInfoRippled = data::synchronous([&source](auto yield) -> std::optional<boost::json::object> {
             if (auto result = source.forwardToRippled({{"command", "server_info"}}, std::nullopt, {}, yield)) {
                 return std::move(result).value();
             }

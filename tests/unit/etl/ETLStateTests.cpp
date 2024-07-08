@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "etl/ETLState.hpp"
+#include "rpc/Errors.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockSource.hpp"
 
@@ -37,7 +38,7 @@ struct ETLStateTest : public NoLoggerFixture {
 
 TEST_F(ETLStateTest, Error)
 {
-    EXPECT_CALL(source, forwardToRippled).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(source, forwardToRippled).WillOnce(Return(std::unexpected{rpc::ClioError::etlINVALID_RESPONSE}));
     auto const state = etl::ETLState::fetchETLStateFromSource(source);
     EXPECT_FALSE(state);
 }

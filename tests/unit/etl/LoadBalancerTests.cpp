@@ -26,6 +26,7 @@
 #include "util/MockPrometheus.hpp"
 #include "util/MockSource.hpp"
 #include "util/MockSubscriptionManager.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/Random.hpp"
 #include "util/config/Config.hpp"
 
@@ -47,6 +48,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -585,7 +587,56 @@ TEST_F(LoadBalancerForwardToRippledTests, source0Fails)
     });
 }
 
-TEST_F(LoadBalancerForwardToRippledTests, bothSourcesFail)
+struct LoadBalancerForwardToRippledErrorTestBundle {
+    std::string testName;
+    rpc::ClioError firstSourceError;
+    rpc::ClioError secondSourceError;
+    rpc::ClioError responseExpectedError;
+};
+
+struct LoadBalancerForwardToRippledErrorTests
+    : LoadBalancerForwardToRippledTests,
+      testing::WithParamInterface<LoadBalancerForwardToRippledErrorTestBundle> {};
+
+INSTANTIATE_TEST_SUITE_P(
+    LoadBalancerForwardToRippledErrorTests,
+    LoadBalancerForwardToRippledErrorTests,
+    testing::Values(
+        LoadBalancerForwardToRippledErrorTestBundle{
+            "ConnectionError_RequestError",
+            rpc::ClioError::etlCONNECTION_ERROR,
+            rpc::ClioError::etlREQUEST_ERROR,
+            rpc::ClioError::etlREQUEST_ERROR
+        },
+        LoadBalancerForwardToRippledErrorTestBundle{
+            "RequestError_RequestTimeout",
+            rpc::ClioError::etlREQUEST_ERROR,
+            rpc::ClioError::etlREQUEST_TIMEOUT,
+            rpc::ClioError::etlREQUEST_TIMEOUT
+        },
+        LoadBalancerForwardToRippledErrorTestBundle{
+            "RequestTimeout_InvalidResponse",
+            rpc::ClioError::etlREQUEST_TIMEOUT,
+            rpc::ClioError::etlINVALID_RESPONSE,
+            rpc::ClioError::etlINVALID_RESPONSE
+        },
+        LoadBalancerForwardToRippledErrorTestBundle{
+            "BothRequestTimeout",
+            rpc::ClioError::etlREQUEST_TIMEOUT,
+            rpc::ClioError::etlREQUEST_TIMEOUT,
+            rpc::ClioError::etlREQUEST_TIMEOUT
+        },
+        LoadBalancerForwardToRippledErrorTestBundle{
+            "InvalidResponse_RequestError",
+            rpc::ClioError::etlINVALID_RESPONSE,
+            rpc::ClioError::etlREQUEST_ERROR,
+            rpc::ClioError::etlINVALID_RESPONSE
+        }
+    ),
+    tests::util::NameGenerator
+);
+
+TEST_P(LoadBalancerForwardToRippledErrorTests, bothSourcesFail)
 {
     EXPECT_CALL(sourceFactory_, makeSource).Times(2);
     auto loadBalancer = makeLoadBalancer();
@@ -593,15 +644,17 @@ TEST_F(LoadBalancerForwardToRippledTests, bothSourcesFail)
         sourceFactory_.sourceAt(0),
         forwardToRippled(request_, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
-        .WillOnce(Return(std::unexpected{rpc::ClioError::etlCONNECTION_ERROR}));
+        .WillOnce(Return(std::unexpected{GetParam().firstSourceError}));
     EXPECT_CALL(
         sourceFactory_.sourceAt(1),
         forwardToRippled(request_, clientIP_, LoadBalancer::USER_FORWARDING_X_USER_VALUE, testing::_)
     )
-        .WillOnce(Return(std::unexpected{rpc::ClioError::etlCONNECTION_ERROR}));
+        .WillOnce(Return(std::unexpected{GetParam().secondSourceError}));
 
     runSpawn([&](boost::asio::yield_context yield) {
-        EXPECT_EQ(loadBalancer->forwardToRippled(request_, clientIP_, false, yield), std::nullopt);
+        auto const response = loadBalancer->forwardToRippled(request_, clientIP_, false, yield);
+        ASSERT_FALSE(response);
+        EXPECT_EQ(response.error(), GetParam().responseExpectedError);
     });
 }
 
