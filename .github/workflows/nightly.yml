@@ -189,7 +189,7 @@ jobs:
       publish_image: ${{ github.event_name != 'pull_request' }}
 
   create_issue_on_failure:
-    needs: [build, run_tests, nightly_release]
+    needs: [build, run_tests, nightly_release, build_and_publish_docker_image]
     if: ${{ always() && contains(needs.*.result, 'failure') && github.event_name != 'pull_request' }}
     runs-on: ubuntu-20.04
     permissions:
