@@ -72,7 +72,6 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input input, Context const& ctx)
         auto const header = sharedPtrBackend_->fetchLedgerBySequence(ledgerIndex, ctx.yield);
         auto const ledgerTime =
             std::chrono::system_clock::time_point{header->closeTime.time_since_epoch() + ripple::epoch_offset};
-        std::cout << "input" << ticks << "ledger" << ledgerTime.time_since_epoch().count() << std::endl;
         return ticks < ledgerTime.time_since_epoch().count();
     };
 
