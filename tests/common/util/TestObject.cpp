@@ -1137,7 +1137,6 @@ CreateMPTokenObject(
         mptoken.setFieldU64(ripple::sfLockedAmount, lockedAmount);
 
     return mptoken;
-
 }
 
 ripple::STObject

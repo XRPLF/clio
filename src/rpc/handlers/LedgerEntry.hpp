@@ -315,14 +315,16 @@ public:
              }}},
             {JS(mpt_issuance), validation::CustomValidators::Uint192HexStringValidator},
             {JS(mptoken),
-                validation::Type<std::string, boost::json::object>{},
-                meta::IfType<std::string>{malformedRequestHexStringValidator},
-                meta::IfType<boost::json::object>{
-                    meta::Section{
-                        {JS(account), validation::Required{}, validation::CustomValidators::AccountBase58Validator},
-                        {JS(mpt_issuance_id), validation::Required{}, validation::CustomValidators::Uint192HexStringValidator},
-                    },
-            }},
+             validation::Type<std::string, boost::json::object>{},
+             meta::IfType<std::string>{malformedRequestHexStringValidator},
+             meta::IfType<boost::json::object>{
+                 meta::Section{
+                     {JS(account), validation::Required{}, validation::CustomValidators::AccountBase58Validator},
+                     {JS(mpt_issuance_id),
+                      validation::Required{},
+                      validation::CustomValidators::Uint192HexStringValidator},
+                 },
+             }},
             {JS(ledger), check::Deprecated{}},
         };
 

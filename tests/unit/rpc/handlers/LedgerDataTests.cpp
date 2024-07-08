@@ -734,7 +734,8 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPTIssuance)
     backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     std::vector<Blob> bbs;
     EXPECT_CALL(*backend, doFetchSuccessorKey).Times(1);
@@ -777,7 +778,8 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPToken)
     backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     std::vector<Blob> bbs;
     EXPECT_CALL(*backend, doFetchSuccessorKey).Times(1);
