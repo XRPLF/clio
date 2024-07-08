@@ -110,7 +110,7 @@ ForwardingSource::forwardToRippled(
     auto responseObject = parsedResponse.as_object();
     responseObject["forwarded"] = true;
 
-    return std::move(responseObject);
+    return responseObject;
 }
 
 }  // namespace etl::impl
