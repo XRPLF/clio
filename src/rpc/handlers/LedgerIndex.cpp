@@ -61,10 +61,9 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input input, Context const& ctx)
         return fillOutputByIndex(maxIndex);
 
     auto const convertISOTimeStrToTicks = [](std::string const& isoTimeStr) {
-        std::tm time = {};
-        std::stringstream ss(isoTimeStr);
-        ss >> std::get_time(&time, DATE_FORMAT);
-        return std::chrono::system_clock::from_time_t(std::mktime(&time)).time_since_epoch().count();
+        std::tm timeStruct;
+        strptime(isoTimeStr.c_str(), DATE_FORMAT, &timeStruct);
+        return std::chrono::system_clock::from_time_t(timegm(&timeStruct)).time_since_epoch().count();
     };
 
     auto const ticks = convertISOTimeStrToTicks(*input.date);
@@ -73,6 +72,7 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input input, Context const& ctx)
         auto const header = sharedPtrBackend_->fetchLedgerBySequence(ledgerIndex, ctx.yield);
         auto const ledgerTime =
             std::chrono::system_clock::time_point{header->closeTime.time_since_epoch() + ripple::epoch_offset};
+        std::cout << "input" << ticks << "ledger" << ledgerTime.time_since_epoch().count() << std::endl;
         return ticks < ledgerTime.time_since_epoch().count();
     };
 
