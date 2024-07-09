@@ -30,6 +30,7 @@
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/STVector256.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/digest.h>
 
@@ -38,6 +39,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -129,21 +131,10 @@ AmendmentCenter::isEnabled(boost::asio::yield_context yield, AmendmentKey const&
 {
     namespace rg = std::ranges;
 
-    // the amendments should always be present on the ledger
-    auto const& amendments = backend_->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
-    ASSERT(amendments.has_value(), "Amendments ledger object must be present in the database");
-
-    ripple::SLE const amendmentsSLE{
-        ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key
-    };
-
-    if (not amendmentsSLE.isFieldPresent(ripple::sfAmendments))
-        return false;
-
-    auto const listAmendments = amendmentsSLE.getFieldV256(ripple::sfAmendments);
-
-    if (auto am = rg::find(all_, key.name, [](auto const& am) { return am.name; }); am != rg::end(all_)) {
-        return rg::find(listAmendments, am->feature) != rg::end(listAmendments);
+    auto const listAmendments = fetchAmendmentsList(yield, seq);
+    if (listAmendments) {
+        if (auto am = rg::find(all_, key.name, [](auto const& am) { return am.name; }); am != rg::end(all_))
+            return rg::find(*listAmendments, am->feature) != rg::end(*listAmendments);
     }
 
     return false;
@@ -153,29 +144,19 @@ std::vector<bool>
 AmendmentCenter::isEnabled(boost::asio::yield_context yield, std::vector<AmendmentKey> const& keys, uint32_t seq) const
 {
     namespace rg = std::ranges;
+    namespace vs = std::views;
 
-    // the amendments should always be present on the ledger
-    auto const& amendments = backend_->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
-    ASSERT(amendments.has_value(), "Amendments ledger object must be present in the database");
-
-    ripple::SLE const amendmentsSLE{
-        ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key
-    };
-
-    if (not amendmentsSLE.isFieldPresent(ripple::sfAmendments))
+    auto const listAmendments = fetchAmendmentsList(yield, seq);
+    if (not listAmendments)
         return std::vector<bool>(keys.size(), false);
 
-    auto const listAmendments = amendmentsSLE.getFieldV256(ripple::sfAmendments);
-    std::vector<bool> out;
-
-    rg::transform(keys, std::back_inserter(out), [this, &listAmendments](auto const& key) {
-        if (auto am = rg::find(all_, key.name, [](auto const& am) { return am.name; }); am != rg::end(all_)) {
-            return rg::find(listAmendments, am->feature) != rg::end(listAmendments);
-        }
-        return false;
-    });
-
-    return out;
+    return keys  //
+        | vs::transform([this, &listAmendments](auto const& key) {
+               if (auto am = rg::find(all_, key.name, [](auto const& am) { return am.name; }); am != rg::end(all_))
+                   return rg::find(*listAmendments, am->feature) != rg::end(*listAmendments);
+               return false;
+           })  //
+        | rg::to<std::vector>();
 }
 
 Amendment const&
@@ -195,6 +176,23 @@ ripple::uint256
 Amendment::GetAmendmentId(std::string_view name)
 {
     return ripple::sha512Half(ripple::Slice(name.data(), name.size()));
+}
+
+std::optional<ripple::STVector256 const>
+AmendmentCenter::fetchAmendmentsList(boost::asio::yield_context yield, uint32_t seq) const
+{
+    // the amendments should always be present on the ledger
+    auto const& amendments = backend_->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
+    ASSERT(amendments.has_value(), "Amendments ledger object must be present in the database");
+
+    ripple::SLE const amendmentsSLE{
+        ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key
+    };
+
+    if (not amendmentsSLE.isFieldPresent(ripple::sfAmendments))
+        return std::nullopt;
+
+    return amendmentsSLE.getFieldV256(ripple::sfAmendments);
 }
 
 }  // namespace data

@@ -40,6 +40,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -240,6 +241,10 @@ public:
      */
     Amendment const&
     operator[](AmendmentKey const& key) const final;
+
+private:
+    std::optional<ripple::STVector256 const>
+    fetchAmendmentsList(boost::asio::yield_context yield, uint32_t seq) const;
 };
 
 }  // namespace data

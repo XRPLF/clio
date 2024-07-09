@@ -64,24 +64,23 @@ FeatureHandler::process([[maybe_unused]] FeatureHandler::Input input, [[maybe_un
         return Error{*status};
 
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
-    auto const& supported = amendmentCenter_->getSupported();
+    auto const& all = amendmentCenter_->getAll();
 
-    auto searchPredicate = [search = input.feature](auto const& p) {
-        auto const& [name, feature] = p;
+    auto searchPredicate = [search = input.feature](auto const& feature) {
         if (search)
-            return ripple::to_string(feature.feature) == search.value() or name == search.value();
+            return ripple::to_string(feature.feature) == search.value() or feature.name == search.value();
         return true;
     };
 
-    auto filterTransformation = [&](auto const& p) {
-        auto const& [name, feature] = p;
+    auto filterTransformation = [&](auto const& feature) {
         return Output::Feature{
-            .name = name,
+            .name = feature.name,
             .key = ripple::to_string(feature.feature),
+            .supported = feature.isSupportedByClio,
         };
     };
 
-    auto const filtered = supported            //
+    auto const filtered = all                  //
         | vs::filter(searchPredicate)          //
         | vs::transform(filterTransformation)  //
         | rg::to<std::vector>();
@@ -148,7 +147,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, FeatureHandler::
     jv = {
         {JS(name), feature.name},
         {JS(enabled), feature.enabled},
-        {JS(supported), true},
+        {JS(supported), feature.supported},
     };
 }
 

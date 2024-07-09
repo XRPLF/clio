@@ -63,6 +63,7 @@ public:
         struct Feature {
             std::string name;
             std::string key;
+            bool supported = false;
             bool enabled = false;
         };
 
