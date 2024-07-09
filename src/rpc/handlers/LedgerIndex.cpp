@@ -22,19 +22,16 @@
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/TimeUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
-#include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/jss.h>
 
 #include <algorithm>
-#include <chrono>
 #include <cstdint>
-#include <ctime>
-#include <iomanip>
 #include <ranges>
 #include <sstream>
 #include <string>
@@ -61,17 +58,16 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input input, Context const& ctx)
         return fillOutputByIndex(maxIndex);
 
     auto const convertISOTimeStrToTicks = [](std::string const& isoTimeStr) {
-        std::tm timeStruct;
-        strptime(isoTimeStr.c_str(), DATE_FORMAT, &timeStruct);
-        return std::chrono::system_clock::from_time_t(timegm(&timeStruct)).time_since_epoch().count();
+        auto const systemTime = util::SystemTpFromUTCStr(isoTimeStr, DATE_FORMAT);
+        // systemTime must be valid after validation passed
+        return systemTime->time_since_epoch().count();
     };
 
     auto const ticks = convertISOTimeStrToTicks(*input.date);
 
     auto const earlierThan = [&](std::uint32_t ledgerIndex) {
         auto const header = sharedPtrBackend_->fetchLedgerBySequence(ledgerIndex, ctx.yield);
-        auto const ledgerTime =
-            std::chrono::system_clock::time_point{header->closeTime.time_since_epoch() + ripple::epoch_offset};
+        auto const ledgerTime = util::SystemTpFromLedgerCloseTime(header->closeTime);
         return ticks < ledgerTime.time_since_epoch().count();
     };
 
