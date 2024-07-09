@@ -61,7 +61,6 @@ public:
             std::string name;
             std::string key;
             bool enabled = false;
-            bool retired = false;
         };
 
         std::map<std::string, Feature> features;

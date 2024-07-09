@@ -52,6 +52,9 @@ namespace rpc {
 FeatureHandler::Result
 FeatureHandler::process([[maybe_unused]] FeatureHandler::Input input, [[maybe_unused]] Context const& ctx) const
 {
+    namespace vs = std::views;
+    namespace rg = std::ranges;
+
     auto const range = sharedPtrBackend_->fetchLedgerRange();
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
@@ -63,37 +66,39 @@ FeatureHandler::process([[maybe_unused]] FeatureHandler::Input input, [[maybe_un
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
     auto const& supported = amendmentCenter_->getSupported();
 
-    std::vector<Output::Feature> filtered;
-    std::ranges::transform(
-        supported  //
-            | std::views::filter([search = input.feature](auto const& p) {
-                  auto const& [name, feature] = p;
-                  if (search)
-                      return ripple::to_string(feature.feature) == search.value() or name == search.value();
-                  return true;
-              }),
-        std::back_inserter(filtered),
-        [&](auto const& p) {
-            auto const& [name, feature] = p;
-            return Output::Feature{
-                .name = name,
-                .key = ripple::to_string(feature.feature),
-                .enabled = false,              // transformed for filtered features below
-                .retired = feature.isRetired,  // TODO: this is current state, not by seq
-            };
-        }
-    );
+    auto searchPredicate = [search = input.feature](auto const& p) {
+        auto const& [name, feature] = p;
+        if (search)
+            return ripple::to_string(feature.feature) == search.value() or name == search.value();
+        return true;
+    };
+
+    auto filterTransformation = [&](auto const& p) {
+        auto const& [name, feature] = p;
+        return Output::Feature{
+            .name = name,
+            .key = ripple::to_string(feature.feature),
+        };
+    };
+
+    auto const filtered = supported            //
+        | vs::filter(searchPredicate)          //
+        | vs::transform(filterTransformation)  //
+        | rg::to<std::vector>();
 
     if (filtered.empty())
         return Error{Status{RippledError::rpcBAD_FEATURE}};
 
-    std::vector<data::AmendmentKey> keys;
-    std::ranges::transform(filtered, std::back_inserter(keys), [](auto const& feature) { return feature.name; });
-
     std::map<std::string, Output::Feature> features;
-    std::ranges::transform(
+    rg::transform(
         filtered,
-        amendmentCenter_->isEnabled(ctx.yield, keys, lgrInfo.seq),
+        amendmentCenter_->isEnabled(
+            ctx.yield,
+            filtered                                                                                   //
+                | vs::transform([](auto const& feature) { return data::AmendmentKey(feature.name); })  //
+                | rg::to<std::vector>(),
+            lgrInfo.seq
+        ),
         std::inserter(features, std::end(features)),
         [&](Output::Feature feature, bool isEnabled) {
             feature.enabled = isEnabled;
@@ -141,13 +146,10 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, FeatureHandler::
     using boost::json::value_from;
 
     jv = {
-        {JS(enabled), feature.enabled},
         {JS(name), feature.name},
+        {JS(enabled), feature.enabled},
         {JS(supported), true},
     };
-
-    if (feature.retired)
-        jv.as_object()[JS(vetoed)] = "Obsolete";
 }
 
 FeatureHandler::Input
