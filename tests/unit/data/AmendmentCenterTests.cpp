@@ -19,6 +19,7 @@
 
 #include "data/AmendmentCenter.hpp"
 #include "data/Types.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
@@ -30,12 +31,13 @@
 #include <xrpl/protocol/Indexes.h>
 
 #include <string>
+#include <vector>
 
 using namespace data;
 
 constexpr auto SEQ = 30;
 
-struct AmendmentCenterTest : util::prometheus::WithPrometheus, MockBackendTest {
+struct AmendmentCenterTest : util::prometheus::WithPrometheus, MockBackendTest, SyncAsioContextTest {
     AmendmentCenter amendmentCenter{backend};
 };
 
@@ -79,6 +81,23 @@ TEST_F(AmendmentCenterTest, IsEnabled)
     EXPECT_TRUE(amendmentCenter.isEnabled("fixUniversalNumber", SEQ));
     EXPECT_FALSE(amendmentCenter.isEnabled("unknown", SEQ));
     EXPECT_FALSE(amendmentCenter.isEnabled("ImmediateOfferKilled", SEQ));
+}
+
+TEST_F(AmendmentCenterTest, IsMultipleEnabled)
+{
+    auto const amendments = CreateAmendmentsObject({Amendments::fixUniversalNumber});
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
+        .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
+
+    runSpawn([this](auto yield) {
+        std::vector<data::AmendmentKey> keys{"fixUniversalNumber", "unknown", "ImmediateOfferKilled"};
+        auto const result = amendmentCenter.isEnabled(yield, keys, SEQ);
+
+        EXPECT_EQ(result.size(), keys.size());
+        EXPECT_TRUE(result.at(0));
+        EXPECT_FALSE(result.at(1));
+        EXPECT_FALSE(result.at(2));
+    });
 }
 
 TEST(AmendmentTest, GenerateAmendmentId)
