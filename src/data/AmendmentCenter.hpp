@@ -243,7 +243,7 @@ public:
     operator[](AmendmentKey const& key) const final;
 
 private:
-    std::optional<ripple::STVector256 const>
+    std::optional<std::vector<ripple::uint256>>
     fetchAmendmentsList(boost::asio::yield_context yield, uint32_t seq) const;
 };
 

@@ -72,32 +72,25 @@ FeatureHandler::process([[maybe_unused]] FeatureHandler::Input input, [[maybe_un
         return true;
     };
 
-    auto filterTransformation = [&](auto const& feature) {
+    std::vector<Output::Feature> filtered;
+    rg::transform(all | vs::filter(searchPredicate), std::back_inserter(filtered), [&](auto const& feature) {
         return Output::Feature{
             .name = feature.name,
             .key = ripple::to_string(feature.feature),
             .supported = feature.isSupportedByClio,
         };
-    };
-
-    auto const filtered = all                  //
-        | vs::filter(searchPredicate)          //
-        | vs::transform(filterTransformation)  //
-        | rg::to<std::vector>();
+    });
 
     if (filtered.empty())
         return Error{Status{RippledError::rpcBAD_FEATURE}};
 
+    std::vector<data::AmendmentKey> names;
+    rg::transform(filtered, std::back_inserter(names), [](auto const& feature) { return feature.name; });
+
     std::map<std::string, Output::Feature> features;
     rg::transform(
         filtered,
-        amendmentCenter_->isEnabled(
-            ctx.yield,
-            filtered                                                                                   //
-                | vs::transform([](auto const& feature) { return data::AmendmentKey(feature.name); })  //
-                | rg::to<std::vector>(),
-            lgrInfo.seq
-        ),
+        amendmentCenter_->isEnabled(ctx.yield, names, lgrInfo.seq),
         std::inserter(features, std::end(features)),
         [&](Output::Feature feature, bool isEnabled) {
             feature.enabled = isEnabled;
