@@ -90,6 +90,10 @@ public:
                     case rpc::ClioError::rpcINVALID_HOT_WALLET:
                     case rpc::ClioError::rpcFIELD_NOT_FOUND_TRANSACTION:
                     case rpc::ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID:
+                    case rpc::ClioError::etlCONNECTION_ERROR:
+                    case rpc::ClioError::etlREQUEST_ERROR:
+                    case rpc::ClioError::etlREQUEST_TIMEOUT:
+                    case rpc::ClioError::etlINVALID_RESPONSE:
                         ASSERT(
                             false, "Unknown rpc error code {}", static_cast<int>(*clioCode)
                         );  // this should never happen
