@@ -213,6 +213,17 @@ public:
     isEnabled(boost::asio::yield_context yield, AmendmentKey const& key, uint32_t seq) const final;
 
     /**
+     * @brief Check whether an amendment was/is enabled for a given sequence
+     *
+     * @param yield The coroutine context to use
+     * @param keys The keys of the amendments to check
+     * @param seq The sequence to check for
+     * @return A vector of bools representing enabled state for each of the given keys
+     */
+    std::vector<bool>
+    isEnabled(boost::asio::yield_context yield, std::vector<AmendmentKey> const& keys, uint32_t seq) const final;
+
+    /**
      * @brief Get an amendment
      *
      * @param key The key of the amendment to get

@@ -60,11 +60,6 @@ public:
         if (ctx.method == "subscribe" || ctx.method == "unsubscribe")
             return false;
 
-        // TODO https://github.com/XRPLF/clio/issues/1131 - remove once clio-native feature is
-        // implemented fully. For now we disallow forwarding of the admin api, only user api is allowed.
-        if (ctx.method == "feature" and not request.contains("vetoed"))
-            return true;
-
         if (handlerProvider_->isClioOnly(ctx.method))
             return false;
 

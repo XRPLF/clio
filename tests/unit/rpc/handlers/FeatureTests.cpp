@@ -22,6 +22,7 @@
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Feature.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
+#include "util/MockAmendmentCenter.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/json/parse.hpp>
@@ -29,12 +30,15 @@
 
 using namespace rpc;
 
-class RPCFeatureHandlerTest : public HandlerBaseTest {};
+class RPCFeatureHandlerTest : public HandlerBaseTest {
+protected:
+    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr;
+};
 
 TEST_F(RPCFeatureHandlerTest, AlwaysNoPermissionForVetoed)
 {
-    runSpawn([](auto yield) {
-        auto const handler = AnyHandler{FeatureHandler{}};
+    runSpawn([this](auto yield) {
+        auto const handler = AnyHandler{FeatureHandler{backend, mockAmendmentCenterPtr}};
         auto const output =
             handler.process(boost::json::parse(R"({"vetoed": true, "feature": "foo"})"), Context{yield});
 
@@ -46,14 +50,4 @@ TEST_F(RPCFeatureHandlerTest, AlwaysNoPermissionForVetoed)
             err.at("error_message").as_string(), "The admin portion of feature API is not available through Clio."
         );
     });
-}
-
-TEST(RPCFeatureHandlerDeathTest, ProcessCausesDeath)
-{
-    FeatureHandler handler{};
-    boost::asio::io_context ioContext;
-    boost::asio::spawn(ioContext, [&](auto yield) {
-        EXPECT_DEATH(handler.process(FeatureHandler::Input{"foo"}, Context{yield}), "");
-    });
-    ioContext.run();
 }

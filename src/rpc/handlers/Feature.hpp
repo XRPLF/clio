@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "data/AmendmentCenterInterface.hpp"
+#include "data/BackendInterface.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 
@@ -27,6 +29,9 @@
 #include <xrpl/protocol/jss.h>
 
 #include <cstdint>
+#include <map>
+#include <memory>
+#include <optional>
 #include <string>
 
 namespace rpc {
@@ -35,23 +40,53 @@ namespace rpc {
  * @brief Contains common functionality for handling the `server_info` command
  */
 class FeatureHandler {
+    std::shared_ptr<BackendInterface> sharedPtrBackend_;
+    std::shared_ptr<data::AmendmentCenterInterface const> amendmentCenter_;
+
 public:
     /**
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string feature;
+        std::optional<std::string> ledgerHash;
+        std::optional<uint32_t> ledgerIndex;
+        std::optional<std::string> feature;
     };
 
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
+        struct Feature {
+            std::string name;
+            std::string key;
+            bool enabled = false;
+            bool retired = false;
+        };
+
+        std::map<std::string, Feature> features;
+        std::string ledgerHash;
+        uint32_t ledgerIndex{};
+
         // validated should be sent via framework
         bool validated = true;
     };
 
     using Result = HandlerReturnType<Output>;
+
+    /**
+     * @brief Construct a new FeatureHandler object
+     *
+     * @param backend The backend to use
+     * @param amendmentCenter The amendment center to use
+     */
+    FeatureHandler(
+        std::shared_ptr<BackendInterface> const& backend,
+        std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter
+    )
+        : sharedPtrBackend_(backend), amendmentCenter_(amendmentCenter)
+    {
+    }
 
     /**
      * @brief Returns the API specification for the command
@@ -69,8 +104,8 @@ public:
      * @param ctx The context of the request
      * @return The result of the operation
      */
-    static Result
-    process(Input input, Context const& ctx);  // NOLINT(readability-convert-member-functions-to-static)
+    Result
+    process(Input input, Context const& ctx) const;  // NOLINT(readability-convert-member-functions-to-static)
 
 private:
     /**
@@ -81,6 +116,15 @@ private:
      */
     friend void
     tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output const& output);
+
+    /**
+     * @brief Convert the Feature to a JSON object
+     *
+     * @param [out] jv The JSON object to convert to
+     * @param feature The feature to convert
+     */
+    friend void
+    tag_invoke(boost::json::value_from_tag, boost::json::value& jv, Output::Feature const& feature);
 
     /**
      * @brief Convert a JSON object to Input type
