@@ -119,6 +119,7 @@ target_sources(
           util/RandomTests.cpp
           util/RetryTests.cpp
           util/SignalsHandlerTests.cpp
+          util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
           # Webserver
           web/AdminVerificationTests.cpp

@@ -22,6 +22,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/TimeUtils.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
@@ -65,10 +66,8 @@ TimeFormatValidator::verify(boost::json::value const& value, std::string_view ke
     if (not value.as_object().at(key).is_string())
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
-    std::tm time = {};
-    std::stringstream stream(value_to<std::string>(value.as_object().at(key)));
-    stream >> std::get_time(&time, format_.c_str());
-    if (stream.fail())
+    auto const ret = util::SystemTpFromUTCStr(value_to<std::string>(value.as_object().at(key)), format_);
+    if (!ret)
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
     return {};
