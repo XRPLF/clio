@@ -57,6 +57,9 @@ public:
      * @brief A struct to hold the output data of the command
      */
     struct Output {
+        /**
+         * @brief Represents an amendment/feature
+         */
         struct Feature {
             std::string name;
             std::string key;
