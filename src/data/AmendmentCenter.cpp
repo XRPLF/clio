@@ -74,6 +74,11 @@ AmendmentKey::operator std::string const&() const
     return name;
 }
 
+AmendmentKey::operator std::string_view() const
+{
+    return name;
+}
+
 AmendmentKey::operator ripple::uint256() const
 {
     return Amendment::GetAmendmentId(name);
