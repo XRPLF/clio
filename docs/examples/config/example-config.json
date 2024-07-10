@@ -31,7 +31,7 @@
     "etl_sources": [
         {
             "ip": "127.0.0.1",
-            "ws_port": "6006",
+            "ws_port": "6005",
             "grpc_port": "50051"
         }
     ],
