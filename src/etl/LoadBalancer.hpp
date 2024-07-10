@@ -25,6 +25,7 @@
 #include "etl/Source.hpp"
 #include "etl/impl/ForwardingCache.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
+#include "rpc/Errors.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
@@ -41,6 +42,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <string>
@@ -181,9 +183,9 @@ public:
      * @param clientIp The IP address of the peer, if known
      * @param isAdmin Whether the request is from an admin
      * @param yield The coroutine context
-     * @return Response received from rippled node as JSON object on success; nullopt on failure
+     * @return Response received from rippled node as JSON object on success or error on failure
      */
-    std::optional<boost::json::object>
+    std::expected<boost::json::object, rpc::ClioError>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& clientIp,

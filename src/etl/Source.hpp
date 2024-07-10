@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
+#include "rpc/Errors.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
@@ -34,6 +35,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -131,9 +133,9 @@ public:
      * @param forwardToRippledClientIp IP of the client forwarding this request if known
      * @param xUserValue Value of the X-User header
      * @param yield The coroutine context
-     * @return Response wrapped in an optional on success; nullopt otherwise
+     * @return Response on success or error on failure
      */
-    virtual std::optional<boost::json::object>
+    virtual std::expected<boost::json::object, rpc::ClioError>
     forwardToRippled(
         boost::json::object const& request,
         std::optional<std::string> const& forwardToRippledClientIp,

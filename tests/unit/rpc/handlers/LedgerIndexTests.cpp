@@ -31,6 +31,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -88,6 +89,24 @@ TEST_F(RPCLedgerIndexTest, EarlierThanMinLedger)
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
     });
+}
+
+TEST_F(RPCLedgerIndexTest, ChangeTimeZone)
+{
+    setenv("TZ", "EST+5", 1);
+    backend->setRange(RANGEMIN, RANGEMAX);
+    auto const handler = AnyHandler{LedgerIndexHandler{backend}};
+    auto const req = json::parse(R"({"date": "2024-06-25T12:23:05Z"})");
+    auto const ledgerHeader =
+        CreateLedgerHeaderWithUnixTime(LEDGERHASH, RANGEMIN, 1719318190);  //"2024-06-25T12:23:10Z"
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMIN, _)).WillOnce(Return(ledgerHeader));
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+    });
+    unsetenv("TZ");
 }
 
 struct LedgerIndexTestsCaseBundle {

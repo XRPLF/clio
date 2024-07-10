@@ -99,6 +99,11 @@ getErrorInfo(ClioError code)
         {ClioError::rpcCOMMAND_NOT_STRING, "commandNotString", "Method is not a string."},
         {ClioError::rpcCOMMAND_IS_EMPTY, "emptyCommand", "Method is an empty string."},
         {ClioError::rpcPARAMS_UNPARSEABLE, "paramsUnparseable", "Params must be an array holding exactly one object."},
+        // etl related errors
+        {ClioError::etlCONNECTION_ERROR, "connectionError", "Couldn't connect to rippled."},
+        {ClioError::etlREQUEST_ERROR, "requestError", "Error sending request to rippled."},
+        {ClioError::etlREQUEST_TIMEOUT, "timeout", "Request to rippled timed out."},
+        {ClioError::etlINVALID_RESPONSE, "invalidResponse", "Rippled returned an invalid response."}
     };
 
     auto matchByCode = [code](auto const& info) { return info.code == code; };

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,32 +19,28 @@
 
 #pragma once
 
-#include "rpc/Errors.hpp"
-#include "util/FakeFetchResponse.hpp"
+#include <xrpl/basics/chrono.h>
 
-#include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
-#include <boost/json/object.hpp>
-#include <boost/json/value.hpp>
-#include <gmock/gmock.h>
-
-#include <cstdint>
-#include <expected>
+#include <chrono>
 #include <optional>
-#include <string>
 
-struct MockLoadBalancer {
-    using RawLedgerObjectType = FakeLedgerObject;
+namespace util {
 
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
+/**
+ * @brief Convert a UTC date string to a system_clock::time_point if possible.
+ * @param dateStr The UTC date string to convert.
+ * @param format The format of the date string.
+ * @return The system_clock::time_point if the conversion was successful, otherwise std::nullopt.
+ */
+[[nodiscard]] std::optional<std::chrono::system_clock::time_point>
+SystemTpFromUTCStr(std::string const& dateStr, std::string const& format);
 
-    using ForwardToRippledReturnType = std::expected<boost::json::object, rpc::ClioError>;
-    MOCK_METHOD(
-        ForwardToRippledReturnType,
-        forwardToRippled,
-        (boost::json::object const&, std::optional<std::string> const&, bool, boost::asio::yield_context),
-        (const)
-    );
-};
+/**
+ * @brief Convert a ledger close time which is XRPL network clock to a system_clock::time_point.
+ * @param closeTime The ledger close time to convert.
+ * @return The system_clock::time_point.
+ */
+[[nodiscard]] std::chrono::system_clock::time_point
+SystemTpFromLedgerCloseTime(ripple::NetClock::time_point closeTime);
+
+}  // namespace util
