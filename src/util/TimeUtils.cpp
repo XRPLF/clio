@@ -19,13 +19,19 @@
 
 #include "util/TimeUtils.hpp"
 
+#include <time.h>
 #include <xrpl/basics/chrono.h>
+
+#include <chrono>
+#include <ctime>
+#include <optional>
+#include <string>
 
 namespace util {
 [[nodiscard]] std::optional<std::chrono::system_clock::time_point>
 SystemTpFromUTCStr(std::string const& dateStr, std::string const& format)
 {
-    std::tm timeStruct;
+    std::tm timeStruct{};
     auto const ret = strptime(dateStr.c_str(), format.c_str(), &timeStruct);
     if (ret == nullptr) {
         return std::nullopt;

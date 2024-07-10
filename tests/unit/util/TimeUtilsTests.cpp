@@ -20,13 +20,17 @@
 #include "util/TimeUtils.hpp"
 
 #include <gtest/gtest.h>
+#include <xrpl/basics/chrono.h>
+
+#include <chrono>
+#include <ctime>
 
 TEST(TimeUtilTests, SystemTpFromUTCStrSuccess)
 {
     auto const tp = util::SystemTpFromUTCStr("2024-01-01T10:50:40Z", "%Y-%m-%dT%H:%M:%SZ");
     ASSERT_TRUE(tp.has_value());
     auto const time = std::chrono::system_clock::to_time_t(tp.value());
-    std::tm timeStruct;
+    std::tm timeStruct{};
     gmtime_r(&time, &timeStruct);
     EXPECT_EQ(timeStruct.tm_year + 1900, 2024);
     EXPECT_EQ(timeStruct.tm_mon, 0);
