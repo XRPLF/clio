@@ -115,6 +115,31 @@ TEST_F(AmendmentCenterTest, IsEnabledThrowsWhenUnavailable)
     });
 }
 
+TEST_F(AmendmentCenterTest, IsEnabledReturnsFalseWhenNoAmendments)
+{
+    auto const amendments = CreateBrokenAmendmentsObject();
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
+        .WillOnce(testing::Return(amendments.getSerializer().peekData()));
+
+    runSpawn([this](auto yield) { EXPECT_FALSE(amendmentCenter.isEnabled(yield, "irrelevant", SEQ)); });
+}
+
+TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenNoAmendments)
+{
+    auto const amendments = CreateBrokenAmendmentsObject();
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
+        .WillOnce(testing::Return(amendments.getSerializer().peekData()));
+
+    runSpawn([this](auto yield) {
+        std::vector<data::AmendmentKey> keys{"fixUniversalNumber", "ImmediateOfferKilled"};
+        auto const vec = amendmentCenter.isEnabled(yield, keys, SEQ);
+
+        EXPECT_EQ(vec.size(), keys.size());
+        for (auto const& val : vec)
+            EXPECT_FALSE(val);
+    });
+}
+
 TEST(AmendmentTest, GenerateAmendmentId)
 {
     // https://xrpl.org/known-amendments.html#disallowincoming refer to the published id

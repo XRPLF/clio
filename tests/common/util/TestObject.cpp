@@ -903,6 +903,16 @@ CreateAmendmentsObject(std::vector<ripple::uint256> const& enabledAmendments)
 }
 
 ripple::STObject
+CreateBrokenAmendmentsObject()
+{
+    auto amendments = ripple::STObject(ripple::sfLedgerEntry);
+    amendments.setFieldU16(ripple::sfLedgerEntryType, ripple::ltAMENDMENTS);
+    amendments.setFieldU32(ripple::sfFlags, 0);
+    // Note: no sfAmendments present
+    return amendments;
+}
+
+ripple::STObject
 CreateAMMObject(
     std::string_view accountId,
     std::string_view assetCurrency,
