@@ -142,7 +142,7 @@ CheckOptions:
   readability-braces-around-statements.ShortStatementLines: 2
   bugprone-unsafe-functions.ReportMoreUnsafeFunctions: true
   bugprone-unused-return-value.CheckedReturnTypes: ::std::error_code;::std::error_condition;::std::errc
-  misc-include-cleaner.IgnoreHeaders: '.*/(detail|impl)/.*;.*(expected|unexpected).*;.*ranges_lower_bound\.h'
+  misc-include-cleaner.IgnoreHeaders: '.*/(detail|impl)/.*;.*(expected|unexpected).*;.*ranges_lower_bound\.h;time.h;stdlib.h'
 
 HeaderFilterRegex: '^.*/(src|tests)/.*\.(h|hpp)$'
 WarningsAsErrors: '*'
