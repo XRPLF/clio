@@ -19,7 +19,6 @@
 
 #include "util/TimeUtils.hpp"
 
-#include <time.h>
 #include <xrpl/basics/chrono.h>
 
 #include <chrono>
