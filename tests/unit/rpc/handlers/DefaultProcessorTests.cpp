@@ -53,6 +53,7 @@ TEST_F(RPCDefaultProcessorTest, ValidInput)
 
         auto const ret = processor(handler, input, Context{yield});
         ASSERT_TRUE(ret);  // no error
+        EXPECT_TRUE(ret.warnings.empty());
     });
 }
 
@@ -68,6 +69,7 @@ TEST_F(RPCDefaultProcessorTest, NoInputVaildCall)
 
         auto const ret = processor(handler, input, Context{yield});
         ASSERT_TRUE(ret);  // no error
+        EXPECT_TRUE(ret.warnings.empty());
     });
 }
 
@@ -83,5 +85,6 @@ TEST_F(RPCDefaultProcessorTest, InvalidInput)
 
         auto const ret = processor(handler, input, Context{yield});
         ASSERT_FALSE(ret);  // returns error
+        EXPECT_TRUE(ret.warnings.empty());
     });
 }
