@@ -29,6 +29,7 @@
 #include <boost/json/value.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <stdlib.h>
 
 #include <cstdint>
 #include <string>
