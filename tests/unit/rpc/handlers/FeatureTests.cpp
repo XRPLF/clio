@@ -257,11 +257,6 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaNameWithSingleSupportedAndEnabledRes
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
-    auto const amendments =
-        CreateAmendmentsObject({Amendments::fixUniversalNumber, Amendments::fixRemoveNFTokenAutoTrustLine});
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
-        .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
-
     auto const expectedOutput = fmt::format(
         R"({{
             "features": {{
@@ -316,11 +311,6 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaHashWithSingleResult)
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
-    auto const amendments =
-        CreateAmendmentsObject({Amendments::fixUniversalNumber, Amendments::fixRemoveNFTokenAutoTrustLine});
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
-        .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
-
     auto const expectedOutput = fmt::format(
         R"({{
             "features": {{
@@ -367,10 +357,6 @@ TEST_F(RPCFeatureHandlerTest, BadFeaturePath)
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
 
-    auto const amendments = CreateAmendmentsObject({Amendments::fixUniversalNumber});
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
-        .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
-
     runSpawn([this](auto yield) {
         auto const handler = AnyHandler{FeatureHandler{backend, mockAmendmentCenterPtr}};
         auto const output = handler.process(boost::json::parse(R"({"feature": "nonexistent"})"), Context{yield});
@@ -413,8 +399,6 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathWithMultipleResults)
 
     auto const amendments =
         CreateAmendmentsObject({Amendments::fixUniversalNumber, Amendments::fixRemoveNFTokenAutoTrustLine});
-    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
-        .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
 
     auto const expectedOutput = fmt::format(
         R"({{

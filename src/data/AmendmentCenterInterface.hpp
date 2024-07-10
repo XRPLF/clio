@@ -43,7 +43,7 @@ public:
      * @param key The key of the amendment to check
      * @return true if supported; false otherwise
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     isSupported(AmendmentKey const& key) const = 0;
 
     /**
@@ -51,7 +51,7 @@ public:
      *
      * @return The amendments supported by Clio
      */
-    virtual std::map<std::string, Amendment> const&
+    [[nodiscard]] virtual std::map<std::string, Amendment> const&
     getSupported() const = 0;
 
     /**
@@ -59,7 +59,7 @@ public:
      *
      * @return All known amendments as a vector
      */
-    virtual std::vector<Amendment> const&
+    [[nodiscard]] virtual std::vector<Amendment> const&
     getAll() const = 0;
 
     /**
@@ -69,7 +69,7 @@ public:
      * @param seq The sequence to check for
      * @return true if enabled; false otherwise
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     isEnabled(AmendmentKey const& key, uint32_t seq) const = 0;
 
     /**
@@ -80,7 +80,7 @@ public:
      * @param seq The sequence to check for
      * @return true if enabled; false otherwise
      */
-    virtual bool
+    [[nodiscard]] virtual bool
     isEnabled(boost::asio::yield_context yield, AmendmentKey const& key, uint32_t seq) const = 0;
 
     /**
@@ -91,7 +91,7 @@ public:
      * @param seq The sequence to check for
      * @return A vector of bools representing enabled state for each of the given keys
      */
-    virtual std::vector<bool>
+    [[nodiscard]] virtual std::vector<bool>
     isEnabled(boost::asio::yield_context yield, std::vector<AmendmentKey> const& keys, uint32_t seq) const = 0;
 
     /**
@@ -100,7 +100,7 @@ public:
      * @param key The key of the amendment to get
      * @return The amendment as a const ref; asserts if the amendment is unknown
      */
-    virtual Amendment const&
+    [[nodiscard]] virtual Amendment const&
     getAmendment(AmendmentKey const& key) const = 0;
 
     /**
@@ -109,7 +109,7 @@ public:
      * @param key The amendment key from @see Amendments
      * @return The amendment as a const ref; asserts if the amendment is unknown
      */
-    virtual Amendment const&
+    [[nodiscard]] virtual Amendment const&
     operator[](AmendmentKey const& key) const = 0;
 };
 

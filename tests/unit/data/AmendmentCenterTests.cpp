@@ -30,12 +30,14 @@
 #include <xrpl/protocol/Feature.h>
 #include <xrpl/protocol/Indexes.h>
 
+#include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 using namespace data;
 
-constexpr auto SEQ = 30;
+constexpr auto SEQ = 30u;
 
 struct AmendmentCenterTest : util::prometheus::WithPrometheus, MockBackendTest, SyncAsioContextTest {
     AmendmentCenter amendmentCenter{backend};
@@ -87,7 +89,7 @@ TEST_F(AmendmentCenterTest, IsMultipleEnabled)
 {
     auto const amendments = CreateAmendmentsObject({Amendments::fixUniversalNumber});
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
-        .WillRepeatedly(testing::Return(amendments.getSerializer().peekData()));
+        .WillOnce(testing::Return(amendments.getSerializer().peekData()));
 
     runSpawn([this](auto yield) {
         std::vector<data::AmendmentKey> keys{"fixUniversalNumber", "unknown", "ImmediateOfferKilled"};
@@ -97,6 +99,19 @@ TEST_F(AmendmentCenterTest, IsMultipleEnabled)
         EXPECT_TRUE(result.at(0));
         EXPECT_FALSE(result.at(1));
         EXPECT_FALSE(result.at(2));
+    });
+}
+
+TEST_F(AmendmentCenterTest, IsEnabledThrowsWhenUnavailable)
+{
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
+        .WillOnce(testing::Return(std::nullopt));
+
+    runSpawn([this](auto yield) {
+        EXPECT_THROW(
+            { [[maybe_unused]] auto const result = amendmentCenter.isEnabled(yield, "irrelevant", SEQ); },
+            std::runtime_error
+        );
     });
 }
 
@@ -113,8 +128,8 @@ struct AmendmentCenterDeathTest : AmendmentCenterTest {};
 
 TEST_F(AmendmentCenterDeathTest, GetInvalidAmendmentAsserts)
 {
-    EXPECT_DEATH({ amendmentCenter.getAmendment("invalidAmendmentKey"); }, ".*");
-    EXPECT_DEATH({ amendmentCenter["invalidAmendmentKey"]; }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = amendmentCenter.getAmendment("invalidAmendmentKey"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = amendmentCenter["invalidAmendmentKey"]; }, ".*");
 }
 
 struct AmendmentKeyTest : testing::Test {};

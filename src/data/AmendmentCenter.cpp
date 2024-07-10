@@ -41,6 +41,7 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -54,6 +55,15 @@ SUPPORTED_AMENDMENTS()
 {
     static std::unordered_set<std::string> amendments = {};
     return amendments;
+}
+
+bool
+lookupAmendment(auto const& allAmendments, std::vector<ripple::uint256> const& ledgerAmendments, std::string_view name)
+{
+    namespace rg = std::ranges;
+    if (auto const am = rg::find(allAmendments, name, &data::Amendment::name); am != rg::end(allAmendments))
+        return rg::find(ledgerAmendments, am->feature) != rg::end(ledgerAmendments);
+    return false;
 }
 
 }  // namespace
@@ -134,12 +144,8 @@ AmendmentCenter::isEnabled(AmendmentKey const& key, uint32_t seq) const
 bool
 AmendmentCenter::isEnabled(boost::asio::yield_context yield, AmendmentKey const& key, uint32_t seq) const
 {
-    namespace rg = std::ranges;
-
-    if (auto const listAmendments = fetchAmendmentsList(yield, seq); listAmendments) {
-        if (auto am = rg::find(all_, key.name, [](auto const& am) { return am.name; }); am != rg::end(all_))
-            return rg::find(*listAmendments, am->feature) != rg::end(*listAmendments);
-    }
+    if (auto const listAmendments = fetchAmendmentsList(yield, seq); listAmendments)
+        return lookupAmendment(all_, *listAmendments, key);
 
     return false;
 }
@@ -152,9 +158,7 @@ AmendmentCenter::isEnabled(boost::asio::yield_context yield, std::vector<Amendme
     if (auto const listAmendments = fetchAmendmentsList(yield, seq); listAmendments) {
         std::vector<bool> out;
         rg::transform(keys, std::back_inserter(out), [this, &listAmendments](auto const& key) {
-            if (auto am = rg::find(all_, key.name, [](auto const& am) { return am.name; }); am != rg::end(all_))
-                return rg::find(*listAmendments, am->feature) != rg::end(*listAmendments);
-            return false;
+            return lookupAmendment(all_, *listAmendments, key);
         });
 
         return out;
@@ -186,8 +190,9 @@ std::optional<std::vector<ripple::uint256>>
 AmendmentCenter::fetchAmendmentsList(boost::asio::yield_context yield, uint32_t seq) const
 {
     // the amendments should always be present on the ledger
-    auto const& amendments = backend_->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
-    ASSERT(amendments.has_value(), "Amendments ledger object must be present in the database");
+    auto const amendments = backend_->fetchLedgerObject(ripple::keylet::amendments().key, seq, yield);
+    if (not amendments.has_value())
+        throw std::runtime_error("Amendments ledger object must be present in the database");
 
     ripple::SLE const amendmentsSLE{
         ripple::SerialIter{amendments->data(), amendments->size()}, ripple::keylet::amendments().key
