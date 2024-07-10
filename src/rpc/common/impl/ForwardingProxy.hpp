@@ -95,7 +95,7 @@ public:
         auto res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.isAdmin, ctx.yield);
         if (not res) {
             notifyFailedToForward(ctx.method);
-            return Result{Status{RippledError::rpcFAILED_TO_FORWARD}};
+            return Result{Status{CombinedError{res.error()}}};
         }
 
         notifyForwarded(ctx.method);

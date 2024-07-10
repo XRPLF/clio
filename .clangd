@@ -9,3 +9,5 @@ Diagnostics:
       - ".*/(detail|impl)/.*"
       - ".*expected.*"
       - ".*ranges_lower_bound.h"
+      - "time.h"
+      - "stdlib.h"
