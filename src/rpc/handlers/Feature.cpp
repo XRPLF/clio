@@ -19,30 +19,88 @@
 
 #include "rpc/handlers/Feature.hpp"
 
+#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/RPCHelpers.hpp"
 #include "rpc/common/MetaProcessors.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
-#include "util/Assert.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
 
+#include <algorithm>
 #include <cstdint>
+#include <iterator>
+#include <map>
+#include <ranges>
 #include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 namespace rpc {
 
 FeatureHandler::Result
-FeatureHandler::process([[maybe_unused]] FeatureHandler::Input input, [[maybe_unused]] Context const& ctx)
+FeatureHandler::process(FeatureHandler::Input input, Context const& ctx) const
 {
-    // For now this handler only fires when "vetoed" is set in the request.
-    // This always leads to a `notSupported` error as we don't want anyone to be able to
-    ASSERT(false, "FeatureHandler::process is not implemented.");
-    return Output{};
+    namespace vs = std::views;
+    namespace rg = std::ranges;
+
+    auto const range = sharedPtrBackend_->fetchLedgerRange();
+    auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
+        *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
+    );
+
+    if (auto const status = std::get_if<Status>(&lgrInfoOrStatus))
+        return Error{*status};
+
+    auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
+    auto const& all = amendmentCenter_->getAll();
+
+    auto searchPredicate = [search = input.feature](auto const& feature) {
+        if (search)
+            return ripple::to_string(feature.feature) == search.value() or feature.name == search.value();
+        return true;
+    };
+
+    std::vector<Output::Feature> filtered;
+    rg::transform(all | vs::filter(searchPredicate), std::back_inserter(filtered), [&](auto const& feature) {
+        return Output::Feature{
+            .name = feature.name,
+            .key = ripple::to_string(feature.feature),
+            .supported = feature.isSupportedByClio,
+        };
+    });
+
+    if (filtered.empty())
+        return Error{Status{RippledError::rpcBAD_FEATURE}};
+
+    std::vector<data::AmendmentKey> names;
+    rg::transform(filtered, std::back_inserter(names), [](auto const& feature) { return feature.name; });
+
+    std::map<std::string, Output::Feature> features;
+    rg::transform(
+        filtered,
+        amendmentCenter_->isEnabled(ctx.yield, names, lgrInfo.seq),
+        std::inserter(features, std::end(features)),
+        [&](Output::Feature feature, bool isEnabled) {
+            feature.enabled = isEnabled;
+            return std::make_pair(feature.key, std::move(feature));
+        }
+    );
+
+    return Output{
+        .features = std::move(features), .ledgerHash = ripple::strHex(lgrInfo.hash), .ledgerIndex = lgrInfo.seq
+    };
 }
 
 RpcSpecConstRef
@@ -55,6 +113,8 @@ FeatureHandler::spec([[maybe_unused]] uint32_t apiVersion)
              validation::NotSupported{},
              Status(RippledError::rpcNO_PERMISSION, "The admin portion of feature API is not available through Clio.")
          }},
+        {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
+        {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
     };
     return rpcSpec;
 }
@@ -65,7 +125,22 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, FeatureHandler::
     using boost::json::value_from;
 
     jv = {
+        {JS(features), value_from(output.features)},
+        {JS(ledger_hash), output.ledgerHash},
+        {JS(ledger_index), output.ledgerIndex},
         {JS(validated), output.validated},
+    };
+}
+
+void
+tag_invoke(boost::json::value_from_tag, boost::json::value& jv, FeatureHandler::Output::Feature const& feature)
+{
+    using boost::json::value_from;
+
+    jv = {
+        {JS(name), feature.name},
+        {JS(enabled), feature.enabled},
+        {JS(supported), feature.supported},
     };
 }
 
@@ -78,6 +153,16 @@ tag_invoke(boost::json::value_to_tag<FeatureHandler::Input>, boost::json::value 
     if (jsonObject.contains(JS(feature)))
         input.feature = jv.at(JS(feature)).as_string();
 
+    if (jsonObject.contains(JS(ledger_hash)))
+        input.ledgerHash = boost::json::value_to<std::string>(jv.at(JS(ledger_hash)));
+
+    if (jsonObject.contains(JS(ledger_index))) {
+        if (!jsonObject.at(JS(ledger_index)).is_string()) {
+            input.ledgerIndex = jv.at(JS(ledger_index)).as_int64();
+        } else if (jsonObject.at(JS(ledger_index)).as_string() != "validated") {
+            input.ledgerIndex = std::stoi(boost::json::value_to<std::string>(jv.at(JS(ledger_index))));
+        }
+    }
     return input;
 }
 
