@@ -30,6 +30,7 @@
 #include <xrpl/protocol/Feature.h>
 #include <xrpl/protocol/Indexes.h>
 
+#include <algorithm>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -135,8 +136,7 @@ TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenNoAmendments)
         auto const vec = amendmentCenter.isEnabled(yield, keys, SEQ);
 
         EXPECT_EQ(vec.size(), keys.size());
-        for (auto const& val : vec)
-            EXPECT_FALSE(val);
+        EXPECT_TRUE(std::ranges::all_of(vec, [](bool val) { return val == false; }));
     });
 }
 
