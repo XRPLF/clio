@@ -30,7 +30,6 @@
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
-#include <xrpl/protocol/STVector256.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/digest.h>
 

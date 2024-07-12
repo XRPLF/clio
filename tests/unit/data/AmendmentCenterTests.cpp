@@ -93,7 +93,7 @@ TEST_F(AmendmentCenterTest, IsMultipleEnabled)
         .WillOnce(testing::Return(amendments.getSerializer().peekData()));
 
     runSpawn([this](auto yield) {
-        std::vector<data::AmendmentKey> keys{"fixUniversalNumber", "unknown", "ImmediateOfferKilled"};
+        std::vector<data::AmendmentKey> const keys{"fixUniversalNumber", "unknown", "ImmediateOfferKilled"};
         auto const result = amendmentCenter.isEnabled(yield, keys, SEQ);
 
         EXPECT_EQ(result.size(), keys.size());
@@ -132,7 +132,7 @@ TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenNoAmendments)
         .WillOnce(testing::Return(amendments.getSerializer().peekData()));
 
     runSpawn([this](auto yield) {
-        std::vector<data::AmendmentKey> keys{"fixUniversalNumber", "ImmediateOfferKilled"};
+        std::vector<data::AmendmentKey> const keys{"fixUniversalNumber", "ImmediateOfferKilled"};
         auto const vec = amendmentCenter.isEnabled(yield, keys, SEQ);
 
         EXPECT_EQ(vec.size(), keys.size());
