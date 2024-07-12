@@ -70,9 +70,8 @@ public:
      * - ledger
      * - type
      *
-     * Clio will throw an error when `queue` is set to `true`
-     * or if `full` or `accounts` are used.
-     * @see https://github.com/XRPLF/clio/issues/603
+     * Clio will throw an error when `queue`, `full` or `accounts` is set to `true`.
+     * @see https://github.com/XRPLF/clio/issues/603 and https://github.com/XRPLF/clio/issues/1537
      */
     struct Input {
         std::optional<std::string> ledgerHash;
@@ -105,9 +104,9 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(full), validation::NotSupported{}},
+            {JS(full), validation::Type<bool>{}, validation::NotSupported{true}},
             {JS(full), check::Deprecated{}},
-            {JS(accounts), validation::NotSupported{}},
+            {JS(accounts), validation::Type<bool>{}, validation::NotSupported{true}},
             {JS(accounts), check::Deprecated{}},
             {JS(owner_funds), validation::Type<bool>{}},
             {JS(queue), validation::Type<bool>{}, validation::NotSupported{true}},
