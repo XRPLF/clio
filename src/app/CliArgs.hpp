@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -16,27 +16,42 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-
-#include "util/build/Build.hpp"
+#pragma once
 
 #include <string>
+#include <variant>
 
-namespace util::build {
+namespace app {
 
-static constexpr char versionString[] = "@CLIO_VERSION@";
+/**
+ * @brief Parsed command line arguments representation.
+ */
+class CliArgs {
+public:
+    /**
+     * @brief Parse command line arguments.
+     *
+     * @param argc Number of arguments.
+     * @param argv Array of arguments.
+     * @return Parsed command line arguments.
+     */
+    static CliArgs
+    parse(int argc, char** argv);
 
-std::string const&
-getClioVersionString()
-{
-    static std::string const value = versionString;
-    return value;
-}
+    /**
+     * @brief Default configuration path.
+     */
+    static constexpr char defaultConfigPath[] = "/etc/opt/clio/config.json";
 
-std::string const&
-getClioFullVersionString()
-{
-    static std::string const value = "clio-" + getClioVersionString();
-    return value;
-}
+    struct RunAction {
+        std::string configPath;
+    };
 
-}  // namespace util::build
+    struct ExitAction {
+        int exitCode;
+    };
+
+    std::variant<RunAction, ExitAction> action;
+};
+
+}  // namespace app

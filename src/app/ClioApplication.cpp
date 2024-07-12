@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,16 +17,25 @@
 */
 //==============================================================================
 
-#pragma once
+#include "app/ClioApplication.hpp"
 
-#include <string>
+#include "util/build/Build.hpp"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
+#include "util/prometheus/Prometheus.hpp"
 
-namespace Build {
+namespace app {
 
-std::string const&
-getClioVersionString();
+ClioApplication::ClioApplication(util::Config const& config) : config_(config), signalsHandler_{config_}
+{
+    util::LogService::init(config);
+    LOG(util::LogService::info()) << "Clio version: " << util::build::getClioFullVersionString();
+    PrometheusService::init(config);
+}
 
-std::string const&
-getClioFullVersionString();
+void
+ClioApplication::run()
+{
+}
 
-}  // namespace Build
+}  // namespace app
