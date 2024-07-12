@@ -25,6 +25,7 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
+#include "util/AccountUtils.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
@@ -116,14 +117,14 @@ public:
                 auto const wallets = value.is_array() ? value.as_array() : boost::json::array{value};
                 auto const getAccountID = [](auto const& j) -> std::optional<ripple::AccountID> {
                     if (j.is_string()) {
-                        auto const pk = ripple::parseBase58<ripple::PublicKey>(
+                        auto const pk = util::parseBase58Wrapper<ripple::PublicKey>(
                             ripple::TokenType::AccountPublic, boost::json::value_to<std::string>(j)
                         );
 
                         if (pk)
                             return ripple::calcAccountID(*pk);
 
-                        return ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(j));
+                        return util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(j));
                     }
 
                     return {};

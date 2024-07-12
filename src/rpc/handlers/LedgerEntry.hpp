@@ -28,6 +28,7 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
+#include "util/AccountUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -136,9 +137,11 @@ public:
                 }
 
                 auto const id1 =
-                    ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value.as_array()[0]));
+                    util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(value.as_array()[0])
+                    );
                 auto const id2 =
-                    ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value.as_array()[1]));
+                    util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(value.as_array()[1])
+                    );
 
                 if (!id1 || !id2)
                     return Error{Status{ClioError::rpcMALFORMED_ADDRESS, "malformedAddresses"}};
