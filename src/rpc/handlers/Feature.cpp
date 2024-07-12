@@ -99,7 +99,10 @@ FeatureHandler::process(FeatureHandler::Input input, Context const& ctx) const
     );
 
     return Output{
-        .features = std::move(features), .ledgerHash = ripple::strHex(lgrInfo.hash), .ledgerIndex = lgrInfo.seq
+        .features = std::move(features),
+        .ledgerHash = ripple::strHex(lgrInfo.hash),
+        .ledgerIndex = lgrInfo.seq,
+        .inlineResult = input.feature.has_value()
     };
 }
 
@@ -124,12 +127,18 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, FeatureHandler::
 {
     using boost::json::value_from;
 
-    jv = {
-        {JS(features), value_from(output.features)},
-        {JS(ledger_hash), output.ledgerHash},
-        {JS(ledger_index), output.ledgerIndex},
-        {JS(validated), output.validated},
-    };
+    if (output.inlineResult) {
+        jv = value_from(output.features);
+    } else {
+        jv = {
+            {JS(features), value_from(output.features)},
+        };
+    }
+
+    auto& obj = jv.as_object();
+    obj[JS(ledger_hash)] = output.ledgerHash;
+    obj[JS(ledger_index)] = output.ledgerIndex;
+    obj[JS(validated)] = output.validated;
 }
 
 void

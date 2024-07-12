@@ -257,13 +257,11 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaNameWithSingleSupportedAndEnabledRes
 
     auto const expectedOutput = fmt::format(
         R"({{
-            "features": {{
-                "2E2FB9CF8A44EB80F4694D38AADAE9B8B7ADAFD2F092E10068E61C98C4F092B0": 
-                {{
-                    "name": "fixUniversalNumber", 
-                    "enabled": true, 
-                    "supported": true
-                }}
+            "2E2FB9CF8A44EB80F4694D38AADAE9B8B7ADAFD2F092E10068E61C98C4F092B0": 
+            {{
+                "name": "fixUniversalNumber", 
+                "enabled": true, 
+                "supported": true
             }},
             "ledger_hash": "{}", 
             "ledger_index": {}, 
@@ -311,13 +309,11 @@ TEST_F(RPCFeatureHandlerTest, SuccessPathViaHashWithSingleResult)
 
     auto const expectedOutput = fmt::format(
         R"({{
-            "features": {{
-                "2E2FB9CF8A44EB80F4694D38AADAE9B8B7ADAFD2F092E10068E61C98C4F092B0": 
-                {{
-                    "name": "fixUniversalNumber", 
-                    "enabled": true, 
-                    "supported": true
-                }}
+            "2E2FB9CF8A44EB80F4694D38AADAE9B8B7ADAFD2F092E10068E61C98C4F092B0": 
+            {{
+                "name": "fixUniversalNumber", 
+                "enabled": true, 
+                "supported": true
             }},
             "ledger_hash": "{}", 
             "ledger_index": {}, 
