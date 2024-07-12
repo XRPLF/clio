@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2022, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,14 +17,16 @@
 */
 //==============================================================================
 
-#include "util/requests/impl/SslContext.hpp"
+#pragma once
 
-#include <gtest/gtest.h>
+#include <string>
 
-using namespace util::requests::impl;
+namespace util::build {
 
-TEST(SslContext, Create)
-{
-    auto ctx = makeClientSslContext();
-    EXPECT_TRUE(ctx);
-}
+std::string const&
+getClioVersionString();
+
+std::string const&
+getClioFullVersionString();
+
+}  // namespace util::build

@@ -61,7 +61,7 @@ public:
     static std::expected<SslStreamData, RequestError>
     create(boost::asio::yield_context yield)
     {
-        auto sslContext = makeSslContext();
+        auto sslContext = makeClientSslContext();
         if (not sslContext.has_value()) {
             return std::unexpected{std::move(sslContext.error())};
         }

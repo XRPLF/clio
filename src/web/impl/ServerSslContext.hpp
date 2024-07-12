@@ -17,14 +17,16 @@
 */
 //==============================================================================
 
-#include "util/requests/impl/SslContext.hpp"
+#pragma once
 
-#include <gtest/gtest.h>
+#include <boost/asio/ssl/context.hpp>
 
-using namespace util::requests::impl;
+#include <expected>
+#include <string>
 
-TEST(SslContext, Create)
-{
-    auto ctx = makeClientSslContext();
-    EXPECT_TRUE(ctx);
-}
+namespace web::impl {
+
+std::expected<boost::asio::ssl::context, std::string>
+makeServerSslContext(std::string const& certFilePath, std::string const& keyFilePath);
+
+}  // namespace web::impl

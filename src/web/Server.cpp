@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2024, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,14 +17,34 @@
 */
 //==============================================================================
 
-#include "util/requests/impl/SslContext.hpp"
+#include "web/Server.hpp"
 
-#include <gtest/gtest.h>
+#include "util/config/Config.hpp"
 
-using namespace util::requests::impl;
+#include <boost/asio/ssl/context.hpp>
 
-TEST(SslContext, Create)
+#include <optional>
+#include <string>
+
+namespace web {
+
+std::expected<std::optional<boost::asio::ssl::context>, std::string>
+makeServerSslContext(util::Config const& config)
 {
-    auto ctx = makeClientSslContext();
-    EXPECT_TRUE(ctx);
+    bool const configHasCertFile = config.contains("ssl_cert_file");
+    bool const configHasKeyFile = config.contains("ssl_key_file");
+
+    if (configHasCertFile != configHasKeyFile) {
+        return std::unexpected{"Config entries 'ssl_cert_file' and 'ssl_key_file' must be set or unset together."};
+    }
+
+    if (not configHasCertFile) {
+        return std::nullopt;
+    }
+
+    auto const certFilename = config.value<std::string>("ssl_cert_file");
+    auto const keyFilename = config.value<std::string>("ssl_key_file");
+
+    return impl::makeServerSslContext(certFilename, keyFilename);
 }
+}  // namespace web
