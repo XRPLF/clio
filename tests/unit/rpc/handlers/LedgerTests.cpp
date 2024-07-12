@@ -304,6 +304,8 @@ TEST_F(RPCLedgerHandlerTest, ConditionallyNotSupportedFieldsDefaultValue)
         auto const handler = AnyHandler{LedgerHandler{backend}};
         auto const req = json::parse(
             R"({
+                "full": false,
+                "accounts": false,
                 "queue": false
             })"
         );
