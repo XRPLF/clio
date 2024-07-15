@@ -50,6 +50,14 @@ enum class ClioError {
     rpcCOMMAND_NOT_STRING = 6002,
     rpcCOMMAND_IS_EMPTY = 6003,
     rpcPARAMS_UNPARSEABLE = 6004,
+
+    // TODO: Since it is not only rpc errors here now, we should move it to util
+    // etl related errors start with 7000
+    // Higher value in this errors means better progress in the forwarding
+    etlCONNECTION_ERROR = 7000,
+    etlREQUEST_ERROR = 7001,
+    etlREQUEST_TIMEOUT = 7002,
+    etlINVALID_RESPONSE = 7003,
 };
 
 /** @brief Holds info about a particular @ref ClioError. */

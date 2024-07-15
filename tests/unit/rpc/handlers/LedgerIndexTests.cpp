@@ -31,6 +31,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -70,7 +71,7 @@ TEST_F(RPCLedgerIndexTest, NoDateGiven)
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("ledger_index").as_uint64(), RANGEMAX);
         EXPECT_EQ(output.result->at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_TRUE(output.result->as_object().contains("close_time_iso"));
+        EXPECT_TRUE(output.result->as_object().contains("closed"));
     });
 }
 
@@ -88,6 +89,24 @@ TEST_F(RPCLedgerIndexTest, EarlierThanMinLedger)
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
     });
+}
+
+TEST_F(RPCLedgerIndexTest, ChangeTimeZone)
+{
+    setenv("TZ", "EST+5", 1);
+    backend->setRange(RANGEMIN, RANGEMAX);
+    auto const handler = AnyHandler{LedgerIndexHandler{backend}};
+    auto const req = json::parse(R"({"date": "2024-06-25T12:23:05Z"})");
+    auto const ledgerHeader =
+        CreateLedgerHeaderWithUnixTime(LEDGERHASH, RANGEMIN, 1719318190);  //"2024-06-25T12:23:10Z"
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMIN, _)).WillOnce(Return(ledgerHeader));
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
+    });
+    unsetenv("TZ");
 }
 
 struct LedgerIndexTestsCaseBundle {
@@ -144,6 +163,6 @@ TEST_P(LedgerIndexTests, SearchFromLedgerRange)
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("ledger_index").as_uint64(), testBundle.expectedLedgerIndex);
         EXPECT_EQ(output.result->at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output.result->at("close_time_iso").as_string(), testBundle.closeTimeIso);
+        EXPECT_EQ(output.result->at("closed").as_string(), testBundle.closeTimeIso);
     });
 }

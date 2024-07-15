@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "etl/impl/SourceImpl.hpp"
+#include "rpc/Errors.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -63,7 +64,7 @@ struct SubscriptionSourceMock {
 struct ForwardingSourceMock {
     MOCK_METHOD(void, constructor, (std::string const&, std::string const&, std::chrono::steady_clock::duration));
 
-    using ForwardToRippledReturnType = std::optional<boost::json::object>;
+    using ForwardToRippledReturnType = std::expected<boost::json::object, rpc::ClioError>;
     using ClientIpOpt = std::optional<std::string>;
     MOCK_METHOD(
         ForwardToRippledReturnType,

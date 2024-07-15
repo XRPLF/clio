@@ -31,7 +31,6 @@
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <xrpl/protocol/ErrorCodes.h>
 
 #include <memory>
 #include <optional>
@@ -260,22 +259,6 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAPIVersionIsV2)
     });
 }
 
-TEST_F(RPCForwardingProxyTest, ShouldForwardFeatureWithoutVetoedFlag)
-{
-    auto const apiVersion = 1u;
-    auto const method = "feature";
-    auto const params = json::parse(R"({"feature": "foo"})");
-
-    runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
-        auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
-
-        auto const res = proxy.shouldForward(ctx);
-        ASSERT_TRUE(res);
-    });
-}
-
 TEST_F(RPCForwardingProxyTest, ShouldNeverForwardFeatureWithVetoedFlag)
 {
     auto const apiVersion = 1u;
@@ -336,7 +319,7 @@ TEST_F(RPCForwardingProxyTest, ForwardCallsBalancerWithCorrectParams)
     EXPECT_CALL(
         *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), true, _)
     )
-        .WillOnce(Return(std::make_optional<json::object>()));
+        .WillOnce(Return(json::object{}));
 
     EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
@@ -366,7 +349,7 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
     EXPECT_CALL(
         *rawBalancerPtr, forwardToRippled(forwarded.as_object(), std::make_optional<std::string>(CLIENT_IP), true, _)
     )
-        .WillOnce(Return(std::nullopt));
+        .WillOnce(Return(std::unexpected{rpc::ClioError::etlINVALID_RESPONSE}));
 
     EXPECT_CALL(*rawHandlerProviderPtr, contains(method)).WillOnce(Return(true));
 
@@ -381,6 +364,6 @@ TEST_F(RPCForwardingProxyTest, ForwardingFailYieldsErrorStatus)
 
         auto const status = std::get_if<Status>(&res.response);
         EXPECT_TRUE(status != nullptr);
-        EXPECT_EQ(*status, ripple::rpcFAILED_TO_FORWARD);
+        EXPECT_EQ(*status, rpc::ClioError::etlINVALID_RESPONSE);
     });
 }

@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "etl/impl/ForwardingSource.hpp"
+#include "rpc/Errors.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/TestWsServer.hpp"
 
@@ -50,7 +51,8 @@ TEST_F(ForwardingSourceTests, ConnectionFailed)
 {
     runSpawn([&](boost::asio::yield_context yield) {
         auto result = forwardingSource.forwardToRippled({}, {}, {}, yield);
-        EXPECT_FALSE(result);
+        ASSERT_FALSE(result);
+        EXPECT_EQ(result.error(), rpc::ClioError::etlCONNECTION_ERROR);
     });
 }
 
@@ -90,7 +92,8 @@ TEST_F(ForwardingSourceOperationsTests, XUserHeader)
     runSpawn([&](boost::asio::yield_context yield) {
         auto result =
             forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, xUserValue, yield);
-        EXPECT_FALSE(result);
+        ASSERT_FALSE(result);
+        EXPECT_EQ(result.error(), rpc::ClioError::etlREQUEST_ERROR);
     });
 }
 
@@ -103,7 +106,8 @@ TEST_F(ForwardingSourceOperationsTests, ReadFailed)
 
     runSpawn([&](boost::asio::yield_context yield) {
         auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
-        EXPECT_FALSE(result);
+        ASSERT_FALSE(result);
+        EXPECT_EQ(result.error(), rpc::ClioError::etlREQUEST_ERROR);
     });
 }
 
@@ -116,7 +120,8 @@ TEST_F(ForwardingSourceOperationsTests, ReadTimeout)
 
     runSpawn([&](boost::asio::yield_context yield) {
         auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
-        EXPECT_FALSE(result);
+        ASSERT_FALSE(result);
+        EXPECT_EQ(result.error(), rpc::ClioError::etlREQUEST_TIMEOUT);
     });
 }
 
@@ -137,7 +142,8 @@ TEST_F(ForwardingSourceOperationsTests, ParseFailed)
 
     runSpawn([&](boost::asio::yield_context yield) {
         auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
-        EXPECT_FALSE(result);
+        ASSERT_FALSE(result);
+        EXPECT_EQ(result.error(), rpc::ClioError::etlINVALID_RESPONSE);
     });
 }
 
@@ -159,7 +165,8 @@ TEST_F(ForwardingSourceOperationsTests, GotNotAnObject)
 
     runSpawn([&](boost::asio::yield_context yield) {
         auto result = forwardingSource.forwardToRippled(boost::json::parse(message_).as_object(), {}, {}, yield);
-        EXPECT_FALSE(result);
+        ASSERT_FALSE(result);
+        EXPECT_EQ(result.error(), rpc::ClioError::etlINVALID_RESPONSE);
     });
 }
 

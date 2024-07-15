@@ -46,6 +46,13 @@ struct MockAmendmentCenter : public data::AmendmentCenterInterface {
 
     MOCK_METHOD(bool, isEnabled, (boost::asio::yield_context, data::AmendmentKey const&, uint32_t), (const, override));
 
+    MOCK_METHOD(
+        std::vector<bool>,
+        isEnabled,
+        (boost::asio::yield_context, std::vector<data::AmendmentKey> const&, uint32_t),
+        (const, override)
+    );
+
     MOCK_METHOD(data::Amendment const&, getAmendment, (data::AmendmentKey const&), (const, override));
 
     MOCK_METHOD(data::Amendment const&, IndexOperator, (data::AmendmentKey const&), (const));

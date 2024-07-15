@@ -22,6 +22,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/TimeUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -31,12 +32,8 @@
 #include <xrpl/protocol/jss.h>
 
 #include <algorithm>
-#include <chrono>
 #include <cstdint>
-#include <ctime>
-#include <iomanip>
 #include <ranges>
-#include <sstream>
 #include <string>
 
 namespace rpc {
@@ -61,18 +58,16 @@ LedgerIndexHandler::process(LedgerIndexHandler::Input input, Context const& ctx)
         return fillOutputByIndex(maxIndex);
 
     auto const convertISOTimeStrToTicks = [](std::string const& isoTimeStr) {
-        std::tm time = {};
-        std::stringstream ss(isoTimeStr);
-        ss >> std::get_time(&time, DATE_FORMAT);
-        return std::chrono::system_clock::from_time_t(std::mktime(&time)).time_since_epoch().count();
+        auto const systemTime = util::SystemTpFromUTCStr(isoTimeStr, DATE_FORMAT);
+        // systemTime must be valid after validation passed
+        return systemTime->time_since_epoch().count();
     };
 
     auto const ticks = convertISOTimeStrToTicks(*input.date);
 
     auto const earlierThan = [&](std::uint32_t ledgerIndex) {
         auto const header = sharedPtrBackend_->fetchLedgerBySequence(ledgerIndex, ctx.yield);
-        auto const ledgerTime =
-            std::chrono::system_clock::time_point{header->closeTime.time_since_epoch() + ripple::epoch_offset};
+        auto const ledgerTime = util::SystemTpFromLedgerCloseTime(header->closeTime);
         return ticks < ledgerTime.time_since_epoch().count();
     };
 
@@ -109,7 +104,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerIndexHandl
     jv = boost::json::object{
         {JS(ledger_index), output.ledgerIndex},
         {JS(ledger_hash), output.ledgerHash},
-        {JS(close_time_iso), output.closeTimeIso},
+        {JS(closed), output.closeTimeIso},
         {JS(validated), true},
     };
 }
