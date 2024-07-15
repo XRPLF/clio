@@ -92,10 +92,8 @@ public:
         auto const itr = std::find_if(configDescription.begin(), configDescription.end(), [&key](auto const& v) {
             return v.key == key;
         });
-        if (itr != configDescription.end()) {
-            return itr->value;
-        }
-        return "Not Found";
+        ASSERT(itr != configDescription.end(), "key doesn't exist in config");
+        return itr->value;
     }
 
 private:

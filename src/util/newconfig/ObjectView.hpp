@@ -68,15 +68,6 @@ public:
     containsKey(std::string_view key) const;
 
     /**
-     * @brief Checks if any key in ClioConfigDefinition starts with prefix_.key
-     *
-     * @param key The suffix of the key
-     * @return true if at least one key starts with the specified prefix_.key, otherwise false
-     */
-    bool
-    startsWithKey(std::string_view key) const;
-
-    /**
      * @brief Retrieves the value associated with the specified prefix._key in ClioConfigDefinition
      *
      * @param key The suffix of the key
@@ -104,6 +95,15 @@ private:
      */
     std::string
     getFullKey(std::string_view key) const;
+
+    /**
+     * @brief Checks if any key in ClioConfigDefinition starts with prefix_.key
+     *
+     * @param key The suffix of the key
+     * @return true if at least one key starts with the specified prefix_.key, otherwise false
+     */
+    bool
+    startsWithKey(std::string_view key) const;
 
     std::string prefix_;
     std::optional<size_t> arrayIndex_;
