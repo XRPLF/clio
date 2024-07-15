@@ -59,6 +59,12 @@ getType()
     }
 }
 
+/**
+ * @brief Represents the config values for Json/Yaml config
+ *
+ * Used in ClioConfigDefinition to indicate the required type of value and
+ * whether it is mandatory to specify in the configuration
+ */
 class ConfigValue {
     friend class ValueView;
 

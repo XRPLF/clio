@@ -51,6 +51,12 @@ public:
     /** @brief Struct to represent a key-value pair*/
     struct KV {
         constexpr KV() = default;
+
+        /** @brief Constructs a key value pair of config key and it's corresponding description
+         *
+         * @param k key of config
+         * @param v value of config
+         */
         constexpr KV(std::string_view k, std::string_view v) : key(k), value(v)
         {
         }
@@ -58,8 +64,10 @@ public:
         std::string_view value;
     };
 
-    /** @brief
-     * constructs a new Clio Config Description based on pre-existing descriptions
+    /** @brief Constructs a new Clio Config Description based on pre-existing descriptions
+     *
+     * @param init initializer list with a predefined set of key-value pairs where key is
+     * config key and value is the description of the key
      */
     constexpr ClioConfigDescription(std::initializer_list<KV> init)
     {
@@ -168,7 +176,7 @@ public:
     /**
      * @brief Returns the specified ValueView object associated with the key
      *
-     * @param key The config key to search for
+     * @param fullKey The config key to search for
      * @return ValueView associated with the given key
      * @throws std::runtime_error if no valid key exists in the config
      */

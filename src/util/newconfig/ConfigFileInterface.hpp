@@ -50,7 +50,8 @@ public:
      * @param key The key of the configuration value.
      * @return An optional containing the configuration value if found, otherwise std::nullopt.
      */
-    virtual std::optional<ConfigValue> getValue(std::string_view) const = 0;
+    virtual std::optional<ConfigValue>
+    getValue(std::string_view key) const = 0;
 
     /**
      * @brief Retrieves an array of configuration values.
@@ -58,7 +59,8 @@ public:
      * @param key The key of the configuration array.
      * @return An optional containing a vector of configuration values if found, otherwise std::nullopt.
      */
-    virtual std::optional<std::vector<ConfigValue>> getArray(std::string_view) const = 0;
+    virtual std::optional<std::vector<ConfigValue>>
+    getArray(std::string_view key) const = 0;
 };
 
 }  // namespace util::config

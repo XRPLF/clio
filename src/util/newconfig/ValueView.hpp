@@ -29,9 +29,17 @@ namespace util::config {
 
 class ClioConfigDefinition;
 
+/**
+ * @brief Provides view into ConfigValues that represents values in Clio Config
+ */
 class ValueView {
 public:
-    ValueView(ConfigValue const& config) : configVal_{config}
+    /**
+     * @brief Constructs a ValueView object
+     *
+     * @param configVal the config Value to view
+     */
+    ValueView(ConfigValue const& configVal) : configVal_{configVal}
     {
     }
 
