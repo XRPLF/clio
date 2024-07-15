@@ -32,6 +32,7 @@ namespace util {
  *alphanumeric. If not, it returns an empty optional, instead of calling the parseBase58 function.
  *@tparam T The type of the value to parse to.
  *@param str The string to parse.
+ *@return An optional with the parsed value, or an empty optional if the parse fails.
  */
 template <class T>
 [[nodiscard]] std::optional<T>
@@ -49,6 +50,7 @@ parseBase58Wrapper(std::string const& str)
  *@tparam T The type of the value to parse to.
  *@param type The type of the token to parse.
  *@param str The string to parse.
+ *@return An optional with the parsed value, or an empty optional if the parse fails.
  */
 template <class T>
 [[nodiscard]] std::optional<T>
