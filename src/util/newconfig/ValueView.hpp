@@ -19,38 +19,71 @@
 
 #pragma once
 
-#include <cstdint>
+#include "util/newconfig/ConfigValue.hpp"
+
+#include <cassert>
+#include <cstddef>
 #include <string_view>
-#include <variant>
 
 namespace util::config {
 
-/**
- * @brief A class to enforce constraints on certain values within ClioConfigDefinition
- * TODO: will be used when parsing user config
- */
-class ConfigConstraints {
+class ClioConfigDefinition;
+
+class ValueView {
 public:
-    /**
-     * @brief make sure port is in a valid range
-     *
-     * @param port port to check valid range. Clio config uses both string and int
-     * @return true if port is within a valid range, false otherwise
-     */
-    bool
-    checkPortRange(std::variant<std::string_view, int> port) const;
+    ValueView(ConfigValue const& config) : configVal_{config}
+    {
+    }
 
     /**
-     * @brief Check if all the log channel's value is correct
+     * @brief Retrieves the value as a string
      *
-     * @return if all log channel values are correct, false otherwise
+     * @return The value as a string
+     * @throws std::bad_variant_access if the value is not a string
+     */
+    std::string_view
+    asString() const;
+
+    /**
+     * @brief Retrieves the value as a boolean
+     *
+     * @return The value as a boolean
+     * @throws std::bad_variant_access if the value is not a boolean
      */
     bool
-    checkLogChannels() const;
+    asBool() const;
+
+    /**
+     * @brief Retrieves the value as an integer
+     *
+     * @return The value as an integer
+     * @throws std::bad_variant_access if the value is not an integer
+     */
+    int
+    asInt() const;
+
+    /**
+     * @brief Retrieves the value as a double
+     *
+     * @return The value as a double
+     * @throws std::bad_variant_access if the value is not a double
+     */
+    double
+    asDouble() const;
+
+    /**
+     * @brief Gets the config type
+     *
+     * @return The config type
+     */
+    constexpr ConfigType
+    type() const
+    {
+        return configVal_.type();
+    }
 
 private:
-    uint32_t const portMin = 1;
-    uint32_t const portMax = 65535;
+    ConfigValue const& configVal_;
 };
 
 }  // namespace util::config

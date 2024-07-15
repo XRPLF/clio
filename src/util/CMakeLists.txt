@@ -28,8 +28,14 @@ target_sources(
 <<<<<<< HEAD
           newconfig/ConfigConstraints.cpp
           newconfig/Object.cpp
+<<<<<<< HEAD
 =======
 >>>>>>> e62e648 (first draft of config)
+=======
+          newconfig/ObjectView.cpp
+          newconfig/ArrayView.cpp
+          newconfig/ValueView.cpp
+>>>>>>> d2f765f (Commit work so far)
 )
 
 target_link_libraries(

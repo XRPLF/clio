@@ -128,6 +128,10 @@ target_sources(
           web/ServerTests.cpp
           web/SweepHandlerTests.cpp
           web/WhitelistHandlerTests.cpp
+          # New Config
+          newconfig/ArrayViewTests.cpp
+          newconfig/ObjectViewTests.cpp
+          newconfig/ValueViewTests.cpp
 )
 
 # See https://github.com/google/googletest/issues/3475

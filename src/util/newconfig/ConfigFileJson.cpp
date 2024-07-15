@@ -21,7 +21,10 @@
 
 #include "util/log/Logger.hpp"
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include "util/newconfig/ConfigDefinition.hpp"
+=======
+>>>>>>> d2f765f (Commit work so far)
 #include "util/newconfig/ConfigValue.hpp"
 
 #include <boost/json/array.hpp>
@@ -43,7 +46,6 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <variant>
 #include <vector>
 
@@ -86,14 +88,14 @@ convertJsonToConfigValue(boost::json::value const& jsonValue)
     ConfigType jsonValueType;
 
     // Convert jsonValue to a type compatible with ConfigValue
-    std::variant<int, char const*, bool, double> variantValue;
+    std::variant<int, std::string, bool, double> variantValue;
 
     if (jsonValue.is_int64()) {
         variantValue = static_cast<int>(jsonValue.as_int64());
         jsonValueType = getType<int>();
     } else if (jsonValue.is_string()) {
         variantValue = jsonValue.as_string().c_str();
-        jsonValueType = getType<char const*>();
+        jsonValueType = getType<std::string>();
     } else if (jsonValue.is_bool()) {
         variantValue = jsonValue.as_bool();
         jsonValueType = getType<bool>();
@@ -121,21 +123,15 @@ ConfigFileJson::getValue(std::string_view key) const
 // TODO: ask about have this function or just make getArray recursive and add params there.
 // NOTE: TOOK A LONG TIME BUT FOUND BUG. BUT ASK WHY STRING_VIEW CORRUPTS THAT DATA.
 void
-goThroughJsonArray(
-    boost::json::array const& arr,
-    std::vector<ConfigFileJson::configVal>& configValues,
-    std::string_view key = ""
-)
+goThroughJsonArray(boost::json::array const& arr, std::vector<ConfigValue>& configValues)
 {
     for (auto const& item : arr) {
         for (auto const& [itemKey, itemVal] : item.as_object()) {
-            std::string embeddedKey = std::string(key) + "." + std::string(itemKey);
-
             if (itemVal.is_primitive()) {
                 ConfigValue configValue = convertJsonToConfigValue(itemVal);
-                configValues.emplace_back(embeddedKey, configValue);
+                configValues.emplace_back(configValue);
             } else if (itemVal.is_array()) {
-                goThroughJsonArray(itemVal.as_array(), configValues, embeddedKey);
+                goThroughJsonArray(itemVal.as_array(), configValues);
             } else {
                 throw std::runtime_error("json object not supported");
             }
@@ -144,13 +140,13 @@ goThroughJsonArray(
 }
 
 // making this function recursive in the case of array in array in array etc..
-std::optional<std::vector<ConfigFileJson::configVal>>
+std::optional<std::vector<ConfigValue>>
 ConfigFileJson::getArray(std::string_view key) const
 {
     if (!jsonObject_.contains(key))
         return std::nullopt;
 
-    std::vector<ConfigFileJson::configVal> configValues;
+    std::vector<ConfigValue> configValues;
     auto arr = jsonObject_.at(key).as_array();
 
     for (auto const& item : arr) {
@@ -158,13 +154,12 @@ ConfigFileJson::getArray(std::string_view key) const
             goThroughJsonArray(arr, configValues);
 
         for (auto const& [itemKey, itemVal] : item.as_object()) {
-            std::string embeddedKey = std::string(itemKey);
             // array inside array
             if (itemVal.is_array()) {
-                goThroughJsonArray(itemVal.as_array(), configValues, itemKey);
+                goThroughJsonArray(itemVal.as_array(), configValues);
             } else if (itemVal.is_primitive()) {
                 ConfigValue configValue = convertJsonToConfigValue(itemVal);
-                configValues.emplace_back(std::string(itemKey), configValue);
+                configValues.emplace_back(configValue);
             } else {
                 throw std::runtime_error("json object not supported");
             }

@@ -20,171 +20,200 @@
 #include "util/newconfig/ConfigDefinition.hpp"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+#include "util/Assert.hpp"
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ArrayView.hpp"
+>>>>>>> d2f765f (Commit work so far)
 #include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Object.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
-#include <array>
 #include <cstddef>
+#include <initializer_list>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <thread>
+#include <variant>
 
 namespace util::config {
 
 /**
- * @brief Full Clio Configuration definition. Specifies which keys it accepts, which fields are mandatory and which
- * fields have default values
+ * @brief Full Clio Configuration definition.
+ *
+ * Specifies which keys are valid in Clio Config and provides default values if user's do not specify one. Those
+ * without default values must be present in the user's config file.
  */
-Object ClioConfig{{
-    {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
-    {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("localhost")},
-    {"database.cassandra.port", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-    {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("localhost")},
-    {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
-    {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.defaultValue("localhost")},
-    {"database.cassandra.max_write_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(23)},
-    {"database.cassandra.max_read_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(23)},
-    {"database.cassandra.threads", ConfigValue{ConfigType::Integer}.defaultValue(23)},
-    {"etl_source.[].ip", ConfigValue{ConfigType::String}.required()},
-    {"etl_source.[].ws_port", ConfigValue{ConfigType::String}.required()},
-    {"etl_source.[].grpc_port", ConfigValue{ConfigType::String}.required()},
-    {"forwarding_cache_timeout", ConfigValue{ConfigType::String}.required()},
-    {"dos_guard.whitelist", ConfigValue{ConfigType::String}.required()},
-    {"dos_guard.max_fetches", ConfigValue{ConfigType::String}.required()},
-    {"dos_guard.max_connections", ConfigValue{ConfigType::String}.required()},
-    {"dos_guard.max_requests", ConfigValue{ConfigType::String}.required()},
-    {"dos_guard.sweep_interval", ConfigValue{ConfigType::String}.required()},
-    {"cache.peers.[].ip", ConfigValue{ConfigType::String}.required()},
-    {"cache.peers.[].port", ConfigValue{ConfigType::String}.required()},
-    {"server.ip", ConfigValue{ConfigType::String}.required()},
-    {"server.port", ConfigValue{ConfigType::String}.required()},
-    {"server.max_queue_size", ConfigValue{ConfigType::String}.required()},
-    {"server.local_admin", ConfigValue{ConfigType::String}.required()},
-    {"prometheus.compress_reply", ConfigValue{ConfigType::String}.required()},
-}};
-
-constexpr ClioConfigDescription const DESCRIPTIONS{std::array<ClioConfigDescription::KV, 4>{
-    {{"database", "Config for database"},
-     {"database.type", "Type of database"},
-     {"database.cassandra.contact_points", "Contact points for Cassandra"},
-     {"etl_source.[].ip", "IP address for ETL source"}}
-}};
-
-/*
-static Object ClioConfigDefinition = Object{
-    {
-        "database", Object{
-            {
-                {"type", ConfigValue{ConfigType::String}.required()},
-                {"cassandra", Object{
-                    {
-                        {"contact_points", ConfigValue{ConfigType::String}.required()},
-                        {"port", ConfigValue{ConfigType::Integer}},
-                        {"keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
-                        {"replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(3)},
-                        {"table_prefix", ConfigValue{ConfigType::String}},  // doesn't have defaultValue or required()
-                        is optional for user to include
-                        {"max_write_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(10'000)},
-                        {"max_read_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(100'000)},
-                        {"threads", ConfigValue{ConfigType::String}.defaultValue(std::thread::hardware_concurrency())},
-                        {"core_connections_per_host", ConfigValue{ConfigType::String}.defaultValue(1)}
-                    }
-                }}
-            }
-        }
-    },
-    {
-        "etl_sources", Array{
-            Object{
-                {
-                    {"ip", ConfigValue{ConfigType::String}.defaultValue("")},
-                    {"ws_port", ConfigValue{ConfigType::String}.defaultValue("")},
-                    {"grpc_port", ConfigValue{ConfigType::String}.defaultValue("")}
-                }
-            }
-        }
-    },
-    {"forwarding_cache_timeout", ConfigValue{ConfigType::String}.defaultValue(0)},
-    {
-        "dos_guard", Object{
-            {
-                {"whitelist", Array{Object{{}}}},
-                {"max_fetches", ConfigValue{1000000}},
-                {"max_connections", ConfigValue{20}},
-                {"max_requests", ConfigValue{20}},
-                {"sweep_interval", ConfigValue{1}}
-            }
-        }
-    },
-    {
-        "cache", Object{
-            {
-                {"peers", Array{
-                    Object{
-                        {{"ip", ConfigValue{"127.0.0.1"}}, {"port", ConfigValue{"123"}}}
-                    }
-                }}
-            }
-        }
-    },
-    {
-        "server", Object{
-            {
-                {"ip", ConfigValue{"IP address of the server"}.defaultValue("0.0.0.0")},
-                {"port", ConfigValue{51555}},
-                {"max_queue_size", ConfigValue{500}},
-                {"local_admin", ConfigValue{true}}
-            }
-        }
-    },
-    {"prometheus", Object{
-        {{"compress_reply", ConfigValue{true}}}
-    }},
-    {
-        "log_channels", Array{
-            Object{
-                {{"channel", ConfigValue{"WebServer"}}, {"log_level", ConfigValue{"info"}}}
-            },
-            Object{
-                {{"channel", ConfigValue{"WebServer"}}, {"log_level", ConfigValue{"info"}}}
-            },
-            Object{
-                {{"channel", ConfigValue{"Subscriptions"}}, {"log_level", ConfigValue{"info"}}}
-            },
-            Object{
-                {{"channel", ConfigValue{"RPC"}}, {"log_level", ConfigValue{"info"}}}
-            },
-            Object{
-                {{"channel", ConfigValue{"ETL"}}, {"log_level", ConfigValue{"info"}}}
-            },
-            Object{
-                {{"channel", ConfigValue{"Performance"}}, {"log_level", ConfigValue{"info"}}}
-            }
-        }
-    },
-    {"log_level", ConfigValue{"info"}},
-    {"log_format", ConfigValue{R"("%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%)"}},
-    {"log_to_console", ConfigValue{true}},
-    {"log_directory", ConfigValue{"./clio_log"}},
-    {"log_rotation_size", ConfigValue{2048}},
-    {"log_directory_max_size", ConfigValue{51200}},
-    {"log_rotation_hour_interval", ConfigValue{12}},
-    {"log_tag_style", ConfigValue{"uint"}},
-    {"extractor_threads", ConfigValue{2}},
-    {"read_only", ConfigValue{false}},
-    {"start_sequence", ConfigValue{""}},
-    {"finish_sequence", ConfigValue{""}},
-    {"ssl_cert_file", ConfigValue{""}},
-    {"ssl_key_file", ConfigValue{""}},
-    {"api_version", Object{
-        {{"min", ConfigValue{1}}, {"max", ConfigValue{2}}}
-    }}
+static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
+    {{"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+     {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("localhost")},
+     {"database.cassandra.port", ConfigValue{ConfigType::Integer}},
+     {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
+     {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(3)},
+     {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.defaultValue("table_prefix")},
+     {"database.cassandra.max_write_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(10'000)},
+     {"database.cassandra.max_read_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(100'000)},
+     {"database.cassandra.threads",
+      ConfigValue{ConfigType::Integer}.defaultValue(static_cast<int>(std::thread::hardware_concurrency()))},
+     {"database.cassandra.core_connections_per_host", ConfigValue{ConfigType::Integer}.defaultValue(1)},
+     {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional()},
+     {"database.cassandra.write_batch_size", ConfigValue{ConfigType::Integer}.defaultValue(20)},
+     {"etl_source.[].ip", Array{ConfigValue{ConfigType::String}.optional()}},
+     {"etl_source.[].ws_port", Array{ConfigValue{ConfigType::String}.min(1).max(65535)}},
+     {"etl_source.[].grpc_port", Array{ConfigValue{ConfigType::String}.min(1).max(65535)}},
+     {"forwarding_cache_timeout", ConfigValue{ConfigType::Integer}},
+     {"dos_guard.[].whitelist", Array{ConfigValue{ConfigType::String}}},
+     {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(1000'000)},
+     {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20)},
+     {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20)},
+     {"dos_guard.sweep_interval", ConfigValue{ConfigType::Double}.defaultValue(1.0)},
+     {"cache.peers.[].ip", Array{ConfigValue{ConfigType::String}}},
+     {"cache.peers.[].port", Array{ConfigValue{ConfigType::String}}},
+     {"server.ip", ConfigValue{ConfigType::String}},
+     {"server.port", ConfigValue{ConfigType::Integer}},
+     {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+     {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+     {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+     {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+     {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32)},
+     {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48)},
+     {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
+     {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
+     {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional()}},
+     {"log_channels.[].log_level", Array{ConfigValue{ConfigType::String}.optional()}},
+     {"log_level", ConfigValue{ConfigType::String}.defaultValue("info")},
+     {"log_format",
+      ConfigValue{ConfigType::String}.defaultValue(
+          R"(%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%)"
+      )},
+     {"log_to_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+     {"log_directory", ConfigValue{ConfigType::String}.optional()},
+     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048)},
+     {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024)},
+     {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12)},
+     {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+     {"extractor_threads", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+     {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+     {"txn_threshold", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+     {"start_sequence", ConfigValue{ConfigType::String}.optional()},
+     {"finish_sequence", ConfigValue{ConfigType::String}.optional()},
+     {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
+     {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
+     {"api_version.min", ConfigValue{ConfigType::Integer}},
+     {"api_version.max", ConfigValue{ConfigType::Integer}}}
 };
-*/
 
-/*
-std::optional<Error> ConfigFileDefinition::parse(ConfigFileInterface const& config)
+ObjectView
+ClioConfigDefinition::getObject(std::string_view prefix, std::optional<std::size_t> idx) const
 {
-    // TODO: use get value/get Array to compare what is needed;
+    std::string prefixWithDot = std::string(prefix) + ".";
+    for (auto const& [mapKey, mapVal] : map_) {
+        if (mapKey.starts_with(prefixWithDot))
+            ASSERT(!mapKey.ends_with(".[]"), "Trying to retrieve an object when value is an Array");
+
+        if (mapKey.starts_with(prefixWithDot) && std::holds_alternative<ConfigValue>(mapVal))
+            return ObjectView{prefix, *this};
+
+        if (mapKey.starts_with(prefixWithDot) && std::holds_alternative<Array>(mapVal)) {
+            ASSERT(std::get<Array>(mapVal).size() > idx, "index provided is out of scope");
+            return ObjectView{prefix, idx.value(), *this};
+        }
+    }
+    throw std::invalid_argument("Key is not found in config");
 }
-*/
+
+ArrayView
+ClioConfigDefinition::getArray(std::string_view prefix) const
+{
+    std::string key = std::string(prefix);
+    if (!prefix.contains(".[]"))
+        key += ".[]";
+
+    for (auto const& [mapKey, mapVal] : map_) {
+        if (mapKey.starts_with(key))
+            return ArrayView{key, *this};
+        ASSERT(!mapKey.starts_with(prefix), "Trying to retrieve an Array when value is an object");
+    }
+    throw std::invalid_argument("Key is not found in config");
+}
+
+ValueView
+ClioConfigDefinition::getValue(std::string_view fullKey) const
+{
+    if (map_.contains(fullKey) && std::holds_alternative<ConfigValue>(map_.at(fullKey))) {
+        return ValueView{std::get<ConfigValue>(map_.at(fullKey))};
+    }
+    ASSERT(
+        !map_.contains(fullKey) && std::holds_alternative<Array>(map_.at(fullKey)), "value of key is not Config Value."
+    );
+
+    throw std::invalid_argument("no matching key");
+}
+
+/**
+ * @brief Description of each config key and what they mean. Used to generate markdown file
+ *
+ * Key-value pairs. Key is configKey, value is its matching description
+ * Maybe_unused will be removed when markdown file is generated
+ */
+[[maybe_unused]] static constexpr ClioConfigDescription const DESCRIPTIONS{
+    {{"database.type", "Type of database to use."},
+     {"database.cassandra.contact_points", "Comma-separated list of contact points for Cassandra nodes."},
+     {"database.cassandra.port", "Port number to connect to Cassandra."},
+     {"database.cassandra.keyspace", "Keyspace to use in Cassandra."},
+     {"database.cassandra.replication_factor", "Number of replicated nodes for Scylladb."},
+     {"database.cassandra.table_prefix", "Prefix for Cassandra table names."},
+     {"database.cassandra.max_write_requests_outstanding", "Maximum number of outstanding write requests."},
+     {"database.cassandra.max_read_requests_outstanding", "Maximum number of outstanding read requests."},
+     {"database.cassandra.threads", "Number of threads for Cassandra operations."},
+     {"database.cassandra.core_connections_per_host", "Number of core connections per host for Cassandra."},
+     {"database.cassandra.queue_size_io", "Queue size for I/O operations in Cassandra."},
+     {"database.cassandra.write_batch_size", "Batch size for write operations in Cassandra."},
+     {"etl_source.[].ip", "IP address of the ETL source."},
+     {"etl_source.[].ws_port", "WebSocket port of the ETL source."},
+     {"etl_source.[].grpc_port", "gRPC port of the ETL source."},
+     {"forwarding_cache_timeout", "Timeout duration for the forwarding cache used in Rippled communication."},
+     {"dos_guard.[].whitelist", "List of IP addresses to whitelist for DOS protection."},
+     {"dos_guard.max_fetches", "Maximum number of fetch operations allowed by DOS guard."},
+     {"dos_guard.max_connections", "Maximum number of concurrent connections allowed by DOS guard."},
+     {"dos_guard.max_requests", "Maximum number of requests allowed by DOS guard."},
+     {"dos_guard.sweep_interval", "Interval in seconds for DOS guard to sweep/clear its state."},
+     {"cache.peers.[].ip", "IP address of peer nodes to cache."},
+     {"cache.peers.[].port", "Port number of peer nodes to cache."},
+     {"server.ip", "IP address of the Clio HTTP server."},
+     {"server.port", "Port number of the Clio HTTP server."},
+     {"server.max_queue_size", "Maximum size of the server's request queue."},
+     {"server.local_admin", "Indicates if the server should run with admin privileges."},
+     {"prometheus.enabled", "Enable or disable Prometheus metrics."},
+     {"prometheus.compress_reply", "Enable or disable compression of Prometheus responses."},
+     {"io_threads", "Number of I/O threads."},
+     {"cache.num_diffs", "Number of diffs to cache."},
+     {"cache.num_markers", "Number of markers to cache."},
+     {"cache.page_fetch_size", "Page fetch size for cache operations."},
+     {"cache.load", "Cache loading strategy ('sync' or 'async')."},
+     {"log_channels.[].channel", "Name of the log channel."},
+     {"log_channels.[].log_level", "Log level for the log channel."},
+     {"log_level", "General logging level of Clio."},
+     {"log_format", "Format string for log messages."},
+     {"log_to_console", "Enable or disable logging to console."},
+     {"log_directory", "Directory path for log files."},
+     {"log_rotation_size", "Log rotation size in megabytes."},
+     {"log_directory_max_size", "Maximum size of the log directory in megabytes."},
+     {"log_rotation_hour_interval", "Interval in hours for log rotation."},
+     {"log_tag_style", "Style for log tags."},
+     {"extractor_threads", "Number of extractor threads."},
+     {"read_only", "Indicates if the server should have read-only privileges."},
+     {"txn_threshold", "Transaction threshold value."},
+     {"start_sequence", "Starting ledger index."},
+     {"finish_sequence", "Ending ledger index."},
+     {"ssl_cert_file", "Path to the SSL certificate file."},
+     {"ssl_key_file", "Path to the SSL key file."},
+     {"api_version.min", "Minimum API version."},
+     {"api_version.max", "Maximum API version."}}
+};
 
 =======
 namespace util::config {

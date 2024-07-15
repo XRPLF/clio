@@ -33,7 +33,10 @@
 
 #include <optional>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include <string>
+=======
+>>>>>>> d2f765f (Commit work so far)
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -47,7 +50,10 @@ namespace util::config {
 class ConfigFileJson final : public ConfigFileInterface {
 public:
 <<<<<<< HEAD
+<<<<<<< HEAD
     using configVal = std::pair<std::string, ConfigValue>;
+=======
+>>>>>>> d2f765f (Commit work so far)
     ConfigFileJson(std::string_view configFilePath)
     {
         parse(configFilePath);
@@ -63,7 +69,7 @@ public:
     std::optional<ConfigValue>
     getValue(std::string_view key) const override;
 
-    std::optional<std::vector<configVal>>
+    std::optional<std::vector<ConfigValue>>
     getArray(std::string_view key) const override;
 
 private:

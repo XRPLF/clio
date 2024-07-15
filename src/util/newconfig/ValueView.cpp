@@ -17,20 +17,48 @@
 */
 //==============================================================================
 
-#pragma once
+#include "util/newconfig/ValueView.hpp"
+
+#include "util/Assert.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
 
 #include <string>
 #include <string_view>
-#include <utility>
+#include <variant>
 
 namespace util::config {
 
-struct Error {
-    Error(std::string_view key, std::string_view error) : key_(key), error_(error)
-    {
-    }
-    std::string_view key_;
-    std::string error_;
-};
+std::string_view
+ValueView::asString() const
+{
+    if (this->type() == ConfigType::String)
+        return std::get<std::string>(configVal_.value_.value());
+    throw std::bad_variant_access();
+}
+
+bool
+ValueView::asBool() const
+{
+    if (type() == ConfigType::Boolean && configVal_.value_.has_value())
+        return std::get<bool>(configVal_.value_.value());
+    throw std::bad_variant_access();
+}
+
+int
+ValueView::asInt() const
+{
+    if (type() == ConfigType::Integer && configVal_.value_.has_value())
+        return std::get<int>(configVal_.value_.value());
+    throw std::bad_variant_access();
+}
+
+double
+ValueView::asDouble() const
+{
+    if (type() == ConfigType::Double && configVal_.value_.has_value())
+        return std::get<double>(configVal_.value_.value());
+    throw std::bad_variant_access();
+}
 
 }  // namespace util::config

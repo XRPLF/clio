@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
@@ -162,3 +163,5 @@ private:
 };
 
 }  // namespace util::config
+=======
+>>>>>>> d2f765f (Commit work so far)

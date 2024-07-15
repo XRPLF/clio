@@ -21,11 +21,9 @@
 
 <<<<<<< HEAD
 #include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Object.hpp"
 
 #include <optional>
 #include <string_view>
-#include <utility>
 #include <vector>
 =======
 #include "util/newconfig/Array.hpp"
@@ -37,11 +35,17 @@
 
 namespace util::config {
 
-/** @brief The interface for config Json */
+/**
+ * @brief The interface for configuration files.
+ *
+ * This class defines the interface for handling configuration files,
+ * which can be implemented for different formats such as JSON or YAML.
+ */
 class ConfigFileInterface {
 public:
     virtual ~ConfigFileInterface() = default;
 
+<<<<<<< HEAD
     virtual void parse(std::string_view) = 0;
 <<<<<<< HEAD
     virtual std::optional<ConfigValue> getValue(std::string_view) const = 0;
@@ -50,6 +54,31 @@ public:
     virtual std::optional<ValueData<ConfigType>> getValue(std::string_view) const = 0;
     virtual std::optional<Array<ConfigType>> getArray(std::string_view) const = 0;
 >>>>>>> e62e648 (first draft of config)
+=======
+    /**
+     * @brief Parses the provided path of user clio configuration data
+     *
+     * @param filePath The path to the Clio Config data
+     */
+    virtual void
+    parse(std::string_view filePath) = 0;
+
+    /**
+     * @brief Retrieves a configuration value.
+     *
+     * @param key The key of the configuration value.
+     * @return An optional containing the configuration value if found, otherwise std::nullopt.
+     */
+    virtual std::optional<ConfigValue> getValue(std::string_view) const = 0;
+
+    /**
+     * @brief Retrieves an array of configuration values.
+     *
+     * @param key The key of the configuration array.
+     * @return An optional containing a vector of configuration values if found, otherwise std::nullopt.
+     */
+    virtual std::optional<std::vector<ConfigValue>> getArray(std::string_view) const = 0;
+>>>>>>> d2f765f (Commit work so far)
 };
 
 }  // namespace util::config
