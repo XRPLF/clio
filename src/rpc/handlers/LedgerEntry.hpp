@@ -71,6 +71,7 @@ public:
         std::string ledgerHash;
         std::optional<boost::json::object> node;
         std::optional<std::string> nodeBinary;
+        std::optional<uint32_t> deletedLedgerIndex;
         bool validated = true;
     };
 
@@ -103,6 +104,7 @@ public:
         std::optional<uint32_t> chainClaimId;
         std::optional<uint32_t> createAccountClaimId;
         std::optional<ripple::uint256> oracleNode;
+        bool includeDeleted = false;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -314,6 +316,7 @@ public:
                   meta::WithCustomError{modifiers::ToNumber{}, Status(ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID)}},
              }}},
             {JS(ledger), check::Deprecated{}},
+            {"include_deleted", validation::Type<bool>{}},
         };
 
         return rpcSpec;

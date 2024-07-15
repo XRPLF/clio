@@ -162,17 +162,26 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         return Error{*status};
 
     auto const lgrInfo = std::get<ripple::LedgerHeader>(lgrInfoOrStatus);
-    auto const ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
+    auto output = LedgerEntryHandler::Output{};
+    auto ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
 
-    if (!ledgerObject || ledgerObject->empty())
-        return Error{Status{"entryNotFound"}};
+    if (!ledgerObject || ledgerObject->empty()) {
+        if (not input.includeDeleted) 
+            return Error{Status{"entryNotFound"}};
+        auto const deletedSeq = sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
+        if (!deletedSeq) 
+            return Error{Status{"entryNotFound"}};
+        ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, deletedSeq.value() - 1, ctx.yield);
+        if (!ledgerObject || ledgerObject->empty()) 
+            return Error{Status{"entryNotFound"}};
+        output.deletedLedgerIndex = deletedSeq.value();
+    }
 
     ripple::STLedgerEntry const sle{ripple::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
 
     if (input.expectedType != ripple::ltANY && sle.getType() != input.expectedType)
         return Error{Status{"unexpectedLedgerType"}};
 
-    auto output = LedgerEntryHandler::Output{};
     output.index = ripple::strHex(key);
     output.ledgerIndex = lgrInfo.seq;
     output.ledgerHash = ripple::strHex(lgrInfo.hash);
@@ -219,6 +228,9 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerEntryHandl
         {JS(validated), output.validated},
         {JS(index), output.index},
     };
+
+    if (output.deletedLedgerIndex)
+        object["deleted_ledger_index"] = *(output.deletedLedgerIndex);
 
     if (output.nodeBinary) {
         object[JS(node_binary)] = *(output.nodeBinary);
@@ -336,6 +348,9 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
     } else if (jsonObject.contains(JS(oracle))) {
         input.oracleNode = parseOracleFromJson(jv.at(JS(oracle)));
     }
+
+    if (jsonObject.contains("include_deleted"))
+        input.includeDeleted = jv.at("include_deleted").as_bool();
 
     return input;
 }
