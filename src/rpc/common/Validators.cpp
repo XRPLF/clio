@@ -22,6 +22,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/AccountUtils.hpp"
 #include "util/TimeUtils.hpp"
 
 #include <boost/json/object.hpp>
@@ -133,7 +134,7 @@ CustomValidator CustomValidators::AccountBase58Validator =
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
-        auto const account = ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value));
+        auto const account = util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(value));
         if (!account || account->isZero())
             return Error{Status{ClioError::rpcMALFORMED_ADDRESS}};
 

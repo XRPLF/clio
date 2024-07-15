@@ -93,6 +93,7 @@ target_sources(
           rpc/JsonBoolTests.cpp
           rpc/RPCHelpersTests.cpp
           rpc/WorkQueueTests.cpp
+          util/AccountUtilsTests.cpp
           util/AssertTests.cpp
           # Async framework
           util/async/AnyExecutionContextTests.cpp

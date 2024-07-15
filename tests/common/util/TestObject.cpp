@@ -21,6 +21,7 @@
 
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
+#include "util/AccountUtils.hpp"
 #include "util/Assert.hpp"
 
 #include <xrpl/basics/Blob.h>
@@ -60,7 +61,7 @@ constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B2501
 ripple::AccountID
 GetAccountIDWithString(std::string_view id)
 {
-    return ripple::parseBase58<ripple::AccountID>(std::string(id)).value();
+    return util::parseBase58Wrapper<ripple::AccountID>(std::string(id)).value();
 }
 
 ripple::uint256
@@ -169,11 +170,11 @@ CreatePaymentTransactionObject(
 {
     ripple::STObject obj(ripple::sfTransaction);
     obj.setFieldU16(ripple::sfTransactionType, ripple::ttPAYMENT);
-    auto account = ripple::parseBase58<ripple::AccountID>(std::string(accountId1));
+    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId1));
     obj.setAccountID(ripple::sfAccount, account.value());
     obj.setFieldAmount(ripple::sfAmount, ripple::STAmount(amount, false));
     obj.setFieldAmount(ripple::sfFee, ripple::STAmount(fee, false));
-    auto account2 = ripple::parseBase58<ripple::AccountID>(std::string(accountId2));
+    auto account2 = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId2));
     obj.setAccountID(ripple::sfDestination, account2.value());
     obj.setFieldU32(ripple::sfSequence, seq);
     char const* key = "test";
@@ -273,14 +274,14 @@ CreateCreateOfferTransactionObject(
 {
     ripple::STObject obj(ripple::sfTransaction);
     obj.setFieldU16(ripple::sfTransactionType, ripple::ttOFFER_CREATE);
-    auto account = ripple::parseBase58<ripple::AccountID>(std::string(accountId));
+    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
     obj.setAccountID(ripple::sfAccount, account.value());
     auto amount = ripple::STAmount(fee, false);
     obj.setFieldAmount(ripple::sfFee, amount);
     obj.setFieldU32(ripple::sfSequence, seq);
     // add amount
     ripple::Issue const issue1(
-        ripple::Currency{currency}, ripple::parseBase58<ripple::AccountID>(std::string(issuer)).value()
+        ripple::Currency{currency}, util::parseBase58Wrapper<ripple::AccountID>(std::string(issuer)).value()
     );
     if (reverse) {
         obj.setFieldAmount(ripple::sfTakerPays, ripple::STAmount(issue1, takerGets));
@@ -303,11 +304,11 @@ GetIssue(std::string_view currency, std::string_view issuerId)
     if (currency.size() == 3) {
         return ripple::Issue(
             ripple::to_currency(std::string(currency)),
-            ripple::parseBase58<ripple::AccountID>(std::string(issuerId)).value()
+            util::parseBase58Wrapper<ripple::AccountID>(std::string(issuerId)).value()
         );
     }
     return ripple::Issue(
-        ripple::Currency{currency}, ripple::parseBase58<ripple::AccountID>(std::string(issuerId)).value()
+        ripple::Currency{currency}, util::parseBase58Wrapper<ripple::AccountID>(std::string(issuerId)).value()
     );
 }
 
@@ -651,7 +652,7 @@ CreateMintNFTTxWithMetadata(
     // tx
     ripple::STObject tx(ripple::sfTransaction);
     tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_MINT);
-    auto account = ripple::parseBase58<ripple::AccountID>(std::string(accountId));
+    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
     tx.setAccountID(ripple::sfAccount, account.value());
     auto amount = ripple::STAmount(fee, false);
     tx.setFieldAmount(ripple::sfFee, amount);
@@ -708,7 +709,7 @@ CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uin
     // tx
     ripple::STObject tx(ripple::sfTransaction);
     tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_ACCEPT_OFFER);
-    auto account = ripple::parseBase58<ripple::AccountID>(std::string(accountId));
+    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
     tx.setAccountID(ripple::sfAccount, account.value());
     auto amount = ripple::STAmount(fee, false);
     tx.setFieldAmount(ripple::sfFee, amount);
@@ -752,7 +753,7 @@ CreateCancelNFTOffersTxWithMetadata(
     // tx
     ripple::STObject tx(ripple::sfTransaction);
     tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_CANCEL_OFFER);
-    auto account = ripple::parseBase58<ripple::AccountID>(std::string(accountId));
+    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
     tx.setAccountID(ripple::sfAccount, account.value());
     auto amount = ripple::STAmount(fee, false);
     tx.setFieldAmount(ripple::sfFee, amount);
@@ -806,7 +807,7 @@ CreateCreateNFTOfferTxWithMetadata(
     // tx
     ripple::STObject tx(ripple::sfTransaction);
     tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_CREATE_OFFER);
-    auto account = ripple::parseBase58<ripple::AccountID>(std::string(accountId));
+    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
     tx.setAccountID(ripple::sfAccount, account.value());
     auto amount = ripple::STAmount(fee, false);
     tx.setFieldAmount(ripple::sfFee, amount);
@@ -854,7 +855,7 @@ CreateOracleSetTxWithMetadata(
     // tx
     ripple::STObject tx(ripple::sfTransaction);
     tx.setFieldU16(ripple::sfTransactionType, ripple::ttORACLE_SET);
-    auto account = ripple::parseBase58<ripple::AccountID>(std::string(accountId));
+    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
     tx.setAccountID(ripple::sfAccount, account.value());
     auto amount = ripple::STAmount(fee, false);
     tx.setFieldAmount(ripple::sfFee, amount);
@@ -934,7 +935,7 @@ CreateAMMObject(
     amm.setFieldIssue(ripple::sfAsset2, ripple::STIssue{ripple::sfAsset2, GetIssue(asset2Currency, asset2Issuer)});
     ripple::Issue const issue1(
         ripple::Currency{lpTokenBalanceIssueCurrency},
-        ripple::parseBase58<ripple::AccountID>(std::string(accountId)).value()
+        util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId)).value()
     );
     amm.setFieldAmount(ripple::sfLPTokenBalance, ripple::STAmount(issue1, lpTokenBalanceIssueAmount));
     amm.setFieldU32(ripple::sfFlags, 0);
