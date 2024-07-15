@@ -180,7 +180,7 @@ public:
     ConfigValue const&
     at(std::size_t idx) const
     {
-        ASSERT(idx >= 0 && idx < elements_.size(), "index is out of scope");
+        ASSERT(idx < elements_.size(), "index is out of scope");
         return elements_[idx];
     }
 
