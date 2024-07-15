@@ -12,6 +12,7 @@ target_sources(
           data/cassandra/RetryPolicyTests.cpp
           data/cassandra/SettingsProviderTests.cpp
           DOSGuardTests.cpp
+          NewConfigTests.cpp
           # ETL
           etl/AmendmentBlockHandlerTests.cpp
           etl/CacheLoaderSettingsTests.cpp
@@ -127,6 +128,10 @@ target_sources(
           web/ServerTests.cpp
           web/SweepHandlerTests.cpp
           web/WhitelistHandlerTests.cpp
+          # New Config
+          util/newconfig/ArrayViewTests.cpp
+          util/newconfig/ObjectViewTests.cpp
+          util/newconfig/ValueViewTests.cpp
 )
 
 # See https://github.com/google/googletest/issues/3475

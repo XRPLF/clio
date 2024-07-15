@@ -23,6 +23,10 @@ target_sources(
           TimeUtils.cpp
           TxUtils.cpp
           LedgerUtils.cpp
+          newconfig/ConfigDefinition.cpp
+          newconfig/ObjectView.cpp
+          newconfig/ArrayView.cpp
+          newconfig/ValueView.cpp
 )
 
 target_link_libraries(
