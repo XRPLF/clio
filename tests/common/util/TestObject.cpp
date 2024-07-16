@@ -758,7 +758,7 @@ CreateCancelNFTOffersTxWithMetadata(
     tx.setFieldAmount(ripple::sfFee, amount);
     tx.setFieldU32(ripple::sfSequence, seq);
     ripple::STVector256 offers;
-    offers.resize(2);
+    offers.resize(nftOffers.size());
     std::transform(nftOffers.cbegin(), nftOffers.cend(), offers.begin(), [&](auto const& nftId) {
         return ripple::uint256{nftId.c_str()};
     });
