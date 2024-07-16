@@ -45,7 +45,6 @@
 #include <xrpl/protocol/TER.h>
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/UintTypes.h>
-#include <xrpl/protocol/tokens.h>
 
 #include <algorithm>
 #include <chrono>
