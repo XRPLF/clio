@@ -43,7 +43,6 @@
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/jss.h>
-#include <xrpl/protocol/tokens.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -174,7 +173,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, deletedSeq.value() - 1, ctx.yield);
         if (!ledgerObject || ledgerObject->empty()) 
             return Error{Status{"entryNotFound"}};
-        output.deletedLedgerIndex = deletedSeq.value();
+        output.deletedLedgerIndex = deletedSeq;
     }
 
     ripple::STLedgerEntry const sle{ripple::SerialIter{ledgerObject->data(), ledgerObject->size()}, key};
