@@ -46,7 +46,6 @@
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
-#include <xrpl/protocol/tokens.h>
 
 #include <cstdint>
 #include <functional>

@@ -576,9 +576,8 @@ public:
             if (auto const result = res->template get<Blob, std::uint32_t>(); result) { 
                 auto [_ ,seq] = result.value();
                 return seq;
-            } else {
-                LOG(log_.debug()) << "Could not fetch ledger object sequence - no rows";
-            }
+            }                 LOG(log_.debug()) << "Could not fetch ledger object sequence - no rows";
+           
         } else {
             LOG(log_.error()) << "Could not fetch ledger object sequence: " << res.error();
         }

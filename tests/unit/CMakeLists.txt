@@ -28,6 +28,7 @@ target_sources(
           etl/GrpcSourceTests.cpp
           etl/LedgerPublisherTests.cpp
           etl/LoadBalancerTests.cpp
+          etl/NFTHelpersTests.cpp
           etl/SourceImplTests.cpp
           etl/SubscriptionSourceTests.cpp
           etl/TransformerTests.cpp
