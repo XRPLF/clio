@@ -40,7 +40,7 @@ struct NFTHelpersTests : public NoLoggerFixture {};
 TEST_F(NFTHelpersTests, ConvertDataFromNFTCancelOfferTx)
 {
     auto const tx = CreateCancelNFTOffersTxWithMetadata(ACCOUNT, 1, 2, std::vector<std::string>{NFTID2, NFTID});
-    ripple::TxMeta txMeta(ripple::uint256(TX), 1, tx.metadata);
+    ripple::TxMeta const txMeta(ripple::uint256(TX), 1, tx.metadata);
     auto const [nftTxs, nftDatas] =
         etl::getNFTDataFromTx(txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()}));
 
@@ -52,7 +52,7 @@ TEST_F(NFTHelpersTests, ConvertDataFromNFTCancelOfferTxContainingDuplicateNFT)
 {
     auto const tx =
         CreateCancelNFTOffersTxWithMetadata(ACCOUNT, 1, 2, std::vector<std::string>{NFTID2, NFTID, NFTID2, NFTID});
-    ripple::TxMeta txMeta(ripple::uint256(TX), 1, tx.metadata);
+    ripple::TxMeta const txMeta(ripple::uint256(TX), 1, tx.metadata);
     auto const [nftTxs, nftDatas] =
         etl::getNFTDataFromTx(txMeta, ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()}));
 
