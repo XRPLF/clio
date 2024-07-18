@@ -27,6 +27,7 @@
 #include <fmt/core.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <stdexcept>
 #include <string>
@@ -53,41 +54,40 @@ ObjectView::getFullKey(std::string_view key) const
 bool
 ObjectView::containsKey(std::string_view key) const
 {
-    std::string fullKey = getFullKey(key);
-    return clioConfig_.map_.contains(fullKey);
+    auto const fullKey = getFullKey(key);
+    return clioConfig_.get().contains(fullKey);
 }
 
 bool
 ObjectView::startsWithKey(std::string_view key) const
 {
-    for (auto const& [valueKey, value] : clioConfig_.map_) {
-        if (valueKey.starts_with(key))
-            return true;
-    }
-    return false;
+    auto it = std::find_if(clioConfig_.get().begin(), clioConfig_.get().end(), [&key](auto const& pair) {
+        return pair.first.starts_with(key);
+    });
+    return it != clioConfig_.get().end();
 }
 
 ValueView
 ObjectView::getValue(std::string_view key) const
 {
-    std::string fullKey = getFullKey(key);
+    auto const fullKey = getFullKey(key);
     if (arrayIndex_.has_value()) {
-        return clioConfig_.getArray(fullKey).valueAt(arrayIndex_.value());
+        return clioConfig_.get().getArray(fullKey).valueAt(arrayIndex_.value());
     }
-    return clioConfig_.getValue(fullKey);
+    return clioConfig_.get().getValue(fullKey);
 }
 
 ObjectView
 ObjectView::getObject(std::string_view key) const
 {
-    std::string fullKey = getFullKey(key);
+    auto const fullKey = getFullKey(key);
     if (startsWithKey(fullKey) && !arrayIndex_.has_value()) {
-        return clioConfig_.getObject(fullKey);
+        return clioConfig_.get().getObject(fullKey);
     }
     if (startsWithKey(fullKey) && arrayIndex_.has_value()) {
         return ObjectView(fullKey, arrayIndex_.value(), clioConfig_);
     }
-    throw std::runtime_error("Key does not exist in object");
+    throw std::runtime_error(fmt::format("Key {} does not exist in object", fullKey));
 }
 
 }  // namespace util::config

@@ -27,6 +27,7 @@
 #include "util/newconfig/ValueView.hpp"
 
 #include <cstddef>
+#include <functional>
 #include <string>
 #include <string_view>
 
@@ -41,8 +42,6 @@ namespace util::config {
  */
 class ArrayView {
 public:
-    ArrayView() = delete;
-
     /**
      * @brief Constructs an ArrayView with the given prefix and config definition.
      *
@@ -57,7 +56,7 @@ public:
      * @param idx Index of the object to retrieve.
      * @return ObjectView at the specified index.
      */
-    ObjectView
+    [[nodiscard]] ObjectView
     objectAt(std::size_t idx) const;
 
     /**
@@ -66,7 +65,7 @@ public:
      * @param idx Index of the value to retrieve.
      * @return ValueView at the specified index.
      */
-    ValueView
+    [[nodiscard]] ValueView
     valueAt(std::size_t idx) const;
 
     /**
@@ -75,7 +74,7 @@ public:
      * @return Number of elements in the array.
      * @throw std::logic_error if somehow ArrayView doesn't exist
      */
-    size_t
+    [[nodiscard]] size_t
     size() const;
 
     /**
@@ -83,11 +82,11 @@ public:
      *
      * @return Iterator to the beginning of the values.
      */
-    auto
+    [[nodiscard]] auto
     beginValues() const
     {
-        ASSERT(clioConfig_.map_.contains(prefix_), "Current string is prefix, not full key");
-        return std::get<Array>(clioConfig_.map_.at(prefix_)).begin();
+        ASSERT(clioConfig_.get().contains(prefix_), "Current string {} is a prefix, not a key of config", prefix_);
+        return clioConfig_.get().atArray(prefix_).begin();
     }
 
     /**
@@ -95,16 +94,16 @@ public:
      *
      * @return Iterator to the end of the values.
      */
-    auto
+    [[nodiscard]] auto
     endValues() const
     {
-        ASSERT(clioConfig_.map_.contains(prefix_), "Current string is prefix, not full key");
-        return std::get<Array>(clioConfig_.map_.at(prefix_)).end();
+        ASSERT(clioConfig_.get().contains(prefix_), "Current string {} is a prefix, not a key of config", prefix_);
+        return clioConfig_.get().atArray(prefix_).end();
     }
 
 private:
     std::string const prefix_;
-    ClioConfigDefinition const& clioConfig_;
+    std::reference_wrapper<ClioConfigDefinition const> clioConfig_;
 };
 
 }  // namespace util::config

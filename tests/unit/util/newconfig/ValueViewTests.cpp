@@ -24,36 +24,58 @@
 #include <../common/newconfig/FakeConfigData.hpp>
 #include <gtest/gtest.h>
 
+#include <cstdint>
+#include <stdexcept>
 #include <variant>
 
 using namespace util::config;
 
 struct ValueViewTest : testing::Test {
-    ClioConfigDefinition configData = generateConfig();
+    ClioConfigDefinition const configData = generateConfig();
 };
 
 TEST_F(ValueViewTest, ValueView)
 {
-    ConfigValue cv = ConfigValue{ConfigType::String}.defaultValue("value");
-    ValueView vv = ValueView(cv);
-    ASSERT_EQ("value", vv.asString());
-    ASSERT_EQ(ConfigType::String, cv.type());
+    ConfigValue const cv = ConfigValue{ConfigType::String}.defaultValue("value");
+    ValueView const vv = ValueView(cv);
+    EXPECT_EQ("value", vv.asString());
+    EXPECT_EQ(ConfigType::String, cv.type());
 
-    auto v = configData.getValue("header.port");
-    ASSERT_EQ(v.type(), ConfigType::Integer);
+    auto const v = configData.getValue("header.port");
+    EXPECT_EQ(v.type(), ConfigType::Integer);
 
-    ASSERT_EQ("value", configData.getValue("header.text1").asString());
-    ASSERT_EQ(123, configData.getValue("header.port").asInt());
-    ASSERT_EQ(true, configData.getValue("header.admin").asBool());
-    ASSERT_EQ("TSM", configData.getValue("header.sub.sub2Value").asString());
-    ASSERT_EQ(444.22, configData.getValue("ip").asDouble());
+    EXPECT_EQ("value", configData.getValue("header.text1").asString());
+    EXPECT_EQ(123, configData.getValue("header.port").asIntType<int>());
+    EXPECT_EQ(true, configData.getValue("header.admin").asBool());
+    EXPECT_EQ("TSM", configData.getValue("header.sub.sub2Value").asString());
+    EXPECT_EQ(444.22, configData.getValue("ip").asDouble());
+}
+
+TEST_F(ValueViewTest, differentIntegerTest)
+{
+    auto const vv = configData.getValue("header.port");
+    auto const uint32 = vv.asIntType<uint32_t>();
+    auto const uint64 = vv.asIntType<uint64_t>();
+    auto const int32 = vv.asIntType<int32_t>();
+    auto const int64 = vv.asIntType<int64_t>();
+    auto const doubleVal = vv.asIntType<double>();
+
+    EXPECT_EQ(vv.asIntType<int>(), uint32);
+    EXPECT_EQ(vv.asIntType<int>(), uint64);
+    EXPECT_EQ(vv.asIntType<int>(), int32);
+    EXPECT_EQ(vv.asIntType<int>(), int64);
+    EXPECT_EQ(vv.asIntType<int>(), doubleVal);
 }
 
 TEST_F(ValueViewTest, wrongTypes)
 {
-    auto cv = configData.getValue("header.port");
-    ValueView vv = ValueView(cv);
-    ASSERT_THROW(vv.asBool(), std::bad_variant_access);
-    ASSERT_THROW(vv.asString(), std::bad_variant_access);
-    ASSERT_THROW(vv.asDouble(), std::bad_variant_access);
+    auto const vv = configData.getValue("header.port");
+
+    EXPECT_THROW({ [[maybe_unused]] auto a_ = vv.asBool(); }, std::bad_variant_access);
+    EXPECT_THROW({ [[maybe_unused]] auto a_ = vv.asString(); }, std::bad_variant_access);
+    EXPECT_THROW({ [[maybe_unused]] auto a_ = vv.asDouble(); }, std::bad_variant_access);
+
+    ConfigValue const cv = ConfigValue{ConfigType::Integer}.defaultValue(-5);
+    auto const vv2 = ValueView(cv);
+    EXPECT_THROW({ [[maybe_unused]] auto a_ = vv2.asIntType<uint32_t>(); }, std::logic_error);
 }

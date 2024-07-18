@@ -23,6 +23,7 @@
 #include "util/newconfig/ValueView.hpp"
 
 #include <cstddef>
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -64,7 +65,7 @@ public:
      * @param key The suffix of the key
      * @return true if the full key exists, otherwise false
      */
-    bool
+    [[nodiscard]] bool
     containsKey(std::string_view key) const;
 
     /**
@@ -73,7 +74,7 @@ public:
      * @param key The suffix of the key
      * @return A ValueView object representing the value associated with the key
      */
-    ValueView
+    [[nodiscard]] ValueView
     getValue(std::string_view key) const;
 
     /**
@@ -83,7 +84,7 @@ public:
      * @param key The suffix of the key
      * @return An ObjectView representing the subset of configuration data
      */
-    ObjectView
+    [[nodiscard]] ObjectView
     getObject(std::string_view key) const;
 
 private:
@@ -93,7 +94,7 @@ private:
      * @param key The suffix of the key
      * @return the full string of the key
      */
-    std::string
+    [[nodiscard]] std::string
     getFullKey(std::string_view key) const;
 
     /**
@@ -102,12 +103,12 @@ private:
      * @param key The suffix of the key
      * @return true if at least one key starts with the specified prefix_.key, otherwise false
      */
-    bool
+    [[nodiscard]] bool
     startsWithKey(std::string_view key) const;
 
     std::string prefix_;
     std::optional<size_t> arrayIndex_;
-    ClioConfigDefinition const& clioConfig_;
+    std::reference_wrapper<ClioConfigDefinition const> clioConfig_;
 };
 
 }  // namespace util::config

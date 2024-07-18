@@ -27,57 +27,57 @@
 using namespace util::config;
 
 struct ObjectViewTest : testing::Test {
-    ClioConfigDefinition configData = generateConfig();
+    ClioConfigDefinition const configData = generateConfig();
 };
 
 TEST_F(ObjectViewTest, ObjectValueTest)
 {
-    auto headerObj = configData.getObject("header");
-    ASSERT_FALSE(headerObj.containsKey("header"));
-    ASSERT_TRUE(headerObj.containsKey("text1"));
-    ASSERT_TRUE(headerObj.containsKey("port"));
-    ASSERT_TRUE(headerObj.containsKey("admin"));
+    auto const headerObj = configData.getObject("header");
+    EXPECT_FALSE(headerObj.containsKey("header"));
+    EXPECT_TRUE(headerObj.containsKey("text1"));
+    EXPECT_TRUE(headerObj.containsKey("port"));
+    EXPECT_TRUE(headerObj.containsKey("admin"));
 
-    ASSERT_EQ("value", headerObj.getValue("text1").asString());
-    ASSERT_EQ(123, headerObj.getValue("port").asInt());
-    ASSERT_EQ(true, headerObj.getValue("admin").asBool());
+    EXPECT_EQ("value", headerObj.getValue("text1").asString());
+    EXPECT_EQ(123, headerObj.getValue("port").asIntType<int>());
+    EXPECT_EQ(true, headerObj.getValue("admin").asBool());
 }
 
 TEST_F(ObjectViewTest, ObjectInArray)
 {
-    ArrayView arr = configData.getArray("array");
-    ASSERT_EQ(arr.size(), 2);
-    ObjectView firstObj = arr.objectAt(0);
-    ObjectView secondObj = arr.objectAt(1);
-    ASSERT_TRUE(firstObj.containsKey("sub"));
-    ASSERT_TRUE(firstObj.containsKey("sub2"));
+    ArrayView const arr = configData.getArray("array");
+    EXPECT_EQ(arr.size(), 2);
+    ObjectView const firstObj = arr.objectAt(0);
+    ObjectView const secondObj = arr.objectAt(1);
+    EXPECT_TRUE(firstObj.containsKey("sub"));
+    EXPECT_TRUE(firstObj.containsKey("sub2"));
 
     // object's key is only "sub" and "sub2"
-    ASSERT_FALSE(firstObj.containsKey("array.[].sub"));
+    EXPECT_FALSE(firstObj.containsKey("array.[].sub"));
 
-    ASSERT_EQ(firstObj.getValue("sub").asDouble(), 111.11);
-    ASSERT_EQ(firstObj.getValue("sub2").asString(), "subCategory");
+    EXPECT_EQ(firstObj.getValue("sub").asDouble(), 111.11);
+    EXPECT_EQ(firstObj.getValue("sub2").asString(), "subCategory");
 
-    ASSERT_EQ(secondObj.getValue("sub").asDouble(), 4321.55);
-    ASSERT_EQ(secondObj.getValue("sub2").asString(), "temporary");
+    EXPECT_EQ(secondObj.getValue("sub").asDouble(), 4321.55);
+    EXPECT_EQ(secondObj.getValue("sub2").asString(), "temporary");
 }
 
 TEST_F(ObjectViewTest, ObjectInArrayMoreComplex)
 {
-    ArrayView arr = configData.getArray("higher");
+    ArrayView const arr = configData.getArray("higher");
     ASSERT_EQ(1, arr.size());
 
-    ObjectView firstObj = arr.objectAt(0);
+    ObjectView const firstObj = arr.objectAt(0);
 
     // this returns the 1st object inside "low"
-    ObjectView sameObjFromConfigData = configData.getObject("higher.[].low", 0);
-    ASSERT_EQ(sameObjFromConfigData.getValue("admin").asBool(), firstObj.getValue("low.admin").asBool());
-    ASSERT_FALSE(firstObj.containsKey("low"));
-    ASSERT_TRUE(firstObj.containsKey("low.admin"));
+    ObjectView const sameObjFromConfigData = configData.getObject("higher.[].low", 0);
+    EXPECT_EQ(sameObjFromConfigData.getValue("admin").asBool(), firstObj.getValue("low.admin").asBool());
+    EXPECT_FALSE(firstObj.containsKey("low"));
+    EXPECT_TRUE(firstObj.containsKey("low.admin"));
 
-    ObjectView objLow = firstObj.getObject("low");
-    ASSERT_TRUE(objLow.containsKey("section"));
-    ASSERT_TRUE(objLow.containsKey("admin"));
-    ASSERT_EQ(objLow.getValue("section").asString(), "true");
-    ASSERT_EQ(objLow.getValue("admin").asBool(), false);
+    ObjectView const objLow = firstObj.getObject("low");
+    EXPECT_TRUE(objLow.containsKey("section"));
+    EXPECT_TRUE(objLow.containsKey("admin"));
+    EXPECT_EQ(objLow.getValue("section").asString(), "true");
+    EXPECT_EQ(objLow.getValue("admin").asBool(), false);
 }

@@ -36,30 +36,26 @@ namespace util::config {
 ArrayView::ArrayView(std::string_view prefix, ClioConfigDefinition const& configDef)
     : prefix_{prefix}, clioConfig_{configDef}
 {
-    auto it = std::find_if(configDef.map_.begin(), configDef.map_.end(), [this](auto const& pair) {
+    auto it = std::find_if(configDef.begin(), configDef.end(), [this](auto const& pair) {
         return pair.first.starts_with(prefix_);
     });
-    ASSERT(it != clioConfig_.map_.end(), "prefix does not exist in config definition.");
+    ASSERT(it != clioConfig_.get().end(), "Prefix {} does not exist in config definition.", prefix);
     ASSERT(prefix_.contains(".[]"), "Not an array");
 }
 
 ValueView
 ArrayView::valueAt(std::size_t idx) const
 {
-    ASSERT(clioConfig_.map_.contains(prefix_), "Current string is prefix, not full key");
-    ConfigValue const& val = std::get<Array>(clioConfig_.map_.at(prefix_)).at(idx);
+    ASSERT(clioConfig_.get().contains(prefix_), "Current string {} is a prefix, not a key of config", prefix_);
+    ConfigValue const& val = clioConfig_.get().atArray(prefix_).at(idx);
     return ValueView{val};
 }
 
 size_t
 ArrayView::size() const
 {
-    for (auto const& pair : clioConfig_.map_) {
-        if (pair.first.starts_with(prefix_)) {
-            return std::get<Array>(pair.second).size();
-        }
-    }
-    throw std::logic_error("Arrayview is initialized with incorrect prefix.");
+    return clioConfig_.get().arraySize(prefix_);
+    throw std::logic_error("ArrayView is initialized with incorrect prefix. Shoudn't reach here");
 }
 
 ObjectView

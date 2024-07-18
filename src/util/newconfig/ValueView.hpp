@@ -21,9 +21,15 @@
 
 #include "util/newconfig/ConfigValue.hpp"
 
+#include <fmt/core.h>
+
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <stdexcept>
 #include <string_view>
+#include <variant>
 
 namespace util::config {
 
@@ -49,7 +55,7 @@ public:
      * @return The value as a string
      * @throws std::bad_variant_access if the value is not a string
      */
-    std::string_view
+    [[nodiscard]] std::string_view
     asString() const;
 
     /**
@@ -58,26 +64,50 @@ public:
      * @return The value as a boolean
      * @throws std::bad_variant_access if the value is not a boolean
      */
-    bool
+    [[nodiscard]] bool
     asBool() const;
 
     /**
-     * @brief Retrieves the value as an integer
+     * @brief Retrieves any type of "int" value (uint_32, int64_t etc)
      *
-     * @return The value as an integer
-     * @throws std::bad_variant_access if the value is not an integer
+     * @return The value with user requested type (if convertible)
+     * @throws std::logic_error if the int < 0 and user requested unsigned int
+     * @throws std::bad_variant_access if the value is not of type int
      */
-    int
-    asInt() const;
+    template <typename T>
+    [[nodiscard]] T
+    asIntType() const
+    {
+        if ((type() == ConfigType::Integer || type() == ConfigType::UnsignedInt) &&
+            configVal_.get().value_.has_value()) {
+            auto val = std::get<int64_t>(configVal_.get().value_.value());
+            if (std::is_unsigned_v<T> && val < 0)
+                throw std::logic_error(fmt::format("Int {} cannot be converted to the specified unsigned type", val));
+
+            if (std::is_convertible_v<decltype(val), T>) {
+                return static_cast<T>(val);
+            }
+        }
+        throw std::bad_variant_access();
+    }
 
     /**
      * @brief Retrieves the value as a double
      *
      * @return The value as a double
-     * @throws std::bad_variant_access if the value is not a double
+     * @throws std::bad_variant_access if the value cannot be retrieved as a Double
      */
-    double
+    [[nodiscard]] double
     asDouble() const;
+
+    /**
+     * @brief Retrieves the value as a float
+     *
+     * @return The value as a float
+     * @throws std::bad_variant_access if the value cannot be retrieved as a float
+     */
+    [[nodiscard]] float
+    asFloat() const;
 
     /**
      * @brief Gets the config type
@@ -87,11 +117,11 @@ public:
     constexpr ConfigType
     type() const
     {
-        return configVal_.type();
+        return configVal_.get().type();
     }
 
 private:
-    ConfigValue const& configVal_;
+    std::reference_wrapper<ConfigValue const> configVal_;
 };
 
 }  // namespace util::config

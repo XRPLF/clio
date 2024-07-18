@@ -25,9 +25,11 @@
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/ObjectView.hpp"
 
+#include <fmt/core.h>
+
 #include <cstddef>
+#include <cstdint>
 #include <initializer_list>
-#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -44,38 +46,38 @@ namespace util::config {
 static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
     {{"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
      {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("localhost")},
-     {"database.cassandra.port", ConfigValue{ConfigType::Integer}},
+     {"database.cassandra.port", ConfigValue{ConfigType::UnsignedInt}},
      {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
-     {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(3)},
+     {"database.cassandra.replication_factor", ConfigValue{ConfigType::UnsignedInt}.defaultValue(3u)},
      {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.defaultValue("table_prefix")},
-     {"database.cassandra.max_write_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(10'000)},
-     {"database.cassandra.max_read_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(100'000)},
+     {"database.cassandra.max_write_requests_outstanding", ConfigValue{ConfigType::UnsignedInt}.defaultValue(10'000u)},
+     {"database.cassandra.max_read_requests_outstanding", ConfigValue{ConfigType::UnsignedInt}.defaultValue(100'000u)},
      {"database.cassandra.threads",
-      ConfigValue{ConfigType::Integer}.defaultValue(static_cast<int>(std::thread::hardware_concurrency()))},
-     {"database.cassandra.core_connections_per_host", ConfigValue{ConfigType::Integer}.defaultValue(1)},
-     {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional()},
-     {"database.cassandra.write_batch_size", ConfigValue{ConfigType::Integer}.defaultValue(20)},
+      ConfigValue{ConfigType::UnsignedInt}.defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))},
+     {"database.cassandra.core_connections_per_host", ConfigValue{ConfigType::UnsignedInt}.defaultValue(1u)},
+     {"database.cassandra.queue_size_io", ConfigValue{ConfigType::UnsignedInt}.optional()},
+     {"database.cassandra.write_batch_size", ConfigValue{ConfigType::UnsignedInt}.defaultValue(20u)},
      {"etl_source.[].ip", Array{ConfigValue{ConfigType::String}.optional()}},
-     {"etl_source.[].ws_port", Array{ConfigValue{ConfigType::String}.min(1).max(65535)}},
-     {"etl_source.[].grpc_port", Array{ConfigValue{ConfigType::String}.min(1).max(65535)}},
+     {"etl_source.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().min(1).max(65535)}},
+     {"etl_source.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().min(1).max(65535)}},
      {"forwarding_cache_timeout", ConfigValue{ConfigType::Integer}},
      {"dos_guard.[].whitelist", Array{ConfigValue{ConfigType::String}}},
-     {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(1000'000)},
-     {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20)},
-     {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20)},
+     {"dos_guard.max_fetches", ConfigValue{ConfigType::UnsignedInt}.defaultValue(1000'000u)},
+     {"dos_guard.max_connections", ConfigValue{ConfigType::UnsignedInt}.defaultValue(20u)},
+     {"dos_guard.max_requests", ConfigValue{ConfigType::UnsignedInt}.defaultValue(20u)},
      {"dos_guard.sweep_interval", ConfigValue{ConfigType::Double}.defaultValue(1.0)},
      {"cache.peers.[].ip", Array{ConfigValue{ConfigType::String}}},
      {"cache.peers.[].port", Array{ConfigValue{ConfigType::String}}},
      {"server.ip", ConfigValue{ConfigType::String}},
      {"server.port", ConfigValue{ConfigType::Integer}},
-     {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+     {"server.max_queue_size", ConfigValue{ConfigType::UnsignedInt}.defaultValue(0u)},
      {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
      {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
      {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2)},
-     {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32)},
-     {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48)},
-     {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
+     {"io_threads", ConfigValue{ConfigType::UnsignedInt}.defaultValue(2u)},
+     {"cache.num_diffs", ConfigValue{ConfigType::UnsignedInt}.defaultValue(32u)},
+     {"cache.num_markers", ConfigValue{ConfigType::UnsignedInt}.defaultValue(48u)},
+     {"cache.page_fetch_size", ConfigValue{ConfigType::UnsignedInt}.defaultValue(512u)},
      {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
      {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional()}},
      {"log_channels.[].log_level", Array{ConfigValue{ConfigType::String}.optional()}},
@@ -86,53 +88,68 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
       )},
      {"log_to_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
      {"log_directory", ConfigValue{ConfigType::String}.optional()},
-     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048)},
-     {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024)},
-     {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12)},
+     {"log_rotation_size", ConfigValue{ConfigType::UnsignedInt}.defaultValue(2048u)},
+     {"log_directory_max_size", ConfigValue{ConfigType::UnsignedInt}.defaultValue(50u * 1024u)},
+     {"log_rotation_hour_interval", ConfigValue{ConfigType::UnsignedInt}.defaultValue(12u)},
      {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
-     {"extractor_threads", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+     {"extractor_threads", ConfigValue{ConfigType::UnsignedInt}.defaultValue(2u)},
      {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-     {"txn_threshold", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+     {"txn_threshold", ConfigValue{ConfigType::UnsignedInt}.defaultValue(0u)},
      {"start_sequence", ConfigValue{ConfigType::String}.optional()},
      {"finish_sequence", ConfigValue{ConfigType::String}.optional()},
      {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
      {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
-     {"api_version.min", ConfigValue{ConfigType::Integer}},
-     {"api_version.max", ConfigValue{ConfigType::Integer}}}
+     {"api_version.min", ConfigValue{ConfigType::UnsignedInt}},
+     {"api_version.max", ConfigValue{ConfigType::UnsignedInt}}}
 };
 
 ObjectView
-ClioConfigDefinition::getObject(std::string_view prefix, std::optional<std::size_t> idx) const
+ClioConfigDefinition::getObject(std::string_view prefix) const
 {
-    std::string prefixWithDot = std::string(prefix) + ".";
+    auto const prefixWithDot = std::string(prefix) + ".";
     for (auto const& [mapKey, mapVal] : map_) {
         if (mapKey.starts_with(prefixWithDot))
             ASSERT(!mapKey.ends_with(".[]"), "Trying to retrieve an object when value is an Array");
 
-        if (mapKey.starts_with(prefixWithDot) && std::holds_alternative<ConfigValue>(mapVal))
+        if (mapKey.starts_with(prefixWithDot) && std::holds_alternative<ConfigValue>(mapVal)) {
+            ASSERT(std::holds_alternative<ConfigValue>(mapVal), "Trying to get object from Array but requires index");
             return ObjectView{prefix, *this};
-
-        if (mapKey.starts_with(prefixWithDot) && std::holds_alternative<Array>(mapVal)) {
-            ASSERT(std::get<Array>(mapVal).size() > idx, "index provided is out of scope");
-            return ObjectView{prefix, idx.value(), *this};
         }
     }
-    throw std::invalid_argument("Key is not found in config");
+    throw std::invalid_argument(fmt::format("Key {} is not found in config", prefixWithDot));
+}
+
+ObjectView
+ClioConfigDefinition::getObject(std::string_view prefix, std::size_t idx) const
+{
+    auto const prefixWithDot = std::string(prefix) + ".";
+    for (auto const& [mapKey, mapVal] : map_) {
+        if (mapKey.starts_with(prefixWithDot))
+            ASSERT(!mapKey.ends_with(".[]"), "Trying to retrieve an object when value is an Array");
+
+        if (mapKey.starts_with(prefixWithDot)) {
+            ASSERT(std::holds_alternative<Array>(mapVal), "Trying to get object, but doesn't require index");
+            ASSERT(std::get<Array>(mapVal).size() > idx, "Index provided is out of scope");
+            return ObjectView{prefix, idx, *this};
+        }
+    }
+    throw std::invalid_argument(fmt::format("Key {} is not found in config", prefixWithDot));
 }
 
 ArrayView
 ClioConfigDefinition::getArray(std::string_view prefix) const
 {
-    std::string key = std::string(prefix);
+    auto key = std::string(prefix);
     if (!prefix.contains(".[]"))
         key += ".[]";
 
     for (auto const& [mapKey, mapVal] : map_) {
-        if (mapKey.starts_with(key))
+        if (mapKey.starts_with(key)) {
+            ASSERT(std::holds_alternative<Array>(mapVal), "Trying to retrieve an Array when value is an object ");
             return ArrayView{key, *this};
-        ASSERT(!mapKey.starts_with(prefix), "Trying to retrieve an Array when value is an object");
+        }
     }
-    throw std::invalid_argument("Key is not found in config");
+    throw std::invalid_argument(fmt::format("Key {} is not found in config", key));
 }
 
 ValueView
@@ -142,72 +159,32 @@ ClioConfigDefinition::getValue(std::string_view fullKey) const
         return ValueView{std::get<ConfigValue>(map_.at(fullKey))};
     }
     ASSERT(
-        !map_.contains(fullKey) && std::holds_alternative<Array>(map_.at(fullKey)), "value of key is not Config Value."
+        map_.contains(fullKey) && std::holds_alternative<Array>(map_.at(fullKey)),
+        "Value of Key {} is not Config Value.",
+        fullKey
     );
 
-    throw std::invalid_argument("no matching key");
+    throw std::invalid_argument(fmt::format("Key {} is not found in config", fullKey));
 }
 
-/**
- * @brief Description of each config key and what they mean. Used to generate markdown file
- *
- * Key-value pairs. Key is configKey, value is its matching description
- * Maybe_unused will be removed when markdown file is generated
- */
-[[maybe_unused]] static constexpr ClioConfigDescription const DESCRIPTIONS{
-    {{"database.type", "Type of database to use."},
-     {"database.cassandra.contact_points", "Comma-separated list of contact points for Cassandra nodes."},
-     {"database.cassandra.port", "Port number to connect to Cassandra."},
-     {"database.cassandra.keyspace", "Keyspace to use in Cassandra."},
-     {"database.cassandra.replication_factor", "Number of replicated nodes for Scylladb."},
-     {"database.cassandra.table_prefix", "Prefix for Cassandra table names."},
-     {"database.cassandra.max_write_requests_outstanding", "Maximum number of outstanding write requests."},
-     {"database.cassandra.max_read_requests_outstanding", "Maximum number of outstanding read requests."},
-     {"database.cassandra.threads", "Number of threads for Cassandra operations."},
-     {"database.cassandra.core_connections_per_host", "Number of core connections per host for Cassandra."},
-     {"database.cassandra.queue_size_io", "Queue size for I/O operations in Cassandra."},
-     {"database.cassandra.write_batch_size", "Batch size for write operations in Cassandra."},
-     {"etl_source.[].ip", "IP address of the ETL source."},
-     {"etl_source.[].ws_port", "WebSocket port of the ETL source."},
-     {"etl_source.[].grpc_port", "gRPC port of the ETL source."},
-     {"forwarding_cache_timeout", "Timeout duration for the forwarding cache used in Rippled communication."},
-     {"dos_guard.[].whitelist", "List of IP addresses to whitelist for DOS protection."},
-     {"dos_guard.max_fetches", "Maximum number of fetch operations allowed by DOS guard."},
-     {"dos_guard.max_connections", "Maximum number of concurrent connections allowed by DOS guard."},
-     {"dos_guard.max_requests", "Maximum number of requests allowed by DOS guard."},
-     {"dos_guard.sweep_interval", "Interval in seconds for DOS guard to sweep/clear its state."},
-     {"cache.peers.[].ip", "IP address of peer nodes to cache."},
-     {"cache.peers.[].port", "Port number of peer nodes to cache."},
-     {"server.ip", "IP address of the Clio HTTP server."},
-     {"server.port", "Port number of the Clio HTTP server."},
-     {"server.max_queue_size", "Maximum size of the server's request queue."},
-     {"server.local_admin", "Indicates if the server should run with admin privileges."},
-     {"prometheus.enabled", "Enable or disable Prometheus metrics."},
-     {"prometheus.compress_reply", "Enable or disable compression of Prometheus responses."},
-     {"io_threads", "Number of I/O threads."},
-     {"cache.num_diffs", "Number of diffs to cache."},
-     {"cache.num_markers", "Number of markers to cache."},
-     {"cache.page_fetch_size", "Page fetch size for cache operations."},
-     {"cache.load", "Cache loading strategy ('sync' or 'async')."},
-     {"log_channels.[].channel", "Name of the log channel."},
-     {"log_channels.[].log_level", "Log level for the log channel."},
-     {"log_level", "General logging level of Clio."},
-     {"log_format", "Format string for log messages."},
-     {"log_to_console", "Enable or disable logging to console."},
-     {"log_directory", "Directory path for log files."},
-     {"log_rotation_size", "Log rotation size in megabytes."},
-     {"log_directory_max_size", "Maximum size of the log directory in megabytes."},
-     {"log_rotation_hour_interval", "Interval in hours for log rotation."},
-     {"log_tag_style", "Style for log tags."},
-     {"extractor_threads", "Number of extractor threads."},
-     {"read_only", "Indicates if the server should have read-only privileges."},
-     {"txn_threshold", "Transaction threshold value."},
-     {"start_sequence", "Starting ledger index."},
-     {"finish_sequence", "Ending ledger index."},
-     {"ssl_cert_file", "Path to the SSL certificate file."},
-     {"ssl_key_file", "Path to the SSL key file."},
-     {"api_version.min", "Minimum API version."},
-     {"api_version.max", "Maximum API version."}}
-};
+Array const&
+ClioConfigDefinition::atArray(std::string_view key) const
+{
+    ASSERT(map_.contains(key), "Current string {} is a prefix, not a key of config", key);
+    ASSERT(std::holds_alternative<Array>(map_.at(key)), "Value of {} is not an array", key);
+    return std::get<Array>(map_.at(key));
+}
+
+std::size_t
+ClioConfigDefinition::arraySize(std::string_view prefix) const
+{
+    ASSERT(prefix.contains(".[]"), "Prefix {} is not an array", prefix);
+    for (auto const& pair : map_) {
+        if (pair.first.starts_with(prefix)) {
+            return std::get<Array>(pair.second).size();
+        }
+    }
+    throw std::logic_error(fmt::format("Prefix {} not found in any of the config keys", prefix));
+}
 
 }  // namespace util::config

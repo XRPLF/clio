@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigDescription.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -31,11 +31,9 @@ using namespace util::config;
 
 TEST(ConfigDescription, getValues)
 {
-    ClioConfigDescription definition{
-        {{"database.type", "Type of database."}, {"key", "value"}, {"array[].sub", "this is the subsection."}}
-    };
+    ClioConfigDescription definition{};
 
-    ASSERT_EQ(definition.get("key"), "value");
-    ASSERT_EQ(definition.get("database.type"), "Type of database.");
-    ASSERT_EQ(definition.get("array[].sub"), "this is the subsection.");
+    EXPECT_EQ(definition.get("database.type"), "Type of database to use.");
+    EXPECT_EQ(definition.get("etl_source.[].ip"), "IP address of the ETL source.");
+    EXPECT_EQ(definition.get("prometheus.enabled"), "Enable or disable Prometheus metrics.");
 }

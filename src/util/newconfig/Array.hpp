@@ -25,6 +25,7 @@
 
 #include <cstddef>
 #include <iterator>
+#include <utility>
 #include <vector>
 
 namespace util::config {
@@ -36,7 +37,11 @@ namespace util::config {
  */
 class Array {
 public:
-    /** @brief Custom iterator class which returns ValueView of what's underneath the Array
+    /** @brief Used for end iterator*/
+    struct Sentinel {};
+
+    /**
+     * @brief Custom iterator class which returns ValueView of what's underneath the Array
      */
     struct ArrayIterator {
         using iterator_category = std::forward_iterator_tag;
@@ -49,7 +54,7 @@ public:
          *
          * @param ptr Pointer to the ConfigValue
          */
-        ArrayIterator(pointer ptr) : m_ptr(ptr)
+        ArrayIterator(pointer ptr) : ptr_(ptr)
         {
         }
 
@@ -61,7 +66,7 @@ public:
         ArrayIterator&
         operator++()
         {
-            m_ptr++;
+            ++ptr_;
             return *this;
         }
 
@@ -74,7 +79,7 @@ public:
         operator++(int)
         {
             ArrayIterator temp = *this;
-            m_ptr++;
+            ptr_++;
             return temp;
         }
 
@@ -86,7 +91,7 @@ public:
         ValueView
         operator*()
         {
-            return ValueView(*m_ptr);
+            return ValueView(*ptr_);
         }
 
         /**
@@ -98,7 +103,7 @@ public:
         bool
         operator==(ArrayIterator const& other) const
         {
-            return m_ptr == other.m_ptr;
+            return ptr_ == other.ptr_;
         }
 
         /**
@@ -110,11 +115,23 @@ public:
         bool
         operator!=(ArrayIterator const& other) const
         {
-            return m_ptr != other.m_ptr;
+            return ptr_ != other.ptr_;
+        }
+
+        /**
+         * @brief Equality operator for Sentinel comparison
+         *
+         * @param sentinel Sentinel object to compare
+         * @return true since it will always compare to end
+         */
+        bool
+        operator==(Sentinel const&) const
+        {
+            return true;
         }
 
     private:
-        pointer m_ptr;
+        pointer ptr_;
     };
 
     /**
@@ -124,7 +141,7 @@ public:
      * @param args Arguments to initialize the elements of the Array
      */
     template <typename... Args>
-    constexpr Array(Args... args) : elements_{args...}
+    constexpr Array(Args&&... args) : elements_{std::forward<Args>(args)...}
     {
     }
 
@@ -147,17 +164,18 @@ public:
     auto
     end() const
     {
-        return ArrayIterator{elements_.data() + elements_.size()};
+        return Sentinel{};
     }
 
-    /** @brief Add ConfigValues to Array class
+    /**
+     * @brief Add ConfigValues to Array class
      *
      * @param value The ConfigValue to add
      */
     void
     emplace_back(ConfigValue value)
     {
-        elements_.emplace_back(value);
+        elements_.push_back(std::move(value));
     }
 
     /**

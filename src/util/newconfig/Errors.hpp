@@ -26,16 +26,8 @@ namespace util::config {
 
 /** @brief todo: Will display the different errors when parsing config */
 struct Error {
-    /** @brief Constructs an error object to return
-     *
-     * @param key the key of config
-     * @param error the error to output
-     */
-    Error(std::string_view key, std::string_view error) : key_(key), error_(error)
-    {
-    }
-    std::string_view key_;
-    std::string error_;
+    std::string_view key;
+    std::string_view error;
 };
 
 }  // namespace util::config
