@@ -121,7 +121,6 @@ public:
         /**
          * @brief Equality operator for Sentinel comparison
          *
-         * @param sentinel Sentinel object to compare
          * @return true since it will always compare to end
          */
         bool
