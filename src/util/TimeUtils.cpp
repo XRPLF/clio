@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,34 +17,31 @@
 */
 //==============================================================================
 
-#pragma once
+#include "util/TimeUtils.hpp"
 
-#include "rpc/Errors.hpp"
-#include "util/FakeFetchResponse.hpp"
+#include <xrpl/basics/chrono.h>
 
-#include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
-#include <boost/json/object.hpp>
-#include <boost/json/value.hpp>
-#include <gmock/gmock.h>
-
-#include <cstdint>
-#include <expected>
+#include <chrono>
+#include <ctime>
 #include <optional>
 #include <string>
 
-struct MockLoadBalancer {
-    using RawLedgerObjectType = FakeLedgerObject;
+namespace util {
+[[nodiscard]] std::optional<std::chrono::system_clock::time_point>
+SystemTpFromUTCStr(std::string const& dateStr, std::string const& format)
+{
+    std::tm timeStruct{};
+    auto const ret = strptime(dateStr.c_str(), format.c_str(), &timeStruct);
+    if (ret == nullptr) {
+        return std::nullopt;
+    }
+    return std::chrono::system_clock::from_time_t(timegm(&timeStruct));
+}
 
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
+[[nodiscard]] std::chrono::system_clock::time_point
+SystemTpFromLedgerCloseTime(ripple::NetClock::time_point closeTime)
+{
+    return std::chrono::system_clock::time_point{closeTime.time_since_epoch() + ripple::epoch_offset};
+}
 
-    using ForwardToRippledReturnType = std::expected<boost::json::object, rpc::ClioError>;
-    MOCK_METHOD(
-        ForwardToRippledReturnType,
-        forwardToRippled,
-        (boost::json::object const&, std::optional<std::string> const&, bool, boost::asio::yield_context),
-        (const)
-    );
-};
+}  // namespace util

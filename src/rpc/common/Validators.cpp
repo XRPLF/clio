@@ -22,6 +22,8 @@
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/AccountUtils.hpp"
+#include "util/TimeUtils.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
@@ -30,13 +32,10 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/UintTypes.h>
-#include <xrpl/protocol/tokens.h>
 
 #include <charconv>
 #include <cstdint>
 #include <ctime>
-#include <iomanip>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -65,10 +64,8 @@ TimeFormatValidator::verify(boost::json::value const& value, std::string_view ke
     if (not value.as_object().at(key).is_string())
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
-    std::tm time = {};
-    std::stringstream stream(value_to<std::string>(value.as_object().at(key)));
-    stream >> std::get_time(&time, format_.c_str());
-    if (stream.fail())
+    auto const ret = util::SystemTpFromUTCStr(value_to<std::string>(value.as_object().at(key)), format_);
+    if (!ret)
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
     return {};
@@ -139,7 +136,7 @@ CustomValidator CustomValidators::AccountBase58Validator =
         if (!value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
 
-        auto const account = ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value));
+        auto const account = util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(value));
         if (!account || account->isZero())
             return Error{Status{ClioError::rpcMALFORMED_ADDRESS}};
 

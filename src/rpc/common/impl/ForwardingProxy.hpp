@@ -60,10 +60,9 @@ public:
         if (ctx.method == "subscribe" || ctx.method == "unsubscribe")
             return false;
 
-        // TODO https://github.com/XRPLF/clio/issues/1131 - remove once clio-native feature is
-        // implemented fully. For now we disallow forwarding of the admin api, only user api is allowed.
-        if (ctx.method == "feature" and not request.contains("vetoed"))
-            return true;
+        // Disallow forwarding of the admin api, only user api is allowed for security reasons.
+        if (ctx.method == "feature" and request.contains("vetoed"))
+            return false;
 
         if (handlerProvider_->isClioOnly(ctx.method))
             return false;
@@ -96,7 +95,7 @@ public:
         auto res = balancer_->forwardToRippled(toForward, ctx.clientIp, ctx.isAdmin, ctx.yield);
         if (not res) {
             notifyFailedToForward(ctx.method);
-            return Result{Status{RippledError::rpcFAILED_TO_FORWARD}};
+            return Result{Status{CombinedError{res.error()}}};
         }
 
         notifyForwarded(ctx.method);

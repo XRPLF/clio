@@ -40,16 +40,19 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
-#define REGISTER(name) inline static impl::WritingAmendmentKey const name = std::string(BOOST_PP_STRINGIZE(name))
+#define REGISTER(name)                                   \
+    inline static impl::WritingAmendmentKey const name = \
+        impl::WritingAmendmentKey(std::string(BOOST_PP_STRINGIZE(name)))
 
 namespace data {
 namespace impl {
 
 struct WritingAmendmentKey : AmendmentKey {
-    WritingAmendmentKey(std::string amendmentName);
+    explicit WritingAmendmentKey(std::string amendmentName);
 };
 
 }  // namespace impl
@@ -173,7 +176,7 @@ public:
      * @param key The key of the amendment to check
      * @return true if supported; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isSupported(AmendmentKey const& key) const final;
 
     /**
@@ -181,7 +184,7 @@ public:
      *
      * @return The amendments supported by Clio
      */
-    std::map<std::string, Amendment> const&
+    [[nodiscard]] std::map<std::string, Amendment> const&
     getSupported() const final;
 
     /**
@@ -189,7 +192,7 @@ public:
      *
      * @return All known amendments as a vector
      */
-    std::vector<Amendment> const&
+    [[nodiscard]] std::vector<Amendment> const&
     getAll() const final;
 
     /**
@@ -199,7 +202,7 @@ public:
      * @param seq The sequence to check for
      * @return true if enabled; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isEnabled(AmendmentKey const& key, uint32_t seq) const final;
 
     /**
@@ -210,8 +213,19 @@ public:
      * @param seq The sequence to check for
      * @return true if enabled; false otherwise
      */
-    bool
+    [[nodiscard]] bool
     isEnabled(boost::asio::yield_context yield, AmendmentKey const& key, uint32_t seq) const final;
+
+    /**
+     * @brief Check whether an amendment was/is enabled for a given sequence
+     *
+     * @param yield The coroutine context to use
+     * @param keys The keys of the amendments to check
+     * @param seq The sequence to check for
+     * @return A vector of bools representing enabled state for each of the given keys
+     */
+    [[nodiscard]] std::vector<bool>
+    isEnabled(boost::asio::yield_context yield, std::vector<AmendmentKey> const& keys, uint32_t seq) const final;
 
     /**
      * @brief Get an amendment
@@ -219,7 +233,7 @@ public:
      * @param key The key of the amendment to get
      * @return The amendment as a const ref; asserts if the amendment is unknown
      */
-    Amendment const&
+    [[nodiscard]] Amendment const&
     getAmendment(AmendmentKey const& key) const final;
 
     /**
@@ -228,8 +242,12 @@ public:
      * @param key The amendment key from @see Amendments
      * @return The amendment as a const ref; asserts if the amendment is unknown
      */
-    Amendment const&
+    [[nodiscard]] Amendment const&
     operator[](AmendmentKey const& key) const final;
+
+private:
+    [[nodiscard]] std::optional<std::vector<ripple::uint256>>
+    fetchAmendmentsList(boost::asio::yield_context yield, uint32_t seq) const;
 };
 
 }  // namespace data

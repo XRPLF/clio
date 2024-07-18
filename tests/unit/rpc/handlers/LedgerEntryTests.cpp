@@ -61,6 +61,8 @@ constexpr static auto RANGEMIN = 10;
 constexpr static auto RANGEMAX = 30;
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto TOKENID = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA";
+constexpr static auto NFTID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
+constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 
 class RPCLedgerEntryTest : public HandlerBaseTest {};
 
@@ -2689,3 +2691,321 @@ TEST(RPCLedgerEntrySpecTest, DeprecatedFields)
     EXPECT_EQ(warning.at("id").as_int64(), static_cast<int64_t>(rpc::WarningCode::warnRPC_DEPRECATED));
     EXPECT_NE(warning.at("message").as_string().find("Field 'ledger' is deprecated."), std::string::npos) << warning;
 }
+
+// Same as BinaryFalse with include_deleted set to true
+// Expected Result: same as BinaryFalse
+TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
+{
+    static auto constexpr OUT = R"({
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+        "node": {
+            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Amount": "100",
+            "Balance": "200",
+            "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+            "Flags": 0,
+            "LedgerEntryType": "PayChannel",
+            "OwnerNode": "0",
+            "PreviousTxnID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+            "PreviousTxnLgrSeq": 400,
+            "PublicKey": "020000000000000000000000000000000000000000000000000000000000000000",
+            "SettleDelay": 300,
+            "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD"
+        }
+    })";
+
+    backend->setRange(RANGEMIN, RANGEMAX);
+    // return valid ledgerinfo
+    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+
+    // return valid ledger entry which can be deserialized
+    auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "index": "{}",
+                "include_deleted": true
+            }})",
+            INDEX1
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, json::parse(OUT));
+    });
+}
+
+// Test for object is deleted in the latest sequence
+// Expected Result: return the latest object that is not deleted
+TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
+{
+    static auto constexpr OUT = R"({
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+        "deleted_ledger_index": 30,
+        "node": {
+            "Amount": "123",
+            "Flags": 0,
+            "LedgerEntryType": "NFTokenOffer",
+            "NFTokenID": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
+            "NFTokenOfferNode": "0",
+            "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "OwnerNode": "0",
+            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+            "PreviousTxnLgrSeq": 0,
+            "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD"
+            }
+        })";
+    backend->setRange(RANGEMIN, RANGEMAX);
+    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    // return valid ledger entry which can be deserialized
+    auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillOnce(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend, doFetchLedgerObjectSeq(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillOnce(Return(uint32_t{RANGEMAX}));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 1, _))
+        .WillOnce(Return(offer.getSerializer().peekData()));
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "index": "{}",
+                "include_deleted": true
+            }})",
+            INDEX1
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, json::parse(OUT));
+    });
+}
+
+// Test for object not exist in database
+// Expected Result: return entryNotFound error
+TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
+{
+    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillOnce(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend, doFetchLedgerObjectSeq(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillOnce(Return(uint32_t{RANGEMAX}));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 1, _))
+        .WillOnce(Return(std::optional<Blob>{}));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "index": "{}",
+                "include_deleted": true
+            }})",
+            INDEX1
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        auto const myerr = err.at("error").as_string();
+        EXPECT_EQ(myerr, "entryNotFound");
+    });
+}
+
+// Same as BinaryFalse with include_deleted set to false
+// Expected Result: same as BinaryFalse
+TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
+{
+    static auto constexpr OUT = R"({
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+        "node": {
+            "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "Amount": "100",
+            "Balance": "200",
+            "Destination": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+            "Flags": 0,
+            "LedgerEntryType": "PayChannel",
+            "OwnerNode": "0",
+            "PreviousTxnID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+            "PreviousTxnLgrSeq": 400,
+            "PublicKey": "020000000000000000000000000000000000000000000000000000000000000000",
+            "SettleDelay": 300,
+            "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD"
+        }
+    })";
+
+    backend->setRange(RANGEMIN, RANGEMAX);
+    // return valid ledgerinfo
+    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+
+    // return valid ledger entry which can be deserialized
+    auto const ledgerEntry = CreatePaymentChannelLedgerObject(ACCOUNT, ACCOUNT2, 100, 200, 300, INDEX1, 400);
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "payment_channel": "{}",
+                "include_deleted": false
+            }})",
+            INDEX1
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, json::parse(OUT));
+    });
+}
+
+// Test when an object is updated and include_deleted is set to true
+// Expected Result: return the latest object that is not deleted (latest object in this test)
+TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
+{
+    static auto constexpr OUT = R"({
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+        "node": {
+            "Balance": {
+                "currency": "USD",
+                "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "value": "10"
+            },
+            "Flags": 0,
+            "HighLimit": {
+                "currency": "USD",
+                "issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+                "value": "200"
+            },
+            "LedgerEntryType": "RippleState",
+            "LowLimit": {
+                "currency": "USD",
+                "issuer": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+                "value": "100"
+            },
+            "PreviousTxnID": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+            "PreviousTxnLgrSeq": 123,
+            "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD"
+            }
+        })";
+
+    backend->setRange(RANGEMIN, RANGEMAX);
+    // return valid ledgerinfo
+    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+
+    // return valid ledger entry which can be deserialized
+    auto const line1 = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
+    auto const line2 = CreateRippleStateLedgerObject("USD", ACCOUNT, 10, ACCOUNT2, 100, ACCOUNT, 200, TXNID, 123);
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillRepeatedly(Return(line1.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 1, _))
+        .WillRepeatedly(Return(line2.getSerializer().peekData()));
+  
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "index": "{}",
+                "include_deleted": true
+            }})",
+            INDEX1
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, json::parse(OUT));
+    });
+}
+
+// Test when an object is deleted several sequence ago and include_deleted is set to true
+// Expected Result: return the latest object that is not deleted
+TEST_F(RPCLedgerEntryTest, ObjectDeletedPreviously)
+{
+    static auto constexpr OUT = R"({
+        "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index": 30,
+        "validated": true,
+        "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD",
+        "deleted_ledger_index": 26,
+        "node": {
+            "Amount": "123",
+            "Flags": 0,
+            "LedgerEntryType": "NFTokenOffer",
+            "NFTokenID": "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004",
+            "NFTokenOfferNode": "0",
+            "Owner": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "OwnerNode": "0",
+            "PreviousTxnID": "0000000000000000000000000000000000000000000000000000000000000000",
+            "PreviousTxnLgrSeq": 0,
+            "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD"
+            }
+        })";
+    backend->setRange(RANGEMIN, RANGEMAX);
+    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    // return valid ledger entry which can be deserialized
+    auto const offer = CreateNFTBuyOffer(NFTID, ACCOUNT);
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillOnce(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend, doFetchLedgerObjectSeq(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillOnce(Return(uint32_t{RANGEMAX - 4}));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 5, _))
+        .WillOnce(Return(offer.getSerializer().peekData()));
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "index": "{}",
+                "include_deleted": true
+            }})",
+            INDEX1
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, json::parse(OUT));
+    });
+}
+
+// Test for object seq not exist in database
+// Expected Result: return entryNotFound error
+TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
+{
+    auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillOnce(Return(std::optional<Blob>{}));
+    EXPECT_CALL(*backend, doFetchLedgerObjectSeq(ripple::uint256{INDEX1}, RANGEMAX, _))
+        .WillOnce(Return(std::nullopt));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "index": "{}",
+                "include_deleted": true
+            }})",
+            INDEX1
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        auto const myerr = err.at("error").as_string();
+        EXPECT_EQ(myerr, "entryNotFound");
+    });
+}
+

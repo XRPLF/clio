@@ -28,6 +28,7 @@ target_sources(
           etl/GrpcSourceTests.cpp
           etl/LedgerPublisherTests.cpp
           etl/LoadBalancerTests.cpp
+          etl/NFTHelpersTests.cpp
           etl/SourceImplTests.cpp
           etl/SubscriptionSourceTests.cpp
           etl/TransformerTests.cpp
@@ -94,6 +95,7 @@ target_sources(
           rpc/JsonBoolTests.cpp
           rpc/RPCHelpersTests.cpp
           rpc/WorkQueueTests.cpp
+          util/AccountUtilsTests.cpp
           util/AssertTests.cpp
           # Async framework
           util/async/AnyExecutionContextTests.cpp
@@ -120,6 +122,7 @@ target_sources(
           util/RandomTests.cpp
           util/RetryTests.cpp
           util/SignalsHandlerTests.cpp
+          util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
           # Webserver
           web/AdminVerificationTests.cpp

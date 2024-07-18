@@ -294,14 +294,12 @@ getNFTokenCancelOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
         txs.emplace_back(tokenID, txMeta, sttx.getTransactionID());
     }
 
-    // Deduplicate any transactions based on tokenID/txIdx combo. Can't just
-    // use txIdx because in this case one tx can cancel offers for several
-    // NFTs.
+    // Deduplicate any transactions based on tokenID
     std::sort(txs.begin(), txs.end(), [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
-        return a.tokenID < b.tokenID && a.transactionIndex < b.transactionIndex;
+        return a.tokenID < b.tokenID;
     });
     auto last = std::unique(txs.begin(), txs.end(), [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
-        return a.tokenID == b.tokenID && a.transactionIndex == b.transactionIndex;
+        return a.tokenID == b.tokenID;
     });
     txs.erase(last, txs.end());
     return {txs, {}};

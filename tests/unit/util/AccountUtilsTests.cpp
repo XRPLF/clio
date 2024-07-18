@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,34 +17,24 @@
 */
 //==============================================================================
 
-#pragma once
+#include "util/AccountUtils.hpp"
 
-#include "rpc/Errors.hpp"
-#include "util/FakeFetchResponse.hpp"
+#include <gtest/gtest.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/SecretKey.h>
+#include <xrpl/protocol/tokens.h>
 
-#include <boost/asio/spawn.hpp>
-#include <boost/json.hpp>
-#include <boost/json/object.hpp>
-#include <boost/json/value.hpp>
-#include <gmock/gmock.h>
+constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 
-#include <cstdint>
-#include <expected>
-#include <optional>
-#include <string>
+TEST(AccountUtils, parseBase58Wrapper)
+{
+    EXPECT_FALSE(util::parseBase58Wrapper<ripple::AccountID>("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp!"));
+    EXPECT_TRUE(util::parseBase58Wrapper<ripple::AccountID>(ACCOUNT));
 
-struct MockLoadBalancer {
-    using RawLedgerObjectType = FakeLedgerObject;
-
-    MOCK_METHOD(void, loadInitialLedger, (std::uint32_t, bool), ());
-    MOCK_METHOD(std::optional<FakeFetchResponse>, fetchLedger, (uint32_t, bool, bool), ());
-    MOCK_METHOD(boost::json::value, toJson, (), (const));
-
-    using ForwardToRippledReturnType = std::expected<boost::json::object, rpc::ClioError>;
-    MOCK_METHOD(
-        ForwardToRippledReturnType,
-        forwardToRippled,
-        (boost::json::object const&, std::optional<std::string> const&, bool, boost::asio::yield_context),
-        (const)
-    );
-};
+    EXPECT_TRUE(util::parseBase58Wrapper<ripple::SecretKey>(
+        ripple::TokenType::NodePrivate, "paQmjZ37pKKPMrgadBLsuf9ab7Y7EUNzh27LQrZqoexpAs31nJi"
+    ));
+    EXPECT_FALSE(util::parseBase58Wrapper<ripple::SecretKey>(
+        ripple::TokenType::NodePrivate, "??paQmjZ37pKKPMrgadBLsuf9ab7Y7EUNzh27LQrZqoexpAs31n"
+    ));
+}

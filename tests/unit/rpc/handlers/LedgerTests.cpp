@@ -79,25 +79,25 @@ generateTestValuesForParametersTest()
             "AccountsInvalidBool",
             R"({"accounts": true})",
             "notSupported",
-            "Not supported field 'accounts'",
+            "Not supported field 'accounts's value 'true'",
         },
         {
             "AccountsInvalidInt",
             R"({"accounts": 123})",
-            "notSupported",
-            "Not supported field 'accounts'",
+            "invalidParams",
+            "Invalid parameters.",
         },
         {
             "FullInvalidBool",
             R"({"full": true})",
             "notSupported",
-            "Not supported field 'full'",
+            "Not supported field 'full's value 'true'",
         },
         {
             "FullInvalidInt",
             R"({"full": 123})",
-            "notSupported",
-            "Not supported field 'full'",
+            "invalidParams",
+            "Invalid parameters.",
         },
         {
             "QueueExist",
@@ -304,6 +304,8 @@ TEST_F(RPCLedgerHandlerTest, ConditionallyNotSupportedFieldsDefaultValue)
         auto const handler = AnyHandler{LedgerHandler{backend}};
         auto const req = json::parse(
             R"({
+                "full": false,
+                "accounts": false,
                 "queue": false
             })"
         );

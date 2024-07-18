@@ -23,6 +23,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/AccountUtils.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/bimap/bimap.hpp>
@@ -45,7 +46,6 @@
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
-#include <xrpl/protocol/tokens.h>
 
 #include <cstdint>
 #include <functional>
@@ -263,7 +263,7 @@ tag_invoke(boost::json::value_to_tag<GetAggregatePriceHandler::Input>, boost::js
     for (auto const& oracle : jsonObject.at(JS(oracles)).as_array()) {
         input.oracles.push_back(GetAggregatePriceHandler::Oracle{
             .documentId = boost::json::value_to<std::uint64_t>(oracle.as_object().at(JS(oracle_document_id))),
-            .account = *ripple::parseBase58<ripple::AccountID>(
+            .account = *util::parseBase58Wrapper<ripple::AccountID>(
                 boost::json::value_to<std::string>(oracle.as_object().at(JS(account)))
             )
         });

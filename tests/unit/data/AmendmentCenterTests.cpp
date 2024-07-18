@@ -19,6 +19,7 @@
 
 #include "data/AmendmentCenter.hpp"
 #include "data/Types.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestObject.hpp"
@@ -29,13 +30,17 @@
 #include <xrpl/protocol/Feature.h>
 #include <xrpl/protocol/Indexes.h>
 
+#include <algorithm>
+#include <optional>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 using namespace data;
 
-constexpr auto SEQ = 30;
+constexpr auto SEQ = 30u;
 
-struct AmendmentCenterTest : util::prometheus::WithPrometheus, MockBackendTest {
+struct AmendmentCenterTest : util::prometheus::WithPrometheus, MockBackendTest, SyncAsioContextTest {
     AmendmentCenter amendmentCenter{backend};
 };
 
@@ -81,6 +86,60 @@ TEST_F(AmendmentCenterTest, IsEnabled)
     EXPECT_FALSE(amendmentCenter.isEnabled("ImmediateOfferKilled", SEQ));
 }
 
+TEST_F(AmendmentCenterTest, IsMultipleEnabled)
+{
+    auto const amendments = CreateAmendmentsObject({Amendments::fixUniversalNumber});
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
+        .WillOnce(testing::Return(amendments.getSerializer().peekData()));
+
+    runSpawn([this](auto yield) {
+        std::vector<data::AmendmentKey> const keys{"fixUniversalNumber", "unknown", "ImmediateOfferKilled"};
+        auto const result = amendmentCenter.isEnabled(yield, keys, SEQ);
+
+        EXPECT_EQ(result.size(), keys.size());
+        EXPECT_TRUE(result.at(0));
+        EXPECT_FALSE(result.at(1));
+        EXPECT_FALSE(result.at(2));
+    });
+}
+
+TEST_F(AmendmentCenterTest, IsEnabledThrowsWhenUnavailable)
+{
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
+        .WillOnce(testing::Return(std::nullopt));
+
+    runSpawn([this](auto yield) {
+        EXPECT_THROW(
+            { [[maybe_unused]] auto const result = amendmentCenter.isEnabled(yield, "irrelevant", SEQ); },
+            std::runtime_error
+        );
+    });
+}
+
+TEST_F(AmendmentCenterTest, IsEnabledReturnsFalseWhenNoAmendments)
+{
+    auto const amendments = CreateBrokenAmendmentsObject();
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
+        .WillOnce(testing::Return(amendments.getSerializer().peekData()));
+
+    runSpawn([this](auto yield) { EXPECT_FALSE(amendmentCenter.isEnabled(yield, "irrelevant", SEQ)); });
+}
+
+TEST_F(AmendmentCenterTest, IsEnabledReturnsVectorOfFalseWhenNoAmendments)
+{
+    auto const amendments = CreateBrokenAmendmentsObject();
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::amendments().key, SEQ, testing::_))
+        .WillOnce(testing::Return(amendments.getSerializer().peekData()));
+
+    runSpawn([this](auto yield) {
+        std::vector<data::AmendmentKey> const keys{"fixUniversalNumber", "ImmediateOfferKilled"};
+        auto const vec = amendmentCenter.isEnabled(yield, keys, SEQ);
+
+        EXPECT_EQ(vec.size(), keys.size());
+        EXPECT_TRUE(std::ranges::all_of(vec, [](bool val) { return val == false; }));
+    });
+}
+
 TEST(AmendmentTest, GenerateAmendmentId)
 {
     // https://xrpl.org/known-amendments.html#disallowincoming refer to the published id
@@ -94,8 +153,8 @@ struct AmendmentCenterDeathTest : AmendmentCenterTest {};
 
 TEST_F(AmendmentCenterDeathTest, GetInvalidAmendmentAsserts)
 {
-    EXPECT_DEATH({ amendmentCenter.getAmendment("invalidAmendmentKey"); }, ".*");
-    EXPECT_DEATH({ amendmentCenter["invalidAmendmentKey"]; }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = amendmentCenter.getAmendment("invalidAmendmentKey"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = amendmentCenter["invalidAmendmentKey"]; }, ".*");
 }
 
 struct AmendmentKeyTest : testing::Test {};

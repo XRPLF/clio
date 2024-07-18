@@ -464,11 +464,36 @@ TEST_F(RPCBaseTest, AccountValidator)
     failingInput = json::parse(R"({ "account": "02000000000000000000000000000000000000000000000000000000000000000" })");
     ASSERT_FALSE(spec.process(failingInput));
 
+    failingInput = json::parse(R"({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp?" })");
+    ASSERT_FALSE(spec.process(failingInput));
+
     auto passingInput = json::parse(R"({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" })");
     ASSERT_TRUE(spec.process(passingInput));
 
     passingInput =
         json::parse(R"({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })");
+    ASSERT_TRUE(spec.process(passingInput));
+}
+
+TEST_F(RPCBaseTest, AccountBase58Validator)
+{
+    auto spec = RpcSpec{
+        {"account", CustomValidators::AccountBase58Validator},
+    };
+    auto failingInput = json::parse(R"({ "account": 256 })");
+    ASSERT_FALSE(spec.process(failingInput));
+
+    failingInput = json::parse(R"({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp" })");
+    ASSERT_FALSE(spec.process(failingInput));
+
+    failingInput =
+        json::parse(R"({ "account": "020000000000000000000000000000000000000000000000000000000000000000" })");
+    ASSERT_FALSE(spec.process(failingInput));
+
+    failingInput = json::parse(R"({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp?" })");
+    ASSERT_FALSE(spec.process(failingInput));
+
+    auto passingInput = json::parse(R"({ "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn" })");
     ASSERT_TRUE(spec.process(passingInput));
 }
 

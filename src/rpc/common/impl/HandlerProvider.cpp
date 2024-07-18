@@ -90,7 +90,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"book_changes", {BookChangesHandler{backend}}},
           {"book_offers", {BookOffersHandler{backend}}},
           {"deposit_authorized", {DepositAuthorizedHandler{backend}}},
-          {"feature", {FeatureHandler{}}},
+          {"feature", {FeatureHandler{backend, amendmentCenter}}},
           {"gateway_balances", {GatewayBalancesHandler{backend}}},
           {"get_aggregate_price", {GetAggregatePriceHandler{backend}}},
           {"ledger", {LedgerHandler{backend}}},

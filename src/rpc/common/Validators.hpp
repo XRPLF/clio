@@ -29,6 +29,7 @@
 #include <fmt/core.h>
 #include <xrpl/protocol/ErrorCodes.h>
 
+#include <concepts>
 #include <cstdint>
 #include <ctime>
 #include <functional>
