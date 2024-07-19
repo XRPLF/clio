@@ -59,12 +59,14 @@ TEST_F(ValueViewTest, differentIntegerTest)
     auto const int32 = vv.asIntType<int32_t>();
     auto const int64 = vv.asIntType<int64_t>();
     auto const doubleVal = vv.asIntType<double>();
+    auto const floatVal = vv.asIntType<float>();
 
     EXPECT_EQ(vv.asIntType<int>(), uint32);
     EXPECT_EQ(vv.asIntType<int>(), uint64);
     EXPECT_EQ(vv.asIntType<int>(), int32);
     EXPECT_EQ(vv.asIntType<int>(), int64);
     EXPECT_EQ(vv.asIntType<int>(), doubleVal);
+    EXPECT_EQ(vv.asIntType<int>(), floatVal);
 }
 
 TEST_F(ValueViewTest, wrongTypes)

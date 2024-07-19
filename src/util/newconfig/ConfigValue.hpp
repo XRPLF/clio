@@ -34,7 +34,7 @@ template <typename>
 constexpr bool alwaysFalse = false;
 
 /** @brief Custom clio config types */
-enum class ConfigType { UnsignedInt, Integer, String, Double, Boolean };
+enum class ConfigType { Integer, String, Double, Boolean };
 
 /**
  * @brief Get the corresponding clio config type
@@ -48,8 +48,6 @@ getType()
 {
     if constexpr (std::is_same_v<Type, int>) {
         return ConfigType::Integer;
-    } else if constexpr (std::is_same_v<Type, uint32_t>) {
-        return ConfigType::UnsignedInt;
     } else if constexpr (std::is_same_v<Type, std::string>) {
         return ConfigType::String;
     } else if constexpr (std::is_same_v<Type, double>) {
@@ -71,7 +69,7 @@ class ConfigValue {
     friend class ValueView;
 
 public:
-    using Type = std::variant<uint32_t, int64_t, std::string, bool, double>;
+    using Type = std::variant<int64_t, std::string, bool, double>;
 
     /**
      * @brief Constructor initializing with the config type
@@ -162,8 +160,6 @@ private:
             ASSERT(type == ConfigType::Boolean, "Value does not match type boolean");
         } else if (std::holds_alternative<double>(value)) {
             ASSERT(type == ConfigType::Double, "Value does not match type double");
-        } else if (std::holds_alternative<uint32_t>(value)) {
-            ASSERT(type == ConfigType::UnsignedInt, "Value does not match type unsigned int");
         } else if (std::holds_alternative<int64_t>(value)) {
             ASSERT(type == ConfigType::Integer, "Value does not match type integer");
         }

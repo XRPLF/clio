@@ -21,7 +21,6 @@
 
 #include "util/newconfig/ConfigValue.hpp"
 
-#include <cstdint>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -47,7 +46,7 @@ ValueView::asBool() const
 double
 ValueView::asDouble() const
 {
-    if (type() == ConfigType::Double && configVal_.get().value_.has_value())
+    if ((type() == ConfigType::Double || type() == ConfigType::Integer) && configVal_.get().value_.has_value())
         return std::get<double>(configVal_.get().value_.value());
     throw std::bad_variant_access();
 }
@@ -55,7 +54,7 @@ ValueView::asDouble() const
 float
 ValueView::asFloat() const
 {
-    if (type() == ConfigType::Double && configVal_.get().value_.has_value())
+    if ((type() == ConfigType::Double || type() == ConfigType::Integer) && configVal_.get().value_.has_value())
         return static_cast<float>(std::get<double>(configVal_.get().value_.value()));
     throw std::bad_variant_access();
 }

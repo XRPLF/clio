@@ -78,8 +78,7 @@ public:
     [[nodiscard]] T
     asIntType() const
     {
-        if ((type() == ConfigType::Integer || type() == ConfigType::UnsignedInt) &&
-            configVal_.get().value_.has_value()) {
+        if ((type() == ConfigType::Integer) && configVal_.get().value_.has_value()) {
             auto val = std::get<int64_t>(configVal_.get().value_.value());
             if (std::is_unsigned_v<T> && val < 0)
                 throw std::logic_error(fmt::format("Int {} cannot be converted to the specified unsigned type", val));
