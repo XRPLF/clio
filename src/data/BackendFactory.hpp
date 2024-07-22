@@ -51,8 +51,7 @@ make_Backend(util::Config const& config)
     auto const type = config.value<std::string>("database.type");
     std::shared_ptr<BackendInterface> backend = nullptr;
 
-    // TODO: retire `cassandra-new` by next release after 2.0
-    if (boost::iequals(type, "cassandra") or boost::iequals(type, "cassandra-new")) {
+    if (boost::iequals(type, "cassandra")) {
         auto cfg = config.section("database." + type);
         backend = std::make_shared<data::cassandra::CassandraBackend>(data::cassandra::SettingsProvider{cfg}, readOnly);
     }
