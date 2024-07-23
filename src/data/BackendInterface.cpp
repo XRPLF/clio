@@ -110,7 +110,7 @@ BackendInterface::fetchLedgerObjectSeq(
 ) const
 {
     auto seq = doFetchLedgerObjectSeq(key, sequence, yield);
-    if (!seq) 
+    if (!seq)
         LOG(gLog.trace()) << "Missed in db";
     return seq;
 }
