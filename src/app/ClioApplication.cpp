@@ -19,12 +19,58 @@
 
 #include "app/ClioApplication.hpp"
 
+#include "data/AmendmentCenter.hpp"
+#include "data/BackendFactory.hpp"
+#include "etl/ETLService.hpp"
+#include "etl/LoadBalancer.hpp"
+#include "etl/NetworkValidatedLedgers.hpp"
+#include "feed/SubscriptionManager.hpp"
+#include "rpc/Counters.hpp"
+#include "rpc/RPCEngine.hpp"
+#include "rpc/WorkQueue.hpp"
+#include "rpc/common/impl/HandlerProvider.hpp"
 #include "util/build/Build.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Prometheus.hpp"
+#include "web/DOSGuard.hpp"
+#include "web/IntervalSweepHandler.hpp"
+#include "web/RPCServerHandler.hpp"
+#include "web/Server.hpp"
+#include "web/WhitelistHandler.hpp"
+
+#include <boost/asio/io_context.hpp>
+
+#include <cstdint>
+#include <cstdlib>
+#include <memory>
+#include <thread>
+#include <vector>
 
 namespace app {
+
+namespace {
+
+/**
+ * @brief Start context threads
+ *
+ * @param ioc Context
+ * @param numThreads Number of worker threads to start
+ */
+void
+start(boost::asio::io_context& ioc, std::uint32_t numThreads)
+{
+    std::vector<std::thread> v;
+    v.reserve(numThreads - 1);
+    for (auto i = numThreads - 1; i > 0; --i)
+        v.emplace_back([&ioc] { ioc.run(); });
+
+    ioc.run();
+    for (auto& t : v)
+        t.join();
+}
+
+}  // namespace
 
 ClioApplication::ClioApplication(util::Config const& config) : config_(config), signalsHandler_{config_}
 {
@@ -33,9 +79,65 @@ ClioApplication::ClioApplication(util::Config const& config) : config_(config), 
     PrometheusService::init(config);
 }
 
-void
+int
 ClioApplication::run()
 {
+    auto const threads = config_.valueOr("io_threads", 2);
+    if (threads <= 0) {
+        LOG(util::LogService::fatal()) << "io_threads is less than 1";
+        return EXIT_FAILURE;
+    }
+    LOG(util::LogService::info()) << "Number of io threads = " << threads;
+
+    // IO context to handle all incoming requests, as well as other things.
+    // This is not the only io context in the application.
+    boost::asio::io_context ioc{threads};
+
+    // Rate limiter, to prevent abuse
+    auto sweepHandler = web::IntervalSweepHandler{config_, ioc};
+    auto whitelistHandler = web::WhitelistHandler{config_};
+    auto dosGuard = web::DOSGuard{config_, whitelistHandler, sweepHandler};
+
+    // Interface to the database
+    auto backend = data::make_Backend(config_);
+
+    // Manages clients subscribed to streams
+    auto subscriptionsRunner = feed::SubscriptionManagerRunner(config_, backend);
+
+    auto const subscriptions = subscriptionsRunner.getManager();
+
+    // Tracks which ledgers have been validated by the network
+    auto ledgers = etl::NetworkValidatedLedgers::make_ValidatedLedgers();
+
+    // Handles the connection to one or more rippled nodes.
+    // ETL uses the balancer to extract data.
+    // The server uses the balancer to forward RPCs to a rippled node.
+    // The balancer itself publishes to streams (transactions_proposed and accounts_proposed)
+    auto balancer = etl::LoadBalancer::make_LoadBalancer(config_, ioc, backend, subscriptions, ledgers);
+
+    // ETL is responsible for writing and publishing to streams. In read-only mode, ETL only publishes
+    auto etl = etl::ETLService::make_ETLService(config_, ioc, backend, subscriptions, balancer, ledgers);
+
+    auto workQueue = rpc::WorkQueue::make_WorkQueue(config_);
+    auto counters = rpc::Counters::make_Counters(workQueue);
+    auto const amendmentCenter = std::make_shared<data::AmendmentCenter const>(backend);
+    auto const handlerProvider = std::make_shared<rpc::impl::ProductionHandlerProvider const>(
+        config_, backend, subscriptions, balancer, etl, amendmentCenter, counters
+    );
+    auto const rpcEngine =
+        rpc::RPCEngine::make_RPCEngine(backend, balancer, dosGuard, workQueue, counters, handlerProvider);
+
+    // Init the web server
+    auto handler =
+        std::make_shared<web::RPCServerHandler<rpc::RPCEngine, etl::ETLService>>(config_, backend, rpcEngine, etl);
+    auto const httpServer = web::make_HttpServer(config_, ioc, dosGuard, handler);
+
+    // Blocks until stopped.
+    // When stopped, shared_ptrs fall out of scope
+    // Calls destructors on all resources, and destructs in order
+    start(ioc, threads);
+
+    return EXIT_SUCCESS;
 }
 
 }  // namespace app

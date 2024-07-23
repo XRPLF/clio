@@ -41,8 +41,10 @@ public:
 
     /**
      * @brief Run the application
+-    *
+     * @return exit code
      */
-    void
+    int
     run();
 };
 

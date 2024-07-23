@@ -18,6 +18,7 @@
 //==============================================================================
 #pragma once
 
+#include <concepts>
 #include <string>
 #include <variant>
 
@@ -29,29 +30,72 @@ namespace app {
 class CliArgs {
 public:
     /**
+     * @brief Default configuration path.
+     */
+    static constexpr char defaultConfigPath[] = "/etc/opt/clio/config.json";
+
+    /**
+     * @brief An action parsed from the command line.
+     */
+    class Action {
+    public:
+        /** @brief Run action. */
+        struct Run {
+            /** @brief Configuration file path. */
+            std::string configPath;
+        };
+
+        /** @brief Exit action. */
+        struct Exit {
+            /** @brief Exit code. */
+            int exitCode;
+        };
+
+        /**
+         * @brief Construct an action from a Run.
+         *
+         * @param run Run action.
+         */
+        template <typename ActionType>
+            requires std::is_same_v<ActionType, Run> or std::is_same_v<ActionType, Exit>
+        explicit Action(ActionType&& action) : action_(std::forward<ActionType>(action))
+        {
+        }
+
+        /**
+         * @brief Apply a function to the action.
+         *
+         * @tparam Processors Action processors types. Must be callable with the action type and return int.
+         * @param processors Action processors.
+         * @return Exit code.
+         */
+        template <typename... Processors>
+        int
+        apply(Processors&&... processors) const
+        {
+            return std::visit(Overload{std::forward<Processors>(processors)...}, action_);
+        }
+
+    private:
+        std::variant<Run, Exit> action_;
+
+        template <typename... Ts>
+        struct Overload : Ts... {
+            using Ts::operator()...;
+        };
+        template <class... Ts>
+        Overload(Ts...) -> Overload<Ts...>;
+    };
+
+    /**
      * @brief Parse command line arguments.
      *
      * @param argc Number of arguments.
      * @param argv Array of arguments.
      * @return Parsed command line arguments.
      */
-    static CliArgs
+    static Action
     parse(int argc, char** argv);
-
-    /**
-     * @brief Default configuration path.
-     */
-    static constexpr char defaultConfigPath[] = "/etc/opt/clio/config.json";
-
-    struct RunAction {
-        std::string configPath;
-    };
-
-    struct ExitAction {
-        int exitCode;
-    };
-
-    std::variant<RunAction, ExitAction> action;
 };
 
 }  // namespace app

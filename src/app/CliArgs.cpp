@@ -17,9 +17,10 @@
 */
 //==============================================================================
 
+#include "app/CliArgs.hpp"
+
 #include "util/build/Build.hpp"
 
-#include <CliArgs.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/positional_options.hpp>
@@ -33,7 +34,7 @@
 
 namespace app {
 
-CliArgs
+CliArgs::Action
 CliArgs::parse(int argc, char** argv)
 {
     namespace po = boost::program_options;
@@ -54,16 +55,16 @@ CliArgs::parse(int argc, char** argv)
 
     if (parsed.count("version") != 0u) {
         std::cout << util::build::getClioFullVersionString() << '\n';
-        return CliArgs{ExitAction{EXIT_SUCCESS}};
+        return Action{Action::Exit{EXIT_SUCCESS}};
     }
 
     if (parsed.count("help") != 0u) {
         std::cout << "Clio server " << util::build::getClioFullVersionString() << "\n\n" << description;
-        return CliArgs{ExitAction{EXIT_SUCCESS}};
+        return Action{Action::Exit{EXIT_SUCCESS}};
     }
 
     auto configPath = parsed["conf"].as<std::string>();
-    return CliArgs{RunAction{std::move(configPath)}};
+    return Action{Action::Run{std::move(configPath)}};
 }
 
 }  // namespace app
