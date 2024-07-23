@@ -33,6 +33,8 @@
 
 namespace util::config {
 
+class ClioConfigDefinition;
+
 /**
  * @brief View for array structure for config.
  *
@@ -72,7 +74,6 @@ public:
      * @brief Returns the number of elements in the array.
      *
      * @return Number of elements in the array.
-     * @throw std::logic_error if somehow ArrayView doesn't exist
      */
     [[nodiscard]] size_t
     size() const;
@@ -82,24 +83,16 @@ public:
      *
      * @return Iterator to the beginning of the values.
      */
-    [[nodiscard]] auto
-    beginValues() const
-    {
-        ASSERT(clioConfig_.get().contains(prefix_), "Current string {} is a prefix, not a key of config", prefix_);
-        return clioConfig_.get().atArray(prefix_).begin();
-    }
+    [[nodiscard]] Array::ArrayIterator
+    beginValues() const;
 
     /**
      * @brief Returns an iterator to the end of the values.
      *
      * @return Iterator to the end of the values.
      */
-    [[nodiscard]] auto
-    endValues() const
-    {
-        ASSERT(clioConfig_.get().contains(prefix_), "Current string {} is a prefix, not a key of config", prefix_);
-        return clioConfig_.get().atArray(prefix_).end();
-    }
+    [[nodiscard]] Array::Sentinel
+    endValues() const;
 
 private:
     std::string const prefix_;

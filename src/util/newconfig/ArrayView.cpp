@@ -28,7 +28,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <stdexcept>
 #include <string_view>
 
 namespace util::config {
@@ -55,7 +54,6 @@ size_t
 ArrayView::size() const
 {
     return clioConfig_.get().arraySize(prefix_);
-    throw std::logic_error("ArrayView is initialized with incorrect prefix. Shoudn't reach here");
 }
 
 ObjectView
@@ -63,6 +61,20 @@ ArrayView::objectAt(std::size_t idx) const
 {
     ASSERT(idx < this->size(), "Object index is out of scope");
     return ObjectView{prefix_, idx, clioConfig_};
+}
+
+Array::ArrayIterator
+ArrayView::beginValues() const
+{
+    ASSERT(clioConfig_.get().contains(prefix_), "Current string {} is a prefix, not a key of config", prefix_);
+    return clioConfig_.get().atArray(prefix_).begin();
+}
+
+Array::Sentinel
+ArrayView::endValues() const
+{
+    ASSERT(clioConfig_.get().contains(prefix_), "Current string {} is a prefix, not a key of config", prefix_);
+    return clioConfig_.get().atArray(prefix_).end();
 }
 
 }  // namespace util::config

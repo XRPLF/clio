@@ -132,6 +132,8 @@ target_sources(
           util/newconfig/ArrayViewTests.cpp
           util/newconfig/ObjectViewTests.cpp
           util/newconfig/ValueViewTests.cpp
+          util/newconfig/ArrayTests.cpp
+          util/newconfig/ConfigValueTests.cpp
 )
 
 # See https://github.com/google/googletest/issues/3475

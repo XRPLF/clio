@@ -45,9 +45,7 @@ public:
      *
      * @param configVal the config Value to view
      */
-    ValueView(ConfigValue const& configVal) : configVal_{configVal}
-    {
-    }
+    ValueView(ConfigValue const& configVal);
 
     /**
      * @brief Retrieves the value as a string
@@ -78,8 +76,8 @@ public:
     [[nodiscard]] T
     asIntType() const
     {
-        if ((type() == ConfigType::Integer) && configVal_.get().value_.has_value()) {
-            auto val = std::get<int64_t>(configVal_.get().value_.value());
+        if ((type() == ConfigType::Integer) && configVal_.get().hasValue()) {
+            auto val = std::get<int64_t>(configVal_.get().getValue());
             if (std::is_unsigned_v<T> && val < 0)
                 throw std::logic_error(fmt::format("Int {} cannot be converted to the specified unsigned type", val));
 
@@ -113,10 +111,32 @@ public:
      *
      * @return The config type
      */
-    constexpr ConfigType
+    [[nodiscard]] constexpr ConfigType
     type() const
     {
         return configVal_.get().type();
+    }
+
+    /**
+     * @brief Check if Config Value exists
+     *
+     * @return true if exists, false otherwise
+     */
+    [[nodiscard]] constexpr bool
+    hasValue() const
+    {
+        return configVal_.get().hasValue();
+    }
+
+    /**
+     * @brief Check if config value is optional
+     *
+     * @return true if optional, false otherwise
+     */
+    [[nodiscard]] constexpr bool
+    isOptional() const
+    {
+        return configVal_.get().isOptional();
     }
 
 private:

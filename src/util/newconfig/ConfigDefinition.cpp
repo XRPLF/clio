@@ -24,13 +24,14 @@
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/ObjectView.hpp"
+#include "util/newconfig/ValueView.hpp"
 
 #include <fmt/core.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
-#include <stdexcept>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -60,7 +61,8 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"etl_source.[].ip", Array{ConfigValue{ConfigType::String}.optional()}},
      {"etl_source.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().min(1).max(65535)}},
      {"etl_source.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().min(1).max(65535)}},
-     {"forwarding_cache_timeout", ConfigValue{ConfigType::Integer}},
+     {"forwarding.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(0.0)},
+     {"forwarding.request_timeout", ConfigValue{ConfigType::Double}.defaultValue(10.0)},
      {"dos_guard.[].whitelist", Array{ConfigValue{ConfigType::String}}},
      {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(1000'000)},
      {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20)},
@@ -104,36 +106,20 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
 };
 
 ObjectView
-ClioConfigDefinition::getObject(std::string_view prefix) const
+ClioConfigDefinition::getObject(std::string_view prefix, std::optional<std::size_t> idx) const
 {
     auto const prefixWithDot = std::string(prefix) + ".";
     for (auto const& [mapKey, mapVal] : map_) {
-        if (mapKey.starts_with(prefixWithDot))
-            ASSERT(!mapKey.ends_with(".[]"), "Trying to retrieve an object when value is an Array");
-
-        if (mapKey.starts_with(prefixWithDot) && std::holds_alternative<ConfigValue>(mapVal)) {
-            ASSERT(std::holds_alternative<ConfigValue>(mapVal), "Trying to get object from Array but requires index");
+        if (mapKey.starts_with(prefixWithDot) && (std::holds_alternative<ConfigValue>(mapVal) || !idx.has_value()))
             return ObjectView{prefix, *this};
+
+        if (mapKey.starts_with(prefixWithDot) && std::holds_alternative<Array>(mapVal)) {
+            ASSERT(std::get<Array>(mapVal).size() > idx, "index provided is out of scope");
+            return ObjectView{prefix, idx.value(), *this};
         }
     }
-    throw std::invalid_argument(fmt::format("Key {} is not found in config", prefixWithDot));
-}
-
-ObjectView
-ClioConfigDefinition::getObject(std::string_view prefix, std::size_t idx) const
-{
-    auto const prefixWithDot = std::string(prefix) + ".";
-    for (auto const& [mapKey, mapVal] : map_) {
-        if (mapKey.starts_with(prefixWithDot))
-            ASSERT(!mapKey.ends_with(".[]"), "Trying to retrieve an object when value is an Array");
-
-        if (mapKey.starts_with(prefixWithDot)) {
-            ASSERT(std::holds_alternative<Array>(mapVal), "Trying to get object, but doesn't require index");
-            ASSERT(std::get<Array>(mapVal).size() > idx, "Index provided is out of scope");
-            return ObjectView{prefix, idx, *this};
-        }
-    }
-    throw std::invalid_argument(fmt::format("Key {} is not found in config", prefixWithDot));
+    ASSERT(false, "Key {} is not found in config", prefixWithDot);
+    return ObjectView{"", *this};
 }
 
 ArrayView
@@ -149,22 +135,19 @@ ClioConfigDefinition::getArray(std::string_view prefix) const
             return ArrayView{key, *this};
         }
     }
-    throw std::invalid_argument(fmt::format("Key {} is not found in config", key));
+    ASSERT(false, "Key {} is not found in config", key);
+    return ArrayView{"", *this};
 }
 
 ValueView
 ClioConfigDefinition::getValue(std::string_view fullKey) const
 {
-    if (map_.contains(fullKey) && std::holds_alternative<ConfigValue>(map_.at(fullKey))) {
+    ASSERT(map_.contains(fullKey), "key {} does not exist in config", fullKey);
+    if (std::holds_alternative<ConfigValue>(map_.at(fullKey))) {
         return ValueView{std::get<ConfigValue>(map_.at(fullKey))};
     }
-    ASSERT(
-        map_.contains(fullKey) && std::holds_alternative<Array>(map_.at(fullKey)),
-        "Value of Key {} is not Config Value.",
-        fullKey
-    );
-
-    throw std::invalid_argument(fmt::format("Key {} is not found in config", fullKey));
+    ASSERT(false, "Value of key {} is an Array, not an object", fullKey);
+    return ValueView{ConfigValue{}};
 }
 
 Array const&
@@ -184,7 +167,8 @@ ClioConfigDefinition::arraySize(std::string_view prefix) const
             return std::get<Array>(pair.second).size();
         }
     }
-    throw std::logic_error(fmt::format("Prefix {} not found in any of the config keys", prefix));
+    ASSERT(false, "Prefix {} not found in any of the config keys", prefix);
+    return 0;
 }
 
 }  // namespace util::config

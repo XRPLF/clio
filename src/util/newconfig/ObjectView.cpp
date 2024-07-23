@@ -19,6 +19,7 @@
 
 #include "util/newconfig/ObjectView.hpp"
 
+#include "util/Assert.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
@@ -29,7 +30,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 
@@ -45,26 +45,11 @@ ObjectView::ObjectView(std::string_view prefix, std::size_t arrayIndex, ClioConf
 {
 }
 
-std::string
-ObjectView::getFullKey(std::string_view key) const
-{
-    return fmt::format("{}.{}", prefix_, key);
-}
-
 bool
 ObjectView::containsKey(std::string_view key) const
 {
     auto const fullKey = getFullKey(key);
     return clioConfig_.get().contains(fullKey);
-}
-
-bool
-ObjectView::startsWithKey(std::string_view key) const
-{
-    auto it = std::find_if(clioConfig_.get().begin(), clioConfig_.get().end(), [&key](auto const& pair) {
-        return pair.first.starts_with(key);
-    });
-    return it != clioConfig_.get().end();
 }
 
 ValueView
@@ -87,7 +72,33 @@ ObjectView::getObject(std::string_view key) const
     if (startsWithKey(fullKey) && arrayIndex_.has_value()) {
         return ObjectView(fullKey, arrayIndex_.value(), clioConfig_);
     }
-    throw std::runtime_error(fmt::format("Key {} does not exist in object", fullKey));
+    ASSERT(false, "Key {} does not exist in object", fullKey);
+    return ObjectView{"", clioConfig_};
+}
+
+ArrayView
+ObjectView::getArray(std::string_view key) const
+{
+    auto fullKey = getFullKey(key);
+    if (!fullKey.contains(".[]"))
+        fullKey = fullKey + ".[]";
+
+    return clioConfig_.get().getArray(fullKey);
+}
+
+std::string
+ObjectView::getFullKey(std::string_view key) const
+{
+    return fmt::format("{}.{}", prefix_, key);
+}
+
+bool
+ObjectView::startsWithKey(std::string_view key) const
+{
+    auto it = std::find_if(clioConfig_.get().begin(), clioConfig_.get().end(), [&key](auto const& pair) {
+        return pair.first.starts_with(key);
+    });
+    return it != clioConfig_.get().end();
 }
 
 }  // namespace util::config

@@ -46,7 +46,13 @@ generateConfig()
              ConfigValue{ConfigType::String}.defaultValue("temporary")
          }},
         {"higher.[].low.section", Array{ConfigValue{ConfigType::String}.defaultValue("true")}},
-        {"higher.[].low.admin", Array{ConfigValue{ConfigType::Boolean}.defaultValue(false)}}
+        {"higher.[].low.admin", Array{ConfigValue{ConfigType::Boolean}.defaultValue(false)}},
+        {"dosguard.whitelist.[]",
+         Array{
+             ConfigValue{ConfigType::String}.defaultValue("125.5.5.2"),
+             ConfigValue{ConfigType::String}.defaultValue("204.2.2.2")
+         }},
+        {"dosguard.port", ConfigValue{ConfigType::Integer}.defaultValue(55555)}
     };
 }
 
@@ -69,7 +75,7 @@ generateConfig()
        "sub": 4321.55,
        "sub2": "temporary"
    }
- ]
+ ],
  "higher": [
    {
        "low": {
@@ -77,5 +83,11 @@ generateConfig()
            "admin": false
        }
    }
- ]
+ ],
+ "dosguard":  {
+    "whitelist": [
+        "125.5.5.2", "204.2.2.2"
+    ],
+    "port" : 55555
+ }
 */

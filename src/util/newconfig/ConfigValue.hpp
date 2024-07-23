@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Assert.hpp"
+#include "util/UnsupportedType.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -29,9 +30,6 @@
 #include <variant>
 
 namespace util::config {
-
-template <typename>
-constexpr bool alwaysFalse = false;
 
 /** @brief Custom clio config types */
 enum class ConfigType { Integer, String, Double, Boolean };
@@ -55,7 +53,7 @@ getType()
     } else if constexpr (std::is_same_v<Type, bool>) {
         return ConfigType::Boolean;
     } else {
-        static_assert(alwaysFalse<Type>, "Wrong config type");
+        static_assert(util::unsupportedType<Type>, "Wrong config type");
     }
 }
 
@@ -66,10 +64,10 @@ getType()
  * whether it is mandatory to specify in the configuration
  */
 class ConfigValue {
-    friend class ValueView;
-
 public:
     using Type = std::variant<int64_t, std::string, bool, double>;
+
+    constexpr ConfigValue() = default;
 
     /**
      * @brief Constructor initializing with the config type
@@ -89,7 +87,6 @@ public:
     ConfigValue&
     defaultValue(Type value)
     {
-        required_ = false;
         setValue(value);
         return *this;
     }
@@ -139,9 +136,42 @@ public:
     constexpr ConfigValue&
     optional()
     {
-        required_ = false;
+        optional_ = true;
         ASSERT(!value_.has_value(), "value must not exist in optional");
         return *this;
+    }
+
+    /**
+     * @brief Checks if configValue is optional
+     *
+     * @return true if optional, false otherwise
+     */
+    constexpr bool
+    isOptional() const
+    {
+        return optional_;
+    }
+
+    /**
+     * @brief Check if value is optional
+     *
+     * @return if value is optiona, false otherwise
+     */
+    constexpr bool
+    hasValue() const
+    {
+        return value_.has_value();
+    }
+
+    /**
+     * @brief Get the value of config
+     *
+     * @return Config Value
+     */
+    Type const&
+    getValue() const
+    {
+        return value_.value();
     }
 
 private:
@@ -180,7 +210,7 @@ private:
     }
 
     ConfigType type_{};
-    bool required_{true};
+    bool optional_{false};
     std::optional<Type> value_;
     std::optional<std::uint32_t> min_;
     std::optional<std::uint32_t> max_;

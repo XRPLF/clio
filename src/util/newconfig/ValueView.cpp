@@ -27,35 +27,39 @@
 
 namespace util::config {
 
+ValueView::ValueView(ConfigValue const& configVal) : configVal_{configVal}
+{
+}
+
 std::string_view
 ValueView::asString() const
 {
-    if (this->type() == ConfigType::String && configVal_.get().value_.has_value())
-        return std::get<std::string>(configVal_.get().value_.value());
+    if (this->type() == ConfigType::String && configVal_.get().hasValue())
+        return std::get<std::string>(configVal_.get().getValue());
     throw std::bad_variant_access();
 }
 
 bool
 ValueView::asBool() const
 {
-    if (type() == ConfigType::Boolean && configVal_.get().value_.has_value())
-        return std::get<bool>(configVal_.get().value_.value());
+    if (type() == ConfigType::Boolean && configVal_.get().hasValue())
+        return std::get<bool>(configVal_.get().getValue());
     throw std::bad_variant_access();
 }
 
 double
 ValueView::asDouble() const
 {
-    if ((type() == ConfigType::Double || type() == ConfigType::Integer) && configVal_.get().value_.has_value())
-        return std::get<double>(configVal_.get().value_.value());
+    if ((type() == ConfigType::Double || type() == ConfigType::Integer) && configVal_.get().hasValue())
+        return std::get<double>(configVal_.get().getValue());
     throw std::bad_variant_access();
 }
 
 float
 ValueView::asFloat() const
 {
-    if ((type() == ConfigType::Double || type() == ConfigType::Integer) && configVal_.get().value_.has_value())
-        return static_cast<float>(std::get<double>(configVal_.get().value_.value()));
+    if ((type() == ConfigType::Double || type() == ConfigType::Integer) && configVal_.get().hasValue())
+        return static_cast<float>(std::get<double>(configVal_.get().getValue()));
     throw std::bad_variant_access();
 }
 

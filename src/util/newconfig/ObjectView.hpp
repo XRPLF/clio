@@ -39,8 +39,6 @@ class ArrayView;
  * Allows querying and accessing configuration values based on the provided prefix
  */
 class ObjectView {
-    friend class ClioConfigDefinition;
-
 public:
     /**
      * @brief Constructs an ObjectView for the specified prefix. The view must be of type object
@@ -86,6 +84,16 @@ public:
      */
     [[nodiscard]] ObjectView
     getObject(std::string_view key) const;
+
+    /**
+     * @brief Retrieves an ArrayView in ClioConfigDefinition with key that starts with prefix_.key. The view must be of
+     * type object
+     *
+     * @param key The suffix of the key
+     * @return An ObjectView representing the subset of configuration data
+     */
+    [[nodiscard]] ArrayView
+    getArray(std::string_view key) const;
 
 private:
     /**

@@ -38,12 +38,12 @@ TEST_F(ArrayViewTest, ArrayValueTest)
 {
     ArrayView const arrVals = configData.getArray("array.[].sub");
     auto valIt = arrVals.beginValues();
-    EXPECT_EQ((*valIt++).asDouble(), 111.11);
-    EXPECT_EQ((*valIt++).asDouble(), 4321.55);
+    EXPECT_NEAR((*valIt++).asDouble(), 111.11, 1e-9);
+    EXPECT_NEAR((*valIt++).asDouble(), 4321.55, 1e-9);
     EXPECT_EQ(valIt, arrVals.endValues());
 
-    EXPECT_EQ(111.11, arrVals.valueAt(0).asDouble());
-    EXPECT_EQ(4321.55, arrVals.valueAt(1).asDouble());
+    EXPECT_NEAR(111.11, arrVals.valueAt(0).asDouble(), 1e-9);
+    EXPECT_NEAR(4321.55, arrVals.valueAt(1).asDouble(), 1e-9);
 
     ArrayView const arrVals2 = configData.getArray("array.[].sub2");
     auto val2It = arrVals2.beginValues();
@@ -65,8 +65,23 @@ TEST_F(ArrayViewTest, ArrayWithObjTest)
 
     auto const obj1 = arrVals.objectAt(0);
     auto const obj2 = arrValAlt.objectAt(0);
-    EXPECT_EQ(obj1.getValue("sub").asDouble(), obj2.getValue("sub").asDouble());
-    EXPECT_EQ(obj1.getValue("sub").asDouble(), 111.11);
+    EXPECT_NEAR(obj1.getValue("sub").asDouble(), obj2.getValue("sub").asDouble(), 1e-9);
+    EXPECT_NEAR(obj1.getValue("sub").asDouble(), 111.11, 1e-9);
+}
+
+TEST_F(ArrayViewTest, ObjectWithArray)
+{
+    auto arr = configData.getArray("dosguard.whitelist");
+    EXPECT_EQ(2, arr.size());
+    EXPECT_EQ(arr.valueAt(0).asString(), "125.5.5.2");
+    EXPECT_EQ(arr.valueAt(1).asString(), "204.2.2.2");
+
+    auto const obj2 = configData.getObject("higher.[].low");
+    auto const arr2 = obj2.getArray("section");
+
+    auto it = arr2.beginValues();
+    EXPECT_EQ((*it++).asString(), "true");
+    EXPECT_EQ(it, arr.endValues());
 }
 
 struct ArrayViewDeathTest : ArrayViewTest {};

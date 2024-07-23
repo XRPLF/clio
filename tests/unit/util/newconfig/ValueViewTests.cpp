@@ -39,16 +39,9 @@ TEST_F(ValueViewTest, ValueView)
     ConfigValue const cv = ConfigValue{ConfigType::String}.defaultValue("value");
     ValueView const vv = ValueView(cv);
     EXPECT_EQ("value", vv.asString());
-    EXPECT_EQ(ConfigType::String, cv.type());
-
-    auto const v = configData.getValue("header.port");
-    EXPECT_EQ(v.type(), ConfigType::Integer);
-
-    EXPECT_EQ("value", configData.getValue("header.text1").asString());
-    EXPECT_EQ(123, configData.getValue("header.port").asIntType<int>());
-    EXPECT_EQ(true, configData.getValue("header.admin").asBool());
-    EXPECT_EQ("TSM", configData.getValue("header.sub.sub2Value").asString());
-    EXPECT_EQ(444.22, configData.getValue("ip").asDouble());
+    EXPECT_EQ(ConfigType::String, vv.type());
+    EXPECT_EQ(true, vv.hasValue());
+    EXPECT_EQ(false, vv.isOptional());
 }
 
 TEST_F(ValueViewTest, differentIntegerTest)

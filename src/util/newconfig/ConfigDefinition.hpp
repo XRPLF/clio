@@ -28,21 +28,20 @@
 #include "util/newconfig/ObjectView.hpp"
 #include "util/newconfig/ValueView.hpp"
 
+#include <__expected/expected.h>
 #include <fmt/core.h>
 
 #include <cassert>
 #include <cstddef>
 #include <initializer_list>
 #include <optional>
-#include <stdexcept>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <variant>
 
 namespace util::config {
-
-class ArrayView;
 
 /**
  * @brief All the config data will be stored and extracted from this class
@@ -98,36 +97,23 @@ public:
      * @param configDescription The configuration description object
      * @return An optional Error if generating markdown fails
      */
-    std::optional<Error>
-    getMarkDownFile(ClioConfigDescription const& configDescription) const;
+    std::expected<std::string, Error>
+    getMarkDown(ClioConfigDescription const& configDescription) const;
 
     /**
      * @brief Returns the ObjectView specified with the prefix
      *
      * @param prefix The key prefix for the ObjectView
      * @return ObjectView with the given prefix
-     * @throws std::runtime_error if no valid prefix exists in the config
      */
     ObjectView
-    getObject(std::string_view prefix) const;
-
-    /**
-     * @brief Returns the ObjectView specified with the prefix from Array
-     *
-     * @param prefix The key prefix for the ObjectView
-     * @param idx Optional index for the ObjectView
-     * @return ObjectView with the given prefix
-     * @throws std::runtime_error if no valid prefix exists in the config
-     */
-    ObjectView
-    getObject(std::string_view prefix, std::size_t idx) const;
+    getObject(std::string_view prefix, std::optional<std::size_t> idx = std::nullopt) const;
 
     /**
      * @brief Returns the specified ValueView object associated with the key
      *
      * @param fullKey The config key to search for
      * @return ValueView associated with the given key
-     * @throws std::runtime_error if no valid key exists in the config
      */
     ValueView
     getValue(std::string_view fullKey) const;
