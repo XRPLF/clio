@@ -28,11 +28,11 @@
 #include "util/newconfig/ObjectView.hpp"
 #include "util/newconfig/ValueView.hpp"
 
-#include <__expected/expected.h>
 #include <fmt/core.h>
 
 #include <cassert>
 #include <cstddef>
+#include <expected>
 #include <initializer_list>
 #include <optional>
 #include <string>
