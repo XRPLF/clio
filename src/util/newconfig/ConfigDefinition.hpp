@@ -104,6 +104,7 @@ public:
      * @brief Returns the ObjectView specified with the prefix
      *
      * @param prefix The key prefix for the ObjectView
+     * @param idx Used if getting Object in an Array
      * @return ObjectView with the given prefix
      */
     ObjectView
