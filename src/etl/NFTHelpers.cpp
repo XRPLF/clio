@@ -356,4 +356,22 @@ getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string c
 
     return nfts;
 }
+
+std::vector<NFTsData>
+getUniqueNFTsDatas(std::vector<NFTsData> const& nfts)
+{
+    std::vector<NFTsData> results = nfts;
+    // Remove all but the last NFTsData for each id. unique removes all but the first of a group, so we want to
+    // reverse sort by transaction index
+    std::sort(results.begin(), results.end(), [](NFTsData const& a, NFTsData const& b) {
+        return a.tokenID == b.tokenID ? a.transactionIndex > b.transactionIndex : a.tokenID > b.tokenID;
+    });
+
+    auto const last = std::unique(results.begin(), results.end(), [](NFTsData const& a, NFTsData const& b) {
+        return a.tokenID == b.tokenID;
+    });
+    results.erase(last, results.end());
+    return results;
+}
+
 }  // namespace etl

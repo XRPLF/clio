@@ -104,4 +104,14 @@ getNFTDataFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 std::vector<NFTsData>
 getNFTDataFromObj(std::uint32_t seq, std::string const& key, std::string const& blob);
 
+/**
+ * @brief Get the unique NFTs data from a vector of NFTsData happening in the same ledger. For example, if a NFT has
+ both accept offer and burn happening in the same ledger,we only keep the final state of the NFT.
+
+ * @param nfts The NFTs data to filter, happening in the same ledger
+ * @return The unique NFTs data
+ */
+std::vector<NFTsData>
+getUniqueNFTsDatas(std::vector<NFTsData> const& nfts);
+
 }  // namespace etl
