@@ -74,7 +74,6 @@ start(boost::asio::io_context& ioc, std::uint32_t numThreads)
 
 ClioApplication::ClioApplication(util::Config const& config) : config_(config), signalsHandler_{config_}
 {
-    util::LogService::init(config);
     LOG(util::LogService::info()) << "Clio version: " << util::build::getClioFullVersionString();
     PrometheusService::init(config);
 }

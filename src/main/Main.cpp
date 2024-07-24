@@ -46,6 +46,7 @@ try {
                 std::cerr << "Couldnt parse config '" << run.configPath << "'." << std::endl;
                 return EXIT_FAILURE;
             }
+            util::LogService::init(config);
             app::ClioApplication clio{config};
             return clio.run();
         }
