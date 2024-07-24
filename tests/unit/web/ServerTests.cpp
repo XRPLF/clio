@@ -40,13 +40,13 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/websocket/error.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <boost/system/system_error.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
 #include <condition_variable>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -60,12 +60,11 @@
 using namespace util;
 using namespace web::impl;
 using namespace web;
-using namespace boost::json;
 
-std::string
+boost::json::value
 generateJSONWithDynamicPort(std::string_view port)
 {
-    return fmt::format(
+    return boost::json::parse(fmt::format(
         R"JSON({{
             "server": {{
                 "ip": "0.0.0.0",
@@ -80,13 +79,13 @@ generateJSONWithDynamicPort(std::string_view port)
             }}
         }})JSON",
         port
-    );
+    ));
 }
 
-std::string
+boost::json::value
 generateJSONDataOverload(std::string_view port)
 {
-    return fmt::format(
+    return boost::json::parse(fmt::format(
         R"JSON({{
             "server": {{
                 "ip": "0.0.0.0",
@@ -100,71 +99,18 @@ generateJSONDataOverload(std::string_view port)
             }}
         }})JSON",
         port
-    );
+    ));
 }
 
-// for testing, we use a self-signed certificate
-std::optional<ssl::context>
-parseCertsForTest()
+boost::json::value
+addSslConfig(boost::json::value config)
 {
-    std::string const key = R"(-----BEGIN RSA PRIVATE KEY-----
-MIIEpAIBAAKCAQEAqP3K4WDIhk63zbxSoN8tJqRZD3W0IWFMwCluZchUwsHPxEC4
-32sPk58YonynY5nGtTeSGhedSqHD0gFBLcU/su4dSsj+kgGgJwKmiPmoQiTpzEmd
-g2Kqrnrw6QAilyhyMgjo6lYOiCsLU2qdnXcN8AOaAD9wtqNdcoFFQJD9vU9uKA8x
-evwIF7OgpUyERlnj5ILTGlwzOr1IochpxG08JD22C9ZlSLB2DTGbW4x8OvdobAtC
-tKU+x9hRbgaAN/jgHze+CrN3Bq48RY2S51Pe/VrDnTAWoDJ/VVFvv8z4niAC5dYC
-oAdB6Zut11bUTspqp8MWt3gzEp3Z1cKs83ftaQIDAQABAoIBAGXZH48Zz4DyrGA4
-YexG1WV2o55np/p+M82Uqs55IGyIdnmnMESmt6qWtjgnvJKQuWu6ZDmJhejW+bf1
-vZyiRrPGQq0x2guRIz6foFLpdHj42lee/mmS659gxRUIWdCUNc7mA8pHt1Zl6tuJ
-ZBjlCedfpE8F7R6F8unx8xTozaRr4ZbOVnqB8YWjyuIDUnujsxKdKFASZJAEzRjh
-+lScXAdEYTaswgTWFFGKzwTjH/Yfv4y3LwE0RmR/1e+eQmQ7Z4C0HhjYe3EYXAvk
-naH2QFZaYVhu7x/+oLPetIzFJOZn61iDhUtGYdvQVvF8qQCPqeuKeLcS9X5my9aK
-nfLUryECgYEA3ZZGffe6Me6m0ZX/zwT5NbZpZCJgeALGLZPg9qulDVf8zHbDRsdn
-K6Mf/Xhy3DCfSwdwcuAKz/r+4tPFyNUJR+Y2ltXaVl72iY3uJRdriNrEbZ47Ez4z
-dhtEmDrD7C+7AusErEgjas+AKXkp1tovXrXUiVfRytBtoKqrym4IjJUCgYEAwzxz
-fTuE2nrIwFkvg0p9PtrCwkw8dnzhBeNnzFdPOVAiHCfnNcaSOWWTkGHIkGLoORqs
-fqfZCD9VkqRwsPDaSSL7vhX3oHuerDipdxOjaXVjYa7YjM6gByzo62hnG6BcQHC7
-zrj7iqjnMdyNLtXcPu6zm/j5iIOLWXMevK/OVIUCgYAey4e4cfk6f0RH1GTczIAl
-6tfyxqRJiXkpVGfrYCdsF1JWyBqTd5rrAZysiVTNLSS2NK54CJL4HJXXyD6wjorf
-pyrnA4l4f3Ib49G47exP9Ldf1KG5JufX/iomTeR0qp1+5lKb7tqdOYFCQkiCR4hV
-zUdgXwgU+6qArbd6RpiBkQKBgQCSen5jjQ5GJS0NM1y0cmS5jcPlpvEOLO9fTZiI
-9VCZPYf5++46qHr42T73aoXh3nNAtMSKWkA5MdtwJDPwbSQ5Dyg1G6IoI9eOewya
-LH/EFbC0j0wliLkD6SvvwurpDU1pg6tElAEVrVeYT1MVupp+FPVopkoBpEAeooKD
-KpvxSQKBgQDP9fNJIpuX3kaudb0pI1OvuqBYTrTExMx+JMR+Sqf0HUwavpeCn4du
-O2R4tGOOkGAX/0/actRXptFk23ucHnSIwcW6HYgDM3tDBP7n3GYdu5CSE1eiR5k7
-Zl3fuvbMYcmYKgutFcRj+8NvzRWT2suzGU2x4PiPX+fh5kpvmMdvLA==
------END RSA PRIVATE KEY-----)";
-    std::string const cert = R"(-----BEGIN CERTIFICATE-----
-MIIDrjCCApagAwIBAgIJAOE4Hv/P8CO3MA0GCSqGSIb3DQEBCwUAMDkxEjAQBgNV
-BAMMCTEyNy4wLjAuMTELMAkGA1UEBhMCVVMxFjAUBgNVBAcMDVNhbiBGcmFuc2lz
-Y28wHhcNMjMwNTE4MTUwMzEwWhcNMjQwNTE3MTUwMzEwWjBrMQswCQYDVQQGEwJV
-UzETMBEGA1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNU2FuIEZyYW5zaXNjbzEN
-MAsGA1UECgwEVGVzdDEMMAoGA1UECwwDRGV2MRIwEAYDVQQDDAkxMjcuMC4wLjEw
-ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCo/crhYMiGTrfNvFKg3y0m
-pFkPdbQhYUzAKW5lyFTCwc/EQLjfaw+TnxiifKdjmca1N5IaF51KocPSAUEtxT+y
-7h1KyP6SAaAnAqaI+ahCJOnMSZ2DYqquevDpACKXKHIyCOjqVg6IKwtTap2ddw3w
-A5oAP3C2o11ygUVAkP29T24oDzF6/AgXs6ClTIRGWePkgtMaXDM6vUihyGnEbTwk
-PbYL1mVIsHYNMZtbjHw692hsC0K0pT7H2FFuBoA3+OAfN74Ks3cGrjxFjZLnU979
-WsOdMBagMn9VUW+/zPieIALl1gKgB0Hpm63XVtROymqnwxa3eDMSndnVwqzzd+1p
-AgMBAAGjgYYwgYMwUwYDVR0jBEwwSqE9pDswOTESMBAGA1UEAwwJMTI3LjAuMC4x
-MQswCQYDVQQGEwJVUzEWMBQGA1UEBwwNU2FuIEZyYW5zaXNjb4IJAKu2wr50Pfbq
-MAkGA1UdEwQCMAAwCwYDVR0PBAQDAgTwMBQGA1UdEQQNMAuCCTEyNy4wLjAuMTAN
-BgkqhkiG9w0BAQsFAAOCAQEArEjC1DmJ6q0735PxGkOmjWNsfnw8c2Zl1Z4idKfn
-svEFtegNLU7tCu4aKunxlCHWiFVpunr4X67qH1JiE93W0JADnRrPxvywiqR6nUcO
-p6HII/kzOizUXk59QMc1GLIIR6LDlNEeDlUbIc2DH8DPrRFBuIMYy4lf18qyfiUb
-8Jt8nLeAzbhA21wI6BVhEt8G/cgIi88mPifXq+YVHrJE01jUREHRwl/MMildqxgp
-LLuOOuPuy2d+HqjKE7z00j28Uf7gZK29bGx1rK+xH6veAr4plKBavBr8WWpAoUG+
-PAMNb1i80cMsjK98xXDdr+7Uvy5M4COMwA5XHmMZDEW8Jw==
------END CERTIFICATE-----)";
-    ssl::context ctx{ssl::context::tlsv12};
-    ctx.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2);
-    ctx.use_certificate_chain(boost::asio::buffer(cert.data(), cert.size()));
-    ctx.use_private_key(boost::asio::buffer(key.data(), key.size()), boost::asio::ssl::context::file_format::pem);
-    return ctx;
+    config.as_object()["ssl_key_file"] = "tests/unit/web/test_data/key.pem";
+    config.as_object()["ssl_cert_file"] = "tests/unit/web/test_data/cert.pem";
+    return config;
 }
 
-class WebServerTest : public NoLoggerFixture {
-public:
+struct WebServerTest : NoLoggerFixture {
     ~WebServerTest() override
     {
         work.reset();
@@ -173,7 +119,6 @@ public:
             runner->join();
     }
 
-protected:
     WebServerTest()
     {
         work.emplace(ctx);  // make sure ctx does not stop on its own
@@ -183,12 +128,12 @@ protected:
     // this ctx is for dos timer
     boost::asio::io_context ctxSync;
     std::string const port = std::to_string(tests::util::generateFreePort());
-    Config cfg{parse(generateJSONWithDynamicPort(port))};
+    Config cfg{generateJSONWithDynamicPort(port)};
     IntervalSweepHandler sweepHandler = web::IntervalSweepHandler{cfg, ctxSync};
     WhitelistHandler whitelistHandler = web::WhitelistHandler{cfg};
     DOSGuard dosGuard = web::DOSGuard{cfg, whitelistHandler, sweepHandler};
 
-    Config cfgOverload{parse(generateJSONDataOverload(port))};
+    Config cfgOverload{generateJSONDataOverload(port)};
     IntervalSweepHandler sweepHandlerOverload = web::IntervalSweepHandler{cfgOverload, ctxSync};
     WhitelistHandler whitelistHandlerOverload = web::WhitelistHandler{cfgOverload};
     DOSGuard dosGuardOverload = web::DOSGuard{cfgOverload, whitelistHandlerOverload, sweepHandlerOverload};
@@ -235,7 +180,6 @@ std::shared_ptr<web::HttpServer<Executor>>
 makeServerSync(
     util::Config const& config,
     boost::asio::io_context& ioc,
-    std::optional<std::reference_wrapper<boost::asio::ssl::context>> const& sslCtx,
     web::DOSGuard& dosGuard,
     std::shared_ptr<Executor> const& handler
 )
@@ -245,7 +189,7 @@ makeServerSync(
     std::condition_variable cv;
     bool ready = false;
     boost::asio::dispatch(ioc.get_executor(), [&]() mutable {
-        server = web::make_HttpServer(config, ioc, sslCtx, dosGuard, handler);
+        server = web::make_HttpServer(config, ioc, dosGuard, handler);
         {
             std::lock_guard const lk(m);
             ready = true;
@@ -264,7 +208,7 @@ makeServerSync(
 TEST_F(WebServerTest, Http)
 {
     auto e = std::make_shared<EchoExecutor>();
-    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
+    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     auto const res = HttpSyncClient::syncPost("localhost", port, R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
 }
@@ -272,7 +216,7 @@ TEST_F(WebServerTest, Http)
 TEST_F(WebServerTest, Ws)
 {
     auto e = std::make_shared<EchoExecutor>();
-    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
+    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost(R"({"Hello":1})");
@@ -283,7 +227,7 @@ TEST_F(WebServerTest, Ws)
 TEST_F(WebServerTest, HttpInternalError)
 {
     auto e = std::make_shared<ExceptionExecutor>();
-    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
+    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     auto const res = HttpSyncClient::syncPost("localhost", port, R"({})");
     EXPECT_EQ(
         res,
@@ -294,7 +238,7 @@ TEST_F(WebServerTest, HttpInternalError)
 TEST_F(WebServerTest, WsInternalError)
 {
     auto e = std::make_shared<ExceptionExecutor>();
-    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
+    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost(R"({"id":"id1"})");
@@ -308,7 +252,7 @@ TEST_F(WebServerTest, WsInternalError)
 TEST_F(WebServerTest, WsInternalErrorNotJson)
 {
     auto e = std::make_shared<ExceptionExecutor>();
-    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuard, e);
+    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost("not json");
@@ -322,9 +266,8 @@ TEST_F(WebServerTest, WsInternalErrorNotJson)
 TEST_F(WebServerTest, Https)
 {
     auto e = std::make_shared<EchoExecutor>();
-    auto sslCtx = parseCertsForTest();
-    auto const ctxSslRef = sslCtx ? std::optional<std::reference_wrapper<ssl::context>>{sslCtx.value()} : std::nullopt;
-    auto const server = makeServerSync(cfg, ctx, ctxSslRef, dosGuard, e);
+    cfg = Config{addSslConfig(generateJSONWithDynamicPort(port))};
+    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     auto const res = HttpsSyncClient::syncPost("localhost", port, R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
 }
@@ -332,10 +275,8 @@ TEST_F(WebServerTest, Https)
 TEST_F(WebServerTest, Wss)
 {
     auto e = std::make_shared<EchoExecutor>();
-    auto sslCtx = parseCertsForTest();
-    auto const ctxSslRef = sslCtx ? std::optional<std::reference_wrapper<ssl::context>>{sslCtx.value()} : std::nullopt;
-
-    auto server = makeServerSync(cfg, ctx, ctxSslRef, dosGuard, e);
+    cfg = Config{addSslConfig(generateJSONWithDynamicPort(port))};
+    auto server = makeServerSync(cfg, ctx, dosGuard, e);
     WebServerSslSyncClient wsClient;
     wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost(R"({"Hello":1})");
@@ -346,7 +287,7 @@ TEST_F(WebServerTest, Wss)
 TEST_F(WebServerTest, HttpRequestOverload)
 {
     auto e = std::make_shared<EchoExecutor>();
-    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
+    auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e);
     auto res = HttpSyncClient::syncPost("localhost", port, R"({})");
     EXPECT_EQ(res, "{}");
     res = HttpSyncClient::syncPost("localhost", port, R"({})");
@@ -359,7 +300,7 @@ TEST_F(WebServerTest, HttpRequestOverload)
 TEST_F(WebServerTest, WsRequestOverload)
 {
     auto e = std::make_shared<EchoExecutor>();
-    auto const server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
+    auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", port);
     auto res = wsClient.syncPost(R"({})");
@@ -379,7 +320,7 @@ TEST_F(WebServerTest, HttpPayloadOverload)
 {
     std::string const s100(100, 'a');
     auto e = std::make_shared<EchoExecutor>();
-    auto server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
+    auto server = makeServerSync(cfg, ctx, dosGuardOverload, e);
     auto const res = HttpSyncClient::syncPost("localhost", port, fmt::format(R"({{"payload":"{}"}})", s100));
     EXPECT_EQ(
         res,
@@ -391,7 +332,7 @@ TEST_F(WebServerTest, WsPayloadOverload)
 {
     std::string const s100(100, 'a');
     auto e = std::make_shared<EchoExecutor>();
-    auto server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
+    auto server = makeServerSync(cfg, ctx, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
     wsClient.connect("localhost", port);
     auto const res = wsClient.syncPost(fmt::format(R"({{"payload":"{}"}})", s100));
@@ -405,7 +346,7 @@ TEST_F(WebServerTest, WsPayloadOverload)
 TEST_F(WebServerTest, WsTooManyConnection)
 {
     auto e = std::make_shared<EchoExecutor>();
-    auto server = makeServerSync(cfg, ctx, std::nullopt, dosGuardOverload, e);
+    auto server = makeServerSync(cfg, ctx, dosGuardOverload, e);
     // max connection is 2, exception should happen when the third connection is made
     WebSocketSyncClient wsClient1;
     wsClient1.connect("localhost", port);
@@ -485,7 +426,7 @@ JSONServerConfigWithNoSpecifiedAdmin(uint32_t const port)
 }
 
 // get this value from online sha256 generator
-static auto constexpr SecertSha256 = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
+static auto constexpr SecretSha256 = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
 
 class AdminCheckExecutor {
 public:
@@ -513,8 +454,8 @@ class WebServerAdminTest : public WebServerTest, public ::testing::WithParamInte
 TEST_P(WebServerAdminTest, WsAdminCheck)
 {
     auto e = std::make_shared<AdminCheckExecutor>();
-    Config const serverConfig{parse(GetParam().config)};
-    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
+    Config const serverConfig{boost::json::parse(GetParam().config)};
+    auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
     uint32_t const webServerPort = serverConfig.value<uint32_t>("server.port");
     wsClient.connect("localhost", std::to_string(webServerPort), GetParam().headers);
@@ -527,8 +468,8 @@ TEST_P(WebServerAdminTest, WsAdminCheck)
 TEST_P(WebServerAdminTest, HttpAdminCheck)
 {
     auto e = std::make_shared<AdminCheckExecutor>();
-    Config const serverConfig{parse(GetParam().config)};
-    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuardOverload, e);
+    Config const serverConfig{boost::json::parse(GetParam().config)};
+    auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e);
     std::string const request = "Why hello";
     uint32_t const webServerPort = serverConfig.value<uint32_t>("server.port");
     auto const res = HttpSyncClient::syncPost("localhost", std::to_string(webServerPort), request, GetParam().headers);
@@ -556,27 +497,27 @@ INSTANTIATE_TEST_CASE_P(
         },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword(tests::util::generateFreePort()),
-            .headers = {WebHeader(http::field::authorization, SecertSha256)},
+            .headers = {WebHeader(http::field::authorization, SecretSha256)},
             .expectedResponse = "user"
         },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithAdminPassword(tests::util::generateFreePort()),
             .headers = {WebHeader(
                 http::field::authorization,
-                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecretSha256)
             )},
             .expectedResponse = "admin"
         },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse(tests::util::generateFreePort()),
-            .headers = {WebHeader(http::field::authorization, SecertSha256)},
+            .headers = {WebHeader(http::field::authorization, SecretSha256)},
             .expectedResponse = "user"
         },
         WebServerAdminTestParams{
             .config = JSONServerConfigWithBothAdminPasswordAndLocalAdminFalse(tests::util::generateFreePort()),
             .headers = {WebHeader(
                 http::field::authorization,
-                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecretSha256)
             )},
             .expectedResponse = "admin"
         },
@@ -584,7 +525,7 @@ INSTANTIATE_TEST_CASE_P(
             .config = JSONServerConfigWithAdminPassword(tests::util::generateFreePort()),
             .headers = {WebHeader(
                 http::field::authentication_info,
-                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+                fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecretSha256)
             )},
             .expectedResponse = "user"
         },
@@ -618,8 +559,8 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminSet)
     );
 
     auto e = std::make_shared<AdminCheckExecutor>();
-    Config const serverConfig{parse(JSONServerConfigWithBothAdminPasswordAndLocalAdmin)};
-    EXPECT_THROW(web::make_HttpServer(serverConfig, ctx, std::nullopt, dosGuardOverload, e), std::logic_error);
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithBothAdminPasswordAndLocalAdmin)};
+    EXPECT_THROW(web::make_HttpServer(serverConfig, ctx, dosGuardOverload, e), std::logic_error);
 }
 
 TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
@@ -637,8 +578,8 @@ TEST_F(WebServerTest, AdminErrorCfgTestBothAdminPasswordAndLocalAdminFalse)
     );
 
     auto e = std::make_shared<AdminCheckExecutor>();
-    Config const serverConfig{parse(JSONServerConfigWithNoAdminPasswordAndLocalAdminFalse)};
-    EXPECT_THROW(web::make_HttpServer(serverConfig, ctx, std::nullopt, dosGuardOverload, e), std::logic_error);
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithNoAdminPasswordAndLocalAdminFalse)};
+    EXPECT_THROW(web::make_HttpServer(serverConfig, ctx, dosGuardOverload, e), std::logic_error);
 }
 
 struct WebServerPrometheusTest : util::prometheus::WithPrometheus, WebServerTest {};
@@ -647,8 +588,8 @@ TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
 {
     auto e = std::make_shared<EchoExecutor>();
     uint32_t const webServerPort = tests::util::generateFreePort();
-    Config const serverConfig{parse(JSONServerConfigWithAdminPassword(webServerPort))};
-    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword(webServerPort))};
+    auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
     auto const res = HttpSyncClient::syncGet("localhost", std::to_string(webServerPort), "", "/metrics");
     EXPECT_EQ(res, "Only admin is allowed to collect metrics");
 }
@@ -669,9 +610,9 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
     );
 
     auto e = std::make_shared<EchoExecutor>();
-    Config const serverConfig{parse(JSONServerConfigWithDisabledPrometheus)};
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithDisabledPrometheus)};
     PrometheusService::init(serverConfig);
-    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
+    auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
     auto const res = HttpSyncClient::syncGet(
         "localhost",
         std::to_string(webServerPort),
@@ -679,7 +620,7 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
         "/metrics",
         {WebHeader(
             http::field::authorization,
-            fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+            fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecretSha256)
         )}
     );
     EXPECT_EQ(res, "Prometheus is disabled in clio config");
@@ -691,8 +632,8 @@ TEST_F(WebServerPrometheusTest, validResponse)
     auto& testCounter = PrometheusService::counterInt("test_counter", util::prometheus::Labels());
     ++testCounter;
     auto e = std::make_shared<EchoExecutor>();
-    Config const serverConfig{parse(JSONServerConfigWithAdminPassword(webServerPort))};
-    auto server = makeServerSync(serverConfig, ctx, std::nullopt, dosGuard, e);
+    Config const serverConfig{boost::json::parse(JSONServerConfigWithAdminPassword(webServerPort))};
+    auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
     auto const res = HttpSyncClient::syncGet(
         "localhost",
         std::to_string(webServerPort),
@@ -700,7 +641,7 @@ TEST_F(WebServerPrometheusTest, validResponse)
         "/metrics",
         {WebHeader(
             http::field::authorization,
-            fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecertSha256)
+            fmt::format("{}{}", PasswordAdminVerificationStrategy::passwordPrefix, SecretSha256)
         )}
     );
     EXPECT_EQ(res, "# TYPE test_counter counter\ntest_counter 1\n\n");

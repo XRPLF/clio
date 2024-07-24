@@ -129,6 +129,9 @@ target_sources(
           web/WhitelistHandlerTests.cpp
 )
 
+configure_file(web/test_data/cert.pem ${CMAKE_BINARY_DIR}/tests/unit/web/test_data/cert.pem COPYONLY)
+configure_file(web/test_data/key.pem ${CMAKE_BINARY_DIR}/tests/unit/web/test_data/key.pem COPYONLY)
+
 # See https://github.com/google/googletest/issues/3475
 gtest_discover_tests(clio_tests DISCOVERY_TIMEOUT 90)
 
