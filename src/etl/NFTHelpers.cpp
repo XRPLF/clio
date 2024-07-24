@@ -295,7 +295,7 @@ getNFTokenCancelOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
     }
 
     // Deduplicate any transactions based on tokenID
-    std::ranges::sort(txs.begin(), txs.end(), [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
+    std::ranges::sort(txs, [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
         return a.tokenID < b.tokenID;
     });
     auto last = std::unique(txs.begin(), txs.end(), [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
@@ -362,7 +362,7 @@ getUniqueNFTsDatas(std::vector<NFTsData> const& nfts)
 {
     std::vector<NFTsData> results = nfts;
 
-    std::ranges::sort(results.begin(), results.end(), [](NFTsData const& a, NFTsData const& b) {
+    std::ranges::sort(results, [](NFTsData const& a, NFTsData const& b) {
         return a.tokenID == b.tokenID ? a.transactionIndex > b.transactionIndex : a.tokenID > b.tokenID;
     });
 
