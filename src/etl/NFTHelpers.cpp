@@ -116,8 +116,8 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         }
     }
 
-    std::ranges::sort(finalIDs.begin(), finalIDs.end());
-    std::ranges::sort(prevIDs.begin(), prevIDs.end());
+    std::ranges::sort(finalIDs);
+    std::ranges::sort(prevIDs);
 
     // Find the first NFT ID that doesn't match.  We're looking for an
     // added NFT, so the one we want will be the mismatch in finalIDs.
