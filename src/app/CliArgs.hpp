@@ -56,7 +56,7 @@ public:
         /**
          * @brief Construct an action from a Run.
          *
-         * @param run Run action.
+         * @param action Run action.
          */
         template <typename ActionType>
             requires std::is_same_v<ActionType, Run> or std::is_same_v<ActionType, Exit>

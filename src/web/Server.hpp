@@ -318,7 +318,6 @@ using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
  * @tparam HandlerType The tyep of handler to process the request
  * @param config The config to create server
  * @param ioc The server will run under this io_context
- * @param ctx The SSL context if any
  * @param dosGuard The dos guard to protect the server
  * @param handler The handler to process the request
  * @return The server instance
