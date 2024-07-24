@@ -104,7 +104,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, LedgerIndexHandl
     jv = boost::json::object{
         {JS(ledger_index), output.ledgerIndex},
         {JS(ledger_hash), output.ledgerHash},
-        {JS(close_time_iso), output.closeTimeIso},
+        {JS(closed), output.closeTimeIso},
         {JS(validated), true},
     };
 }

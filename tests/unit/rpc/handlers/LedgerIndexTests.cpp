@@ -71,7 +71,7 @@ TEST_F(RPCLedgerIndexTest, NoDateGiven)
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("ledger_index").as_uint64(), RANGEMAX);
         EXPECT_EQ(output.result->at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_TRUE(output.result->as_object().contains("close_time_iso"));
+        EXPECT_TRUE(output.result->as_object().contains("closed"));
     });
 }
 
@@ -163,6 +163,6 @@ TEST_P(LedgerIndexTests, SearchFromLedgerRange)
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->at("ledger_index").as_uint64(), testBundle.expectedLedgerIndex);
         EXPECT_EQ(output.result->at("ledger_hash").as_string(), LEDGERHASH);
-        EXPECT_EQ(output.result->at("close_time_iso").as_string(), testBundle.closeTimeIso);
+        EXPECT_EQ(output.result->at("closed").as_string(), testBundle.closeTimeIso);
     });
 }

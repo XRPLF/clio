@@ -247,9 +247,9 @@ struct LedgerRange {
 struct Amendment {
     std::string name;
     ripple::uint256 feature;
-    bool isSupportedByXRPL;
-    bool isSupportedByClio;
-    bool isRetired;
+    bool isSupportedByXRPL = false;
+    bool isSupportedByClio = false;
+    bool isRetired = false;
 
     /**
      * @brief Get the amendment Id from its name
@@ -288,6 +288,9 @@ struct AmendmentKey {
 
     /** @brief Conversion to string */
     operator std::string const&() const;
+
+    /** @brief Conversion to string_view */
+    operator std::string_view() const;
 
     /** @brief Conversion to uint256 */
     operator ripple::uint256() const;

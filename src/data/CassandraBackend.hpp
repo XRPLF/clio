@@ -567,6 +567,24 @@ public:
         return std::nullopt;
     }
 
+    std::optional<std::uint32_t>
+    doFetchLedgerObjectSeq(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
+        const override
+    {
+        LOG(log_.debug()) << "Fetching ledger object for seq " << sequence << ", key = " << ripple::to_string(key);
+        if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res) {
+            if (auto const result = res->template get<Blob, std::uint32_t>(); result) { 
+                auto [_ ,seq] = result.value();
+                return seq;
+            }                 LOG(log_.debug()) << "Could not fetch ledger object sequence - no rows";
+           
+        } else {
+            LOG(log_.error()) << "Could not fetch ledger object sequence: " << res.error();
+        }
+
+        return std::nullopt;
+    }
+
     std::optional<TransactionAndMetadata>
     fetchTransaction(ripple::uint256 const& hash, boost::asio::yield_context yield) const override
     {
