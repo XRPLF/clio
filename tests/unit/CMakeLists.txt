@@ -4,6 +4,7 @@ target_sources(
   clio_tests
   PRIVATE # Common
           ConfigTests.cpp
+          app/CliArgsTests.cpp
           data/AmendmentCenterTests.cpp
           data/BackendCountersTests.cpp
           data/BackendInterfaceTests.cpp

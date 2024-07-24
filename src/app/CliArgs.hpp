@@ -16,9 +16,9 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+
 #pragma once
 
-#include <concepts>
 #include <string>
 #include <variant>
 
@@ -95,7 +95,7 @@ public:
      * @return Parsed command line arguments.
      */
     static Action
-    parse(int argc, char** argv);
+    parse(int argc, char const* argv[]);
 };
 
 }  // namespace app

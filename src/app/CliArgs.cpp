@@ -35,7 +35,7 @@
 namespace app {
 
 CliArgs::Action
-CliArgs::parse(int argc, char** argv)
+CliArgs::parse(int argc, char const* argv[])
 {
     namespace po = boost::program_options;
     // clang-format off
@@ -53,13 +53,13 @@ CliArgs::parse(int argc, char** argv)
     po::store(po::command_line_parser(argc, argv).options(description).positional(positional).run(), parsed);
     po::notify(parsed);
 
-    if (parsed.count("version") != 0u) {
-        std::cout << util::build::getClioFullVersionString() << '\n';
+    if (parsed.count("help") != 0u) {
+        std::cout << "Clio server " << util::build::getClioFullVersionString() << "\n\n" << description;
         return Action{Action::Exit{EXIT_SUCCESS}};
     }
 
-    if (parsed.count("help") != 0u) {
-        std::cout << "Clio server " << util::build::getClioFullVersionString() << "\n\n" << description;
+    if (parsed.count("version") != 0u) {
+        std::cout << util::build::getClioFullVersionString() << '\n';
         return Action{Action::Exit{EXIT_SUCCESS}};
     }
 

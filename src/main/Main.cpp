@@ -33,7 +33,7 @@
 #include <iostream>
 
 int
-main(int argc, char* argv[])
+main(int argc, char const* argv[])
 try {
     util::setTerminationHandler();
 
