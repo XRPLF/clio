@@ -116,8 +116,8 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         }
     }
 
-    std::sort(finalIDs.begin(), finalIDs.end());
-    std::sort(prevIDs.begin(), prevIDs.end());
+    std::ranges::sort(finalIDs.begin(), finalIDs.end());
+    std::ranges::sort(prevIDs.begin(), prevIDs.end());
 
     // Find the first NFT ID that doesn't match.  We're looking for an
     // added NFT, so the one we want will be the mismatch in finalIDs.
@@ -295,7 +295,7 @@ getNFTokenCancelOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
     }
 
     // Deduplicate any transactions based on tokenID
-    std::sort(txs.begin(), txs.end(), [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
+    std::ranges::sort(txs.begin(), txs.end(), [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
         return a.tokenID < b.tokenID;
     });
     auto last = std::unique(txs.begin(), txs.end(), [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
@@ -361,9 +361,8 @@ std::vector<NFTsData>
 getUniqueNFTsDatas(std::vector<NFTsData> const& nfts)
 {
     std::vector<NFTsData> results = nfts;
-    // Remove all but the last NFTsData for each id. unique removes all but the first of a group, so we want to
-    // reverse sort by transaction index
-    std::sort(results.begin(), results.end(), [](NFTsData const& a, NFTsData const& b) {
+
+    std::ranges::sort(results.begin(), results.end(), [](NFTsData const& a, NFTsData const& b) {
         return a.tokenID == b.tokenID ? a.transactionIndex > b.transactionIndex : a.tokenID > b.tokenID;
     });
 
