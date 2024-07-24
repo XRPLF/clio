@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "util/OverloadSet.hpp"
+
 #include <string>
 #include <variant>
 
@@ -73,18 +75,11 @@ public:
         int
         apply(Processors&&... processors) const
         {
-            return std::visit(Overload{std::forward<Processors>(processors)...}, action_);
+            return std::visit(util::OverloadSet{std::forward<Processors>(processors)...}, action_);
         }
 
     private:
         std::variant<Run, Exit> action_;
-
-        template <typename... Ts>
-        struct Overload : Ts... {
-            using Ts::operator()...;
-        };
-        template <class... Ts>
-        Overload(Ts...) -> Overload<Ts...>;
     };
 
     /**

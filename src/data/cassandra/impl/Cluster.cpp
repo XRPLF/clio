@@ -21,6 +21,7 @@
 
 #include "data/cassandra/impl/ManagedObject.hpp"
 #include "data/cassandra/impl/SslContext.hpp"
+#include "util/OverloadSet.hpp"
 #include "util/log/Logger.hpp"
 
 #include <cassandra.h>
@@ -31,16 +32,9 @@
 #include <variant>
 
 namespace {
+
 constexpr auto clusterDeleter = [](CassCluster* ptr) { cass_cluster_free(ptr); };
 
-template <typename... Ts>
-struct overloadSet : Ts... {
-    using Ts::operator()...;
-};
-
-// explicit deduction guide (not needed as of C++20, but clang be clang)
-template <typename... Ts>
-overloadSet(Ts...) -> overloadSet<Ts...>;
 };  // namespace
 
 namespace data::cassandra::impl {
@@ -90,7 +84,7 @@ void
 Cluster::setupConnection(Settings const& settings)
 {
     std::visit(
-        overloadSet{
+        util::OverloadSet{
             [this](Settings::ContactPoints const& points) { setupContactPoints(points); },
             [this](Settings::SecureConnectionBundle const& bundle) { setupSecureBundle(bundle); }
         },
