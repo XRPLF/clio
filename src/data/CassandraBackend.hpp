@@ -573,11 +573,12 @@ public:
     {
         LOG(log_.debug()) << "Fetching ledger object for seq " << sequence << ", key = " << ripple::to_string(key);
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res) {
-            if (auto const result = res->template get<Blob, std::uint32_t>(); result) { 
-                auto [_ ,seq] = result.value();
+            if (auto const result = res->template get<Blob, std::uint32_t>(); result) {
+                auto [_, seq] = result.value();
                 return seq;
-            }                 LOG(log_.debug()) << "Could not fetch ledger object sequence - no rows";
-           
+            }
+            LOG(log_.debug()) << "Could not fetch ledger object sequence - no rows";
+
         } else {
             LOG(log_.error()) << "Could not fetch ledger object sequence: " << res.error();
         }

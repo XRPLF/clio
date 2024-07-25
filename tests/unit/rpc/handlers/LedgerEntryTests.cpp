@@ -2847,7 +2847,7 @@ TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
         .WillRepeatedly(Return(line1.getSerializer().peekData()));
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX - 1, _))
         .WillRepeatedly(Return(line2.getSerializer().peekData()));
-  
+
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
         auto const req = json::parse(fmt::format(
@@ -2920,8 +2920,7 @@ TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
         .WillOnce(Return(std::optional<Blob>{}));
-    EXPECT_CALL(*backend, doFetchLedgerObjectSeq(ripple::uint256{INDEX1}, RANGEMAX, _))
-        .WillOnce(Return(std::nullopt));
+    EXPECT_CALL(*backend, doFetchLedgerObjectSeq(ripple::uint256{INDEX1}, RANGEMAX, _)).WillOnce(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
@@ -2939,4 +2938,3 @@ TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
         EXPECT_EQ(myerr, "entryNotFound");
     });
 }
-
