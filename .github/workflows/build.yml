@@ -225,6 +225,6 @@ jobs:
 
       - name: Run clio_tests
         run: |
-          tree .
+          find .
           chmod +x ./clio_tests
           ./clio_tests
