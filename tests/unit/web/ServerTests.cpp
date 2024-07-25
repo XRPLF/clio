@@ -105,8 +105,8 @@ generateJSONDataOverload(std::string_view port)
 boost::json::value
 addSslConfig(boost::json::value config)
 {
-    config.as_object()["ssl_key_file"] = "tests/unit/web/test_data/key.pem";
-    config.as_object()["ssl_cert_file"] = "tests/unit/web/test_data/cert.pem";
+    config.as_object()["ssl_key_file"] = TEST_DATA_SSL_KEY_PATH;
+    config.as_object()["ssl_cert_file"] = TEST_DATA_SSL_CERT_PATH;
     return config;
 }
 
@@ -261,6 +261,29 @@ TEST_F(WebServerTest, WsInternalErrorNotJson)
         res,
         R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","request":"not json"})"
     );
+}
+
+TEST_F(WebServerTest, IncompleteSslConfig)
+{
+    auto e = std::make_shared<EchoExecutor>();
+
+    auto jsonConfig = generateJSONWithDynamicPort(port);
+    jsonConfig.as_object()["ssl_key_file"] = TEST_DATA_SSL_KEY_PATH;
+
+    auto const server = makeServerSync(Config{jsonConfig}, ctx, dosGuard, e);
+    EXPECT_EQ(server, nullptr);
+}
+
+TEST_F(WebServerTest, WrongSslConfig)
+{
+    auto e = std::make_shared<EchoExecutor>();
+
+    auto jsonConfig = generateJSONWithDynamicPort(port);
+    jsonConfig.as_object()["ssl_key_file"] = TEST_DATA_SSL_KEY_PATH;
+    jsonConfig.as_object()["ssl_cert_file"] = "wrong_path";
+
+    auto const server = makeServerSync(Config{jsonConfig}, ctx, dosGuard, e);
+    EXPECT_EQ(server, nullptr);
 }
 
 TEST_F(WebServerTest, Https)

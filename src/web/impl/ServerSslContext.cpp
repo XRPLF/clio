@@ -21,6 +21,8 @@
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ssl/context.hpp>
+#include <fmt/compile.h>
+#include <fmt/core.h>
 
 #include <expected>
 #include <fstream>
@@ -63,8 +65,15 @@ makeServerSslContext(std::string const& certFilePath, std::string const& keyFile
 
     ssl::context ctx{ssl::context::tls_server};
     ctx.set_options(ssl::context::default_workarounds | ssl::context::no_sslv2);
-    ctx.use_certificate_chain(buffer(certContent->data(), certContent->size()));
-    ctx.use_private_key(buffer(keyContent->data(), keyContent->size()), ssl::context::file_format::pem);
+
+    try {
+        ctx.use_certificate_chain(buffer(certContent->data(), certContent->size()));
+        ctx.use_private_key(buffer(keyContent->data(), keyContent->size()), ssl::context::file_format::pem);
+    } catch (...) {
+        return std::unexpected{
+            fmt::format("Error loading SSL certificate ({}) or SSL key ({}).", certFilePath, keyFilePath)
+        };
+    }
 
     return ctx;
 }
