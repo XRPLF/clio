@@ -10,7 +10,7 @@ updates:
     reviewers:
       - "cindyyan317"
       - "godexsoft"
-      - "keznetsss"
+      - "kuznetsss"
     commit-message:
       prefix: "[CI] "
     target-branch: "develop"
