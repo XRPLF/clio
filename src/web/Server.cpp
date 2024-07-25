@@ -34,13 +34,11 @@ makeServerSslContext(util::Config const& config)
     bool const configHasCertFile = config.contains("ssl_cert_file");
     bool const configHasKeyFile = config.contains("ssl_key_file");
 
-    if (configHasCertFile != configHasKeyFile) {
+    if (configHasCertFile != configHasKeyFile)
         return std::unexpected{"Config entries 'ssl_cert_file' and 'ssl_key_file' must be set or unset together."};
-    }
 
-    if (not configHasCertFile) {
+    if (not configHasCertFile)
         return std::nullopt;
-    }
 
     auto const certFilename = config.value<std::string>("ssl_cert_file");
     auto const keyFilename = config.value<std::string>("ssl_key_file");
