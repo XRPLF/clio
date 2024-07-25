@@ -71,6 +71,12 @@ jobs:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
           path: build/clio_*tests
 
+      - name: Upload test data
+        uses: actions/upload-artifact@v4
+        with:
+          name: clio_test_data_${{ runner.os }}_${{ matrix.build_type }}
+          path: build/tests/unit/test_data
+
       - name: Compress clio_server
         shell: bash
         run: |
@@ -123,6 +129,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: clio_test_data_${{ runner.os }}_${{ matrix.build_type }}
+          path: tests/unit/test_data
 
       - name: Run clio_tests
         run: |

@@ -23,7 +23,7 @@ jobs:
         run: |
           ./.githooks/check-format --diff
         shell: bash
-  
+ 
   check_docs:
     name: Check documentation
     runs-on: ubuntu-20.04
@@ -218,6 +218,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
+
       - uses: actions/download-artifact@v4
         with:
           name: clio_test_data_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
@@ -225,6 +226,5 @@ jobs:
 
       - name: Run clio_tests
         run: |
-          find .
           chmod +x ./clio_tests
           ./clio_tests
