@@ -221,9 +221,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: clio_test_data_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
-          path: tests/unit/
+          path: tests/unit/test_data
 
       - name: Run clio_tests
         run: |
+          tree .
           chmod +x ./clio_tests
           ./clio_tests
