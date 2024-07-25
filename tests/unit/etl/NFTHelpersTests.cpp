@@ -44,6 +44,7 @@
 #include <xrpl/protocol/UintTypes.h>
 #include <xrpl/protocol/tokens.h>
 
+#include <cstdint>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -313,7 +314,7 @@ TEST_F(NFTHelpersTest, NFTCancelOfferContainsDuplicateNFTs)
     verifyNFTTransactionsData(nftTxs[1], sttx, txMeta, NFTID2);
 }
 
-TEST_F(NFTHelpersTests, UniqueNFTDatas)
+TEST_F(NFTHelpersTest, UniqueNFTDatas)
 {
     std::vector<NFTsData> nftDatas;
 
