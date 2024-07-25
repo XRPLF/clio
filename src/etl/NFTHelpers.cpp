@@ -116,8 +116,8 @@ getNFTokenMintData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx)
         }
     }
 
-    std::sort(finalIDs.begin(), finalIDs.end());
-    std::sort(prevIDs.begin(), prevIDs.end());
+    std::ranges::sort(finalIDs);
+    std::ranges::sort(prevIDs);
 
     // Find the first NFT ID that doesn't match.  We're looking for an
     // added NFT, so the one we want will be the mismatch in finalIDs.
@@ -295,7 +295,7 @@ getNFTokenCancelOfferData(ripple::TxMeta const& txMeta, ripple::STTx const& sttx
     }
 
     // Deduplicate any transactions based on tokenID
-    std::sort(txs.begin(), txs.end(), [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
+    std::ranges::sort(txs, [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
         return a.tokenID < b.tokenID;
     });
     auto last = std::unique(txs.begin(), txs.end(), [](NFTTransactionsData const& a, NFTTransactionsData const& b) {
@@ -356,4 +356,21 @@ getNFTDataFromObj(std::uint32_t const seq, std::string const& key, std::string c
 
     return nfts;
 }
+
+std::vector<NFTsData>
+getUniqueNFTsDatas(std::vector<NFTsData> const& nfts)
+{
+    std::vector<NFTsData> results = nfts;
+
+    std::ranges::sort(results, [](NFTsData const& a, NFTsData const& b) {
+        return a.tokenID == b.tokenID ? a.transactionIndex > b.transactionIndex : a.tokenID > b.tokenID;
+    });
+
+    auto const last = std::unique(results.begin(), results.end(), [](NFTsData const& a, NFTsData const& b) {
+        return a.tokenID == b.tokenID;
+    });
+    results.erase(last, results.end());
+    return results;
+}
+
 }  // namespace etl

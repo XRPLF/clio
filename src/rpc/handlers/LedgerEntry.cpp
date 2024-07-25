@@ -165,13 +165,13 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     auto ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
 
     if (!ledgerObject || ledgerObject->empty()) {
-        if (not input.includeDeleted) 
+        if (not input.includeDeleted)
             return Error{Status{"entryNotFound"}};
         auto const deletedSeq = sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
-        if (!deletedSeq) 
+        if (!deletedSeq)
             return Error{Status{"entryNotFound"}};
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, deletedSeq.value() - 1, ctx.yield);
-        if (!ledgerObject || ledgerObject->empty()) 
+        if (!ledgerObject || ledgerObject->empty())
             return Error{Status{"entryNotFound"}};
         output.deletedLedgerIndex = deletedSeq;
     }
