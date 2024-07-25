@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Etc/GMT"
+    reviewers:
+      - "cindyyan317"
+      - "godexsoft"
+      - "kuznetsss"
+    commit-message:
+      prefix: "[CI] "
+    target-branch: "develop"
