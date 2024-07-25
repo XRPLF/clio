@@ -99,7 +99,7 @@ jobs:
 
       - name: Create PR with fixes
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         env:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
