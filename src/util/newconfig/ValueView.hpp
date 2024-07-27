@@ -28,7 +28,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <stdexcept>
 #include <string_view>
 
 namespace util::config {

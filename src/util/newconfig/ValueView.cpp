@@ -22,9 +22,9 @@
 #include "util/Assert.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 
+#include <cstdint>
 #include <string>
 #include <string_view>
-#include <variant>
 
 namespace util::config {
 
@@ -53,8 +53,13 @@ ValueView::asBool() const
 double
 ValueView::asDouble() const
 {
-    if ((type() == ConfigType::Double || type() == ConfigType::Integer) && configVal_.get().hasValue())
-        return std::get<double>(configVal_.get().getValue());
+    if (configVal_.get().hasValue()) {
+        if (type() == ConfigType::Double) {
+            return std::get<double>(configVal_.get().getValue());
+        }
+        if (type() == ConfigType::Integer)
+            return static_cast<double>(std::get<int64_t>(configVal_.get().getValue()));
+    }
     ASSERT(false, "Value view is not of Double type");
     return 0.0;
 }
@@ -62,8 +67,13 @@ ValueView::asDouble() const
 float
 ValueView::asFloat() const
 {
-    if ((type() == ConfigType::Double || type() == ConfigType::Integer) && configVal_.get().hasValue())
-        return static_cast<float>(std::get<double>(configVal_.get().getValue()));
+    if (configVal_.get().hasValue()) {
+        if (type() == ConfigType::Double) {
+            return static_cast<float>(std::get<double>(configVal_.get().getValue()));
+        }
+        if (type() == ConfigType::Integer)
+            return static_cast<float>(std::get<int64_t>(configVal_.get().getValue()));
+    }
     ASSERT(false, "Value view is not of Float type");
     return 0.0f;
 }
