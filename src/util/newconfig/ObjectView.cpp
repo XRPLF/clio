@@ -22,7 +22,6 @@
 #include "util/Assert.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/ValueView.hpp"
 
 #include <fmt/core.h>
@@ -83,6 +82,7 @@ ObjectView::getArray(std::string_view key) const
     if (!fullKey.contains(".[]"))
         fullKey = fullKey + ".[]";
 
+    ASSERT(clioConfig_.get().startsWith(fullKey), "Key {} does not exist in object", fullKey);
     return clioConfig_.get().getArray(fullKey);
 }
 

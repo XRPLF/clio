@@ -21,8 +21,8 @@
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ObjectView.hpp"
 
-#include <../common/newconfig/FakeConfigData.hpp>
 #include <gtest/gtest.h>
+#include <newconfig/FakeConfigData.hpp>
 
 using namespace util::config;
 
@@ -80,4 +80,28 @@ TEST_F(ObjectViewTest, ObjectInArrayMoreComplex)
     EXPECT_TRUE(objLow.containsKey("admin"));
     EXPECT_EQ(objLow.getValue("section").asString(), "true");
     EXPECT_EQ(objLow.getValue("admin").asBool(), false);
+}
+
+TEST_F(ObjectViewTest, getArrayInObject)
+{
+    auto const obj = configData.getObject("dosguard");
+    EXPECT_TRUE(obj.containsKey("whitelist.[]"));
+
+    auto const arr = obj.getArray("whitelist");
+    EXPECT_EQ(2, arr.size());
+
+    EXPECT_EQ("125.5.5.2", arr.valueAt(0).asString());
+    EXPECT_EQ("204.2.2.2", arr.valueAt(1).asString());
+}
+
+struct ObjectViewDeathTest : ObjectViewTest {};
+
+TEST_F(ObjectViewDeathTest, incorrectKeys)
+{
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("header.text1"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("head"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getArray("header"); }, ".*");
+
+    // dies because only 1 object in higher.[].low
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("higher.[].low", 1); }, ".*");
 }

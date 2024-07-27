@@ -29,6 +29,9 @@
 #include <gtest/gtest.h>
 #include <newconfig/FakeConfigData.hpp>
 
+#include <string_view>
+#include <unordered_set>
+
 using namespace util::config;
 
 // TODO: parsing config file and populating into config will be here once implemented
@@ -46,25 +49,104 @@ TEST_F(NewConfigTest, fetchValues)
     EXPECT_EQ(true, configData.getValue("header.admin").asBool());
     EXPECT_EQ("TSM", configData.getValue("header.sub.sub2Value").asString());
     EXPECT_EQ(444.22, configData.getValue("ip").asDouble());
+
+    auto const v2 = configData.getValueInArray("dosguard.whitelist", 0);
+    EXPECT_EQ(v2.asString(), "125.5.5.2");
 }
 
 TEST_F(NewConfigTest, fetchObject)
 {
     auto const obj = configData.getObject("header");
-    ASSERT_TRUE(obj.containsKey("sub.sub2Value"));
+    EXPECT_TRUE(obj.containsKey("sub.sub2Value"));
 
     auto const obj2 = obj.getObject("sub");
-    ASSERT_TRUE(obj2.containsKey("sub2Value"));
+    EXPECT_TRUE(obj2.containsKey("sub2Value"));
     EXPECT_EQ(obj2.getValue("sub2Value").asString(), "TSM");
+
+    auto const objInArr = configData.getObject("array", 0);
+    auto const obj2InArr = configData.getObject("array", 1);
+    EXPECT_EQ(objInArr.getValue("sub").asDouble(), 111.11);
+    EXPECT_EQ(objInArr.getValue("sub2").asString(), "subCategory");
+    EXPECT_EQ(obj2InArr.getValue("sub").asDouble(), 4321.55);
+    EXPECT_EQ(obj2InArr.getValue("sub2").asString(), "temporary");
 }
 
 TEST_F(NewConfigTest, fetchArray)
 {
     auto const obj = configData.getObject("dosguard");
-    ASSERT_TRUE(obj.containsKey("whitelist.[]"));
+    EXPECT_TRUE(obj.containsKey("whitelist.[]"));
 
-    auto arr = obj.getArray("whitelist");
+    auto const arr = obj.getArray("whitelist");
     EXPECT_EQ(2, arr.size());
+
+    auto const sameArr = configData.getArray("dosguard.whitelist");
+    EXPECT_EQ(2, sameArr.size());
+    EXPECT_EQ(sameArr.valueAt(0).asString(), arr.valueAt(0).asString());
+    EXPECT_EQ(sameArr.valueAt(1).asString(), arr.valueAt(1).asString());
+}
+
+TEST_F(NewConfigTest, CheckKeys)
+{
+    EXPECT_TRUE(configData.contains("header.port"));
+    EXPECT_TRUE(configData.contains("array.[].sub"));
+    EXPECT_TRUE(configData.contains("dosguard.whitelist.[]"));
+    EXPECT_FALSE(configData.contains("dosguard.whitelist"));
+
+    EXPECT_TRUE(configData.startsWith("dosguard"));
+    EXPECT_TRUE(configData.startsWith("ip"));
+
+    EXPECT_EQ(configData.arraySize("array"), 2);
+    EXPECT_EQ(configData.arraySize("higher"), 1);
+    EXPECT_EQ(configData.arraySize("dosguard.whitelist"), 2);
+}
+
+TEST_F(NewConfigTest, CheckAllKeys)
+{
+    auto expected = std::unordered_set<std::string_view>{};
+    auto const actual = std::unordered_set<std::string_view>{
+        "header.text1",
+        "header.port",
+        "header.admin",
+        "header.sub.sub2Value",
+        "ip",
+        "array.[].sub",
+        "array.[].sub2",
+        "higher.[].low.section",
+        "higher.[].low.admin",
+        "dosguard.whitelist.[]",
+        "dosguard.port"
+    };
+
+    for (auto i = configData.begin(); i != configData.end(); ++i) {
+        expected.emplace((i->first));
+    }
+    EXPECT_EQ(expected, actual);
+}
+
+struct NewConfigDeathTest : NewConfigTest {};
+
+TEST_F(NewConfigDeathTest, IncorrectGetValues)
+{
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("head"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("head."); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("asdf"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("dosguard.whitelist"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("dosguard.whitelist.[]"); }, ".*");
+}
+
+TEST_F(NewConfigDeathTest, IncorrectGetObject)
+{
+    ASSERT_FALSE(configData.contains("head"));
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("head"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("array"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("array", 2); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("doesNotExist"); }, ".*");
+}
+
+TEST_F(NewConfigDeathTest, IncorrectGetArray)
+{
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getArray("header.text1"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getArray("asdf"); }, ".*");
 }
 
 TEST(ConfigDescription, getValues)

@@ -101,7 +101,7 @@ extractColumn(CassRow const* row, std::size_t idx)
         output = static_cast<DecayedType>(out);
     } else {
         // type not supported for extraction
-        static_assert(util::unsupportedType<DecayedType>);
+        static_assert(util::Unsupported<DecayedType>);
     }
 
     return output;

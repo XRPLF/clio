@@ -19,6 +19,7 @@
 
 #include "util/newconfig/Array.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/ValueView.hpp"
 
 #include <gtest/gtest.h>
 

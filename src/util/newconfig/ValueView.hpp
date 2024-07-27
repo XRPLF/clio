@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/Assert.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 
 #include <fmt/core.h>
@@ -29,7 +30,6 @@
 #include <functional>
 #include <stdexcept>
 #include <string_view>
-#include <variant>
 
 namespace util::config {
 
@@ -79,13 +79,14 @@ public:
         if ((type() == ConfigType::Integer) && configVal_.get().hasValue()) {
             auto val = std::get<int64_t>(configVal_.get().getValue());
             if (std::is_unsigned_v<T> && val < 0)
-                throw std::logic_error(fmt::format("Int {} cannot be converted to the specified unsigned type", val));
+                ASSERT(false, "Int {} cannot be converted to the specified unsigned type", val);
 
             if (std::is_convertible_v<decltype(val), T>) {
                 return static_cast<T>(val);
             }
         }
-        throw std::bad_variant_access();
+        ASSERT(false, "Value view is not of any Int type");
+        return 0;
     }
 
     /**

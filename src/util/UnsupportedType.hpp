@@ -21,7 +21,8 @@
 
 namespace util {
 
+/** @brief used for compile time checking of unsupported types */
 template <typename>
-static constexpr bool unsupportedType = false;
+static constexpr bool Unsupported = false;
 
 }  // namespace util

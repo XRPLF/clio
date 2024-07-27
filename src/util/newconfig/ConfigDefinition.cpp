@@ -28,6 +28,7 @@
 
 #include <fmt/core.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
@@ -63,7 +64,7 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"etl_source.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().min(1).max(65535)}},
      {"forwarding.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(0.0)},
      {"forwarding.request_timeout", ConfigValue{ConfigType::Double}.defaultValue(10.0)},
-     {"dos_guard.[].whitelist", Array{ConfigValue{ConfigType::String}}},
+     {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}},
      {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(1000'000)},
      {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20)},
      {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20)},
@@ -79,6 +80,8 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2)},
      {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32)},
      {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48)},
+     {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+     {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0)},
      {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
      {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")},
      {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional()}},
@@ -105,17 +108,31 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"api_version.max", ConfigValue{ConfigType::Integer}}}
 };
 
+ClioConfigDefinition::ClioConfigDefinition(std::initializer_list<KeyValuePair> pair)
+{
+    for (auto const& p : pair) {
+        if (p.first.contains("[]"))
+            ASSERT(std::holds_alternative<Array>(p.second), "Value must be array if key has \"[]\"");
+        map_.insert(p);
+    }
+}
+
 ObjectView
 ClioConfigDefinition::getObject(std::string_view prefix, std::optional<std::size_t> idx) const
 {
     auto const prefixWithDot = std::string(prefix) + ".";
     for (auto const& [mapKey, mapVal] : map_) {
-        if (mapKey.starts_with(prefixWithDot) && (std::holds_alternative<ConfigValue>(mapVal) || !idx.has_value()))
-            return ObjectView{prefix, *this};
-
-        if (mapKey.starts_with(prefixWithDot) && std::holds_alternative<Array>(mapVal)) {
-            ASSERT(std::get<Array>(mapVal).size() > idx, "index provided is out of scope");
+        auto const hasPrefix = mapKey.starts_with(prefixWithDot);
+        if (idx.has_value() && hasPrefix && std::holds_alternative<Array>(mapVal)) {
+            ASSERT(std::get<Array>(mapVal).size() > idx.value(), "Index provided is out of scope");
+            // we want to support getObject("array") and getObject("array.[]"), so we check if "[]" exists
+            if (!prefix.contains("[]"))
+                return ObjectView{prefixWithDot + "[]", idx.value(), *this};
             return ObjectView{prefix, idx.value(), *this};
+        }
+        if (hasPrefix && !idx.has_value() && !mapKey.contains(prefixWithDot + "[]")) {
+            ASSERT(!mapKey.contains(prefixWithDot + "[]"), "Key {} is an array, not an object", mapKey);
+            return ObjectView{prefix, *this};
         }
     }
     ASSERT(false, "Key {} is not found in config", prefixWithDot);
@@ -125,9 +142,7 @@ ClioConfigDefinition::getObject(std::string_view prefix, std::optional<std::size
 ArrayView
 ClioConfigDefinition::getArray(std::string_view prefix) const
 {
-    auto key = std::string(prefix);
-    if (!prefix.contains(".[]"))
-        key += ".[]";
+    auto key = checkForBracketsInArray(prefix);
 
     for (auto const& [mapKey, mapVal] : map_) {
         if (mapKey.starts_with(key)) {
@@ -137,6 +152,19 @@ ClioConfigDefinition::getArray(std::string_view prefix) const
     }
     ASSERT(false, "Key {} is not found in config", key);
     return ArrayView{"", *this};
+}
+
+bool
+ClioConfigDefinition::contains(std::string_view key) const
+{
+    return map_.contains(key);
+}
+
+bool
+ClioConfigDefinition::startsWith(std::string_view key) const
+{
+    auto it = std::find_if(map_.begin(), map_.end(), [&key](auto const& pair) { return pair.first.starts_with(key); });
+    return it != map_.end();
 }
 
 ValueView
@@ -150,24 +178,31 @@ ClioConfigDefinition::getValue(std::string_view fullKey) const
     return ValueView{ConfigValue{}};
 }
 
-Array const&
-ClioConfigDefinition::atArray(std::string_view key) const
+ValueView
+ClioConfigDefinition::getValueInArray(std::string_view fullKey, std::size_t index) const
 {
-    ASSERT(map_.contains(key), "Current string {} is a prefix, not a key of config", key);
-    ASSERT(std::holds_alternative<Array>(map_.at(key)), "Value of {} is not an array", key);
-    return std::get<Array>(map_.at(key));
+    auto it = this->getArrayIterator(fullKey);
+    return ValueView{std::get<Array>(it->second).at(index)};
+}
+
+Array const&
+ClioConfigDefinition::atArray(std::string_view fullKey) const
+{
+    auto it = this->getArrayIterator(fullKey);
+    return std::get<Array>(it->second);
 }
 
 std::size_t
 ClioConfigDefinition::arraySize(std::string_view prefix) const
 {
-    ASSERT(prefix.contains(".[]"), "Prefix {} is not an array", prefix);
+    auto key = checkForBracketsInArray(prefix);
+
     for (auto const& pair : map_) {
-        if (pair.first.starts_with(prefix)) {
+        if (pair.first.starts_with(key)) {
             return std::get<Array>(pair.second).size();
         }
     }
-    ASSERT(false, "Prefix {} not found in any of the config keys", prefix);
+    ASSERT(false, "Prefix {} not found in any of the config keys", key);
     return 0;
 }
 

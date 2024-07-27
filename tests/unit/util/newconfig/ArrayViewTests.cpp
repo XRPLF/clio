@@ -23,10 +23,8 @@
 #include "util/newconfig/ObjectView.hpp"
 #include "util/newconfig/ValueView.hpp"
 
-#include <../common/newconfig/FakeConfigData.hpp>
 #include <gtest/gtest.h>
-
-#include <variant>
+#include <newconfig/FakeConfigData.hpp>
 
 using namespace util::config;
 
@@ -37,51 +35,64 @@ struct ArrayViewTest : testing::Test {
 TEST_F(ArrayViewTest, ArrayValueTest)
 {
     ArrayView const arrVals = configData.getArray("array.[].sub");
-    auto valIt = arrVals.beginValues();
-    EXPECT_NEAR((*valIt++).asDouble(), 111.11, 1e-9);
-    EXPECT_NEAR((*valIt++).asDouble(), 4321.55, 1e-9);
-    EXPECT_EQ(valIt, arrVals.endValues());
+    auto valIt = arrVals.begin<ValueView>();
+    auto const precision = 1e-9;
+    EXPECT_NEAR((*valIt++).asDouble(), 111.11, precision);
+    EXPECT_NEAR((*valIt++).asDouble(), 4321.55, precision);
+    EXPECT_EQ(valIt, arrVals.end<ValueView>());
 
-    EXPECT_NEAR(111.11, arrVals.valueAt(0).asDouble(), 1e-9);
-    EXPECT_NEAR(4321.55, arrVals.valueAt(1).asDouble(), 1e-9);
+    EXPECT_NEAR(111.11, arrVals.valueAt(0).asDouble(), precision);
+    EXPECT_NEAR(4321.55, arrVals.valueAt(1).asDouble(), precision);
 
     ArrayView const arrVals2 = configData.getArray("array.[].sub2");
-    auto val2It = arrVals2.beginValues();
+    auto val2It = arrVals2.begin<ValueView>();
     EXPECT_EQ((*val2It++).asString(), "subCategory");
     EXPECT_EQ((*val2It++).asString(), "temporary");
-    EXPECT_EQ(val2It, arrVals2.endValues());
+    EXPECT_EQ(val2It, arrVals2.end<ValueView>());
 
     ValueView const tempVal = arrVals2.valueAt(0);
     EXPECT_EQ(tempVal.type(), ConfigType::String);
     EXPECT_EQ("subCategory", tempVal.asString());
-
-    EXPECT_THROW({ [[maybe_unused]] auto _ = tempVal.asIntType<int>(); }, std::bad_variant_access);
 }
 
 TEST_F(ArrayViewTest, ArrayWithObjTest)
 {
     ArrayView const arrVals = configData.getArray("array.[]");
     ArrayView const arrValAlt = configData.getArray("array");
+    auto const precision = 1e-9;
 
     auto const obj1 = arrVals.objectAt(0);
     auto const obj2 = arrValAlt.objectAt(0);
-    EXPECT_NEAR(obj1.getValue("sub").asDouble(), obj2.getValue("sub").asDouble(), 1e-9);
-    EXPECT_NEAR(obj1.getValue("sub").asDouble(), 111.11, 1e-9);
+    EXPECT_NEAR(obj1.getValue("sub").asDouble(), obj2.getValue("sub").asDouble(), precision);
+    EXPECT_NEAR(obj1.getValue("sub").asDouble(), 111.11, precision);
 }
 
-TEST_F(ArrayViewTest, ObjectWithArray)
+TEST_F(ArrayViewTest, IterateArray)
 {
     auto arr = configData.getArray("dosguard.whitelist");
     EXPECT_EQ(2, arr.size());
     EXPECT_EQ(arr.valueAt(0).asString(), "125.5.5.2");
     EXPECT_EQ(arr.valueAt(1).asString(), "204.2.2.2");
 
-    auto const obj2 = configData.getObject("higher.[].low");
-    auto const arr2 = obj2.getArray("section");
+    auto it = arr.begin<ValueView>();
+    EXPECT_EQ((*it++).asString(), "125.5.5.2");
+    EXPECT_EQ((*it++).asString(), "204.2.2.2");
+    EXPECT_EQ((it), arr.end<ValueView>());
+}
 
-    auto it = arr2.beginValues();
-    EXPECT_EQ((*it++).asString(), "true");
-    EXPECT_EQ(it, arr.endValues());
+TEST_F(ArrayViewTest, IterateObject)
+{
+    auto arr = configData.getArray("array");
+    EXPECT_EQ(2, arr.size());
+
+    auto it = arr.begin<ObjectView>();
+    EXPECT_EQ(111.11, (*it).getValue("sub").asDouble());
+    EXPECT_EQ("subCategory", (*it++).getValue("sub2").asString());
+
+    EXPECT_EQ(4321.55, (*it).getValue("sub").asDouble());
+    EXPECT_EQ("temporary", (*it++).getValue("sub2").asString());
+
+    EXPECT_EQ(it, arr.end<ObjectView>());
 }
 
 struct ArrayViewDeathTest : ArrayViewTest {};
@@ -89,6 +100,25 @@ struct ArrayViewDeathTest : ArrayViewTest {};
 TEST_F(ArrayViewDeathTest, IncorrectAccess)
 {
     ArrayView const arr = configData.getArray("higher");
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = arr.objectAt(1); }, "");
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = arr.beginValues(); }, "");
+
+    // dies because higher only has 1 object
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = arr.objectAt(1); }, ".*");
+
+    ArrayView const arrVals2 = configData.getArray("array.[].sub2");
+    ValueView const tempVal = arrVals2.valueAt(0);
+
+    // dies because array.[].sub2 only has 2 config values
+    EXPECT_DEATH([[maybe_unused]] auto _ = arrVals2.valueAt(2), ".*");
+
+    // dies as value is not of type int
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = tempVal.asIntType<int>(); }, ".*");
+}
+
+TEST_F(ArrayViewDeathTest, IncorrectIterate)
+{
+    ArrayView const arr = configData.getArray("higher");
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = arr.begin<ValueView>(); }, ".*");
+
+    ArrayView const dosguardWhitelist = configData.getArray("dosguard.whitelist");
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = dosguardWhitelist.begin<ObjectView>(); }, ".*");
 }

@@ -21,10 +21,12 @@
 
 #include "util/Assert.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/ObjectView.hpp"
 #include "util/newconfig/ValueView.hpp"
 
 #include <cstddef>
 #include <iterator>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -37,102 +39,6 @@ namespace util::config {
  */
 class Array {
 public:
-    /** @brief Used for end iterator*/
-    struct Sentinel {};
-
-    /**
-     * @brief Custom iterator class which returns ValueView of what's underneath the Array
-     */
-    struct ArrayIterator {
-        using iterator_category = std::forward_iterator_tag;
-        using pointer = ConfigValue const*;
-        using reference = ConfigValue const&;
-        using valueType = ConfigValue;
-
-        /**
-         * @brief Constructs an ArrayIterator with a pointer to the ConfigValue
-         *
-         * @param ptr Pointer to the ConfigValue
-         */
-        ArrayIterator(pointer ptr) : ptr_(ptr)
-        {
-        }
-
-        /**
-         * @brief Prefix increment operator
-         *
-         * @return Reference to the incremented ArrayIterator
-         */
-        ArrayIterator&
-        operator++()
-        {
-            ++ptr_;
-            return *this;
-        }
-
-        /**
-         * @brief Postfix increment operator
-         *
-         * @return Copy of the ArrayIterator before increment
-         */
-        ArrayIterator
-        operator++(int)
-        {
-            ArrayIterator temp = *this;
-            ptr_++;
-            return temp;
-        }
-
-        /**
-         * @brief Dereference operator to get a ValueView of the ConfigValue
-         *
-         * @return ValueView of the ConfigValue
-         */
-        ValueView
-        operator*()
-        {
-            return ValueView(*ptr_);
-        }
-
-        /**
-         * @brief Equality operator
-         *
-         * @param other Another ArrayIterator to compare
-         * @return true if iterators are equal, otherwise false
-         */
-        bool
-        operator==(ArrayIterator const& other) const
-        {
-            return ptr_ == other.ptr_;
-        }
-
-        /**
-         * @brief Inequality operator
-         *
-         * @param other Another ArrayIterator to compare
-         * @return true if iterators are not equal, otherwise false
-         */
-        bool
-        operator!=(ArrayIterator const& other) const
-        {
-            return ptr_ != other.ptr_;
-        }
-
-        /**
-         * @brief Equality operator for Sentinel comparison
-         *
-         * @return true since it will always compare to end
-         */
-        bool
-        operator==(Sentinel const&) const
-        {
-            return true;
-        }
-
-    private:
-        pointer ptr_;
-    };
-
     /**
      * @brief Constructs an Array with the provided arguments
      *
@@ -142,28 +48,6 @@ public:
     template <typename... Args>
     constexpr Array(Args&&... args) : elements_{std::forward<Args>(args)...}
     {
-    }
-
-    /**
-     * @brief Returns an iterator to the beginning of the Array
-     *
-     * @return Iterator to the beginning of the Array
-     */
-    auto
-    begin() const
-    {
-        return ArrayIterator{elements_.data()};
-    }
-
-    /**
-     * @brief Returns an iterator to the end of the Array
-     *
-     * @return Iterator to the end of the Array
-     */
-    auto
-    end() const
-    {
-        return Sentinel{};
     }
 
     /**

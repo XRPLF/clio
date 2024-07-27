@@ -26,7 +26,6 @@
 #include "util/newconfig/ObjectView.hpp"
 #include "util/newconfig/ValueView.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <string_view>
 
@@ -35,11 +34,6 @@ namespace util::config {
 ArrayView::ArrayView(std::string_view prefix, ClioConfigDefinition const& configDef)
     : prefix_{prefix}, clioConfig_{configDef}
 {
-    auto it = std::find_if(configDef.begin(), configDef.end(), [this](auto const& pair) {
-        return pair.first.starts_with(prefix_);
-    });
-    ASSERT(it != clioConfig_.get().end(), "Prefix {} does not exist in config definition.", prefix);
-    ASSERT(prefix_.contains(".[]"), "Not an array");
 }
 
 ValueView
@@ -61,20 +55,6 @@ ArrayView::objectAt(std::size_t idx) const
 {
     ASSERT(idx < this->size(), "Object index is out of scope");
     return ObjectView{prefix_, idx, clioConfig_};
-}
-
-Array::ArrayIterator
-ArrayView::beginValues() const
-{
-    ASSERT(clioConfig_.get().contains(prefix_), "Current string {} is a prefix, not a key of config", prefix_);
-    return clioConfig_.get().atArray(prefix_).begin();
-}
-
-Array::Sentinel
-ArrayView::endValues() const
-{
-    ASSERT(clioConfig_.get().contains(prefix_), "Current string {} is a prefix, not a key of config", prefix_);
-    return clioConfig_.get().atArray(prefix_).end();
 }
 
 }  // namespace util::config

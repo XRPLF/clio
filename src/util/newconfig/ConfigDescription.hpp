@@ -98,6 +98,8 @@ private:
         KV{"io_threads", "Number of I/O threads."},
         KV{"cache.num_diffs", "Number of diffs to cache."},
         KV{"cache.num_markers", "Number of markers to cache."},
+        KV{"cache.num_cursors_from_diff", "Num of cursors that are different."},
+        KV{"cache.num_cursors_from_account", "Number of cursors from an account."},
         KV{"cache.page_fetch_size", "Page fetch size for cache operations."},
         KV{"cache.load", "Cache loading strategy ('sync' or 'async')."},
         KV{"log_channels.[].channel", "Name of the log channel."},

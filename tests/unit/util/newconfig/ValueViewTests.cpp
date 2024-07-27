@@ -21,12 +21,11 @@
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/ValueView.hpp"
 
-#include <../common/newconfig/FakeConfigData.hpp>
 #include <gtest/gtest.h>
+#include <newconfig/FakeConfigData.hpp>
 
 #include <cstdint>
 #include <stdexcept>
-#include <variant>
 
 using namespace util::config;
 
@@ -44,7 +43,7 @@ TEST_F(ValueViewTest, ValueView)
     EXPECT_EQ(false, vv.isOptional());
 }
 
-TEST_F(ValueViewTest, differentIntegerTest)
+TEST_F(ValueViewTest, DifferentIntegerTest)
 {
     auto const vv = configData.getValue("header.port");
     auto const uint32 = vv.asIntType<uint32_t>();
@@ -62,15 +61,20 @@ TEST_F(ValueViewTest, differentIntegerTest)
     EXPECT_EQ(vv.asIntType<int>(), floatVal);
 }
 
-TEST_F(ValueViewTest, wrongTypes)
+struct ValueDeathTest : ValueViewTest {};
+
+TEST_F(ValueDeathTest, WrongTypes)
 {
     auto const vv = configData.getValue("header.port");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv.asBool(); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv.asString(); }, ".*");
 
-    EXPECT_THROW({ [[maybe_unused]] auto a_ = vv.asBool(); }, std::bad_variant_access);
-    EXPECT_THROW({ [[maybe_unused]] auto a_ = vv.asString(); }, std::bad_variant_access);
-    EXPECT_THROW({ [[maybe_unused]] auto a_ = vv.asDouble(); }, std::bad_variant_access);
-
-    ConfigValue const cv = ConfigValue{ConfigType::Integer}.defaultValue(-5);
+    auto const cv = ConfigValue{ConfigType::Integer}.defaultValue(-5);
     auto const vv2 = ValueView(cv);
-    EXPECT_THROW({ [[maybe_unused]] auto a_ = vv2.asIntType<uint32_t>(); }, std::logic_error);
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv2.asIntType<uint32_t>(); }, ".*");
+
+    auto const cv2 = ConfigValue{ConfigType::String}.defaultValue("asdf");
+    auto const vv3 = ValueView(cv2);
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv3.asDouble(); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv3.asFloat(); }, ".*");
 }

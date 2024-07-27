@@ -20,20 +20,17 @@
 #pragma once
 
 #include "util/Assert.hpp"
-#include "util/newconfig/Array.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
-#include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/ObjectView.hpp"
 #include "util/newconfig/ValueView.hpp"
 
 #include <cstddef>
 #include <functional>
+#include <iterator>
 #include <string>
 #include <string_view>
 
 namespace util::config {
-
-class ClioConfigDefinition;
 
 /**
  * @brief View for array structure for config.
@@ -44,6 +41,126 @@ class ClioConfigDefinition;
  */
 class ArrayView {
 public:
+    /**
+     * @brief Custom iterator class which contains config object or value underneath ArrayView
+     */
+    template <typename T>
+    struct ArrayIterator {
+        using iterator_category = std::forward_iterator_tag;
+        using pointer = T const*;
+        using reference = T const&;
+        using value_type = T;
+
+        /**
+         * @brief Constructs an ArrayIterator with underlying ArrayView and index value
+         *
+         * @param arr ArrayView to iterate
+         * @param index Current index of the ArrayView
+         */
+        ArrayIterator(ArrayView const& arr, std::size_t index) : arr_{arr}, index_{index}
+        {
+            if (arr_.clioConfig_.get().contains(arr_.prefix_)) {
+                ASSERT((std::is_same_v<T, ValueView>), "Array iterator must be ValueView");
+            } else {
+                ASSERT((std::is_same_v<T, ObjectView>), "Array iterator must be ObjectView");
+            }
+        }
+
+        /**
+         * @brief Prefix increment operator
+         *
+         * @return Reference to the incremented ArrayIterator
+         */
+        ArrayIterator&
+        operator++()
+        {
+            if (index_ < arr_.size())
+                index_++;
+            return *this;
+        }
+
+        /**
+         * @brief Postfix increment operator
+         *
+         * @return Copy of the ArrayIterator before increment
+         */
+        ArrayIterator
+        operator++(int)
+        {
+            ArrayIterator temp = *this;
+            if (index_ < arr_.size())
+                index_++;
+            return temp;
+        }
+
+        /**
+         * @brief Dereference operator to get a ValueView or ObjectView
+         *
+         * @return ValueView of the ConfigValue
+         */
+        T
+        operator*()
+        {
+            if constexpr (std::is_same_v<T, ObjectView>) {
+                return ObjectView{arr_.prefix_, index_, arr_.clioConfig_.get()};
+            } else {
+                return arr_.clioConfig_.get().getValueInArray(arr_.prefix_, index_);
+            }
+        }
+
+        /**
+         * @brief Equality operator
+         *
+         * @param other Another ArrayIterator to compare
+         * @return true if iterators are equal, otherwise false
+         */
+        bool
+        operator==(ArrayIterator const& other) const
+        {
+            return index_ == other.index_;
+        }
+
+        /**
+         * @brief Inequality operator
+         *
+         * @param other Another ArrayIterator to compare
+         * @return true if iterators are not equal, otherwise false
+         */
+        bool
+        operator!=(ArrayIterator const& other) const
+        {
+            return index_ != other.index_;
+        }
+
+    private:
+        ArrayView const& arr_;
+        std::size_t index_ = 0;
+    };
+
+    /**
+     * @brief Returns an iterator to the beginning of the Array
+     *
+     * @return Iterator to the beginning of the Array
+     */
+    template <typename T>
+    auto
+    begin() const
+    {
+        return ArrayIterator<T>(*this, 0);
+    }
+
+    /**
+     * @brief Returns an iterator to the end of the Array
+     *
+     * @return Iterator to the end of the Array
+     */
+    template <typename T>
+    auto
+    end() const
+    {
+        return ArrayIterator<T>(*this, this->size());
+    }
+
     /**
      * @brief Constructs an ArrayView with the given prefix and config definition.
      *
@@ -77,22 +194,6 @@ public:
      */
     [[nodiscard]] size_t
     size() const;
-
-    /**
-     * @brief Returns an iterator to the beginning of the values.
-     *
-     * @return Iterator to the beginning of the values.
-     */
-    [[nodiscard]] Array::ArrayIterator
-    beginValues() const;
-
-    /**
-     * @brief Returns an iterator to the end of the values.
-     *
-     * @return Iterator to the end of the values.
-     */
-    [[nodiscard]] Array::Sentinel
-    endValues() const;
 
 private:
     std::string const prefix_;

@@ -62,7 +62,7 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
                     if (auto const res = req->modify(j, key); not res)
                         firstFailure = res.error();
                 } else {
-                    static_assert(util::unsupportedType<decltype(*req)>);
+                    static_assert(util::Unsupported<decltype(*req)>);
                 }
             }(),
             ...

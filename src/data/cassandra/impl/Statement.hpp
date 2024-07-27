@@ -139,7 +139,7 @@ public:
             throwErrorIfNeeded(rc, "Bind int64");
         } else {
             // type not supported for binding
-            static_assert(util::unsupportedType<DecayedType>);
+            static_assert(util::Unsupported<DecayedType>);
         }
     }
 };

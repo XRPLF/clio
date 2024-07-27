@@ -44,7 +44,7 @@ template <typename Type>
 constexpr ConfigType
 getType()
 {
-    if constexpr (std::is_same_v<Type, int>) {
+    if constexpr (std::is_same_v<Type, int64_t>) {
         return ConfigType::Integer;
     } else if constexpr (std::is_same_v<Type, std::string>) {
         return ConfigType::String;
@@ -53,7 +53,7 @@ getType()
     } else if constexpr (std::is_same_v<Type, bool>) {
         return ConfigType::Boolean;
     } else {
-        static_assert(util::unsupportedType<Type>, "Wrong config type");
+        static_assert(util::Unsupported<Type>, "Wrong config type");
     }
 }
 
@@ -137,7 +137,6 @@ public:
     optional()
     {
         optional_ = true;
-        ASSERT(!value_.has_value(), "value must not exist in optional");
         return *this;
     }
 

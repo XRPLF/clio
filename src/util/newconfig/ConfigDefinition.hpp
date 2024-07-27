@@ -30,6 +30,7 @@
 
 #include <fmt/core.h>
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <expected>
@@ -60,14 +61,7 @@ public:
      *
      * @param pair A list of key-value pairs for the predefined set of clio configurations
      */
-    ClioConfigDefinition(std::initializer_list<KeyValuePair> pair)
-    {
-        for (auto const& p : pair) {
-            if (p.first.contains("[]"))
-                ASSERT(std::holds_alternative<Array>(p.second), "value must be array if key has \"[]\"");
-            map_.insert(p);
-        }
-    }
+    ClioConfigDefinition(std::initializer_list<KeyValuePair> pair);
 
     /**
      * @brief Parses the configuration file
@@ -98,7 +92,7 @@ public:
      * @return An optional Error if generating markdown fails
      */
     std::expected<std::string, Error>
-    getMarkDown(ClioConfigDescription const& configDescription) const;
+    getMarkdown(ClioConfigDescription const& configDescription) const;
 
     /**
      * @brief Returns the ObjectView specified with the prefix
@@ -120,6 +114,16 @@ public:
     getValue(std::string_view fullKey) const;
 
     /**
+     * @brief Returns the specified ValueView object in an array with a given index
+     *
+     * @param fullKey The config key to search for
+     * @param index The index of the config value inside the Array to get
+     * @return ValueView associated with the given key
+     */
+    ValueView
+    getValueInArray(std::string_view fullKey, std::size_t index) const;
+
+    /**
      * @brief Returns the specified Array object from ClioConfigDefinition
      *
      * @param prefix The prefix to search config keys from
@@ -127,6 +131,42 @@ public:
      */
     ArrayView
     getArray(std::string_view prefix) const;
+
+    /**
+     * @brief Checks if a key is present in the configuration map.
+     *
+     * @param key The key to search for in the configuration map.
+     * @return True if the key is present, false otherwise.
+     */
+    bool
+    contains(std::string_view key) const;
+
+    /**
+     * @brief Checks if any key in config starts with "key"
+     *
+     * @param key The key to search for in the configuration map.
+     * @return True if the any key in config starts with "key", false otherwise.
+     */
+    bool
+    startsWith(std::string_view key) const;
+
+    /**
+     * @brief Returns the Array object associated with the specified key.
+     *
+     * @param key The key whose associated Array object is to be returned.
+     * @return The Array object associated with the specified key.
+     */
+    Array const&
+    atArray(std::string_view key) const;
+
+    /**
+     * @brief Returns the size of an Array
+     *
+     * @param prefix The prefix whose associated Array object is to be returned.
+     * @return The size of the array associated with the specified prefix.
+     */
+    std::size_t
+    arraySize(std::string_view prefix) const;
 
     /**
      * @brief Returns an iterator to the beginning of the configuration map.
@@ -150,37 +190,40 @@ public:
         return map_.end();
     }
 
+private:
     /**
-     * @brief Checks if a key is present in the configuration map.
+     * @brief returns the iterator of key-value pair with key fullKey
      *
-     * @param key The key to search for in the configuration map.
-     * @return True if the key is present, false otherwise.
+     * @param fullKey Key to search for
+     * @return iterator of map
      */
-    bool
-    contains(std::string_view key) const
+    auto
+    getArrayIterator(std::string_view key) const
     {
-        return map_.contains(key);
+        auto fullKey = checkForBracketsInArray(key);
+        auto it = std::find_if(map_.begin(), map_.end(), [&fullKey](auto pair) { return pair.first == fullKey; });
+
+        ASSERT(it != map_.end(), "key {} does not exist in config", fullKey);
+        ASSERT(std::holds_alternative<Array>(it->second), "Value of {} is not an array", fullKey);
+
+        return it;
     }
 
     /**
-     * @brief Returns the Array object associated with the specified key.
+     * @brief Used for all Array API's; check to make sure "[]" exists, if not, append to end
      *
-     * @param key The key whose associated Array object is to be returned.
-     * @return The Array object associated with the specified key.
+     * @param key key to check for
+     * @return the key with "[]" appended to the end
      */
-    Array const&
-    atArray(std::string_view key) const;
+    static std::string
+    checkForBracketsInArray(std::string_view key)
+    {
+        std::string fullKey = std::string(key);
+        if (!key.contains(".[]"))
+            fullKey += ".[]";
+        return fullKey;
+    }
 
-    /**
-     * @brief Returns the size of an Array
-     *
-     * @param prefix The prefix whose associated Array object is to be returned.
-     * @return The size of the array associated with the specified prefix.
-     */
-    std::size_t
-    arraySize(std::string_view prefix) const;
-
-private:
     std::unordered_map<std::string_view, std::variant<ConfigValue, Array>> map_;
 };
 

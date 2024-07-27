@@ -89,7 +89,7 @@ public:
             throwErrorIfNeeded(rc, "Bind ripple::uint256");
         } else {
             // type not supported for binding
-            static_assert(util::unsupportedType<DecayedType>);
+            static_assert(util::Unsupported<DecayedType>);
         }
     }
 };
@@ -136,7 +136,7 @@ private:
             output = static_cast<DecayedType>(out);
         } else {
             // type not supported for extraction
-            static_assert(util::unsupportedType<DecayedType>);
+            static_assert(util::Unsupported<DecayedType>);
         }
 
         return output;
