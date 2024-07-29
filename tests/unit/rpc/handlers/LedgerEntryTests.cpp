@@ -2726,6 +2726,7 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
 // Expected Result: return entryNotFound error
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
 {
+    backend->setRange(RANGEMIN, RANGEMAX);
     auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
