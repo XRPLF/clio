@@ -57,7 +57,7 @@ public:
     get(std::string_view key)
     {
         auto itr = std::ranges::find_if(configDescription, [&](auto const& v) { return v.key == key; });
-        ASSERT(itr != configDescription.end(), "key not found");
+        ASSERT(itr != configDescription.end(), "Key {} doesn't exist in config", key);
         return itr->value;
     }
 
