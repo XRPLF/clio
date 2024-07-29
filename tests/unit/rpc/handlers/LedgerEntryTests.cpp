@@ -2944,7 +2944,9 @@ TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
     });
 }
 
-TEST_F(RPCLedgerEntryTest, RangeNotAvailableDeathTest)
+using RPCLedgerEntryDeathTest = RPCLedgerEntryTest;
+
+TEST_F(RPCLedgerEntryDeathTest, RangeNotAvailable)
 {
     boost::asio::io_context ctx;
     bool checkCalled = false;
