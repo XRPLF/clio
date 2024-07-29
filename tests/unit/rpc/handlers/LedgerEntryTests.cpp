@@ -26,6 +26,9 @@
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
@@ -2939,4 +2942,24 @@ TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
         auto const myerr = err.at("error").as_string();
         EXPECT_EQ(myerr, "entryNotFound");
     });
+}
+
+TEST_F(RPCLedgerEntryTest, RangeNotAvailableDeathTest)
+{
+    boost::asio::io_context ctx;
+    bool checkCalled = false;
+    spawn(ctx, [&, _ = make_work_guard(ctx)](boost::asio::yield_context yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "index": "{}"
+            }})",
+            INDEX1
+        ));
+        checkCalled = true;
+        EXPECT_DEATH({ auto _ = handler.process(req, Context{yield}); }, "Ledger range must be available");
+    });
+
+    ctx.run();
+    ASSERT_TRUE(checkCalled);
 }
