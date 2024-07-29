@@ -92,8 +92,8 @@ TEST_F(NewConfigTest, CheckKeys)
     EXPECT_TRUE(configData.contains("dosguard.whitelist.[]"));
     EXPECT_FALSE(configData.contains("dosguard.whitelist"));
 
-    EXPECT_TRUE(configData.startsWith("dosguard"));
-    EXPECT_TRUE(configData.startsWith("ip"));
+    EXPECT_TRUE(configData.hasItemsWithPrefix("dosguard"));
+    EXPECT_TRUE(configData.hasItemsWithPrefix("ip"));
 
     EXPECT_EQ(configData.arraySize("array"), 2);
     EXPECT_EQ(configData.arraySize("higher"), 1);

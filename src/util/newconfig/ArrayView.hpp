@@ -117,6 +117,7 @@ public:
         bool
         operator==(ArrayIterator const& other) const
         {
+            ASSERT(this->arr_ == other.arr_, "Trying to compare two different arrays");
             return index_ == other.index_;
         }
 
@@ -168,6 +169,18 @@ public:
      * @param configDef The ClioConfigDefinition instance.
      */
     ArrayView(std::string_view prefix, ClioConfigDefinition const& configDef);
+
+    /**
+     * @brief Equality operator of ArrayView
+     *
+     * @param other Another ArrayView to compare
+     * @return true if prefix are equal (as we only have 1 ClioConfig), otherwise false
+     */
+    bool
+    operator==(ArrayView const& other) const
+    {
+        return this->prefix_ == other.prefix_;
+    }
 
     /**
      * @brief Returns an ObjectView at the specified index.

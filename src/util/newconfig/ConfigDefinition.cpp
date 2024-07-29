@@ -130,10 +130,8 @@ ClioConfigDefinition::getObject(std::string_view prefix, std::optional<std::size
                 return ObjectView{prefixWithDot + "[]", idx.value(), *this};
             return ObjectView{prefix, idx.value(), *this};
         }
-        if (hasPrefix && !idx.has_value() && !mapKey.contains(prefixWithDot + "[]")) {
-            ASSERT(!mapKey.contains(prefixWithDot + "[]"), "Key {} is an array, not an object", mapKey);
+        if (hasPrefix && !idx.has_value() && !mapKey.contains(prefixWithDot + "[]"))
             return ObjectView{prefix, *this};
-        }
     }
     ASSERT(false, "Key {} is not found in config", prefixWithDot);
     return ObjectView{"", *this};
@@ -142,11 +140,13 @@ ClioConfigDefinition::getObject(std::string_view prefix, std::optional<std::size
 ArrayView
 ClioConfigDefinition::getArray(std::string_view prefix) const
 {
-    auto key = checkForBracketsInArray(prefix);
+    auto key = addBracketsForArrayKey(prefix);
 
     for (auto const& [mapKey, mapVal] : map_) {
         if (mapKey.starts_with(key)) {
-            ASSERT(std::holds_alternative<Array>(mapVal), "Trying to retrieve an Array when value is an object ");
+            ASSERT(
+                std::holds_alternative<Array>(mapVal), "Trying to retrieve Object or ConfigValue, instead of an Array "
+            );
             return ArrayView{key, *this};
         }
     }
@@ -161,9 +161,9 @@ ClioConfigDefinition::contains(std::string_view key) const
 }
 
 bool
-ClioConfigDefinition::startsWith(std::string_view key) const
+ClioConfigDefinition::hasItemsWithPrefix(std::string_view key) const
 {
-    auto it = std::find_if(map_.begin(), map_.end(), [&key](auto const& pair) { return pair.first.starts_with(key); });
+    auto it = std::ranges::find_if(map_, [&key](auto const& pair) { return pair.first.starts_with(key); });
     return it != map_.end();
 }
 
@@ -195,7 +195,7 @@ ClioConfigDefinition::atArray(std::string_view fullKey) const
 std::size_t
 ClioConfigDefinition::arraySize(std::string_view prefix) const
 {
-    auto key = checkForBracketsInArray(prefix);
+    auto key = addBracketsForArrayKey(prefix);
 
     for (auto const& pair : map_) {
         if (pair.first.starts_with(key)) {

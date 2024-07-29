@@ -148,7 +148,7 @@ public:
      * @return True if the any key in config starts with "key", false otherwise.
      */
     bool
-    startsWith(std::string_view key) const;
+    hasItemsWithPrefix(std::string_view key) const;
 
     /**
      * @brief Returns the Array object associated with the specified key.
@@ -200,8 +200,8 @@ private:
     auto
     getArrayIterator(std::string_view key) const
     {
-        auto fullKey = checkForBracketsInArray(key);
-        auto it = std::find_if(map_.begin(), map_.end(), [&fullKey](auto pair) { return pair.first == fullKey; });
+        auto fullKey = addBracketsForArrayKey(key);
+        auto it = std::ranges::find_if(map_, [&fullKey](auto pair) { return pair.first == fullKey; });
 
         ASSERT(it != map_.end(), "key {} does not exist in config", fullKey);
         ASSERT(std::holds_alternative<Array>(it->second), "Value of {} is not an array", fullKey);
@@ -216,7 +216,7 @@ private:
      * @return the key with "[]" appended to the end
      */
     static std::string
-    checkForBracketsInArray(std::string_view key)
+    addBracketsForArrayKey(std::string_view key)
     {
         std::string fullKey = std::string(key);
         if (!key.contains(".[]"))

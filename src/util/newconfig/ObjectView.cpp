@@ -82,7 +82,7 @@ ObjectView::getArray(std::string_view key) const
     if (!fullKey.contains(".[]"))
         fullKey = fullKey + ".[]";
 
-    ASSERT(clioConfig_.get().startsWith(fullKey), "Key {} does not exist in object", fullKey);
+    ASSERT(clioConfig_.get().hasItemsWithPrefix(fullKey), "Key {} does not exist in object", fullKey);
     return clioConfig_.get().getArray(fullKey);
 }
 
@@ -95,9 +95,7 @@ ObjectView::getFullKey(std::string_view key) const
 bool
 ObjectView::startsWithKey(std::string_view key) const
 {
-    auto it = std::find_if(clioConfig_.get().begin(), clioConfig_.get().end(), [&key](auto const& pair) {
-        return pair.first.starts_with(key);
-    });
+    auto it = std::ranges::find_if(clioConfig_.get(), [&key](auto const& pair) { return pair.first.starts_with(key); });
     return it != clioConfig_.get().end();
 }
 

@@ -56,10 +56,8 @@ public:
     static constexpr std::string_view
     get(std::string_view key)
     {
-        auto const itr = std::find_if(configDescription.begin(), configDescription.end(), [&key](auto const& v) {
-            return v.key == key;
-        });
-        ASSERT(itr != configDescription.end(), "key doesn't exist in config");
+        auto itr = std::ranges::find_if(configDescription, [&](auto const& v) { return v.key == key; });
+        ASSERT(itr != configDescription.end(), "key not found");
         return itr->value;
     }
 
