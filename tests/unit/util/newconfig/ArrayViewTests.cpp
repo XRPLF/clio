@@ -26,6 +26,8 @@
 
 #include <gtest/gtest.h>
 
+#include <cstddef>
+
 using namespace util::config;
 
 struct ArrayViewTest : testing::Test {
@@ -78,10 +80,19 @@ TEST_F(ArrayViewTest, IterateArray)
     EXPECT_EQ((*it++).asString(), "125.5.5.2");
     EXPECT_EQ((*it++).asString(), "204.2.2.2");
     EXPECT_EQ((it), arr.end<ValueView>());
+}
 
-    auto itArray = configData.getArray("array.[].sub");
-    auto itDosguard = configData.getArray("dosguard.whitelist.[]");
-    ASSERT_FALSE(itArray.begin<ValueView>() == itDosguard.begin<ValueView>());
+TEST_F(ArrayViewTest, DifferentArrayIterators)
+{
+    auto const subArray = configData.getArray("array.[].sub");
+    auto const dosguardArray = configData.getArray("dosguard.whitelist.[]");
+    ASSERT_EQ(subArray.size(), dosguardArray.size());
+
+    auto itArray = subArray.begin<ValueView>();
+    auto itDosguard = dosguardArray.begin<ValueView>();
+
+    for (std::size_t i = 0; i < subArray.size(); i++)
+        EXPECT_NE(itArray++, itDosguard++);
 }
 
 TEST_F(ArrayViewTest, IterateObject)

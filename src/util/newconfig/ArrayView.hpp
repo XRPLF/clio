@@ -112,12 +112,12 @@ public:
          * @brief Equality operator
          *
          * @param other Another ArrayIterator to compare
-         * @return true if iterators are pointing to the same ArrayView underneath, otherwise false
+         * @return true if iterators are pointing to the same element in the same ArrayView object, otherwise false
          */
         bool
         operator==(ArrayIterator const& other) const
         {
-            return (&(this->arr_) == &(other.arr_)) ? index_ == other.index_ : false;
+            return &arr_ == &(other.arr_) && index_ == other.index_;
         }
 
         /**
@@ -129,7 +129,7 @@ public:
         bool
         operator!=(ArrayIterator const& other) const
         {
-            return index_ != other.index_;
+            return &arr_ != &(other.arr_) || index_ != other.index_;
         }
 
     private:
