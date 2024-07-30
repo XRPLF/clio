@@ -19,10 +19,10 @@
 
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/FakeConfigData.hpp"
 #include "util/newconfig/ObjectView.hpp"
 
 #include <gtest/gtest.h>
-#include <newconfig/FakeConfigData.hpp>
 
 using namespace util::config;
 

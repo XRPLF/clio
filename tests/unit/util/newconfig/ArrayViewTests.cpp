@@ -20,11 +20,11 @@
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/FakeConfigData.hpp"
 #include "util/newconfig/ObjectView.hpp"
 #include "util/newconfig/ValueView.hpp"
 
 #include <gtest/gtest.h>
-#include <newconfig/FakeConfigData.hpp>
 
 using namespace util::config;
 
@@ -78,6 +78,10 @@ TEST_F(ArrayViewTest, IterateArray)
     EXPECT_EQ((*it++).asString(), "125.5.5.2");
     EXPECT_EQ((*it++).asString(), "204.2.2.2");
     EXPECT_EQ((it), arr.end<ValueView>());
+
+    auto itArray = configData.getArray("array.[].sub");
+    auto itDosguard = configData.getArray("dosguard.whitelist.[]");
+    ASSERT_FALSE(itArray.begin<ValueView>() == itDosguard.begin<ValueView>());
 }
 
 TEST_F(ArrayViewTest, IterateObject)
@@ -114,7 +118,7 @@ TEST_F(ArrayViewDeathTest, IncorrectAccess)
     EXPECT_DEATH({ [[maybe_unused]] auto _ = tempVal.asIntType<int>(); }, ".*");
 }
 
-TEST_F(ArrayViewDeathTest, IncorrectIterate)
+TEST_F(ArrayViewDeathTest, IncorrectIterateAccess)
 {
     ArrayView const arr = configData.getArray("higher");
     EXPECT_DEATH({ [[maybe_unused]] auto _ = arr.begin<ValueView>(); }, ".*");

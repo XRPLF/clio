@@ -21,13 +21,13 @@
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigDescription.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/FakeConfigData.hpp"
 
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <gtest/gtest.h>
-#include <newconfig/FakeConfigData.hpp>
 
 #include <string_view>
 #include <unordered_set>

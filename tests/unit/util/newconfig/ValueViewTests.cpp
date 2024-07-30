@@ -19,10 +19,10 @@
 
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/FakeConfigData.hpp"
 #include "util/newconfig/ValueView.hpp"
 
 #include <gtest/gtest.h>
-#include <newconfig/FakeConfigData.hpp>
 
 #include <cstdint>
 
