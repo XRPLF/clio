@@ -41,7 +41,7 @@ public:
 
     /**
      * @brief Run the application
--    *
+     *
      * @return exit code
      */
     int
