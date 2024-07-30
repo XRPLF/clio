@@ -24,6 +24,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -153,6 +154,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 
     // check ledger exists
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "Ledger range must be available");
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
