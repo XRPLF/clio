@@ -2950,7 +2950,7 @@ TEST_F(RPCLedgerEntryDeathTest, RangeNotAvailable)
 {
     boost::asio::io_context ctx;
     bool checkCalled = false;
-    spawn(ctx, [&, _ = make_work_guard(ctx)](boost::asio::yield_context yield) {
+    spawn(ctx, [&, _unused = make_work_guard(ctx)](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{LedgerEntryHandler{backend}};
         auto const req = json::parse(fmt::format(
             R"({{
