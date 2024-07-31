@@ -199,6 +199,7 @@ jobs:
     with:
       tags: |
           type=raw,value=nightly
+          type=raw,value=${{ github.sha }}
       artifact_name: clio_server_Linux_Release
       strip_binary: true
       publish_image: ${{ github.event_name != 'pull_request' }}
