@@ -141,3 +141,43 @@ If you wish to develop against a `rippled` instance running in standalone mode t
 
 1. Advance the `rippled` ledger to at least ledger 256.
 2. Wait 10 minutes before first starting Clio against this standalone node.
+
+## Building with a Custom `libxrpl`
+
+Sometimes, during development, you need to build against a custom version of `libxrpl`. (For example, you may be developing compatibility for a proposed amendment that is not yet merged to the main `rippled` codebase.) To build Clio with compatibility for a custom fork or branch of `rippled`, follow these steps:
+
+1. First, pull/clone the appropriate `rippled` fork and switch to the branch you want to build. For example, the following example uses an in-development build with [XLS-33d Multi-Purpose Tokens](https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0033d-multi-purpose-tokens):
+
+    ```sh
+    git clone https://github.com/shawnxie999/rippled/
+    cd rippled
+    git switch mpt-1.1
+    ```
+
+2. Export a custom package to your local Conan store using a user/channel:
+
+    ```sh
+    conan export . my/feature
+    ```
+
+3. Patch your local Clio build to use the right package.
+
+    Edit `conanfile.py` (from the Clio repository root). Replace the `xrpl` requirement with the custom package version from the previous step. This must also include the current version number from your `rippled` branch. For example:
+
+    ```py
+    # ... (excerpt from conanfile.py)
+        requires = [
+        'boost/1.82.0',
+        'cassandra-cpp-driver/2.17.0',
+        'fmt/10.1.1',
+        'protobuf/3.21.9',
+        'grpc/1.50.1',
+        'openssl/1.1.1u',
+        'xrpl/2.3.0-b1@my/feature', # Update this line
+        'libbacktrace/cci.20210118'
+    ]
+    ```
+
+4. Build Clio as you would have before.
+
+    See [Building Clio](#building-clio) for details.
