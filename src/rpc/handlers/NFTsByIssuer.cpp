@@ -85,13 +85,13 @@ NFTsByIssuerHandler::process(NFTsByIssuerHandler::Input input, Context const& ct
         nftJson[JS(nft_id)] = strHex(nft.tokenID);
         nftJson[JS(ledger_index)] = nft.ledgerSequence;
         nftJson[JS(owner)] = toBase58(nft.owner);
-        nftJson["is_burned"] = nft.isBurned;
+        nftJson[JS(is_burned)] = nft.isBurned;
         nftJson[JS(uri)] = strHex(nft.uri);
 
         nftJson[JS(flags)] = nft::getFlags(nft.tokenID);
         nftJson["transfer_fee"] = nft::getTransferFee(nft.tokenID);
         nftJson[JS(issuer)] = toBase58(nft::getIssuer(nft.tokenID));
-        nftJson["nft_taxon"] = nft::toUInt32(nft::getTaxon(nft.tokenID));
+        nftJson[JS(nft_taxon)] = nft::toUInt32(nft::getTaxon(nft.tokenID));
         nftJson[JS(nft_serial)] = nft::getSerial(nft.tokenID);
 
         output.nfts.push_back(nftJson);
@@ -118,7 +118,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, NFTsByIssuerHand
         jv.as_object()[JS(marker)] = *(output.marker);
 
     if (output.nftTaxon.has_value())
-        jv.as_object()["nft_taxon"] = *(output.nftTaxon);
+        jv.as_object()[JS(nft_taxon)] = *(output.nftTaxon);
 }
 
 NFTsByIssuerHandler::Input
@@ -143,8 +143,8 @@ tag_invoke(boost::json::value_to_tag<NFTsByIssuerHandler::Input>, boost::json::v
     if (jsonObject.contains(JS(limit)))
         input.limit = jsonObject.at(JS(limit)).as_int64();
 
-    if (jsonObject.contains("nft_taxon"))
-        input.nftTaxon = jsonObject.at("nft_taxon").as_int64();
+    if (jsonObject.contains(JS(nft_taxon)))
+        input.nftTaxon = jsonObject.at(JS(nft_taxon)).as_int64();
 
     if (jsonObject.contains(JS(marker)))
         input.marker = boost::json::value_to<std::string>(jsonObject.at(JS(marker)));

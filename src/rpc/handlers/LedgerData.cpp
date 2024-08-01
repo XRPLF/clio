@@ -33,6 +33,7 @@
 #include <boost/json/value_to.hpp>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
+#include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/STLedgerEntry.h>
@@ -195,11 +196,11 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
     if (jsonObject.contains("out_of_order"))
         input.outOfOrder = jsonObject.at("out_of_order").as_bool();
 
-    if (jsonObject.contains("marker")) {
-        if (jsonObject.at("marker").is_string()) {
-            input.marker = ripple::uint256{boost::json::value_to<std::string>(jsonObject.at("marker")).data()};
+    if (jsonObject.contains(JS(marker))) {
+        if (jsonObject.at(JS(marker)).is_string()) {
+            input.marker = ripple::uint256{boost::json::value_to<std::string>(jsonObject.at(JS(marker))).data()};
         } else {
-            input.diffMarker = jsonObject.at("marker").as_int64();
+            input.diffMarker = jsonObject.at(JS(marker)).as_int64();
         }
     }
 
@@ -215,7 +216,7 @@ tag_invoke(boost::json::value_to_tag<LedgerDataHandler::Input>, boost::json::val
     }
 
     if (jsonObject.contains(JS(type)))
-        input.type = util::getLedgerEntryTypeFromStr(boost::json::value_to<std::string>(jsonObject.at(JS(type))));
+        input.type = util::LedgerTypes::GetLedgerEntryTypeFromStr(boost::json::value_to<std::string>(jv.at(JS(type))));
 
     return input;
 }
