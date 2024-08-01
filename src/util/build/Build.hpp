@@ -21,7 +21,7 @@
 
 #include <string>
 
-namespace Build {
+namespace util::build {
 
 std::string const&
 getClioVersionString();
@@ -29,4 +29,4 @@ getClioVersionString();
 std::string const&
 getClioFullVersionString();
 
-}  // namespace Build
+}  // namespace util::build

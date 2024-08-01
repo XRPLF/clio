@@ -82,9 +82,9 @@ getRootCertificate()
 }  // namespace
 
 std::expected<boost::asio::ssl::context, RequestError>
-makeSslContext()
+makeClientSslContext()
 {
-    ssl::context context{ssl::context::sslv23_client};
+    ssl::context context{ssl::context::tls_client};
     context.set_verify_mode(ssl::verify_peer);
     auto const rootCertificate = getRootCertificate();
     if (not rootCertificate.has_value()) {

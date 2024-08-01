@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "main/Build.hpp"
 #include "rpc/Errors.hpp"
 #include "util/Taggable.hpp"
+#include "util/build/Build.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Http.hpp"
 #include "web/DOSGuard.hpp"
@@ -297,7 +297,7 @@ private:
     httpResponse(http::status status, std::string content_type, std::string message) const
     {
         http::response<http::string_body> res{status, req_.version()};
-        res.set(http::field::server, "clio-server-" + Build::getClioVersionString());
+        res.set(http::field::server, "clio-server-" + util::build::getClioVersionString());
         res.set(http::field::content_type, content_type);
         res.keep_alive(req_.keep_alive());
         res.body() = std::move(message);

@@ -31,7 +31,7 @@
 namespace util::requests::impl {
 
 std::expected<boost::asio::ssl::context, RequestError>
-makeSslContext();
+makeClientSslContext();
 
 std::optional<std::string>
 sslErrorToString(boost::beast::error_code const& error);

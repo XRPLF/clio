@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,26 +17,35 @@
 */
 //==============================================================================
 
-#include "util/build/Build.hpp"
+#pragma once
 
-#include <string>
+#include "util/SignalsHandler.hpp"
+#include "util/config//Config.hpp"
 
-namespace util::build {
+namespace app {
 
-static constexpr char versionString[] = "@CLIO_VERSION@";
+/**
+ * @brief The main application class
+ */
+class ClioApplication {
+    util::Config const& config_;
+    util::SignalsHandler signalsHandler_;
 
-std::string const&
-getClioVersionString()
-{
-    static std::string const value = versionString;
-    return value;
-}
+public:
+    /**
+     * @brief Construct a new ClioApplication object
+     *
+     * @param config The configuration of the application
+     */
+    ClioApplication(util::Config const& config);
 
-std::string const&
-getClioFullVersionString()
-{
-    static std::string const value = "clio-" + getClioVersionString();
-    return value;
-}
+    /**
+     * @brief Run the application
+     *
+     * @return exit code
+     */
+    int
+    run();
+};
 
-}  // namespace util::build
+}  // namespace app
