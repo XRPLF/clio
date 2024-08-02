@@ -20,6 +20,7 @@
 #pragma once
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
 
 #include <atomic>
@@ -30,59 +31,55 @@
 namespace util {
 
 /**
- * @brief A wrapper around boost::asio::steady_timer that allows to destroy timer safely any time
+ * @brief A class to repeat some action at a regular interval
  */
-class Timer {
+class Repeat {
     boost::asio::io_context& ioc_;
     boost::asio::steady_timer timer_;
-    std::atomic_bool shouldStop_{false};
-    std::binary_semaphore stop_{0};
+    std::atomic_bool stopping_{false};
+    std::binary_semaphore semaphore_{0};
 
 public:
     /**
-     * @brief Construct a new Timer object
+     * @brief Construct a new Repeat object
      *
      * @param ioc The io_context to use
      */
-    Timer(boost::asio::io_context& ioc);
+    Repeat(boost::asio::io_context& ioc);
 
     /**
      * @brief Destroy the Timer object
      */
-    ~Timer();
+    ~Repeat();
 
     /**
-     * @brief Cancel the timer
+     * @brief Stop repeating
      */
     void
-    cancel();
+    stop();
 
     /**
-     * @brief Asynchronously wait for the timer to expire
+     * @brief Start asynchronously repeating
      *
-     * @tparam Handler The handler type
-     * @param handler The handler to call when the timer expires
+     * @tparam Action The action type
+     * @param action The action to call regularly
      */
-    template <std::invocable<boost::system::error_code> Handler>
+    template <std::invocable<boost::system::error_code> Action>
     void
-    async_wait(Handler&& handler)
+    start(std::chrono::steady_clock::duration interval, Action&& action)
     {
-        timer_.async_wait([handler = std::forward<Handler>(handler), this](auto const& ec) {
-            if (shouldStop_) {
-                stop_.release();
+        timer_.expires_after(interval);
+        timer_.async_wait([this, interval, action = std::forward<Action>(action)](auto const& ec) {
+            if (stopping_) {
+                semaphore_.release();
                 return;
             }
-            handler(ec);
+            if (not ec)
+                return;
+            action();
+            start(interval, std::forward<Action>(action));
         });
     }
-
-    /**
-     * @brief Set the expiration time relative to now
-     *
-     * @param duration The duration to wait
-     */
-    void
-    expires_after(std::chrono::steady_clock::duration const& duration);
 };
 
 }  // namespace util

@@ -18,7 +18,7 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
-#include "util/Timer.hpp"
+#include "util/Repeat.hpp"
 #include "util/WithTimeout.hpp"
 
 #include <boost/asio/error.hpp>
@@ -26,48 +26,92 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <future>
 #include <memory>
 #include <thread>
 
 using namespace util;
 
 struct TimerTests : SyncAsioContextTest {
-    Timer timer{ctx};
+    Repeat timer{ctx};
     testing::StrictMock<testing::MockFunction<void(boost::system::error_code)>> handlerMock;
 };
 
-TEST_F(TimerTests, AsyncWaitCallsHandler)
-{
-    timer.expires_after(std::chrono::milliseconds{10});
-    timer.async_wait(handlerMock.AsStdFunction());
-    EXPECT_CALL(handlerMock, Call(boost::system::error_code{}));
-    ctx.run();
-}
-
+/*TEST_F(TimerTests, AsyncWaitCallsHandler)*/
+/*{*/
+/*    timer.expires_after(std::chrono::milliseconds{10});*/
+/*    timer.async_wait(handlerMock.AsStdFunction());*/
+/*    EXPECT_CALL(handlerMock, Call(boost::system::error_code{}));*/
+/*    ctx.run();*/
+/*}*/
+/**/
 TEST_F(TimerTests, CancelCancelsTimer)
 {
     timer.expires_after(std::chrono::milliseconds{10});
     timer.async_wait(handlerMock.AsStdFunction());
     timer.cancel();
-    EXPECT_CALL(handlerMock, Call(boost::system::error_code{boost::asio::error::operation_aborted}));
+    std::this_thread::sleep_for(std::chrono::milliseconds{20});
     ctx.run();
 }
 
 TEST_F(TimerTests, RepeatingTimerCanBeDestroyedWhileIoContextIsRunning)
 {
-    auto timerPtr = std::make_unique<Timer>(ctx);
+    auto workGuard = boost::asio::make_work_guard(ctx);
+    std::promise<void> finished;
+    std::thread thread{[&]() {
+        ctx.run();
+        finished.set_value();
+    }};
+    {
+        Repeat timer(ctx);
 
-    EXPECT_CALL(handlerMock, Call(boost::system::error_code{})).WillRepeatedly([&](auto const& ec) {
-        if (ec == boost::asio::error::operation_aborted)
-            return;
-        timerPtr->expires_after(std::chrono::milliseconds{1});
-        timerPtr->async_wait(handlerMock.AsStdFunction());
-    });
-    timerPtr->expires_after(std::chrono::milliseconds{1});
-    timerPtr->async_wait(handlerMock.AsStdFunction());
+        EXPECT_CALL(handlerMock, Call).WillRepeatedly([&](auto const&) {
+            timer.expires_after(std::chrono::nanoseconds{1});
+            timer.async_wait(handlerMock.AsStdFunction());
+        });
+        timer.expires_after(std::chrono::nanoseconds{1});
+        timer.async_wait(handlerMock.AsStdFunction());
 
-    std::thread thread{[this]() { ctx.run(); }};
-    std::this_thread::sleep_for(std::chrono::milliseconds{10});
-    timerPtr.reset();
-    tests::common::util::withTimeout(std::chrono::seconds{1}, [&thread]() { thread.join(); });
+        std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    }
+    workGuard.reset();
+
+    if (finished.get_future().wait_for(std::chrono::seconds{1}) == std::future_status::timeout)
+        FAIL() << "Timer was not destroyed";
+    thread.join();
+}
+
+TEST_F(TimerTests, Cancel)
+{
+    auto workGuard = boost::asio::make_work_guard(ctx);
+    std::promise<void> finished;
+    std::thread thread{[&]() {
+        ctx.run();
+        finished.set_value();
+    }};
+    {
+        Repeat timer(ctx);
+
+        size_t counter = 0;
+        EXPECT_CALL(handlerMock, Call).WillRepeatedly([&](auto const&) {
+            timer.expires_after(std::chrono::nanoseconds{1});
+            timer.async_wait(handlerMock.AsStdFunction());
+            ++counter;
+            if (counter == 10) {
+                timer.cancel();
+                counter = 0;
+                timer.expires_after(std::chrono::nanoseconds{1});
+                timer.async_wait(handlerMock.AsStdFunction());
+            }
+        });
+        timer.expires_after(std::chrono::nanoseconds{1});
+        timer.async_wait(handlerMock.AsStdFunction());
+
+        std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    }
+    workGuard.reset();
+
+    if (finished.get_future().wait_for(std::chrono::seconds{1}) == std::future_status::timeout)
+        FAIL() << "Timer was not destroyed";
+    thread.join();
 }

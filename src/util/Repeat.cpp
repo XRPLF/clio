@@ -17,11 +17,12 @@
 */
 //==============================================================================
 
-#include "util/Timer.hpp"
+#include "util/Repeat.hpp"
 
 #include <boost/asio/io_context.hpp>
 
 #include <chrono>
+#include <mutex>
 
 namespace util {
 
@@ -33,8 +34,9 @@ Timer::~Timer()
 {
     if (ioc_.stopped())
         return;
-    shouldStop_ = true;
-    stop_.acquire();
+    stopping_ = true;
+    cancel();
+    semaphore_.acquire();
 }
 
 void
