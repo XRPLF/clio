@@ -21,6 +21,7 @@ target_sources(
           requests/impl/SslContext.cpp
           Taggable.cpp
           TerminationHandler.cpp
+          Timer.cpp
           TimeUtils.cpp
           TxUtils.cpp
           LedgerUtils.cpp
