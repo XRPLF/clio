@@ -2,7 +2,8 @@ add_library(clio_util)
 
 target_sources(
   clio_util
-  PRIVATE config/Config.cpp
+  PRIVATE build/Build.cpp
+          config/Config.cpp
           log/Logger.cpp
           prometheus/Http.cpp
           prometheus/Label.cpp

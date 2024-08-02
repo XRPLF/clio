@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,26 +17,32 @@
 */
 //==============================================================================
 
-#include "util/build/Build.hpp"
+#include "web/impl/ServerSslContext.hpp"
 
-#include <string>
+#include <gtest/gtest.h>
 
-namespace util::build {
+using namespace web::impl;
 
-static constexpr char versionString[] = "@CLIO_VERSION@";
-
-std::string const&
-getClioVersionString()
+TEST(ServerSslContext, makeServerSslContext)
 {
-    static std::string const value = versionString;
-    return value;
+    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_CERT_PATH, TEST_DATA_SSL_KEY_PATH);
+    ASSERT_TRUE(sslContext);
 }
 
-std::string const&
-getClioFullVersionString()
+TEST(ServerSslContext, makeServerSslContext_WrongCertPath)
 {
-    static std::string const value = "clio-" + getClioVersionString();
-    return value;
+    auto const sslContext = makeServerSslContext("wrong_path", TEST_DATA_SSL_KEY_PATH);
+    ASSERT_FALSE(sslContext);
 }
 
-}  // namespace util::build
+TEST(ServerSslContext, makeServerSslContext_WrongKeyPath)
+{
+    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_CERT_PATH, "wrong_path");
+    ASSERT_FALSE(sslContext);
+}
+
+TEST(ServerSslContext, makeServerSslContext_CertKeyMismatch)
+{
+    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_KEY_PATH, TEST_DATA_SSL_CERT_PATH);
+    ASSERT_FALSE(sslContext);
+}

@@ -44,7 +44,7 @@ runs:
         id: meta
         with:
           images: ${{ inputs.image_name }}
-          tags: ${{ steps.generate_tags.outputs.tags }}
+          tags: ${{ inputs.tags }}
 
       - name: Build and push
         uses: docker/build-push-action@v5

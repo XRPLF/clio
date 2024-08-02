@@ -89,7 +89,7 @@ jobs:
 
             List of the issues found: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/
 
-      - uses: crazy-max/ghaction-import-gpg@v5
+      - uses: crazy-max/ghaction-import-gpg@v6
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
         with:
           gpg_private_key: ${{ secrets.ACTIONS_GPG_PRIVATE_KEY }}
@@ -99,7 +99,7 @@ jobs:
 
       - name: Create PR with fixes
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         env:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,26 +17,26 @@
 */
 //==============================================================================
 
-#include "util/build/Build.hpp"
+#pragma once
 
-#include <string>
+namespace util {
 
-namespace util::build {
+/**
+ * @brief Overload set for lambdas
+ *
+ * @tparam Ts Types of lambdas
+ */
+template <typename... Ts>
+struct OverloadSet : Ts... {
+    using Ts::operator()...;
+};
 
-static constexpr char versionString[] = "@CLIO_VERSION@";
+/**
+ * @brief Deduction guide for OverloadSet
+ *
+ * @tparam Ts Types of lambdas
+ */
+template <class... Ts>
+OverloadSet(Ts...) -> OverloadSet<Ts...>;
 
-std::string const&
-getClioVersionString()
-{
-    static std::string const value = versionString;
-    return value;
-}
-
-std::string const&
-getClioFullVersionString()
-{
-    static std::string const value = "clio-" + getClioVersionString();
-    return value;
-}
-
-}  // namespace util::build
+}  // namespace util

@@ -28,6 +28,7 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
+#include "util/AccountUtils.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -70,6 +71,7 @@ public:
         std::string ledgerHash;
         std::optional<boost::json::object> node;
         std::optional<std::string> nodeBinary;
+        std::optional<uint32_t> deletedLedgerIndex;
         bool validated = true;
     };
 
@@ -102,6 +104,7 @@ public:
         std::optional<uint32_t> chainClaimId;
         std::optional<uint32_t> createAccountClaimId;
         std::optional<ripple::uint256> oracleNode;
+        bool includeDeleted = false;
     };
 
     using Result = HandlerReturnType<Output>;
@@ -136,9 +139,11 @@ public:
                 }
 
                 auto const id1 =
-                    ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value.as_array()[0]));
+                    util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(value.as_array()[0])
+                    );
                 auto const id2 =
-                    ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value.as_array()[1]));
+                    util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(value.as_array()[1])
+                    );
 
                 if (!id1 || !id2)
                     return Error{Status{ClioError::rpcMALFORMED_ADDRESS, "malformedAddresses"}};
@@ -311,6 +316,7 @@ public:
                   meta::WithCustomError{modifiers::ToNumber{}, Status(ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID)}},
              }}},
             {JS(ledger), check::Deprecated{}},
+            {"include_deleted", validation::Type<bool>{}},
         };
 
         return rpcSpec;

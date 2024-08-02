@@ -24,6 +24,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/AccountUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
@@ -186,14 +187,14 @@ accountFromStringStrict(std::string const& account)
     if (blob && ripple::publicKeyType(ripple::makeSlice(*blob))) {
         publicKey = ripple::PublicKey(ripple::Slice{blob->data(), blob->size()});
     } else {
-        publicKey = ripple::parseBase58<ripple::PublicKey>(ripple::TokenType::AccountPublic, account);
+        publicKey = util::parseBase58Wrapper<ripple::PublicKey>(ripple::TokenType::AccountPublic, account);
     }
 
     std::optional<ripple::AccountID> result;
     if (publicKey) {
         result = ripple::calcAccountID(*publicKey);
     } else {
-        result = ripple::parseBase58<ripple::AccountID>(account);
+        result = util::parseBase58Wrapper<ripple::AccountID>(account);
     }
 
     return result;
@@ -799,7 +800,7 @@ getAccountsFromTransaction(boost::json::object const& transaction)
             auto inObject = getAccountsFromTransaction(value.as_object());
             accounts.insert(accounts.end(), inObject.begin(), inObject.end());
         } else if (value.is_string()) {
-            auto const account = ripple::parseBase58<ripple::AccountID>(boost::json::value_to<std::string>(value));
+            auto const account = util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(value));
             if (account) {
                 accounts.push_back(*account);
             }

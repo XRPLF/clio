@@ -17,12 +17,15 @@ jobs:
         include:
           - os: macos14
             build_type: Release
+            static: false
           - os: heavy
             build_type: Release
+            static: true
             container:
               image: rippleci/clio_ci:latest
           - os: heavy
             build_type: Debug
+            static: true
             container:
               image: rippleci/clio_ci:latest
     runs-on: [self-hosted, "${{ matrix.os }}"]
@@ -54,6 +57,7 @@ jobs:
           conan_profile: ${{ steps.conan.outputs.conan_profile }}
           conan_cache_hit: ${{ steps.restore_cache.outputs.conan_cache_hit }}
           build_type: ${{ matrix.build_type }}
+          static: ${{ matrix.static }}
 
       - name: Build Clio
         uses: ./.github/actions/build_clio
@@ -66,6 +70,12 @@ jobs:
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
           path: build/clio_*tests
+
+      - name: Upload test data
+        uses: actions/upload-artifact@v4
+        with:
+          name: clio_test_data_${{ runner.os }}_${{ matrix.build_type }}
+          path: build/tests/unit/test_data
 
       - name: Compress clio_server
         shell: bash
@@ -119,6 +129,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: clio_test_data_${{ runner.os }}_${{ matrix.build_type }}
+          path: tests/unit/test_data
 
       - name: Run clio_tests
         run: |
@@ -184,6 +199,7 @@ jobs:
     with:
       tags: |
           type=raw,value=nightly
+          type=raw,value=${{ github.sha }}
       artifact_name: clio_server_Linux_Release
       strip_binary: true
       publish_image: ${{ github.event_name != 'pull_request' }}

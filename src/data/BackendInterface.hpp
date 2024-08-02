@@ -379,6 +379,19 @@ public:
     fetchLedgerObject(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield) const;
 
     /**
+     * @brief Fetches a specific ledger object sequence.
+     *
+     * Currently the real fetch happens in doFetchLedgerObjectSeq
+     *
+     * @param key The key of the object
+     * @param sequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return The sequence in unit32_t on success; nullopt otherwise
+     */
+    std::optional<std::uint32_t>
+    fetchLedgerObjectSeq(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield) const;
+
+    /**
      * @brief Fetches all ledger objects by their keys.
      *
      * Currently the real fetch happens in doFetchLedgerObjects and fetchLedgerObjects attempts to fetch from Cache
@@ -406,6 +419,18 @@ public:
      */
     virtual std::optional<Blob>
     doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield) const = 0;
+
+    /**
+     * @brief The database-specific implementation for fetching a ledger object sequence.
+     *
+     * @param key The key to fetch for
+     * @param sequence The ledger sequence to fetch for
+     * @param yield The coroutine context
+     * @return The sequence in unit32_t on success; nullopt otherwise
+     */
+    virtual std::optional<std::uint32_t>
+    doFetchLedgerObjectSeq(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield)
+        const = 0;
 
     /**
      * @brief The database-specific implementation for fetching ledger objects.

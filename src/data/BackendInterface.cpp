@@ -102,6 +102,19 @@ BackendInterface::fetchLedgerObject(
     return dbObj;
 }
 
+std::optional<std::uint32_t>
+BackendInterface::fetchLedgerObjectSeq(
+    ripple::uint256 const& key,
+    std::uint32_t const sequence,
+    boost::asio::yield_context yield
+) const
+{
+    auto seq = doFetchLedgerObjectSeq(key, sequence, yield);
+    if (!seq)
+        LOG(gLog.trace()) << "Missed in db";
+    return seq;
+}
+
 std::vector<Blob>
 BackendInterface::fetchLedgerObjects(
     std::vector<ripple::uint256> const& keys,

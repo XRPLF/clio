@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,26 +17,16 @@
 */
 //==============================================================================
 
-#include "util/build/Build.hpp"
+#pragma once
 
+#include <boost/asio/ssl/context.hpp>
+
+#include <expected>
 #include <string>
 
-namespace util::build {
+namespace web::impl {
 
-static constexpr char versionString[] = "@CLIO_VERSION@";
+std::expected<boost::asio::ssl::context, std::string>
+makeServerSslContext(std::string const& certFilePath, std::string const& keyFilePath);
 
-std::string const&
-getClioVersionString()
-{
-    static std::string const value = versionString;
-    return value;
-}
-
-std::string const&
-getClioFullVersionString()
-{
-    static std::string const value = "clio-" + getClioVersionString();
-    return value;
-}
-
-}  // namespace util::build
+}  // namespace web::impl

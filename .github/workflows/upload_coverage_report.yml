@@ -23,7 +23,7 @@ jobs:
 
       - name: Upload coverage report
         if: ${{ hashFiles('build/coverage_report.xml') != '' }}
-        uses: wandalen/wretry.action@v1.4.10
+        uses: wandalen/wretry.action@v3.5.0
         with:
           action: codecov/codecov-action@v4
           with: |

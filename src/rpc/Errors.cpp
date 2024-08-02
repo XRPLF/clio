@@ -20,6 +20,7 @@
 #include "rpc/Errors.hpp"
 
 #include "rpc/JS.hpp"
+#include "util/OverloadSet.hpp"
 
 #include <boost/json/object.hpp>
 #include <xrpl/protocol/ErrorCodes.h>
@@ -35,17 +36,6 @@
 #include <variant>
 
 using namespace std;
-
-namespace {
-template <typename... Ts>
-struct overloadSet : Ts... {
-    using Ts::operator()...;
-};
-
-// explicit deduction guide (not needed as of C++20, but clang be clang)
-template <typename... Ts>
-overloadSet(Ts...) -> overloadSet<Ts...>;
-}  // namespace
 
 namespace rpc {
 
@@ -149,7 +139,7 @@ makeError(Status const& status)
     auto wrapOptional = [](string_view const& str) { return str.empty() ? nullopt : make_optional(str); };
 
     auto res = visit(
-        overloadSet{
+        util::OverloadSet{
             [&status, &wrapOptional](RippledError err) {
                 if (err == ripple::rpcUNKNOWN)
                     return boost::json::object{{"error", status.message}, {"type", "response"}, {"status", "error"}};

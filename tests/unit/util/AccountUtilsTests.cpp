@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,26 +17,24 @@
 */
 //==============================================================================
 
-#include "util/build/Build.hpp"
+#include "util/AccountUtils.hpp"
 
-#include <string>
+#include <gtest/gtest.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/SecretKey.h>
+#include <xrpl/protocol/tokens.h>
 
-namespace util::build {
+constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 
-static constexpr char versionString[] = "@CLIO_VERSION@";
-
-std::string const&
-getClioVersionString()
+TEST(AccountUtils, parseBase58Wrapper)
 {
-    static std::string const value = versionString;
-    return value;
-}
+    EXPECT_FALSE(util::parseBase58Wrapper<ripple::AccountID>("rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jp!"));
+    EXPECT_TRUE(util::parseBase58Wrapper<ripple::AccountID>(ACCOUNT));
 
-std::string const&
-getClioFullVersionString()
-{
-    static std::string const value = "clio-" + getClioVersionString();
-    return value;
+    EXPECT_TRUE(util::parseBase58Wrapper<ripple::SecretKey>(
+        ripple::TokenType::NodePrivate, "paQmjZ37pKKPMrgadBLsuf9ab7Y7EUNzh27LQrZqoexpAs31nJi"
+    ));
+    EXPECT_FALSE(util::parseBase58Wrapper<ripple::SecretKey>(
+        ripple::TokenType::NodePrivate, "??paQmjZ37pKKPMrgadBLsuf9ab7Y7EUNzh27LQrZqoexpAs31n"
+    ));
 }
-
-}  // namespace util::build
