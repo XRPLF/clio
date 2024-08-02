@@ -163,13 +163,13 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: nightly_release
+          pattern: clio_server_*
 
       - name: Prepare files
         shell: bash
         run: |
           cp ${{ github.workspace }}/.github/workflows/nightly_notes.md "${RUNNER_TEMP}/nightly_notes.md"
           cd nightly_release
-          rm -r clio_*tests*
           for d in $(ls); do
             archive_name=$(ls $d)
             mv ${d}/${archive_name} ./
