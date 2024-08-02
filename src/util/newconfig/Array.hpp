@@ -56,7 +56,7 @@ public:
      * @param value The ConfigValue to add
      */
     void
-    emplace_back(ConfigValue value)
+    emplaceBack(ConfigValue value)
     {
         elements_.push_back(std::move(value));
     }
@@ -66,7 +66,7 @@ public:
      *
      * @return Number of values stored in the Array
      */
-    size_t
+    [[nodiscard]] size_t
     size() const
     {
         return elements_.size();
@@ -78,7 +78,7 @@ public:
      * @param idx Index of the ConfigValue to retrieve
      * @return ConfigValue at the specified index
      */
-    ConfigValue const&
+    [[nodiscard]] ConfigValue const&
     at(std::size_t idx) const
     {
         ASSERT(idx < elements_.size(), "index is out of scope");

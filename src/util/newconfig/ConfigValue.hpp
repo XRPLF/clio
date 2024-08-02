@@ -67,8 +67,6 @@ class ConfigValue {
 public:
     using Type = std::variant<int64_t, std::string, bool, double>;
 
-    constexpr ConfigValue() = default;
-
     /**
      * @brief Constructor initializing with the config type
      *
@@ -84,7 +82,7 @@ public:
      * @param value The default value
      * @return Reference to this ConfigValue
      */
-    ConfigValue&
+    [[nodiscard]] ConfigValue&
     defaultValue(Type value)
     {
         setValue(value);
@@ -96,7 +94,7 @@ public:
      *
      * @return The config type
      */
-    constexpr ConfigType
+    [[nodiscard]] constexpr ConfigType
     type() const
     {
         return type_;
@@ -108,7 +106,7 @@ public:
      * @param min The minimum value
      * @return Reference to this ConfigValue
      */
-    constexpr ConfigValue&
+    [[nodiscard]] constexpr ConfigValue&
     min(std::uint32_t min)
     {
         min_ = min;
@@ -121,7 +119,7 @@ public:
      * @param max The maximum value
      * @return Reference to this ConfigValue
      */
-    constexpr ConfigValue&
+    [[nodiscard]] constexpr ConfigValue&
     max(std::uint32_t max)
     {
         max_ = max;
@@ -133,7 +131,7 @@ public:
      *
      * @return Reference to this ConfigValue
      */
-    constexpr ConfigValue&
+    [[nodiscard]] constexpr ConfigValue&
     optional()
     {
         optional_ = true;
@@ -145,7 +143,7 @@ public:
      *
      * @return true if optional, false otherwise
      */
-    constexpr bool
+    [[nodiscard]] constexpr bool
     isOptional() const
     {
         return optional_;
@@ -156,7 +154,7 @@ public:
      *
      * @return if value is optiona, false otherwise
      */
-    constexpr bool
+    [[nodiscard]] constexpr bool
     hasValue() const
     {
         return value_.has_value();
@@ -167,7 +165,7 @@ public:
      *
      * @return Config Value
      */
-    Type const&
+    [[nodiscard]] Type const&
     getValue() const
     {
         return value_.value();

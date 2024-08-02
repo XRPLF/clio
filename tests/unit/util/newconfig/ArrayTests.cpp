@@ -41,7 +41,7 @@ TEST(ArrayTest, testConfigArray)
     EXPECT_EQ(vv2.asIntType<int>(), 1234);
 
     EXPECT_EQ(arr.size(), 3);
-    arr.emplace_back(ConfigValue{ConfigType::String}.defaultValue("false"));
+    arr.emplaceBack(ConfigValue{ConfigType::String}.defaultValue("false"));
 
     EXPECT_EQ(arr.size(), 4);
     auto cv4 = arr.at(3);

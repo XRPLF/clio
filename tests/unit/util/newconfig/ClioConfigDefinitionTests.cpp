@@ -162,6 +162,6 @@ TEST(ConfigDescriptionAssertDeathTest, nonExistingKeyTest)
 {
     ClioConfigDescription definition{};
 
-    EXPECT_DEATH(definition.get("data"), ".*");
-    EXPECT_DEATH(definition.get("etl_source.[]"), ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("data"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("etl_source.[]"); }, ".*");
 }

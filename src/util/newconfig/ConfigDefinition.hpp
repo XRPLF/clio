@@ -71,7 +71,7 @@ public:
      * @param config The configuration file interface
      * @return An optional Error object if parsing fails
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     parse(ConfigFileInterface const& config);
 
     /**
@@ -82,7 +82,7 @@ public:
      * @param config The configuration file interface
      * @return An optional Error object if validation fails
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     validate(ConfigFileInterface const& config) const;
 
     /**
@@ -91,7 +91,7 @@ public:
      * @param configDescription The configuration description object
      * @return An optional Error if generating markdown fails
      */
-    std::expected<std::string, Error>
+    [[nodiscard]] std::expected<std::string, Error>
     getMarkdown(ClioConfigDescription const& configDescription) const;
 
     /**
@@ -101,7 +101,7 @@ public:
      * @param idx Used if getting Object in an Array
      * @return ObjectView with the given prefix
      */
-    ObjectView
+    [[nodiscard]] ObjectView
     getObject(std::string_view prefix, std::optional<std::size_t> idx = std::nullopt) const;
 
     /**
@@ -110,7 +110,7 @@ public:
      * @param fullKey The config key to search for
      * @return ValueView associated with the given key
      */
-    ValueView
+    [[nodiscard]] ValueView
     getValue(std::string_view fullKey) const;
 
     /**
@@ -120,7 +120,7 @@ public:
      * @param index The index of the config value inside the Array to get
      * @return ValueView associated with the given key
      */
-    ValueView
+    [[nodiscard]] ValueView
     getValueInArray(std::string_view fullKey, std::size_t index) const;
 
     /**
@@ -129,7 +129,7 @@ public:
      * @param prefix The prefix to search config keys from
      * @return ArrayView with all key-value pairs where key starts with "prefix"
      */
-    ArrayView
+    [[nodiscard]] ArrayView
     getArray(std::string_view prefix) const;
 
     /**
@@ -138,7 +138,7 @@ public:
      * @param key The key to search for in the configuration map.
      * @return True if the key is present, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     contains(std::string_view key) const;
 
     /**
@@ -147,7 +147,7 @@ public:
      * @param key The key to search for in the configuration map.
      * @return True if the any key in config starts with "key", false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     hasItemsWithPrefix(std::string_view key) const;
 
     /**
@@ -156,8 +156,8 @@ public:
      * @param key The key whose associated Array object is to be returned.
      * @return The Array object associated with the specified key.
      */
-    Array const&
-    atArray(std::string_view key) const;
+    [[nodiscard]] Array const&
+    asArray(std::string_view key) const;
 
     /**
      * @brief Returns the size of an Array
@@ -165,7 +165,7 @@ public:
      * @param prefix The prefix whose associated Array object is to be returned.
      * @return The size of the array associated with the specified prefix.
      */
-    std::size_t
+    [[nodiscard]] std::size_t
     arraySize(std::string_view prefix) const;
 
     /**
@@ -173,7 +173,7 @@ public:
      *
      * @return A constant iterator to the beginning of the map.
      */
-    auto
+    [[nodiscard]] auto
     begin() const
     {
         return map_.begin();
@@ -184,7 +184,7 @@ public:
      *
      * @return A constant iterator to the end of the map.
      */
-    auto
+    [[nodiscard]] auto
     end() const
     {
         return map_.end();
@@ -197,11 +197,11 @@ private:
      * @param fullKey Key to search for
      * @return iterator of map
      */
-    auto
+    [[nodiscard]] auto
     getArrayIterator(std::string_view key) const
     {
-        auto fullKey = addBracketsForArrayKey(key);
-        auto it = std::ranges::find_if(map_, [&fullKey](auto pair) { return pair.first == fullKey; });
+        auto const fullKey = addBracketsForArrayKey(key);
+        auto const it = std::ranges::find_if(map_, [&fullKey](auto pair) { return pair.first == fullKey; });
 
         ASSERT(it != map_.end(), "key {} does not exist in config", fullKey);
         ASSERT(std::holds_alternative<Array>(it->second), "Value of {} is not an array", fullKey);
@@ -215,7 +215,7 @@ private:
      * @param key key to check for
      * @return the key with "[]" appended to the end
      */
-    static std::string
+    [[nodiscard]] static std::string
     addBracketsForArrayKey(std::string_view key)
     {
         std::string fullKey = std::string(key);

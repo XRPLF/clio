@@ -75,7 +75,7 @@ public:
         operator++()
         {
             if (index_ < arr_.size())
-                index_++;
+                ++index_;
             return *this;
         }
 
@@ -89,7 +89,7 @@ public:
         {
             ArrayIterator temp = *this;
             if (index_ < arr_.size())
-                index_++;
+                ++index_;
             return temp;
         }
 
@@ -143,7 +143,7 @@ public:
      * @return Iterator to the beginning of the Array
      */
     template <typename T>
-    auto
+    [[nodiscard]] auto
     begin() const
     {
         return ArrayIterator<T>(*this, 0);
@@ -155,7 +155,7 @@ public:
      * @return Iterator to the end of the Array
      */
     template <typename T>
-    auto
+    [[nodiscard]] auto
     end() const
     {
         return ArrayIterator<T>(*this, this->size());
@@ -196,7 +196,7 @@ public:
     size() const;
 
 private:
-    std::string const prefix_;
+    std::string prefix_;
     std::reference_wrapper<ClioConfigDefinition const> clioConfig_;
 };
 

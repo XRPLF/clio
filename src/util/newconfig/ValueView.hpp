@@ -76,7 +76,7 @@ public:
     asIntType() const
     {
         if ((type() == ConfigType::Integer) && configVal_.get().hasValue()) {
-            auto val = std::get<int64_t>(configVal_.get().getValue());
+            auto const val = std::get<int64_t>(configVal_.get().getValue());
             if (std::is_unsigned_v<T> && val < 0)
                 ASSERT(false, "Int {} cannot be converted to the specified unsigned type", val);
 

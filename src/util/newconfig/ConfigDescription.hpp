@@ -53,10 +53,10 @@ public:
      * @param key The key to look up the description for
      * @return The description associated with the key, or "Not Found" if the key does not exist
      */
-    static constexpr std::string_view
+    [[nodiscard]] static constexpr std::string_view
     get(std::string_view key)
     {
-        auto itr = std::ranges::find_if(configDescription, [&](auto const& v) { return v.key == key; });
+        auto const itr = std::ranges::find_if(configDescription, [&](auto const& v) { return v.key == key; });
         ASSERT(itr != configDescription.end(), "Key {} doesn't exist in config", key);
         return itr->value;
     }
