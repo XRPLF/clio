@@ -31,10 +31,8 @@
 #include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/io_service.hpp>
-#include <boost/asio/ssl/context.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/status.hpp>

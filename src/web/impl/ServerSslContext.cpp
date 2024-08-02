@@ -21,7 +21,6 @@
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ssl/context.hpp>
-#include <fmt/compile.h>
 #include <fmt/core.h>
 
 #include <expected>
