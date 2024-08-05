@@ -120,7 +120,6 @@ public:
      * @brief Returns a list of all ledger entry type as string.
      * @return A list of all ledger entry type as string.
      */
-
     static constexpr auto
     GetLedgerEntryTypeStrList()
     {
