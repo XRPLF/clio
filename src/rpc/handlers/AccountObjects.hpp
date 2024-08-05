@@ -111,7 +111,7 @@ public:
     static RpcSpecConstRef
     spec([[maybe_unused]] uint32_t apiVersion)
     {
-        auto const& ledgerTypeStrs = util::getLedgerEntryTypeStrs();
+        auto const& accountOwnedTypes = util::LedgerTypes::GetAccountOwnedLedgerTypeStrList();
         static auto const rpcSpec = RpcSpec{
             {JS(account), validation::Required{}, validation::CustomValidators::AccountValidator},
             {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
@@ -122,7 +122,7 @@ public:
              modifiers::Clamp<int32_t>(LIMIT_MIN, LIMIT_MAX)},
             {JS(type),
              validation::Type<std::string>{},
-             validation::OneOf<std::string>(ledgerTypeStrs.cbegin(), ledgerTypeStrs.cend())},
+             validation::OneOf<std::string>(accountOwnedTypes.cbegin(), accountOwnedTypes.cend())},
             {JS(marker), validation::CustomValidators::AccountMarkerValidator},
             {JS(deletion_blockers_only), validation::Type<bool>{}},
         };
