@@ -19,29 +19,14 @@
 
 #pragma once
 
-#include "feed/impl/SingleFeedBase.hpp"
-
-#include <boost/json/object.hpp>
-#include <boost/json/serialize.hpp>
-
-namespace feed::impl {
+#include "util/LoggerFixtures.hpp"
+#include "util/async/context/SyncExecutionContext.hpp"
 
 /**
- * @brief Feed that publishes the json object as it is.
+ * @brief Fixture with an embedded sync execution context
  *
- * @tparam ExecutionContext The type of the execution context.
  */
-template <class ExecutionContext>
-struct ForwardFeed : public SingleFeedBase<ExecutionContext> {
-    using SingleFeedBase<ExecutionContext>::SingleFeedBase;
-
-    /**
-     * @brief Publishes the json object.
-     */
-    void
-    pub(boost::json::object const& json) const
-    {
-        SingleFeedBase<ExecutionContext>::pub(boost::json::serialize(json));
-    }
+struct SyncExecutionCtxFixture : virtual public NoLoggerFixture {
+    using Ctx = util::async::SyncExecutionContext;
+    Ctx ctx;
 };
-}  // namespace feed::impl

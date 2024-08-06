@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/async/Concepts.hpp"
 #include "util/async/context/impl/Cancellation.hpp"
 #include "util/async/context/impl/Execution.hpp"
 #include "util/async/context/impl/Timer.hpp"
@@ -64,10 +63,8 @@ public:
     BasicStrand(BasicStrand const&) = delete;
 
     [[nodiscard]] auto
-    execute(
-        SomeHandlerWith<StopToken> auto&& fn,
-        std::optional<std::chrono::milliseconds> timeout = std::nullopt
-    ) noexcept(isNoexcept)
+    execute(SomeHandlerWith<StopToken> auto&& fn, std::optional<std::chrono::milliseconds> timeout = std::nullopt) const
+        noexcept(isNoexcept)
     {
         return DispatcherType::dispatch(
             context_,
@@ -91,7 +88,7 @@ public:
     }
 
     [[nodiscard]] auto
-    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) noexcept(isNoexcept)
+    execute(SomeHandlerWith<StopToken> auto&& fn, SomeStdDuration auto timeout) const noexcept(isNoexcept)
     {
         return execute(
             std::forward<decltype(fn)>(fn),
@@ -100,7 +97,7 @@ public:
     }
 
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn) noexcept(isNoexcept)
+    execute(SomeHandlerWithoutStopToken auto&& fn) const noexcept(isNoexcept)
     {
         return DispatcherType::dispatch(
             context_,

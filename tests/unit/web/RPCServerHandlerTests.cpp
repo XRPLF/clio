@@ -37,7 +37,6 @@
 #include <stdexcept>
 #include <string>
 
-using namespace feed;
 using namespace web;
 
 constexpr static auto MINSEQ = 10;

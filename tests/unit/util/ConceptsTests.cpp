@@ -17,31 +17,34 @@
 */
 //==============================================================================
 
-#pragma once
+#include "util/Concepts.hpp"
 
-#include "feed/impl/SingleFeedBase.hpp"
+#include <gtest/gtest.h>
 
-#include <boost/json/object.hpp>
-#include <boost/json/serialize.hpp>
+#include <list>
+#include <string>
+#include <vector>
 
-namespace feed::impl {
+TEST(ConceptsTests, SomeNumberType)
+{
+    static_assert(util::SomeNumberType<int>);
+    static_assert(!util::SomeNumberType<int const>);
+    static_assert(!util::SomeNumberType<bool>);
+    static_assert(util::SomeNumberType<float>);
+}
 
-/**
- * @brief Feed that publishes the json object as it is.
- *
- * @tparam ExecutionContext The type of the execution context.
- */
-template <class ExecutionContext>
-struct ForwardFeed : public SingleFeedBase<ExecutionContext> {
-    using SingleFeedBase<ExecutionContext>::SingleFeedBase;
+TEST(ConceptsTests, IsInstanceOfV)
+{
+    static_assert(util::IsInstanceOfV<std::vector, std::vector<int>>);
+    static_assert(!util::IsInstanceOfV<std::vector, std::list<int>>);
+    static_assert(util::IsInstanceOfV<std::list, std::list<int>>);
+    static_assert(!util::IsInstanceOfV<std::list, std::vector<int>>);
+}
 
-    /**
-     * @brief Publishes the json object.
-     */
-    void
-    pub(boost::json::object const& json) const
-    {
-        SingleFeedBase<ExecutionContext>::pub(boost::json::serialize(json));
-    }
-};
-}  // namespace feed::impl
+TEST(ConceptsTests, Hashable)
+{
+    static_assert(util::Hashable<int>);
+    static_assert(util::Hashable<std::string>);
+    static_assert(!util::Hashable<std::vector<int>>);
+    static_assert(!util::Hashable<std::list<int>>);
+}

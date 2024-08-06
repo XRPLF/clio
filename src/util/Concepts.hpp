@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <cstddef>
+#include <functional>
 #include <type_traits>
 
 namespace util {
@@ -28,5 +30,31 @@ namespace util {
  */
 template <typename T>
 concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_const_v<T>;
+
+/**
+ * @brief The class to be specialized if Type is not some kind of Template
+ */
+template <template <typename...> typename Template, typename Type>
+struct IsInstanceOf : std::false_type {};
+
+/**
+ * @brief The class to be specialized if Type is some kind of Template
+ */
+template <template <typename...> typename Template, typename... Args>
+struct IsInstanceOf<Template, Template<Args...>> : std::true_type {};
+
+/**
+ * @brief A helper variable template to check if Type is some kind of Template
+ */
+template <template <typename...> typename Template, typename Type>
+constexpr bool IsInstanceOfV = IsInstanceOf<Template, Type>::value;
+
+/**
+ * @brief Specifies a type that has custom hash function
+ */
+template <typename T>
+concept Hashable = requires(T a) {
+    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
+};
 
 }  // namespace util

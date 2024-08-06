@@ -20,10 +20,10 @@
 #pragma once
 
 #include "feed/impl/TrackableSignal.hpp"
+#include "util/Concepts.hpp"
 
 #include <boost/signals2.hpp>
 
-#include <cstddef>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -31,19 +31,15 @@
 
 namespace feed::impl {
 
-template <typename T>
-concept Hashable = requires(T a) {
-    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
-};
-
 /**
  * @brief Class to manage a map of key and its associative signal.
+ *
  * @param Key The type of the key.
  * @param Session The type of the object that will be tracked, when the object is destroyed, the connection will be
  * removed lazily.
  * @param Args The types of the arguments that will be passed to the slot
  */
-template <Hashable Key, typename Session, typename... Args>
+template <util::Hashable Key, typename Session, typename... Args>
 class TrackableSignalMap {
     using ConnectionPtr = Session*;
     using ConnectionSharedPtr = std::shared_ptr<Session>;

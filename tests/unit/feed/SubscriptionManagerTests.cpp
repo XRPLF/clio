@@ -20,15 +20,14 @@
 #include "data/Types.hpp"
 #include "feed/FeedTestUtil.hpp"
 #include "feed/SubscriptionManager.hpp"
-#include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"
+#include "util/async/context/BasicExecutionContext.hpp"
+#include "util/async/context/SyncExecutionContext.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
-#include <boost/asio/executor_work_guard.hpp>
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -41,7 +40,6 @@
 
 #include <memory>
 #include <string>
-#include <thread>
 #include <vector>
 
 constexpr static auto ACCOUNT1 = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
@@ -53,20 +51,21 @@ constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A
 namespace json = boost::json;
 using namespace feed;
 using namespace feed::impl;
+using namespace testing;
 
-class SubscriptionManagerTest : public util::prometheus::WithPrometheus,
-                                public MockBackendTest,
-                                public SyncAsioContextTest {
+template <typename T>
+class SubscriptionManagerImplTest : public util::prometheus::WithPrometheus, public MockBackendTest {
+    using ExecutionCtx = T;
+
 protected:
-    std::shared_ptr<SubscriptionManager> SubscriptionManagerPtr;
+    std::shared_ptr<SubscriptionManager<ExecutionCtx>> subscriptionManagerPtr;
     std::shared_ptr<web::ConnectionBase> session;
     MockSession* sessionPtr = nullptr;
 
     void
     SetUp() override
     {
-        SyncAsioContextTest::SetUp();
-        SubscriptionManagerPtr = std::make_shared<SubscriptionManager>(ctx, backend);
+        subscriptionManagerPtr = std::make_shared<SubscriptionManager<ExecutionCtx>>(backend, 2);
         session = std::make_shared<MockSession>();
         session->apiSubVersion = 1;
         sessionPtr = dynamic_cast<MockSession*>(session.get());
@@ -76,65 +75,37 @@ protected:
     TearDown() override
     {
         session.reset();
-        SubscriptionManagerPtr.reset();
-        SyncAsioContextTest::TearDown();
+        subscriptionManagerPtr.reset();
     }
 };
 
-// TODO enable when fixed :/
-/*
-TEST_F(SubscriptionManagerTest, MultipleThreadCtx)
-{
-    std::vector<std::thread> workers;
-    workers.reserve(2);
+using SubscriptionManagerTest = SubscriptionManagerImplTest<util::async::SyncExecutionContext>;
+using AsyncSubscriptionManagerTest = SubscriptionManagerImplTest<util::async::PoolExecutionContext>;
 
-    SubscriptionManagerPtr->subManifest(session);
-    SubscriptionManagerPtr->subValidation(session);
+TEST_F(AsyncSubscriptionManagerTest, MultipleThreadCtx)
+{
+    subscriptionManagerPtr->subManifest(session);
+    subscriptionManagerPtr->subValidation(session);
 
     constexpr static auto jsonManifest = R"({"manifest":"test"})";
     constexpr static auto jsonValidation = R"({"validation":"test"})";
 
-    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(jsonManifest))).Times(1);
-    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(jsonValidation))).Times(1);
+    EXPECT_CALL(*sessionPtr, send(_)).Times(AtMost(2));
 
-    SubscriptionManagerPtr->forwardManifest(json::parse(jsonManifest).get_object());
-    SubscriptionManagerPtr->forwardValidation(json::parse(jsonValidation).get_object());
-
-    for (int i = 0; i < 2; ++i)
-        workers.emplace_back([this]() { ctx.run(); });
-
-    // wait for all jobs in ctx to finish
-    for (auto& worker : workers)
-        worker.join();
-
-    session.reset();
-    SubscriptionManagerPtr.reset();
+    subscriptionManagerPtr->forwardManifest(json::parse(jsonManifest).get_object());
+    subscriptionManagerPtr->forwardValidation(json::parse(jsonValidation).get_object());
 }
-*/
 
-TEST_F(SubscriptionManagerTest, MultipleThreadCtxSessionDieEarly)
+TEST_F(AsyncSubscriptionManagerTest, MultipleThreadCtxSessionDieEarly)
 {
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_ = boost::asio::make_work_guard(ctx);
+    subscriptionManagerPtr->subManifest(session);
+    subscriptionManagerPtr->subValidation(session);
 
-    std::vector<std::thread> workers;
-    workers.reserve(2);
-    for (int i = 0; i < 2; ++i)
-        workers.emplace_back([this]() { ctx.run(); });
-
-    SubscriptionManagerPtr->subManifest(session);
-    SubscriptionManagerPtr->subValidation(session);
-
-    SubscriptionManagerPtr->forwardManifest(json::parse(R"({"manifest":"test"})").get_object());
-    SubscriptionManagerPtr->forwardValidation(json::parse(R"({"validation":"test"})").get_object());
-
+    EXPECT_CALL(*sessionPtr, send(_)).Times(0);
     session.reset();
 
-    work_.reset();
-    for (auto& worker : workers)
-        worker.join();
-    // SubscriptionManager's pub job is running in thread pool, so we let thread pool run out of work, otherwise
-    // SubscriptionManager will die before the job is called
-    SubscriptionManagerPtr.reset();
+    subscriptionManagerPtr->forwardManifest(json::parse(R"({"manifest":"test"})").get_object());
+    subscriptionManagerPtr->forwardValidation(json::parse(R"({"validation":"test"})").get_object());
 }
 
 TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
@@ -153,42 +124,42 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
         })";
     std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>();
     std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>();
-    SubscriptionManagerPtr->subBookChanges(session1);
-    SubscriptionManagerPtr->subBookChanges(session2);
-    SubscriptionManagerPtr->subManifest(session1);
-    SubscriptionManagerPtr->subManifest(session2);
-    SubscriptionManagerPtr->subProposedTransactions(session1);
-    SubscriptionManagerPtr->subProposedTransactions(session2);
-    SubscriptionManagerPtr->subTransactions(session1);
+    subscriptionManagerPtr->subBookChanges(session1);
+    subscriptionManagerPtr->subBookChanges(session2);
+    subscriptionManagerPtr->subManifest(session1);
+    subscriptionManagerPtr->subManifest(session2);
+    subscriptionManagerPtr->subProposedTransactions(session1);
+    subscriptionManagerPtr->subProposedTransactions(session2);
+    subscriptionManagerPtr->subTransactions(session1);
     session2->apiSubVersion = 2;
-    SubscriptionManagerPtr->subTransactions(session2);
-    SubscriptionManagerPtr->subValidation(session1);
-    SubscriptionManagerPtr->subValidation(session2);
+    subscriptionManagerPtr->subTransactions(session2);
+    subscriptionManagerPtr->subValidation(session1);
+    subscriptionManagerPtr->subValidation(session2);
     auto const account = GetAccountIDWithString(ACCOUNT1);
-    SubscriptionManagerPtr->subAccount(account, session1);
-    SubscriptionManagerPtr->subAccount(account, session2);
-    SubscriptionManagerPtr->subProposedAccount(account, session1);
-    SubscriptionManagerPtr->subProposedAccount(account, session2);
+    subscriptionManagerPtr->subAccount(account, session1);
+    subscriptionManagerPtr->subAccount(account, session2);
+    subscriptionManagerPtr->subProposedAccount(account, session1);
+    subscriptionManagerPtr->subProposedAccount(account, session2);
     auto const issue1 = GetIssue(CURRENCY, ISSUER);
     ripple::Book const book{ripple::xrpIssue(), issue1};
-    SubscriptionManagerPtr->subBook(book, session1);
-    SubscriptionManagerPtr->subBook(book, session2);
-    EXPECT_EQ(SubscriptionManagerPtr->report(), json::parse(ReportReturn));
+    subscriptionManagerPtr->subBook(book, session1);
+    subscriptionManagerPtr->subBook(book, session2);
+    EXPECT_EQ(subscriptionManagerPtr->report(), json::parse(ReportReturn));
 
     // count down when unsub manually
-    SubscriptionManagerPtr->unsubBookChanges(session1);
-    SubscriptionManagerPtr->unsubManifest(session1);
-    SubscriptionManagerPtr->unsubProposedTransactions(session1);
-    SubscriptionManagerPtr->unsubTransactions(session1);
-    SubscriptionManagerPtr->unsubValidation(session1);
-    SubscriptionManagerPtr->unsubAccount(account, session1);
-    SubscriptionManagerPtr->unsubProposedAccount(account, session1);
-    SubscriptionManagerPtr->unsubBook(book, session1);
+    subscriptionManagerPtr->unsubBookChanges(session1);
+    subscriptionManagerPtr->unsubManifest(session1);
+    subscriptionManagerPtr->unsubProposedTransactions(session1);
+    subscriptionManagerPtr->unsubTransactions(session1);
+    subscriptionManagerPtr->unsubValidation(session1);
+    subscriptionManagerPtr->unsubAccount(account, session1);
+    subscriptionManagerPtr->unsubProposedAccount(account, session1);
+    subscriptionManagerPtr->unsubBook(book, session1);
 
     // try to unsub an account which is not subscribed
     auto const account2 = GetAccountIDWithString(ACCOUNT2);
-    SubscriptionManagerPtr->unsubAccount(account2, session1);
-    SubscriptionManagerPtr->unsubProposedAccount(account2, session1);
+    subscriptionManagerPtr->unsubAccount(account2, session1);
+    subscriptionManagerPtr->unsubProposedAccount(account2, session1);
     auto checkResult = [](json::object reportReturn, int result) {
         EXPECT_EQ(reportReturn["book_changes"], result);
         EXPECT_EQ(reportReturn["validations"], result);
@@ -199,46 +170,41 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
         EXPECT_EQ(reportReturn["account"], result);
         EXPECT_EQ(reportReturn["books"], result);
     };
-    checkResult(SubscriptionManagerPtr->report(), 1);
+    checkResult(subscriptionManagerPtr->report(), 1);
 
     // count down when session disconnect
     session2.reset();
-    checkResult(SubscriptionManagerPtr->report(), 0);
+    checkResult(subscriptionManagerPtr->report(), 0);
 }
 
 TEST_F(SubscriptionManagerTest, ManifestTest)
 {
     constexpr static auto dummyManifest = R"({"manifest":"test"})";
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummyManifest))).Times(1);
-    SubscriptionManagerPtr->subManifest(session);
-    SubscriptionManagerPtr->forwardManifest(json::parse(dummyManifest).get_object());
-    ctx.run();
+    subscriptionManagerPtr->subManifest(session);
+    subscriptionManagerPtr->forwardManifest(json::parse(dummyManifest).get_object());
 
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummyManifest))).Times(0);
-    SubscriptionManagerPtr->unsubManifest(session);
-    SubscriptionManagerPtr->forwardManifest(json::parse(dummyManifest).get_object());
-    ctx.run();
+    subscriptionManagerPtr->unsubManifest(session);
+    subscriptionManagerPtr->forwardManifest(json::parse(dummyManifest).get_object());
 }
 
 TEST_F(SubscriptionManagerTest, ValidationTest)
 {
     constexpr static auto dummy = R"({"validation":"test"})";
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummy))).Times(1);
-    SubscriptionManagerPtr->subValidation(session);
-    SubscriptionManagerPtr->forwardValidation(json::parse(dummy).get_object());
-    ctx.run();
+    subscriptionManagerPtr->subValidation(session);
+    subscriptionManagerPtr->forwardValidation(json::parse(dummy).get_object());
 
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummy))).Times(0);
-    SubscriptionManagerPtr->unsubValidation(session);
-    SubscriptionManagerPtr->forwardValidation(json::parse(dummy).get_object());
-    ctx.restart();
-    ctx.run();
+    subscriptionManagerPtr->unsubValidation(session);
+    subscriptionManagerPtr->forwardValidation(json::parse(dummy).get_object());
 }
 
 TEST_F(SubscriptionManagerTest, BookChangesTest)
 {
-    SubscriptionManagerPtr->subBookChanges(session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["book_changes"], 1);
+    subscriptionManagerPtr->subBookChanges(session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["book_changes"], 1);
 
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 32);
     auto transactions = std::vector<TransactionAndMetadata>{};
@@ -250,7 +216,6 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
 
-    SubscriptionManagerPtr->pubBookChanges(ledgerHeader, transactions);
     constexpr static auto bookChangePublish =
         R"({
             "type":"bookChanges",
@@ -272,20 +237,20 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
             ]
         })";
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(bookChangePublish))).Times(1);
-    ctx.run();
+    subscriptionManagerPtr->pubBookChanges(ledgerHeader, transactions);
 
-    SubscriptionManagerPtr->unsubBookChanges(session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["book_changes"], 0);
+    subscriptionManagerPtr->unsubBookChanges(session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["book_changes"], 0);
 }
 
 TEST_F(SubscriptionManagerTest, LedgerTest)
 {
     backend->setRange(10, 30);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
-    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(testing::Return(ledgerHeader));
+    EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
     auto const feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
-    EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(testing::Return(feeBlob));
+    EXPECT_CALL(*backend, doFetchLedgerObject).WillOnce(Return(feeBlob));
     // check the function response
     // Information about the ledgers on hand and current fee schedule. This
     // includes the same fields as a ledger stream message, except that it omits
@@ -300,19 +265,19 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
             "reserve_base":3,
             "reserve_inc":2
         })";
+    boost::asio::io_context ctx;
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
-        auto const res = SubscriptionManagerPtr->subLedger(yield, session);
+        auto const res = subscriptionManagerPtr->subLedger(yield, session);
         // check the response
         EXPECT_EQ(res, json::parse(LedgerResponse));
     });
     ctx.run();
-    EXPECT_EQ(SubscriptionManagerPtr->report()["ledger"], 1);
+    EXPECT_EQ(subscriptionManagerPtr->report()["ledger"], 1);
 
     // test publish
     auto const ledgerHeader2 = CreateLedgerHeader(LEDGERHASH, 31);
     auto fee2 = ripple::Fees();
     fee2.reserve = 10;
-    SubscriptionManagerPtr->pubLedger(ledgerHeader2, fee2, "10-31", 8);
     constexpr static auto ledgerPub =
         R"({
             "type":"ledgerClosed",
@@ -326,12 +291,12 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
             "txn_count":8
         })";
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(ledgerPub))).Times(1);
-    ctx.restart();
-    ctx.run();
+
+    subscriptionManagerPtr->pubLedger(ledgerHeader2, fee2, "10-31", 8);
 
     // test unsub
-    SubscriptionManagerPtr->unsubLedger(session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["ledger"], 0);
+    subscriptionManagerPtr->unsubLedger(session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["ledger"], 0);
 }
 
 TEST_F(SubscriptionManagerTest, TransactionTest)
@@ -339,12 +304,12 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
     auto const issue1 = GetIssue(CURRENCY, ISSUER);
     auto const account = GetAccountIDWithString(ISSUER);
     ripple::Book const book{ripple::xrpIssue(), issue1};
-    SubscriptionManagerPtr->subBook(book, session);
-    SubscriptionManagerPtr->subTransactions(session);
-    SubscriptionManagerPtr->subAccount(account, session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["account"], 1);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions"], 1);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["books"], 1);
+    subscriptionManagerPtr->subBook(book, session);
+    subscriptionManagerPtr->subTransactions(session);
+    subscriptionManagerPtr->subAccount(account, session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["account"], 1);
+    EXPECT_EQ(subscriptionManagerPtr->report()["transactions"], 1);
+    EXPECT_EQ(subscriptionManagerPtr->report()["books"], 1);
 
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
@@ -354,7 +319,6 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ISSUER, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    SubscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
 
     constexpr static auto OrderbookPublish =
         R"({
@@ -417,23 +381,23 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
         })";
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(OrderbookPublish))).Times(3);
-    ctx.run();
+    subscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
 
-    SubscriptionManagerPtr->unsubBook(book, session);
-    SubscriptionManagerPtr->unsubTransactions(session);
-    SubscriptionManagerPtr->unsubAccount(account, session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["account"], 0);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions"], 0);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["books"], 0);
+    subscriptionManagerPtr->unsubBook(book, session);
+    subscriptionManagerPtr->unsubTransactions(session);
+    subscriptionManagerPtr->unsubAccount(account, session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["account"], 0);
+    EXPECT_EQ(subscriptionManagerPtr->report()["transactions"], 0);
+    EXPECT_EQ(subscriptionManagerPtr->report()["books"], 0);
 }
 
 TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
 {
     auto const account = GetAccountIDWithString(ACCOUNT1);
-    SubscriptionManagerPtr->subProposedAccount(account, session);
-    SubscriptionManagerPtr->subProposedTransactions(session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["accounts_proposed"], 1);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions_proposed"], 1);
+    subscriptionManagerPtr->subProposedAccount(account, session);
+    subscriptionManagerPtr->subProposedTransactions(session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["accounts_proposed"], 1);
+    EXPECT_EQ(subscriptionManagerPtr->report()["transactions_proposed"], 1);
 
     constexpr static auto dummyTransaction =
         R"({
@@ -505,7 +469,7 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
         })";
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummyTransaction))).Times(2);
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(OrderbookPublish))).Times(2);
-    SubscriptionManagerPtr->forwardProposedTransaction(json::parse(dummyTransaction).get_object());
+    subscriptionManagerPtr->forwardProposedTransaction(json::parse(dummyTransaction).get_object());
 
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
@@ -515,24 +479,23 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    SubscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
-    ctx.run();
+    subscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
 
     // unsub account1
-    SubscriptionManagerPtr->unsubProposedAccount(account, session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["accounts_proposed"], 0);
-    SubscriptionManagerPtr->unsubProposedTransactions(session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions_proposed"], 0);
+    subscriptionManagerPtr->unsubProposedAccount(account, session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["accounts_proposed"], 0);
+    subscriptionManagerPtr->unsubProposedTransactions(session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["transactions_proposed"], 0);
 }
 
 TEST_F(SubscriptionManagerTest, DuplicateResponseSubTxAndProposedTx)
 {
-    SubscriptionManagerPtr->subProposedTransactions(session);
-    SubscriptionManagerPtr->subTransactions(session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions"], 1);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions_proposed"], 1);
+    subscriptionManagerPtr->subProposedTransactions(session);
+    subscriptionManagerPtr->subTransactions(session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["transactions"], 1);
+    EXPECT_EQ(subscriptionManagerPtr->report()["transactions_proposed"], 1);
 
-    EXPECT_CALL(*sessionPtr, send(testing::_)).Times(2);
+    EXPECT_CALL(*sessionPtr, send(_)).Times(2);
 
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
@@ -542,24 +505,23 @@ TEST_F(SubscriptionManagerTest, DuplicateResponseSubTxAndProposedTx)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    SubscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
-    ctx.run();
+    subscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
 
-    SubscriptionManagerPtr->unsubTransactions(session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions"], 0);
-    SubscriptionManagerPtr->unsubProposedTransactions(session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["transactions_proposed"], 0);
+    subscriptionManagerPtr->unsubTransactions(session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["transactions"], 0);
+    subscriptionManagerPtr->unsubProposedTransactions(session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["transactions_proposed"], 0);
 }
 
 TEST_F(SubscriptionManagerTest, NoDuplicateResponseSubAccountAndProposedAccount)
 {
     auto const account = GetAccountIDWithString(ACCOUNT1);
-    SubscriptionManagerPtr->subProposedAccount(account, session);
-    SubscriptionManagerPtr->subAccount(account, session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["accounts_proposed"], 1);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["account"], 1);
+    subscriptionManagerPtr->subProposedAccount(account, session);
+    subscriptionManagerPtr->subAccount(account, session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["accounts_proposed"], 1);
+    EXPECT_EQ(subscriptionManagerPtr->report()["account"], 1);
 
-    EXPECT_CALL(*sessionPtr, send(testing::_)).Times(1);
+    EXPECT_CALL(*sessionPtr, send(_)).Times(1);
 
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
@@ -569,12 +531,11 @@ TEST_F(SubscriptionManagerTest, NoDuplicateResponseSubAccountAndProposedAccount)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    SubscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
-    ctx.run();
+    subscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
 
     // unsub account1
-    SubscriptionManagerPtr->unsubProposedAccount(account, session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["accounts_proposed"], 0);
-    SubscriptionManagerPtr->unsubAccount(account, session);
-    EXPECT_EQ(SubscriptionManagerPtr->report()["account"], 0);
+    subscriptionManagerPtr->unsubProposedAccount(account, session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["accounts_proposed"], 0);
+    subscriptionManagerPtr->unsubAccount(account, session);
+    EXPECT_EQ(subscriptionManagerPtr->report()["account"], 0);
 }

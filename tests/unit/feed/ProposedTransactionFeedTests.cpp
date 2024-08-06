@@ -19,14 +19,13 @@
 
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/ProposedTransactionFeed.hpp"
-#include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/SyncExecutionContextFixture.hpp"
 #include "util/TestObject.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -66,14 +65,11 @@ TEST_F(FeedProposedTransactionTest, ProposedTransaction)
 
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
-    ctx.run();
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 0);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedProposedTransactionTest, AccountProposedTransaction)
@@ -90,15 +86,12 @@ TEST_F(FeedProposedTransactionTest, AccountProposedTransaction)
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
-    ctx.run();
 
     // unsub
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedProposedTransactionTest, SubStreamAndAccount)
@@ -111,7 +104,6 @@ TEST_F(FeedProposedTransactionTest, SubStreamAndAccount)
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(2);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
-    ctx.run();
 
     // unsub
     testFeedPtr->unsub(account, sessionPtr);
@@ -119,16 +111,12 @@ TEST_F(FeedProposedTransactionTest, SubStreamAndAccount)
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
-    ctx.restart();
-    ctx.run();
 
     // unsub transaction
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 0);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedProposedTransactionTest, AccountProposedTransactionDuplicate)
@@ -142,23 +130,18 @@ TEST_F(FeedProposedTransactionTest, AccountProposedTransactionDuplicate)
 
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
-    ctx.run();
 
     // unsub account1
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
-    ctx.restart();
-    ctx.run();
 
     // unsub account2
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedProposedTransactionTest, Count)
@@ -231,16 +214,15 @@ TEST_F(FeedProposedTransactionTest, AutoDisconnect)
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 0);
 }
 
-struct ProposedTransactionFeedMockPrometheusTest : WithMockPrometheus, SyncAsioContextTest {
+struct ProposedTransactionFeedMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
-    std::shared_ptr<ProposedTransactionFeed> testFeedPtr;
+    std::shared_ptr<ProposedTransactionFeed<Ctx>> testFeedPtr;
 
     void
     SetUp() override
     {
-        SyncAsioContextTest::SetUp();
-        testFeedPtr = std::make_shared<ProposedTransactionFeed>(ctx);
+        testFeedPtr = std::make_shared<ProposedTransactionFeed<Ctx>>(ctx);
         sessionPtr = std::make_shared<MockSession>();
     }
     void
@@ -248,7 +230,6 @@ protected:
     {
         sessionPtr.reset();
         testFeedPtr.reset();
-        SyncAsioContextTest::TearDown();
     }
 };
 

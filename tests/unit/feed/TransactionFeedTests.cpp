@@ -20,14 +20,13 @@
 #include "data/Types.hpp"
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/TransactionFeed.hpp"
-#include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/SyncExecutionContextFixture.hpp"
 #include "util/TestObject.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
@@ -174,17 +173,12 @@ TEST_F(FeedTransactionTest, SubTransactionV1)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
-
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(sessionPtr);
-    EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
-
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
+    EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 }
 
 TEST_F(FeedTransactionTest, SubTransactionForProposedTx)
@@ -198,15 +192,12 @@ TEST_F(FeedTransactionTest, SubTransactionForProposedTx)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsubProposed(sessionPtr);
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubTransactionV2)
@@ -221,17 +212,14 @@ TEST_F(FeedTransactionTest, SubTransactionV2)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
 
-    ctx.run();
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubAccountV1)
@@ -247,16 +235,14 @@ TEST_F(FeedTransactionTest, SubAccountV1)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
+
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubForProposedAccount)
@@ -272,14 +258,12 @@ TEST_F(FeedTransactionTest, SubForProposedAccount)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
+
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsubProposed(account, sessionPtr);
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubAccountV2)
@@ -297,16 +281,13 @@ TEST_F(FeedTransactionTest, SubAccountV2)
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
@@ -326,10 +307,8 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(2);
-
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
@@ -337,8 +316,6 @@ TEST_F(FeedTransactionTest, SubBothTransactionAndAccount)
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubBookV1)
@@ -356,7 +333,6 @@ TEST_F(FeedTransactionTest, SubBookV1)
 
     auto metaObj = CreateMetaDataForBookChange(CURRENCY, ISSUER, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     constexpr static auto OrderbookPublish =
         R"({
@@ -419,12 +395,11 @@ TEST_F(FeedTransactionTest, SubBookV1)
         })";
 
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(OrderbookPublish))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     // trigger by offer cancel meta data
     metaObj = CreateMetaDataForCancelOffer(CURRENCY, ISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     constexpr static auto OrderbookCancelPublish =
         R"({
@@ -473,9 +448,8 @@ TEST_F(FeedTransactionTest, SubBookV1)
             "close_time_iso": "2000-01-01T00:00:00Z",
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
         })";
-    ctx.restart();
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(OrderbookCancelPublish))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     // trigger by offer create meta data
     constexpr static auto OrderbookCreatePublish =
@@ -529,17 +503,14 @@ TEST_F(FeedTransactionTest, SubBookV1)
         })";
     metaObj = CreateMetaDataForCreateOffer(CURRENCY, ISSUER, 22, 3, 1);
     trans1.metadata = metaObj.getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
+
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(OrderbookCreatePublish))).Times(1);
-    ctx.restart();
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
 
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubBookV2)
@@ -558,7 +529,6 @@ TEST_F(FeedTransactionTest, SubBookV2)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ISSUER, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     constexpr static auto OrderbookPublish =
         R"({
@@ -621,14 +591,12 @@ TEST_F(FeedTransactionTest, SubBookV2)
         })";
 
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(OrderbookPublish))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(book, sessionPtr);
     EXPECT_EQ(testFeedPtr->bookSubCount(), 0);
 
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
@@ -648,23 +616,19 @@ TEST_F(FeedTransactionTest, TransactionContainsBothAccountsSubed)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
+
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
@@ -684,24 +648,20 @@ TEST_F(FeedTransactionTest, SubAccountRepeatWithDifferentVersion)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
+
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
@@ -721,16 +681,13 @@ TEST_F(FeedTransactionTest, SubTransactionRepeatWithDifferentVersion)
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V2))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubCount(), 0);
 
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubRepeat)
@@ -820,7 +777,6 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
     ON_CALL(*backend, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
 
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
     constexpr static auto TransactionForOwnerFund =
         R"({
             "transaction":
@@ -859,7 +815,7 @@ TEST_F(FeedTransactionTest, PubTransactionWithOwnerFund)
         })";
 
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TransactionForOwnerFund))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 }
 
 constexpr static auto TRAN_FROZEN =
@@ -931,9 +887,9 @@ TEST_F(FeedTransactionTest, PubTransactionOfferCreationFrozenLine)
     ripple::STObject const accountRoot = CreateAccountRootObject(ISSUER, 0, 1, 10, 2, TXNID, 3);
     ON_CALL(*backend, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
+
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_FROZEN))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 }
 
 TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
@@ -969,10 +925,9 @@ TEST_F(FeedTransactionTest, SubTransactionOfferCreationGlobalFrozen)
     ripple::STObject const accountRoot = CreateAccountRootObject(ISSUER, ripple::lsfGlobalFreeze, 1, 10, 2, TXNID, 3);
     ON_CALL(*backend, doFetchLedgerObject(kk, testing::_, testing::_))
         .WillByDefault(testing::Return(accountRoot.getSerializer().peekData()));
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_FROZEN))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 }
 
 TEST_F(FeedTransactionTest, SubBothProposedAndValidatedAccount)
@@ -988,17 +943,14 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidatedAccount)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(account, sessionPtr);
     testFeedPtr->unsubProposed(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
 
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubBothProposedAndValidated)
@@ -1013,15 +965,13 @@ TEST_F(FeedTransactionTest, SubBothProposedAndValidated)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
+
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(2);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     testFeedPtr->unsub(sessionPtr);
     testFeedPtr->unsubProposed(sessionPtr);
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubProposedDisconnect)
@@ -1035,14 +985,12 @@ TEST_F(FeedTransactionTest, SubProposedDisconnect)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
+
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     sessionPtr.reset();
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedTransactionTest, SubProposedAccountDisconnect)
@@ -1057,26 +1005,23 @@ TEST_F(FeedTransactionTest, SubProposedAccountDisconnect)
     trans1.transaction = obj.getSerializer().peekData();
     trans1.ledgerSequence = 32;
     trans1.metadata = CreatePaymentTransactionMetaObject(ACCOUNT1, ACCOUNT2, 110, 30, 22).getSerializer().peekData();
-    testFeedPtr->pub(trans1, ledgerHeader, backend);
+
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(TRAN_V1))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(trans1, ledgerHeader, backend);
 
     sessionPtr.reset();
     testFeedPtr->pub(trans1, ledgerHeader, backend);
-    ctx.restart();
-    ctx.run();
 }
 
-struct TransactionFeedMockPrometheusTest : WithMockPrometheus, SyncAsioContextTest {
+struct TransactionFeedMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
-    std::shared_ptr<TransactionFeed> testFeedPtr;
+    std::shared_ptr<TransactionFeed<Ctx>> testFeedPtr;
 
     void
     SetUp() override
     {
-        SyncAsioContextTest::SetUp();
-        testFeedPtr = std::make_shared<TransactionFeed>(ctx);
+        testFeedPtr = std::make_shared<TransactionFeed<Ctx>>(ctx);
         sessionPtr = std::make_shared<MockSession>();
     }
     void
@@ -1084,7 +1029,6 @@ protected:
     {
         sessionPtr.reset();
         testFeedPtr.reset();
-        SyncAsioContextTest::TearDown();
     }
 };
 

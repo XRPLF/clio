@@ -22,8 +22,6 @@
 #include "data/Types.hpp"
 #include "feed/Types.hpp"
 
-#include <boost/asio/executor_work_guard.hpp>
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <xrpl/protocol/AccountID.h>

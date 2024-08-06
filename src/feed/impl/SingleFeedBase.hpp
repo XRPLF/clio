@@ -21,11 +21,9 @@
 
 #include "feed/Types.hpp"
 #include "feed/impl/TrackableSignal.hpp"
+#include "feed/impl/Util.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Gauge.hpp"
-
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/strand.hpp>
 
 #include <cstdint>
 #include <functional>
@@ -36,9 +34,12 @@ namespace feed::impl {
 
 /**
  * @brief Base class for single feed.
+ *
+ * @tparam ExecutionContext The type of the execution context.
  */
+template <typename ExecutionContext>
 class SingleFeedBase {
-    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
+    ExecutionContext::Strand strand_;
     std::reference_wrapper<util::prometheus::GaugeInt> subCount_;
     TrackableSignal<Subscriber, std::shared_ptr<std::string> const&> signal_;
     util::Logger logger_{"Subscriptions"};
@@ -47,40 +48,79 @@ class SingleFeedBase {
 public:
     /**
      * @brief Construct a new Single Feed Base object
-     * @param ioContext The actual publish will be called in the strand of this.
+     *
+     * @param executorContext The actual publish will be called in the strand of this.
      * @param name The promethues counter name of the feed.
      */
-    SingleFeedBase(boost::asio::io_context& ioContext, std::string const& name);
+    SingleFeedBase(ExecutionContext& executorContext, std::string const& name)
+        : strand_(executorContext.makeStrand()), subCount_(getSubscriptionsGaugeInt(name)), name_(name)
+    {
+    }
 
     /**
      * @brief Subscribe the feed.
+     *
      * @param subscriber
      */
     void
-    sub(SubscriberSharedPtr const& subscriber);
+    sub(SubscriberSharedPtr const& subscriber)
+    {
+        auto const weakPtr = std::weak_ptr(subscriber);
+        auto const added = signal_.connectTrackableSlot(subscriber, [weakPtr](std::shared_ptr<std::string> const& msg) {
+            if (auto connectionPtr = weakPtr.lock())
+                connectionPtr->send(msg);
+        });
+
+        if (added) {
+            LOG(logger_.info()) << subscriber->tag() << "Subscribed " << name_;
+            ++subCount_.get();
+            subscriber->onDisconnect.connect([this](SubscriberPtr connectionDisconnecting) {
+                unsubInternal(connectionDisconnecting);
+            });
+        };
+    }
 
     /**
      * @brief Unsubscribe the feed.
+     *
      * @param subscriber
      */
     void
-    unsub(SubscriberSharedPtr const& subscriber);
+    unsub(SubscriberSharedPtr const& subscriber)
+    {
+        unsubInternal(subscriber.get());
+    }
 
     /**
      * @brief Publishes the feed in strand.
      * @param msg The message.
      */
     void
-    pub(std::string msg) const;
+    pub(std::string msg) const
+    {
+        [[maybe_unused]] auto task = strand_.execute([this, msg = std::move(msg)]() mutable {
+            auto const msgPtr = std::make_shared<std::string>(std::move(msg));
+            signal_.emit(msgPtr);
+        });
+    }
 
     /**
      * @brief Get the count of subscribers.
      */
     std::uint64_t
-    count() const;
+    count() const
+    {
+        return subCount_.get().value();
+    }
 
 private:
     void
-    unsubInternal(SubscriberPtr subscriber);
+    unsubInternal(SubscriberPtr subscriber)
+    {
+        if (signal_.disconnect(subscriber)) {
+            LOG(logger_.info()) << subscriber->tag() << "Unsubscribed " << name_;
+            --subCount_.get();
+        }
+    }
 };
 }  // namespace feed::impl

@@ -37,10 +37,6 @@
 #include <string>
 #include <vector>
 
-namespace feed {
-class SubscriptionManager;
-}  // namespace feed
-
 namespace rpc {
 
 /**

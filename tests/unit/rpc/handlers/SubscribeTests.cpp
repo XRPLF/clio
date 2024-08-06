@@ -27,6 +27,7 @@
 #include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/NameGenerator.hpp"
+#include "util/SyncExecutionContextFixture.hpp"
 #include "util/TestObject.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -63,14 +64,13 @@ constexpr static auto PAYS20XRPGETS10USDBOOKDIR = "7B1767D41DBCE79D9585CF9D0262A
 constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 
-class RPCSubscribeHandlerTest : public HandlerBaseTest {
+class RPCSubscribeHandlerTest : public HandlerBaseTest, SyncExecutionCtxFixture {
 protected:
     void
     SetUp() override
     {
         HandlerBaseTest::SetUp();
-
-        subManager_ = std::make_shared<feed::SubscriptionManager>(ctx, backend);
+        subManager_ = std::make_shared<feed::SubscriptionManager<Ctx>>(backend);
         session_ = std::make_shared<MockSession>();
     }
     void
@@ -79,7 +79,7 @@ protected:
         HandlerBaseTest::TearDown();
     }
 
-    std::shared_ptr<feed::SubscriptionManager> subManager_;
+    std::shared_ptr<feed::SubscriptionManager<Ctx>> subManager_{};
     std::shared_ptr<web::ConnectionBase> session_;
 };
 

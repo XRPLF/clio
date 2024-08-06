@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "feed/SubscriptionManager.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/AnyHandler.hpp"
@@ -26,6 +27,7 @@
 #include "util/MockSubscriptionManager.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/NameGenerator.hpp"
+#include "util/SyncExecutionContextFixture.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/json/parse.hpp>
@@ -48,7 +50,8 @@ using namespace feed;
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 
-struct RPCUnsubscribeTest : HandlerBaseTest {
+struct RPCUnsubscribeTest : HandlerBaseTest, SyncExecutionCtxFixture {
+    using SubscriptionManager = feed::SubscriptionManager<Ctx>;
     void
     SetUp() override
     {
@@ -61,7 +64,7 @@ struct RPCUnsubscribeTest : HandlerBaseTest {
         HandlerBaseTest::TearDown();
     }
 
-    std::shared_ptr<feed::SubscriptionManager> subManager_;
+    std::shared_ptr<SubscriptionManager> subManager_;
     std::shared_ptr<web::ConnectionBase> session_;
     StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
 };

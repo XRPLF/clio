@@ -28,10 +28,9 @@
 #include "feed/impl/LedgerFeed.hpp"
 #include "feed/impl/ProposedTransactionFeed.hpp"
 #include "feed/impl/TransactionFeed.hpp"
+#include "util/async/context/BasicExecutionContext.hpp"
 #include "util/log/Logger.hpp"
 
-#include <boost/asio/executor_work_guard.hpp>
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <xrpl/protocol/AccountID.h>
@@ -40,10 +39,8 @@
 #include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <string>
-#include <thread>
 #include <vector>
 
 /**
@@ -55,38 +52,46 @@ namespace feed {
 
 /**
  * @brief A subscription manager is responsible for managing the subscriptions and publishing the feeds
+ * @tparam ExecutionContext The type of the execution context, which must be some kind of BasicExecutionContext
  */
+template <class ExecutionContext>
+    requires util::IsInstanceOfV<util::async::BasicExecutionContext, ExecutionContext>
 class SubscriptionManager : public SubscriptionManagerInterface {
-    std::reference_wrapper<boost::asio::io_context> ioContext_;
     std::shared_ptr<data::BackendInterface const> backend_;
-
-    impl::ForwardFeed manifestFeed_;
-    impl::ForwardFeed validationsFeed_;
-    impl::LedgerFeed ledgerFeed_;
-    impl::BookChangesFeed bookChangesFeed_;
-    impl::TransactionFeed transactionFeed_;
-    impl::ProposedTransactionFeed proposedTransactionFeed_;
+    ExecutionContext ctx_;
+    impl::ForwardFeed<ExecutionContext> manifestFeed_;
+    impl::ForwardFeed<ExecutionContext> validationsFeed_;
+    impl::LedgerFeed<ExecutionContext> ledgerFeed_;
+    impl::BookChangesFeed<ExecutionContext> bookChangesFeed_;
+    impl::TransactionFeed<ExecutionContext> transactionFeed_;
+    impl::ProposedTransactionFeed<ExecutionContext> proposedTransactionFeed_;
 
 public:
     /**
      * @brief Construct a new Subscription Manager object
      *
-     * @param ioContext The io context to use
      * @param backend The backend to use
+     * @param numThreads The number of threads to use to publish the feeds
      */
-    SubscriptionManager(
-        boost::asio::io_context& ioContext,
-        std::shared_ptr<data::BackendInterface const> const& backend
-    )
-        : ioContext_(ioContext)
-        , backend_(backend)
-        , manifestFeed_(ioContext, "manifest")
-        , validationsFeed_(ioContext, "validations")
-        , ledgerFeed_(ioContext)
-        , bookChangesFeed_(ioContext)
-        , transactionFeed_(ioContext)
-        , proposedTransactionFeed_(ioContext)
+    SubscriptionManager(std::shared_ptr<data::BackendInterface const> const& backend, std::uint32_t numThreads = 1)
+        : backend_(backend)
+        , ctx_(numThreads)
+        , manifestFeed_(ctx_, "manifest")
+        , validationsFeed_(ctx_, "validations")
+        , ledgerFeed_(ctx_)
+        , bookChangesFeed_(ctx_)
+        , transactionFeed_(ctx_)
+        , proposedTransactionFeed_(ctx_)
     {
+    }
+
+    /**
+     * @brief Destructor of the SubscriptionManager object. It will block until all the executor threads are stopped.
+     */
+    ~SubscriptionManager() override
+    {
+        ctx_.stop();
+        ctx_.join();
     }
 
     /**
@@ -94,14 +99,20 @@ public:
      * @param subscriber
      */
     void
-    subBookChanges(SubscriberSharedPtr const& subscriber) final;
+    subBookChanges(SubscriberSharedPtr const& subscriber) final
+    {
+        bookChangesFeed_.sub(subscriber);
+    }
 
     /**
      * @brief Unsubscribe to the book changes feed.
      * @param subscriber
      */
     void
-    unsubBookChanges(SubscriberSharedPtr const& subscriber) final;
+    unsubBookChanges(SubscriberSharedPtr const& subscriber) final
+    {
+        bookChangesFeed_.unsub(subscriber);
+    }
 
     /**
      * @brief Publish the book changes feed.
@@ -110,21 +121,34 @@ public:
      */
     void
     pubBookChanges(ripple::LedgerHeader const& lgrInfo, std::vector<data::TransactionAndMetadata> const& transactions)
-        const final;
+        const final
+    {
+        bookChangesFeed_.pub(lgrInfo, transactions);
+    }
 
     /**
      * @brief Subscribe to the proposed transactions feed.
      * @param subscriber
      */
     void
-    subProposedTransactions(SubscriberSharedPtr const& subscriber) final;
+    subProposedTransactions(SubscriberSharedPtr const& subscriber) final
+    {
+        proposedTransactionFeed_.sub(subscriber);
+        // proposed_transactions subscribers not only receive the transaction json when it is proposed, but also the
+        // transaction json when it is validated. So the subscriber also subscribes to the transaction feed.
+        transactionFeed_.subProposed(subscriber);
+    }
 
     /**
      * @brief Unsubscribe to the proposed transactions feed.
      * @param subscriber
      */
     void
-    unsubProposedTransactions(SubscriberSharedPtr const& subscriber) final;
+    unsubProposedTransactions(SubscriberSharedPtr const& subscriber) final
+    {
+        proposedTransactionFeed_.unsub(subscriber);
+        transactionFeed_.unsubProposed(subscriber);
+    }
 
     /**
      * @brief Subscribe to the proposed transactions feed, only receive the feed when particular account is affected.
@@ -132,7 +156,14 @@ public:
      * @param subscriber
      */
     void
-    subProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
+    subProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final
+    {
+        proposedTransactionFeed_.sub(account, subscriber);
+        // Same as proposed_transactions subscribers, proposed_account subscribers also subscribe to the transaction
+        // feed to receive validated transaction feed. TransactionFeed class will filter out the sessions that have been
+        // sent to.
+        transactionFeed_.subProposed(account, subscriber);
+    }
 
     /**
      * @brief Unsubscribe to the proposed transactions feed for particular account.
@@ -140,14 +171,21 @@ public:
      * @param subscriber
      */
     void
-    unsubProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
+    unsubProposedAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final
+    {
+        proposedTransactionFeed_.unsub(account, subscriber);
+        transactionFeed_.unsubProposed(account, subscriber);
+    }
 
     /**
      * @brief Forward the proposed transactions feed.
      * @param receivedTxJson The proposed transaction json.
      */
     void
-    forwardProposedTransaction(boost::json::object const& receivedTxJson) final;
+    forwardProposedTransaction(boost::json::object const& receivedTxJson) final
+    {
+        proposedTransactionFeed_.pub(receivedTxJson);
+    }
 
     /**
      * @brief Subscribe to the ledger feed.
@@ -156,14 +194,20 @@ public:
      * @return The ledger feed
      */
     boost::json::object
-    subLedger(boost::asio::yield_context yield, SubscriberSharedPtr const& subscriber) final;
+    subLedger(boost::asio::yield_context yield, SubscriberSharedPtr const& subscriber) final
+    {
+        return ledgerFeed_.sub(yield, backend_, subscriber);
+    }
 
     /**
      * @brief Unsubscribe to the ledger feed.
      * @param subscriber
      */
     void
-    unsubLedger(SubscriberSharedPtr const& subscriber) final;
+    unsubLedger(SubscriberSharedPtr const& subscriber) final
+    {
+        ledgerFeed_.unsub(subscriber);
+    }
 
     /**
      * @brief Publish the ledger feed.
@@ -178,63 +222,90 @@ public:
         ripple::Fees const& fees,
         std::string const& ledgerRange,
         std::uint32_t txnCount
-    ) const final;
+    ) const final
+    {
+        ledgerFeed_.pub(lgrInfo, fees, ledgerRange, txnCount);
+    }
 
     /**
      * @brief Subscribe to the manifest feed.
      * @param subscriber
      */
     void
-    subManifest(SubscriberSharedPtr const& subscriber) final;
+    subManifest(SubscriberSharedPtr const& subscriber) final
+    {
+        manifestFeed_.sub(subscriber);
+    }
 
     /**
      * @brief Unsubscribe to the manifest feed.
      * @param subscriber
      */
     void
-    unsubManifest(SubscriberSharedPtr const& subscriber) final;
+    unsubManifest(SubscriberSharedPtr const& subscriber) final
+    {
+        manifestFeed_.unsub(subscriber);
+    }
 
     /**
      * @brief Forward the manifest feed.
      * @param manifestJson The manifest json to forward.
      */
     void
-    forwardManifest(boost::json::object const& manifestJson) const final;
+    forwardManifest(boost::json::object const& manifestJson) const final
+    {
+        manifestFeed_.pub(manifestJson);
+    }
 
     /**
      * @brief Subscribe to the validation feed.
      * @param subscriber
      */
     void
-    subValidation(SubscriberSharedPtr const& subscriber) final;
+    subValidation(SubscriberSharedPtr const& subscriber) final
+    {
+        validationsFeed_.sub(subscriber);
+    }
 
     /**
      * @brief Unsubscribe to the validation feed.
      * @param subscriber
      */
     void
-    unsubValidation(SubscriberSharedPtr const& subscriber) final;
+    unsubValidation(SubscriberSharedPtr const& subscriber) final
+    {
+        validationsFeed_.unsub(subscriber);
+    }
 
     /**
      * @brief Forward the validation feed.
      * @param validationJson The validation feed json to forward.
      */
     void
-    forwardValidation(boost::json::object const& validationJson) const final;
+    forwardValidation(boost::json::object const& validationJson) const final
+    {
+        validationsFeed_.pub(validationJson);
+    }
 
     /**
      * @brief Subscribe to the transactions feed.
      * @param subscriber
      */
     void
-    subTransactions(SubscriberSharedPtr const& subscriber) final;
+    subTransactions(SubscriberSharedPtr const& subscriber) final
+    {
+        transactionFeed_.sub(subscriber);
+    }
 
     /**
      * @brief Unsubscribe to the transactions feed.
      * @param subscriber
      */
     void
-    unsubTransactions(SubscriberSharedPtr const& subscriber) final;
+    unsubTransactions(SubscriberSharedPtr const& subscriber) final
+    {
+        transactionFeed_.unsub(subscriber);
+    }
 
     /**
      * @brief Subscribe to the transactions feed, only receive the feed when particular account is affected.
@@ -242,7 +313,10 @@ public:
      * @param subscriber
      */
     void
-    subAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
+    subAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final
+    {
+        transactionFeed_.sub(account, subscriber);
+    }
 
     /**
      * @brief Unsubscribe to the transactions feed for particular account.
@@ -250,7 +324,10 @@ public:
      * @param subscriber The subscriber to unsubscribe
      */
     void
-    unsubAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final;
+    unsubAccount(ripple::AccountID const& account, SubscriberSharedPtr const& subscriber) final
+    {
+        transactionFeed_.unsub(account, subscriber);
+    }
 
     /**
      * @brief Subscribe to the transactions feed, only receive feed when particular order book is affected.
@@ -258,7 +335,10 @@ public:
      * @param subscriber
      */
     void
-    subBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber) final;
+    subBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber) final
+    {
+        transactionFeed_.sub(book, subscriber);
+    }
 
     /**
      * @brief Unsubscribe to the transactions feed for particular order book.
@@ -266,7 +346,10 @@ public:
      * @param subscriber
      */
     void
-    unsubBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber) final;
+    unsubBook(ripple::Book const& book, SubscriberSharedPtr const& subscriber) final
+    {
+        transactionFeed_.unsub(book, subscriber);
+    }
 
     /**
      * @brief Forward the transactions feed.
@@ -274,7 +357,10 @@ public:
      * @param lgrInfo The ledger header.
      */
     void
-    pubTransaction(data::TransactionAndMetadata const& txMeta, ripple::LedgerHeader const& lgrInfo) final;
+    pubTransaction(data::TransactionAndMetadata const& txMeta, ripple::LedgerHeader const& lgrInfo) final
+    {
+        transactionFeed_.pub(txMeta, lgrInfo, backend_);
+    }
 
     /**
      * @brief Get the number of subscribers.
@@ -282,20 +368,30 @@ public:
      * @return The report of the number of subscribers
      */
     boost::json::object
-    report() const final;
+    report() const final
+    {
+        return {
+            {"ledger", ledgerFeed_.count()},
+            {"transactions", transactionFeed_.transactionSubCount()},
+            {"transactions_proposed", proposedTransactionFeed_.transactionSubcount()},
+            {"manifests", manifestFeed_.count()},
+            {"validations", validationsFeed_.count()},
+            {"account", transactionFeed_.accountSubCount()},
+            {"accounts_proposed", proposedTransactionFeed_.accountSubCount()},
+            {"books", transactionFeed_.bookSubCount()},
+            {"book_changes", bookChangesFeed_.count()},
+        };
+    }
 };
 
 /**
- * @brief The help class to run the subscription manager. The container of io_context which is used to publish the
- * feeds.
+ * @brief The help class to run the subscription manager with a pool executor.
  */
 class SubscriptionManagerRunner {
-    boost::asio::io_context ioContext_;
-    std::shared_ptr<SubscriptionManager> subscriptionManager_;
+    std::uint64_t workersNum_;
+    using ExecutionCtx = util::async::PoolExecutionContext;
+    std::shared_ptr<SubscriptionManager<ExecutionCtx>> subscriptionManager_;
     util::Logger logger_{"Subscriptions"};
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_ =
-        boost::asio::make_work_guard(ioContext_);
-    std::vector<std::thread> workers_;
 
 public:
     /**
@@ -305,13 +401,10 @@ public:
      * @param backend The backend to use
      */
     SubscriptionManagerRunner(util::Config const& config, std::shared_ptr<data::BackendInterface> const& backend)
-        : subscriptionManager_(std::make_shared<SubscriptionManager>(ioContext_, backend))
+        : workersNum_(config.valueOr<std::uint64_t>("subscription_workers", 1))
+        , subscriptionManager_(std::make_shared<SubscriptionManager<ExecutionCtx>>(backend, workersNum_))
     {
-        auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
-        LOG(logger_.info()) << "Starting subscription manager with " << numThreads << " workers";
-        workers_.reserve(numThreads);
-        for (auto i = numThreads; i > 0; --i)
-            workers_.emplace_back([&] { ioContext_.run(); });
+        LOG(logger_.info()) << "Starting subscription manager with " << workersNum_ << " workers";
     }
 
     /**
@@ -319,17 +412,10 @@ public:
      *
      * @return The subscription manager
      */
-    std::shared_ptr<SubscriptionManager>
+    auto
     getManager()
     {
         return subscriptionManager_;
-    }
-
-    ~SubscriptionManagerRunner()
-    {
-        work_.reset();
-        for (auto& worker : workers_)
-            worker.join();
     }
 };
 }  // namespace feed
