@@ -23,6 +23,7 @@
 #include "rpc/common/Checkers.hpp"
 #include "rpc/common/Concepts.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/UnsupportedType.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/value.hpp>
@@ -35,9 +36,6 @@
 #include <vector>
 
 namespace rpc::impl {
-
-template <typename>
-static constexpr bool unsupported_v = false;
 
 using FieldSpecProcessor = std::function<MaybeError(boost::json::value&)>;
 
@@ -64,7 +62,7 @@ makeFieldProcessor(std::string const& key, Processors&&... procs)
                     if (auto const res = req->modify(j, key); not res)
                         firstFailure = res.error();
                 } else {
-                    static_assert(unsupported_v<decltype(*req)>);
+                    static_assert(util::Unsupported<decltype(*req)>);
                 }
             }(),
             ...

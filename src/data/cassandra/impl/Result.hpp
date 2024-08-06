@@ -21,6 +21,7 @@
 
 #include "data/cassandra/impl/ManagedObject.hpp"
 #include "data/cassandra/impl/Tuple.hpp"
+#include "util/UnsupportedType.hpp"
 
 #include <cassandra.h>
 #include <xrpl/basics/base_uint.h>
@@ -40,9 +41,6 @@
 #include <vector>
 
 namespace data::cassandra::impl {
-
-template <typename>
-static constexpr bool unsupported_v = false;
 
 template <typename Type>
 inline Type
@@ -103,7 +101,7 @@ extractColumn(CassRow const* row, std::size_t idx)
         output = static_cast<DecayedType>(out);
     } else {
         // type not supported for extraction
-        static_assert(unsupported_v<DecayedType>);
+        static_assert(util::Unsupported<DecayedType>);
     }
 
     return output;
