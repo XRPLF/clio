@@ -19,15 +19,41 @@
 
 #pragma once
 
-#include <cstddef>
+#include "etl/SystemState.hpp"
+#include "util/Repeat.hpp"
+
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/asio/steady_timer.hpp>
+
+#include <chrono>
 #include <functional>
 
-struct FakeAmendmentBlockAction {
-    std::reference_wrapper<std::size_t> callCount;
+namespace etl::impl {
+
+class AmendmentBlockHandler {
+public:
+    using ActionType = std::function<void()>;
+
+private:
+    std::reference_wrapper<SystemState> state_;
+    util::Repeat repeat_;
+    std::chrono::steady_clock::duration interval_;
+
+    ActionType action_;
+
+public:
+    static ActionType const defaultAmendmentBlockAction;
+
+    AmendmentBlockHandler(
+        boost::asio::io_context& ioc,
+        SystemState& state,
+        std::chrono::steady_clock::duration interval = std::chrono::seconds{1},
+        ActionType action = defaultAmendmentBlockAction
+    );
 
     void
-    operator()() const
-    {
-        ++(callCount.get());
-    }
+    onAmendmentBlock();
 };
+
+}  // namespace etl::impl

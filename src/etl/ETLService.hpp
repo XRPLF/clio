@@ -22,11 +22,10 @@
 #include "data/BackendInterface.hpp"
 #include "data/LedgerCache.hpp"
 #include "etl/CacheLoader.hpp"
-#include "etl/ETLHelpers.hpp"
 #include "etl/ETLState.hpp"
 #include "etl/LoadBalancer.hpp"
 #include "etl/SystemState.hpp"
-#include "etl/impl/AmendmentBlock.hpp"
+#include "etl/impl/AmendmentBlockHandler.hpp"
 #include "etl/impl/ExtractionDataPipe.hpp"
 #include "etl/impl/Extractor.hpp"
 #include "etl/impl/LedgerFetcher.hpp"
@@ -85,7 +84,7 @@ class ETLService {
     using ExtractorType = etl::impl::Extractor<DataPipeType, LedgerFetcherType>;
     using LedgerLoaderType = etl::impl::LedgerLoader<LoadBalancerType, LedgerFetcherType>;
     using LedgerPublisherType = etl::impl::LedgerPublisher<CacheType>;
-    using AmendmentBlockHandlerType = etl::impl::AmendmentBlockHandler<>;
+    using AmendmentBlockHandlerType = etl::impl::AmendmentBlockHandler;
     using TransformerType =
         etl::impl::Transformer<DataPipeType, LedgerLoaderType, LedgerPublisherType, AmendmentBlockHandlerType>;
 

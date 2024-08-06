@@ -10,6 +10,7 @@ target_sources(
           NetworkValidatedLedgers.cpp
           NFTHelpers.cpp
           Source.cpp
+          impl/AmendmentBlockHandler.cpp
           impl/ForwardingCache.cpp
           impl/ForwardingSource.cpp
           impl/GrpcSource.cpp

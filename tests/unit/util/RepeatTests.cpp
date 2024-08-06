@@ -56,8 +56,7 @@ TEST_F(RepeatTests, CallsHandler)
 {
     repeat.start(std::chrono::milliseconds{1}, handlerMock.AsStdFunction());
     EXPECT_CALL(handlerMock, Call).Times(AtLeast(10));
-    ctx.run_for(std::chrono::milliseconds{20});
-    ctx.stop();
+    runContextFor(std::chrono::milliseconds{20});
 }
 
 TEST_F(RepeatTests, StopsOnStop)
@@ -98,7 +97,6 @@ TEST_F(RepeatTests, CanBeDestroyedWhenContextHasBeenStopped)
         Repeat localRepeat{ctx};
         EXPECT_CALL(handlerMock, Call).Times(AtLeast(1));
         localRepeat.start(std::chrono::milliseconds{1}, handlerMock.AsStdFunction());
-        ctx.run_for(std::chrono::milliseconds{20});
-        ctx.stop();
+        runContextFor(std::chrono::milliseconds{20});
     });
 }

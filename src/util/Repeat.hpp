@@ -26,7 +26,6 @@
 #include <atomic>
 #include <chrono>
 #include <concepts>
-#include <iostream>
 #include <semaphore>
 
 namespace util {
@@ -50,6 +49,9 @@ public:
 
     /**
      * @brief Destroy the Timer object
+     * @note io_context must be either stopped or running when Repeat is destroyed. Otherwise, the destructor will hang.
+     * Method ctx.run_for() doesn't leave the context in a stopped state, so ctx.stop() must be called before the
+     * destructor.
      */
     ~Repeat();
 

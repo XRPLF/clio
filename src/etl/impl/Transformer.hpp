@@ -23,7 +23,7 @@
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
 #include "etl/SystemState.hpp"
-#include "etl/impl/AmendmentBlock.hpp"
+#include "etl/impl/AmendmentBlockHandler.hpp"
 #include "etl/impl/LedgerLoader.hpp"
 #include "util/Assert.hpp"
 #include "util/LedgerUtils.hpp"
