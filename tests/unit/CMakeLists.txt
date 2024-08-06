@@ -121,8 +121,8 @@ target_sources(
           util/requests/WsConnectionTests.cpp
           util/RandomTests.cpp
           util/RetryTests.cpp
+          util/RepeatTests.cpp
           util/SignalsHandlerTests.cpp
-          util/TimerTests.cpp
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
           # Webserver

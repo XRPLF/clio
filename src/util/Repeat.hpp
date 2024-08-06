@@ -26,6 +26,7 @@
 #include <atomic>
 #include <chrono>
 #include <concepts>
+#include <iostream>
 #include <semaphore>
 
 namespace util {
@@ -64,20 +65,28 @@ public:
      * @tparam Action The action type
      * @param action The action to call regularly
      */
-    template <std::invocable<boost::system::error_code> Action>
+    template <std::invocable Action>
     void
     start(std::chrono::steady_clock::duration interval, Action&& action)
     {
+        stopping_ = false;
+        startImpl(interval, std::forward<Action>(action));
+    }
+
+private:
+    template <std::invocable Action>
+    void
+    startImpl(std::chrono::steady_clock::duration interval, Action&& action)
+    {
         timer_.expires_after(interval);
-        timer_.async_wait([this, interval, action = std::forward<Action>(action)](auto const& ec) {
+        timer_.async_wait([this, interval, action = std::forward<Action>(action)](auto const&) mutable {
             if (stopping_) {
                 semaphore_.release();
                 return;
             }
-            if (not ec)
-                return;
             action();
-            start(interval, std::forward<Action>(action));
+
+            startImpl(interval, std::forward<Action>(action));
         });
     }
 };

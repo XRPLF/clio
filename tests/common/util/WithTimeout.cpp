@@ -25,7 +25,6 @@
 #include <cstdlib>
 #include <functional>
 #include <future>
-#include <iostream>
 #include <thread>
 
 namespace tests::common::util {

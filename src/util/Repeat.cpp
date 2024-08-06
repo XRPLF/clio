@@ -21,34 +21,25 @@
 
 #include <boost/asio/io_context.hpp>
 
-#include <chrono>
-#include <mutex>
-
 namespace util {
 
-Timer::Timer(boost::asio::io_context& ioc) : ioc_{ioc}, timer_(ioc_)
+Repeat::Repeat(boost::asio::io_context& ioc) : ioc_{ioc}, timer_(ioc_)
 {
 }
 
-Timer::~Timer()
+Repeat::~Repeat()
 {
     if (ioc_.stopped())
         return;
+    stop();
+}
+
+void
+Repeat::stop()
+{
     stopping_ = true;
-    cancel();
-    semaphore_.acquire();
-}
-
-void
-Timer::cancel()
-{
     timer_.cancel();
-}
-
-void
-Timer::expires_after(std::chrono::steady_clock::duration const& duration)
-{
-    timer_.expires_after(duration);
+    semaphore_.acquire();
 }
 
 }  // namespace util
