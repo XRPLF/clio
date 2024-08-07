@@ -47,7 +47,7 @@ jobs:
       - name: Upload clio_tests
         uses: actions/upload-artifact@v4
         with:
-          name: clio_tests_check_libxrpl-${{ github.run_id }}-${{ github.run_number }}
+          name: clio_tests_check_libxrpl
           path: build/clio_tests
 
   run_tests:
@@ -60,7 +60,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: clio_tests_check_libxrpl-${{ github.run_id }}-${{ github.run_number }}
+          name: clio_tests_check_libxrpl
 
       - name: Run clio_tests
         run: |
