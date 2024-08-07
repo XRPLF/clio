@@ -13,6 +13,7 @@ TMPDIR=${ROOT}/.cache/doxygen
 TMPFILE=${TMPDIR}/docs.log
 DOCDIR=${TMPDIR}/out
 
+# Check doxygen is at all installed
 if [ -z "$DOXYGEN" ]; then
     # No hard error if doxygen is not installed yet
     cat <<EOF
@@ -21,6 +22,24 @@ if [ -z "$DOXYGEN" ]; then
 -----------------------------------------------------------------------------
         'doxygen' is required to check documentation.
         Please install it for next time. For the time being it's on CI.
+-----------------------------------------------------------------------------
+
+EOF
+    exit 0
+fi
+
+# Check version of doxygen is at least 1.12
+version=$($DOXYGEN --version | grep -o '[0-9\.]*')
+
+if [[ "1.12.0" > "$version" ]]; then
+    # No hard error if doxygen version is not the one we want - let CI deal with it
+    cat <<EOF
+
+                                    ERROR
+-----------------------------------------------------------------------------
+        A minimum of version 1.12 of `which doxygen` is required.
+        Your version is $version.
+        Please upgrade it for next time. For the time being it's on CI.
 -----------------------------------------------------------------------------
 
 EOF
