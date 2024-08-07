@@ -23,10 +23,6 @@
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/FakeConfigData.hpp"
 
-#include <boost/json/object.hpp>
-#include <boost/json/parse.hpp>
-#include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <gtest/gtest.h>
 
 #include <string_view>
@@ -151,7 +147,7 @@ TEST_F(NewConfigDeathTest, IncorrectGetArray)
 
 TEST(ConfigDescription, getValues)
 {
-    ClioConfigDescription definition{};
+    ClioConfigDescription const definition{};
 
     EXPECT_EQ(definition.get("database.type"), "Type of database to use.");
     EXPECT_EQ(definition.get("etl_source.[].ip"), "IP address of the ETL source.");
@@ -160,7 +156,7 @@ TEST(ConfigDescription, getValues)
 
 TEST(ConfigDescriptionAssertDeathTest, nonExistingKeyTest)
 {
-    ClioConfigDescription definition{};
+    ClioConfigDescription const definition{};
 
     EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("data"); }, ".*");
     EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("etl_source.[]"); }, ".*");

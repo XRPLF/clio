@@ -33,11 +33,11 @@ TEST(ArrayTest, testConfigArray)
         ConfigValue{ConfigType::Double}.defaultValue(22.22),
     };
     auto cv = arr.at(0);
-    ValueView vv{cv};
+    ValueView const vv{cv};
     EXPECT_EQ(vv.asBool(), false);
 
     auto cv2 = arr.at(1);
-    ValueView vv2{cv2};
+    ValueView const vv2{cv2};
     EXPECT_EQ(vv2.asIntType<int>(), 1234);
 
     EXPECT_EQ(arr.size(), 3);
@@ -45,6 +45,6 @@ TEST(ArrayTest, testConfigArray)
 
     EXPECT_EQ(arr.size(), 4);
     auto cv4 = arr.at(3);
-    ValueView vv4{cv4};
+    ValueView const vv4{cv4};
     EXPECT_EQ(vv4.asString(), "false");
 }
