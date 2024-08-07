@@ -25,7 +25,6 @@
 #include "util/newconfig/ValueView.hpp"
 
 #include <fmt/core.h>
-#include <unistd.h>
 
 #include <algorithm>
 #include <cstddef>
