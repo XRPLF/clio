@@ -58,9 +58,8 @@ public:
  * @brief A simple denial of service guard used for rate limiting.
  *
  * @tparam WhitelistHandlerType The type of the whitelist handler
- * @tparam SweepHandlerType The type of the sweep handler
  */
-template <typename WhitelistHandlerType, typename SweepHandlerType>
+template <typename WhitelistHandlerType>
 class BasicDOSGuard : public BaseDOSGuard {
     /**
      * @brief Accumulated state per IP, state will be reset accordingly
@@ -92,17 +91,12 @@ public:
      * @param whitelistHandler Whitelist handler that checks whitelist for IP addresses
      * @param sweepHandler Sweep handler that implements the sweeping behaviour
      */
-    BasicDOSGuard(
-        util::Config const& config,
-        WhitelistHandlerType const& whitelistHandler,
-        SweepHandlerType& sweepHandler
-    )
+    BasicDOSGuard(util::Config const& config, WhitelistHandlerType const& whitelistHandler)
         : whitelistHandler_{std::cref(whitelistHandler)}
         , maxFetches_{config.valueOr("dos_guard.max_fetches", DEFAULT_MAX_FETCHES)}
         , maxConnCount_{config.valueOr("dos_guard.max_connections", DEFAULT_MAX_CONNECTIONS)}
         , maxRequestCount_{config.valueOr("dos_guard.max_requests", DEFAULT_MAX_REQUESTS)}
     {
-        sweepHandler.setup(this);
     }
 
     /**
@@ -262,6 +256,6 @@ private:
 /**
  * @brief A simple denial of service guard used for rate limiting.
  */
-using DOSGuard = BasicDOSGuard<web::WhitelistHandler, web::IntervalSweepHandler>;
+using DOSGuard = BasicDOSGuard<web::WhitelistHandler>;
 
 }  // namespace web

@@ -171,14 +171,4 @@ struct HandlerWithoutInputMock {
     MOCK_METHOD(Result, process, (rpc::Context const&), (const));
 };
 
-// testing sweep handler by mocking dos guard
-template <typename SweepHandler>
-struct BasicDOSGuardMock : public web::BaseDOSGuard {
-    BasicDOSGuardMock(SweepHandler& handler)
-    {
-        handler.setup(this);
-    }
-
-    MOCK_METHOD(void, clear, (), (noexcept, override));
-};
 }  // namespace tests::common

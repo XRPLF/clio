@@ -93,9 +93,9 @@ ClioApplication::run()
     boost::asio::io_context ioc{threads};
 
     // Rate limiter, to prevent abuse
-    auto sweepHandler = web::IntervalSweepHandler{config_, ioc};
     auto whitelistHandler = web::WhitelistHandler{config_};
-    auto dosGuard = web::DOSGuard{config_, whitelistHandler, sweepHandler};
+    auto dosGuard = web::DOSGuard{config_, whitelistHandler};
+    auto sweepHandler = web::IntervalSweepHandler{config_, ioc, dosGuard};
 
     // Interface to the database
     auto backend = data::make_Backend(config_);

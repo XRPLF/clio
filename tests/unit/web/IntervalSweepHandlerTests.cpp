@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "rpc/FakesAndMocks.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/config/Config.hpp"
+#include "web/DOSGuard.hpp"
 #include "web/IntervalSweepHandler.hpp"
 
 #include <boost/json/parse.hpp>
@@ -28,30 +28,29 @@
 
 #include <chrono>
 
-using namespace util;
 using namespace web;
-using namespace testing;
 
-constexpr static auto JSONData = R"JSON(
+struct IntervalSweepHandlerTest : SyncAsioContextTest {
+protected:
+    constexpr static auto JSONData = R"JSON(
     {
         "dos_guard": {
-            "max_fetches": 100,
-            "sweep_interval": 0.1,
-            "max_connections": 2,
-            "whitelist": ["127.0.0.1"]
+            "sweep_interval": 0
         }
     }
 )JSON";
 
-class DOSGuardIntervalSweepHandlerTest : public SyncAsioContextTest {
-protected:
-    Config cfg{boost::json::parse(JSONData)};
-    IntervalSweepHandler sweepHandler{cfg, ctx};
-    tests::common::BasicDOSGuardMock<IntervalSweepHandler> guard{sweepHandler};
+    struct DosGuardMock : BaseDOSGuard {
+        MOCK_METHOD(void, clear, (), (noexcept, override));
+    };
+    testing::StrictMock<DosGuardMock> guardMock;
+
+    util::Config cfg{boost::json::parse(JSONData)};
+    IntervalSweepHandler sweepHandler{cfg, ctx, guardMock};
 };
 
-TEST_F(DOSGuardIntervalSweepHandlerTest, SweepAfterInterval)
+TEST_F(IntervalSweepHandlerTest, SweepAfterInterval)
 {
-    EXPECT_CALL(guard, clear()).Times(AtLeast(2));
-    ctx.run_for(std::chrono::milliseconds(400));
+    EXPECT_CALL(guardMock, clear()).Times(testing::AtLeast(10));
+    runContextFor(std::chrono::milliseconds{20});
 }
