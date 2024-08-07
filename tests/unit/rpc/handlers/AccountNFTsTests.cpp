@@ -43,6 +43,8 @@
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto TOKENID = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA";
+constexpr static auto TOKENID2 = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EB";
+constexpr static auto TOKENID3 = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EC";
 constexpr static auto ISSUER = "raSsG8F6KePke7sqw2MXYZ3mu7p68GvFma";
 constexpr static auto SERIAL = 49386;
 constexpr static auto TAXON = 0;
@@ -368,7 +370,7 @@ TEST_F(RPCAccountNFTsHandlerTest, Limit)
     });
 }
 
-TEST_F(RPCAccountNFTsHandlerTest, Marker)
+TEST_F(RPCAccountNFTsHandlerTest, InvalidMarker)
 {
     backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
@@ -386,6 +388,8 @@ TEST_F(RPCAccountNFTsHandlerTest, Marker)
         .WillByDefault(Return(pageObject.getSerializer().peekData()));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
+    // Marker should match a specific NFT Token ID, which is the NFT to continue query after
+    // Here "PAGE" is an invalid NFT Token ID as it does not match any existing NFT Token ID.
     auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
@@ -397,8 +401,50 @@ TEST_F(RPCAccountNFTsHandlerTest, Marker)
     auto const handler = AnyHandler{AccountNFTsHandler{backend}};
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
+        ASSERT_FALSE(output);
+    });
+}
+
+TEST_F(RPCAccountNFTsHandlerTest, ValidMarker)
+{
+    backend->setRange(MINSEQ, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+
+    auto const accountObject = CreateAccountRootObject(ACCOUNT, 0, 1, 10, 2, TXNID, 3);
+    auto const accountID = GetAccountIDWithString(ACCOUNT);
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(accountID).key, 30, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    // object contains two NFT Tokens
+    auto const pageObject = CreateNFTTokenPage(
+        std::vector{
+            std::make_pair<std::string, std::string>(TOKENID, "www.ok.com"),
+            std::make_pair<std::string, std::string>(TOKENID2, "www.ok2.com"),
+            std::make_pair<std::string, std::string>(TOKENID3, "www.ok3.com")
+        },
+        std::nullopt
+    );
+    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{TOKENID}, 30, _))
+        .WillByDefault(Return(pageObject.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
+
+    // Start querying results right after TokenID (which is the first TokenID of the 3)
+    // should expect 2 more TokenIDs as output
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "marker":"{}"
+        }})",
+        ACCOUNT,
+        TOKENID
+    ));
+    auto const handler = AnyHandler{AccountNFTsHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
         ASSERT_TRUE(output);
-        EXPECT_EQ(output.result->as_object().at("account_nfts").as_array().size(), 1);
+        EXPECT_EQ(output.result->as_object().at("account_nfts").as_array().size(), 2);
     });
 }
 
