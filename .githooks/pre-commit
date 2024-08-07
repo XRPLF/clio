@@ -3,6 +3,5 @@
 # This script is intended to be run from the root of the repository.
 
 source .githooks/check-format
-#source .githooks/check-docs
+source .githooks/check-docs
 
-# TODO: Fix Doxygen issue with reference links. See https://github.com/XRPLF/clio/issues/1431
