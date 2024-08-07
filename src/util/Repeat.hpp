@@ -59,6 +59,7 @@ public:
      * @brief Start asynchronously repeating
      *
      * @tparam Action The action type
+     * @param interval The interval to repeat
      * @param action The action to call regularly
      */
     template <std::invocable Action>
