@@ -23,7 +23,7 @@
 
 namespace util {
 
-Repeat::Repeat(boost::asio::io_context& ioc) : ioc_{ioc}, timer_(ioc_)
+Repeat::Repeat(boost::asio::io_context& ioc) : timer_(ioc)
 {
 }
 

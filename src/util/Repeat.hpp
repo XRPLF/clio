@@ -35,7 +35,6 @@ namespace util {
  * @note io_context must be stopped before the Repeat object is destroyed. Otherwise it is undefined behavior
  */
 class Repeat {
-    boost::asio::io_context& ioc_;
     boost::asio::steady_timer timer_;
     std::atomic_bool stopping_{false};
     std::binary_semaphore semaphore_{0};
