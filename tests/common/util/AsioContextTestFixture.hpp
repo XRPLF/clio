@@ -102,8 +102,7 @@ struct SyncAsioContextTest : virtual public NoLoggerFixture {
     runContextFor(std::chrono::milliseconds duration)
     {
         ctx.run_for(duration);
-        ctx.stop();
-        // ctx.reset() is not used because it will reset stopped flag
+        ctx.reset();
     }
 
 protected:

@@ -111,7 +111,6 @@ addSslConfig(boost::json::value config)
 struct WebServerTest : NoLoggerFixture {
     ~WebServerTest() override
     {
-        ctxSync.stop();
         work.reset();
         ctx.stop();
         if (runner->joinable())

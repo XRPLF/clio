@@ -24,6 +24,7 @@
 #include "etl/CacheLoader.hpp"
 #include "etl/ETLState.hpp"
 #include "etl/LoadBalancer.hpp"
+#include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/SystemState.hpp"
 #include "etl/impl/AmendmentBlockHandler.hpp"
 #include "etl/impl/ExtractionDataPipe.hpp"
@@ -36,7 +37,6 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <boost/json/object.hpp>
 #include <grpcpp/grpcpp.h>
 #include <org/xrpl/rpc/v1/get_ledger.pb.h>

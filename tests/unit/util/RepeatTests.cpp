@@ -80,23 +80,3 @@ TEST_F(RepeatTests, RunsAfterStop)
         }
     });
 }
-
-TEST_F(RepeatTests, CanBeDestroyedWhileContextIsRunning)
-{
-    withRunningContext([this]() {
-        Repeat localRepeat{ctx};
-        EXPECT_CALL(handlerMock, Call).Times(AtLeast(1));
-        localRepeat.start(std::chrono::milliseconds{1}, handlerMock.AsStdFunction());
-        std::this_thread::sleep_for(std::chrono::milliseconds{10});
-    });
-}
-
-TEST_F(RepeatTests, CanBeDestroyedWhenContextHasBeenStopped)
-{
-    tests::common::util::withTimeout(std::chrono::seconds{1}, [this]() {
-        Repeat localRepeat{ctx};
-        EXPECT_CALL(handlerMock, Call).Times(AtLeast(1));
-        localRepeat.start(std::chrono::milliseconds{1}, handlerMock.AsStdFunction());
-        runContextFor(std::chrono::milliseconds{20});
-    });
-}

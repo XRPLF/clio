@@ -27,13 +27,6 @@ Repeat::Repeat(boost::asio::io_context& ioc) : ioc_{ioc}, timer_(ioc_)
 {
 }
 
-Repeat::~Repeat()
-{
-    if (ioc_.stopped())
-        return;
-    stop();
-}
-
 void
 Repeat::stop()
 {

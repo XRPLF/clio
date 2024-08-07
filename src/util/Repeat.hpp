@@ -32,6 +32,7 @@ namespace util {
 
 /**
  * @brief A class to repeat some action at a regular interval
+ * @note io_context must be stopped before the Repeat object is destroyed. Otherwise it is undefined behavior
  */
 class Repeat {
     boost::asio::io_context& ioc_;
@@ -48,15 +49,8 @@ public:
     Repeat(boost::asio::io_context& ioc);
 
     /**
-     * @brief Destroy the Timer object
-     * @note io_context must be either stopped or running when Repeat is destroyed. Otherwise, the destructor will hang.
-     * Method ctx.run_for() doesn't leave the context in a stopped state, so ctx.stop() must be called before the
-     * destructor.
-     */
-    ~Repeat();
-
-    /**
      * @brief Stop repeating
+     * @note This method will block to ensure the repeating is actually stopped. But blocking time should be very short.
      */
     void
     stop();
