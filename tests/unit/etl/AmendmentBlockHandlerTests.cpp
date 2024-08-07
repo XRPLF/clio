@@ -20,6 +20,7 @@
 #include "etl/SystemState.hpp"
 #include "etl/impl/AmendmentBlockHandler.hpp"
 #include "util/AsioContextTestFixture.hpp"
+#include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -46,4 +47,13 @@ TEST_F(AmendmentBlockHandlerTest, CallToOnAmendmentBlockSetsStateAndRepeatedlyCa
     EXPECT_TRUE(state.isAmendmentBlocked);
 
     runContextFor(std::chrono::milliseconds{1});
+}
+
+struct DefaultAmendmentBlockActionTest : LoggerFixture {};
+
+TEST_F(DefaultAmendmentBlockActionTest, Call)
+{
+    AmendmentBlockHandler::defaultAmendmentBlockAction();
+    auto const loggerString = getLoggerString();
+    EXPECT_TRUE(loggerString.starts_with("ETL:FTL Can't process new ledgers")) << "LoggerString " << loggerString;
 }
