@@ -89,7 +89,6 @@ public:
      *
      * @param config Clio config
      * @param whitelistHandler Whitelist handler that checks whitelist for IP addresses
-     * @param sweepHandler Sweep handler that implements the sweeping behaviour
      */
     BasicDOSGuard(util::Config const& config, WhitelistHandlerType const& whitelistHandler)
         : whitelistHandler_{std::cref(whitelistHandler)}
