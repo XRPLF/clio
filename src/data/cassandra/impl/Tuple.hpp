@@ -20,6 +20,7 @@
 #pragma once
 
 #include "data/cassandra/impl/ManagedObject.hpp"
+#include "util/UnsupportedType.hpp"
 
 #include <cassandra.h>
 #include <xrpl/basics/base_uint.h>
@@ -37,9 +38,6 @@ namespace data::cassandra::impl {
 
 class Tuple : public ManagedObject<CassTuple> {
     static constexpr auto deleter = [](CassTuple* ptr) { cass_tuple_free(ptr); };
-
-    template <typename>
-    static constexpr bool unsupported_v = false;
 
 public:
     /* implicit */ Tuple(CassTuple* ptr);
@@ -91,15 +89,12 @@ public:
             throwErrorIfNeeded(rc, "Bind ripple::uint256");
         } else {
             // type not supported for binding
-            static_assert(unsupported_v<DecayedType>);
+            static_assert(util::Unsupported<DecayedType>);
         }
     }
 };
 
 class TupleIterator : public ManagedObject<CassIterator> {
-    template <typename>
-    static constexpr bool unsupported_v = false;
-
 public:
     /* implicit */ TupleIterator(CassIterator* ptr);
 
@@ -141,7 +136,7 @@ private:
             output = static_cast<DecayedType>(out);
         } else {
             // type not supported for extraction
-            static_assert(unsupported_v<DecayedType>);
+            static_assert(util::Unsupported<DecayedType>);
         }
 
         return output;
