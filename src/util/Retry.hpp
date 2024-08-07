@@ -89,7 +89,6 @@ public:
      * @param strand The strand to use for async operations
      */
     Retry(RetryStrategyPtr strategy, boost::asio::strand<boost::asio::io_context::executor_type> strand);
-    ~Retry();
 
     /**
      * @brief Schedule a retry

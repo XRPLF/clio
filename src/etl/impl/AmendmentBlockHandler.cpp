@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,33 +17,40 @@
 */
 //==============================================================================
 
-#include "web/IntervalSweepHandler.hpp"
+#include "etl/impl/AmendmentBlockHandler.hpp"
 
-#include "util/config/Config.hpp"
-#include "web/DOSGuard.hpp"
+#include "etl/SystemState.hpp"
+#include "util/log/Logger.hpp"
 
-#include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/system/detail/error_code.hpp>
 
-#include <algorithm>
 #include <chrono>
 #include <functional>
+#include <utility>
 
-namespace web {
+namespace etl::impl {
 
-IntervalSweepHandler::IntervalSweepHandler(
-    util::Config const& config,
-    boost::asio::io_context& ctx,
-    web::BaseDOSGuard& dosGuard
+AmendmentBlockHandler::ActionType const AmendmentBlockHandler::defaultAmendmentBlockAction = []() {
+    static util::Logger const log{"ETL"};
+    LOG(log.fatal()) << "Can't process new ledgers: The current ETL source is not compatible with the version of "
+                     << "the libxrpl Clio is currently using. Please upgrade Clio to a newer version.";
+};
+
+AmendmentBlockHandler::AmendmentBlockHandler(
+    boost::asio::io_context& ioc,
+    SystemState& state,
+    std::chrono::steady_clock::duration interval,
+    ActionType action
 )
-    : repeat_{std::ref(ctx)}
+    : state_{std::ref(state)}, repeat_{ioc}, interval_{interval}, action_{std::move(action)}
 {
-    auto const sweepInterval{std::max(
-        std::chrono::milliseconds{1u}, util::Config::toMilliseconds(config.valueOr("dos_guard.sweep_interval", 1.0))
-    )};
-    repeat_.start(sweepInterval, [&dosGuard] { dosGuard.clear(); });
 }
 
-}  // namespace web
+void
+AmendmentBlockHandler::onAmendmentBlock()
+{
+    state_.get().isAmendmentBlocked = true;
+    repeat_.start(interval_, action_);
+}
+
+}  // namespace etl::impl

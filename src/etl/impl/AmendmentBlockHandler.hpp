@@ -17,33 +17,43 @@
 */
 //==============================================================================
 
-#include "web/IntervalSweepHandler.hpp"
+#pragma once
 
-#include "util/config/Config.hpp"
-#include "web/DOSGuard.hpp"
+#include "etl/SystemState.hpp"
+#include "util/Repeat.hpp"
 
-#include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
-#include <boost/system/detail/error_code.hpp>
+#include <boost/asio/steady_timer.hpp>
 
-#include <algorithm>
 #include <chrono>
 #include <functional>
 
-namespace web {
+namespace etl::impl {
 
-IntervalSweepHandler::IntervalSweepHandler(
-    util::Config const& config,
-    boost::asio::io_context& ctx,
-    web::BaseDOSGuard& dosGuard
-)
-    : repeat_{std::ref(ctx)}
-{
-    auto const sweepInterval{std::max(
-        std::chrono::milliseconds{1u}, util::Config::toMilliseconds(config.valueOr("dos_guard.sweep_interval", 1.0))
-    )};
-    repeat_.start(sweepInterval, [&dosGuard] { dosGuard.clear(); });
-}
+class AmendmentBlockHandler {
+public:
+    using ActionType = std::function<void()>;
 
-}  // namespace web
+private:
+    std::reference_wrapper<SystemState> state_;
+    util::Repeat repeat_;
+    std::chrono::steady_clock::duration interval_;
+
+    ActionType action_;
+
+public:
+    static ActionType const defaultAmendmentBlockAction;
+
+    AmendmentBlockHandler(
+        boost::asio::io_context& ioc,
+        SystemState& state,
+        std::chrono::steady_clock::duration interval = std::chrono::seconds{1},
+        ActionType action = defaultAmendmentBlockAction
+    );
+
+    void
+    onAmendmentBlock();
+};
+
+}  // namespace etl::impl

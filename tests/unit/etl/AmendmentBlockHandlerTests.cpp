@@ -18,37 +18,42 @@
 //==============================================================================
 
 #include "etl/SystemState.hpp"
-#include "etl/impl/AmendmentBlock.hpp"
-#include "util/FakeAmendmentBlockAction.hpp"
+#include "etl/impl/AmendmentBlockHandler.hpp"
+#include "util/AsioContextTestFixture.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 
 #include <boost/asio/io_context.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <cstddef>
-#include <functional>
 
-using namespace testing;
-using namespace etl;
+using namespace etl::impl;
 
-struct AmendmentBlockHandlerTest : util::prometheus::WithPrometheus, NoLoggerFixture {
-    using AmendmentBlockHandlerType = impl::AmendmentBlockHandler<FakeAmendmentBlockAction>;
-
-    boost::asio::io_context ioc_;
+struct AmendmentBlockHandlerTest : util::prometheus::WithPrometheus, SyncAsioContextTest {
+    testing::StrictMock<testing::MockFunction<void()>> actionMock;
+    etl::SystemState state;
 };
 
 TEST_F(AmendmentBlockHandlerTest, CallToOnAmendmentBlockSetsStateAndRepeatedlyCallsAction)
 {
-    std::size_t callCount = 0;
-    SystemState state;
-    AmendmentBlockHandlerType handler{ioc_, state, std::chrono::nanoseconds{1}, {std::ref(callCount)}};
+    AmendmentBlockHandler handler{ctx, state, std::chrono::nanoseconds{1}, actionMock.AsStdFunction()};
 
     EXPECT_FALSE(state.isAmendmentBlocked);
+    EXPECT_CALL(actionMock, Call()).Times(testing::AtLeast(10));
     handler.onAmendmentBlock();
     EXPECT_TRUE(state.isAmendmentBlocked);
 
-    ioc_.run_for(std::chrono::milliseconds{1});
-    EXPECT_TRUE(callCount >= 10);
+    runContextFor(std::chrono::milliseconds{1});
+}
+
+struct DefaultAmendmentBlockActionTest : LoggerFixture {};
+
+TEST_F(DefaultAmendmentBlockActionTest, Call)
+{
+    AmendmentBlockHandler::defaultAmendmentBlockAction();
+    auto const loggerString = getLoggerString();
+    EXPECT_TRUE(loggerString.starts_with("ETL:FTL Can't process new ledgers")) << "LoggerString " << loggerString;
 }

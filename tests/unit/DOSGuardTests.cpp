@@ -38,7 +38,6 @@ constexpr auto JSONData = R"JSON(
     {
         "dos_guard": {
             "max_fetches": 100,
-            "sweep_interval": 1,
             "max_connections": 2,
             "max_requests": 3,
             "whitelist": [
@@ -55,33 +54,13 @@ struct MockWhitelistHandler {
 };
 
 using MockWhitelistHandlerType = NiceMock<MockWhitelistHandler>;
-
-class FakeSweepHandler {
-private:
-    using guardType = BasicDOSGuard<MockWhitelistHandlerType, FakeSweepHandler>;
-    guardType* dosGuard_;
-
-public:
-    void
-    setup(guardType* guard)
-    {
-        dosGuard_ = guard;
-    }
-
-    void
-    sweep()
-    {
-        dosGuard_->clear();
-    }
-};
 };  // namespace
 
 class DOSGuardTest : public NoLoggerFixture {
 protected:
     Config cfg{json::parse(JSONData)};
-    FakeSweepHandler sweepHandler{};
     MockWhitelistHandlerType whitelistHandler;
-    BasicDOSGuard<MockWhitelistHandlerType, FakeSweepHandler> guard{cfg, whitelistHandler, sweepHandler};
+    BasicDOSGuard<MockWhitelistHandlerType> guard{cfg, whitelistHandler};
 };
 
 TEST_F(DOSGuardTest, Whitelisting)
@@ -124,7 +103,7 @@ TEST_F(DOSGuardTest, ClearFetchCountOnTimer)
     EXPECT_FALSE(guard.add(IP, 1));  // can't add even 1 anymore
     EXPECT_FALSE(guard.isOk(IP));
 
-    sweepHandler.sweep();         // pretend sweep called from timer
+    guard.clear();                // pretend sweep called from timer
     EXPECT_TRUE(guard.isOk(IP));  // can fetch again
 }
 
@@ -148,6 +127,6 @@ TEST_F(DOSGuardTest, RequestLimitOnTimer)
     EXPECT_TRUE(guard.isOk(IP));
     EXPECT_FALSE(guard.request(IP));
     EXPECT_FALSE(guard.isOk(IP));
-    sweepHandler.sweep();
+    guard.clear();
     EXPECT_TRUE(guard.isOk(IP));  // can request again
 }

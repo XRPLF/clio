@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,33 +17,31 @@
 */
 //==============================================================================
 
-#include "web/IntervalSweepHandler.hpp"
+#include "util/WithTimeout.hpp"
 
-#include "util/config/Config.hpp"
-#include "web/DOSGuard.hpp"
+#include <gtest/gtest.h>
 
-#include <boost/asio/error.hpp>
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/system/detail/error_code.hpp>
-
-#include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <functional>
+#include <future>
+#include <thread>
 
-namespace web {
+namespace tests::common::util {
 
-IntervalSweepHandler::IntervalSweepHandler(
-    util::Config const& config,
-    boost::asio::io_context& ctx,
-    web::BaseDOSGuard& dosGuard
-)
-    : repeat_{std::ref(ctx)}
+void
+withTimeout(std::chrono::steady_clock::duration timeout, std::function<void()> function)
 {
-    auto const sweepInterval{std::max(
-        std::chrono::milliseconds{1u}, util::Config::toMilliseconds(config.valueOr("dos_guard.sweep_interval", 1.0))
-    )};
-    repeat_.start(sweepInterval, [&dosGuard] { dosGuard.clear(); });
+    std::promise<void> promise;
+    auto future = promise.get_future();
+    std::thread t([&promise, &function] {
+        function();
+        promise.set_value();
+    });
+    if (future.wait_for(timeout) == std::future_status::timeout) {
+        FAIL() << "Timeout " << std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count() << "ms exceeded";
+    }
+    t.join();
 }
 
-}  // namespace web
+}  // namespace tests::common::util

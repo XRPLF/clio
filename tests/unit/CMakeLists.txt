@@ -121,6 +121,7 @@ target_sources(
           util/requests/WsConnectionTests.cpp
           util/RandomTests.cpp
           util/RetryTests.cpp
+          util/RepeatTests.cpp
           util/SignalsHandlerTests.cpp
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
@@ -129,7 +130,7 @@ target_sources(
           web/impl/ServerSslContextTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
-          web/SweepHandlerTests.cpp
+          web/IntervalSweepHandlerTests.cpp
           web/WhitelistHandlerTests.cpp
           # New Config
           util/newconfig/ArrayViewTests.cpp

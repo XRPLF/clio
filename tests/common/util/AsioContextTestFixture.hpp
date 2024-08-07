@@ -26,6 +26,7 @@
 #include <boost/asio/spawn.hpp>
 #include <gmock/gmock.h>
 
+#include <chrono>
 #include <optional>
 #include <thread>
 
@@ -94,6 +95,13 @@ struct SyncAsioContextTest : virtual public NoLoggerFixture {
     runContext()
     {
         ctx.run();
+        ctx.reset();
+    }
+
+    void
+    runContextFor(std::chrono::milliseconds duration)
+    {
+        ctx.run_for(duration);
         ctx.reset();
     }
 

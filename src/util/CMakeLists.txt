@@ -14,11 +14,12 @@ target_sources(
           prometheus/Prometheus.cpp
           Random.cpp
           Retry.cpp
-          SignalsHandler.cpp
+          Repeat.cpp
           requests/RequestBuilder.cpp
           requests/Types.cpp
           requests/WsConnection.cpp
           requests/impl/SslContext.cpp
+          SignalsHandler.cpp
           Taggable.cpp
           TerminationHandler.cpp
           TimeUtils.cpp

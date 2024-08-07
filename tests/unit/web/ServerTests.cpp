@@ -127,14 +127,14 @@ struct WebServerTest : NoLoggerFixture {
     boost::asio::io_context ctxSync;
     std::string const port = std::to_string(tests::util::generateFreePort());
     Config cfg{generateJSONWithDynamicPort(port)};
-    IntervalSweepHandler sweepHandler = web::IntervalSweepHandler{cfg, ctxSync};
-    WhitelistHandler whitelistHandler = web::WhitelistHandler{cfg};
-    DOSGuard dosGuard = web::DOSGuard{cfg, whitelistHandler, sweepHandler};
+    WhitelistHandler whitelistHandler{cfg};
+    DOSGuard dosGuard{cfg, whitelistHandler};
+    IntervalSweepHandler sweepHandler{cfg, ctxSync, dosGuard};
 
     Config cfgOverload{generateJSONDataOverload(port)};
-    IntervalSweepHandler sweepHandlerOverload = web::IntervalSweepHandler{cfgOverload, ctxSync};
-    WhitelistHandler whitelistHandlerOverload = web::WhitelistHandler{cfgOverload};
-    DOSGuard dosGuardOverload = web::DOSGuard{cfgOverload, whitelistHandlerOverload, sweepHandlerOverload};
+    WhitelistHandler whitelistHandlerOverload{cfgOverload};
+    DOSGuard dosGuardOverload{cfgOverload, whitelistHandlerOverload};
+    IntervalSweepHandler sweepHandlerOverload{cfgOverload, ctxSync, dosGuardOverload};
     // this ctx is for http server
     boost::asio::io_context ctx;
 

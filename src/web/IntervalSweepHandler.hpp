@@ -19,28 +19,20 @@
 
 #pragma once
 
+#include "util/Repeat.hpp"
 #include "util/config/Config.hpp"
 
-#include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/steady_timer.hpp>
-
-#include <chrono>
-#include <functional>
 
 namespace web {
 
 class BaseDOSGuard;
 
 /**
- * @brief Sweep handler using a steady_timer and boost::asio::io_context.
+ * @brief Sweep handler clearing context every sweep interval from config.
  */
 class IntervalSweepHandler {
-    std::chrono::milliseconds sweepInterval_;
-    std::reference_wrapper<boost::asio::io_context> ctx_;
-    boost::asio::steady_timer timer_;
-
-    web::BaseDOSGuard* dosGuard_ = nullptr;
+    util::Repeat repeat_;
 
 public:
     /**
@@ -48,25 +40,9 @@ public:
      *
      * @param config Clio config to use
      * @param ctx The boost::asio::io_context to use
+     * @param dosGuard The DOS guard to use
      */
-    IntervalSweepHandler(util::Config const& config, boost::asio::io_context& ctx);
-
-    /**
-     * @brief Cancels the sweep timer.
-     */
-    ~IntervalSweepHandler();
-
-    /**
-     * @brief This setup member function is called by @ref BasicDOSGuard during its initialization.
-     *
-     * @param guard Pointer to the dos guard
-     */
-    void
-    setup(web::BaseDOSGuard* guard);
-
-private:
-    void
-    createTimer();
+    IntervalSweepHandler(util::Config const& config, boost::asio::io_context& ctx, web::BaseDOSGuard& dosGuard);
 };
 
 }  // namespace web

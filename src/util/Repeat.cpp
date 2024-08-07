@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,33 +17,22 @@
 */
 //==============================================================================
 
-#include "web/IntervalSweepHandler.hpp"
+#include "util/Repeat.hpp"
 
-#include "util/config/Config.hpp"
-#include "web/DOSGuard.hpp"
-
-#include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/system/detail/error_code.hpp>
 
-#include <algorithm>
-#include <chrono>
-#include <functional>
+namespace util {
 
-namespace web {
-
-IntervalSweepHandler::IntervalSweepHandler(
-    util::Config const& config,
-    boost::asio::io_context& ctx,
-    web::BaseDOSGuard& dosGuard
-)
-    : repeat_{std::ref(ctx)}
+Repeat::Repeat(boost::asio::io_context& ioc) : timer_(ioc)
 {
-    auto const sweepInterval{std::max(
-        std::chrono::milliseconds{1u}, util::Config::toMilliseconds(config.valueOr("dos_guard.sweep_interval", 1.0))
-    )};
-    repeat_.start(sweepInterval, [&dosGuard] { dosGuard.clear(); });
 }
 
-}  // namespace web
+void
+Repeat::stop()
+{
+    stopping_ = true;
+    timer_.cancel();
+    semaphore_.acquire();
+}
+
+}  // namespace util

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,15 +19,18 @@
 
 #pragma once
 
-#include <cstddef>
+#include <chrono>
 #include <functional>
 
-struct FakeAmendmentBlockAction {
-    std::reference_wrapper<std::size_t> callCount;
+namespace tests::common::util {
 
-    void
-    operator()() const
-    {
-        ++(callCount.get());
-    }
-};
+/**
+ * @brief Run a function with a timeout. If the function does not complete within the timeout, the test will fail.
+ *
+ * @param timeout The timeout duration
+ * @param function The function to run
+ */
+void
+withTimeout(std::chrono::steady_clock::duration timeout, std::function<void()> function);
+
+}  // namespace tests::common::util
