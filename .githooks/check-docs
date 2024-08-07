@@ -20,8 +20,10 @@ if [ -z "$DOXYGEN" ]; then
 
                                    WARNING
 -----------------------------------------------------------------------------
-        'doxygen' is required to check documentation.
-        Please install it for next time. For the time being it's on CI.
+        'doxygen' is required to check documentation. 
+        Please install it for next time.
+
+        Your changes may fail to pass CI once pushed.
 -----------------------------------------------------------------------------
 
 EOF
@@ -38,8 +40,9 @@ if [[ "1.12.0" > "$version" ]]; then
                                     ERROR
 -----------------------------------------------------------------------------
         A minimum of version 1.12 of `which doxygen` is required.
-        Your version is $version.
-        Please upgrade it for next time. For the time being it's on CI.
+        Your version is $version. Please upgrade it for next time.
+
+        Your changes may fail to pass CI once pushed.
 -----------------------------------------------------------------------------
 
 EOF
