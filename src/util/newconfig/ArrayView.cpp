@@ -17,31 +17,44 @@
 */
 //==============================================================================
 
-#include "util/LedgerUtils.hpp"
+#include "util/newconfig/ArrayView.hpp"
 
-#include <xrpl/protocol/LedgerFormats.h>
+#include "util/Assert.hpp"
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/ObjectView.hpp"
+#include "util/newconfig/ValueView.hpp"
 
-#include <algorithm>
-#include <string>
-#include <unordered_map>
+#include <cstddef>
+#include <string_view>
 
-namespace util {
+namespace util::config {
 
-ripple::LedgerEntryType
-LedgerTypes::GetLedgerEntryTypeFromStr(std::string const& entryName)
+ArrayView::ArrayView(std::string_view prefix, ClioConfigDefinition const& configDef)
+    : prefix_{prefix}, clioConfig_{configDef}
 {
-    static std::unordered_map<std::string, ripple::LedgerEntryType> typeMap = []() {
-        std::unordered_map<std::string, ripple::LedgerEntryType> map;
-        std::for_each(std::begin(LEDGER_TYPES), std::end(LEDGER_TYPES), [&map](auto const& item) {
-            map[item.name] = item.type;
-        });
-        return map;
-    }();
-
-    if (typeMap.find(entryName) == typeMap.end())
-        return ripple::ltANY;
-
-    return typeMap.at(entryName);
 }
 
-}  // namespace util
+ValueView
+ArrayView::valueAt(std::size_t idx) const
+{
+    ASSERT(clioConfig_.get().contains(prefix_), "Current string {} is a prefix, not a key of config", prefix_);
+    ConfigValue const& val = clioConfig_.get().asArray(prefix_).at(idx);
+    return ValueView{val};
+}
+
+size_t
+ArrayView::size() const
+{
+    return clioConfig_.get().arraySize(prefix_);
+}
+
+ObjectView
+ArrayView::objectAt(std::size_t idx) const
+{
+    ASSERT(idx < this->size(), "Object index is out of scope");
+    return ObjectView{prefix_, idx, clioConfig_};
+}
+
+}  // namespace util::config

@@ -96,7 +96,7 @@ public:
     {
         static auto const rpcSpec = RpcSpec{
             {JS(issuer), validation::Required{}, validation::CustomValidators::AccountValidator},
-            {"nft_taxon", validation::Type<uint32_t>{}},
+            {JS(nft_taxon), validation::Type<uint32_t>{}},
             {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
             {JS(limit),

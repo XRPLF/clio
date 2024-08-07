@@ -17,31 +17,12 @@
 */
 //==============================================================================
 
-#include "util/LedgerUtils.hpp"
-
-#include <xrpl/protocol/LedgerFormats.h>
-
-#include <algorithm>
-#include <string>
-#include <unordered_map>
+#pragma once
 
 namespace util {
 
-ripple::LedgerEntryType
-LedgerTypes::GetLedgerEntryTypeFromStr(std::string const& entryName)
-{
-    static std::unordered_map<std::string, ripple::LedgerEntryType> typeMap = []() {
-        std::unordered_map<std::string, ripple::LedgerEntryType> map;
-        std::for_each(std::begin(LEDGER_TYPES), std::end(LEDGER_TYPES), [&map](auto const& item) {
-            map[item.name] = item.type;
-        });
-        return map;
-    }();
-
-    if (typeMap.find(entryName) == typeMap.end())
-        return ripple::ltANY;
-
-    return typeMap.at(entryName);
-}
+/** @brief used for compile time checking of unsupported types */
+template <typename>
+static constexpr bool Unsupported = false;
 
 }  // namespace util

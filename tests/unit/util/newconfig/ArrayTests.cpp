@@ -17,31 +17,34 @@
 */
 //==============================================================================
 
-#include "util/LedgerUtils.hpp"
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/ValueView.hpp"
 
-#include <xrpl/protocol/LedgerFormats.h>
+#include <gtest/gtest.h>
 
-#include <algorithm>
-#include <string>
-#include <unordered_map>
+using namespace util::config;
 
-namespace util {
-
-ripple::LedgerEntryType
-LedgerTypes::GetLedgerEntryTypeFromStr(std::string const& entryName)
+TEST(ArrayTest, testConfigArray)
 {
-    static std::unordered_map<std::string, ripple::LedgerEntryType> typeMap = []() {
-        std::unordered_map<std::string, ripple::LedgerEntryType> map;
-        std::for_each(std::begin(LEDGER_TYPES), std::end(LEDGER_TYPES), [&map](auto const& item) {
-            map[item.name] = item.type;
-        });
-        return map;
-    }();
+    auto arr = Array{
+        ConfigValue{ConfigType::Boolean}.defaultValue(false),
+        ConfigValue{ConfigType::Integer}.defaultValue(1234),
+        ConfigValue{ConfigType::Double}.defaultValue(22.22),
+    };
+    auto cv = arr.at(0);
+    ValueView const vv{cv};
+    EXPECT_EQ(vv.asBool(), false);
 
-    if (typeMap.find(entryName) == typeMap.end())
-        return ripple::ltANY;
+    auto cv2 = arr.at(1);
+    ValueView const vv2{cv2};
+    EXPECT_EQ(vv2.asIntType<int>(), 1234);
 
-    return typeMap.at(entryName);
+    EXPECT_EQ(arr.size(), 3);
+    arr.emplaceBack(ConfigValue{ConfigType::String}.defaultValue("false"));
+
+    EXPECT_EQ(arr.size(), 4);
+    auto cv4 = arr.at(3);
+    ValueView const vv4{cv4};
+    EXPECT_EQ(vv4.asString(), "false");
 }
-
-}  // namespace util

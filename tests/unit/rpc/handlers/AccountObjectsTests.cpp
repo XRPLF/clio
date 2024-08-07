@@ -96,6 +96,12 @@ generateTestValuesForParametersTest()
             "Invalid field 'type'."
         },
         AccountObjectsParamTestCaseBundle{
+            "TypeNotAccountOwned",
+            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":"amendments"})",
+            "invalidParams",
+            "Invalid field 'type'."
+        },
+        AccountObjectsParamTestCaseBundle{
             "LedgerHashInvalid",
             R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})",
             "invalidParams",

@@ -17,31 +17,24 @@
 */
 //==============================================================================
 
-#include "util/LedgerUtils.hpp"
+#include "util/newconfig/ConfigValue.hpp"
 
-#include <xrpl/protocol/LedgerFormats.h>
+#include <gtest/gtest.h>
 
-#include <algorithm>
-#include <string>
-#include <unordered_map>
+using namespace util::config;
 
-namespace util {
-
-ripple::LedgerEntryType
-LedgerTypes::GetLedgerEntryTypeFromStr(std::string const& entryName)
+TEST(ConfigValue, testConfigValue)
 {
-    static std::unordered_map<std::string, ripple::LedgerEntryType> typeMap = []() {
-        std::unordered_map<std::string, ripple::LedgerEntryType> map;
-        std::for_each(std::begin(LEDGER_TYPES), std::end(LEDGER_TYPES), [&map](auto const& item) {
-            map[item.name] = item.type;
-        });
-        return map;
-    }();
+    auto cvStr = ConfigValue{ConfigType::String}.defaultValue("12345");
+    EXPECT_EQ(cvStr.type(), ConfigType::String);
+    EXPECT_TRUE(cvStr.hasValue());
+    EXPECT_FALSE(cvStr.isOptional());
 
-    if (typeMap.find(entryName) == typeMap.end())
-        return ripple::ltANY;
+    auto cvInt = ConfigValue{ConfigType::Integer}.defaultValue(543);
+    EXPECT_EQ(cvInt.type(), ConfigType::Integer);
+    EXPECT_TRUE(cvStr.hasValue());
+    EXPECT_FALSE(cvStr.isOptional());
 
-    return typeMap.at(entryName);
+    auto cvOpt = ConfigValue{ConfigType::Integer}.optional();
+    EXPECT_TRUE(cvOpt.isOptional());
 }
-
-}  // namespace util
