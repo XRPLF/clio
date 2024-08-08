@@ -22,9 +22,7 @@
 #include "util/config/Config.hpp"
 #include "web/DOSGuard.hpp"
 
-#include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/post.hpp>
 #include <boost/system/detail/error_code.hpp>
 
 #include <algorithm>
