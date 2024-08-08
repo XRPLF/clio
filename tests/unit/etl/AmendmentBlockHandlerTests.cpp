@@ -23,7 +23,6 @@
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

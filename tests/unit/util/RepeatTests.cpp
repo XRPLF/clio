@@ -21,7 +21,6 @@
 #include "util/Repeat.hpp"
 #include "util/WithTimeout.hpp"
 
-#include <boost/asio/error.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
