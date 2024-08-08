@@ -31,6 +31,7 @@
 #include <condition_variable>
 #include <cstdint>
 #include <mutex>
+#include <semaphore>
 
 using namespace util;
 using namespace rpc;
@@ -43,14 +44,14 @@ constexpr auto JSONConfig = R"JSON({
     })JSON";
 }  // namespace
 
-struct RPCWorkQueueTestBase : NoLoggerFixture {
+struct WorkQueueTestBase : NoLoggerFixture {
     Config cfg = Config{boost::json::parse(JSONConfig)};
     WorkQueue queue = WorkQueue::make_WorkQueue(cfg);
 };
 
-struct RPCWorkQueueTest : WithPrometheus, RPCWorkQueueTestBase {};
+struct WorkQueueTest : WithPrometheus, WorkQueueTestBase {};
 
-TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
+TEST_F(WorkQueueTest, WhitelistedExecutionCountAddsUp)
 {
     auto constexpr static TOTAL = 512u;
     uint32_t executeCount = 0u;
@@ -77,7 +78,7 @@ TEST_F(RPCWorkQueueTest, WhitelistedExecutionCountAddsUp)
     EXPECT_EQ(report.at("max_queue_size"), 2);
 }
 
-TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
+TEST_F(WorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
 {
     auto constexpr static TOTAL = 3u;
     auto expectedCount = 2u;
@@ -112,35 +113,70 @@ TEST_F(RPCWorkQueueTest, NonWhitelistedPreventSchedulingAtQueueLimitExceeded)
     EXPECT_TRUE(unblocked);
 }
 
-struct RPCWorkQueueMockPrometheusTest : WithMockPrometheus, RPCWorkQueueTestBase {};
+struct WorkQueueStopTest : WorkQueueTest {
+    testing::StrictMock<testing::MockFunction<void()>> onTasksComplete;
+    testing::StrictMock<testing::MockFunction<void()>> taskMock;
+};
 
-TEST_F(RPCWorkQueueMockPrometheusTest, postCoroCouhters)
+TEST_F(WorkQueueStopTest, RejectsNewTasksWhenStopping)
+{
+    EXPECT_CALL(taskMock, Call());
+    EXPECT_TRUE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, false));
+
+    queue.stop([]() {});
+    EXPECT_FALSE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, false));
+
+    queue.join();
+}
+
+TEST_F(WorkQueueStopTest, CallsOnTasksCompleteWhenStoppingAndQueueIsEmpty)
+{
+    EXPECT_CALL(taskMock, Call());
+    EXPECT_TRUE(queue.postCoro([this](auto /* yield */) { taskMock.Call(); }, false));
+
+    EXPECT_CALL(onTasksComplete, Call()).WillOnce([&]() { EXPECT_EQ(queue.size(), 0u); });
+    queue.stop(onTasksComplete.AsStdFunction());
+    queue.join();
+}
+TEST_F(WorkQueueStopTest, CallsOnTasksCompleteWhenStoppingOnLastTask)
+{
+    std::binary_semaphore semaphore{0};
+
+    EXPECT_CALL(taskMock, Call());
+    EXPECT_TRUE(queue.postCoro(
+        [&](auto /* yield */) {
+            taskMock.Call();
+            semaphore.acquire();
+        },
+        false
+    ));
+
+    EXPECT_CALL(onTasksComplete, Call()).WillOnce([&]() { EXPECT_EQ(queue.size(), 0u); });
+    queue.stop(onTasksComplete.AsStdFunction());
+    semaphore.release();
+
+    queue.join();
+}
+
+struct WorkQueueMockPrometheusTest : WithMockPrometheus, WorkQueueTestBase {};
+
+TEST_F(WorkQueueMockPrometheusTest, postCoroCouhters)
 {
     auto& queuedMock = makeMock<CounterInt>("work_queue_queued_total_number", "");
     auto& durationMock = makeMock<CounterInt>("work_queue_cumulitive_tasks_duration_us", "");
     auto& curSizeMock = makeMock<GaugeInt>("work_queue_current_size", "");
 
-    std::mutex mtx;
-    bool canContinue = false;
-    std::condition_variable cv;
+    std::binary_semaphore semaphore{0};
 
-    EXPECT_CALL(curSizeMock, value()).WillOnce(::testing::Return(0));
+    EXPECT_CALL(curSizeMock, value()).Times(2).WillRepeatedly(::testing::Return(0));
     EXPECT_CALL(curSizeMock, add(1));
     EXPECT_CALL(queuedMock, add(1));
     EXPECT_CALL(durationMock, add(::testing::Gt(0))).WillOnce([&](auto) {
         EXPECT_CALL(curSizeMock, add(-1));
-        std::unique_lock const lk{mtx};
-        canContinue = true;
-        cv.notify_all();
+        semaphore.release();
     });
 
-    auto const res = queue.postCoro(
-        [&](auto /* yield */) {
-            std::unique_lock lk{mtx};
-            cv.wait(lk, [&]() { return canContinue; });
-        },
-        false
-    );
+    auto const res = queue.postCoro([&](auto /* yield */) { semaphore.acquire(); }, false);
 
     ASSERT_TRUE(res);
     queue.join();
