@@ -120,7 +120,7 @@ class PortConstraint final : public Constraint {
      * @param port The port number to check.
      * @return An optional Error if the port is not within a valid range.
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     checkConstraint(ValueType const& port) const override;
 
 private:
@@ -130,7 +130,7 @@ private:
      * @param type The value type to be checked.
      * @return true if the type is correct, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     checkType(ValueType const& type) const override
     {
         return std::holds_alternative<int64_t>(type) || std::holds_alternative<std::string>(type);
@@ -150,7 +150,7 @@ class ChannelNameConstraint final : public Constraint {
      * @param channel The channel name to check.
      * @return An optional Error if the channel name is not valid.
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     checkConstraint(ValueType const& channel) const override;
 
 private:
@@ -160,7 +160,7 @@ private:
      * @param type The value type to be checked.
      * @return true if the type is correct, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     checkType(ValueType const& type) const override
     {
         return std::holds_alternative<std::string>(type);
@@ -177,7 +177,7 @@ class LogLevelNameConstraint final : public Constraint {
      * @param logger The log level name to check.
      * @return An optional Error if the log level name is not valid.
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     checkConstraint(ValueType const& logger) const override;
 
 private:
@@ -187,7 +187,7 @@ private:
      * @param type The value type to be checked.
      * @return true if the type is correct, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     checkType(ValueType const& type) const override
     {
         return std::holds_alternative<std::string>(type);
@@ -204,7 +204,7 @@ class ValidIPConstraint final : public Constraint {
      * @param ip The IP address to check.
      * @return An optional Error if the IP address is not valid.
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     checkConstraint(ValueType const& ip) const override;
 
 private:
@@ -214,7 +214,7 @@ private:
      * @param type The value type to be checked.
      * @return true if the type is correct, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     checkType(ValueType const& type) const override
     {
         return std::holds_alternative<std::string>(type);
@@ -231,7 +231,7 @@ class CassandraName final : public Constraint {
      * @param name The Cassandra name to check.
      * @return An optional Error if the name is not "cassandra"
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     checkConstraint(ValueType const& name) const override;
 
 private:
@@ -241,7 +241,7 @@ private:
      * @param type The value type to be checked.
      * @return true if the type is correct, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     checkType(ValueType const& type) const override
     {
         return std::holds_alternative<std::string>(type);
@@ -258,7 +258,7 @@ class LoadConstraint final : public Constraint {
      * @param name The load mode to check.
      * @return An optional Error if the load mode is not valid.
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     checkConstraint(ValueType const& name) const override;
 
 private:
@@ -268,7 +268,7 @@ private:
      * @param type The value type to be checked.
      * @return true if the type is correct, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     checkType(ValueType const& type) const override
     {
         return std::holds_alternative<std::string>(type);
@@ -285,7 +285,7 @@ class LogTagStyle final : public Constraint {
      * @param tagName The log tag style to check.
      * @return An optional Error if the log tag style is not valid.
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     checkConstraint(ValueType const& tagName) const override;
 
 private:
@@ -295,7 +295,7 @@ private:
      * @param type The value type to be checked.
      * @return true if the type is correct, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     checkType(ValueType const& type) const override
     {
         return std::holds_alternative<std::string>(type);
@@ -312,7 +312,7 @@ class APIVersionConstraint final : public Constraint {
      * @param apiVersion The API version to check.
      * @return An optional Error if the API version is not within a valid range.
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     checkConstraint(ValueType const& apiVersion) const override;
 
 private:
@@ -322,7 +322,7 @@ private:
      * @param type The value type to be checked.
      * @return true if the type is correct, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     checkType(ValueType const& type) const override
     {
         return std::holds_alternative<int64_t>(type);
@@ -342,7 +342,7 @@ class PositiveNumConstraint final : public Constraint {
      * @param num The number to check.
      * @return An optional Error if the number is not valid.
      */
-    std::optional<Error>
+    [[nodiscard]] std::optional<Error>
     checkConstraint(Constraint::ValueType const& num) const override
     {
         if (!checkType(num))
@@ -361,7 +361,7 @@ private:
      * @param type The type to be checked.
      * @return true if the type is correct, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     checkType(ValueType const& type) const override
     {
         return std::holds_alternative<std::int64_t>(type) || std::holds_alternative<double>(type);

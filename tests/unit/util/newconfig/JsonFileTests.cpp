@@ -87,3 +87,11 @@ TEST_F(ParseJson, validateArrayValue)
     EXPECT_EQ("125.5.5.1", std::get<std::string>(whitelistArr.at(0)));
     EXPECT_EQ("204.2.2.1", std::get<std::string>(whitelistArr.at(1)));
 }
+
+struct JsonValueDeathTest : ParseJson {};
+
+TEST_F(JsonValueDeathTest, invalidGetValues)
+{
+    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("doesn't exist"), ".*");
+    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("header.text1"), ".*");
+}
