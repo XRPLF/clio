@@ -114,6 +114,9 @@ public:
  * @brief A constraint to ensure the port number is within a valid range.
  */
 class PortConstraint final : public Constraint {
+public:
+    ~PortConstraint() override = default;
+
     /**
      * @brief Check if the port number is within a valid range.
      *
@@ -144,6 +147,9 @@ private:
  * @brief A constraint to ensure the channel name is valid.
  */
 class ChannelNameConstraint final : public Constraint {
+public:
+    ~ChannelNameConstraint() override = default;
+
     /**
      * @brief Check if the channel name is valid.
      *
@@ -171,6 +177,9 @@ private:
  * @brief A constraint to ensure the log level name is valid.
  */
 class LogLevelNameConstraint final : public Constraint {
+public:
+    ~LogLevelNameConstraint() override = default;
+
     /**
      * @brief Check if the log level name is valid.
      *
@@ -198,6 +207,9 @@ private:
  * @brief A constraint to ensure the IP address is valid.
  */
 class ValidIPConstraint final : public Constraint {
+public:
+    ~ValidIPConstraint() override = default;
+
     /**
      * @brief Check if the IP address is valid.
      *
@@ -225,6 +237,9 @@ private:
  * @brief A constraint to ensure the Cassandra name is valid.
  */
 class CassandraName final : public Constraint {
+public:
+    ~CassandraName() override = default;
+
     /**
      * @brief Check if the Cassandra name is valid.
      *
@@ -252,6 +267,9 @@ private:
  * @brief A constraint to ensure the load mode is valid.
  */
 class LoadConstraint final : public Constraint {
+public:
+    ~LoadConstraint() override = default;
+
     /**
      * @brief Check if the load mode is valid.
      *
@@ -279,6 +297,9 @@ private:
  * @brief A constraint to ensure the log tag style is valid.
  */
 class LogTagStyle final : public Constraint {
+public:
+    ~LogTagStyle() override = default;
+
     /**
      * @brief Check if the log tag style is valid.
      *
@@ -306,6 +327,9 @@ private:
  * @brief A constraint class to ensure the API version is within a valid range.
  */
 class APIVersionConstraint final : public Constraint {
+public:
+    ~APIVersionConstraint() override = default;
+
     /**
      * @brief Check if the API version is within a valid range.
      *
@@ -336,6 +360,9 @@ private:
  */
 template <typename T>
 class PositiveNumConstraint final : public Constraint {
+public:
+    ~PositiveNumConstraint() override = default;
+
     /**
      * @brief Check if the number is positive and within the valid range.
      *

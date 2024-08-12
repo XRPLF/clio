@@ -241,8 +241,8 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
         );
         std::visit(
             util::OverloadSet{
-                [&key, &config, &listOfErrors](ConfigValue& value) {
-                    if (auto const setVal = value.setValue(config.getValue(key)); setVal.has_value())
+                [&key, &config, &listOfErrors](ConfigValue& val) {
+                    if (auto const setVal = val.setValue(config.getValue(key)); setVal.has_value())
                         listOfErrors.emplace_back(setVal.value());
                 },
                 // All configValues in Array gotten from user must have same type and constraint as the first element in
