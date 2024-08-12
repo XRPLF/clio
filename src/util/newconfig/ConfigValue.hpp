@@ -32,6 +32,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <variant>
 
 namespace util::config {
@@ -74,19 +75,26 @@ public:
      * @brief Sets the value current ConfigValue given by the User's defined value
      *
      * @param value The value to set
+     * @param key The Config key associated with the value. Optional to include; Used for debugging message to user.
      * @return optional Error if user tries to set a value of wrong type or not within a constraint
      */
     [[nodiscard]] std::optional<Error>
-    setValue(ValueType value)
+    setValue(ValueType value, std::optional<std::string_view> key = std::nullopt)
     {
-        auto const err = checkTypeConsistency(type_, value);
-        if (err.has_value())
+        auto err = checkTypeConsistency(type_, value);
+        if (err.has_value()) {
+            if (key.has_value())
+                err->error = fmt::format("{} {}", key.value(), err->error);
             return err;
+        }
 
         if (cons_.has_value()) {
-            auto const constraintCheck = cons_->get().checkConstraint(value);
-            if (constraintCheck.has_value())
+            auto constraintCheck = cons_->get().checkConstraint(value);
+            if (constraintCheck.has_value()) {
+                if (key.has_value())
+                    constraintCheck->error = fmt::format("{} {}", key.value(), constraintCheck->error);
                 return constraintCheck;
+            }
         }
         value_ = value;
         return std::nullopt;
@@ -208,16 +216,16 @@ private:
     checkTypeConsistency(ConfigType type, ValueType value)
     {
         if (type == ConfigType::String && !std::holds_alternative<std::string>(value)) {
-            return Error{"Value does not match type string"};
+            return Error{"value does not match type string"};
         }
         if (type == ConfigType::Boolean && !std::holds_alternative<bool>(value)) {
-            return Error{"Value does not match type boolean"};
+            return Error{"value does not match type boolean"};
         }
         if (type == ConfigType::Double && !std::holds_alternative<double>(value)) {
-            return Error{"Value does not match type double"};
+            return Error{"value does not match type double"};
         }
         if (type == ConfigType::Integer && !std::holds_alternative<int64_t>(value)) {
-            return Error{"Value does not match type integer"};
+            return Error{"value does not match type integer"};
         }
         return std::nullopt;
     }

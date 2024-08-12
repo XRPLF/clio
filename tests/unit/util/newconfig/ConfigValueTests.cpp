@@ -49,7 +49,7 @@ TEST(ConfigValue, withDifferentConstraints)
     EXPECT_TRUE(err.has_value());
     EXPECT_EQ(err->error, "Port does not satisfy the constraint bounds");
     EXPECT_TRUE(cvPort.setValue(33.33).has_value());
-    EXPECT_TRUE(cvPort.setValue(33.33).value().error == "Value does not match type integer");
+    EXPECT_TRUE(cvPort.setValue(33.33).value().error == "value does not match type integer");
     EXPECT_FALSE(cvPort.setValue(1).has_value());
     auto cvPort2 = ConfigValue{ConfigType::String}.defaultValue("4444").withConstraint(validatePort);
     auto const strPortError = cvPort2.setValue("100000");
@@ -103,7 +103,7 @@ TEST(ConfigValue, withDifferentConstraints)
     EXPECT_FALSE(apiVer.setValue(API_VERSION_MAX));
     auto const apiWrongType = apiVer.setValue("9");
     EXPECT_TRUE(apiWrongType.has_value());
-    EXPECT_EQ(apiWrongType->error, "Value does not match type integer");
+    EXPECT_EQ(apiWrongType->error, "value does not match type integer");
 }
 
 TEST(ConfigValueDeathTest, withDifferentConstraints)

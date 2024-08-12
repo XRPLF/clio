@@ -253,3 +253,31 @@ TEST_F(OverrideConfigVals, fetchObjectByArray)
     EXPECT_EQ(obj3InArr.getValue("sub").asDouble(), 5555.44);
     EXPECT_EQ(obj3InArr.getValue("sub2").asString(), "london");
 }
+
+/** @brief override the default values with the ones in Json */
+struct IncorrectOverrideValues : testing::Test {
+    ClioConfigDefinition configData = generateConfig();
+};
+
+TEST_F(IncorrectOverrideValues, InvalidJson)
+{
+    auto const tmp = TmpFile(invalidJSONData);
+    ConfigFileJson const jsonFileObj{tmp.path};
+    auto const errors = configData.parse(jsonFileObj);
+    EXPECT_TRUE(errors.has_value());
+
+    // Expected error messages
+    std::unordered_set<std::string_view> expectedErrors{
+        "dosguard.whitelist.[] value does not match type string",
+        "higher.[].low.section key is required in user Config",
+        "higher.[].low.admin key is required in user Config",
+        "array.[].sub key is required in user Config",
+        "header.port value does not match type integer"
+    };
+
+    std::unordered_set<std::string_view> actualErrors;
+    for (auto const& error : errors.value()) {
+        actualErrors.insert(error.error);
+    }
+    EXPECT_EQ(expectedErrors, actualErrors);
+}

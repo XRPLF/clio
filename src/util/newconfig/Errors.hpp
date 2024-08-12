@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <string>
 #include <string_view>
 
 namespace util::config {
@@ -33,7 +34,18 @@ struct Error {
     Error(std::string_view err) : error{err}
     {
     }
-    std::string_view error;
+
+    /**
+     * @brief Constructs an Error with a custom error message.
+     *
+     * @param key the key associated with the error.
+     * @param err the error message to display to users.
+     */
+    Error(std::string_view key, std::string_view err) : error{std::string(key) + std::string(err)}
+    {
+    }
+
+    std::string error;
 };
 
 }  // namespace util::config
