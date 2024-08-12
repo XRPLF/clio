@@ -346,10 +346,16 @@ class PositiveNumConstraint final : public Constraint {
     checkConstraint(Constraint::ValueType const& num) const override
     {
         if (!checkType(num))
-            return Error{"number must be of type int or double"};
+            return Error{"number must be of type int"};
+        auto const numToCheck = std::get<int64_t>(num);
 
-        auto const numToCheck = std::holds_alternative<double>(num) ? std::get<double>(num) : std::get<int64_t>(num);
-        if (numToCheck >= std::numeric_limits<T>::lowest() || numToCheck <= std::numeric_limits<T>::max())
+        if (std::is_same_v<T, uint64_t> && numToCheck < 0)
+            return Error{"uint64 must be positive"};
+
+        if (std::is_same_v<T, uint64_t> || std::is_same_v<T, int64_t>)
+            return std::nullopt;
+
+        if (numToCheck >= std::numeric_limits<T>::lowest() && numToCheck <= std::numeric_limits<T>::max())
             return std::nullopt;
         return Error{"num must be an integer"};
     }
@@ -364,7 +370,7 @@ private:
     [[nodiscard]] bool
     checkType(ValueType const& type) const override
     {
-        return std::holds_alternative<std::int64_t>(type) || std::holds_alternative<double>(type);
+        return std::holds_alternative<std::int64_t>(type);
     }
 };
 
