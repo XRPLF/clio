@@ -115,10 +115,13 @@ TEST(ConfigValueDeathTest, withDifferentConstraints)
         { [[maybe_unused]] auto a = ConfigValue{ConfigType::Boolean}.defaultValue(true).withConstraint(logTag); }, ".*"
     );
     EXPECT_DEATH(
-        { [[maybe_unused]] auto a = ConfigValue{ConfigType::Integer}.defaultValue(999999).withConstraint(uint16); },
+        {
+            [[maybe_unused]] auto a = ConfigValue{ConfigType::Integer}.defaultValue(999999).withConstraint(ValidUint16);
+        },
         ".*"
     );
     EXPECT_DEATH(
-        { [[maybe_unused]] auto a = ConfigValue{ConfigType::Integer}.defaultValue(-66).withConstraint(uint64); }, ".*"
+        { [[maybe_unused]] auto a = ConfigValue{ConfigType::Integer}.defaultValue(-66).withConstraint(ValidUint16); },
+        ".*"
     );
 }
