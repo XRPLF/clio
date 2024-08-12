@@ -28,7 +28,7 @@ struct Error {
     /**
      * @brief Constructs an Error with a custom error message.
      *
-     * @param error the error message to display to users.
+     * @param err the error message to display to users.
      */
     Error(std::string_view err) : error{err}
     {
