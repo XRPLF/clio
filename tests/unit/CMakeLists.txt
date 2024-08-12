@@ -133,12 +133,13 @@ target_sources(
           web/IntervalSweepHandlerTests.cpp
           web/WhitelistHandlerTests.cpp
           # New Config
-          util/newconfig/ArrayViewTests.cpp
-          util/newconfig/ObjectViewTests.cpp
-          util/newconfig/ValueViewTests.cpp
           util/newconfig/ArrayTests.cpp
-          util/newconfig/ConfigValueTests.cpp
+          util/newconfig/ArrayViewTests.cpp
           util/newconfig/ClioConfigDefinitionTests.cpp
+          util/newconfig/ConfigValueTests.cpp
+          util/newconfig/ObjectViewTests.cpp
+          util/newconfig/JsonFileTests.cpp
+          util/newconfig/ValueViewTests.cpp
 )
 
 configure_file(test_data/cert.pem ${CMAKE_BINARY_DIR}/tests/unit/test_data/cert.pem COPYONLY)

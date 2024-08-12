@@ -17,18 +17,51 @@
 */
 //==============================================================================
 
-#pragma once
+#include "util/newconfig/Array.hpp"
 
-#include <string_view>
+#include "util/Assert.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+
+#include <cstddef>
+#include <utility>
+#include <vector>
 
 namespace util::config {
 
-/** @brief Displays the different errors when parsing user config */
-struct Error {
-    Error(std::string_view err) : error{err}
-    {
+void
+Array::emplaceBack(ConfigValue value)
+{
+    ASSERT(value.type() == elements_.front().type(), "Trying to insert a Value of Wrong Type");
+    if (!elements_.front().hasValue()) {
+        elements_.front() = std::move(value);
+    } else {
+        elements_.push_back(std::move(value));
     }
-    std::string_view error;
-};
+}
+
+size_t
+Array::size() const
+{
+    return elements_.size();
+}
+
+ConfigValue const&
+Array::at(std::size_t idx) const
+{
+    ASSERT(idx < elements_.size(), "Index is out of scope");
+    return elements_[idx];
+}
+
+std::vector<ConfigValue>::const_iterator
+Array::begin() const
+{
+    return elements_.begin();
+}
+
+std::vector<ConfigValue>::const_iterator
+Array::end() const
+{
+    return elements_.end();
+}
 
 }  // namespace util::config

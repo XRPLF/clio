@@ -20,12 +20,24 @@
 #pragma once
 
 #include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <gtest/gtest.h>
 
 using namespace util::config;
+
+/**
+ * @brief A mock ClioConfigDefinition for testing purposes.
+ *
+ * In the actual Clio configuration, arrays typically hold optional values, meaning users are not required to
+ * provide values for them.
+ *
+ * For primitive types (i.e., single specific values), some are mandatory and must be explicitly defined in the
+ * user's configuration file, including both the key and the corresponding value, while some are optional
+ */
 
 inline ClioConfigDefinition
 generateConfig()
@@ -36,60 +48,147 @@ generateConfig()
         {"header.admin", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
         {"header.sub.sub2Value", ConfigValue{ConfigType::String}.defaultValue("TSM")},
         {"ip", ConfigValue{ConfigType::Double}.defaultValue(444.22)},
-        {"array.[].sub",
-         Array{
-             ConfigValue{ConfigType::Double}.defaultValue(111.11), ConfigValue{ConfigType::Double}.defaultValue(4321.55)
-         }},
-        {"array.[].sub2",
-         Array{
-             ConfigValue{ConfigType::String}.defaultValue("subCategory"),
-             ConfigValue{ConfigType::String}.defaultValue("temporary")
-         }},
-        {"higher.[].low.section", Array{ConfigValue{ConfigType::String}.defaultValue("true")}},
-        {"higher.[].low.admin", Array{ConfigValue{ConfigType::Boolean}.defaultValue(false)}},
-        {"dosguard.whitelist.[]",
-         Array{
-             ConfigValue{ConfigType::String}.defaultValue("125.5.5.2"),
-             ConfigValue{ConfigType::String}.defaultValue("204.2.2.2")
-         }},
-        {"dosguard.port", ConfigValue{ConfigType::Integer}.defaultValue(55555)}
+        {"array.[].sub", Array{ConfigValue{ConfigType::Double}.optional()}},
+        {"array.[].sub2", Array{ConfigValue{ConfigType::String}.optional()}},
+        {"higher.[].low.section", Array{ConfigValue{ConfigType::String}.withConstraint(channelName)}},
+        {"higher.[].low.admin", Array{ConfigValue{ConfigType::Boolean}}},
+        {"dosguard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
+        {"dosguard.port", ConfigValue{ConfigType::Integer}.defaultValue(55555).withConstraint(port)},
+        {"optional.withDefault", ConfigValue{ConfigType::Double}.defaultValue(0.0).optional()},
+        {"optional.withNoDefault", ConfigValue{ConfigType::Double}.optional()},
+        {"requireValue", ConfigValue{ConfigType::String}}
     };
 }
 
-/* The config definition above would look like this structure in config.json:
-"header": {
-   "text1": "value",
-   "port": 123,
-   "admin": true,
-   "sub": {
-       "sub2Value": "TSM"
-   }
- },
- "ip": 444.22,
- "array": [
-   {
-       "sub": 111.11,
-       "sub2": "subCategory"
-   },
-   {
-       "sub": 4321.55,
-       "sub2": "temporary"
-   }
- ],
- "higher": [
-   {
-       "low": {
-           "section": "true",
-           "admin": false
+/* The config definition above would look like this structure in config.json
+{
+    "header": {
+       "text1": "value",
+       "port": 321,
+       "admin": true,
+       "sub": {
+           "sub2Value": "TSM"
        }
-   }
- ],
- "dosguard":  {
-    "whitelist": [
-        "125.5.5.2", "204.2.2.2"
-    ],
-    "port" : 55555
- },
+     },
+     "ip": 444.22,
+     "array": [
+       {
+           "sub": //optional for user to include
+           "sub2": //optional for user to include
+       },
+     ],
+     "higher": [
+       {
+           "low": {
+               "section": //optional for user to include
+               "admin": //optional for user to include
+           }
+       }
+     ],
+     "dosguard":  {
+        "whitelist": [
+            // mandatory for user to include
+        ],
+        "port" : 55555
+        },
+    },
+    "optional" : {
+        "withDefault" : 0.0,
+        "withNoDefault" :  //optional for user to include
+        },
+    "requireValue" : // value must be provided by user
+    }
+*/
 
+/* Used to test overwriting default values in ClioConfigDefinition Above */
+constexpr static auto JSONData = R"JSON(
+    {
+    "header": {
+       "text1": "value",
+       "port": 321,
+       "admin": false,
+       "sub": {
+           "sub2Value": "TSM"
+       }
+     },
+     "array": [
+       {
+           "sub": 111.11,
+           "sub2": "subCategory"
+       },
+       {
+           "sub": 4321.55,
+           "sub2": "temporary"
+       },
+       {
+           "sub": 5555.44,
+           "sub2": "london"
+       }
+     ],
+      "higher": [
+       {
+           "low": {
+               "section": "WebServer",
+               "admin": false
+           }
+       }
+     ],
+     "dosguard":  {
+        "whitelist": [
+            "125.5.5.1", "204.2.2.1"
+        ],
+        "port" : 44444
+        },
+    "optional" : {
+        "withDefault" : 0.0
+        },
+    "requireValue" : "required"
+    }
+)JSON";
 
+/* After parsing jsonValue and populating it into ClioConfig, It will look like this below in json format;
+{
+    "header": {
+       "text1": "value",
+       "port": 321,
+       "admin": false,
+       "sub": {
+           "sub2Value": "TSM"
+       }
+     },
+     "ip": 444.22,
+     "array": [
+        {
+           "sub": 111.11,
+           "sub2": "subCategory"
+       },
+       {
+           "sub": 4321.55,
+           "sub2": "temporary"
+       },
+       {
+           "sub": 5555.44,
+           "sub2": "london"
+       }
+     ],
+     "higher": [
+       {
+           "low": {
+               "section": "WebServer",
+               "admin": false
+           }
+       }
+     ],
+     "dosguard":  {
+        "whitelist": [
+            "125.5.5.1", "204.2.2.1"
+        ],
+        "port" : 44444
+        }
+    },
+    "optional" : {
+        "withDefault" : 0.0
+        },
+    "requireValue" : "required"
+    }
 */

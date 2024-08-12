@@ -19,16 +19,36 @@
 
 #pragma once
 
+#include "util/newconfig/ConfigFileInterface.hpp"
+
+#include <boost/filesystem/path.hpp>
+
+#include <cstdint>
+#include <string>
 #include <string_view>
+#include <variant>
+#include <vector>
+
+// TODO: implement when we support yaml
 
 namespace util::config {
 
-/** @brief Displays the different errors when parsing user config */
-struct Error {
-    Error(std::string_view err) : error{err}
-    {
-    }
-    std::string_view error;
+/** @brief Yaml representation of config */
+class ConfigFileYaml final : public ConfigFileInterface {
+public:
+    ConfigFileYaml() = default;
+
+    void
+    parse(boost::filesystem::path filePath) override;
+
+    std::variant<int64_t, std::string, bool, double>
+    getValue(std::string_view key) const override;
+
+    std::vector<std::variant<int64_t, std::string, bool, double>>
+    getArray(std::string_view key) const override;
+
+    bool
+    containsKey(std::string_view key) const override;
 };
 
 }  // namespace util::config

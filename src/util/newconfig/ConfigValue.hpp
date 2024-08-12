@@ -20,42 +20,22 @@
 #pragma once
 
 #include "util/Assert.hpp"
-#include "util/UnsupportedType.hpp"
+#include "util/OverloadSet.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
+#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Types.hpp"
+
+#include <__expected/expected.h>
+#include <fmt/core.h>
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
-#include <type_traits>
 #include <variant>
 
 namespace util::config {
-
-/** @brief Custom clio config types */
-enum class ConfigType { Integer, String, Double, Boolean };
-
-/**
- * @brief Get the corresponding clio config type
- *
- * @tparam Type The type to get the corresponding ConfigType for
- * @return The corresponding ConfigType
- */
-template <typename Type>
-constexpr ConfigType
-getType()
-{
-    if constexpr (std::is_same_v<Type, int64_t>) {
-        return ConfigType::Integer;
-    } else if constexpr (std::is_same_v<Type, std::string>) {
-        return ConfigType::String;
-    } else if constexpr (std::is_same_v<Type, double>) {
-        return ConfigType::Double;
-    } else if constexpr (std::is_same_v<Type, bool>) {
-        return ConfigType::Boolean;
-    } else {
-        static_assert(util::Unsupported<Type>, "Wrong config type");
-    }
-}
 
 /**
  * @brief Represents the config values for Json/Yaml config
@@ -65,7 +45,7 @@ getType()
  */
 class ConfigValue {
 public:
-    using Type = std::variant<int64_t, std::string, bool, double>;
+    using ValueType = std::variant<int64_t, std::string, bool, double>;
 
     /**
      * @brief Constructor initializing with the config type
@@ -83,10 +63,83 @@ public:
      * @return Reference to this ConfigValue
      */
     [[nodiscard]] ConfigValue&
-    defaultValue(Type value)
+    defaultValue(ValueType value)
     {
-        setValue(value);
+        auto const err = checkTypeConsistency(type_, value);
+        ASSERT(!err.has_value(), "{}", err->error);
+        value_ = value;
         return *this;
+    }
+
+    /**
+     * @brief Sets the value current ConfigValue given by the User's defined value
+     *
+     * @param value The value to set
+     * @return optional Error if user tries to set a value of wrong type or not within a constraint
+     */
+    [[nodiscard]] std::optional<Error>
+    setValue(ValueType value)
+    {
+        auto const err = checkTypeConsistency(type_, value);
+        if (err.has_value())
+            return err;
+
+        if (cons_.has_value()) {
+            auto const constraintCheck = cons_->get().checkConstraint(value);
+            if (constraintCheck.has_value())
+                return constraintCheck;
+        }
+        value_ = value;
+        return std::nullopt;
+    }
+
+    /**
+     * @brief Assigns a constraint to the ConfigValue.
+     *
+     * This method associates a specific constraint with the ConfigValue.
+     * If the ConfigValue already holds a value, the method will check whether
+     * the value satisfies the given constraint. If the constraint is not satisfied,
+     * an assertion failure will occur with a detailed error message.
+     *
+     * @param cons The constraint to be applied to the ConfigValue.
+     * @return A reference to the modified ConfigValue object.
+     */
+    [[nodiscard]] ConfigValue&
+    withConstraint(Constraint const& cons)
+    {
+        cons_ = std::reference_wrapper<Constraint const>(cons);
+        ASSERT(cons_.has_value(), "Constraint must be defined");
+
+        if (value_.has_value()) {
+            auto const& temp = cons_.value().get();
+            auto const& result = temp.checkConstraint(value_.value());
+            if (result.has_value()) {
+                // useful for specifying clear Error message
+                std::string type;
+                std::visit(
+                    util::OverloadSet{
+                        [&type](bool tmp) { type = fmt::format("bool {}", tmp); },
+                        [&type](std::string tmp) { type = fmt::format("string {}", tmp); },
+                        [&type](double tmp) { type = fmt::format("double {}", tmp); },
+                        [&type](int64_t tmp) { type = fmt::format("int {}", tmp); }
+                    },
+                    value_.value()
+                );
+                ASSERT(false, "Value {} ConfigValue does not satisfy the set Constraint", type);
+            }
+        }
+        return *this;
+    }
+
+    /**
+     * @brief Retrieves the constraint associated with this ConfigValue, if any.
+     *
+     * @return An optional reference to the associated Constraint.
+     */
+    [[nodiscard]] std::optional<std::reference_wrapper<Constraint const>>
+    getConstraint() const
+    {
+        return cons_;
     }
 
     /**
@@ -98,32 +151,6 @@ public:
     type() const
     {
         return type_;
-    }
-
-    /**
-     * @brief Sets the minimum value for the config
-     *
-     * @param min The minimum value
-     * @return Reference to this ConfigValue
-     */
-    [[nodiscard]] constexpr ConfigValue&
-    min(std::uint32_t min)
-    {
-        min_ = min;
-        return *this;
-    }
-
-    /**
-     * @brief Sets the maximum value for the config
-     *
-     * @param max The maximum value
-     * @return Reference to this ConfigValue
-     */
-    [[nodiscard]] constexpr ConfigValue&
-    max(std::uint32_t max)
-    {
-        max_ = max;
-        return *this;
     }
 
     /**
@@ -165,7 +192,7 @@ public:
      *
      * @return Config Value
      */
-    [[nodiscard]] Type const&
+    [[nodiscard]] ValueType const&
     getValue() const
     {
         return value_.value();
@@ -178,39 +205,28 @@ private:
      * @param type The config type
      * @param value The config value
      */
-    static void
-    checkTypeConsistency(ConfigType type, Type value)
+    static std::optional<Error>
+    checkTypeConsistency(ConfigType type, ValueType value)
     {
-        if (std::holds_alternative<std::string>(value)) {
-            ASSERT(type == ConfigType::String, "Value does not match type string");
-        } else if (std::holds_alternative<bool>(value)) {
-            ASSERT(type == ConfigType::Boolean, "Value does not match type boolean");
-        } else if (std::holds_alternative<double>(value)) {
-            ASSERT(type == ConfigType::Double, "Value does not match type double");
-        } else if (std::holds_alternative<int64_t>(value)) {
-            ASSERT(type == ConfigType::Integer, "Value does not match type integer");
+        if (type == ConfigType::String && !std::holds_alternative<std::string>(value)) {
+            return Error{"Value does not match type string"};
         }
-    }
-
-    /**
-     * @brief Sets the value for the config
-     *
-     * @param value The value to set
-     * @return The value that was set
-     */
-    Type
-    setValue(Type value)
-    {
-        checkTypeConsistency(type_, value);
-        value_ = value;
-        return value;
+        if (type == ConfigType::Boolean && !std::holds_alternative<bool>(value)) {
+            return Error{"Value does not match type boolean"};
+        }
+        if (type == ConfigType::Double && !std::holds_alternative<double>(value)) {
+            return Error{"Value does not match type double"};
+        }
+        if (type == ConfigType::Integer && !std::holds_alternative<int64_t>(value)) {
+            return Error{"Value does not match type integer"};
+        }
+        return std::nullopt;
     }
 
     ConfigType type_{};
     bool optional_{false};
-    std::optional<Type> value_;
-    std::optional<std::uint32_t> min_;
-    std::optional<std::uint32_t> max_;
+    std::optional<ValueType> value_;
+    std::optional<std::reference_wrapper<Constraint const>> cons_;
 };
 
 }  // namespace util::config

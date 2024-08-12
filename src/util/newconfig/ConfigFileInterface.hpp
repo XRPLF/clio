@@ -19,10 +19,12 @@
 
 #pragma once
 
-#include "util/newconfig/ConfigValue.hpp"
+#include <boost/filesystem/path.hpp>
 
-#include <optional>
+#include <cstdint>
+#include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 
 namespace util::config {
@@ -42,25 +44,34 @@ public:
      * @param filePath The path to the Clio Config data
      */
     virtual void
-    parse(std::string_view filePath) = 0;
+    parse(boost::filesystem::path filePath) = 0;
 
     /**
-     * @brief Retrieves a configuration value.
+     * @brief Retrieves the value of configValue.
      *
-     * @param key The key of the configuration value.
-     * @return An optional containing the configuration value if found, otherwise std::nullopt.
+     * @param key The key of configuration.
+     * @return the value assosiated with key.
      */
-    virtual std::optional<ConfigValue>
+    virtual std::variant<int64_t, std::string, bool, double>
     getValue(std::string_view key) const = 0;
 
     /**
      * @brief Retrieves an array of configuration values.
      *
      * @param key The key of the configuration array.
-     * @return An optional containing a vector of configuration values if found, otherwise std::nullopt.
+     * @return A vector of configuration values if found, otherwise std::nullopt.
      */
-    virtual std::optional<std::vector<ConfigValue>>
+    virtual std::vector<std::variant<int64_t, std::string, bool, double>>
     getArray(std::string_view key) const = 0;
+
+    /**
+     * @brief Checks if key exist in configuration file.
+     *
+     * @param key The key to search for.
+     * @return true if key exists in configuration file, false otherwise.
+     */
+    virtual bool
+    containsKey(std::string_view key) const = 0;
 };
 
 }  // namespace util::config

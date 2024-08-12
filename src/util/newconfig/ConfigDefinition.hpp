@@ -40,7 +40,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
-#include <variant>
+#include <vector>
 
 namespace util::config {
 
@@ -69,9 +69,9 @@ public:
      * Should also check that no extra configuration key/value pairs are present
      *
      * @param config The configuration file interface
-     * @return An optional Error object if parsing fails
+     * @return An optional vector of Error objects stating all the failures if parsing fails
      */
-    [[nodiscard]] std::optional<Error>
+    [[nodiscard]] std::optional<std::vector<Error>>
     parse(ConfigFileInterface const& config);
 
     /**
@@ -80,9 +80,9 @@ public:
      * Should only check for valid values, without populating
      *
      * @param config The configuration file interface
-     * @return An optional Error object if validation fails
+     * @return An optional vector of Error objects stating all the failures if validation fails
      */
-    [[nodiscard]] std::optional<Error>
+    [[nodiscard]] std::optional<std::vector<Error>>
     validate(ConfigFileInterface const& config) const;
 
     /**
