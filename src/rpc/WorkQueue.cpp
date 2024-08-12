@@ -62,10 +62,10 @@ WorkQueue::~WorkQueue()
 }
 
 void
-WorkQueue::stop(std::function<void()> onTasksComplete)
+WorkQueue::stop(std::function<void()> onQueueEmpty)
 {
-    auto handler = onTasksComplete_.lock();
-    handler.get() = std::move(onTasksComplete);
+    auto handler = onQueueEmpty_.lock();
+    handler.get() = std::move(onQueueEmpty);
     stopping_ = true;
     if (size() == 0) {
         handler->operator()();

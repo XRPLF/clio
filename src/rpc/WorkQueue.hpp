@@ -38,7 +38,6 @@
 #include <cstdint>
 #include <functional>
 #include <limits>
-#include <thread>
 
 namespace rpc {
 
@@ -57,7 +56,7 @@ class WorkQueue {
     boost::asio::thread_pool ioc_;
 
     std::atomic_bool stopping_;
-    util::Mutex<std::function<void()>> onTasksComplete_;
+    util::Mutex<std::function<void()>> onQueueEmpty_;
 
 public:
     /**
@@ -72,10 +71,10 @@ public:
     /**
      * @brief Put the work queue into a stopping state. This will prevent new jobs from being queued.
      *
-     * @param onTasksComplete A callback to run when all the tasks in the queue are complete
+     * @param onQueueEmpty A callback to run when the last task in the queue is completed
      */
     void
-    stop(std::function<void()> onTasksComplete);
+    stop(std::function<void()> onQueueEmpty);
 
     /**
      * @brief A factory function that creates the work queue based on a config.
@@ -128,7 +127,7 @@ public:
                 func(yield);
                 --curSize_.get();
                 if (curSize_.get().value() == 0 && stopping_) {
-                    auto onTasksComplete = onTasksComplete_.lock();
+                    auto onTasksComplete = onQueueEmpty_.lock();
                     ASSERT(onTasksComplete->operator bool(), "onTasksComplete must be set when stopping is true.");
                     onTasksComplete->operator()();
                 }
