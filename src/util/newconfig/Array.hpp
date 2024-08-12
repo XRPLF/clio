@@ -21,33 +21,32 @@
 
 #include "util/Assert.hpp"
 #include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/ObjectView.hpp"
-#include "util/newconfig/ValueView.hpp"
 
 #include <cstddef>
-#include <iterator>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace util::config {
 
 /**
- * @brief Array definition for Json/Yaml config
+ * @brief Array definition to store multiple values provided by the user from Json/Yaml
  *
  * Used in ClioConfigDefinition to represent multiple potential values (like whitelist)
+ * Is constructed with only 1 element which states which type/constraint must every element
+ * In the array satisfy
  */
 class Array {
 public:
     /**
-     * @brief Constructs an Array with the provided arguments
+     * @brief Constructs an Array with provided Arg
      *
      * @tparam Args Types of the arguments
-     * @param args Arguments to initialize the elements of the Array
+     * @param arg Argument to set the type and constraint of ConfigValues in Array
      */
-    template <typename... Args>
-    constexpr Array(Args&&... args) : elements_{std::forward<Args>(args)...}
+    template <typename Arg>
+    constexpr Array(Arg&& arg) : elements_{std::forward<Arg>(arg)}
     {
+        ASSERT(!elements_.at(0).hasValue(), "Array does not include default values");
     }
 
     /**
@@ -56,10 +55,7 @@ public:
      * @param value The ConfigValue to add
      */
     void
-    emplaceBack(ConfigValue value)
-    {
-        elements_.push_back(std::move(value));
-    }
+    emplaceBack(ConfigValue value);
 
     /**
      * @brief Returns the number of values stored in the Array
@@ -67,10 +63,7 @@ public:
      * @return Number of values stored in the Array
      */
     [[nodiscard]] size_t
-    size() const
-    {
-        return elements_.size();
-    }
+    size() const;
 
     /**
      * @brief Returns the ConfigValue at the specified index
@@ -79,11 +72,23 @@ public:
      * @return ConfigValue at the specified index
      */
     [[nodiscard]] ConfigValue const&
-    at(std::size_t idx) const
-    {
-        ASSERT(idx < elements_.size(), "index is out of scope");
-        return elements_[idx];
-    }
+    at(std::size_t idx) const;
+
+    /**
+     * @brief Returns an iterator to the beginning of the ConfigValue vector.
+     *
+     * @return A constant iterator to the beginning of the vector.
+     */
+    [[nodiscard]] std::vector<ConfigValue>::const_iterator
+    begin() const;
+
+    /**
+     * @brief Returns an iterator to the end of the ConfigValue vector.
+     *
+     * @return A constant iterator to the end of the vector.
+     */
+    [[nodiscard]] std::vector<ConfigValue>::const_iterator
+    end() const;
 
 private:
     std::vector<ConfigValue> elements_;

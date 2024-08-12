@@ -25,9 +25,12 @@ target_sources(
           TimeUtils.cpp
           TxUtils.cpp
           LedgerUtils.cpp
-          newconfig/ConfigDefinition.cpp
-          newconfig/ObjectView.cpp
+          newconfig/Array.cpp
           newconfig/ArrayView.cpp
+          newconfig/ConfigConstraints.cpp
+          newconfig/ConfigDefinition.cpp
+          newconfig/ConfigFileJson.cpp
+          newconfig/ObjectView.cpp
           newconfig/ValueView.cpp
 )
 

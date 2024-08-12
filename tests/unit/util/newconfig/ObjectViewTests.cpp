@@ -17,8 +17,10 @@
 */
 //==============================================================================
 
+#include "util/TmpFile.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
 #include "util/newconfig/FakeConfigData.hpp"
 #include "util/newconfig/ObjectView.hpp"
 
@@ -27,7 +29,14 @@
 using namespace util::config;
 
 struct ObjectViewTest : testing::Test {
-    ClioConfigDefinition const configData = generateConfig();
+    ObjectViewTest()
+    {
+        auto const tmp = TmpFile(JSONData);
+        ConfigFileJson const jsonFileObj{tmp.path};
+        auto const errors = configData.parse(jsonFileObj);
+        EXPECT_TRUE(!errors.has_value());
+    }
+    ClioConfigDefinition configData = generateConfig();
 };
 
 TEST_F(ObjectViewTest, ObjectValueTest)
@@ -39,14 +48,14 @@ TEST_F(ObjectViewTest, ObjectValueTest)
     EXPECT_TRUE(headerObj.containsKey("admin"));
 
     EXPECT_EQ("value", headerObj.getValue("text1").asString());
-    EXPECT_EQ(123, headerObj.getValue("port").asIntType<int>());
-    EXPECT_EQ(true, headerObj.getValue("admin").asBool());
+    EXPECT_EQ(321, headerObj.getValue("port").asIntType<int>());
+    EXPECT_EQ(false, headerObj.getValue("admin").asBool());
 }
 
 TEST_F(ObjectViewTest, ObjectInArray)
 {
     ArrayView const arr = configData.getArray("array");
-    EXPECT_EQ(arr.size(), 2);
+    EXPECT_EQ(arr.size(), 3);
     ObjectView const firstObj = arr.objectAt(0);
     ObjectView const secondObj = arr.objectAt(1);
     EXPECT_TRUE(firstObj.containsKey("sub"));
@@ -78,7 +87,7 @@ TEST_F(ObjectViewTest, ObjectInArrayMoreComplex)
     ObjectView const objLow = firstObj.getObject("low");
     EXPECT_TRUE(objLow.containsKey("section"));
     EXPECT_TRUE(objLow.containsKey("admin"));
-    EXPECT_EQ(objLow.getValue("section").asString(), "true");
+    EXPECT_EQ(objLow.getValue("section").asString(), "WebServer");
     EXPECT_EQ(objLow.getValue("admin").asBool(), false);
 }
 
@@ -90,8 +99,8 @@ TEST_F(ObjectViewTest, getArrayInObject)
     auto const arr = obj.getArray("whitelist");
     EXPECT_EQ(2, arr.size());
 
-    EXPECT_EQ("125.5.5.2", arr.valueAt(0).asString());
-    EXPECT_EQ("204.2.2.2", arr.valueAt(1).asString());
+    EXPECT_EQ("125.5.5.1", arr.valueAt(0).asString());
+    EXPECT_EQ("204.2.2.1", arr.valueAt(1).asString());
 }
 
 struct ObjectViewDeathTest : ObjectViewTest {};
