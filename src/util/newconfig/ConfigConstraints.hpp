@@ -355,7 +355,10 @@ class PositiveNumConstraint final : public Constraint {
         if (std::is_same_v<T, uint64_t> || std::is_same_v<T, int64_t>)
             return std::nullopt;
 
-        if (numToCheck >= std::numeric_limits<T>::lowest() && numToCheck <= std::numeric_limits<T>::max())
+        int64_t low = std::numeric_limits<T>::lowest();
+        int64_t high = std::numeric_limits<T>::max();
+
+        if (numToCheck >= low && numToCheck <= high)
             return std::nullopt;
         return Error{"num must be an integer"};
     }
@@ -382,8 +385,8 @@ static constexpr CassandraName const nameCassandra{};
 static constexpr LoadConstraint const loadMode{};
 static constexpr LogTagStyle const logTag{};
 static constexpr APIVersionConstraint const validApiVersion{};
-static constexpr PositiveNumConstraint<uint16_t> const uint16{};
-static constexpr PositiveNumConstraint<uint32_t> const uint32{};
-static constexpr PositiveNumConstraint<uint64_t> const uint64{};
+static constexpr PositiveNumConstraint<uint16_t> const ValidUint16{};
+static constexpr PositiveNumConstraint<uint32_t> const ValidUint32{};
+static constexpr PositiveNumConstraint<uint64_t> const ValidUint64{};
 
 }  // namespace util::config
