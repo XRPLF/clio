@@ -115,8 +115,6 @@ public:
  */
 class PortConstraint final : public Constraint {
 public:
-    ~PortConstraint() override = default;
-
     /**
      * @brief Check if the port number is within a valid range.
      *
@@ -148,8 +146,6 @@ private:
  */
 class ChannelNameConstraint final : public Constraint {
 public:
-    ~ChannelNameConstraint() override = default;
-
     /**
      * @brief Check if the channel name is valid.
      *
@@ -178,8 +174,6 @@ private:
  */
 class LogLevelNameConstraint final : public Constraint {
 public:
-    ~LogLevelNameConstraint() override = default;
-
     /**
      * @brief Check if the log level name is valid.
      *
@@ -208,8 +202,6 @@ private:
  */
 class ValidIPConstraint final : public Constraint {
 public:
-    ~ValidIPConstraint() override = default;
-
     /**
      * @brief Check if the IP address is valid.
      *
@@ -238,8 +230,6 @@ private:
  */
 class CassandraName final : public Constraint {
 public:
-    ~CassandraName() override = default;
-
     /**
      * @brief Check if the Cassandra name is valid.
      *
@@ -268,8 +258,6 @@ private:
  */
 class LoadConstraint final : public Constraint {
 public:
-    ~LoadConstraint() override = default;
-
     /**
      * @brief Check if the load mode is valid.
      *
@@ -298,8 +286,6 @@ private:
  */
 class LogTagStyle final : public Constraint {
 public:
-    ~LogTagStyle() override = default;
-
     /**
      * @brief Check if the log tag style is valid.
      *
@@ -328,8 +314,6 @@ private:
  */
 class APIVersionConstraint final : public Constraint {
 public:
-    ~APIVersionConstraint() override = default;
-
     /**
      * @brief Check if the API version is within a valid range.
      *
@@ -361,8 +345,6 @@ private:
 template <typename T>
 class PositiveNumConstraint final : public Constraint {
 public:
-    ~PositiveNumConstraint() override = default;
-
     /**
      * @brief Check if the number is positive and within the valid range.
      *
@@ -404,16 +386,16 @@ private:
     }
 };
 
-static constexpr PortConstraint const port{};
-static constexpr ChannelNameConstraint const channelName{};
-static constexpr LogLevelNameConstraint const logLevelName{};
-static constexpr ValidIPConstraint const validIP{};
-static constexpr CassandraName const nameCassandra{};
-static constexpr LoadConstraint const loadMode{};
-static constexpr LogTagStyle const logTag{};
-static constexpr APIVersionConstraint const validApiVersion{};
-static constexpr PositiveNumConstraint<uint16_t> const ValidUint16{};
-static constexpr PositiveNumConstraint<uint32_t> const ValidUint32{};
-static constexpr PositiveNumConstraint<uint64_t> const ValidUint64{};
+static PortConstraint const validatePort{};
+static ChannelNameConstraint const validateChannelName{};
+static LogLevelNameConstraint const validateLogLevelName{};
+static ValidIPConstraint const validateIP{};
+static CassandraName const validateCassandraName{};
+static LoadConstraint const validateLoadMode{};
+static LogTagStyle const validateLogTag{};
+static APIVersionConstraint const validateApiVersion{};
+static PositiveNumConstraint<uint16_t> const ValidateUint16{};
+static PositiveNumConstraint<uint32_t> const ValidateUint32{};
+static PositiveNumConstraint<uint64_t> const ValidateUint64{};
 
 }  // namespace util::config
