@@ -25,7 +25,6 @@
 #include "util/newconfig/Errors.hpp"
 #include "util/newconfig/Types.hpp"
 
-#include <__expected/expected.h>
 #include <fmt/core.h>
 
 #include <cstddef>
