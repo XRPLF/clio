@@ -229,11 +229,11 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
         if (!config.containsKey(key)) {
             if (std::holds_alternative<ConfigValue>(value)) {
                 if (!(std::get<ConfigValue>(value).isOptional() || std::get<ConfigValue>(value).hasValue()))
-                    listOfErrors.emplace_back(fmt::format("Key {} is required in user Config", key));
+                    listOfErrors.emplace_back(key, " key is required in user Config");
             } else if (std::holds_alternative<Array>(value)) {
                 for (auto const& configVal : std::get<Array>(value)) {
                     if (!(configVal.isOptional() || configVal.hasValue()))
-                        listOfErrors.emplace_back(fmt::format("Key {} is required in user Config", key));
+                        listOfErrors.emplace_back(key, " key is required in user Config");
                 }
             }
             continue;
@@ -245,7 +245,7 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
         std::visit(
             util::OverloadSet{
                 [&key, &config, &listOfErrors](ConfigValue& val) {
-                    if (auto const setVal = val.setValue(config.getValue(key)); setVal.has_value())
+                    if (auto const setVal = val.setValue(config.getValue(key), key); setVal.has_value())
                         listOfErrors.emplace_back(setVal.value());
                 },
                 // All configValues in Array gotten from user must have same type and constraint as the first element in
@@ -257,8 +257,8 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
                     for (auto const& val : config.getArray(key)) {
                         ConfigValue configVal{firstVal.type()};
                         auto const resultOfSettingValue = constraint.has_value()
-                            ? configVal.withConstraint(constraint.value()).setValue(val)
-                            : configVal.setValue(val);
+                            ? configVal.withConstraint(constraint.value()).setValue(val, key)
+                            : configVal.setValue(val, key);
 
                         if (resultOfSettingValue.has_value()) {
                             listOfErrors.emplace_back(resultOfSettingValue.value());

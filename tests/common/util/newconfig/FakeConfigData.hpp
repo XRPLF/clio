@@ -48,7 +48,7 @@ generateConfig()
         {"header.admin", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
         {"header.sub.sub2Value", ConfigValue{ConfigType::String}.defaultValue("TSM")},
         {"ip", ConfigValue{ConfigType::Double}.defaultValue(444.22)},
-        {"array.[].sub", Array{ConfigValue{ConfigType::Double}.optional()}},
+        {"array.[].sub", Array{ConfigValue{ConfigType::Double}}},
         {"array.[].sub2", Array{ConfigValue{ConfigType::String}.optional()}},
         {"higher.[].low.section", Array{ConfigValue{ConfigType::String}.withConstraint(validateChannelName)}},
         {"higher.[].low.admin", Array{ConfigValue{ConfigType::Boolean}}},
@@ -192,3 +192,19 @@ constexpr static auto JSONData = R"JSON(
     "requireValue" : "required"
     }
 */
+
+// Invalid Json key/values
+constexpr static auto invalidJSONData = R"JSON(
+{
+    "header": {
+        "port": "999"
+    },
+    "dosguard": {
+        "whitelist": [
+            false
+        ]
+    },
+    "idk": true,
+    "requireValue" : "required"
+}
+)JSON";
