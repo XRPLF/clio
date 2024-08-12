@@ -37,7 +37,9 @@ class ConfigFileJson final : public ConfigFileInterface {
 public:
     /**
      * @brief Construct a new ConfigJson object and stores the values from
-     * user's config in the object
+     * user's config in the object.
+     *
+     * @param filePath the path to the Json file to parse.
      */
     ConfigFileJson(std::string_view filePath)
     {
@@ -53,7 +55,7 @@ public:
      * @param key The key of the configuration value to retrieve.
      * @return A variant containing the same type corresponding to the extracted value.
      */
-    std::variant<int64_t, std::string, bool, double>
+    [[nodiscard]] std::variant<int64_t, std::string, bool, double>
     getValue(std::string_view key) const override;
 
     /**
@@ -62,7 +64,7 @@ public:
      * @param key The key of the configuration array to retrieve.
      * @return A vector of variants holding the config values specified by user.
      */
-    std::vector<std::variant<int64_t, std::string, bool, double>>
+    [[nodiscard]] std::vector<std::variant<int64_t, std::string, bool, double>>
     getArray(std::string_view key) const override;
 
     /**
@@ -71,7 +73,7 @@ public:
      * @param key The key to check for.
      * @return True if the key exists, false otherwise.
      */
-    bool
+    [[nodiscard]] bool
     containsKey(std::string_view key) const override;
 
 private:
@@ -81,7 +83,7 @@ private:
      * @param jsonValue The JSON value to extract.
      * @return A variant containing the same type corresponding to the extracted value.
      */
-    static std::variant<int64_t, std::string, bool, double>
+    [[nodiscard]] static std::variant<int64_t, std::string, bool, double>
     extractJsonValue(boost::json::value const& jsonValue)
     {
         std::variant<int64_t, std::string, bool, double> variantValue;
