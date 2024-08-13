@@ -18,7 +18,7 @@
 //==============================================================================
 #include "util/LoggerFixtures.hpp"
 #include "util/config/Config.hpp"
-#include "web/WhitelistHandler.hpp"
+#include "web/dosguard/WhitelistHandler.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
@@ -29,7 +29,7 @@
 #include <vector>
 
 using namespace util;
-using namespace web;
+using namespace web::dosguard;
 
 struct WhitelistHandlerTest : NoLoggerFixture {};
 

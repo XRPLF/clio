@@ -21,6 +21,7 @@
 
 #include "util/config/Config.hpp"
 #include "web/Resolver.hpp"
+#include "web/dosguard/WhitelistHandlerInterface.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/asio/ip/address.hpp>
@@ -30,16 +31,14 @@
 #include <fmt/core.h>
 
 #include <algorithm>
-#include <functional>
 #include <regex>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-namespace web {
+namespace web::dosguard {
 
 /**
  * @brief A whitelist to remove rate limits of certain IP addresses.
@@ -57,23 +56,7 @@ public:
      * @throws std::runtime::error when the network address is not valid
      */
     void
-    add(std::string_view net)
-    {
-        using namespace boost::asio;
-
-        if (not isMask(net)) {
-            ips_.push_back(ip::make_address(net));
-            return;
-        }
-
-        if (isV4(net)) {
-            subnetsV4_.push_back(ip::make_network_v4(net));
-        } else if (isV6(net)) {
-            subnetsV6_.push_back(ip::make_network_v6(net));
-        } else {
-            throw std::runtime_error(fmt::format("malformed network: {}", net.data()));
-        }
-    }
+    add(std::string_view net);
 
     /**
      * @brief Checks to see if ip address is whitelisted.
@@ -83,69 +66,29 @@ public:
      * @return true if the given IP is whitelisted; false otherwise
      */
     bool
-    isWhiteListed(std::string_view ip) const
-    {
-        using namespace boost::asio;
-
-        auto const addr = ip::make_address(ip);
-        if (std::find(std::begin(ips_), std::end(ips_), addr) != std::end(ips_))
-            return true;
-
-        if (addr.is_v4()) {
-            return std::find_if(
-                       std::begin(subnetsV4_), std::end(subnetsV4_), std::bind_front(&isInV4Subnet, std::cref(addr))
-                   ) != std::end(subnetsV4_);
-        }
-
-        if (addr.is_v6()) {
-            return std::find_if(
-                       std::begin(subnetsV6_), std::end(subnetsV6_), std::bind_front(&isInV6Subnet, std::cref(addr))
-                   ) != std::end(subnetsV6_);
-        }
-
-        return false;
-    }
+    isWhiteListed(std::string_view ip) const;
 
 private:
     static bool
-    isInV4Subnet(boost::asio::ip::address const& addr, boost::asio::ip::network_v4 const& subnet)
-    {
-        auto const range = subnet.hosts();
-        return range.find(addr.to_v4()) != range.end();
-    }
+    isInV4Subnet(boost::asio::ip::address const& addr, boost::asio::ip::network_v4 const& subnet);
 
     static bool
-    isInV6Subnet(boost::asio::ip::address const& addr, boost::asio::ip::network_v6 const& subnet)
-    {
-        auto const range = subnet.hosts();
-        return range.find(addr.to_v6()) != range.end();
-    }
+    isInV6Subnet(boost::asio::ip::address const& addr, boost::asio::ip::network_v6 const& subnet);
 
     static bool
-    isV4(std::string_view net)
-    {
-        static std::regex const ipv4CidrRegex(R"(^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$)");
-        return std::regex_match(std::string(net), ipv4CidrRegex);
-    }
+    isV4(std::string_view net);
 
     static bool
-    isV6(std::string_view net)
-    {
-        static std::regex const ipv6CidrRegex(R"(^([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}/\d{1,3}$)");
-        return std::regex_match(std::string(net), ipv6CidrRegex);
-    }
+    isV6(std::string_view net);
 
     static bool
-    isMask(std::string_view net)
-    {
-        return net.find('/') != std::string_view::npos;
-    }
+    isMask(std::string_view net);
 };
 
 /**
  * @brief A simple handler to add/check elements in a whitelist.
  */
-class WhitelistHandler {
+class WhitelistHandler : public WhitelistHandlerInterface {
     Whitelist whitelist_;
 
 public:
@@ -170,7 +113,7 @@ public:
      * @return true if the given IP is whitelisted; false otherwise
      */
     bool
-    isWhiteListed(std::string_view ip) const
+    isWhiteListed(std::string_view ip) const override
     {
         return whitelist_.isWhiteListed(ip);
     }
@@ -200,4 +143,4 @@ private:
     }
 };
 
-}  // namespace web
+}  // namespace web::dosguard

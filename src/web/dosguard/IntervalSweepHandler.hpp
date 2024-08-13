@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2022, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,40 +17,36 @@
 */
 //==============================================================================
 
-#include "util/AsioContextTestFixture.hpp"
+#pragma once
+
+#include "util/Repeat.hpp"
 #include "util/config/Config.hpp"
-#include "web/DOSGuard.hpp"
-#include "web/IntervalSweepHandler.hpp"
 
-#include <boost/json/parse.hpp>
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include <boost/asio/io_context.hpp>
 
-#include <chrono>
+namespace web::dosguard {
 
-using namespace web;
+class BaseDOSGuard;
 
-struct IntervalSweepHandlerTest : SyncAsioContextTest {
-protected:
-    constexpr static auto JSONData = R"JSON(
-    {
-        "dos_guard": {
-            "sweep_interval": 0
-        }
-    }
-)JSON";
+/**
+ * @brief Sweep handler clearing context every sweep interval from config.
+ */
+class IntervalSweepHandler {
+    util::Repeat repeat_;
 
-    struct DosGuardMock : BaseDOSGuard {
-        MOCK_METHOD(void, clear, (), (noexcept, override));
-    };
-    testing::StrictMock<DosGuardMock> guardMock;
-
-    util::Config cfg{boost::json::parse(JSONData)};
-    IntervalSweepHandler sweepHandler{cfg, ctx, guardMock};
+public:
+    /**
+     * @brief Construct a new interval-based sweep handler.
+     *
+     * @param config Clio config to use
+     * @param ctx The boost::asio::io_context to use
+     * @param dosGuard The DOS guard to use
+     */
+    IntervalSweepHandler(
+        util::Config const& config,
+        boost::asio::io_context& ctx,
+        web::dosguard::BaseDOSGuard& dosGuard
+    );
 };
 
-TEST_F(IntervalSweepHandlerTest, SweepAfterInterval)
-{
-    EXPECT_CALL(guardMock, clear()).Times(testing::AtLeast(10));
-    runContextFor(std::chrono::milliseconds{20});
-}
+}  // namespace web::dosguard

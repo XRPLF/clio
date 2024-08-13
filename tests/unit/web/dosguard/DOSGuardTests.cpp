@@ -19,7 +19,8 @@
 
 #include "util/LoggerFixtures.hpp"
 #include "util/config/Config.hpp"
-#include "web/DOSGuard.hpp"
+#include "web/dosguard/DOSGuard.hpp"
+#include "web/dosguard/WhitelistHandlerInterface.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
@@ -30,11 +31,11 @@
 using namespace testing;
 using namespace util;
 using namespace std;
-using namespace web;
+using namespace web::dosguard;
 namespace json = boost::json;
 
-namespace {
-constexpr auto JSONData = R"JSON(
+struct DOSGuardTest : NoLoggerFixture {
+    static constexpr auto JSONData = R"JSON(
     {
         "dos_guard": {
             "max_fetches": 100,
@@ -47,20 +48,15 @@ constexpr auto JSONData = R"JSON(
     }
 )JSON";
 
-constexpr auto IP = "127.0.0.2";
+    static constexpr auto IP = "127.0.0.2";
 
-struct MockWhitelistHandler {
-    MOCK_METHOD(bool, isWhiteListed, (std::string_view ip), (const));
-};
+    struct MockWhitelistHandler : WhitelistHandlerInterface {
+        MOCK_METHOD(bool, isWhiteListed, (std::string_view ip), (const));
+    };
 
-using MockWhitelistHandlerType = NiceMock<MockWhitelistHandler>;
-};  // namespace
-
-class DOSGuardTest : public NoLoggerFixture {
-protected:
     Config cfg{json::parse(JSONData)};
-    MockWhitelistHandlerType whitelistHandler;
-    BasicDOSGuard<MockWhitelistHandlerType> guard{cfg, whitelistHandler};
+    NiceMock<MockWhitelistHandler> whitelistHandler;
+    DOSGuard guard{cfg, whitelistHandler};
 };
 
 TEST_F(DOSGuardTest, Whitelisting)

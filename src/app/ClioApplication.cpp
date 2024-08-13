@@ -33,11 +33,11 @@
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Prometheus.hpp"
-#include "web/DOSGuard.hpp"
-#include "web/IntervalSweepHandler.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/Server.hpp"
-#include "web/WhitelistHandler.hpp"
+#include "web/dosguard/DOSGuard.hpp"
+#include "web/dosguard/IntervalSweepHandler.hpp"
+#include "web/dosguard/WhitelistHandler.hpp"
 
 #include <boost/asio/io_context.hpp>
 
@@ -93,9 +93,9 @@ ClioApplication::run()
     boost::asio::io_context ioc{threads};
 
     // Rate limiter, to prevent abuse
-    auto whitelistHandler = web::WhitelistHandler{config_};
-    auto dosGuard = web::DOSGuard{config_, whitelistHandler};
-    auto sweepHandler = web::IntervalSweepHandler{config_, ioc, dosGuard};
+    auto whitelistHandler = web::dosguard::WhitelistHandler{config_};
+    auto dosGuard = web::dosguard::DOSGuard{config_, whitelistHandler};
+    auto sweepHandler = web::dosguard::IntervalSweepHandler{config_, ioc, dosGuard};
 
     // Interface to the database
     auto backend = data::make_Backend(config_);
