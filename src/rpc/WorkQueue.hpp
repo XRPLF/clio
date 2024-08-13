@@ -56,7 +56,21 @@ class WorkQueue {
     boost::asio::thread_pool ioc_;
 
     std::atomic_bool stopping_;
-    util::Mutex<std::function<void()>> onQueueEmpty_;
+
+    class OneTimeCallable {
+        std::function<void()> func_;
+        bool called_{false};
+
+    public:
+        void
+        setCallable(std::function<void()> func);
+
+        void
+        operator()();
+
+        operator bool() const;
+    };
+    util::Mutex<OneTimeCallable> onQueueEmpty_;
 
 public:
     /**

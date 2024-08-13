@@ -34,6 +34,25 @@
 
 namespace rpc {
 
+void
+WorkQueue::OneTimeCallable::setCallable(std::function<void()> func)
+{
+    func_ = func;
+}
+
+void
+WorkQueue::OneTimeCallable::operator()()
+{
+    if (not called_) {
+        func_();
+        called_ = true;
+    }
+}
+WorkQueue::OneTimeCallable::operator bool() const
+{
+    return func_.operator bool();
+}
+
 WorkQueue::WorkQueue(std::uint32_t numWorkers, uint32_t maxSize)
     : queued_{PrometheusService::counterInt(
           "work_queue_queued_total_number",
@@ -65,7 +84,7 @@ void
 WorkQueue::stop(std::function<void()> onQueueEmpty)
 {
     auto handler = onQueueEmpty_.lock();
-    handler.get() = std::move(onQueueEmpty);
+    handler->setCallable(std::move(onQueueEmpty));
     stopping_ = true;
     if (size() == 0) {
         handler->operator()();
