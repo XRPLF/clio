@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,30 +19,26 @@
 
 #pragma once
 
-#include "util/Repeat.hpp"
-#include "util/config/Config.hpp"
+#include <string_view>
 
-#include <boost/asio/io_context.hpp>
-
-namespace web {
-
-class BaseDOSGuard;
+namespace web::dosguard {
 
 /**
- * @brief Sweep handler clearing context every sweep interval from config.
+ * @brief Interface for a whitelist handler
  */
-class IntervalSweepHandler {
-    util::Repeat repeat_;
-
+class WhitelistHandlerInterface {
 public:
+    /** @brief Virtual destructor */
+    virtual ~WhitelistHandlerInterface() = default;
+
     /**
-     * @brief Construct a new interval-based sweep handler.
+     * @brief Checks to see if the given IP is whitelisted
      *
-     * @param config Clio config to use
-     * @param ctx The boost::asio::io_context to use
-     * @param dosGuard The DOS guard to use
+     * @param ip The IP to check
+     * @return true if the given IP is whitelisted; false otherwise
      */
-    IntervalSweepHandler(util::Config const& config, boost::asio::io_context& ctx, web::BaseDOSGuard& dosGuard);
+    [[nodiscard]] virtual bool
+    isWhiteListed(std::string_view ip) const = 0;
 };
 
-}  // namespace web
+}  // namespace web::dosguard

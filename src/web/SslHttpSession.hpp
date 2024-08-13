@@ -20,9 +20,10 @@
 #pragma once
 
 #include "util/Taggable.hpp"
-#include "web/DOSGuard.hpp"
 #include "web/SslWsSession.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/HttpBase.hpp"
+#include "web/interface/Concepts.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/ip/tcp.hpp>
@@ -78,7 +79,7 @@ public:
         std::shared_ptr<impl::AdminVerificationStrategy> const& adminVerification,
         boost::asio::ssl::context& ctx,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<web::DOSGuard> dosGuard,
+        std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer buffer
     )
