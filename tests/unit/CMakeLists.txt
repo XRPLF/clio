@@ -104,6 +104,7 @@ target_sources(
           util/async/AnyStrandTests.cpp
           util/async/AsyncExecutionContextTests.cpp
           util/BatchingTests.cpp
+          util/ConceptsTests.cpp
           util/LedgerUtilsTests.cpp
           # Prometheus support
           util/prometheus/BoolTests.cpp
@@ -116,7 +117,6 @@ target_sources(
           util/prometheus/MetricsFamilyTests.cpp
           util/prometheus/OStreamTests.cpp
           # Requests framework
-          util/ConceptsTests.cpp
           util/requests/RequestBuilderTests.cpp
           util/requests/SslContextTests.cpp
           util/requests/WsConnectionTests.cpp

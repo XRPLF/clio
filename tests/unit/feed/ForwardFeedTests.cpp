@@ -36,7 +36,7 @@ constexpr static auto FEED = R"({"test":"test"})";
 template <typename ExecutionContext>
 class NamedForwardFeedTest : public ForwardFeed<ExecutionContext> {
 public:
-    NamedForwardFeedTest(ExecutionContext& ioContext) : ForwardFeed<ExecutionContext>(ioContext, "test")
+    NamedForwardFeedTest(ExecutionContext& ctx) : ForwardFeed<ExecutionContext>(ctx, "test")
     {
     }
 };

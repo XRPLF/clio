@@ -80,7 +80,7 @@ TEST_F(FeedBaseMockPrometheusTest, AutoUnsub)
 template <typename ExecutionContext>
 class NamedSingleFeedTest : public SingleFeedBase<ExecutionContext> {
 public:
-    NamedSingleFeedTest(ExecutionContext& ioContext) : SingleFeedBase<ExecutionContext>(ioContext, "forTest")
+    NamedSingleFeedTest(ExecutionContext& ctx) : SingleFeedBase<ExecutionContext>(ctx, "forTest")
     {
     }
 };

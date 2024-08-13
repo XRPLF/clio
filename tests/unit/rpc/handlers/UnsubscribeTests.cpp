@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "feed/SubscriptionManager.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/AnyHandler.hpp"
@@ -51,7 +50,6 @@ constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 
 struct RPCUnsubscribeTest : HandlerBaseTest, SyncExecutionCtxFixture {
-    using SubscriptionManager = feed::SubscriptionManager<Ctx>;
     void
     SetUp() override
     {
@@ -64,7 +62,6 @@ struct RPCUnsubscribeTest : HandlerBaseTest, SyncExecutionCtxFixture {
         HandlerBaseTest::TearDown();
     }
 
-    std::shared_ptr<SubscriptionManager> subManager_;
     std::shared_ptr<web::ConnectionBase> session_;
     StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
 };
