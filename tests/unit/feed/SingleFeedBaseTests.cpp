@@ -38,14 +38,14 @@ using namespace util::prometheus;
 struct FeedBaseMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
-    using SingleFeedBase = SingleFeedBase<Ctx>;
-    std::shared_ptr<SingleFeedBase> testFeedPtr;
+    using SingleFeedBaseTest = SingleFeedBase<Ctx>;
+    std::shared_ptr<SingleFeedBaseTest> testFeedPtr;
     MockSession* mockSessionPtr = nullptr;
 
     void
     SetUp() override
     {
-        testFeedPtr = std::make_shared<SingleFeedBase>(ctx, "testFeed");
+        testFeedPtr = std::make_shared<SingleFeedBaseTest>(ctx, "testFeed");
         sessionPtr = std::make_shared<MockSession>();
         mockSessionPtr = dynamic_cast<MockSession*>(sessionPtr.get());
     }
