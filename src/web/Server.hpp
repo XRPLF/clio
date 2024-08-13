@@ -21,9 +21,9 @@
 
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
-#include "web/DOSGuard.hpp"
 #include "web/HttpSession.hpp"
 #include "web/SslHttpSession.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/ServerSslContext.hpp"
 #include "web/interface/Concepts.hpp"
 
@@ -91,7 +91,7 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, 
     boost::beast::tcp_stream stream_;
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
-    std::reference_wrapper<web::DOSGuard> const dosGuard_;
+    std::reference_wrapper<dosguard::DOSGuardInterface> const dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
     boost::beast::flat_buffer buffer_;
     std::shared_ptr<impl::AdminVerificationStrategy> const adminVerification_;
@@ -111,7 +111,7 @@ public:
         tcp::socket&& socket,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<web::DOSGuard> dosGuard,
+        std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> handler,
         std::shared_ptr<impl::AdminVerificationStrategy> adminVerification
     )
@@ -213,7 +213,7 @@ class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslS
     std::reference_wrapper<boost::asio::io_context> ioc_;
     std::optional<boost::asio::ssl::context> ctx_;
     util::TagDecoratorFactory tagFactory_;
-    std::reference_wrapper<web::DOSGuard> dosGuard_;
+    std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard_;
     std::shared_ptr<HandlerType> handler_;
     tcp::acceptor acceptor_;
     std::shared_ptr<impl::AdminVerificationStrategy> adminVerification_;
@@ -235,7 +235,7 @@ public:
         std::optional<boost::asio::ssl::context> ctx,
         tcp::endpoint endpoint,
         util::TagDecoratorFactory tagFactory,
-        web::DOSGuard& dosGuard,
+        dosguard::DOSGuardInterface& dosGuard,
         std::shared_ptr<HandlerType> handler,
         std::optional<std::string> adminPassword
     )
@@ -327,7 +327,7 @@ static std::shared_ptr<HttpServer<HandlerType>>
 make_HttpServer(
     util::Config const& config,
     boost::asio::io_context& ioc,
-    web::DOSGuard& dosGuard,
+    dosguard::DOSGuardInterface& dosGuard,
     std::shared_ptr<HandlerType> const& handler
 )
 {

@@ -28,7 +28,7 @@
 #include "rpc/common/impl/ForwardingProxy.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
-#include "web/DOSGuard.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -65,7 +65,7 @@ class RPCEngine {
     util::Logger log_{"RPC"};
 
     std::shared_ptr<BackendInterface> backend_;
-    std::reference_wrapper<web::DOSGuard const> dosGuard_;
+    std::reference_wrapper<web::dosguard::DOSGuardInterface const> dosGuard_;
     std::reference_wrapper<WorkQueue> workQueue_;
     std::reference_wrapper<Counters> counters_;
 
@@ -87,7 +87,7 @@ public:
     RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
-        web::DOSGuard const& dosGuard,
+        web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider
@@ -116,7 +116,7 @@ public:
     make_RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
-        web::DOSGuard const& dosGuard,
+        web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider

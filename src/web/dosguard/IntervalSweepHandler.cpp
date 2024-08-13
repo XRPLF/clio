@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "web/IntervalSweepHandler.hpp"
+#include "web/dosguard/IntervalSweepHandler.hpp"
 
 #include "util/config/Config.hpp"
-#include "web/DOSGuard.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/system/detail/error_code.hpp>
@@ -29,12 +29,12 @@
 #include <chrono>
 #include <functional>
 
-namespace web {
+namespace web::dosguard {
 
 IntervalSweepHandler::IntervalSweepHandler(
     util::Config const& config,
     boost::asio::io_context& ctx,
-    web::BaseDOSGuard& dosGuard
+    BaseDOSGuard& dosGuard
 )
     : repeat_{std::ref(ctx)}
 {
@@ -44,4 +44,4 @@ IntervalSweepHandler::IntervalSweepHandler(
     repeat_.start(sweepInterval, [&dosGuard] { dosGuard.clear(); });
 }
 
-}  // namespace web
+}  // namespace web::dosguard

@@ -24,10 +24,11 @@
 #include "util/config/Config.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
-#include "web/DOSGuard.hpp"
-#include "web/IntervalSweepHandler.hpp"
 #include "web/Server.hpp"
-#include "web/WhitelistHandler.hpp"
+#include "web/dosguard/DOSGuard.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
+#include "web/dosguard/IntervalSweepHandler.hpp"
+#include "web/dosguard/WhitelistHandler.hpp"
 #include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -127,14 +128,14 @@ struct WebServerTest : NoLoggerFixture {
     boost::asio::io_context ctxSync;
     std::string const port = std::to_string(tests::util::generateFreePort());
     Config cfg{generateJSONWithDynamicPort(port)};
-    WhitelistHandler whitelistHandler{cfg};
-    DOSGuard dosGuard{cfg, whitelistHandler};
-    IntervalSweepHandler sweepHandler{cfg, ctxSync, dosGuard};
+    dosguard::WhitelistHandler whitelistHandler{cfg};
+    dosguard::DOSGuard dosGuard{cfg, whitelistHandler};
+    dosguard::IntervalSweepHandler sweepHandler{cfg, ctxSync, dosGuard};
 
     Config cfgOverload{generateJSONDataOverload(port)};
-    WhitelistHandler whitelistHandlerOverload{cfgOverload};
-    DOSGuard dosGuardOverload{cfgOverload, whitelistHandlerOverload};
-    IntervalSweepHandler sweepHandlerOverload{cfgOverload, ctxSync, dosGuardOverload};
+    dosguard::WhitelistHandler whitelistHandlerOverload{cfgOverload};
+    dosguard::DOSGuard dosGuardOverload{cfgOverload, whitelistHandlerOverload};
+    dosguard::IntervalSweepHandler sweepHandlerOverload{cfgOverload, ctxSync, dosGuardOverload};
     // this ctx is for http server
     boost::asio::io_context ctx;
 
@@ -178,7 +179,7 @@ std::shared_ptr<web::HttpServer<Executor>>
 makeServerSync(
     util::Config const& config,
     boost::asio::io_context& ioc,
-    web::DOSGuard& dosGuard,
+    web::dosguard::DOSGuardInterface& dosGuard,
     std::shared_ptr<Executor> const& handler
 )
 {

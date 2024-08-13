@@ -20,7 +20,7 @@
 #pragma once
 
 #include "util/Taggable.hpp"
-#include "web/DOSGuard.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/WsBase.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -69,7 +69,7 @@ public:
         boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<web::DOSGuard> dosGuard,
+        std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer,
         bool isAdmin
@@ -102,7 +102,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<HandlerT
     boost::beast::flat_buffer buffer_;
     std::string ip_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
-    std::reference_wrapper<web::DOSGuard> dosGuard_;
+    std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
     http::request<http::string_body> req_;
     bool isAdmin_;
@@ -124,7 +124,7 @@ public:
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<web::DOSGuard> dosGuard,
+        std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> handler,
         boost::beast::flat_buffer&& buffer,
         http::request<http::string_body> request,

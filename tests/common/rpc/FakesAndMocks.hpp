@@ -23,7 +23,6 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
-#include "web/DOSGuard.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
