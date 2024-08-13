@@ -71,7 +71,7 @@ public:
      * @brief Construct a new Subscription Manager object
      *
      * @param backend The backend to use
-     * @param numThreads The number of threads to use to publish the feeds
+     * @param numThreads The number of threads to use to publish the feeds, 1 by default
      */
     SubscriptionManager(std::shared_ptr<data::BackendInterface const> const& backend, std::uint32_t numThreads = 1)
         : backend_(backend)
