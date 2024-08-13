@@ -38,6 +38,9 @@ public:
     clear() noexcept = 0;
 };
 
+/**
+ * @brief The interface of a denial of service guard.
+ */
 class DOSGuardInterface : public BaseDOSGuard {
 public:
     /**
