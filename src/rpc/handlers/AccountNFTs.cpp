@@ -40,7 +40,6 @@
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
 #include <xrpl/protocol/nft.h>
-#include <xrpl/protocol/nftPageMask.h>
 
 #include <cstdint>
 #include <optional>
@@ -79,16 +78,8 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
         input.marker ? ripple::uint256{input.marker->c_str()} : ripple::keylet::nftpage_max(*accountID).key;
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
-    bool pastMarker = !static_cast<bool>(input.marker);
-    bool markerFound = false;
-    bool const markerSet = input.marker.has_value();
-    auto const maskedMarker = pageKey & ripple::nft::pageMask;
-
-    if (!blob) {
-        if (markerSet)
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}};
-        return response;
-    }
+    if (!blob)
+        return Error{Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}};
 
     std::optional<ripple::SLE const> page{ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}};
     auto numPages = 0u;
@@ -98,25 +89,6 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
 
         for (auto const& nft : arr) {
             auto const nftokenID = nft[ripple::sfNFTokenID];
-            auto const maskedNftokenID = nftokenID & ripple::nft::pageMask;
-
-            if (!pastMarker) {
-                if (maskedNftokenID < maskedMarker)
-                    continue;
-
-                if (maskedNftokenID == maskedMarker && nftokenID < pageKey)
-                    continue;
-
-                if (nftokenID == pageKey) {
-                    markerFound = true;
-                    continue;
-                }
-            }
-
-            if (markerSet && !markerFound)
-                return Error{Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}};
-
-            pastMarker = true;
 
             response.nfts.push_back(toBoostJson(nft.getJson(ripple::JsonOptions::none)));
             auto& obj = response.nfts.back().as_object();
@@ -145,9 +117,6 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
             page.reset();
         }
     }
-
-    if (markerSet && !markerFound)
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}};
 
     return response;
 }
