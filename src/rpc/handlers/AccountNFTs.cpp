@@ -79,7 +79,7 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
     if (!blob)
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "invalidMarker"}};
+        return Error{Status{RippledError::rpcINVALID_PARAMS, "Marker field does not match any valid Page ID"}};
 
     std::optional<ripple::SLE const> page{ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}};
     auto numPages = 0u;
