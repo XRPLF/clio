@@ -36,8 +36,8 @@
 
 namespace feed::impl {
 
-SingleFeedBase::SingleFeedBase(util::async::AnyExecutionContext& ioContext, std::string const& name)
-    : strand_(ioContext.makeStrand()), subCount_(getSubscriptionsGaugeInt(name)), name_(name)
+SingleFeedBase::SingleFeedBase(util::async::AnyExecutionContext& executionCtx, std::string const& name)
+    : strand_(executionCtx.makeStrand()), subCount_(getSubscriptionsGaugeInt(name)), name_(name)
 {
 }
 
