@@ -21,12 +21,11 @@
 #include "feed/impl/SingleFeedBase.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/SyncExecutionCtxFixture.hpp"
 #include "util/async/AnyExecutionContext.hpp"
-#include "util/async/context/SyncExecutionContext.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -37,13 +36,11 @@ constexpr static auto FEED = R"({"test":"test"})";
 using namespace feed::impl;
 using namespace util::prometheus;
 
-struct FeedBaseMockPrometheusTest : WithMockPrometheus {
+struct FeedBaseMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
     std::shared_ptr<SingleFeedBase> testFeedPtr;
     MockSession* mockSessionPtr = nullptr;
-    util::async::SyncExecutionContext realCtx;
-    util::async::AnyExecutionContext ctx{realCtx};
 
     void
     SetUp() override

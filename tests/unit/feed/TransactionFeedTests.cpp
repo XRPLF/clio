@@ -22,9 +22,8 @@
 #include "feed/impl/TransactionFeed.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/SyncExecutionCtxFixture.hpp"
 #include "util/TestObject.hpp"
-#include "util/async/AnyExecutionContext.hpp"
-#include "util/async/context/SyncExecutionContext.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -1014,13 +1013,11 @@ TEST_F(FeedTransactionTest, SubProposedAccountDisconnect)
     testFeedPtr->pub(trans1, ledgerHeader, backend);
 }
 
-struct TransactionFeedMockPrometheusTest : WithMockPrometheus {
+struct TransactionFeedMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
     std::shared_ptr<TransactionFeed> testFeedPtr;
 
-    util::async::SyncExecutionContext realCtx;
-    util::async::AnyExecutionContext ctx{realCtx};
     void
     SetUp() override
     {

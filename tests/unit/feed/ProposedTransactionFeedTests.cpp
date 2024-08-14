@@ -19,16 +19,13 @@
 
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/ProposedTransactionFeed.hpp"
-#include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/SyncExecutionCtxFixture.hpp"
 #include "util/TestObject.hpp"
-#include "util/async/AnyExecutionContext.hpp"
-#include "util/async/context/SyncExecutionContext.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -217,12 +214,10 @@ TEST_F(FeedProposedTransactionTest, AutoDisconnect)
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 0);
 }
 
-struct ProposedTransactionFeedMockPrometheusTest : WithMockPrometheus {
+struct ProposedTransactionFeedMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
     std::shared_ptr<ProposedTransactionFeed> testFeedPtr;
-    util::async::SyncExecutionContext realCtx;
-    util::async::AnyExecutionContext ctx{realCtx};
 
     void
     SetUp() override

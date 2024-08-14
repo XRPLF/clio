@@ -21,7 +21,6 @@
 #include "feed/impl/LedgerFeed.hpp"
 #include "util/TestObject.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>

@@ -22,8 +22,7 @@
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
-#include "util/async/AnyExecutionContext.hpp"
-#include "util/async/context/SyncExecutionContext.hpp"
+#include "util/SyncExecutionCtxFixture.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/json/parse.hpp>
@@ -36,11 +35,9 @@
 
 // Base class for feed tests, providing easy way to access the received feed
 template <typename TestedFeed>
-struct FeedBaseTest : util::prometheus::WithPrometheus, MockBackendTest {
+struct FeedBaseTest : util::prometheus::WithPrometheus, MockBackendTest, SyncExecutionCtxFixture {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
-    util::async::SyncExecutionContext realCtx;
-    util::async::AnyExecutionContext ctx{realCtx};
     std::shared_ptr<TestedFeed> testFeedPtr;
     MockSession* mockSessionPtr = nullptr;
 

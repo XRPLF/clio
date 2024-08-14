@@ -36,7 +36,7 @@ constexpr static auto FEED = R"({"test":"test"})";
 
 class NamedForwardFeedTest : public ForwardFeed {
 public:
-    NamedForwardFeedTest(util::async::AnyExecutionContext& ioContext) : ForwardFeed(ioContext, "test")
+    NamedForwardFeedTest(util::async::AnyExecutionContext& executionCtx) : ForwardFeed(executionCtx, "test")
     {
     }
 };
