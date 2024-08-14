@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "feed/Types.hpp"
 #include "feed/impl/SingleFeedBase.hpp"
+#include "util/async/AnyExecutionContext.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -46,9 +47,9 @@ class LedgerFeed : public SingleFeedBase {
 public:
     /**
      * @brief Construct a new Ledger Feed object
-     * @param ioContext The actual publish will be called in the strand of this.
+     * @param executionCtx The actual publish will be called in the strand of this.
      */
-    LedgerFeed(util::async::AnyExecutionContext& ioContext) : SingleFeedBase(ioContext, "ledger")
+    LedgerFeed(util::async::AnyExecutionContext& executionCtx) : SingleFeedBase(executionCtx, "ledger")
     {
     }
 

@@ -24,6 +24,7 @@
 #include "feed/impl/TrackableSignalMap.hpp"
 #include "feed/impl/Util.hpp"
 #include "util/async/AnyExecutionContext.hpp"
+#include "util/async/AnyStrand.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Gauge.hpp"
 
@@ -62,10 +63,10 @@ class ProposedTransactionFeed {
 public:
     /**
      * @brief Construct a Proposed Transaction Feed object.
-     * @param ioContext The actual publish will be called in the strand of this.
+     * @param executionCtx The actual publish will be called in the strand of this.
      */
-    ProposedTransactionFeed(util::async::AnyExecutionContext& ioContext)
-        : strand_(ioContext.makeStrand())
+    ProposedTransactionFeed(util::async::AnyExecutionContext& executionCtx)
+        : strand_(executionCtx.makeStrand())
         , subAllCount_(getSubscriptionsGaugeInt("tx_proposed"))
         , subAccountCount_(getSubscriptionsGaugeInt("account_proposed"))
 

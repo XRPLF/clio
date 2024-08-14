@@ -84,10 +84,10 @@ class TransactionFeed {
 public:
     /**
      * @brief Construct a new Transaction Feed object.
-     * @param ioContext The actual publish will be called in the strand of this.
+     * @param executionCtx The actual publish will be called in the strand of this.
      */
-    TransactionFeed(util::async::AnyExecutionContext& ioContext)
-        : strand_(ioContext.makeStrand())
+    TransactionFeed(util::async::AnyExecutionContext& executionCtx)
+        : strand_(executionCtx.makeStrand())
         , subAllCount_(getSubscriptionsGaugeInt("tx"))
         , subAccountCount_(getSubscriptionsGaugeInt("account"))
         , subBookCount_(getSubscriptionsGaugeInt("book"))

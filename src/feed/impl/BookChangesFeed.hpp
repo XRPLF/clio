@@ -22,6 +22,7 @@
 #include "data/Types.hpp"
 #include "feed/impl/SingleFeedBase.hpp"
 #include "rpc/BookChangesHelper.hpp"
+#include "util/async/AnyExecutionContext.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/json/serialize.hpp>
@@ -37,7 +38,7 @@ namespace feed::impl {
  * '0A5010342D8AAFABDCA58A68F6F588E1C6E58C21B63ED6CA8DB2478F58F3ECD5', 'ledger_time': 756395682, 'changes': []}
  */
 struct BookChangesFeed : public SingleFeedBase {
-    BookChangesFeed(util::async::AnyExecutionContext& ioContext) : SingleFeedBase(ioContext, "book_changes")
+    BookChangesFeed(util::async::AnyExecutionContext& executionCtx) : SingleFeedBase(executionCtx, "book_changes")
     {
     }
 

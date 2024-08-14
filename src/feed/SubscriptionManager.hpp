@@ -42,10 +42,8 @@
 #include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <string>
-#include <thread>
 #include <vector>
 
 /**
@@ -72,13 +70,13 @@ public:
     /**
      * @brief Construct a new Subscription Manager object
      *
-     * @param ioContext The io context to use
+     * @param executor The executor to use to publish the feeds
      * @param backend The backend to use
      */
     template <class ExecutorCtx>
-    SubscriptionManager(ExecutorCtx& ioContext, std::shared_ptr<data::BackendInterface const> const& backend)
+    SubscriptionManager(ExecutorCtx& executor, std::shared_ptr<data::BackendInterface const> const& backend)
         : backend_(backend)
-        , ctx_(ioContext)
+        , ctx_(executor)
         , manifestFeed_(ctx_, "manifest")
         , validationsFeed_(ctx_, "validations")
         , ledgerFeed_(ctx_)
@@ -89,7 +87,7 @@ public:
     }
 
     /**
-     * @brief Destructor of the SubscriptionManager object. It will block until all the executor threads are stopped.
+     * @brief Destructor of the SubscriptionManager object. It will block until all running jobs finished.
      */
     ~SubscriptionManager() override
     {
@@ -294,8 +292,8 @@ public:
 };
 
 /**
- * @brief The help class to run the subscription manager. The container of io_context which is used to publish the
- * feeds.
+ * @brief The help class to run the subscription manager. The container of PoolExecutionContext which is used to publish
+ * the feeds.
  */
 class SubscriptionManagerRunner {
     std::uint64_t workersNum_;
@@ -316,8 +314,7 @@ public:
         , ctx_(workersNum_)
         , subscriptionManager_(std::make_shared<SubscriptionManager>(ctx_, backend))
     {
-        auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
-        LOG(logger_.info()) << "Starting subscription manager with " << numThreads << " workers";
+        LOG(logger_.info()) << "Starting subscription manager with " << workersNum_ << " workers";
     }
 
     /**

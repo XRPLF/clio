@@ -49,10 +49,10 @@ class SingleFeedBase {
 public:
     /**
      * @brief Construct a new Single Feed Base object
-     * @param ioContext The actual publish will be called in the strand of this.
+     * @param executionCtx The actual publish will be called in the strand of this.
      * @param name The promethues counter name of the feed.
      */
-    SingleFeedBase(util::async::AnyExecutionContext& ioContext, std::string const& name);
+    SingleFeedBase(util::async::AnyExecutionContext& executionCtx, std::string const& name);
 
     /**
      * @brief Subscribe the feed.
