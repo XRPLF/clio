@@ -19,10 +19,11 @@
 
 #pragma once
 
-#include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/async/AnyExecutionContext.hpp"
+#include "util/async/context/SyncExecutionContext.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/json/parse.hpp>
@@ -35,16 +36,17 @@
 
 // Base class for feed tests, providing easy way to access the received feed
 template <typename TestedFeed>
-struct FeedBaseTest : util::prometheus::WithPrometheus, SyncAsioContextTest, MockBackendTest {
+struct FeedBaseTest : util::prometheus::WithPrometheus, MockBackendTest {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
+    util::async::SyncExecutionContext realCtx;
+    util::async::AnyExecutionContext ctx{realCtx};
     std::shared_ptr<TestedFeed> testFeedPtr;
     MockSession* mockSessionPtr = nullptr;
 
     void
     SetUp() override
     {
-        SyncAsioContextTest::SetUp();
         testFeedPtr = std::make_shared<TestedFeed>(ctx);
         sessionPtr = std::make_shared<MockSession>();
         sessionPtr->apiSubVersion = 1;
@@ -56,7 +58,6 @@ protected:
     {
         sessionPtr.reset();
         testFeedPtr.reset();
-        SyncAsioContextTest::TearDown();
     }
 };
 

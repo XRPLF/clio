@@ -100,7 +100,7 @@ public:
     }
 
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn) noexcept(isNoexcept)
+    execute(SomeHandlerWithoutStopToken auto&& fn) const noexcept(isNoexcept)
     {
         return DispatcherType::dispatch(
             context_,

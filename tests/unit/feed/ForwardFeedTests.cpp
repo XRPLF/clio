@@ -19,6 +19,7 @@
 
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/ForwardFeed.hpp"
+#include "util/async/AnyExecutionContext.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/json/parse.hpp>
@@ -35,7 +36,7 @@ constexpr static auto FEED = R"({"test":"test"})";
 
 class NamedForwardFeedTest : public ForwardFeed {
 public:
-    NamedForwardFeedTest(boost::asio::io_context& ioContext) : ForwardFeed(ioContext, "test")
+    NamedForwardFeedTest(util::async::AnyExecutionContext& ioContext) : ForwardFeed(ioContext, "test")
     {
     }
 };
@@ -47,15 +48,11 @@ TEST_F(FeedForwardTest, Pub)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
     auto const json = json::parse(FEED).as_object();
-    testFeedPtr->pub(json);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED))).Times(1);
-    ctx.run();
-
+    testFeedPtr->pub(json);
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
     testFeedPtr->pub(json);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedForwardTest, AutoDisconnect)
@@ -63,9 +60,8 @@ TEST_F(FeedForwardTest, AutoDisconnect)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
     auto const json = json::parse(FEED).as_object();
-    testFeedPtr->pub(json);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(json);
     sessionPtr.reset();
     EXPECT_EQ(testFeedPtr->count(), 0);
     testFeedPtr->pub(json);

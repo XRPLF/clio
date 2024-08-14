@@ -60,7 +60,7 @@ public:
      * @return The type-erased operation
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn)
+    execute(SomeHandlerWithoutStopToken auto&& fn) const
     {
         using RetType = std::decay_t<decltype(fn())>;
         static_assert(not std::is_same_v<RetType, std::any>);
@@ -138,7 +138,7 @@ private:
             std::function<std::any(AnyStopToken)>,
             std::optional<std::chrono::milliseconds> timeout = std::nullopt
         ) = 0;
-        [[nodiscard]] virtual impl::ErasedOperation execute(std::function<std::any()>) = 0;
+        [[nodiscard]] virtual impl::ErasedOperation execute(std::function<std::any()>) const = 0;
     };
 
     template <typename StrandType>
@@ -158,7 +158,7 @@ private:
         }
 
         [[nodiscard]] impl::ErasedOperation
-        execute(std::function<std::any()> fn) override
+        execute(std::function<std::any()> fn) const override
         {
             return strand.execute(std::move(fn));
         }

@@ -48,7 +48,7 @@ public:
      * @brief Construct a new Ledger Feed object
      * @param ioContext The actual publish will be called in the strand of this.
      */
-    LedgerFeed(boost::asio::io_context& ioContext) : SingleFeedBase(ioContext, "ledger")
+    LedgerFeed(util::async::AnyExecutionContext& ioContext) : SingleFeedBase(ioContext, "ledger")
     {
     }
 
