@@ -79,7 +79,7 @@ TEST_F(FeedBaseMockPrometheusTest, AutoUnsub)
 
 class NamedSingleFeedTest : public SingleFeedBase {
 public:
-    NamedSingleFeedTest(util::async::AnyExecutionContext& ioContext) : SingleFeedBase(ioContext, "forTest")
+    NamedSingleFeedTest(util::async::AnyExecutionContext& executionCtx) : SingleFeedBase(executionCtx, "forTest")
     {
     }
 };

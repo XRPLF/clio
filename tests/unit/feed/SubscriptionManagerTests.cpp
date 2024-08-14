@@ -82,7 +82,7 @@ using SubscriptionManagerTest = SubscriptionManagerBaseTest<util::async::SyncExe
 
 using SubscriptionManagerAsyncTest = SubscriptionManagerBaseTest<util::async::PoolExecutionContext>;
 
-TEST_F(SubscriptionManagerTest, MultipleThreadCtx)
+TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtx)
 {
     subscriptionManagerPtr->subManifest(session);
     subscriptionManagerPtr->subValidation(session);

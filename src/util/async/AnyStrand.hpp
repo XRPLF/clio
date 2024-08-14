@@ -20,7 +20,6 @@
 #pragma once
 
 #include "util/async/AnyStopToken.hpp"
-#include "util/async/Concepts.hpp"
 #include "util/async/impl/ErasedOperation.hpp"
 
 #include <any>
@@ -84,7 +83,7 @@ public:
      * @return The type-erased operation
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn)
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn) const
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, std::any>);
@@ -109,7 +108,7 @@ public:
      * @return The type-erased operation
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout) const
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, std::any>);
@@ -134,10 +133,8 @@ private:
         virtual ~Concept() = default;
 
         [[nodiscard]] virtual impl::ErasedOperation
-        execute(
-            std::function<std::any(AnyStopToken)>,
-            std::optional<std::chrono::milliseconds> timeout = std::nullopt
-        ) = 0;
+        execute(std::function<std::any(AnyStopToken)>, std::optional<std::chrono::milliseconds> timeout = std::nullopt)
+            const = 0;
         [[nodiscard]] virtual impl::ErasedOperation execute(std::function<std::any()>) const = 0;
     };
 
@@ -152,7 +149,8 @@ private:
         }
 
         [[nodiscard]] impl::ErasedOperation
-        execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
+        execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout)
+            const override
         {
             return strand.execute(std::move(fn), timeout);
         }
