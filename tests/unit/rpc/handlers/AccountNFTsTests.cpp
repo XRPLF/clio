@@ -433,6 +433,9 @@ TEST_F(RPCAccountNFTsHandlerTest, InvalidMarker)
     runSpawn([&](auto yield) {
         auto const output = handler.process(input, Context{yield});
         ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "invalidMarker");
     });
 }
 
