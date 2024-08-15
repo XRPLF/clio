@@ -19,50 +19,14 @@
 
 #pragma once
 
-#include "util/config/Config.hpp"
-#include "web/dosguard/DOSGuardInterface.hpp"
-#include "web/ng/MessageHandler.hpp"
+#include "web/ng/Connection.hpp"
+#include "web/ng/Request.hpp"
+#include "web/ng/Response.hpp"
 
-#include <boost/asio/io_context.hpp>
-
-#include <memory>
-#include <optional>
-#include <string>
-#include <unordered_map>
+#include <functional>
 
 namespace web::ng {
 
-class Server {
-    boost::asio::io_context& ctx_;
-    std::unique_ptr<dosguard::DOSGuardInterface> dosguard_;
-    std::unordered_map<std::string, MessageHandler> getHandlers_;
-    std::unordered_map<std::string, MessageHandler> postHandlers_;
-    std::optional<MessageHandler> wsHandler_;
-
-public:
-    Server(
-        util::Config const& config,
-        std::unique_ptr<dosguard::DOSGuardInterface> dosguard,
-        boost::asio::io_context& ctx
-    );
-
-    Server(Server const&) = delete;
-    Server(Server&&) = delete;
-
-    void
-    run();
-
-    void
-    onGet(std::string target, MessageHandler handler);
-
-    void
-    onPost(std::string target, MessageHandler handler);
-
-    void
-    onWs(MessageHandler handler);
-
-    void
-    stop();
-};
+using MessageHandler = std::function<Response(Request const&, ConnectionContext context)>;
 
 }  // namespace web::ng

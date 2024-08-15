@@ -19,50 +19,49 @@
 
 #pragma once
 
-#include "util/config/Config.hpp"
-#include "web/dosguard/DOSGuardInterface.hpp"
-#include "web/ng/MessageHandler.hpp"
-
-#include <boost/asio/io_context.hpp>
-
-#include <memory>
-#include <optional>
-#include <string>
-#include <unordered_map>
+#include <chrono>
+#include <cstddef>
 
 namespace web::ng {
 
-class Server {
-    boost::asio::io_context& ctx_;
-    std::unique_ptr<dosguard::DOSGuardInterface> dosguard_;
-    std::unordered_map<std::string, MessageHandler> getHandlers_;
-    std::unordered_map<std::string, MessageHandler> postHandlers_;
-    std::optional<MessageHandler> wsHandler_;
+class ConnectionContext;
+
+class Connection {
+public:
+    virtual ~Connection() = default;
+
+    virtual void
+    send() = 0;
+
+    virtual void
+    receive() = 0;
+
+    virtual void
+    close(std::chrono::steady_clock::duration timeout) = 0;
+
+    void
+    subscribeToDisconnect();
+
+    ConnectionContext
+    context() const;
+
+    struct Hash {
+        size_t
+        operator()(Connection const& connection) const;
+    };
+};
+
+class ConnectionContext {
+    Connection& connection_;
 
 public:
-    Server(
-        util::Config const& config,
-        std::unique_ptr<dosguard::DOSGuardInterface> dosguard,
-        boost::asio::io_context& ctx
-    );
+    explicit ConnectionContext(Connection& connection);
 
-    Server(Server const&) = delete;
-    Server(Server&&) = delete;
+    ConnectionContext(ConnectionContext&&) = delete;
+    ConnectionContext(ConnectionContext const&) = default;
 
-    void
-    run();
-
-    void
-    onGet(std::string target, MessageHandler handler);
-
-    void
-    onPost(std::string target, MessageHandler handler);
-
-    void
-    onWs(MessageHandler handler);
-
-    void
-    stop();
+    bool
+    isAdmin() const;
 };
 
 }  // namespace web::ng
