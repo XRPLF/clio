@@ -415,12 +415,6 @@ TEST_F(RPCAccountNFTsHandlerTest, InvalidMarker)
     ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(accountID).key, 30, _))
         .WillByDefault(Return(accountObject.getSerializer().peekData()));
 
-    auto const pageObject =
-        CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt);
-    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{PAGE}, 30, _))
-        .WillByDefault(Return(pageObject.getSerializer().peekData()));
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
-
     auto static const input = json::parse(fmt::format(
         R"({{
             "account":"{}",
@@ -436,6 +430,32 @@ TEST_F(RPCAccountNFTsHandlerTest, InvalidMarker)
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "Marker field does not match any valid Page ID");
+    });
+}
+
+TEST_F(RPCAccountNFTsHandlerTest, AccountNoNFT)
+{
+    backend->setRange(MINSEQ, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+
+    auto const accountObject = CreateAccountRootObject(ACCOUNT, 0, 1, 10, 2, TXNID, 3);
+    auto const accountID = GetAccountIDWithString(ACCOUNT);
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(accountID).key, 30, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "account":"{}"
+        }})",
+        ACCOUNT
+    ));
+    auto const handler = AnyHandler{AccountNFTsHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(output.result->as_object().at("account_nfts").as_array().size(), 0);
     });
 }
 
