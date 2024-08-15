@@ -27,6 +27,7 @@
 #include <any>
 #include <expected>
 #include <string>
+#include <utility>
 
 using namespace util::async;
 using namespace ::testing;
@@ -46,6 +47,14 @@ struct AnyOperationTests : Test {
     AnyOperation<void> scheduledVoidOp{impl::ErasedOperation(static_cast<ScheduledOperationType&>(mockScheduledOp))};
 };
 using AnyOperationDeathTest = AnyOperationTests;
+
+TEST_F(AnyOperationTests, Move)
+{
+    EXPECT_CALL(mockOp, get()).WillOnce(Return(std::any{}));
+    auto yoink = std::move(voidOp);
+    auto res = yoink.get();
+    ASSERT_TRUE(res);
+}
 
 TEST_F(AnyOperationTests, VoidDataYieldsNoError)
 {

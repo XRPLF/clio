@@ -32,6 +32,7 @@
 #include <chrono>
 #include <functional>
 #include <type_traits>
+#include <utility>
 
 using namespace util::async;
 using namespace ::testing;
@@ -51,6 +52,26 @@ struct AnyExecutionContextTests : Test {
     NiceMock<MockExecutionContext> mockExecutionContext;
     AnyExecutionContext ctx{static_cast<MockExecutionContext&>(mockExecutionContext)};
 };
+
+TEST_F(AnyExecutionContextTests, Move)
+{
+    auto mockOp = OperationType<std::any>{};
+    EXPECT_CALL(mockExecutionContext, execute(An<std::function<std::any()>>())).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockOp, get());
+
+    auto mineNow = std::move(ctx);
+    ASSERT_TRUE(mineNow.execute([] { throw 0; }).get());
+}
+
+TEST_F(AnyExecutionContextTests, CopyIsRefCounted)
+{
+    auto mockOp = OperationType<std::any>{};
+    EXPECT_CALL(mockExecutionContext, execute(An<std::function<std::any()>>())).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockOp, get());
+
+    auto yoink = ctx;
+    ASSERT_TRUE(yoink.execute([] { throw 0; }).get());
+}
 
 TEST_F(AnyExecutionContextTests, ExecuteWithoutTokenAndVoid)
 {

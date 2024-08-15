@@ -46,6 +46,21 @@ struct AnyStrandTests : ::testing::Test {
     AnyStrand strand{static_cast<MockStrand&>(mockStrand)};
 };
 
+// TEST_F(AnyStrandTests, Move)
+// {
+//     auto mineNow = std::move(strand);
+//     EXPECT_TRUE(mineNow.execute([] { return true; }).get().value());
+// }
+
+TEST_F(AnyStrandTests, CopyIsRefCounted)
+{
+    auto mockOp = OperationType<std::any>{};
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any()>>())).WillOnce(ReturnRef(mockOp));
+
+    auto yoink = strand;
+    ASSERT_TRUE(yoink.execute([] { throw 0; }).get());
+}
+
 TEST_F(AnyStrandTests, ExecuteWithoutTokenAndVoid)
 {
     auto mockOp = OperationType<std::any>{};
