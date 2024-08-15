@@ -43,16 +43,41 @@ public:
     /**
      * @brief Construct a new type-erased Execution Context object
      *
+     * @note Stores the Execution Context by reference.
+     *
      * @tparam CtxType The type of the execution context to wrap
      * @param ctx The execution context to wrap
      */
     template <typename CtxType>
-        requires(not std::is_same_v<std::decay_t<CtxType>, AnyExecutionContext>)
     /* implicit */
-    AnyExecutionContext(CtxType&& ctx) : pimpl_{std::make_unique<Model<CtxType>>(std::forward<CtxType>(ctx))}
+    AnyExecutionContext(CtxType&& ctx)
+        requires(not std::is_same_v<std::decay_t<CtxType>, AnyExecutionContext> and std::is_lvalue_reference_v<decltype(ctx)>)
+        : pimpl_{std::make_unique<NonOwningModel<CtxType>>(ctx)}
     {
     }
 
+    /**
+     * @brief Construct a new type-erased Execution Context object
+     *
+     * @note Stores the Execution Context by moving it into the AnyExecutionContext.
+     *
+     * @tparam CtxType The type of the execution context to wrap
+     * @param ctx The execution context to wrap
+     */
+    template <typename CtxType>
+    /* implicit */
+    AnyExecutionContext(CtxType&& ctx)
+        requires(not std::is_same_v<std::decay_t<CtxType>, AnyExecutionContext> and std::is_rvalue_reference_v<decltype(ctx)>)
+        : pimpl_{std::make_unique<OwningModel<CtxType>>(std::forward<CtxType>(ctx))}
+    {
+    }
+
+    AnyExecutionContext(AnyExecutionContext const&) = default;
+    AnyExecutionContext(AnyExecutionContext&&) = default;
+    AnyExecutionContext&
+    operator=(AnyExecutionContext const&) = default;
+    AnyExecutionContext&
+    operator=(AnyExecutionContext&&) = default;
     ~AnyExecutionContext() = default;
 
     /**
@@ -221,10 +246,49 @@ private:
     };
 
     template <typename CtxType>
-    struct Model : Concept {
+    struct OwningModel : Concept {
+        CtxType ctx;
+
+        OwningModel(CtxType&& ctx) : ctx(std::move(ctx))
+        {
+        }
+
+        impl::ErasedOperation
+        execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
+        {
+            return ctx.execute(std::move(fn), timeout);
+        }
+
+        impl::ErasedOperation
+        execute(std::function<std::any()> fn) override
+        {
+            return ctx.execute(std::move(fn));
+        }
+
+        impl::ErasedOperation
+        scheduleAfter(std::chrono::milliseconds delay, std::function<std::any(AnyStopToken)> fn) override
+        {
+            return ctx.scheduleAfter(delay, std::move(fn));
+        }
+
+        impl::ErasedOperation
+        scheduleAfter(std::chrono::milliseconds delay, std::function<std::any(AnyStopToken, bool)> fn) override
+        {
+            return ctx.scheduleAfter(delay, std::move(fn));
+        }
+
+        AnyStrand
+        makeStrand() override
+        {
+            return ctx.makeStrand();
+        }
+    };
+
+    template <typename CtxType>
+    struct NonOwningModel : Concept {
         std::reference_wrapper<std::decay_t<CtxType>> ctx;
 
-        Model(CtxType& ctx) : ctx{std::ref(ctx)}
+        NonOwningModel(CtxType& ctx) : ctx{std::ref(ctx)}
         {
         }
 
@@ -260,7 +324,7 @@ private:
     };
 
 private:
-    std::unique_ptr<Concept> pimpl_;
+    std::shared_ptr<Concept> pimpl_;
 };
 
 }  // namespace util::async

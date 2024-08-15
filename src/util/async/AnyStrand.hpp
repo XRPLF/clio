@@ -51,6 +51,8 @@ public:
     {
     }
 
+    AnyStrand(AnyStrand const&) = default;
+    AnyStrand(AnyStrand&&) = default;
     ~AnyStrand() = default;
 
     /**
@@ -165,7 +167,7 @@ private:
     };
 
 private:
-    std::unique_ptr<Concept> pimpl_;
+    std::shared_ptr<Concept> pimpl_;
 };
 
 }  // namespace util::async

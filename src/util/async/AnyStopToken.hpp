@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 namespace util::async {
 
@@ -142,7 +143,7 @@ private:
             }
 
             ASSERT(false, "Token type does not support conversion to boost::asio::yield_context");
-            __builtin_unreachable();  // TODO: replace with std::unreachable when C++23 is available
+            std::unreachable();
         }
     };
 

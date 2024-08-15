@@ -37,7 +37,7 @@ struct SameThreadContext {
         }
 
         void
-        stop() noexcept
+        stop() const noexcept
         {
         }
     };
@@ -50,6 +50,18 @@ struct SameThreadContext {
     };
 
     Executor executor;
+
+    void
+    stop() const noexcept
+    {
+        executor.stop();
+    }
+
+    Executor&
+    getExecutor()
+    {
+        return executor;
+    }
 
     [[nodiscard]] Strand
     makeStrand() noexcept  // NOLINT(readability-convert-member-functions-to-static)
