@@ -433,7 +433,7 @@ TEST_F(RPCAccountNFTsHandlerTest, InvalidMarker)
     });
 }
 
-TEST_F(RPCAccountNFTsHandlerTest, AccountNoNFT)
+TEST_F(RPCAccountNFTsHandlerTest, AccountWithNoNFT)
 {
     backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);

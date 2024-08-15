@@ -86,6 +86,10 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
     }
 
     std::optional<ripple::SLE const> page{ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}};
+
+    if (page->getType() != ripple::ltNFTOKEN_PAGE)
+        return Error{Status{RippledError::rpcINVALID_PARAMS, "Marker matches Page ID from another Account"}};
+
     auto numPages = 0u;
 
     while (page) {
