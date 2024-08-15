@@ -20,11 +20,15 @@
 #pragma once
 
 #include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/ng/MessageHandler.hpp"
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/spawn.hpp>
 
+#include <future>
 #include <memory>
 #include <optional>
 #include <string>
@@ -33,11 +37,17 @@
 namespace web::ng {
 
 class Server {
+    util::Logger log_{"WebServer"};
     boost::asio::io_context& ctx_;
     std::unique_ptr<dosguard::DOSGuardInterface> dosguard_;
+
     std::unordered_map<std::string, MessageHandler> getHandlers_;
     std::unordered_map<std::string, MessageHandler> postHandlers_;
     std::optional<MessageHandler> wsHandler_;
+
+    boost::asio::ip::tcp::endpoint endpoint_;
+
+    std::future<void> running_;
 
 public:
     Server(
@@ -49,20 +59,24 @@ public:
     Server(Server const&) = delete;
     Server(Server&&) = delete;
 
-    void
+    std::optional<std::string>
     run();
 
     void
-    onGet(std::string target, MessageHandler handler);
+    onGet(std::string const& target, MessageHandler handler);
 
     void
-    onPost(std::string target, MessageHandler handler);
+    onPost(std::string const& target, MessageHandler handler);
 
     void
     onWs(MessageHandler handler);
 
     void
     stop();
+
+private:
+    void
+    makeConnnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield);
 };
 
 }  // namespace web::ng
