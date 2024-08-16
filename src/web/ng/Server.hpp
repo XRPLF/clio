@@ -19,20 +19,23 @@
 
 #pragma once
 
+#include "util/Mutex.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
+#include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/ssl/context.hpp>
 
-#include <future>
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace web::ng {
 
@@ -40,14 +43,15 @@ class Server {
     util::Logger log_{"WebServer"};
     boost::asio::io_context& ctx_;
     std::unique_ptr<dosguard::DOSGuardInterface> dosguard_;
+    std::optional<boost::asio::ssl::context> sslContext_;
 
     std::unordered_map<std::string, MessageHandler> getHandlers_;
     std::unordered_map<std::string, MessageHandler> postHandlers_;
     std::optional<MessageHandler> wsHandler_;
 
-    boost::asio::ip::tcp::endpoint endpoint_;
+    util::Mutex<std::unordered_set<ConnectionPtr, Connection::Hash>> connections_;
 
-    std::future<void> running_;
+    boost::asio::ip::tcp::endpoint endpoint_;
 
 public:
     Server(
@@ -76,7 +80,13 @@ public:
 
 private:
     void
-    makeConnnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield);
+    makeConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield);
+
+    void
+    handleConnection(std::string connectionTag, boost::asio::yield_context yield);
+
+    void
+    handleConnectionLoop(std::string connectionTag, boost::asio::yield_context yield);
 };
 
 }  // namespace web::ng

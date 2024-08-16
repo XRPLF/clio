@@ -19,55 +19,20 @@
 
 #pragma once
 
-#include <chrono>
-#include <cstddef>
-#include <memory>
+#include "util/config/Config.hpp"
 
-namespace web::ng {
+#include <boost/asio/ssl/context.hpp>
 
-class ConnectionContext;
+#include <expected>
+#include <optional>
+#include <string>
 
-class Connection {
-public:
-    virtual ~Connection() = default;
+namespace web::ng::impl {
 
-    virtual void
-    send() = 0;
+std::expected<std::optional<boost::asio::ssl::context>, std::string>
+makeServerSslContext(util::Config const& config);
 
-    virtual void
-    receive() = 0;
+std::expected<boost::asio::ssl::context, std::string>
+makeServerSslContext(std::string const& certFilePath, std::string const& keyFilePath);
 
-    virtual void
-    close(std::chrono::steady_clock::duration timeout) = 0;
-
-    void
-    subscribeToDisconnect();
-
-    ConnectionContext
-    context() const;
-
-    std::string const&
-    tag() const;
-
-    struct Hash {
-        size_t
-        operator()(Connection const& connection) const;
-    };
-};
-
-class ConnectionContext {
-    Connection& connection_;
-
-public:
-    explicit ConnectionContext(Connection& connection);
-
-    ConnectionContext(ConnectionContext&&) = delete;
-    ConnectionContext(ConnectionContext const&) = default;
-
-    bool
-    isAdmin() const;
-};
-
-using ConnectionPtr = std::unique_ptr<Connection>;
-
-}  // namespace web::ng
+}  // namespace web::ng::impl
