@@ -77,10 +77,9 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
     auto const pageKey =
         input.marker ? ripple::uint256{input.marker->c_str()} : ripple::keylet::nftpage_max(*accountID).key;
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
-    auto const markerSet = input.marker.has_value();
 
     if (!blob) {
-        if (markerSet)
+        if (input.marker.has_value())
             return Error{Status{RippledError::rpcINVALID_PARAMS, "Marker field does not match any valid Page ID"}};
         return response;
     }

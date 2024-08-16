@@ -459,6 +459,42 @@ TEST_F(RPCAccountNFTsHandlerTest, AccountWithNoNFT)
     });
 }
 
+TEST_F(RPCAccountNFTsHandlerTest, invalidPage)
+{
+    backend->setRange(MINSEQ, MAXSEQ);
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
+
+    auto const accountObject = CreateAccountRootObject(ACCOUNT, 0, 1, 10, 2, TXNID, 3);
+    auto const accountID = GetAccountIDWithString(ACCOUNT);
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(accountID).key, 30, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+
+    auto const pageObject =
+        CreateNFTTokenPage(std::vector{std::make_pair<std::string, std::string>(TOKENID, "www.ok.com")}, std::nullopt);
+    ON_CALL(*backend, doFetchLedgerObject(ripple::uint256{PAGE}, 30, _))
+        .WillByDefault(Return(accountObject.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
+
+    auto static const input = json::parse(fmt::format(
+        R"({{
+            "account":"{}",
+            "marker":"{}"
+        }})",
+        ACCOUNT,
+        PAGE
+    ));
+    auto const handler = AnyHandler{AccountNFTsHandler{backend}};
+    runSpawn([&](auto yield) {
+        auto const output = handler.process(input, Context{yield});
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "Marker matches Page ID from another Account");
+    });
+}
+
 TEST_F(RPCAccountNFTsHandlerTest, LimitLessThanMin)
 {
     static auto const expectedOutput = fmt::format(
