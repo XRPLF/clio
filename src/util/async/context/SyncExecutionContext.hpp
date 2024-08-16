@@ -40,6 +40,11 @@ struct SameThreadContext {
         stop() noexcept
         {
         }
+
+        void
+        join() noexcept
+        {
+        }
     };
 
     // Note: these types are not actually used but needed for compilation
