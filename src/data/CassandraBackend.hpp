@@ -975,7 +975,7 @@ public:
             }
         }
 
-        executor_.write(std::move(statements));
+        executor_.writeEach(std::move(statements));
     }
 
     void
