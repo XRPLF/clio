@@ -120,7 +120,7 @@ protected:
 
 TEST_F(NFTHelpersTest, NFTDataFromFailedTx)
 {
-    auto const tx = createNFTModifyTxWithMetadata(kACCOUNT, kNFT_ID, ripple::Blob{});
+    auto const tx = createNftModifyTxWithMetadata(kACCOUNT, kNFT_ID, ripple::Blob{});
 
     // Inject a failed result
     ripple::SerialIter sitMeta(ripple::makeSlice(tx.metadata));
@@ -163,7 +163,7 @@ TEST_F(NFTHelpersTest, NFTModifyWithURI)
     std::string const uri("1234567890A");
     ripple::Blob const uriBlob(uri.begin(), uri.end());
 
-    auto const tx = createNFTModifyTxWithMetadata(kACCOUNT, kNFT_ID, uriBlob);
+    auto const tx = createNftModifyTxWithMetadata(kACCOUNT, kNFT_ID, uriBlob);
     ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
 
     auto const sttx = ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
@@ -177,7 +177,7 @@ TEST_F(NFTHelpersTest, NFTModifyWithURI)
 
 TEST_F(NFTHelpersTest, NFTModifyWithoutURI)
 {
-    auto const tx = createNFTModifyTxWithMetadata(kACCOUNT, kNFT_ID, ripple::Blob{});
+    auto const tx = createNftModifyTxWithMetadata(kACCOUNT, kNFT_ID, ripple::Blob{});
     ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
     auto const sttx = ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
     auto const [nftTxs, nftDatas] = etl::getNFTDataFromTx(txMeta, sttx);
@@ -204,7 +204,7 @@ TEST_F(NFTHelpersTest, NFTMintCantFindNewNFT)
 {
     // No NFT added to the page
     auto const tx =
-        createMintNFTTxWithMetadataOfCreatedNode(kACCOUNT, 1, 20, 1, std::nullopt, std::nullopt, kPAGE_INDEX);
+        createMintNftTxWithMetadataOfCreatedNode(kACCOUNT, 1, 20, 1, std::nullopt, std::nullopt, kPAGE_INDEX);
     ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
 
     EXPECT_THROW(
@@ -217,7 +217,7 @@ TEST_F(NFTHelpersTest, NFTMintFromCreatedNode)
 {
     std::string const uri("1234567890A");
     ripple::Blob const uriBlob(uri.begin(), uri.end());
-    auto const tx = createMintNFTTxWithMetadataOfCreatedNode(kACCOUNT, 1, 20, 1, kNFT_ID, uri, kPAGE_INDEX);
+    auto const tx = createMintNftTxWithMetadataOfCreatedNode(kACCOUNT, 1, 20, 1, kNFT_ID, uri, kPAGE_INDEX);
     ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
     auto const sttx = ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
 
@@ -230,7 +230,7 @@ TEST_F(NFTHelpersTest, NFTMintFromCreatedNode)
 
 TEST_F(NFTHelpersTest, NFTMintWithoutUriField)
 {
-    auto const tx = createMintNFTTxWithMetadataOfCreatedNode(kACCOUNT, 1, 20, 1, kNFT_ID, std::nullopt, kPAGE_INDEX);
+    auto const tx = createMintNftTxWithMetadataOfCreatedNode(kACCOUNT, 1, 20, 1, kNFT_ID, std::nullopt, kPAGE_INDEX);
     ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
     auto const sttx = ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
 
@@ -243,7 +243,7 @@ TEST_F(NFTHelpersTest, NFTMintWithoutUriField)
 
 TEST_F(NFTHelpersTest, NFTMintZeroMetaNode)
 {
-    auto const tx = createMintNFTTxWithMetadataOfCreatedNode(kACCOUNT, 1, 20, 1, kNFT_ID, std::nullopt, kPAGE_INDEX);
+    auto const tx = createMintNftTxWithMetadataOfCreatedNode(kACCOUNT, 1, 20, 1, kNFT_ID, std::nullopt, kPAGE_INDEX);
     ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
     txMeta.getNodes().clear();
 
@@ -255,7 +255,7 @@ TEST_F(NFTHelpersTest, NFTMintZeroMetaNode)
 
 TEST_F(NFTHelpersTest, NFTBurnFromDeletedNode)
 {
-    auto const tx = createNFTBurnTxWithMetadataOfDeletedNode(kACCOUNT, kNFT_ID);
+    auto const tx = createNftBurnTxWithMetadataOfDeletedNode(kACCOUNT, kNFT_ID);
     ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
     txMeta.getNodes()[1].setFieldH256(ripple::sfLedgerIndex, ripple::uint256(kPAGE_INDEX));
     auto const sttx = ripple::STTx(ripple::SerialIter{tx.transaction.data(), tx.transaction.size()});
@@ -268,7 +268,7 @@ TEST_F(NFTHelpersTest, NFTBurnFromDeletedNode)
 
 TEST_F(NFTHelpersTest, NFTBurnZeroMetaNode)
 {
-    auto const tx = createNFTBurnTxWithMetadataOfDeletedNode(kACCOUNT, kNFT_ID);
+    auto const tx = createNftBurnTxWithMetadataOfDeletedNode(kACCOUNT, kNFT_ID);
     ripple::TxMeta txMeta(ripple::uint256(kTX), 1, tx.metadata);
     txMeta.getNodes().clear();
 

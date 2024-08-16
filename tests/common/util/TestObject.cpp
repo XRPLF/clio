@@ -728,7 +728,7 @@ createMintNftTxWithMetadata(
 }
 
 data::TransactionAndMetadata
-createMintNFTTxWithMetadataOfCreatedNode(
+createMintNftTxWithMetadataOfCreatedNode(
     std::string_view accountId,
     uint32_t seq,
     uint32_t fee,
@@ -795,7 +795,7 @@ createMintNFTTxWithMetadataOfCreatedNode(
 }
 
 data::TransactionAndMetadata
-createNFTModifyTxWithMetadata(std::string_view accountId, std::string_view nftID, ripple::Blob uri)
+createNftModifyTxWithMetadata(std::string_view accountId, std::string_view nftID, ripple::Blob uri)
 {
     // tx
     ripple::STObject tx(ripple::sfTransaction);
@@ -855,7 +855,7 @@ createNFTModifyTxWithMetadata(std::string_view accountId, std::string_view nftID
 }
 
 data::TransactionAndMetadata
-createNFTBurnTxWithMetadataOfDeletedNode(std::string_view accountId, std::string_view nftID)
+createNftBurnTxWithMetadataOfDeletedNode(std::string_view accountId, std::string_view nftID)
 {
     // tx
     ripple::STObject tx(ripple::sfTransaction);

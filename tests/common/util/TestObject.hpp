@@ -318,7 +318,7 @@ createMintNftTxWithMetadata(
  * Create NFToken mint tx, the metadata contained a created node
  */
 [[nodiscard]] data::TransactionAndMetadata
-createMintNFTTxWithMetadataOfCreatedNode(
+createMintNftTxWithMetadataOfCreatedNode(
     std::string_view accountId,
     uint32_t seq,
     uint32_t fee,
@@ -329,13 +329,13 @@ createMintNFTTxWithMetadataOfCreatedNode(
 );
 
 [[nodiscard]] data::TransactionAndMetadata
-createNFTModifyTxWithMetadata(std::string_view accountId, std::string_view nftID, ripple::Blob uri);
+createNftModifyTxWithMetadata(std::string_view accountId, std::string_view nftID, ripple::Blob uri);
 
 /**
  * Create NFToken burn tx, tx causes a nft page node deleted
  */
 [[nodiscard]] data::TransactionAndMetadata
-createNFTBurnTxWithMetadataOfDeletedNode(std::string_view accountId, std::string_view nftID);
+createNftBurnTxWithMetadataOfDeletedNode(std::string_view accountId, std::string_view nftID);
 
 /**
  * Create NFToken mint tx, tx causes a nft page node changed

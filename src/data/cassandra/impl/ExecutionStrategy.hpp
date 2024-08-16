@@ -229,24 +229,6 @@ public:
     }
 
     /**
-     * @brief Non-blocking  query execution used for writing data. Constrast with write, this method does not execute
-     * the statements in a batch.
-     *
-     * Retries forever with retry policy specified by @ref AsyncExecutor.
-     *
-     * @param statements Vector of statements to execute
-     * @throw DatabaseTimeout on timeout
-     */
-    void
-    writeEach(std::vector<StatementType>&& statements)
-    {
-        if (statements.empty())
-            return;
-
-        std::ranges::for_each(std::move(statements), [this](auto& statement) { this->write(std::move(statement)); });
-    }
-
-    /**
      * @brief Non-blocking batched query execution used for writing data.
      *
      * Retries forever with retry policy specified by @ref AsyncExecutor.
@@ -282,6 +264,21 @@ public:
                 [this]() { counters_->registerWriteRetry(); }
             );
         });
+    }
+
+    /**
+     * @brief Non-blocking  query execution used for writing data. Constrast with write, this method does not execute
+     * the statements in a batch.
+     *
+     * Retries forever with retry policy specified by @ref AsyncExecutor.
+     *
+     * @param statements Vector of statements to execute
+     * @throw DatabaseTimeout on timeout
+     */
+    void
+    writeEach(std::vector<StatementType>&& statements)
+    {
+        std::ranges::for_each(std::move(statements), [this](auto& statement) { this->write(std::move(statement)); });
     }
 
     /**
