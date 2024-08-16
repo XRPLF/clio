@@ -23,6 +23,7 @@
 #include "data/cassandra/impl/ExecutionStrategy.hpp"
 #include "util/AsioContextTestFixture.hpp"
 
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
@@ -371,7 +372,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteMultipleAndCallSyncSucceeds)
     auto const totalRequests = 1024u;
     auto callCount = std::atomic_uint{0u};
 
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
+    auto work = boost::asio::make_work_guard(ctx);
     auto thread = std::thread{[this]() { ctx.run(); }};
 
     ON_CALL(handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>()))
@@ -412,7 +413,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteEachAndCallSyncSucceeds)
     auto const numStatements = 16u;
     auto callCount = std::atomic_uint{0u};
 
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
+    auto work = boost::asio::make_work_guard(ctx);
     auto thread = std::thread{[this]() { ctx.run(); }};
 
     ON_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))

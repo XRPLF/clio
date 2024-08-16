@@ -240,9 +240,6 @@ public:
     void
     writeEach(std::vector<StatementType>&& statements)
     {
-        if (statements.empty())
-            return;
-
         std::ranges::for_each(std::move(statements), [this](auto& statement) { this->write(std::move(statement)); });
     }
 
