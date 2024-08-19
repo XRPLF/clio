@@ -17,61 +17,33 @@
 */
 //==============================================================================
 
-#pragma once
+#include "web/ng/Connection.hpp"
 
-#include <chrono>
+#include <atomic>
 #include <cstddef>
-#include <memory>
+#include <functional>
 
 namespace web::ng {
 
-class ConnectionContext;
+namespace {
 
-class Connection {
-    size_t id_;
+size_t
+generateId()
+{
+    static std::atomic_size_t id{0};
+    return id++;
+}
 
-public:
-    Connection();
+}  // namespace
 
-    virtual ~Connection() = default;
+Connection::Connection() : id_{generateId()}
+{
+}
 
-    virtual void
-    send() = 0;
-
-    virtual void
-    receive() = 0;
-
-    virtual void
-    close(std::chrono::steady_clock::duration timeout) = 0;
-
-    void
-    subscribeToDisconnect();
-
-    ConnectionContext
-    context() const;
-
-    size_t
-    id() const;
-
-    struct Hash {
-        size_t
-        operator()(Connection const& connection) const;
-    };
-};
-
-class ConnectionContext {
-    Connection& connection_;
-
-public:
-    explicit ConnectionContext(Connection& connection);
-
-    ConnectionContext(ConnectionContext&&) = delete;
-    ConnectionContext(ConnectionContext const&) = default;
-
-    bool
-    isAdmin() const;
-};
-
-using ConnectionPtr = std::unique_ptr<Connection>;
+size_t
+Connection::Hash::operator()(Connection const& connection) const
+{
+    return std::hash<std::size_t>{}(connection.id());
+}
 
 }  // namespace web::ng
