@@ -44,9 +44,6 @@
 #include <utility>
 
 // forward declarations
-namespace feed {
-class SubscriptionManager;
-}  // namespace feed
 namespace etl {
 class LoadBalancer;
 class ETLService;

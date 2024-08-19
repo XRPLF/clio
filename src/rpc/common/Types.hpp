@@ -43,9 +43,6 @@ class LoadBalancer;
 namespace web {
 struct ConnectionBase;
 }  // namespace web
-namespace feed {
-class SubscriptionManager;
-}  // namespace feed
 
 namespace rpc {
 

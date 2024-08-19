@@ -52,9 +52,6 @@
 struct AccountTransactionsData;
 struct NFTTransactionsData;
 struct NFTsData;
-namespace feed {
-class SubscriptionManager;
-}  // namespace feed
 
 /**
  * @brief This namespace contains everything to do with the ETL and ETL sources.

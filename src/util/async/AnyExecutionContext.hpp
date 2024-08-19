@@ -227,6 +227,24 @@ public:
         return pimpl_->makeStrand();
     }
 
+    /**
+     * @brief Stop the execution context
+     */
+    void
+    stop()
+    {
+        pimpl_->stop();
+    }
+
+    /**
+     * @brief Join the execution context
+     */
+    void
+    join()
+    {
+        pimpl_->join();
+    }
+
 private:
     struct Concept {
         virtual ~Concept() = default;
@@ -243,6 +261,10 @@ private:
             scheduleAfter(std::chrono::milliseconds, std::function<std::any(AnyStopToken, bool)>) = 0;
         virtual AnyStrand
         makeStrand() = 0;
+        virtual void
+        stop() = 0;
+        virtual void
+        join() = 0;
     };
 
     template <typename CtxType>
@@ -320,6 +342,18 @@ private:
         makeStrand() override
         {
             return ctx.get().makeStrand();
+        }
+
+        void
+        stop() override
+        {
+            ctx.get().stop();
+        }
+
+        void
+        join() override
+        {
+            ctx.get().join();
         }
     };
 

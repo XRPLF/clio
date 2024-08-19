@@ -19,13 +19,13 @@
 
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/SingleFeedBase.hpp"
-#include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
+#include "util/SyncExecutionCtxFixture.hpp"
+#include "util/async/AnyExecutionContext.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -36,7 +36,7 @@ constexpr static auto FEED = R"({"test":"test"})";
 using namespace feed::impl;
 using namespace util::prometheus;
 
-struct FeedBaseMockPrometheusTest : WithMockPrometheus, SyncAsioContextTest {
+struct FeedBaseMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
     std::shared_ptr<web::ConnectionBase> sessionPtr;
     std::shared_ptr<SingleFeedBase> testFeedPtr;
@@ -45,7 +45,6 @@ protected:
     void
     SetUp() override
     {
-        SyncAsioContextTest::SetUp();
         testFeedPtr = std::make_shared<SingleFeedBase>(ctx, "testFeed");
         sessionPtr = std::make_shared<MockSession>();
         mockSessionPtr = dynamic_cast<MockSession*>(sessionPtr.get());
@@ -55,7 +54,6 @@ protected:
     {
         sessionPtr.reset();
         testFeedPtr.reset();
-        SyncAsioContextTest::TearDown();
     }
 };
 
@@ -81,7 +79,7 @@ TEST_F(FeedBaseMockPrometheusTest, AutoUnsub)
 
 class NamedSingleFeedTest : public SingleFeedBase {
 public:
-    NamedSingleFeedTest(boost::asio::io_context& ioContext) : SingleFeedBase(ioContext, "forTest")
+    NamedSingleFeedTest(util::async::AnyExecutionContext& executionCtx) : SingleFeedBase(executionCtx, "forTest")
     {
     }
 };
@@ -94,13 +92,10 @@ TEST_F(SingleFeedBaseTest, Test)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
     testFeedPtr->pub(FEED);
-    ctx.run();
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
     testFeedPtr->pub(FEED);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(SingleFeedBaseTest, TestAutoDisconnect)
@@ -109,7 +104,6 @@ TEST_F(SingleFeedBaseTest, TestAutoDisconnect)
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
     testFeedPtr->pub(FEED);
-    ctx.run();
 
     sessionPtr.reset();
     EXPECT_EQ(testFeedPtr->count(), 0);

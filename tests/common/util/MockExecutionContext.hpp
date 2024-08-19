@@ -77,4 +77,5 @@ struct MockExecutionContext {
     );
     MOCK_METHOD(MockStrand const&, makeStrand, (), (const));
     MOCK_METHOD(void, stop, (), (const));
+    MOCK_METHOD(void, join, (), (const));
 };

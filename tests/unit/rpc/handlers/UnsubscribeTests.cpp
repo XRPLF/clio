@@ -61,7 +61,6 @@ struct RPCUnsubscribeTest : HandlerBaseTest {
         HandlerBaseTest::TearDown();
     }
 
-    std::shared_ptr<feed::SubscriptionManager> subManager_;
     std::shared_ptr<web::ConnectionBase> session_;
     StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
 };

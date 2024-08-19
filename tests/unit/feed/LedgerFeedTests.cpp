@@ -21,7 +21,6 @@
 #include "feed/impl/LedgerFeed.hpp"
 #include "util/TestObject.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
@@ -63,7 +62,6 @@ TEST_F(FeedLedgerTest, SubPub)
         // check the response
         EXPECT_EQ(res, json::parse(LedgerResponse));
     });
-    ctx.run();
     EXPECT_EQ(testFeedPtr->count(), 1);
 
     constexpr static auto ledgerPub =
@@ -85,16 +83,12 @@ TEST_F(FeedLedgerTest, SubPub)
     auto fee2 = ripple::Fees();
     fee2.reserve = 10;
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8);
-    ctx.restart();
-    ctx.run();
 
     // test unsub, after unsub the send should not be called
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
     EXPECT_CALL(*mockSessionPtr, send(_)).Times(0);
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedLedgerTest, AutoDisconnect)
@@ -120,7 +114,6 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
         // check the response
         EXPECT_EQ(res, json::parse(LedgerResponse));
     });
-    ctx.run();
     EXPECT_EQ(testFeedPtr->count(), 1);
     EXPECT_CALL(*mockSessionPtr, send(_)).Times(0);
 
@@ -132,6 +125,4 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     fee2.reserve = 10;
     // no error
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8);
-    ctx.restart();
-    ctx.run();
 }

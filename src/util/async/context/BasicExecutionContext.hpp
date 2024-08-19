@@ -354,6 +354,15 @@ public:
     {
         context_.stop();
     }
+
+    /**
+     * @brief Block until all operations are completed
+     */
+    void
+    join() noexcept
+    {
+        context_.executor.join();
+    }
 };
 
 /**

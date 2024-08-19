@@ -21,6 +21,8 @@
 
 #include "feed/Types.hpp"
 #include "feed/impl/TrackableSignal.hpp"
+#include "util/async/AnyExecutionContext.hpp"
+#include "util/async/AnyStrand.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Gauge.hpp"
 
@@ -38,7 +40,7 @@ namespace feed::impl {
  * @brief Base class for single feed.
  */
 class SingleFeedBase {
-    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
+    util::async::AnyStrand strand_;
     std::reference_wrapper<util::prometheus::GaugeInt> subCount_;
     TrackableSignal<Subscriber, std::shared_ptr<std::string> const&> signal_;
     util::Logger logger_{"Subscriptions"};
@@ -47,10 +49,10 @@ class SingleFeedBase {
 public:
     /**
      * @brief Construct a new Single Feed Base object
-     * @param ioContext The actual publish will be called in the strand of this.
+     * @param executionCtx The actual publish will be called in the strand of this.
      * @param name The promethues counter name of the feed.
      */
-    SingleFeedBase(boost::asio::io_context& ioContext, std::string const& name);
+    SingleFeedBase(util::async::AnyExecutionContext& executionCtx, std::string const& name);
 
     /**
      * @brief Subscribe the feed.

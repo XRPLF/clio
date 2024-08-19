@@ -23,7 +23,6 @@
 #include "feed/impl/ForwardFeed.hpp"
 #include "util/TestObject.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/protocol/STObject.h>
@@ -55,7 +54,6 @@ TEST_F(FeedBookChangeTest, Pub)
     trans1.metadata = metaObj.getSerializer().peekData();
     transactions.push_back(trans1);
 
-    testFeedPtr->pub(ledgerHeader, transactions);
     constexpr static auto bookChangePublish =
         R"({
             "type":"bookChanges",
@@ -78,11 +76,9 @@ TEST_F(FeedBookChangeTest, Pub)
         })";
 
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(bookChangePublish))).Times(1);
-    ctx.run();
+    testFeedPtr->pub(ledgerHeader, transactions);
 
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
     testFeedPtr->pub(ledgerHeader, transactions);
-    ctx.restart();
-    ctx.run();
 }

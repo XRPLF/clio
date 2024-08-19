@@ -28,6 +28,8 @@
 #include "feed/impl/LedgerFeed.hpp"
 #include "feed/impl/ProposedTransactionFeed.hpp"
 #include "feed/impl/TransactionFeed.hpp"
+#include "util/async/AnyExecutionContext.hpp"
+#include "util/async/context/BasicExecutionContext.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
@@ -40,10 +42,8 @@
 #include <xrpl/protocol/LedgerHeader.h>
 
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <string>
-#include <thread>
 #include <vector>
 
 /**
@@ -57,9 +57,8 @@ namespace feed {
  * @brief A subscription manager is responsible for managing the subscriptions and publishing the feeds
  */
 class SubscriptionManager : public SubscriptionManagerInterface {
-    std::reference_wrapper<boost::asio::io_context> ioContext_;
     std::shared_ptr<data::BackendInterface const> backend_;
-
+    util::async::AnyExecutionContext ctx_;
     impl::ForwardFeed manifestFeed_;
     impl::ForwardFeed validationsFeed_;
     impl::LedgerFeed ledgerFeed_;
@@ -71,22 +70,29 @@ public:
     /**
      * @brief Construct a new Subscription Manager object
      *
-     * @param ioContext The io context to use
+     * @param executor The executor to use to publish the feeds
      * @param backend The backend to use
      */
-    SubscriptionManager(
-        boost::asio::io_context& ioContext,
-        std::shared_ptr<data::BackendInterface const> const& backend
-    )
-        : ioContext_(ioContext)
-        , backend_(backend)
-        , manifestFeed_(ioContext, "manifest")
-        , validationsFeed_(ioContext, "validations")
-        , ledgerFeed_(ioContext)
-        , bookChangesFeed_(ioContext)
-        , transactionFeed_(ioContext)
-        , proposedTransactionFeed_(ioContext)
+    template <class ExecutorCtx>
+    SubscriptionManager(ExecutorCtx& executor, std::shared_ptr<data::BackendInterface const> const& backend)
+        : backend_(backend)
+        , ctx_(executor)
+        , manifestFeed_(ctx_, "manifest")
+        , validationsFeed_(ctx_, "validations")
+        , ledgerFeed_(ctx_)
+        , bookChangesFeed_(ctx_)
+        , transactionFeed_(ctx_)
+        , proposedTransactionFeed_(ctx_)
     {
+    }
+
+    /**
+     * @brief Destructor of the SubscriptionManager object. It will block until all running jobs finished.
+     */
+    ~SubscriptionManager() override
+    {
+        ctx_.stop();
+        ctx_.join();
     }
 
     /**
@@ -286,16 +292,15 @@ public:
 };
 
 /**
- * @brief The help class to run the subscription manager. The container of io_context which is used to publish the
- * feeds.
+ * @brief The help class to run the subscription manager. The container of PoolExecutionContext which is used to publish
+ * the feeds.
  */
 class SubscriptionManagerRunner {
-    boost::asio::io_context ioContext_;
+    std::uint64_t workersNum_;
+    using ActualExecutionCtx = util::async::PoolExecutionContext;
+    ActualExecutionCtx ctx_;
     std::shared_ptr<SubscriptionManager> subscriptionManager_;
     util::Logger logger_{"Subscriptions"};
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_ =
-        boost::asio::make_work_guard(ioContext_);
-    std::vector<std::thread> workers_;
 
 public:
     /**
@@ -305,13 +310,11 @@ public:
      * @param backend The backend to use
      */
     SubscriptionManagerRunner(util::Config const& config, std::shared_ptr<data::BackendInterface> const& backend)
-        : subscriptionManager_(std::make_shared<SubscriptionManager>(ioContext_, backend))
+        : workersNum_(config.valueOr<std::uint64_t>("subscription_workers", 1))
+        , ctx_(workersNum_)
+        , subscriptionManager_(std::make_shared<SubscriptionManager>(ctx_, backend))
     {
-        auto numThreads = config.valueOr<uint64_t>("subscription_workers", 1);
-        LOG(logger_.info()) << "Starting subscription manager with " << numThreads << " workers";
-        workers_.reserve(numThreads);
-        for (auto i = numThreads; i > 0; --i)
-            workers_.emplace_back([&] { ioContext_.run(); });
+        LOG(logger_.info()) << "Starting subscription manager with " << workersNum_ << " workers";
     }
 
     /**
@@ -323,13 +326,6 @@ public:
     getManager()
     {
         return subscriptionManager_;
-    }
-
-    ~SubscriptionManagerRunner()
-    {
-        work_.reset();
-        for (auto& worker : workers_)
-            worker.join();
     }
 };
 }  // namespace feed

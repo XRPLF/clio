@@ -23,6 +23,8 @@
 #include "feed/impl/TrackableSignal.hpp"
 #include "feed/impl/TrackableSignalMap.hpp"
 #include "feed/impl/Util.hpp"
+#include "util/async/AnyExecutionContext.hpp"
+#include "util/async/AnyStrand.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Gauge.hpp"
 
@@ -51,7 +53,7 @@ class ProposedTransactionFeed {
 
     std::unordered_set<SubscriberPtr>
         notified_;  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts
-    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
+    util::async::AnyStrand strand_;
     std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
 
@@ -61,10 +63,10 @@ class ProposedTransactionFeed {
 public:
     /**
      * @brief Construct a Proposed Transaction Feed object.
-     * @param ioContext The actual publish will be called in the strand of this.
+     * @param executionCtx The actual publish will be called in the strand of this.
      */
-    ProposedTransactionFeed(boost::asio::io_context& ioContext)
-        : strand_(boost::asio::make_strand(ioContext))
+    ProposedTransactionFeed(util::async::AnyExecutionContext& executionCtx)
+        : strand_(executionCtx.makeStrand())
         , subAllCount_(getSubscriptionsGaugeInt("tx_proposed"))
         , subAccountCount_(getSubscriptionsGaugeInt("account_proposed"))
 
