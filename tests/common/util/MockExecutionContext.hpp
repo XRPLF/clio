@@ -50,32 +50,32 @@ struct MockExecutionContext {
     template <typename T>
     using ScheduledOperation = MockScheduledOperation<T>;
 
-    MOCK_METHOD(Operation<std::any> const&, execute, (std::function<std::any()>), (const));
+    MOCK_METHOD(Operation<std::any> const&, execute, (std::function<std::any()>), ());
     MOCK_METHOD(
         Operation<std::any> const&,
         execute,
         (std::function<std::any()>, std::optional<std::chrono::milliseconds>),
-        (const)
+        ()
     );
     MOCK_METHOD(
         StoppableOperation<std::any> const&,
         execute,
         (std::function<std::any(util::async::AnyStopToken)>, std::optional<std::chrono::milliseconds>),
-        (const)
+        ()
     );
     MOCK_METHOD(
         ScheduledOperation<std::any> const&,
         scheduleAfter,
         (std::chrono::milliseconds, std::function<std::any(util::async::AnyStopToken)>),
-        (const)
+        ()
     );
     MOCK_METHOD(
         ScheduledOperation<std::any> const&,
         scheduleAfter,
         (std::chrono::milliseconds, std::function<std::any(util::async::AnyStopToken, bool)>),
-        (const)
+        ()
     );
-    MOCK_METHOD(MockStrand const&, makeStrand, (), (const));
+    MOCK_METHOD(MockStrand const&, makeStrand, (), ());
     MOCK_METHOD(void, stop, (), (const));
-    MOCK_METHOD(void, join, (), (const));
+    MOCK_METHOD(void, join, (), ());
 };

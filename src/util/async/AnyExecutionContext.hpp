@@ -258,7 +258,7 @@ private:
         virtual AnyStrand
         makeStrand() = 0;
         virtual void
-        stop() = 0;
+        stop() const = 0;
         virtual void
         join() = 0;
     };
@@ -303,7 +303,7 @@ private:
         }
 
         void
-        stop() override
+        stop() const override
         {
             ctx.stop();
         }

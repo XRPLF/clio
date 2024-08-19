@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/Assert.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
 #include "util/async/Operation.hpp"
@@ -84,6 +85,7 @@ struct AsioPoolContext {
     Strand
     makeStrand() const
     {
+        ASSERT(executor, "Called after executor was moved from.");
         return {boost::asio::make_strand(*executor)};
     }
 
@@ -104,6 +106,7 @@ struct AsioPoolContext {
     Executor&
     getExecutor() const
     {
+        ASSERT(executor, "Called after executor was moved from.");
         return *executor;
     }
 

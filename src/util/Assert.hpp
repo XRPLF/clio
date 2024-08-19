@@ -74,4 +74,5 @@ assertImpl(
 
 }  // namespace util
 
-#define ASSERT(condition, ...) util::assertImpl(CURRENT_SRC_LOCATION, #condition, (condition), __VA_ARGS__)
+#define ASSERT(condition, ...) \
+    util::assertImpl(CURRENT_SRC_LOCATION, #condition, static_cast<bool>(condition), __VA_ARGS__)
