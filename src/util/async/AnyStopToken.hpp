@@ -42,7 +42,7 @@ public:
      * @param token The stop token to wrap
      */
     template <SomeStopToken TokenType>
-        requires(not std::is_same_v<std::decay_t<TokenType>, AnyStopToken>)
+        requires NotSameAs<TokenType, AnyStopToken>
     /* implicit */ AnyStopToken(TokenType&& token)
         : pimpl_{std::make_unique<Model<TokenType>>(std::forward<TokenType>(token))}
     {

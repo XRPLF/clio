@@ -34,16 +34,6 @@
 #include <utility>
 
 namespace util::async {
-namespace impl {
-template <typename T, typename Erased>
-concept NotSameAs = not std::is_same_v<std::decay_t<T>, Erased>;
-
-template <typename T, typename Erased>
-concept RValueNotSameAs = requires(T&& t) {
-    requires std::is_rvalue_reference_v<decltype(t)>;
-    requires NotSameAs<T, Erased>;
-};
-}  // namespace impl
 
 /**
  * @brief A type-erased execution context
@@ -58,7 +48,7 @@ public:
      * @tparam CtxType The type of the execution context to wrap
      * @param ctx The execution context to wrap
      */
-    template <impl::NotSameAs<AnyExecutionContext> CtxType>
+    template <NotSameAs<AnyExecutionContext> CtxType>
     /* implicit */
     AnyExecutionContext(CtxType& ctx) : pimpl_{std::make_shared<Model<CtxType&>>(ctx)}
     {
@@ -72,7 +62,7 @@ public:
      * @tparam CtxType The type of the execution context to wrap
      * @param ctx The execution context to wrap
      */
-    template <impl::RValueNotSameAs<AnyExecutionContext> CtxType>
+    template <RValueNotSameAs<AnyExecutionContext> CtxType>
     /* implicit */
     AnyExecutionContext(CtxType&& ctx) : pimpl_{std::make_shared<Model<CtxType>>(std::forward<CtxType>(ctx))}
     {

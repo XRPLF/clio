@@ -150,4 +150,19 @@ concept SomeStdDuration = requires {
 template <typename T>
 concept SomeOptStdDuration = requires(T v) { SomeStdDuration<decltype(v.value())>; };
 
+/**
+ * @brief Checks that decayed T s not of the same type as Erased
+ */
+template <typename T, typename Erased>
+concept NotSameAs = not std::is_same_v<std::decay_t<T>, Erased>;
+
+/**
+ * @brief Check that T is an r-value and is not the same type as Erased
+ */
+template <typename T, typename Erased>
+concept RValueNotSameAs = requires(T&& t) {
+    requires std::is_rvalue_reference_v<decltype(t)>;
+    requires NotSameAs<T, Erased>;
+};
+
 }  // namespace util::async
