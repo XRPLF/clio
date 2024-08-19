@@ -26,7 +26,6 @@
 #include "rpc/RPCHelpers.hpp"
 #include "util/log/Logger.hpp"
 
-#include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>

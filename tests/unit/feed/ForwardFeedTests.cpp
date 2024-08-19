@@ -21,7 +21,6 @@
 #include "feed/impl/ForwardFeed.hpp"
 #include "util/async/AnyExecutionContext.hpp"
 
-#include <boost/asio/io_context.hpp>
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
