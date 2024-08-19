@@ -25,10 +25,6 @@
 #include "util/async/AnyExecutionContext.hpp"
 #include "util/log/Logger.hpp"
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/asio/strand.hpp>
-
 #include <cstdint>
 #include <memory>
 #include <string>
