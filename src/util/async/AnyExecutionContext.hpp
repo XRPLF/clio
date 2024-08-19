@@ -34,6 +34,16 @@
 #include <utility>
 
 namespace util::async {
+namespace impl {
+template <typename T, typename Erased>
+concept NotSameAs = not std::is_same_v<std::decay_t<T>, Erased>;
+
+template <typename T, typename Erased>
+concept RValueNotSameAs = requires(T&& t) {
+    requires std::is_rvalue_reference_v<decltype(t)>;
+    requires NotSameAs<T, Erased>;
+};
+}  // namespace impl
 
 /**
  * @brief A type-erased execution context
@@ -48,11 +58,9 @@ public:
      * @tparam CtxType The type of the execution context to wrap
      * @param ctx The execution context to wrap
      */
-    template <typename CtxType>
+    template <impl::NotSameAs<AnyExecutionContext> CtxType>
     /* implicit */
-    AnyExecutionContext(CtxType&& ctx)
-        requires(not std::is_same_v<std::decay_t<CtxType>, AnyExecutionContext> and std::is_lvalue_reference_v<decltype(ctx)>)
-        : pimpl_{std::make_shared<NonOwningModel<CtxType>>(ctx)}
+    AnyExecutionContext(CtxType& ctx) : pimpl_{std::make_shared<Model<CtxType&>>(ctx)}
     {
     }
 
@@ -64,11 +72,9 @@ public:
      * @tparam CtxType The type of the execution context to wrap
      * @param ctx The execution context to wrap
      */
-    template <typename CtxType>
+    template <impl::RValueNotSameAs<AnyExecutionContext> CtxType>
     /* implicit */
-    AnyExecutionContext(CtxType&& ctx)
-        requires(not std::is_same_v<std::decay_t<CtxType>, AnyExecutionContext> and std::is_rvalue_reference_v<decltype(ctx)>)
-        : pimpl_{std::make_shared<OwningModel<CtxType>>(std::forward<CtxType>(ctx))}
+    AnyExecutionContext(CtxType&& ctx) : pimpl_{std::make_shared<Model<CtxType>>(std::forward<CtxType>(ctx))}
     {
     }
 
@@ -231,7 +237,7 @@ public:
      * @brief Stop the execution context
      */
     void
-    stop()
+    stop() const
     {
         pimpl_->stop();
     }
@@ -268,10 +274,11 @@ private:
     };
 
     template <typename CtxType>
-    struct OwningModel : Concept {
+    struct Model : Concept {
         CtxType ctx;
 
-        OwningModel(CtxType&& ctx) : ctx(std::move(ctx))
+        template <typename Type>
+        Model(Type&& ctx) : ctx(std::forward<Type>(ctx))
         {
         }
 
@@ -304,56 +311,17 @@ private:
         {
             return ctx.makeStrand();
         }
-    };
-
-    template <typename CtxType>
-    struct NonOwningModel : Concept {
-        std::reference_wrapper<std::decay_t<CtxType>> ctx;
-
-        NonOwningModel(CtxType& ctx) : ctx{std::ref(ctx)}
-        {
-        }
-
-        impl::ErasedOperation
-        execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
-        {
-            return ctx.get().execute(std::move(fn), timeout);
-        }
-
-        impl::ErasedOperation
-        execute(std::function<std::any()> fn) override
-        {
-            return ctx.get().execute(std::move(fn));
-        }
-
-        impl::ErasedOperation
-        scheduleAfter(std::chrono::milliseconds delay, std::function<std::any(AnyStopToken)> fn) override
-        {
-            return ctx.get().scheduleAfter(delay, std::move(fn));
-        }
-
-        impl::ErasedOperation
-        scheduleAfter(std::chrono::milliseconds delay, std::function<std::any(AnyStopToken, bool)> fn) override
-        {
-            return ctx.get().scheduleAfter(delay, std::move(fn));
-        }
-
-        AnyStrand
-        makeStrand() override
-        {
-            return ctx.get().makeStrand();
-        }
 
         void
         stop() override
         {
-            ctx.get().stop();
+            ctx.stop();
         }
 
         void
         join() override
         {
-            ctx.get().join();
+            ctx.join();
         }
     };
 

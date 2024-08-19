@@ -62,6 +62,12 @@ struct SameThreadContext {
         executor.stop();
     }
 
+    void
+    join() noexcept
+    {
+        executor.join();
+    }
+
     Executor&
     getExecutor()
     {

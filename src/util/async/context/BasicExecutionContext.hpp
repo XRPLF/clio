@@ -60,8 +60,8 @@ struct AsioPoolStrandContext {
     using Executor = boost::asio::strand<boost::asio::thread_pool::executor_type>;
     using Timer = SteadyTimer<Executor>;
 
-    Executor&
-    getExecutor()
+    Executor const&
+    getExecutor() const
     {
         return executor;
     }
@@ -92,6 +92,13 @@ struct AsioPoolContext {
     {
         if (executor)  // don't call if executor was moved from
             executor->stop();
+    }
+
+    void
+    join() const
+    {
+        if (executor)  // don't call if executor was moved from
+            executor->join();
     }
 
     Executor&
@@ -350,7 +357,7 @@ public:
      * @brief Stop the execution context as soon as possible
      */
     void
-    stop() noexcept
+    stop() const noexcept
     {
         context_.stop();
     }
@@ -361,7 +368,7 @@ public:
     void
     join() noexcept
     {
-        context_.executor.join();
+        context_.join();
     }
 };
 
