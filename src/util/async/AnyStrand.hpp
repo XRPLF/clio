@@ -47,7 +47,7 @@ public:
     template <typename StrandType>
         requires(not std::is_same_v<std::decay_t<StrandType>, AnyStrand>)
     /* implicit */ AnyStrand(StrandType&& strand)
-        : pimpl_{std::make_unique<Model<StrandType>>(std::forward<StrandType>(strand))}
+        : pimpl_{std::make_shared<Model<StrandType>>(std::forward<StrandType>(strand))}
     {
     }
 

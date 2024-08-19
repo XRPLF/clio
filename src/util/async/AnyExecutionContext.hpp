@@ -52,7 +52,7 @@ public:
     /* implicit */
     AnyExecutionContext(CtxType&& ctx)
         requires(not std::is_same_v<std::decay_t<CtxType>, AnyExecutionContext> and std::is_lvalue_reference_v<decltype(ctx)>)
-        : pimpl_{std::make_unique<NonOwningModel<CtxType>>(ctx)}
+        : pimpl_{std::make_shared<NonOwningModel<CtxType>>(ctx)}
     {
     }
 
@@ -68,7 +68,7 @@ public:
     /* implicit */
     AnyExecutionContext(CtxType&& ctx)
         requires(not std::is_same_v<std::decay_t<CtxType>, AnyExecutionContext> and std::is_rvalue_reference_v<decltype(ctx)>)
-        : pimpl_{std::make_unique<OwningModel<CtxType>>(std::forward<CtxType>(ctx))}
+        : pimpl_{std::make_shared<OwningModel<CtxType>>(std::forward<CtxType>(ctx))}
     {
     }
 

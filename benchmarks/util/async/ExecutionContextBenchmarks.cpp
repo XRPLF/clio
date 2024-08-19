@@ -31,7 +31,6 @@
 #include <cstdint>
 #include <latch>
 #include <optional>
-#include <stdexcept>
 #include <thread>
 #include <vector>
 
