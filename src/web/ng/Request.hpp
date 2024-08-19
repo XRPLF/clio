@@ -19,8 +19,21 @@
 
 #pragma once
 
+#include <string>
+
 namespace web::ng {
 
-class Request {};
+class Request {
+public:
+    enum class HttpMethod { GET, POST, WEBSOCKET, UNSUPPORTED };
+
+    HttpMethod
+    httpMethod() const;
+
+    std::string const&
+    target() const;
+};
+
+class RequestError {};
 
 }  // namespace web::ng

@@ -25,14 +25,18 @@
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
+#include "web/ng/Request.hpp"
+#include "web/ng/Response.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <optional>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -49,7 +53,7 @@ class Server {
     std::unordered_map<std::string, MessageHandler> postHandlers_;
     std::optional<MessageHandler> wsHandler_;
 
-    util::Mutex<std::unordered_set<ConnectionPtr, Connection::Hash>> connections_;
+    util::Mutex<std::unordered_set<ConnectionPtr, Connection::Hash>, std::shared_mutex> connections_;
 
     boost::asio::ip::tcp::endpoint endpoint_;
 
@@ -83,10 +87,13 @@ private:
     makeConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield);
 
     void
-    handleConnection(std::string connectionTag, boost::asio::yield_context yield);
+    handleConnection(Connection& connection, boost::asio::yield_context yield);
 
     void
-    handleConnectionLoop(std::string connectionTag, boost::asio::yield_context yield);
+    handleConnectionLoop(Connection& connection, boost::asio::yield_context yield);
+
+    Response
+    handleRequest(Request request, ConnectionContext connectionContext);
 };
 
 }  // namespace web::ng

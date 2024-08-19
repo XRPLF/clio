@@ -25,6 +25,8 @@
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
+#include "web/ng/Request.hpp"
+#include "web/ng/Response.hpp"
 #include "web/ng/impl/HttpConnection.hpp"
 #include "web/ng/impl/ServerSslContext.hpp"
 
@@ -43,7 +45,9 @@
 #include <fmt/compile.h>
 #include <fmt/core.h>
 
+#include <cstddef>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -188,43 +192,63 @@ Server::makeConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_c
     //      upgraded = true;
     // }
 
-    auto connectionTag = connection->tag();
+    Connection* connectionPtr = connection.get();
 
     {
-        auto connections = connections_.lock();
-        auto [_, inserted] = connections->insert(std::move(connection));
-        ASSERT(inserted, "Connection with tag already exists");
+        auto connections = connections_.lock<std::unique_lock>();
+        auto [it, inserted] = connections->insert(std::move(connection));
+        ASSERT(inserted, "Connection with id {} already exists.", it->get()->id());
     }
 
     if (upgraded) {
-        boost::asio::spawn(
-            ctx_,
-            [this, connectionTag = std::move(connectionTag)](boost::asio::yield_context yield) mutable {
-                handleConnectionLoop(std::move(connectionTag), yield);
-            }
-        );
+        boost::asio::spawn(ctx_, [this, &connectionRef = *connectionPtr](boost::asio::yield_context yield) mutable {
+            handleConnectionLoop(connectionRef, yield);
+        });
     } else {
-        boost::asio::spawn(
-            ctx_,
-            [this, connectionTag = std::move(connectionTag)](boost::asio::yield_context yield) mutable {
-                handleConnection(std::move(connectionTag), yield);
-            }
-        );
+        boost::asio::spawn(ctx_, [this, &connectionRef = *connectionPtr](boost::asio::yield_context yield) mutable {
+            handleConnection(connectionRef, yield);
+        });
     }
 }
 
 void
-Server::handleConnection(std::string connectionTag, boost::asio::yield_context yield)
+Server::handleConnection(Connection& connection, boost::asio::yield_context yield)
 {
-    // read request from connection
-    // process the request
-    // send response
+    auto expectedRequest = connection.receive(yield);
+    if (not expectedRequest.has_value()) {
+    }
+    auto response = handleRequest(std::move(expectedRequest).value());
+    connection.send(std::move(response), yield);
 }
 
 void
-Server::handleConnectionLoop(std::string connectionTag, boost::asio::yield_context yield)
+Server::handleConnectionLoop(Connection& connection, boost::asio::yield_context yield)
 {
     // loop of handleConnection calls
+}
+
+Response
+Server::handleRequest(Request request, ConnectionContext connectionContext)
+{
+    auto process = [&connectionContext](Request request, auto& handlersMap) {
+        auto const it = handlersMap.find(request.target());
+        if (it == handlersMap.end()) {
+            return Response{};
+        }
+        return it->second(std::move(request), connectionContext);
+    };
+    switch (request.httpMethod()) {
+        case Request::HttpMethod::GET:
+            return process(std::move(request), getHandlers_);
+        case Request::HttpMethod::POST:
+            return process(std::move(request), postHandlers_);
+        case Request::HttpMethod::WS:
+            if (wsHandler_) {
+                return (*wsHandler_)(std::move(request));
+            }
+        default:
+            return Response{};
+    }
 }
 
 }  // namespace web::ng

@@ -19,8 +19,15 @@
 
 #pragma once
 
+#include "web/ng/Request.hpp"
+#include "web/ng/Response.hpp"
+
+#include <boost/asio/spawn.hpp>
+
 #include <chrono>
 #include <cstddef>
+#include <expected>
+#include <functional>
 #include <memory>
 
 namespace web::ng {
@@ -36,10 +43,10 @@ public:
     virtual ~Connection() = default;
 
     virtual void
-    send() = 0;
+    send(Response response, boost::asio::yield_context yield) = 0;
 
-    virtual void
-    receive() = 0;
+    virtual std::expected<Request, RequestError>
+    receive(boost::asio::yield_context yield) = 0;
 
     virtual void
     close(std::chrono::steady_clock::duration timeout) = 0;
@@ -60,7 +67,7 @@ public:
 };
 
 class ConnectionContext {
-    Connection& connection_;
+    std::reference_wrapper<Connection> connection_;
 
 public:
     explicit ConnectionContext(Connection& connection);
