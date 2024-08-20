@@ -20,13 +20,13 @@
 #include "web/ng/Server.hpp"
 
 #include "util/Assert.hpp"
+#include "util/Mutex.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
+#include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
-#include "web/ng/Request.hpp"
-#include "web/ng/Response.hpp"
 #include "web/ng/impl/HttpConnection.hpp"
 #include "web/ng/impl/ServerSslContext.hpp"
 
@@ -35,6 +35,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/socket_base.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/use_future.hpp>
 #include <boost/beast/core/detect_ssl.hpp>
@@ -47,49 +48,47 @@
 
 #include <cstddef>
 #include <memory>
-#include <mutex>
 #include <optional>
-#include <stdexcept>
+#include <shared_mutex>
 #include <string>
 #include <string_view>
 #include <utility>
 
 namespace web::ng {
 
-Server::Server(
-    util::Config const& config,
-    std::unique_ptr<dosguard::DOSGuardInterface> dosguard,
-    boost::asio::io_context& ctx
-)
-    : ctx_{ctx}, dosguard_{std::move(dosguard)}
+namespace {
+
+std::expected<boost::asio::ip::tcp::endpoint, std::string>
+makeEndpoint(util::Config const& serverConfig)
 {
-    // TODO(kuznetsss): move this into make_Server()
-    auto const serverConfig = config.section("server");
+    auto const ip = serverConfig.maybeValue<std::string>("ip");
+    if (not ip.has_value())
+        return std::unexpected{"Missing 'ip` in server config."};
 
-    auto const address = boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
-    auto const port = serverConfig.value<unsigned short>("port");
-    endpoint_ = boost::asio::ip::tcp::endpoint{address, port};
+    auto const address = boost::asio::ip::make_address(*ip);
+    auto const port = serverConfig.maybeValue<unsigned short>("port");
+    if (not port.has_value())
+        return std::unexpected{"Missing 'port` in server config."};
 
-    auto expectedSslContext = impl::makeServerSslContext(config);
-    if (not expectedSslContext)
-        throw std::logic_error{expectedSslContext.error()};
-    sslContext_ = std::move(expectedSslContext).value();
+    return boost::asio::ip::tcp::endpoint{address, *port};
+}
 
-    auto adminPassword = serverConfig.maybeValue<std::string>("admin_password");
-    auto const localAdmin = serverConfig.maybeValue<bool>("local_admin");
+}  // namespace
 
-    // Throw config error when localAdmin is true and admin_password is also set
-    if (localAdmin && localAdmin.value() && adminPassword) {
-        LOG(log_.error()) << "local_admin is true but admin_password is also set, please specify only one method "
-                             "to authorize admin";
-        throw std::logic_error("Admin config error, local_admin and admin_password can not be set together.");
-    }
-    // Throw config error when localAdmin is false but admin_password is not set
-    if (localAdmin && !localAdmin.value() && !adminPassword) {
-        LOG(log_.error()) << "local_admin is false but admin_password is not set, please specify one method "
-                             "to authorize admin";
-        throw std::logic_error("Admin config error, one method must be specified to authorize admin.");
-    }
+Server::Server(
+    boost::asio::io_context& ctx,
+    boost::asio::ip::tcp::endpoint endpoint,
+    std::optional<boost::asio::ssl::context> sslContext,
+    std::shared_ptr<web::impl::AdminVerificationStrategy> adminVerificationStrategy,
+    std::unique_ptr<dosguard::DOSGuardInterface> dosguard
+)
+    : ctx_{ctx}
+    , dosguard_{std::move(dosguard)}
+    , adminVerificationStrategy_(std::move(adminVerificationStrategy))
+    , sslContext_{std::move(sslContext)}
+    , connections_{std::make_unique<util::Mutex<ConnectionsSet, std::shared_mutex>>()}
+    , endpoint_{std::move(endpoint)}
+{
 }
 
 std::optional<std::string>
@@ -214,11 +213,11 @@ Server::makeConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_c
 void
 Server::handleConnection(Connection& connection, boost::asio::yield_context yield)
 {
-    auto expectedRequest = connection.receive(yield);
-    if (not expectedRequest.has_value()) {
-    }
-    auto response = handleRequest(std::move(expectedRequest).value());
-    connection.send(std::move(response), yield);
+    // auto expectedRequest = connection.receive(yield);
+    // if (not expectedRequest.has_value()) {
+    // }
+    // auto response = handleRequest(std::move(expectedRequest).value());
+    // connection.send(std::move(response), yield);
 }
 
 void
@@ -227,28 +226,60 @@ Server::handleConnectionLoop(Connection& connection, boost::asio::yield_context 
     // loop of handleConnection calls
 }
 
-Response
-Server::handleRequest(Request request, ConnectionContext connectionContext)
+// Response
+// Server::handleRequest(Request request, ConnectionContext connectionContext)
+// {
+//     auto process = [&connectionContext](Request request, auto& handlersMap) {
+//         auto const it = handlersMap.find(request.target());
+//         if (it == handlersMap.end()) {
+//             return Response{};
+//         }
+//         return it->second(std::move(request), connectionContext);
+//     };
+//     switch (request.httpMethod()) {
+//         case Request::HttpMethod::GET:
+//             return process(std::move(request), getHandlers_);
+//         case Request::HttpMethod::POST:
+//             return process(std::move(request), postHandlers_);
+//         case Request::HttpMethod::WS:
+//             if (wsHandler_) {
+//                 return (*wsHandler_)(std::move(request));
+//             }
+//         default:
+//             return Response{};
+//     }
+// }
+
+std::expected<Server, std::string>
+make_Server(
+    util::Config const& config,
+    boost::asio::io_context& context,
+    std::unique_ptr<dosguard::DOSGuardInterface> dosguard
+)
 {
-    auto process = [&connectionContext](Request request, auto& handlersMap) {
-        auto const it = handlersMap.find(request.target());
-        if (it == handlersMap.end()) {
-            return Response{};
-        }
-        return it->second(std::move(request), connectionContext);
-    };
-    switch (request.httpMethod()) {
-        case Request::HttpMethod::GET:
-            return process(std::move(request), getHandlers_);
-        case Request::HttpMethod::POST:
-            return process(std::move(request), postHandlers_);
-        case Request::HttpMethod::WS:
-            if (wsHandler_) {
-                return (*wsHandler_)(std::move(request));
-            }
-        default:
-            return Response{};
+    auto const serverConfig = config.section("server");
+
+    auto endpoint = makeEndpoint(serverConfig);
+    if (not endpoint.has_value())
+        return std::unexpected{std::move(endpoint).error()};
+
+    auto expectedSslContext = impl::makeServerSslContext(config);
+    if (not expectedSslContext)
+        return std::unexpected{std::move(expectedSslContext).error()};
+
+    auto adminVerificationStrategy = web::impl::make_AdminVerificationStrategy(serverConfig);
+    if (not adminVerificationStrategy) {
+        return std::unexpected{std::move(adminVerificationStrategy).error()};
     }
+
+    return Server{
+        context,
+        std::move(endpoint).value(),
+        std::move(expectedSslContext).value(),
+        std::move(adminVerificationStrategy).value(),
+        std::move(dosguard)
+
+    };
 }
 
 }  // namespace web::ng

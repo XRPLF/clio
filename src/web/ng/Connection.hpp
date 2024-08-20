@@ -62,9 +62,11 @@ public:
 
     struct Hash {
         size_t
-        operator()(Connection const& connection) const;
+        operator()(std::unique_ptr<Connection> const& connection) const;
     };
 };
+
+using ConnectionPtr = std::unique_ptr<Connection>;
 
 class ConnectionContext {
     std::reference_wrapper<Connection> connection_;

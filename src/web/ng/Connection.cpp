@@ -22,6 +22,7 @@
 #include <atomic>
 #include <cstddef>
 #include <functional>
+#include <memory>
 
 namespace web::ng {
 
@@ -41,9 +42,9 @@ Connection::Connection() : id_{generateId()}
 }
 
 size_t
-Connection::Hash::operator()(Connection const& connection) const
+Connection::Hash::operator()(std::unique_ptr<Connection> const& connection) const
 {
-    return std::hash<std::size_t>{}(connection.id());
+    return std::hash<std::size_t>{}(connection->id());
 }
 
 }  // namespace web::ng

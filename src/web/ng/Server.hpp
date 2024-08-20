@@ -23,6 +23,7 @@
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
+#include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/Request.hpp"
@@ -34,6 +35,7 @@
 #include <boost/asio/ssl/context.hpp>
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <shared_mutex>
@@ -45,27 +47,32 @@ namespace web::ng {
 
 class Server {
     util::Logger log_{"WebServer"};
-    boost::asio::io_context& ctx_;
+    std::reference_wrapper<boost::asio::io_context> ctx_;
+
     std::unique_ptr<dosguard::DOSGuardInterface> dosguard_;
+    std::shared_ptr<web::impl::AdminVerificationStrategy> adminVerificationStrategy_;
     std::optional<boost::asio::ssl::context> sslContext_;
 
     std::unordered_map<std::string, MessageHandler> getHandlers_;
     std::unordered_map<std::string, MessageHandler> postHandlers_;
     std::optional<MessageHandler> wsHandler_;
 
-    util::Mutex<std::unordered_set<ConnectionPtr, Connection::Hash>, std::shared_mutex> connections_;
+    using ConnectionsSet = std::unordered_set<ConnectionPtr, Connection::Hash>;
+    std::unique_ptr<util::Mutex<ConnectionsSet, std::shared_mutex>> connections_;
 
     boost::asio::ip::tcp::endpoint endpoint_;
 
 public:
     Server(
-        util::Config const& config,
-        std::unique_ptr<dosguard::DOSGuardInterface> dosguard,
-        boost::asio::io_context& ctx
+        boost::asio::io_context& ctx,
+        boost::asio::ip::tcp::endpoint endpoint,
+        std::optional<boost::asio::ssl::context> sslContext,
+        std::shared_ptr<web::impl::AdminVerificationStrategy> adminVerificationStrategy,
+        std::unique_ptr<dosguard::DOSGuardInterface> dosguard
     );
 
     Server(Server const&) = delete;
-    Server(Server&&) = delete;
+    Server(Server&&) = default;
 
     std::optional<std::string>
     run();
@@ -95,5 +102,12 @@ private:
     Response
     handleRequest(Request request, ConnectionContext connectionContext);
 };
+
+std::expected<Server, std::string>
+make_Server(
+    util::Config const& config,
+    boost::asio::io_context& context,
+    std::unique_ptr<dosguard::DOSGuardInterface> dosguard
+);
 
 }  // namespace web::ng
