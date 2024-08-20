@@ -236,7 +236,7 @@ public:
      * @brief Join the execution context
      */
     void
-    join()
+    join() const
     {
         pimpl_->join();
     }
@@ -260,7 +260,7 @@ private:
         virtual void
         stop() const = 0;
         virtual void
-        join() = 0;
+        join() const = 0;
     };
 
     template <typename CtxType>
@@ -309,7 +309,7 @@ private:
         }
 
         void
-        join() override
+        join() const override
         {
             ctx.join();
         }

@@ -42,7 +42,7 @@ struct SameThreadContext {
         }
 
         void
-        join() noexcept
+        join() const noexcept
         {
         }
     };
@@ -63,7 +63,7 @@ struct SameThreadContext {
     }
 
     void
-    join() noexcept
+    join() const noexcept
     {
         executor.join();
     }
