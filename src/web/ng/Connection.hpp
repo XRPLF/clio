@@ -29,6 +29,7 @@
 #include <expected>
 #include <functional>
 #include <memory>
+#include <string>
 
 namespace web::ng {
 
@@ -36,11 +37,15 @@ class ConnectionContext;
 
 class Connection {
     size_t id_;
+    std::string ip_;  // client ip
 
 public:
-    Connection();
+    Connection(std::string ip);
 
     virtual ~Connection() = default;
+
+    virtual bool
+    upgraded() const = 0;
 
     virtual void
     send(Response response, boost::asio::yield_context yield) = 0;

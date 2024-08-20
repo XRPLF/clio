@@ -20,41 +20,68 @@
 #pragma once
 
 #include "web/ng/Connection.hpp"
+#include "web/ng/Request.hpp"
+#include "web/ng/Response.hpp"
 
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/beast/core/basic_stream.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
 
 #include <chrono>
+#include <memory>
+#include <string>
 #include <utility>
 
 namespace web::ng::impl {
 
+class UpgradableConnection : public Connection {
+public:
+    using Connection::Connection;
+
+    virtual bool
+    isUpgradeRequested() const = 0;
+
+    virtual ConnectionPtr
+    upgrade() const = 0;
+
+    virtual void
+    fetch(boost::asio::yield_context yield) = 0;
+};
+
+using UpgradableConnectionPtr = std::unique_ptr<UpgradableConnection>;
+
 template <typename StreamType>
-class HttpConnection : public Connection {
+class HttpConnection : public UpgradableConnection {
     StreamType stream_;
 
 public:
-    HttpConnection(boost::asio::ip::tcp::socket socket)
+    HttpConnection(boost::asio::ip::tcp::socket socket, std::string ip)
         requires std::is_same_v<StreamType, boost::beast::tcp_stream>
-        : stream_{std::move(socket)}
+        : UpgradableConnection(std::move(ip)), stream_{std::move(socket)}
     {
     }
 
-    HttpConnection(boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& sslCtx)
+    HttpConnection(boost::asio::ip::tcp::socket socket, std::string ip, boost::asio::ssl::context& sslCtx)
         requires std::is_same_v<StreamType, boost::asio::ssl::stream<boost::beast::tcp_stream>>
-        : stream_{std::move(socket), sslCtx}
+        : UpgradableConnection(std::move(ip)), stream_{std::move(socket), sslCtx}
     {
     }
 
-    void
-    send() override
+    bool
+    upgraded() const override
     {
+        return false;
     }
 
     void
-    receive() override
+    send(Response, boost::asio::yield_context) override
+    {
+    }
+
+    std::expected<Request, RequestError>
+    receive(boost::asio::yield_context) override
     {
     }
     void

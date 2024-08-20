@@ -23,6 +23,8 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <string>
+#include <utility>
 
 namespace web::ng {
 
@@ -37,7 +39,7 @@ generateId()
 
 }  // namespace
 
-Connection::Connection() : id_{generateId()}
+Connection::Connection(std::string ip) : id_{generateId()}, ip_{std::move(ip)}
 {
 }
 

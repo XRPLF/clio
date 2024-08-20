@@ -49,6 +49,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <shared_mutex>
 #include <string>
@@ -89,6 +90,67 @@ makeAcceptor(boost::asio::io_context& context, boost::asio::ip::tcp::endpoint co
     return std::move(acceptor);
 }
 
+std::expected<std::string, boost::system::system_error>
+extractIp(boost::asio::ip::tcp::socket const& socket)
+{
+    std::string ip;
+    try {
+        ip = socket.remote_endpoint().address().to_string();
+    } catch (boost::system::system_error const& error) {
+        return std::unexpected{error};
+    }
+    return ip;
+}
+
+struct SslDetectionResult {
+    boost::asio::ip::tcp::socket socket;
+    bool isSsl;
+    boost::beast::flat_buffer buffer;
+};
+
+std::expected<std::optional<SslDetectionResult>, std::string>
+detectSsl(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield)
+{
+    boost::beast::tcp_stream tcpStream{std::move(socket)};
+    boost::beast::flat_buffer buffer;
+    boost::beast::error_code errorCode;
+    bool const isSsl = boost::beast::async_detect_ssl(tcpStream, buffer, yield[errorCode]);
+
+    if (errorCode == boost::asio::ssl::error::stream_truncated)
+        return std::nullopt;
+
+    if (errorCode)
+        return std::unexpected{fmt::format("Detector failed (detect): {}", errorCode.message())};
+
+    return SslDetectionResult{.socket = tcpStream.release_socket(), .isSsl = isSsl, .buffer = std::move(buffer)};
+}
+
+std::expected<ConnectionPtr, std::string>
+makeConnection(
+    SslDetectionResult sslDetectionResult,
+    std::optional<boost::asio::ssl::context>& sslContext,
+    std::string ip,
+    boost::asio::yield_context yield
+)
+{
+    impl::UpgradableConnectionPtr connection;
+    if (sslDetectionResult.isSsl) {
+        if (not sslContext.has_value())
+            return std::unexpected{"SSL is not supported by this server"};
+
+        connection =
+            std::make_unique<impl::SslHttpConnection>(std::move(sslDetectionResult.socket), std::move(ip), *sslContext);
+    } else {
+        connection = std::make_unique<impl::HttpConnection>(std::move(sslDetectionResult.socket), std::move(ip));
+    }
+
+    connection->fetch(yield);
+    if (connection->isUpgradeRequested())
+        return connection->upgrade();
+
+    return connection;
+}
+
 }  // namespace
 
 Server::Server(
@@ -105,36 +167,6 @@ Server::Server(
     , connections_{std::make_unique<util::Mutex<ConnectionsSet, std::shared_mutex>>()}
     , endpoint_{std::move(endpoint)}
 {
-}
-
-std::optional<std::string>
-Server::run()
-{
-    auto acceptor = makeAcceptor(ctx_.get(), endpoint_);
-    if (not acceptor.has_value())
-        return std::move(acceptor).error();
-
-    running_ = true;
-    boost::asio::spawn(ctx_, [this, acceptor = std::move(acceptor)](boost::asio::yield_context yield) mutable {
-        while (true) {
-            boost::beast::error_code errorCode;
-            boost::asio::ip::tcp::socket socket{ctx_.get().get_executor()};
-
-            acceptor->async_accept(socket, yield[errorCode]);
-            if (errorCode) {
-                LOG(log_.debug()) << "Error accepting a connection: " << errorCode.what();
-                continue;
-            }
-            boost::asio::spawn(
-                ctx_.get(),
-                [this, socket = std::move(socket)](boost::asio::yield_context yield) mutable {
-                    makeConnection(std::move(socket), yield);
-                },
-                boost::asio::detached
-            );
-        }
-    });
-    return std::nullopt;
 }
 
 void
@@ -158,78 +190,90 @@ Server::onWs(MessageHandler handler)
     wsHandler_ = std::move(handler);
 }
 
+std::optional<std::string>
+Server::run()
+{
+    auto acceptor = makeAcceptor(ctx_.get(), endpoint_);
+    if (not acceptor.has_value())
+        return std::move(acceptor).error();
+
+    running_ = true;
+    boost::asio::spawn(ctx_, [this, acceptor = std::move(acceptor)](boost::asio::yield_context yield) mutable {
+        while (true) {
+            boost::beast::error_code errorCode;
+            boost::asio::ip::tcp::socket socket{ctx_.get().get_executor()};
+
+            acceptor->async_accept(socket, yield[errorCode]);
+            if (errorCode) {
+                LOG(log_.debug()) << "Error accepting a connection: " << errorCode.what();
+                continue;
+            }
+            boost::asio::spawn(
+                ctx_.get(),
+                [this, socket = std::move(socket)](boost::asio::yield_context yield) mutable {
+                    handleConnection(std::move(socket), yield);
+                },
+                boost::asio::detached
+            );
+        }
+    });
+    return std::nullopt;
+}
+
 void
 Server::stop()
 {
 }
 
 void
-Server::makeConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield)
+Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield)
 {
-    auto const logError = [this](std::string_view message, boost::beast::error_code ec) {
-        LOG(log_.info()) << "Detector failed (" << message << "): " << ec.message();
-    };
+    auto sslDetectionResultExpected = detectSsl(std::move(socket), yield);
+    if (not sslDetectionResultExpected) {
+        LOG(log_.info()) << sslDetectionResultExpected.error();
+    }
+    auto sslDetectionResult = std::move(sslDetectionResultExpected).value();
+    if (not sslDetectionResult)
+        return;  // stream truncated, probably user disconnected
 
-    boost::beast::tcp_stream tcpStream{std::move(socket)};
-    boost::beast::flat_buffer buffer;
-    boost::beast::error_code errorCode;
-    bool const isSsl = boost::beast::async_detect_ssl(tcpStream, buffer, yield[errorCode]);
-
-    if (errorCode == boost::asio::ssl::error::stream_truncated)
-        return;
-
-    if (errorCode) {
-        logError("detect", errorCode);
+    auto ip = extractIp(sslDetectionResult->socket);
+    if (not ip.has_value()) {
+        LOG(log_.info()) << "Cannot get remote endpoint: " << ip.error().what();
         return;
     }
 
-    std::string ip;
-    try {
-        ip = socket.remote_endpoint().address().to_string();
-    } catch (boost::system::system_error const& error) {
-        logError("cannot get remote endpoint", error.code());
-        return;
+    auto connectionExpected = makeConnection(std::move(sslDetectionResult), sslContext_, std::move(ip).value(), yield);
+    if (not connectionExpected.has_value()) {
+        LOG(log_.info()) << "Error creating a connection: " << connectionExpected.error();
     }
-
-    ConnectionPtr connection;
-    if (isSsl) {
-        if (not sslContext_.has_value()) {
-            logError("SSL is not supported by this server", errorCode);
-            return;
-        }
-        connection = std::make_unique<impl::SslHttpConnection>(std::move(socket), *sslContext_);
-    } else {
-        connection = std::make_unique<impl::HttpConnection>(std::move(socket));
-    }
-
-    bool upgraded = false;
-    // connection.fetch()
-    // if (connection.should_upgrade()) {
-    //      connection = std::move(connection).upgrade();
-    //      upgraded = true;
-    // }
-
-    Connection* connectionPtr = connection.get();
-
-    {
-        auto connections = connections_.lock<std::unique_lock>();
-        auto [it, inserted] = connections->insert(std::move(connection));
-        ASSERT(inserted, "Connection with id {} already exists.", it->get()->id());
-    }
-
-    if (upgraded) {
-        boost::asio::spawn(ctx_, [this, &connectionRef = *connectionPtr](boost::asio::yield_context yield) mutable {
-            handleConnectionLoop(connectionRef, yield);
-        });
-    } else {
-        boost::asio::spawn(ctx_, [this, &connectionRef = *connectionPtr](boost::asio::yield_context yield) mutable {
-            handleConnection(connectionRef, yield);
-        });
-    }
+    // insert connection into connections_
+    // run processConnection or processConnectionLoop
 }
 
+// void
+// Server::makeConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield)
+// {
+//     Connection* connectionPtr = connection.get();
+//
+//     {
+//         auto connections = connections_->lock<std::unique_lock>();
+//         auto [it, inserted] = connections->insert(std::move(connection));
+//         ASSERT(inserted, "Connection with id {} already exists.", it->get()->id());
+//     }
+//
+//     if (upgraded) {
+//         boost::asio::spawn(ctx_, [this, &connectionRef = *connectionPtr](boost::asio::yield_context yield) mutable {
+//             handleConnectionLoop(connectionRef, yield);
+//         });
+//     } else {
+//         boost::asio::spawn(ctx_, [this, &connectionRef = *connectionPtr](boost::asio::yield_context yield) mutable {
+//             handleConnection(connectionRef, yield);
+//         });
+//     }
+// }
+
 void
-Server::handleConnection(Connection& connection, boost::asio::yield_context yield)
+Server::processConnection(Connection& connection, boost::asio::yield_context yield)
 {
     // auto expectedRequest = connection.receive(yield);
     // if (not expectedRequest.has_value()) {
@@ -239,7 +283,7 @@ Server::handleConnection(Connection& connection, boost::asio::yield_context yiel
 }
 
 void
-Server::handleConnectionLoop(Connection& connection, boost::asio::yield_context yield)
+Server::processConnectionLoop(Connection& connection, boost::asio::yield_context yield)
 {
     // loop of handleConnection calls
 }

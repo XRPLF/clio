@@ -76,9 +76,6 @@ public:
     Server(Server const&) = delete;
     Server(Server&&) = default;
 
-    std::optional<std::string>
-    run();
-
     void
     onGet(std::string const& target, MessageHandler handler);
 
@@ -88,18 +85,21 @@ public:
     void
     onWs(MessageHandler handler);
 
+    std::optional<std::string>
+    run();
+
     void
     stop();
 
 private:
     void
-    makeConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield);
+    handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield);
 
     void
-    handleConnection(Connection& connection, boost::asio::yield_context yield);
+    processConnection(Connection& connection, boost::asio::yield_context yield);
 
     void
-    handleConnectionLoop(Connection& connection, boost::asio::yield_context yield);
+    processConnectionLoop(Connection& connection, boost::asio::yield_context yield);
 
     Response
     handleRequest(Request request, ConnectionContext connectionContext);
