@@ -30,6 +30,7 @@
 #include "web/ng/impl/HttpConnection.hpp"
 #include "web/ng/impl/ServerSslContext.hpp"
 
+#include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -73,6 +74,21 @@ makeEndpoint(util::Config const& serverConfig)
     return boost::asio::ip::tcp::endpoint{address, *port};
 }
 
+std::expected<boost::asio::ip::tcp::acceptor, std::string>
+makeAcceptor(boost::asio::io_context& context, boost::asio::ip::tcp::endpoint const& endpoint)
+{
+    boost::asio::ip::tcp::acceptor acceptor{context};
+    try {
+        acceptor.open(endpoint.protocol());
+        acceptor.set_option(boost::asio::socket_base::reuse_address(true));
+        acceptor.bind(endpoint);
+        acceptor.listen(boost::asio::socket_base::max_listen_connections);
+    } catch (boost::system::system_error const& error) {
+        return std::unexpected{fmt::format("Error creating TCP acceptor: {}", error.what())};
+    }
+    return std::move(acceptor);
+}
+
 }  // namespace
 
 Server::Server(
@@ -94,29 +110,28 @@ Server::Server(
 std::optional<std::string>
 Server::run()
 {
-    boost::asio::ip::tcp::acceptor acceptor{ctx_};
-    try {
-        acceptor.open(endpoint_.protocol());
-        acceptor.set_option(boost::asio::socket_base::reuse_address(true));
-        acceptor.bind(endpoint_);
-        acceptor.listen(boost::asio::socket_base::max_listen_connections);
-    } catch (boost::system::system_error const& error) {
-        return fmt::format("Web server error: {}", error.what());
-    }
+    auto acceptor = makeAcceptor(ctx_.get(), endpoint_);
+    if (not acceptor.has_value())
+        return std::move(acceptor).error();
 
+    running_ = true;
     boost::asio::spawn(ctx_, [this, acceptor = std::move(acceptor)](boost::asio::yield_context yield) mutable {
         while (true) {
             boost::beast::error_code errorCode;
-            boost::asio::ip::tcp::socket socket{ctx_.get_executor()};
+            boost::asio::ip::tcp::socket socket{ctx_.get().get_executor()};
 
-            acceptor.async_accept(socket, yield[errorCode]);
+            acceptor->async_accept(socket, yield[errorCode]);
             if (errorCode) {
                 LOG(log_.debug()) << "Error accepting a connection: " << errorCode.what();
                 continue;
             }
-            boost::asio::spawn(ctx_, [this, socket = std::move(socket)](boost::asio::yield_context yield) mutable {
-                makeConnection(std::move(socket), yield);
-            });  // maybe use boost::asio::detached here?
+            boost::asio::spawn(
+                ctx_.get(),
+                [this, socket = std::move(socket)](boost::asio::yield_context yield) mutable {
+                    makeConnection(std::move(socket), yield);
+                },
+                boost::asio::detached
+            );
         }
     });
     return std::nullopt;
@@ -125,18 +140,21 @@ Server::run()
 void
 Server::onGet(std::string const& target, MessageHandler handler)
 {
+    ASSERT(not running_, "Adding a GET handler is not allowed when Server is running.");
     getHandlers_[target] = std::move(handler);
 }
 
 void
 Server::onPost(std::string const& target, MessageHandler handler)
 {
+    ASSERT(not running_, "Adding a POST handler is not allowed when Server is running.");
     postHandlers_[target] = std::move(handler);
 }
 
 void
 Server::onWs(MessageHandler handler)
 {
+    ASSERT(not running_, "Adding a Websocket handler is not allowed when Server is running.");
     wsHandler_ = std::move(handler);
 }
 

@@ -62,6 +62,8 @@ class Server {
 
     boost::asio::ip::tcp::endpoint endpoint_;
 
+    bool running_{false};
+
 public:
     Server(
         boost::asio::io_context& ctx,
