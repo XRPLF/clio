@@ -29,8 +29,6 @@
 #include "feed/impl/ProposedTransactionFeed.hpp"
 #include "feed/impl/TransactionFeed.hpp"
 #include "util/async/AnyExecutionContext.hpp"
-#include "util/async/context/BasicExecutionContext.hpp"
-#include "util/log/Logger.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -74,9 +72,9 @@ public:
      * @param backend The backend to use
      */
     template <class ExecutorCtx>
-    SubscriptionManager(ExecutorCtx& executor, std::shared_ptr<data::BackendInterface const> const& backend)
+    SubscriptionManager(ExecutorCtx&& executor, std::shared_ptr<data::BackendInterface const> const& backend)
         : backend_(backend)
-        , ctx_(executor)
+        , ctx_(std::forward<ExecutorCtx>(executor))
         , manifestFeed_(ctx_, "manifest")
         , validationsFeed_(ctx_, "validations")
         , ledgerFeed_(ctx_)
@@ -289,43 +287,5 @@ public:
      */
     boost::json::object
     report() const final;
-};
-
-/**
- * @brief The help class to run the subscription manager. The container of PoolExecutionContext which is used to publish
- * the feeds.
- */
-class SubscriptionManagerRunner {
-    std::uint64_t workersNum_;
-    using ActualExecutionCtx = util::async::PoolExecutionContext;
-    ActualExecutionCtx ctx_;
-    std::shared_ptr<SubscriptionManager> subscriptionManager_;
-    util::Logger logger_{"Subscriptions"};
-
-public:
-    /**
-     * @brief Construct a new Subscription Manager Runner object
-     *
-     * @param config The configuration
-     * @param backend The backend to use
-     */
-    SubscriptionManagerRunner(util::Config const& config, std::shared_ptr<data::BackendInterface> const& backend)
-        : workersNum_(config.valueOr<std::uint64_t>("subscription_workers", 1))
-        , ctx_(workersNum_)
-        , subscriptionManager_(std::make_shared<SubscriptionManager>(ctx_, backend))
-    {
-        LOG(logger_.info()) << "Starting subscription manager with " << workersNum_ << " workers";
-    }
-
-    /**
-     * @brief Get the subscription manager
-     *
-     * @return The subscription manager
-     */
-    std::shared_ptr<SubscriptionManager>
-    getManager()
-    {
-        return subscriptionManager_;
-    }
 };
 }  // namespace feed

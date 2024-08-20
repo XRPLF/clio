@@ -28,6 +28,7 @@
 #include "util/async/context/SyncExecutionContext.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
@@ -57,13 +58,12 @@ class SubscriptionManagerBaseTest : public util::prometheus::WithPrometheus, pub
 protected:
     std::shared_ptr<SubscriptionManager> subscriptionManagerPtr;
     std::shared_ptr<web::ConnectionBase> session;
-    Execution ctx{2};
     MockSession* sessionPtr = nullptr;
 
     void
     SetUp() override
     {
-        subscriptionManagerPtr = std::make_shared<SubscriptionManager>(ctx, backend);
+        subscriptionManagerPtr = std::make_shared<SubscriptionManager>(Execution(2), backend);
         session = std::make_shared<MockSession>();
         session->apiSubVersion = 1;
         sessionPtr = dynamic_cast<MockSession*>(session.get());
@@ -264,11 +264,13 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
             "reserve_base":3,
             "reserve_inc":2
         })";
+    boost::asio::io_context ctx;
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto const res = subscriptionManagerPtr->subLedger(yield, session);
         // check the response
         EXPECT_EQ(res, json::parse(LedgerResponse));
     });
+    ctx.run();
     EXPECT_EQ(subscriptionManagerPtr->report()["ledger"], 1);
 
     // test publish
