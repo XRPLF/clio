@@ -36,7 +36,7 @@ struct SpawnDispatchStrategy {
         auto op = outcome.getOperation();
 
         boost::asio::spawn(
-            ctx.executor,
+            ctx.getExecutor(),
             [outcome = std::forward<decltype(outcome)>(outcome),
              fn = std::forward<decltype(fn)>(fn)](auto yield) mutable {
                 if constexpr (SomeStoppableOutcome<OutcomeType>) {
@@ -60,7 +60,7 @@ struct PostDispatchStrategy {
         auto op = outcome.getOperation();
 
         boost::asio::post(
-            ctx.executor,
+            ctx.getExecutor(),
             [outcome = std::forward<decltype(outcome)>(outcome), fn = std::forward<decltype(fn)>(fn)]() mutable {
                 if constexpr (SomeStoppableOutcome<OutcomeType>) {
                     auto& stopSource = outcome.getStopSource();

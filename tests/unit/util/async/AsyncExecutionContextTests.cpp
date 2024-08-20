@@ -40,6 +40,12 @@ struct ExecutionContextTests : public ::testing::Test {
 
 TYPED_TEST_CASE(ExecutionContextTests, ExecutionContextTypes);
 
+TYPED_TEST(ExecutionContextTests, move)
+{
+    auto mineNow = std::move(this->ctx);
+    EXPECT_TRUE(mineNow.execute([] { return true; }).get().value());
+}
+
 TYPED_TEST(ExecutionContextTests, execute)
 {
     auto res = this->ctx.execute([]() { return 42; });
@@ -159,6 +165,15 @@ TYPED_TEST(ExecutionContextTests, timerUnknownException)
     auto const err = res.get().error();
     EXPECT_TRUE(err.message.ends_with("unknown"));
     EXPECT_TRUE(std::string{err}.ends_with("unknown"));
+}
+
+TYPED_TEST(ExecutionContextTests, strandMove)
+{
+    auto strand = this->ctx.makeStrand();
+    auto yoink = std::move(strand);
+    auto res = yoink.execute([] { return 42; });
+
+    EXPECT_EQ(res.get().value(), 42);
 }
 
 TYPED_TEST(ExecutionContextTests, strand)

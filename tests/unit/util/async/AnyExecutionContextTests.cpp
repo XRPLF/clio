@@ -24,6 +24,12 @@
 #include "util/async/AnyOperation.hpp"
 #include "util/async/AnyStopToken.hpp"
 #include "util/async/AnyStrand.hpp"
+#include "util/async/Concepts.hpp"
+#include "util/async/Operation.hpp"
+#include "util/async/Outcome.hpp"
+#include "util/async/context/SyncExecutionContext.hpp"
+#include "util/async/context/impl/Cancellation.hpp"
+#include "util/async/impl/ErasedOperation.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -31,10 +37,71 @@
 #include <any>
 #include <chrono>
 #include <functional>
+#include <optional>
 #include <type_traits>
+#include <utility>
 
 using namespace util::async;
 using namespace ::testing;
+
+static_assert(SomeStoppable<StoppableOperation<int, impl::BasicStopSource>>);
+static_assert(not SomeStoppable<Operation<int>>);
+
+static_assert(SomeCancellable<ScheduledOperation<SyncExecutionContext, int>>);
+static_assert(not SomeCancellable<int>);
+
+static_assert(SomeOperation<Operation<int>>);
+static_assert(not SomeOperation<int>);
+
+static_assert(SomeStoppableOperation<MockStoppableOperation<int>>);
+static_assert(not SomeStoppableOperation<MockOperation<int>>);
+
+static_assert(SomeCancellableOperation<MockScheduledOperation<int>>);
+static_assert(not SomeCancellableOperation<MockOperation<int>>);
+
+static_assert(SomeOutcome<Outcome<int>>);
+static_assert(not SomeOutcome<int>);
+
+static_assert(SomeStopToken<impl::BasicStopSource::Token>);
+static_assert(not SomeStopToken<int>);
+
+static_assert(SomeYieldStopSource<impl::YieldContextStopSource>);
+static_assert(not SomeYieldStopSource<int>);
+static_assert(not SomeYieldStopSource<impl::BasicStopSource>);
+
+static_assert(SomeSimpleStopSource<impl::BasicStopSource>);
+static_assert(not SomeSimpleStopSource<int>);
+
+static_assert(SomeStopSource<impl::BasicStopSource>);
+static_assert(not SomeStopSource<int>);
+
+static_assert(SomeStopSourceProvider<StoppableOutcome<int, impl::BasicStopSource>>);
+static_assert(not SomeStopSourceProvider<Outcome<int>>);
+
+static_assert(SomeStoppableOutcome<StoppableOutcome<int, impl::BasicStopSource>>);
+static_assert(not SomeStoppableOutcome<Outcome<int>>);
+
+static_assert(SomeHandlerWithoutStopToken<decltype([]() {})>);
+static_assert(not SomeHandlerWithoutStopToken<decltype([](int) {})>);
+
+static_assert(SomeHandlerWith<decltype([](int) {}), int>);
+static_assert(not SomeHandlerWith<decltype([](int) {}), std::optional<float>>);
+
+static_assert(SomeStdDuration<std::chrono::steady_clock::duration>);
+static_assert(not SomeStdDuration<std::chrono::steady_clock::time_point>);
+
+static_assert(SomeStdOptional<std::optional<int>>);
+static_assert(not SomeStdOptional<int>);
+
+static_assert(SomeOptStdDuration<std::optional<std::chrono::steady_clock::duration>>);
+static_assert(not SomeOptStdDuration<std::chrono::duration<double>>);
+static_assert(not SomeOptStdDuration<std::optional<int>>);
+
+static_assert(NotSameAs<int, impl::ErasedOperation>);
+static_assert(not NotSameAs<impl::ErasedOperation, impl::ErasedOperation>);
+
+static_assert(RValueNotSameAs<int&&, impl::ErasedOperation>);
+static_assert(not RValueNotSameAs<int&, impl::ErasedOperation>);
 
 struct AnyExecutionContextTests : Test {
     using StrandType = NiceMock<MockStrand>;
@@ -51,6 +118,26 @@ struct AnyExecutionContextTests : Test {
     NiceMock<MockExecutionContext> mockExecutionContext;
     AnyExecutionContext ctx{static_cast<MockExecutionContext&>(mockExecutionContext)};
 };
+
+TEST_F(AnyExecutionContextTests, Move)
+{
+    auto mockOp = OperationType<std::any>{};
+    EXPECT_CALL(mockExecutionContext, execute(An<std::function<std::any()>>())).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockOp, get());
+
+    auto mineNow = std::move(ctx);
+    ASSERT_TRUE(mineNow.execute([] { throw 0; }).get());
+}
+
+TEST_F(AnyExecutionContextTests, CopyIsRefCounted)
+{
+    auto mockOp = OperationType<std::any>{};
+    EXPECT_CALL(mockExecutionContext, execute(An<std::function<std::any()>>())).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockOp, get());
+
+    auto yoink = ctx;
+    ASSERT_TRUE(yoink.execute([] { throw 0; }).get());
+}
 
 TEST_F(AnyExecutionContextTests, ExecuteWithoutTokenAndVoid)
 {

@@ -43,16 +43,37 @@ public:
     /**
      * @brief Construct a new type-erased Execution Context object
      *
+     * @note Stores the Execution Context by reference.
+     *
      * @tparam CtxType The type of the execution context to wrap
      * @param ctx The execution context to wrap
      */
-    template <typename CtxType>
-        requires(not std::is_same_v<std::decay_t<CtxType>, AnyExecutionContext>)
+    template <NotSameAs<AnyExecutionContext> CtxType>
     /* implicit */
-    AnyExecutionContext(CtxType&& ctx) : pimpl_{std::make_unique<Model<CtxType>>(std::forward<CtxType>(ctx))}
+    AnyExecutionContext(CtxType& ctx) : pimpl_{std::make_shared<Model<CtxType&>>(ctx)}
     {
     }
 
+    /**
+     * @brief Construct a new type-erased Execution Context object
+     *
+     * @note Stores the Execution Context by moving it into the AnyExecutionContext.
+     *
+     * @tparam CtxType The type of the execution context to wrap
+     * @param ctx The execution context to wrap
+     */
+    template <RValueNotSameAs<AnyExecutionContext> CtxType>
+    /* implicit */
+    AnyExecutionContext(CtxType&& ctx) : pimpl_{std::make_shared<Model<CtxType>>(std::forward<CtxType>(ctx))}
+    {
+    }
+
+    AnyExecutionContext(AnyExecutionContext const&) = default;
+    AnyExecutionContext(AnyExecutionContext&&) = default;
+    AnyExecutionContext&
+    operator=(AnyExecutionContext const&) = default;
+    AnyExecutionContext&
+    operator=(AnyExecutionContext&&) = default;
     ~AnyExecutionContext() = default;
 
     /**
@@ -206,7 +227,7 @@ public:
      * @brief Stop the execution context
      */
     void
-    stop()
+    stop() const
     {
         pimpl_->stop();
     }
@@ -215,7 +236,7 @@ public:
      * @brief Join the execution context
      */
     void
-    join()
+    join() const
     {
         pimpl_->join();
     }
@@ -237,64 +258,65 @@ private:
         virtual AnyStrand
         makeStrand() = 0;
         virtual void
-        stop() = 0;
+        stop() const = 0;
         virtual void
-        join() = 0;
+        join() const = 0;
     };
 
     template <typename CtxType>
     struct Model : Concept {
-        std::reference_wrapper<std::decay_t<CtxType>> ctx;
+        CtxType ctx;
 
-        Model(CtxType& ctx) : ctx{std::ref(ctx)}
+        template <typename Type>
+        Model(Type&& ctx) : ctx(std::forward<Type>(ctx))
         {
         }
 
         impl::ErasedOperation
         execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
         {
-            return ctx.get().execute(std::move(fn), timeout);
+            return ctx.execute(std::move(fn), timeout);
         }
 
         impl::ErasedOperation
         execute(std::function<std::any()> fn) override
         {
-            return ctx.get().execute(std::move(fn));
+            return ctx.execute(std::move(fn));
         }
 
         impl::ErasedOperation
         scheduleAfter(std::chrono::milliseconds delay, std::function<std::any(AnyStopToken)> fn) override
         {
-            return ctx.get().scheduleAfter(delay, std::move(fn));
+            return ctx.scheduleAfter(delay, std::move(fn));
         }
 
         impl::ErasedOperation
         scheduleAfter(std::chrono::milliseconds delay, std::function<std::any(AnyStopToken, bool)> fn) override
         {
-            return ctx.get().scheduleAfter(delay, std::move(fn));
+            return ctx.scheduleAfter(delay, std::move(fn));
         }
 
         AnyStrand
         makeStrand() override
         {
-            return ctx.get().makeStrand();
+            return ctx.makeStrand();
         }
 
         void
-        stop() override
+        stop() const override
         {
-            ctx.get().stop();
+            ctx.stop();
         }
 
         void
-        join() override
+        join() const override
         {
-            ctx.get().join();
+            ctx.join();
         }
     };
 
 private:
-    std::unique_ptr<Concept> pimpl_;
+    std::shared_ptr<Concept> pimpl_;
 };
 
 }  // namespace util::async

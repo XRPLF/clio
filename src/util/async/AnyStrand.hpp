@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/async/AnyStopToken.hpp"
+#include "util/async/Concepts.hpp"
 #include "util/async/impl/ErasedOperation.hpp"
 
 #include <any>
@@ -43,13 +44,14 @@ public:
      * @tparam StrandType The type of the strand to wrap
      * @param strand The strand to wrap
      */
-    template <typename StrandType>
-        requires(not std::is_same_v<std::decay_t<StrandType>, AnyStrand>)
+    template <NotSameAs<AnyStrand> StrandType>
     /* implicit */ AnyStrand(StrandType&& strand)
-        : pimpl_{std::make_unique<Model<StrandType>>(std::forward<StrandType>(strand))}
+        : pimpl_{std::make_shared<Model<StrandType>>(std::forward<StrandType>(strand))}
     {
     }
 
+    AnyStrand(AnyStrand const&) = default;
+    AnyStrand(AnyStrand&&) = default;
     ~AnyStrand() = default;
 
     /**
@@ -163,7 +165,7 @@ private:
     };
 
 private:
-    std::unique_ptr<Concept> pimpl_;
+    std::shared_ptr<Concept> pimpl_;
 };
 
 }  // namespace util::async

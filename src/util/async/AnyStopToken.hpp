@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 namespace util::async {
 
@@ -41,7 +42,7 @@ public:
      * @param token The stop token to wrap
      */
     template <SomeStopToken TokenType>
-        requires(not std::is_same_v<std::decay_t<TokenType>, AnyStopToken>)
+        requires NotSameAs<TokenType, AnyStopToken>
     /* implicit */ AnyStopToken(TokenType&& token)
         : pimpl_{std::make_unique<Model<TokenType>>(std::forward<TokenType>(token))}
     {
@@ -142,7 +143,7 @@ private:
             }
 
             ASSERT(false, "Token type does not support conversion to boost::asio::yield_context");
-            __builtin_unreachable();  // TODO: replace with std::unreachable when C++23 is available
+            std::unreachable();
         }
     };
 
