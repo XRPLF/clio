@@ -198,12 +198,12 @@ Server::run()
         return std::move(acceptor).error();
 
     running_ = true;
-    boost::asio::spawn(ctx_, [this, acceptor = std::move(acceptor)](boost::asio::yield_context yield) mutable {
+    boost::asio::spawn(ctx_, [this, acceptor = std::move(acceptor).value()](boost::asio::yield_context yield) mutable {
         while (true) {
             boost::beast::error_code errorCode;
             boost::asio::ip::tcp::socket socket{ctx_.get().get_executor()};
 
-            acceptor->async_accept(socket, yield[errorCode]);
+            acceptor.async_accept(socket, yield[errorCode]);
             if (errorCode) {
                 LOG(log_.debug()) << "Error accepting a connection: " << errorCode.what();
                 continue;
@@ -326,8 +326,8 @@ Server::processConnectionLoop(Connection& connection, boost::asio::yield_context
 Connection&
 Server::insertConnection(ConnectionPtr connection)
 {
-    auto connectionsMap = connections_->lock<std::unique_lock>();
     auto const connectionId = connection->id();
+    auto connectionsMap = connections_->lock<std::unique_lock>();
     auto [it, inserted] = connectionsMap->emplace(connectionId, std::move(connection));
     ASSERT(inserted, "Connection with id {} already exists", it->second->id());
     return *it->second.get();
