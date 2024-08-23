@@ -26,6 +26,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
+#include <boost/asio/ssl/stream.hpp>
 #include <boost/beast/core/basic_stream.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
 
@@ -70,7 +71,7 @@ public:
     }
 
     bool
-    upgraded() const override
+    wasUpgraded() const override
     {
         return false;
     }
@@ -84,8 +85,26 @@ public:
     receive(boost::asio::yield_context) override
     {
     }
+
     void
     close(std::chrono::steady_clock::duration) override
+    {
+    }
+
+    bool
+    isUpgradeRequested() const override
+    {
+        return false;
+    }
+
+    ConnectionPtr
+    upgrade() const override
+    {
+        return nullptr;
+    }
+
+    void
+    fetch(boost::asio::yield_context) override
     {
     }
 };

@@ -48,12 +48,12 @@
 #include <fmt/core.h>
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
 #include <string>
-#include <string_view>
 #include <utility>
 
 namespace web::ng {
@@ -141,7 +141,7 @@ makeConnection(
         connection =
             std::make_unique<impl::SslHttpConnection>(std::move(sslDetectionResult.socket), std::move(ip), *sslContext);
     } else {
-        connection = std::make_unique<impl::HttpConnection>(std::move(sslDetectionResult.socket), std::move(ip));
+        connection = std::make_unique<impl::PlainHttpConnection>(std::move(sslDetectionResult.socket), std::move(ip));
     }
 
     connection->fetch(yield);
@@ -164,7 +164,7 @@ Server::Server(
     , dosguard_{std::move(dosguard)}
     , adminVerificationStrategy_(std::move(adminVerificationStrategy))
     , sslContext_{std::move(sslContext)}
-    , connections_{std::make_unique<util::Mutex<ConnectionsSet, std::shared_mutex>>()}
+    , connections_{std::make_unique<util::Mutex<ConnectionsMap, std::shared_mutex>>()}
     , endpoint_{std::move(endpoint)}
 {
 }
@@ -231,6 +231,7 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
     auto sslDetectionResultExpected = detectSsl(std::move(socket), yield);
     if (not sslDetectionResultExpected) {
         LOG(log_.info()) << sslDetectionResultExpected.error();
+        return;
     }
     auto sslDetectionResult = std::move(sslDetectionResultExpected).value();
     if (not sslDetectionResult)
@@ -242,12 +243,22 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
         return;
     }
 
-    auto connectionExpected = makeConnection(std::move(sslDetectionResult), sslContext_, std::move(ip).value(), yield);
+    auto connectionExpected =
+        makeConnection(std::move(sslDetectionResult).value(), sslContext_, std::move(ip).value(), yield);
     if (not connectionExpected.has_value()) {
         LOG(log_.info()) << "Error creating a connection: " << connectionExpected.error();
+        return;
     }
-    // insert connection into connections_
-    // run processConnection or processConnectionLoop
+
+    Connection& connection = insertConnection(std::move(connectionExpected).value());
+
+    boost::asio::spawn(ctx_, [this, &connection = connection](boost::asio::yield_context yield) {
+        if (connection.wasUpgraded()) {
+            processConnectionLoop(connection, yield);
+        } else {
+            processConnection(connection, yield);
+        }
+    });
 }
 
 // void
@@ -311,6 +322,16 @@ Server::processConnectionLoop(Connection& connection, boost::asio::yield_context
 //             return Response{};
 //     }
 // }
+
+Connection&
+Server::insertConnection(ConnectionPtr connection)
+{
+    auto connectionsMap = connections_->lock<std::unique_lock>();
+    auto const connectionId = connection->id();
+    auto [it, inserted] = connectionsMap->emplace(connectionId, std::move(connection));
+    ASSERT(inserted, "Connection with id {} already exists", it->second->id());
+    return *it->second.get();
+}
 
 std::expected<Server, std::string>
 make_Server(

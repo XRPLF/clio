@@ -41,7 +41,6 @@
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 
 namespace web::ng {
 
@@ -57,8 +56,8 @@ class Server {
     std::unordered_map<std::string, MessageHandler> postHandlers_;
     std::optional<MessageHandler> wsHandler_;
 
-    using ConnectionsSet = std::unordered_set<ConnectionPtr, Connection::Hash>;
-    std::unique_ptr<util::Mutex<ConnectionsSet, std::shared_mutex>> connections_;
+    using ConnectionsMap = std::unordered_map<size_t, ConnectionPtr>;
+    std::unique_ptr<util::Mutex<ConnectionsMap, std::shared_mutex>> connections_;
 
     boost::asio::ip::tcp::endpoint endpoint_;
 
@@ -103,6 +102,9 @@ private:
 
     Response
     handleRequest(Request request, ConnectionContext connectionContext);
+
+    Connection&
+    insertConnection(ConnectionPtr connection);
 };
 
 std::expected<Server, std::string>

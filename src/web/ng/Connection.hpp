@@ -45,7 +45,7 @@ public:
     virtual ~Connection() = default;
 
     virtual bool
-    upgraded() const = 0;
+    wasUpgraded() const = 0;
 
     virtual void
     send(Response response, boost::asio::yield_context yield) = 0;
@@ -64,11 +64,6 @@ public:
 
     size_t
     id() const;
-
-    struct Hash {
-        size_t
-        operator()(std::unique_ptr<Connection> const& connection) const;
-    };
 };
 
 using ConnectionPtr = std::unique_ptr<Connection>;

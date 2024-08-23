@@ -21,8 +21,6 @@
 
 #include <atomic>
 #include <cstddef>
-#include <functional>
-#include <memory>
 #include <string>
 #include <utility>
 
@@ -41,12 +39,6 @@ generateId()
 
 Connection::Connection(std::string ip) : id_{generateId()}, ip_{std::move(ip)}
 {
-}
-
-size_t
-Connection::Hash::operator()(std::unique_ptr<Connection> const& connection) const
-{
-    return std::hash<std::size_t>{}(connection->id());
 }
 
 }  // namespace web::ng
