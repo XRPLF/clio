@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "rpc/common/APIVersion.hpp"
 #include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
@@ -42,7 +43,8 @@ TEST(ConfigValue, testConfigValue)
     EXPECT_TRUE(cvOpt.isOptional());
 }
 
-TEST(ConfigValue, withDifferentConstraints)
+// A test for each constraint so it's easy to change in the future
+TEST(ConfigValue, portConstraint)
 {
     auto cvPort = ConfigValue{ConfigType::Integer}.defaultValue(4444).withConstraint(validatePort);
     auto const err = cvPort.setValue(99999);
@@ -55,69 +57,133 @@ TEST(ConfigValue, withDifferentConstraints)
     auto const strPortError = cvPort2.setValue("100000");
     EXPECT_TRUE(strPortError.has_value());
     EXPECT_EQ(strPortError->error, "Port does not satisfy the constraint bounds");
+}
 
+TEST(ConfigValue, channelConstraint)
+{
     auto cvChannel = ConfigValue{ConfigType::String}.defaultValue("General").withConstraint(validateChannelName);
-    auto const err2 = cvChannel.setValue("nono");
-    EXPECT_TRUE(err2.has_value());
+    auto const err = cvChannel.setValue("nono");
+    EXPECT_TRUE(err.has_value());
     EXPECT_EQ(
-        err2->error, "Channel name must be one of General, WebServer, Backend, RPC, ETL, Subscriptions, Performance"
+        err->error,
+        "Key \"channel\"'s value must be one of the following: General, WebServer, Backend, RPC, ETL, Subscriptions, "
+        "Performance"
     );
     EXPECT_FALSE(cvChannel.setValue("Performance"));
+}
 
+TEST(ConfigValue, logLevelConstraint)
+{
     auto logLevelChannel = ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(validateLogLevelName);
-    auto const err3 = logLevelChannel.setValue("PETER_WAS_HERE");
-    EXPECT_TRUE(err3.has_value());
-    EXPECT_EQ(err3->error, "log_level must be one of trace, debug, info, warning, error, fatal, count");
+    auto const err = logLevelChannel.setValue("PETER_WAS_HERE");
+    EXPECT_TRUE(err.has_value());
+    EXPECT_EQ(
+        err->error,
+        "Key \"log_level\"'s value must be one of the following: trace, debug, info, warning, error, fatal, count"
+    );
     EXPECT_FALSE(logLevelChannel.setValue("count"));
+}
 
+TEST(ConfigValue, ipConstraint)
+{
     auto ip = ConfigValue{ConfigType::String}.defaultValue("127.0.0.1").withConstraint(validateIP);
+    EXPECT_FALSE(ip.setValue("http://127.0.0.1").has_value());
+    EXPECT_FALSE(ip.setValue("http://127.0.0.1.com").has_value());
     auto const err4 = ip.setValue("123.44");
     EXPECT_TRUE(err4.has_value());
     EXPECT_EQ(err4->error, "ip is not a valid ip address");
     EXPECT_FALSE(ip.setValue("126.0.0.2"));
+}
 
+TEST(ConfigValue, databaseTypeConstraint)
+{
     auto cassandra = ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(validateCassandraName);
     auto const casError = cassandra.setValue("123.44");
     EXPECT_TRUE(casError.has_value());
-    EXPECT_EQ(casError->error, "database.type must be string Cassandra");
+    EXPECT_EQ(casError->error, "Key \"database.type\"'s value must be string Cassandra");
     EXPECT_FALSE(cassandra.setValue("cassandra"));
+}
 
+TEST(ConfigValue, cacheLoadConstraint)
+{
     auto load = ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(validateLoadMode);
-    auto const err5 = load.setValue("ASYCS");
-    EXPECT_TRUE(err5.has_value());
-    EXPECT_EQ(err5->error, "cache.load must be string sync, async, or none");
+    auto const err = load.setValue("ASYCS");
+    EXPECT_TRUE(err.has_value());
+    EXPECT_EQ(err->error, "Key \"cache.load\"'s value must be one of the following: sync, async, none");
     EXPECT_FALSE(load.setValue("none"));
     EXPECT_FALSE(load.setValue("sync"));
+}
 
+TEST(ConfigValue, logTagStyleConstraint)
+{
     auto logTagName = ConfigValue{ConfigType::String}.defaultValue("uint").withConstraint(validateLogTag);
-    auto const err6 = logTagName.setValue("idek_anymore");
-    EXPECT_TRUE(err6.has_value());
-    EXPECT_EQ(err6->error, "log_tag_style must be string int, uint, null, none, or uuid");
+    auto const err = logTagName.setValue("idek_anymore");
+    EXPECT_TRUE(err.has_value());
+    EXPECT_EQ(err->error, "Key \"log_tag_style\"'s value must be one of the following: int, uint, null, none, uuid");
     EXPECT_FALSE(logTagName.setValue("null"));
     EXPECT_FALSE(logTagName.setValue("uuid"));
+}
 
+TEST(ConfigValue, apiVersionConstraint)
+{
     auto apiVer = ConfigValue{ConfigType::Integer}.defaultValue(1u).withConstraint(validateApiVersion);
-    auto const err7 = apiVer.setValue(9999);
-    EXPECT_TRUE(err7.has_value());
-    EXPECT_EQ(err7->error, fmt::format("api_version must be between {} and {}", API_VERSION_MIN, API_VERSION_MAX));
-    EXPECT_FALSE(apiVer.setValue(API_VERSION_MAX));
+    auto const err = apiVer.setValue(9999);
+    EXPECT_TRUE(err.has_value());
+    EXPECT_EQ(
+        err->error, fmt::format("api_version must be between {} and {}", rpc::API_VERSION_MIN, rpc::API_VERSION_MAX)
+    );
+    EXPECT_FALSE(apiVer.setValue(rpc::API_VERSION_MAX));
     auto const apiWrongType = apiVer.setValue("9");
     EXPECT_TRUE(apiWrongType.has_value());
     EXPECT_EQ(apiWrongType->error, "value does not match type integer");
 }
 
-TEST(ConfigValueDeathTest, withDifferentConstraints)
+TEST(ConfigValue, positiveNumConstraint)
+{
+    auto positiveNum = ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(ValidateUint16);
+    auto const err = positiveNum.setValue(-22, "key");
+    EXPECT_TRUE(err.has_value());
+    EXPECT_EQ(err->error, "key number does not satisfy the specified constraint");
+    EXPECT_FALSE(positiveNum.setValue(99, "key"));
+
+    auto doubleVal = ConfigValue{ConfigType::Double}.defaultValue(0.2).withConstraint(ValidatePositiveDouble);
+    auto const err2 = doubleVal.setValue(-1.1);
+    EXPECT_TRUE(err2.has_value());
+    EXPECT_EQ(err2->error, "double number must be greater than 0");
+    EXPECT_FALSE(doubleVal.setValue(12.1));
+}
+
+void
+testConstraintDeath(Constraint const& constraint)
+{
+    EXPECT_DEATH(
+        { [[maybe_unused]] auto a = ConfigValue{ConfigType::Boolean}.defaultValue(true).withConstraint(constraint); },
+        ".*"
+    );
+}
+
+TEST(ConfigValueDeathTest, withConstraintWrongType)
+{
+    // test_p doesn't work with Constraint* as type
+    testConstraintDeath(validatePort);
+    testConstraintDeath(validateChannelName);
+    testConstraintDeath(validateLogLevelName);
+    testConstraintDeath(validateIP);
+    testConstraintDeath(validateCassandraName);
+    testConstraintDeath(validateLoadMode);
+    testConstraintDeath(validateLogTag);
+    testConstraintDeath(validateApiVersion);
+    testConstraintDeath(ValidateUint16);
+    testConstraintDeath(ValidateUint32);
+    testConstraintDeath(ValidateUint64);
+    testConstraintDeath(ValidatePositiveDouble);
+}
+
+TEST(ConfigValueDeathTest, withConstraintWrongValues)
 {
     EXPECT_DEATH(
         {
             [[maybe_unused]] auto a = ConfigValue{ConfigType::String}.defaultValue(33).withConstraint(validateLoadMode);
-        },
-        ".*"
-    );
-    EXPECT_DEATH(
-        {
-            [[maybe_unused]] auto a =
-                ConfigValue{ConfigType::Boolean}.defaultValue(true).withConstraint(validateLogTag);
         },
         ".*"
     );
@@ -134,4 +200,5 @@ TEST(ConfigValueDeathTest, withDifferentConstraints)
         },
         ".*"
     );
+    EXPECT_DEATH({ [[maybe_unused]] auto a = ConfigValue{ConfigType::Boolean}.defaultValue(-66); }, ".*");
 }

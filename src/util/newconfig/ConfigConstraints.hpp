@@ -21,12 +21,18 @@
 #pragma once
 
 #include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Types.hpp"
+
+#include <fmt/core.h>
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <variant>
 
 namespace util::config {
@@ -34,20 +40,7 @@ class ValueView;
 class ConfigValue;
 
 /**
- * @brief specific values that are accepted for channel names in config
- */
-static constexpr std::array<char const*, 7> channels = {
-    "General",
-    "WebServer",
-    "Backend",
-    "RPC",
-    "ETL",
-    "Subscriptions",
-    "Performance",
-};
-
-/**
- * @brief specific values that are accepted for logger levels in config
+ * @brief specific values that are accepted for logger levels in config.
  */
 static constexpr std::array<char const*, 7> logLevels = {
     "trace",
@@ -60,7 +53,7 @@ static constexpr std::array<char const*, 7> logLevels = {
 };
 
 /**
- * @brief specific values that are accepted for logger tag style in config
+ * @brief specific values that are accepted for logger tag style in config.
  */
 static constexpr std::array<char const*, 5> logTags = {
     "int",
@@ -71,270 +64,265 @@ static constexpr std::array<char const*, 5> logTags = {
 };
 
 /**
- * @brief Minimum API version supported by this build
- *
- * Note: Clio does not natively support v1 and only supports v2 or newer.
- * However, Clio will forward all v1 requests to rippled for backward compatibility.
+ * @brief specific values that are accepted for cache loading in config.
  */
-static constexpr uint32_t API_VERSION_MIN = 1u;
+static constexpr std::array<char const*, 3> loadCacheMode = {
+    "sync",
+    "async",
+    "none",
+};
 
 /**
- * @brief Maximum API version supported by this build
- */
-static constexpr uint32_t API_VERSION_MAX = 2u;
-
-/**
- * @brief A interface to enforce constraints on certain values within ClioConfigDefinition.
+ * @brief An interface to enforce constraints on certain values within ClioConfigDefinition.
  */
 class Constraint {
 public:
-    using ValueType = std::variant<int64_t, std::string, bool, double>;
-    virtual ~Constraint() noexcept = default;
-
+    virtual constexpr ~Constraint() noexcept = default;
     /**
      * @brief Check if the value meets the specific constraint.
      *
-     * @param type The value to be checked.
-     * @return An optional Error if the constraint is not met.
+     * @param val The value to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
      */
-    virtual std::optional<Error>
-    checkConstraint(ValueType const& type) const = 0;
+    [[nodiscard]]
+    std::optional<Error>
+    checkConstraint(Value const& val) const
+    {
+        if (auto maybeError = checkTypeImpl(val); maybeError.has_value())
+            return std::move(maybeError).value();
+        return checkValueImpl(val);
+    }
 
+protected:
+    /**
+     * @brief Creates an error message for all constraints that must satisfy certain hard-coded values.
+     *
+     * @tparam arrSize, the size of the array of hardcoded values
+     * @param key The key to the value
+     * @param arr The array with hard-coded values to add to error message
+     * @return The error message specifying what the value of key must be
+     */
+    template <std::size_t arrSize>
+    constexpr std::string
+    makeErrorMsg(std::string_view key, std::array<char const*, arrSize> arr) const
+    {
+        auto errorMsg = fmt::format("Key \"{}\"'s value must be one of the following: ", key);
+        for (auto const elem : arr)
+            errorMsg += fmt::format("{}, ", elem);
+
+        // Remove extra comma and space from end
+        errorMsg.erase(errorMsg.length() - 2);
+        return errorMsg;
+    }
+
+private:
     /**
      * @brief Check if the value is of a correct type for the constraint.
      *
-     * @param type The value type to be checked.
-     * @return true if the type is correct, false otherwise.
+     * @param val The value type to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
      */
-    virtual bool
-    checkType(ValueType const& type) const = 0;
+    virtual std::optional<Error>
+    checkTypeImpl(Value const& val) const = 0;
+
+    /**
+     * @brief Check if the value is within the constraint.
+     *
+     * @param val The value type to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    virtual std::optional<Error>
+    checkValueImpl(Value const& val) const = 0;
 };
 
 /**
  * @brief A constraint to ensure the port number is within a valid range.
  */
 class PortConstraint final : public Constraint {
-public:
-    /**
-     * @brief Check if the port number is within a valid range.
-     *
-     * @param port The port number to check.
-     * @return An optional Error if the port is not within a valid range.
-     */
-    [[nodiscard]] std::optional<Error>
-    checkConstraint(ValueType const& port) const override;
-
-private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
-     * @param type The value type to be checked.
-     * @return true if the type is correct, false otherwise.
+     * @param port The type to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
      */
-    [[nodiscard]] bool
-    checkType(ValueType const& type) const override
-    {
-        return std::holds_alternative<int64_t>(type) || std::holds_alternative<std::string>(type);
-    }
+    [[nodiscard]] std::optional<Error>
+    checkTypeImpl(Value const& port) const override;
 
-    uint32_t const portMin = 1;
-    uint32_t const portMax = 65535;
+    /**
+     * @brief Check if the value is within the constraint.
+     *
+     * @param port The value to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkValueImpl(Value const& port) const override;
+
+private:
+    static constexpr uint32_t portMin = 1;
+    static constexpr uint32_t portMax = 65535;
 };
 
 /**
  * @brief A constraint to ensure the channel name is valid.
  */
 class ChannelNameConstraint final : public Constraint {
-public:
     /**
-     * @brief Check if the channel name is valid.
+     * @brief Check if value is of type string.
      *
-     * @param channel The channel name to check.
-     * @return An optional Error if the channel name is not valid.
+     * @param channelName The type to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwis
      */
     [[nodiscard]] std::optional<Error>
-    checkConstraint(ValueType const& channel) const override;
+    checkTypeImpl(Value const& channelName) const override;
 
-private:
     /**
-     * @brief Check if the type of the value is correct for this specific constraint.
+     * @brief Check if the value is within the constraint.
      *
-     * @param type The value type to be checked.
-     * @return true if the type is correct, false otherwise.
+     * @param channelName The value to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
      */
-    [[nodiscard]] bool
-    checkType(ValueType const& type) const override
-    {
-        return std::holds_alternative<std::string>(type);
-    }
+    [[nodiscard]] std::optional<Error>
+    checkValueImpl(Value const& channelName) const override;
 };
 
 /**
  * @brief A constraint to ensure the log level name is valid.
  */
 class LogLevelNameConstraint final : public Constraint {
-public:
-    /**
-     * @brief Check if the log level name is valid.
-     *
-     * @param logger The log level name to check.
-     * @return An optional Error if the log level name is not valid.
-     */
-    [[nodiscard]] std::optional<Error>
-    checkConstraint(ValueType const& logger) const override;
-
-private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
-     * @param type The value type to be checked.
-     * @return true if the type is correct, false otherwise.
+     * @param logLevel The type to be checked
+     * @return An optional Error if the constraint is not met, std::nullopt otherwise
      */
-    [[nodiscard]] bool
-    checkType(ValueType const& type) const override
-    {
-        return std::holds_alternative<std::string>(type);
-    }
+    [[nodiscard]] std::optional<Error>
+    checkTypeImpl(Value const& logLevel) const override;
+
+    /**
+     * @brief Check if the value is within the constraint.
+     *
+     * @param logLevel The value to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkValueImpl(Value const& logLevel) const override;
 };
 
 /**
  * @brief A constraint to ensure the IP address is valid.
  */
 class ValidIPConstraint final : public Constraint {
-public:
-    /**
-     * @brief Check if the IP address is valid.
-     *
-     * @param ip The IP address to check.
-     * @return An optional Error if the IP address is not valid.
-     */
-    [[nodiscard]] std::optional<Error>
-    checkConstraint(ValueType const& ip) const override;
-
 private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
-     * @param type The value type to be checked.
-     * @return true if the type is correct, false otherwise.
+     * @param ip The type to be checked.
+     * @return An optional Error if the constraint is not met, std::nullopt otherwise
      */
-    [[nodiscard]] bool
-    checkType(ValueType const& type) const override
-    {
-        return std::holds_alternative<std::string>(type);
-    }
+    [[nodiscard]] std::optional<Error>
+    checkTypeImpl(Value const& ip) const override;
+
+    /**
+     * @brief Check if the value is within the constraint.
+     *
+     * @param ip The value to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkValueImpl(Value const& ip) const override;
 };
 
 /**
  * @brief A constraint to ensure the Cassandra name is valid.
  */
 class CassandraName final : public Constraint {
-public:
-    /**
-     * @brief Check if the Cassandra name is valid.
-     *
-     * @param name The Cassandra name to check.
-     * @return An optional Error if the name is not "cassandra"
-     */
-    [[nodiscard]] std::optional<Error>
-    checkConstraint(ValueType const& name) const override;
-
 private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
-     * @param type The value type to be checked.
-     * @return true if the type is correct, false otherwise.
+     * @param name The type to be checked
+     * @return An optional Error if the constraint is not met, std::nullopt otherwise
      */
-    [[nodiscard]] bool
-    checkType(ValueType const& type) const override
-    {
-        return std::holds_alternative<std::string>(type);
-    }
+    [[nodiscard]] std::optional<Error>
+    checkTypeImpl(Value const& name) const override;
+
+    /**
+     * @brief Check if the value is within the constraint
+     *
+     * @param name The value to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkValueImpl(Value const& name) const override;
 };
 
 /**
  * @brief A constraint to ensure the load mode is valid.
  */
 class LoadConstraint final : public Constraint {
-public:
-    /**
-     * @brief Check if the load mode is valid.
-     *
-     * @param name The load mode to check.
-     * @return An optional Error if the load mode is not valid.
-     */
-    [[nodiscard]] std::optional<Error>
-    checkConstraint(ValueType const& name) const override;
-
-private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
-     * @param type The value type to be checked.
-     * @return true if the type is correct, false otherwise.
+     * @param loadMode The type to be checked
+     * @return An optional Error if the constraint is not met, std::nullopt otherwise
      */
-    [[nodiscard]] bool
-    checkType(ValueType const& type) const override
-    {
-        return std::holds_alternative<std::string>(type);
-    }
+    [[nodiscard]] std::optional<Error>
+    checkTypeImpl(Value const& loadMode) const override;
+
+    /**
+     * @brief Check if the value is within the constraint
+     *
+     * @param loadMode The value to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkValueImpl(Value const& loadMode) const override;
 };
 
 /**
  * @brief A constraint to ensure the log tag style is valid.
  */
 class LogTagStyle final : public Constraint {
-public:
-    /**
-     * @brief Check if the log tag style is valid.
-     *
-     * @param tagName The log tag style to check.
-     * @return An optional Error if the log tag style is not valid.
-     */
-    [[nodiscard]] std::optional<Error>
-    checkConstraint(ValueType const& tagName) const override;
-
-private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
-     * @param type The value type to be checked.
-     * @return true if the type is correct, false otherwise.
+     * @param tagName The type to be checked
+     * @return An optional Error if the constraint is not met, std::nullopt otherwise
      */
-    [[nodiscard]] bool
-    checkType(ValueType const& type) const override
-    {
-        return std::holds_alternative<std::string>(type);
-    }
+    [[nodiscard]] std::optional<Error>
+    checkTypeImpl(Value const& tagName) const override;
+
+    /**
+     * @brief Check if the value is within the constraint
+     *
+     * @param tagName The value to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkValueImpl(Value const& tagName) const override;
 };
 
 /**
  * @brief A constraint class to ensure the API version is within a valid range.
  */
 class APIVersionConstraint final : public Constraint {
-public:
-    /**
-     * @brief Check if the API version is within a valid range.
-     *
-     * @param apiVersion The API version to check.
-     * @return An optional Error if the API version is not within a valid range.
-     */
-    [[nodiscard]] std::optional<Error>
-    checkConstraint(ValueType const& apiVersion) const override;
-
-private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
-     * @param type The value type to be checked.
-     * @return true if the type is correct, false otherwise.
+     * @param apiVersion The type to be checked
+     * @return An optional Error if the constraint is not met, std::nullopt otherwise
      */
-    [[nodiscard]] bool
-    checkType(ValueType const& type) const override
-    {
-        return std::holds_alternative<int64_t>(type);
-    }
+    [[nodiscard]] std::optional<Error>
+    checkTypeImpl(Value const& apiVersion) const override;
+
+    /**
+     * @brief Check if the value is within the constraint
+     *
+     * @param apiVersion The value to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkValueImpl(Value const& apiVersion) const override;
 };
 
 /**
@@ -344,18 +332,29 @@ private:
  */
 template <typename T>
 class PositiveNumConstraint final : public Constraint {
-public:
+    /**
+     * @brief Check if the type of the value is correct for this specific constraint.
+     *
+     * @param num The type to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkTypeImpl(Value const& num) const override
+    {
+        if (!std::holds_alternative<std::int64_t>(num))
+            return Error{"number must be of type int"};
+        return std::nullopt;
+    }
+
     /**
      * @brief Check if the number is positive and within the valid range.
      *
-     * @param num The number to check.
-     * @return An optional Error if the number is not valid.
+     * @param num The number to check
+     * @return An Error object if the constraint is not met, nullopt otherwise
      */
     [[nodiscard]] std::optional<Error>
-    checkConstraint(Constraint::ValueType const& num) const override
+    checkValueImpl(Value const& num) const override
     {
-        if (!checkType(num))
-            return Error{"number must be of type int"};
         auto const numToCheck = std::get<int64_t>(num);
 
         if (std::is_same_v<T, uint64_t> && numToCheck < 0)
@@ -369,33 +368,44 @@ public:
 
         if (numToCheck >= low && numToCheck <= high)
             return std::nullopt;
-        return Error{"num must be an integer"};
-    }
-
-private:
-    /**
-     * @brief Check if the type of the value is correct for this specific constraint.
-     *
-     * @param type The type to be checked.
-     * @return true if the type is correct, false otherwise.
-     */
-    [[nodiscard]] bool
-    checkType(ValueType const& type) const override
-    {
-        return std::holds_alternative<std::int64_t>(type);
+        return Error{"number does not satisfy the specified constraint"};
     }
 };
 
-static PortConstraint const validatePort{};
-static ChannelNameConstraint const validateChannelName{};
-static LogLevelNameConstraint const validateLogLevelName{};
-static ValidIPConstraint const validateIP{};
-static CassandraName const validateCassandraName{};
-static LoadConstraint const validateLoadMode{};
-static LogTagStyle const validateLogTag{};
-static APIVersionConstraint const validateApiVersion{};
-static PositiveNumConstraint<uint16_t> const ValidateUint16{};
-static PositiveNumConstraint<uint32_t> const ValidateUint32{};
-static PositiveNumConstraint<uint64_t> const ValidateUint64{};
+/**
+ * @brief A constraint to ensure a double number is positive
+ */
+class PositiveDouble final : public Constraint {
+    /**
+     * @brief Check if the type of the value is correct for this specific constraint.
+     *
+     * @param num The type to be checked
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkTypeImpl(Value const& num) const override;
+
+    /**
+     * @brief Check if the number is positive.
+     *
+     * @param num The number to check
+     * @return An Error object if the constraint is not met, nullopt otherwise
+     */
+    [[nodiscard]] std::optional<Error>
+    checkValueImpl(Value const& num) const override;
+};
+
+static constexpr PortConstraint const validatePort{};
+static constexpr ChannelNameConstraint const validateChannelName{};
+static constexpr LogLevelNameConstraint const validateLogLevelName{};
+static constexpr ValidIPConstraint const validateIP{};
+static constexpr CassandraName const validateCassandraName{};
+static constexpr LoadConstraint const validateLoadMode{};
+static constexpr LogTagStyle const validateLogTag{};
+static constexpr APIVersionConstraint const validateApiVersion{};
+static constexpr PositiveNumConstraint<uint16_t> const ValidateUint16{};
+static constexpr PositiveNumConstraint<uint32_t> const ValidateUint32{};
+static constexpr PositiveNumConstraint<uint64_t> const ValidateUint64{};
+static constexpr PositiveDouble const ValidatePositiveDouble{};
 
 }  // namespace util::config

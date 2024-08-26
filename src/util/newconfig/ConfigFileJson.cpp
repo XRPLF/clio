@@ -21,6 +21,8 @@
 
 #include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/filesystem/path.hpp>
 #include <boost/json/array.hpp>
@@ -28,18 +30,18 @@
 #include <boost/json/parse.hpp>
 #include <boost/json/parse_options.hpp>
 #include <boost/json/value.hpp>
+#include <fmt/core.h>
 
 #include <cstddef>
-#include <cstdint>
 #include <exception>
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <variant>
 #include <vector>
 
 namespace util::config {
@@ -63,7 +65,30 @@ ConfigFileJson::parse(boost::filesystem::path configFilePath)
     }
 }
 
-std::variant<int64_t, std::string, bool, double>
+/**
+ * @brief Extracts the value from a JSON object and converts it into the corresponding type.
+ *
+ * @param jsonValue The JSON value to extract.
+ * @return A variant containing the same type corresponding to the extracted value.
+ */
+[[nodiscard]] static Value
+extractJsonValue(boost::json::value const& jsonValue)
+{
+    Value variantValue;
+
+    if (jsonValue.is_int64()) {
+        variantValue = jsonValue.as_int64();
+    } else if (jsonValue.is_string()) {
+        variantValue = jsonValue.as_string().c_str();
+    } else if (jsonValue.is_bool()) {
+        variantValue = jsonValue.as_bool();
+    } else if (jsonValue.is_double()) {
+        variantValue = jsonValue.as_double();
+    }
+    return variantValue;
+}
+
+Value
 ConfigFileJson::getValue(std::string_view key) const
 {
     ASSERT(jsonObject_.contains(key), "Json object does not contain key {}", key);
@@ -73,13 +98,13 @@ ConfigFileJson::getValue(std::string_view key) const
     return value;
 }
 
-std::vector<std::variant<int64_t, std::string, bool, double>>
+std::vector<Value>
 ConfigFileJson::getArray(std::string_view key) const
 {
     ASSERT(jsonObject_.contains(key), "Key {} must exist in Json", key);
     ASSERT(jsonObject_.at(key).is_array(), "Key {} has value that is not an array", key);
 
-    std::vector<std::variant<int64_t, std::string, bool, double>> configValues;
+    std::vector<Value> configValues;
     auto const arr = jsonObject_.at(key).as_array();
 
     for (auto const& item : arr) {

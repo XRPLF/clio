@@ -21,8 +21,12 @@
 
 #include "util/Assert.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <cstddef>
+#include <optional>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -43,8 +47,7 @@ public:
      * @tparam Args Types of the arguments
      * @param arg Argument to set the type and constraint of ConfigValues in Array
      */
-    template <typename Arg>
-    constexpr Array(Arg&& arg) : elements_{std::forward<Arg>(arg)}
+    Array(ConfigValue arg) : elements_{std::move(arg)}
     {
         ASSERT(!elements_.at(0).hasValue(), "Array does not include default values");
     }
@@ -54,8 +57,8 @@ public:
      *
      * @param value The ConfigValue to add
      */
-    void
-    emplaceBack(ConfigValue value);
+    std::optional<Error>
+    addValue(Value value, std::optional<std::string_view> key = std::nullopt);
 
     /**
      * @brief Returns the number of values stored in the Array

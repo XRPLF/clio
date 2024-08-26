@@ -20,14 +20,13 @@
 #pragma once
 
 #include "util/newconfig/ConfigFileInterface.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/filesystem/path.hpp>
 #include <boost/json/object.hpp>
 
-#include <cstdint>
 #include <string>
 #include <string_view>
-#include <variant>
 #include <vector>
 
 namespace util::config {
@@ -55,7 +54,7 @@ public:
      * @param key The key of the configuration value to retrieve.
      * @return A variant containing the same type corresponding to the extracted value.
      */
-    [[nodiscard]] std::variant<int64_t, std::string, bool, double>
+    [[nodiscard]] Value
     getValue(std::string_view key) const override;
 
     /**
@@ -64,7 +63,7 @@ public:
      * @param key The key of the configuration array to retrieve.
      * @return A vector of variants holding the config values specified by user.
      */
-    [[nodiscard]] std::vector<std::variant<int64_t, std::string, bool, double>>
+    [[nodiscard]] std::vector<Value>
     getArray(std::string_view key) const override;
 
     /**
@@ -78,31 +77,10 @@ public:
 
 private:
     /**
-     * @brief Extracts the value from a JSON object and converts it into the corresponding type.
+     * @brief Recursive function to flatten a JSON object into the same structure as the Clio Config.
      *
-     * @param jsonValue The JSON value to extract.
-     * @return A variant containing the same type corresponding to the extracted value.
-     */
-    [[nodiscard]] static std::variant<int64_t, std::string, bool, double>
-    extractJsonValue(boost::json::value const& jsonValue)
-    {
-        std::variant<int64_t, std::string, bool, double> variantValue;
-
-        if (jsonValue.is_int64()) {
-            variantValue = jsonValue.as_int64();
-        } else if (jsonValue.is_string()) {
-            variantValue = jsonValue.as_string().c_str();
-        } else if (jsonValue.is_bool()) {
-            variantValue = jsonValue.as_bool();
-        } else if (jsonValue.is_double()) {
-            variantValue = jsonValue.as_double();
-        }
-        return variantValue;
-    }
-
-    /**
-     * @brief Recursive function to flatten a JSON object into the same structure as the Clio Config,
-     * with the same naming convensions for keys.
+     * The keys will end up having the same naming convensions in Clio Config.
+     * Other than the keys specified in user Config file, no new keys are created.
      *
      * @param obj The JSON object to flatten.
      * @param prefix The prefix to use for the keys in the flattened object.

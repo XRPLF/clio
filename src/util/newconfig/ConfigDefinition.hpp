@@ -40,6 +40,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace util::config {
@@ -66,7 +67,8 @@ public:
     /**
      * @brief Parses the configuration file
      *
-     * Should also check that no extra configuration key/value pairs are present
+     * Also checks that no extra configuration key/value pairs are present. Adds to list of Errors
+     * if it does
      *
      * @param config The configuration file interface
      * @return An optional vector of Error objects stating all the failures if parsing fails

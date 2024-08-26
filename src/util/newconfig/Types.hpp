@@ -24,11 +24,15 @@
 #include <cstdint>
 #include <string>
 #include <type_traits>
+#include <variant>
 
 namespace util::config {
 
 /** @brief Custom clio config types */
 enum class ConfigType { Integer, String, Double, Boolean };
+
+/** @brief Represents the supported Config Values */
+using Value = std::variant<int64_t, std::string, bool, double>;
 
 /**
  * @brief Get the corresponding clio config type

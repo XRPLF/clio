@@ -59,8 +59,10 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
      {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(3u)},
      {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.defaultValue("table_prefix")},
-     {"database.cassandra.max_write_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(10'000)},
-     {"database.cassandra.max_read_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(100'000)},
+     {"database.cassandra.max_write_requests_outstanding",
+      ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(ValidateUint32)},
+     {"database.cassandra.max_read_requests_outstanding",
+      ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(ValidateUint32)},
      {"database.cassandra.threads",
       ConfigValue{ConfigType::Integer}.defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))},
      {"database.cassandra.core_connections_per_host",
@@ -71,13 +73,16 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"etl_source.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validateIP)}},
      {"etl_source.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validatePort)}},
      {"etl_source.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validatePort)}},
-     {"forwarding.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(0.0)},
-     {"forwarding.request_timeout", ConfigValue{ConfigType::Double}.defaultValue(10.0)},
+     {"forwarding.cache_timeout",
+      ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(ValidatePositiveDouble)},
+     {"forwarding.request_timeout",
+      ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(ValidatePositiveDouble)},
      {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}},
      {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(1000'000).withConstraint(ValidateUint32)},
      {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(ValidateUint32)},
      {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(ValidateUint32)},
-     {"dos_guard.sweep_interval", ConfigValue{ConfigType::Double}.defaultValue(1.0)},
+     {"dos_guard.sweep_interval",
+      ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(ValidatePositiveDouble)},
      {"cache.peers.[].ip", Array{ConfigValue{ConfigType::String}.withConstraint(validateIP)}},
      {"cache.peers.[].port", Array{ConfigValue{ConfigType::String}.withConstraint(validatePort)}},
      {"server.ip", ConfigValue{ConfigType::String}.withConstraint(validateIP)},
@@ -229,11 +234,11 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
         if (!config.containsKey(key)) {
             if (std::holds_alternative<ConfigValue>(value)) {
                 if (!(std::get<ConfigValue>(value).isOptional() || std::get<ConfigValue>(value).hasValue()))
-                    listOfErrors.emplace_back(key, " key is required in user Config");
+                    listOfErrors.emplace_back(key, "key is required in user Config");
             } else if (std::holds_alternative<Array>(value)) {
                 for (auto const& configVal : std::get<Array>(value)) {
                     if (!(configVal.isOptional() || configVal.hasValue()))
-                        listOfErrors.emplace_back(key, " key is required in user Config");
+                        listOfErrors.emplace_back(key, "key is required in user Config");
                 }
             }
             continue;
@@ -243,30 +248,21 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
             "Value must be of type ConfigValue or Array"
         );
         std::visit(
-            util::OverloadSet{
-                [&key, &config, &listOfErrors](ConfigValue& val) {
-                    if (auto const setVal = val.setValue(config.getValue(key), key); setVal.has_value())
-                        listOfErrors.emplace_back(setVal.value());
-                },
-                // All configValues in Array gotten from user must have same type and constraint as the first element in
-                // Array specified ClioConfigDefinition up top
-                [&key, &config, &listOfErrors](Array& arr) {
-                    auto const firstVal = arr.at(0);
-                    auto const constraint = firstVal.getConstraint();
-
-                    for (auto const& val : config.getArray(key)) {
-                        ConfigValue configVal{firstVal.type()};
-                        auto const resultOfSettingValue = constraint.has_value()
-                            ? configVal.withConstraint(constraint.value()).setValue(val, key)
-                            : configVal.setValue(val, key);
-
-                        if (resultOfSettingValue.has_value()) {
-                            listOfErrors.emplace_back(resultOfSettingValue.value());
-                        } else {
-                            arr.emplaceBack(std::move(configVal));
-                        }
-                    }
-                }
+            util::OverloadSet{// handle the case where the config value is a single element.
+                              // attempt to set the value from the configuration for the specified key.
+                              [&key, &config, &listOfErrors](ConfigValue& val) {
+                                  if (auto const maybeError = val.setValue(config.getValue(key), key);
+                                      maybeError.has_value())
+                                      listOfErrors.emplace_back(maybeError.value());
+                              },
+                              // handle the case where the config value is an array.
+                              // iterate over each provided value in the array and attempt to set it for the key.
+                              [&key, &config, &listOfErrors](Array& arr) {
+                                  for (auto const& val : config.getArray(key)) {
+                                      if (auto const maybeError = arr.addValue(val, key); maybeError.has_value())
+                                          listOfErrors.emplace_back(maybeError.value());
+                                  }
+                              }
             },
             value
         );

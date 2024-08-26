@@ -197,7 +197,8 @@ constexpr static auto JSONData = R"JSON(
 constexpr static auto invalidJSONData = R"JSON(
 {
     "header": {
-        "port": "999"
+        "port": "999",
+        "admin": "true"
     },
     "dosguard": {
         "whitelist": [
@@ -205,6 +206,9 @@ constexpr static auto invalidJSONData = R"JSON(
         ]
     },
     "idk": true,
-    "requireValue" : "required"
+    "requireValue" : "required",
+    "optional" : {
+        "withDefault" : "0.0"
+        }
 }
 )JSON";
