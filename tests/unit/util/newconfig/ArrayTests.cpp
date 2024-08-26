@@ -33,11 +33,11 @@ using namespace util::config;
 TEST(ArrayTest, testConfigArray)
 {
     auto arr = Array{ConfigValue{ConfigType::Double}};
-    arr.emplaceBack(ConfigValue{ConfigType::Double}.defaultValue(111.11));
+    arr.addValue(111.11);
     EXPECT_EQ(arr.size(), 1);
 
-    arr.emplaceBack(ConfigValue{ConfigType::Double}.defaultValue(222.22));
-    arr.emplaceBack(ConfigValue{ConfigType::Double}.defaultValue(333.33));
+    arr.addValue(222.22);
+    arr.addValue(333.33);
     EXPECT_EQ(arr.size(), 3);
 
     auto const cv = arr.at(0);
@@ -49,7 +49,7 @@ TEST(ArrayTest, testConfigArray)
     EXPECT_EQ(vv2.asDouble(), 222.22);
 
     EXPECT_EQ(arr.size(), 3);
-    arr.emplaceBack(ConfigValue{ConfigType::Double}.defaultValue(444.44));
+    arr.addValue(444.44);
 
     EXPECT_EQ(arr.size(), 4);
     auto const cv4 = arr.at(3);
@@ -63,7 +63,7 @@ TEST(ArrayTest, iterateArray)
     std::vector<int64_t> const expected{543, 123, 909};
 
     for (auto const num : expected)
-        arr.emplaceBack(ConfigValue{ConfigType::Integer}.defaultValue(num));
+        arr.addValue(num);
 
     std::vector<int64_t> actual;
     for (auto it = arr.begin(); it != arr.end(); ++it)

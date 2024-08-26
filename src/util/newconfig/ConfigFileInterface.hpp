@@ -19,12 +19,13 @@
 
 #pragma once
 
+#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Types.hpp"
+
 #include <boost/filesystem/path.hpp>
 
-#include <cstdint>
-#include <string>
+#include <optional>
 #include <string_view>
-#include <variant>
 #include <vector>
 
 namespace util::config {
@@ -52,7 +53,7 @@ public:
      * @param key The key of configuration.
      * @return the value assosiated with key.
      */
-    virtual std::variant<int64_t, std::string, bool, double>
+    virtual Value
     getValue(std::string_view key) const = 0;
 
     /**
@@ -61,7 +62,7 @@ public:
      * @param key The key of the configuration array.
      * @return A vector of configuration values if found, otherwise std::nullopt.
      */
-    virtual std::vector<std::variant<int64_t, std::string, bool, double>>
+    virtual std::vector<Value>
     getArray(std::string_view key) const = 0;
 
     /**

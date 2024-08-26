@@ -45,8 +45,6 @@ namespace util::config {
  */
 class ConfigValue {
 public:
-    using ValueType = std::variant<int64_t, std::string, bool, double>;
-
     /**
      * @brief Constructor initializing with the config type
      *
@@ -63,7 +61,7 @@ public:
      * @return Reference to this ConfigValue
      */
     [[nodiscard]] ConfigValue&
-    defaultValue(ValueType value)
+    defaultValue(Value value)
     {
         auto const err = checkTypeConsistency(type_, value);
         ASSERT(!err.has_value(), "{}", err->error);
@@ -79,7 +77,7 @@ public:
      * @return optional Error if user tries to set a value of wrong type or not within a constraint
      */
     [[nodiscard]] std::optional<Error>
-    setValue(ValueType value, std::optional<std::string_view> key = std::nullopt)
+    setValue(Value value, std::optional<std::string_view> key = std::nullopt)
     {
         auto err = checkTypeConsistency(type_, value);
         if (err.has_value()) {
@@ -111,7 +109,7 @@ public:
      * @param cons The constraint to be applied to the ConfigValue.
      * @return A reference to the modified ConfigValue object.
      */
-    [[nodiscard]] ConfigValue&
+    [[nodiscard]] constexpr ConfigValue&
     withConstraint(Constraint const& cons)
     {
         cons_ = std::reference_wrapper<Constraint const>(cons);
@@ -199,7 +197,7 @@ public:
      *
      * @return Config Value
      */
-    [[nodiscard]] ValueType const&
+    [[nodiscard]] Value const&
     getValue() const
     {
         return value_.value();
@@ -213,7 +211,7 @@ private:
      * @param value The config value
      */
     static std::optional<Error>
-    checkTypeConsistency(ConfigType type, ValueType value)
+    checkTypeConsistency(ConfigType type, Value value)
     {
         if (type == ConfigType::String && !std::holds_alternative<std::string>(value)) {
             return Error{"value does not match type string"};
@@ -232,7 +230,7 @@ private:
 
     ConfigType type_{};
     bool optional_{false};
-    std::optional<ValueType> value_;
+    std::optional<Value> value_;
     std::optional<std::reference_wrapper<Constraint const>> cons_;
 };
 

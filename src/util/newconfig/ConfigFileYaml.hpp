@@ -20,13 +20,11 @@
 #pragma once
 
 #include "util/newconfig/ConfigFileInterface.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/filesystem/path.hpp>
 
-#include <cstdint>
-#include <string>
 #include <string_view>
-#include <variant>
 #include <vector>
 
 // TODO: implement when we support yaml
@@ -41,10 +39,10 @@ public:
     void
     parse(boost::filesystem::path filePath) override;
 
-    std::variant<int64_t, std::string, bool, double>
+    Value
     getValue(std::string_view key) const override;
 
-    std::vector<std::variant<int64_t, std::string, bool, double>>
+    std::vector<Value>
     getArray(std::string_view key) const override;
 
     bool

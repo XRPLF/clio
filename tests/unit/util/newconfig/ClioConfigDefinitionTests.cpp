@@ -272,7 +272,9 @@ TEST_F(IncorrectOverrideValues, InvalidJson)
         "higher.[].low.section key is required in user Config",
         "higher.[].low.admin key is required in user Config",
         "array.[].sub key is required in user Config",
-        "header.port value does not match type integer"
+        "header.port value does not match type integer",
+        "header.admin value does not match type boolean",
+        "optional.withDefault value does not match type double"
     };
 
     std::unordered_set<std::string_view> actualErrors;

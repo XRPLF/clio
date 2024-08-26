@@ -19,8 +19,11 @@
 
 #pragma once
 
+#include <fmt/core.h>
+
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace util::config {
 
@@ -31,7 +34,7 @@ struct Error {
      *
      * @param err the error message to display to users.
      */
-    Error(std::string_view err) : error{err}
+    Error(std::string err) : error{std::move(err)}
     {
     }
 
@@ -41,7 +44,10 @@ struct Error {
      * @param key the key associated with the error.
      * @param err the error message to display to users.
      */
-    Error(std::string_view key, std::string_view err) : error{std::string(key) + std::string(err)}
+    Error(std::string_view key, std::string_view err)
+        : error{
+              fmt::format("{} {}", key, err),
+          }
     {
     }
 

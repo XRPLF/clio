@@ -21,22 +21,32 @@
 
 #include "util/Assert.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <cstddef>
+#include <optional>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 namespace util::config {
 
-void
-Array::emplaceBack(ConfigValue value)
+std::optional<Error>
+Array::addValue(Value value, std::optional<std::string_view> key)
 {
-    ASSERT(value.type() == elements_.front().type(), "Trying to insert a Value of Wrong Type");
-    if (!elements_.front().hasValue()) {
-        elements_.front() = std::move(value);
-    } else {
-        elements_.push_back(std::move(value));
+    if (!elements_.at(0).hasValue()) {
+        auto& newElem = elements_.at(0);
+        if (auto const maybeError = newElem.setValue(value, key); maybeError.has_value())
+            return maybeError;
+        return std::nullopt;
     }
+
+    auto newElem = ConfigValue{elements_.at(0).type()};
+    if (auto const maybeError = newElem.setValue(value, key); maybeError.has_value())
+        return maybeError;
+    elements_.emplace_back(std::move(newElem));
+    return std::nullopt;
 }
 
 size_t
