@@ -77,7 +77,10 @@ static constexpr std::array<char const*, 3> loadCacheMode = {
  */
 class Constraint {
 public:
-    virtual constexpr ~Constraint() noexcept = default;
+    // using "{}" instead of = default because of gcc bug.
+    // see here for more info:
+    // https://stackoverflow.com/questions/72835571/constexpr-c-error-destructor-used-before-its-definition
+    constexpr virtual ~Constraint() noexcept {};
     /**
      * @brief Check if the value meets the specific constraint.
      *

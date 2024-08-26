@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
 #include "util/newconfig/ValueView.hpp"
@@ -59,7 +60,7 @@ TEST(ArrayTest, testConfigArray)
 
 TEST(ArrayTest, iterateArray)
 {
-    auto arr = Array{ConfigValue{ConfigType::Integer}};
+    auto arr = Array{ConfigValue{ConfigType::Integer}.withConstraint(ValidateUint16)};
     std::vector<int64_t> const expected{543, 123, 909};
 
     for (auto const num : expected)
