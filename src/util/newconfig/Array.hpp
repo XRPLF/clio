@@ -56,6 +56,8 @@ public:
      * @brief Add ConfigValues to Array class
      *
      * @param value The ConfigValue to add
+     * @param key optional string key to include that will show in error message
+     * @return optional error if adding config value to array fails. nullopt otherwise
      */
     std::optional<Error>
     addValue(Value value, std::optional<std::string_view> key = std::nullopt);
