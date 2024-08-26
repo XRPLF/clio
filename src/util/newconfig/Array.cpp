@@ -42,7 +42,11 @@ Array::addValue(Value value, std::optional<std::string_view> key)
         return std::nullopt;
     }
 
-    auto newElem = ConfigValue{elements_.at(0).type()};
+    auto const firstVal = elements_.at(0);
+    auto const constraint = firstVal.getConstraint();
+
+    auto newElem = constraint.has_value() ? ConfigValue{firstVal.type()}.withConstraint(constraint->get())
+                                          : ConfigValue{firstVal.type()};
     if (auto const maybeError = newElem.setValue(value, key); maybeError.has_value())
         return maybeError;
     elements_.emplace_back(std::move(newElem));
