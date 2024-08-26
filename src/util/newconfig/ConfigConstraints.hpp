@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 /*
    This file is part of clio: https://github.com/XRPLF/clio
@@ -142,6 +141,12 @@ private:
  * @brief A constraint to ensure the port number is within a valid range.
  */
 class PortConstraint final : public Constraint {
+public:
+    constexpr ~PortConstraint()
+    {
+    }
+
+private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
@@ -160,7 +165,6 @@ class PortConstraint final : public Constraint {
     [[nodiscard]] std::optional<Error>
     checkValueImpl(Value const& port) const override;
 
-private:
     static constexpr uint32_t portMin = 1;
     static constexpr uint32_t portMax = 65535;
 };
@@ -169,6 +173,12 @@ private:
  * @brief A constraint to ensure the channel name is valid.
  */
 class ChannelNameConstraint final : public Constraint {
+public:
+    constexpr ~ChannelNameConstraint()
+    {
+    }
+
+private:
     /**
      * @brief Check if value is of type string.
      *
@@ -192,6 +202,12 @@ class ChannelNameConstraint final : public Constraint {
  * @brief A constraint to ensure the log level name is valid.
  */
 class LogLevelNameConstraint final : public Constraint {
+public:
+    constexpr ~LogLevelNameConstraint()
+    {
+    }
+
+private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
@@ -215,6 +231,11 @@ class LogLevelNameConstraint final : public Constraint {
  * @brief A constraint to ensure the IP address is valid.
  */
 class ValidIPConstraint final : public Constraint {
+public:
+    constexpr ~ValidIPConstraint()
+    {
+    }
+
 private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
@@ -239,6 +260,11 @@ private:
  * @brief A constraint to ensure the Cassandra name is valid.
  */
 class CassandraName final : public Constraint {
+public:
+    constexpr ~CassandraName()
+    {
+    }
+
 private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
@@ -263,6 +289,12 @@ private:
  * @brief A constraint to ensure the load mode is valid.
  */
 class LoadConstraint final : public Constraint {
+public:
+    constexpr ~LoadConstraint()
+    {
+    }
+
+private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
@@ -286,6 +318,12 @@ class LoadConstraint final : public Constraint {
  * @brief A constraint to ensure the log tag style is valid.
  */
 class LogTagStyle final : public Constraint {
+public:
+    constexpr ~LogTagStyle()
+    {
+    }
+
+private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
@@ -309,6 +347,12 @@ class LogTagStyle final : public Constraint {
  * @brief A constraint class to ensure the API version is within a valid range.
  */
 class APIVersionConstraint final : public Constraint {
+public:
+    constexpr ~APIVersionConstraint()
+    {
+    }
+
+private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
@@ -335,6 +379,12 @@ class APIVersionConstraint final : public Constraint {
  */
 template <typename T>
 class PositiveNumConstraint final : public Constraint {
+public:
+    constexpr ~PositiveNumConstraint()
+    {
+    }
+
+private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
@@ -379,6 +429,12 @@ class PositiveNumConstraint final : public Constraint {
  * @brief A constraint to ensure a double number is positive
  */
 class PositiveDouble final : public Constraint {
+public:
+    constexpr ~PositiveDouble()
+    {
+    }
+
+private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *

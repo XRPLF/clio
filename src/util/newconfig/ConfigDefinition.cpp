@@ -64,7 +64,9 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"database.cassandra.max_read_requests_outstanding",
       ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(ValidateUint32)},
      {"database.cassandra.threads",
-      ConfigValue{ConfigType::Integer}.defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))},
+      ConfigValue{ConfigType::Integer}
+          .defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))
+          .withConstraint(ValidateUint32)},
      {"database.cassandra.core_connections_per_host",
       ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(ValidateUint16)},
      {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional().withConstraint(ValidateUint16)},
