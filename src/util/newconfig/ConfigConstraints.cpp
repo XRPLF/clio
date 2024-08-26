@@ -189,9 +189,9 @@ APIVersionConstraint::checkValueImpl(Value const& apiVersion) const
 }
 
 std::optional<Error>
-PositiveDouble::checkTypeImpl(Value const& type) const
+PositiveDouble::checkTypeImpl(Value const& num) const
 {
-    if (!std::holds_alternative<double>(type))
+    if (!std::holds_alternative<double>(num))
         return Error{"double number must be of type double"};
     return std::nullopt;
 }
