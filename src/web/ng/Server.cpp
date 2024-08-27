@@ -138,10 +138,13 @@ makeConnection(
         if (not sslContext.has_value())
             return std::unexpected{"SSL is not supported by this server"};
 
-        connection =
-            std::make_unique<impl::SslHttpConnection>(std::move(sslDetectionResult.socket), std::move(ip), *sslContext);
+        connection = std::make_unique<impl::SslHttpConnection>(
+            std::move(sslDetectionResult.socket), std::move(ip), std::move(sslDetectionResult.buffer), *sslContext
+        );
     } else {
-        connection = std::make_unique<impl::PlainHttpConnection>(std::move(sslDetectionResult.socket), std::move(ip));
+        connection = std::make_unique<impl::PlainHttpConnection>(
+            std::move(sslDetectionResult.socket), std::move(ip), std::move(sslDetectionResult.buffer)
+        );
     }
 
     connection->fetch(yield);
@@ -242,6 +245,8 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
         LOG(log_.info()) << "Cannot get remote endpoint: " << ip.error().what();
         return;
     }
+
+    // TODO(kuznetsss): check ip with dosguard here
 
     auto connectionExpected =
         makeConnection(std::move(sslDetectionResult).value(), sslContext_, std::move(ip).value(), yield);

@@ -19,8 +19,23 @@
 
 #pragma once
 
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/status.hpp>
+#include <boost/beast/http/string_body.hpp>
+
+#include <string>
 namespace web::ng {
 
-class Response {};
+class Response {
+    std::string message_;
+    boost::beast::http::status status_;
+
+public:
+    Response(std::string message, boost::beast::http::status);
+    virtual ~Response() = default;
+
+    boost::beast::http::response<boost::beast::http::string_body>
+    toHttpResponse() &&;
+};
 
 }  // namespace web::ng

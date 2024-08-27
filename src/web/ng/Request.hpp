@@ -19,12 +19,19 @@
 
 #pragma once
 
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
+
 #include <string>
 
 namespace web::ng {
 
 class Request {
+    boost::beast::http::request<boost::beast::http::string_body> request_;
+
 public:
+    explicit Request(boost::beast::http::request<boost::beast::http::string_body> request);
+
     enum class HttpMethod { GET, POST, WEBSOCKET, UNSUPPORTED };
 
     HttpMethod
@@ -33,7 +40,5 @@ public:
     std::string const&
     target() const;
 };
-
-class RequestError {};
 
 }  // namespace web::ng

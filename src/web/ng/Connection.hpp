@@ -19,16 +19,19 @@
 
 #pragma once
 
+#include "web/ng/Error.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
 
 #include <chrono>
 #include <cstddef>
 #include <expected>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace web::ng {
@@ -36,25 +39,33 @@ namespace web::ng {
 class ConnectionContext;
 
 class Connection {
+protected:
     size_t id_;
     std::string ip_;  // client ip
+    boost::beast::flat_buffer buffer_;
 
 public:
-    Connection(std::string ip);
+    static constexpr std::chrono::steady_clock::duration DEFAULT_TIMEOUT = std::chrono::seconds{30};
+
+    Connection(std::string ip, boost::beast::flat_buffer buffer);
 
     virtual ~Connection() = default;
 
     virtual bool
     wasUpgraded() const = 0;
 
-    virtual void
-    send(Response response, boost::asio::yield_context yield) = 0;
+    virtual std::optional<Error>
+    send(
+        Response response,
+        boost::asio::yield_context yield,
+        std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
+    ) = 0;
 
-    virtual std::expected<Request, RequestError>
-    receive(boost::asio::yield_context yield) = 0;
+    virtual std::expected<Request, Error>
+    receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) = 0;
 
     virtual void
-    close(std::chrono::steady_clock::duration timeout) = 0;
+    close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) = 0;
 
     void
     subscribeToDisconnect();

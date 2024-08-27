@@ -20,6 +20,7 @@
 #pragma once
 
 #include "web/ng/Connection.hpp"
+#include "web/ng/Error.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 
@@ -28,10 +29,17 @@
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/stream.hpp>
 #include <boost/beast/core/basic_stream.hpp>
+#include <boost/beast/core/error.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/websocket.hpp>
 
 #include <chrono>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -41,32 +49,42 @@ class UpgradableConnection : public Connection {
 public:
     using Connection::Connection;
 
-    virtual bool
-    isUpgradeRequested() const = 0;
+    virtual std::expected<bool, Error>
+    isUpgradeRequested(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT)
+        const = 0;
 
     virtual ConnectionPtr
     upgrade() const = 0;
-
-    virtual void
-    fetch(boost::asio::yield_context yield) = 0;
 };
 
 using UpgradableConnectionPtr = std::unique_ptr<UpgradableConnection>;
 
+template <typename T>
+concept IsTcpStream = std::is_same_v<T, boost::beast::tcp_stream>;
+
+template <typename T>
+concept IsSslTcpStream = std::is_same_v<T, boost::asio::ssl::stream<boost::beast::tcp_stream>>;
+
 template <typename StreamType>
 class HttpConnection : public UpgradableConnection {
     StreamType stream_;
+    std::optional<boost::beast::http::request<boost::beast::http::string_body>> request_;
 
 public:
-    HttpConnection(boost::asio::ip::tcp::socket socket, std::string ip)
-        requires std::is_same_v<StreamType, boost::beast::tcp_stream>
-        : UpgradableConnection(std::move(ip)), stream_{std::move(socket)}
+    HttpConnection(boost::asio::ip::tcp::socket socket, std::string ip, boost::beast::flat_buffer buffer)
+        requires IsTcpStream<StreamType>
+        : UpgradableConnection(std::move(ip), std::move(buffer)), stream_{std::move(socket)}
     {
     }
 
-    HttpConnection(boost::asio::ip::tcp::socket socket, std::string ip, boost::asio::ssl::context& sslCtx)
-        requires std::is_same_v<StreamType, boost::asio::ssl::stream<boost::beast::tcp_stream>>
-        : UpgradableConnection(std::move(ip)), stream_{std::move(socket), sslCtx}
+    HttpConnection(
+        boost::asio::ip::tcp::socket socket,
+        std::string ip,
+        boost::beast::flat_buffer buffer,
+        boost::asio::ssl::context& sslCtx
+    )
+        requires IsSslTcpStream<StreamType>
+        : UpgradableConnection(std::move(ip), std::move(buffer)), stream_{std::move(socket), sslCtx}
     {
     }
 
@@ -76,36 +94,77 @@ public:
         return false;
     }
 
+    std::optional<Error>
+    send(
+        Response response,
+        boost::asio::yield_context yield,
+        std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
+    ) override
+    {
+        auto const httpResponse = std::move(response).toHttpResponse();
+        boost::system::error_code error;
+        boost::beast::get_lowest_layer(stream_).expires_after(timeout);
+        boost::beast::http::async_write(stream_, httpResponse, yield[error]);
+        if (error)
+            return error;
+        return std::nullopt;
+    }
+
+    std::expected<Request, Error>
+    receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) override
+    {
+        if (request_.has_value()) {
+            Request result{std::move(request_).value()};
+            request_.reset();
+            return std::move(result);
+        }
+        return fetch(yield, timeout);
+    }
+
     void
-    send(Response, boost::asio::yield_context) override
+    close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) override
     {
+        [[maybe_unused]] boost::system::error_code error;
+        if constexpr (IsSslTcpStream<StreamType>) {
+            boost::beast::get_lowest_layer(stream_).expires_after(timeout);
+            stream_.async_shutdown(yield[error]);
+        }
+        stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
     }
 
-    std::expected<Request, RequestError>
-    receive(boost::asio::yield_context) override
+    std::expected<bool, Error>
+    isUpgradeRequested(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT)
+        const override
     {
-    }
+        auto expectedRequest = fetch(yield, timeout);
+        if (not expectedRequest.has_value())
+            return std::move(expectedRequest).error();
 
-    void
-    close(std::chrono::steady_clock::duration) override
-    {
-    }
+        request_ = std::move(expectedRequest).value();
 
-    bool
-    isUpgradeRequested() const override
-    {
-        return false;
+        return boost::beast::websocket::is_upgrade(request_.value());
     }
 
     ConnectionPtr
     upgrade() const override
     {
+        if constexpr (IsSslTcpStream<StreamType>) {
+            return std::make_unique<SslWsConnection>(stream_.socket)
+        }
         return nullptr;
     }
 
-    void
-    fetch(boost::asio::yield_context) override
+private:
+    std::expected<boost::beast::http::request<boost::beast::http::string_body>, Error>
+    fetch(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
     {
+        boost::beast::http::request<boost::beast::http::string_body> request{};
+        boost::system::error_code error;
+        boost::beast::get_lowest_layer(stream_).expires_after(timeout);
+        boost::beast::http::async_read(stream_, buffer_, request, yield[error]);
+        if (error)
+            return std::unexpected{error};
+        return std::move(request);
     }
 };
 

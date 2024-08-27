@@ -19,33 +19,10 @@
 
 #pragma once
 
-#include "web/ng/Connection.hpp"
+#include <boost/system/detail/error_code.hpp>
 
-#include <boost/asio/ssl/stream.hpp>
-#include <boost/beast/core/tcp_stream.hpp>
-#include <boost/beast/websocket/stream.hpp>
+namespace web::ng {
 
-#include <type_traits>
+using Error = boost::system::error_code;
 
-namespace web::ng::impl {
-
-template <typename T>
-concept IsWsStream = std::is_same_v<T, boost::beast::websocket::stream<boost::beast::tcp_stream>>;
-
-template <typename T>
-concept IsWsSslStream =
-    std::is_same_v<T, boost::beast::websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>>;
-
-template <typename StreamType>
-class WsConnection : public Connection {
-    StreamType stream_;
-
-public:
-    WsConnection(boost::asio::ip::tcp::socket socket, std::string ip, boost::beast::flat_buffer buffer, boost::beast::
-};
-
-using PlainWsConnection = WsConnection<boost::beast::websocket::stream<boost::beast::tcp_stream>>;
-using SslWsConnection =
-    WsConnection<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>>;
-
-}  // namespace web::ng::impl
+}  // namespace web::ng
