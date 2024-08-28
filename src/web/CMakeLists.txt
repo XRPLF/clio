@@ -12,6 +12,7 @@ target_sources(
           ng/Connection.cpp
           ng/Server.cpp
           ng/impl/ServerSslContext.cpp
+          ng/impl/WsConnection.cpp
 )
 
 target_link_libraries(clio_web PUBLIC clio_util)

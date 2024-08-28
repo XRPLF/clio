@@ -19,10 +19,13 @@
 
 #pragma once
 
+#include "util/Assert.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
+#include "web/ng/impl/Concepts.hpp"
+#include "web/ng/impl/WsConnection.hpp"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
@@ -53,17 +56,11 @@ public:
     isUpgradeRequested(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT)
         const = 0;
 
-    virtual ConnectionPtr
-    upgrade() const = 0;
+    virtual std::expected<ConnectionPtr, Error>
+    upgrade(std::optional<boost::asio::ssl::context>& sslContext, boost::asio::yield_context yield) && = 0;
 };
 
 using UpgradableConnectionPtr = std::unique_ptr<UpgradableConnection>;
-
-template <typename T>
-concept IsTcpStream = std::is_same_v<T, boost::beast::tcp_stream>;
-
-template <typename T>
-concept IsSslTcpStream = std::is_same_v<T, boost::asio::ssl::stream<boost::beast::tcp_stream>>;
 
 template <typename StreamType>
 class HttpConnection : public UpgradableConnection {
@@ -145,13 +142,30 @@ public:
         return boost::beast::websocket::is_upgrade(request_.value());
     }
 
-    ConnectionPtr
-    upgrade() const override
+    std::expected<ConnectionPtr, Error>
+        upgrade(
+            [[maybe_unused]] std::optional<boost::asio::ssl::context>& sslContext,
+            boost::asio::yield_context yield
+        ) &&
+        override
     {
+        ASSERT(request_.has_value(), "Request must be present to upgrade the connection");
+
         if constexpr (IsSslTcpStream<StreamType>) {
-            return std::make_unique<SslWsConnection>(stream_.socket)
+            ASSERT(sslContext.has_value(), "SSL context must be present to upgrade the connection");
+            return make_SslWsConnection(
+                boost::beast::get_lowest_layer(stream_).release_socket(),
+                std::move(ip_),
+                std::move(buffer_),
+                request_,
+                sslContext.value(),
+                yield
+            );
         }
-        return nullptr;
+
+        return make_PlainWsConnection(
+            stream_.release_socket(), std::move(ip_), std::move(buffer_), std::move(request_).value(), yield
+        );
     }
 
 private:
