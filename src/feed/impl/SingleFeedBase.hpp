@@ -22,6 +22,7 @@
 #include "feed/Types.hpp"
 #include "feed/impl/TrackableSignal.hpp"
 #include "util/log/Logger.hpp"
+#include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -40,6 +41,7 @@ namespace feed::impl {
 class SingleFeedBase {
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     std::reference_wrapper<util::prometheus::GaugeInt> subCount_;
+    std::reference_wrapper<util::prometheus::CounterInt> pubCount_;
     TrackableSignal<Subscriber, std::shared_ptr<std::string> const&> signal_;
     util::Logger logger_{"Subscriptions"};
     std::string name_;

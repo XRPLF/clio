@@ -36,7 +36,10 @@
 namespace feed::impl {
 
 SingleFeedBase::SingleFeedBase(boost::asio::io_context& ioContext, std::string const& name)
-    : strand_(boost::asio::make_strand(ioContext)), subCount_(getSubscriptionsGaugeInt(name)), name_(name)
+    : strand_(boost::asio::make_strand(ioContext))
+    , subCount_(getSubscriptionsGaugeInt(name))
+    , pubCount_(getPublishedMessagesCounterInt(name))
+    , name_(name)
 {
 }
 
@@ -70,6 +73,7 @@ SingleFeedBase::pub(std::string msg) const
     boost::asio::post(strand_, [this, msg = std::move(msg)]() mutable {
         auto const msgPtr = std::make_shared<std::string>(std::move(msg));
         signal_.emit(msgPtr);
+        ++pubCount_.get();
     });
 }
 

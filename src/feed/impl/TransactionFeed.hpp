@@ -26,6 +26,7 @@
 #include "feed/impl/TrackableSignalMap.hpp"
 #include "feed/impl/Util.hpp"
 #include "util/log/Logger.hpp"
+#include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -67,6 +68,7 @@ class TransactionFeed {
     std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subBookCount_;
+    std::reference_wrapper<util::prometheus::CounterInt> pubCount_;
 
     TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountSignal_;
     TrackableSignalMap<ripple::Book, Subscriber, AllVersionTransactionsType const&> bookSignal_;
@@ -89,6 +91,7 @@ public:
         , subAllCount_(getSubscriptionsGaugeInt("tx"))
         , subAccountCount_(getSubscriptionsGaugeInt("account"))
         , subBookCount_(getSubscriptionsGaugeInt("book"))
+        , pubCount_(getPublishedMessagesCounterInt("tx"))
     {
     }
 

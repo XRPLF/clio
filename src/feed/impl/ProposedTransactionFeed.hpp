@@ -24,6 +24,7 @@
 #include "feed/impl/TrackableSignalMap.hpp"
 #include "feed/impl/Util.hpp"
 #include "util/log/Logger.hpp"
+#include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -54,6 +55,7 @@ class ProposedTransactionFeed {
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     std::reference_wrapper<util::prometheus::GaugeInt> subAllCount_;
     std::reference_wrapper<util::prometheus::GaugeInt> subAccountCount_;
+    std::reference_wrapper<util::prometheus::CounterInt> pubCount_;
 
     TrackableSignalMap<ripple::AccountID, Subscriber, std::shared_ptr<std::string>> accountSignal_;
     TrackableSignal<Subscriber, std::shared_ptr<std::string>> signal_;
@@ -67,7 +69,7 @@ public:
         : strand_(boost::asio::make_strand(ioContext))
         , subAllCount_(getSubscriptionsGaugeInt("tx_proposed"))
         , subAccountCount_(getSubscriptionsGaugeInt("account_proposed"))
-
+        , pubCount_(getPublishedMessagesCounterInt("tx_proposed"))
     {
     }
 
