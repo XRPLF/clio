@@ -226,10 +226,10 @@ SubscriptionSource::handleMessage(std::string const& message)
                 auto validatedLedgers = boost::json::value_to<std::string>(result.at(JS(validated_ledgers)));
                 setValidatedRange(std::move(validatedLedgers));
             }
-            LOG(log_.debug()) << "Received a message on ledger subscription stream. Message : " << object;
+            LOG(log_.debug()) << "Received a message on ledger subscription stream. Message: " << object;
 
         } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_LedgerClosed) {
-            LOG(log_.debug()) << "Received a message of type 'ledgerClosed' on ledger subscription stream. Message : "
+            LOG(log_.debug()) << "Received a message of type 'ledgerClosed' on ledger subscription stream. Message: "
                               << object;
             if (object.contains(JS(ledger_index))) {
                 ledgerIndex = object.at(JS(ledger_index)).as_int64();
@@ -256,6 +256,8 @@ SubscriptionSource::handleMessage(std::string const& message)
                 } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_ManifestReceived) {
                     LOG(log_.debug()) << "Forwarding manifest: " << object;
                     subscriptions_->forwardManifest(object);
+                } else {
+                    LOG(log_.error()) << "Unknown message: " << object;
                 }
             }
         }
