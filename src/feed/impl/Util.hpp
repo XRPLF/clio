@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
@@ -36,6 +37,16 @@ getSubscriptionsGaugeInt(std::string const& counterName)
         "subscriptions_current_number",
         util::prometheus::Labels({util::prometheus::Label{"stream", counterName}}),
         fmt::format("Current subscribers number on the {} stream", counterName)
+    );
+}
+
+inline util::prometheus::CounterInt&
+getPublishedMessagesCounterInt(std::string const& counterName)
+{
+    return PrometheusService::counterInt(
+        "subscriptions_published_count",
+        util::prometheus::Labels({util::prometheus::Label{"stream", counterName}}),
+        fmt::format("Total published messages on the {} stream", counterName)
     );
 }
 }  // namespace feed::impl

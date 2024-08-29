@@ -284,23 +284,29 @@ TransactionFeed::pub(
          affectedBooks = std::move(affectedBooks)]() {
             notified_.clear();
             signal_.emit(allVersionsMsgs);
+
             // clear the notified set. If the same connection subscribes both transactions + proposed_transactions,
             // rippled SENDS the same message twice
             notified_.clear();
             txProposedsignal_.emit(allVersionsMsgs);
             notified_.clear();
+
             // check duplicate for account and proposed_account, this prevents sending the same message multiple times
             // if it affects multiple accounts watched by the same connection
             for (auto const& account : affectedAccounts) {
                 accountSignal_.emit(account, allVersionsMsgs);
                 accountProposedSignal_.emit(account, allVersionsMsgs);
             }
+
             notified_.clear();
+
             // check duplicate for books, this prevents sending the same message multiple times if it affects multiple
             // books watched by the same connection
             for (auto const& book : affectedBooks) {
                 bookSignal_.emit(book, allVersionsMsgs);
             }
+
+            ++pubCount_.get();
         }
     );
 }
