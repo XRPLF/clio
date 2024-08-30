@@ -330,40 +330,28 @@ TEST_F(WsConnectionTests, RespondsToPing)
             controlFrameCallback;
         serverConnection.setControlFrameCallback(controlFrameCallback.AsStdFunction());
         EXPECT_CALL(controlFrameCallback, Call(boost::beast::websocket::frame_type::pong, testing::_)).WillOnce([&]() {
-            std::cout << "Received pong" << std::endl;
             serverConnection.resetControlFrameCallback();
-            std::cout << "Sending pong" << std::endl;
             asio::spawn(ctx, [&](asio::yield_context yield) {
                 auto maybeError = serverConnection.send("got ping", yield);
-                std::cout << maybeError.has_value() << std::endl;
                 ASSERT_FALSE(maybeError.has_value()) << *maybeError;
-                std::cout << "Sent pong" << std::endl;
             });
         });
 
-        std::cout << "Sending ping" << std::endl;
         serverConnection.sendPing({}, yield);
-        std::cout << "Receiving message" << std::endl;
         auto message = serverConnection.receive(yield);
-        std::cout << "Got message" << std::endl;
         ASSERT_TRUE(message.has_value());
         EXPECT_EQ(message, "hello") << message.value();
-        std::cout << "Server done" << std::endl;
     });
 
     runSpawn([&](asio::yield_context yield) {
         auto connection = builder.plainConnect(yield);
         ASSERT_TRUE(connection.has_value()) << connection.error().message();
-        std::cout << "Reading" << std::endl;
         auto expectedMessage = connection->operator*().read(yield);
-        std::cout << "Got message" << std::endl;
         ASSERT_TRUE(expectedMessage) << expectedMessage.error().message();
         EXPECT_EQ(expectedMessage.value(), "got ping");
 
-        std::cout << "Writing" << std::endl;
         auto error = connection->operator*().write("hello", yield);
         ASSERT_FALSE(error) << error->message();
-        std::cout << "Done" << std::endl;
     });
 }
 
