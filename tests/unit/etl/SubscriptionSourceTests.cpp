@@ -18,31 +18,35 @@
 //==============================================================================
 
 #include "etl/impl/SubscriptionSource.hpp"
-#include "util/AssignRandomPort.hpp"
 #include "util/Fixtures.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
+#include "util/MockPrometheus.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/TestWsServer.hpp"
+#include "util/prometheus/Gauge.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
+#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <optional>
 #include <string>
+#include <thread>
 #include <utility>
 
 using namespace etl::impl;
 using testing::MockFunction;
 using testing::StrictMock;
 
-struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
-    SubscriptionSourceConnectionTests()
+struct SubscriptionSourceConnectionTestsBase : public NoLoggerFixture {
+    SubscriptionSourceConnectionTestsBase()
     {
         subscriptionSource_.run();
     }
@@ -92,6 +96,8 @@ struct SubscriptionSourceConnectionTests : public NoLoggerFixture {
     }
 };
 
+struct SubscriptionSourceConnectionTests : util::prometheus::WithPrometheus, SubscriptionSourceConnectionTestsBase {};
+
 TEST_F(SubscriptionSourceConnectionTests, ConnectionFailed)
 {
     EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
@@ -109,6 +115,18 @@ TEST_F(SubscriptionSourceConnectionTests, ReadError)
     boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
         auto connection = serverConnection(yield);
         connection.close(yield);
+    });
+
+    EXPECT_CALL(onConnectHook_, Call());
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
+    ioContext_.run();
+}
+
+TEST_F(SubscriptionSourceConnectionTests, ReadTimeout)
+{
+    boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
+        auto connection = serverConnection(yield);
+        std::this_thread::sleep_for(std::chrono::milliseconds{10});
     });
 
     EXPECT_CALL(onConnectHook_, Call());
@@ -146,7 +164,7 @@ TEST_F(SubscriptionSourceConnectionTests, IsConnected)
     ioContext_.run();
 }
 
-struct SubscriptionSourceReadTests : public SubscriptionSourceConnectionTests {
+struct SubscriptionSourceReadTestsBase : public SubscriptionSourceConnectionTestsBase {
     [[maybe_unused]] TestWsConnection
     connectAndSendMessage(std::string const message, boost::asio::yield_context yield)
     {
@@ -156,6 +174,8 @@ struct SubscriptionSourceReadTests : public SubscriptionSourceConnectionTests {
         return connection;
     }
 };
+
+struct SubscriptionSourceReadTests : util::prometheus::WithPrometheus, SubscriptionSourceReadTestsBase {};
 
 TEST_F(SubscriptionSourceReadTests, GotWrongMessage_Reconnect)
 {
@@ -532,4 +552,28 @@ TEST_F(SubscriptionSourceReadTests, LastMessageTime)
     auto const now = std::chrono::steady_clock::now();
     auto const diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - actualLastTimeMessage);
     EXPECT_LT(diff, std::chrono::milliseconds(100));
+}
+
+struct SubscriptionSourcePrometheusCounterTests : util::prometheus::WithMockPrometheus,
+                                                  SubscriptionSourceReadTestsBase {};
+
+TEST_F(SubscriptionSourcePrometheusCounterTests, LastMessageTime)
+{
+    auto& lastMessageTimeMock = makeMock<util::prometheus::GaugeInt>(
+        "subscription_source_last_message_time", fmt::format("{{source=\"127.0.0.1:{}\"}}", wsServer_.port())
+    );
+    boost::asio::spawn(ioContext_, [this](boost::asio::yield_context yield) {
+        auto connection = connectAndSendMessage("some_message", yield);
+        connection.close(yield);
+    });
+
+    EXPECT_CALL(onConnectHook_, Call());
+    EXPECT_CALL(onDisconnectHook_, Call()).WillOnce([this]() { subscriptionSource_.stop(); });
+    EXPECT_CALL(lastMessageTimeMock, set).WillOnce([](int64_t value) {
+        auto const now =
+            std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
+                .count();
+        EXPECT_LE(std::abs(value - now), 1);
+    });
+    ioContext_.run();
 }
