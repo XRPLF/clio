@@ -19,6 +19,7 @@
 
 #include "util/log/Logger.hpp"
 
+#include "util/Assert.hpp"
 #include "util/SourceLocation.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
@@ -84,6 +85,9 @@ operator<<(std::ostream& stream, Severity sev)
     return stream << labels.at(static_cast<int>(sev));
 }
 
+/**
+ * @brief converts the loglevel to string to a corresponding Severity enum value.
+ */
 Severity
 invoke_tag(std::string_view logLevel)
 {
@@ -101,6 +105,7 @@ invoke_tag(std::string_view logLevel)
         return Severity::FTL;
 
     // already checked during parsing of config that value must be valid
+    ASSERT(false, "Parsing of log_level is incorrect");
     std::unreachable();
 }
 
