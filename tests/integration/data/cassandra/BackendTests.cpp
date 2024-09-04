@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "data/BackendInterface.hpp"
+#include "data/CassandraBackend.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/Handle.hpp"
