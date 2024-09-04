@@ -19,25 +19,34 @@
 
 #pragma once
 
+#include "rpc/common/APIVersion.hpp"
 #include "util/Assert.hpp"
 #include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigDescription.hpp"
 #include "util/newconfig/ConfigFileInterface.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Errors.hpp"
 #include "util/newconfig/ObjectView.hpp"
+#include "util/newconfig/Types.hpp"
 #include "util/newconfig/ValueView.hpp"
 
+#include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <fmt/core.h>
 
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <cstddef>
+#include <cstdint>
+#include <exception>
 #include <expected>
 #include <initializer_list>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -171,6 +180,15 @@ public:
     arraySize(std::string_view prefix) const;
 
     /**
+     * @brief Method to convert a float seconds value to milliseconds.
+     *
+     * @param value The value to convert
+     * @return The value in milliseconds
+     */
+    static std::chrono::milliseconds
+    toMilliseconds(float value);
+
+    /**
      * @brief Returns an iterator to the beginning of the configuration map.
      *
      * @return A constant iterator to the beginning of the map.
@@ -227,6 +245,103 @@ private:
     }
 
     std::unordered_map<std::string_view, std::variant<ConfigValue, Array>> map_;
+};
+
+/**
+ * @brief Full Clio Configuration definition.
+ *
+ * Specifies which keys are valid in Clio Config and provides default values if user's do not specify one. Those
+ * without default values must be present in the user's config file.
+ */
+static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
+    {{"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(validateCassandraName)},
+     {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("localhost")},
+     {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
+     {"database.cassandra.port", ConfigValue{ConfigType::Integer}.withConstraint(validatePort)},
+     {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
+     {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(3u)},
+     {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
+     {"database.cassandra.max_write_requests_outstanding",
+      ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(ValidateUint32)},
+     {"database.cassandra.max_read_requests_outstanding",
+      ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(ValidateUint32)},
+     {"database.cassandra.threads",
+      ConfigValue{ConfigType::Integer}
+          .defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))
+          .withConstraint(ValidateUint32)},
+     {"database.cassandra.core_connections_per_host",
+      ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(ValidateUint16)},
+     {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional().withConstraint(ValidateUint16)},
+     {"database.cassandra.write_batch_size",
+      ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(ValidateUint16)},
+     {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.withConstraint(ValidateUint32).optional()},
+     {"database.cassandra.request_timeout", ConfigValue{ConfigType::Integer}.withConstraint(ValidateUint32).optional()},
+     {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
+     {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
+     {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
+     {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+     {"etl_sources.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validateIP)}},
+     {"etl_sources.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validatePort)}},
+     {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validatePort)}},
+     {"forwarding.cache_timeout",
+      ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(ValidatePositiveDouble)},
+     {"forwarding.request_timeout",
+      ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(ValidatePositiveDouble)},
+     {"num_markers", ConfigValue{ConfigType::Integer}.withConstraint(ValidateUint32).optional()},
+     {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}},
+     {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(ValidateUint32)},
+     {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(ValidateUint32)},
+     {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(ValidateUint32)},
+     {"dos_guard.sweep_interval",
+      ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(ValidatePositiveDouble)},
+     {"workers",
+      ConfigValue{ConfigType::Integer}.defaultValue(std::thread::hardware_concurrency()).withConstraint(ValidateUint32)
+     },
+     {"server.ip", ConfigValue{ConfigType::String}.withConstraint(validateIP)},
+     {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(validatePort)},
+     {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(ValidateUint32)},
+     {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+     {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
+     {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+     {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(ValidateUint16)},
+     {"subscription_workers", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(ValidateUint64)},
+     {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(ValidatePositiveDouble)},
+     {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32).withConstraint(ValidateUint16)},
+     {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48).withConstraint(ValidateUint16)},
+     {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(ValidateUint16)},
+     {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(ValidateUint16)
+     },
+     {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(ValidateUint16)},
+     {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(validateLoadMode)},
+     {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validateChannelName)}},
+     {"log_channels.[].log_level",
+      Array{ConfigValue{ConfigType::String}.optional().withConstraint(validateLogLevelName)}},
+     {"log_level", ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(validateLogLevelName)},
+     {"log_format",
+      ConfigValue{ConfigType::String}.defaultValue(
+          R"(%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%)"
+      )},
+     {"log_to_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+     {"log_directory", ConfigValue{ConfigType::String}.optional()},
+     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(ValidateUint64)},
+     {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(ValidateUint64)
+     },
+     {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(ValidateUint32)},
+     {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none").withConstraint(validateLogTag)},
+     {"extractor_threads", ConfigValue{ConfigType::Integer}.defaultValue(1u).withConstraint(ValidateUint32)},
+     {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+     {"txn_threshold", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(ValidateUint16)},
+     {"start_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(ValidateUint32)},
+     {"finish_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(ValidateUint32)},
+     {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
+     {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
+     {"api_version.default",
+      ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_DEFAULT).withConstraint(validateApiVersion)},
+     {"api_version.min",
+      ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_MIN).withConstraint(validateApiVersion)},
+     {"api_version.max",
+      ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_MAX).withConstraint(validateApiVersion)}}
 };
 
 }  // namespace util::config

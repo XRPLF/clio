@@ -20,7 +20,9 @@
 #include "rpc/WorkQueue.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 
@@ -34,22 +36,20 @@
 #include <semaphore>
 
 using namespace util;
+using namespace util::config;
 using namespace rpc;
 using namespace util::prometheus;
 
-namespace {
-constexpr auto JSONConfig = R"JSON({
-        "server": { "max_queue_size" : 2 },
-        "workers": 4
-    })JSON";
-}  // namespace
+struct RPCWorkQueueTestBase : NoLoggerFixture {
+    ClioConfigDefinition cfg = {
+        {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4)}
+    };
 
-struct WorkQueueTestBase : NoLoggerFixture {
-    Config cfg = Config{boost::json::parse(JSONConfig)};
     WorkQueue queue = WorkQueue::make_WorkQueue(cfg);
 };
 
-struct WorkQueueTest : WithPrometheus, WorkQueueTestBase {};
+struct WorkQueueTest : WithPrometheus, RPCWorkQueueTestBase {};
 
 TEST_F(WorkQueueTest, WhitelistedExecutionCountAddsUp)
 {
@@ -158,7 +158,7 @@ TEST_F(WorkQueueStopTest, CallsOnTasksCompleteWhenStoppingOnLastTask)
     queue.join();
 }
 
-struct WorkQueueMockPrometheusTest : WithMockPrometheus, WorkQueueTestBase {};
+struct WorkQueueMockPrometheusTest : WithMockPrometheus, RPCWorkQueueTestBase {};
 
 TEST_F(WorkQueueMockPrometheusTest, postCoroCouhters)
 {

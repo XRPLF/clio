@@ -41,6 +41,7 @@
 #include <fmt/core.h>
 
 #include <chrono>
+#include <cstdint>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -66,7 +67,7 @@ namespace web {
  * @return Optional SSL context or error message if any
  */
 std::expected<std::optional<boost::asio::ssl::context>, std::string>
-makeServerSslContext(util::Config const& config);
+makeServerSslContext(util::config::ClioConfigDefinition const& config);
 
 /**
  * @brief The Detector class to detect if the connection is a ssl or not.
@@ -325,7 +326,7 @@ using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
 template <typename HandlerType>
 static std::shared_ptr<HttpServer<HandlerType>>
 make_HttpServer(
-    util::Config const& config,
+    util::config::ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
     dosguard::DOSGuardInterface& dosGuard,
     std::shared_ptr<HandlerType> const& handler
@@ -339,23 +340,20 @@ make_HttpServer(
         return nullptr;
     }
 
-    if (!config.contains("server"))
-        return nullptr;
-
-    auto const serverConfig = config.section("server");
-    auto const address = boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
-    auto const port = serverConfig.value<unsigned short>("port");
-    auto adminPassword = serverConfig.maybeValue<std::string>("admin_password");
-    auto const localAdmin = serverConfig.maybeValue<bool>("local_admin");
+    auto const serverConfig = config.getObject("server");
+    auto const address = boost::asio::ip::make_address(serverConfig.getValue("ip").asString());
+    auto const port = serverConfig.getValue("port").asIntType<uint32_t>();
+    auto adminPassword = serverConfig.getValue("admin_password");
+    auto const localAdmin = serverConfig.getValue("local_admin");
 
     // Throw config error when localAdmin is true and admin_password is also set
-    if (localAdmin && localAdmin.value() && adminPassword) {
+    if (localAdmin.hasValue() && localAdmin.asBool() && adminPassword.hasValue()) {
         LOG(log.error()) << "local_admin is true but admin_password is also set, please specify only one method "
                             "to authorize admin";
         throw std::logic_error("Admin config error, local_admin and admin_password can not be set together.");
     }
     // Throw config error when localAdmin is false but admin_password is not set
-    if (localAdmin && !localAdmin.value() && !adminPassword) {
+    if (localAdmin.hasValue() && !localAdmin.asBool() && !adminPassword.hasValue()) {
         LOG(log.error()) << "local_admin is false but admin_password is not set, please specify one method "
                             "to authorize admin";
         throw std::logic_error("Admin config error, one method must be specified to authorize admin.");
@@ -368,7 +366,7 @@ make_HttpServer(
         util::TagDecoratorFactory(config),
         dosGuard,
         handler,
-        std::move(adminPassword)
+        std::move(adminPassword.hasValue() ? std::make_optional(adminPassword.asString()) : std::nullopt)
     );
 
     server->run();

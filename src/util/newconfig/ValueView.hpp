@@ -29,7 +29,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <string_view>
+#include <string>
 
 namespace util::config {
 
@@ -53,7 +53,7 @@ public:
      * @return The value as a string
      * @throws std::bad_variant_access if the value is not a string
      */
-    [[nodiscard]] std::string_view
+    [[nodiscard]] std::string
     asString() const;
 
     /**

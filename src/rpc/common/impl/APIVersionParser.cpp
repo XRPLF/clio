@@ -19,8 +19,7 @@
 
 #include "rpc/common/impl/APIVersionParser.hpp"
 
-#include "rpc/common/APIVersion.hpp"
-#include "util/log/Logger.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/json/object.hpp>
 #include <fmt/core.h>
@@ -33,11 +32,11 @@ using namespace std;
 
 namespace rpc::impl {
 
-ProductionAPIVersionParser::ProductionAPIVersionParser(util::Config const& config)
+ProductionAPIVersionParser::ProductionAPIVersionParser(util::config::ObjectView const& config)
     : ProductionAPIVersionParser(
-          config.valueOr("default", API_VERSION_DEFAULT),
-          config.valueOr("min", API_VERSION_MIN),
-          config.valueOr("max", API_VERSION_MAX)
+          config.getValue("default").asIntType<uint32_t>(),
+          config.getValue("min").asIntType<uint32_t>(),
+          config.getValue("max").asIntType<uint32_t>()
       )
 {
 }

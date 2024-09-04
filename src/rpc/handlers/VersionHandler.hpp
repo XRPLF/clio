@@ -22,7 +22,7 @@
 #include "rpc/common/APIVersion.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/impl/APIVersionParser.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
@@ -53,11 +53,11 @@ public:
      *
      * @param config The configuration to use
      */
-    explicit VersionHandler(util::Config const& config)
+    explicit VersionHandler(util::config::ClioConfigDefinition const& config)
         : apiVersionParser_(
-              config.valueOr("default", API_VERSION_DEFAULT),
-              config.valueOr("min", API_VERSION_MIN),
-              config.valueOr("max", API_VERSION_MAX)
+              config.getValue("api_version.default").asIntType<uint32_t>(),
+              config.getValue("api_version.min").asIntType<uint32_t>(),
+              config.getValue("api_version.max").asIntType<uint32_t>()
           )
     {
     }

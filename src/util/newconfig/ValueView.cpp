@@ -25,7 +25,6 @@
 
 #include <cstdint>
 #include <string>
-#include <string_view>
 #include <utility>
 
 namespace util::config {
@@ -34,7 +33,7 @@ ValueView::ValueView(ConfigValue const& configVal) : configVal_{configVal}
 {
 }
 
-std::string_view
+std::string
 ValueView::asString() const
 {
     if (this->type() == ConfigType::String && configVal_.get().hasValue())

@@ -20,8 +20,8 @@
 #pragma once
 
 #include "rpc/common/APIVersion.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/json/object.hpp>
 
@@ -72,7 +72,7 @@ public:
                          << "; default = " << defaultVersion_ << "]";
     }
 
-    ProductionAPIVersionParser(util::Config const& config);
+    ProductionAPIVersionParser(util::config::ObjectView const& config);
 
     std::expected<uint32_t, std::string>
     parse(boost::json::object const& request) const override;

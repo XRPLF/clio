@@ -24,7 +24,9 @@
 #include "util/MockHandlerProvider.hpp"
 #include "util/MockLoadBalancer.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/Context.hpp"
 
 #include <boost/json/object.hpp>
@@ -39,6 +41,7 @@
 
 using namespace rpc;
 using namespace testing;
+using namespace util::config;
 namespace json = boost::json;
 
 constexpr static auto CLIENT_IP = "127.0.0.1";
@@ -49,7 +52,7 @@ protected:
     std::shared_ptr<MockHandlerProvider> handlerProvider = std::make_shared<MockHandlerProvider>();
     MockCounters counters;
 
-    util::Config config;
+    ClioConfigDefinition const config{{"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")}};
     util::TagDecoratorFactory tagFactory{config};
 
     rpc::impl::ForwardingProxy<MockLoadBalancer, MockCounters, MockHandlerProvider> proxy{

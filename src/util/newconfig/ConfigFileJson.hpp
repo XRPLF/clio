@@ -24,6 +24,7 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/json/object.hpp>
+#include <boost/json/parse.hpp>
 
 #include <string>
 #include <string_view>
@@ -35,7 +36,7 @@ namespace util::config {
 class ConfigFileJson final : public ConfigFileInterface {
 public:
     /**
-     * @brief Construct a new ConfigJson object and stores the values from
+     * @brief Construct a new ConfigFileJson object and stores the values from
      * user's config in the object.
      *
      * @param filePath the path to the Json file to parse.
@@ -43,6 +44,17 @@ public:
     ConfigFileJson(std::string_view filePath)
     {
         parse(filePath);
+    }
+
+    /**
+     * @brief Construct a new ConfigFileJson object and stores the values from
+     * the provided boost::json values
+     *
+     * @param jsonObj The JSON object to be processed and stored.
+     */
+    ConfigFileJson(boost::json::value jsonObj)
+    {
+        flattenJson(jsonObj.as_object(), "");
     }
 
     void

@@ -28,7 +28,7 @@
 #include "util/MockSubscriptionManager.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Random.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ClioConfigFactories.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -52,20 +52,47 @@
 #include <vector>
 
 using namespace etl;
+using namespace util::config;
 using testing::Return;
+
+constexpr static auto const TwoSourcesLedgerResponse = R"({
+    "etl_sources": [
+        {
+            "grpc_port": "source1"
+        },
+        {
+            "grpc_port": "source2"
+        }
+    ]
+})";
+
+constexpr static auto const ThreeSourcesLedgerResponse = R"({
+    "etl_sources": [
+        {
+            "grpc_port": "source1"
+        },
+        {
+            "grpc_port": "source2"
+        },
+        {
+            "grpc_port": "source3"
+        }
+    ]
+})";
 
 struct LoadBalancerConstructorTests : util::prometheus::WithPrometheus, MockBackendTestStrict {
     StrictMockSubscriptionManagerSharedPtr subscriptionManager_;
     StrictMockNetworkValidatedLedgersPtr networkManager_;
     StrictMockSourceFactory sourceFactory_{2};
     boost::asio::io_context ioContext_;
-    boost::json::value configJson_{{"etl_sources", {"source1", "source2"}}};
+    boost::json::value configJson_{boost::json::parse(TwoSourcesLedgerResponse)};
 
     std::unique_ptr<LoadBalancer>
     makeLoadBalancer()
     {
+        auto const cfg = getParseLoadBalancerConfig(configJson_);
         return std::make_unique<LoadBalancer>(
-            util::Config{configJson_},
+            cfg,
             ioContext_,
             backend,
             subscriptionManager_,
@@ -333,7 +360,8 @@ struct LoadBalancer3SourcesTests : LoadBalancerConstructorTests {
     LoadBalancer3SourcesTests()
     {
         sourceFactory_.setSourcesNumber(3);
-        configJson_.as_object()["etl_sources"] = {"source1", "source2", "source3"};
+        configJson_ = boost::json::parse(ThreeSourcesLedgerResponse);
+
         EXPECT_CALL(sourceFactory_, makeSource).Times(3);
         EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
         EXPECT_CALL(sourceFactory_.sourceAt(0), run);

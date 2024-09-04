@@ -141,7 +141,7 @@ TEST(ConfigDescription, getValues)
     ClioConfigDescription const definition{};
 
     EXPECT_EQ(definition.get("database.type"), "Type of database to use.");
-    EXPECT_EQ(definition.get("etl_source.[].ip"), "IP address of the ETL source.");
+    EXPECT_EQ(definition.get("etl_sources.[].ip"), "IP address of the ETL source.");
     EXPECT_EQ(definition.get("prometheus.enabled"), "Enable or disable Prometheus metrics.");
 }
 
@@ -150,7 +150,7 @@ TEST(ConfigDescriptionAssertDeathTest, nonExistingKeyTest)
     ClioConfigDescription const definition{};
 
     EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("data"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("etl_source.[]"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("etl_sources.[]"); }, ".*");
 }
 
 /** @brief override the default values with the ones in Json */

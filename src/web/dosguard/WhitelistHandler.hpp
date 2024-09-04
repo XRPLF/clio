@@ -19,7 +19,9 @@
 
 #pragma once
 
-#include "util/config/Config.hpp"
+#include "util/newconfig/ArrayView.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ValueView.hpp"
 #include "web/Resolver.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
@@ -99,7 +101,7 @@ public:
      * @param resolver The resolver to use for hostname resolution
      */
     template <SomeResolver HostnameResolverType = Resolver>
-    WhitelistHandler(util::Config const& config, HostnameResolverType&& resolver = {})
+    WhitelistHandler(util::config::ClioConfigDefinition const& config, HostnameResolverType&& resolver = {})
     {
         std::unordered_set<std::string> const arr = getWhitelist(config, std::forward<HostnameResolverType>(resolver));
         for (auto const& net : arr)
@@ -121,24 +123,25 @@ public:
 private:
     template <SomeResolver HostnameResolverType>
     [[nodiscard]] static std::unordered_set<std::string>
-    getWhitelist(util::Config const& config, HostnameResolverType&& resolver)
+    getWhitelist(util::config::ClioConfigDefinition const& config, HostnameResolverType&& resolver)
     {
-        auto whitelist = config.arrayOr("dos_guard.whitelist", {});
-        auto const transform = [](auto const& elem) { return elem.template value<std::string>(); };
-
-        std::unordered_set<std::string> const hostnames{
-            boost::transform_iterator(std::begin(whitelist), transform),
-            boost::transform_iterator(std::end(whitelist), transform)
-        };
-
+        auto const whitelist = config.getArray("dos_guard.whitelist");
+        std::unordered_set<std::string> hostnames{};
         // resolve hostnames to ips
         std::unordered_set<std::string> ips;
-        for (auto const& hostname : hostnames) {
-            auto resolvedIps = resolver.resolve(hostname, "");
-            for (auto& ip : resolvedIps) {
-                ips.insert(std::move(ip));
-            }
-        };
+
+        if (whitelist.valueAt(0).hasValue()) {
+            for (auto it = whitelist.begin<util::config::ValueView>(); it != whitelist.end<util::config::ValueView>();
+                 ++it)
+                hostnames.insert((*it).asString());
+
+            for (auto const& hostname : hostnames) {
+                auto resolvedIps = resolver.resolve(hostname, "");
+                for (auto& ip : resolvedIps) {
+                    ips.insert(std::move(ip));
+                }
+            };
+        }
         return ips;
     }
 };

@@ -53,6 +53,9 @@
 namespace util {
 
 class Config;
+namespace config {
+class ClioConfigDefinition;
+}  // namespace config
 
 /**
  * @brief Skips evaluation of expensive argument lists if the given logger is disabled for the required severity level.
@@ -285,7 +288,7 @@ public:
      * @param config The configuration to use
      */
     static void
-    init(Config const& config);
+    init(config::ClioConfigDefinition const& config);
 
     /**
      * @brief Globally accesible General logger at Severity::TRC severity

@@ -26,8 +26,8 @@
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Assert.hpp"
 #include "util/Constants.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <xrpl/beast/core/CurrentThreadName.h>
@@ -262,7 +262,7 @@ ETLService::doWork()
 }
 
 ETLService::ETLService(
-    util::Config const& config,
+    util::config::ClioConfigDefinition const& config,
     boost::asio::io_context& ioc,
     std::shared_ptr<BackendInterface> backend,
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions,
@@ -278,11 +278,15 @@ ETLService::ETLService(
     , ledgerPublisher_(ioc, backend, backend->cache(), subscriptions, state_)
     , amendmentBlockHandler_(ioc, state_)
 {
-    startSequence_ = config.maybeValue<uint32_t>("start_sequence");
-    finishSequence_ = config.maybeValue<uint32_t>("finish_sequence");
-    state_.isReadOnly = config.valueOr("read_only", static_cast<bool>(state_.isReadOnly));
-    extractorThreads_ = config.valueOr<uint32_t>("extractor_threads", extractorThreads_);
-    txnThreshold_ = config.valueOr<size_t>("txn_threshold", txnThreshold_);
+    startSequence_ = config.getValue("start_sequence").hasValue()
+        ? std::make_optional(config.getValue("start_sequence").asIntType<uint32_t>())
+        : std::nullopt;
+    finishSequence_ = config.getValue("finish_sequence").hasValue()
+        ? std::make_optional(config.getValue("finish_sequence").asIntType<uint32_t>())
+        : std::nullopt;
+    state_.isReadOnly = config.getValue("read_only").asBool();
+    extractorThreads_ = config.getValue("extractor_threads").asIntType<uint32_t>();
+    txnThreshold_ = config.getValue("txn_threshold").asIntType<std::size_t>();
 
     // This should probably be done in the backend factory but we don't have state available until here
     backend_->setCorruptionDetector(CorruptionDetector<data::LedgerCache>{state_, backend->cache()});

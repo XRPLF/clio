@@ -309,8 +309,11 @@ public:
      * @param config The configuration
      * @param backend The backend to use
      */
-    SubscriptionManagerRunner(util::Config const& config, std::shared_ptr<data::BackendInterface> const& backend)
-        : workersNum_(config.valueOr<std::uint64_t>("subscription_workers", 1))
+    SubscriptionManagerRunner(
+        util::config::ClioConfigDefinition const& config,
+        std::shared_ptr<data::BackendInterface> const& backend
+    )
+        : workersNum_(config.getValue("subscription_workers").asIntType<uint64_t>())
         , ctx_(workersNum_)
         , subscriptionManager_(std::make_shared<SubscriptionManager>(ctx_, backend))
     {

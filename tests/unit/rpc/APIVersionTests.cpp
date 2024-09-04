@@ -19,7 +19,9 @@
 
 #include "rpc/common/impl/APIVersionParser.hpp"
 #include "util/LoggerFixtures.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
@@ -29,6 +31,7 @@ constexpr static auto DEFAULT_API_VERSION = 5u;
 constexpr static auto MIN_API_VERSION = 2u;
 constexpr static auto MAX_API_VERSION = 10u;
 
+using namespace util::config;
 using namespace rpc::impl;
 namespace json = boost::json;
 
@@ -93,18 +96,13 @@ TEST_F(RPCAPIVersionTest, ReturnsParsedVersionIfAllPreconditionsAreMet)
 
 TEST_F(RPCAPIVersionTest, GetsValuesFromConfigCorrectly)
 {
-    util::Config const cfg{json::parse(fmt::format(
-        R"({{
-            "min": {},
-            "max": {},
-            "default": {}
-        }})",
-        MIN_API_VERSION,
-        MAX_API_VERSION,
-        DEFAULT_API_VERSION
-    ))};
+    ClioConfigDefinition cfg{
+        {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(MIN_API_VERSION)},
+        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(MAX_API_VERSION)},
+        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(DEFAULT_API_VERSION)}
+    };
 
-    ProductionAPIVersionParser const configuredParser{cfg};
+    ProductionAPIVersionParser const configuredParser{cfg.getObject("api_version")};
 
     {
         auto ver = configuredParser.parse(json::parse(R"({"api_version": 2})").as_object());

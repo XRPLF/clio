@@ -92,12 +92,12 @@ WorkQueue::stop(std::function<void()> onQueueEmpty)
 }
 
 WorkQueue
-WorkQueue::make_WorkQueue(util::Config const& config)
+WorkQueue::make_WorkQueue(util::config::ClioConfigDefinition const& config)
 {
     static util::Logger const log{"RPC"};
-    auto const serverConfig = config.section("server");
-    auto const numThreads = config.valueOr<uint32_t>("workers", std::thread::hardware_concurrency());
-    auto const maxQueueSize = serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
+    auto const serverConfig = config.getObject("server");
+    auto const numThreads = config.getValue("workers").asIntType<uint32_t>();
+    auto const maxQueueSize = serverConfig.getValue("max_queue_size").asIntType<uint32_t>();  // 0 is no limit
 
     LOG(log.info()) << "Number of workers = " << numThreads << ". Max queue size = " << maxQueueSize;
     return WorkQueue{numThreads, maxQueueSize};

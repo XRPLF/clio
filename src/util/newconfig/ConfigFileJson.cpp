@@ -21,7 +21,6 @@
 
 #include "util/Assert.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/Errors.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <boost/filesystem/path.hpp>
@@ -33,11 +32,11 @@
 #include <fmt/core.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <fstream>
 #include <ios>
 #include <iostream>
-#include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -78,13 +77,18 @@ extractJsonValue(boost::json::value const& jsonValue)
 
     if (jsonValue.is_int64()) {
         variantValue = jsonValue.as_int64();
+    } else if (jsonValue.is_uint64()) {
+        variantValue = static_cast<int64_t>(jsonValue.as_uint64());
     } else if (jsonValue.is_string()) {
         variantValue = jsonValue.as_string().c_str();
     } else if (jsonValue.is_bool()) {
         variantValue = jsonValue.as_bool();
     } else if (jsonValue.is_double()) {
         variantValue = jsonValue.as_double();
+    } else {
+        ASSERT(false, "not supported json type", "");
     }
+
     return variantValue;
 }
 

@@ -20,7 +20,10 @@
 #pragma once
 
 #include "util/Assert.hpp"
-#include "util/config/Config.hpp"
+#include "util/Concepts.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
@@ -205,7 +208,11 @@ struct WithMockPrometheus : virtual ::testing::Test {
             }
             std::cerr << "\n";
         }
-        PrometheusService::init();
+        config::ClioConfigDefinition config{
+            {"prometheus.compress_reply", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)},
+            {"prometheus.enabled", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)}
+        };
+        PrometheusService::init(config);
     }
 
     static MockPrometheusImpl&
@@ -252,8 +259,11 @@ struct WithMockPrometheus : virtual ::testing::Test {
 struct WithPrometheus : virtual ::testing::Test {
     WithPrometheus()
     {
-        boost::json::value const config{{"prometheus", boost::json::object{{"compress_reply", false}}}};
-        PrometheusService::init(Config{config});
+        config::ClioConfigDefinition config{
+            {"prometheus.compress_reply", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(false)},
+            {"prometheus.enabled", config::ConfigValue{config::ConfigType::Boolean}.defaultValue(true)}
+        };
+        PrometheusService::init(config);
     }
 
     ~WithPrometheus() override

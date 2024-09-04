@@ -19,7 +19,8 @@
 
 #pragma once
 
-#include "util/config/Config.hpp"
+#include "util/Assert.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/json.hpp>
@@ -34,6 +35,8 @@
 #include <optional>
 #include <ostream>
 #include <stdexcept>
+#include <string_view>
+#include <utility>
 
 namespace util {
 namespace impl {
@@ -178,6 +181,22 @@ class TagDecoratorFactory final {
     Type type_;                        /*< The type of TagDecorator this factory produces */
     ParentType parent_ = std::nullopt; /*< The parent tag decorator to bind */
 
+    static Type
+    invoke_type(std::string_view style)
+    {
+        if (boost::iequals(style, "int") || boost::iequals(style, "uint"))
+            return TagDecoratorFactory::Type::UINT;
+
+        if (boost::iequals(style, "null") || boost::iequals(style, "none"))
+            return TagDecoratorFactory::Type::NONE;
+
+        if (boost::iequals(style, "uuid"))
+            return TagDecoratorFactory::Type::UUID;
+
+        ASSERT(false, "log_tag_style does not have valid value");
+        std::unreachable();
+    }
+
 public:
     ~TagDecoratorFactory() = default;
 
@@ -186,7 +205,8 @@ public:
      *
      * @param config The configuration as a json object
      */
-    explicit TagDecoratorFactory(util::Config const& config) : type_{config.valueOr<Type>("log_tag_style", Type::NONE)}
+    explicit TagDecoratorFactory(util::config::ClioConfigDefinition const& config)
+        : type_{invoke_type(config.getValue("log_tag_style").asString())}
     {
     }
 
@@ -212,26 +232,6 @@ public:
      */
     TagDecoratorFactory
     with(ParentType parent) const noexcept;
-
-private:
-    friend Type
-    tag_invoke(boost::json::value_to_tag<Type>, boost::json::value const& value)
-    {
-        if (not value.is_string())
-            throw std::runtime_error("`log_tag_style` must be a string");
-        auto const& style = value.as_string();
-
-        if (boost::iequals(style, "int") || boost::iequals(style, "uint"))
-            return TagDecoratorFactory::Type::UINT;
-
-        if (boost::iequals(style, "null") || boost::iequals(style, "none"))
-            return TagDecoratorFactory::Type::NONE;
-
-        if (boost::iequals(style, "uuid"))
-            return TagDecoratorFactory::Type::UUID;
-
-        throw std::runtime_error("Could not parse `log_tag_style`: expected `uint`, `uuid` or `null`");
-    }
 };
 
 /**

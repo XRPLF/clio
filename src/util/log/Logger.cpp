@@ -20,7 +20,9 @@
 #include "util/log/Logger.hpp"
 
 #include "util/SourceLocation.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ArrayView.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
@@ -53,9 +55,11 @@
 #include <cstdint>
 #include <ios>
 #include <iostream>
+#include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 
@@ -81,12 +85,8 @@ operator<<(std::ostream& stream, Severity sev)
 }
 
 Severity
-tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
+invoke_tag(std::string_view logLevel)
 {
-    if (not value.is_string())
-        throw std::runtime_error("`log_level` must be a string");
-    auto const& logLevel = value.as_string();
-
     if (boost::iequals(logLevel, "trace"))
         return Severity::TRC;
     if (boost::iequals(logLevel, "debug"))
@@ -100,23 +100,21 @@ tag_invoke(boost::json::value_to_tag<Severity>, boost::json::value const& value)
     if (boost::iequals(logLevel, "fatal"))
         return Severity::FTL;
 
-    throw std::runtime_error(
-        "Could not parse `log_level`: expected `trace`, `debug`, `info`, `warning`, `error` or `fatal`"
-    );
+    // already checked during parsing of config that value must be valid
+    std::unreachable();
 }
 
 void
-LogService::init(util::Config const& config)
+LogService::init(config::ClioConfigDefinition const& config)
 {
     namespace keywords = boost::log::keywords;
     namespace sinks = boost::log::sinks;
 
     boost::log::add_common_attributes();
     boost::log::register_simple_formatter_factory<Severity, char>("Severity");
-    auto const defaultFormat = "%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%";
-    std::string format = config.valueOr<std::string>("log_format", defaultFormat);
+    std::string format = config.getValue("log_format").asString();
 
-    if (config.valueOr("log_to_console", false)) {
+    if (config.getValue("log_to_console").asBool()) {
         boost::log::add_console_log(
             std::cout, keywords::format = format, keywords::filter = log_severity < Severity::FTL
         );
@@ -125,13 +123,16 @@ LogService::init(util::Config const& config)
     // Always print fatal logs to cerr
     boost::log::add_console_log(std::cerr, keywords::format = format, keywords::filter = log_severity >= Severity::FTL);
 
-    if (auto logDir = config.maybeValue<std::string>("log_directory"); logDir) {
+    auto const logDir = config.getValue("log_directory").hasValue()
+        ? std::make_optional(config.getValue("log_directory").asString())
+        : std::nullopt;
+    if (logDir) {
         boost::filesystem::path dirPath{logDir.value()};
         if (!boost::filesystem::exists(dirPath))
             boost::filesystem::create_directories(dirPath);
-        auto const rotationSize = config.valueOr<uint64_t>("log_rotation_size", 2048u) * 1024u * 1024u;
-        auto const rotationPeriod = config.valueOr<uint32_t>("log_rotation_hour_interval", 12u);
-        auto const dirSize = config.valueOr<uint64_t>("log_directory_max_size", 50u * 1024u) * 1024u * 1024u;
+        auto const rotationSize = config.getValue("log_rotation_size").asIntType<uint64_t>();
+        auto const rotationPeriod = config.getValue("log_rotation_hour_interval").asIntType<uint32_t>();
+        auto const dirSize = config.getValue("log_directory_max_size").asIntType<uint64_t>();
         auto fileSink = boost::log::add_file_log(
             keywords::file_name = dirPath / "clio.log",
             keywords::target_file_name = dirPath / "clio_%Y-%m-%d_%H-%M-%S.log",
@@ -149,19 +150,22 @@ LogService::init(util::Config const& config)
     }
 
     // get default severity, can be overridden per channel using the `log_channels` array
-    auto defaultSeverity = config.valueOr<Severity>("log_level", Severity::NFO);
+    auto defaultSeverity = invoke_tag(config.getValue("log_level").asString());
 
     std::unordered_map<std::string, Severity> min_severity;
     for (auto const& channel : Logger::CHANNELS)
         min_severity[channel] = defaultSeverity;
     min_severity["Alert"] = Severity::WRN;  // Channel for alerts, always warning severity
 
-    for (auto const overrides = config.arrayOr("log_channels", {}); auto const& cfg : overrides) {
-        auto name = cfg.valueOrThrow<std::string>("channel", "Channel name is required");
+    auto const overrides = config.getArray("log_channels");
+
+    for (auto it = overrides.begin<util::config::ObjectView>(); it != overrides.end<util::config::ObjectView>(); ++it) {
+        auto const& cfg = *it;
+        auto name = cfg.getValue("channel").asString();
         if (std::count(std::begin(Logger::CHANNELS), std::end(Logger::CHANNELS), name) == 0)
             throw std::runtime_error("Can't override settings for log channel " + name + ": invalid channel");
 
-        min_severity[name] = cfg.valueOr<Severity>("log_level", defaultSeverity);
+        min_severity[name] = invoke_tag(config.getValue("log_level").asString());
     }
 
     auto log_filter = [min_severity = std::move(min_severity),
