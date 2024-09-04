@@ -287,9 +287,9 @@ void
 SubscriptionSource::handleError(util::requests::RequestError const& error, boost::asio::yield_context yield)
 {
     isConnected_ = false;
-    isForwarding_ = false;
+    bool const wasForwarding = isForwarding_.exchange(false);
     if (not stop_) {
-        onDisconnect_();
+        onDisconnect_(wasForwarding);
         LOG(log_.info()) << "Disconnected";
     }
 
