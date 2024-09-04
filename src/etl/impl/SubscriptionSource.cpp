@@ -184,8 +184,8 @@ SubscriptionSource::subscribe()
             }
 
             isConnected_ = true;
-            onConnect_();
             LOG(log_.info()) << "Connected";
+            onConnect_();
 
             retry_.reset();
 
@@ -287,8 +287,8 @@ SubscriptionSource::handleError(util::requests::RequestError const& error, boost
     isConnected_ = false;
     bool const wasForwarding = isForwarding_.exchange(false);
     if (not stop_) {
-        onDisconnect_(wasForwarding);
         LOG(log_.info()) << "Disconnected";
+        onDisconnect_(wasForwarding);
     }
 
     if (wsConnection_ != nullptr) {
