@@ -265,8 +265,6 @@ SubscriptionSource::handleMessage(std::string const& message)
                 } else if (object.contains(JS(type)) && object.at(JS(type)) == JS_ManifestReceived) {
                     LOG(log_.debug()) << "Forwarding manifest: " << object;
                     subscriptions_->forwardManifest(object);
-                } else {
-                    LOG(log_.error()) << "Unknown message: " << object;
                 }
             }
         }
