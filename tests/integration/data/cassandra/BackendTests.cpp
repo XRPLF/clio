@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "data/BackendInterface.hpp"
-#include "data/CassandraBackend.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
 #include "data/cassandra/Handle.hpp"
@@ -30,7 +29,7 @@
 #include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
 #include "util/StringUtils.hpp"
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <TestGlobals.hpp>
 #include <boost/asio/impl/spawn.hpp>
@@ -73,7 +72,7 @@ using namespace data::cassandra;
 
 class BackendCassandraTest : public SyncAsioContextTest, public WithPrometheus {
 protected:
-    ClioConfigDefinition cfg{
+    ObjectView cfg{
         {{"contact_points", ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
          {"keyspace", ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
          {"replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)}}
