@@ -87,6 +87,9 @@ operator<<(std::ostream& stream, Severity sev)
 
 /**
  * @brief converts the loglevel to string to a corresponding Severity enum value.
+ *
+ * @param logLevel A string representing the log level
+ * @return Severity The corresponding Severity enum value.
  */
 Severity
 invoke_tag(std::string_view logLevel)
