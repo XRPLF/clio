@@ -60,10 +60,6 @@ public:
         if (ctx.method == "subscribe" || ctx.method == "unsubscribe")
             return false;
 
-        // Disallow forwarding of the admin api, only user api is allowed for security reasons.
-        if (ctx.method == "feature" and request.contains("vetoed"))
-            return false;
-
         if (handlerProvider_->isClioOnly(ctx.method))
             return false;
 

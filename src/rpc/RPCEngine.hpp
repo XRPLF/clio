@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "rpc/Counters.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/RPCHelpers.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/HandlerProvider.hpp"
 #include "rpc/common/Types.hpp"
@@ -131,8 +132,13 @@ public:
     Result
     buildResponse(web::Context const& ctx)
     {
-        if (forwardingProxy_.shouldForward(ctx))
+        if (forwardingProxy_.shouldForward(ctx)) {
+            // Disallow forwarding of the admin api, only user api is allowed for security reasons.
+            if (isAdminCmd(ctx.method, ctx.params))
+                return Result{Status{RippledError::rpcNO_PERMISSION}};
+
             return forwardingProxy_.forward(ctx);
+        }
 
         if (backend_->isTooBusy()) {
             LOG(log_.error()) << "Database is too busy. Rejecting request";
