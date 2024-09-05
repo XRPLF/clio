@@ -576,7 +576,5 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(IsAdminCmdParameterTest, Test)
 {
     auto const testBundle = GetParam();
-    EXPECT_TRUE(
-        isAdminCmd(testBundle.method, boost::json::parse(testBundle.testJson).as_object()) == testBundle.expected
-    );
+    EXPECT_EQ(isAdminCmd(testBundle.method, boost::json::parse(testBundle.testJson).as_object()), testBundle.expected);
 }
