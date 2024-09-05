@@ -25,6 +25,8 @@
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/field.hpp>
+#include <boost/beast/websocket/stream.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
@@ -33,6 +35,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -316,6 +319,40 @@ TEST_F(WsConnectionTests, MultipleConnections)
             ASSERT_FALSE(error) << error->message();
         });
     }
+}
+
+TEST_F(WsConnectionTests, RespondsToPing)
+{
+    asio::spawn(ctx, [&](asio::yield_context yield) {
+        auto serverConnection = unwrap(server.acceptConnection(yield));
+
+        testing::StrictMock<testing::MockFunction<void(boost::beast::websocket::frame_type, std::string_view)>>
+            controlFrameCallback;
+        serverConnection.setControlFrameCallback(controlFrameCallback.AsStdFunction());
+        EXPECT_CALL(controlFrameCallback, Call(boost::beast::websocket::frame_type::pong, testing::_)).WillOnce([&]() {
+            serverConnection.resetControlFrameCallback();
+            asio::spawn(ctx, [&](asio::yield_context yield) {
+                auto maybeError = serverConnection.send("got pong", yield);
+                ASSERT_FALSE(maybeError.has_value()) << *maybeError;
+            });
+        });
+
+        serverConnection.sendPing({}, yield);
+        auto message = serverConnection.receive(yield);
+        ASSERT_TRUE(message.has_value());
+        EXPECT_EQ(message, "hello") << message.value();
+    });
+
+    runSpawn([&](asio::yield_context yield) {
+        auto connection = builder.plainConnect(yield);
+        ASSERT_TRUE(connection.has_value()) << connection.error().message();
+        auto expectedMessage = connection->operator*().read(yield);
+        ASSERT_TRUE(expectedMessage) << expectedMessage.error().message();
+        EXPECT_EQ(expectedMessage.value(), "got pong");
+
+        auto error = connection->operator*().write("hello", yield);
+        ASSERT_FALSE(error) << error->message();
+    });
 }
 
 enum class WsConnectionErrorTestsBundle : int { Read = 1, Write = 2 };
