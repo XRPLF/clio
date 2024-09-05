@@ -23,7 +23,6 @@
 #include "rpc/RPCHelpers.hpp"
 #include "util/log/Logger.hpp"
 
-#include <boost/asio/post.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
 #include <xrpl/protocol/AccountID.h>
@@ -101,17 +100,18 @@ ProposedTransactionFeed::pub(boost::json::object const& receivedTxJson)
     auto const accounts = rpc::getAccountsFromTransaction(transaction);
     auto affectedAccounts = std::unordered_set<ripple::AccountID>(accounts.cbegin(), accounts.cend());
 
-    boost::asio::post(strand_, [this, pubMsg = std::move(pubMsg), affectedAccounts = std::move(affectedAccounts)]() {
-        notified_.clear();
-        signal_.emit(pubMsg);
-        // Prevent the same connection from receiving the same message twice if it is subscribed to multiple accounts
-        // However, if the same connection subscribe both stream and account, it will still receive the message twice.
-        // notified_ can be cleared before signal_ emit to improve this, but let's keep it as is for now, since rippled
-        // acts like this.
-        notified_.clear();
-        for (auto const& account : affectedAccounts)
-            accountSignal_.emit(account, pubMsg);
-    });
+    [[maybe_unused]] auto task =
+        strand_.execute([this, pubMsg = std::move(pubMsg), affectedAccounts = std::move(affectedAccounts)]() {
+            notified_.clear();
+            signal_.emit(pubMsg);
+            // Prevent the same connection from receiving the same message twice if it is subscribed to multiple
+            // accounts However, if the same connection subscribe both stream and account, it will still receive the
+            // message twice. notified_ can be cleared before signal_ emit to improve this, but let's keep it as is for
+            // now, since rippled acts like this.
+            notified_.clear();
+            for (auto const& account : affectedAccounts)
+                accountSignal_.emit(account, pubMsg);
+        });
 }
 
 std::uint64_t

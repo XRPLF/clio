@@ -22,7 +22,7 @@
 #include "data/AmendmentCenterInterface.hpp"
 #include "data/BackendInterface.hpp"
 #include "etl/ETLService.hpp"
-#include "feed/SubscriptionManager.hpp"
+#include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Counters.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/handlers/AMMInfo.hpp"
@@ -71,7 +71,7 @@ namespace rpc::impl {
 ProductionHandlerProvider::ProductionHandlerProvider(
     util::Config const& config,
     std::shared_ptr<BackendInterface> const& backend,
-    std::shared_ptr<feed::SubscriptionManager> const& subscriptionManager,
+    std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptionManager,
     std::shared_ptr<etl::LoadBalancer> const& balancer,
     std::shared_ptr<etl::ETLService const> const& etl,
     std::shared_ptr<data::AmendmentCenterInterface const> const& amendmentCenter,

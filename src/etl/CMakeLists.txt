@@ -11,6 +11,7 @@ target_sources(
           NFTHelpers.cpp
           Source.cpp
           MPTHelpers.cpp
+          impl/AmendmentBlockHandler.cpp
           impl/ForwardingCache.cpp
           impl/ForwardingSource.cpp
           impl/GrpcSource.cpp

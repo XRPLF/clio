@@ -142,20 +142,7 @@ public:
             );
         }
 
-        // Remove all but the last NFTsData for each id. unique removes all but the first of a group, so we want to
-        // reverse sort by transaction index
-        std::sort(result.nfTokensData.begin(), result.nfTokensData.end(), [](NFTsData const& a, NFTsData const& b) {
-            return a.tokenID > b.tokenID && a.transactionIndex > b.transactionIndex;
-        });
-
-        // Now we can unique the NFTs by tokenID.
-        auto last = std::unique(
-            result.nfTokensData.begin(),
-            result.nfTokensData.end(),
-            [](NFTsData const& a, NFTsData const& b) { return a.tokenID == b.tokenID; }
-        );
-        result.nfTokensData.erase(last, result.nfTokensData.end());
-
+        result.nfTokensData = getUniqueNFTsDatas(result.nfTokensData);
         return result;
     }
 

@@ -44,6 +44,7 @@
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/formatter_parser.hpp>
 
+#include <array>
 #include <cstddef>
 #include <optional>
 #include <ostream>
@@ -176,6 +177,16 @@ class Logger final {
     };
 
 public:
+    static constexpr std::array<char const*, 7> CHANNELS = {
+        "General",
+        "WebServer",
+        "Backend",
+        "RPC",
+        "ETL",
+        "Subscriptions",
+        "Performance",
+    };
+
     /**
      * @brief Construct a new Logger object that produces loglines for the
      * specified channel.

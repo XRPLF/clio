@@ -25,6 +25,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
+#include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream.hpp>
 
 #include <expected>
@@ -54,6 +55,9 @@ public:
     std::optional<std::string>
     send(std::string const& message, boost::asio::yield_context yield);
 
+    void
+    sendPing(boost::beast::websocket::ping_data const& data, boost::asio::yield_context yield);
+
     // returns nullopt if the connection is closed
     std::optional<std::string>
     receive(boost::asio::yield_context yield);
@@ -63,6 +67,12 @@ public:
 
     std::vector<util::requests::HttpHeader> const&
     headers() const;
+
+    void
+    setControlFrameCallback(std::function<void(boost::beast::websocket::frame_type, std::string_view)> callback);
+
+    void
+    resetControlFrameCallback();
 };
 using TestWsConnectionPtr = std::unique_ptr<TestWsConnection>;
 

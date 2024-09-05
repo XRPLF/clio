@@ -23,6 +23,7 @@
 #include "data/cassandra/impl/Collection.hpp"
 #include "data/cassandra/impl/ManagedObject.hpp"
 #include "data/cassandra/impl/Tuple.hpp"
+#include "util/UnsupportedType.hpp"
 
 #include <cassandra.h>
 #include <fmt/core.h>
@@ -43,9 +44,6 @@ namespace data::cassandra::impl {
 
 class Statement : public ManagedObject<CassStatement> {
     static constexpr auto deleter = [](CassStatement* ptr) { cass_statement_free(ptr); };
-
-    template <typename>
-    static constexpr bool unsupported_v = false;
 
 public:
     /**
@@ -141,7 +139,7 @@ public:
             throwErrorIfNeeded(rc, "Bind int64");
         } else {
             // type not supported for binding
-            static_assert(unsupported_v<DecayedType>);
+            static_assert(util::Unsupported<DecayedType>);
         }
     }
 };

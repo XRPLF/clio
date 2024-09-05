@@ -24,6 +24,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -163,6 +164,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 
     // check ledger exists
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "Ledger range must be available");
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
@@ -175,13 +177,13 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
     auto ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, lgrInfo.seq, ctx.yield);
 
     if (!ledgerObject || ledgerObject->empty()) {
-        if (not input.includeDeleted) 
+        if (not input.includeDeleted)
             return Error{Status{"entryNotFound"}};
         auto const deletedSeq = sharedPtrBackend_->fetchLedgerObjectSeq(key, lgrInfo.seq, ctx.yield);
-        if (!deletedSeq) 
+        if (!deletedSeq)
             return Error{Status{"entryNotFound"}};
         ledgerObject = sharedPtrBackend_->fetchLedgerObject(key, deletedSeq.value() - 1, ctx.yield);
-        if (!ledgerObject || ledgerObject->empty()) 
+        if (!ledgerObject || ledgerObject->empty())
             return Error{Status{"entryNotFound"}};
         output.deletedLedgerIndex = deletedSeq;
     }

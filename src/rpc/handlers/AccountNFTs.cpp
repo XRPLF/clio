@@ -78,10 +78,17 @@ AccountNFTsHandler::process(AccountNFTsHandler::Input input, Context const& ctx)
         input.marker ? ripple::uint256{input.marker->c_str()} : ripple::keylet::nftpage_max(*accountID).key;
     auto const blob = sharedPtrBackend_->fetchLedgerObject(pageKey, lgrInfo.seq, ctx.yield);
 
-    if (!blob)
+    if (!blob) {
+        if (input.marker.has_value())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, "Marker field does not match any valid Page ID"}};
         return response;
+    }
 
     std::optional<ripple::SLE const> page{ripple::SLE{ripple::SerialIter{blob->data(), blob->size()}, pageKey}};
+
+    if (page->getType() != ripple::ltNFTOKEN_PAGE)
+        return Error{Status{RippledError::rpcINVALID_PARAMS, "Marker matches Page ID from another Account"}};
+
     auto numPages = 0u;
 
     while (page) {

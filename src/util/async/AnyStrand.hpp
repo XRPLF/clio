@@ -44,13 +44,14 @@ public:
      * @tparam StrandType The type of the strand to wrap
      * @param strand The strand to wrap
      */
-    template <typename StrandType>
-        requires(not std::is_same_v<std::decay_t<StrandType>, AnyStrand>)
+    template <NotSameAs<AnyStrand> StrandType>
     /* implicit */ AnyStrand(StrandType&& strand)
-        : pimpl_{std::make_unique<Model<StrandType>>(std::forward<StrandType>(strand))}
+        : pimpl_{std::make_shared<Model<StrandType>>(std::forward<StrandType>(strand))}
     {
     }
 
+    AnyStrand(AnyStrand const&) = default;
+    AnyStrand(AnyStrand&&) = default;
     ~AnyStrand() = default;
 
     /**
@@ -60,7 +61,7 @@ public:
      * @return The type-erased operation
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWithoutStopToken auto&& fn)
+    execute(SomeHandlerWithoutStopToken auto&& fn) const
     {
         using RetType = std::decay_t<decltype(fn())>;
         static_assert(not std::is_same_v<RetType, std::any>);
@@ -84,7 +85,7 @@ public:
      * @return The type-erased operation
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn)
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn) const
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, std::any>);
@@ -109,7 +110,7 @@ public:
      * @return The type-erased operation
      */
     [[nodiscard]] auto
-    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout)
+    execute(SomeHandlerWith<AnyStopToken> auto&& fn, SomeStdDuration auto timeout) const
     {
         using RetType = std::decay_t<decltype(fn(std::declval<AnyStopToken>()))>;
         static_assert(not std::is_same_v<RetType, std::any>);
@@ -134,11 +135,9 @@ private:
         virtual ~Concept() = default;
 
         [[nodiscard]] virtual impl::ErasedOperation
-        execute(
-            std::function<std::any(AnyStopToken)>,
-            std::optional<std::chrono::milliseconds> timeout = std::nullopt
-        ) = 0;
-        [[nodiscard]] virtual impl::ErasedOperation execute(std::function<std::any()>) = 0;
+        execute(std::function<std::any(AnyStopToken)>, std::optional<std::chrono::milliseconds> timeout = std::nullopt)
+            const = 0;
+        [[nodiscard]] virtual impl::ErasedOperation execute(std::function<std::any()>) const = 0;
     };
 
     template <typename StrandType>
@@ -152,20 +151,21 @@ private:
         }
 
         [[nodiscard]] impl::ErasedOperation
-        execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout) override
+        execute(std::function<std::any(AnyStopToken)> fn, std::optional<std::chrono::milliseconds> timeout)
+            const override
         {
             return strand.execute(std::move(fn), timeout);
         }
 
         [[nodiscard]] impl::ErasedOperation
-        execute(std::function<std::any()> fn) override
+        execute(std::function<std::any()> fn) const override
         {
             return strand.execute(std::move(fn));
         }
     };
 
 private:
-    std::unique_ptr<Concept> pimpl_;
+    std::shared_ptr<Concept> pimpl_;
 };
 
 }  // namespace util::async

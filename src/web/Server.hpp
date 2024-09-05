@@ -21,9 +21,10 @@
 
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
-#include "web/DOSGuard.hpp"
 #include "web/HttpSession.hpp"
 #include "web/SslHttpSession.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
+#include "web/impl/ServerSslContext.hpp"
 #include "web/interface/Concepts.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -59,6 +60,15 @@
 namespace web {
 
 /**
+ * @brief A helper function to create a server SSL context.
+ *
+ * @param config The config to create the context
+ * @return Optional SSL context or error message if any
+ */
+std::expected<std::optional<boost::asio::ssl::context>, std::string>
+makeServerSslContext(util::Config const& config);
+
+/**
  * @brief The Detector class to detect if the connection is a ssl or not.
  *
  * If it is an SSL connection, the Detector will pass the ownership of the socket to SslSessionType, otherwise to
@@ -81,7 +91,7 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, 
     boost::beast::tcp_stream stream_;
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
-    std::reference_wrapper<web::DOSGuard> const dosGuard_;
+    std::reference_wrapper<dosguard::DOSGuardInterface> const dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
     boost::beast::flat_buffer buffer_;
     std::shared_ptr<impl::AdminVerificationStrategy> const adminVerification_;
@@ -101,7 +111,7 @@ public:
         tcp::socket&& socket,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
-        std::reference_wrapper<web::DOSGuard> dosGuard,
+        std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> handler,
         std::shared_ptr<impl::AdminVerificationStrategy> adminVerification
     )
@@ -201,9 +211,9 @@ class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslS
 
     util::Logger log_{"WebServer"};
     std::reference_wrapper<boost::asio::io_context> ioc_;
-    std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx_;
+    std::optional<boost::asio::ssl::context> ctx_;
     util::TagDecoratorFactory tagFactory_;
-    std::reference_wrapper<web::DOSGuard> dosGuard_;
+    std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard_;
     std::shared_ptr<HandlerType> handler_;
     tcp::acceptor acceptor_;
     std::shared_ptr<impl::AdminVerificationStrategy> adminVerification_;
@@ -222,15 +232,15 @@ public:
      */
     Server(
         boost::asio::io_context& ioc,
-        std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx,
+        std::optional<boost::asio::ssl::context> ctx,
         tcp::endpoint endpoint,
         util::TagDecoratorFactory tagFactory,
-        web::DOSGuard& dosGuard,
+        dosguard::DOSGuardInterface& dosGuard,
         std::shared_ptr<HandlerType> handler,
         std::optional<std::string> adminPassword
     )
         : ioc_(std::ref(ioc))
-        , ctx_(ctx)
+        , ctx_(std::move(ctx))
         , tagFactory_(tagFactory)
         , dosGuard_(std::ref(dosGuard))
         , handler_(std::move(handler))
@@ -285,7 +295,8 @@ private:
     onAccept(boost::beast::error_code ec, tcp::socket socket)
     {
         if (!ec) {
-            auto ctxRef = ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_} : std::nullopt;
+            auto ctxRef =
+                ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;
 
             std::make_shared<Detector<PlainSessionType, SslSessionType, HandlerType>>(
                 std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_, adminVerification_
@@ -307,7 +318,6 @@ using HttpServer = Server<HttpSession, SslHttpSession, HandlerType>;
  * @tparam HandlerType The tyep of handler to process the request
  * @param config The config to create server
  * @param ioc The server will run under this io_context
- * @param ctx The SSL context if any
  * @param dosGuard The dos guard to protect the server
  * @param handler The handler to process the request
  * @return The server instance
@@ -317,12 +327,18 @@ static std::shared_ptr<HttpServer<HandlerType>>
 make_HttpServer(
     util::Config const& config,
     boost::asio::io_context& ioc,
-    std::optional<std::reference_wrapper<boost::asio::ssl::context>> const& ctx,
-    web::DOSGuard& dosGuard,
+    dosguard::DOSGuardInterface& dosGuard,
     std::shared_ptr<HandlerType> const& handler
 )
 {
     static util::Logger const log{"WebServer"};
+
+    auto expectedSslContext = makeServerSslContext(config);
+    if (not expectedSslContext) {
+        LOG(log.error()) << "Failed to create SSL context: " << expectedSslContext.error();
+        return nullptr;
+    }
+
     if (!config.contains("server"))
         return nullptr;
 
@@ -347,7 +363,7 @@ make_HttpServer(
 
     auto server = std::make_shared<HttpServer<HandlerType>>(
         ioc,
-        ctx,
+        std::move(expectedSslContext).value(),
         boost::asio::ip::tcp::endpoint{address, port},
         util::TagDecoratorFactory(config),
         dosGuard,

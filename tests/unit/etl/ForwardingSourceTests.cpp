@@ -42,8 +42,8 @@ struct ForwardingSourceTests : SyncAsioContextTest {
     ForwardingSource forwardingSource{
         "127.0.0.1",
         server_.port(),
-        std::chrono::milliseconds{1},
-        std::chrono::milliseconds{1}
+        std::chrono::milliseconds{20},
+        std::chrono::milliseconds{20}
     };
 };
 

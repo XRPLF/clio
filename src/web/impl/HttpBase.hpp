@@ -19,12 +19,12 @@
 
 #pragma once
 
-#include "main/Build.hpp"
 #include "rpc/Errors.hpp"
 #include "util/Taggable.hpp"
+#include "util/build/Build.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Http.hpp"
-#include "web/DOSGuard.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/interface/Concepts.hpp"
 #include "web/interface/ConnectionBase.hpp"
@@ -114,7 +114,7 @@ class HttpBase : public ConnectionBase {
 protected:
     boost::beast::flat_buffer buffer_;
     http::request<http::string_body> req_;
-    std::reference_wrapper<web::DOSGuard> dosGuard_;
+    std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
@@ -154,7 +154,7 @@ public:
         std::string const& ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::shared_ptr<AdminVerificationStrategy> adminVerification,
-        std::reference_wrapper<web::DOSGuard> dosGuard,
+        std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> handler,
         boost::beast::flat_buffer buffer
     )
@@ -297,7 +297,7 @@ private:
     httpResponse(http::status status, std::string content_type, std::string message) const
     {
         http::response<http::string_body> res{status, req_.version()};
-        res.set(http::field::server, "clio-server-" + Build::getClioVersionString());
+        res.set(http::field::server, "clio-server-" + util::build::getClioVersionString());
         res.set(http::field::content_type, content_type);
         res.keep_alive(req_.keep_alive());
         res.body() = std::move(message);

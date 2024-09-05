@@ -4,6 +4,7 @@ target_sources(
   clio_tests
   PRIVATE # Common
           ConfigTests.cpp
+          app/CliArgsTests.cpp
           data/AmendmentCenterTests.cpp
           data/BackendCountersTests.cpp
           data/BackendInterfaceTests.cpp
@@ -11,7 +12,6 @@ target_sources(
           data/cassandra/ExecutionStrategyTests.cpp
           data/cassandra/RetryPolicyTests.cpp
           data/cassandra/SettingsProviderTests.cpp
-          DOSGuardTests.cpp
           # ETL
           etl/AmendmentBlockHandlerTests.cpp
           etl/CacheLoaderSettingsTests.cpp
@@ -121,16 +121,32 @@ target_sources(
           util/requests/WsConnectionTests.cpp
           util/RandomTests.cpp
           util/RetryTests.cpp
+          util/RepeatTests.cpp
           util/SignalsHandlerTests.cpp
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
           # Webserver
           web/AdminVerificationTests.cpp
+          web/dosguard/DOSGuardTests.cpp
+          web/dosguard/IntervalSweepHandlerTests.cpp
+          web/dosguard/WhitelistHandlerTests.cpp
+          web/impl/ServerSslContextTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
-          web/SweepHandlerTests.cpp
-          web/WhitelistHandlerTests.cpp
+          # New Config
+          util/newconfig/ArrayViewTests.cpp
+          util/newconfig/ObjectViewTests.cpp
+          util/newconfig/ValueViewTests.cpp
+          util/newconfig/ArrayTests.cpp
+          util/newconfig/ConfigValueTests.cpp
+          util/newconfig/ClioConfigDefinitionTests.cpp
 )
+
+configure_file(test_data/cert.pem ${CMAKE_BINARY_DIR}/tests/unit/test_data/cert.pem COPYONLY)
+target_compile_definitions(clio_tests PRIVATE TEST_DATA_SSL_CERT_PATH="tests/unit/test_data/cert.pem")
+
+configure_file(test_data/key.pem ${CMAKE_BINARY_DIR}/tests/unit/test_data/key.pem COPYONLY)
+target_compile_definitions(clio_tests PRIVATE TEST_DATA_SSL_KEY_PATH="tests/unit/test_data/key.pem")
 
 # See https://github.com/google/googletest/issues/3475
 gtest_discover_tests(clio_tests DISCOVERY_TIMEOUT 90)

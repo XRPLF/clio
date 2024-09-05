@@ -259,22 +259,6 @@ TEST_F(RPCForwardingProxyTest, ShouldForwardReturnsFalseIfAPIVersionIsV2)
     });
 }
 
-TEST_F(RPCForwardingProxyTest, ShouldNeverForwardFeatureWithVetoedFlag)
-{
-    auto const apiVersion = 1u;
-    auto const method = "feature";
-    auto const params = json::parse(R"({"vetoed": true, "feature": "foo"})");
-
-    runSpawn([&](auto yield) {
-        auto const range = backend->fetchLedgerRange();
-        auto const ctx =
-            web::Context(yield, method, apiVersion, params.as_object(), nullptr, tagFactory, *range, CLIENT_IP, true);
-
-        auto const res = proxy.shouldForward(ctx);
-        ASSERT_FALSE(res);
-    });
-}
-
 TEST_F(RPCForwardingProxyTest, ShouldNeverForwardSubscribe)
 {
     auto const apiVersion = 1u;

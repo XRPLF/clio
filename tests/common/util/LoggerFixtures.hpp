@@ -22,10 +22,14 @@
 #include "util/log/Logger.hpp"
 
 #include <boost/log/core/core.hpp>
+#include <boost/log/expressions/predicates/channel_severity_filter.hpp>
+#include <boost/log/keywords/format.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/formatter_parser.hpp>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <mutex>
 #include <ostream>
 #include <sstream>
@@ -70,8 +74,14 @@ public:
         core->remove_all_sinks();
         boost::log::add_console_log(stream_, keywords::format = "%Channel%:%Severity% %Message%");
         auto min_severity = expr::channel_severity_filter(util::log_channel, util::log_severity);
+
+        std::ranges::for_each(util::Logger::CHANNELS, [&min_severity](char const* channel) {
+            min_severity[channel] = util::Severity::TRC;
+        });
+
         min_severity["General"] = util::Severity::DBG;
         min_severity["Trace"] = util::Severity::TRC;
+
         core->set_filter(min_severity);
         core->set_logging_enabled(true);
     }
@@ -88,6 +98,12 @@ protected:
     checkEmpty()
     {
         ASSERT_TRUE(buffer_.getStrAndReset().empty());
+    }
+
+    std::string
+    getLoggerString()
+    {
+        return buffer_.getStrAndReset();
     }
 };
 

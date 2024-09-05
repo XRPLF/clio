@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "util/Assert.hpp"
+#include "util/Mutex.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Counter.hpp"
@@ -30,11 +32,12 @@
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 
+#include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <limits>
-#include <thread>
 
 namespace rpc {
 
@@ -52,6 +55,23 @@ class WorkQueue {
     util::Logger log_{"RPC"};
     boost::asio::thread_pool ioc_;
 
+    std::atomic_bool stopping_;
+
+    class OneTimeCallable {
+        std::function<void()> func_;
+        bool called_{false};
+
+    public:
+        void
+        setCallable(std::function<void()> func);
+
+        void
+        operator()();
+
+        operator bool() const;
+    };
+    util::Mutex<OneTimeCallable> onQueueEmpty_;
+
 public:
     /**
      * @brief Create an we instance of the work queue.
@@ -63,22 +83,21 @@ public:
     ~WorkQueue();
 
     /**
+     * @brief Put the work queue into a stopping state. This will prevent new jobs from being queued.
+     *
+     * @param onQueueEmpty A callback to run when the last task in the queue is completed
+     */
+    void
+    stop(std::function<void()> onQueueEmpty);
+
+    /**
      * @brief A factory function that creates the work queue based on a config.
      *
      * @param config The Clio config to use
      * @return The work queue
      */
     static WorkQueue
-    make_WorkQueue(util::Config const& config)
-    {
-        static util::Logger const log{"RPC"};
-        auto const serverConfig = config.section("server");
-        auto const numThreads = config.valueOr<uint32_t>("workers", std::thread::hardware_concurrency());
-        auto const maxQueueSize = serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
-
-        LOG(log.info()) << "Number of workers = " << numThreads << ". Max queue size = " << maxQueueSize;
-        return WorkQueue{numThreads, maxQueueSize};
-    }
+    make_WorkQueue(util::Config const& config);
 
     /**
      * @brief Submit a job to the work queue.
@@ -94,6 +113,11 @@ public:
     bool
     postCoro(FnType&& func, bool isWhiteListed)
     {
+        if (stopping_) {
+            LOG(log_.warn()) << "Queue is stopping, rejecting incoming task.";
+            return false;
+        }
+
         if (curSize_.get().value() >= maxSize_ && !isWhiteListed) {
             LOG(log_.warn()) << "Queue is full. rejecting job. current size = " << curSize_.get().value()
                              << "; max size = " << maxSize_;
@@ -116,6 +140,11 @@ public:
 
                 func(yield);
                 --curSize_.get();
+                if (curSize_.get().value() == 0 && stopping_) {
+                    auto onTasksComplete = onQueueEmpty_.lock();
+                    ASSERT(onTasksComplete->operator bool(), "onTasksComplete must be set when stopping is true.");
+                    onTasksComplete->operator()();
+                }
             }
         );
 
@@ -128,23 +157,21 @@ public:
      * @return The report as a JSON object.
      */
     boost::json::object
-    report() const
-    {
-        auto obj = boost::json::object{};
-
-        obj["queued"] = queued_.get().value();
-        obj["queued_duration_us"] = durationUs_.get().value();
-        obj["current_queue_size"] = curSize_.get().value();
-        obj["max_queue_size"] = maxSize_;
-
-        return obj;
-    }
+    report() const;
 
     /**
      * @brief Wait until all the jobs in the queue are finished.
      */
     void
     join();
+
+    /**
+     * @brief Get the size of the queue.
+     *
+     * @return The numver of jobs in the queue.
+     */
+    size_t
+    size() const;
 };
 
 }  // namespace rpc

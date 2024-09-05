@@ -2,7 +2,8 @@ add_library(clio_util)
 
 target_sources(
   clio_util
-  PRIVATE config/Config.cpp
+  PRIVATE build/Build.cpp
+          config/Config.cpp
           log/Logger.cpp
           prometheus/Http.cpp
           prometheus/Label.cpp
@@ -13,16 +14,21 @@ target_sources(
           prometheus/Prometheus.cpp
           Random.cpp
           Retry.cpp
-          SignalsHandler.cpp
+          Repeat.cpp
           requests/RequestBuilder.cpp
           requests/Types.cpp
           requests/WsConnection.cpp
           requests/impl/SslContext.cpp
+          SignalsHandler.cpp
           Taggable.cpp
           TerminationHandler.cpp
           TimeUtils.cpp
           TxUtils.cpp
           LedgerUtils.cpp
+          newconfig/ConfigDefinition.cpp
+          newconfig/ObjectView.cpp
+          newconfig/ArrayView.cpp
+          newconfig/ValueView.cpp
 )
 
 target_link_libraries(

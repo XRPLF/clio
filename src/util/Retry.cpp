@@ -57,11 +57,6 @@ Retry::Retry(RetryStrategyPtr strategy, boost::asio::strand<boost::asio::io_cont
 {
 }
 
-Retry::~Retry()
-{
-    cancel();
-}
-
 void
 Retry::cancel()
 {

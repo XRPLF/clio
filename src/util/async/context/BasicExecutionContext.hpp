@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/Assert.hpp"
 #include "util/async/Concepts.hpp"
 #include "util/async/Error.hpp"
 #include "util/async/Operation.hpp"
@@ -38,6 +39,7 @@
 #include <chrono>
 #include <cstddef>
 #include <expected>
+#include <memory>
 #include <optional>
 #include <type_traits>
 #include <utility>
@@ -59,6 +61,12 @@ struct AsioPoolStrandContext {
     using Executor = boost::asio::strand<boost::asio::thread_pool::executor_type>;
     using Timer = SteadyTimer<Executor>;
 
+    Executor const&
+    getExecutor() const
+    {
+        return executor;
+    }
+
     Executor executor;
 };
 
@@ -67,13 +75,42 @@ struct AsioPoolContext {
     using Timer = SteadyTimer<Executor>;
     using Strand = AsioPoolStrandContext;
 
-    Strand
-    makeStrand()
+    AsioPoolContext(std::size_t numThreads) : executor(std::make_unique<Executor>(numThreads))
     {
-        return {boost::asio::make_strand(executor)};
     }
 
-    Executor executor;
+    AsioPoolContext(AsioPoolContext const&) = delete;
+    AsioPoolContext(AsioPoolContext&&) = default;
+
+    Strand
+    makeStrand() const
+    {
+        ASSERT(executor, "Called after executor was moved from.");
+        return {boost::asio::make_strand(*executor)};
+    }
+
+    void
+    stop() const
+    {
+        if (executor)  // don't call if executor was moved from
+            executor->stop();
+    }
+
+    void
+    join() const
+    {
+        if (executor)  // don't call if executor was moved from
+            executor->join();
+    }
+
+    Executor&
+    getExecutor() const
+    {
+        ASSERT(executor, "Called after executor was moved from.");
+        return *executor;
+    }
+
+    std::unique_ptr<Executor> executor;
 };
 
 }  // namespace impl
@@ -151,7 +188,7 @@ public:
         stop();
     }
 
-    BasicExecutionContext(BasicExecutionContext&&) = delete;
+    BasicExecutionContext(BasicExecutionContext&&) = default;
     BasicExecutionContext(BasicExecutionContext const&) = delete;
 
     /**
@@ -323,9 +360,18 @@ public:
      * @brief Stop the execution context as soon as possible
      */
     void
-    stop() noexcept
+    stop() const noexcept
     {
-        context_.executor.stop();
+        context_.stop();
+    }
+
+    /**
+     * @brief Block until all operations are completed
+     */
+    void
+    join() noexcept
+    {
+        context_.join();
     }
 };
 

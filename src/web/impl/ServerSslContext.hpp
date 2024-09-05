@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,15 +19,14 @@
 
 #pragma once
 
-#include <cstddef>
-#include <functional>
+#include <boost/asio/ssl/context.hpp>
 
-struct FakeAmendmentBlockAction {
-    std::reference_wrapper<std::size_t> callCount;
+#include <expected>
+#include <string>
 
-    void
-    operator()() const
-    {
-        ++(callCount.get());
-    }
-};
+namespace web::impl {
+
+std::expected<boost::asio::ssl::context, std::string>
+makeServerSslContext(std::string const& certFilePath, std::string const& keyFilePath);
+
+}  // namespace web::impl

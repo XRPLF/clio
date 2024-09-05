@@ -150,24 +150,15 @@ LogService::init(util::Config const& config)
 
     // get default severity, can be overridden per channel using the `log_channels` array
     auto defaultSeverity = config.valueOr<Severity>("log_level", Severity::NFO);
-    static constexpr std::array<char const*, 7> channels = {
-        "General",
-        "WebServer",
-        "Backend",
-        "RPC",
-        "ETL",
-        "Subscriptions",
-        "Performance",
-    };
 
     std::unordered_map<std::string, Severity> min_severity;
-    for (auto const& channel : channels)
+    for (auto const& channel : Logger::CHANNELS)
         min_severity[channel] = defaultSeverity;
     min_severity["Alert"] = Severity::WRN;  // Channel for alerts, always warning severity
 
     for (auto const overrides = config.arrayOr("log_channels", {}); auto const& cfg : overrides) {
         auto name = cfg.valueOrThrow<std::string>("channel", "Channel name is required");
-        if (std::count(std::begin(channels), std::end(channels), name) == 0)
+        if (std::count(std::begin(Logger::CHANNELS), std::end(Logger::CHANNELS), name) == 0)
             throw std::runtime_error("Can't override settings for log channel " + name + ": invalid channel");
 
         min_severity[name] = cfg.valueOr<Severity>("log_level", defaultSeverity);

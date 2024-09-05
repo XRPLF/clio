@@ -23,7 +23,7 @@ jobs:
         run: |
           ./.githooks/check-format --diff
         shell: bash
-  
+ 
   check_docs:
     name: Check documentation
     runs-on: ubuntu-20.04
@@ -52,28 +52,28 @@ jobs:
             build_type: Release
             conan_profile: gcc
             code_coverage: false
-            static: false
+            static: true
           - os: heavy
             container:
               image: rippleci/clio_ci:latest
             build_type: Debug
             conan_profile: gcc
             code_coverage: true
-            static: false
+            static: true
           - os: heavy
             container:
               image: rippleci/clio_ci:latest
             build_type: Release
             conan_profile: clang
             code_coverage: false
-            static: false
+            static: true
           - os: heavy
             container:
               image: rippleci/clio_ci:latest
             build_type: Debug
             conan_profile: clang
             code_coverage: false
-            static: false
+            static: true
           - os: macos14
             build_type: Release
             code_coverage: false
@@ -149,6 +149,13 @@ jobs:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ steps.conan.outputs.conan_profile }}
           path: build/clio_*tests
 
+      - name: Upload test data
+        if: ${{ !matrix.code_coverage }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: clio_test_data_${{ runner.os }}_${{ matrix.build_type }}_${{ steps.conan.outputs.conan_profile }}
+          path: build/tests/unit/test_data
+
       - name: Save cache
         uses: ./.github/actions/save_cache
         with:
@@ -211,6 +218,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: clio_tests_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: clio_test_data_${{ runner.os }}_${{ matrix.build_type }}_${{ matrix.conan_profile }}
+          path: tests/unit/test_data
+
       - name: Run clio_tests
         run: |
           chmod +x ./clio_tests

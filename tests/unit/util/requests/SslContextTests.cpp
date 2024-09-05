@@ -25,6 +25,6 @@ using namespace util::requests::impl;
 
 TEST(SslContext, Create)
 {
-    auto ctx = makeSslContext();
+    auto ctx = makeClientSslContext();
     EXPECT_TRUE(ctx);
 }

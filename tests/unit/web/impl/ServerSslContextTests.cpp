@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,41 +17,32 @@
 */
 //==============================================================================
 
-#include "rpc/FakesAndMocks.hpp"
-#include "util/AsioContextTestFixture.hpp"
-#include "util/config/Config.hpp"
-#include "web/IntervalSweepHandler.hpp"
+#include "web/impl/ServerSslContext.hpp"
 
-#include <boost/json/parse.hpp>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <chrono>
+using namespace web::impl;
 
-using namespace util;
-using namespace web;
-using namespace testing;
-
-constexpr static auto JSONData = R"JSON(
-    {
-        "dos_guard": {
-            "max_fetches": 100,
-            "sweep_interval": 0.1,
-            "max_connections": 2,
-            "whitelist": ["127.0.0.1"]
-        }
-    }
-)JSON";
-
-class DOSGuardIntervalSweepHandlerTest : public SyncAsioContextTest {
-protected:
-    Config cfg{boost::json::parse(JSONData)};
-    IntervalSweepHandler sweepHandler{cfg, ctx};
-    tests::common::BasicDOSGuardMock<IntervalSweepHandler> guard{sweepHandler};
-};
-
-TEST_F(DOSGuardIntervalSweepHandlerTest, SweepAfterInterval)
+TEST(ServerSslContext, makeServerSslContext)
 {
-    EXPECT_CALL(guard, clear()).Times(AtLeast(2));
-    ctx.run_for(std::chrono::milliseconds(400));
+    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_CERT_PATH, TEST_DATA_SSL_KEY_PATH);
+    ASSERT_TRUE(sslContext);
+}
+
+TEST(ServerSslContext, makeServerSslContext_WrongCertPath)
+{
+    auto const sslContext = makeServerSslContext("wrong_path", TEST_DATA_SSL_KEY_PATH);
+    ASSERT_FALSE(sslContext);
+}
+
+TEST(ServerSslContext, makeServerSslContext_WrongKeyPath)
+{
+    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_CERT_PATH, "wrong_path");
+    ASSERT_FALSE(sslContext);
+}
+
+TEST(ServerSslContext, makeServerSslContext_CertKeyMismatch)
+{
+    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_KEY_PATH, TEST_DATA_SSL_CERT_PATH);
+    ASSERT_FALSE(sslContext);
 }

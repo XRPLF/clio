@@ -22,11 +22,11 @@
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "main/Build.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/build/Build.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -124,7 +124,7 @@ public:
         uint32_t loadFactor = 1u;
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         std::chrono::seconds uptime = {};
-        std::string clioVersion = Build::getClioVersionString();
+        std::string clioVersion = util::build::getClioVersionString();
         std::string xrplVersion = ripple::BuildInfo::getVersionString();
         std::optional<boost::json::object> rippledInfo = std::nullopt;
         ValidatedLedgerSection validatedLedger = {};

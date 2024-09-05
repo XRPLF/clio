@@ -22,7 +22,6 @@
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
-#include "data/cassandra/Concepts.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Schema.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
@@ -94,7 +93,7 @@ public:
         , executor_{settingsProvider_.getSettings(), handle_}
     {
         if (auto const res = handle_.connect(); not res)
-            throw std::runtime_error("Could not connect to Cassandra: " + res.error());
+            throw std::runtime_error("Could not connect to databse: " + res.error());
 
         if (not readOnly) {
             if (auto const res = handle_.execute(schema_.createKeyspace); not res) {
@@ -346,7 +345,7 @@ public:
             hashes.push_back(std::move(hash));
 
         auto end = std::chrono::system_clock::now();
-        LOG(log_.debug()) << "Fetched " << hashes.size() << " transaction hashes from Cassandra in "
+        LOG(log_.debug()) << "Fetched " << hashes.size() << " transaction hashes from database in "
                           << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
                           << " milliseconds";
 
@@ -612,11 +611,12 @@ public:
     {
         LOG(log_.debug()) << "Fetching ledger object for seq " << sequence << ", key = " << ripple::to_string(key);
         if (auto const res = executor_.read(yield, schema_->selectObject, key, sequence); res) {
-            if (auto const result = res->template get<Blob, std::uint32_t>(); result) { 
-                auto [_ ,seq] = result.value();
+            if (auto const result = res->template get<Blob, std::uint32_t>(); result) {
+                auto [_, seq] = result.value();
                 return seq;
-            }                 LOG(log_.debug()) << "Could not fetch ledger object sequence - no rows";
-           
+            }
+            LOG(log_.debug()) << "Could not fetch ledger object sequence - no rows";
+
         } else {
             LOG(log_.error()) << "Could not fetch ledger object sequence: " << res.error();
         }
@@ -697,7 +697,7 @@ public:
         });
 
         ASSERT(numHashes == results.size(), "Number of hashes and results must match");
-        LOG(log_.debug()) << "Fetched " << numHashes << " transactions from Cassandra in " << timeDiff
+        LOG(log_.debug()) << "Fetched " << numHashes << " transactions from database in " << timeDiff
                           << " milliseconds";
         return results;
     }
@@ -817,7 +817,7 @@ public:
         if (keys.empty())
             return {};
 
-        LOG(log_.debug()) << "Fetched " << keys.size() << " diff hashes from Cassandra in " << timeDiff
+        LOG(log_.debug()) << "Fetched " << keys.size() << " diff hashes from database in " << timeDiff
                           << " milliseconds";
 
         auto const objs = fetchLedgerObjects(keys, ledgerSequence, yield);
@@ -905,7 +905,7 @@ public:
         std::string&& metadata
     ) override
     {
-        LOG(log_.trace()) << "Writing txn to cassandra";
+        LOG(log_.trace()) << "Writing txn to database";
 
         executor_.write(schema_->insertLedgerTransaction, seq, hash);
         executor_.write(

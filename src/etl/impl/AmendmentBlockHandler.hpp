@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022, the clio developers.
+    Copyright (c) 2023, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,54 +19,41 @@
 
 #pragma once
 
-#include "util/config/Config.hpp"
+#include "etl/SystemState.hpp"
+#include "util/Repeat.hpp"
 
-#include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
 
 #include <chrono>
 #include <functional>
 
-namespace web {
+namespace etl::impl {
 
-class BaseDOSGuard;
-
-/**
- * @brief Sweep handler using a steady_timer and boost::asio::io_context.
- */
-class IntervalSweepHandler {
-    std::chrono::milliseconds sweepInterval_;
-    std::reference_wrapper<boost::asio::io_context> ctx_;
-    boost::asio::steady_timer timer_;
-
-    web::BaseDOSGuard* dosGuard_ = nullptr;
-
+class AmendmentBlockHandler {
 public:
-    /**
-     * @brief Construct a new interval-based sweep handler.
-     *
-     * @param config Clio config to use
-     * @param ctx The boost::asio::io_context to use
-     */
-    IntervalSweepHandler(util::Config const& config, boost::asio::io_context& ctx);
-
-    /**
-     * @brief Cancels the sweep timer.
-     */
-    ~IntervalSweepHandler();
-
-    /**
-     * @brief This setup member function is called by @ref BasicDOSGuard during its initialization.
-     *
-     * @param guard Pointer to the dos guard
-     */
-    void
-    setup(web::BaseDOSGuard* guard);
+    using ActionType = std::function<void()>;
 
 private:
+    std::reference_wrapper<SystemState> state_;
+    util::Repeat repeat_;
+    std::chrono::steady_clock::duration interval_;
+
+    ActionType action_;
+
+public:
+    static ActionType const defaultAmendmentBlockAction;
+
+    AmendmentBlockHandler(
+        boost::asio::io_context& ioc,
+        SystemState& state,
+        std::chrono::steady_clock::duration interval = std::chrono::seconds{1},
+        ActionType action = defaultAmendmentBlockAction
+    );
+
     void
-    createTimer();
+    onAmendmentBlock();
 };
 
-}  // namespace web
+}  // namespace etl::impl

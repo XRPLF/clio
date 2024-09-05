@@ -22,13 +22,14 @@
 #include "data/BackendInterface.hpp"
 #include "rpc/Counters.hpp"
 #include "rpc/Errors.hpp"
+#include "rpc/RPCHelpers.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/HandlerProvider.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
-#include "web/DOSGuard.hpp"
+#include "web/dosguard/DOSGuardInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -44,9 +45,6 @@
 #include <utility>
 
 // forward declarations
-namespace feed {
-class SubscriptionManager;
-}  // namespace feed
 namespace etl {
 class LoadBalancer;
 class ETLService;
@@ -65,7 +63,7 @@ class RPCEngine {
     util::Logger log_{"RPC"};
 
     std::shared_ptr<BackendInterface> backend_;
-    std::reference_wrapper<web::DOSGuard const> dosGuard_;
+    std::reference_wrapper<web::dosguard::DOSGuardInterface const> dosGuard_;
     std::reference_wrapper<WorkQueue> workQueue_;
     std::reference_wrapper<Counters> counters_;
 
@@ -87,7 +85,7 @@ public:
     RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
-        web::DOSGuard const& dosGuard,
+        web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider
@@ -116,7 +114,7 @@ public:
     make_RPCEngine(
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<etl::LoadBalancer> const& balancer,
-        web::DOSGuard const& dosGuard,
+        web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider
@@ -134,8 +132,13 @@ public:
     Result
     buildResponse(web::Context const& ctx)
     {
-        if (forwardingProxy_.shouldForward(ctx))
+        if (forwardingProxy_.shouldForward(ctx)) {
+            // Disallow forwarding of the admin api, only user api is allowed for security reasons.
+            if (isAdminCmd(ctx.method, ctx.params))
+                return Result{Status{RippledError::rpcNO_PERMISSION}};
+
             return forwardingProxy_.forward(ctx);
+        }
 
         if (backend_->isTooBusy()) {
             LOG(log_.error()) << "Database is too busy. Rejecting request";

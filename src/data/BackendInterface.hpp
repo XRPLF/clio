@@ -448,7 +448,8 @@ public:
      * @return The sequence in unit32_t on success; nullopt otherwise
      */
     virtual std::optional<std::uint32_t>
-    doFetchLedgerObjectSeq(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield) const = 0;
+    doFetchLedgerObjectSeq(ripple::uint256 const& key, std::uint32_t sequence, boost::asio::yield_context yield)
+        const = 0;
 
     /**
      * @brief The database-specific implementation for fetching ledger objects.

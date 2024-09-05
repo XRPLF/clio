@@ -34,11 +34,6 @@ public:
         timer_.async_wait(std::forward<decltype(fn)>(fn));
     }
 
-    ~SteadyTimer()
-    {
-        cancel();
-    }
-
     SteadyTimer(SteadyTimer&&) = default;
 
     SteadyTimer(SteadyTimer const&) = delete;
