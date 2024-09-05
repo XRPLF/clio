@@ -30,7 +30,9 @@
 #include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
 #include "util/StringUtils.hpp"
+#include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/ObjectView.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <TestGlobals.hpp>
 #include <boost/asio/impl/spawn.hpp>
@@ -73,13 +75,16 @@ using namespace data::cassandra;
 
 class BackendCassandraTest : public SyncAsioContextTest, public WithPrometheus {
 protected:
-    ObjectView cfg{
-        {{"contact_points", ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
-         {"keyspace", ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
-         {"replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)}}
+    ClioConfigDefinition cfg{
+        {{"database.cassandra.contact_points",
+          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
+         {"database.cassandra.keyspace",
+          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
+         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)}}
     };
 
-    SettingsProvider settingsProvider{cfg};
+    ObjectView obj = cfg.getObject("database.cassandra");
+    SettingsProvider settingsProvider{obj};
 
     // recreated for each test
     std::unique_ptr<BackendInterface> backend;
