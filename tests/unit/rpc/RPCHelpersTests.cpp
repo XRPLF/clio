@@ -25,6 +25,7 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/asio/impl/spawn.hpp>
@@ -540,41 +541,42 @@ TEST_F(RPCHelpersTest, ParseIssue)
     );
 }
 
-TEST_F(RPCHelpersTest, isAdminCmd)
+struct IsAdminCmdParamTestCaseBundle {
+    std::string testName;
+    std::string method;
+    std::string testJson;
+    bool expected;
+};
+
+struct IsAdminCmdParameterTest : public TestWithParam<IsAdminCmdParamTestCaseBundle> {};
+
+static auto
+generateTestValuesForParametersTest()
 {
-    auto method = "feature";
-    auto params = boost::json::parse(R"({"vetoed": true, "feature": "foo"})");
-    EXPECT_TRUE(isAdminCmd(method, params.as_object()));
+    return std::vector<IsAdminCmdParamTestCaseBundle>{
+        {"featureVetoedTrue", "feature", R"({"vetoed": true, "feature": "foo"})", true},
+        {"featureVetoedFalse", "feature", R"({"vetoed": false, "feature": "foo"})", true},
+        {"ledgerFullTrue", "ledger", R"({"full": true})", true},
+        {"ledgerAccountsTrue", "ledger", R"({"accounts": true})", true},
+        {"ledgerTypeTrue", "ledger", R"({"type": true})", true},
+        {"ledgerFullFalse", "ledger", R"({"full": false})", false},
+        {"ledgerAccountsFalse", "ledger", R"({"accounts": false})", false},
+        {"ledgerTypeFalse", "ledger", R"({"type": false})", false},
+        {"ledgerEntry", "ledger_entry", R"({"type": false})", false}
+    };
+}
 
-    method = "feature";
-    params = boost::json::parse(R"({"vetoed": false, "feature": "foo"})");
-    EXPECT_TRUE(isAdminCmd(method, params.as_object()));
+INSTANTIATE_TEST_CASE_P(
+    IsAdminCmdTest,
+    IsAdminCmdParameterTest,
+    ValuesIn(generateTestValuesForParametersTest()),
+    tests::util::NameGenerator
+);
 
-    method = "ledger";
-    params = boost::json::parse(R"({"full": true})");
-    EXPECT_TRUE(isAdminCmd(method, params.as_object()));
-
-    method = "ledger";
-    params = boost::json::parse(R"({"accounts": true})");
-    EXPECT_TRUE(isAdminCmd(method, params.as_object()));
-
-    method = "ledger";
-    params = boost::json::parse(R"({"type": true})");
-    EXPECT_TRUE(isAdminCmd(method, params.as_object()));
-
-    method = "ledger";
-    params = boost::json::parse(R"({"full": false})");
-    EXPECT_FALSE(isAdminCmd(method, params.as_object()));
-
-    method = "ledger";
-    params = boost::json::parse(R"({"accounts": false})");
-    EXPECT_FALSE(isAdminCmd(method, params.as_object()));
-
-    method = "ledger";
-    params = boost::json::parse(R"({"type": false})");
-    EXPECT_FALSE(isAdminCmd(method, params.as_object()));
-
-    method = "ledger_entry";
-    params = boost::json::parse(R"({"type": false})");
-    EXPECT_FALSE(isAdminCmd(method, params.as_object()));
+TEST_P(IsAdminCmdParameterTest, Test)
+{
+    auto const testBundle = GetParam();
+    EXPECT_TRUE(
+        isAdminCmd(testBundle.method, boost::json::parse(testBundle.testJson).as_object()) == testBundle.expected
+    );
 }
