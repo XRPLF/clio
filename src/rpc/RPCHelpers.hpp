@@ -558,6 +558,16 @@ bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request);
 
 /**
+ * @brief Check whether a request requires administrative privileges on rippled side.
+ *
+ * @param method The method name to check
+ * @param request The request to check
+ * @return true if the request requires ADMIN role
+ */
+bool
+isAdminCmd(std::string const& method, boost::json::object const& request);
+
+/**
  * @brief Get the NFTID from the request
  *
  * @param request The request

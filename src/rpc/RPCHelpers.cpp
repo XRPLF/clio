@@ -1273,6 +1273,23 @@ specifiesCurrentOrClosedLedger(boost::json::object const& request)
     return false;
 }
 
+bool
+isAdminCmd(std::string const& method, boost::json::object const& request)
+{
+    auto const isFieldSet = [&request](auto const field) {
+        return request.contains(field) and request.at(field).is_bool() and request.at(field).as_bool();
+    };
+
+    if (method == JS(ledger)) {
+        if (isFieldSet(JS(full)) or isFieldSet(JS(accounts)) or isFieldSet(JS(type)))
+            return true;
+    }
+
+    if (method == JS(feature) and request.contains(JS(vetoed)))
+        return true;
+    return false;
+}
+
 std::variant<ripple::uint256, Status>
 getNFTID(boost::json::object const& request)
 {
