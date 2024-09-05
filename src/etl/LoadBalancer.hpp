@@ -25,6 +25,7 @@
 #include "etl/Source.hpp"
 #include "etl/impl/ForwardingCache.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
+#include "util/Mutex.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
@@ -38,7 +39,6 @@
 #include <org/xrpl/rpc/v1/ledger.pb.h>
 #include <ripple/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
-#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -74,7 +74,10 @@ private:
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
         DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
-    std::atomic_bool hasForwardingSource_{false};
+
+    // Using mutext instead of atomic_bool because choosing a new source to
+    // forward messages should be done with a mutual exclusion otherwise there will be a race condition
+    util::Mutex<bool> hasForwardingSource_{false};
 
 public:
     /**

@@ -39,8 +39,10 @@
 #include <boost/beast/websocket/stream_base.hpp>
 #include <boost/system/errc.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <expected>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -123,15 +125,20 @@ private:
     static void
     withTimeout(Operation&& operation, boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
     {
+        auto isCompleted = std::make_shared<bool>(false);
         boost::asio::cancellation_signal cancellationSignal;
         auto cyield = boost::asio::bind_cancellation_slot(cancellationSignal.slot(), yield);
 
         boost::asio::steady_timer timer{boost::asio::get_associated_executor(cyield), timeout};
-        timer.async_wait([&cancellationSignal](boost::system::error_code errorCode) {
-            if (!errorCode)
+
+        // The timer below can be called with no error code even if the operation is completed before the timeout, so we
+        // need an additional flag here
+        timer.async_wait([&cancellationSignal, isCompleted](boost::system::error_code errorCode) {
+            if (!errorCode and not *isCompleted)
                 cancellationSignal.emit(boost::asio::cancellation_type::terminal);
         });
         operation(cyield);
+        *isCompleted = true;
     }
 
     static boost::system::error_code
