@@ -573,7 +573,7 @@ TEST_F(SubscriptionSourcePrometheusCounterTests, LastMessageTime)
         auto const now =
             std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
                 .count();
-        EXPECT_LE(std::abs(value - now), 1);
+        EXPECT_LE(now - value, 1);
     });
     ioContext_.run();
 }
