@@ -539,3 +539,42 @@ TEST_F(RPCHelpersTest, ParseIssue)
         std::runtime_error
     );
 }
+
+TEST_F(RPCHelpersTest, isAdminCmd)
+{
+    auto method = "feature";
+    auto params = boost::json::parse(R"({"vetoed": true, "feature": "foo"})");
+    EXPECT_TRUE(isAdminCmd(method, params.as_object()));
+
+    method = "feature";
+    params = boost::json::parse(R"({"vetoed": false, "feature": "foo"})");
+    EXPECT_TRUE(isAdminCmd(method, params.as_object()));
+
+    method = "ledger";
+    params = boost::json::parse(R"({"full": true})");
+    EXPECT_TRUE(isAdminCmd(method, params.as_object()));
+
+    method = "ledger";
+    params = boost::json::parse(R"({"accounts": true})");
+    EXPECT_TRUE(isAdminCmd(method, params.as_object()));
+
+    method = "ledger";
+    params = boost::json::parse(R"({"type": true})");
+    EXPECT_TRUE(isAdminCmd(method, params.as_object()));
+
+    method = "ledger";
+    params = boost::json::parse(R"({"full": false})");
+    EXPECT_FALSE(isAdminCmd(method, params.as_object()));
+
+    method = "ledger";
+    params = boost::json::parse(R"({"accounts": false})");
+    EXPECT_FALSE(isAdminCmd(method, params.as_object()));
+
+    method = "ledger";
+    params = boost::json::parse(R"({"type": false})");
+    EXPECT_FALSE(isAdminCmd(method, params.as_object()));
+
+    method = "ledger_entry";
+    params = boost::json::parse(R"({"type": false})");
+    EXPECT_FALSE(isAdminCmd(method, params.as_object()));
+}
