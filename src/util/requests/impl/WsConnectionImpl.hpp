@@ -125,7 +125,7 @@ private:
     static void
     withTimeout(Operation&& operation, boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
     {
-        auto isCompleted = std::make_shared<std::atomic_bool>(false);
+        auto isCompleted = std::make_shared<bool>(false);
         boost::asio::cancellation_signal cancellationSignal;
         auto cyield = boost::asio::bind_cancellation_slot(cancellationSignal.slot(), yield);
 
@@ -134,11 +134,11 @@ private:
         // The timer below can be called with no error code even if the operation is completed before the timeout, so we
         // need an additional flag here
         timer.async_wait([&cancellationSignal, isCompleted](boost::system::error_code errorCode) {
-            if (!errorCode and not isCompleted->load())
+            if (!errorCode and not *isCompleted)
                 cancellationSignal.emit(boost::asio::cancellation_type::terminal);
         });
         operation(cyield);
-        isCompleted->store(true);
+        *isCompleted = true;
     }
 
     static boost::system::error_code
