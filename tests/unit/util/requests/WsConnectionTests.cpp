@@ -332,7 +332,7 @@ TEST_F(WsConnectionTests, RespondsToPing)
         EXPECT_CALL(controlFrameCallback, Call(boost::beast::websocket::frame_type::pong, testing::_)).WillOnce([&]() {
             serverConnection.resetControlFrameCallback();
             asio::spawn(ctx, [&](asio::yield_context yield) {
-                auto maybeError = serverConnection.send("got ping", yield);
+                auto maybeError = serverConnection.send("got pong", yield);
                 ASSERT_FALSE(maybeError.has_value()) << *maybeError;
             });
         });
@@ -348,7 +348,7 @@ TEST_F(WsConnectionTests, RespondsToPing)
         ASSERT_TRUE(connection.has_value()) << connection.error().message();
         auto expectedMessage = connection->operator*().read(yield);
         ASSERT_TRUE(expectedMessage) << expectedMessage.error().message();
-        EXPECT_EQ(expectedMessage.value(), "got ping");
+        EXPECT_EQ(expectedMessage.value(), "got pong");
 
         auto error = connection->operator*().write("hello", yield);
         ASSERT_FALSE(error) << error->message();
