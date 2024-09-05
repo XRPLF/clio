@@ -64,6 +64,7 @@
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STBase.h>
+#include <xrpl/protocol/STEitherAmount.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STTx.h>
@@ -134,7 +135,7 @@ parseAccountCursor(std::optional<std::string> jsonCursor)
     return AccountCursor({cursorIndex, startHint});
 }
 
-std::optional<ripple::STAmount>
+std::optional<ripple::STEitherAmount>
 getDeliveredAmount(
     std::shared_ptr<ripple::STTx const> const& txn,
     std::shared_ptr<ripple::TxMeta const> const& meta,
