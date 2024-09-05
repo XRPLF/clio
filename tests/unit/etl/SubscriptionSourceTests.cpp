@@ -70,8 +70,8 @@ struct SubscriptionSourceConnectionTestsBase : public NoLoggerFixture {
         onConnectHook_.AsStdFunction(),
         onDisconnectHook_.AsStdFunction(),
         onLedgerClosedHook_.AsStdFunction(),
-        std::chrono::milliseconds(1),
-        std::chrono::milliseconds(1)
+        std::chrono::milliseconds(5),
+        std::chrono::milliseconds(5)
     };
 
     [[maybe_unused]] TestWsConnection
