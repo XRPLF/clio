@@ -558,7 +558,7 @@ bool
 specifiesCurrentOrClosedLedger(boost::json::object const& request);
 
 /**
- * @brief Check if a request requires ADMIN role to execute in rippled.
+ * @brief Check whether a request requires administrative privileges on rippled side.
  *
  * @param method The method name to check
  * @param request The request to check

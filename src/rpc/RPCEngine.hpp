@@ -134,9 +134,9 @@ public:
     {
         if (forwardingProxy_.shouldForward(ctx)) {
             // Disallow forwarding of the admin api, only user api is allowed for security reasons.
-            if (isAdminCmd(ctx.method, ctx.params)) {
+            if (isAdminCmd(ctx.method, ctx.params))
                 return Result{Status{RippledError::rpcNO_PERMISSION}};
-            }
+
             return forwardingProxy_.forward(ctx);
         }
 
