@@ -25,6 +25,7 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/asio/impl/spawn.hpp>
@@ -538,4 +539,42 @@ TEST_F(RPCHelpersTest, ParseIssue)
         parseIssue(boost::json::parse(R"({"issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"})").as_object()),
         std::runtime_error
     );
+}
+
+struct IsAdminCmdParamTestCaseBundle {
+    std::string testName;
+    std::string method;
+    std::string testJson;
+    bool expected;
+};
+
+struct IsAdminCmdParameterTest : public TestWithParam<IsAdminCmdParamTestCaseBundle> {};
+
+static auto
+generateTestValuesForParametersTest()
+{
+    return std::vector<IsAdminCmdParamTestCaseBundle>{
+        {"featureVetoedTrue", "feature", R"({"vetoed": true, "feature": "foo"})", true},
+        {"featureVetoedFalse", "feature", R"({"vetoed": false, "feature": "foo"})", true},
+        {"ledgerFullTrue", "ledger", R"({"full": true})", true},
+        {"ledgerAccountsTrue", "ledger", R"({"accounts": true})", true},
+        {"ledgerTypeTrue", "ledger", R"({"type": true})", true},
+        {"ledgerFullFalse", "ledger", R"({"full": false})", false},
+        {"ledgerAccountsFalse", "ledger", R"({"accounts": false})", false},
+        {"ledgerTypeFalse", "ledger", R"({"type": false})", false},
+        {"ledgerEntry", "ledger_entry", R"({"type": false})", false}
+    };
+}
+
+INSTANTIATE_TEST_CASE_P(
+    IsAdminCmdTest,
+    IsAdminCmdParameterTest,
+    ValuesIn(generateTestValuesForParametersTest()),
+    tests::util::NameGenerator
+);
+
+TEST_P(IsAdminCmdParameterTest, Test)
+{
+    auto const testBundle = GetParam();
+    EXPECT_EQ(isAdminCmd(testBundle.method, boost::json::parse(testBundle.testJson).as_object()), testBundle.expected);
 }
