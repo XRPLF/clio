@@ -111,10 +111,13 @@ LoadBalancer::LoadBalancer(
             validatedLedgers,
             forwardingTimeout,
             [this]() {
-                if (not hasForwardingSource_)
+                if (not hasForwardingSource_.lock().get())
                     chooseForwardingSource();
             },
-            [this]() { chooseForwardingSource(); },
+            [this](bool wasForwarding) {
+                if (wasForwarding)
+                    chooseForwardingSource();
+            },
             [this]() {
                 if (forwardingCache_.has_value())
                     forwardingCache_->invalidate();
@@ -323,11 +326,12 @@ void
 LoadBalancer::chooseForwardingSource()
 {
     LOG(log_.info()) << "Choosing a new source to forward subscriptions";
-    hasForwardingSource_ = false;
+    auto hasForwardingSourceLock = hasForwardingSource_.lock();
+    hasForwardingSourceLock.get() = false;
     for (auto& source : sources_) {
-        if (not hasForwardingSource_ and source->isConnected()) {
+        if (not hasForwardingSourceLock.get() and source->isConnected()) {
             source->setForwarding(true);
-            hasForwardingSource_ = true;
+            hasForwardingSourceLock.get() = true;
         } else {
             source->setForwarding(false);
         }
