@@ -30,7 +30,7 @@
 #include <vector>
 
 struct ParseJson : testing::Test {
-    ParseJson() : jsonFileObj(TmpFile(JSONData).path)
+    ParseJson() : jsonFileObj{TmpFile(JSONData).path}
     {
     }
 

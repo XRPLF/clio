@@ -45,9 +45,6 @@ public:
         parse(filePath);
     }
 
-    void
-    parse(boost::filesystem::path filePath) override;
-
     /**
      * @brief Retrieves a configuration value by its key.
      *
@@ -87,6 +84,14 @@ private:
      */
     void
     flattenJson(boost::json::object const& obj, std::string const& prefix);
+
+    /**
+     * @brief Parses the provided JSON file and stores the values in the object.
+     *
+     * @param filePath The path to the JSON file to be parsed.
+     */
+    void
+    parse(boost::filesystem::path filePath) override;
 
     boost::json::object jsonObject_;
 };
