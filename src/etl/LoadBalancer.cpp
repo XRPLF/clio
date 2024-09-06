@@ -322,6 +322,7 @@ LoadBalancer::getETLState() noexcept
 void
 LoadBalancer::chooseForwardingSource()
 {
+    LOG(log_.info()) << "Choosing a new source to forward subscriptions";
     hasForwardingSource_ = false;
     for (auto& source : sources_) {
         if (not hasForwardingSource_ and source->isConnected()) {
