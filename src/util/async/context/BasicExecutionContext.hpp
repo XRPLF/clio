@@ -369,7 +369,7 @@ public:
      * @brief Block until all operations are completed
      */
     void
-    join() noexcept
+    join() const noexcept
     {
         context_.join();
     }
