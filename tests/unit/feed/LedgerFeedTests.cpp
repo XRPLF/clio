@@ -21,6 +21,7 @@
 #include "feed/impl/LedgerFeed.hpp"
 #include "util/TestObject.hpp"
 
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
@@ -57,11 +58,13 @@ TEST_F(FeedLedgerTest, SubPub)
             "reserve_base":3,
             "reserve_inc":2
         })";
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+    boost::asio::io_context ioContext;
+    boost::asio::spawn(ioContext, [this](boost::asio::yield_context yield) {
         auto res = testFeedPtr->sub(yield, backend, sessionPtr);
         // check the response
         EXPECT_EQ(res, json::parse(LedgerResponse));
     });
+    ioContext.run();
     EXPECT_EQ(testFeedPtr->count(), 1);
 
     constexpr static auto ledgerPub =

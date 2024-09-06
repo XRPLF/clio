@@ -101,9 +101,7 @@ ClioApplication::run()
     auto backend = data::make_Backend(config_);
 
     // Manages clients subscribed to streams
-    auto subscriptionsRunner = feed::SubscriptionManagerRunner(config_, backend);
-
-    auto const subscriptions = subscriptionsRunner.getManager();
+    auto subscriptions = feed::SubscriptionManager::make_SubscriptionManager(config_, backend);
 
     // Tracks which ledgers have been validated by the network
     auto ledgers = etl::NetworkValidatedLedgers::make_ValidatedLedgers();
