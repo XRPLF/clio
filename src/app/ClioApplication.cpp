@@ -29,7 +29,6 @@
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
-#include "util/async/context/BasicExecutionContext.hpp"
 #include "util/build/Build.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -102,10 +101,7 @@ ClioApplication::run()
     auto backend = data::make_Backend(config_);
 
     // Manages clients subscribed to streams
-    auto const workersNum = config_.valueOr<std::uint64_t>("subscription_workers", 1);
-    LOG(util::LogService::info()) << "Starting subscription manager with " << workersNum << " workers";
-    auto subscriptions =
-        std::make_shared<feed::SubscriptionManager>(util::async::PoolExecutionContext(workersNum), backend);
+    auto subscriptions = feed::SubscriptionManager::make_SubscriptionManager(config_, backend);
 
     // Tracks which ledgers have been validated by the network
     auto ledgers = etl::NetworkValidatedLedgers::make_ValidatedLedgers();

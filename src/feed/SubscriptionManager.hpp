@@ -29,6 +29,9 @@
 #include "feed/impl/ProposedTransactionFeed.hpp"
 #include "feed/impl/TransactionFeed.hpp"
 #include "util/async/AnyExecutionContext.hpp"
+#include "util/async/context/BasicExecutionContext.hpp"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -42,6 +45,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 /**
@@ -66,15 +70,35 @@ class SubscriptionManager : public SubscriptionManagerInterface {
 
 public:
     /**
+     * @brief Factory function to create a new SubscriptionManager with a PoolExecutionContext.
+     *
+     * @param config The configuration to use
+     * @param backend The backend to use
+     * @return A shared pointer to a new instance of SubscriptionManager
+     */
+    static std::shared_ptr<SubscriptionManager>
+    make_SubscriptionManager(util::Config const& config, std::shared_ptr<data::BackendInterface const> const& backend)
+    {
+        auto const workersNum = config.valueOr<std::uint64_t>("subscription_workers", 1);
+
+        util::Logger logger_{"Subscriptions"};
+        LOG(logger_.info()) << "Starting subscription manager with " << workersNum << " workers";
+
+        return std::make_shared<feed::SubscriptionManager>(util::async::PoolExecutionContext(workersNum), backend);
+    }
+
+    /**
      * @brief Construct a new Subscription Manager object
      *
      * @param executor The executor to use to publish the feeds
      * @param backend The backend to use
      */
-    template <class ExecutorCtx>
-    SubscriptionManager(ExecutorCtx&& executor, std::shared_ptr<data::BackendInterface const> const& backend)
+    SubscriptionManager(
+        util::async::AnyExecutionContext&& executor,
+        std::shared_ptr<data::BackendInterface const> const& backend
+    )
         : backend_(backend)
-        , ctx_(std::forward<ExecutorCtx>(executor))
+        , ctx_(std::move(executor))
         , manifestFeed_(ctx_, "manifest")
         , validationsFeed_(ctx_, "validations")
         , ledgerFeed_(ctx_)
@@ -288,4 +312,5 @@ public:
     boost::json::object
     report() const final;
 };
+
 }  // namespace feed
