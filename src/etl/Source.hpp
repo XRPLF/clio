@@ -53,7 +53,7 @@ namespace etl {
 class SourceBase {
 public:
     using OnConnectHook = std::function<void()>;
-    using OnDisconnectHook = std::function<void()>;
+    using OnDisconnectHook = std::function<void(bool)>;
     using OnLedgerClosedHook = std::function<void()>;
 
     virtual ~SourceBase() = default;
