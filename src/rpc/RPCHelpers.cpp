@@ -1276,8 +1276,10 @@ specifiesCurrentOrClosedLedger(boost::json::object const& request)
 bool
 isAdminCmd(std::string const& method, boost::json::object const& request)
 {
+    // rippled considers the string as true: https://github.com/XRPLF/rippled/issues/5119
     auto const isFieldSet = [&request](auto const field) {
-        return request.contains(field) and request.at(field).is_bool() and request.at(field).as_bool();
+        return request.contains(field) and
+            ((request.at(field).is_bool() and request.at(field).as_bool()) or request.at(field).is_string());
     };
 
     if (method == JS(ledger)) {
