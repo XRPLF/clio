@@ -76,6 +76,7 @@ public:
      * stores the values in the object.
      *
      * @param configFilePath The path to the JSON file to be parsed.
+     * @return A ConfigFileJson object if parsing user file is successful. Error otherwise
      */
     [[nodiscard]] static std::expected<ConfigFileJson, Error>
     make_ConfigFileJson(boost::filesystem::path configFilePath);
