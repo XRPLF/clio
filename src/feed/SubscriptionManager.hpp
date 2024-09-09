@@ -81,7 +81,7 @@ public:
     {
         auto const workersNum = config.valueOr<std::uint64_t>("subscription_workers", 1);
 
-        util::Logger logger{"Subscriptions"};
+        util::Logger const logger{"Subscriptions"};
         LOG(logger.info()) << "Starting subscription manager with " << workersNum << " workers";
 
         return std::make_shared<feed::SubscriptionManager>(util::async::PoolExecutionContext(workersNum), backend);
