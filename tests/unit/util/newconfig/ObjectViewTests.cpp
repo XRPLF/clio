@@ -17,13 +17,13 @@
 */
 //==============================================================================
 
-#include "util/TmpFile.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigFileJson.hpp"
 #include "util/newconfig/FakeConfigData.hpp"
 #include "util/newconfig/ObjectView.hpp"
 
+#include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
 
 using namespace util::config;
@@ -31,8 +31,7 @@ using namespace util::config;
 struct ObjectViewTest : testing::Test {
     ObjectViewTest()
     {
-        auto const tmp = TmpFile(JSONData);
-        ConfigFileJson const jsonFileObj{tmp.path};
+        ConfigFileJson const jsonFileObj{boost::json::parse(JSONData).as_object()};
         auto const errors = configData.parse(jsonFileObj);
         EXPECT_TRUE(!errors.has_value());
     }
@@ -52,7 +51,7 @@ TEST_F(ObjectViewTest, ObjectValueTest)
     EXPECT_EQ(false, headerObj.getValue("admin").asBool());
 }
 
-TEST_F(ObjectViewTest, ObjectInArray)
+TEST_F(ObjectViewTest, ObjectValuesInArray)
 {
     ArrayView const arr = configData.getArray("array");
     EXPECT_EQ(arr.size(), 3);
@@ -71,7 +70,7 @@ TEST_F(ObjectViewTest, ObjectInArray)
     EXPECT_EQ(secondObj.getValue("sub2").asString(), "temporary");
 }
 
-TEST_F(ObjectViewTest, ObjectInArrayMoreComplex)
+TEST_F(ObjectViewTest, GetObjectsInDifferentWays)
 {
     ArrayView const arr = configData.getArray("higher");
     ASSERT_EQ(1, arr.size());
@@ -105,12 +104,19 @@ TEST_F(ObjectViewTest, getArrayInObject)
 
 struct ObjectViewDeathTest : ObjectViewTest {};
 
-TEST_F(ObjectViewDeathTest, incorrectKeys)
+TEST_F(ObjectViewDeathTest, KeyDoesNotExist)
+{
+    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("head"); }, ".*");
+}
+
+TEST_F(ObjectViewDeathTest, KeyIsValueView)
 {
     EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("header.text1"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("head"); }, ".*");
     EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getArray("header"); }, ".*");
+}
 
+TEST_F(ObjectViewDeathTest, KeyisArrayView)
+{
     // dies because only 1 object in higher.[].low
     EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("higher.[].low", 1); }, ".*");
 }

@@ -31,12 +31,17 @@
 
 using namespace util::config;
 
-TEST(ArrayTest, testConfigArray)
+TEST(ArrayTest, addSingleValue)
 {
     auto arr = Array{ConfigValue{ConfigType::Double}};
     arr.addValue(111.11);
     EXPECT_EQ(arr.size(), 1);
+}
 
+TEST(ArrayTest, addAndCheckMultipleValues)
+{
+    auto arr = Array{ConfigValue{ConfigType::Double}};
+    arr.addValue(111.11);
     arr.addValue(222.22);
     arr.addValue(333.33);
     EXPECT_EQ(arr.size(), 3);
@@ -58,9 +63,16 @@ TEST(ArrayTest, testConfigArray)
     EXPECT_EQ(vv4.asDouble(), 444.44);
 }
 
-TEST(ArrayTest, iterateArray)
+TEST(ArrayTest, testArrayPattern)
 {
-    auto arr = Array{ConfigValue{ConfigType::Integer}.withConstraint(ValidateUint16)};
+    auto const arr = Array{ConfigValue{ConfigType::String}};
+    auto const arrPattern = arr.getArrayPattern();
+    EXPECT_EQ(arrPattern.type(), ConfigType::String);
+}
+
+TEST(ArrayTest, iterateValueArray)
+{
+    auto arr = Array{ConfigValue{ConfigType::Integer}.withConstraint(validateUint16)};
     std::vector<int64_t> const expected{543, 123, 909};
 
     for (auto const num : expected)

@@ -24,7 +24,7 @@
 #include "util/newconfig/ConfigDescription.hpp"
 #include "util/newconfig/ConfigFileInterface.hpp"
 #include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/ObjectView.hpp"
 #include "util/newconfig/ValueView.hpp"
 

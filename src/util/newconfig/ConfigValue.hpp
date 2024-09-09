@@ -22,7 +22,7 @@
 #include "util/Assert.hpp"
 #include "util/OverloadSet.hpp"
 #include "util/newconfig/ConfigConstraints.hpp"
-#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <fmt/core.h>

@@ -19,15 +19,13 @@
 
 #pragma once
 
-#include "util/Assert.hpp"
 #include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <cstddef>
 #include <optional>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 namespace util::config {
@@ -44,13 +42,9 @@ public:
     /**
      * @brief Constructs an Array with provided Arg
      *
-     * @tparam Args Types of the arguments
      * @param arg Argument to set the type and constraint of ConfigValues in Array
      */
-    Array(ConfigValue arg) : elements_{std::move(arg)}
-    {
-        ASSERT(!elements_.at(0).hasValue(), "Array does not include default values");
-    }
+    Array(ConfigValue arg);
 
     /**
      * @brief Add ConfigValues to Array class
@@ -80,6 +74,15 @@ public:
     at(std::size_t idx) const;
 
     /**
+     * @brief Returns the ConfigValue that defines the type/constraint every
+     * ConfigValue must follow in Array
+     *
+     * @return The item_pattern
+     */
+    [[nodiscard]] ConfigValue const&
+    getArrayPattern() const;
+
+    /**
      * @brief Returns an iterator to the beginning of the ConfigValue vector.
      *
      * @return A constant iterator to the beginning of the vector.
@@ -96,6 +99,7 @@ public:
     end() const;
 
 private:
+    ConfigValue itemPattern_;
     std::vector<ConfigValue> elements_;
 };
 

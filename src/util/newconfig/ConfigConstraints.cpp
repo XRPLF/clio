@@ -19,9 +19,8 @@
 
 #include "util/newconfig/ConfigConstraints.hpp"
 
-#include "rpc/common/APIVersion.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <fmt/core.h>
@@ -41,7 +40,7 @@ std::optional<Error>
 PortConstraint::checkTypeImpl(Value const& port) const
 {
     if (!(std::holds_alternative<int64_t>(port) || std::holds_alternative<std::string>(port)))
-        return Error{"Port must be a string or Integer"};
+        return Error{"Port must be a string or integer"};
     return std::nullopt;
 }
 
@@ -78,7 +77,7 @@ ChannelNameConstraint::checkValueImpl(Value const& channelName) const
             return std::get<std::string>(channelName) == name;
         }))
         return std::nullopt;
-    return Error{makeErrorMsg("channel", Logger::CHANNELS)};
+    return Error{makeErrorMsg("channel", channelName, Logger::CHANNELS)};
 }
 
 std::optional<Error>
@@ -96,27 +95,34 @@ LogLevelNameConstraint::checkValueImpl(Value const& logLevel) const
             return std::get<std::string>(logLevel) == name;
         }))
         return std::nullopt;
-    return Error{makeErrorMsg("log_level", logLevels)};
+    return Error{makeErrorMsg("log_level", logLevel, logLevels)};
 }
 
 std::optional<Error>
 ValidIPConstraint::checkTypeImpl(Value const& ip) const
 {
     if (!std::holds_alternative<std::string>(ip))
-        return Error{"ip value must be a string"};
+        return Error{"Ip value must be a string"};
     return std::nullopt;
 }
 
 std::optional<Error>
 ValidIPConstraint::checkValueImpl(Value const& ip) const
 {
-    static std::regex const ipv4(
-        R"(^((http|https):\/\/)?((([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6})|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))(:\d{1,5})?(\/[^\s]*)?$)"
-    );
-    if (std::regex_match(std::get<std::string>(ip), ipv4))
+    if (std::get<std::string>(ip) == "localhost")
         return std::nullopt;
 
-    return Error{"ip is not a valid ip address"};
+    static std::regex const ipv4(
+        R"(^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$)"
+    );
+
+    static std::regex const ip_url(
+        R"(^((http|https):\/\/)?((([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6})|(((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])))(:\d{1,5})?(\/[^\s]*)?$)"
+    );
+    if (std::regex_match(std::get<std::string>(ip), ipv4) || std::regex_match(std::get<std::string>(ip), ip_url))
+        return std::nullopt;
+
+    return Error{"Ip is not a valid ip address"};
 }
 
 std::optional<Error>
@@ -132,7 +138,7 @@ CassandraName::checkValueImpl(Value const& name) const
 {
     if (std::get<std::string>(name) == "cassandra")
         return std::nullopt;
-    return Error{"Key \"database.type\"'s value must be string Cassandra"};
+    return Error{"Key \"database.type\"'s value must be string cassandra"};
 }
 
 std::optional<Error>
@@ -150,7 +156,7 @@ LoadConstraint::checkValueImpl(Value const& loadMode) const
             return std::get<std::string>(loadMode) == name;
         }))
         return std::nullopt;
-    return Error{makeErrorMsg("cache.load", loadCacheMode)};
+    return Error{makeErrorMsg("cache.load", loadMode, loadCacheMode)};
 }
 
 std::optional<Error>
@@ -169,30 +175,14 @@ LogTagStyle::checkValueImpl(Value const& tagName) const
         })) {
         return std::nullopt;
     }
-    return Error{makeErrorMsg("log_tag_style", logTags)};
-}
-
-std::optional<Error>
-APIVersionConstraint::checkTypeImpl(Value const& apiVersion) const
-{
-    if (!std::holds_alternative<int64_t>(apiVersion))
-        return Error{"api_version value must be a positive integer"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-APIVersionConstraint::checkValueImpl(Value const& apiVersion) const
-{
-    if (std::get<int64_t>(apiVersion) <= rpc::API_VERSION_MAX && std::get<int64_t>(apiVersion) >= rpc::API_VERSION_MIN)
-        return std::nullopt;
-    return Error{fmt::format("api_version must be between {} and {}", rpc::API_VERSION_MIN, rpc::API_VERSION_MAX)};
+    return Error{makeErrorMsg("log_tag_style", tagName, logTags)};
 }
 
 std::optional<Error>
 PositiveDouble::checkTypeImpl(Value const& num) const
 {
-    if (!std::holds_alternative<double>(num))
-        return Error{"double number must be of type double"};
+    if (!(std::holds_alternative<double>(num) || std::holds_alternative<int64_t>(num)))
+        return Error{"Double number must be of type int or double"};
     return std::nullopt;
 }
 
@@ -201,7 +191,7 @@ PositiveDouble::checkValueImpl(Value const& num) const
 {
     if (std::get<double>(num) >= 0)
         return std::nullopt;
-    return Error{"double number must be greater than 0"};
+    return Error{"Double number must be greater than 0"};
 }
 
 }  // namespace util::config

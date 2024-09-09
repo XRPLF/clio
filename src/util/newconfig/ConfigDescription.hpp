@@ -92,7 +92,7 @@ private:
         KV{"server.max_queue_size", "Maximum size of the server's request queue."},
         KV{"server.workers", "Maximum number of threads for server to run with."},
         KV{"server.local_admin", "Indicates if the server should run with admin privileges."},
-        KV{"server.admin_password", "Password required to run Clio Server with admin privileges"},
+        KV{"server.admin_password", "Password for Clio admin-only APIs."},
         KV{"prometheus.enabled", "Enable or disable Prometheus metrics."},
         KV{"prometheus.compress_reply", "Enable or disable compression of Prometheus responses."},
         KV{"io_threads", "Number of I/O threads."},

@@ -21,7 +21,7 @@
 
 #include "util/Assert.hpp"
 #include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <cstddef>
@@ -32,21 +32,18 @@
 
 namespace util::config {
 
+Array::Array(ConfigValue arg) : itemPattern_{std::move(arg)}
+{
+}
+
 std::optional<Error>
 Array::addValue(Value value, std::optional<std::string_view> key)
 {
-    if (!elements_.at(0).hasValue()) {
-        auto& newElem = elements_.at(0);
-        if (auto const maybeError = newElem.setValue(value, key); maybeError.has_value())
-            return maybeError;
-        return std::nullopt;
-    }
+    auto const& configValPattern = itemPattern_;
+    auto const constraint = configValPattern.getConstraint();
 
-    auto const firstVal = elements_.at(0);
-    auto const constraint = firstVal.getConstraint();
-
-    auto newElem = constraint.has_value() ? ConfigValue{firstVal.type()}.withConstraint(constraint->get())
-                                          : ConfigValue{firstVal.type()};
+    auto newElem = constraint.has_value() ? ConfigValue{configValPattern.type()}.withConstraint(constraint->get())
+                                          : ConfigValue{configValPattern.type()};
     if (auto const maybeError = newElem.setValue(value, key); maybeError.has_value())
         return maybeError;
     elements_.emplace_back(std::move(newElem));
@@ -64,6 +61,12 @@ Array::at(std::size_t idx) const
 {
     ASSERT(idx < elements_.size(), "Index is out of scope");
     return elements_[idx];
+}
+
+ConfigValue const&
+Array::getArrayPattern() const
+{
+    return itemPattern_;
 }
 
 std::vector<ConfigValue>::const_iterator

@@ -21,6 +21,7 @@
 #include "util/newconfig/ConfigFileJson.hpp"
 #include "util/newconfig/FakeConfigData.hpp"
 
+#include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -29,8 +30,24 @@
 #include <variant>
 #include <vector>
 
+TEST(CreateConfigFile, filePath)
+{
+    auto const jsonFileObj = ConfigFileJson::make_ConfigFileJson(TmpFile(JSONData).path);
+    EXPECT_TRUE(jsonFileObj.has_value());
+
+    EXPECT_TRUE(jsonFileObj->containsKey("array.[].sub"));
+    auto const arrSub = jsonFileObj->getArray("array.[].sub");
+    EXPECT_EQ(arrSub.size(), 3);
+}
+
+TEST(CreateConfigFile, incorrectFilePath)
+{
+    auto const jsonFileObj = util::config::ConfigFileJson::make_ConfigFileJson("123/clio");
+    EXPECT_FALSE(jsonFileObj.has_value());
+}
+
 struct ParseJson : testing::Test {
-    ParseJson() : jsonFileObj{TmpFile(JSONData).path}
+    ParseJson() : jsonFileObj{boost::json::parse(JSONData).as_object()}
     {
     }
 
@@ -90,8 +107,7 @@ TEST_F(ParseJson, validateArrayValue)
 
 struct JsonValueDeathTest : ParseJson {};
 
-TEST_F(JsonValueDeathTest, invalidGetValues)
+TEST_F(JsonValueDeathTest, invalidGetArray)
 {
-    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("doesn't exist"), ".*");
     EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("header.text1"), ".*");
 }

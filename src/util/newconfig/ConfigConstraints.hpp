@@ -19,10 +19,12 @@
 
 #pragma once
 
-#include "util/newconfig/Errors.hpp"
+#include "rpc/common/APIVersion.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <array>
 #include <cstddef>
@@ -31,7 +33,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <variant>
 
 namespace util::config {
@@ -76,10 +77,11 @@ static constexpr std::array<char const*, 3> loadCacheMode = {
  */
 class Constraint {
 public:
-    // using "{}" instead of = default because of gcc bug.
+    // using "{}" instead of = default because of gcc bug. Bug is fixed in gcc13
     // see here for more info:
     // https://stackoverflow.com/questions/72835571/constexpr-c-error-destructor-used-before-its-definition
     constexpr virtual ~Constraint() noexcept {};
+
     /**
      * @brief Check if the value meets the specific constraint.
      *
@@ -90,8 +92,8 @@ public:
     std::optional<Error>
     checkConstraint(Value const& val) const
     {
-        if (auto maybeError = checkTypeImpl(val); maybeError.has_value())
-            return std::move(maybeError).value();
+        if (auto const maybeError = checkTypeImpl(val); maybeError.has_value())
+            return maybeError;
         return checkValueImpl(val);
     }
 
@@ -106,18 +108,19 @@ protected:
      */
     template <std::size_t arrSize>
     constexpr std::string
-    makeErrorMsg(std::string_view key, std::array<char const*, arrSize> arr) const
+    makeErrorMsg(std::string_view key, Value const& value, std::array<char const*, arrSize> arr) const
     {
-        auto errorMsg = fmt::format("Key \"{}\"'s value must be one of the following: ", key);
-        for (auto const elem : arr)
-            errorMsg += fmt::format("{}, ", elem);
+        // Extract the value from the variant
+        std::string valueStr = std::visit([](auto const& v) { return fmt::format("{}", v); }, value);
 
-        // Remove extra comma and space from end
-        errorMsg.erase(errorMsg.length() - 2);
+        // Create the error message
+        auto errorMsg =
+            fmt::format("You provided value \"{}\". Key \"{}\"'s value must be one of the following: ", valueStr, key);
+        errorMsg += fmt::format("{}", fmt::join(arr, ", "));
+
         return errorMsg;
     }
 
-private:
     /**
      * @brief Check if the value is of a correct type for the constraint.
      *
@@ -344,43 +347,16 @@ private:
 };
 
 /**
- * @brief A constraint class to ensure the API version is within a valid range.
+ * @brief A constraint class to ensure an integer value is between two numbers (inclusive)
  */
-class APIVersionConstraint final : public Constraint {
+template <typename numType>
+class NumberValueConstraint final : public Constraint {
 public:
-    constexpr ~APIVersionConstraint()
+    constexpr NumberValueConstraint(numType min, numType max) : min_{min}, max_{max}
     {
     }
 
-private:
-    /**
-     * @brief Check if the type of the value is correct for this specific constraint.
-     *
-     * @param apiVersion The type to be checked
-     * @return An optional Error if the constraint is not met, std::nullopt otherwise
-     */
-    [[nodiscard]] std::optional<Error>
-    checkTypeImpl(Value const& apiVersion) const override;
-
-    /**
-     * @brief Check if the value is within the constraint
-     *
-     * @param apiVersion The value to be checked
-     * @return An Error object if the constraint is not met, nullopt otherwise
-     */
-    [[nodiscard]] std::optional<Error>
-    checkValueImpl(Value const& apiVersion) const override;
-};
-
-/**
- * @brief A constraint to ensure a number is positive and within the valid range of a given type.
- *
- * @tparam T The numeric type (ie., uint16_t, uint32_t etc).
- */
-template <typename T>
-class PositiveNumConstraint final : public Constraint {
-public:
-    constexpr ~PositiveNumConstraint()
+    constexpr ~NumberValueConstraint()
     {
     }
 
@@ -394,13 +370,13 @@ private:
     [[nodiscard]] std::optional<Error>
     checkTypeImpl(Value const& num) const override
     {
-        if (!std::holds_alternative<std::int64_t>(num))
-            return Error{"number must be of type int"};
+        if (!std::holds_alternative<int64_t>(num))
+            return Error{"Number must be of type integer"};
         return std::nullopt;
     }
 
     /**
-     * @brief Check if the number is positive and within the valid range.
+     * @brief Check if the number is positive.
      *
      * @param num The number to check
      * @return An Error object if the constraint is not met, nullopt otherwise
@@ -408,21 +384,14 @@ private:
     [[nodiscard]] std::optional<Error>
     checkValueImpl(Value const& num) const override
     {
-        auto const numToCheck = std::get<int64_t>(num);
-
-        if (std::is_same_v<T, uint64_t> && numToCheck < 0)
-            return Error{"uint64 must be positive"};
-
-        if (std::is_same_v<T, uint64_t> || std::is_same_v<T, int64_t>)
+        auto const numValue = std::holds_alternative<double>(num) ? std::get<double>(num) : std::get<int64_t>(num);
+        if (numValue >= min_ && numValue <= max_)
             return std::nullopt;
-
-        int64_t low = std::numeric_limits<T>::lowest();
-        int64_t high = std::numeric_limits<T>::max();
-
-        if (numToCheck >= low && numToCheck <= high)
-            return std::nullopt;
-        return Error{"number does not satisfy the specified constraint"};
+        return Error{fmt::format("Number must be between {} and {}", min_, max_)};
     }
+
+    numType min_;
+    numType max_;
 };
 
 /**
@@ -461,10 +430,19 @@ static constexpr ValidIPConstraint const validateIP{};
 static constexpr CassandraName const validateCassandraName{};
 static constexpr LoadConstraint const validateLoadMode{};
 static constexpr LogTagStyle const validateLogTag{};
-static constexpr APIVersionConstraint const validateApiVersion{};
-static constexpr PositiveNumConstraint<uint16_t> const ValidateUint16{};
-static constexpr PositiveNumConstraint<uint32_t> const ValidateUint32{};
-static constexpr PositiveNumConstraint<uint64_t> const ValidateUint64{};
-static constexpr PositiveDouble const ValidatePositiveDouble{};
+static constexpr PositiveDouble const validatePositiveDouble{};
+static constexpr NumberValueConstraint<uint16_t> const validateUint16{
+    std::numeric_limits<uint16_t>::min(),
+    std::numeric_limits<uint16_t>::max()
+};
+static constexpr NumberValueConstraint<uint32_t> const validateUint32{
+    std::numeric_limits<uint32_t>::min(),
+    std::numeric_limits<uint32_t>::max()
+};
+static constexpr NumberValueConstraint<uint64_t> const validateUint64{
+    std::numeric_limits<uint64_t>::min(),
+    std::numeric_limits<uint64_t>::max()
+};
+static constexpr NumberValueConstraint<uint32_t> const validateApiVersion{rpc::API_VERSION_MIN, rpc::API_VERSION_MAX};
 
 }  // namespace util::config

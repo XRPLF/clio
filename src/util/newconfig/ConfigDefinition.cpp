@@ -26,7 +26,7 @@
 #include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigFileInterface.hpp"
 #include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/ObjectView.hpp"
 #include "util/newconfig/Types.hpp"
 #include "util/newconfig/ValueView.hpp"
@@ -60,48 +60,48 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(3u)},
      {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.defaultValue("table_prefix")},
      {"database.cassandra.max_write_requests_outstanding",
-      ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(ValidateUint32)},
+      ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(validateUint32)},
      {"database.cassandra.max_read_requests_outstanding",
-      ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(ValidateUint32)},
+      ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(validateUint32)},
      {"database.cassandra.threads",
       ConfigValue{ConfigType::Integer}
           .defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))
-          .withConstraint(ValidateUint32)},
+          .withConstraint(validateUint32)},
      {"database.cassandra.core_connections_per_host",
-      ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(ValidateUint16)},
-     {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional().withConstraint(ValidateUint16)},
+      ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(validateUint16)},
+     {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint16)},
      {"database.cassandra.write_batch_size",
-      ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(ValidateUint16)},
-     {"etl_source.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validateIP)}},
-     {"etl_source.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validatePort)}},
-     {"etl_source.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validatePort)}},
+      ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(validateUint16)},
+     {"etl_source.[].ip", Array{ConfigValue{ConfigType::String}.withConstraint(validateIP)}},
+     {"etl_source.[].ws_port", Array{ConfigValue{ConfigType::String}.withConstraint(validatePort)}},
+     {"etl_source.[].grpc_port", Array{ConfigValue{ConfigType::String}.withConstraint(validatePort)}},
      {"forwarding.cache_timeout",
-      ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(ValidatePositiveDouble)},
+      ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(validatePositiveDouble)},
      {"forwarding.request_timeout",
-      ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(ValidatePositiveDouble)},
+      ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(validatePositiveDouble)},
      {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}},
-     {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(1000'000).withConstraint(ValidateUint32)},
-     {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(ValidateUint32)},
-     {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(ValidateUint32)},
+     {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(1000'000).withConstraint(validateUint32)},
+     {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(validateUint32)},
+     {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(validateUint32)},
      {"dos_guard.sweep_interval",
-      ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(ValidatePositiveDouble)},
+      ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(validatePositiveDouble)},
      {"cache.peers.[].ip", Array{ConfigValue{ConfigType::String}.withConstraint(validateIP)}},
      {"cache.peers.[].port", Array{ConfigValue{ConfigType::String}.withConstraint(validatePort)}},
      {"server.ip", ConfigValue{ConfigType::String}.withConstraint(validateIP)},
      {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(validatePort)},
-     {"server.workers", ConfigValue{ConfigType::Integer}.withConstraint(ValidateUint32)},
-     {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(ValidateUint32)},
+     {"server.workers", ConfigValue{ConfigType::Integer}.withConstraint(validateUint32)},
+     {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(validateUint32)},
      {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
      {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
      {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
      {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(ValidateUint16)},
-     {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32).withConstraint(ValidateUint16)},
-     {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48).withConstraint(ValidateUint16)},
-     {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(ValidateUint16)},
-     {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(ValidateUint16)
+     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(validateUint16)},
+     {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32).withConstraint(validateUint16)},
+     {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48).withConstraint(validateUint16)},
+     {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(validateUint16)},
+     {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(validateUint16)
      },
-     {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(ValidateUint16)},
+     {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(validateUint16)},
      {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(validateLoadMode)},
      {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validateChannelName)}},
      {"log_channels.[].log_level",
@@ -113,16 +113,16 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
       )},
      {"log_to_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
      {"log_directory", ConfigValue{ConfigType::String}.optional()},
-     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(ValidateUint64)},
-     {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(ValidateUint64)
+     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(validateUint64)},
+     {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(validateUint64)
      },
-     {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(ValidateUint32)},
+     {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(validateUint32)},
      {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint").withConstraint(validateLogTag)},
-     {"extractor_threads", ConfigValue{ConfigType::Integer}.defaultValue(2u).withConstraint(ValidateUint32)},
+     {"extractor_threads", ConfigValue{ConfigType::Integer}.defaultValue(2u).withConstraint(validateUint32)},
      {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-     {"txn_threshold", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(ValidateUint16)},
-     {"start_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(ValidateUint32)},
-     {"finish_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(ValidateUint32)},
+     {"txn_threshold", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(validateUint16)},
+     {"start_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint32)},
+     {"finish_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint32)},
      {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
      {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
      {"api_version.min", ConfigValue{ConfigType::Integer}},
@@ -238,10 +238,8 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
                 if (!(std::get<ConfigValue>(value).isOptional() || std::get<ConfigValue>(value).hasValue()))
                     listOfErrors.emplace_back(key, "key is required in user Config");
             } else if (std::holds_alternative<Array>(value)) {
-                for (auto const& configVal : std::get<Array>(value)) {
-                    if (!(configVal.isOptional() || configVal.hasValue()))
-                        listOfErrors.emplace_back(key, "key is required in user Config");
-                }
+                if (!(std::get<Array>(value).getArrayPattern().isOptional()))
+                    listOfErrors.emplace_back(key, "key is required in user Config");
             }
             continue;
         }

@@ -36,9 +36,6 @@ class ConfigFileYaml final : public ConfigFileInterface {
 public:
     ConfigFileYaml() = default;
 
-    void
-    parse(boost::filesystem::path filePath) override;
-
     Value
     getValue(std::string_view key) const override;
 

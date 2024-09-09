@@ -20,8 +20,7 @@
 #include "util/newconfig/ConfigFileJson.hpp"
 
 #include "util/Assert.hpp"
-#include "util/log/Logger.hpp"
-#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <boost/filesystem/path.hpp>
@@ -37,7 +36,6 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
-#include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -46,8 +44,13 @@
 
 namespace util::config {
 
-void
-ConfigFileJson::parse(boost::filesystem::path configFilePath)
+ConfigFileJson::ConfigFileJson(boost::json::object jsonObj)
+{
+    flattenJson(jsonObj, "");
+}
+
+std::expected<ConfigFileJson, Error>
+ConfigFileJson::make_ConfigFileJson(boost::filesystem::path configFilePath)
 {
     try {
         std::ifstream const in(configFilePath.string(), std::ios::in | std::ios::binary);
@@ -57,11 +60,13 @@ ConfigFileJson::parse(boost::filesystem::path configFilePath)
             auto opts = boost::json::parse_options{};
             opts.allow_comments = true;
             auto const tempObj = boost::json::parse(contents.str(), {}, opts).as_object();
-            flattenJson(tempObj, "");
+            return ConfigFileJson{tempObj};
         }
+        return std::unexpected<Error>({fmt::format("Could not open configuration file '{}'", configFilePath.string())});
     } catch (std::exception const& e) {
-        LOG(util::LogService::error()) << "Could not read configuration file from '" << configFilePath.string()
-                                       << "': " << e.what();
+        return std::unexpected<Error>({fmt::format(
+            "An error occurred while processing configuration file '{}': {}", configFilePath.string(), e.what()
+        )});
     }
 }
 
@@ -91,9 +96,7 @@ extractJsonValue(boost::json::value const& jsonValue)
 Value
 ConfigFileJson::getValue(std::string_view key) const
 {
-    ASSERT(jsonObject_.contains(key), "Json object does not contain key {}", key);
     auto const jsonValue = jsonObject_.at(key);
-
     auto const value = extractJsonValue(jsonValue);
     return value;
 }
@@ -101,7 +104,6 @@ ConfigFileJson::getValue(std::string_view key) const
 std::vector<Value>
 ConfigFileJson::getArray(std::string_view key) const
 {
-    ASSERT(jsonObject_.contains(key), "Key {} must exist in Json", key);
     ASSERT(jsonObject_.at(key).is_array(), "Key {} has value that is not an array", key);
 
     std::vector<Value> configValues;
@@ -124,7 +126,7 @@ void
 ConfigFileJson::flattenJson(boost::json::object const& obj, std::string const& prefix)
 {
     for (auto const& [key, value] : obj) {
-        std::string fullKey = prefix.empty() ? std::string(key) : prefix + "." + std::string(key);
+        std::string fullKey = prefix.empty() ? std::string(key) : fmt::format("{}.{}", prefix, std::string(key));
 
         // In ClioConfigDefinition, value must be a primitive or array
         if (value.is_object()) {

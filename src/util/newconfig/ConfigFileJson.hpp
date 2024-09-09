@@ -20,11 +20,13 @@
 #pragma once
 
 #include "util/newconfig/ConfigFileInterface.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <boost/filesystem/path.hpp>
 #include <boost/json/object.hpp>
 
+#include <expected>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -36,14 +38,11 @@ class ConfigFileJson final : public ConfigFileInterface {
 public:
     /**
      * @brief Construct a new ConfigJson object and stores the values from
-     * user's config in the object.
+     * user's config into a json object.
      *
-     * @param filePath the path to the Json file to parse.
+     * @param jsonObj the Json object to parse; represents user's config
      */
-    ConfigFileJson(std::string_view filePath)
-    {
-        parse(filePath);
-    }
+    ConfigFileJson(boost::json::object jsonObj);
 
     /**
      * @brief Retrieves a configuration value by its key.
@@ -72,6 +71,15 @@ public:
     [[nodiscard]] bool
     containsKey(std::string_view key) const override;
 
+    /**
+     * @brief Creates a new ConfigFileJson by parsing the provided JSON file and
+     * stores the values in the object.
+     *
+     * @param filePath The path to the JSON file to be parsed.
+     */
+    [[nodiscard]] static std::expected<ConfigFileJson, Error>
+    make_ConfigFileJson(boost::filesystem::path configFilePath);
+
 private:
     /**
      * @brief Recursive function to flatten a JSON object into the same structure as the Clio Config.
@@ -84,14 +92,6 @@ private:
      */
     void
     flattenJson(boost::json::object const& obj, std::string const& prefix);
-
-    /**
-     * @brief Parses the provided JSON file and stores the values in the object.
-     *
-     * @param filePath The path to the JSON file to be parsed.
-     */
-    void
-    parse(boost::filesystem::path filePath) override;
 
     boost::json::object jsonObject_;
 };
