@@ -562,7 +562,11 @@ generateTestValuesForParametersTest()
         {"ledgerFullFalse", "ledger", R"({"full": false})", false},
         {"ledgerAccountsFalse", "ledger", R"({"accounts": false})", false},
         {"ledgerTypeFalse", "ledger", R"({"type": false})", false},
-        {"ledgerEntry", "ledger_entry", R"({"type": false})", false}
+        {"ledgerEntry", "ledger_entry", R"({"type": false})", false},
+        {"ledgerFullIsStr", "ledger", R"({"full": "String"})", true},
+        {"ledgerAccoutsIsStr", "ledger", R"({"accounts": "String"})", true},
+        {"ledgerTypeIsStr", "ledger", R"({"type": "String"})", true},
+        {"featureVetoedIsStr", "feature", R"({"vetoed": "String"})", true},
     };
 }
 
