@@ -62,9 +62,12 @@ ConfigFileJson::make_ConfigFileJson(boost::filesystem::path configFilePath)
             auto const tempObj = boost::json::parse(contents.str(), {}, opts).as_object();
             return ConfigFileJson{tempObj};
         }
-        return std::unexpected<Error>({fmt::format("Could not open configuration file '{}'", configFilePath.string())});
+        return std::unexpected<Error>(
+            Error{fmt::format("Could not open configuration file '{}'", configFilePath.string())}
+        );
+
     } catch (std::exception const& e) {
-        return std::unexpected<Error>({fmt::format(
+        return std::unexpected<Error>(Error{fmt::format(
             "An error occurred while processing configuration file '{}': {}", configFilePath.string(), e.what()
         )});
     }
