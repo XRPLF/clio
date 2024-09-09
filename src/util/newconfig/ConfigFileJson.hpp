@@ -75,7 +75,7 @@ public:
      * @brief Creates a new ConfigFileJson by parsing the provided JSON file and
      * stores the values in the object.
      *
-     * @param filePath The path to the JSON file to be parsed.
+     * @param configFilePath The path to the JSON file to be parsed.
      */
     [[nodiscard]] static std::expected<ConfigFileJson, Error>
     make_ConfigFileJson(boost::filesystem::path configFilePath);

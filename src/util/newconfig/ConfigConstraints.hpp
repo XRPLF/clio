@@ -103,6 +103,7 @@ protected:
      *
      * @tparam arrSize, the size of the array of hardcoded values
      * @param key The key to the value
+     * @param value The value the user provided
      * @param arr The array with hard-coded values to add to error message
      * @return The error message specifying what the value of key must be
      */
@@ -352,6 +353,12 @@ private:
 template <typename numType>
 class NumberValueConstraint final : public Constraint {
 public:
+    /**
+     * @brief Constructs a constraint where the number must be between min_ and max_.
+     *
+     * @param min the minimum number it can be to satisfy this constraint
+     * @param max the maximum number it can be to satisfy this constraint
+     */
     constexpr NumberValueConstraint(numType min, numType max) : min_{min}, max_{max}
     {
     }
