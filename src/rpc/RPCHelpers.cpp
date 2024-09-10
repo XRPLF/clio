@@ -36,6 +36,7 @@
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
+#include <boost/json/serialize.hpp>
 #include <boost/json/string.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
@@ -49,6 +50,7 @@
 #include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/beast/utility/Zero.h>
+#include <xrpl/json/json_reader.h>
 #include <xrpl/json/json_value.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Book.h>
@@ -1276,13 +1278,15 @@ specifiesCurrentOrClosedLedger(boost::json::object const& request)
 bool
 isAdminCmd(std::string const& method, boost::json::object const& request)
 {
-    // rippled considers the string as true: https://github.com/XRPLF/rippled/issues/5119
-    auto const isFieldSet = [&request](auto const field) {
-        return request.contains(field) and
-            ((request.at(field).is_bool() and request.at(field).as_bool()) or request.at(field).is_string());
-    };
-
     if (method == JS(ledger)) {
+        auto const requestStr = boost::json::serialize(request);
+        Json::Value jv;
+        Json::Reader{}.parse(requestStr, jv);
+        // rippled considers string/non-zero int/non-empty array/ non-empty json as true.
+        // Use rippled's API asBool to get the same result.
+        // https://github.com/XRPLF/rippled/issues/5119
+        auto const isFieldSet = [&jv](auto const field) { return jv.isMember(field) and jv[field].asBool(); };
+
         if (isFieldSet(JS(full)) or isFieldSet(JS(accounts)) or isFieldSet(JS(type)))
             return true;
     }
