@@ -211,13 +211,18 @@ private:
     checkValueImpl(Value const& ip) const override;
 };
 
+/**
+ * @brief A constraint class to ensure the provided value is one of the specified values in an array.
+ *
+ * @tparam arrSize The size of the array containing the valid values for the constraint
+ */
 template <std::size_t arrSize>
 class OneOf final : public Constraint {
 public:
     /**
      * @brief Constructs a constraint where the value must be one of the values in the provided array.
      *
-     * @param key The key of the ConfigValue that has this Constraint
+     * @param key The key of the ConfigValue that has this constraint
      * @param arr The value that has this constraint must be of the values in arr
      */
     constexpr OneOf(std::string_view key, std::array<char const*, arrSize> arr) : key_{key}, arr_{arr}
