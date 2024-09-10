@@ -113,9 +113,9 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
       )},
      {"log_to_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
      {"log_directory", ConfigValue{ConfigType::String}.optional()},
-     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048).withConstraint(validateUint64)},
-     {"log_directory_max_size", ConfigValue{ConfigType::Integer}.defaultValue(50 * 1024).withConstraint(validateUint64)
-     },
+     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048u).withConstraint(validateUint32)},
+     {"log_directory_max_size",
+      ConfigValue{ConfigType::Integer}.defaultValue(50u * 1024u).withConstraint(validateUint32)},
      {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(validateUint32)},
      {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint").withConstraint(validateLogTag)},
      {"extractor_threads", ConfigValue{ConfigType::Integer}.defaultValue(2u).withConstraint(validateUint32)},
@@ -133,7 +133,7 @@ ClioConfigDefinition::ClioConfigDefinition(std::initializer_list<KeyValuePair> p
 {
     for (auto const& [key, value] : pair) {
         if (key.contains("[]"))
-            ASSERT(std::holds_alternative<Array>(value), "Value must be array if key has \"[]\"");
+            ASSERT(std::holds_alternative<Array>(value), R"(Value must be array if key has "[]")");
         map_.insert({key, value});
     }
 }

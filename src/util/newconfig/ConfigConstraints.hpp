@@ -20,12 +20,14 @@
 #pragma once
 
 #include "rpc/common/APIVersion.hpp"
+#include "util/log/Logger.hpp"
 #include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <fmt/core.h>
 #include <fmt/format.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -73,6 +75,11 @@ static constexpr std::array<char const*, 3> loadCacheMode = {
 };
 
 /**
+ * @brief specific values that are accepted for database type in config.
+ */
+static constexpr std::array<char const*, 1> databaseType = {"cassandra"};
+
+/**
  * @brief An interface to enforce constraints on certain values within ClioConfigDefinition.
  */
 class Constraint {
@@ -80,6 +87,7 @@ public:
     // using "{}" instead of = default because of gcc bug. Bug is fixed in gcc13
     // see here for more info:
     // https://stackoverflow.com/questions/72835571/constexpr-c-error-destructor-used-before-its-definition
+    // https://godbolt.org/z/eMdWThaMY
     constexpr virtual ~Constraint() noexcept {};
 
     /**
@@ -112,14 +120,15 @@ protected:
     makeErrorMsg(std::string_view key, Value const& value, std::array<char const*, arrSize> arr) const
     {
         // Extract the value from the variant
-        std::string valueStr = std::visit([](auto const& v) { return fmt::format("{}", v); }, value);
+        auto const valueStr = std::visit([](auto const& v) { return fmt::format("{}", v); }, value);
 
         // Create the error message
-        auto errorMsg =
-            fmt::format("You provided value \"{}\". Key \"{}\"'s value must be one of the following: ", valueStr, key);
-        errorMsg += fmt::format("{}", fmt::join(arr, ", "));
-
-        return errorMsg;
+        return fmt::format(
+            R"(You provided value "{}". Key "{}"'s value must be one of the following: {})",
+            valueStr,
+            key,
+            fmt::join(arr, ", ")
+        );
     }
 
     /**
@@ -174,64 +183,6 @@ private:
 };
 
 /**
- * @brief A constraint to ensure the channel name is valid.
- */
-class ChannelNameConstraint final : public Constraint {
-public:
-    constexpr ~ChannelNameConstraint()
-    {
-    }
-
-private:
-    /**
-     * @brief Check if value is of type string.
-     *
-     * @param channelName The type to be checked
-     * @return An Error object if the constraint is not met, nullopt otherwis
-     */
-    [[nodiscard]] std::optional<Error>
-    checkTypeImpl(Value const& channelName) const override;
-
-    /**
-     * @brief Check if the value is within the constraint.
-     *
-     * @param channelName The value to be checked
-     * @return An Error object if the constraint is not met, nullopt otherwise
-     */
-    [[nodiscard]] std::optional<Error>
-    checkValueImpl(Value const& channelName) const override;
-};
-
-/**
- * @brief A constraint to ensure the log level name is valid.
- */
-class LogLevelNameConstraint final : public Constraint {
-public:
-    constexpr ~LogLevelNameConstraint()
-    {
-    }
-
-private:
-    /**
-     * @brief Check if the type of the value is correct for this specific constraint.
-     *
-     * @param logLevel The type to be checked
-     * @return An optional Error if the constraint is not met, std::nullopt otherwise
-     */
-    [[nodiscard]] std::optional<Error>
-    checkTypeImpl(Value const& logLevel) const override;
-
-    /**
-     * @brief Check if the value is within the constraint.
-     *
-     * @param logLevel The value to be checked
-     * @return An Error object if the constraint is not met, nullopt otherwise
-     */
-    [[nodiscard]] std::optional<Error>
-    checkValueImpl(Value const& logLevel) const override;
-};
-
-/**
  * @brief A constraint to ensure the IP address is valid.
  */
 class ValidIPConstraint final : public Constraint {
@@ -260,12 +211,20 @@ private:
     checkValueImpl(Value const& ip) const override;
 };
 
-/**
- * @brief A constraint to ensure the Cassandra name is valid.
- */
-class CassandraName final : public Constraint {
+template <std::size_t arrSize>
+class OneOf final : public Constraint {
 public:
-    constexpr ~CassandraName()
+    /**
+     * @brief Constructs a constraint where the value must be one of the values in the provided array.
+     *
+     * @param key The key of the ConfigValue that has this Constraint
+     * @param arr The value that has this constraint must be of the values in arr
+     */
+    constexpr OneOf(std::string_view key, std::array<char const*, arrSize> arr) : key_{key}, arr_{arr}
+    {
+    }
+
+    constexpr ~OneOf()
     {
     }
 
@@ -273,78 +232,36 @@ private:
     /**
      * @brief Check if the type of the value is correct for this specific constraint.
      *
-     * @param name The type to be checked
-     * @return An optional Error if the constraint is not met, std::nullopt otherwise
-     */
-    [[nodiscard]] std::optional<Error>
-    checkTypeImpl(Value const& name) const override;
-
-    /**
-     * @brief Check if the value is within the constraint
-     *
-     * @param name The value to be checked
+     * @param val The type to be checked
      * @return An Error object if the constraint is not met, nullopt otherwise
      */
     [[nodiscard]] std::optional<Error>
-    checkValueImpl(Value const& name) const override;
-};
-
-/**
- * @brief A constraint to ensure the load mode is valid.
- */
-class LoadConstraint final : public Constraint {
-public:
-    constexpr ~LoadConstraint()
+    checkTypeImpl(Value const& val) const override
     {
+        if (!std::holds_alternative<std::string>(val))
+            return Error{fmt::format(R"(Key "{}"'s value must be a string)", key_)};
+        return std::nullopt;
     }
 
-private:
     /**
-     * @brief Check if the type of the value is correct for this specific constraint.
+     * @brief Check if the value matches one of the value in the provided array
      *
-     * @param loadMode The type to be checked
-     * @return An optional Error if the constraint is not met, std::nullopt otherwise
-     */
-    [[nodiscard]] std::optional<Error>
-    checkTypeImpl(Value const& loadMode) const override;
-
-    /**
-     * @brief Check if the value is within the constraint
-     *
-     * @param loadMode The value to be checked
+     * @param val The value to check
      * @return An Error object if the constraint is not met, nullopt otherwise
      */
     [[nodiscard]] std::optional<Error>
-    checkValueImpl(Value const& loadMode) const override;
-};
-
-/**
- * @brief A constraint to ensure the log tag style is valid.
- */
-class LogTagStyle final : public Constraint {
-public:
-    constexpr ~LogTagStyle()
+    checkValueImpl(Value const& val) const override
     {
+        namespace rg = std::ranges;
+        auto const check = [&val](std::string_view name) { return std::get<std::string>(val) == name; };
+        if (rg::any_of(arr_, check))
+            return std::nullopt;
+
+        return Error{makeErrorMsg(key_, val, arr_)};
     }
 
-private:
-    /**
-     * @brief Check if the type of the value is correct for this specific constraint.
-     *
-     * @param tagName The type to be checked
-     * @return An optional Error if the constraint is not met, std::nullopt otherwise
-     */
-    [[nodiscard]] std::optional<Error>
-    checkTypeImpl(Value const& tagName) const override;
-
-    /**
-     * @brief Check if the value is within the constraint
-     *
-     * @param tagName The value to be checked
-     * @return An Error object if the constraint is not met, nullopt otherwise
-     */
-    [[nodiscard]] std::optional<Error>
-    checkValueImpl(Value const& tagName) const override;
+    std::string_view key_;
+    std::array<char const*, arrSize> arr_;
 };
 
 /**
@@ -391,8 +308,8 @@ private:
     [[nodiscard]] std::optional<Error>
     checkValueImpl(Value const& num) const override
     {
-        auto const numValue = std::holds_alternative<double>(num) ? std::get<double>(num) : std::get<int64_t>(num);
-        if (numValue >= min_ && numValue <= max_)
+        auto const numValue = std::get<int64_t>(num);
+        if (numValue >= static_cast<int64_t>(min_) && numValue <= static_cast<int64_t>(max_))
             return std::nullopt;
         return Error{fmt::format("Number must be between {} and {}", min_, max_)};
     }
@@ -430,26 +347,25 @@ private:
     checkValueImpl(Value const& num) const override;
 };
 
-static constexpr PortConstraint const validatePort{};
-static constexpr ChannelNameConstraint const validateChannelName{};
-static constexpr LogLevelNameConstraint const validateLogLevelName{};
-static constexpr ValidIPConstraint const validateIP{};
-static constexpr CassandraName const validateCassandraName{};
-static constexpr LoadConstraint const validateLoadMode{};
-static constexpr LogTagStyle const validateLogTag{};
-static constexpr PositiveDouble const validatePositiveDouble{};
-static constexpr NumberValueConstraint<uint16_t> const validateUint16{
+static constexpr PortConstraint validatePort{};
+static constexpr ValidIPConstraint validateIP{};
+
+static constexpr OneOf validateChannelName{"channel", Logger::CHANNELS};
+static constexpr OneOf validateLogLevelName{"log_level", logLevels};
+static constexpr OneOf validateCassandraName{"database.type", databaseType};
+static constexpr OneOf validateLoadMode{"cache.load", loadCacheMode};
+static constexpr OneOf validateLogTag{"log_tag_style", logTags};
+
+static constexpr PositiveDouble validatePositiveDouble{};
+
+static constexpr NumberValueConstraint<uint16_t> validateUint16{
     std::numeric_limits<uint16_t>::min(),
     std::numeric_limits<uint16_t>::max()
 };
-static constexpr NumberValueConstraint<uint32_t> const validateUint32{
+static constexpr NumberValueConstraint<uint32_t> validateUint32{
     std::numeric_limits<uint32_t>::min(),
     std::numeric_limits<uint32_t>::max()
 };
-static constexpr NumberValueConstraint<uint64_t> const validateUint64{
-    std::numeric_limits<uint64_t>::min(),
-    std::numeric_limits<uint64_t>::max()
-};
-static constexpr NumberValueConstraint<uint32_t> const validateApiVersion{rpc::API_VERSION_MIN, rpc::API_VERSION_MAX};
+static constexpr NumberValueConstraint<uint32_t> validateApiVersion{rpc::API_VERSION_MIN, rpc::API_VERSION_MAX};
 
 }  // namespace util::config

@@ -19,19 +19,16 @@
 
 #include "util/newconfig/ConfigConstraints.hpp"
 
-#include "util/log/Logger.hpp"
 #include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <fmt/core.h>
 
-#include <algorithm>
 #include <cstdint>
 #include <optional>
 #include <regex>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <variant>
 
 namespace util::config {
@@ -63,42 +60,6 @@ PortConstraint::checkValueImpl(Value const& port) const
 }
 
 std::optional<Error>
-ChannelNameConstraint::checkTypeImpl(Value const& channelName) const
-{
-    if (!std::holds_alternative<std::string>(channelName))
-        return Error{"Key \"channel\"'s value must be a string"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-ChannelNameConstraint::checkValueImpl(Value const& channelName) const
-{
-    if (std::ranges::any_of(Logger::CHANNELS, [&channelName](std::string_view name) {
-            return std::get<std::string>(channelName) == name;
-        }))
-        return std::nullopt;
-    return Error{makeErrorMsg("channel", channelName, Logger::CHANNELS)};
-}
-
-std::optional<Error>
-LogLevelNameConstraint::checkTypeImpl(Value const& logLevel) const
-{
-    if (!std::holds_alternative<std::string>(logLevel))
-        return Error{"Key \"log_level\"'s value must be a string"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-LogLevelNameConstraint::checkValueImpl(Value const& logLevel) const
-{
-    if (std::ranges::any_of(logLevels, [&logLevel](std::string_view name) {
-            return std::get<std::string>(logLevel) == name;
-        }))
-        return std::nullopt;
-    return Error{makeErrorMsg("log_level", logLevel, logLevels)};
-}
-
-std::optional<Error>
 ValidIPConstraint::checkTypeImpl(Value const& ip) const
 {
     if (!std::holds_alternative<std::string>(ip))
@@ -123,59 +84,6 @@ ValidIPConstraint::checkValueImpl(Value const& ip) const
         return std::nullopt;
 
     return Error{"Ip is not a valid ip address"};
-}
-
-std::optional<Error>
-CassandraName::checkTypeImpl(Value const& name) const
-{
-    if (!std::holds_alternative<std::string>(name))
-        return Error{"Key \"database.type\"'s value must be a string"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-CassandraName::checkValueImpl(Value const& name) const
-{
-    if (std::get<std::string>(name) == "cassandra")
-        return std::nullopt;
-    return Error{"Key \"database.type\"'s value must be string cassandra"};
-}
-
-std::optional<Error>
-LoadConstraint::checkTypeImpl(Value const& loadMode) const
-{
-    if (!std::holds_alternative<std::string>(loadMode))
-        return Error{"Key \"cache.load\" value must be a string"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-LoadConstraint::checkValueImpl(Value const& loadMode) const
-{
-    if (std::ranges::any_of(loadCacheMode, [&loadMode](std::string_view name) {
-            return std::get<std::string>(loadMode) == name;
-        }))
-        return std::nullopt;
-    return Error{makeErrorMsg("cache.load", loadMode, loadCacheMode)};
-}
-
-std::optional<Error>
-LogTagStyle::checkTypeImpl(Value const& tagName) const
-{
-    if (!std::holds_alternative<std::string>(tagName))
-        return Error{"Key \"log_tag_style\"'s value must be a string"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-LogTagStyle::checkValueImpl(Value const& tagName) const
-{
-    if (std::ranges::any_of(logTags, [&tagName](std::string_view name) {
-            return std::get<std::string>(tagName) == name;
-        })) {
-        return std::nullopt;
-    }
-    return Error{makeErrorMsg("log_tag_style", tagName, logTags)};
 }
 
 std::optional<Error>

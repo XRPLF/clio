@@ -24,6 +24,7 @@
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
+#include <array>
 #include <string>
 
 using namespace util::config;
@@ -71,36 +72,36 @@ TEST(ConfigValue, SetValuesOnPortConstraint)
     EXPECT_EQ(strPortError->error, "Port does not satisfy the constraint bounds");
 }
 
-TEST(ConfigValue, ChannelConstraint)
+TEST(ConfigValue, OneOfConstraintOneValue)
 {
-    auto const channelConstraint{ChannelNameConstraint{}};
-    EXPECT_FALSE(channelConstraint.checkConstraint("WebServer").has_value());
+    std::array<char const*, 1> const arr = {"tracer"};
+    auto const databaseConstraint{OneOf{"database.type", arr}};
+    EXPECT_FALSE(databaseConstraint.checkConstraint("tracer").has_value());
 
-    EXPECT_TRUE(channelConstraint.checkConstraint(345).has_value());
-    EXPECT_EQ(channelConstraint.checkConstraint(345)->error, "Key \"channel\"'s value must be a string");
+    EXPECT_TRUE(databaseConstraint.checkConstraint(345).has_value());
+    EXPECT_EQ(databaseConstraint.checkConstraint(345)->error, R"(Key "database.type"'s value must be a string)");
 
-    EXPECT_TRUE(channelConstraint.checkConstraint("asdf").has_value());
+    EXPECT_TRUE(databaseConstraint.checkConstraint("123.44").has_value());
     EXPECT_EQ(
-        channelConstraint.checkConstraint("asdf")->error,
-        "You provided value \"asdf\". Key \"channel\"'s value must be one of the following: General, WebServer, "
-        "Backend, RPC, ETL, Subscriptions, "
-        "Performance"
+        databaseConstraint.checkConstraint("123.44")->error,
+        R"(You provided value "123.44". Key "database.type"'s value must be one of the following: tracer)"
     );
 }
 
-TEST(ConfigValue, LogLevelConstraint)
+TEST(ConfigValue, OneOfConstraint)
 {
-    auto const logLevelCons{LogLevelNameConstraint{}};
-    EXPECT_FALSE(logLevelCons.checkConstraint("trace").has_value());
+    std::array<char const*, 3> const arr = {"123", "trace", "haha"};
+    auto const oneOfCons{OneOf{"log_level", arr}};
 
-    EXPECT_TRUE(logLevelCons.checkConstraint(345).has_value());
-    EXPECT_EQ(logLevelCons.checkConstraint(345)->error, "Key \"log_level\"'s value must be a string");
+    EXPECT_FALSE(oneOfCons.checkConstraint("trace").has_value());
 
-    EXPECT_TRUE(logLevelCons.checkConstraint("PETER_WAS_HERE").has_value());
+    EXPECT_TRUE(oneOfCons.checkConstraint(345).has_value());
+    EXPECT_EQ(oneOfCons.checkConstraint(345)->error, R"(Key "log_level"'s value must be a string)");
+
+    EXPECT_TRUE(oneOfCons.checkConstraint("PETER_WAS_HERE").has_value());
     EXPECT_EQ(
-        logLevelCons.checkConstraint("PETER_WAS_HERE")->error,
-        "You provided value \"PETER_WAS_HERE\". Key \"log_level\"'s value must be one of the following: trace, debug, "
-        "info, warning, error, fatal, count"
+        oneOfCons.checkConstraint("PETER_WAS_HERE")->error,
+        R"(You provided value "PETER_WAS_HERE". Key "log_level"'s value must be one of the following: 123, trace, haha)"
     );
 }
 
@@ -120,54 +121,6 @@ TEST(ConfigValue, IpConstraint)
     EXPECT_TRUE(ip.setValue("http://example..com"));
     EXPECT_FALSE(ip.setValue("localhost"));
     EXPECT_FALSE(ip.setValue("http://example.com:8080/path"));
-}
-
-TEST(ConfigValue, DatabaseTypeConstraint)
-{
-    auto const databaseConstraint{CassandraName{}};
-    EXPECT_FALSE(databaseConstraint.checkConstraint("cassandra").has_value());
-
-    EXPECT_TRUE(databaseConstraint.checkConstraint(345).has_value());
-    EXPECT_EQ(databaseConstraint.checkConstraint(345)->error, "Key \"database.type\"'s value must be a string");
-
-    EXPECT_TRUE(databaseConstraint.checkConstraint("123.44").has_value());
-    EXPECT_EQ(
-        databaseConstraint.checkConstraint("123.44")->error, "Key \"database.type\"'s value must be string cassandra"
-    );
-}
-
-TEST(ConfigValue, CacheLoadConstraint)
-{
-    auto const loadCons{LoadConstraint{}};
-    EXPECT_FALSE(loadCons.checkConstraint("async").has_value());
-
-    EXPECT_TRUE(loadCons.checkConstraint(345).has_value());
-    EXPECT_EQ(loadCons.checkConstraint(345)->error, "Key \"cache.load\" value must be a string");
-
-    EXPECT_TRUE(loadCons.checkConstraint("ASYCS").has_value());
-    EXPECT_EQ(
-        loadCons.checkConstraint("ASYCS")->error,
-        "You provided value \"ASYCS\". Key \"cache.load\"'s value must be one of the following: sync, async, none"
-    );
-}
-
-TEST(ConfigValue, LogTagStyleConstraint)
-{
-    auto const logTagCons{LogTagStyle{}};
-    EXPECT_FALSE(logTagCons.checkConstraint("uint").has_value());
-
-    EXPECT_TRUE(logTagCons.checkConstraint(345).has_value());
-    EXPECT_EQ(logTagCons.checkConstraint(345)->error, "Key \"log_tag_style\"'s value must be a string");
-
-    EXPECT_TRUE(logTagCons.checkConstraint("idek_anymore").has_value());
-    EXPECT_EQ(
-        logTagCons.checkConstraint("idek_anymore")->error,
-        "You provided value \"idek_anymore\". Key \"log_tag_style\"'s value must be one of the following: int, uint, "
-        "null, none, uuid"
-    );
-
-    EXPECT_FALSE(logTagCons.checkConstraint("null").has_value());
-    EXPECT_FALSE(logTagCons.checkConstraint("uuid").has_value());
 }
 
 TEST(ConfigValue, positiveNumConstraint)
@@ -225,7 +178,6 @@ INSTANTIATE_TEST_SUITE_P(
         ConstraintTestBundle{"ApiVersionConstraint", validateApiVersion},
         ConstraintTestBundle{"Uint16Constraint", validateUint16},
         ConstraintTestBundle{"Uint32Constraint", validateUint32},
-        ConstraintTestBundle{"Uint64Constraint", validateUint64},
         ConstraintTestBundle{"PositiveDoubleConstraint", validatePositiveDouble}
     ),
     [](testing::TestParamInfo<ConstraintTestBundle> const& info) { return info.param.name; }
@@ -264,7 +216,7 @@ TEST(ConfigValueDeathTest, OutOfBounceIntegerConstraint)
     );
     EXPECT_DEATH(
         {
-            [[maybe_unused]] auto a = ConfigValue{ConfigType::Integer}.defaultValue(-66).withConstraint(validateUint64);
+            [[maybe_unused]] auto a = ConfigValue{ConfigType::Integer}.defaultValue(-66).withConstraint(validateUint32);
         },
         ".*"
     );

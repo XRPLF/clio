@@ -124,7 +124,7 @@ public:
                 std::visit(
                     util::OverloadSet{
                         [&type](bool tmp) { type = fmt::format("bool {}", tmp); },
-                        [&type](std::string tmp) { type = fmt::format("string {}", tmp); },
+                        [&type](std::string const& tmp) { type = fmt::format("string {}", tmp); },
                         [&type](double tmp) { type = fmt::format("double {}", tmp); },
                         [&type](int64_t tmp) { type = fmt::format("int {}", tmp); }
                     },

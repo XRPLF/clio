@@ -40,9 +40,37 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace util::config {
+
+namespace {
+/**
+ * @brief Extracts the value from a JSON object and converts it into the corresponding type.
+ *
+ * @param jsonValue The JSON value to extract.
+ * @return A variant containing the same type corresponding to the extracted value.
+ */
+[[nodiscard]] Value
+extractJsonValue(boost::json::value const& jsonValue)
+{
+    if (jsonValue.is_int64()) {
+        return jsonValue.as_int64();
+    }
+    if (jsonValue.is_string()) {
+        return jsonValue.as_string().c_str();
+    }
+    if (jsonValue.is_bool()) {
+        return jsonValue.as_bool();
+    }
+    if (jsonValue.is_double()) {
+        return jsonValue.as_double();
+    }
+    ASSERT(false, "Json is not of type int, string, bool or double");
+    std::unreachable();
+}
+}  // namespace
 
 ConfigFileJson::ConfigFileJson(boost::json::object jsonObj)
 {
@@ -53,8 +81,7 @@ std::expected<ConfigFileJson, Error>
 ConfigFileJson::make_ConfigFileJson(boost::filesystem::path configFilePath)
 {
     try {
-        std::ifstream const in(configFilePath.string(), std::ios::in | std::ios::binary);
-        if (in) {
+        if (auto const in = std::ifstream(configFilePath.string(), std::ios::in | std::ios::binary); in) {
             std::stringstream contents;
             contents << in.rdbuf();
             auto opts = boost::json::parse_options{};
@@ -71,29 +98,6 @@ ConfigFileJson::make_ConfigFileJson(boost::filesystem::path configFilePath)
             "An error occurred while processing configuration file '{}': {}", configFilePath.string(), e.what()
         )});
     }
-}
-
-/**
- * @brief Extracts the value from a JSON object and converts it into the corresponding type.
- *
- * @param jsonValue The JSON value to extract.
- * @return A variant containing the same type corresponding to the extracted value.
- */
-[[nodiscard]] static Value
-extractJsonValue(boost::json::value const& jsonValue)
-{
-    Value variantValue;
-
-    if (jsonValue.is_int64()) {
-        variantValue = jsonValue.as_int64();
-    } else if (jsonValue.is_string()) {
-        variantValue = jsonValue.as_string().c_str();
-    } else if (jsonValue.is_bool()) {
-        variantValue = jsonValue.as_bool();
-    } else if (jsonValue.is_double()) {
-        variantValue = jsonValue.as_double();
-    }
-    return variantValue;
 }
 
 Value
