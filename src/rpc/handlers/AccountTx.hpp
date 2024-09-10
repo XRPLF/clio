@@ -39,7 +39,6 @@
 #include <ripple/protocol/jss.h>
 
 #include <cstdint>
-#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -57,8 +56,8 @@ class AccountTxHandler {
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    // no max limit
     static auto constexpr LIMIT_MIN = 1;
+    static auto constexpr LIMIT_MAX = 1000;
     static auto constexpr LIMIT_DEFAULT = 200;
 
     /**
@@ -133,7 +132,7 @@ public:
             {JS(limit),
              validation::Type<uint32_t>{},
              validation::Min(1u),
-             modifiers::Clamp<int32_t>{LIMIT_MIN, std::numeric_limits<int32_t>::max()}},
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
             {JS(marker),
              meta::WithCustomError{
                  validation::Type<boost::json::object>{},
