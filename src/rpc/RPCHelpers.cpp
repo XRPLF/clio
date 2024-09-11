@@ -1287,7 +1287,11 @@ isAdminCmd(std::string const& method, boost::json::object const& request)
         // https://github.com/XRPLF/rippled/issues/5119
         auto const isFieldSet = [&jv](auto const field) { return jv.isMember(field) and jv[field].asBool(); };
 
-        if (isFieldSet(JS(full)) or isFieldSet(JS(accounts)) or isFieldSet(JS(type)))
+        // According to doc
+        // https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/ledger-methods/ledger,
+        // full/accounts/type are admin only, but type only works when full/accounts are set, so we don't need to check
+        // type.
+        if (isFieldSet(JS(full)) or isFieldSet(JS(accounts)))
             return true;
     }
 
