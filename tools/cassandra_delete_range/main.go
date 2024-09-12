@@ -26,30 +26,37 @@ const (
 )
 
 var (
-	clusterHosts      = kingpin.Arg("hosts", "Your Scylla nodes IP addresses, comma separated (i.e. 192.168.1.1,192.168.1.2,192.168.1.3)").Required().String()
-	earliestLedgerIdx = kingpin.Flag("ledgerIdx", "Sets the earliest ledger_index to keep untouched").Short('i').Required().Uint64()
+	app = kingpin.New("cassandra_delete_range", "A tool that prunes data from the Clio DB.")
 
-	nodesInCluster        = kingpin.Flag("nodes-in-cluster", "Number of nodes in your Scylla cluster").Short('n').Default(fmt.Sprintf("%d", defaultNumberOfNodesInCluster)).Int()
-	coresInNode           = kingpin.Flag("cores-in-node", "Number of cores in each node").Short('c').Default(fmt.Sprintf("%d", defaultNumberOfCoresInNode)).Int()
-	smudgeFactor          = kingpin.Flag("smudge-factor", "Yet another factor to make parallelism cooler").Short('s').Default(fmt.Sprintf("%d", defaultSmudgeFactor)).Int()
-	clusterConsistency    = kingpin.Flag("consistency", "Cluster consistency level. Use 'localone' for multi DC").Short('o').Default("localquorum").String()
-	clusterTimeout        = kingpin.Flag("timeout", "Maximum duration for query execution in millisecond").Short('t').Default("15000").Int()
-	clusterNumConnections = kingpin.Flag("cluster-number-of-connections", "Number of connections per host per session (in our case, per thread)").Short('b').Default("1").Int()
-	clusterCQLVersion     = kingpin.Flag("cql-version", "The CQL version to use").Short('l').Default("3.0.0").String()
-	clusterPageSize       = kingpin.Flag("cluster-page-size", "Page size of results").Short('p').Default("5000").Int()
-	keyspace              = kingpin.Flag("keyspace", "Keyspace to use").Short('k').Default("clio_fh").String()
+	deleteAfter          = app.Command("delete-after", "Prunes from the given ledger index until the end")
+	deleteAfterHosts     = deleteAfter.Arg("hosts", "Your Scylla nodes IP addresses, comma separated (i.e. 192.168.1.1,192.168.1.2,192.168.1.3)").Required().String()
+	deleteAfterLedgerIdx = deleteAfter.Arg("idx", "Sets the earliest ledger_index to keep untouched (delete everything after this ledger index)").Required().Uint64()
 
-	userName = kingpin.Flag("username", "Username to use when connecting to the cluster").String()
-	password = kingpin.Flag("password", "Password to use when connecting to the cluster").String()
+	deleteBefore          = app.Command("delete-before", "Prunes everything before the given ledger index")
+	deleteBeforeHosts     = deleteBefore.Arg("hosts", "Your Scylla nodes IP addresses, comma separated (i.e. 192.168.1.1,192.168.1.2,192.168.1.3)").Required().String()
+	deleteBeforeLedgerIdx = deleteBefore.Arg("idx", "Sets the latest ledger_index to keep around (delete everything before this ledger index)").Required().Uint64()
 
-	skipSuccessorTable          = kingpin.Flag("skip-successor", "Whether to skip deletion from successor table").Default("false").Bool()
-	skipObjectsTable            = kingpin.Flag("skip-objects", "Whether to skip deletion from objects table").Default("false").Bool()
-	skipLedgerHashesTable       = kingpin.Flag("skip-ledger-hashes", "Whether to skip deletion from ledger_hashes table").Default("false").Bool()
-	skipTransactionsTable       = kingpin.Flag("skip-transactions", "Whether to skip deletion from transactions table").Default("false").Bool()
-	skipDiffTable               = kingpin.Flag("skip-diff", "Whether to skip deletion from diff table").Default("false").Bool()
-	skipLedgerTransactionsTable = kingpin.Flag("skip-ledger-transactions", "Whether to skip deletion from ledger_transactions table").Default("false").Bool()
-	skipLedgersTable            = kingpin.Flag("skip-ledgers", "Whether to skip deletion from ledgers table").Default("false").Bool()
-	skipWriteLatestLedger       = kingpin.Flag("skip-write-latest-ledger", "Whether to skip writing the latest ledger index").Default("false").Bool()
+	nodesInCluster        = app.Flag("nodes-in-cluster", "Number of nodes in your Scylla cluster").Short('n').Default(fmt.Sprintf("%d", defaultNumberOfNodesInCluster)).Int()
+	coresInNode           = app.Flag("cores-in-node", "Number of cores in each node").Short('c').Default(fmt.Sprintf("%d", defaultNumberOfCoresInNode)).Int()
+	smudgeFactor          = app.Flag("smudge-factor", "Yet another factor to make parallelism cooler").Short('s').Default(fmt.Sprintf("%d", defaultSmudgeFactor)).Int()
+	clusterConsistency    = app.Flag("consistency", "Cluster consistency level. Use 'localone' for multi DC").Short('o').Default("localquorum").String()
+	clusterTimeout        = app.Flag("timeout", "Maximum duration for query execution in millisecond").Short('t').Default("15000").Int()
+	clusterNumConnections = app.Flag("cluster-number-of-connections", "Number of connections per host per session (in our case, per thread)").Short('b').Default("1").Int()
+	clusterCQLVersion     = app.Flag("cql-version", "The CQL version to use").Short('l').Default("3.0.0").String()
+	clusterPageSize       = app.Flag("cluster-page-size", "Page size of results").Short('p').Default("5000").Int()
+	keyspace              = app.Flag("keyspace", "Keyspace to use").Short('k').Default("clio_fh").String()
+
+	userName = app.Flag("username", "Username to use when connecting to the cluster").String()
+	password = app.Flag("password", "Password to use when connecting to the cluster").String()
+
+	skipSuccessorTable          = app.Flag("skip-successor", "Whether to skip deletion from successor table").Default("false").Bool()
+	skipObjectsTable            = app.Flag("skip-objects", "Whether to skip deletion from objects table").Default("false").Bool()
+	skipLedgerHashesTable       = app.Flag("skip-ledger-hashes", "Whether to skip deletion from ledger_hashes table").Default("false").Bool()
+	skipTransactionsTable       = app.Flag("skip-transactions", "Whether to skip deletion from transactions table").Default("false").Bool()
+	skipDiffTable               = app.Flag("skip-diff", "Whether to skip deletion from diff table").Default("false").Bool()
+	skipLedgerTransactionsTable = app.Flag("skip-ledger-transactions", "Whether to skip deletion from ledger_transactions table").Default("false").Bool()
+	skipLedgersTable            = app.Flag("skip-ledgers", "Whether to skip deletion from ledgers table").Default("false").Bool()
+	skipWriteLatestLedger       = app.Flag("skip-write-latest-ledger", "Whether to skip writing the latest ledger index").Default("false").Bool()
 
 	workerCount = 1           // the calculated number of parallel goroutines the client should run
 	ranges      []*tokenRange // the calculated ranges to be executed in parallel
@@ -73,6 +80,105 @@ type columnSettings struct {
 type deleteInfo struct {
 	Query string
 	Data  []deleteParams
+}
+
+func main() {
+	log.SetOutput(os.Stdout)
+
+	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
+	case deleteAfter.FullCommand():
+		if *deleteAfterLedgerIdx == 0 {
+			log.Println("Please specify ledger index to delete from")
+			return
+		}
+
+		cluster, err := prepareDb(deleteAfterHosts)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		doDeleteAfter(cluster)
+
+	case deleteBefore.FullCommand():
+		if *deleteBeforeLedgerIdx == 0 {
+			log.Println("Please specify ledger index to delete until")
+			return
+		}
+
+		cluster, err := prepareDb(deleteBeforeHosts)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		doDeleteBefore(cluster)
+	}
+}
+
+func doDeleteAfter(cluster *gocql.ClusterConfig) {
+	displayParams("delete-after", deleteAfterHosts, cluster.Timeout/1000/1000, *deleteAfterLedgerIdx)
+	log.Printf("Will delete everything after ledger index %d (exclusive) and till latest\n", *deleteAfterLedgerIdx)
+	log.Println("WARNING: Please make sure that there are no Clio writers operating on the DB while this script is running")
+
+	if !promptContinue() {
+		log.Fatal("Aborted")
+	}
+
+	startTime := time.Now().UTC()
+
+	firstLedgerIdxInDB, latestLedgerIdxInDB, err := getLedgerRange(cluster)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if firstLedgerIdxInDB > *deleteAfterLedgerIdx {
+		log.Fatal("Earliest ledger index in DB is greater than the one specified. Aborting...")
+	}
+
+	if latestLedgerIdxInDB < *deleteAfterLedgerIdx {
+		log.Fatal("Latest ledger index in DB is smaller than the one specified. Aborting...")
+	}
+
+	if err := deleteLedgerData(cluster, *deleteAfterLedgerIdx+1, latestLedgerIdxInDB, firstLedgerIdxInDB, *deleteAfterLedgerIdx); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Total Execution Time: %s\n\n", time.Since(startTime))
+	fmt.Println("NOTE: Cassandra/ScyllaDB only writes tombstones. You need to run compaction to free up disk space.")
+}
+
+func doDeleteBefore(cluster *gocql.ClusterConfig) {
+	// we force skip successors for this one
+	*skipSuccessorTable = true
+
+	displayParams("delete-before", deleteBeforeHosts, cluster.Timeout/1000/1000, *deleteBeforeLedgerIdx)
+	log.Printf("Will delete everything before ledger index %d (exclusive)\n", *deleteBeforeLedgerIdx)
+	log.Println("WARNING: Please make sure that there are no Clio writers operating on the DB while this script is running")
+
+	if !promptContinue() {
+		log.Fatal("Aborted")
+	}
+
+	startTime := time.Now().UTC()
+
+	firstLedgerIdxInDB, latestLedgerIdxInDB, err := getLedgerRange(cluster)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if firstLedgerIdxInDB > *deleteBeforeLedgerIdx {
+		log.Fatal("Earliest ledger index in DB is greater than the one specified. Aborting...")
+	}
+
+	if latestLedgerIdxInDB < *deleteBeforeLedgerIdx {
+		log.Fatal("Latest ledger index in DB is smaller than the one specified. Aborting...")
+	}
+
+	if err := deleteLedgerData(cluster, firstLedgerIdxInDB, *deleteBeforeLedgerIdx-1, *deleteBeforeLedgerIdx, latestLedgerIdxInDB); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Total Execution Time: %s\n\n", time.Since(startTime))
+	fmt.Println("NOTE: Cassandra/ScyllaDB only writes tombstones. You need to run compaction to free up disk space.")
 }
 
 func getTokenRanges() []*tokenRange {
@@ -167,41 +273,13 @@ func getConsistencyLevel(consistencyValue string) gocql.Consistency {
 	}
 }
 
-func main() {
-	log.SetOutput(os.Stdout)
-	kingpin.Parse()
-
-	workerCount = (*nodesInCluster) * (*coresInNode) * (*smudgeFactor)
-	ranges = getTokenRanges()
-	shuffle(ranges)
-
-	hosts := strings.Split(*clusterHosts, ",")
-
-	cluster := gocql.NewCluster(hosts...)
-	cluster.Consistency = getConsistencyLevel(*clusterConsistency)
-	cluster.Timeout = time.Duration(*clusterTimeout * 1000 * 1000)
-	cluster.NumConns = *clusterNumConnections
-	cluster.CQLVersion = *clusterCQLVersion
-	cluster.PageSize = *clusterPageSize
-	cluster.Keyspace = *keyspace
-
-	if *userName != "" {
-		cluster.Authenticator = gocql.PasswordAuthenticator{
-			Username: *userName,
-			Password: *password,
-		}
-	}
-
-	if *earliestLedgerIdx == 0 {
-		log.Println("Please specify ledger index to delete from")
-		return
-	}
-
+func displayParams(command string, hosts *string, timeout time.Duration, ledgerIdx uint64) {
 	runParameters := fmt.Sprintf(`
 Execution Parameters:
 =====================
 
-Range to be deleted           : %d -> latest
+Command                       : %s
+Ledger index                  : %d
 Scylla cluster nodes          : %s
 Keyspace                      : %s
 Consistency                   : %s
@@ -221,14 +299,15 @@ Skip deletion of:
 - ledger_transactions table   : %t
 - ledgers table               : %t
 
-Will rite latest ledger       : %t
+Will update ledger_range      : %t
 
 `,
-		*earliestLedgerIdx,
-		*clusterHosts,
+		command,
+		ledgerIdx,
+		*hosts,
 		*keyspace,
 		*clusterConsistency,
-		cluster.Timeout/1000/1000,
+		timeout,
 		*clusterNumConnections,
 		*clusterCQLVersion,
 		*clusterPageSize,
@@ -244,38 +323,42 @@ Will rite latest ledger       : %t
 		!*skipWriteLatestLedger)
 
 	fmt.Println(runParameters)
+}
 
-	log.Printf("Will delete everything after ledger index %d (exclusive) and till latest\n", *earliestLedgerIdx)
-	log.Println("WARNING: Please make sure that there are no Clio writers operating on the DB while this script is running")
-	log.Println("Are you sure you want to continue? (y/n)")
+func prepareDb(dbHosts *string) (*gocql.ClusterConfig, error) {
+	workerCount = (*nodesInCluster) * (*coresInNode) * (*smudgeFactor)
+	ranges = getTokenRanges()
+	shuffle(ranges)
 
+	hosts := strings.Split(*dbHosts, ",")
+
+	cluster := gocql.NewCluster(hosts...)
+	cluster.Consistency = getConsistencyLevel(*clusterConsistency)
+	cluster.Timeout = time.Duration(*clusterTimeout * 1000 * 1000)
+	cluster.NumConns = *clusterNumConnections
+	cluster.CQLVersion = *clusterCQLVersion
+	cluster.PageSize = *clusterPageSize
+	cluster.Keyspace = *keyspace
+
+	if *userName != "" {
+		cluster.Authenticator = gocql.PasswordAuthenticator{
+			Username: *userName,
+			Password: *password,
+		}
+	}
+
+	return cluster, nil
+}
+
+func promptContinue() bool {
 	var continueFlag string
+
+	log.Println("Are you sure you want to continue? (y/n)")
 	if fmt.Scanln(&continueFlag); continueFlag != "y" {
-		log.Println("Aborting...")
-		return
+		return false
 	}
 
-	startTime := time.Now().UTC()
-
-	earliestLedgerIdxInDB, latestLedgerIdxInDB, err := getLedgerRange(cluster)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if earliestLedgerIdxInDB > *earliestLedgerIdx {
-		log.Fatal("Earliest ledger index in DB is greater than the one specified. Aborting...")
-	}
-
-	if latestLedgerIdxInDB < *earliestLedgerIdx {
-		log.Fatal("Latest ledger index in DB is smaller than the one specified. Aborting...")
-	}
-
-	if err := deleteLedgerData(cluster, *earliestLedgerIdx+1, latestLedgerIdxInDB); err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("Total Execution Time: %s\n\n", time.Since(startTime))
-	fmt.Println("NOTE: Cassandra/ScyllaDB only writes tombstones. You need to run compaction to free up disk space.")
+	return true
 }
 
 func getLedgerRange(cluster *gocql.ClusterConfig) (uint64, uint64, error) {
@@ -303,7 +386,7 @@ func getLedgerRange(cluster *gocql.ClusterConfig) (uint64, uint64, error) {
 	return firstLedgerIdx, latestLedgerIdx, nil
 }
 
-func deleteLedgerData(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, toLedgerIdx uint64) error {
+func deleteLedgerData(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, toLedgerIdx uint64, newStartLedger uint64, newEndLedger uint64) error {
 	var totalErrors uint64
 	var totalRows uint64
 	var totalDeletes uint64
@@ -313,7 +396,7 @@ func deleteLedgerData(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, toLedg
 	var deleteCount uint64
 	var errCount uint64
 
-	log.Printf("Start scanning and removing data for %d -> latest (%d according to ledger_range table)\n\n", fromLedgerIdx, toLedgerIdx)
+	log.Printf("Start scanning and removing data for %d -> %d\n\n", fromLedgerIdx, toLedgerIdx)
 
 	// successor queries
 	if !*skipSuccessorTable {
@@ -412,7 +495,7 @@ func deleteLedgerData(cluster *gocql.ClusterConfig, fromLedgerIdx uint64, toLedg
 	// TODO: also, whether we need to take care of nft tables and other stuff like that
 
 	if !*skipWriteLatestLedger {
-		if err := updateLedgerRange(cluster, fromLedgerIdx-1); err != nil {
+		if err := updateLedgerRange(cluster, newStartLedger, newEndLedger); err != nil {
 			log.Printf("ERROR failed updating ledger range: %s\n", err)
 			return err
 		}
@@ -583,6 +666,9 @@ func performDeleteQueries(cluster *gocql.ClusterConfig, info *deleteInfo, colSet
 							atomic.AddUint64(&totalErrors, 1)
 						} else {
 							atomic.AddUint64(&totalDeletes, 1)
+							if atomic.LoadUint64(&totalDeletes)%10000 == 0 {
+								log.Printf("total deletes done %d\n", totalDeletes)
+							}
 						}
 					}
 				}
@@ -598,16 +684,22 @@ func performDeleteQueries(cluster *gocql.ClusterConfig, info *deleteInfo, colSet
 	return totalDeletes, totalErrors
 }
 
-func updateLedgerRange(cluster *gocql.ClusterConfig, ledgerIndex uint64) error {
-	log.Printf("Updating latest ledger to %d\n", ledgerIndex)
+func updateLedgerRange(cluster *gocql.ClusterConfig, newStartLedger uint64, newEndLedger uint64) error {
+	log.Printf("Updating ledger range to %d->%d\n", newStartLedger, newEndLedger)
 
 	if session, err := cluster.CreateSession(); err == nil {
 		defer session.Close()
 
 		query := "UPDATE ledger_range SET sequence = ? WHERE is_latest = ?"
-		preparedQuery := session.Query(query, ledgerIndex, true)
+		preparedQuery := session.Query(query, newEndLedger, true)
 		if err := preparedQuery.Exec(); err != nil {
-			fmt.Fprintf(os.Stderr, "FAILED QUERY: %s [seq=%d][true]\n", query, ledgerIndex)
+			fmt.Fprintf(os.Stderr, "FAILED QUERY: %s [seq=%d][true]\n", query, newEndLedger)
+			return err
+		}
+
+		preparedQuery = session.Query(query, newStartLedger, false)
+		if err := preparedQuery.Exec(); err != nil {
+			fmt.Fprintf(os.Stderr, "FAILED QUERY: %s [seq=%d][false]\n", query, newStartLedger)
 			return err
 		}
 	} else {
