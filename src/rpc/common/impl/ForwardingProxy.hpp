@@ -69,6 +69,9 @@ public:
         if (specifiesCurrentOrClosedLedger(request))
             return true;
 
+        if (isForcedForward(ctx))
+            return true;
+
         auto const checkAccountInfoForward = [&]() {
             return ctx.method == "account_info" and request.contains("queue") and request.at("queue").is_bool() and
                 request.at("queue").as_bool();
@@ -137,6 +140,14 @@ private:
     validHandler(std::string const& method) const
     {
         return handlerProvider_->contains(method) || isProxied(method);
+    }
+
+    bool
+    isForcedForward(web::Context const& ctx) const
+    {
+        static constexpr auto forceForwardFieldName = "force_forward";
+        return ctx.isAdmin and ctx.params.contains(forceForwardFieldName) and
+            ctx.params.at(forceForwardFieldName).is_bool() and ctx.params.at(forceForwardFieldName).as_bool();
     }
 };
 
