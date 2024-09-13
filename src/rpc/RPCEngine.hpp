@@ -27,13 +27,16 @@
 #include "rpc/common/HandlerProvider.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
+#include "util/ResponseExpirationCache.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 #include <boost/json.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/protocol/ErrorCodes.h>
 
 #include <chrono>
@@ -42,6 +45,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <utility>
 
 // forward declarations
@@ -58,6 +62,7 @@ namespace rpc {
 /**
  * @brief The RPC engine that ties all RPC-related functionality together.
  */
+template <typename LoadBalancerType>
 class RPCEngine {
     util::Logger perfLog_{"Performance"};
     util::Logger log_{"RPC"};
@@ -69,7 +74,9 @@ class RPCEngine {
 
     std::shared_ptr<HandlerProvider const> handlerProvider_;
 
-    impl::ForwardingProxy<etl::LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
+    impl::ForwardingProxy<LoadBalancerType, Counters, HandlerProvider> forwardingProxy_;
+
+    std::optional<util::ResponseExpirationCache> responseCache_;
 
 public:
     /**
@@ -83,8 +90,9 @@ public:
      * @param handlerProvider The handler provider to use
      */
     RPCEngine(
+        util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<etl::LoadBalancer> const& balancer,
+        std::shared_ptr<LoadBalancerType> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
@@ -97,6 +105,24 @@ public:
         , handlerProvider_{handlerProvider}
         , forwardingProxy_{balancer, counters, handlerProvider}
     {
+        // Let main thread catch the exception if config type is wrong
+        auto const cacheTimeout = config.valueOr<float>("rpc.cache_timeout", 0.f);
+        auto const cmdsCfg = config.arrayOr("rpc.cached_commands", {});
+
+        if (cacheTimeout > 0.f and not cmdsCfg.empty()) {
+            auto const transform = [](auto const& elem) { return elem.template value<std::string>(); };
+
+            std::unordered_set<std::string> const cmds{
+                boost::transform_iterator(std::begin(cmdsCfg), transform),
+                boost::transform_iterator(std::end(cmdsCfg), transform)
+            };
+
+            LOG(log_.info()) << fmt::format(
+                "Init RPC Cache, timeout: {} seconds, cached commands: {}", cacheTimeout, fmt::join(cmds, ", ")
+            );
+
+            responseCache_ = util::ResponseExpirationCache{util::Config::toMilliseconds(cacheTimeout), cmds};
+        }
     }
 
     /**
@@ -112,15 +138,16 @@ public:
      */
     static std::shared_ptr<RPCEngine>
     make_RPCEngine(
+        util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<etl::LoadBalancer> const& balancer,
+        std::shared_ptr<LoadBalancerType> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
         Counters& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
     {
-        return std::make_shared<RPCEngine>(backend, balancer, dosGuard, workQueue, counters, handlerProvider);
+        return std::make_shared<RPCEngine>(config, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
     }
 
     /**
@@ -138,6 +165,14 @@ public:
                 return Result{Status{RippledError::rpcNO_PERMISSION}};
 
             return forwardingProxy_.forward(ctx);
+        }
+
+        if (not ctx.isAdmin) {
+            // add counter
+            if (auto res = responseCache_ ? responseCache_->get(ctx.method) : std::nullopt; res.has_value()) {
+                LOG(log_.info()) << "Cache hit for " << ctx.method;
+                return Result{std::move(res.value())};
+            }
         }
 
         if (backend_->isTooBusy()) {
@@ -162,6 +197,9 @@ public:
 
             if (not v)
                 notifyErrored(ctx.method);
+
+            if (not ctx.isAdmin and responseCache_)
+                responseCache_->put(ctx.method, v.result->as_object());
 
             return Result{std::move(v)};
         } catch (data::DatabaseTimeout const& t) {

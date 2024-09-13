@@ -519,7 +519,7 @@ struct LoadBalancerForwardToRippledTests : LoadBalancerConstructorTests, SyncAsi
         EXPECT_CALL(sourceFactory_.sourceAt(1), run);
     }
 
-    boost::json::object const request_{{"request", "value"}};
+    boost::json::object const request_{{"command", "value"}};
     std::optional<std::string> const clientIP_ = "some_ip";
     boost::json::object const response_{{"response", "other_value"}};
 };

@@ -23,7 +23,6 @@ target_sources(
           etl/ETLStateTests.cpp
           etl/ExtractionDataPipeTests.cpp
           etl/ExtractorTests.cpp
-          etl/ForwardingCacheTests.cpp
           etl/ForwardingSourceTests.cpp
           etl/GrpcSourceTests.cpp
           etl/LedgerPublisherTests.cpp
@@ -121,6 +120,7 @@ target_sources(
           util/RandomTests.cpp
           util/RetryTests.cpp
           util/RepeatTests.cpp
+          util/ResponseExpirationCacheTests.cpp
           util/SignalsHandlerTests.cpp
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
