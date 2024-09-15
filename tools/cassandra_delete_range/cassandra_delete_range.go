@@ -33,6 +33,8 @@ var (
 	deleteBefore          = app.Command("delete-before", "Prunes everything before the given ledger index")
 	deleteBeforeLedgerIdx = deleteBefore.Arg("idx", "Sets the latest ledger_index to keep around (delete everything before this ledger index)").Required().Uint64()
 
+	getLedgerRange = app.Command("get-ledger-range", "Fetch the current lender_range table values")
+
 	nodesInCluster        = app.Flag("nodes-in-cluster", "Number of nodes in your Scylla cluster").Short('n').Default(fmt.Sprintf("%d", defaultNumberOfNodesInCluster)).Int()
 	coresInNode           = app.Flag("cores-in-node", "Number of cores in each node").Short('c').Default(fmt.Sprintf("%d", defaultNumberOfCoresInNode)).Int()
 	smudgeFactor          = app.Flag("smudge-factor", "Yet another factor to make parallelism cooler").Short('s').Default(fmt.Sprintf("%d", defaultSmudgeFactor)).Int()
@@ -120,6 +122,13 @@ func main() {
 
 		fmt.Printf("Total Execution Time: %s\n\n", time.Since(startTime))
 		fmt.Println("NOTE: Cassandra/ScyllaDB only writes tombstones. You need to run compaction to free up disk space.")
+	case getLedgerRange.FullCommand():
+		from, to, err := clioCass.GetLedgerRange()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("Range: %d -> %d\n", from, to)
 	}
 }
 
@@ -163,7 +172,7 @@ Will update ledger_range      : %t
 		*clusterPageSize,
 		workerCount,
 		len(ranges),
-		*skipSuccessorTable,
+		*skipSuccessorTable || command == "delete-before",
 		*skipObjectsTable,
 		*skipLedgerHashesTable,
 		*skipTransactionsTable,

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -44,6 +45,7 @@ type Settings struct {
 }
 
 type Cass interface {
+	GetLedgerRange() (uint64, uint64, error)
 	DeleteBefore(ledgerIdx uint64)
 	DeleteAfter(ledgerIdx uint64)
 }
@@ -58,10 +60,12 @@ func NewClioCass(settings *Settings, cluster *gocql.ClusterConfig) *ClioCass {
 }
 
 func (c *ClioCass) DeleteBefore(ledgerIdx uint64) {
-	firstLedgerIdxInDB, latestLedgerIdxInDB, err := c.getLedgerRange()
+	firstLedgerIdxInDB, latestLedgerIdxInDB, err := c.GetLedgerRange()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Printf("DB ledger range is %d -> %d\n", firstLedgerIdxInDB, latestLedgerIdxInDB)
 
 	if firstLedgerIdxInDB > ledgerIdx {
 		log.Fatal("Earliest ledger index in DB is greater than the one specified. Aborting...")
@@ -83,10 +87,12 @@ func (c *ClioCass) DeleteBefore(ledgerIdx uint64) {
 }
 
 func (c *ClioCass) DeleteAfter(ledgerIdx uint64) {
-	firstLedgerIdxInDB, latestLedgerIdxInDB, err := c.getLedgerRange()
+	firstLedgerIdxInDB, latestLedgerIdxInDB, err := c.GetLedgerRange()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Printf("DB ledger range is %d -> %d\n", firstLedgerIdxInDB, latestLedgerIdxInDB)
 
 	if firstLedgerIdxInDB > ledgerIdx {
 		log.Fatal("Earliest ledger index in DB is greater than the one specified. Aborting...")
@@ -106,7 +112,7 @@ func (c *ClioCass) DeleteAfter(ledgerIdx uint64) {
 	}
 }
 
-func (c *ClioCass) getLedgerRange() (uint64, uint64, error) {
+func (c *ClioCass) GetLedgerRange() (uint64, uint64, error) {
 	var (
 		firstLedgerIdx  uint64
 		latestLedgerIdx uint64
@@ -127,7 +133,6 @@ func (c *ClioCass) getLedgerRange() (uint64, uint64, error) {
 		return 0, 0, err
 	}
 
-	log.Printf("DB ledger range is %d:%d\n", firstLedgerIdx, latestLedgerIdx)
 	return firstLedgerIdx, latestLedgerIdx, nil
 }
 
@@ -178,7 +183,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for successor table")
 		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
 			"SELECT key, seq FROM successor WHERE token(key) >= ? AND token(key) <= ?",
-			"DELETE FROM successor WHERE key = ? AND seq = ?")
+			"DELETE FROM successor WHERE key = ? AND seq = ?", false)
 		log.Printf("Total delete queries: %d\n", len(info.Data))
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalErrors += errCount
@@ -190,23 +195,17 @@ func (c *ClioCass) pruneData(
 
 	// objects queries
 	if !c.settings.SkipObjectsTable {
-		if toLedgerIdx.HasValue() {
-			// TODO: pruning from start of db
-
-		} else {
-			// pruning end of db
-			log.Println("Generating delete queries for objects table")
-			info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
-				"SELECT key, sequence FROM objects WHERE token(key) >= ? AND token(key) <= ?",
-				"DELETE FROM objects WHERE key = ? AND sequence = ?")
-			log.Printf("Total delete queries: %d\n", len(info.Data))
-			log.Printf("Total traversed rows: %d\n\n", rowsCount)
-			totalErrors += errCount
-			totalRows += rowsCount
-			deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: true, UseSeq: true})
-			totalErrors += errCount
-			totalDeletes += deleteCount
-		}
+		log.Println("Generating delete queries for objects table")
+		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
+			"SELECT key, sequence FROM objects WHERE token(key) >= ? AND token(key) <= ?",
+			"DELETE FROM objects WHERE key = ? AND sequence = ?", true)
+		log.Printf("Total delete queries: %d\n", len(info.Data))
+		log.Printf("Total traversed rows: %d\n\n", rowsCount)
+		totalErrors += errCount
+		totalRows += rowsCount
+		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: true, UseSeq: true})
+		totalErrors += errCount
+		totalDeletes += deleteCount
 	}
 
 	// ledger_hashes queries
@@ -214,7 +213,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for ledger_hashes table")
 		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
 			"SELECT hash, sequence FROM ledger_hashes WHERE token(hash) >= ? AND token(hash) <= ?",
-			"DELETE FROM ledger_hashes WHERE hash = ?")
+			"DELETE FROM ledger_hashes WHERE hash = ?", false)
 		log.Printf("Total delete queries: %d\n", len(info.Data))
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalErrors += errCount
@@ -229,7 +228,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for transactions table")
 		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
 			"SELECT hash, ledger_sequence FROM transactions WHERE token(hash) >= ? AND token(hash) <= ?",
-			"DELETE FROM transactions WHERE hash = ?")
+			"DELETE FROM transactions WHERE hash = ?", false)
 		log.Printf("Total delete queries: %d\n", len(info.Data))
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalErrors += errCount
@@ -326,6 +325,7 @@ func (c *ClioCass) prepareDeleteQueries(
 	toLedgerIdx maybe.Maybe[uint64],
 	queryTemplate string,
 	deleteQueryTemplate string,
+	keepLastValid bool,
 ) (deleteInfo, uint64, uint64) {
 	rangesChannel := make(chan *util.TokenRange, len(c.settings.Ranges))
 	for i := range c.settings.Ranges {
@@ -338,7 +338,12 @@ func (c *ClioCass) prepareDeleteQueries(
 	var info = deleteInfo{Query: deleteQueryTemplate}
 
 	go func() {
+		total := uint64(0)
 		for params := range outChannel {
+			total += 1
+			if total%1000 == 0 {
+				log.Printf("... %d queries ...\n", total)
+			}
 			info.Data = append(info.Data, params)
 		}
 	}()
@@ -370,6 +375,9 @@ func (c *ClioCass) prepareDeleteQueries(
 					var pageState []byte
 					var rowsRetrieved uint64
 
+					var previousKey []byte
+					var foundLastValid bool
+
 					for {
 						iter := preparedQuery.PageSize(c.clusterConfig.PageSize).PageState(pageState).Iter()
 						nextPageState := iter.PageState()
@@ -383,11 +391,20 @@ func (c *ClioCass) prepareDeleteQueries(
 							if err == nil {
 								rowsRetrieved++
 
+								if keepLastValid && !slices.Equal(previousKey, key) {
+									previousKey = key
+									foundLastValid = false
+								}
+
 								// only grab the rows that are in the correct range of sequence numbers
 								if fromLedgerIdx.HasValue() && fromLedgerIdx.Value() <= seq {
 									outChannel <- deleteParams{Seq: seq, Blob: key}
 								} else if toLedgerIdx.HasValue() && seq < toLedgerIdx.Value() {
-									outChannel <- deleteParams{Seq: seq, Blob: key}
+									if !keepLastValid || foundLastValid {
+										outChannel <- deleteParams{Seq: seq, Blob: key}
+									} else {
+										foundLastValid = true
+									}
 								}
 							} else {
 								log.Printf("ERROR: page iteration failed: %s\n", err)
