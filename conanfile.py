@@ -20,6 +20,17 @@ class Clio(ConanFile):
         'lint': [True, False],                # run clang-tidy checks during compilation
     }
 
+    requires = [
+        'boost/1.82.0',
+        'cassandra-cpp-driver/2.17.1',        # Updated version
+        'fmt/10.1.1',
+        'protobuf/3.21.9',
+        'grpc/1.50.1',
+        'openssl/1.1.1u',
+        'xrpl/2.3.0-b1',
+        'libbacktrace/cci.20210118'
+    ]
+
     default_options = {
         'static': False,
         'verbose': False,
@@ -44,7 +55,6 @@ class Clio(ConanFile):
         'protobuf/*:with_zlib': True,
         'snappy/*:shared': False,
         'gtest/*:no_main': True,
-        'benchmark/*:header_only': True, # Set options for benchmark if applicable
     }
 
     exports_sources = (
