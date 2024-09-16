@@ -244,7 +244,7 @@ func (c *ClioCass) pruneData(
 		info = c.prepareSimpleDeleteQueries(rangeFrom, rangeTo,
 			"DELETE FROM diff WHERE seq = ?")
 		log.Printf("Total delete queries: %d\n\n", len(info.Data))
-		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: true, UseSeq: true})
+		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: false, UseSeq: true})
 		totalErrors += errCount
 		totalDeletes += deleteCount
 	}
@@ -397,10 +397,10 @@ func (c *ClioCass) prepareDeleteQueries(
 								// only grab the rows that are in the correct range of sequence numbers
 								if fromLedgerIdx.HasValue() && fromLedgerIdx.Value() <= seq {
 									outChannel <- deleteParams{Seq: seq, Blob: key}
-								} else if toLedgerIdx.HasValue() && seq < toLedgerIdx.Value() {
-									if !keepLastValid || foundLastValid {
+								} else if toLedgerIdx.HasValue() {
+									if seq < toLedgerIdx.Value() && (!keepLastValid || foundLastValid) {
 										outChannel <- deleteParams{Seq: seq, Blob: key}
-									} else {
+									} else if seq <= toLedgerIdx.Value()+1 {
 										foundLastValid = true
 									}
 								}
