@@ -10,7 +10,6 @@ class Clio(ConanFile):
     settings = 'os', 'compiler', 'build_type', 'arch'
     options = {
         'static': [True, False],              # static linkage
-        'fPIC': [True, False],                # unused?
         'verbose': [True, False],
         'tests': [True, False],               # build unit tests; create `clio_tests` binary
         'integration_tests': [True, False],   # build integration tests; create `clio_integration_tests` binary
@@ -21,20 +20,8 @@ class Clio(ConanFile):
         'lint': [True, False],                # run clang-tidy checks during compilation
     }
 
-    requires = [
-        'boost/1.82.0',
-        'cassandra-cpp-driver/2.17.0',
-        'fmt/10.1.1',
-        'protobuf/3.21.9',
-        'grpc/1.50.1',
-        'openssl/1.1.1u',
-        'xrpl/2.3.0-b1',
-        'libbacktrace/cci.20210118'
-    ]
-
     default_options = {
         'static': False,
-        'fPIC': True,
         'verbose': False,
         'tests': False,
         'integration_tests': False,
@@ -57,6 +44,7 @@ class Clio(ConanFile):
         'protobuf/*:with_zlib': True,
         'snappy/*:shared': False,
         'gtest/*:no_main': True,
+        'benchmark/*:header_only': True, # Set options for benchmark if applicable
     }
 
     exports_sources = (
@@ -75,11 +63,10 @@ class Clio(ConanFile):
 
     def layout(self):
         cmake_layout(self)
-        # Fix this setting to follow the default introduced in Conan 1.48 
-        # to align with our build instructions.
         self.folders.generators = 'build/generators'
 
     generators = 'CMakeDeps'
+
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables['verbose'] = self.options.verbose
