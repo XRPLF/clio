@@ -311,9 +311,7 @@ func (c *ClioCass) prepareSimpleDeleteQueries(
 ) deleteInfo {
 	var info = deleteInfo{Query: deleteQueryTemplate}
 
-	// Note: we deliberately add 1 extra ledger to make sure we delete any data Clio might have written
-	// if it crashed or was stopped in the middle of writing just before it wrote ledger_range.
-	for i := fromLedgerIdx; i <= toLedgerIdx+1; i++ {
+	for i := fromLedgerIdx; i <= toLedgerIdx; i++ {
 		info.Data = append(info.Data, deleteParams{Seq: i})
 	}
 
