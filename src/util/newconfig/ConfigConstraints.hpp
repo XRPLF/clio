@@ -44,7 +44,7 @@ class ConfigValue;
 /**
  * @brief specific values that are accepted for logger levels in config.
  */
-static constexpr std::array<char const*, 7> logLevels = {
+static constexpr std::array<char const*, 7> LOG_LEVELS = {
     "trace",
     "debug",
     "info",
@@ -57,7 +57,7 @@ static constexpr std::array<char const*, 7> logLevels = {
 /**
  * @brief specific values that are accepted for logger tag style in config.
  */
-static constexpr std::array<char const*, 5> logTags = {
+static constexpr std::array<char const*, 5> LOG_TAGS = {
     "int",
     "uint",
     "null",
@@ -68,7 +68,7 @@ static constexpr std::array<char const*, 5> logTags = {
 /**
  * @brief specific values that are accepted for cache loading in config.
  */
-static constexpr std::array<char const*, 3> loadCacheMode = {
+static constexpr std::array<char const*, 3> LOAD_CACHE_MODE = {
     "sync",
     "async",
     "none",
@@ -77,7 +77,7 @@ static constexpr std::array<char const*, 3> loadCacheMode = {
 /**
  * @brief specific values that are accepted for database type in config.
  */
-static constexpr std::array<char const*, 1> databaseType = {"cassandra"};
+static constexpr std::array<char const*, 1> DATABASE_TYPE = {"cassandra"};
 
 /**
  * @brief An interface to enforce constraints on certain values within ClioConfigDefinition.
@@ -356,10 +356,10 @@ static constexpr PortConstraint validatePort{};
 static constexpr ValidIPConstraint validateIP{};
 
 static constexpr OneOf validateChannelName{"channel", Logger::CHANNELS};
-static constexpr OneOf validateLogLevelName{"log_level", logLevels};
-static constexpr OneOf validateCassandraName{"database.type", databaseType};
-static constexpr OneOf validateLoadMode{"cache.load", loadCacheMode};
-static constexpr OneOf validateLogTag{"log_tag_style", logTags};
+static constexpr OneOf validateLogLevelName{"log_level", LOG_LEVELS};
+static constexpr OneOf validateCassandraName{"database.type", DATABASE_TYPE};
+static constexpr OneOf validateLoadMode{"cache.load", LOAD_CACHE_MODE};
+static constexpr OneOf validateLogTag{"log_tag_style", LOG_TAGS};
 
 static constexpr PositiveDouble validatePositiveDouble{};
 
