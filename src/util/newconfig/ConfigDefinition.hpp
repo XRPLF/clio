@@ -24,7 +24,7 @@
 #include "util/newconfig/ConfigDescription.hpp"
 #include "util/newconfig/ConfigFileInterface.hpp"
 #include "util/newconfig/ConfigValue.hpp"
-#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/ObjectView.hpp"
 #include "util/newconfig/ValueView.hpp"
 
@@ -41,6 +41,7 @@
 #include <unordered_map>
 #include <utility>
 #include <variant>
+#include <vector>
 
 namespace util::config {
 
@@ -66,12 +67,13 @@ public:
     /**
      * @brief Parses the configuration file
      *
-     * Should also check that no extra configuration key/value pairs are present
+     * Also checks that no extra configuration key/value pairs are present. Adds to list of Errors
+     * if it does
      *
      * @param config The configuration file interface
-     * @return An optional Error object if parsing fails
+     * @return An optional vector of Error objects stating all the failures if parsing fails
      */
-    [[nodiscard]] std::optional<Error>
+    [[nodiscard]] std::optional<std::vector<Error>>
     parse(ConfigFileInterface const& config);
 
     /**
@@ -80,9 +82,9 @@ public:
      * Should only check for valid values, without populating
      *
      * @param config The configuration file interface
-     * @return An optional Error object if validation fails
+     * @return An optional vector of Error objects stating all the failures if validation fails
      */
-    [[nodiscard]] std::optional<Error>
+    [[nodiscard]] std::optional<std::vector<Error>>
     validate(ConfigFileInterface const& config) const;
 
     /**
