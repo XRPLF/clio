@@ -21,6 +21,7 @@
 
 #include "util/Assert.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <cstdint>
 #include <string>
@@ -55,9 +56,9 @@ double
 ValueView::asDouble() const
 {
     if (configVal_.get().hasValue()) {
-        if (type() == ConfigType::Double) {
+        if (type() == ConfigType::Double)
             return std::get<double>(configVal_.get().getValue());
-        }
+
         if (type() == ConfigType::Integer)
             return static_cast<double>(std::get<int64_t>(configVal_.get().getValue()));
     }
