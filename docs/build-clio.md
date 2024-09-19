@@ -168,7 +168,7 @@ Sometimes, during development, you need to build against a custom version of `li
     # ... (excerpt from conanfile.py)
         requires = [
         'boost/1.82.0',
-        'cassandra-cpp-driver/2.17.1',
+        'cassandra-cpp-driver/2.17.0',
         'fmt/10.1.1',
         'protobuf/3.21.9',
         'grpc/1.50.1',
