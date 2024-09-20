@@ -155,7 +155,7 @@ protected:
  */
 class PortConstraint final : public Constraint {
 public:
-    constexpr ~PortConstraint()
+    constexpr ~PortConstraint() override
     {
     }  // NOLINT(google-default-destructor)
 
@@ -187,7 +187,7 @@ private:
  */
 class ValidIPConstraint final : public Constraint {
 public:
-    constexpr ~ValidIPConstraint()
+    constexpr ~ValidIPConstraint() override
     {
     }  // NOLINT(google-default-destructor)
 
@@ -229,7 +229,7 @@ public:
     {
     }
 
-    constexpr ~OneOf()
+    constexpr ~OneOf() override
     {
     }  // NOLINT(google-default-destructor)
 
@@ -285,7 +285,7 @@ public:
     {
     }
 
-    constexpr ~NumberValueConstraint()
+    constexpr ~NumberValueConstraint() override
     {
     }  // NOLINT(google-default-destructor)
 
@@ -328,7 +328,7 @@ private:
  */
 class PositiveDouble final : public Constraint {
 public:
-    constexpr ~PositiveDouble()
+    constexpr ~PositiveDouble() override
     {
     }  // NOLINT(google-default-destructor)
 
