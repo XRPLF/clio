@@ -133,7 +133,7 @@ void
 ConfigFileJson::flattenJson(boost::json::object const& obj, std::string const& prefix)
 {
     for (auto const& [key, value] : obj) {
-        std::string fullKey = prefix.empty() ? std::string(key) : fmt::format("{}.{}", prefix, std::string(key));
+        std::string const fullKey = prefix.empty() ? std::string(key) : fmt::format("{}.{}", prefix, std::string(key));
 
         // In ClioConfigDefinition, value must be a primitive or array
         if (value.is_object()) {
@@ -141,7 +141,7 @@ ConfigFileJson::flattenJson(boost::json::object const& obj, std::string const& p
         } else if (value.is_array()) {
             auto const& arr = value.as_array();
             for (std::size_t i = 0; i < arr.size(); ++i) {
-                std::string arrayPrefix = fullKey + ".[]";
+                std::string const arrayPrefix = fullKey + ".[]";
                 if (arr[i].is_object()) {
                     flattenJson(arr[i].as_object(), arrayPrefix);
                 } else {

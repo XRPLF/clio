@@ -88,7 +88,7 @@ public:
     // see here for more info:
     // https://stackoverflow.com/questions/72835571/constexpr-c-error-destructor-used-before-its-definition
     // https://godbolt.org/z/eMdWThaMY
-    constexpr virtual ~Constraint() noexcept {};
+    constexpr virtual ~Constraint() noexcept = default;
 
     /**
      * @brief Check if the value meets the specific constraint.
@@ -155,9 +155,8 @@ protected:
  */
 class PortConstraint final : public Constraint {
 public:
-    constexpr ~PortConstraint()
-    {
-    }
+    constexpr ~PortConstraint() override
+    = default;
 
 private:
     /**
@@ -187,9 +186,8 @@ private:
  */
 class ValidIPConstraint final : public Constraint {
 public:
-    constexpr ~ValidIPConstraint()
-    {
-    }
+    constexpr ~ValidIPConstraint() override
+    = default;
 
 private:
     /**
@@ -229,9 +227,8 @@ public:
     {
     }
 
-    constexpr ~OneOf()
-    {
-    }
+    constexpr ~OneOf() override
+    = default;
 
 private:
     /**
@@ -285,9 +282,8 @@ public:
     {
     }
 
-    constexpr ~NumberValueConstraint()
-    {
-    }
+    constexpr ~NumberValueConstraint() override
+    = default;
 
 private:
     /**
@@ -328,9 +324,8 @@ private:
  */
 class PositiveDouble final : public Constraint {
 public:
-    constexpr ~PositiveDouble()
-    {
-    }
+    constexpr ~PositiveDouble() override
+    = default;
 
 private:
     /**

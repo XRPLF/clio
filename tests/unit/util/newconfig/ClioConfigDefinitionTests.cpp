@@ -25,11 +25,9 @@
 #include "util/newconfig/Types.hpp"
 #include "util/newconfig/ValueView.hpp"
 
-#include <boost/filesystem/operations.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -287,7 +285,7 @@ TEST_F(IncorrectOverrideValues, InvalidJsonErrors)
     EXPECT_TRUE(errors.has_value());
 
     // Expected error messages
-    std::unordered_set<std::string_view> expectedErrors{
+    std::unordered_set<std::string_view> const expectedErrors{
         "dosguard.whitelist.[] value does not match type string",
         "higher.[].low.section key is required in user Config",
         "higher.[].low.admin key is required in user Config",

@@ -22,8 +22,6 @@
 #include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
-#include <fmt/core.h>
-
 #include <cstdint>
 #include <optional>
 #include <regex>
