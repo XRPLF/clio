@@ -91,6 +91,7 @@ target_sources(
           rpc/handlers/UnsubscribeTests.cpp
           rpc/handlers/VersionHandlerTests.cpp
           rpc/JsonBoolTests.cpp
+          rpc/RPCEngineTests.cpp
           rpc/RPCHelpersTests.cpp
           rpc/WorkQueueTests.cpp
           util/AccountUtilsTests.cpp

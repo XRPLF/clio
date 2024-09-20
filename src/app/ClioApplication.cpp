@@ -121,14 +121,14 @@ ClioApplication::run()
     auto const handlerProvider = std::make_shared<rpc::impl::ProductionHandlerProvider const>(
         config_, backend, subscriptions, balancer, etl, amendmentCenter, counters
     );
-    auto const rpcEngine = rpc::RPCEngine<etl::LoadBalancer>::make_RPCEngine(
-        config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider
-    );
+
+    using RPCEngineType = rpc::RPCEngine<etl::LoadBalancer, rpc::Counters>;
+    auto const rpcEngine =
+        RPCEngineType::make_RPCEngine(config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
 
     // Init the web server
-    auto handler = std::make_shared<web::RPCServerHandler<rpc::RPCEngine<etl::LoadBalancer>, etl::ETLService>>(
-        config_, backend, rpcEngine, etl
-    );
+    auto handler =
+        std::make_shared<web::RPCServerHandler<RPCEngineType, etl::ETLService>>(config_, backend, rpcEngine, etl);
     auto const httpServer = web::make_HttpServer(config_, ioc, dosGuard, handler);
 
     // Blocks until stopped.

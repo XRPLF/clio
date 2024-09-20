@@ -62,7 +62,7 @@ namespace rpc {
 /**
  * @brief The RPC engine that ties all RPC-related functionality together.
  */
-template <typename LoadBalancerType>
+template <typename LoadBalancerType, typename CountersType>
 class RPCEngine {
     util::Logger perfLog_{"Performance"};
     util::Logger log_{"RPC"};
@@ -70,11 +70,11 @@ class RPCEngine {
     std::shared_ptr<BackendInterface> backend_;
     std::reference_wrapper<web::dosguard::DOSGuardInterface const> dosGuard_;
     std::reference_wrapper<WorkQueue> workQueue_;
-    std::reference_wrapper<Counters> counters_;
+    std::reference_wrapper<CountersType> counters_;
 
     std::shared_ptr<HandlerProvider const> handlerProvider_;
 
-    impl::ForwardingProxy<LoadBalancerType, Counters, HandlerProvider> forwardingProxy_;
+    impl::ForwardingProxy<LoadBalancerType, CountersType, HandlerProvider> forwardingProxy_;
 
     std::optional<util::ResponseExpirationCache> responseCache_;
 
@@ -95,7 +95,7 @@ public:
         std::shared_ptr<LoadBalancerType> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
-        Counters& counters,
+        CountersType& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
         : backend_{backend}
@@ -121,7 +121,7 @@ public:
                 "Init RPC Cache, timeout: {} seconds, cached commands: {}", cacheTimeout, fmt::join(cmds, ", ")
             );
 
-            responseCache_ = util::ResponseExpirationCache{util::Config::toMilliseconds(cacheTimeout), cmds};
+            responseCache_.emplace(util::Config::toMilliseconds(cacheTimeout), cmds);
         }
     }
 
@@ -143,7 +143,7 @@ public:
         std::shared_ptr<LoadBalancerType> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
-        Counters& counters,
+        CountersType& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
     {
@@ -168,11 +168,8 @@ public:
         }
 
         if (not ctx.isAdmin) {
-            // add counter
-            if (auto res = responseCache_ ? responseCache_->get(ctx.method) : std::nullopt; res.has_value()) {
-                LOG(log_.info()) << "Cache hit for " << ctx.method;
+            if (auto res = responseCache_ ? responseCache_->get(ctx.method) : std::nullopt; res.has_value())
                 return Result{std::move(res.value())};
-            }
         }
 
         if (backend_->isTooBusy()) {
@@ -198,7 +195,7 @@ public:
             if (not v)
                 notifyErrored(ctx.method);
 
-            if (not ctx.isAdmin and responseCache_)
+            if (not ctx.isAdmin and v and responseCache_)
                 responseCache_->put(ctx.method, v.result->as_object());
 
             return Result{std::move(v)};
