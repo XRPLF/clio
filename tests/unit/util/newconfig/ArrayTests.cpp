@@ -47,11 +47,11 @@ TEST(ArrayTest, addAndCheckMultipleValues)
     EXPECT_EQ(arr.size(), 3);
 
     auto const cv = arr.at(0);
-    ValueView vv{cv};
+    ValueView const vv{cv};
     EXPECT_EQ(vv.asDouble(), 111.11);
 
     auto const cv2 = arr.at(1);
-    ValueView vv2{cv2};
+    ValueView const vv2{cv2};
     EXPECT_EQ(vv2.asDouble(), 222.22);
 
     EXPECT_EQ(arr.size(), 3);
@@ -59,7 +59,7 @@ TEST(ArrayTest, addAndCheckMultipleValues)
 
     EXPECT_EQ(arr.size(), 4);
     auto const cv4 = arr.at(3);
-    ValueView vv4{cv4};
+    ValueView const vv4{cv4};
     EXPECT_EQ(vv4.asDouble(), 444.44);
 }
 
