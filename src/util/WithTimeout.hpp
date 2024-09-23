@@ -34,7 +34,7 @@
 
 namespace util {
 
-/** Perform a cotoutine operation with a timeout.
+/** Perform a coroutine operation with a timeout.
     @param operation The operation to perform.
     @param yield The yield context.
     @param timeout The timeout duration.

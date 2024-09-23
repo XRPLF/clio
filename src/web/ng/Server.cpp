@@ -26,6 +26,7 @@
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/ng/Connection.hpp"
+#include "web/ng/Error.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/impl/HttpConnection.hpp"
 #include "web/ng/impl/ServerSslContext.hpp"
@@ -147,9 +148,12 @@ makeConnection(
         );
     }
 
-    connection->fetch(yield);
-    if (connection->isUpgradeRequested())
-        return connection->upgrade();
+    if (connection->isUpgradeRequested(yield)) {
+        return connection->upgrade(sslContext, yield)
+            .or_else([](Error error) -> std::expected<ConnectionPtr, std::string> {
+                return std::unexpected{fmt::format("Error upgrading connection: {}", error.what())};
+            });
+    }
 
     return connection;
 }
@@ -265,28 +269,6 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
         }
     });
 }
-
-// void
-// Server::makeConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield)
-// {
-//     Connection* connectionPtr = connection.get();
-//
-//     {
-//         auto connections = connections_->lock<std::unique_lock>();
-//         auto [it, inserted] = connections->insert(std::move(connection));
-//         ASSERT(inserted, "Connection with id {} already exists.", it->get()->id());
-//     }
-//
-//     if (upgraded) {
-//         boost::asio::spawn(ctx_, [this, &connectionRef = *connectionPtr](boost::asio::yield_context yield) mutable {
-//             handleConnectionLoop(connectionRef, yield);
-//         });
-//     } else {
-//         boost::asio::spawn(ctx_, [this, &connectionRef = *connectionPtr](boost::asio::yield_context yield) mutable {
-//             handleConnection(connectionRef, yield);
-//         });
-//     }
-// }
 
 void
 Server::processConnection(Connection& connection, boost::asio::yield_context yield)

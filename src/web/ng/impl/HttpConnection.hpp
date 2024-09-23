@@ -57,7 +57,7 @@ public:
         const = 0;
 
     virtual std::expected<ConnectionPtr, Error>
-    upgrade(std::optional<boost::asio::ssl::context>& sslContext, boost::asio::yield_context yield) && = 0;
+    upgrade(std::optional<boost::asio::ssl::context>& sslContext, boost::asio::yield_context yield) = 0;
 };
 
 using UpgradableConnectionPtr = std::unique_ptr<UpgradableConnection>;
@@ -143,10 +143,7 @@ public:
     }
 
     std::expected<ConnectionPtr, Error>
-        upgrade(
-            [[maybe_unused]] std::optional<boost::asio::ssl::context>& sslContext,
-            boost::asio::yield_context yield
-        ) &&
+    upgrade([[maybe_unused]] std::optional<boost::asio::ssl::context>& sslContext, boost::asio::yield_context yield)
         override
     {
         ASSERT(request_.has_value(), "Request must be present to upgrade the connection");
