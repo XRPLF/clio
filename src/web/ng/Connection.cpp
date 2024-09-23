@@ -19,6 +19,8 @@
 
 #include "web/ng/Connection.hpp"
 
+#include <boost/beast/core/flat_buffer.hpp>
+
 #include <atomic>
 #include <cstddef>
 #include <string>
@@ -37,7 +39,8 @@ generateId()
 
 }  // namespace
 
-Connection::Connection(std::string ip) : id_{generateId()}, ip_{std::move(ip)}
+Connection::Connection(std::string ip, boost::beast::flat_buffer buffer)
+    : id_{generateId()}, ip_{std::move(ip)}, buffer_{std::move(buffer)}
 {
 }
 
