@@ -50,6 +50,7 @@ constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A
 constexpr static auto NFTID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
 constexpr static auto NFTID2 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DA";
 constexpr static auto NFTID3 = "15FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DF";
+constexpr static auto INDEX = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 
 class RPCAccountTxHandlerTest : public HandlerBaseTest {};
 
@@ -460,7 +461,7 @@ genNFTTransactions(uint32_t seq)
     trans1.date = 1;
     transactions.push_back(trans1);
 
-    auto trans2 = CreateAcceptNFTOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID2);
+    auto trans2 = CreateAcceptNFTBuyerOfferTxWithMetadata(ACCOUNT, 1, 50, NFTID2, INDEX);
     trans2.ledgerSequence = seq;
     trans2.date = 2;
     transactions.push_back(trans2);

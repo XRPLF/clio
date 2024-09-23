@@ -35,6 +35,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -193,9 +194,23 @@ public:
     void
     write(PreparedStatementType const& preparedStatement, Args&&... args)
     {
+        auto statement = preparedStatement.bind(std::forward<Args>(args)...);
+        write(std::move(statement));
+    }
+
+    /**
+     * @brief Non-blocking query execution used for writing data.
+     *
+     * Retries forever with retry policy specified by @ref AsyncExecutor
+     *
+     * @param statement Statement to execute
+     * @throw DatabaseTimeout on timeout
+     */
+    void
+    write(StatementType&& statement)
+    {
         auto const startTime = std::chrono::steady_clock::now();
 
-        auto statement = preparedStatement.bind(std::forward<Args>(args)...);
         incrementOutstandingRequestCount();
 
         counters_->registerWriteStarted();
@@ -211,6 +226,21 @@ public:
             },
             [this]() { counters_->registerWriteRetry(); }
         );
+    }
+
+    /**
+     * @brief Non-blocking  query execution used for writing data. Constrast with write, this method does not execute
+     * the statements in a batch.
+     *
+     * Retries forever with retry policy specified by @ref AsyncExecutor.
+     *
+     * @param statements Vector of statements to execute
+     * @throw DatabaseTimeout on timeout
+     */
+    void
+    writeEach(std::vector<StatementType>&& statements)
+    {
+        std::ranges::for_each(std::move(statements), [this](auto& statement) { this->write(std::move(statement)); });
     }
 
     /**

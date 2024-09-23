@@ -492,7 +492,7 @@ TEST_F(RPCHelpersTest, LedgerHeaderJsonV2)
 
 TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV1)
 {
-    auto const txMeta = CreateAcceptNFTOfferTxWithMetadata(ACCOUNT, 30, 1, INDEX1);
+    auto const txMeta = CreateAcceptNFTBuyerOfferTxWithMetadata(ACCOUNT, 30, 1, INDEX1, INDEX2);
     auto const json = toJsonWithBinaryTx(txMeta, 1);
     EXPECT_TRUE(json.contains(JS(tx_blob)));
     EXPECT_TRUE(json.contains(JS(meta)));
@@ -500,7 +500,7 @@ TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV1)
 
 TEST_F(RPCHelpersTest, TransactionAndMetadataBinaryJsonV2)
 {
-    auto const txMeta = CreateAcceptNFTOfferTxWithMetadata(ACCOUNT, 30, 1, INDEX1);
+    auto const txMeta = CreateAcceptNFTBuyerOfferTxWithMetadata(ACCOUNT, 30, 1, INDEX1, INDEX2);
     auto const json = toJsonWithBinaryTx(txMeta, 2);
     EXPECT_TRUE(json.contains(JS(tx_blob)));
     EXPECT_TRUE(json.contains(JS(meta_blob)));

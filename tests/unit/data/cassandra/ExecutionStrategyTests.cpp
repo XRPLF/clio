@@ -23,6 +23,7 @@
 #include "data/cassandra/impl/ExecutionStrategy.hpp"
 #include "util/AsioContextTestFixture.hpp"
 
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
@@ -118,13 +119,11 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineSuccessful)
 {
     auto strat = makeStrategy();
 
-    ON_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .WillByDefault([](auto const& /* statement */, auto&& cb) {
+    EXPECT_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
+        .WillOnce([](auto const& /* statement */, auto&& cb) {
             cb({});  // pretend we got data
             return FakeFutureWithCallback{};
         });
-    EXPECT_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(1));
     EXPECT_CALL(*counters, registerReadFinishedImpl(testing::_, 1));
 
@@ -138,14 +137,12 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineThrowsOnTimeoutF
 {
     auto strat = makeStrategy();
 
-    ON_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .WillByDefault([](auto const&, auto&& cb) {
+    EXPECT_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
+        .WillOnce([](auto const&, auto&& cb) {
             auto res = FakeResultOrError{CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}};
             cb(res);  // notify that item is ready
             return FakeFutureWithCallback{res};
         });
-    EXPECT_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(1));
     EXPECT_CALL(*counters, registerReadErrorImpl(1));
 
@@ -159,14 +156,12 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadOneInCoroutineThrowsOnInvalidQ
 {
     auto strat = makeStrategy();
 
-    ON_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .WillByDefault([](auto const&, auto&& cb) {
+    EXPECT_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
+        .WillOnce([](auto const&, auto&& cb) {
             auto res = FakeResultOrError{CassandraError{"invalid", CASS_ERROR_SERVER_INVALID_QUERY}};
             cb(res);  // notify that item is ready
             return FakeFutureWithCallback{res};
         });
-    EXPECT_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(1));
     EXPECT_CALL(*counters, registerReadErrorImpl(1));
 
@@ -180,16 +175,14 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineSuccessful)
 {
     auto strat = makeStrategy();
 
-    ON_CALL(handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .WillByDefault([](auto const& statements, auto&& cb) {
+    EXPECT_CALL(
+        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
+    )
+        .WillOnce([](auto const& statements, auto&& cb) {
             EXPECT_EQ(statements.size(), NUM_STATEMENTS);
             cb({});  // pretend we got data
             return FakeFutureWithCallback{};
         });
-    EXPECT_CALL(
-        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
-    )
-        .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadFinishedImpl(testing::_, NUM_STATEMENTS));
 
@@ -203,17 +196,15 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineThrowsOnTimeou
 {
     auto strat = makeStrategy();
 
-    ON_CALL(handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .WillByDefault([](auto const& statements, auto&& cb) {
+    EXPECT_CALL(
+        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
+    )
+        .WillOnce([](auto const& statements, auto&& cb) {
             EXPECT_EQ(statements.size(), NUM_STATEMENTS);
             auto res = FakeResultOrError{CassandraError{"timeout", CASS_ERROR_LIB_REQUEST_TIMED_OUT}};
             cb(res);  // notify that item is ready
             return FakeFutureWithCallback{res};
         });
-    EXPECT_CALL(
-        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
-    )
-        .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadErrorImpl(NUM_STATEMENTS));
 
@@ -227,17 +218,15 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineThrowsOnInvali
 {
     auto strat = makeStrategy();
 
-    ON_CALL(handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .WillByDefault([](auto const& statements, auto&& cb) {
+    EXPECT_CALL(
+        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
+    )
+        .WillOnce([](auto const& statements, auto&& cb) {
             EXPECT_EQ(statements.size(), NUM_STATEMENTS);
             auto res = FakeResultOrError{CassandraError{"invalid", CASS_ERROR_SERVER_INVALID_QUERY}};
             cb(res);  // notify that item is ready
             return FakeFutureWithCallback{res};
         });
-    EXPECT_CALL(
-        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
-    )
-        .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadErrorImpl(NUM_STATEMENTS));
 
@@ -251,8 +240,10 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineMarksBusyIfReq
 {
     auto strat = makeStrategy(Settings{.maxReadRequestsOutstanding = 2});
 
-    ON_CALL(handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .WillByDefault([this, &strat](auto const& statements, auto&& cb) {
+    EXPECT_CALL(
+        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
+    )
+        .WillOnce([this, &strat](auto const& statements, auto&& cb) {
             EXPECT_EQ(statements.size(), NUM_STATEMENTS);
             EXPECT_CALL(*counters, registerTooBusy());
             EXPECT_TRUE(strat.isTooBusy());  // 2 was the limit, we sent 3
@@ -260,10 +251,6 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadBatchInCoroutineMarksBusyIfReq
             cb({});  // notify that item is ready
             return FakeFutureWithCallback{};
         });
-    EXPECT_CALL(
-        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
-    )
-        .Times(1);
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadFinishedImpl(testing::_, NUM_STATEMENTS));
 
@@ -279,19 +266,12 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineSuccessful)
 {
     auto strat = makeStrategy();
 
-    ON_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .WillByDefault([](auto const&, auto&& cb) {
+    EXPECT_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
+        .Times(NUM_STATEMENTS)
+        .WillRepeatedly([](auto const&, auto&& cb) {
             cb({});  // pretend we got data
             return FakeFutureWithCallback{};
-        });
-    EXPECT_CALL(
-        handle,
-        asyncExecute(
-            A<FakeStatement const&>(),
-            A<std::function<void(FakeResultOrError)>&&>()
-        )
-    )
-        .Times(NUM_STATEMENTS);  // once per statement
+        });  // once per statement
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadFinishedImpl(testing::_, NUM_STATEMENTS));
 
@@ -307,8 +287,9 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineThrowsOnFailure
     auto strat = makeStrategy();
     auto callCount = std::atomic_int{0};
 
-    ON_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .WillByDefault([&callCount](auto const&, auto&& cb) {
+    EXPECT_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
+        .Times(NUM_STATEMENTS)
+        .WillRepeatedly([&callCount](auto const&, auto&& cb) {
             if (callCount == 1) {  // error happens on one of the entries
                 cb({CassandraError{"invalid data", CASS_ERROR_LIB_INVALID_DATA}});
             } else {
@@ -316,15 +297,7 @@ TEST_F(BackendCassandraExecutionStrategyTest, ReadEachInCoroutineThrowsOnFailure
             }
             ++callCount;
             return FakeFutureWithCallback{};
-        });
-    EXPECT_CALL(
-        handle,
-        asyncExecute(
-            A<FakeStatement const&>(),
-            A<std::function<void(FakeResultOrError)>&&>()
-        )
-    )
-        .Times(NUM_STATEMENTS);  // once per statement
+        });  // once per statement
     EXPECT_CALL(*counters, registerReadStartedImpl(NUM_STATEMENTS));
     EXPECT_CALL(*counters, registerReadErrorImpl(1));
     EXPECT_CALL(*counters, registerReadFinishedImpl(testing::_, 2));
@@ -339,9 +312,9 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteSyncFirstTrySuccessful)
 {
     auto strat = makeStrategy();
 
-    ON_CALL(handle, execute(A<FakeStatement const&>())).WillByDefault([](auto const&) { return FakeResultOrError{}; });
-    EXPECT_CALL(handle,
-                execute(A<FakeStatement const&>())).Times(1);  // first one will succeed
+    EXPECT_CALL(handle, execute(A<FakeStatement const&>())).WillOnce([](auto const&) {
+        return FakeResultOrError{};
+    });  // first one will succeed
     EXPECT_CALL(*counters, registerWriteSync(testing::_));
 
     EXPECT_TRUE(strat.writeSync({}));
@@ -371,26 +344,21 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteMultipleAndCallSyncSucceeds)
     auto const totalRequests = 1024u;
     auto callCount = std::atomic_uint{0u};
 
-    auto work = std::optional<boost::asio::io_context::work>{ctx};
+    auto work = boost::asio::make_work_guard(ctx);
     auto thread = std::thread{[this]() { ctx.run(); }};
 
-    ON_CALL(handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>()))
-        .WillByDefault([this, &callCount](auto const&, auto&& cb) {
+    EXPECT_CALL(
+        handle, asyncExecute(A<std::vector<FakeStatement> const&>(), A<std::function<void(FakeResultOrError)>&&>())
+    )
+        .Times(totalRequests)
+        .WillRepeatedly([this, &callCount](auto const&, auto&& cb) {
             // run on thread to emulate concurrency model of real asyncExecute
             boost::asio::post(ctx, [&callCount, cb = std::forward<decltype(cb)>(cb)] {
                 ++callCount;
                 cb({});  // pretend we got data
             });
             return FakeFutureWithCallback{};
-        });
-    EXPECT_CALL(
-        handle,
-        asyncExecute(
-            A<std::vector<FakeStatement> const&>(),
-            A<std::function<void(FakeResultOrError)>&&>()
-        )
-    )
-        .Times(totalRequests);  // one per write call
+        });  // one per write call
     EXPECT_CALL(*counters, registerWriteStarted()).Times(totalRequests);
     EXPECT_CALL(*counters, registerWriteFinished(testing::_)).Times(totalRequests);
 
@@ -400,6 +368,40 @@ TEST_F(BackendCassandraExecutionStrategyTest, WriteMultipleAndCallSyncSucceeds)
 
     strat.sync();                         // make sure all above writes are finished
     EXPECT_EQ(callCount, totalRequests);  // all requests should finish
+
+    work.reset();
+    thread.join();
+}
+
+TEST_F(BackendCassandraExecutionStrategyTest, WriteEachAndCallSyncSucceeds)
+{
+    auto strat = makeStrategy();
+    auto const totalRequests = 1024u;
+    auto const numStatements = 16u;
+    auto callCount = std::atomic_uint{0u};
+
+    auto work = boost::asio::make_work_guard(ctx);
+    auto thread = std::thread{[this]() { ctx.run(); }};
+
+    EXPECT_CALL(handle, asyncExecute(A<FakeStatement const&>(), A<std::function<void(FakeResultOrError)>&&>()))
+        .Times(totalRequests * numStatements)
+        .WillRepeatedly([this, &callCount](auto const&, auto&& cb) {
+            // run on thread to emulate concurrency model of real asyncExecute
+            boost::asio::post(ctx, [&callCount, cb = std::forward<decltype(cb)>(cb)] {
+                ++callCount;
+                cb({});  // pretend we got data
+            });
+            return FakeFutureWithCallback{};
+        });  // numStatements per write call
+    EXPECT_CALL(*counters, registerWriteStarted()).Times(totalRequests * numStatements);
+    EXPECT_CALL(*counters, registerWriteFinished(testing::_)).Times(totalRequests * numStatements);
+
+    auto makeStatements = [] { return std::vector<FakeStatement>(16); };
+    for (auto i = 0u; i < totalRequests; ++i)
+        strat.writeEach(makeStatements());
+
+    strat.sync();                                         // make sure all above writes are finished
+    EXPECT_EQ(callCount, totalRequests * numStatements);  // all requests should finish
 
     work.reset();
     thread.join();

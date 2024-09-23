@@ -577,7 +577,6 @@ public:
                 return seq;
             }
             LOG(log_.debug()) << "Could not fetch ledger object sequence - no rows";
-
         } else {
             LOG(log_.error()) << "Could not fetch ledger object sequence: " << res.error();
         }
@@ -881,28 +880,35 @@ public:
         statements.reserve(data.size() * 3);
 
         for (NFTsData const& record : data) {
-            statements.push_back(
-                schema_->insertNFT.bind(record.tokenID, record.ledgerSequence, record.owner, record.isBurned)
-            );
+            if (!record.onlyUriChanged) {
+                statements.push_back(
+                    schema_->insertNFT.bind(record.tokenID, record.ledgerSequence, record.owner, record.isBurned)
+                );
 
-            // If `uri` is set (and it can be set to an empty uri), we know this
-            // is a net-new NFT. That is, this NFT has not been seen before by
-            // us _OR_ it is in the extreme edge case of a re-minted NFT ID with
-            // the same NFT ID as an already-burned token. In this case, we need
-            // to record the URI and link to the issuer_nf_tokens table.
-            if (record.uri) {
-                statements.push_back(schema_->insertIssuerNFT.bind(
-                    ripple::nft::getIssuer(record.tokenID),
-                    static_cast<uint32_t>(ripple::nft::getTaxon(record.tokenID)),
-                    record.tokenID
-                ));
+                // If `uri` is set (and it can be set to an empty uri), we know this
+                // is a net-new NFT. That is, this NFT has not been seen before by
+                // us _OR_ it is in the extreme edge case of a re-minted NFT ID with
+                // the same NFT ID as an already-burned token. In this case, we need
+                // to record the URI and link to the issuer_nf_tokens table.
+                if (record.uri) {
+                    statements.push_back(schema_->insertIssuerNFT.bind(
+                        ripple::nft::getIssuer(record.tokenID),
+                        static_cast<uint32_t>(ripple::nft::getTaxon(record.tokenID)),
+                        record.tokenID
+                    ));
+                    statements.push_back(
+                        schema_->insertNFTURI.bind(record.tokenID, record.ledgerSequence, record.uri.value())
+                    );
+                }
+            } else {
+                // only uri changed, we update the uri table only
                 statements.push_back(
                     schema_->insertNFTURI.bind(record.tokenID, record.ledgerSequence, record.uri.value())
                 );
             }
         }
 
-        executor_.write(std::move(statements));
+        executor_.writeEach(std::move(statements));
     }
 
     void

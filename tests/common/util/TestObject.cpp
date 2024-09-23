@@ -438,7 +438,7 @@ CreatePaymentChannelLedgerObject(
     return channel;
 }
 
-[[nodiscard]] ripple::STObject
+ripple::STObject
 CreateRippleStateLedgerObject(
     std::string_view currency,
     std::string_view issuerId,
@@ -703,7 +703,230 @@ CreateMintNFTTxWithMetadata(
 }
 
 data::TransactionAndMetadata
-CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uint32_t fee, std::string_view nftId)
+CreateMintNFTTxWithMetadataOfCreatedNode(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    uint32_t nfTokenTaxon,
+    std::optional<std::string_view> nftID,
+    std::optional<std::string_view> uri,
+    std::optional<std::string_view> pageIndex
+)
+{
+    // tx
+    ripple::STObject tx(ripple::sfTransaction);
+    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_MINT);
+    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
+    tx.setAccountID(ripple::sfAccount, account.value());
+    auto amount = ripple::STAmount(fee, false);
+    tx.setFieldAmount(ripple::sfFee, amount);
+    // required field for ttNFTOKEN_MINT
+    tx.setFieldU32(ripple::sfNFTokenTaxon, nfTokenTaxon);
+    tx.setFieldU32(ripple::sfSequence, seq);
+    char const* key = "test";
+    ripple::Slice const slice(key, 4);
+    tx.setFieldVL(ripple::sfSigningPubKey, slice);
+    if (uri)
+        tx.setFieldVL(ripple::sfURI, ripple::Slice(uri->data(), uri->size()));
+
+    // meta
+    ripple::STObject metaObj(ripple::sfTransactionMetaData);
+    ripple::STArray metaArray{1};
+    ripple::STObject node(ripple::sfCreatedNode);
+    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+
+    ripple::STObject newFields(ripple::sfNewFields);
+    ripple::STArray NFTArray1{1};
+
+    if (nftID) {
+        // finalFields contain new NFT while previousFields does not
+        auto entry = ripple::STObject(ripple::sfNFToken);
+        entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{*nftID});
+        if (uri)
+            entry.setFieldVL(ripple::sfURI, ripple::Slice(uri->data(), uri->size()));
+
+        NFTArray1.push_back(entry);
+    }
+    newFields.setFieldArray(ripple::sfNFTokens, NFTArray1);
+    node.emplace_back(std::move(newFields));
+    if (pageIndex)
+        node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{*pageIndex});
+
+    // add a ledger object ahead of nft page
+    ripple::STObject node2(ripple::sfCreatedNode);
+    node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltACCOUNT_ROOT);
+    metaArray.push_back(node2);
+
+    metaArray.push_back(node);
+
+    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+
+    data::TransactionAndMetadata ret;
+    ret.transaction = tx.getSerializer().peekData();
+    ret.metadata = metaObj.getSerializer().peekData();
+    return ret;
+}
+
+data::TransactionAndMetadata
+CreateNFTModifyTxWithMetadata(std::string_view accountId, std::string_view nftID, ripple::Blob uri)
+{
+    // tx
+    ripple::STObject tx(ripple::sfTransaction);
+    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_MODIFY);
+    auto account = ripple::parseBase58<ripple::AccountID>(std::string(accountId));
+    tx.setAccountID(ripple::sfAccount, account.value());
+    auto amount = ripple::STAmount(10, false);
+    tx.setFieldAmount(ripple::sfFee, amount);
+    tx.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    tx.setFieldU32(ripple::sfSequence, 100);
+    char const* key = "test";
+    ripple::Slice const slice(key, 4);
+    tx.setFieldVL(ripple::sfSigningPubKey, slice);
+
+    if (!uri.empty())  // sfURI should be absent if empty
+        tx.setFieldVL(ripple::sfURI, uri);
+
+    // meta
+    ripple::STObject metaObj(ripple::sfTransactionMetaData);
+    ripple::STArray metaArray{1};
+    ripple::STObject node(ripple::sfModifiedNode);
+    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+
+    ripple::STObject finalFields(ripple::sfFinalFields);
+    ripple::STArray NFTArray1{1};
+    ripple::STArray NFTArray2{1};
+
+    // finalFields contain new NFT while previousFields does not
+    auto entry = ripple::STObject(ripple::sfNFToken);
+    entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    if (!uri.empty())
+        entry.setFieldVL(ripple::sfURI, uri);
+    NFTArray1.push_back(entry);
+
+    auto entry2 = ripple::STObject(ripple::sfNFToken);
+    entry2.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    char const* url = "previous";
+    entry2.setFieldVL(ripple::sfURI, ripple::Slice(url, 7));
+    NFTArray2.push_back(entry2);
+
+    finalFields.setFieldArray(ripple::sfNFTokens, NFTArray1);
+
+    ripple::STObject previousFields(ripple::sfPreviousFields);
+    previousFields.setFieldArray(ripple::sfNFTokens, NFTArray2);
+
+    node.emplace_back(std::move(finalFields));
+    node.emplace_back(std::move(previousFields));
+    metaArray.push_back(node);
+    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+
+    data::TransactionAndMetadata ret;
+    ret.transaction = tx.getSerializer().peekData();
+    ret.metadata = metaObj.getSerializer().peekData();
+    return ret;
+}
+
+data::TransactionAndMetadata
+CreateNFTBurnTxWithMetadataOfDeletedNode(std::string_view accountId, std::string_view nftID)
+{
+    // tx
+    ripple::STObject tx(ripple::sfTransaction);
+    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_BURN);
+    auto account = GetAccountIDWithString(accountId);
+    tx.setAccountID(ripple::sfAccount, account);
+    auto amount = ripple::STAmount(10, false);
+    tx.setFieldAmount(ripple::sfFee, amount);
+    tx.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    tx.setFieldU32(ripple::sfSequence, 100);
+    char const* key = "test";
+    ripple::Slice const slice(key, 4);
+    tx.setFieldVL(ripple::sfSigningPubKey, slice);
+
+    // meta
+    ripple::STObject metaObj(ripple::sfTransactionMetaData);
+    ripple::STArray metaArray{1};
+    ripple::STObject node(ripple::sfDeletedNode);
+    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+    // deleted node should contain finalFields
+    ripple::STObject finalFields(ripple::sfFinalFields);
+    ripple::STArray NFTArray{1};
+    auto entry = ripple::STObject(ripple::sfNFToken);
+    entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    NFTArray.push_back(entry);
+    finalFields.setFieldArray(ripple::sfNFTokens, NFTArray);
+
+    node.emplace_back(std::move(finalFields));
+
+    // add a ledger object ahead of nft page
+    ripple::STObject node2(ripple::sfCreatedNode);
+    node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltACCOUNT_ROOT);
+    metaArray.push_back(node2);
+
+    metaArray.push_back(node);
+    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+
+    data::TransactionAndMetadata ret;
+    ret.transaction = tx.getSerializer().peekData();
+    ret.metadata = metaObj.getSerializer().peekData();
+    return ret;
+}
+
+data::TransactionAndMetadata
+CreateNFTBurnTxWithMetadataOfModifiedNode(std::string_view accountId, std::string_view nftID)
+{
+    // tx
+    ripple::STObject tx(ripple::sfTransaction);
+    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_BURN);
+    auto account = GetAccountIDWithString(accountId);
+    tx.setAccountID(ripple::sfAccount, account);
+    auto amount = ripple::STAmount(10, false);
+    tx.setFieldAmount(ripple::sfFee, amount);
+    tx.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    tx.setFieldU32(ripple::sfSequence, 100);
+    char const* key = "test";
+    ripple::Slice const slice(key, 4);
+    tx.setFieldVL(ripple::sfSigningPubKey, slice);
+
+    // meta
+    ripple::STObject metaObj(ripple::sfTransactionMetaData);
+    ripple::STArray metaArray{1};
+    ripple::STObject node(ripple::sfModifiedNode);
+    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+
+    ripple::STObject finalFields(ripple::sfFinalFields);
+    ripple::STArray NFTArray{1};
+    ripple::STObject previousFields(ripple::sfPreviousFields);
+    auto entry = ripple::STObject(ripple::sfNFToken);
+    entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftID});
+    NFTArray.push_back(entry);
+    previousFields.setFieldArray(ripple::sfNFTokens, NFTArray);
+
+    node.emplace_back(std::move(previousFields));
+    node.emplace_back(std::move(finalFields));
+    metaArray.push_back(node);
+    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+
+    data::TransactionAndMetadata ret;
+    ret.transaction = tx.getSerializer().peekData();
+    ret.metadata = metaObj.getSerializer().peekData();
+    return ret;
+}
+
+data::TransactionAndMetadata
+CreateAcceptNFTBuyerOfferTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    std::string_view nftId,
+    std::string_view offerId
+)
 {
     // tx
     ripple::STObject tx(ripple::sfTransaction);
@@ -713,7 +936,7 @@ CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uin
     auto amount = ripple::STAmount(fee, false);
     tx.setFieldAmount(ripple::sfFee, amount);
     tx.setFieldU32(ripple::sfSequence, seq);
-    tx.setFieldH256(ripple::sfNFTokenBuyOffer, ripple::uint256{INDEX1});
+    tx.setFieldH256(ripple::sfNFTokenBuyOffer, ripple::uint256{offerId});
     char const* key = "test";
     ripple::Slice const slice(key, 4);
     tx.setFieldVL(ripple::sfSigningPubKey, slice);
@@ -727,9 +950,106 @@ CreateAcceptNFTOfferTxWithMetadata(std::string_view accountId, uint32_t seq, uin
 
     ripple::STObject finalFields(ripple::sfFinalFields);
     finalFields.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
+    // for buyer offer, the offer owner is the nft's new owner
+    finalFields.setAccountID(ripple::sfOwner, account.value());
 
     node.emplace_back(std::move(finalFields));
+    node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{offerId});
     metaArray.push_back(node);
+    metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
+    metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
+    metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
+
+    data::TransactionAndMetadata ret;
+    ret.transaction = tx.getSerializer().peekData();
+    ret.metadata = metaObj.getSerializer().peekData();
+    return ret;
+}
+
+data::TransactionAndMetadata
+CreateAcceptNFTSellerOfferTxWithMetadata(
+    std::string_view accountId,
+    uint32_t seq,
+    uint32_t fee,
+    std::string_view nftId,
+    std::string_view offerId,
+    std::string_view pageIndex,
+    bool isNewPageCreated
+)
+{
+    // tx
+    ripple::STObject tx(ripple::sfTransaction);
+    tx.setFieldU16(ripple::sfTransactionType, ripple::ttNFTOKEN_ACCEPT_OFFER);
+    auto account = util::parseBase58Wrapper<ripple::AccountID>(std::string(accountId));
+    tx.setAccountID(ripple::sfAccount, account.value());
+    auto amount = ripple::STAmount(fee, false);
+    tx.setFieldAmount(ripple::sfFee, amount);
+    tx.setFieldU32(ripple::sfSequence, seq);
+    tx.setFieldH256(ripple::sfNFTokenSellOffer, ripple::uint256{offerId});
+    char const* key = "test";
+    ripple::Slice const slice(key, 4);
+    tx.setFieldVL(ripple::sfSigningPubKey, slice);
+
+    // meta
+    // create deletedNode with ltNFTOKEN_OFFER
+    ripple::STObject metaObj(ripple::sfTransactionMetaData);
+    ripple::STArray metaArray{1};
+    ripple::STObject node(ripple::sfDeletedNode);
+    node.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_OFFER);
+
+    ripple::STObject finalFields(ripple::sfFinalFields);
+    finalFields.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
+    // offer owner is not the nft's new owner for seller offer, we need to create other nodes for processing new owner
+    finalFields.setAccountID(ripple::sfOwner, account.value());
+
+    node.emplace_back(std::move(finalFields));
+    node.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{offerId});
+    metaArray.push_back(node);
+
+    // new owner's nft page node changed: 1 new nft page node added 2 old nft page node modified
+    if (isNewPageCreated) {
+        ripple::STObject node2(ripple::sfCreatedNode);
+        node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+
+        ripple::STObject newFields(ripple::sfNewFields);
+        ripple::STArray NFTArray1{1};
+
+        auto entry = ripple::STObject(ripple::sfNFToken);
+        entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
+        NFTArray1.push_back(entry);
+
+        newFields.setFieldArray(ripple::sfNFTokens, NFTArray1);
+        node2.emplace_back(std::move(newFields));
+        node2.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{pageIndex});
+        metaArray.push_back(node2);
+    } else {
+        ripple::STObject node2(ripple::sfModifiedNode);
+        node2.setFieldU16(ripple::sfLedgerEntryType, ripple::ltNFTOKEN_PAGE);
+
+        ripple::STObject finalFields(ripple::sfFinalFields);
+        ripple::STArray NFTArray1{2};
+
+        // finalFields contain new NFT while previousFields does not
+        auto entry = ripple::STObject(ripple::sfNFToken);
+        entry.setFieldH256(ripple::sfNFTokenID, ripple::uint256{nftId});
+        NFTArray1.push_back(entry);
+
+        auto entry2 = ripple::STObject(ripple::sfNFToken);
+        entry2.setFieldH256(ripple::sfNFTokenID, ripple::uint256{INDEX1});
+        NFTArray1.push_back(entry2);
+
+        finalFields.setFieldArray(ripple::sfNFTokens, NFTArray1);
+
+        NFTArray1.erase(NFTArray1.begin());
+        ripple::STObject previousFields(ripple::sfPreviousFields);
+        previousFields.setFieldArray(ripple::sfNFTokens, NFTArray1);
+
+        node2.emplace_back(std::move(finalFields));
+        node2.emplace_back(std::move(previousFields));
+        node2.setFieldH256(ripple::sfLedgerIndex, ripple::uint256{pageIndex});
+        metaArray.push_back(node2);
+    }
+
     metaObj.setFieldArray(ripple::sfAffectedNodes, metaArray);
     metaObj.setFieldU8(ripple::sfTransactionResult, ripple::tesSUCCESS);
     metaObj.setFieldU32(ripple::sfTransactionIndex, 0);
