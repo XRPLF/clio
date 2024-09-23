@@ -21,13 +21,20 @@ type deleteInfo struct {
 }
 
 type deleteParams struct {
-	Seq  uint64
-	Blob []byte // hash, key, etc
+	Seq      uint64
+	Blob     []byte // hash, key, etc
+	tnxIndex uint64 //transaction index
 }
 
 type columnSettings struct {
 	UseSeq  bool
 	UseBlob bool
+}
+
+type deleteMethod struct {
+	deleteObject      maybe.Maybe[bool]
+	deleteTransaction maybe.Maybe[bool]
+	deleteGeneral     maybe.Maybe[bool]
 }
 
 type Settings struct {
@@ -39,6 +46,7 @@ type Settings struct {
 	SkipLedgerTransactionsTable bool
 	SkipLedgersTable            bool
 	SkipWriteLatestLedger       bool
+	SkipAccTransactionsTable    bool
 
 	WorkerCount int
 	Ranges      []*util.TokenRange
@@ -94,11 +102,11 @@ func (c *ClioCass) DeleteAfter(ledgerIdx uint64) {
 
 	log.Printf("DB ledger range is %d -> %d\n", firstLedgerIdxInDB, latestLedgerIdxInDB)
 
-	if firstLedgerIdxInDB > ledgerIdx {
+	if firstLedgerIdxInDB >= ledgerIdx {
 		log.Fatal("Earliest ledger index in DB is greater than the one specified. Aborting...")
 	}
 
-	if latestLedgerIdxInDB < ledgerIdx {
+	if latestLedgerIdxInDB <= ledgerIdx {
 		log.Fatal("Latest ledger index in DB is smaller than the one specified. Aborting...")
 	}
 
@@ -183,7 +191,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for successor table")
 		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
 			"SELECT key, seq FROM successor WHERE token(key) >= ? AND token(key) <= ?",
-			"DELETE FROM successor WHERE key = ? AND seq = ?", false)
+			"DELETE FROM successor WHERE key = ? AND seq = ?", deleteMethod{deleteGeneral: maybe.Set(true)})
 		log.Printf("Total delete queries: %d\n", len(info.Data))
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalErrors += errCount
@@ -198,7 +206,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for objects table")
 		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
 			"SELECT key, sequence FROM objects WHERE token(key) >= ? AND token(key) <= ?",
-			"DELETE FROM objects WHERE key = ? AND sequence = ?", true)
+			"DELETE FROM objects WHERE key = ? AND sequence = ?", deleteMethod{deleteObject: maybe.Set(true)})
 		log.Printf("Total delete queries: %d\n", len(info.Data))
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalErrors += errCount
@@ -213,7 +221,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for ledger_hashes table")
 		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
 			"SELECT hash, sequence FROM ledger_hashes WHERE token(hash) >= ? AND token(hash) <= ?",
-			"DELETE FROM ledger_hashes WHERE hash = ?", false)
+			"DELETE FROM ledger_hashes WHERE hash = ?", deleteMethod{deleteGeneral: maybe.Set(true)})
 		log.Printf("Total delete queries: %d\n", len(info.Data))
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalErrors += errCount
@@ -228,7 +236,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for transactions table")
 		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
 			"SELECT hash, ledger_sequence FROM transactions WHERE token(hash) >= ? AND token(hash) <= ?",
-			"DELETE FROM transactions WHERE hash = ?", false)
+			"DELETE FROM transactions WHERE hash = ?", deleteMethod{deleteGeneral: maybe.Set(true)})
 		log.Printf("Total delete queries: %d\n", len(info.Data))
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalErrors += errCount
@@ -272,8 +280,22 @@ func (c *ClioCass) pruneData(
 		totalDeletes += deleteCount
 	}
 
-	// TODO: tbd what to do with account_tx as it got tuple for seq_idx
-	// TODO: also, whether we need to take care of nft tables and other stuff like that
+	if !c.settings.SkipAccTransactionsTable {
+		log.Println("Generating delete queries for account transactions table")
+
+		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
+			"SELECT account, seq_idx FROM account_tx WHERE token(account) >= ? AND token(account) <= ?",
+			"DELETE FROM account_tx WHERE account = ? AND seq_idx = (?, ?)", deleteMethod{deleteTransaction: maybe.Set(true)})
+		log.Printf("Total delete queries: %d\n", len(info.Data))
+		log.Printf("Total traversed rows: %d\n\n", rowsCount)
+		totalErrors += errCount
+		totalRows += rowsCount
+		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: true, UseSeq: false})
+		totalErrors += errCount
+		totalDeletes += deleteCount
+	}
+
+	// TODO: take care of nft tables and other stuff like that
 
 	if !c.settings.SkipWriteLatestLedger {
 		var (
@@ -318,12 +340,110 @@ func (c *ClioCass) prepareSimpleDeleteQueries(
 	return info
 }
 
+func prepareDelete(
+	scanner gocql.Scanner,
+	outChannel chan deleteParams,
+	fromLedgerIdx maybe.Maybe[uint64],
+	toLedgerIdx maybe.Maybe[uint64],
+	rowsRetrieved *uint64,
+) bool {
+	for scanner.Next() {
+		var key []byte
+		var seq uint64
+
+		err := scanner.Scan(&key, &seq)
+		if err == nil {
+			*rowsRetrieved++
+
+			// only grab the rows that are in the correct range of sequence numbers
+			if fromLedgerIdx.HasValue() && fromLedgerIdx.Value() <= seq {
+				outChannel <- deleteParams{Seq: seq, Blob: key}
+			} else if toLedgerIdx.HasValue() && seq <= toLedgerIdx.Value() {
+				outChannel <- deleteParams{Seq: seq, Blob: key}
+			}
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
+func prepareObjectDelete(
+	scanner gocql.Scanner,
+	outChannel chan deleteParams,
+	fromLedgerIdx maybe.Maybe[uint64],
+	toLedgerIdx maybe.Maybe[uint64],
+	rowsRetrieved *uint64,
+) bool {
+	var previousKey []byte
+	var foundLastValid bool
+	var keepLastValid = true
+
+	for scanner.Next() {
+		var key []byte
+		var seq uint64
+
+		err := scanner.Scan(&key, &seq)
+		if err == nil {
+			*rowsRetrieved++
+
+			if keepLastValid && !slices.Equal(previousKey, key) {
+				previousKey = key
+				foundLastValid = false
+			}
+
+			// only grab the rows that are in the correct range of sequence numbers
+			if fromLedgerIdx.HasValue() && fromLedgerIdx.Value() <= seq {
+				outChannel <- deleteParams{Seq: seq, Blob: key}
+			} else if toLedgerIdx.HasValue() {
+				if seq <= toLedgerIdx.Value() && (!keepLastValid || foundLastValid) {
+					outChannel <- deleteParams{Seq: seq, Blob: key}
+				} else if seq <= toLedgerIdx.Value()+1 {
+					foundLastValid = true
+				}
+			}
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
+func prepareAccTxnDelete(
+	scanner gocql.Scanner,
+	outChannel chan deleteParams,
+	fromLedgerIdx maybe.Maybe[uint64],
+	toLedgerIdx maybe.Maybe[uint64],
+	rowsRetrieved *uint64,
+) bool {
+	for scanner.Next() {
+		var key []byte
+		var ledgerIndex, txnIndex uint64
+
+		// account_tx/nft table has seq_idx frozen<tuple<bigint, bigint>>
+		err := scanner.Scan(&key, &ledgerIndex, &txnIndex)
+		if err == nil {
+			*rowsRetrieved++
+
+			// only grab the rows that are in the correct range of sequence numbers
+			if fromLedgerIdx.HasValue() && fromLedgerIdx.Value() <= ledgerIndex {
+				outChannel <- deleteParams{Seq: ledgerIndex, Blob: key, tnxIndex: txnIndex}
+			} else if toLedgerIdx.HasValue() && ledgerIndex <= toLedgerIdx.Value() {
+				outChannel <- deleteParams{Seq: ledgerIndex, Blob: key, tnxIndex: txnIndex}
+			}
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
 func (c *ClioCass) prepareDeleteQueries(
 	fromLedgerIdx maybe.Maybe[uint64],
 	toLedgerIdx maybe.Maybe[uint64],
 	queryTemplate string,
 	deleteQueryTemplate string,
-	keepLastValid bool,
+	method deleteMethod,
 ) (deleteInfo, uint64, uint64) {
 	rangesChannel := make(chan *util.TokenRange, len(c.settings.Ranges))
 	for i := range c.settings.Ranges {
@@ -373,42 +493,26 @@ func (c *ClioCass) prepareDeleteQueries(
 					var pageState []byte
 					var rowsRetrieved uint64
 
-					var previousKey []byte
-					var foundLastValid bool
-
 					for {
 						iter := preparedQuery.PageSize(c.clusterConfig.PageSize).PageState(pageState).Iter()
 						nextPageState := iter.PageState()
 						scanner := iter.Scanner()
 
-						for scanner.Next() {
-							var key []byte
-							var seq uint64
+						var prepareDeleteResult bool
 
-							err = scanner.Scan(&key, &seq)
-							if err == nil {
-								rowsRetrieved++
+						// query object table first as it is the largest table by far
+						if method.deleteObject.HasValue() && method.deleteObject.Value() {
+							prepareDeleteResult = prepareObjectDelete(scanner, outChannel, fromLedgerIdx, toLedgerIdx, &rowsRetrieved)
+						} else if method.deleteTransaction.HasValue() && method.deleteTransaction.Value() {
+							prepareDeleteResult = prepareAccTxnDelete(scanner, outChannel, fromLedgerIdx, toLedgerIdx, &rowsRetrieved)
+						} else if method.deleteGeneral.HasValue() && method.deleteGeneral.Value() {
+							prepareDeleteResult = prepareDelete(scanner, outChannel, fromLedgerIdx, toLedgerIdx, &rowsRetrieved)
+						}
 
-								if keepLastValid && !slices.Equal(previousKey, key) {
-									previousKey = key
-									foundLastValid = false
-								}
-
-								// only grab the rows that are in the correct range of sequence numbers
-								if fromLedgerIdx.HasValue() && fromLedgerIdx.Value() <= seq {
-									outChannel <- deleteParams{Seq: seq, Blob: key}
-								} else if toLedgerIdx.HasValue() {
-									if seq < toLedgerIdx.Value() && (!keepLastValid || foundLastValid) {
-										outChannel <- deleteParams{Seq: seq, Blob: key}
-									} else if seq <= toLedgerIdx.Value()+1 {
-										foundLastValid = true
-									}
-								}
-							} else {
-								log.Printf("ERROR: page iteration failed: %s\n", err)
-								fmt.Fprintf(os.Stderr, "FAILED QUERY: %s\n", fmt.Sprintf("%s [from=%d][to=%d][pagestate=%x]", queryTemplate, r.StartRange, r.EndRange, pageState))
-								atomic.AddUint64(&totalErrors, 1)
-							}
+						if !prepareDeleteResult {
+							log.Printf("ERROR: page iteration failed: %s\n", err)
+							fmt.Fprintf(os.Stderr, "FAILED QUERY: %s\n", fmt.Sprintf("%s [from=%d][to=%d][pagestate=%x]", queryTemplate, r.StartRange, r.EndRange, pageState))
+							atomic.AddUint64(&totalErrors, 1)
 						}
 
 						if len(nextPageState) == 0 {
@@ -496,7 +600,9 @@ func (c *ClioCass) performDeleteQueries(info *deleteInfo, colSettings columnSett
 
 				for chunk := range chunksChannel {
 					for _, r := range chunk {
-						if bc == 2 {
+						if bc == 3 {
+							preparedQuery.Bind(r.Blob, r.Seq, r.tnxIndex)
+						} else if bc == 2 {
 							preparedQuery.Bind(r.Blob, r.Seq)
 						} else if bc == 1 {
 							if colSettings.UseSeq {

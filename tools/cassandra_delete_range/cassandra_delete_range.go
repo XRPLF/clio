@@ -33,7 +33,7 @@ var (
 	deleteBefore          = app.Command("delete-before", "Prunes everything before the given ledger index")
 	deleteBeforeLedgerIdx = deleteBefore.Arg("idx", "Sets the latest ledger_index to keep around (delete everything before this ledger index)").Required().Uint64()
 
-	getLedgerRange = app.Command("get-ledger-range", "Fetch the current lender_range table values")
+	getLedgerRange = app.Command("get-ledger-range", "Fetch the current ledger_range table values")
 
 	nodesInCluster        = app.Flag("nodes-in-cluster", "Number of nodes in your Scylla cluster").Short('n').Default(fmt.Sprintf("%d", defaultNumberOfNodesInCluster)).Int()
 	coresInNode           = app.Flag("cores-in-node", "Number of cores in each node").Short('c').Default(fmt.Sprintf("%d", defaultNumberOfCoresInNode)).Int()
@@ -56,6 +56,7 @@ var (
 	skipLedgerTransactionsTable = app.Flag("skip-ledger-transactions", "Whether to skip deletion from ledger_transactions table").Default("false").Bool()
 	skipLedgersTable            = app.Flag("skip-ledgers", "Whether to skip deletion from ledgers table").Default("false").Bool()
 	skipWriteLatestLedger       = app.Flag("skip-write-latest-ledger", "Whether to skip writing the latest ledger index").Default("false").Bool()
+	skipAccTransactionsTable    = app.Flag("skip-account-transactions", "Whether to skip deletion from account_transactions table").Default("false").Bool()
 
 	workerCount = 1                // the calculated number of parallel goroutines the client should run
 	ranges      []*util.TokenRange // the calculated ranges to be executed in parallel
@@ -79,6 +80,7 @@ func main() {
 		SkipLedgerTransactionsTable: *skipLedgerHashesTable,
 		SkipLedgersTable:            *skipLedgersTable,
 		SkipWriteLatestLedger:       *skipWriteLatestLedger,
+		SkipAccTransactionsTable:    *skipAccTransactionsTable,
 		WorkerCount:                 workerCount,
 		Ranges:                      ranges}, cluster)
 
