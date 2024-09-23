@@ -88,7 +88,7 @@ public:
     // see here for more info:
     // https://stackoverflow.com/questions/72835571/constexpr-c-error-destructor-used-before-its-definition
     // https://godbolt.org/z/eMdWThaMY
-    constexpr virtual ~Constraint() noexcept {};  // NOLINT(google-default-destructor)
+    constexpr virtual ~Constraint() noexcept = default;  // NOLINT(google-default-destructor)
 
     /**
      * @brief Check if the value meets the specific constraint.
@@ -156,8 +156,7 @@ protected:
 class PortConstraint final : public Constraint {
 public:
     constexpr ~PortConstraint() override
-    {
-    }  // NOLINT(google-default-destructor)
+    = default;  // NOLINT(google-default-destructor)
 
 private:
     /**
@@ -188,8 +187,7 @@ private:
 class ValidIPConstraint final : public Constraint {
 public:
     constexpr ~ValidIPConstraint() override
-    {
-    }  // NOLINT(google-default-destructor)
+    = default;  // NOLINT(google-default-destructor)
 
 private:
     /**
@@ -230,8 +228,7 @@ public:
     }
 
     constexpr ~OneOf() override
-    {
-    }  // NOLINT(google-default-destructor)
+    = default;  // NOLINT(google-default-destructor)
 
 private:
     /**
@@ -286,8 +283,7 @@ public:
     }
 
     constexpr ~NumberValueConstraint() override
-    {
-    }  // NOLINT(google-default-destructor)
+    = default;  // NOLINT(google-default-destructor)
 
 private:
     /**
@@ -329,8 +325,7 @@ private:
 class PositiveDouble final : public Constraint {
 public:
     constexpr ~PositiveDouble() override
-    {
-    }  // NOLINT(google-default-destructor)
+    = default;  // NOLINT(google-default-destructor)
 
 private:
     /**
