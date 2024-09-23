@@ -84,11 +84,7 @@ static constexpr std::array<char const*, 1> DATABASE_TYPE = {"cassandra"};
  */
 class Constraint {
 public:
-    // using "{}" instead of = default because of gcc bug. Bug is fixed in gcc13
-    // see here for more info:
-    // https://stackoverflow.com/questions/72835571/constexpr-c-error-destructor-used-before-its-definition
-    // https://godbolt.org/z/eMdWThaMY
-    constexpr virtual ~Constraint() noexcept {};  // NOLINT(modernize-use-equals-default)
+    constexpr virtual ~Constraint() noexcept = default;
 
     /**
      * @brief Check if the value meets the specific constraint.
@@ -155,7 +151,7 @@ protected:
  */
 class PortConstraint final : public Constraint {
 public:
-    constexpr ~PortConstraint() override {};  // NOLINT(modernize-use-equals-default)
+    constexpr ~PortConstraint() noexcept override = default;
 
 private:
     /**
@@ -185,7 +181,7 @@ private:
  */
 class ValidIPConstraint final : public Constraint {
 public:
-    constexpr ~ValidIPConstraint() override {};  // NOLINT(modernize-use-equals-default)
+    constexpr ~ValidIPConstraint() noexcept override = default;
 
 private:
     /**
@@ -225,7 +221,7 @@ public:
     {
     }
 
-    constexpr ~OneOf() override {};  // NOLINT(modernize-use-equals-default)
+    constexpr ~OneOf() noexcept override = default;
 
 private:
     /**
@@ -279,7 +275,7 @@ public:
     {
     }
 
-    constexpr ~NumberValueConstraint() override {};  // NOLINT(modernize-use-equals-default)
+    constexpr ~NumberValueConstraint() noexcept override = default;
 
 private:
     /**
@@ -320,7 +316,7 @@ private:
  */
 class PositiveDouble final : public Constraint {
 public:
-    constexpr ~PositiveDouble() override {};  // NOLINT(modernize-use-equals-default)
+    constexpr ~PositiveDouble() noexcept override = default;
 
 private:
     /**
@@ -342,25 +338,25 @@ private:
     checkValueImpl(Value const& num) const override;
 };
 
-static constexpr PortConstraint validatePort{};
-static constexpr ValidIPConstraint validateIP{};
+static constinit PortConstraint validatePort{};
+static constinit ValidIPConstraint validateIP{};
 
-static constexpr OneOf validateChannelName{"channel", Logger::CHANNELS};
-static constexpr OneOf validateLogLevelName{"log_level", LOG_LEVELS};
-static constexpr OneOf validateCassandraName{"database.type", DATABASE_TYPE};
-static constexpr OneOf validateLoadMode{"cache.load", LOAD_CACHE_MODE};
-static constexpr OneOf validateLogTag{"log_tag_style", LOG_TAGS};
+static constinit OneOf validateChannelName{"channel", Logger::CHANNELS};
+static constinit OneOf validateLogLevelName{"log_level", LOG_LEVELS};
+static constinit OneOf validateCassandraName{"database.type", DATABASE_TYPE};
+static constinit OneOf validateLoadMode{"cache.load", LOAD_CACHE_MODE};
+static constinit OneOf validateLogTag{"log_tag_style", LOG_TAGS};
 
-static constexpr PositiveDouble validatePositiveDouble{};
+static constinit PositiveDouble validatePositiveDouble{};
 
-static constexpr NumberValueConstraint<uint16_t> validateUint16{
+static constinit NumberValueConstraint<uint16_t> validateUint16{
     std::numeric_limits<uint16_t>::min(),
     std::numeric_limits<uint16_t>::max()
 };
-static constexpr NumberValueConstraint<uint32_t> validateUint32{
+static constinit NumberValueConstraint<uint32_t> validateUint32{
     std::numeric_limits<uint32_t>::min(),
     std::numeric_limits<uint32_t>::max()
 };
-static constexpr NumberValueConstraint<uint32_t> validateApiVersion{rpc::API_VERSION_MIN, rpc::API_VERSION_MAX};
+static constinit NumberValueConstraint<uint32_t> validateApiVersion{rpc::API_VERSION_MIN, rpc::API_VERSION_MAX};
 
 }  // namespace util::config
