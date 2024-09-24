@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/WithTimeout.hpp"
 #include "util/build/Build.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -84,10 +85,11 @@ public:
         boost::asio::yield_context yield
     )
     {
-        boost::system::error_code error;
+        Error error;
+        // TODO(kuznetsss): save either all headers or just verify admin here
         stream_.async_accept(request, yield[error]);
         if (error)
-            return Error{error};
+            return error;
         return std::nullopt;
     }
 
@@ -104,13 +106,20 @@ public:
         std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
     ) override
     {
-        return {};
+        auto error = util::withTimeout(
+            [this, &response](auto&& yield) { stream_.async_write(response.asConstBuffer(), yield); }, yield, timeout
+        );
+        if (error)
+            return std::move(error);
+        return std::nullopt;
     }
 
     std::expected<Request, Error>
     receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) override
     {
-        return {};
+        auto error = util::withTimeout([this](auto&& yield) { stream_.async_read(buffer_, yield); }, yield, timeout);
+        if (error)
+            return std::move(error);
     }
 
     void

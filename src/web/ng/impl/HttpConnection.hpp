@@ -93,12 +93,12 @@ public:
 
     std::optional<Error>
     send(
-        Response response,
+        Response const& response,
         boost::asio::yield_context yield,
         std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
     ) override
     {
-        auto const httpResponse = std::move(response).toHttpResponse();
+        auto const httpResponse = response.toHttpResponse();
         boost::system::error_code error;
         boost::beast::get_lowest_layer(stream_).expires_after(timeout);
         boost::beast::http::async_write(stream_, httpResponse, yield[error]);

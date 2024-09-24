@@ -10,9 +10,10 @@ target_sources(
           impl/AdminVerificationStrategy.cpp
           impl/ServerSslContext.cpp
           ng/Connection.cpp
-          ng/Server.cpp
           ng/impl/ServerSslContext.cpp
           ng/impl/WsConnection.cpp
+          ng/Server.cpp
+          ng/Response.cpp
 )
 
 target_link_libraries(clio_web PUBLIC clio_util)

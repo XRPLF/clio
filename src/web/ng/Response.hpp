@@ -19,23 +19,38 @@
 
 #pragma once
 
+#include <boost/asio/buffer.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 
+#include <optional>
 #include <string>
 namespace web::ng {
 
 class Response {
+public:
+    struct HttpData {
+        enum class ContentType { APPLICATION_JSON, TEXT_HTML };
+
+        boost::beast::http::status status;
+        ContentType contentType;
+        bool keepAlive;
+        unsigned int version;
+    };
+
+private:
     std::string message_;
-    boost::beast::http::status status_;
+    std::optional<HttpData> httpData_;
 
 public:
-    Response(std::string message, boost::beast::http::status);
-    virtual ~Response() = default;
+    Response(std::string message, std::optional<HttpData> httpData);
 
     boost::beast::http::response<boost::beast::http::string_body>
-    toHttpResponse() &&;
+    intoHttpResponse() &&;
+
+    boost::asio::const_buffer
+    asConstBuffer() const&;
 };
 
 }  // namespace web::ng
