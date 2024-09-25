@@ -19,18 +19,33 @@
 
 #pragma once
 
+#include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
 
+#include <functional>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <variant>
 
 namespace web::ng {
 
 class Request {
-    boost::beast::http::request<boost::beast::http::string_body> request_;
+public:
+    using HttpHeaders = boost::beast::http::request<boost::beast::http::string_body>::header_type;
+
+private:
+    struct WsData {
+        std::string request;
+        std::reference_wrapper<HttpHeaders const> headers_;
+    };
+
+    std::variant<boost::beast::http::request<boost::beast::http::string_body>, WsData> data_;
 
 public:
     explicit Request(boost::beast::http::request<boost::beast::http::string_body> request);
+    Request(std::string request, HttpHeaders const& headers);
 
     enum class HttpMethod { GET, POST, WEBSOCKET, UNSUPPORTED };
 
@@ -39,6 +54,11 @@ public:
 
     std::string const&
     target() const;
+
+    std::optional<std::string_view>
+    headerValue(boost::beast::http::field headerName) const;
+    std::optional<std::string_view>
+    headerValue(std::string const& headerName) const;
 };
 
 }  // namespace web::ng

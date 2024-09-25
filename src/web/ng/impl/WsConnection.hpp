@@ -52,6 +52,7 @@ namespace web::ng::impl {
 template <typename StreamType>
 class WsConnection : public Connection {
     boost::beast::websocket::stream<StreamType> stream_;
+    boost::beast::http::request<boost::beast::http::string_body> initialRequest_;
 
 public:
     WsConnection(boost::asio::ip::tcp::socket socket, std::string ip, boost::beast::flat_buffer buffer)
@@ -64,10 +65,13 @@ public:
         boost::asio::ip::tcp::socket socket,
         std::string ip,
         boost::beast::flat_buffer buffer,
-        boost::asio::ssl::context& sslContext
+        boost::asio::ssl::context& sslContext,
+        boost::beast::http::request<boost::beast::http::string_body> initialRequest
     )
         requires IsSslTcpStream<StreamType>
-        : Connection(std::move(ip), std::move(buffer)), stream_(std::move(socket), sslContext)
+        : Connection(std::move(ip), std::move(buffer))
+        , stream_(std::move(socket), sslContext)
+        , initialRequest_(std::move(initialRequest))
     {
         // Disable the timeout. The websocket::stream uses its own timeout settings.
         boost::beast::get_lowest_layer(stream_).expires_never();
@@ -80,14 +84,10 @@ public:
     }
 
     std::optional<Error>
-    accept(
-        boost::beast::http::request<boost::beast::http::string_body> const& request,
-        boost::asio::yield_context yield
-    )
+    performHandshake(boost::asio::yield_context yield)
     {
         Error error;
-        // TODO(kuznetsss): save either all headers or just verify admin here
-        stream_.async_accept(request, yield[error]);
+        stream_.async_accept(initialRequest_, yield[error]);
         if (error)
             return error;
         return std::nullopt;
@@ -120,11 +120,19 @@ public:
         auto error = util::withTimeout([this](auto&& yield) { stream_.async_read(buffer_, yield); }, yield, timeout);
         if (error)
             return std::move(error);
+
+        return Request{std::string{buffer_.data(), buffer_.size()}, initialRequest_};
     }
 
     void
     close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) override
     {
+        boost::beast::websocket::stream_base::timeout wsTimeout{};
+        stream_.get_option(wsTimeout);
+        wsTimeout.handshake_timeout = timeout;
+        stream_.set_option(wsTimeout);
+
+        stream_.async_close(yield);
     }
 };
 
