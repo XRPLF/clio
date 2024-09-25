@@ -200,15 +200,9 @@ CustomValidator CustomValidators::SubscribeStreamValidator =
             "ledger", "transactions", "transactions_proposed", "book_changes", "manifests", "validations"
         };
 
-        static std::unordered_set<std::string> const reportingNotSupportStreams = {
-            "peer_status", "consensus", "server"
-        };
         for (auto const& v : value.as_array()) {
             if (!v.is_string())
                 return Error{Status{RippledError::rpcINVALID_PARAMS, "streamNotString"}};
-
-            if (reportingNotSupportStreams.contains(boost::json::value_to<std::string>(v)))
-                return Error{Status{RippledError::rpcREPORTING_UNSUPPORTED}};
 
             if (not validStreams.contains(boost::json::value_to<std::string>(v)))
                 return Error{Status{RippledError::rpcSTREAM_MALFORMED}};

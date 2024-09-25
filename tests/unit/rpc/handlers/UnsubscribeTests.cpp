@@ -486,22 +486,13 @@ generateTestValuesForParametersTest()
             "bothNotBool"
         },
         UnsubscribeParamTestCaseBundle{
-            "StreamPeerStatusNotSupport",
-            R"({"streams": ["peer_status"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamPeerStatusNotSupport", R"({"streams": ["peer_status"]})", "malformedStream", "Stream malformed."
         },
         UnsubscribeParamTestCaseBundle{
-            "StreamConsensusNotSupport",
-            R"({"streams": ["consensus"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamConsensusNotSupport", R"({"streams": ["consensus"]})", "malformedStream", "Stream malformed."
         },
         UnsubscribeParamTestCaseBundle{
-            "StreamServerNotSupport",
-            R"({"streams": ["server"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamServerNotSupport", R"({"streams": ["server"]})", "malformedStream", "Stream malformed."
         },
     };
 }

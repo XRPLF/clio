@@ -79,7 +79,7 @@ TEST(RPCErrorsTest, StatusAsBool)
 TEST(RPCErrorsTest, StatusEquals)
 {
     EXPECT_EQ(Status{RippledError::rpcUNKNOWN}, Status{RippledError::rpcUNKNOWN});
-    EXPECT_NE(Status{RippledError::rpcUNKNOWN}, Status{RippledError::rpcREPORTING_UNSUPPORTED});
+    EXPECT_NE(Status{RippledError::rpcUNKNOWN}, Status{RippledError::rpcINTERNAL});
 }
 
 TEST(RPCErrorsTest, SuccessToJSON)
