@@ -486,13 +486,13 @@ generateTestValuesForParametersTest()
             "bothNotBool"
         },
         UnsubscribeParamTestCaseBundle{
-            "StreamPeerStatusNotSupport", R"({"streams": ["peer_status"]})", "malformedStream", "Stream malformed."
+            "StreamPeerStatusNotSupport", R"({"streams": ["peer_status"]})", "notSupported", "Operation not supported."
         },
         UnsubscribeParamTestCaseBundle{
-            "StreamConsensusNotSupport", R"({"streams": ["consensus"]})", "malformedStream", "Stream malformed."
+            "StreamConsensusNotSupport", R"({"streams": ["consensus"]})", "notSupported", "Operation not supported."
         },
         UnsubscribeParamTestCaseBundle{
-            "StreamServerNotSupport", R"({"streams": ["server"]})", "malformedStream", "Stream malformed."
+            "StreamServerNotSupport", R"({"streams": ["server"]})", "notSupported", "Operation not supported."
         },
     };
 }
