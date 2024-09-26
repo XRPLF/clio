@@ -21,6 +21,7 @@
 
 #include "util/Assert.hpp"
 #include "util/Mutex.hpp"
+#include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
@@ -131,6 +132,7 @@ makeConnection(
     SslDetectionResult sslDetectionResult,
     std::optional<boost::asio::ssl::context>& sslContext,
     std::string ip,
+    util::TagDecoratorFactory& tagDecoratorFactory,
     boost::asio::yield_context yield
 )
 {
@@ -140,11 +142,18 @@ makeConnection(
             return std::unexpected{"SSL is not supported by this server"};
 
         connection = std::make_unique<impl::SslHttpConnection>(
-            std::move(sslDetectionResult.socket), std::move(ip), std::move(sslDetectionResult.buffer), *sslContext
+            std::move(sslDetectionResult.socket),
+            std::move(ip),
+            std::move(sslDetectionResult.buffer),
+            *sslContext,
+            tagDecoratorFactory
         );
     } else {
         connection = std::make_unique<impl::PlainHttpConnection>(
-            std::move(sslDetectionResult.socket), std::move(ip), std::move(sslDetectionResult.buffer)
+            std::move(sslDetectionResult.socket),
+            std::move(ip),
+            std::move(sslDetectionResult.buffer),
+            tagDecoratorFactory
         );
     }
 
@@ -165,7 +174,8 @@ Server::Server(
     boost::asio::ip::tcp::endpoint endpoint,
     std::optional<boost::asio::ssl::context> sslContext,
     std::shared_ptr<web::impl::AdminVerificationStrategy> adminVerificationStrategy,
-    std::unique_ptr<dosguard::DOSGuardInterface> dosguard
+    std::unique_ptr<dosguard::DOSGuardInterface> dosguard,
+    util::TagDecoratorFactory tagDecoratorFactory
 )
     : ctx_{ctx}
     , dosguard_{std::move(dosguard)}
@@ -173,6 +183,7 @@ Server::Server(
     , sslContext_{std::move(sslContext)}
     , connections_{std::make_unique<util::Mutex<ConnectionsMap, std::shared_mutex>>()}
     , endpoint_{std::move(endpoint)}
+    , tagDecoratorFactory_{tagDecoratorFactory}
 {
 }
 
@@ -252,8 +263,9 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
 
     // TODO(kuznetsss): check ip with dosguard here
 
-    auto connectionExpected =
-        makeConnection(std::move(sslDetectionResult).value(), sslContext_, std::move(ip).value(), yield);
+    auto connectionExpected = makeConnection(
+        std::move(sslDetectionResult).value(), sslContext_, std::move(ip).value(), tagDecoratorFactory_, yield
+    );
     if (not connectionExpected.has_value()) {
         LOG(log_.info()) << "Error creating a connection: " << connectionExpected.error();
         return;
@@ -262,53 +274,21 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
     Connection& connection = insertConnection(std::move(connectionExpected).value());
 
     boost::asio::spawn(ctx_, [this, &connection = connection](boost::asio::yield_context yield) {
-        if (connection.wasUpgraded()) {
-            processConnectionLoop(connection, yield);
-        } else {
-            processConnection(connection, yield);
-        }
+        processConnection(connection, yield);
     });
 }
 
 void
 Server::processConnection(Connection& connection, boost::asio::yield_context yield)
 {
-    // auto expectedRequest = connection.receive(yield);
-    // if (not expectedRequest.has_value()) {
+    // while (true) {
+    //     auto expectedRequest = connection.receive(yield);
+    //     if (not expectedRequest) {
+    //         LOG(log_.info())
+    //     }
+    //
     // }
-    // auto response = handleRequest(std::move(expectedRequest).value());
-    // connection.send(std::move(response), yield);
 }
-
-void
-Server::processConnectionLoop(Connection& connection, boost::asio::yield_context yield)
-{
-    // loop of handleConnection calls
-}
-
-// Response
-// Server::handleRequest(Request request, ConnectionContext connectionContext)
-// {
-//     auto process = [&connectionContext](Request request, auto& handlersMap) {
-//         auto const it = handlersMap.find(request.target());
-//         if (it == handlersMap.end()) {
-//             return Response{};
-//         }
-//         return it->second(std::move(request), connectionContext);
-//     };
-//     switch (request.httpMethod()) {
-//         case Request::HttpMethod::GET:
-//             return process(std::move(request), getHandlers_);
-//         case Request::HttpMethod::POST:
-//             return process(std::move(request), postHandlers_);
-//         case Request::HttpMethod::WS:
-//             if (wsHandler_) {
-//                 return (*wsHandler_)(std::move(request));
-//             }
-//         default:
-//             return Response{};
-//     }
-// }
 
 Connection&
 Server::insertConnection(ConnectionPtr connection)
@@ -347,8 +327,8 @@ make_Server(
         std::move(endpoint).value(),
         std::move(expectedSslContext).value(),
         std::move(adminVerificationStrategy).value(),
-        std::move(dosguard)
-
+        std::move(dosguard),
+        util::TagDecoratorFactory(config)
     };
 }
 

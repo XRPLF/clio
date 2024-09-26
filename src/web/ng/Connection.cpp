@@ -19,6 +19,8 @@
 
 #include "web/ng/Connection.hpp"
 
+#include "util/Taggable.hpp"
+
 #include <boost/beast/core/flat_buffer.hpp>
 
 #include <atomic>
@@ -39,8 +41,12 @@ generateId()
 
 }  // namespace
 
-Connection::Connection(std::string ip, boost::beast::flat_buffer buffer)
-    : id_{generateId()}, ip_{std::move(ip)}, buffer_{std::move(buffer)}
+Connection::Connection(
+    std::string ip,
+    boost::beast::flat_buffer buffer,
+    util::TagDecoratorFactory const& tagDecoratorFactory
+)
+    : id_{generateId()}, ip_{std::move(ip)}, buffer_{std::move(buffer)}, taggable_(tagDecoratorFactory)
 {
 }
 

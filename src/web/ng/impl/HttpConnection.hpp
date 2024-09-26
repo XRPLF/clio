@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Assert.hpp"
+#include "util/Taggable.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/Request.hpp"
@@ -57,7 +58,11 @@ public:
         const = 0;
 
     virtual std::expected<ConnectionPtr, Error>
-    upgrade(std::optional<boost::asio::ssl::context>& sslContext, boost::asio::yield_context yield) = 0;
+    upgrade(
+        std::optional<boost::asio::ssl::context>& sslContext,
+        util::TagDecoratorFactory const& tagDecoratorFactory,
+        boost::asio::yield_context yield
+    ) = 0;
 };
 
 using UpgradableConnectionPtr = std::unique_ptr<UpgradableConnection>;
@@ -68,9 +73,14 @@ class HttpConnection : public UpgradableConnection {
     std::optional<boost::beast::http::request<boost::beast::http::string_body>> request_;
 
 public:
-    HttpConnection(boost::asio::ip::tcp::socket socket, std::string ip, boost::beast::flat_buffer buffer)
+    HttpConnection(
+        boost::asio::ip::tcp::socket socket,
+        std::string ip,
+        boost::beast::flat_buffer buffer,
+        util::TagDecoratorFactory const& tagDecoratorFactory
+    )
         requires IsTcpStream<StreamType>
-        : UpgradableConnection(std::move(ip), std::move(buffer)), stream_{std::move(socket)}
+        : UpgradableConnection(std::move(ip), std::move(buffer), tagDecoratorFactory), stream_{std::move(socket)}
     {
     }
 
@@ -78,10 +88,12 @@ public:
         boost::asio::ip::tcp::socket socket,
         std::string ip,
         boost::beast::flat_buffer buffer,
-        boost::asio::ssl::context& sslCtx
+        boost::asio::ssl::context& sslCtx,
+        util::TagDecoratorFactory const& tagDecoratorFactory
     )
         requires IsSslTcpStream<StreamType>
-        : UpgradableConnection(std::move(ip), std::move(buffer)), stream_{std::move(socket), sslCtx}
+        : UpgradableConnection(std::move(ip), std::move(buffer), tagDecoratorFactory)
+        , stream_{std::move(socket), sslCtx}
     {
     }
 
@@ -143,8 +155,11 @@ public:
     }
 
     std::expected<ConnectionPtr, Error>
-    upgrade([[maybe_unused]] std::optional<boost::asio::ssl::context>& sslContext, boost::asio::yield_context yield)
-        override
+    upgrade(
+        [[maybe_unused]] std::optional<boost::asio::ssl::context>& sslContext,
+        util::TagDecoratorFactory const& tagDecoratorFactory,
+        boost::asio::yield_context yield
+    ) override
     {
         ASSERT(request_.has_value(), "Request must be present to upgrade the connection");
 
@@ -156,12 +171,18 @@ public:
                 std::move(buffer_),
                 request_,
                 sslContext.value(),
+                tagDecoratorFactory,
                 yield
             );
         }
 
         return make_PlainWsConnection(
-            stream_.release_socket(), std::move(ip_), std::move(buffer_), std::move(request_).value(), yield
+            stream_.release_socket(),
+            std::move(ip_),
+            std::move(buffer_),
+            std::move(request_).value(),
+            tagDecoratorFactory,
+            yield
         );
     }
 

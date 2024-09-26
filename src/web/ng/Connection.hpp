@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/Taggable.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
@@ -43,11 +44,12 @@ protected:
     size_t id_;
     std::string ip_;  // client ip
     boost::beast::flat_buffer buffer_;
+    util::Taggable taggable_;
 
 public:
     static constexpr std::chrono::steady_clock::duration DEFAULT_TIMEOUT = std::chrono::seconds{30};
 
-    Connection(std::string ip, boost::beast::flat_buffer buffer);
+    Connection(std::string ip, boost::beast::flat_buffer buffer, util::TagDecoratorFactory const& tagDecoratorFactory);
 
     virtual ~Connection() = default;
 

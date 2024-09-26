@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/Taggable.hpp"
 #include "util/WithTimeout.hpp"
 #include "util/build/Build.hpp"
 #include "web/ng/Connection.hpp"
@@ -55,9 +56,14 @@ class WsConnection : public Connection {
     boost::beast::http::request<boost::beast::http::string_body> initialRequest_;
 
 public:
-    WsConnection(boost::asio::ip::tcp::socket socket, std::string ip, boost::beast::flat_buffer buffer)
+    WsConnection(
+        boost::asio::ip::tcp::socket socket,
+        std::string ip,
+        boost::beast::flat_buffer buffer,
+        util::TagDecoratorFactory const& tagDecoratorFactory
+    )
         requires IsTcpStream<StreamType>
-        : Connection(std::move(ip), std::move(buffer)), stream_(std::move(socket))
+        : Connection(std::move(ip), std::move(buffer), tagDecoratorFactory), stream_(std::move(socket))
     {
     }
 
@@ -66,10 +72,11 @@ public:
         std::string ip,
         boost::beast::flat_buffer buffer,
         boost::asio::ssl::context& sslContext,
-        boost::beast::http::request<boost::beast::http::string_body> initialRequest
+        boost::beast::http::request<boost::beast::http::string_body> initialRequest,
+        util::TagDecoratorFactory const& tagDecoratorFactory
     )
         requires IsSslTcpStream<StreamType>
-        : Connection(std::move(ip), std::move(buffer))
+        : Connection(std::move(ip), std::move(buffer), tagDecoratorFactory)
         , stream_(std::move(socket), sslContext)
         , initialRequest_(std::move(initialRequest))
     {
@@ -145,6 +152,7 @@ make_PlainWsConnection(
     std::string ip,
     boost::beast::flat_buffer buffer,
     boost::beast::http::request<boost::beast::http::string_body> const& request,
+    util::TagDecoratorFactory const& tagDecoratorFactory,
     boost::asio::yield_context yield
 );
 
@@ -155,6 +163,7 @@ make_SslWsConnection(
     boost::beast::flat_buffer buffer,
     boost::beast::http::request<boost::beast::http::string_body> const& request,
     boost::asio::ssl::context& sslContext,
+    util::TagDecoratorFactory const& tagDecoratorFactory,
     boost::asio::yield_context yield
 );
 

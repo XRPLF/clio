@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Mutex.hpp"
+#include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
@@ -61,6 +62,8 @@ class Server {
 
     boost::asio::ip::tcp::endpoint endpoint_;
 
+    util::TagDecoratorFactory tagDecoratorFactory_;
+
     bool running_{false};
 
 public:
@@ -69,7 +72,8 @@ public:
         boost::asio::ip::tcp::endpoint endpoint,
         std::optional<boost::asio::ssl::context> sslContext,
         std::shared_ptr<web::impl::AdminVerificationStrategy> adminVerificationStrategy,
-        std::unique_ptr<dosguard::DOSGuardInterface> dosguard
+        std::unique_ptr<dosguard::DOSGuardInterface> dosguard,
+        util::TagDecoratorFactory tagDecoratorFactory
     );
 
     Server(Server const&) = delete;
