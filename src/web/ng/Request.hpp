@@ -57,6 +57,7 @@ public:
 
     std::optional<std::string_view>
     headerValue(boost::beast::http::field headerName) const;
+
     std::optional<std::string_view>
     headerValue(std::string const& headerName) const;
 };

@@ -241,7 +241,7 @@ class Taggable {
     using DecoratorType = std::unique_ptr<BaseTagDecorator>;
     DecoratorType tagDecorator_;
 
-public:
+protected:
     /**
      * @brief New Taggable from a specified factory.
      *
@@ -251,6 +251,7 @@ public:
     {
     }
 
+public:
     virtual ~Taggable() = default;
     Taggable(Taggable&&) = default;
 

@@ -10,6 +10,7 @@ target_sources(
           impl/AdminVerificationStrategy.cpp
           impl/ServerSslContext.cpp
           ng/Connection.cpp
+          ng/impl/ConnectionHandler.cpp
           ng/impl/ServerSslContext.cpp
           ng/impl/WsConnection.cpp
           ng/Server.cpp

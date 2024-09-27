@@ -46,8 +46,14 @@ Connection::Connection(
     boost::beast::flat_buffer buffer,
     util::TagDecoratorFactory const& tagDecoratorFactory
 )
-    : id_{generateId()}, ip_{std::move(ip)}, buffer_{std::move(buffer)}, taggable_(tagDecoratorFactory)
+    : util::Taggable(tagDecoratorFactory), id_{generateId()}, ip_{std::move(ip)}, buffer_{std::move(buffer)}
 {
+}
+
+std::string const&
+Connection::ip() const
+{
+    return ip_;
 }
 
 }  // namespace web::ng

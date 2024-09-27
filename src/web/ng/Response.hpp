@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "web/ng/Request.hpp"
+
 #include <boost/asio/buffer.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
@@ -44,7 +46,10 @@ private:
     std::optional<HttpData> httpData_;
 
 public:
-    Response(std::string message, std::optional<HttpData> httpData);
+    // WebSocket response
+    explicit Response(std::string message);
+
+    Response(boost::beast::http::status status, std::string message, Request&& request);
 
     boost::beast::http::response<boost::beast::http::string_body>
     intoHttpResponse() &&;

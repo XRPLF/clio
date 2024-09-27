@@ -39,19 +39,16 @@ namespace web::ng {
 
 class ConnectionContext;
 
-class Connection {
+class Connection : public util::Taggable {
 protected:
     size_t id_;
     std::string ip_;  // client ip
     boost::beast::flat_buffer buffer_;
-    util::Taggable taggable_;
 
 public:
     static constexpr std::chrono::steady_clock::duration DEFAULT_TIMEOUT = std::chrono::seconds{30};
 
     Connection(std::string ip, boost::beast::flat_buffer buffer, util::TagDecoratorFactory const& tagDecoratorFactory);
-
-    virtual ~Connection() = default;
 
     virtual bool
     wasUpgraded() const = 0;
@@ -77,6 +74,9 @@ public:
 
     size_t
     id() const;
+
+    std::string const&
+    ip() const;
 };
 
 using ConnectionPtr = std::unique_ptr<Connection>;

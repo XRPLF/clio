@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Mutex.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -29,6 +28,7 @@
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
+#include "web/ng/impl/ConnectionHandler.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -39,26 +39,20 @@
 #include <functional>
 #include <memory>
 #include <optional>
-#include <shared_mutex>
 #include <string>
-#include <unordered_map>
 
 namespace web::ng {
 
 class Server {
     util::Logger log_{"WebServer"};
+    util::Logger perfLog_{"Performance"};
     std::reference_wrapper<boost::asio::io_context> ctx_;
 
     std::unique_ptr<dosguard::DOSGuardInterface> dosguard_;
     std::shared_ptr<web::impl::AdminVerificationStrategy> adminVerificationStrategy_;
     std::optional<boost::asio::ssl::context> sslContext_;
 
-    std::unordered_map<std::string, MessageHandler> getHandlers_;
-    std::unordered_map<std::string, MessageHandler> postHandlers_;
-    std::optional<MessageHandler> wsHandler_;
-
-    using ConnectionsMap = std::unordered_map<size_t, ConnectionPtr>;
-    std::unique_ptr<util::Mutex<ConnectionsMap, std::shared_mutex>> connections_;
+    impl::ConnectionHandler connectionHandler_;
 
     boost::asio::ip::tcp::endpoint endpoint_;
 
@@ -97,18 +91,6 @@ public:
 private:
     void
     handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield);
-
-    void
-    processConnection(Connection& connection, boost::asio::yield_context yield);
-
-    void
-    processConnectionLoop(Connection& connection, boost::asio::yield_context yield);
-
-    Response
-    handleRequest(Request request, ConnectionContext connectionContext);
-
-    Connection&
-    insertConnection(ConnectionPtr connection);
 };
 
 std::expected<Server, std::string>

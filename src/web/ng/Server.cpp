@@ -20,7 +20,6 @@
 #include "web/ng/Server.hpp"
 
 #include "util/Assert.hpp"
-#include "util/Mutex.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -40,7 +39,6 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/error.hpp>
-#include <boost/asio/use_future.hpp>
 #include <boost/beast/core/detect_ssl.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
@@ -52,9 +50,7 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <optional>
-#include <shared_mutex>
 #include <string>
 #include <utility>
 
@@ -158,7 +154,7 @@ makeConnection(
     }
 
     if (connection->isUpgradeRequested(yield)) {
-        return connection->upgrade(sslContext, yield)
+        return connection->upgrade(sslContext, tagDecoratorFactory, yield)
             .or_else([](Error error) -> std::expected<ConnectionPtr, std::string> {
                 return std::unexpected{fmt::format("Error upgrading connection: {}", error.what())};
             });
@@ -181,7 +177,6 @@ Server::Server(
     , dosguard_{std::move(dosguard)}
     , adminVerificationStrategy_(std::move(adminVerificationStrategy))
     , sslContext_{std::move(sslContext)}
-    , connections_{std::make_unique<util::Mutex<ConnectionsMap, std::shared_mutex>>()}
     , endpoint_{std::move(endpoint)}
     , tagDecoratorFactory_{tagDecoratorFactory}
 {
@@ -191,21 +186,21 @@ void
 Server::onGet(std::string const& target, MessageHandler handler)
 {
     ASSERT(not running_, "Adding a GET handler is not allowed when Server is running.");
-    getHandlers_[target] = std::move(handler);
+    connectionHandler_.onGet(target, std::move(handler));
 }
 
 void
 Server::onPost(std::string const& target, MessageHandler handler)
 {
     ASSERT(not running_, "Adding a POST handler is not allowed when Server is running.");
-    postHandlers_[target] = std::move(handler);
+    connectionHandler_.onPost(target, std::move(handler));
 }
 
 void
 Server::onWs(MessageHandler handler)
 {
     ASSERT(not running_, "Adding a Websocket handler is not allowed when Server is running.");
-    wsHandler_ = std::move(handler);
+    connectionHandler_.onWs(std::move(handler));
 }
 
 std::optional<std::string>
@@ -271,33 +266,12 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
         return;
     }
 
-    Connection& connection = insertConnection(std::move(connectionExpected).value());
-
-    boost::asio::spawn(ctx_, [this, &connection = connection](boost::asio::yield_context yield) {
-        processConnection(connection, yield);
-    });
-}
-
-void
-Server::processConnection(Connection& connection, boost::asio::yield_context yield)
-{
-    // while (true) {
-    //     auto expectedRequest = connection.receive(yield);
-    //     if (not expectedRequest) {
-    //         LOG(log_.info())
-    //     }
-    //
-    // }
-}
-
-Connection&
-Server::insertConnection(ConnectionPtr connection)
-{
-    auto const connectionId = connection->id();
-    auto connectionsMap = connections_->lock<std::unique_lock>();
-    auto [it, inserted] = connectionsMap->emplace(connectionId, std::move(connection));
-    ASSERT(inserted, "Connection with id {} already exists", it->second->id());
-    return *it->second.get();
+    boost::asio::spawn(
+        ctx_,
+        [this, connection = std::move(connectionExpected).value()](boost::asio::yield_context yield) mutable {
+            connectionHandler_.processConnection(std::move(connection), yield);
+        }
+    );
 }
 
 std::expected<Server, std::string>
