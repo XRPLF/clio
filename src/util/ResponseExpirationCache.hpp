@@ -93,7 +93,7 @@ class ResponseExpirationCache {
     std::unordered_map<std::string, util::Mutex<CacheEntry, std::shared_mutex>> cache_;
 
     bool
-    shouldCache(std::string const& request);
+    shouldCache(std::string const& cmd);
 
 public:
     /**
@@ -116,20 +116,20 @@ public:
     /**
      * @brief Get a response from the cache
      *
-     * @param request The request to get the response for
+     * @param cmd The command to get the response for
      * @return The response if it exists or std::nullopt otherwise
      */
     [[nodiscard]] std::optional<boost::json::object>
-    get(std::string const& request) const;
+    get(std::string const& cmd) const;
 
     /**
      * @brief Put a response into the cache if the request should be cached
      *
-     * @param request The request to store the response for
+     * @param cmd The command to store the response for
      * @param response The response to store
      */
     void
-    put(std::string const& request, boost::json::object const& response);
+    put(std::string const& cmd, boost::json::object const& response);
 
     /**
      * @brief Invalidate all entries in the cache

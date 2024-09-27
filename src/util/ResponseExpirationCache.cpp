@@ -32,15 +32,15 @@
 namespace util {
 
 bool
-ResponseExpirationCache::shouldCache(std::string const& request)
+ResponseExpirationCache::shouldCache(std::string const& cmd)
 {
-    return cache_.contains(request);
+    return cache_.contains(cmd);
 }
 
 std::optional<boost::json::object>
-ResponseExpirationCache::get(std::string const& request) const
+ResponseExpirationCache::get(std::string const& cmd) const
 {
-    auto it = cache_.find(request);
+    auto it = cache_.find(cmd);
     if (it == cache_.end())
         return std::nullopt;
 
@@ -52,14 +52,14 @@ ResponseExpirationCache::get(std::string const& request) const
 }
 
 void
-ResponseExpirationCache::put(std::string const& request, boost::json::object const& response)
+ResponseExpirationCache::put(std::string const& cmd, boost::json::object const& response)
 {
-    if (not shouldCache(request))
+    if (not shouldCache(cmd))
         return;
 
-    ASSERT(cache_.contains(request), "Command is not in the cache: {}", request);
+    ASSERT(cache_.contains(cmd), "Command is not in the cache: {}", cmd);
 
-    auto entry = cache_[request].lock<std::unique_lock>();
+    auto entry = cache_[cmd].lock<std::unique_lock>();
     entry->put(response);
 }
 

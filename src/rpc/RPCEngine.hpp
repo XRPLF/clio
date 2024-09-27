@@ -48,12 +48,6 @@
 #include <unordered_set>
 #include <utility>
 
-// forward declarations
-namespace etl {
-class LoadBalancer;
-class ETLService;
-}  // namespace etl
-
 /**
  * @brief This namespace contains all the RPC logic and handlers.
  */
@@ -82,6 +76,7 @@ public:
     /**
      * @brief Construct a new RPCEngine object
      *
+     * @param config The config to use
      * @param backend The backend to use
      * @param balancer The load balancer to use
      * @param dosGuard The DOS guard to use
@@ -128,6 +123,7 @@ public:
     /**
      * @brief Factory function to create a new instance of the RPC engine.
      *
+     * @param config The config to use
      * @param backend The backend to use
      * @param balancer The load balancer to use
      * @param dosGuard The DOS guard to use
@@ -167,8 +163,8 @@ public:
             return forwardingProxy_.forward(ctx);
         }
 
-        if (not ctx.isAdmin) {
-            if (auto res = responseCache_ ? responseCache_->get(ctx.method) : std::nullopt; res.has_value())
+        if (not ctx.isAdmin and responseCache_) {
+            if (auto res = responseCache_->get(ctx.method); res.has_value())
                 return Result{std::move(res.value())};
         }
 
@@ -192,11 +188,11 @@ public:
 
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
-            if (not v)
+            if (not v) {
                 notifyErrored(ctx.method);
-
-            if (not ctx.isAdmin and v and responseCache_)
+            } else if (not ctx.isAdmin and responseCache_) {
                 responseCache_->put(ctx.method, v.result->as_object());
+            }
 
             return Result{std::move(v)};
         } catch (data::DatabaseTimeout const& t) {

@@ -699,6 +699,21 @@ TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
     });
 }
 
+TEST_F(LoadBalancerForwardToRippledTests, commandLineMissing)
+{
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
+    auto loadBalancer = makeLoadBalancer();
+
+    auto const request = boost::json::object{{"command2", "server_info"}};
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_EQ(
+            loadBalancer->forwardToRippled(request, clientIP_, false, yield).error(),
+            rpc::ClioError::rpcCOMMAND_IS_MISSING
+        );
+    });
+}
+
 struct LoadBalancerToJsonTests : LoadBalancerOnConnectHookTests {};
 
 TEST_F(LoadBalancerToJsonTests, toJson)

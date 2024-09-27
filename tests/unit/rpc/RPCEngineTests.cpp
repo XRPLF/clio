@@ -32,7 +32,6 @@
 #include "util/MockHandlerProvider.hpp"
 #include "util/MockLoadBalancer.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/MockResponseExpirationCache.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
@@ -47,10 +46,8 @@
 #include <xrpl/protocol/ErrorCodes.h>
 
 #include <exception>
-#include <iostream>
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <variant>
 #include <vector>
@@ -62,7 +59,8 @@ using namespace testing;
 
 namespace {
 constexpr auto FORWARD_REPLY = R"JSON({
-    "result": {
+    "result": 
+    {
         "status": "success",
         "forwarded": true
     }
@@ -76,9 +74,7 @@ class RPCEngineTest : public util::prometheus::WithPrometheus,
                       public SyncAsioContextTest {
 protected:
     Config cfg = Config{json::parse(R"JSON({
-        "server": {
-            "max_queue_size": 2
-        },
+        "server": {"max_queue_size": 2},
         "workers": 4
     })JSON")};
     util::TagDecoratorFactory tagFactory{cfg};
@@ -90,7 +86,6 @@ protected:
 
 struct RPCEngineFlowTestCaseBundle {
     std::string testName;
-    std::string config;
     bool isAdmin;
     std::string method;
     std::string params;
@@ -117,7 +112,6 @@ generateTestValuesForParametersTest()
 
     return std::vector<RPCEngineFlowTestCaseBundle>{
         {"ForwardedSubmit",
-         "{}",
          isAdmin,
          "submit",
          "{}",
@@ -128,13 +122,9 @@ generateTestValuesForParametersTest()
          rpc::Status{},
          boost::json::parse(FORWARD_REPLY).as_object()},
         {"ForwardAdminCmd",
-         "{}",
          !isAdmin,
          "ledger",
-         R"JSON({
-                "full": true,
-                "ledger_index": "current"
-            })JSON",
+         R"JSON({"full": true, "ledger_index": "current"})JSON",
          !forwarded,
          neverCalledIsTooBusy,
          neverCalledUnknownCmd,
@@ -142,7 +132,6 @@ generateTestValuesForParametersTest()
          rpc::Status{RippledError::rpcNO_PERMISSION},
          std::nullopt},
         {"BackendTooBusy",
-         "{}",
          !isAdmin,
          "ledger",
          "{}",
@@ -153,7 +142,6 @@ generateTestValuesForParametersTest()
          rpc::Status{RippledError::rpcTOO_BUSY},
          std::nullopt},
         {"HandlerUnknown",
-         "{}",
          !isAdmin,
          "ledger",
          "{}",
@@ -164,13 +152,9 @@ generateTestValuesForParametersTest()
          rpc::Status{RippledError::rpcUNKNOWN_COMMAND},
          std::nullopt},
         {"HandlerReturnError",
-         "{}",
          !isAdmin,
          "ledger",
-         R"JSON({
-                "hello": "world",
-                "limit": 50
-         })JSON",
+         R"JSON({"hello": "world", "limit": 50})JSON",
          !forwarded,
          neverCalledIsTooBusy,
          !cmdUnknown,
@@ -178,22 +162,15 @@ generateTestValuesForParametersTest()
          rpc::Status{"Very custom error"},
          std::nullopt},
         {"HandlerReturnResponse",
-         "{}",
          !isAdmin,
          "ledger",
-         R"JSON({
-                "hello": "world",
-                "limit": 50
-         })JSON",
+         R"JSON({"hello": "world", "limit": 50})JSON",
          !forwarded,
          neverCalledIsTooBusy,
          !cmdUnknown,
          !handlerReturnError,
          std::nullopt,
-         boost::json::parse(R"JSON({
-            "computed": "world_50"
-         })JSON")
-             .as_object()},
+         boost::json::parse(R"JSON({"computed": "world_50"})JSON").as_object()},
     };
 }
 
@@ -207,11 +184,10 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(RPCEngineFlowParameterTest, Test)
 {
     auto const testBundle = GetParam();
-    auto const cfg = Config{json::parse(testBundle.config)};
 
     std::shared_ptr<RPCEngine<MockLoadBalancer, MockCounters>> engine =
         RPCEngine<MockLoadBalancer, MockCounters>::make_RPCEngine(
-            cfg, backend, mockLoadBalancerPtr, dosGuard, queue, *mockCountersPtr, handlerProvider
+            Config{}, backend, mockLoadBalancerPtr, dosGuard, queue, *mockCountersPtr, handlerProvider
         );
 
     if (testBundle.forwarded) {
@@ -219,12 +195,12 @@ TEST_P(RPCEngineFlowParameterTest, Test)
             .WillOnce(Return(std::expected<boost::json::object, rpc::ClioError>(json::parse(FORWARD_REPLY).as_object()))
             );
         EXPECT_CALL(*handlerProvider, contains).WillOnce(Return(true));
-        EXPECT_CALL(*mockCountersPtr, rpcForwarded(testBundle.method));
+        EXPECT_CALL(*mockCountersPtr, rpcForwarded(testBundle.method)).Times(1);
     }
 
     if (testBundle.isTooBusy.has_value()) {
         EXPECT_CALL(*backend, isTooBusy).WillOnce(Return(*testBundle.isTooBusy));
-        EXPECT_CALL(*mockCountersPtr, onTooBusy);
+        EXPECT_CALL(*mockCountersPtr, onTooBusy).Times(1);
     }
 
     EXPECT_CALL(*handlerProvider, isClioOnly).WillOnce(Return(false));
@@ -232,15 +208,16 @@ TEST_P(RPCEngineFlowParameterTest, Test)
     if (testBundle.isUnknownCmd.has_value()) {
         if (testBundle.isUnknownCmd.value()) {
             EXPECT_CALL(*handlerProvider, getHandler).WillOnce(Return(std::nullopt));
-            EXPECT_CALL(*mockCountersPtr, onUnknownCommand);
+            EXPECT_CALL(*mockCountersPtr, onUnknownCommand).Times(1);
         } else {
             if (testBundle.handlerReturnError) {
                 EXPECT_CALL(*handlerProvider, getHandler)
                     .WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
-                EXPECT_CALL(*mockCountersPtr, rpcErrored(testBundle.method));
-                EXPECT_CALL(*handlerProvider, contains).WillOnce(Return(true));
+                EXPECT_CALL(*mockCountersPtr, rpcErrored(testBundle.method)).Times(1);
+                EXPECT_CALL(*handlerProvider, contains(testBundle.method)).WillOnce(Return(true)).Times(1);
             } else {
-                EXPECT_CALL(*handlerProvider, getHandler).WillOnce(Return(AnyHandler{tests::common::HandlerFake{}}));
+                EXPECT_CALL(*handlerProvider, getHandler(testBundle.method))
+                    .WillOnce(Return(AnyHandler{tests::common::HandlerFake{}}));
             }
         }
     }
@@ -249,7 +226,7 @@ TEST_P(RPCEngineFlowParameterTest, Test)
         auto const ctx = web::Context(
             yield,
             testBundle.method,
-            1,
+            1,  // api version
             boost::json::parse(testBundle.params).as_object(),
             nullptr,
             tagFactory,
@@ -263,8 +240,6 @@ TEST_P(RPCEngineFlowParameterTest, Test)
         auto const response = std::get_if<boost::json::object>(&res.response);
         ASSERT_EQ(status == nullptr, testBundle.response.has_value());
         if (testBundle.response.has_value()) {
-            std::cout << "response: " << *response << std::endl;
-            std::cout << "expected: " << testBundle.response.value() << std::endl;
             EXPECT_EQ(*response, testBundle.response.value());
         } else {
             EXPECT_TRUE(*status == testBundle.status.value());
@@ -280,10 +255,10 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
             cfg, backend, mockLoadBalancerPtr, dosGuard, queue, *mockCountersPtr, handlerProvider
         );
     EXPECT_CALL(*backend, isTooBusy).WillOnce(Return(false));
-    EXPECT_CALL(*handlerProvider, getHandler).WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
-    EXPECT_CALL(*mockCountersPtr, rpcErrored(method)).WillRepeatedly(Throw(data::DatabaseTimeout{}));
-    EXPECT_CALL(*handlerProvider, contains).WillOnce(Return(true));
-    EXPECT_CALL(*mockCountersPtr, onTooBusy());
+    EXPECT_CALL(*handlerProvider, getHandler(method)).WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
+    EXPECT_CALL(*mockCountersPtr, rpcErrored(method)).WillOnce(Throw(data::DatabaseTimeout{}));
+    EXPECT_CALL(*handlerProvider, contains(method)).WillOnce(Return(true));
+    EXPECT_CALL(*mockCountersPtr, onTooBusy()).Times(1);
 
     runSpawn([&](auto yield) {
         auto const ctx = web::Context(
@@ -313,9 +288,9 @@ TEST_F(RPCEngineTest, ThrowException)
             cfg, backend, mockLoadBalancerPtr, dosGuard, queue, *mockCountersPtr, handlerProvider
         );
     EXPECT_CALL(*backend, isTooBusy).WillOnce(Return(false));
-    EXPECT_CALL(*handlerProvider, getHandler).WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
-    EXPECT_CALL(*mockCountersPtr, rpcErrored(method)).WillRepeatedly(Throw(std::exception{}));
-    EXPECT_CALL(*handlerProvider, contains).WillOnce(Return(true));
+    EXPECT_CALL(*handlerProvider, getHandler(method)).WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
+    EXPECT_CALL(*mockCountersPtr, rpcErrored(method)).WillOnce(Throw(std::exception{}));
+    EXPECT_CALL(*handlerProvider, contains(method)).WillOnce(Return(true));
     EXPECT_CALL(*mockCountersPtr, onInternalError());
 
     runSpawn([&](auto yield) {
@@ -357,7 +332,8 @@ generateCacheTestValuesForParametersTest()
          R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": {
+            "rpc": 
+            {
                 "cache_timeout": 10,
                 "cached_commands": ["cache_it"]
             }
@@ -368,8 +344,7 @@ generateCacheTestValuesForParametersTest()
          R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": {
-            }
+            "rpc": {}
          })JSON",
          !isAdmin,
          !expectedCacheEnabled},
@@ -377,7 +352,8 @@ generateCacheTestValuesForParametersTest()
          R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": {
+            "rpc": 
+            {
                 "cache_timeout": 10,
                 "cached_commands": []
             }
@@ -388,7 +364,8 @@ generateCacheTestValuesForParametersTest()
          R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": {
+            "rpc": 
+            {
                 "cached_commands": ["cache_it"]
             }
          })JSON",
@@ -398,7 +375,8 @@ generateCacheTestValuesForParametersTest()
          R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": {
+            "rpc": 
+            {
                 "cache_timeout": 10,
                 "cached_commands": ["cache_it2"]
             }
@@ -409,7 +387,8 @@ generateCacheTestValuesForParametersTest()
          R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": {
+            "rpc": 
+            {
                 "cache_timeout": 0,
                 "cached_commands": ["cache_it"]
             }
@@ -420,7 +399,8 @@ generateCacheTestValuesForParametersTest()
          R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": {
+            "rpc": 
+            {
                 "cache_timeout": 10,
                 "cached_commands": ["cache_it"]
             }
@@ -468,11 +448,7 @@ TEST_P(RPCEngineCacheParameterTest, Test)
                 yield,
                 method,
                 1,
-                boost::json::parse(R"JSON({
-                "hello": "world",
-                "limit": 50
-         })JSON")
-                    .as_object(),
+                boost::json::parse(R"JSON({"hello": "world", "limit": 50})JSON").as_object(),
                 nullptr,
                 tagFactory,
                 LedgerRange{0, 30},
@@ -482,13 +458,7 @@ TEST_P(RPCEngineCacheParameterTest, Test)
 
             auto const res = engine->buildResponse(ctx);
             auto const response = std::get_if<boost::json::object>(&res.response);
-            EXPECT_TRUE(
-                *response ==
-                boost::json::parse(R"JSON({
-            "computed": "world_50"
-         })JSON")
-                    .as_object()
-            );
+            EXPECT_TRUE(*response == boost::json::parse(R"JSON({ "computed": "world_50"})JSON").as_object());
         });
     }
 }
@@ -496,13 +466,14 @@ TEST_P(RPCEngineCacheParameterTest, Test)
 TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
 {
     auto const cfgCache = Config{json::parse(R"JSON({      
-            "server": {"max_queue_size": 2},
-            "workers": 4,
-            "rpc": {
-                "cache_timeout": 10,
-                "cached_commands": ["cache_it"]
-            }
-         })JSON")};
+                                                      "server": {"max_queue_size": 2},
+                                                      "workers": 4,
+                                                      "rpc": 
+                                                      {
+                                                          "cache_timeout": 10,
+                                                          "cached_commands": ["cache_it"]
+                                                      }
+                                                })JSON")};
 
     auto const notAdmin = false;
     auto const method = "cache_it";
@@ -526,11 +497,7 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
                 yield,
                 method,
                 1,
-                boost::json::parse(R"JSON({
-                "hello": "world",
-                "limit": 50
-         })JSON")
-                    .as_object(),
+                boost::json::parse(R"JSON({"hello": "world","limit": 50})JSON").as_object(),
                 nullptr,
                 tagFactory,
                 LedgerRange{0, 30},

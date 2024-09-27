@@ -229,7 +229,8 @@ LoadBalancer::forwardToRippled(
     boost::asio::yield_context yield
 )
 {
-    ASSERT(request.contains("command"), "Request must contain a command to forward.");
+    if (not request.contains("command"))
+        return std::unexpected{rpc::ClioError::rpcCOMMAND_IS_MISSING};
 
     auto const cmd = boost::json::value_to<std::string>(request.at("command"));
     if (forwardingCache_) {
