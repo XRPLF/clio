@@ -22,7 +22,6 @@
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
-#include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/impl/ConnectionHandler.hpp"
@@ -34,7 +33,6 @@
 
 #include <cstddef>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <string>
 
@@ -45,8 +43,6 @@ class Server {
     util::Logger perfLog_{"Performance"};
     std::reference_wrapper<boost::asio::io_context> ctx_;
 
-    std::unique_ptr<dosguard::DOSGuardInterface> dosguard_;
-    std::shared_ptr<web::impl::AdminVerificationStrategy> adminVerificationStrategy_;
     std::optional<boost::asio::ssl::context> sslContext_;
 
     impl::ConnectionHandler connectionHandler_;
@@ -63,8 +59,6 @@ public:
         boost::asio::ip::tcp::endpoint endpoint,
         std::optional<boost::asio::ssl::context> sslContext,
         impl::ConnectionHandler connectionHandler,
-        std::shared_ptr<web::impl::AdminVerificationStrategy> adminVerificationStrategy,
-        std::unique_ptr<dosguard::DOSGuardInterface> dosguard,
         util::TagDecoratorFactory tagDecoratorFactory
     );
 
@@ -92,10 +86,6 @@ private:
 };
 
 std::expected<Server, std::string>
-make_Server(
-    util::Config const& config,
-    boost::asio::io_context& context,
-    std::unique_ptr<dosguard::DOSGuardInterface> dosguard
-);
+make_Server(util::Config const& config, boost::asio::io_context& context);
 
 }  // namespace web::ng

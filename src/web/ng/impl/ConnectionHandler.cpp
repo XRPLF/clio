@@ -214,7 +214,7 @@ ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::as
             );
         } else {
             boost::asio::spawn(
-                yield,
+                yield,  // spawn on the same strand
                 [this,
                  &closeConnectionGracefully,
                  &ongoingRequestsCounter,

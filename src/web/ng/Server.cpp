@@ -23,8 +23,6 @@
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
-#include "web/dosguard/DOSGuardInterface.hpp"
-#include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/MessageHandler.hpp"
@@ -170,13 +168,9 @@ Server::Server(
     boost::asio::ip::tcp::endpoint endpoint,
     std::optional<boost::asio::ssl::context> sslContext,
     impl::ConnectionHandler connectionHandler,
-    std::shared_ptr<web::impl::AdminVerificationStrategy> adminVerificationStrategy,
-    std::unique_ptr<dosguard::DOSGuardInterface> dosguard,
     util::TagDecoratorFactory tagDecoratorFactory
 )
     : ctx_{ctx}
-    , dosguard_{std::move(dosguard)}
-    , adminVerificationStrategy_(std::move(adminVerificationStrategy))
     , sslContext_{std::move(sslContext)}
     , connectionHandler_{std::move(connectionHandler)}
     , endpoint_{std::move(endpoint)}
@@ -277,11 +271,7 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
 }
 
 std::expected<Server, std::string>
-make_Server(
-    util::Config const& config,
-    boost::asio::io_context& context,
-    std::unique_ptr<dosguard::DOSGuardInterface> dosguard
-)
+make_Server(util::Config const& config, boost::asio::io_context& context)
 {
     auto const serverConfig = config.section("server");
 
@@ -292,11 +282,6 @@ make_Server(
     auto expectedSslContext = impl::makeServerSslContext(config);
     if (not expectedSslContext)
         return std::unexpected{std::move(expectedSslContext).error()};
-
-    auto adminVerificationStrategy = web::impl::make_AdminVerificationStrategy(serverConfig);
-    if (not adminVerificationStrategy) {
-        return std::unexpected{std::move(adminVerificationStrategy).error()};
-    }
 
     impl::ConnectionHandler::ProcessingStrategy processingStrategy{impl::ConnectionHandler::ProcessingStrategy::Parallel
     };
@@ -316,8 +301,6 @@ make_Server(
         std::move(endpoint).value(),
         std::move(expectedSslContext).value(),
         impl::ConnectionHandler{processingStrategy, parallelRequestLimit},
-        std::move(adminVerificationStrategy).value(),
-        std::move(dosguard),
         util::TagDecoratorFactory(config)
     };
 }
