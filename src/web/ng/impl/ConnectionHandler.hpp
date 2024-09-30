@@ -103,12 +103,13 @@ private:
     /**
      * @brief Handle a request.
      *
+     * @param connectionContext The connection context.
      * @param request The request to handle.
      * @param yield The yield context.
      * @return The response to send.
      */
     Response
-    handleRequest(Request request, boost::asio::yield_context yield);
+    handleRequest(ConnectionContext const& connectionContext, Request const& request, boost::asio::yield_context yield);
 };
 
 }  // namespace web::ng::impl

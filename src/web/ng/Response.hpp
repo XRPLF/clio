@@ -46,10 +46,7 @@ private:
     std::optional<HttpData> httpData_;
 
 public:
-    // WebSocket response
-    explicit Response(std::string message);
-
-    Response(boost::beast::http::status status, std::string message, Request&& request);
+    Response(boost::beast::http::status status, std::string message, Request const& request);
 
     boost::beast::http::response<boost::beast::http::string_body>
     intoHttpResponse() &&;

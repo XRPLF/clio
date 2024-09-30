@@ -47,10 +47,13 @@ public:
     explicit Request(boost::beast::http::request<boost::beast::http::string_body> request);
     Request(std::string request, HttpHeaders const& headers);
 
-    enum class HttpMethod { GET, POST, WEBSOCKET, UNSUPPORTED };
+    enum class Method { GET, POST, WEBSOCKET, UNSUPPORTED };
 
-    HttpMethod
-    httpMethod() const;
+    Method
+    method() const;
+
+    bool
+    isHttp() const;
 
     std::string const&
     target() const;

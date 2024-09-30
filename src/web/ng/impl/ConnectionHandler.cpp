@@ -34,11 +34,45 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/websocket/error.hpp>
 
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
 
 namespace web::ng::impl {
+
+namespace {
+
+Response
+handleHttpRequest(
+    ConnectionContext const& connectionContext,
+    std::unordered_map<std::string, MessageHandler> const& handlers,
+    Request const& request,
+    boost::asio::yield_context yield
+)
+{
+    auto it = handlers.find(request.target());
+    if (it == handlers.end()) {
+        return Response{boost::beast::http::status::bad_request, "Bad target", request};
+    }
+    return it->second(request, connectionContext, yield);
+}
+
+Response
+handleWsRequest(
+    ConnectionContext connectionContext,
+    std::optional<MessageHandler> const& handler,
+    Request const& request,
+    boost::asio::yield_context yield
+)
+{
+    if (not handler.has_value()) {
+        return Response{boost::beast::http::status::bad_request, "WebSocket is not supported by this server", request};
+    }
+    return handler->operator()(request, connectionContext, yield);
+}
+
+}  // namespace
 
 void
 ConnectionHandler::onGet(std::string const& target, MessageHandler handler)
@@ -141,7 +175,7 @@ ConnectionHandler::requestResponseLoop(Connection& connection, boost::asio::yiel
 
         LOG(log_.info()) << connection.tag() << "Received request from ip = " << connection.ip();
 
-        auto response = handleRequest(std::move(expectedRequest).value(), yield);
+        auto response = handleRequest(connection.context(), expectedRequest.value(), yield);
 
         auto const maybeError = connection.send(std::move(response), yield);
         if (maybeError.has_value()) {
@@ -151,32 +185,21 @@ ConnectionHandler::requestResponseLoop(Connection& connection, boost::asio::yiel
 }
 
 Response
-handleHttpRequest(
-    Connection const& connection,
-    std::unordered_map<std::string, MessageHandler> const& handlers,
-    Request request,
+ConnectionHandler::handleRequest(
+    ConnectionContext const& connectionContext,
+    Request const& request,
     boost::asio::yield_context yield
 )
 {
-    auto it = handlers.find(request.target());
-    if (it == handlers.end()) {
-        return Response{boost::beast::http::status::bad_request, "Bad target", request};
-    }
-    it->second(std::move(request), )
-}
-
-Response
-ConnectionHandler::handleRequest(Request request, boost::asio::yield_context yield)
-{
-    switch (request.httpMethod()) {
-        case Request::HttpMethod::GET:
-            return handleHttpRequest(getHandlers_, std::move(request), yield);
-        case Request::HttpMethod::POST:
-            return handleHttpRequest(postHandlers_, std::move(request), yield);
-        case Request::HttpMethod::WEBSOCKET:
-            return handleWsRequest(std::move(request), yield);
+    switch (request.method()) {
+        case Request::Method::GET:
+            return handleHttpRequest(connectionContext, getHandlers_, request, yield);
+        case Request::Method::POST:
+            return handleHttpRequest(connectionContext, postHandlers_, request, yield);
+        case Request::Method::WEBSOCKET:
+            return handleWsRequest(connectionContext, wsHandler_, request, yield);
         default:
-            return Response{http::status::bad_request, "Unsupported http method", request};
+            return Response{boost::beast::http::status::bad_request, "Unsupported http method", request};
     }
 }
 

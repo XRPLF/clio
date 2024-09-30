@@ -23,10 +23,12 @@
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 
+#include <boost/asio/spawn.hpp>
+
 #include <functional>
 
 namespace web::ng {
 
-using MessageHandler = std::function<Response(Request const&, ConnectionContext context)>;
+using MessageHandler = std::function<Response(Request const&, ConnectionContext, boost::asio::yield_context)>;
 
 }  // namespace web::ng
