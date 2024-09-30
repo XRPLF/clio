@@ -67,12 +67,11 @@ constexpr auto FORWARD_REPLY = R"JSON({
 })JSON";
 }  // namespace
 
-class RPCEngineTest : public util::prometheus::WithPrometheus,
-                      public MockBackendTest,
-                      public MockCountersTest,
-                      public MockLoadBalancerTest,
-                      public SyncAsioContextTest {
-protected:
+struct RPCEngineTest : util::prometheus::WithPrometheus,
+                       MockBackendTest,
+                       MockCountersTest,
+                       MockLoadBalancerTest,
+                       SyncAsioContextTest {
     Config cfg = Config{json::parse(R"JSON({
         "server": {"max_queue_size": 2},
         "workers": 4
@@ -102,75 +101,69 @@ struct RPCEngineFlowParameterTest : public RPCEngineTest, WithParamInterface<RPC
 static auto
 generateTestValuesForParametersTest()
 {
-    auto const isAdmin = true;
-    auto const isTooBusy = true;
-    auto const neverCalledIsTooBusy = std::nullopt;
-    auto const neverCalledUnknownCmd = std::nullopt;
-    auto const forwarded = true;
-    auto const cmdUnknown = true;
-    auto const handlerReturnError = true;
+    auto const neverCalled = std::nullopt;
 
     return std::vector<RPCEngineFlowTestCaseBundle>{
-        {"ForwardedSubmit",
-         isAdmin,
-         "submit",
-         "{}",
-         forwarded,
-         neverCalledIsTooBusy,
-         neverCalledUnknownCmd,
-         !handlerReturnError,
-         rpc::Status{},
-         boost::json::parse(FORWARD_REPLY).as_object()},
-        {"ForwardAdminCmd",
-         !isAdmin,
-         "ledger",
-         R"JSON({"full": true, "ledger_index": "current"})JSON",
-         !forwarded,
-         neverCalledIsTooBusy,
-         neverCalledUnknownCmd,
-         !handlerReturnError,
-         rpc::Status{RippledError::rpcNO_PERMISSION},
-         std::nullopt},
-        {"BackendTooBusy",
-         !isAdmin,
-         "ledger",
-         "{}",
-         !forwarded,
-         isTooBusy,
-         neverCalledUnknownCmd,
-         !handlerReturnError,
-         rpc::Status{RippledError::rpcTOO_BUSY},
-         std::nullopt},
-        {"HandlerUnknown",
-         !isAdmin,
-         "ledger",
-         "{}",
-         !forwarded,
-         neverCalledIsTooBusy,
-         cmdUnknown,
-         !handlerReturnError,
-         rpc::Status{RippledError::rpcUNKNOWN_COMMAND},
-         std::nullopt},
-        {"HandlerReturnError",
-         !isAdmin,
-         "ledger",
-         R"JSON({"hello": "world", "limit": 50})JSON",
-         !forwarded,
-         neverCalledIsTooBusy,
-         !cmdUnknown,
-         handlerReturnError,
-         rpc::Status{"Very custom error"},
-         std::nullopt},
-        {"HandlerReturnResponse",
-         !isAdmin,
-         "ledger",
-         R"JSON({"hello": "world", "limit": 50})JSON",
-         !forwarded,
-         neverCalledIsTooBusy,
-         !cmdUnknown,
-         !handlerReturnError,
-         std::nullopt,
-         boost::json::parse(R"JSON({"computed": "world_50"})JSON").as_object()},
+        {.testName = "ForwardedSubmit",
+         .isAdmin = true,
+         .method = "submit",
+         .params = "{}",
+         .forwarded = true,
+         .isTooBusy = neverCalled,
+         .isUnknownCmd = neverCalled,
+         .handlerReturnError = false,
+         .status = rpc::Status{},
+         .response = boost::json::parse(FORWARD_REPLY).as_object()},
+        {.testName = "ForwardAdminCmd",
+         .isAdmin = false,
+         .method = "ledger",
+         .params = R"JSON({"full": true, "ledger_index": "current"})JSON",
+         .forwarded = false,
+         .isTooBusy = neverCalled,
+         .isUnknownCmd = neverCalled,
+         .handlerReturnError = false,
+         .status = rpc::Status{RippledError::rpcNO_PERMISSION},
+         .response = std::nullopt},
+        {.testName = "BackendTooBusy",
+         .isAdmin = false,
+         .method = "ledger",
+         .params = "{}",
+         .forwarded = false,
+         .isTooBusy = true,
+         .isUnknownCmd = neverCalled,
+         .handlerReturnError = false,
+         .status = rpc::Status{RippledError::rpcTOO_BUSY},
+         .response = std::nullopt},
+        {.testName = "HandlerUnknown",
+         .isAdmin = false,
+         .method = "ledger",
+         .params = "{}",
+         .forwarded = false,
+         .isTooBusy = false,
+         .isUnknownCmd = true,
+         .handlerReturnError = false,
+         .status = rpc::Status{RippledError::rpcUNKNOWN_COMMAND},
+         .response = std::nullopt},
+        {.testName = "HandlerReturnError",
+         .isAdmin = false,
+         .method = "ledger",
+         .params = R"JSON({"hello": "world", "limit": 50})JSON",
+         .forwarded = false,
+         .isTooBusy = false,
+         .isUnknownCmd = false,
+         .handlerReturnError = true,
+         .status = rpc::Status{"Very custom error"},
+         .response = std::nullopt},
+        {.testName = "HandlerReturnResponse",
+         .isAdmin = false,
+         .method = "ledger",
+         .params = R"JSON({"hello": "world", "limit": 50})JSON",
+         .forwarded = false,
+         .isTooBusy = false,
+         .isUnknownCmd = false,
+         .handlerReturnError = false,
+         .status = std::nullopt,
+         .response = boost::json::parse(R"JSON({"computed": "world_50"})JSON").as_object()},
     };
 }
 
@@ -183,7 +176,7 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_P(RPCEngineFlowParameterTest, Test)
 {
-    auto const testBundle = GetParam();
+    auto const& testBundle = GetParam();
 
     std::shared_ptr<RPCEngine<MockLoadBalancer, MockCounters>> engine =
         RPCEngine<MockLoadBalancer, MockCounters>::make_RPCEngine(
@@ -200,7 +193,8 @@ TEST_P(RPCEngineFlowParameterTest, Test)
 
     if (testBundle.isTooBusy.has_value()) {
         EXPECT_CALL(*backend, isTooBusy).WillOnce(Return(*testBundle.isTooBusy));
-        EXPECT_CALL(*mockCountersPtr, onTooBusy).Times(1);
+        if (testBundle.isTooBusy.value())
+            EXPECT_CALL(*mockCountersPtr, onTooBusy).Times(1);
     }
 
     EXPECT_CALL(*handlerProvider, isClioOnly).WillOnce(Return(false));
@@ -214,7 +208,7 @@ TEST_P(RPCEngineFlowParameterTest, Test)
                 EXPECT_CALL(*handlerProvider, getHandler)
                     .WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
                 EXPECT_CALL(*mockCountersPtr, rpcErrored(testBundle.method)).Times(1);
-                EXPECT_CALL(*handlerProvider, contains(testBundle.method)).WillOnce(Return(true)).Times(1);
+                EXPECT_CALL(*handlerProvider, contains(testBundle.method)).WillOnce(Return(true));
             } else {
                 EXPECT_CALL(*handlerProvider, getHandler(testBundle.method))
                     .WillOnce(Return(AnyHandler{tests::common::HandlerFake{}}));
@@ -316,6 +310,7 @@ TEST_F(RPCEngineTest, ThrowException)
 struct RPCEngineCacheTestCaseBundle {
     std::string testName;
     std::string config;
+    std::string method;
     bool isAdmin;
     bool expectedCacheEnabled;
 };
@@ -325,88 +320,62 @@ struct RPCEngineCacheParameterTest : public RPCEngineTest, WithParamInterface<RP
 static auto
 generateCacheTestValuesForParametersTest()
 {
-    auto const isAdmin = true;
-    auto const expectedCacheEnabled = true;
     return std::vector<RPCEngineCacheTestCaseBundle>{
-        {"CacheEnabled",
-         R"JSON({      
+        {.testName = "CacheEnabled",
+         .config = R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
             "rpc": 
-            {
-                "cache_timeout": 10,
-                "cached_commands": ["cache_it"]
-            }
+            {"cache_timeout": 10}
          })JSON",
-         !isAdmin,
-         expectedCacheEnabled},
-        {"CacheDisabledWhenNoConfig",
-         R"JSON({      
+         .method = "server_info",
+         .isAdmin = false,
+         .expectedCacheEnabled = true},
+        {.testName = "CacheDisabledWhenNoConfig",
+         .config = R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
             "rpc": {}
          })JSON",
-         !isAdmin,
-         !expectedCacheEnabled},
-        {"CacheDisabledWhenNoCmds",
-         R"JSON({      
+         .method = "server_info",
+         .isAdmin = false,
+         .expectedCacheEnabled = false},
+        {.testName = "CacheDisabledWhenNoTimeout",
+         .config = R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": 
-            {
-                "cache_timeout": 10,
-                "cached_commands": []
-            }
+            "rpc": {}
          })JSON",
-         !isAdmin,
-         !expectedCacheEnabled},
-        {"CacheDisabledWhenNoTimeout",
-         R"JSON({      
+         .method = "server_info",
+         .isAdmin = false,
+         .expectedCacheEnabled = false},
+        {.testName = "CacheDisabledWhenTimeoutIsZero",
+         .config = R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": 
-            {
-                "cached_commands": ["cache_it"]
-            }
+            "rpc": {"cache_timeout": 0}
          })JSON",
-         !isAdmin,
-         !expectedCacheEnabled},
-        {"CacheDisabledWhenCmdNotMatch",
-         R"JSON({      
+         .method = "server_info",
+         .isAdmin = false,
+         .expectedCacheEnabled = false},
+        {.testName = "CacheNotWorkForAdmin",
+         .config = R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": 
-            {
-                "cache_timeout": 10,
-                "cached_commands": ["cache_it2"]
-            }
+            "rpc": { "cache_timeout": 10}
          })JSON",
-         !isAdmin,
-         !expectedCacheEnabled},
-        {"CacheDisabledWhenTimeoutIsZero",
-         R"JSON({      
+         .method = "server_info",
+         .isAdmin = true,
+         .expectedCacheEnabled = false},
+        {.testName = "CacheDisabledWhenCmdNotMatch",
+         .config = R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": 
-            {
-                "cache_timeout": 0,
-                "cached_commands": ["cache_it"]
-            }
+            "rpc": {"cache_timeout": 10}
          })JSON",
-         !isAdmin,
-         !expectedCacheEnabled},
-        {"CacheNotWorkForAdmin",
-         R"JSON({      
-            "server": {"max_queue_size": 2},
-            "workers": 4,
-            "rpc": 
-            {
-                "cache_timeout": 10,
-                "cached_commands": ["cache_it"]
-            }
-         })JSON",
-         isAdmin,
-         !expectedCacheEnabled},
+         .method = "server_info2",
+         .isAdmin = false,
+         .expectedCacheEnabled = false},
     };
 }
 
@@ -419,27 +388,26 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_P(RPCEngineCacheParameterTest, Test)
 {
-    auto const testParam = GetParam();
+    auto const& testParam = GetParam();
     auto const cfgCache = Config{json::parse(testParam.config)};
 
     auto const admin = testParam.isAdmin;
-    auto const method = "cache_it";
+    auto const method = testParam.method;
     std::shared_ptr<RPCEngine<MockLoadBalancer, MockCounters>> engine =
         RPCEngine<MockLoadBalancer, MockCounters>::make_RPCEngine(
             cfgCache, backend, mockLoadBalancerPtr, dosGuard, queue, *mockCountersPtr, handlerProvider
         );
     int callTime = 2;
+    EXPECT_CALL(*handlerProvider, isClioOnly).Times(callTime).WillRepeatedly(Return(false));
     if (testParam.expectedCacheEnabled) {
         EXPECT_CALL(*backend, isTooBusy).WillOnce(Return(false));
         EXPECT_CALL(*handlerProvider, getHandler).WillOnce(Return(AnyHandler{tests::common::HandlerFake{}}));
-        EXPECT_CALL(*handlerProvider, isClioOnly).WillOnce(Return(false));
 
     } else {
         EXPECT_CALL(*backend, isTooBusy).Times(callTime).WillRepeatedly(Return(false));
         EXPECT_CALL(*handlerProvider, getHandler)
             .Times(callTime)
             .WillRepeatedly(Return(AnyHandler{tests::common::HandlerFake{}}));
-        EXPECT_CALL(*handlerProvider, isClioOnly).Times(callTime).WillRepeatedly(Return(false));
     }
 
     while (callTime-- != 0) {
@@ -468,15 +436,11 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
     auto const cfgCache = Config{json::parse(R"JSON({      
                                                       "server": {"max_queue_size": 2},
                                                       "workers": 4,
-                                                      "rpc": 
-                                                      {
-                                                          "cache_timeout": 10,
-                                                          "cached_commands": ["cache_it"]
-                                                      }
+                                                      "rpc": {"cache_timeout": 10}
                                                 })JSON")};
 
     auto const notAdmin = false;
-    auto const method = "cache_it";
+    auto const method = "server_info";
     std::shared_ptr<RPCEngine<MockLoadBalancer, MockCounters>> engine =
         RPCEngine<MockLoadBalancer, MockCounters>::make_RPCEngine(
             cfgCache, backend, mockLoadBalancerPtr, dosGuard, queue, *mockCountersPtr, handlerProvider
@@ -487,7 +451,7 @@ TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
     EXPECT_CALL(*handlerProvider, getHandler)
         .Times(callTime)
         .WillRepeatedly(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
-    EXPECT_CALL(*mockCountersPtr, rpcErrored("cache_it")).Times(callTime);
+    EXPECT_CALL(*mockCountersPtr, rpcErrored(method)).Times(callTime);
     EXPECT_CALL(*handlerProvider, isClioOnly).Times(callTime).WillRepeatedly(Return(false));
     EXPECT_CALL(*handlerProvider, contains).Times(callTime).WillRepeatedly(Return(true));
 

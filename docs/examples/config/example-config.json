@@ -40,10 +40,7 @@
         "request_timeout": 10.0 // time for Clio to wait for rippled to reply on a forwarded request (default is 10 seconds)
     },
     "rpc": {
-        "cache_timeout": 0.5, // in seconds, could be 0, which means no cache for rpc
-        "cached_commands": [
-            "server_info"
-        ] // List of commands to cache，please don't cache commands that require input parameters, such as "account_info"
+        "cache_timeout": 0.5 // in seconds, could be 0, which means no cache for rpc
     }
     "dos_guard": {
         // Comma-separated list of IPs to exclude from rate limiting

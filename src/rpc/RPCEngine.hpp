@@ -20,7 +20,6 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/Counters.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/WorkQueue.hpp"
@@ -102,21 +101,13 @@ public:
     {
         // Let main thread catch the exception if config type is wrong
         auto const cacheTimeout = config.valueOr<float>("rpc.cache_timeout", 0.f);
-        auto const cmdsCfg = config.arrayOr("rpc.cached_commands", {});
 
-        if (cacheTimeout > 0.f and not cmdsCfg.empty()) {
-            auto const transform = [](auto const& elem) { return elem.template value<std::string>(); };
+        if (cacheTimeout > 0.f) {
+            LOG(log_.info()) << fmt::format("Init RPC Cache, timeout: {} seconds", cacheTimeout);
 
-            std::unordered_set<std::string> const cmds{
-                boost::transform_iterator(std::begin(cmdsCfg), transform),
-                boost::transform_iterator(std::end(cmdsCfg), transform)
-            };
-
-            LOG(log_.info()) << fmt::format(
-                "Init RPC Cache, timeout: {} seconds, cached commands: {}", cacheTimeout, fmt::join(cmds, ", ")
+            responseCache_.emplace(
+                util::Config::toMilliseconds(cacheTimeout), std::unordered_set<std::string>{"server_info"}
             );
-
-            responseCache_.emplace(util::Config::toMilliseconds(cacheTimeout), cmds);
         }
     }
 
@@ -165,7 +156,7 @@ public:
 
         if (not ctx.isAdmin and responseCache_) {
             if (auto res = responseCache_->get(ctx.method); res.has_value())
-                return Result{std::move(res.value())};
+                return Result{std::move(res).value()};
         }
 
         if (backend_->isTooBusy()) {

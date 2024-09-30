@@ -31,6 +31,31 @@
 
 namespace util {
 
+void
+ResponseExpirationCache::Entry::put(boost::json::object response)
+{
+    response_ = std::move(response);
+    lastUpdated_ = std::chrono::steady_clock::now();
+}
+
+std::optional<boost::json::object>
+ResponseExpirationCache::Entry::get() const
+{
+    return response_;
+}
+
+std::chrono::steady_clock::time_point
+ResponseExpirationCache::Entry::lastUpdated() const
+{
+    return lastUpdated_;
+}
+
+void
+ResponseExpirationCache::Entry::invalidate()
+{
+    response_.reset();
+}
+
 bool
 ResponseExpirationCache::shouldCache(std::string const& cmd)
 {

@@ -29,7 +29,6 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
 
 namespace util {
 
@@ -40,7 +39,7 @@ class ResponseExpirationCache {
     /**
      * @brief A class to store a cache entry.
      */
-    class CacheEntry {
+    class Entry {
         std::chrono::steady_clock::time_point lastUpdated_;
         std::optional<boost::json::object> response_;
 
@@ -51,11 +50,7 @@ class ResponseExpirationCache {
          * @param response The response to store
          */
         void
-        put(boost::json::object response)
-        {
-            response_ = std::move(response);
-            lastUpdated_ = std::chrono::steady_clock::now();
-        }
+        put(boost::json::object response);
 
         /**
          * @brief Get the response from the cache
@@ -63,10 +58,7 @@ class ResponseExpirationCache {
          * @return The response
          */
         std::optional<boost::json::object>
-        get() const
-        {
-            return response_;
-        }
+        get() const;
 
         /**
          * @brief Get the last time the cache was updated
@@ -74,23 +66,17 @@ class ResponseExpirationCache {
          * @return The last time the cache was updated
          */
         std::chrono::steady_clock::time_point
-        lastUpdated() const
-        {
-            return lastUpdated_;
-        }
+        lastUpdated() const;
 
         /**
          * @brief Invalidate the cache entry
          */
         void
-        invalidate()
-        {
-            response_.reset();
-        }
+        invalidate();
     };
 
     std::chrono::steady_clock::duration cacheTimeout_;
-    std::unordered_map<std::string, util::Mutex<CacheEntry, std::shared_mutex>> cache_;
+    std::unordered_map<std::string, util::Mutex<Entry, std::shared_mutex>> cache_;
 
     bool
     shouldCache(std::string const& cmd);
@@ -109,7 +95,7 @@ public:
         : cacheTimeout_(cacheTimeout)
     {
         for (auto const& command : cmds) {
-            cache_.emplace(command, CacheEntry{});
+            cache_.emplace(command, Entry{});
         }
     }
 
