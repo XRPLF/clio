@@ -188,13 +188,13 @@ TEST_P(RPCEngineFlowParameterTest, Test)
             .WillOnce(Return(std::expected<boost::json::object, rpc::ClioError>(json::parse(FORWARD_REPLY).as_object()))
             );
         EXPECT_CALL(*handlerProvider, contains).WillOnce(Return(true));
-        EXPECT_CALL(*mockCountersPtr, rpcForwarded(testBundle.method)).Times(1);
+        EXPECT_CALL(*mockCountersPtr, rpcForwarded(testBundle.method));
     }
 
     if (testBundle.isTooBusy.has_value()) {
         EXPECT_CALL(*backend, isTooBusy).WillOnce(Return(*testBundle.isTooBusy));
         if (testBundle.isTooBusy.value())
-            EXPECT_CALL(*mockCountersPtr, onTooBusy).Times(1);
+            EXPECT_CALL(*mockCountersPtr, onTooBusy);
     }
 
     EXPECT_CALL(*handlerProvider, isClioOnly).WillOnce(Return(false));
@@ -202,12 +202,12 @@ TEST_P(RPCEngineFlowParameterTest, Test)
     if (testBundle.isUnknownCmd.has_value()) {
         if (testBundle.isUnknownCmd.value()) {
             EXPECT_CALL(*handlerProvider, getHandler).WillOnce(Return(std::nullopt));
-            EXPECT_CALL(*mockCountersPtr, onUnknownCommand).Times(1);
+            EXPECT_CALL(*mockCountersPtr, onUnknownCommand);
         } else {
             if (testBundle.handlerReturnError) {
                 EXPECT_CALL(*handlerProvider, getHandler)
                     .WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
-                EXPECT_CALL(*mockCountersPtr, rpcErrored(testBundle.method)).Times(1);
+                EXPECT_CALL(*mockCountersPtr, rpcErrored(testBundle.method));
                 EXPECT_CALL(*handlerProvider, contains(testBundle.method)).WillOnce(Return(true));
             } else {
                 EXPECT_CALL(*handlerProvider, getHandler(testBundle.method))
@@ -252,7 +252,7 @@ TEST_F(RPCEngineTest, ThrowDatabaseError)
     EXPECT_CALL(*handlerProvider, getHandler(method)).WillOnce(Return(AnyHandler{tests::common::FailingHandlerFake{}}));
     EXPECT_CALL(*mockCountersPtr, rpcErrored(method)).WillOnce(Throw(data::DatabaseTimeout{}));
     EXPECT_CALL(*handlerProvider, contains(method)).WillOnce(Return(true));
-    EXPECT_CALL(*mockCountersPtr, onTooBusy()).Times(1);
+    EXPECT_CALL(*mockCountersPtr, onTooBusy());
 
     runSpawn([&](auto yield) {
         auto const ctx = web::Context(
