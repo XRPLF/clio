@@ -30,10 +30,12 @@
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/error.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/websocket/error.hpp>
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -97,10 +99,18 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
 {
     auto& connection = insertConnection(std::move(connectionPtr));
 
-    auto const shouldCloseGracefully = requestResponseLoop(connection, yield);
-    if (shouldCloseGracefully) {
-        connection.close(yield);
+    bool shouldCloseGracefully{false};
+
+    switch (processingStrategy_) {
+        case ProcessingStrategy::Sequent:
+            shouldCloseGracefully = sequentRequestResponseLoop(connection, yield);
+            break;
+        case ProcessingStrategy::Parallel:
+            shouldCloseGracefully = parallelRequestResponseLoop(connection, yield);
+            break;
     }
+    if (shouldCloseGracefully)
+        connection.close(yield);
 
     removeConnection(connection);
     // connection reference is not valid anymore
@@ -157,7 +167,7 @@ ConnectionHandler::handleError(Error const& error, Connection const& connection)
 }
 
 bool
-ConnectionHandler::requestResponseLoop(Connection& connection, boost::asio::yield_context yield)
+ConnectionHandler::sequentRequestResponseLoop(Connection& connection, boost::asio::yield_context yield)
 {
     // The loop here is infinite because:
     // - For websocket connection is persistent so Clio will try to read and respond infinite unless client
@@ -169,19 +179,75 @@ ConnectionHandler::requestResponseLoop(Connection& connection, boost::asio::yiel
 
     while (true) {
         auto expectedRequest = connection.receive(yield);
-        if (not expectedRequest) {
+        if (not expectedRequest)
             return handleError(expectedRequest.error(), connection);
-        }
 
         LOG(log_.info()) << connection.tag() << "Received request from ip = " << connection.ip();
 
-        auto response = handleRequest(connection.context(), expectedRequest.value(), yield);
+        auto maybeReturnValue = processRequest(connection, std::move(expectedRequest).value(), yield);
+        if (maybeReturnValue.has_value())
+            return maybeReturnValue.value();
+    }
+}
 
-        auto const maybeError = connection.send(std::move(response), yield);
-        if (maybeError.has_value()) {
-            return handleError(maybeError.value(), connection);
+bool
+ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::asio::yield_context yield)
+{
+    // atomic_bool is not needed here because everything happening on coroutine's strand
+    std::optional<bool> closeConnectionGracefully;
+    size_t ongoingRequestsCounter{0};
+
+    while (not closeConnectionGracefully.has_value()) {
+        auto expectedRequest = connection.receive(yield);
+        if (not expectedRequest)
+            return handleError(expectedRequest.error(), connection);
+
+        ++ongoingRequestsCounter;
+        if (maxParallelRequests_.has_value() && ongoingRequestsCounter > *maxParallelRequests_) {
+            connection.send(
+                Response{
+                    boost::beast::http::status::too_many_requests,
+                    "Too many request for one session",
+                    expectedRequest.value()
+                },
+                yield
+            );
+        } else {
+            boost::asio::spawn(
+                yield,
+                [this,
+                 &closeConnectionGracefully,
+                 &ongoingRequestsCounter,
+                 &connection,
+                 request = std::move(expectedRequest).value()](boost::asio::yield_context innerYield) mutable {
+                    auto maybeCloseConnectionGracefully = processRequest(connection, std::move(request), innerYield);
+                    if (maybeCloseConnectionGracefully.has_value()) {
+                        if (closeConnectionGracefully.has_value()) {
+                            // Close connection gracefully only if both are true. If at least one is false then
+                            // connection is already closed.
+                            closeConnectionGracefully = *closeConnectionGracefully && *maybeCloseConnectionGracefully;
+                        } else {
+                            closeConnectionGracefully = maybeCloseConnectionGracefully;
+                        }
+                    }
+                    --ongoingRequestsCounter;
+                }
+            );
         }
     }
+    return *closeConnectionGracefully;
+}
+
+std::optional<bool>
+ConnectionHandler::processRequest(Connection& connection, Request&& request, boost::asio::yield_context yield)
+{
+    auto response = handleRequest(connection.context(), request, yield);
+
+    auto const maybeError = connection.send(std::move(response), yield);
+    if (maybeError.has_value()) {
+        return handleError(maybeError.value(), connection);
+    }
+    return std::nullopt;
 }
 
 Response

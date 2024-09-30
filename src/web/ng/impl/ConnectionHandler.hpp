@@ -38,8 +38,15 @@
 namespace web::ng::impl {
 
 class ConnectionHandler {
+public:
+    enum class ProcessingStrategy { Sequent, Parallel };
+
+private:
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
+
+    ProcessingStrategy processingStrategy_;
+    std::optional<size_t> maxParallelRequests_;
 
     std::unordered_map<std::string, MessageHandler> getHandlers_;
     std::unordered_map<std::string, MessageHandler> postHandlers_;
@@ -49,6 +56,8 @@ class ConnectionHandler {
     std::unique_ptr<util::Mutex<ConnectionsMap>> connections_{std::make_unique<util::Mutex<ConnectionsMap>>()};
 
 public:
+    ConnectionHandler(ProcessingStrategy processingStrategy, std::optional<size_t> maxParallelRequests_);
+
     void
     onGet(std::string const& target, MessageHandler handler);
 
@@ -98,7 +107,13 @@ private:
      * @return True if the connection should be gracefully closed, false otherwise.
      */
     bool
-    requestResponseLoop(Connection& connection, boost::asio::yield_context yield);
+    sequentRequestResponseLoop(Connection& connection, boost::asio::yield_context yield);
+
+    bool
+    parallelRequestResponseLoop(Connection& connection, boost::asio::yield_context yield);
+
+    std::optional<bool>
+    processRequest(Connection& connection, Request&& request, boost::asio::yield_context yield);
 
     /**
      * @brief Handle a request.

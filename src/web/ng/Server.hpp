@@ -24,10 +24,7 @@
 #include "util/log/Logger.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/AdminVerificationStrategy.hpp"
-#include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
-#include "web/ng/Request.hpp"
-#include "web/ng/Response.hpp"
 #include "web/ng/impl/ConnectionHandler.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -65,6 +62,7 @@ public:
         boost::asio::io_context& ctx,
         boost::asio::ip::tcp::endpoint endpoint,
         std::optional<boost::asio::ssl::context> sslContext,
+        impl::ConnectionHandler connectionHandler,
         std::shared_ptr<web::impl::AdminVerificationStrategy> adminVerificationStrategy,
         std::unique_ptr<dosguard::DOSGuardInterface> dosguard,
         util::TagDecoratorFactory tagDecoratorFactory

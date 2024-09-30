@@ -67,7 +67,14 @@
         "admin_password": "xrp",
         // If local_admin is true, Clio will consider requests come from 127.0.0.1 as admin requests
         // It's true by default unless admin_password is set,'local_admin' : true and 'admin_password' can not be set at the same time
-        "local_admin": false
+        "local_admin": false,
+        "processing_strategy": "parallel", // Could be "sequent" or "parallel".
+        // For sequent strategy request from one client connection will be processed one by one and the next one will not be read before
+        // the previous one is processed. For parallel strategy Clio will take all requests and process them in parallel and
+        // send a reply for each request whenever it is ready.
+        "parallel_requests_limit": 10 // Optional parameter, used only if "processing_strategy" is "parallel".
+        It limits the number of requests for one client connection processed in parallel. Infinite if not specified.
+
     },
     // Time in seconds for graceful shutdown. Defaults to 10 seconds. Not fully implemented yet.
     "graceful_period": 10.0,

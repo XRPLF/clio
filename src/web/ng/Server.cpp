@@ -169,6 +169,7 @@ Server::Server(
     boost::asio::io_context& ctx,
     boost::asio::ip::tcp::endpoint endpoint,
     std::optional<boost::asio::ssl::context> sslContext,
+    impl::ConnectionHandler connectionHandler,
     std::shared_ptr<web::impl::AdminVerificationStrategy> adminVerificationStrategy,
     std::unique_ptr<dosguard::DOSGuardInterface> dosguard,
     util::TagDecoratorFactory tagDecoratorFactory
@@ -177,6 +178,7 @@ Server::Server(
     , dosguard_{std::move(dosguard)}
     , adminVerificationStrategy_(std::move(adminVerificationStrategy))
     , sslContext_{std::move(sslContext)}
+    , connectionHandler_{std::move(connectionHandler)}
     , endpoint_{std::move(endpoint)}
     , tagDecoratorFactory_{tagDecoratorFactory}
 {
@@ -296,10 +298,24 @@ make_Server(
         return std::unexpected{std::move(adminVerificationStrategy).error()};
     }
 
+    impl::ConnectionHandler::ProcessingStrategy processingStrategy{impl::ConnectionHandler::ProcessingStrategy::Parallel
+    };
+    std::optional<size_t> parallelRequestLimit;
+
+    auto const processingStrategyStr = serverConfig.valueOr<std::string>("processing_strategy", "parallel");
+    if (processingStrategyStr == "sequent") {
+        processingStrategy = impl::ConnectionHandler::ProcessingStrategy::Sequent;
+    } else if (processingStrategyStr == "parallel") {
+        parallelRequestLimit = serverConfig.maybeValue<size_t>("parallel_requests_limit");
+    } else {
+        return std::unexpected{fmt::format("Invalid 'server.processing_strategy': {}", processingStrategyStr)};
+    }
+
     return Server{
         context,
         std::move(endpoint).value(),
         std::move(expectedSslContext).value(),
+        impl::ConnectionHandler{processingStrategy, parallelRequestLimit},
         std::move(adminVerificationStrategy).value(),
         std::move(dosguard),
         util::TagDecoratorFactory(config)
