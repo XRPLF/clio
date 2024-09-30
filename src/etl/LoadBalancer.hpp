@@ -23,9 +23,9 @@
 #include "etl/ETLState.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
-#include "etl/impl/ForwardingCache.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "util/Mutex.hpp"
+#include "util/ResponseExpirationCache.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
@@ -68,7 +68,7 @@ private:
 
     util::Logger log_{"ETL"};
     // Forwarding cache must be destroyed after sources because sources have a callback to invalidate cache
-    std::optional<impl::ForwardingCache> forwardingCache_;
+    std::optional<util::ResponseExpirationCache> forwardingCache_;
     std::optional<std::string> forwardingXUserValue_;
 
     std::vector<SourcePtr> sources_;

@@ -27,6 +27,7 @@
 #include "rpc/Errors.hpp"
 #include "util/Assert.hpp"
 #include "util/Random.hpp"
+#include "util/ResponseExpirationCache.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -34,6 +35,7 @@
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
+#include <boost/json/value_to.hpp>
 #include <fmt/core.h>
 
 #include <algorithm>
@@ -79,7 +81,10 @@ LoadBalancer::LoadBalancer(
 {
     auto const forwardingCacheTimeout = config.valueOr<float>("forwarding.cache_timeout", 0.f);
     if (forwardingCacheTimeout > 0.f) {
-        forwardingCache_ = impl::ForwardingCache{Config::toMilliseconds(forwardingCacheTimeout)};
+        forwardingCache_ = util::ResponseExpirationCache{
+            Config::toMilliseconds(forwardingCacheTimeout),
+            {"server_info", "server_state", "server_definitions", "fee", "ledger_closed"}
+        };
     }
 
     static constexpr std::uint32_t MAX_DOWNLOAD = 256;
@@ -224,8 +229,12 @@ LoadBalancer::forwardToRippled(
     boost::asio::yield_context yield
 )
 {
+    if (not request.contains("command"))
+        return std::unexpected{rpc::ClioError::rpcCOMMAND_IS_MISSING};
+
+    auto const cmd = boost::json::value_to<std::string>(request.at("command"));
     if (forwardingCache_) {
-        if (auto cachedResponse = forwardingCache_->get(request); cachedResponse) {
+        if (auto cachedResponse = forwardingCache_->get(cmd); cachedResponse) {
             return std::move(cachedResponse).value();
         }
     }
@@ -253,7 +262,7 @@ LoadBalancer::forwardToRippled(
 
     if (response) {
         if (forwardingCache_ and not response->contains("error"))
-            forwardingCache_->put(request, *response);
+            forwardingCache_->put(cmd, *response);
         return std::move(response).value();
     }
 

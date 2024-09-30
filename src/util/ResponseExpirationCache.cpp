@@ -17,88 +17,55 @@
 */
 //==============================================================================
 
-#include "etl/impl/ForwardingCache.hpp"
+#include "util/ResponseExpirationCache.hpp"
 
 #include "util/Assert.hpp"
 
 #include <boost/json/object.hpp>
-#include <boost/json/value_to.hpp>
 
 #include <chrono>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
 #include <string>
-#include <unordered_set>
-#include <utility>
 
-namespace etl::impl {
-
-namespace {
-
-std::optional<std::string>
-getCommand(boost::json::object const& request)
-{
-    if (not request.contains("command")) {
-        return std::nullopt;
-    }
-    return boost::json::value_to<std::string>(request.at("command"));
-}
-
-}  // namespace
+namespace util {
 
 void
-CacheEntry::put(boost::json::object response)
+ResponseExpirationCache::Entry::put(boost::json::object response)
 {
     response_ = std::move(response);
     lastUpdated_ = std::chrono::steady_clock::now();
 }
 
 std::optional<boost::json::object>
-CacheEntry::get() const
+ResponseExpirationCache::Entry::get() const
 {
     return response_;
 }
 
 std::chrono::steady_clock::time_point
-CacheEntry::lastUpdated() const
+ResponseExpirationCache::Entry::lastUpdated() const
 {
     return lastUpdated_;
 }
 
 void
-CacheEntry::invalidate()
+ResponseExpirationCache::Entry::invalidate()
 {
     response_.reset();
 }
 
-std::unordered_set<std::string> const
-    ForwardingCache::CACHEABLE_COMMANDS{"server_info", "server_state", "server_definitions", "fee", "ledger_closed"};
-
-ForwardingCache::ForwardingCache(std::chrono::steady_clock::duration const cacheTimeout) : cacheTimeout_{cacheTimeout}
-{
-    for (auto const& command : CACHEABLE_COMMANDS) {
-        cache_.emplace(command, CacheEntry{});
-    }
-}
-
 bool
-ForwardingCache::shouldCache(boost::json::object const& request)
+ResponseExpirationCache::shouldCache(std::string const& cmd)
 {
-    auto const command = getCommand(request);
-    return command.has_value() and CACHEABLE_COMMANDS.contains(*command);
+    return cache_.contains(cmd);
 }
 
 std::optional<boost::json::object>
-ForwardingCache::get(boost::json::object const& request) const
+ResponseExpirationCache::get(std::string const& cmd) const
 {
-    auto const command = getCommand(request);
-
-    if (not command.has_value()) {
-        return std::nullopt;
-    }
-
-    auto it = cache_.find(*command);
+    auto it = cache_.find(cmd);
     if (it == cache_.end())
         return std::nullopt;
 
@@ -110,20 +77,19 @@ ForwardingCache::get(boost::json::object const& request) const
 }
 
 void
-ForwardingCache::put(boost::json::object const& request, boost::json::object const& response)
+ResponseExpirationCache::put(std::string const& cmd, boost::json::object const& response)
 {
-    auto const command = getCommand(request);
-    if (not command.has_value() or not shouldCache(request))
+    if (not shouldCache(cmd))
         return;
 
-    ASSERT(cache_.contains(*command), "Command is not in the cache: {}", *command);
+    ASSERT(cache_.contains(cmd), "Command is not in the cache: {}", cmd);
 
-    auto entry = cache_[*command].lock<std::unique_lock>();
+    auto entry = cache_[cmd].lock<std::unique_lock>();
     entry->put(response);
 }
 
 void
-ForwardingCache::invalidate()
+ResponseExpirationCache::invalidate()
 {
     for (auto& [_, entry] : cache_) {
         auto entryLock = entry.lock<std::unique_lock>();
@@ -131,4 +97,4 @@ ForwardingCache::invalidate()
     }
 }
 
-}  // namespace etl::impl
+}  // namespace util

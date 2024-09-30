@@ -519,7 +519,7 @@ struct LoadBalancerForwardToRippledTests : LoadBalancerConstructorTests, SyncAsi
         EXPECT_CALL(sourceFactory_.sourceAt(1), run);
     }
 
-    boost::json::object const request_{{"request", "value"}};
+    boost::json::object const request_{{"command", "value"}};
     std::optional<std::string> const clientIP_ = "some_ip";
     boost::json::object const response_{{"response", "other_value"}};
 };
@@ -696,6 +696,21 @@ TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
         EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
         sourceFactory_.callbacksAt(0).onLedgerClosed();
         EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), boost::json::object{});
+    });
+}
+
+TEST_F(LoadBalancerForwardToRippledTests, commandLineMissing)
+{
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
+    auto loadBalancer = makeLoadBalancer();
+
+    auto const request = boost::json::object{{"command2", "server_info"}};
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_EQ(
+            loadBalancer->forwardToRippled(request, clientIP_, false, yield).error(),
+            rpc::ClioError::rpcCOMMAND_IS_MISSING
+        );
     });
 }
 
