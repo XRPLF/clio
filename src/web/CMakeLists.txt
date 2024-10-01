@@ -14,6 +14,7 @@ target_sources(
           ng/impl/ServerSslContext.cpp
           ng/impl/WsConnection.cpp
           ng/Server.cpp
+          ng/Request.cpp
           ng/Response.cpp
 )
 

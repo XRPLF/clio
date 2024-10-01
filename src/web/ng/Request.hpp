@@ -38,10 +38,11 @@ public:
 private:
     struct WsData {
         std::string request;
-        std::reference_wrapper<HttpHeaders const> headers_;
+        std::reference_wrapper<HttpHeaders const> headers;
     };
 
-    std::variant<boost::beast::http::request<boost::beast::http::string_body>, WsData> data_;
+    using HttpRequest = boost::beast::http::request<boost::beast::http::string_body>;
+    std::variant<HttpRequest, WsData> data_;
 
 public:
     explicit Request(boost::beast::http::request<boost::beast::http::string_body> request);
@@ -55,7 +56,10 @@ public:
     bool
     isHttp() const;
 
-    std::string const&
+    std::optional<std::reference_wrapper<boost::beast::http::request<boost::beast::http::string_body> const>>
+    asHttpRequest() const;
+
+    std::optional<std::string_view>
     target() const;
 
     std::optional<std::string_view>
@@ -63,6 +67,10 @@ public:
 
     std::optional<std::string_view>
     headerValue(std::string const& headerName) const;
+
+private:
+    HttpRequest const&
+    httpRequest() const;
 };
 
 }  // namespace web::ng

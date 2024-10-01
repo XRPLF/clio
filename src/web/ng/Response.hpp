@@ -25,6 +25,7 @@
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
+#include <boost/json/object.hpp>
 
 #include <optional>
 #include <string>
@@ -47,6 +48,7 @@ private:
 
 public:
     Response(boost::beast::http::status status, std::string message, Request const& request);
+    Response(boost::beast::http::status status, boost::json::object const& message, Request const& request);
 
     boost::beast::http::response<boost::beast::http::string_body>
     intoHttpResponse() &&;

@@ -21,12 +21,15 @@
 
 #include "util/Assert.hpp"
 #include "util/build/Build.hpp"
+#include "web/ng/Request.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
+#include <boost/json/object.hpp>
+#include <boost/json/serialize.hpp>
 
 #include <optional>
 #include <string>
@@ -50,10 +53,31 @@ asString(Response::HttpData::ContentType type)
     std::unreachable();
 }
 
+template <typename MessageType>
+std::optional<Response::HttpData>
+makeHttpData(boost::beast::http::status status, Request const& request)
+{
+    if (request.isHttp()) {
+        auto const& httpRequest = request.asHttpRequest()->get();
+        return Response::HttpData{
+            .status = status,
+            .contentType = std::is_same_v<MessageType, std::string> ? Response::HttpData::ContentType::TEXT_HTML
+                                                                    : Response::HttpData::ContentType::APPLICATION_JSON,
+            .keepAlive = httpRequest.keep_alive(),
+            .version = httpRequest.version()
+        };
+    }
+    return std::nullopt;
+}
 }  // namespace
 
-Response::Response(std::string message, std::optional<HttpData> httpData)
-    : message_(std::move(message)), httpData_(httpData)
+Response::Response(boost::beast::http::status status, std::string message, Request const& request)
+    : message_(std::move(message)), httpData_{makeHttpData<decltype(message)>(status, request)}
+{
+}
+
+Response::Response(boost::beast::http::status status, boost::json::object const& message, Request const& request)
+    : message_(boost::json::serialize(message)), httpData_{makeHttpData<decltype(message)>(status, request)}
 {
 }
 
