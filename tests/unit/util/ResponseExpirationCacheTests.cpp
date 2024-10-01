@@ -20,7 +20,6 @@
 #include "util/ResponseExpirationCache.hpp"
 
 #include <boost/json/object.hpp>
-#include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
 
 #include <chrono>
