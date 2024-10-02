@@ -127,10 +127,10 @@ target_sources(
           util/TxUtilTests.cpp
           util/WithTimeout.cpp
           # Webserver
-          web/AdminVerificationTests.cpp
           web/dosguard/DOSGuardTests.cpp
           web/dosguard/IntervalSweepHandlerTests.cpp
           web/dosguard/WhitelistHandlerTests.cpp
+          web/impl/AdminVerificationTests.cpp
           web/impl/ServerSslContextTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp

@@ -85,15 +85,12 @@ make_AdminVerificationStrategy(util::Config const& serverConfig)
 {
     auto adminPassword = serverConfig.maybeValue<std::string>("admin_password");
     auto const localAdmin = serverConfig.maybeValue<bool>("local_admin");
+    bool const localAdminEnabled = localAdmin && localAdmin.value();
 
-    // Return error when localAdmin is true and admin_password is also set
-    if (localAdmin && localAdmin.value() && adminPassword) {
-        return std::unexpected{"Admin config error, local_admin and admin_password can not be set together."};
-    }
-
-    // Return error when localAdmin is false but admin_password is not set
-    if (localAdmin && !localAdmin.value() && !adminPassword) {
-        return std::unexpected{"Admin config error, one method must be specified to authorize admin."};
+    if (localAdminEnabled == adminPassword.has_value()) {
+        if (adminPassword.has_value())
+            return std::unexpected{"Admin config error, local_admin and admin_password can not be set together."};
+        return std::unexpected{"Admin config error, either local_admin and admin_password must be specified."};
     }
 
     return make_AdminVerificationStrategy(std::move(adminPassword));
