@@ -18,8 +18,7 @@ type TokenRange struct {
 // not stored as arrays of startRange/endRange because it will be O(n) lookup
 // stored as Map with key startRange, value endRange so O(1) lookup for tokenRange
 type StoredRange struct {
-	TokenRange  maybe.Maybe[map[int64]int64] // all ranges that has been read and deleted
-	LedgerRange maybe.Maybe[uint64]          // read up to this specific ledger index
+	TokenRange maybe.Maybe[map[int64]int64] // all ranges that has been read and deleted
 }
 
 func Shuffle(data []*TokenRange) {

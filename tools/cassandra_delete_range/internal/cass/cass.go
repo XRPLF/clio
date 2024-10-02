@@ -77,11 +77,11 @@ func (c *ClioCass) DeleteBefore(ledgerIdx uint64) {
 
 	log.Printf("DB ledger range is %d -> %d\n", firstLedgerIdxInDB, latestLedgerIdxInDB)
 
-	if firstLedgerIdxInDB > ledgerIdx {
+	if firstLedgerIdxInDB >= ledgerIdx {
 		log.Fatal("Earliest ledger index in DB is greater than the one specified. Aborting...")
 	}
 
-	if latestLedgerIdxInDB < ledgerIdx {
+	if latestLedgerIdxInDB <= ledgerIdx {
 		log.Fatal("Latest ledger index in DB is smaller than the one specified. Aborting...")
 	}
 
@@ -296,7 +296,6 @@ func (c *ClioCass) pruneData(
 		}
 		fmt.Fprintf(file, "%s\n", c.settings.Command)
 		file.WriteString("diff\n")
-		file.WriteString("ledger_range\n")
 
 		log.Println("Generating delete queries for diff table")
 		deleteCount, errCount = c.prepareSimpleDeleteQueries(rangeFrom, rangeTo,
@@ -318,7 +317,6 @@ func (c *ClioCass) pruneData(
 		}
 		fmt.Fprintf(file, "%s\n", c.settings.Command)
 		file.WriteString("ledger_transactions\n")
-		file.WriteString("ledger_range\n")
 
 		log.Println("Generating delete queries for ledger_transactions table")
 		deleteCount, errCount = c.prepareSimpleDeleteQueries(rangeFrom, rangeTo,
@@ -340,7 +338,6 @@ func (c *ClioCass) pruneData(
 		}
 		fmt.Fprintf(file, "%s\n", c.settings.Command)
 		file.WriteString("ledgers\n")
-		file.WriteString("ledger_range\n")
 
 		log.Println("Generating delete queries for ledgers table")
 		deleteCount, errCount = c.prepareSimpleDeleteQueries(rangeFrom, rangeTo,
@@ -422,31 +419,22 @@ func (c *ClioCass) prepareSimpleDeleteQueries(
 
 	if session, err := c.clusterConfig.CreateSession(); err == nil {
 		defer session.Close()
-		if c.settings.RangesRead != nil {
-			if c.settings.RangesRead.LedgerRange.HasValue() {
-				fromLedgerIdx = c.settings.RangesRead.LedgerRange.Value()
-			} else {
-				log.Fatal("ledger_range should exist in continue.txt")
-			}
-		}
 		for i := fromLedgerIdx; i <= toLedgerIdx; i++ {
 			info.Data = append(info.Data, deleteParams{Seq: i})
 			// for every 1000 queries in data, delete
 			if len(info.Data) == 1000 {
-				delete, err := c.performDeleteQueries(&info, session, colSettings)
+				_, err := c.performDeleteQueries(&info, session, colSettings)
 				atomic.AddUint64(&totalDeletes, uint64(len(info.Data)))
 				atomic.AddUint64(&totalErrors, err)
 				info = deleteInfo{Query: deleteQueryTemplate}
-				log.Printf("check delete 1 : %d", delete)
 			}
 		}
 		// delete the rest of queries if exists
 		if len(info.Data) > 0 {
-			delete, err := c.performDeleteQueries(&info, session, colSettings)
+			_, err := c.performDeleteQueries(&info, session, colSettings)
 			atomic.AddUint64(&totalDeletes, uint64(len(info.Data)))
 			atomic.AddUint64(&totalErrors, err)
 			info = deleteInfo{Query: deleteQueryTemplate}
-			log.Printf("check delete 2 : %d", delete)
 		}
 	} else {
 		log.Printf("ERROR: %s\n", err)
@@ -605,7 +593,7 @@ func (c *ClioCass) prepareDeleteQueries(
 								}
 							}
 						} else {
-							log.Fatal("ledger_range should exist in continue.txt")
+							log.Fatal("token_range should exist in continue.txt")
 						}
 					}
 

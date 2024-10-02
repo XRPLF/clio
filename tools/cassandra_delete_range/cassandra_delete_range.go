@@ -79,17 +79,18 @@ func main() {
 
 	if *resume {
 		// format of file continue.txt is
-		// previous user command (must match the same command to resume deletion)
-		// table name (ie. objects, ledger_hashes etc)
-		// deletion method (ie. token_range or ledger_range)
-		// the values of token_ranges (each pair of values seperated line by line) or just a single int for ledger_range
+		/*
+		 Previous user command (must match the same command to resume deletion)
+		 Table name (ie. objects, ledger_hashes etc)
+		 Deletion method (ie. token_range). We don't store ledger_range because these tables are extremely small
+		 Values of token_ranges (each pair of values seperated line by line) or just a single int for ledger_range
+		*/
 
 		file, err := os.Open("continue.txt")
 		if err != nil {
 			log.Fatal("continue.txt does not exist. Aborted")
 		}
 		defer file.Close()
-		log.Print("RESUMED2")
 
 		if err != nil {
 			log.Fatalf("Failed to open file: %v", err)
@@ -136,7 +137,6 @@ func main() {
 		case "objects":
 			*skipSuccessorTable = true
 		}
-		log.Print("RESUMED3")
 
 		scanner.Scan()
 		if scanner.Text() == "token_range" {
@@ -160,24 +160,9 @@ func main() {
 					log.Fatalf("Error converting integer: %s, %s", err1, err2)
 				}
 				rangeRead[start] = end
-				log.Printf("%d, %d", start, end)
 			}
 			ledgerOrTokenRange = &util.StoredRange{}
 			ledgerOrTokenRange.TokenRange = maybe.Set(rangeRead)
-		} else if scanner.Text() == "ledger_range" {
-			scanner.Scan()
-			line := scanner.Text()
-			startStr := strings.TrimSpace(line)
-
-			// convert ledger_index to uint64
-			toContinue, err1 := strconv.ParseUint(startStr, 10, 64)
-			if err1 != nil {
-				log.Fatalf("Error converting integer: %s", err1)
-			}
-			ledgerOrTokenRange = &util.StoredRange{}
-			ledgerOrTokenRange.LedgerRange = maybe.Set(toContinue)
-		} else {
-			log.Fatalf("%s is not token_range or ledger_range. Aborted..", scanner.Text())
 		}
 	}
 
