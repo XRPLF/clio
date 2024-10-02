@@ -50,6 +50,8 @@ type Settings struct {
 
 	WorkerCount int
 	Ranges      []*util.TokenRange
+	RangesRead  *util.StoredRange // Used to resume deletion
+	Command     string
 }
 
 type Cass interface {
@@ -154,7 +156,6 @@ func (c *ClioCass) pruneData(
 	var totalRows uint64
 	var totalDeletes uint64
 
-	var info deleteInfo
 	var rowsCount uint64
 	var deleteCount uint64
 	var errCount uint64
@@ -188,111 +189,193 @@ func (c *ClioCass) pruneData(
 
 	// successor queries
 	if !c.settings.SkipSuccessorTable {
+		file, err := os.Create("continue.txt")
+		if err != nil {
+			fmt.Println("Error creating file in Successor table:", err)
+			return err
+		}
+		fmt.Fprintf(file, "%s\n", c.settings.Command)
+		file.WriteString("successor\n")
+		file.WriteString("token_range\n")
+
 		log.Println("Generating delete queries for successor table")
-		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
+		rowsCount, deleteCount, errCount = c.prepareDeleteQueries(file, fromLedgerIdx, toLedgerIdx,
 			"SELECT key, seq FROM successor WHERE token(key) >= ? AND token(key) <= ?",
-			"DELETE FROM successor WHERE key = ? AND seq = ?", deleteMethod{deleteGeneral: maybe.Set(true)})
-		log.Printf("Total delete queries: %d\n", len(info.Data))
+			"DELETE FROM successor WHERE key = ? AND seq = ?", deleteMethod{deleteGeneral: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
+		log.Printf("Total delete queries: %d\n", deleteCount)
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
-		totalErrors += errCount
 		totalRows += rowsCount
-		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: true, UseSeq: true})
 		totalErrors += errCount
 		totalDeletes += deleteCount
+
+		file.Close()
+		os.Remove("continue.txt")
 	}
 
 	// objects queries
 	if !c.settings.SkipObjectsTable {
+		file, err := os.Create("continue.txt")
+		if err != nil {
+			fmt.Println("Error creating file in Object table:", err)
+			return err
+		}
+		fmt.Fprintf(file, "%s\n", c.settings.Command)
+		file.WriteString("objects\n")
+		file.WriteString("token_range\n")
+
 		log.Println("Generating delete queries for objects table")
-		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
+		rowsCount, deleteCount, errCount = c.prepareDeleteQueries(file, fromLedgerIdx, toLedgerIdx,
 			"SELECT key, sequence FROM objects WHERE token(key) >= ? AND token(key) <= ?",
-			"DELETE FROM objects WHERE key = ? AND sequence = ?", deleteMethod{deleteObject: maybe.Set(true)})
-		log.Printf("Total delete queries: %d\n", len(info.Data))
+			"DELETE FROM objects WHERE key = ? AND sequence = ?", deleteMethod{deleteObject: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: true})
+		log.Printf("Total delete queries: %d\n", deleteCount)
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalErrors += errCount
 		totalRows += rowsCount
-		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: true, UseSeq: true})
-		totalErrors += errCount
 		totalDeletes += deleteCount
+
+		file.Close()
+		os.Remove("continue.txt")
 	}
 
 	// ledger_hashes queries
 	if !c.settings.SkipLedgerHashesTable {
+		file, err := os.Create("continue.txt")
+		if err != nil {
+			fmt.Println("Error creating file in ledger hashes table:", err)
+			return err
+		}
+		fmt.Fprintf(file, "%s\n", c.settings.Command)
+		file.WriteString("ledger_hashes\n")
+		file.WriteString("token_range\n")
+
 		log.Println("Generating delete queries for ledger_hashes table")
-		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
+		rowsCount, deleteCount, errCount = c.prepareDeleteQueries(file, fromLedgerIdx, toLedgerIdx,
 			"SELECT hash, sequence FROM ledger_hashes WHERE token(hash) >= ? AND token(hash) <= ?",
-			"DELETE FROM ledger_hashes WHERE hash = ?", deleteMethod{deleteGeneral: maybe.Set(true)})
-		log.Printf("Total delete queries: %d\n", len(info.Data))
+			"DELETE FROM ledger_hashes WHERE hash = ?", deleteMethod{deleteGeneral: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
+		log.Printf("Total delete queries: %d\n", deleteCount)
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
-		totalErrors += errCount
 		totalRows += rowsCount
-		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: true, UseSeq: false})
 		totalErrors += errCount
 		totalDeletes += deleteCount
+
+		file.Close()
+		os.Remove("continue.txt")
 	}
 
 	// transactions queries
 	if !c.settings.SkipTransactionsTable {
+		file, err := os.Create("continue.txt")
+		if err != nil {
+			fmt.Println("Error creating file in transaction table:", err)
+			return err
+		}
+		fmt.Fprintf(file, "%s\n", c.settings.Command)
+		file.WriteString("transactions\n")
+		file.WriteString("token_range\n")
+
 		log.Println("Generating delete queries for transactions table")
-		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
+		rowsCount, deleteCount, errCount = c.prepareDeleteQueries(file, fromLedgerIdx, toLedgerIdx,
 			"SELECT hash, ledger_sequence FROM transactions WHERE token(hash) >= ? AND token(hash) <= ?",
-			"DELETE FROM transactions WHERE hash = ?", deleteMethod{deleteGeneral: maybe.Set(true)})
-		log.Printf("Total delete queries: %d\n", len(info.Data))
+			"DELETE FROM transactions WHERE hash = ?", deleteMethod{deleteGeneral: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
+		log.Printf("Total delete queries: %d\n", deleteCount)
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
-		totalErrors += errCount
 		totalRows += rowsCount
-		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: true, UseSeq: false})
 		totalErrors += errCount
 		totalDeletes += deleteCount
+
+		file.Close()
+		os.Remove("continue.txt")
 	}
 
 	// diff queries
 	if !c.settings.SkipDiffTable {
+		file, err := os.Create("continue.txt")
+		if err != nil {
+			fmt.Println("Error creating file in diff table:", err)
+			return err
+		}
+		fmt.Fprintf(file, "%s\n", c.settings.Command)
+		file.WriteString("diff\n")
+		file.WriteString("ledger_range\n")
+
 		log.Println("Generating delete queries for diff table")
-		info = c.prepareSimpleDeleteQueries(rangeFrom, rangeTo,
-			"DELETE FROM diff WHERE seq = ?")
-		log.Printf("Total delete queries: %d\n\n", len(info.Data))
-		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: false, UseSeq: true})
+		deleteCount, errCount = c.prepareSimpleDeleteQueries(rangeFrom, rangeTo,
+			"DELETE FROM diff WHERE seq = ?", columnSettings{UseBlob: false, UseSeq: true})
+		log.Printf("Total delete queries: %d\n\n", deleteCount)
 		totalErrors += errCount
 		totalDeletes += deleteCount
+
+		file.Close()
+		os.Remove("continue.txt")
 	}
 
 	// ledger_transactions queries
 	if !c.settings.SkipLedgerTransactionsTable {
+		file, err := os.Create("continue.txt")
+		if err != nil {
+			fmt.Println("Error creating file in ledger_transactions table:", err)
+			return err
+		}
+		fmt.Fprintf(file, "%s\n", c.settings.Command)
+		file.WriteString("ledger_transactions\n")
+		file.WriteString("ledger_range\n")
+
 		log.Println("Generating delete queries for ledger_transactions table")
-		info = c.prepareSimpleDeleteQueries(rangeFrom, rangeTo,
-			"DELETE FROM ledger_transactions WHERE ledger_sequence = ?")
-		log.Printf("Total delete queries: %d\n\n", len(info.Data))
-		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: false, UseSeq: true})
+		deleteCount, errCount = c.prepareSimpleDeleteQueries(rangeFrom, rangeTo,
+			"DELETE FROM ledger_transactions WHERE ledger_sequence = ?", columnSettings{UseBlob: false, UseSeq: true})
+		log.Printf("Total delete queries: %d\n\n", deleteCount)
 		totalErrors += errCount
 		totalDeletes += deleteCount
+
+		file.Close()
+		os.Remove("continue.txt")
 	}
 
 	// ledgers queries
 	if !c.settings.SkipLedgersTable {
-		log.Println("Generating delete queries for ledgers table")
+		file, err := os.Create("continue.txt")
+		if err != nil {
+			fmt.Println("Error creating file in ledgers table:", err)
+			return err
+		}
+		fmt.Fprintf(file, "%s\n", c.settings.Command)
+		file.WriteString("ledgers\n")
+		file.WriteString("ledger_range\n")
 
-		info = c.prepareSimpleDeleteQueries(rangeFrom, rangeTo,
-			"DELETE FROM ledgers WHERE sequence = ?")
-		log.Printf("Total delete queries: %d\n\n", len(info.Data))
-		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: false, UseSeq: true})
+		log.Println("Generating delete queries for ledgers table")
+		deleteCount, errCount = c.prepareSimpleDeleteQueries(rangeFrom, rangeTo,
+			"DELETE FROM ledgers WHERE sequence = ?", columnSettings{UseBlob: false, UseSeq: true})
+		log.Printf("Total delete queries: %d\n\n", deleteCount)
 		totalErrors += errCount
 		totalDeletes += deleteCount
+
+		file.Close()
+		os.Remove("continue.txt")
 	}
 
+	// account_tx queries
 	if !c.settings.SkipAccTransactionsTable {
-		log.Println("Generating delete queries for account transactions table")
+		file, err := os.Create("continue.txt")
+		if err != nil {
+			fmt.Println("Error creating file in Successor table:", err)
+			return err
+		}
+		fmt.Fprintf(file, "%s\n", c.settings.Command)
+		file.WriteString("account_tx\n")
+		file.WriteString("token_range\n")
 
-		info, rowsCount, errCount = c.prepareDeleteQueries(fromLedgerIdx, toLedgerIdx,
+		log.Println("Generating delete queries for account transactions table")
+		rowsCount, deleteCount, errCount = c.prepareDeleteQueries(file, fromLedgerIdx, toLedgerIdx,
 			"SELECT account, seq_idx FROM account_tx WHERE token(account) >= ? AND token(account) <= ?",
-			"DELETE FROM account_tx WHERE account = ? AND seq_idx = (?, ?)", deleteMethod{deleteTransaction: maybe.Set(true)})
-		log.Printf("Total delete queries: %d\n", len(info.Data))
+			"DELETE FROM account_tx WHERE account = ? AND seq_idx = (?, ?)", deleteMethod{deleteTransaction: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
+		log.Printf("Total delete queries: %d\n", deleteCount)
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
-		totalErrors += errCount
 		totalRows += rowsCount
-		deleteCount, errCount = c.performDeleteQueries(&info, columnSettings{UseBlob: true, UseSeq: false})
 		totalErrors += errCount
 		totalDeletes += deleteCount
+
+		file.Close()
+		os.Remove("continue.txt")
 	}
 
 	// TODO: take care of nft tables and other stuff like that
@@ -330,19 +413,52 @@ func (c *ClioCass) prepareSimpleDeleteQueries(
 	fromLedgerIdx uint64,
 	toLedgerIdx uint64,
 	deleteQueryTemplate string,
-) deleteInfo {
+	colSettings columnSettings,
+) (uint64, uint64) {
+	var totalDeletes uint64
+	var totalErrors uint64
+
 	var info = deleteInfo{Query: deleteQueryTemplate}
 
-	for i := fromLedgerIdx; i <= toLedgerIdx; i++ {
-		info.Data = append(info.Data, deleteParams{Seq: i})
+	if session, err := c.clusterConfig.CreateSession(); err == nil {
+		defer session.Close()
+		if c.settings.RangesRead != nil {
+			if c.settings.RangesRead.LedgerRange.HasValue() {
+				fromLedgerIdx = c.settings.RangesRead.LedgerRange.Value()
+			} else {
+				log.Fatal("ledger_range should exist in continue.txt")
+			}
+		}
+		for i := fromLedgerIdx; i <= toLedgerIdx; i++ {
+			info.Data = append(info.Data, deleteParams{Seq: i})
+			// for every 1000 queries in data, delete
+			if len(info.Data) == 1000 {
+				delete, err := c.performDeleteQueries(&info, session, colSettings)
+				atomic.AddUint64(&totalDeletes, uint64(len(info.Data)))
+				atomic.AddUint64(&totalErrors, err)
+				info = deleteInfo{Query: deleteQueryTemplate}
+				log.Printf("check delete 1 : %d", delete)
+			}
+		}
+		// delete the rest of queries if exists
+		if len(info.Data) > 0 {
+			delete, err := c.performDeleteQueries(&info, session, colSettings)
+			atomic.AddUint64(&totalDeletes, uint64(len(info.Data)))
+			atomic.AddUint64(&totalErrors, err)
+			info = deleteInfo{Query: deleteQueryTemplate}
+			log.Printf("check delete 2 : %d", delete)
+		}
+	} else {
+		log.Printf("ERROR: %s\n", err)
+		fmt.Fprintf(os.Stderr, "FAILED TO CREATE SESSION: %s\n", err)
+		atomic.AddUint64(&totalErrors, 1)
 	}
-
-	return info
+	return totalDeletes, totalErrors
 }
 
-func prepareDelete(
+func (c *ClioCass) prepareDefaultDelete(
 	scanner gocql.Scanner,
-	outChannel chan deleteParams,
+	info *deleteInfo,
 	fromLedgerIdx maybe.Maybe[uint64],
 	toLedgerIdx maybe.Maybe[uint64],
 	rowsRetrieved *uint64,
@@ -357,9 +473,9 @@ func prepareDelete(
 
 			// only grab the rows that are in the correct range of sequence numbers
 			if fromLedgerIdx.HasValue() && fromLedgerIdx.Value() <= seq {
-				outChannel <- deleteParams{Seq: seq, Blob: key}
+				info.Data = append(info.Data, deleteParams{Seq: seq, Blob: key})
 			} else if toLedgerIdx.HasValue() && seq <= toLedgerIdx.Value() {
-				outChannel <- deleteParams{Seq: seq, Blob: key}
+				info.Data = append(info.Data, deleteParams{Seq: seq, Blob: key})
 			}
 		} else {
 			return false
@@ -368,9 +484,9 @@ func prepareDelete(
 	return true
 }
 
-func prepareObjectDelete(
+func (c *ClioCass) prepareObjectDelete(
 	scanner gocql.Scanner,
-	outChannel chan deleteParams,
+	info *deleteInfo,
 	fromLedgerIdx maybe.Maybe[uint64],
 	toLedgerIdx maybe.Maybe[uint64],
 	rowsRetrieved *uint64,
@@ -394,10 +510,10 @@ func prepareObjectDelete(
 
 			// only grab the rows that are in the correct range of sequence numbers
 			if fromLedgerIdx.HasValue() && fromLedgerIdx.Value() <= seq {
-				outChannel <- deleteParams{Seq: seq, Blob: key}
+				info.Data = append(info.Data, deleteParams{Seq: seq, Blob: key})
 			} else if toLedgerIdx.HasValue() {
 				if seq <= toLedgerIdx.Value() && (!keepLastValid || foundLastValid) {
-					outChannel <- deleteParams{Seq: seq, Blob: key}
+					info.Data = append(info.Data, deleteParams{Seq: seq, Blob: key})
 				} else if seq <= toLedgerIdx.Value()+1 {
 					foundLastValid = true
 				}
@@ -409,9 +525,9 @@ func prepareObjectDelete(
 	return true
 }
 
-func prepareAccTxnDelete(
+func (c *ClioCass) prepareAccTxnDelete(
 	scanner gocql.Scanner,
-	outChannel chan deleteParams,
+	info *deleteInfo,
 	fromLedgerIdx maybe.Maybe[uint64],
 	toLedgerIdx maybe.Maybe[uint64],
 	rowsRetrieved *uint64,
@@ -427,9 +543,9 @@ func prepareAccTxnDelete(
 
 			// only grab the rows that are in the correct range of sequence numbers
 			if fromLedgerIdx.HasValue() && fromLedgerIdx.Value() <= ledgerIndex {
-				outChannel <- deleteParams{Seq: ledgerIndex, Blob: key, tnxIndex: txnIndex}
+				info.Data = append(info.Data, deleteParams{Seq: ledgerIndex, Blob: key, tnxIndex: txnIndex})
 			} else if toLedgerIdx.HasValue() && ledgerIndex <= toLedgerIdx.Value() {
-				outChannel <- deleteParams{Seq: ledgerIndex, Blob: key, tnxIndex: txnIndex}
+				info.Data = append(info.Data, deleteParams{Seq: ledgerIndex, Blob: key, tnxIndex: txnIndex})
 			}
 		} else {
 			return false
@@ -439,12 +555,14 @@ func prepareAccTxnDelete(
 }
 
 func (c *ClioCass) prepareDeleteQueries(
+	file *os.File,
 	fromLedgerIdx maybe.Maybe[uint64],
 	toLedgerIdx maybe.Maybe[uint64],
 	queryTemplate string,
 	deleteQueryTemplate string,
 	method deleteMethod,
-) (deleteInfo, uint64, uint64) {
+	colSettings columnSettings,
+) (uint64, uint64, uint64) {
 	rangesChannel := make(chan *util.TokenRange, len(c.settings.Ranges))
 	for i := range c.settings.Ranges {
 		rangesChannel <- c.settings.Ranges[i]
@@ -452,24 +570,13 @@ func (c *ClioCass) prepareDeleteQueries(
 
 	close(rangesChannel)
 
-	outChannel := make(chan deleteParams)
 	var info = deleteInfo{Query: deleteQueryTemplate}
-
-	go func() {
-		total := uint64(0)
-		for params := range outChannel {
-			total += 1
-			if total%1000 == 0 {
-				log.Printf("... %d queries ...\n", total)
-			}
-			info.Data = append(info.Data, params)
-		}
-	}()
-
 	var wg sync.WaitGroup
 	var sessionCreationWaitGroup sync.WaitGroup
 	var totalRows uint64
+	var totalDeletes uint64
 	var totalErrors uint64
+	counter := uint64(1000)
 
 	wg.Add(c.settings.WorkerCount)
 	sessionCreationWaitGroup.Add(c.settings.WorkerCount)
@@ -488,6 +595,20 @@ func (c *ClioCass) prepareDeleteQueries(
 				preparedQuery := session.Query(q)
 
 				for r := range rangesChannel {
+					if c.settings.RangesRead != nil {
+						if c.settings.RangesRead.TokenRange.HasValue() {
+							if value, exists := c.settings.RangesRead.TokenRange.Value()[r.StartRange]; exists {
+								// Check for end range
+								if value == r.EndRange {
+									//delete(c.settings.RangesRead.TokenRange.Value(), r.StartRange)
+									continue
+								}
+							}
+						} else {
+							log.Fatal("ledger_range should exist in continue.txt")
+						}
+					}
+
 					preparedQuery.Bind(r.StartRange, r.EndRange)
 
 					var pageState []byte
@@ -502,11 +623,11 @@ func (c *ClioCass) prepareDeleteQueries(
 
 						// query object table first as it is the largest table by far
 						if method.deleteObject.HasValue() && method.deleteObject.Value() {
-							prepareDeleteResult = prepareObjectDelete(scanner, outChannel, fromLedgerIdx, toLedgerIdx, &rowsRetrieved)
+							prepareDeleteResult = c.prepareObjectDelete(scanner, &info, fromLedgerIdx, toLedgerIdx, &rowsRetrieved)
 						} else if method.deleteTransaction.HasValue() && method.deleteTransaction.Value() {
-							prepareDeleteResult = prepareAccTxnDelete(scanner, outChannel, fromLedgerIdx, toLedgerIdx, &rowsRetrieved)
+							prepareDeleteResult = c.prepareAccTxnDelete(scanner, &info, fromLedgerIdx, toLedgerIdx, &rowsRetrieved)
 						} else if method.deleteGeneral.HasValue() && method.deleteGeneral.Value() {
-							prepareDeleteResult = prepareDelete(scanner, outChannel, fromLedgerIdx, toLedgerIdx, &rowsRetrieved)
+							prepareDeleteResult = c.prepareDefaultDelete(scanner, &info, fromLedgerIdx, toLedgerIdx, &rowsRetrieved)
 						}
 
 						if !prepareDeleteResult {
@@ -516,14 +637,27 @@ func (c *ClioCass) prepareDeleteQueries(
 						}
 
 						if len(nextPageState) == 0 {
+							// Checks for delete queries every page
+							if len(info.Data) > 0 {
+								_, numErr := c.performDeleteQueries(&info, session, colSettings)
+								atomic.AddUint64(&totalErrors, numErr)
+								atomic.AddUint64(&totalDeletes, uint64(len(info.Data)))
+								if totalDeletes >= counter {
+									log.Printf("... deleted %d queries ...", counter)
+									counter += 1000
+								}
+								// reset back to the deleted query template after finishing executing delete
+								info = deleteInfo{Query: deleteQueryTemplate}
+							}
 							break
 						}
-
 						pageState = nextPageState
 					}
-
+					fmt.Fprintf(file, "%d, %d \n", r.StartRange, r.EndRange)
 					atomic.AddUint64(&totalRows, rowsRetrieved)
 				}
+				// after finishing deletion of one table, set to nil, because we continue to delete normally now
+				c.settings.RangesRead = nil
 			} else {
 				log.Printf("ERROR: %s\n", err)
 				fmt.Fprintf(os.Stderr, "FAILED TO CREATE SESSION: %s\n", err)
@@ -533,9 +667,7 @@ func (c *ClioCass) prepareDeleteQueries(
 	}
 
 	wg.Wait()
-	close(outChannel)
-
-	return info, totalRows, totalErrors
+	return totalRows, totalDeletes, totalErrors
 }
 
 func (c *ClioCass) splitDeleteWork(info *deleteInfo) [][]deleteParams {
@@ -565,7 +697,7 @@ func (c *ClioCass) splitDeleteWork(info *deleteInfo) [][]deleteParams {
 	return chunks
 }
 
-func (c *ClioCass) performDeleteQueries(info *deleteInfo, colSettings columnSettings) (uint64, uint64) {
+func (c *ClioCass) performDeleteQueries(info *deleteInfo, session *gocql.Session, colSettings columnSettings) (uint64, uint64) {
 	var wg sync.WaitGroup
 	var sessionCreationWaitGroup sync.WaitGroup
 	var totalDeletes uint64
@@ -589,45 +721,35 @@ func (c *ClioCass) performDeleteQueries(info *deleteInfo, colSettings columnSett
 		go func(number int, q string, bc int) {
 			defer wg.Done()
 
-			var session *gocql.Session
-			var err error
-			if session, err = c.clusterConfig.CreateSession(); err == nil {
-				defer session.Close()
+			sessionCreationWaitGroup.Done()
+			sessionCreationWaitGroup.Wait()
+			preparedQuery := session.Query(q)
 
-				sessionCreationWaitGroup.Done()
-				sessionCreationWaitGroup.Wait()
-				preparedQuery := session.Query(q)
-
-				for chunk := range chunksChannel {
-					for _, r := range chunk {
-						if bc == 3 {
-							preparedQuery.Bind(r.Blob, r.Seq, r.tnxIndex)
-						} else if bc == 2 {
-							preparedQuery.Bind(r.Blob, r.Seq)
-						} else if bc == 1 {
-							if colSettings.UseSeq {
-								preparedQuery.Bind(r.Seq)
-							} else if colSettings.UseBlob {
-								preparedQuery.Bind(r.Blob)
-							}
+			for chunk := range chunksChannel {
+				for _, r := range chunk {
+					if bc == 3 {
+						preparedQuery.Bind(r.Blob, r.Seq, r.tnxIndex)
+					} else if bc == 2 {
+						preparedQuery.Bind(r.Blob, r.Seq)
+					} else if bc == 1 {
+						if colSettings.UseSeq {
+							preparedQuery.Bind(r.Seq)
+						} else if colSettings.UseBlob {
+							preparedQuery.Bind(r.Blob)
 						}
+					}
 
-						if err := preparedQuery.Exec(); err != nil {
-							log.Printf("DELETE ERROR: %s\n", err)
-							fmt.Fprintf(os.Stderr, "FAILED QUERY: %s\n", fmt.Sprintf("%s [blob=0x%x][seq=%d]", info.Query, r.Blob, r.Seq))
-							atomic.AddUint64(&totalErrors, 1)
-						} else {
-							atomic.AddUint64(&totalDeletes, 1)
-							if atomic.LoadUint64(&totalDeletes)%10000 == 0 {
-								log.Printf("... %d deletes ...\n", totalDeletes)
-							}
+					if err := preparedQuery.Exec(); err != nil {
+						log.Printf("DELETE ERROR: %s\n", err)
+						fmt.Fprintf(os.Stderr, "FAILED QUERY: %s\n", fmt.Sprintf("%s [blob=0x%x][seq=%d]", info.Query, r.Blob, r.Seq))
+						atomic.AddUint64(&totalErrors, 1)
+					} else {
+						atomic.AddUint64(&totalDeletes, 1)
+						if atomic.LoadUint64(&totalDeletes)%10000 == 0 {
+							log.Printf("... %d deletes ...\n", totalDeletes)
 						}
 					}
 				}
-			} else {
-				log.Printf("ERROR: %s\n", err)
-				fmt.Fprintf(os.Stderr, "FAILED TO CREATE SESSION: %s\n", err)
-				atomic.AddUint64(&totalErrors, 1)
 			}
 		}(i, query, bindCount)
 	}

@@ -5,9 +5,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 	"xrplf/clio/cassandra_delete_range/internal/cass"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/gocql/gocql"
+	"github.com/pmorelli92/maybe"
 )
 
 const (
@@ -44,6 +47,7 @@ var (
 	clusterCQLVersion     = app.Flag("cql-version", "The CQL version to use").Short('l').Default("3.0.0").String()
 	clusterPageSize       = app.Flag("cluster-page-size", "Page size of results").Short('p').Default("5000").Int()
 	keyspace              = app.Flag("keyspace", "Keyspace to use").Short('k').Default("clio_fh").String()
+	resume                = app.Flag("resume", "Whether to resume deletion from the previous command due to something crashing").Default("false").Bool()
 
 	userName = app.Flag("username", "Username to use when connecting to the cluster").String()
 	password = app.Flag("password", "Password to use when connecting to the cluster").String()
@@ -58,17 +62,123 @@ var (
 	skipWriteLatestLedger       = app.Flag("skip-write-latest-ledger", "Whether to skip writing the latest ledger index").Default("false").Bool()
 	skipAccTransactionsTable    = app.Flag("skip-account-transactions", "Whether to skip deletion from account_transactions table").Default("false").Bool()
 
-	workerCount = 1                // the calculated number of parallel goroutines the client should run
-	ranges      []*util.TokenRange // the calculated ranges to be executed in parallel
+	workerCount        = 1                // the calculated number of parallel goroutines the client should run
+	ranges             []*util.TokenRange // the calculated ranges to be executed in parallel
+	ledgerOrTokenRange *util.StoredRange  // mapping of startRange -> endRange. Used for resume deletion
 )
 
 func main() {
 	log.SetOutput(os.Stdout)
 
+	cmd := strings.Join(os.Args[1:], " ")
 	command := kingpin.MustParse(app.Parse(os.Args[1:]))
 	cluster, err := prepareDb(hosts)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if *resume {
+		// format of file continue.txt is
+		// previous user command (must match the same command to resume deletion)
+		// table name (ie. objects, ledger_hashes etc)
+		// deletion method (ie. token_range or ledger_range)
+		// the values of token_ranges (each pair of values seperated line by line) or just a single int for ledger_range
+
+		file, err := os.Open("continue.txt")
+		if err != nil {
+			log.Fatal("continue.txt does not exist. Aborted")
+		}
+		defer file.Close()
+		log.Print("RESUMED2")
+
+		if err != nil {
+			log.Fatalf("Failed to open file: %v", err)
+		}
+		scanner := bufio.NewScanner(file)
+		scanner.Scan()
+
+		// --resume must be last flag passed; so can check command matches
+		if os.Args[len(os.Args)-1] != "--resume" {
+			log.Fatal("--resume must be the last flag passed")
+		}
+
+		// get rid of --resume at the end
+		cmd = strings.Join(os.Args[1:len(os.Args)-1], " ")
+
+		// makes sure command that got aborted matches the user command they enter
+		if scanner.Text() != cmd {
+			log.Fatalf("File continue.txt has %s command stored. \n You provided %s which does not match. \n Aborting...", scanner.Text(), cmd)
+		}
+
+		scanner.Scan()
+		// skip the neccessary tables based on where the program aborted
+		// for example if account_tx, all tables before account_tx
+		// should be already deleted so we skip for deletion
+		switch scanner.Text() {
+		case "account_tx":
+			*skipLedgersTable = true
+			fallthrough
+		case "ledgers":
+			*skipLedgerTransactionsTable = true
+			fallthrough
+		case "ledger_transactions":
+			*skipDiffTable = true
+			fallthrough
+		case "diff":
+			*skipTransactionsTable = true
+			fallthrough
+		case "transactions":
+			*skipLedgerHashesTable = true
+			fallthrough
+		case "ledger_hashes":
+			*skipObjectsTable = true
+			fallthrough
+		case "objects":
+			*skipSuccessorTable = true
+		}
+		log.Print("RESUMED3")
+
+		scanner.Scan()
+		if scanner.Text() == "token_range" {
+			rangeRead := make(map[int64]int64)
+
+			// now go through all the ledger range and load it to a set
+			for scanner.Scan() {
+				line := scanner.Text()
+				Range := strings.Split(line, ",")
+				if len(Range) != 2 {
+					log.Fatalf("Range is not two integers. %s . Aborting...", Range)
+				}
+				startStr := strings.TrimSpace(Range[0])
+				endStr := strings.TrimSpace(Range[1])
+
+				// convert string to int64
+				start, err1 := strconv.ParseInt(startStr, 10, 64)
+				end, err2 := strconv.ParseInt(endStr, 10, 64)
+
+				if err1 != nil || err2 != nil {
+					log.Fatalf("Error converting integer: %s, %s", err1, err2)
+				}
+				rangeRead[start] = end
+				log.Printf("%d, %d", start, end)
+			}
+			ledgerOrTokenRange = &util.StoredRange{}
+			ledgerOrTokenRange.TokenRange = maybe.Set(rangeRead)
+		} else if scanner.Text() == "ledger_range" {
+			scanner.Scan()
+			line := scanner.Text()
+			startStr := strings.TrimSpace(line)
+
+			// convert ledger_index to uint64
+			toContinue, err1 := strconv.ParseUint(startStr, 10, 64)
+			if err1 != nil {
+				log.Fatalf("Error converting integer: %s", err1)
+			}
+			ledgerOrTokenRange = &util.StoredRange{}
+			ledgerOrTokenRange.LedgerRange = maybe.Set(toContinue)
+		} else {
+			log.Fatalf("%s is not token_range or ledger_range. Aborted..", scanner.Text())
+		}
 	}
 
 	clioCass := cass.NewClioCass(&cass.Settings{
@@ -82,7 +192,9 @@ func main() {
 		SkipWriteLatestLedger:       *skipWriteLatestLedger,
 		SkipAccTransactionsTable:    *skipAccTransactionsTable,
 		WorkerCount:                 workerCount,
-		Ranges:                      ranges}, cluster)
+		Ranges:                      ranges,
+		RangesRead:                  ledgerOrTokenRange,
+		Command:                     cmd}, cluster)
 
 	switch command {
 	case deleteAfter.FullCommand():
@@ -159,6 +271,7 @@ Skip deletion of:
 - diff table                  : %t
 - ledger_transactions table   : %t
 - ledgers table               : %t
+- account_tx table            : %t
 
 Will update ledger_range      : %t
 
@@ -181,7 +294,9 @@ Will update ledger_range      : %t
 		*skipDiffTable,
 		*skipLedgerTransactionsTable,
 		*skipLedgersTable,
-		!*skipWriteLatestLedger)
+		*skipAccTransactionsTable,
+		!*skipWriteLatestLedger,
+	)
 
 	fmt.Println(runParameters)
 }
