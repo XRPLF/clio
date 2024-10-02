@@ -18,18 +18,19 @@
 //==============================================================================
 
 #include "data/Types.hpp"
-#include "feed/SubscriptionManager.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/handlers/Subscribe.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
+#include "util/MockSubscriptionManager.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
+#include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
 #include <fmt/core.h>
@@ -57,7 +58,6 @@ constexpr static auto MINSEQ = 10;
 constexpr static auto MAXSEQ = 30;
 constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
 constexpr static auto PAYS20USDGETS10XRPBOOKDIR = "43B83ADC452B85FCBADA6CAEAC5181C255A213630D58FFD455071AFD498D0000";
 constexpr static auto PAYS20XRPGETS10USDBOOKDIR = "7B1767D41DBCE79D9585CF9D0262A5FEC45E5206FF524F8B55071AFD498D0000";
 constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
@@ -69,8 +69,6 @@ protected:
     SetUp() override
     {
         HandlerBaseTest::SetUp();
-
-        subManager_ = std::make_shared<feed::SubscriptionManager>(ctx, backend);
         session_ = std::make_shared<MockSession>();
     }
     void
@@ -79,8 +77,8 @@ protected:
         HandlerBaseTest::TearDown();
     }
 
-    std::shared_ptr<feed::SubscriptionManager> subManager_;
     std::shared_ptr<web::ConnectionBase> session_;
+    StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
 };
 
 struct SubscribeParamTestCaseBundle {
@@ -138,22 +136,13 @@ generateTestValuesForParametersTest()
         SubscribeParamTestCaseBundle{"StreamNotString", R"({"streams": [1]})", "invalidParams", "streamNotString"},
         SubscribeParamTestCaseBundle{"StreamNotValid", R"({"streams": ["1"]})", "malformedStream", "Stream malformed."},
         SubscribeParamTestCaseBundle{
-            "StreamPeerStatusNotSupport",
-            R"({"streams": ["peer_status"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamPeerStatusNotSupport", R"({"streams": ["peer_status"]})", "notSupported", "Operation not supported."
         },
         SubscribeParamTestCaseBundle{
-            "StreamConsensusNotSupport",
-            R"({"streams": ["consensus"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamConsensusNotSupport", R"({"streams": ["consensus"]})", "notSupported", "Operation not supported."
         },
         SubscribeParamTestCaseBundle{
-            "StreamServerNotSupport",
-            R"({"streams": ["server"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamServerNotSupport", R"({"streams": ["server"]})", "notSupported", "Operation not supported."
         },
         SubscribeParamTestCaseBundle{"BooksNotArray", R"({"books": "1"})", "invalidParams", "booksNotArray"},
         SubscribeParamTestCaseBundle{
@@ -575,7 +564,7 @@ TEST_P(SubscribeParameterTest, InvalidParams)
 {
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const req = json::parse(testBundle.testJson);
         auto const output = handler.process(req, Context{yield});
         ASSERT_FALSE(output);
@@ -588,7 +577,7 @@ TEST_P(SubscribeParameterTest, InvalidParams)
 TEST_F(RPCSubscribeHandlerTest, EmptyResponse)
 {
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, mockSubscriptionManagerPtr}};
         auto const output = handler.process(json::parse(R"({})"), Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
@@ -604,16 +593,16 @@ TEST_F(RPCSubscribeHandlerTest, StreamsWithoutLedger)
         })"
     );
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, mockSubscriptionManagerPtr}};
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subTransactions).Times(1);
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subValidation).Times(1);
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subManifest).Times(1);
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subBookChanges).Times(1);
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subProposedTransactions).Times(1);
+
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
-        auto const report = subManager_->report();
-        EXPECT_EQ(report.at("transactions_proposed").as_uint64(), 1);
-        EXPECT_EQ(report.at("transactions").as_uint64(), 1);
-        EXPECT_EQ(report.at("validations").as_uint64(), 1);
-        EXPECT_EQ(report.at("manifests").as_uint64(), 1);
-        EXPECT_EQ(report.at("book_changes").as_uint64(), 1);
     });
 }
 
@@ -629,31 +618,21 @@ TEST_F(RPCSubscribeHandlerTest, StreamsLedger)
             "reserve_base":3,
             "reserve_inc":2
         })";
-    backend->setRange(MINSEQ, MAXSEQ);
 
-    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    // return valid ledgerHeader
-    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
-    ON_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillByDefault(Return(ledgerHeader));
-    // fee
-    auto feeBlob = CreateLegacyFeeSettingBlob(1, 2, 3, 4, 0);
-    ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(feeBlob));
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
-
-    // ledger stream returns information about the ledgers on hand and current
-    // fee schedule.
     auto const input = json::parse(
         R"({
             "streams": ["ledger"]
         })"
     );
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, mockSubscriptionManagerPtr}};
+
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subLedger)
+            .WillOnce(testing::Return(boost::json::parse(expectedOutput).as_object()));
+
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object(), json::parse(expectedOutput));
-        auto const report = subManager_->report();
-        EXPECT_EQ(report.at("ledger").as_uint64(), 1);
     });
 }
 
@@ -668,13 +647,13 @@ TEST_F(RPCSubscribeHandlerTest, Accounts)
         ACCOUNT2
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, mockSubscriptionManagerPtr}};
+
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subAccount(GetAccountIDWithString(ACCOUNT), session_)).Times(1);
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subAccount(GetAccountIDWithString(ACCOUNT2), session_)).Times(2);
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
-        auto const report = subManager_->report();
-        // filter the duplicates
-        EXPECT_EQ(report.at("account").as_uint64(), 2);
     });
 }
 
@@ -689,13 +668,15 @@ TEST_F(RPCSubscribeHandlerTest, AccountsProposed)
         ACCOUNT2
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, mockSubscriptionManagerPtr}};
+
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subProposedAccount(GetAccountIDWithString(ACCOUNT), session_))
+            .Times(1);
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subProposedAccount(GetAccountIDWithString(ACCOUNT2), session_))
+            .Times(2);
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
-        auto const report = subManager_->report();
-        // filter the duplicates
-        EXPECT_EQ(report.at("accounts_proposed").as_uint64(), 2);
     });
 }
 
@@ -721,12 +702,11 @@ TEST_F(RPCSubscribeHandlerTest, JustBooks)
         ACCOUNT
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, mockSubscriptionManagerPtr}};
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subBook).Times(1);
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
-        auto const report = subManager_->report();
-        EXPECT_EQ(report.at("books").as_uint64(), 1);
     });
 }
 
@@ -753,13 +733,11 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSet)
         ACCOUNT
     ));
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, mockSubscriptionManagerPtr}};
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subBook).Times(2);
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_TRUE(output.result->as_object().empty());
-        auto const report = subManager_->report();
-        // original book + reverse book
-        EXPECT_EQ(report.at("books").as_uint64(), 2);
     });
 }
 
@@ -919,16 +897,14 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothSnapshotSet)
         ACCOUNT
     );
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, mockSubscriptionManagerPtr}};
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subBook).Times(2);
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("bids").as_array().size(), 10);
         EXPECT_EQ(output.result->as_object().at("asks").as_array().size(), 10);
         EXPECT_EQ(output.result->as_object().at("bids").as_array()[0].as_object(), json::parse(expectedOffer));
         EXPECT_EQ(output.result->as_object().at("asks").as_array()[0].as_object(), json::parse(expectedReversedOffer));
-        auto const report = subManager_->report();
-        // original book + reverse book
-        EXPECT_EQ(report.at("books").as_uint64(), 2);
     });
 }
 
@@ -1061,14 +1037,12 @@ TEST_F(RPCSubscribeHandlerTest, BooksBothUnsetSnapshotSet)
     );
 
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, mockSubscriptionManagerPtr}};
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subBook).Times(1);
         auto const output = handler.process(input, Context{yield, session_});
         ASSERT_TRUE(output);
         EXPECT_EQ(output.result->as_object().at("offers").as_array().size(), 10);
         EXPECT_EQ(output.result->as_object().at("offers").as_array()[0].as_object(), json::parse(expectedOffer));
-        auto const report = subManager_->report();
-        // original book + reverse book
-        EXPECT_EQ(report.at("books").as_uint64(), 1);
     });
 }
 
@@ -1081,7 +1055,8 @@ TEST_F(RPCSubscribeHandlerTest, APIVersion)
     );
     auto const apiVersion = 2;
     runSpawn([&, this](auto yield) {
-        auto const handler = AnyHandler{SubscribeHandler{backend, subManager_}};
+        auto const handler = AnyHandler{SubscribeHandler{backend, mockSubscriptionManagerPtr}};
+        EXPECT_CALL(*mockSubscriptionManagerPtr, subProposedTransactions).Times(1);
         auto const output =
             handler.process(input, Context{.yield = yield, .session = session_, .apiVersion = apiVersion});
         ASSERT_TRUE(output);

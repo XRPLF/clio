@@ -31,6 +31,7 @@
 #include <expected>
 #include <functional>
 #include <type_traits>
+#include <utility>
 
 using namespace util::async;
 using namespace ::testing;
@@ -45,6 +46,25 @@ struct AnyStrandTests : ::testing::Test {
     ::testing::NaggyMock<MockStrand> mockStrand;
     AnyStrand strand{static_cast<MockStrand&>(mockStrand)};
 };
+
+TEST_F(AnyStrandTests, Move)
+{
+    auto mockOp = OperationType<std::any>{};
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any()>>())).WillOnce(ReturnRef(mockOp));
+    EXPECT_CALL(mockOp, get());
+
+    auto mineNow = std::move(strand);
+    ASSERT_TRUE(mineNow.execute([] { throw 0; }).get());
+}
+
+TEST_F(AnyStrandTests, CopyIsRefCounted)
+{
+    auto mockOp = OperationType<std::any>{};
+    EXPECT_CALL(mockStrand, execute(An<std::function<std::any()>>())).WillOnce(ReturnRef(mockOp));
+
+    auto yoink = strand;
+    ASSERT_TRUE(yoink.execute([] { throw 0; }).get());
+}
 
 TEST_F(AnyStrandTests, ExecuteWithoutTokenAndVoid)
 {

@@ -37,7 +37,7 @@ inline constexpr struct AssociatedExecutorExtractor {
     [[nodiscard]] typename CtxType::ExecutorType&
     operator()(CtxType& ctx) const noexcept
     {
-        return ctx.context_.executor;
+        return ctx.context_.getExecutor();
     }
 } extractAssociatedExecutor;
 

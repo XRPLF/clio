@@ -61,7 +61,6 @@ struct RPCUnsubscribeTest : HandlerBaseTest {
         HandlerBaseTest::TearDown();
     }
 
-    std::shared_ptr<feed::SubscriptionManager> subManager_;
     std::shared_ptr<web::ConnectionBase> session_;
     StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
 };
@@ -487,22 +486,13 @@ generateTestValuesForParametersTest()
             "bothNotBool"
         },
         UnsubscribeParamTestCaseBundle{
-            "StreamPeerStatusNotSupport",
-            R"({"streams": ["peer_status"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamPeerStatusNotSupport", R"({"streams": ["peer_status"]})", "notSupported", "Operation not supported."
         },
         UnsubscribeParamTestCaseBundle{
-            "StreamConsensusNotSupport",
-            R"({"streams": ["consensus"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamConsensusNotSupport", R"({"streams": ["consensus"]})", "notSupported", "Operation not supported."
         },
         UnsubscribeParamTestCaseBundle{
-            "StreamServerNotSupport",
-            R"({"streams": ["server"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamServerNotSupport", R"({"streams": ["server"]})", "notSupported", "Operation not supported."
         },
     };
 }

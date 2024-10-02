@@ -58,12 +58,13 @@ TEST_F(FeedLedgerTest, SubPub)
             "reserve_base":3,
             "reserve_inc":2
         })";
-    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+    boost::asio::io_context ioContext;
+    boost::asio::spawn(ioContext, [this](boost::asio::yield_context yield) {
         auto res = testFeedPtr->sub(yield, backend, sessionPtr);
         // check the response
         EXPECT_EQ(res, json::parse(LedgerResponse));
     });
-    ctx.run();
+    ioContext.run();
     EXPECT_EQ(testFeedPtr->count(), 1);
 
     constexpr static auto ledgerPub =
@@ -85,16 +86,12 @@ TEST_F(FeedLedgerTest, SubPub)
     auto fee2 = ripple::Fees();
     fee2.reserve = 10;
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8);
-    ctx.restart();
-    ctx.run();
 
     // test unsub, after unsub the send should not be called
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
     EXPECT_CALL(*mockSessionPtr, send(_)).Times(0);
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8);
-    ctx.restart();
-    ctx.run();
 }
 
 TEST_F(FeedLedgerTest, AutoDisconnect)
@@ -120,7 +117,6 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
         // check the response
         EXPECT_EQ(res, json::parse(LedgerResponse));
     });
-    ctx.run();
     EXPECT_EQ(testFeedPtr->count(), 1);
     EXPECT_CALL(*mockSessionPtr, send(_)).Times(0);
 
@@ -132,6 +128,4 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     fee2.reserve = 10;
     // no error
     testFeedPtr->pub(ledgerHeader2, fee2, "10-31", 8);
-    ctx.restart();
-    ctx.run();
 }

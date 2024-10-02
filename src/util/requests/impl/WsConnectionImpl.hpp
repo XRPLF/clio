@@ -40,8 +40,10 @@
 #include <boost/beast/websocket/stream_base.hpp>
 #include <boost/system/errc.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <expected>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>

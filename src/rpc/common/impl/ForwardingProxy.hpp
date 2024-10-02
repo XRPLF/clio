@@ -60,10 +60,6 @@ public:
         if (ctx.method == "subscribe" || ctx.method == "unsubscribe")
             return false;
 
-        // Disallow forwarding of the admin api, only user api is allowed for security reasons.
-        if (ctx.method == "feature" and request.contains("vetoed"))
-            return false;
-
         if (handlerProvider_->isClioOnly(ctx.method))
             return false;
 
@@ -71,6 +67,9 @@ public:
             return true;
 
         if (specifiesCurrentOrClosedLedger(request))
+            return true;
+
+        if (isForcedForward(ctx))
             return true;
 
         auto const checkAccountInfoForward = [&]() {
@@ -141,6 +140,14 @@ private:
     validHandler(std::string const& method) const
     {
         return handlerProvider_->contains(method) || isProxied(method);
+    }
+
+    bool
+    isForcedForward(web::Context const& ctx) const
+    {
+        static constexpr auto FORCE_FORWARD = "force_forward";
+        return ctx.isAdmin and ctx.params.contains(FORCE_FORWARD) and ctx.params.at(FORCE_FORWARD).is_bool() and
+            ctx.params.at(FORCE_FORWARD).as_bool();
     }
 };
 

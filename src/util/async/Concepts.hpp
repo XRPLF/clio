@@ -22,7 +22,9 @@
 #include <boost/asio/spawn.hpp>
 
 #include <chrono>
+#include <concepts>
 #include <functional>
+#include <optional>
 #include <type_traits>
 
 namespace util::async {
@@ -141,13 +143,38 @@ concept SomeStdDuration = requires {
     // See https://stackoverflow.com/questions/74383254/concept-that-models-only-the-stdchrono-duration-types
     []<typename Rep, typename Period>( // 
         std::type_identity<std::chrono::duration<Rep, Period>>
-    ) {}(std::type_identity<T>());
+    ) {}(std::type_identity<std::decay_t<T>>());
+};
+
+/**
+ * @brief Specifies that the type must be some std::optional
+ */
+template <typename T>
+concept SomeStdOptional = requires {
+    []<typename Type>( // 
+        std::type_identity<std::optional<Type>>
+    ) {}(std::type_identity<std::decay_t<T>>());
 };
 
 /**
  * @brief Specifies that the type must be some std::duration wrapped in an optional
  */
 template <typename T>
-concept SomeOptStdDuration = requires(T v) { SomeStdDuration<decltype(v.value())>; };
+concept SomeOptStdDuration = SomeStdOptional<T> and SomeStdDuration<decltype(T{}.value())>;
+
+/**
+ * @brief Checks that decayed T s not of the same type as Erased
+ */
+template <typename T, typename Erased>
+concept NotSameAs = not std::is_same_v<std::decay_t<T>, Erased>;
+
+/**
+ * @brief Check that T is an r-value and is not the same type as Erased
+ */
+template <typename T, typename Erased>
+concept RValueNotSameAs = requires(T&& t) {
+    requires std::is_rvalue_reference_v<decltype(t)>;
+    requires NotSameAs<T, Erased>;
+};
 
 }  // namespace util::async

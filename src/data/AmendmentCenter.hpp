@@ -124,6 +124,9 @@ struct Amendments {
     REGISTER(NFTokenMintOffer);
     REGISTER(fixReducedOffersV2);
     REGISTER(fixEnforceNFTokenTrustline);
+    REGISTER(fixInnerObjTemplate2);
+    REGISTER(fixNFTokenPageLinks);
+    REGISTER(InvariantsV1_1);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);

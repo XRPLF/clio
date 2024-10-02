@@ -19,9 +19,8 @@
 
 #pragma once
 
-#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
-#include <optional>
 #include <string_view>
 #include <vector>
 
@@ -36,31 +35,33 @@ namespace util::config {
 class ConfigFileInterface {
 public:
     virtual ~ConfigFileInterface() = default;
-    /**
-     * @brief Parses the provided path of user clio configuration data
-     *
-     * @param filePath The path to the Clio Config data
-     */
-    virtual void
-    parse(std::string_view filePath) = 0;
 
     /**
-     * @brief Retrieves a configuration value.
+     * @brief Retrieves the value of configValue.
      *
-     * @param key The key of the configuration value.
-     * @return An optional containing the configuration value if found, otherwise std::nullopt.
+     * @param key The key of configuration.
+     * @return the value assosiated with key.
      */
-    virtual std::optional<ConfigValue>
+    virtual Value
     getValue(std::string_view key) const = 0;
 
     /**
      * @brief Retrieves an array of configuration values.
      *
      * @param key The key of the configuration array.
-     * @return An optional containing a vector of configuration values if found, otherwise std::nullopt.
+     * @return A vector of configuration values if found, otherwise std::nullopt.
      */
-    virtual std::optional<std::vector<ConfigValue>>
+    virtual std::vector<Value>
     getArray(std::string_view key) const = 0;
+
+    /**
+     * @brief Checks if key exist in configuration file.
+     *
+     * @param key The key to search for.
+     * @return true if key exists in configuration file, false otherwise.
+     */
+    virtual bool
+    containsKey(std::string_view key) const = 0;
 };
 
 }  // namespace util::config

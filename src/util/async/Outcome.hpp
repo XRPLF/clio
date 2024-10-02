@@ -21,6 +21,7 @@
 
 #include "util/async/context/impl/Cancellation.hpp"
 
+#include <concepts>
 #include <future>
 
 namespace util::async {
