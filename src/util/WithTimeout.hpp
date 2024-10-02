@@ -30,6 +30,7 @@
 
 #include <chrono>
 #include <ctime>
+#include <memory>
 
 namespace util {
 
@@ -44,15 +45,17 @@ boost::system::error_code
 withTimeout(Operation&& operation, boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
 {
     boost::system::error_code error;
+    auto operationCompleted = std::make_shared<bool>(false);
     boost::asio::cancellation_signal cancellationSignal;
     auto cyield = boost::asio::bind_cancellation_slot(cancellationSignal.slot(), yield[error]);
 
     boost::asio::steady_timer timer{boost::asio::get_associated_executor(cyield), timeout};
-    timer.async_wait([&cancellationSignal](boost::system::error_code errorCode) {
-        if (!errorCode)
+    timer.async_wait([&cancellationSignal, operationCompleted](boost::system::error_code errorCode) {
+        if (!errorCode and !*operationCompleted)
             cancellationSignal.emit(boost::asio::cancellation_type::terminal);
     });
     operation(cyield);
+    *operationCompleted = true;
 
     // Map error code to timeout
     if (error == boost::system::errc::operation_canceled) {
