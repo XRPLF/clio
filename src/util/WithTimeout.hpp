@@ -29,7 +29,6 @@
 #include <boost/system/errc.hpp>
 
 #include <chrono>
-#include <concepts>
 #include <ctime>
 
 namespace util {
@@ -40,7 +39,7 @@ namespace util {
     @param timeout The timeout duration.
     @return The error code of the operation.
 */
-template <std::invocable<> Operation>
+template <typename Operation>
 boost::system::error_code
 withTimeout(Operation&& operation, boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
 {

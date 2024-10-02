@@ -30,9 +30,11 @@
 #include <boost/asio/spawn.hpp>
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 namespace web::ng::impl {
@@ -41,6 +43,20 @@ class ConnectionHandler {
 public:
     enum class ProcessingStrategy { Sequent, Parallel };
 
+    struct StringHash {
+        using hash_type = std::hash<std::string_view>;
+        using is_transparent = void;
+
+        std::size_t
+        operator()(char const* str) const;
+        std::size_t
+        operator()(std::string_view str) const;
+        std::size_t
+        operator()(std::string const& str) const;
+    };
+
+    using TargetToHandlerMap = std::unordered_map<std::string, MessageHandler, StringHash, std::equal_to<>>;
+
 private:
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
@@ -48,8 +64,8 @@ private:
     ProcessingStrategy processingStrategy_;
     std::optional<size_t> maxParallelRequests_;
 
-    std::unordered_map<std::string, MessageHandler> getHandlers_;
-    std::unordered_map<std::string, MessageHandler> postHandlers_;
+    TargetToHandlerMap getHandlers_;
+    TargetToHandlerMap postHandlers_;
     std::optional<MessageHandler> wsHandler_;
 
     using ConnectionsMap = std::unordered_map<size_t, ConnectionPtr>;

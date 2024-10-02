@@ -54,8 +54,10 @@ public:
     using Connection::Connection;
 
     virtual std::expected<bool, Error>
-    isUpgradeRequested(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT)
-        const = 0;
+    isUpgradeRequested(
+        boost::asio::yield_context yield,
+        std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
+    ) = 0;
 
     virtual std::expected<ConnectionPtr, Error>
     upgrade(
@@ -127,7 +129,9 @@ public:
             request_.reset();
             return std::move(result);
         }
-        return fetch(yield, timeout);
+        return fetch(yield, timeout).and_then([](auto httpRequest) -> std::expected<Request, Error> {
+            return Request{std::move(httpRequest)};
+        });
     }
 
     void
@@ -138,16 +142,22 @@ public:
             boost::beast::get_lowest_layer(stream_).expires_after(timeout);
             stream_.async_shutdown(yield[error]);
         }
-        stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+        if constexpr (IsTcpStream<StreamType>) {
+            stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_type::shutdown_both, error);
+        } else {
+            boost::beast::get_lowest_layer(stream_).socket().shutdown(
+                boost::asio::ip::tcp::socket::shutdown_type::shutdown_both, error
+            );
+        }
     }
 
     std::expected<bool, Error>
     isUpgradeRequested(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT)
-        const override
+        override
     {
         auto expectedRequest = fetch(yield, timeout);
         if (not expectedRequest.has_value())
-            return std::move(expectedRequest).error();
+            return std::unexpected{std::move(expectedRequest).error()};
 
         request_ = std::move(expectedRequest).value();
 
@@ -169,21 +179,21 @@ public:
                 boost::beast::get_lowest_layer(stream_).release_socket(),
                 std::move(ip_),
                 std::move(buffer_),
-                request_,
+                std::move(request_).value(),
                 sslContext.value(),
                 tagDecoratorFactory,
                 yield
             );
+        } else {
+            return make_PlainWsConnection(
+                stream_.release_socket(),
+                std::move(ip_),
+                std::move(buffer_),
+                std::move(request_).value(),
+                tagDecoratorFactory,
+                yield
+            );
         }
-
-        return make_PlainWsConnection(
-            stream_.release_socket(),
-            std::move(ip_),
-            std::move(buffer_),
-            std::move(request_).value(),
-            tagDecoratorFactory,
-            yield
-        );
     }
 
 private:

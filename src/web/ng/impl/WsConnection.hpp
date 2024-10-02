@@ -38,6 +38,7 @@
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
+#include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
@@ -60,10 +61,13 @@ public:
         boost::asio::ip::tcp::socket socket,
         std::string ip,
         boost::beast::flat_buffer buffer,
+        boost::beast::http::request<boost::beast::http::string_body> initialRequest,
         util::TagDecoratorFactory const& tagDecoratorFactory
     )
         requires IsTcpStream<StreamType>
-        : Connection(std::move(ip), std::move(buffer), tagDecoratorFactory), stream_(std::move(socket))
+        : Connection(std::move(ip), std::move(buffer), tagDecoratorFactory)
+        , stream_(std::move(socket))
+        , initialRequest_(std::move(initialRequest))
     {
     }
 
@@ -126,9 +130,9 @@ public:
     {
         auto error = util::withTimeout([this](auto&& yield) { stream_.async_read(buffer_, yield); }, yield, timeout);
         if (error)
-            return std::move(error);
+            return std::unexpected{error};
 
-        return Request{std::string{buffer_.data(), buffer_.size()}, initialRequest_};
+        return Request{std::string{static_cast<char const*>(buffer_.data().data()), buffer_.size()}, initialRequest_};
     }
 
     void
@@ -139,7 +143,7 @@ public:
         wsTimeout.handshake_timeout = timeout;
         stream_.set_option(wsTimeout);
 
-        stream_.async_close(yield);
+        stream_.async_close(boost::beast::websocket::close_code::normal, yield);
     }
 };
 
@@ -151,7 +155,7 @@ make_PlainWsConnection(
     boost::asio::ip::tcp::socket socket,
     std::string ip,
     boost::beast::flat_buffer buffer,
-    boost::beast::http::request<boost::beast::http::string_body> const& request,
+    boost::beast::http::request<boost::beast::http::string_body> request,
     util::TagDecoratorFactory const& tagDecoratorFactory,
     boost::asio::yield_context yield
 );
@@ -161,7 +165,7 @@ make_SslWsConnection(
     boost::asio::ip::tcp::socket socket,
     std::string ip,
     boost::beast::flat_buffer buffer,
-    boost::beast::http::request<boost::beast::http::string_body> const& request,
+    boost::beast::http::request<boost::beast::http::string_body> request,
     boost::asio::ssl::context& sslContext,
     util::TagDecoratorFactory const& tagDecoratorFactory,
     boost::asio::yield_context yield

@@ -19,6 +19,7 @@
 
 #include "web/ng/impl/WsConnection.hpp"
 
+#include "util/Taggable.hpp"
 #include "web/ng/Error.hpp"
 
 #include <boost/asio/ip/tcp.hpp>
@@ -39,12 +40,15 @@ make_PlainWsConnection(
     boost::asio::ip::tcp::socket socket,
     std::string ip,
     boost::beast::flat_buffer buffer,
-    boost::beast::http::request<boost::beast::http::string_body> const& request,
+    boost::beast::http::request<boost::beast::http::string_body> request,
+    util::TagDecoratorFactory const& tagDecoratorFactory,
     boost::asio::yield_context yield
 )
 {
-    auto connection = std::make_unique<PlainWsConnection>(std::move(socket), std::move(ip), std::move(buffer));
-    auto maybeError = connection->accept(request, yield);
+    auto connection = std::make_unique<PlainWsConnection>(
+        std::move(socket), std::move(ip), std::move(buffer), std::move(request), tagDecoratorFactory
+    );
+    auto maybeError = connection->performHandshake(yield);
     if (maybeError.has_value())
         return std::unexpected{maybeError.value()};
     return std::move(connection);
@@ -55,14 +59,16 @@ make_SslWsConnection(
     boost::asio::ip::tcp::socket socket,
     std::string ip,
     boost::beast::flat_buffer buffer,
-    boost::beast::http::request<boost::beast::http::string_body> const& request,
+    boost::beast::http::request<boost::beast::http::string_body> request,
     boost::asio::ssl::context& sslContext,
+    util::TagDecoratorFactory const& tagDecoratorFactory,
     boost::asio::yield_context yield
 )
 {
-    auto connection =
-        std::make_unique<SslWsConnection>(std::move(socket), std::move(ip), std::move(buffer), sslContext);
-    auto maybeError = connection->accept(request, yield);
+    auto connection = std::make_unique<SslWsConnection>(
+        std::move(socket), std::move(ip), std::move(buffer), sslContext, std::move(request), tagDecoratorFactory
+    );
+    auto maybeError = connection->performHandshake(yield);
     if (maybeError.has_value())
         return std::unexpected{maybeError.value()};
     return std::move(connection);

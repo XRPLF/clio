@@ -38,7 +38,7 @@
 #include <cstddef>
 #include <optional>
 #include <string>
-#include <unordered_map>
+#include <string_view>
 #include <utility>
 
 namespace web::ng::impl {
@@ -48,12 +48,13 @@ namespace {
 Response
 handleHttpRequest(
     ConnectionContext const& connectionContext,
-    std::unordered_map<std::string, MessageHandler> const& handlers,
+    ConnectionHandler::TargetToHandlerMap const& handlers,
     Request const& request,
     boost::asio::yield_context yield
 )
 {
-    auto it = handlers.find(request.target());
+    ASSERT(request.target().has_value(), "Got not a HTTP request");
+    auto it = handlers.find(*request.target());
     if (it == handlers.end()) {
         return Response{boost::beast::http::status::bad_request, "Bad target", request};
     }
@@ -75,6 +76,24 @@ handleWsRequest(
 }
 
 }  // namespace
+
+size_t
+ConnectionHandler::StringHash::operator()(char const* str) const
+{
+    return hash_type{}(str);
+}
+
+size_t
+ConnectionHandler::StringHash::operator()(std::string_view str) const
+{
+    return hash_type{}(str);
+}
+
+size_t
+ConnectionHandler::StringHash::operator()(std::string const& str) const
+{
+    return hash_type{}(str);
+}
 
 void
 ConnectionHandler::onGet(std::string const& target, MessageHandler handler)

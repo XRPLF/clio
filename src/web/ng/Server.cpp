@@ -207,25 +207,28 @@ Server::run()
         return std::move(acceptor).error();
 
     running_ = true;
-    boost::asio::spawn(ctx_, [this, acceptor = std::move(acceptor).value()](boost::asio::yield_context yield) mutable {
-        while (true) {
-            boost::beast::error_code errorCode;
-            boost::asio::ip::tcp::socket socket{ctx_.get().get_executor()};
+    boost::asio::spawn(
+        ctx_.get(),
+        [this, acceptor = std::move(acceptor).value()](boost::asio::yield_context yield) mutable {
+            while (true) {
+                boost::beast::error_code errorCode;
+                boost::asio::ip::tcp::socket socket{ctx_.get().get_executor()};
 
-            acceptor.async_accept(socket, yield[errorCode]);
-            if (errorCode) {
-                LOG(log_.debug()) << "Error accepting a connection: " << errorCode.what();
-                continue;
+                acceptor.async_accept(socket, yield[errorCode]);
+                if (errorCode) {
+                    LOG(log_.debug()) << "Error accepting a connection: " << errorCode.what();
+                    continue;
+                }
+                boost::asio::spawn(
+                    ctx_.get(),
+                    [this, socket = std::move(socket)](boost::asio::yield_context yield) mutable {
+                        handleConnection(std::move(socket), yield);
+                    },
+                    boost::asio::detached
+                );
             }
-            boost::asio::spawn(
-                ctx_.get(),
-                [this, socket = std::move(socket)](boost::asio::yield_context yield) mutable {
-                    handleConnection(std::move(socket), yield);
-                },
-                boost::asio::detached
-            );
         }
-    });
+    );
     return std::nullopt;
 }
 
@@ -263,7 +266,7 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
     }
 
     boost::asio::spawn(
-        ctx_,
+        ctx_.get(),
         [this, connection = std::move(connectionExpected).value()](boost::asio::yield_context yield) mutable {
             connectionHandler_.processConnection(std::move(connection), yield);
         }
