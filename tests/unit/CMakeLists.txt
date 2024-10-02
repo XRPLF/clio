@@ -125,6 +125,7 @@ target_sources(
           util/SignalsHandlerTests.cpp
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
+          util/WithTimeout.cpp
           # Webserver
           web/AdminVerificationTests.cpp
           web/dosguard/DOSGuardTests.cpp

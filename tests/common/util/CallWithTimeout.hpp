@@ -17,31 +17,20 @@
 */
 //==============================================================================
 
-#include "util/WithTimeout.hpp"
-
-#include <gtest/gtest.h>
+#pragma once
 
 #include <chrono>
-#include <cstdlib>
 #include <functional>
-#include <future>
-#include <thread>
 
 namespace tests::common::util {
 
+/**
+ * @brief Run a function with a timeout. If the function does not complete within the timeout, the test will fail.
+ *
+ * @param timeout The timeout duration
+ * @param function The function to run
+ */
 void
-withTimeout(std::chrono::steady_clock::duration timeout, std::function<void()> function)
-{
-    std::promise<void> promise;
-    auto future = promise.get_future();
-    std::thread t([&promise, &function] {
-        function();
-        promise.set_value();
-    });
-    if (future.wait_for(timeout) == std::future_status::timeout) {
-        FAIL() << "Timeout " << std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count() << "ms exceeded";
-    }
-    t.join();
-}
+callWithTimeout(std::chrono::steady_clock::duration timeout, std::function<void()> function);
 
 }  // namespace tests::common::util

@@ -34,12 +34,16 @@
 
 namespace util {
 
-/** Perform a coroutine operation with a timeout.
-    @param operation The operation to perform.
-    @param yield The yield context.
-    @param timeout The timeout duration.
-    @return The error code of the operation.
-*/
+/**
+ * @brief Perform a coroutine operation with a timeout.
+ *
+ * @tparam Operation The operation type to perform. Must be a callable accepting yield context with bound cancellation
+ * token.
+ * @param operation The operation to perform.
+ * @param yield The yield context.
+ * @param timeout The timeout duration.
+ * @return The error code of the operation.
+ */
 template <typename Operation>
 boost::system::error_code
 withTimeout(Operation&& operation, boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
