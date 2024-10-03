@@ -25,9 +25,10 @@
 #include <ios>
 #include <string>
 #include <string_view>
+#include <utility>
 
 struct TmpFile {
-    std::string const path;
+    std::string path;
 
     TmpFile(std::string_view content) : path{std::tmpnam(nullptr)}
     {
@@ -36,8 +37,25 @@ struct TmpFile {
         ofs << content;
     }
 
+    TmpFile(TmpFile const&) = delete;
+    TmpFile(TmpFile&& other) : path{std::move(other.path)}
+    {
+        other.path.clear();
+    }
+    TmpFile&
+    operator=(TmpFile const&) = delete;
+    TmpFile&
+
+    operator=(TmpFile&& other)
+    {
+        if (this != &other)
+            *this = std::move(other);
+        return *this;
+    }
+
     ~TmpFile()
     {
-        std::filesystem::remove(path);
+        if (not path.empty())
+            std::filesystem::remove(path);
     }
 };

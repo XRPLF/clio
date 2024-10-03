@@ -19,14 +19,22 @@
 
 #pragma once
 
-#include <boost/asio/ssl/context.hpp>
+#include "util/TmpFile.hpp"
 
-#include <expected>
-#include <string>
+#include <string_view>
 
-namespace web::impl {
+namespace tests {
 
-std::expected<boost::asio::ssl::context, std::string>
-makeServerSslContext(std::string const& certFilePath, std::string const& keyFilePath);
+std::string_view
+sslCert();
 
-}  // namespace web::impl
+TmpFile
+sslCertFile();
+
+std::string_view
+sslKey();
+
+TmpFile
+sslKeyFile();
+
+}  // namespace tests

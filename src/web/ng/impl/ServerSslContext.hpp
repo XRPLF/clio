@@ -33,6 +33,6 @@ std::expected<std::optional<boost::asio::ssl::context>, std::string>
 makeServerSslContext(util::Config const& config);
 
 std::expected<boost::asio::ssl::context, std::string>
-makeServerSslContext(std::string const& certFilePath, std::string const& keyFilePath);
+makeServerSslContext(std::string const& certData, std::string const& keyData);
 
 }  // namespace web::ng::impl

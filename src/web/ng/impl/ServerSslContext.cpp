@@ -64,34 +64,31 @@ makeServerSslContext(util::Config const& config)
         return std::nullopt;
 
     auto const certFilename = config.value<std::string>("ssl_cert_file");
-    auto const keyFilename = config.value<std::string>("ssl_key_file");
+    auto const certContent = readFile(certFilename);
+    if (!certContent)
+        return std::unexpected{"Can't read SSL certificate: " + certFilename};
 
-    return impl::makeServerSslContext(certFilename, keyFilename);
+    auto const keyFilename = config.value<std::string>("ssl_key_file");
+    auto const keyContent = readFile(keyFilename);
+    if (!keyContent)
+        return std::unexpected{"Can't read SSL key: " + keyFilename};
+
+    return impl::makeServerSslContext(*certContent, *keyContent);
 }
 
 std::expected<boost::asio::ssl::context, std::string>
-makeServerSslContext(std::string const& certFilePath, std::string const& keyFilePath)
+makeServerSslContext(std::string const& certData, std::string const& keyData)
 {
-    auto const certContent = readFile(certFilePath);
-    if (!certContent)
-        return std::unexpected{"Can't read SSL certificate: " + certFilePath};
-
-    auto const keyContent = readFile(keyFilePath);
-    if (!keyContent)
-        return std::unexpected{"Can't read SSL key: " + keyFilePath};
-
     using namespace boost::asio;
 
     ssl::context ctx{ssl::context::tls_server};
     ctx.set_options(ssl::context::default_workarounds | ssl::context::no_sslv2);
 
     try {
-        ctx.use_certificate_chain(buffer(certContent->data(), certContent->size()));
-        ctx.use_private_key(buffer(keyContent->data(), keyContent->size()), ssl::context::file_format::pem);
+        ctx.use_certificate_chain(buffer(certData.data(), certData.size()));
+        ctx.use_private_key(buffer(keyData.data(), keyData.size()), ssl::context::file_format::pem);
     } catch (...) {
-        return std::unexpected{
-            fmt::format("Error loading SSL certificate ({}) or SSL key ({}).", certFilePath, keyFilePath)
-        };
+        return std::unexpected{fmt::format("Error loading SSL certificate or SSL key.")};
     }
 
     return ctx;

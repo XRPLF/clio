@@ -21,6 +21,7 @@
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestHttpSyncClient.hpp"
+#include "util/TmpFile.hpp"
 #include "util/config/Config.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
@@ -43,6 +44,7 @@
 #include <boost/system/system_error.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
+#include <test_data/SslCert.hpp>
 
 #include <condition_variable>
 #include <cstdint>
@@ -101,14 +103,6 @@ generateJSONDataOverload(std::string_view port)
     ));
 }
 
-boost::json::value
-addSslConfig(boost::json::value config)
-{
-    config.as_object()["ssl_key_file"] = TEST_DATA_SSL_KEY_PATH;
-    config.as_object()["ssl_cert_file"] = TEST_DATA_SSL_CERT_PATH;
-    return config;
-}
-
 struct WebServerTest : NoLoggerFixture {
     ~WebServerTest() override
     {
@@ -122,6 +116,14 @@ struct WebServerTest : NoLoggerFixture {
     {
         work.emplace(ctx);  // make sure ctx does not stop on its own
         runner.emplace([this] { ctx.run(); });
+    }
+
+    boost::json::value
+    addSslConfig(boost::json::value config) const
+    {
+        config.as_object()["ssl_key_file"] = sslKeyFile.path;
+        config.as_object()["ssl_cert_file"] = sslCertFile.path;
+        return config;
     }
 
     // this ctx is for dos timer
@@ -138,6 +140,9 @@ struct WebServerTest : NoLoggerFixture {
     dosguard::IntervalSweepHandler sweepHandlerOverload{cfgOverload, ctxSync, dosGuardOverload};
     // this ctx is for http server
     boost::asio::io_context ctx;
+
+    TmpFile sslCertFile{tests::sslCertFile()};
+    TmpFile sslKeyFile{tests::sslKeyFile()};
 
 private:
     std::optional<boost::asio::io_service::work> work;
@@ -267,7 +272,7 @@ TEST_F(WebServerTest, IncompleteSslConfig)
     auto e = std::make_shared<EchoExecutor>();
 
     auto jsonConfig = generateJSONWithDynamicPort(port);
-    jsonConfig.as_object()["ssl_key_file"] = TEST_DATA_SSL_KEY_PATH;
+    jsonConfig.as_object()["ssl_key_file"] = sslKeyFile.path;
 
     auto const server = makeServerSync(Config{jsonConfig}, ctx, dosGuard, e);
     EXPECT_EQ(server, nullptr);
@@ -278,7 +283,7 @@ TEST_F(WebServerTest, WrongSslConfig)
     auto e = std::make_shared<EchoExecutor>();
 
     auto jsonConfig = generateJSONWithDynamicPort(port);
-    jsonConfig.as_object()["ssl_key_file"] = TEST_DATA_SSL_KEY_PATH;
+    jsonConfig.as_object()["ssl_key_file"] = sslKeyFile.path;
     jsonConfig.as_object()["ssl_cert_file"] = "wrong_path";
 
     auto const server = makeServerSync(Config{jsonConfig}, ctx, dosGuard, e);

@@ -94,6 +94,7 @@ target_sources(
           rpc/RPCEngineTests.cpp
           rpc/RPCHelpersTests.cpp
           rpc/WorkQueueTests.cpp
+          test_data/SslCert.cpp
           util/AccountUtilsTests.cpp
           util/AssertTests.cpp
           # Async framework
@@ -131,7 +132,7 @@ target_sources(
           web/dosguard/IntervalSweepHandlerTests.cpp
           web/dosguard/WhitelistHandlerTests.cpp
           web/impl/AdminVerificationTests.cpp
-          web/impl/ServerSslContextTests.cpp
+          web/ng/impl/ServerSslContextTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
           # New Config
@@ -143,12 +144,6 @@ target_sources(
           util/newconfig/JsonConfigFileTests.cpp
           util/newconfig/ValueViewTests.cpp
 )
-
-configure_file(test_data/cert.pem ${CMAKE_BINARY_DIR}/tests/unit/test_data/cert.pem COPYONLY)
-target_compile_definitions(clio_tests PRIVATE TEST_DATA_SSL_CERT_PATH="tests/unit/test_data/cert.pem")
-
-configure_file(test_data/key.pem ${CMAKE_BINARY_DIR}/tests/unit/test_data/key.pem COPYONLY)
-target_compile_definitions(clio_tests PRIVATE TEST_DATA_SSL_KEY_PATH="tests/unit/test_data/key.pem")
 
 # See https://github.com/google/googletest/issues/3475
 gtest_discover_tests(clio_tests DISCOVERY_TIMEOUT 90)
