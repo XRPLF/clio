@@ -81,7 +81,7 @@ func (c *ClioCass) DeleteBefore(ledgerIdx uint64) {
 		log.Fatal("Earliest ledger index in DB is greater than the one specified. Aborting...")
 	}
 
-	if latestLedgerIdxInDB <= ledgerIdx {
+	if latestLedgerIdxInDB < ledgerIdx {
 		log.Fatal("Latest ledger index in DB is smaller than the one specified. Aborting...")
 	}
 
@@ -104,7 +104,7 @@ func (c *ClioCass) DeleteAfter(ledgerIdx uint64) {
 
 	log.Printf("DB ledger range is %d -> %d\n", firstLedgerIdxInDB, latestLedgerIdxInDB)
 
-	if firstLedgerIdxInDB >= ledgerIdx {
+	if firstLedgerIdxInDB > ledgerIdx {
 		log.Fatal("Earliest ledger index in DB is greater than the one specified. Aborting...")
 	}
 
@@ -570,7 +570,7 @@ func (c *ClioCass) prepareDeleteQueries(
 	sessionCreationWaitGroup.Add(c.settings.WorkerCount)
 
 	for i := 0; i < c.settings.WorkerCount; i++ {
-		go func(q string) {
+		go func(q string, info deleteInfo) {
 			defer wg.Done()
 
 			var session *gocql.Session
@@ -588,7 +588,6 @@ func (c *ClioCass) prepareDeleteQueries(
 							if value, exists := c.settings.RangesRead.TokenRange.Value()[r.StartRange]; exists {
 								// Check for end range
 								if value == r.EndRange {
-									//delete(c.settings.RangesRead.TokenRange.Value(), r.StartRange)
 									continue
 								}
 							}
@@ -651,7 +650,7 @@ func (c *ClioCass) prepareDeleteQueries(
 				fmt.Fprintf(os.Stderr, "FAILED TO CREATE SESSION: %s\n", err)
 				atomic.AddUint64(&totalErrors, 1)
 			}
-		}(queryTemplate)
+		}(queryTemplate, info)
 	}
 
 	wg.Wait()

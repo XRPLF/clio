@@ -70,100 +70,15 @@ var (
 func main() {
 	log.SetOutput(os.Stdout)
 
-	cmd := strings.Join(os.Args[1:], " ")
 	command := kingpin.MustParse(app.Parse(os.Args[1:]))
 	cluster, err := prepareDb(hosts)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	cmd := strings.Join(os.Args[1:], " ")
 	if *resume {
-		// format of file continue.txt is
-		/*
-		 Previous user command (must match the same command to resume deletion)
-		 Table name (ie. objects, ledger_hashes etc)
-		 Deletion method (ie. token_range). We don't store ledger_range because these tables are extremely small
-		 Values of token_ranges (each pair of values seperated line by line) or just a single int for ledger_range
-		*/
-
-		file, err := os.Open("continue.txt")
-		if err != nil {
-			log.Fatal("continue.txt does not exist. Aborted")
-		}
-		defer file.Close()
-
-		if err != nil {
-			log.Fatalf("Failed to open file: %v", err)
-		}
-		scanner := bufio.NewScanner(file)
-		scanner.Scan()
-
-		// --resume must be last flag passed; so can check command matches
-		if os.Args[len(os.Args)-1] != "--resume" {
-			log.Fatal("--resume must be the last flag passed")
-		}
-
-		// get rid of --resume at the end
-		cmd = strings.Join(os.Args[1:len(os.Args)-1], " ")
-
-		// makes sure command that got aborted matches the user command they enter
-		if scanner.Text() != cmd {
-			log.Fatalf("File continue.txt has %s command stored. \n You provided %s which does not match. \n Aborting...", scanner.Text(), cmd)
-		}
-
-		scanner.Scan()
-		// skip the neccessary tables based on where the program aborted
-		// for example if account_tx, all tables before account_tx
-		// should be already deleted so we skip for deletion
-		switch scanner.Text() {
-		case "account_tx":
-			*skipLedgersTable = true
-			fallthrough
-		case "ledgers":
-			*skipLedgerTransactionsTable = true
-			fallthrough
-		case "ledger_transactions":
-			*skipDiffTable = true
-			fallthrough
-		case "diff":
-			*skipTransactionsTable = true
-			fallthrough
-		case "transactions":
-			*skipLedgerHashesTable = true
-			fallthrough
-		case "ledger_hashes":
-			*skipObjectsTable = true
-			fallthrough
-		case "objects":
-			*skipSuccessorTable = true
-		}
-
-		scanner.Scan()
-		if scanner.Text() == "token_range" {
-			rangeRead := make(map[int64]int64)
-
-			// now go through all the ledger range and load it to a set
-			for scanner.Scan() {
-				line := scanner.Text()
-				Range := strings.Split(line, ",")
-				if len(Range) != 2 {
-					log.Fatalf("Range is not two integers. %s . Aborting...", Range)
-				}
-				startStr := strings.TrimSpace(Range[0])
-				endStr := strings.TrimSpace(Range[1])
-
-				// convert string to int64
-				start, err1 := strconv.ParseInt(startStr, 10, 64)
-				end, err2 := strconv.ParseInt(endStr, 10, 64)
-
-				if err1 != nil || err2 != nil {
-					log.Fatalf("Error converting integer: %s, %s", err1, err2)
-				}
-				rangeRead[start] = end
-			}
-			ledgerOrTokenRange = &util.StoredRange{}
-			ledgerOrTokenRange.TokenRange = maybe.Set(rangeRead)
-		}
+		prepareResume(&cmd)
 	}
 
 	clioCass := cass.NewClioCass(&cass.Settings{
@@ -309,4 +224,93 @@ func prepareDb(dbHosts *string) (*gocql.ClusterConfig, error) {
 	}
 
 	return cluster, nil
+}
+
+func prepareResume(cmd *string) {
+	// format of file continue.txt is
+	/*
+	 Previous user command (must match the same command to resume deletion)
+	 Table name (ie. objects, ledger_hashes etc)
+	 Deletion method (ie. token_range). We don't store ledger_range because these tables are extremely small
+	 Values of token_ranges (each pair of values seperated line by line) or just a single int for ledger_range
+	*/
+
+	file, err := os.Open("continue.txt")
+	if err != nil {
+		log.Fatal("continue.txt does not exist. Aborted")
+	}
+	defer file.Close()
+
+	if err != nil {
+		log.Fatalf("Failed to open file: %v", err)
+	}
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+
+	// --resume must be last flag passed; so can check command matches
+	if os.Args[len(os.Args)-1] != "--resume" {
+		log.Fatal("--resume must be the last flag passed")
+	}
+
+	// get rid of --resume at the end
+	*cmd = strings.Join(os.Args[1:len(os.Args)-1], " ")
+
+	// makes sure command that got aborted matches the user command they enter
+	if scanner.Text() != *cmd {
+		log.Fatalf("File continue.txt has %s command stored. \n You provided %s which does not match. \n Aborting...", scanner.Text(), *cmd)
+	}
+
+	scanner.Scan()
+	// skip the neccessary tables based on where the program aborted
+	// for example if account_tx, all tables before account_tx
+	// should be already deleted so we skip for deletion
+	switch scanner.Text() {
+	case "account_tx":
+		*skipLedgersTable = true
+		fallthrough
+	case "ledgers":
+		*skipLedgerTransactionsTable = true
+		fallthrough
+	case "ledger_transactions":
+		*skipDiffTable = true
+		fallthrough
+	case "diff":
+		*skipTransactionsTable = true
+		fallthrough
+	case "transactions":
+		*skipLedgerHashesTable = true
+		fallthrough
+	case "ledger_hashes":
+		*skipObjectsTable = true
+		fallthrough
+	case "objects":
+		*skipSuccessorTable = true
+	}
+
+	scanner.Scan()
+	if scanner.Text() == "token_range" {
+		rangeRead := make(map[int64]int64)
+
+		// now go through all the ledger range and load it to a set
+		for scanner.Scan() {
+			line := scanner.Text()
+			Range := strings.Split(line, ",")
+			if len(Range) != 2 {
+				log.Fatalf("Range is not two integers. %s . Aborting...", Range)
+			}
+			startStr := strings.TrimSpace(Range[0])
+			endStr := strings.TrimSpace(Range[1])
+
+			// convert string to int64
+			start, err1 := strconv.ParseInt(startStr, 10, 64)
+			end, err2 := strconv.ParseInt(endStr, 10, 64)
+
+			if err1 != nil || err2 != nil {
+				log.Fatalf("Error converting integer: %s, %s", err1, err2)
+			}
+			rangeRead[start] = end
+		}
+		ledgerOrTokenRange = &util.StoredRange{}
+		ledgerOrTokenRange.TokenRange = maybe.Set(rangeRead)
+	}
 }
