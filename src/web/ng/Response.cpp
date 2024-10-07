@@ -30,6 +30,7 @@
 #include <boost/beast/http/string_body.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
+#include <fmt/core.h>
 
 #include <optional>
 #include <string>
@@ -87,7 +88,7 @@ Response::intoHttpResponse() &&
     ASSERT(httpData_.has_value(), "Response must have http data to be converted into http response");
 
     boost::beast::http::response<boost::beast::http::string_body> result{httpData_->status, httpData_->version};
-    result.set(boost::beast::http::field::server, "clio-server-" + util::build::getClioVersionString());
+    result.set(boost::beast::http::field::server, fmt::format("clio-server-{}", util::build::getClioVersionString()));
     result.set(boost::beast::http::field::content_type, asString(httpData_->contentType));
     result.keep_alive(httpData_->keepAlive);
     result.body() = std::move(message_);

@@ -31,8 +31,14 @@
 #include <string>
 namespace web::ng {
 
+/**
+ * @brief Represents an HTTP or Websocket response.
+ */
 class Response {
 public:
+    /**
+     * @brief The data for an HTTP response.
+     */
     struct HttpData {
         enum class ContentType { APPLICATION_JSON, TEXT_HTML };
 
@@ -47,12 +53,41 @@ private:
     std::optional<HttpData> httpData_;
 
 public:
+    /**
+     * @brief Construct a Response from string. Content type will be text/html.
+     *
+     * @param status The HTTP status.
+     * @param message The message to send.
+     * @param request The request that triggered this response. Used to determine whether the response should contain
+     * HTTP or WebSocket data.
+     */
     Response(boost::beast::http::status status, std::string message, Request const& request);
+
+    /**
+     * @brief Construct a Response from JSON object. Content type will be application/json.
+     *
+     * @param status The HTTP status.
+     * @param message The message to send.
+     * @param request The request that triggered this response. Used to determine whether the response should contain
+     * HTTP or WebSocket
+     */
     Response(boost::beast::http::status status, boost::json::object const& message, Request const& request);
 
+    /**
+     * @brief Convert the Response to an HTTP response.
+     * @note The Response must be constructed with an HTTP request.
+     *
+     * @return The HTTP response.
+     */
     boost::beast::http::response<boost::beast::http::string_body>
     intoHttpResponse() &&;
 
+    /**
+     * @brief Get the message of the response as a const buffer.
+     * @note The response must be constructed with a WebSocket request.
+     *
+     * @return The message of the response as a const buffer.
+     */
     boost::asio::const_buffer
     asConstBuffer() const&;
 };
