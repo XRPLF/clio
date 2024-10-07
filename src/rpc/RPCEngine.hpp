@@ -20,20 +20,22 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "rpc/Counters.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/HandlerProvider.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/impl/ForwardingProxy.hpp"
+#include "util/ResponseExpirationCache.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 #include <boost/json.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <xrpl/protocol/ErrorCodes.h>
 
 #include <chrono>
@@ -42,13 +44,8 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <utility>
-
-// forward declarations
-namespace etl {
-class LoadBalancer;
-class ETLService;
-}  // namespace etl
 
 /**
  * @brief This namespace contains all the RPC logic and handlers.
@@ -58,6 +55,7 @@ namespace rpc {
 /**
  * @brief The RPC engine that ties all RPC-related functionality together.
  */
+template <typename LoadBalancerType, typename CountersType>
 class RPCEngine {
     util::Logger perfLog_{"Performance"};
     util::Logger log_{"RPC"};
@@ -65,16 +63,19 @@ class RPCEngine {
     std::shared_ptr<BackendInterface> backend_;
     std::reference_wrapper<web::dosguard::DOSGuardInterface const> dosGuard_;
     std::reference_wrapper<WorkQueue> workQueue_;
-    std::reference_wrapper<Counters> counters_;
+    std::reference_wrapper<CountersType> counters_;
 
     std::shared_ptr<HandlerProvider const> handlerProvider_;
 
-    impl::ForwardingProxy<etl::LoadBalancer, Counters, HandlerProvider> forwardingProxy_;
+    impl::ForwardingProxy<LoadBalancerType, CountersType, HandlerProvider> forwardingProxy_;
+
+    std::optional<util::ResponseExpirationCache> responseCache_;
 
 public:
     /**
      * @brief Construct a new RPCEngine object
      *
+     * @param config The config to use
      * @param backend The backend to use
      * @param balancer The load balancer to use
      * @param dosGuard The DOS guard to use
@@ -83,11 +84,12 @@ public:
      * @param handlerProvider The handler provider to use
      */
     RPCEngine(
+        util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<etl::LoadBalancer> const& balancer,
+        std::shared_ptr<LoadBalancerType> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
-        Counters& counters,
+        CountersType& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
         : backend_{backend}
@@ -97,11 +99,22 @@ public:
         , handlerProvider_{handlerProvider}
         , forwardingProxy_{balancer, counters, handlerProvider}
     {
+        // Let main thread catch the exception if config type is wrong
+        auto const cacheTimeout = config.valueOr<float>("rpc.cache_timeout", 0.f);
+
+        if (cacheTimeout > 0.f) {
+            LOG(log_.info()) << fmt::format("Init RPC Cache, timeout: {} seconds", cacheTimeout);
+
+            responseCache_.emplace(
+                util::Config::toMilliseconds(cacheTimeout), std::unordered_set<std::string>{"server_info"}
+            );
+        }
     }
 
     /**
      * @brief Factory function to create a new instance of the RPC engine.
      *
+     * @param config The config to use
      * @param backend The backend to use
      * @param balancer The load balancer to use
      * @param dosGuard The DOS guard to use
@@ -112,15 +125,16 @@ public:
      */
     static std::shared_ptr<RPCEngine>
     make_RPCEngine(
+        util::Config const& config,
         std::shared_ptr<BackendInterface> const& backend,
-        std::shared_ptr<etl::LoadBalancer> const& balancer,
+        std::shared_ptr<LoadBalancerType> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
         WorkQueue& workQueue,
-        Counters& counters,
+        CountersType& counters,
         std::shared_ptr<HandlerProvider const> const& handlerProvider
     )
     {
-        return std::make_shared<RPCEngine>(backend, balancer, dosGuard, workQueue, counters, handlerProvider);
+        return std::make_shared<RPCEngine>(config, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
     }
 
     /**
@@ -138,6 +152,11 @@ public:
                 return Result{Status{RippledError::rpcNO_PERMISSION}};
 
             return forwardingProxy_.forward(ctx);
+        }
+
+        if (not ctx.isAdmin and responseCache_) {
+            if (auto res = responseCache_->get(ctx.method); res.has_value())
+                return Result{std::move(res).value()};
         }
 
         if (backend_->isTooBusy()) {
@@ -160,8 +179,11 @@ public:
 
             LOG(perfLog_.debug()) << ctx.tag() << " finish executing rpc `" << ctx.method << '`';
 
-            if (not v)
+            if (not v) {
                 notifyErrored(ctx.method);
+            } else if (not ctx.isAdmin and responseCache_) {
+                responseCache_->put(ctx.method, v.result->as_object());
+            }
 
             return Result{std::move(v)};
         } catch (data::DatabaseTimeout const& t) {

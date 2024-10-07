@@ -21,6 +21,7 @@
 
 #include "util/Assert.hpp"
 #include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <fmt/core.h>
 
@@ -84,7 +85,7 @@ public:
                 return static_cast<T>(val);
             }
         }
-        ASSERT(false, "Value view is not of any Int type");
+        ASSERT(false, "Value view is not of Int type");
         return 0;
     }
 

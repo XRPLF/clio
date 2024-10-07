@@ -101,9 +101,7 @@ ClioApplication::run()
     auto backend = data::make_Backend(config_);
 
     // Manages clients subscribed to streams
-    auto subscriptionsRunner = feed::SubscriptionManagerRunner(config_, backend);
-
-    auto const subscriptions = subscriptionsRunner.getManager();
+    auto subscriptions = feed::SubscriptionManager::make_SubscriptionManager(config_, backend);
 
     // Tracks which ledgers have been validated by the network
     auto ledgers = etl::NetworkValidatedLedgers::make_ValidatedLedgers();
@@ -123,12 +121,14 @@ ClioApplication::run()
     auto const handlerProvider = std::make_shared<rpc::impl::ProductionHandlerProvider const>(
         config_, backend, subscriptions, balancer, etl, amendmentCenter, counters
     );
+
+    using RPCEngineType = rpc::RPCEngine<etl::LoadBalancer, rpc::Counters>;
     auto const rpcEngine =
-        rpc::RPCEngine::make_RPCEngine(backend, balancer, dosGuard, workQueue, counters, handlerProvider);
+        RPCEngineType::make_RPCEngine(config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
 
     // Init the web server
     auto handler =
-        std::make_shared<web::RPCServerHandler<rpc::RPCEngine, etl::ETLService>>(config_, backend, rpcEngine, etl);
+        std::make_shared<web::RPCServerHandler<RPCEngineType, etl::ETLService>>(config_, backend, rpcEngine, etl);
     auto const httpServer = web::make_HttpServer(config_, ioc, dosGuard, handler);
 
     // Blocks until stopped.

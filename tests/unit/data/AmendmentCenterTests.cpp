@@ -49,7 +49,7 @@ struct AmendmentCenterTest : util::prometheus::WithPrometheus, MockBackendTest, 
 TEST_F(AmendmentCenterTest, AllAmendmentsFromLibXRPLAreSupported)
 {
     for (auto const& [name, _] : ripple::allAmendments()) {
-        ASSERT_TRUE(amendmentCenter.isSupported(name)) << "XRPL amendment not supported by Clio: " << name;
+        EXPECT_TRUE(amendmentCenter.isSupported(name)) << "XRPL amendment not supported by Clio: " << name;
     }
 
     ASSERT_EQ(amendmentCenter.getSupported().size(), ripple::allAmendments().size());

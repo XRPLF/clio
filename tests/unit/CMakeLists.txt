@@ -23,7 +23,6 @@ target_sources(
           etl/ETLStateTests.cpp
           etl/ExtractionDataPipeTests.cpp
           etl/ExtractorTests.cpp
-          etl/ForwardingCacheTests.cpp
           etl/ForwardingSourceTests.cpp
           etl/GrpcSourceTests.cpp
           etl/LedgerPublisherTests.cpp
@@ -93,6 +92,7 @@ target_sources(
           rpc/handlers/UnsubscribeTests.cpp
           rpc/handlers/VersionHandlerTests.cpp
           rpc/JsonBoolTests.cpp
+          rpc/RPCEngineTests.cpp
           rpc/RPCHelpersTests.cpp
           rpc/WorkQueueTests.cpp
           util/AccountUtilsTests.cpp
@@ -122,6 +122,7 @@ target_sources(
           util/RandomTests.cpp
           util/RetryTests.cpp
           util/RepeatTests.cpp
+          util/ResponseExpirationCacheTests.cpp
           util/SignalsHandlerTests.cpp
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
@@ -134,12 +135,13 @@ target_sources(
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
           # New Config
-          util/newconfig/ArrayViewTests.cpp
-          util/newconfig/ObjectViewTests.cpp
-          util/newconfig/ValueViewTests.cpp
           util/newconfig/ArrayTests.cpp
-          util/newconfig/ConfigValueTests.cpp
+          util/newconfig/ArrayViewTests.cpp
           util/newconfig/ClioConfigDefinitionTests.cpp
+          util/newconfig/ConfigValueTests.cpp
+          util/newconfig/ObjectViewTests.cpp
+          util/newconfig/JsonConfigFileTests.cpp
+          util/newconfig/ValueViewTests.cpp
 )
 
 configure_file(test_data/cert.pem ${CMAKE_BINARY_DIR}/tests/unit/test_data/cert.pem COPYONLY)

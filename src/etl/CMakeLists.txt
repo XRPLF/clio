@@ -12,7 +12,6 @@ target_sources(
           Source.cpp
           MPTHelpers.cpp
           impl/AmendmentBlockHandler.cpp
-          impl/ForwardingCache.cpp
           impl/ForwardingSource.cpp
           impl/GrpcSource.cpp
           impl/SubscriptionSource.cpp
