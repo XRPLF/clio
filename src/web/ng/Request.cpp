@@ -87,6 +87,14 @@ Request::asHttpRequest() const
     return httpRequest();
 }
 
+std::string_view
+Request::message() const
+{
+    if (not isHttp())
+        return std::get<WsData>(data_).request;
+    return httpRequest().body();
+}
+
 std::optional<std::string_view>
 Request::target() const
 {

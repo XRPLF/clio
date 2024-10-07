@@ -132,6 +132,7 @@ target_sources(
           web/dosguard/IntervalSweepHandlerTests.cpp
           web/dosguard/WhitelistHandlerTests.cpp
           web/impl/AdminVerificationTests.cpp
+          web/ng/RequestTests.cpp
           web/ng/impl/ServerSslContextTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
