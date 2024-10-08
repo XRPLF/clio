@@ -2433,9 +2433,9 @@ generateTestValuesForNormalPathTest()
                     "binary": true,
                     "mpt_issuance": "{}"
                 }})",
-                ripple::to_string(ripple::getMptID(account1, 2))
+                ripple::to_string(ripple::makeMptID(2, account1))
             ),
-            ripple::keylet::mptIssuance(ripple::getMptID(account1, 2)).key,
+            ripple::keylet::mptIssuance(ripple::makeMptID(2, account1)).key,
             CreateMPTIssuanceObject(ACCOUNT, 2, "metadata")
         },
         NormalPathTestBundle{
@@ -2448,7 +2448,7 @@ generateTestValuesForNormalPathTest()
                 INDEX1
             ),
             ripple::uint256{INDEX1},
-            CreateMPTokenObject(ACCOUNT, ripple::getMptID(account1, 2))
+            CreateMPTokenObject(ACCOUNT, ripple::makeMptID(2, account1))
         },
         NormalPathTestBundle{
             "MPTokenViaObject",
@@ -2461,10 +2461,10 @@ generateTestValuesForNormalPathTest()
                     }}
                 }})",
                 ACCOUNT,
-                ripple::to_string(ripple::getMptID(account1, 2))
+                ripple::to_string(ripple::makeMptID(2, account1))
             ),
-            ripple::keylet::mptoken(ripple::getMptID(account1, 2), account1).key,
-            CreateMPTokenObject(ACCOUNT, ripple::getMptID(account1, 2))
+            ripple::keylet::mptoken(ripple::makeMptID(2, account1), account1).key,
+            CreateMPTokenObject(ACCOUNT, ripple::makeMptID(2, account1))
         },
     };
 }

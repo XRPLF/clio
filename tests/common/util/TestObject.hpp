@@ -397,12 +397,7 @@ CreateLPTCurrency(std::string_view assetCurrency, std::string_view asset2Currenc
 CreateMPTIssuanceObject(std::string_view accountId, std::uint32_t seq, std::string_view metadata);
 
 [[nodiscard]] ripple::STObject
-CreateMPTokenObject(
-    std::string_view accountId,
-    ripple::uint192 issuanceID,
-    std::uint64_t mptAmount = 1,
-    std::uint64_t lockedAmount = 0
-);
+CreateMPTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std::uint64_t mptAmount = 1);
 
 [[nodiscard]] ripple::STObject
 CreateOraclePriceData(

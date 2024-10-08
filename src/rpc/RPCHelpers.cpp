@@ -66,7 +66,6 @@
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STBase.h>
-#include <xrpl/protocol/STEitherAmount.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STTx.h>
@@ -137,7 +136,7 @@ parseAccountCursor(std::optional<std::string> jsonCursor)
     return AccountCursor({cursorIndex, startHint});
 }
 
-std::optional<ripple::STEitherAmount>
+std::optional<ripple::STAmount>
 getDeliveredAmount(
     std::shared_ptr<ripple::STTx const> const& txn,
     std::shared_ptr<ripple::TxMeta const> const& meta,
@@ -333,7 +332,7 @@ getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
             continue;
 
         auto const& mptNode = node.peekAtField(ripple::sfNewFields).downcast<ripple::STObject>();
-        return ripple::getMptID(mptNode[ripple::sfIssuer], mptNode[ripple::sfSequence]);
+        return ripple::makeMptID(mptNode[ripple::sfSequence], mptNode[ripple::sfIssuer]);
     }
 
     return {};
@@ -420,7 +419,7 @@ toJson(ripple::SLE const& sle)
     // if object type if mpt issuance, inject synthetic mpt id
     if (sle.getType() == ripple::ltMPTOKEN_ISSUANCE)
         value.as_object()[JS(mpt_issuance_id)] =
-            ripple::to_string(ripple::getMptID(sle[ripple::sfIssuer], sle[ripple::sfSequence]));
+            ripple::to_string(ripple::makeMptID(sle[ripple::sfSequence], sle[ripple::sfIssuer]));
 
     return value.as_object();
 }
@@ -1018,7 +1017,7 @@ accountHolds(
     auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob) {
-        amount.clear({currency, issuer});
+        amount.clear(ripple::Issue{currency, issuer});
         return amount;
     }
 
@@ -1026,7 +1025,7 @@ accountHolds(
     ripple::SLE const sle{it, key};
 
     if (zeroIfFrozen && isFrozen(backend, sequence, account, currency, issuer, yield)) {
-        amount.clear(ripple::Issue(currency, issuer));
+        amount.clear(ripple::Issue{currency, issuer});
     } else {
         amount = sle.getFieldAmount(ripple::sfBalance);
         if (account > issuer) {

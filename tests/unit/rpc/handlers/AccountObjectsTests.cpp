@@ -1671,7 +1671,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTIssuanceType)
         // make sure mptID is synethetically parsed if object is mptIssuance
         EXPECT_EQ(
             accountObjects.front().at("mpt_issuance_id").as_string(),
-            ripple::to_string(ripple::getMptID(GetAccountIDWithString(ACCOUNT), 2))
+            ripple::to_string(ripple::makeMptID(2, GetAccountIDWithString(ACCOUNT)))
         );
     });
 }
@@ -1696,7 +1696,7 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTokenType)
 
     std::vector<Blob> bbs;
     // put 1 mpt issuance
-    auto const mptokenObject = CreateMPTokenObject(ACCOUNT, ripple::getMptID(GetAccountIDWithString(ACCOUNT), 2));
+    auto const mptokenObject = CreateMPTokenObject(ACCOUNT, ripple::makeMptID(2, GetAccountIDWithString(ACCOUNT)));
     bbs.push_back(mptokenObject.getSerializer().peekData());
 
     EXPECT_CALL(*backend, doFetchLedgerObjects).WillOnce(Return(bbs));

@@ -1124,12 +1124,7 @@ CreateMPTIssuanceObject(std::string_view accountId, std::uint32_t seq, std::stri
 }
 
 ripple::STObject
-CreateMPTokenObject(
-    std::string_view accountId,
-    ripple::uint192 issuanceID,
-    std::uint64_t mptAmount,
-    std::uint64_t lockedAmount
-)
+CreateMPTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std::uint64_t mptAmount)
 {
     ripple::STObject mptoken(ripple::sfLedgerEntry);
     mptoken.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId));
@@ -1142,9 +1137,6 @@ CreateMPTokenObject(
 
     if (mptAmount)
         mptoken.setFieldU64(ripple::sfMPTAmount, mptAmount);
-
-    if (lockedAmount)
-        mptoken.setFieldU64(ripple::sfLockedAmount, lockedAmount);
 
     return mptoken;
 }

@@ -768,7 +768,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPTIssuance)
         // make sure mptID is synethetically parsed if object is mptIssuance
         EXPECT_EQ(
             objects.front().at("mpt_issuance_id").as_string(),
-            ripple::to_string(ripple::getMptID(GetAccountIDWithString(ACCOUNT), 2))
+            ripple::to_string(ripple::makeMptID(2, GetAccountIDWithString(ACCOUNT)))
         );
     });
 }
@@ -785,7 +785,7 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPToken)
     EXPECT_CALL(*backend, doFetchSuccessorKey).Times(1);
     ON_CALL(*backend, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
 
-    auto const mptoken = CreateMPTokenObject(ACCOUNT, ripple::getMptID(GetAccountIDWithString(ACCOUNT), 2));
+    auto const mptoken = CreateMPTokenObject(ACCOUNT, ripple::makeMptID(2, GetAccountIDWithString(ACCOUNT)));
     bbs.push_back(mptoken.getSerializer().peekData());
 
     ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));

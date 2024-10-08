@@ -54,7 +54,6 @@
 #include <xrpl/protocol/Rate.h>
 #include <xrpl/protocol/STAmount.h>
 #include <xrpl/protocol/STBase.h>
-#include <xrpl/protocol/STEitherAmount.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/STTx.h>
@@ -740,7 +739,7 @@ canHaveDeliveredAmount(
  * @param date The date of the ledger
  * @return The delivered amount or std::nullopt if not available
  */
-std::optional<ripple::STEitherAmount>
+std::optional<ripple::STAmount>
 getDeliveredAmount(
     std::shared_ptr<ripple::STTx const> const& txn,
     std::shared_ptr<ripple::TxMeta const> const& meta,

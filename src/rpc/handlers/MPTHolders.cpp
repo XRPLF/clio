@@ -80,12 +80,8 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
 
         mptJson[JS(account)] = toBase58(sle[ripple::sfAccount]);
         mptJson[JS(flags)] = sle.getFlags();
-        mptJson["mpt_amount"] = toBoostJson(ripple::STUInt64{sle[ripple::sfMPTAmount]}.getJson(JsonOptions::none));
-
-        if (sle[ripple::sfLockedAmount])
-            mptJson["locked_amount"] =
-                toBoostJson(ripple::STUInt64{sle[ripple::sfLockedAmount]}.getJson(JsonOptions::none));
-
+        mptJson["mpt_amount"] =
+            toBoostJson(ripple::STUInt64{ripple::sfMPTAmount, sle[ripple::sfMPTAmount]}.getJson(JsonOptions::none));
         mptJson["mptoken_index"] = ripple::to_string(ripple::keylet::mptoken(mptID, sle[ripple::sfAccount]).key);
 
         output.mpts.push_back(mptJson);

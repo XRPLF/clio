@@ -421,7 +421,6 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
             "account": "rrnAZCqMahreZrKMcZU3t2DZ6yUndT4ubN",
             "flags": 0,
             "mpt_amount": "0",
-            "locked_amount": "1",
             "mptoken_index": "D137F2E5A5767A06CB7A8F060ADE442A30CFF95028E1AF4B8767E3A56877205A"
         }}],
         "validated": true
@@ -435,7 +434,7 @@ TEST_F(RPCMPTHoldersHandlerTest, CustomAmounts)
     auto const issuanceKk = ripple::keylet::mptIssuance(ripple::uint192(MPTID)).key;
     ON_CALL(*backend, doFetchLedgerObject(issuanceKk, 30, _)).WillByDefault(Return(Blob{'f', 'a', 'k', 'e'}));
 
-    auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID), 0, 1);
+    auto const mptoken = CreateMPTokenObject(HOLDER1_ACCOUNT, ripple::uint192(MPTID), 0);
     std::vector<Blob> const mpts = {mptoken.getSerializer().peekData()};
     ON_CALL(*backend, fetchMPTHolders).WillByDefault(Return(MPTHoldersAndCursor{mpts, {}}));
     EXPECT_CALL(
