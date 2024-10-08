@@ -7,7 +7,6 @@ import (
 	"math/rand"
 
 	"github.com/gocql/gocql"
-	"github.com/pmorelli92/maybe"
 )
 
 type TokenRange struct {
@@ -18,7 +17,7 @@ type TokenRange struct {
 // not stored as arrays of startRange/endRange because it will be O(n) lookup
 // stored as Map with key startRange, value endRange so O(1) lookup for tokenRange
 type StoredRange struct {
-	TokenRange maybe.Maybe[map[int64]int64] // all ranges that has been read and deleted
+	TokenRange map[int64]int64 // all ranges that has been read and deleted
 }
 
 func Shuffle(data []*TokenRange) {

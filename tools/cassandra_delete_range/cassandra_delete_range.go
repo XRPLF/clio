@@ -17,7 +17,6 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/gocql/gocql"
-	"github.com/pmorelli92/maybe"
 )
 
 const (
@@ -231,8 +230,7 @@ func prepareResume(cmd *string) {
 	/*
 	 Previous user command (must match the same command to resume deletion)
 	 Table name (ie. objects, ledger_hashes etc)
-	 Deletion method (ie. token_range). We don't store ledger_range because these tables are extremely small
-	 Values of token_ranges (each pair of values seperated line by line) or just a single int for ledger_range
+	 Values of token_ranges (each pair of values seperated line by line)
 	*/
 
 	file, err := os.Open("continue.txt")
@@ -264,6 +262,7 @@ func prepareResume(cmd *string) {
 	// skip the neccessary tables based on where the program aborted
 	// for example if account_tx, all tables before account_tx
 	// should be already deleted so we skip for deletion
+	tableFound := false
 	switch scanner.Text() {
 	case "account_tx":
 		*skipLedgersTable = true
@@ -285,32 +284,37 @@ func prepareResume(cmd *string) {
 		fallthrough
 	case "objects":
 		*skipSuccessorTable = true
+		fallthrough
+	case "successor":
+		tableFound = true
+	}
+
+	if !tableFound {
+		log.Fatalf("Invalid table: %s", scanner.Text())
 	}
 
 	scanner.Scan()
-	if scanner.Text() == "token_range" {
-		rangeRead := make(map[int64]int64)
+	rangeRead := make(map[int64]int64)
 
-		// now go through all the ledger range and load it to a set
-		for scanner.Scan() {
-			line := scanner.Text()
-			Range := strings.Split(line, ",")
-			if len(Range) != 2 {
-				log.Fatalf("Range is not two integers. %s . Aborting...", Range)
-			}
-			startStr := strings.TrimSpace(Range[0])
-			endStr := strings.TrimSpace(Range[1])
-
-			// convert string to int64
-			start, err1 := strconv.ParseInt(startStr, 10, 64)
-			end, err2 := strconv.ParseInt(endStr, 10, 64)
-
-			if err1 != nil || err2 != nil {
-				log.Fatalf("Error converting integer: %s, %s", err1, err2)
-			}
-			rangeRead[start] = end
+	// now go through all the ledger range and load it to a set
+	for scanner.Scan() {
+		line := scanner.Text()
+		tokenRange := strings.Split(line, ",")
+		if len(tokenRange) != 2 {
+			log.Fatalf("Range is not two integers. %s . Aborting...", tokenRange)
 		}
-		ledgerOrTokenRange = &util.StoredRange{}
-		ledgerOrTokenRange.TokenRange = maybe.Set(rangeRead)
+		startStr := strings.TrimSpace(tokenRange[0])
+		endStr := strings.TrimSpace(tokenRange[1])
+
+		// convert string to int64
+		start, err1 := strconv.ParseInt(startStr, 10, 64)
+		end, err2 := strconv.ParseInt(endStr, 10, 64)
+
+		if err1 != nil || err2 != nil {
+			log.Fatalf("Error converting integer: %s, %s", err1, err2)
+		}
+		rangeRead[start] = end
 	}
+	ledgerOrTokenRange = &util.StoredRange{}
+	ledgerOrTokenRange.TokenRange = rangeRead
 }
