@@ -19,6 +19,8 @@
 
 #include "util/TestHttpServer.hpp"
 
+#include "util/Assert.hpp"
+
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
@@ -36,6 +38,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <expected>
 #include <string>
 #include <utility>
 
@@ -112,6 +115,17 @@ TestHttpServer::TestHttpServer(boost::asio::io_context& context, std::string hos
     acceptor_.set_option(asio::socket_base::reuse_address(true));
     acceptor_.bind(endpoint);
     acceptor_.listen(asio::socket_base::max_listen_connections);
+}
+
+std::expected<boost::asio::ip::tcp::socket, boost::system::error_code>
+TestHttpServer::accept(boost::asio::yield_context yield)
+{
+    boost::beast::error_code errorCode;
+    tcp::socket socket(this->acceptor_.get_executor());
+    acceptor_.async_accept(socket, yield[errorCode]);
+    if (errorCode)
+        return std::unexpected{errorCode};
+    return socket;
 }
 
 void
