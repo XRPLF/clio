@@ -23,9 +23,9 @@
 #include "etl/ETLState.hpp"
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
-#include "etl/impl/ForwardingCache.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
-#include "rpc/Errors.hpp"
+#include "util/Mutex.hpp"
+#include "util/ResponseExpirationCache.hpp"
 #include "util/log/Logger.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 
@@ -39,7 +39,6 @@
 #include <org/xrpl/rpc/v1/ledger.pb.h>
 #include <xrpl/proto/org/xrpl/rpc/v1/xrp_ledger.grpc.pb.h>
 
-#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <expected>
@@ -69,14 +68,17 @@ private:
 
     util::Logger log_{"ETL"};
     // Forwarding cache must be destroyed after sources because sources have a callback to invalidate cache
-    std::optional<impl::ForwardingCache> forwardingCache_;
+    std::optional<util::ResponseExpirationCache> forwardingCache_;
     std::optional<std::string> forwardingXUserValue_;
 
     std::vector<SourcePtr> sources_;
     std::optional<ETLState> etlState_;
     std::uint32_t downloadRanges_ =
         DEFAULT_DOWNLOAD_RANGES; /*< The number of markers to use when downloading initial ledger */
-    std::atomic_bool hasForwardingSource_{false};
+
+    // Using mutext instead of atomic_bool because choosing a new source to
+    // forward messages should be done with a mutual exclusion otherwise there will be a race condition
+    util::Mutex<bool> hasForwardingSource_{false};
 
 public:
     /**

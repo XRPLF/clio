@@ -25,6 +25,7 @@
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
 #include <boost/asio/impl/spawn.hpp>
@@ -538,4 +539,68 @@ TEST_F(RPCHelpersTest, ParseIssue)
         parseIssue(boost::json::parse(R"({"issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"})").as_object()),
         std::runtime_error
     );
+}
+
+struct IsAdminCmdParamTestCaseBundle {
+    std::string testName;
+    std::string method;
+    std::string testJson;
+    bool expected;
+};
+
+struct IsAdminCmdParameterTest : public TestWithParam<IsAdminCmdParamTestCaseBundle> {};
+
+static auto
+generateTestValuesForParametersTest()
+{
+    return std::vector<IsAdminCmdParamTestCaseBundle>{
+        {"ledgerEntry", "ledger_entry", R"({"type": false})", false},
+
+        {"featureVetoedTrue", "feature", R"({"vetoed": true, "feature": "foo"})", true},
+        {"featureVetoedFalse", "feature", R"({"vetoed": false, "feature": "foo"})", true},
+        {"featureVetoedIsStr", "feature", R"({"vetoed": "String"})", true},
+
+        {"ledger", "ledger", R"({})", false},
+        {"ledgerWithType", "ledger", R"({"type": "fee"})", false},
+        {"ledgerFullTrue", "ledger", R"({"full": true})", true},
+        {"ledgerFullFalse", "ledger", R"({"full": false})", false},
+        {"ledgerFullIsStr", "ledger", R"({"full": "String"})", true},
+        {"ledgerFullIsEmptyStr", "ledger", R"({"full": ""})", false},
+        {"ledgerFullIsNumber1", "ledger", R"({"full": 1})", true},
+        {"ledgerFullIsNumber0", "ledger", R"({"full": 0})", false},
+        {"ledgerFullIsNull", "ledger", R"({"full": null})", false},
+        {"ledgerFullIsFloat0", "ledger", R"({"full": 0.0})", false},
+        {"ledgerFullIsFloat1", "ledger", R"({"full": 0.1})", true},
+        {"ledgerFullIsArray", "ledger", R"({"full": [1]})", true},
+        {"ledgerFullIsEmptyArray", "ledger", R"({"full": []})", false},
+        {"ledgerFullIsObject", "ledger", R"({"full": {"key": 1}})", true},
+        {"ledgerFullIsEmptyObject", "ledger", R"({"full": {}})", false},
+
+        {"ledgerAccountsTrue", "ledger", R"({"accounts": true})", true},
+        {"ledgerAccountsFalse", "ledger", R"({"accounts": false})", false},
+        {"ledgerAccountsIsStr", "ledger", R"({"accounts": "String"})", true},
+        {"ledgerAccountsIsEmptyStr", "ledger", R"({"accounts": ""})", false},
+        {"ledgerAccountsIsNumber1", "ledger", R"({"accounts": 1})", true},
+        {"ledgerAccountsIsNumber0", "ledger", R"({"accounts": 0})", false},
+        {"ledgerAccountsIsNull", "ledger", R"({"accounts": null})", false},
+        {"ledgerAccountsIsFloat0", "ledger", R"({"accounts": 0.0})", false},
+        {"ledgerAccountsIsFloat1", "ledger", R"({"accounts": 0.1})", true},
+        {"ledgerAccountsIsArray", "ledger", R"({"accounts": [1]})", true},
+        {"ledgerAccountsIsEmptyArray", "ledger", R"({"accounts": []})", false},
+        {"ledgerAccountsIsObject", "ledger", R"({"accounts": {"key": 1}})", true},
+        {"ledgerAccountsIsEmptyObject", "ledger", R"({"accounts": {}})", false},
+    };
+}
+
+INSTANTIATE_TEST_CASE_P(
+    IsAdminCmdTest,
+    IsAdminCmdParameterTest,
+    ValuesIn(generateTestValuesForParametersTest()),
+    tests::util::NameGenerator
+);
+
+TEST_P(IsAdminCmdParameterTest, Test)
+{
+    auto const testBundle = GetParam();
+    EXPECT_EQ(isAdminCmd(testBundle.method, boost::json::parse(testBundle.testJson).as_object()), testBundle.expected);
 }

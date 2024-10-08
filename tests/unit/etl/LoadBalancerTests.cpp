@@ -307,15 +307,12 @@ TEST_F(LoadBalancerOnDisconnectHookTests, source0Disconnects)
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false));
     EXPECT_CALL(sourceFactory_.sourceAt(1), isConnected()).WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(1), setForwarding(true));
-    sourceFactory_.callbacksAt(0).onDisconnect();
+    sourceFactory_.callbacksAt(0).onDisconnect(true);
 }
 
 TEST_F(LoadBalancerOnDisconnectHookTests, source1Disconnects)
 {
-    EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), setForwarding(false));
-    sourceFactory_.callbacksAt(1).onDisconnect();
+    sourceFactory_.callbacksAt(1).onDisconnect(false);
 }
 
 TEST_F(LoadBalancerOnDisconnectHookTests, source0DisconnectsAndConnectsBack)
@@ -324,29 +321,25 @@ TEST_F(LoadBalancerOnDisconnectHookTests, source0DisconnectsAndConnectsBack)
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false));
     EXPECT_CALL(sourceFactory_.sourceAt(1), isConnected()).WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(1), setForwarding(true));
-    sourceFactory_.callbacksAt(0).onDisconnect();
+    sourceFactory_.callbacksAt(0).onDisconnect(true);
 
     sourceFactory_.callbacksAt(0).onConnect();
 }
 
 TEST_F(LoadBalancerOnDisconnectHookTests, source1DisconnectsAndConnectsBack)
 {
-    EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), setForwarding(false));
-    sourceFactory_.callbacksAt(1).onDisconnect();
-
+    sourceFactory_.callbacksAt(1).onDisconnect(false);
     sourceFactory_.callbacksAt(1).onConnect();
 }
 
 TEST_F(LoadBalancerOnConnectHookTests, bothSourcesDisconnectAndConnectBack)
 {
-    EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).Times(2).WillRepeatedly(Return(false));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false)).Times(2);
-    EXPECT_CALL(sourceFactory_.sourceAt(1), isConnected()).Times(2).WillRepeatedly(Return(false));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), setForwarding(false)).Times(2);
-    sourceFactory_.callbacksAt(0).onDisconnect();
-    sourceFactory_.callbacksAt(1).onDisconnect();
+    EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(false));
+    EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), isConnected()).WillOnce(Return(false));
+    EXPECT_CALL(sourceFactory_.sourceAt(1), setForwarding(false));
+    sourceFactory_.callbacksAt(0).onDisconnect(true);
+    sourceFactory_.callbacksAt(1).onDisconnect(false);
 
     EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(true));
     EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(true));
@@ -390,12 +383,7 @@ TEST_F(LoadBalancer3SourcesTests, forwardingUpdate)
     sourceFactory_.callbacksAt(1).onConnect();
 
     // Source 0 got disconnected
-    EXPECT_CALL(sourceFactory_.sourceAt(0), isConnected()).WillOnce(Return(false));
-    EXPECT_CALL(sourceFactory_.sourceAt(0), setForwarding(false));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), isConnected()).WillOnce(Return(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(1), setForwarding(true));
-    EXPECT_CALL(sourceFactory_.sourceAt(2), setForwarding(false));  // only source 1 must be forwarding
-    sourceFactory_.callbacksAt(0).onDisconnect();
+    sourceFactory_.callbacksAt(0).onDisconnect(false);
 }
 
 struct LoadBalancerLoadInitialLedgerTests : LoadBalancerOnConnectHookTests {
@@ -559,7 +547,7 @@ struct LoadBalancerForwardToRippledTests : LoadBalancerConstructorTests, SyncAsi
         EXPECT_CALL(sourceFactory_.sourceAt(1), run);
     }
 
-    boost::json::object const request_{{"request", "value"}};
+    boost::json::object const request_{{"command", "value"}};
     std::optional<std::string> const clientIP_ = "some_ip";
     boost::json::object const response_{{"response", "other_value"}};
 };
@@ -736,6 +724,21 @@ TEST_F(LoadBalancerForwardToRippledTests, onLedgerClosedHookInvalidatesCache)
         EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), response_);
         sourceFactory_.callbacksAt(0).onLedgerClosed();
         EXPECT_EQ(loadBalancer->forwardToRippled(request, clientIP_, false, yield), boost::json::object{});
+    });
+}
+
+TEST_F(LoadBalancerForwardToRippledTests, commandLineMissing)
+{
+    EXPECT_CALL(sourceFactory_, makeSource).Times(2);
+    auto loadBalancer = makeLoadBalancer();
+
+    auto const request = boost::json::object{{"command2", "server_info"}};
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        EXPECT_EQ(
+            loadBalancer->forwardToRippled(request, clientIP_, false, yield).error(),
+            rpc::ClioError::rpcCOMMAND_IS_MISSING
+        );
     });
 }
 

@@ -23,7 +23,6 @@ target_sources(
           etl/ETLStateTests.cpp
           etl/ExtractionDataPipeTests.cpp
           etl/ExtractorTests.cpp
-          etl/ForwardingCacheTests.cpp
           etl/ForwardingSourceTests.cpp
           etl/GrpcSourceTests.cpp
           etl/LedgerPublisherTests.cpp
@@ -92,6 +91,7 @@ target_sources(
           rpc/handlers/UnsubscribeTests.cpp
           rpc/handlers/VersionHandlerTests.cpp
           rpc/JsonBoolTests.cpp
+          rpc/RPCEngineTests.cpp
           rpc/RPCHelpersTests.cpp
           rpc/WorkQueueTests.cpp
           util/AccountUtilsTests.cpp
@@ -121,6 +121,7 @@ target_sources(
           util/RandomTests.cpp
           util/RetryTests.cpp
           util/RepeatTests.cpp
+          util/ResponseExpirationCacheTests.cpp
           util/SignalsHandlerTests.cpp
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
@@ -138,7 +139,7 @@ target_sources(
           util/newconfig/ClioConfigDefinitionTests.cpp
           util/newconfig/ConfigValueTests.cpp
           util/newconfig/ObjectViewTests.cpp
-          util/newconfig/JsonFileTests.cpp
+          util/newconfig/JsonConfigFileTests.cpp
           util/newconfig/ValueViewTests.cpp
 )
 

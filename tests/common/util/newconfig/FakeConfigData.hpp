@@ -25,6 +25,8 @@
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
 
+#include <gtest/gtest.h>
+
 using namespace util::config;
 
 /**

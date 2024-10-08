@@ -40,7 +40,11 @@ try {
     return action.apply(
         [](app::CliArgs::Action::Exit const& exit) { return exit.exitCode; },
         [](app::CliArgs::Action::Run const& run) {
-            auto const errors = ClioConfig.parse(ConfigFileJson{run.configPath});
+            auto const json = ConfigFileJson::make_ConfigFileJson(run.configPath);
+            if (!json.has_value()) {
+                std::cerr << json.error().error << std::endl;
+            }
+            auto const errors = ClioConfig.parse(json.value());
             if (errors.has_value()) {
                 for (auto const& err : errors.value())
                     std::cerr << err.error << std::endl;

@@ -22,7 +22,7 @@
 #include "util/Assert.hpp"
 #include "util/OverloadSet.hpp"
 #include "util/newconfig/ConfigConstraints.hpp"
-#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <fmt/core.h>
@@ -124,7 +124,7 @@ public:
                 std::visit(
                     util::OverloadSet{
                         [&type](bool tmp) { type = fmt::format("bool {}", tmp); },
-                        [&type](std::string tmp) { type = fmt::format("string {}", tmp); },
+                        [&type](std::string const& tmp) { type = fmt::format("string {}", tmp); },
                         [&type](double tmp) { type = fmt::format("double {}", tmp); },
                         [&type](int64_t tmp) { type = fmt::format("int {}", tmp); }
                     },

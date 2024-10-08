@@ -19,6 +19,7 @@ target_sources(
           requests/Types.cpp
           requests/WsConnection.cpp
           requests/impl/SslContext.cpp
+          ResponseExpirationCache.cpp
           SignalsHandler.cpp
           Taggable.cpp
           TerminationHandler.cpp

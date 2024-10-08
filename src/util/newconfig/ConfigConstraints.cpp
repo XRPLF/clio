@@ -19,20 +19,14 @@
 
 #include "util/newconfig/ConfigConstraints.hpp"
 
-#include "rpc/common/APIVersion.hpp"
-#include "util/log/Logger.hpp"
-#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
-#include <fmt/core.h>
-
-#include <algorithm>
 #include <cstdint>
 #include <optional>
 #include <regex>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <variant>
 
 namespace util::config {
@@ -41,7 +35,7 @@ std::optional<Error>
 PortConstraint::checkTypeImpl(Value const& port) const
 {
     if (!(std::holds_alternative<int64_t>(port) || std::holds_alternative<std::string>(port)))
-        return Error{"Port must be a string or Integer"};
+        return Error{"Port must be a string or integer"};
     return std::nullopt;
 }
 
@@ -64,135 +58,37 @@ PortConstraint::checkValueImpl(Value const& port) const
 }
 
 std::optional<Error>
-ChannelNameConstraint::checkTypeImpl(Value const& channelName) const
-{
-    if (!std::holds_alternative<std::string>(channelName))
-        return Error{"Key \"channel\"'s value must be a string"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-ChannelNameConstraint::checkValueImpl(Value const& channelName) const
-{
-    if (std::ranges::any_of(Logger::CHANNELS, [&channelName](std::string_view name) {
-            return std::get<std::string>(channelName) == name;
-        }))
-        return std::nullopt;
-    return Error{makeErrorMsg("channel", Logger::CHANNELS)};
-}
-
-std::optional<Error>
-LogLevelNameConstraint::checkTypeImpl(Value const& logLevel) const
-{
-    if (!std::holds_alternative<std::string>(logLevel))
-        return Error{"Key \"log_level\"'s value must be a string"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-LogLevelNameConstraint::checkValueImpl(Value const& logLevel) const
-{
-    if (std::ranges::any_of(logLevels, [&logLevel](std::string_view name) {
-            return std::get<std::string>(logLevel) == name;
-        }))
-        return std::nullopt;
-    return Error{makeErrorMsg("log_level", logLevels)};
-}
-
-std::optional<Error>
 ValidIPConstraint::checkTypeImpl(Value const& ip) const
 {
     if (!std::holds_alternative<std::string>(ip))
-        return Error{"ip value must be a string"};
+        return Error{"Ip value must be a string"};
     return std::nullopt;
 }
 
 std::optional<Error>
 ValidIPConstraint::checkValueImpl(Value const& ip) const
 {
+    if (std::get<std::string>(ip) == "localhost")
+        return std::nullopt;
+
     static std::regex const ipv4(
-        R"(^((http|https):\/\/)?((([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6})|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))(:\d{1,5})?(\/[^\s]*)?$)"
+        R"(^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$)"
     );
-    if (std::regex_match(std::get<std::string>(ip), ipv4))
+
+    static std::regex const ip_url(
+        R"(^((http|https):\/\/)?((([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6})|(((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])))(:\d{1,5})?(\/[^\s]*)?$)"
+    );
+    if (std::regex_match(std::get<std::string>(ip), ipv4) || std::regex_match(std::get<std::string>(ip), ip_url))
         return std::nullopt;
 
-    return Error{"ip is not a valid ip address"};
-}
-
-std::optional<Error>
-CassandraName::checkTypeImpl(Value const& name) const
-{
-    if (!std::holds_alternative<std::string>(name))
-        return Error{"Key \"database.type\"'s value must be a string"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-CassandraName::checkValueImpl(Value const& name) const
-{
-    if (std::get<std::string>(name) == "cassandra")
-        return std::nullopt;
-    return Error{"Key \"database.type\"'s value must be string Cassandra"};
-}
-
-std::optional<Error>
-LoadConstraint::checkTypeImpl(Value const& loadMode) const
-{
-    if (!std::holds_alternative<std::string>(loadMode))
-        return Error{"Key \"cache.load\" value must be a string"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-LoadConstraint::checkValueImpl(Value const& loadMode) const
-{
-    if (std::ranges::any_of(loadCacheMode, [&loadMode](std::string_view name) {
-            return std::get<std::string>(loadMode) == name;
-        }))
-        return std::nullopt;
-    return Error{makeErrorMsg("cache.load", loadCacheMode)};
-}
-
-std::optional<Error>
-LogTagStyle::checkTypeImpl(Value const& tagName) const
-{
-    if (!std::holds_alternative<std::string>(tagName))
-        return Error{"Key \"log_tag_style\"'s value must be a string"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-LogTagStyle::checkValueImpl(Value const& tagName) const
-{
-    if (std::ranges::any_of(logTags, [&tagName](std::string_view name) {
-            return std::get<std::string>(tagName) == name;
-        })) {
-        return std::nullopt;
-    }
-    return Error{makeErrorMsg("log_tag_style", logTags)};
-}
-
-std::optional<Error>
-APIVersionConstraint::checkTypeImpl(Value const& apiVersion) const
-{
-    if (!std::holds_alternative<int64_t>(apiVersion))
-        return Error{"api_version value must be a positive integer"};
-    return std::nullopt;
-}
-
-std::optional<Error>
-APIVersionConstraint::checkValueImpl(Value const& apiVersion) const
-{
-    if (std::get<int64_t>(apiVersion) <= rpc::API_VERSION_MAX && std::get<int64_t>(apiVersion) >= rpc::API_VERSION_MIN)
-        return std::nullopt;
-    return Error{fmt::format("api_version must be between {} and {}", rpc::API_VERSION_MIN, rpc::API_VERSION_MAX)};
+    return Error{"Ip is not a valid ip address"};
 }
 
 std::optional<Error>
 PositiveDouble::checkTypeImpl(Value const& num) const
 {
-    if (!std::holds_alternative<double>(num))
-        return Error{"double number must be of type double"};
+    if (!(std::holds_alternative<double>(num) || std::holds_alternative<int64_t>(num)))
+        return Error{"Double number must be of type int or double"};
     return std::nullopt;
 }
 
@@ -201,7 +97,7 @@ PositiveDouble::checkValueImpl(Value const& num) const
 {
     if (std::get<double>(num) >= 0)
         return std::nullopt;
-    return Error{"double number must be greater than 0"};
+    return Error{"Double number must be greater than or equal to 0"};
 }
 
 }  // namespace util::config

@@ -26,11 +26,9 @@
 #include "util/newconfig/Types.hpp"
 #include "util/newconfig/ValueView.hpp"
 
-#include <boost/filesystem/operations.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
-#include <boost/json/value_to.hpp>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -78,10 +76,11 @@ TEST_F(NewConfigTest, CheckKeys)
     EXPECT_TRUE(configData.hasItemsWithPrefix("dosguard"));
     EXPECT_TRUE(configData.hasItemsWithPrefix("ip"));
 
-    // all arrays currently not populated, only shows constraint/type the array accepts
-    EXPECT_EQ(configData.arraySize("array"), 1);
-    EXPECT_EQ(configData.arraySize("higher"), 1);
-    EXPECT_EQ(configData.arraySize("dosguard.whitelist"), 1);
+    // all arrays currently not populated, only has "itemPattern_" that defines
+    // the type/constraint each configValue will have later on
+    EXPECT_EQ(configData.arraySize("array"), 0);
+    EXPECT_EQ(configData.arraySize("higher"), 0);
+    EXPECT_EQ(configData.arraySize("dosguard.whitelist"), 0);
 }
 
 TEST_F(NewConfigTest, CheckAllKeys)
@@ -112,31 +111,42 @@ TEST_F(NewConfigTest, CheckAllKeys)
 
 struct NewConfigDeathTest : NewConfigTest {};
 
-TEST_F(NewConfigDeathTest, IncorrectGetValues)
+TEST_F(NewConfigDeathTest, GetNonExistentKeys)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("head"); }, ".*");
     EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("head."); }, ".*");
     EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("asdf"); }, ".*");
+}
+
+TEST_F(NewConfigDeathTest, GetValueButIsArray)
+{
     EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("dosguard.whitelist"); }, ".*");
     EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("dosguard.whitelist.[]"); }, ".*");
 }
 
-TEST_F(NewConfigDeathTest, IncorrectGetObject)
+TEST_F(NewConfigDeathTest, GetNonExistentObjectKey)
 {
     ASSERT_FALSE(configData.contains("head"));
     EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("head"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("array"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("array", 2); }, ".*");
     EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("doesNotExist"); }, ".*");
 }
 
-TEST_F(NewConfigDeathTest, IncorrectGetArray)
+TEST_F(NewConfigDeathTest, GetObjectButIsArray)
+{
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("array"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("array", 2); }, ".*");
+}
+
+TEST_F(NewConfigDeathTest, GetArrayButIsValue)
 {
     EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getArray("header.text1"); }, ".*");
+}
+
+TEST_F(NewConfigDeathTest, GetNonExistentArrayKey)
+{
     EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getArray("asdf"); }, ".*");
 }
 
-TEST(ConfigDescription, getValues)
+TEST(ConfigDescription, GetValues)
 {
     ClioConfigDescription const definition{};
 
@@ -145,7 +155,7 @@ TEST(ConfigDescription, getValues)
     EXPECT_EQ(definition.get("prometheus.enabled"), "Enable or disable Prometheus metrics.");
 }
 
-TEST(ConfigDescriptionAssertDeathTest, nonExistingKeyTest)
+TEST(ConfigDescriptionAssertDeathTest, NonExistingKeyTest)
 {
     ClioConfigDescription const definition{};
 
@@ -153,49 +163,57 @@ TEST(ConfigDescriptionAssertDeathTest, nonExistingKeyTest)
     EXPECT_DEATH({ [[maybe_unused]] auto a = definition.get("etl_sources.[]"); }, ".*");
 }
 
-/** @brief override the default values with the ones in Json */
+/** @brief Testing override the default values with the ones in Json */
 struct OverrideConfigVals : testing::Test {
     OverrideConfigVals()
     {
-        auto const tmp = TmpFile(JSONData);
-        ConfigFileJson const jsonFileObj{tmp.path};
+        ConfigFileJson const jsonFileObj{boost::json::parse(JSONData).as_object()};
         auto const errors = configData.parse(jsonFileObj);
         EXPECT_TRUE(!errors.has_value());
     }
     ClioConfigDefinition configData = generateConfig();
 };
 
-TEST_F(OverrideConfigVals, ValidateValues)
+TEST_F(OverrideConfigVals, ValidateValuesStrings)
 {
     // make sure the values in configData are overriden
     EXPECT_TRUE(configData.contains("header.text1"));
     EXPECT_EQ(configData.getValue("header.text1").asString(), "value");
 
-    EXPECT_TRUE(configData.contains("header.port"));
-    EXPECT_EQ(configData.getValue("header.port").asIntType<int64_t>(), 321);
-
-    EXPECT_TRUE(configData.contains("header.admin"));
-    EXPECT_EQ(configData.getValue("header.admin").asBool(), false);
-
     EXPECT_FALSE(configData.contains("header.sub"));
     EXPECT_TRUE(configData.contains("header.sub.sub2Value"));
     EXPECT_EQ(configData.getValue("header.sub.sub2Value").asString(), "TSM");
 
-    EXPECT_TRUE(configData.contains("dosguard.port"));
-    EXPECT_EQ(configData.getValue("dosguard.port").asIntType<int>(), 44444);
-
-    EXPECT_TRUE(configData.contains("optional.withDefault"));
-    EXPECT_EQ(configData.getValue("optional.withDefault").asDouble(), 0.0);
-
     EXPECT_TRUE(configData.contains("requireValue"));
     EXPECT_EQ(configData.getValue("requireValue").asString(), "required");
+}
+
+TEST_F(OverrideConfigVals, ValidateValuesDouble)
+{
+    EXPECT_TRUE(configData.contains("optional.withDefault"));
+    EXPECT_EQ(configData.getValue("optional.withDefault").asDouble(), 0.0);
 
     // make sure the values not overwritten, (default values) are there too
     EXPECT_TRUE(configData.contains("ip"));
     EXPECT_EQ(configData.getValue("ip").asDouble(), 444.22);
 }
 
-TEST_F(OverrideConfigVals, ValidateArrays)
+TEST_F(OverrideConfigVals, ValidateValuesInteger)
+{
+    EXPECT_TRUE(configData.contains("dosguard.port"));
+    EXPECT_EQ(configData.getValue("dosguard.port").asIntType<int>(), 44444);
+
+    EXPECT_TRUE(configData.contains("header.port"));
+    EXPECT_EQ(configData.getValue("header.port").asIntType<int64_t>(), 321);
+}
+
+TEST_F(OverrideConfigVals, ValidateValuesBool)
+{
+    EXPECT_TRUE(configData.contains("header.admin"));
+    EXPECT_EQ(configData.getValue("header.admin").asBool(), false);
+}
+
+TEST_F(OverrideConfigVals, ValidateIntegerValuesInArrays)
 {
     // Check array values (sub)
     EXPECT_TRUE(configData.contains("array.[].sub"));
@@ -207,7 +225,10 @@ TEST_F(OverrideConfigVals, ValidateArrays)
         actualArrSubVal.emplace_back((*it).asDouble());
     }
     EXPECT_TRUE(std::ranges::equal(expectedArrSubVal, actualArrSubVal));
+}
 
+TEST_F(OverrideConfigVals, ValidateStringValuesInArrays)
+{
     // Check array values (sub2)
     EXPECT_TRUE(configData.contains("array.[].sub2"));
     auto const arrSub2 = configData.getArray("array.[].sub2");
@@ -226,7 +247,7 @@ TEST_F(OverrideConfigVals, ValidateArrays)
     EXPECT_EQ("204.2.2.1", dosguard.valueAt(1).asString());
 }
 
-TEST_F(OverrideConfigVals, fetchArray)
+TEST_F(OverrideConfigVals, FetchArray)
 {
     auto const obj = configData.getObject("dosguard");
     EXPECT_TRUE(obj.containsKey("whitelist.[]"));
@@ -240,7 +261,7 @@ TEST_F(OverrideConfigVals, fetchArray)
     EXPECT_EQ(sameArr.valueAt(1).asString(), arr.valueAt(1).asString());
 }
 
-TEST_F(OverrideConfigVals, fetchObjectByArray)
+TEST_F(OverrideConfigVals, FetchObjectByArray)
 {
     auto const objInArr = configData.getObject("array", 0);
     auto const obj2InArr = configData.getObject("array", 1);
@@ -254,20 +275,18 @@ TEST_F(OverrideConfigVals, fetchObjectByArray)
     EXPECT_EQ(obj3InArr.getValue("sub2").asString(), "london");
 }
 
-/** @brief override the default values with the ones in Json */
 struct IncorrectOverrideValues : testing::Test {
     ClioConfigDefinition configData = generateConfig();
 };
 
-TEST_F(IncorrectOverrideValues, InvalidJson)
+TEST_F(IncorrectOverrideValues, InvalidJsonErrors)
 {
-    auto const tmp = TmpFile(invalidJSONData);
-    ConfigFileJson const jsonFileObj{tmp.path};
+    ConfigFileJson const jsonFileObj{boost::json::parse(invalidJSONData).as_object()};
     auto const errors = configData.parse(jsonFileObj);
     EXPECT_TRUE(errors.has_value());
 
     // Expected error messages
-    std::unordered_set<std::string_view> expectedErrors{
+    std::unordered_set<std::string_view> const expectedErrors{
         "dosguard.whitelist.[] value does not match type string",
         "higher.[].low.section key is required in user Config",
         "higher.[].low.admin key is required in user Config",

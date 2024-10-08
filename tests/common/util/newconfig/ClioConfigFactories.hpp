@@ -40,9 +40,9 @@ getParseLoadBalancerConfig(boost::json::value jsonValues)
 {
     ClioConfigDefinition config{
         {{"forwarding.cache_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(ValidatePositiveDouble)},
+          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(validatePositiveDouble)},
          {"forwarding.request_timeout",
-          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(ValidatePositiveDouble)},
+          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(validatePositiveDouble)},
          {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
          {"etl_sources.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validateIP)}},
          {"etl_sources.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validatePort)}},
@@ -50,7 +50,7 @@ getParseLoadBalancerConfig(boost::json::value jsonValues)
          {"num_markers", ConfigValue{ConfigType::Integer}.optional()}}
     };
 
-    auto const errors = config.parse(ConfigFileJson{jsonValues});
+    auto const errors = config.parse(ConfigFileJson{jsonValues.as_object()});
     ASSERT(!errors.has_value(), "Error parsing Json for clio config for load balancer test");
     return config;
 }
@@ -59,7 +59,7 @@ getParseLoadBalancerConfig(boost::json::value jsonValues)
 inline ClioConfigDefinition
 getParseSettingsConfig(boost::json::value val)
 {
-    ConfigFileJson const jsonVal{val};
+    ConfigFileJson const jsonVal{val.as_object()};
     auto config = ClioConfigDefinition{
         {"database.cassandra.threads",
          ConfigValue{ConfigType::Integer}.defaultValue(std::thread::hardware_concurrency())},
@@ -106,7 +106,7 @@ generateDefaultCacheConfig()
 inline ClioConfigDefinition
 getParseCacheConfig(boost::json::value val)
 {
-    ConfigFileJson const jsonVal{val};
+    ConfigFileJson const jsonVal{val.as_object()};
     auto config = generateDefaultCacheConfig();
     auto const errors = config.parse(jsonVal);
     ASSERT(!errors.has_value(), "Error parsing Json for clio config for settings test");
@@ -117,7 +117,7 @@ getParseCacheConfig(boost::json::value val)
 inline ClioConfigDefinition
 getParseServerConfig(boost::json::value val)
 {
-    ConfigFileJson const jsonVal{val};
+    ConfigFileJson const jsonVal{val.as_object()};
     auto config = ClioConfigDefinition{
         {"server.ip", ConfigValue{ConfigType::String}},
         {"server.port", ConfigValue{ConfigType::Integer}},
@@ -140,7 +140,7 @@ getParseServerConfig(boost::json::value val)
 inline ClioConfigDefinition
 getParseAdminServerConfig(boost::json::value val)
 {
-    ConfigFileJson const jsonVal{val};
+    ConfigFileJson const jsonVal{val.as_object()};
     auto config = ClioConfigDefinition{
         {"server.ip", ConfigValue{ConfigType::String}},
         {"server.port", ConfigValue{ConfigType::Integer}},
@@ -161,9 +161,48 @@ getParseAdminServerConfig(boost::json::value val)
 inline ClioConfigDefinition
 getParseWhitelistHandlerConfig(boost::json::value val)
 {
-    ConfigFileJson const jsonVal{val};
+    ConfigFileJson const jsonVal{val.as_object()};
     auto config = ClioConfigDefinition{{"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}}};
     auto errors = config.parse(jsonVal);
     ASSERT(!errors.has_value(), "Cannot parse Json Correctly");
+    return config;
+}
+
+// used for RPCEngine Tests
+inline ClioConfigDefinition
+generateDefaultRPCEngineConfig()
+{
+    return ClioConfigDefinition{
+        {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(validateUint16)},
+        {"rpc.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(validatePositiveDouble)},
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
+        {"dos_guard.max_fetches",
+         ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(validateUint32)},
+        {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(validateUint32)
+        },
+        {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(validateUint32)}
+    };
+}
+
+// used for (RPCEngineTest, NotCacheIfErrorHappen)
+inline ClioConfigDefinition
+getParseRPCEngineConfig(boost::json::value val)
+{
+    ConfigFileJson const jsonVal{val.as_object()};
+    auto config = ClioConfigDefinition{
+        {"server.ip", ConfigValue{ConfigType::String}},
+        {"server.port", ConfigValue{ConfigType::Integer}},
+        {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
+        {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
+        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
+        {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+        {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+    };
+    auto const errors = config.parse(jsonVal);
+    ASSERT(!errors.has_value(), "Cannot parse Server Json Correctly");
     return config;
 }

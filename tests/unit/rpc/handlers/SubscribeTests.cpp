@@ -136,22 +136,13 @@ generateTestValuesForParametersTest()
         SubscribeParamTestCaseBundle{"StreamNotString", R"({"streams": [1]})", "invalidParams", "streamNotString"},
         SubscribeParamTestCaseBundle{"StreamNotValid", R"({"streams": ["1"]})", "malformedStream", "Stream malformed."},
         SubscribeParamTestCaseBundle{
-            "StreamPeerStatusNotSupport",
-            R"({"streams": ["peer_status"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamPeerStatusNotSupport", R"({"streams": ["peer_status"]})", "notSupported", "Operation not supported."
         },
         SubscribeParamTestCaseBundle{
-            "StreamConsensusNotSupport",
-            R"({"streams": ["consensus"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamConsensusNotSupport", R"({"streams": ["consensus"]})", "notSupported", "Operation not supported."
         },
         SubscribeParamTestCaseBundle{
-            "StreamServerNotSupport",
-            R"({"streams": ["server"]})",
-            "reportingUnsupported",
-            "Requested operation not supported by reporting mode server"
+            "StreamServerNotSupport", R"({"streams": ["server"]})", "notSupported", "Operation not supported."
         },
         SubscribeParamTestCaseBundle{"BooksNotArray", R"({"books": "1"})", "invalidParams", "booksNotArray"},
         SubscribeParamTestCaseBundle{

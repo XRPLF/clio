@@ -20,12 +20,13 @@
 #pragma once
 
 #include "util/newconfig/ConfigFileInterface.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <boost/filesystem/path.hpp>
 #include <boost/json/object.hpp>
-#include <boost/json/parse.hpp>
 
+#include <expected>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -36,29 +37,12 @@ namespace util::config {
 class ConfigFileJson final : public ConfigFileInterface {
 public:
     /**
-     * @brief Construct a new ConfigFileJson object and stores the values from
-     * user's config in the object.
+     * @brief Construct a new ConfigJson object and stores the values from
+     * user's config into a json object.
      *
-     * @param filePath the path to the Json file to parse.
+     * @param jsonObj the Json object to parse; represents user's config
      */
-    ConfigFileJson(std::string_view filePath)
-    {
-        parse(filePath);
-    }
-
-    /**
-     * @brief Construct a new ConfigFileJson object and stores the values from
-     * the provided boost::json values
-     *
-     * @param jsonObj The JSON object to be processed and stored.
-     */
-    ConfigFileJson(boost::json::value jsonObj)
-    {
-        flattenJson(jsonObj.as_object(), "");
-    }
-
-    void
-    parse(boost::filesystem::path filePath) override;
+    ConfigFileJson(boost::json::object jsonObj);
 
     /**
      * @brief Retrieves a configuration value by its key.
@@ -86,6 +70,16 @@ public:
      */
     [[nodiscard]] bool
     containsKey(std::string_view key) const override;
+
+    /**
+     * @brief Creates a new ConfigFileJson by parsing the provided JSON file and
+     * stores the values in the object.
+     *
+     * @param configFilePath The path to the JSON file to be parsed.
+     * @return A ConfigFileJson object if parsing user file is successful. Error otherwise
+     */
+    [[nodiscard]] static std::expected<ConfigFileJson, Error>
+    make_ConfigFileJson(boost::filesystem::path configFilePath);
 
 private:
     /**

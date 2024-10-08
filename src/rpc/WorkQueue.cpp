@@ -19,7 +19,6 @@
 
 #include "rpc/WorkQueue.hpp"
 
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
@@ -29,7 +28,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <thread>
 #include <utility>
 
 namespace rpc {

@@ -19,12 +19,8 @@
 
 #pragma once
 
-#include "util/newconfig/Errors.hpp"
 #include "util/newconfig/Types.hpp"
 
-#include <boost/filesystem/path.hpp>
-
-#include <optional>
 #include <string_view>
 #include <vector>
 
@@ -39,13 +35,6 @@ namespace util::config {
 class ConfigFileInterface {
 public:
     virtual ~ConfigFileInterface() = default;
-    /**
-     * @brief Parses the provided path of user clio configuration data
-     *
-     * @param filePath The path to the Clio Config data
-     */
-    virtual void
-    parse(boost::filesystem::path filePath) = 0;
 
     /**
      * @brief Retrieves the value of configValue.

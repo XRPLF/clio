@@ -43,9 +43,11 @@
 
 #include <algorithm>
 #include <expected>
+#include <functional>
 #include <iterator>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -73,6 +75,14 @@ TestWsConnection::send(std::string const& message, boost::asio::yield_context yi
     if (errorCode)
         return errorCode.message();
     return std::nullopt;
+}
+
+void
+TestWsConnection::sendPing(boost::beast::websocket::ping_data const& data, boost::asio::yield_context yield)
+{
+    boost::beast::error_code errorCode;
+    ws_.async_ping(data, yield[errorCode]);
+    [&]() { ASSERT_FALSE(errorCode) << errorCode.message(); }();
 }
 
 std::optional<std::string>
@@ -103,6 +113,20 @@ std::vector<util::requests::HttpHeader> const&
 TestWsConnection::headers() const
 {
     return headers_;
+}
+
+void
+TestWsConnection::setControlFrameCallback(
+    std::function<void(boost::beast::websocket::frame_type, std::string_view)> callback
+)
+{
+    ws_.control_callback(std::move(callback));
+}
+
+void
+TestWsConnection::resetControlFrameCallback()
+{
+    ws_.control_callback();
 }
 
 TestWsServer::TestWsServer(asio::io_context& context, std::string const& host) : acceptor_(context)

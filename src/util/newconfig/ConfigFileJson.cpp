@@ -20,7 +20,7 @@
 #include "util/newconfig/ConfigFileJson.hpp"
 
 #include "util/Assert.hpp"
-#include "util/log/Logger.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/Types.hpp"
 
 #include <boost/filesystem/path.hpp>
@@ -41,63 +41,73 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace util::config {
 
-void
-ConfigFileJson::parse(boost::filesystem::path configFilePath)
-{
-    try {
-        std::ifstream const in(configFilePath.string(), std::ios::in | std::ios::binary);
-        if (in) {
-            std::stringstream contents;
-            contents << in.rdbuf();
-            auto opts = boost::json::parse_options{};
-            opts.allow_comments = true;
-            auto const tempObj = boost::json::parse(contents.str(), {}, opts).as_object();
-            flattenJson(tempObj, "");
-        }
-    } catch (std::exception const& e) {
-        LOG(util::LogService::error()) << "Could not read configuration file from '" << configFilePath.string()
-                                       << "': " << e.what();
-    }
-}
-
+namespace {
 /**
  * @brief Extracts the value from a JSON object and converts it into the corresponding type.
  *
  * @param jsonValue The JSON value to extract.
  * @return A variant containing the same type corresponding to the extracted value.
  */
-[[nodiscard]] static Value
+[[nodiscard]] Value
 extractJsonValue(boost::json::value const& jsonValue)
 {
-    Value variantValue;
-
     if (jsonValue.is_int64()) {
-        variantValue = jsonValue.as_int64();
-    } else if (jsonValue.is_uint64()) {
-        variantValue = static_cast<int64_t>(jsonValue.as_uint64());
-    } else if (jsonValue.is_string()) {
-        variantValue = jsonValue.as_string().c_str();
-    } else if (jsonValue.is_bool()) {
-        variantValue = jsonValue.as_bool();
-    } else if (jsonValue.is_double()) {
-        variantValue = jsonValue.as_double();
-    } else {
-        ASSERT(false, "not supported json type", "");
+        return jsonValue.as_int64();
     }
+    if (jsonValue.is_uint64()) {
+        return static_cast<int64_t>(jsonValue.as_uint64());
+    }
+    if (jsonValue.is_string()) {
+        return jsonValue.as_string().c_str();
+    }
+    if (jsonValue.is_bool()) {
+        return jsonValue.as_bool();
+    }
+    if (jsonValue.is_double()) {
+        return jsonValue.as_double();
+    }
+    ASSERT(false, "Json is not of type int, uint, string, bool or double");
+    std::unreachable();
+}
+}  // namespace
 
-    return variantValue;
+ConfigFileJson::ConfigFileJson(boost::json::object jsonObj)
+{
+    flattenJson(jsonObj, "");
+}
+
+std::expected<ConfigFileJson, Error>
+ConfigFileJson::make_ConfigFileJson(boost::filesystem::path configFilePath)
+{
+    try {
+        if (auto const in = std::ifstream(configFilePath.string(), std::ios::in | std::ios::binary); in) {
+            std::stringstream contents;
+            contents << in.rdbuf();
+            auto opts = boost::json::parse_options{};
+            opts.allow_comments = true;
+            auto const tempObj = boost::json::parse(contents.str(), {}, opts).as_object();
+            return ConfigFileJson{tempObj};
+        }
+        return std::unexpected<Error>(
+            Error{fmt::format("Could not open configuration file '{}'", configFilePath.string())}
+        );
+
+    } catch (std::exception const& e) {
+        return std::unexpected<Error>(Error{fmt::format(
+            "An error occurred while processing configuration file '{}': {}", configFilePath.string(), e.what()
+        )});
+    }
 }
 
 Value
 ConfigFileJson::getValue(std::string_view key) const
 {
-    ASSERT(jsonObject_.contains(key), "Json object does not contain key {}", key);
     auto const jsonValue = jsonObject_.at(key);
-
     auto const value = extractJsonValue(jsonValue);
     return value;
 }
@@ -105,7 +115,6 @@ ConfigFileJson::getValue(std::string_view key) const
 std::vector<Value>
 ConfigFileJson::getArray(std::string_view key) const
 {
-    ASSERT(jsonObject_.contains(key), "Key {} must exist in Json", key);
     ASSERT(jsonObject_.at(key).is_array(), "Key {} has value that is not an array", key);
 
     std::vector<Value> configValues;
@@ -128,7 +137,7 @@ void
 ConfigFileJson::flattenJson(boost::json::object const& obj, std::string const& prefix)
 {
     for (auto const& [key, value] : obj) {
-        std::string fullKey = prefix.empty() ? std::string(key) : prefix + "." + std::string(key);
+        std::string const fullKey = prefix.empty() ? std::string(key) : fmt::format("{}.{}", prefix, std::string(key));
 
         // In ClioConfigDefinition, value must be a primitive or array
         if (value.is_object()) {
@@ -136,7 +145,7 @@ ConfigFileJson::flattenJson(boost::json::object const& obj, std::string const& p
         } else if (value.is_array()) {
             auto const& arr = value.as_array();
             for (std::size_t i = 0; i < arr.size(); ++i) {
-                std::string arrayPrefix = fullKey + ".[]";
+                std::string const arrayPrefix = fullKey + ".[]";
                 if (arr[i].is_object()) {
                     flattenJson(arr[i].as_object(), arrayPrefix);
                 } else {

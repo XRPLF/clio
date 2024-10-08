@@ -26,8 +26,10 @@
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigFileInterface.hpp"
-#include "util/newconfig/Errors.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Error.hpp"
 #include "util/newconfig/ObjectView.hpp"
+#include "util/newconfig/Types.hpp"
 #include "util/newconfig/ValueView.hpp"
 
 #include <fmt/core.h>
@@ -50,7 +52,7 @@ ClioConfigDefinition::ClioConfigDefinition(std::initializer_list<KeyValuePair> p
 {
     for (auto const& [key, value] : pair) {
         if (key.contains("[]"))
-            ASSERT(std::holds_alternative<Array>(value), "Value must be array if key has \"[]\"");
+            ASSERT(std::holds_alternative<Array>(value), R"(Value must be array if key has "[]")");
         map_.insert({key, value});
     }
 }
@@ -154,7 +156,6 @@ std::optional<std::vector<Error>>
 ClioConfigDefinition::parse(ConfigFileInterface const& config)
 {
     std::vector<Error> listOfErrors;
-
     for (auto& [key, value] : map_) {
         // if key doesn't exist in user config, makes sure it is marked as ".optional()" or has ".defaultValue()"" in
         // ClioConfigDefitinion above
@@ -163,10 +164,8 @@ ClioConfigDefinition::parse(ConfigFileInterface const& config)
                 if (!(std::get<ConfigValue>(value).isOptional() || std::get<ConfigValue>(value).hasValue()))
                     listOfErrors.emplace_back(key, "key is required in user Config");
             } else if (std::holds_alternative<Array>(value)) {
-                for (auto const& configVal : std::get<Array>(value)) {
-                    if (!(configVal.isOptional() || configVal.hasValue()))
-                        listOfErrors.emplace_back(key, "key is required in user Config");
-                }
+                if (!(std::get<Array>(value).getArrayPattern().isOptional()))
+                    listOfErrors.emplace_back(key, "key is required in user Config");
             }
             continue;
         }
