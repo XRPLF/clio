@@ -14,6 +14,12 @@ type TokenRange struct {
 	EndRange   int64
 }
 
+// not stored as arrays of startRange/endRange because it will be O(n) lookup
+// stored as Map with key startRange, value endRange so O(1) lookup for tokenRange
+type StoredRange struct {
+	TokenRange map[int64]int64 // all ranges that has been read and deleted
+}
+
 func Shuffle(data []*TokenRange) {
 	for i := 1; i < len(data); i++ {
 		r := rand.Intn(i + 1)
