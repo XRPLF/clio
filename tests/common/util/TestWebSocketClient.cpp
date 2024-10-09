@@ -19,11 +19,14 @@
 
 #include "util/TestWebSocketClient.hpp"
 
+#include "util/Assert.hpp"
 #include "util/TestHttpClient.hpp"
+#include "util/WithTimeout.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/ssl/stream_base.hpp>
@@ -44,9 +47,11 @@
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
+#include <fmt/core.h>
 #include <openssl/err.h>
 #include <openssl/tls1.h>
 
+#include <chrono>
 #include <optional>
 #include <string>
 #include <utility>
@@ -131,4 +136,88 @@ WebServerSslSyncClient::syncPost(std::string const& body)
     ws_->read(buffer);
 
     return boost::beast::buffers_to_string(buffer.data());
+}
+
+WebSocketAsyncClient::WebSocketAsyncClient(boost::asio::io_context& ioContext) : stream_{ioContext}
+{
+}
+
+std::optional<boost::system::error_code>
+WebSocketAsyncClient::connect(
+    boost::asio::yield_context yield,
+    std::string const& host,
+    std::string const& port,
+    std::chrono::steady_clock::duration timeout,
+    std::vector<WebHeader> additionalHeaders
+)
+{
+    auto const results = boost::asio::ip::tcp::resolver{yield.get_executor()}.resolve(host, port);
+    ASSERT(not results.empty(), "Could not resolve {}:{}", host, port);
+
+    boost::system::error_code error;
+    boost::beast::get_lowest_layer(stream_).expires_after(timeout);
+    stream_.next_layer().async_connect(results, yield[error]);
+    if (error)
+        return error;
+
+    boost::beast::websocket::stream_base::timeout wsTimeout{};
+    stream_.get_option(wsTimeout);
+    wsTimeout.handshake_timeout = timeout;
+    stream_.set_option(wsTimeout);
+    boost::beast::get_lowest_layer(stream_).expires_never();
+
+    stream_.set_option(boost::beast::websocket::stream_base::decorator([additionalHeaders = std::move(additionalHeaders
+                                                                        )](boost::beast::websocket::request_type& req) {
+        for (auto const& header : additionalHeaders) {
+            req.set(header.name, header.value);
+        }
+    }));
+    stream_.async_handshake(fmt::format("{}:{}", host, port), "/", yield[error]);
+    if (error)
+        return error;
+
+    return std::nullopt;
+}
+
+std::optional<boost::system::error_code>
+WebSocketAsyncClient::send(
+    boost::asio::yield_context yield,
+    std::string const& message,
+    std::chrono::steady_clock::duration timeout
+)
+{
+    auto const error = util::withTimeout(
+        [this, &message](auto&& cyield) { stream_.async_write(net::buffer(message), cyield); }, yield, timeout
+    );
+
+    if (error)
+        return error;
+    return std::nullopt;
+}
+
+std::expected<std::string, boost::system::error_code>
+WebSocketAsyncClient::receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
+{
+    boost::beast::flat_buffer buffer{};
+    auto error =
+        util::withTimeout([this, &buffer](auto&& cyield) { stream_.async_read(buffer, cyield); }, yield, timeout);
+    if (error)
+        return std::unexpected{error};
+    return boost::beast::buffers_to_string(buffer.data());
+}
+
+void
+WebSocketAsyncClient::gracefulClose(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
+{
+    boost::beast::websocket::stream_base::timeout wsTimeout{};
+    stream_.get_option(wsTimeout);
+    wsTimeout.handshake_timeout = timeout;
+    stream_.set_option(wsTimeout);
+    stream_.async_close(boost::beast::websocket::close_code::normal, yield);
+}
+
+void
+WebSocketAsyncClient::close()
+{
+    boost::beast::get_lowest_layer(stream_).close();
 }

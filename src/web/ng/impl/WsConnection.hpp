@@ -32,6 +32,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/stream.hpp>
+#include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/role.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
@@ -132,7 +133,7 @@ public:
         if (error)
             return std::unexpected{error};
 
-        return Request{std::string{static_cast<char const*>(buffer_.data().data()), buffer_.size()}, initialRequest_};
+        return Request{boost::beast::buffers_to_string(buffer_.data()), initialRequest_};
     }
 
     void

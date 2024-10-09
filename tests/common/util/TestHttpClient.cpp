@@ -19,9 +19,12 @@
 
 #include "util/TestHttpClient.hpp"
 
+#include "util/Assert.hpp"
+
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/ssl/stream_base.hpp>
@@ -45,7 +48,10 @@
 #include <openssl/err.h>
 #include <openssl/tls1.h>
 
+#include <chrono>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -172,4 +178,73 @@ HttpsSyncClient::syncPost(std::string const& host, std::string const& port, std:
     stream.shutdown(ec);
 
     return res.body();
+}
+
+HttpAsyncClient::HttpAsyncClient(boost::asio::io_context& ioContext) : stream_{ioContext}
+{
+}
+
+std::optional<boost::system::error_code>
+HttpAsyncClient::connect(
+    std::string_view host,
+    std::string_view port,
+    boost::asio::yield_context yield,
+    std::chrono::steady_clock::duration timeout
+)
+{
+    boost::system::error_code error;
+    boost::asio::ip::tcp::resolver resolver{stream_.get_executor()};
+    auto const resolverResults = resolver.resolve(host, port, error);
+    if (error)
+        return error;
+
+    ASSERT(resolverResults.size() > 0, "No results from resolver");
+
+    boost::beast::get_lowest_layer(stream_).expires_after(timeout);
+    stream_.async_connect(resolverResults.begin()->endpoint(), yield[error]);
+    if (error)
+        return error;
+    return std::nullopt;
+}
+
+std::optional<boost::system::error_code>
+HttpAsyncClient::send(
+    boost::beast::http::request<boost::beast::http::string_body> request,
+    boost::asio::yield_context yield,
+    std::chrono::steady_clock::duration timeout
+)
+{
+    request.prepare_payload();
+    boost::system::error_code error;
+    boost::beast::get_lowest_layer(stream_).expires_after(timeout);
+    http::async_write(stream_, request, yield[error]);
+    if (error)
+        return error;
+    return std::nullopt;
+}
+
+std::expected<boost::beast::http::response<boost::beast::http::string_body>, boost::system::error_code>
+HttpAsyncClient::receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
+{
+    boost::system::error_code error;
+    http::response<http::string_body> response;
+    boost::beast::get_lowest_layer(stream_).expires_after(timeout);
+    http::async_read(stream_, buffer_, response, yield[error]);
+    if (error)
+        return std::unexpected{error};
+    return std::move(response);
+}
+
+void
+HttpAsyncClient::gracefulShutdown()
+{
+    boost::system::error_code error;
+    stream_.socket().shutdown(tcp::socket::shutdown_both, error);
+}
+
+void
+HttpAsyncClient::disconnect()
+{
+    boost::system::error_code error;
+    stream_.socket().close(error);
 }

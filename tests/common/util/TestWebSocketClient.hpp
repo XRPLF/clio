@@ -23,9 +23,12 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/ssl/ssl_stream.hpp>
 #include <boost/beast/websocket/stream.hpp>
 
+#include <chrono>
 #include <optional>
 #include <string>
 #include <vector>
@@ -44,6 +47,34 @@ public:
 
     std::string
     syncPost(std::string const& body);
+};
+
+class WebSocketAsyncClient {
+    boost::beast::websocket::stream<boost::beast::tcp_stream> stream_;
+
+public:
+    WebSocketAsyncClient(boost::asio::io_context& ioContext);
+
+    std::optional<boost::system::error_code>
+    connect(
+        boost::asio::yield_context yield,
+        std::string const& host,
+        std::string const& port,
+        std::chrono::steady_clock::duration timeout,
+        std::vector<WebHeader> additionalHeaders = {}
+    );
+
+    std::optional<boost::system::error_code>
+    send(boost::asio::yield_context yield, std::string const& message, std::chrono::steady_clock::duration timeout);
+
+    std::expected<std::string, boost::system::error_code>
+    receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout);
+
+    void
+    gracefulClose(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout);
+
+    void
+    close();
 };
 
 class WebServerSslSyncClient {

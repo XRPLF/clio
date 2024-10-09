@@ -110,7 +110,10 @@ doSession(
 
 TestHttpServer::TestHttpServer(boost::asio::io_context& context, std::string host) : acceptor_(context)
 {
-    boost::asio::ip::tcp::endpoint const endpoint(boost::asio::ip::make_address(host), 0);
+    boost::asio::ip::tcp::resolver resolver{context};
+    auto const results = resolver.resolve(host, "0");
+    ASSERT(!results.empty(), "Failed to resolve host");
+    boost::asio::ip::tcp::endpoint const& endpoint = results.begin()->endpoint();
     acceptor_.open(endpoint.protocol());
     acceptor_.set_option(asio::socket_base::reuse_address(true));
     acceptor_.bind(endpoint);

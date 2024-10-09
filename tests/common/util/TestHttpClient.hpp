@@ -19,10 +19,20 @@
 
 #pragma once
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/verify_context.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/http/field.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/string_body.hpp>
 
+#include <chrono>
+#include <expected>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 struct WebHeader {
@@ -55,4 +65,35 @@ struct HttpsSyncClient {
 
     static std::string
     syncPost(std::string const& host, std::string const& port, std::string const& body);
+};
+
+class HttpAsyncClient {
+    boost::beast::tcp_stream stream_;
+    boost::beast::flat_buffer buffer_;
+
+public:
+    HttpAsyncClient(boost::asio::io_context& ioContext);
+
+    std::optional<boost::system::error_code>
+    connect(
+        std::string_view host,
+        std::string_view port,
+        boost::asio::yield_context yield,
+        std::chrono::steady_clock::duration timeout
+    );
+
+    std::optional<boost::system::error_code>
+    send(
+        boost::beast::http::request<boost::beast::http::string_body> request,
+        boost::asio::yield_context yield,
+        std::chrono::steady_clock::duration timeout
+    );
+
+    std::expected<boost::beast::http::response<boost::beast::http::string_body>, boost::system::error_code>
+    receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout);
+
+    void
+    gracefulShutdown();
+    void
+    disconnect();
 };
