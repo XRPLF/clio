@@ -188,21 +188,11 @@ generateDefaultRPCEngineConfig()
 
 // used for (RPCEngineTest, NotCacheIfErrorHappen)
 inline ClioConfigDefinition
-getParseRPCEngineConfig(boost::json::value val)
+getNoCacheRPCEngineConfig()
 {
-    ConfigFileJson const jsonVal{val.as_object()};
-    auto config = ClioConfigDefinition{
-        {"server.ip", ConfigValue{ConfigType::String}},
-        {"server.port", ConfigValue{ConfigType::Integer}},
-        {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
-        {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
-        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
-        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
-        {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-        {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+    return ClioConfigDefinition{
+        {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(validateUint16)},
+        {"rpc.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(validatePositiveDouble)}
     };
-    auto const errors = config.parse(jsonVal);
-    ASSERT(!errors.has_value(), "Cannot parse Server Json Correctly");
-    return config;
 }

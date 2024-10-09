@@ -395,20 +395,12 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(RPCEngineCacheParameterTest, Test)
 {
     auto const& testParam = GetParam();
-    // auto const json = ConfigFileJson{json::parse(testParam.config).as_object()};
+    auto const json = ConfigFileJson{json::parse(testParam.config).as_object()};
 
-    auto cfgCache{getDefaultRPCEngineConfig()};
-    std::cout << cfgCache.getValue("rpc.cache_timeout").asFloat() << std::endl;
-    std::cout << cfgCache.getValue("server.max_queue_size").asIntType<int>() << std::endl;
-    std::cout << cfgCache.getValue("workers").asIntType<int>() << std::endl;
+    auto cfgCache{generateDefaultRPCEngineConfig()};
+    auto const errors = cfgCache.parse(json);
+    EXPECT_TRUE(!errors.has_value());
 
-    // auto const errors = cfgCache.parse(json);
-
-    std::cout << cfgCache.getValue("rpc.cache_timeout").asFloat() << std::endl;
-    std::cout << cfgCache.getValue("server.max_queue_size").asIntType<int>() << std::endl;
-    std::cout << cfgCache.getValue("workers").asIntType<int>() << std::endl;
-
-    // EXPECT_TRUE(!errors.has_value());
     auto const admin = testParam.isAdmin;
     auto const method = testParam.method;
     std::shared_ptr<RPCEngine<MockLoadBalancer, MockCounters>> engine =

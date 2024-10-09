@@ -95,6 +95,8 @@ PositiveDouble::checkTypeImpl(Value const& num) const
 std::optional<Error>
 PositiveDouble::checkValueImpl(Value const& num) const
 {
+    if (std::holds_alternative<int64_t>(num) && std::get<int64_t>(num) >= 0)
+        return std::nullopt;
     if (std::get<double>(num) >= 0)
         return std::nullopt;
     return Error{"Double number must be greater than or equal to 0"};
