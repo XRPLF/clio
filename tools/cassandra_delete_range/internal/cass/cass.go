@@ -54,6 +54,44 @@ type Settings struct {
 	Command     string
 }
 
+type Marker struct {
+	cmd  string
+	file *os.File
+}
+
+func NewMarker(cmd string) *Marker {
+	return &Marker{cmd: cmd}
+}
+
+func CloseMarker(m *Marker) {
+	if m.file != nil {
+		m.file.Close()
+	}
+	os.Remove("continue.txt")
+}
+
+func (m *Marker) EnterTable(table string) error {
+	// Create the file
+	file, err := os.OpenFile("continue.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	m.file = file
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	fmt.Fprintf(m.file, "%s\n", m.cmd)
+	m.file.WriteString(fmt.Sprintf("%s\n", table))
+	return nil
+}
+
+func (m *Marker) MarkProgress(x int64, y int64) {
+	fmt.Fprintf(m.file, "%d, %d \n", x, y)
+}
+
+func (m *Marker) ExitTable() {
+	m.file.Close()
+	m.file = nil
+	os.Remove("continue.txt")
+}
+
 type Cass interface {
 	GetLedgerRange() (uint64, uint64, error)
 	DeleteBefore(ledgerIdx uint64)
@@ -189,14 +227,13 @@ func (c *ClioCass) pruneData(
 
 	// successor queries
 	if !c.settings.SkipSuccessorTable {
-		file, err := createAndWriteToFile("successor", &c.settings.Command)
-		if err != nil {
+		marker := NewMarker(c.settings.Command)
+		if err := marker.EnterTable("successor"); err != nil {
 			return err
 		}
-		defer file.Close()
 
 		log.Println("Generating delete queries for successor table")
-		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(file, fromLedgerIdx, toLedgerIdx,
+		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(marker, fromLedgerIdx, toLedgerIdx,
 			"SELECT key, seq FROM successor WHERE token(key) >= ? AND token(key) <= ?",
 			"DELETE FROM successor WHERE key = ? AND seq = ?", deleteMethod{deleteGeneral: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
 		log.Printf("Total delete queries: %d\n", deleteCount)
@@ -205,19 +242,18 @@ func (c *ClioCass) pruneData(
 		totalErrors += errCount
 		totalDeletes += deleteCount
 
-		os.Remove("continue.txt")
+		marker.ExitTable()
 	}
 
 	// objects queries
 	if !c.settings.SkipObjectsTable {
-		file, err := createAndWriteToFile("objects", &c.settings.Command)
-		if err != nil {
+		marker := NewMarker(c.settings.Command)
+		if err := marker.EnterTable("objects"); err != nil {
 			return err
 		}
-		defer file.Close()
 
 		log.Println("Generating delete queries for objects table")
-		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(file, fromLedgerIdx, toLedgerIdx,
+		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(marker, fromLedgerIdx, toLedgerIdx,
 			"SELECT key, sequence FROM objects WHERE token(key) >= ? AND token(key) <= ?",
 			"DELETE FROM objects WHERE key = ? AND sequence = ?", deleteMethod{deleteObject: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: true})
 		log.Printf("Total delete queries: %d\n", deleteCount)
@@ -226,19 +262,18 @@ func (c *ClioCass) pruneData(
 		totalRows += rowsCount
 		totalDeletes += deleteCount
 
-		os.Remove("continue.txt")
+		marker.ExitTable()
 	}
 
 	// ledger_hashes queries
 	if !c.settings.SkipLedgerHashesTable {
-		file, err := createAndWriteToFile("ledger_hashes", &c.settings.Command)
-		if err != nil {
+		marker := NewMarker(c.settings.Command)
+		if err := marker.EnterTable("ledger_hashes"); err != nil {
 			return err
 		}
-		defer file.Close()
 
 		log.Println("Generating delete queries for ledger_hashes table")
-		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(file, fromLedgerIdx, toLedgerIdx,
+		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(marker, fromLedgerIdx, toLedgerIdx,
 			"SELECT hash, sequence FROM ledger_hashes WHERE token(hash) >= ? AND token(hash) <= ?",
 			"DELETE FROM ledger_hashes WHERE hash = ?", deleteMethod{deleteGeneral: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
 		log.Printf("Total delete queries: %d\n", deleteCount)
@@ -247,19 +282,18 @@ func (c *ClioCass) pruneData(
 		totalErrors += errCount
 		totalDeletes += deleteCount
 
-		os.Remove("continue.txt")
+		marker.ExitTable()
 	}
 
 	// transactions queries
 	if !c.settings.SkipTransactionsTable {
-		file, err := createAndWriteToFile("transactions", &c.settings.Command)
-		if err != nil {
+		marker := NewMarker(c.settings.Command)
+		if err := marker.EnterTable("transactions"); err != nil {
 			return err
 		}
-		defer file.Close()
 
 		log.Println("Generating delete queries for transactions table")
-		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(file, fromLedgerIdx, toLedgerIdx,
+		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(marker, fromLedgerIdx, toLedgerIdx,
 			"SELECT hash, ledger_sequence FROM transactions WHERE token(hash) >= ? AND token(hash) <= ?",
 			"DELETE FROM transactions WHERE hash = ?", deleteMethod{deleteGeneral: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
 		log.Printf("Total delete queries: %d\n", deleteCount)
@@ -268,16 +302,15 @@ func (c *ClioCass) pruneData(
 		totalErrors += errCount
 		totalDeletes += deleteCount
 
-		os.Remove("continue.txt")
+		marker.ExitTable()
 	}
 
 	// diff queries
 	if !c.settings.SkipDiffTable {
-		file, err := createAndWriteToFile("diff", &c.settings.Command)
-		if err != nil {
+		marker := NewMarker(c.settings.Command)
+		if err := marker.EnterTable("diff"); err != nil {
 			return err
 		}
-		defer file.Close()
 
 		log.Println("Generating delete queries for diff table")
 		deleteCount, errCount = c.prepareAndExecuteSimpleDeleteQueries(rangeFrom, rangeTo,
@@ -286,16 +319,15 @@ func (c *ClioCass) pruneData(
 		totalErrors += errCount
 		totalDeletes += deleteCount
 
-		os.Remove("continue.txt")
+		marker.ExitTable()
 	}
 
 	// ledger_transactions queries
 	if !c.settings.SkipLedgerTransactionsTable {
-		file, err := createAndWriteToFile("ledger_transactions", &c.settings.Command)
-		if err != nil {
+		marker := NewMarker(c.settings.Command)
+		if err := marker.EnterTable("ledger_transactions"); err != nil {
 			return err
 		}
-		defer file.Close()
 
 		log.Println("Generating delete queries for ledger_transactions table")
 		deleteCount, errCount = c.prepareAndExecuteSimpleDeleteQueries(rangeFrom, rangeTo,
@@ -304,16 +336,15 @@ func (c *ClioCass) pruneData(
 		totalErrors += errCount
 		totalDeletes += deleteCount
 
-		os.Remove("continue.txt")
+		marker.ExitTable()
 	}
 
 	// ledgers queries
 	if !c.settings.SkipLedgersTable {
-		file, err := createAndWriteToFile("ledgers", &c.settings.Command)
-		if err != nil {
+		marker := NewMarker(c.settings.Command)
+		if err := marker.EnterTable("ledgers"); err != nil {
 			return err
 		}
-		defer file.Close()
 
 		log.Println("Generating delete queries for ledgers table")
 		deleteCount, errCount = c.prepareAndExecuteSimpleDeleteQueries(rangeFrom, rangeTo,
@@ -322,19 +353,18 @@ func (c *ClioCass) pruneData(
 		totalErrors += errCount
 		totalDeletes += deleteCount
 
-		os.Remove("continue.txt")
+		marker.ExitTable()
 	}
 
 	// account_tx queries
 	if !c.settings.SkipAccTransactionsTable {
-		file, err := createAndWriteToFile("account_tx", &c.settings.Command)
-		if err != nil {
+		marker := NewMarker(c.settings.Command)
+		if err := marker.EnterTable("account_tx"); err != nil {
 			return err
 		}
-		defer file.Close()
 
 		log.Println("Generating delete queries for account transactions table")
-		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(file, fromLedgerIdx, toLedgerIdx,
+		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(marker, fromLedgerIdx, toLedgerIdx,
 			"SELECT account, seq_idx FROM account_tx WHERE token(account) >= ? AND token(account) <= ?",
 			"DELETE FROM account_tx WHERE account = ? AND seq_idx = (?, ?)", deleteMethod{deleteTransaction: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
 		log.Printf("Total delete queries: %d\n", deleteCount)
@@ -343,7 +373,7 @@ func (c *ClioCass) pruneData(
 		totalErrors += errCount
 		totalDeletes += deleteCount
 
-		os.Remove("continue.txt")
+		marker.ExitTable()
 	}
 
 	// TODO: take care of nft tables and other stuff like that
@@ -513,7 +543,7 @@ func (c *ClioCass) prepareAccTxnDelete(
 }
 
 func (c *ClioCass) prepareAndExecuteDeleteQueries(
-	file *os.File,
+	marker *Marker,
 	fromLedgerIdx maybe.Maybe[uint64],
 	toLedgerIdx maybe.Maybe[uint64],
 	queryTemplate string,
@@ -556,7 +586,7 @@ func (c *ClioCass) prepareAndExecuteDeleteQueries(
 						if value, exists := c.settings.RangesRead.TokenRange[r.StartRange]; exists {
 							// Check for end range
 							if value == r.EndRange {
-								fmt.Fprintf(file, "%d, %d \n", r.StartRange, r.EndRange)
+								marker.MarkProgress(r.StartRange, r.EndRange)
 								continue
 							}
 						}
@@ -607,7 +637,7 @@ func (c *ClioCass) prepareAndExecuteDeleteQueries(
 						}
 						pageState = nextPageState
 					}
-					fmt.Fprintf(file, "%d, %d \n", r.StartRange, r.EndRange)
+					marker.MarkProgress(r.StartRange, r.EndRange)
 					atomic.AddUint64(&totalRows, rowsRetrieved)
 				}
 				// after finishing deletion of one table, set to nil, because we continue to delete normally now
@@ -743,16 +773,4 @@ func (c *ClioCass) updateLedgerRange(newStartLedger maybe.Maybe[uint64], newEndL
 	}
 
 	return nil
-}
-
-func createAndWriteToFile(tableName string, command *string) (*os.File, error) {
-	file, err := os.Create("continue.txt")
-	if err != nil {
-		fmt.Printf("Error creating file for %s table: %v\n", tableName, err)
-		return nil, err
-	}
-	fmt.Fprintf(file, "%s\n", *command)
-	file.WriteString(fmt.Sprintf("%s\n", tableName))
-
-	return file, nil
 }
