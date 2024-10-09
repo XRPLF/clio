@@ -348,8 +348,7 @@ getMPTIssuanceID(std::shared_ptr<ripple::TxMeta const> const& meta)
 static bool
 canHaveMPTIssuanceID(std::shared_ptr<ripple::STTx const> const& txn, std::shared_ptr<ripple::TxMeta const> const& meta)
 {
-    ripple::TxType const tt{txn->getTxnType()};
-    if (tt != ripple::ttMPTOKEN_ISSUANCE_CREATE)
+    if (txn->getTxnType() != ripple::ttMPTOKEN_ISSUANCE_CREATE)
         return false;
 
     if (meta->getResultTER() != ripple::tesSUCCESS)
@@ -373,6 +372,7 @@ insertMPTIssuanceID(
         return true;
     }
 
+    assert(false);
     return false;
 }
 
