@@ -58,9 +58,13 @@ using testing::Return;
 constexpr static auto const TwoSourcesLedgerResponse = R"({
     "etl_sources": [
         {
+            "ip": "127.0.0.1",
+            "ws_port": "5005",
             "grpc_port": "source1"
         },
         {
+            "ip": "127.0.0.1",
+            "ws_port": "5005",
             "grpc_port": "source2"
         }
     ]
@@ -69,12 +73,18 @@ constexpr static auto const TwoSourcesLedgerResponse = R"({
 constexpr static auto const ThreeSourcesLedgerResponse = R"({
     "etl_sources": [
         {
+            "ip": "127.0.0.1",
+            "ws_port": "5005",
             "grpc_port": "source1"
         },
         {
+            "ip": "127.0.0.1",
+            "ws_port": "5005",
             "grpc_port": "source2"
         },
         {
+            "ip": "127.0.0.1",
+            "ws_port": "5005",
             "grpc_port": "source3"
         }
     ]
@@ -85,7 +95,7 @@ struct LoadBalancerConstructorTests : util::prometheus::WithPrometheus, MockBack
     StrictMockNetworkValidatedLedgersPtr networkManager_;
     StrictMockSourceFactory sourceFactory_{2};
     boost::asio::io_context ioContext_;
-    boost::json::value configJson_{boost::json::parse(TwoSourcesLedgerResponse)};
+    boost::json::value configJson_ = boost::json::parse(TwoSourcesLedgerResponse);
 
     std::unique_ptr<LoadBalancer>
     makeLoadBalancer()

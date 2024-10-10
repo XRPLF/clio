@@ -36,7 +36,7 @@ using namespace util::config;
 
 // config used for load balancer test
 inline ClioConfigDefinition
-getParseLoadBalancerConfig(boost::json::value jsonValues)
+getParseLoadBalancerConfig(boost::json::value val)
 {
     ClioConfigDefinition config{
         {{"forwarding.cache_timeout",
@@ -50,7 +50,8 @@ getParseLoadBalancerConfig(boost::json::value jsonValues)
          {"num_markers", ConfigValue{ConfigType::Integer}.optional()}}
     };
 
-    auto const errors = config.parse(ConfigFileJson{jsonValues.as_object()});
+    ASSERT(val.is_object(), "must be obj");
+    auto const errors = config.parse(ConfigFileJson{val.as_object()});
     ASSERT(!errors.has_value(), "Error parsing Json for clio config for load balancer test");
     return config;
 }
