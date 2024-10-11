@@ -57,9 +57,9 @@ public:
 
     std::optional<boost::system::error_code>
     connect(
-        boost::asio::yield_context yield,
         std::string const& host,
         std::string const& port,
+        boost::asio::yield_context yield,
         std::chrono::steady_clock::duration timeout,
         std::vector<WebHeader> additionalHeaders = {}
     );

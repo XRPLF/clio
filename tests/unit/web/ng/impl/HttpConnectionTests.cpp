@@ -21,6 +21,7 @@
 #include "util/Taggable.hpp"
 #include "util/TestHttpClient.hpp"
 #include "util/TestHttpServer.hpp"
+#include "util/TestWebSocketClient.hpp"
 #include "util/config/Config.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
@@ -29,6 +30,7 @@
 #include <boost/asio/error.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/ssl/context.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
@@ -40,6 +42,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <optional>
 #include <utility>
 
 using namespace web::ng::impl;
@@ -226,16 +229,23 @@ TEST_F(HttpConnectionTests, IsUpgradeRequested_FailedToFetch)
     });
 }
 
-TEST_F(HttpConnectionTests, IsUpgradeRequested_Success)
+TEST_F(HttpConnectionTests, Upgrade)
 {
-    boost::asio::spawn([this](boost::asio::yield_context yield) {
-        auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
+    WebSocketAsyncClient wsClient_{ctx};
+
+    boost::asio::spawn([this, &wsClient_](boost::asio::yield_context yield) {
+        auto maybeError = wsClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
     });
 
     runSpawn([this](boost::asio::yield_context yield) {
         auto connection = acceptConnection(yield);
-        auto result = connection.isUpgradeRequested(yield, std::chrono::milliseconds{1});
-        EXPECT_FALSE(result.has_value());
+        auto const expectedResult = connection.isUpgradeRequested(yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_TRUE(expectedResult.has_value()) << expectedResult.error().message(); }();
+        [&]() { ASSERT_TRUE(expectedResult.value()); }();
+
+        std::optional<boost::asio::ssl::context> sslContext;
+        auto expectedWsConnection = connection.upgrade(sslContext, tagDecoratorFactory_, yield);
+        [&]() { ASSERT_TRUE(expectedWsConnection.has_value()) << expectedWsConnection.error().message(); }();
     });
 }

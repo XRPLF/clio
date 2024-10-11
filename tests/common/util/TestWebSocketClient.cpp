@@ -144,9 +144,9 @@ WebSocketAsyncClient::WebSocketAsyncClient(boost::asio::io_context& ioContext) :
 
 std::optional<boost::system::error_code>
 WebSocketAsyncClient::connect(
-    boost::asio::yield_context yield,
     std::string const& host,
     std::string const& port,
+    boost::asio::yield_context yield,
     std::chrono::steady_clock::duration timeout,
     std::vector<WebHeader> additionalHeaders
 )
@@ -173,6 +173,7 @@ WebSocketAsyncClient::connect(
         }
     }));
     stream_.async_handshake(fmt::format("{}:{}", host, port), "/", yield[error]);
+
     if (error)
         return error;
 
