@@ -54,6 +54,7 @@
 #include <chrono>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -183,7 +184,7 @@ WebSocketAsyncClient::connect(
 std::optional<boost::system::error_code>
 WebSocketAsyncClient::send(
     boost::asio::yield_context yield,
-    std::string const& message,
+    std::string_view message,
     std::chrono::steady_clock::duration timeout
 )
 {

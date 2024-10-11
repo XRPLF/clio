@@ -31,6 +31,7 @@
 #include <chrono>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 class WebSocketSyncClient {
@@ -65,7 +66,7 @@ public:
     );
 
     std::optional<boost::system::error_code>
-    send(boost::asio::yield_context yield, std::string const& message, std::chrono::steady_clock::duration timeout);
+    send(boost::asio::yield_context yield, std::string_view message, std::chrono::steady_clock::duration timeout);
 
     std::expected<std::string, boost::system::error_code>
     receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout);

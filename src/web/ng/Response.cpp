@@ -82,6 +82,12 @@ Response::Response(boost::beast::http::status status, boost::json::object const&
 {
 }
 
+std::string const&
+Response::message() const
+{
+    return message_;
+}
+
 boost::beast::http::response<boost::beast::http::string_body>
 Response::intoHttpResponse() &&
 {

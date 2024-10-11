@@ -74,6 +74,14 @@ public:
     Response(boost::beast::http::status status, boost::json::object const& message, Request const& request);
 
     /**
+     * @brief Get the message of the response.
+     *
+     * @return The message of the response.
+     */
+    std::string const&
+    message() const;
+
+    /**
      * @brief Convert the Response to an HTTP response.
      * @note The Response must be constructed with an HTTP request.
      *

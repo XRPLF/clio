@@ -67,11 +67,24 @@ struct HttpConnectionTests : SyncAsioContextTest {
     }
 };
 
+TEST_F(HttpConnectionTests, wasUpgraded)
+{
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+        auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+    });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto connection = acceptConnection(yield);
+        EXPECT_FALSE(connection.wasUpgraded());
+    });
+}
+
 TEST_F(HttpConnectionTests, Receive)
 {
     request_.set(boost::beast::http::field::user_agent, "test_client");
 
-    boost::asio::spawn([this](boost::asio::yield_context yield) {
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
 
@@ -98,7 +111,7 @@ TEST_F(HttpConnectionTests, Receive)
 
 TEST_F(HttpConnectionTests, ReceiveTimeout)
 {
-    boost::asio::spawn([this](boost::asio::yield_context yield) {
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{1});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
     });
@@ -112,7 +125,7 @@ TEST_F(HttpConnectionTests, ReceiveTimeout)
 
 TEST_F(HttpConnectionTests, ReceiveClientDisconnected)
 {
-    boost::asio::spawn([this](boost::asio::yield_context yield) {
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{1});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
         httpClient_.disconnect();
@@ -130,7 +143,7 @@ TEST_F(HttpConnectionTests, Send)
     Request const request{request_};
     Response const response{http::status::ok, "some response data", request};
 
-    boost::asio::spawn([this, response = response](boost::asio::yield_context yield) mutable {
+    boost::asio::spawn(ctx, [this, response = response](boost::asio::yield_context yield) mutable {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
 
@@ -158,7 +171,7 @@ TEST_F(HttpConnectionTests, Send)
 TEST_F(HttpConnectionTests, SendClientDisconnected)
 {
     Response const response{http::status::ok, "some response data", Request{request_}};
-    boost::asio::spawn([this, response = response](boost::asio::yield_context yield) mutable {
+    boost::asio::spawn(ctx, [this, response = response](boost::asio::yield_context yield) mutable {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{1});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
         httpClient_.disconnect();
@@ -178,7 +191,7 @@ TEST_F(HttpConnectionTests, SendClientDisconnected)
 
 TEST_F(HttpConnectionTests, Close)
 {
-    boost::asio::spawn([this](boost::asio::yield_context yield) {
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
 
@@ -199,7 +212,7 @@ TEST_F(HttpConnectionTests, Close)
 
 TEST_F(HttpConnectionTests, IsUpgradeRequested_GotHttpRequest)
 {
-    boost::asio::spawn([this](boost::asio::yield_context yield) {
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
 
@@ -217,7 +230,7 @@ TEST_F(HttpConnectionTests, IsUpgradeRequested_GotHttpRequest)
 
 TEST_F(HttpConnectionTests, IsUpgradeRequested_FailedToFetch)
 {
-    boost::asio::spawn([this](boost::asio::yield_context yield) {
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
     });
@@ -233,7 +246,7 @@ TEST_F(HttpConnectionTests, Upgrade)
 {
     WebSocketAsyncClient wsClient_{ctx};
 
-    boost::asio::spawn([this, &wsClient_](boost::asio::yield_context yield) {
+    boost::asio::spawn(ctx, [this, &wsClient_](boost::asio::yield_context yield) {
         auto maybeError = wsClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
     });
