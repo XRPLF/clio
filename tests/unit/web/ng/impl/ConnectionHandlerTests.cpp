@@ -1,0 +1,249 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2024, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#include "util/AsioContextTestFixture.hpp"
+#include "util/Taggable.hpp"
+#include "util/UnsupportedType.hpp"
+#include "util/config/Config.hpp"
+#include "web/ng/Connection.hpp"
+#include "web/ng/Error.hpp"
+#include "web/ng/MockConnection.hpp"
+#include "web/ng/Request.hpp"
+#include "web/ng/Response.hpp"
+#include "web/ng/impl/ConnectionHandler.hpp"
+
+#include <boost/asio/error.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/beast/http/error.hpp>
+#include <boost/beast/http/message.hpp>
+#include <boost/beast/http/status.hpp>
+#include <boost/beast/http/string_body.hpp>
+#include <boost/beast/http/verb.hpp>
+#include <boost/beast/websocket/error.hpp>
+#include <boost/json/object.hpp>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include <concepts>
+#include <cstddef>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+
+using namespace web::ng::impl;
+using namespace web::ng;
+using testing::Return;
+namespace beast = boost::beast;
+namespace http = boost::beast::http;
+namespace websocket = boost::beast::websocket;
+
+struct ConnectionHandlerTest : SyncAsioContextTest {
+    ConnectionHandlerTest(ConnectionHandler::ProcessingPolicy policy, std::optional<size_t> maxParallelConnections)
+        : connectionHandler_{policy, maxParallelConnections}
+    {
+    }
+
+    template <typename BoostErrorType>
+    static std::unexpected<Error>
+    makeError(BoostErrorType error)
+    {
+        if constexpr (std::same_as<BoostErrorType, http::error>) {
+            return std::unexpected{http::make_error_code(error)};
+        } else if constexpr (std::same_as<BoostErrorType, websocket::error>) {
+            return std::unexpected{websocket::make_error_code(error)};
+        } else if constexpr (std::same_as<BoostErrorType, boost::asio::error::basic_errors> ||
+                             std::same_as<BoostErrorType, boost::asio::error::misc_errors> ||
+                             std::same_as<BoostErrorType, boost::asio::error::addrinfo_errors> ||
+                             std::same_as<BoostErrorType, boost::asio::error::netdb_errors>) {
+            return std::unexpected{boost::asio::error::make_error_code(error)};
+        } else {
+            static_assert(util::Unsupported<BoostErrorType>, "Wrong error type");
+        }
+    }
+
+    template <typename... Args>
+    static std::expected<Request, Error>
+    makeRequest(Args&&... args)
+    {
+        return Request{std::forward<Args>(args)...};
+    }
+
+    ConnectionHandler connectionHandler_;
+
+    util::TagDecoratorFactory tagDecoratorFactory_{util::Config(boost::json::object{{"log_tag_style", "uint"}})};
+    StrictMockConnectionPtr mockConnection_ =
+        std::make_unique<StrictMockConnection>("1.2.3.4", beast::flat_buffer{}, tagDecoratorFactory_);
+};
+
+struct ConnectionHandlerSequentialProcessingTest : ConnectionHandlerTest {
+    ConnectionHandlerSequentialProcessingTest()
+        : ConnectionHandlerTest(ConnectionHandler::ProcessingPolicy::Sequential, std::nullopt)
+    {
+    }
+};
+
+TEST_F(ConnectionHandlerSequentialProcessingTest, ReceiveError)
+{
+    EXPECT_CALL(*mockConnection_, receive).WillOnce(Return(makeError(http::error::end_of_stream)));
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+TEST_F(ConnectionHandlerSequentialProcessingTest, ReceiveError_CloseConnection)
+{
+    EXPECT_CALL(*mockConnection_, receive).WillOnce(Return(makeError(boost::asio::error::timed_out)));
+    EXPECT_CALL(*mockConnection_, close);
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_NoHandler_Send)
+{
+    EXPECT_CALL(*mockConnection_, receive)
+        .WillOnce(Return(makeRequest("some_request", Request::HttpHeaders{})))
+        .WillOnce(Return(makeError(websocket::error::closed)));
+
+    EXPECT_CALL(*mockConnection_, send).WillOnce([](Response response, auto&&, auto&&) {
+        EXPECT_EQ(response.message(), "WebSocket is not supported by this server");
+        return std::nullopt;
+    });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_BadTarget_Send)
+{
+    std::string const target = "/some/target";
+
+    std::string const requestMessage = "some message";
+    EXPECT_CALL(*mockConnection_, receive)
+        .WillOnce(Return(makeRequest(http::request<http::string_body>{http::verb::get, target, 11, requestMessage})))
+        .WillOnce(Return(makeError(http::error::end_of_stream)));
+
+    EXPECT_CALL(*mockConnection_, send).WillOnce([](Response response, auto&&, auto&&) {
+        EXPECT_EQ(response.message(), "Bad target");
+        auto const httpResponse = std::move(response).intoHttpResponse();
+        EXPECT_EQ(httpResponse.result(), http::status::bad_request);
+        EXPECT_EQ(httpResponse.version(), 11);
+        return std::nullopt;
+    });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send)
+{
+    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+        wsHandlerMock;
+    connectionHandler_.onWs(wsHandlerMock.AsStdFunction());
+
+    std::string const requestMessage = "some message";
+    std::string const responseMessage = "some response";
+    EXPECT_CALL(*mockConnection_, receive)
+        .WillOnce(Return(makeRequest(requestMessage, Request::HttpHeaders{})))
+        .WillOnce(Return(makeError(websocket::error::closed)));
+
+    EXPECT_CALL(wsHandlerMock, Call).WillOnce([&](Request const& request, auto&&, auto&&) {
+        EXPECT_EQ(request.message(), requestMessage);
+        return Response(http::status::ok, responseMessage, request);
+    });
+
+    EXPECT_CALL(*mockConnection_, send).WillOnce([&responseMessage](Response response, auto&&, auto&&) {
+        EXPECT_EQ(response.message(), responseMessage);
+        return std::nullopt;
+    });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send_Loop)
+{
+    std::string const target = "/some/target";
+    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+        postHandlerMock;
+    connectionHandler_.onPost(target, postHandlerMock.AsStdFunction());
+
+    std::string const requestMessage = "some message";
+    std::string const responseMessage = "some response";
+
+    auto const returnRequest =
+        Return(makeRequest(http::request<http::string_body>{http::verb::post, target, 11, requestMessage}));
+    EXPECT_CALL(*mockConnection_, receive)
+        .WillOnce(returnRequest)
+        .WillOnce(returnRequest)
+        .WillOnce(returnRequest)
+        .WillOnce(Return(makeError(http::error::partial_message)));
+
+    EXPECT_CALL(postHandlerMock, Call).Times(3).WillRepeatedly([&](Request const& request, auto&&, auto&&) {
+        EXPECT_EQ(request.message(), requestMessage);
+        return Response(http::status::ok, responseMessage, request);
+    });
+
+    EXPECT_CALL(*mockConnection_, send).Times(3).WillRepeatedly([&responseMessage](Response response, auto&&, auto&&) {
+        EXPECT_EQ(response.message(), responseMessage);
+        return std::nullopt;
+    });
+
+    EXPECT_CALL(*mockConnection_, close);
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_SendError)
+{
+    std::string const target = "/some/target";
+    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+        getHandlerMock;
+
+    std::string const requestMessage = "some message";
+    std::string const responseMessage = "some response";
+
+    connectionHandler_.onGet(target, getHandlerMock.AsStdFunction());
+
+    EXPECT_CALL(*mockConnection_, receive)
+        .WillOnce(Return(makeRequest(http::request<http::string_body>{http::verb::get, target, 11, requestMessage})));
+
+    EXPECT_CALL(getHandlerMock, Call).WillOnce([&](Request const& request, auto&&, auto&&) {
+        EXPECT_EQ(request.message(), requestMessage);
+        return Response(http::status::ok, responseMessage, request);
+    });
+
+    EXPECT_CALL(*mockConnection_, send).WillOnce([&responseMessage](Response response, auto&&, auto&&) {
+        EXPECT_EQ(response.message(), responseMessage);
+        return makeError(http::error::end_of_stream).error();
+    });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}

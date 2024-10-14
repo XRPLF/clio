@@ -82,16 +82,10 @@ public:
 using ConnectionPtr = std::unique_ptr<Connection>;
 
 class ConnectionContext {
-    std::reference_wrapper<Connection> connection_;
+    std::reference_wrapper<Connection const> connection_;
 
 public:
-    explicit ConnectionContext(Connection& connection);
-
-    ConnectionContext(ConnectionContext&&) = delete;
-    ConnectionContext(ConnectionContext const&) = default;
-
-    bool
-    isAdmin() const;
+    explicit ConnectionContext(Connection const& connection);
 };
 
 using ConnectionPtr = std::unique_ptr<Connection>;

@@ -286,13 +286,12 @@ make_Server(util::Config const& config, boost::asio::io_context& context)
     if (not expectedSslContext)
         return std::unexpected{std::move(expectedSslContext).error()};
 
-    impl::ConnectionHandler::ProcessingStrategy processingStrategy{impl::ConnectionHandler::ProcessingStrategy::Parallel
-    };
+    impl::ConnectionHandler::ProcessingPolicy processingStrategy{impl::ConnectionHandler::ProcessingPolicy::Parallel};
     std::optional<size_t> parallelRequestLimit;
 
     auto const processingStrategyStr = serverConfig.valueOr<std::string>("processing_strategy", "parallel");
     if (processingStrategyStr == "sequent") {
-        processingStrategy = impl::ConnectionHandler::ProcessingStrategy::Sequent;
+        processingStrategy = impl::ConnectionHandler::ProcessingPolicy::Sequential;
     } else if (processingStrategyStr == "parallel") {
         parallelRequestLimit = serverConfig.maybeValue<size_t>("parallel_requests_limit");
     } else {

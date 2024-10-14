@@ -95,6 +95,11 @@ ConnectionHandler::StringHash::operator()(std::string const& str) const
     return hash_type{}(str);
 }
 
+ConnectionHandler::ConnectionHandler(ProcessingPolicy processingPolicy, std::optional<size_t> maxParallelRequests)
+    : processingPolicy_{processingPolicy}, maxParallelRequests_{maxParallelRequests}
+{
+}
+
 void
 ConnectionHandler::onGet(std::string const& target, MessageHandler handler)
 {
@@ -116,41 +121,29 @@ ConnectionHandler::onWs(MessageHandler handler)
 void
 ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::yield_context yield)
 {
-    auto& connection = insertConnection(std::move(connectionPtr));
+    auto& connectionRef = *connectionPtr;
+    auto signalConnection = onStop_.connect([&connectionRef, yield]() { connectionRef.close(yield); });
 
-    bool shouldCloseGracefully{false};
+    bool shouldCloseGracefully = false;
 
-    switch (processingStrategy_) {
-        case ProcessingStrategy::Sequent:
-            shouldCloseGracefully = sequentRequestResponseLoop(connection, yield);
+    switch (processingPolicy_) {
+        case ProcessingPolicy::Sequential:
+            shouldCloseGracefully = sequentRequestResponseLoop(connectionRef, yield);
             break;
-        case ProcessingStrategy::Parallel:
-            shouldCloseGracefully = parallelRequestResponseLoop(connection, yield);
+        case ProcessingPolicy::Parallel:
+            shouldCloseGracefully = parallelRequestResponseLoop(connectionRef, yield);
             break;
     }
     if (shouldCloseGracefully)
-        connection.close(yield);
+        connectionRef.close(yield);
 
-    removeConnection(connection);
-    // connection reference is not valid anymore
-}
-
-Connection&
-ConnectionHandler::insertConnection(ConnectionPtr connection)
-{
-    auto connectionsMap = connections_->lock();
-    auto [it, inserted] = connectionsMap->emplace(connection->id(), std::move(connection));
-    ASSERT(inserted, "Connection with id {} already exists", it->second->id());
-    return *it->second;
+    signalConnection.disconnect();
 }
 
 void
-ConnectionHandler::removeConnection(Connection const& connection)
+ConnectionHandler::stop()
 {
-    auto connectionsMap = connections_->lock();
-    auto it = connectionsMap->find(connection.id());
-    ASSERT(it != connectionsMap->end(), "Connection with id {} does not exist", connection.id());
-    connectionsMap->erase(it);
+    onStop_();
 }
 
 bool
@@ -239,7 +232,7 @@ ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::as
                  &ongoingRequestsCounter,
                  &connection,
                  request = std::move(expectedRequest).value()](boost::asio::yield_context innerYield) mutable {
-                    auto maybeCloseConnectionGracefully = processRequest(connection, std::move(request), innerYield);
+                    auto maybeCloseConnectionGracefully = processRequest(connection, request, innerYield);
                     if (maybeCloseConnectionGracefully.has_value()) {
                         if (closeConnectionGracefully.has_value()) {
                             // Close connection gracefully only if both are true. If at least one is false then
@@ -258,7 +251,7 @@ ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::as
 }
 
 std::optional<bool>
-ConnectionHandler::processRequest(Connection& connection, Request&& request, boost::asio::yield_context yield)
+ConnectionHandler::processRequest(Connection& connection, Request const& request, boost::asio::yield_context yield)
 {
     auto response = handleRequest(connection.context(), request, yield);
 

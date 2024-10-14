@@ -134,6 +134,7 @@ target_sources(
           web/impl/AdminVerificationTests.cpp
           web/ng/ResponseTests.cpp
           web/ng/RequestTests.cpp
+          web/ng/impl/ConnectionHandlerTests.cpp
           web/ng/impl/HttpConnectionTests.cpp
           web/ng/impl/ServerSslContextTests.cpp
           web/ng/impl/WsConnectionTests.cpp

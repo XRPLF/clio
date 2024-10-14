@@ -50,10 +50,20 @@ Connection::Connection(
 {
 }
 
+ConnectionContext
+Connection::context() const
+{
+    return ConnectionContext{*this};
+}
+
 std::string const&
 Connection::ip() const
 {
     return ip_;
+}
+
+ConnectionContext::ConnectionContext(Connection const& connection) : connection_{connection}
+{
 }
 
 }  // namespace web::ng

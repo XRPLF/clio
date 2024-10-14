@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/Mutex.hpp"
 #include "util/log/Logger.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -28,10 +27,11 @@
 #include "web/ng/Response.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/signals2/signal.hpp>
+#include <boost/signals2/variadic_signal.hpp>
 
 #include <cstddef>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -41,7 +41,7 @@ namespace web::ng::impl {
 
 class ConnectionHandler {
 public:
-    enum class ProcessingStrategy { Sequent, Parallel };
+    enum class ProcessingPolicy { Sequential, Parallel };
 
     struct StringHash {
         using hash_type = std::hash<std::string_view>;
@@ -61,18 +61,17 @@ private:
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
 
-    ProcessingStrategy processingStrategy_;
+    ProcessingPolicy processingPolicy_;
     std::optional<size_t> maxParallelRequests_;
 
     TargetToHandlerMap getHandlers_;
     TargetToHandlerMap postHandlers_;
     std::optional<MessageHandler> wsHandler_;
 
-    using ConnectionsMap = std::unordered_map<size_t, ConnectionPtr>;
-    std::unique_ptr<util::Mutex<ConnectionsMap>> connections_{std::make_unique<util::Mutex<ConnectionsMap>>()};
+    boost::signals2::signal<void()> onStop_;
 
 public:
-    ConnectionHandler(ProcessingStrategy processingStrategy, std::optional<size_t> maxParallelRequests_);
+    ConnectionHandler(ProcessingPolicy processingPolicy, std::optional<size_t> maxParallelRequests);
 
     void
     onGet(std::string const& target, MessageHandler handler);
@@ -86,25 +85,10 @@ public:
     void
     processConnection(ConnectionPtr connection, boost::asio::yield_context yield);
 
-private:
-    /**
-     * @brief Insert a connection into the connections map.
-     *
-     * @param connection The connection to insert.
-     * @return A reference to the inserted connection
-     */
-    Connection&
-    insertConnection(ConnectionPtr connection);
-
-    /**
-     * @brief Remove a connection from the connections map.
-     * @note After this call, the connection reference is no longer valid.
-     *
-     * @param connection The connection to remove.
-     */
     void
-    removeConnection(Connection const& connection);
+    stop();
 
+private:
     /**
      * @brief Handle an error.
      *
@@ -129,7 +113,7 @@ private:
     parallelRequestResponseLoop(Connection& connection, boost::asio::yield_context yield);
 
     std::optional<bool>
-    processRequest(Connection& connection, Request&& request, boost::asio::yield_context yield);
+    processRequest(Connection& connection, Request const& request, boost::asio::yield_context yield);
 
     /**
      * @brief Handle a request.
