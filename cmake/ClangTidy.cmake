@@ -8,7 +8,7 @@ if (lint)
     endif ()
     message(STATUS "Using clang-tidy from CLIO_CLANG_TIDY_BIN")
   else ()
-    find_program(_CLANG_TIDY_BIN NAMES "clang-tidy-18" "clang-tidy" REQUIRED)
+    find_program(_CLANG_TIDY_BIN NAMES "clang-tidy-19" "clang-tidy" REQUIRED)
   endif ()
 
   if (NOT _CLANG_TIDY_BIN)
