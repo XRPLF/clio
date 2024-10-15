@@ -149,6 +149,7 @@ TEST(ConfigValue, PositiveDoubleConstraint)
     auto const doubleCons{PositiveDouble{}};
     EXPECT_FALSE(doubleCons.checkConstraint(0.2));
     EXPECT_FALSE(doubleCons.checkConstraint(5.54));
+    EXPECT_FALSE(doubleCons.checkConstraint(3));
     EXPECT_TRUE(doubleCons.checkConstraint("-5"));
     EXPECT_EQ(doubleCons.checkConstraint("-5")->error, "Double number must be of type int or double");
     EXPECT_EQ(doubleCons.checkConstraint(-5.6)->error, "Double number must be greater than or equal to 0");
