@@ -28,8 +28,11 @@
 #include "web/ng/Response.hpp"
 #include "web/ng/impl/ConnectionHandler.hpp"
 
+#include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/http/error.hpp>
@@ -42,10 +45,13 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <concepts>
 #include <cstddef>
+#include <iostream>
 #include <memory>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <utility>
 
@@ -109,6 +115,7 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, ReceiveError)
         connectionHandler_.processConnection(std::move(mockConnection_), yield);
     });
 }
+
 TEST_F(ConnectionHandlerSequentialProcessingTest, ReceiveError_CloseConnection)
 {
     EXPECT_CALL(*mockConnection_, receive).WillOnce(Return(makeError(boost::asio::error::timed_out)));
@@ -245,5 +252,248 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_SendError)
 
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
+{
+    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+        wsHandlerMock;
+    connectionHandler_.onWs(wsHandlerMock.AsStdFunction());
+
+    std::string const requestMessage = "some message";
+    std::string const responseMessage = "some response";
+    bool connectionClosed = false;
+    EXPECT_CALL(*mockConnection_, receive)
+        .Times(4)
+        .WillRepeatedly([&](auto&&, auto&&) -> std::expected<Request, Error> {
+            if (connectionClosed) {
+                return makeError(websocket::error::closed);
+            }
+            return makeRequest(requestMessage, Request::HttpHeaders{});
+        });
+
+    EXPECT_CALL(wsHandlerMock, Call).Times(3).WillRepeatedly([&](Request const& request, auto&&, auto&&) {
+        EXPECT_EQ(request.message(), requestMessage);
+        return Response(http::status::ok, responseMessage, request);
+    });
+
+    size_t numCalls = 0;
+    EXPECT_CALL(*mockConnection_, send).Times(3).WillRepeatedly([&](Response response, auto&&, auto&&) {
+        EXPECT_EQ(response.message(), responseMessage);
+
+        ++numCalls;
+        if (numCalls == 3)
+            connectionHandler_.stop();
+
+        return std::nullopt;
+    });
+
+    EXPECT_CALL(*mockConnection_, close).WillOnce([&connectionClosed]() { connectionClosed = true; });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
+struct ConnectionHandlerParallelProcessingTest : ConnectionHandlerTest {
+    static size_t const maxParallelRequests = 3;
+    ConnectionHandlerParallelProcessingTest()
+        : ConnectionHandlerTest(ConnectionHandler::ProcessingPolicy::Parallel, maxParallelRequests)
+    {
+    }
+
+    static void
+    asyncSleep(boost::asio::yield_context yield, std::chrono::steady_clock::duration duration)
+    {
+        boost::asio::steady_timer timer{yield.get_executor()};
+        std::cout << "sleep starts" << std::endl;
+        timer.expires_after(duration);
+        timer.async_wait(yield);
+        std::cout << "sleep ends" << std::endl;
+    }
+};
+
+TEST_F(ConnectionHandlerParallelProcessingTest, ReceiveError)
+{
+    EXPECT_CALL(*mockConnection_, receive).WillOnce(Return(makeError(http::error::end_of_stream)));
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send)
+{
+    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+        wsHandlerMock;
+    connectionHandler_.onWs(wsHandlerMock.AsStdFunction());
+
+    std::string const requestMessage = "some message";
+    std::string const responseMessage = "some response";
+    EXPECT_CALL(*mockConnection_, receive)
+        .WillOnce(Return(makeRequest(requestMessage, Request::HttpHeaders{})))
+        .WillOnce(Return(makeError(websocket::error::closed)));
+
+    EXPECT_CALL(wsHandlerMock, Call).WillOnce([&](Request const& request, auto&&, auto&&) {
+        EXPECT_EQ(request.message(), requestMessage);
+        return Response(http::status::ok, responseMessage, request);
+    });
+
+    EXPECT_CALL(*mockConnection_, send).WillOnce([&responseMessage](Response response, auto&&, auto&&) {
+        EXPECT_EQ(response.message(), responseMessage);
+        return std::nullopt;
+    });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop)
+{
+    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+        wsHandlerMock;
+    connectionHandler_.onWs(wsHandlerMock.AsStdFunction());
+
+    std::string const requestMessage = "some message";
+    std::string const responseMessage = "some response";
+
+    auto const returnRequest = [&](auto&&, auto&&) { return makeRequest(requestMessage, Request::HttpHeaders{}); };
+    EXPECT_CALL(*mockConnection_, receive)
+        .WillOnce(returnRequest)
+        .WillOnce(returnRequest)
+        .WillOnce(Return(makeError(websocket::error::closed)));
+
+    EXPECT_CALL(wsHandlerMock, Call).Times(2).WillRepeatedly([&](Request const& request, auto&&, auto&&) {
+        EXPECT_EQ(request.message(), requestMessage);
+        return Response(http::status::ok, responseMessage, request);
+    });
+
+    EXPECT_CALL(*mockConnection_, send).Times(2).WillRepeatedly([&responseMessage](Response response, auto&&, auto&&) {
+        EXPECT_EQ(response.message(), responseMessage);
+        return std::nullopt;
+    });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooManyRequest)
+{
+    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+        wsHandlerMock;
+    connectionHandler_.onWs(wsHandlerMock.AsStdFunction());
+
+    std::string const requestMessage = "some message";
+    std::string const responseMessage = "some response";
+
+    auto const returnRequest = [&](auto&&, auto&&) { return makeRequest(requestMessage, Request::HttpHeaders{}); };
+    testing::Sequence sequence;
+    EXPECT_CALL(*mockConnection_, receive)
+        .WillOnce(returnRequest)
+        .WillOnce(returnRequest)
+        .WillOnce(returnRequest)
+        .WillOnce(returnRequest)
+        .WillOnce(returnRequest)
+        .WillOnce(Return(makeError(websocket::error::closed)));
+
+    EXPECT_CALL(wsHandlerMock, Call)
+        .Times(3)
+        .WillRepeatedly([&](Request const& request, auto&&, boost::asio::yield_context yield) {
+            EXPECT_EQ(request.message(), requestMessage);
+            asyncSleep(yield, std::chrono::milliseconds{3});
+            std::cout << "After sleep" << std::endl;
+            return Response(http::status::ok, responseMessage, request);
+        });
+
+    EXPECT_CALL(
+        *mockConnection_,
+        send(
+            testing::ResultOf(
+                [](Response response) {
+                    std::cout << "1 " << response.message() << std::endl;
+                    return response.message();
+                },
+                responseMessage
+            ),
+            testing::_,
+            testing::_
+        )
+    )
+        .Times(3)
+        .WillRepeatedly(Return(std::nullopt));
+
+    EXPECT_CALL(
+        *mockConnection_,
+        send(
+            testing::ResultOf(
+                [](Response response) {
+                    std::cout << "2 " << response.message() << std::endl;
+                    return response.message();
+                },
+                "Too many requests for one session"
+            ),
+            testing::_,
+            testing::_
+        )
+    )
+        .Times(2)
+        .WillRepeatedly(Return(std::nullopt));
+
+    // .WillRepeatedly([&](Response response, auto&&, auto&&) {
+    //     if (handlerCallCounter < 3) {
+    //         EXPECT_EQ(response.message(), responseMessage);
+    //         return std::nullopt;
+    //     }
+    //     EXPECT_EQ(response.message(), "Too many requests for one session");
+    // return std::nullopt;
+    // });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
+TEST_F(ConnectionHandlerParallelProcessingTest, myTest)
+{
+    runSpawn([](boost::asio::yield_context yield) {
+        boost::asio::steady_timer sync{yield.get_executor(), boost::asio::steady_timer::clock_type::duration::max()};
+
+        int childNumber = 0;
+        boost::asio::spawn(yield, [&](boost::asio::yield_context innerYield) {
+            ++childNumber;
+
+            std::cout << "I'm child coroutine" << std::endl;
+            boost::asio::steady_timer t{innerYield.get_executor()};
+            t.expires_after(std::chrono::milliseconds{20});
+            t.async_wait(innerYield);
+            std::cout << "Child 1 done" << std::endl;
+
+            --childNumber;
+            if (childNumber == 0)
+                sync.cancel();
+        });
+
+        std::cout << "Parent: between" << std::endl;
+
+        boost::asio::spawn(yield, [&](auto&& innerYield) {
+            ++childNumber;
+
+            std::cout << "I'm child coroutine 2" << std::endl;
+            boost::asio::steady_timer t{innerYield.get_executor()};
+            t.expires_after(std::chrono::milliseconds{30});
+            t.async_wait(innerYield);
+            std::cout << "Child 2 done" << std::endl;
+
+            --childNumber;
+            if (childNumber == 0)
+                sync.cancel();
+        });
+
+        boost::system::error_code error;
+        sync.async_wait(yield[error]);
+        std::cout << "Parent done" << std::endl;
     });
 }

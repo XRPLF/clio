@@ -27,9 +27,12 @@
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 
+#include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/error.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/status.hpp>
@@ -39,6 +42,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <utility>
 
 namespace web::ng::impl {
@@ -211,15 +215,16 @@ ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::as
 
     while (not closeConnectionGracefully.has_value()) {
         auto expectedRequest = connection.receive(yield);
-        if (not expectedRequest)
+        if (not expectedRequest) {
             return handleError(expectedRequest.error(), connection);
+        }
 
         ++ongoingRequestsCounter;
         if (maxParallelRequests_.has_value() && ongoingRequestsCounter > *maxParallelRequests_) {
             connection.send(
                 Response{
                     boost::beast::http::status::too_many_requests,
-                    "Too many request for one session",
+                    "Too many requests for one session",
                     expectedRequest.value()
                 },
                 yield
