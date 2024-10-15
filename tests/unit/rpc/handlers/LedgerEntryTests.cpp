@@ -2960,7 +2960,7 @@ TEST_F(RPCLedgerEntryDeathTest, RangeNotAvailable)
         ));
         checkCalled = true;
         EXPECT_DEATH(
-            { [[maybe_unused]] auto __ = handler.process(req, Context{yield}); }, "Ledger range must be available"
+            { [[maybe_unused]] auto _ = handler.process(req, Context{yield}); }, "Ledger range must be available"
         );
     });
 
