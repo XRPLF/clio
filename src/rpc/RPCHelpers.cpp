@@ -432,7 +432,7 @@ ledgerHeaderFromRequest(std::shared_ptr<data::BackendInterface const> const& bac
             }
         } else if (indexValue.is_int64()) {
             ledgerSequence = indexValue.as_int64();
-}
+        }
     } else {
         ledgerSequence = ctx.range.maxSequence;
     }
