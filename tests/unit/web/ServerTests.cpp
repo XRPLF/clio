@@ -22,6 +22,7 @@
 #include "util/MockPrometheus.hpp"
 #include "util/TestHttpSyncClient.hpp"
 #include "util/config/Config.hpp"
+#include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 #include "web/Server.hpp"
@@ -42,6 +43,7 @@
 #include <boost/json/value.hpp>
 #include <boost/system/system_error.hpp>
 #include <fmt/core.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <condition_variable>
@@ -109,7 +111,7 @@ addSslConfig(boost::json::value config)
     return config;
 }
 
-struct WebServerTest : NoLoggerFixture {
+struct WebServerTest : NoLoggerFixture, prometheus::WithMockPrometheus {
     ~WebServerTest() override
     {
         work.reset();
@@ -138,6 +140,9 @@ struct WebServerTest : NoLoggerFixture {
     dosguard::IntervalSweepHandler sweepHandlerOverload{cfgOverload, ctxSync, dosGuardOverload};
     // this ctx is for http server
     boost::asio::io_context ctx;
+
+    ::testing::StrictMock<util::prometheus::MockCounterImplInt>& wsMessagesCounterMock =
+        makeMock<util::prometheus::GaugeInt>("ws_messages_length", "");
 
 private:
     std::optional<boost::asio::io_service::work> work;
@@ -214,6 +219,9 @@ TEST_F(WebServerTest, Http)
 
 TEST_F(WebServerTest, Ws)
 {
+    EXPECT_CALL(wsMessagesCounterMock, add(1));
+    EXPECT_CALL(wsMessagesCounterMock, add(-1));
+
     auto e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     WebSocketSyncClient wsClient;
@@ -236,6 +244,9 @@ TEST_F(WebServerTest, HttpInternalError)
 
 TEST_F(WebServerTest, WsInternalError)
 {
+    EXPECT_CALL(wsMessagesCounterMock, add(1));
+    EXPECT_CALL(wsMessagesCounterMock, add(-1));
+
     auto e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     WebSocketSyncClient wsClient;
@@ -250,6 +261,9 @@ TEST_F(WebServerTest, WsInternalError)
 
 TEST_F(WebServerTest, WsInternalErrorNotJson)
 {
+    EXPECT_CALL(wsMessagesCounterMock, add(1));
+    EXPECT_CALL(wsMessagesCounterMock, add(-1));
+
     auto e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     WebSocketSyncClient wsClient;
@@ -296,6 +310,9 @@ TEST_F(WebServerTest, Https)
 
 TEST_F(WebServerTest, Wss)
 {
+    EXPECT_CALL(wsMessagesCounterMock, add(1));
+    EXPECT_CALL(wsMessagesCounterMock, add(-1));
+
     auto e = std::make_shared<EchoExecutor>();
     cfg = Config{addSslConfig(generateJSONWithDynamicPort(port))};
     auto server = makeServerSync(cfg, ctx, dosGuard, e);
@@ -321,6 +338,9 @@ TEST_F(WebServerTest, HttpRequestOverload)
 
 TEST_F(WebServerTest, WsRequestOverload)
 {
+    EXPECT_CALL(wsMessagesCounterMock, add(1)).Times(2);
+    EXPECT_CALL(wsMessagesCounterMock, add(-1)).Times(2);
+
     auto e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
@@ -352,6 +372,9 @@ TEST_F(WebServerTest, HttpPayloadOverload)
 
 TEST_F(WebServerTest, WsPayloadOverload)
 {
+    EXPECT_CALL(wsMessagesCounterMock, add(1));
+    EXPECT_CALL(wsMessagesCounterMock, add(-1));
+
     std::string const s100(100, 'a');
     auto e = std::make_shared<EchoExecutor>();
     auto server = makeServerSync(cfg, ctx, dosGuardOverload, e);

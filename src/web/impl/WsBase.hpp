@@ -126,7 +126,8 @@ public:
     ~WsBase() override
     {
         LOG(perfLog_.debug()) << tag() << "session closed";
-        messagesLength_.get() -= messages_.size();
+        if (!messages_.empty())
+            messagesLength_.get() -= messages_.size();
         dosGuard_.get().decrement(clientIp);
     }
 
