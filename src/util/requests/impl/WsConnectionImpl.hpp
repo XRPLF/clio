@@ -134,7 +134,7 @@ private:
         // The timer below can be called with no error code even if the operation is completed before the timeout, so we
         // need an additional flag here
         timer.async_wait([&cancellationSignal, isCompleted](boost::system::error_code errorCode) {
-            if (!errorCode and not *isCompleted)
+            if (!errorCode and not*isCompleted)
                 cancellationSignal.emit(boost::asio::cancellation_type::terminal);
         });
         operation(cyield);
