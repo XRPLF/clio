@@ -212,7 +212,7 @@ ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::as
     // atomic_bool is not needed here because everything happening on coroutine's strand
     bool stop = false;
     bool closeConnectionGracefully = true;
-    util::CoroutineGroup tasksGroup{yield};
+    util::CoroutineGroup tasksGroup{yield, maxParallelRequests_};
 
     while (not stop) {
         auto expectedRequest = connection.receive(yield);
@@ -223,7 +223,20 @@ ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::as
             break;
         }
 
-        if (maxParallelRequests_.has_value() && tasksGroup.size() >= *maxParallelRequests_) {
+        bool const spawnSuccess = tasksGroup.spawn(
+            yield,  // spawn on the same strand
+            [this, &stop, &closeConnectionGracefully, &connection, request = std::move(expectedRequest).value()](
+                boost::asio::yield_context innerYield
+            ) mutable {
+                auto maybeCloseConnectionGracefully = processRequest(connection, request, innerYield);
+                if (maybeCloseConnectionGracefully.has_value()) {
+                    stop = true;
+                    closeConnectionGracefully &= maybeCloseConnectionGracefully.value();
+                }
+            }
+        );
+
+        if (not spawnSuccess) {
             connection.send(
                 Response{
                     boost::beast::http::status::too_many_requests,
@@ -231,19 +244,6 @@ ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::as
                     expectedRequest.value()
                 },
                 yield
-            );
-        } else {
-            tasksGroup.spawn(
-                yield,  // spawn on the same strand
-                [this, &stop, &closeConnectionGracefully, &connection, request = std::move(expectedRequest).value()](
-                    boost::asio::yield_context innerYield
-                ) mutable {
-                    auto maybeCloseConnectionGracefully = processRequest(connection, request, innerYield);
-                    if (maybeCloseConnectionGracefully.has_value()) {
-                        stop = true;
-                        closeConnectionGracefully &= maybeCloseConnectionGracefully.value();
-                    }
-                }
             );
         }
     }

@@ -24,6 +24,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <optional>
 
 namespace util {
 
@@ -33,6 +34,7 @@ namespace util {
  */
 class CoroutineGroup {
     boost::asio::steady_timer timer_;
+    std::optional<int> maxChildren_;
     int childrenCounter_{0};
 
 public:
@@ -40,8 +42,17 @@ public:
      * @brief Construct a new Coroutine Group object
      *
      * @param yield The yield context to use for the internal timer
+     * @param maxChildren The maximum number of coroutines that can be spawned at the same time. If not provided, there
+     * is no limit
      */
-    CoroutineGroup(boost::asio::yield_context yield);
+    CoroutineGroup(boost::asio::yield_context yield, std::optional<int> maxChildren = std::nullopt);
+
+    /**
+     * @brief Destroy the Coroutine Group object
+     *
+     * @note asyncWait() must be called before the object is destroyed
+     */
+    ~CoroutineGroup();
 
     /**
      * @brief Spawn a new coroutine in the group
@@ -49,12 +60,16 @@ public:
      * @param yield The yield context to use for the coroutine (it should be the same as the one used in the
      * constructor)
      * @param fn The function to execute
+     * @return true If the coroutine was spawned successfully. false if the maximum number of coroutines has been
+     * reached
      */
-    void
+    bool
     spawn(boost::asio::yield_context yield, std::function<void(boost::asio::yield_context)> fn);
 
     /**
      * @brief Wait for all the coroutines in the group to finish
+     *
+     * @note This method must be called before the object is destroyed
      *
      * @param yield The yield context to use for the internal timer
      */
