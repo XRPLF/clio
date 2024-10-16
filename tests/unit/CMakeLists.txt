@@ -104,6 +104,7 @@ target_sources(
           util/async/AnyStrandTests.cpp
           util/async/AsyncExecutionContextTests.cpp
           util/BatchingTests.cpp
+          util/CoroutineGroupTests.cpp
           util/LedgerUtilsTests.cpp
           # Prometheus support
           util/prometheus/BoolTests.cpp
