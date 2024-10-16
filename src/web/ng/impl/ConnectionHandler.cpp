@@ -20,6 +20,7 @@
 #include "web/ng/impl/ConnectionHandler.hpp"
 
 #include "util/Assert.hpp"
+#include "util/CoroutineGroup.hpp"
 #include "util/log/Logger.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
@@ -209,49 +210,45 @@ bool
 ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::asio::yield_context yield)
 {
     // atomic_bool is not needed here because everything happening on coroutine's strand
-    std::optional<bool> closeConnectionGracefully;
-    size_t ongoingRequestsCounter{0};
+    bool stop = false;
+    bool closeConnectionGracefully = true;
+    util::CoroutineGroup tasksGroup{yield};
 
-    while (not closeConnectionGracefully.has_value()) {
+    while (not stop) {
         auto expectedRequest = connection.receive(yield);
         if (not expectedRequest) {
-            return handleError(expectedRequest.error(), connection);
+            auto const closeGracefully = handleError(expectedRequest.error(), connection);
+            stop = true;
+            closeConnectionGracefully &= closeGracefully;
+            break;
         }
 
-        ++ongoingRequestsCounter;
-        if (maxParallelRequests_.has_value() && ongoingRequestsCounter > *maxParallelRequests_) {
+        if (maxParallelRequests_.has_value() && tasksGroup.size() >= *maxParallelRequests_) {
             connection.send(
                 Response{
                     boost::beast::http::status::too_many_requests,
-                    "Too many requests for one session",
+                    "Too many requests for one connection",
                     expectedRequest.value()
                 },
                 yield
             );
         } else {
-            boost::asio::spawn(
+            tasksGroup.spawn(
                 yield,  // spawn on the same strand
-                [this,
-                 &closeConnectionGracefully,
-                 &ongoingRequestsCounter,
-                 &connection,
-                 request = std::move(expectedRequest).value()](boost::asio::yield_context innerYield) mutable {
+                [this, &stop, &closeConnectionGracefully, &connection, request = std::move(expectedRequest).value()](
+                    boost::asio::yield_context innerYield
+                ) mutable {
                     auto maybeCloseConnectionGracefully = processRequest(connection, request, innerYield);
                     if (maybeCloseConnectionGracefully.has_value()) {
-                        if (closeConnectionGracefully.has_value()) {
-                            // Close connection gracefully only if both are true. If at least one is false then
-                            // connection is already closed.
-                            closeConnectionGracefully = *closeConnectionGracefully && *maybeCloseConnectionGracefully;
-                        } else {
-                            closeConnectionGracefully = maybeCloseConnectionGracefully;
-                        }
+                        stop = true;
+                        closeConnectionGracefully &= maybeCloseConnectionGracefully.value();
                     }
-                    --ongoingRequestsCounter;
                 }
             );
         }
     }
-    return *closeConnectionGracefully;
+    tasksGroup.asyncWait(yield);
+    return closeConnectionGracefully;
 }
 
 std::optional<bool>

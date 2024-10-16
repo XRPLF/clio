@@ -48,10 +48,8 @@
 #include <chrono>
 #include <concepts>
 #include <cstddef>
-#include <iostream>
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <utility>
 
@@ -307,10 +305,8 @@ struct ConnectionHandlerParallelProcessingTest : ConnectionHandlerTest {
     asyncSleep(boost::asio::yield_context yield, std::chrono::steady_clock::duration duration)
     {
         boost::asio::steady_timer timer{yield.get_executor()};
-        std::cout << "sleep starts" << std::endl;
         timer.expires_after(duration);
         timer.async_wait(yield);
-        std::cout << "sleep ends" << std::endl;
     }
 };
 
@@ -404,20 +400,13 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooMany
         .WillRepeatedly([&](Request const& request, auto&&, boost::asio::yield_context yield) {
             EXPECT_EQ(request.message(), requestMessage);
             asyncSleep(yield, std::chrono::milliseconds{3});
-            std::cout << "After sleep" << std::endl;
             return Response(http::status::ok, responseMessage, request);
         });
 
     EXPECT_CALL(
         *mockConnection_,
         send(
-            testing::ResultOf(
-                [](Response response) {
-                    std::cout << "1 " << response.message() << std::endl;
-                    return response.message();
-                },
-                responseMessage
-            ),
+            testing::ResultOf([](Response response) { return response.message(); }, responseMessage),
             testing::_,
             testing::_
         )
@@ -429,11 +418,7 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooMany
         *mockConnection_,
         send(
             testing::ResultOf(
-                [](Response response) {
-                    std::cout << "2 " << response.message() << std::endl;
-                    return response.message();
-                },
-                "Too many requests for one session"
+                [](Response response) { return response.message(); }, "Too many requests for one connection"
             ),
             testing::_,
             testing::_
@@ -442,58 +427,7 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooMany
         .Times(2)
         .WillRepeatedly(Return(std::nullopt));
 
-    // .WillRepeatedly([&](Response response, auto&&, auto&&) {
-    //     if (handlerCallCounter < 3) {
-    //         EXPECT_EQ(response.message(), responseMessage);
-    //         return std::nullopt;
-    //     }
-    //     EXPECT_EQ(response.message(), "Too many requests for one session");
-    // return std::nullopt;
-    // });
-
     runSpawn([this](boost::asio::yield_context yield) {
         connectionHandler_.processConnection(std::move(mockConnection_), yield);
-    });
-}
-
-TEST_F(ConnectionHandlerParallelProcessingTest, myTest)
-{
-    runSpawn([](boost::asio::yield_context yield) {
-        boost::asio::steady_timer sync{yield.get_executor(), boost::asio::steady_timer::clock_type::duration::max()};
-
-        int childNumber = 0;
-        boost::asio::spawn(yield, [&](boost::asio::yield_context innerYield) {
-            ++childNumber;
-
-            std::cout << "I'm child coroutine" << std::endl;
-            boost::asio::steady_timer t{innerYield.get_executor()};
-            t.expires_after(std::chrono::milliseconds{20});
-            t.async_wait(innerYield);
-            std::cout << "Child 1 done" << std::endl;
-
-            --childNumber;
-            if (childNumber == 0)
-                sync.cancel();
-        });
-
-        std::cout << "Parent: between" << std::endl;
-
-        boost::asio::spawn(yield, [&](auto&& innerYield) {
-            ++childNumber;
-
-            std::cout << "I'm child coroutine 2" << std::endl;
-            boost::asio::steady_timer t{innerYield.get_executor()};
-            t.expires_after(std::chrono::milliseconds{30});
-            t.async_wait(innerYield);
-            std::cout << "Child 2 done" << std::endl;
-
-            --childNumber;
-            if (childNumber == 0)
-                sync.cancel();
-        });
-
-        boost::system::error_code error;
-        sync.async_wait(yield[error]);
-        std::cout << "Parent done" << std::endl;
     });
 }

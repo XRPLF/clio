@@ -22,6 +22,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 
+#include <cstddef>
 #include <functional>
 
 namespace util {
@@ -33,7 +34,6 @@ namespace util {
 class CoroutineGroup {
     boost::asio::steady_timer timer_;
     int childrenCounter_{0};
-    bool finished_ = false;
 
 public:
     /**
@@ -60,6 +60,14 @@ public:
      */
     void
     asyncWait(boost::asio::yield_context yield);
+
+    /**
+     * @brief Get the number of coroutines in the group
+     *
+     * @return size_t The number of coroutines in the group
+     */
+    size_t
+    size() const;
 };
 
 }  // namespace util

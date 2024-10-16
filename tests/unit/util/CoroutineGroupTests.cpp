@@ -44,21 +44,61 @@ TEST_F(CoroutineGroupTests, spawnWait)
 
     runSpawn([this](boost::asio::yield_context yield) {
         CoroutineGroup group{yield};
+
         group.spawn(yield, [&](boost::asio::yield_context yield) {
             boost::asio::steady_timer timer{yield.get_executor(), std::chrono::milliseconds{1}};
             timer.async_wait(yield);
             callback1_.Call();
         });
+        EXPECT_EQ(group.size(), 1);
+
         group.spawn(yield, [&](boost::asio::yield_context yield) {
             boost::asio::steady_timer timer{yield.get_executor(), std::chrono::milliseconds{2}};
             timer.async_wait(yield);
             callback2_.Call();
         });
+        EXPECT_EQ(group.size(), 2);
+
         group.asyncWait(yield);
+        EXPECT_EQ(group.size(), 0);
+
         callback3_.Call();
     });
 }
 
+TEST_F(CoroutineGroupTests, spawnWaitSpawnWait)
+{
+    testing::Sequence sequence;
+    EXPECT_CALL(callback1_, Call).InSequence(sequence);
+    EXPECT_CALL(callback2_, Call).InSequence(sequence);
+    EXPECT_CALL(callback3_, Call).InSequence(sequence);
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        CoroutineGroup group{yield};
+
+        group.spawn(yield, [&](boost::asio::yield_context yield) {
+            boost::asio::steady_timer timer{yield.get_executor(), std::chrono::milliseconds{1}};
+            timer.async_wait(yield);
+            callback1_.Call();
+        });
+        EXPECT_EQ(group.size(), 1);
+
+        group.asyncWait(yield);
+        EXPECT_EQ(group.size(), 0);
+
+        group.spawn(yield, [&](boost::asio::yield_context yield) {
+            boost::asio::steady_timer timer{yield.get_executor(), std::chrono::milliseconds{1}};
+            timer.async_wait(yield);
+            callback2_.Call();
+        });
+        EXPECT_EQ(group.size(), 1);
+
+        group.asyncWait(yield);
+        EXPECT_EQ(group.size(), 0);
+
+        callback3_.Call();
+    });
+}
 TEST_F(CoroutineGroupTests, childCoroutinesFinishBeforeWait)
 {
     testing::Sequence sequence;
@@ -84,5 +124,17 @@ TEST_F(CoroutineGroupTests, childCoroutinesFinishBeforeWait)
 
         group.asyncWait(yield);
         callback3_.Call();
+    });
+}
+
+TEST_F(CoroutineGroupTests, emptyGroup)
+{
+    testing::Sequence sequence;
+    EXPECT_CALL(callback1_, Call).InSequence(sequence);
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        CoroutineGroup group{yield};
+        group.asyncWait(yield);
+        callback1_.Call();
     });
 }

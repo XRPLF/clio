@@ -19,11 +19,10 @@
 
 #include "util/CoroutineGroup.hpp"
 
-#include "util/Assert.hpp"
-
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 
+#include <cstddef>
 #include <functional>
 #include <utility>
 
@@ -37,27 +36,29 @@ CoroutineGroup::CoroutineGroup(boost::asio::yield_context yield)
 void
 CoroutineGroup::spawn(boost::asio::yield_context yield, std::function<void(boost::asio::yield_context)> fn)
 {
-    ASSERT(not finished_, "Can't spawn a coroutine on finished group");
-
     ++childrenCounter_;
     boost::asio::spawn(yield, [this, fn = std::move(fn)](boost::asio::yield_context yield) {
         fn(yield);
         --childrenCounter_;
-        if (childrenCounter_ == 0) {
+        if (childrenCounter_ == 0)
             timer_.cancel();
-            finished_ = true;
-        }
     });
 }
 
 void
 CoroutineGroup::asyncWait(boost::asio::yield_context yield)
 {
-    if (finished_)
+    if (childrenCounter_ == 0)
         return;
 
     boost::system::error_code error;
     timer_.async_wait(yield[error]);
+}
+
+size_t
+CoroutineGroup::size() const
+{
+    return childrenCounter_;
 }
 
 }  // namespace util
