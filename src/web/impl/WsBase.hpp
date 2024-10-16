@@ -150,6 +150,7 @@ public:
     void
     onWrite(boost::system::error_code ec, std::size_t)
     {
+        LOG(perfLog_.info()) << tag() << "xinmeng sent message";
         messages_.pop();
         --messagesLength_.get();
         sending_ = false;
