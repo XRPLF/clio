@@ -55,10 +55,6 @@ class AccountObjectsHandler {
     // dependencies
     std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
-    // constants
-    static std::unordered_map<std::string, ripple::LedgerEntryType> const TYPES_MAP;
-    static std::unordered_set<std::string> const TYPES_KEYS;
-
 public:
     static auto constexpr LIMIT_MIN = 10;
     static auto constexpr LIMIT_MAX = 400;

@@ -60,7 +60,7 @@ jobs:
         shell: bash
         id: run_clang_tidy
         run: |
-          run-clang-tidy-18 -p build -j ${{ steps.number_of_threads.outputs.threads_number }} -fix -quiet 1>output.txt
+          run-clang-tidy-19 -p build -j ${{ steps.number_of_threads.outputs.threads_number }} -fix -quiet 1>output.txt
 
       - name: Check format
         if: ${{ steps.run_clang_tidy.outcome != 'success' }}
