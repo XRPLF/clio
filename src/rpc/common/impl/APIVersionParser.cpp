@@ -32,6 +32,17 @@ using namespace std;
 
 namespace rpc::impl {
 
+ProductionAPIVersionParser::ProductionAPIVersionParser(
+    uint32_t defaultVersion,
+    uint32_t minVersion,
+    uint32_t maxVersion
+)
+    : defaultVersion_{defaultVersion}, minVersion_{minVersion}, maxVersion_{maxVersion}
+{
+    LOG(log_.info()) << "API version settings: [min = " << minVersion_ << "; max = " << maxVersion_
+                     << "; default = " << defaultVersion_ << "]";
+}
+
 ProductionAPIVersionParser::ProductionAPIVersionParser(util::config::ObjectView const& config)
     : ProductionAPIVersionParser(
           config.getValue("default").asIntType<uint32_t>(),

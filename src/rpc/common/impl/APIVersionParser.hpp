@@ -39,17 +39,11 @@ class ProductionAPIVersionParser : public APIVersionParser {
     uint32_t maxVersion_;
 
 public:
-    // Note: this constructor must remain in the header because of UNITTEST_BUILD definition below
     ProductionAPIVersionParser(
         uint32_t defaultVersion = API_VERSION_DEFAULT,
         uint32_t minVersion = API_VERSION_MIN,
         uint32_t maxVersion = API_VERSION_MAX
-    )
-        : defaultVersion_{defaultVersion}, minVersion_{minVersion}, maxVersion_{maxVersion}
-    {
-        LOG(log_.info()) << "API version settings: [min = " << minVersion_ << "; max = " << maxVersion_
-                         << "; default = " << defaultVersion_ << "]";
-    }
+    );
 
     ProductionAPIVersionParser(util::config::ObjectView const& config);
 
