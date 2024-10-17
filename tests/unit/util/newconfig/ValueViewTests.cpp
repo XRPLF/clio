@@ -17,6 +17,7 @@
 */
 //==============================================================================
 
+#include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/FakeConfigData.hpp"
@@ -70,6 +71,18 @@ TEST_F(ValueViewTest, DifferentIntegerTest)
     auto const ipFloat = ipVal.asFloat();
     EXPECT_NEAR(ipDouble, 444.22, precision);
     EXPECT_NEAR(ipFloat, 444.22f, precision);
+}
+
+TEST_F(ValueViewTest, IntegerAsDoubleTypeValue)
+{
+    auto const cv = ConfigValue{ConfigType::Double}.defaultValue(432).withConstraint(validatePositiveDouble);
+    ValueView const vv{cv};
+    auto const doubleVal = vv.asFloat();
+    auto const floatVal = vv.asDouble();
+
+    auto const precision = 1e-9;
+    EXPECT_NEAR(doubleVal, 432, precision);
+    EXPECT_NEAR(floatVal, 432, precision);
 }
 
 struct ValueDeathTest : ValueViewTest {};

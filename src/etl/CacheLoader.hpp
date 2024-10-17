@@ -64,7 +64,11 @@ public:
      * @param backend The backend to use
      * @param cache The cache to load into
      */
-    CacheLoader(util::Config const& config, std::shared_ptr<BackendInterface> const& backend, CacheType& cache)
+    CacheLoader(
+        util::config::ClioConfigDefinition const& config,
+        std::shared_ptr<BackendInterface> const& backend,
+        CacheType& cache
+    )
         : backend_{backend}, cache_{cache}, settings_{make_CacheLoaderSettings(config)}, ctx_{settings_.numThreads}
     {
     }

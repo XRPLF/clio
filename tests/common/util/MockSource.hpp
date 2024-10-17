@@ -23,7 +23,8 @@
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "rpc/Errors.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -165,7 +166,7 @@ public:
 
         ON_CALL(*this, makeSource)
             .WillByDefault([this](
-                               util::Config const&,
+                               util::config::ObjectView const&,
                                boost::asio::io_context&,
                                std::shared_ptr<BackendInterface>,
                                std::shared_ptr<feed::SubscriptionManagerInterface>,
@@ -202,7 +203,7 @@ public:
     MOCK_METHOD(
         etl::SourcePtr,
         makeSource,
-        (util::Config const&,
+        (util::config::ObjectView const&,
          boost::asio::io_context&,
          std::shared_ptr<BackendInterface>,
          std::shared_ptr<feed::SubscriptionManagerInterface>,

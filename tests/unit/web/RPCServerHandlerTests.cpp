@@ -17,6 +17,7 @@
 //==============================================================================
 
 #include "rpc/Errors.hpp"
+#include "rpc/common/APIVersion.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
@@ -24,7 +25,9 @@
 #include "util/MockPrometheus.hpp"
 #include "util/MockRPCEngine.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -38,6 +41,7 @@
 #include <string>
 
 using namespace web;
+using namespace util::config;
 
 constexpr static auto MINSEQ = 10;
 constexpr static auto MAXSEQ = 30;
@@ -82,7 +86,12 @@ struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTe
     std::shared_ptr<util::TagDecoratorFactory> tagFactory;
     std::shared_ptr<RPCServerHandler<MockAsyncRPCEngine, MockETLService>> handler;
     std::shared_ptr<MockWsBase> session;
-    util::Config cfg;
+    util::config::ClioConfigDefinition cfg{
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
+        {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_DEFAULT)},
+        {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_MIN)},
+        {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_MAX)}
+    };
 };
 
 TEST_F(WebRPCServerHandlerTest, HTTPDefaultPath)

@@ -30,7 +30,9 @@
 #include "util/MockPrometheus.hpp"
 #include "util/Random.hpp"
 #include "util/StringUtils.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/ObjectView.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <TestGlobals.hpp>
 #include <boost/asio/impl/spawn.hpp>
@@ -64,25 +66,25 @@
 #include <vector>
 
 using namespace util;
+using namespace util::config;
 using namespace std;
 using namespace rpc;
 using namespace prometheus;
-namespace json = boost::json;
 
 using namespace data::cassandra;
 
 class BackendCassandraTest : public SyncAsioContextTest, public WithPrometheus {
 protected:
-    Config cfg{json::parse(fmt::format(
-        R"JSON({{
-            "contact_points": "{}",
-            "keyspace": "{}",
-            "replication_factor": 1
-        }})JSON",
-        TestGlobals::instance().backendHost,
-        TestGlobals::instance().backendKeyspace
-    ))};
-    SettingsProvider settingsProvider{cfg};
+    ClioConfigDefinition cfg{
+        {{"database.cassandra.contact_points",
+          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
+         {"database.cassandra.keyspace",
+          ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendKeyspace)},
+         {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)}}
+    };
+
+    ObjectView obj = cfg.getObject("database.cassandra");
+    SettingsProvider settingsProvider{obj};
 
     // recreated for each test
     std::unique_ptr<BackendInterface> backend;

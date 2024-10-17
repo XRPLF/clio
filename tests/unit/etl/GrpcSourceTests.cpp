@@ -23,7 +23,7 @@
 #include "util/MockPrometheus.hpp"
 #include "util/MockXrpLedgerAPIService.hpp"
 #include "util/TestObject.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <gmock/gmock.h>
 #include <grpcpp/server_context.h>
@@ -39,11 +39,12 @@
 #include <vector>
 
 using namespace etl::impl;
+using namespace util::config;
 
 struct GrpcSourceTests : NoLoggerFixture, util::prometheus::WithPrometheus, tests::util::WithMockXrpLedgerAPIService {
     GrpcSourceTests()
         : WithMockXrpLedgerAPIService("localhost:0")
-        , mockBackend_(std::make_shared<testing::StrictMock<MockBackend>>(util::Config{}))
+        , mockBackend_(std::make_shared<testing::StrictMock<MockBackend>>(ClioConfigDefinition{}))
         , grpcSource_("localhost", std::to_string(getXRPLMockPort()), mockBackend_)
     {
     }

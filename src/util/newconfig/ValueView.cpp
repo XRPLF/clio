@@ -25,8 +25,8 @@
 
 #include <cstdint>
 #include <string>
-#include <string_view>
 #include <utility>
+#include <variant>
 
 namespace util::config {
 
@@ -34,7 +34,7 @@ ValueView::ValueView(ConfigValue const& configVal) : configVal_{configVal}
 {
 }
 
-std::string_view
+std::string
 ValueView::asString() const
 {
     if (this->type() == ConfigType::String && configVal_.get().hasValue())
@@ -56,9 +56,14 @@ double
 ValueView::asDouble() const
 {
     if (configVal_.get().hasValue()) {
-        if (type() == ConfigType::Double)
-            return std::get<double>(configVal_.get().getValue());
+        auto const& val = configVal_.get().getValue();
 
+        if (type() == ConfigType::Double) {
+            if (std::holds_alternative<int64_t>(val)) {
+                return static_cast<double>(std::get<int64_t>(val));
+            }
+            return static_cast<double>(std::get<double>(val));
+        }
         if (type() == ConfigType::Integer)
             return static_cast<double>(std::get<int64_t>(configVal_.get().getValue()));
     }
@@ -70,11 +75,16 @@ float
 ValueView::asFloat() const
 {
     if (configVal_.get().hasValue()) {
+        auto const& val = configVal_.get().getValue();
+
         if (type() == ConfigType::Double) {
-            return static_cast<float>(std::get<double>(configVal_.get().getValue()));
+            if (std::holds_alternative<int64_t>(val)) {
+                return static_cast<float>(std::get<int64_t>(val));
+            }
+            return static_cast<float>(std::get<double>(val));
         }
         if (type() == ConfigType::Integer)
-            return static_cast<float>(std::get<int64_t>(configVal_.get().getValue()));
+            return static_cast<float>(std::get<int64_t>(val));
     }
     ASSERT(false, "Value view is not of Float type");
     std::unreachable();
