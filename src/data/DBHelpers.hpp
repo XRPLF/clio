@@ -173,6 +173,14 @@ struct NFTsData {
 };
 
 /**
+ * @brief Represents an MPT and holder pair
+ */
+struct MPTHolderData {
+    ripple::uint192 mptID;
+    ripple::AccountID holder;
+};
+
+/**
  * @brief Check whether the supplied object is an offer.
  *
  * @param object The object to check

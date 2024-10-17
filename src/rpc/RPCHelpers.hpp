@@ -192,6 +192,21 @@ insertDeliveredAmount(
 );
 
 /**
+ * @brief Add "mpt_issuance_id" into MPTokenIssuanceCreate transaction json.
+ *
+ * @param metaJson The metadata json object to add "MPTokenIssuanceID"
+ * @param txn The transaction object
+ * @param meta The metadata object
+ * @return true if the "mpt_issuance_id" is added to the metadata json object
+ */
+bool
+insertMPTIssuanceID(
+    boost::json::object& metaJson,
+    std::shared_ptr<ripple::STTx const> const& txn,
+    std::shared_ptr<ripple::TxMeta const> const& meta
+);
+
+/**
  * @brief Convert STBase object to JSON
  *
  * @param obj The object to convert
