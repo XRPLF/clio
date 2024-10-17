@@ -69,10 +69,8 @@ namespace web {
  * @tparam HandlerType The executor to handle the requests
  */
 template <
-    template <typename>
-    class PlainSessionType,
-    template <typename>
-    class SslSessionType,
+    template <typename> class PlainSessionType,
+    template <typename> class SslSessionType,
     SomeServerHandler HandlerType>
 class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>> {
     using std::enable_shared_from_this<Detector<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
@@ -191,10 +189,8 @@ public:
  * @tparam HandlerType The handler to process the request and return response.
  */
 template <
-    template <typename>
-    class PlainSessionType,
-    template <typename>
-    class SslSessionType,
+    template <typename> class PlainSessionType,
+    template <typename> class SslSessionType,
     SomeServerHandler HandlerType>
 class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>> {
     using std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
