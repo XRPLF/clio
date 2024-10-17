@@ -63,7 +63,11 @@ makeEndpoint(util::Config const& serverConfig)
     if (not ip.has_value())
         return std::unexpected{"Missing 'ip` in server config."};
 
-    auto const address = boost::asio::ip::make_address(*ip);
+    boost::system::error_code error;
+    auto const address = boost::asio::ip::make_address(*ip, error);
+    if (error)
+        return std::unexpected{fmt::format("Error parsing provided IP: {}", error.message())};
+
     auto const port = serverConfig.maybeValue<unsigned short>("port");
     if (not port.has_value())
         return std::unexpected{"Missing 'port` in server config."};
@@ -286,12 +290,12 @@ make_Server(util::Config const& config, boost::asio::io_context& context)
     if (not expectedSslContext)
         return std::unexpected{std::move(expectedSslContext).error()};
 
-    impl::ConnectionHandler::ProcessingPolicy processingStrategy{impl::ConnectionHandler::ProcessingPolicy::Parallel};
+    impl::ConnectionHandler::ProcessingPolicy processingPolicy{impl::ConnectionHandler::ProcessingPolicy::Parallel};
     std::optional<size_t> parallelRequestLimit;
 
-    auto const processingStrategyStr = serverConfig.valueOr<std::string>("processing_strategy", "parallel");
+    auto const processingStrategyStr = serverConfig.valueOr<std::string>("processing_policy", "parallel");
     if (processingStrategyStr == "sequent") {
-        processingStrategy = impl::ConnectionHandler::ProcessingPolicy::Sequential;
+        processingPolicy = impl::ConnectionHandler::ProcessingPolicy::Sequential;
     } else if (processingStrategyStr == "parallel") {
         parallelRequestLimit = serverConfig.maybeValue<size_t>("parallel_requests_limit");
     } else {
@@ -302,7 +306,7 @@ make_Server(util::Config const& config, boost::asio::io_context& context)
         context,
         std::move(endpoint).value(),
         std::move(expectedSslContext).value(),
-        impl::ConnectionHandler{processingStrategy, parallelRequestLimit},
+        impl::ConnectionHandler{processingPolicy, parallelRequestLimit},
         util::TagDecoratorFactory(config)
     };
 }
