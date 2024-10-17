@@ -415,12 +415,6 @@ toJson(ripple::SLE const& sle)
             value.as_object()["urlgravatar"] = str(boost::format("http://www.gravatar.com/avatar/%s") % md5);
         }
     }
-
-    // if object type if mpt issuance, inject synthetic mpt id
-    if (sle.getType() == ripple::ltMPTOKEN_ISSUANCE)
-        value.as_object()[JS(mpt_issuance_id)] =
-            ripple::to_string(ripple::makeMptID(sle[ripple::sfSequence], sle[ripple::sfIssuer]));
-
     return value.as_object();
 }
 

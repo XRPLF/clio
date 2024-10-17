@@ -1764,14 +1764,32 @@ generateTestValuesForParametersTest()
             R"({
                 "mpt_issuance": "invalid"
             })",
-            "invalidParams",
-            "mpt_issuanceMalformed"
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTIssuanceType",
+            R"({
+                "mpt_issuance": 0
+            })",
+            "malformedRequest",
+            "Malformed request."
         },
         ParamTestCaseBundle{
             "InvalidMPTokenStringIndex",
             R"({
                 "mptoken": "invalid"
             })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenObject",
+            fmt::format(
+                R"({{
+                    "mptoken": {{}}
+                }})"
+            ),
             "malformedRequest",
             "Malformed request."
         },
@@ -1785,8 +1803,31 @@ generateTestValuesForParametersTest()
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
-            "Required field \'mpt_issuance_id\' missing"
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenAccount",
+            fmt::format(
+                R"({{
+                    "mptoken": {{
+                        "mpt_issuance_id": "0000019315EABA24E6135A4B5CE2899E0DA791206413B33D",
+                        "account": 1
+                    }}
+                }})"
+            ),
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenType",
+            fmt::format(
+                R"({{
+                    "mptoken": 0
+                }})"
+            ),
+            "malformedRequest",
+            "Malformed request."
         },
     };
 }

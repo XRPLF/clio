@@ -318,16 +318,33 @@ public:
                   },
                   meta::WithCustomError{modifiers::ToNumber{}, Status(ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID)}},
              }}},
-            {JS(mpt_issuance), validation::CustomValidators::Uint192HexStringValidator},
+            {JS(mpt_issuance),
+             meta::WithCustomError{
+                 validation::CustomValidators::Uint192HexStringValidator, Status(ClioError::rpcMALFORMED_REQUEST)
+             }},
             {JS(mptoken),
-             validation::Type<std::string, boost::json::object>{},
+             meta::WithCustomError{
+                 validation::Type<std::string, boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
+             },
              meta::IfType<std::string>{malformedRequestHexStringValidator},
              meta::IfType<boost::json::object>{
                  meta::Section{
-                     {JS(account), validation::Required{}, validation::CustomValidators::AccountBase58Validator},
-                     {JS(mpt_issuance_id),
-                      validation::Required{},
-                      validation::CustomValidators::Uint192HexStringValidator},
+                     {
+                         JS(account),
+                         meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                         meta::WithCustomError{
+                             validation::CustomValidators::AccountBase58Validator,
+                             Status(ClioError::rpcMALFORMED_ADDRESS)
+                         },
+                     },
+                     {
+                         JS(mpt_issuance_id),
+                         meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                         meta::WithCustomError{
+                             validation::CustomValidators::Uint192HexStringValidator,
+                             Status(ClioError::rpcMALFORMED_REQUEST)
+                         },
+                     },
                  },
              }},
             {JS(ledger), check::Deprecated{}},
