@@ -26,7 +26,7 @@
 #include "util/MockCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ClioConfigFactories.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
@@ -39,6 +39,7 @@ using namespace etl;
 using namespace util;
 using namespace data;
 using namespace testing;
+using namespace util::config;
 
 namespace {
 
@@ -178,7 +179,7 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
 //
 TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 {
-    auto const cfg = util::Config(json::parse(R"({"cache": {"load": "sync"}})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "sync"}})"));
     CacheLoader loader{cfg, backend, cache};
 
     auto const diffs = diffProvider.getLatestDiff();
@@ -204,7 +205,7 @@ TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 
 TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
 {
-    auto const cfg = util::Config(json::parse(R"({"cache": {"load": "async"}})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "async"}})"));
     CacheLoader loader{cfg, backend, cache};
 
     auto const diffs = diffProvider.getLatestDiff();
@@ -232,7 +233,7 @@ TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
 
 TEST_F(CacheLoaderTest, DisabledCacheLoaderDoesNotLoadCache)
 {
-    auto cfg = util::Config(json::parse(R"({"cache": {"load": "none"}})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "none"}})"));
     CacheLoader loader{cfg, backend, cache};
 
     EXPECT_CALL(cache, updateImp).Times(0);

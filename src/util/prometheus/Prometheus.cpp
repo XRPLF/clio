@@ -20,7 +20,7 @@
 #include "util/prometheus/Prometheus.hpp"
 
 #include "util/Assert.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 #include "util/prometheus/Bool.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
@@ -176,10 +176,10 @@ PrometheusImpl::getMetric(
 }  // namespace util::prometheus
 
 void
-PrometheusService::init(util::Config const& config)
+PrometheusService::init(util::config::ClioConfigDefinition const& config)
 {
-    bool const enabled = config.valueOr("prometheus.enabled", true);
-    bool const compressReply = config.valueOr("prometheus.compress_reply", true);
+    bool const enabled = config.getValue("prometheus.enabled").asBool();
+    bool const compressReply = config.getValue("prometheus.compress_reply").asBool();
 
     instance_ = std::make_unique<util::prometheus::PrometheusImpl>(enabled, compressReply);
 }

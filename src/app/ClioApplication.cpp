@@ -30,8 +30,8 @@
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
 #include "util/build/Build.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 #include "util/prometheus/Prometheus.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/Server.hpp"
@@ -72,7 +72,8 @@ start(boost::asio::io_context& ioc, std::uint32_t numThreads)
 
 }  // namespace
 
-ClioApplication::ClioApplication(util::Config const& config) : config_(config), signalsHandler_{config_}
+ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& config)
+    : config_(config), signalsHandler_{config_}
 {
     LOG(util::LogService::info()) << "Clio version: " << util::build::getClioFullVersionString();
     PrometheusService::init(config);
@@ -81,7 +82,7 @@ ClioApplication::ClioApplication(util::Config const& config) : config_(config), 
 int
 ClioApplication::run()
 {
-    auto const threads = config_.valueOr("io_threads", 2);
+    auto const threads = config_.getValue("io_threads").asIntType<uint16_t>();
     if (threads <= 0) {
         LOG(util::LogService::fatal()) << "io_threads is less than 1";
         return EXIT_FAILURE;

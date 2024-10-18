@@ -93,7 +93,7 @@ public:
         , executor_{settingsProvider_.getSettings(), handle_}
     {
         if (auto const res = handle_.connect(); not res)
-            throw std::runtime_error("Could not connect to databse: " + res.error());
+            throw std::runtime_error("Could not connect to database: " + res.error());
 
         if (not readOnly) {
             if (auto const res = handle_.execute(schema_.createKeyspace); not res) {

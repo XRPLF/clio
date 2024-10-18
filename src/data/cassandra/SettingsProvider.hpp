@@ -19,10 +19,9 @@
 
 #pragma once
 
-#include "data/cassandra/Handle.hpp"
 #include "data/cassandra/Types.hpp"
-#include "util/config/Config.hpp"
-#include "util/log/Logger.hpp"
+#include "data/cassandra/impl/Cluster.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <cstdint>
 #include <optional>
@@ -34,7 +33,7 @@ namespace data::cassandra {
  * @brief Provides settings for @ref BasicCassandraBackend.
  */
 class SettingsProvider {
-    util::Config config_;
+    util::config::ObjectView config_;
 
     std::string keyspace_;
     std::optional<std::string> tablePrefix_;
@@ -47,7 +46,7 @@ public:
      *
      * @param cfg The config of Clio to use
      */
-    explicit SettingsProvider(util::Config const& cfg);
+    explicit SettingsProvider(util::config::ObjectView const& cfg);
 
     /**
      * @return The cluster settings

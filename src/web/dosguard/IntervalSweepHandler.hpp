@@ -20,7 +20,7 @@
 #pragma once
 
 #include "util/Repeat.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/asio/io_context.hpp>
 
@@ -43,7 +43,7 @@ public:
      * @param dosGuard The DOS guard to use
      */
     IntervalSweepHandler(
-        util::Config const& config,
+        util::config::ClioConfigDefinition const& config,
         boost::asio::io_context& ctx,
         web::dosguard::BaseDOSGuard& dosGuard
     );

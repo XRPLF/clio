@@ -21,7 +21,9 @@
 #include "data/cassandra/Handle.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <TestGlobals.hpp>
 #include <boost/json/parse.hpp>
@@ -30,6 +32,8 @@
 
 #include <stdexcept>
 #include <string>
+
+using namespace util::config;
 
 namespace {
 constexpr auto keyspace = "factory_test";
@@ -71,55 +75,31 @@ protected:
 
 TEST_F(BackendCassandraFactoryTest, NoSuchBackend)
 {
-    util::Config const cfg{boost::json::parse(
-        R"({
-            "database":
-            {
-                "type":"unknown"
-            }
-        })"
-    )};
+    ClioConfigDefinition cfg{{"database.type", ConfigValue{ConfigType::String}.defaultValue("unknown")}};
     EXPECT_THROW(data::make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTest, CreateCassandraBackendDBDisconnect)
 {
-    util::Config const cfg{boost::json::parse(fmt::format(
-        R"({{
-            "database":
-            {{
-                "type" : "cassandra",
-                "cassandra" : {{
-                    "contact_points": "{}",
-                    "keyspace": "{}",
-                    "replication_factor": 1,
-                    "connect_timeout": 2
-                }}
-            }}
-        }})",
-        "127.0.0.2",
-        keyspace
-    ))};
+    ClioConfigDefinition cfg{
+        {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+        {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("127.0.0.2")},
+        {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue(keyspace)},
+        {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)},
+        {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.defaultValue(2)}
+    };
     EXPECT_THROW(data::make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 {
-    util::Config const cfg{boost::json::parse(fmt::format(
-        R"({{
-            "database":
-            {{
-                "type": "cassandra",
-                "cassandra": {{
-                    "contact_points": "{}",
-                    "keyspace": "{}",
-                    "replication_factor": 1
-                }}
-            }}
-        }})",
-        TestGlobals::instance().backendHost,
-        keyspace
-    ))};
+    ClioConfigDefinition cfg{
+        {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+        {"database.cassandra.contact_points",
+         ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
+        {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue(keyspace)},
+        {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)}
+    };
 
     {
         auto backend = data::make_Backend(cfg);
@@ -147,60 +127,37 @@ TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackend)
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithEmptyDB)
 {
-    util::Config const cfg{boost::json::parse(fmt::format(
-        R"({{
-            "read_only": true,
-            "database":
-            {{
-                "type" : "cassandra",
-                "cassandra" : {{
-                    "contact_points": "{}",
-                    "keyspace": "{}",
-                    "replication_factor": 1
-                }}
-            }}
-        }})",
-        TestGlobals::instance().backendHost,
-        keyspace
-    ))};
+    ClioConfigDefinition cfg{
+        {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+        {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+        {"database.cassandra.contact_points",
+         ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
+        {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue(keyspace)},
+        {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)}
+    };
+
     EXPECT_THROW(data::make_Backend(cfg), std::runtime_error);
 }
 
 TEST_F(BackendCassandraFactoryTestWithDB, CreateCassandraBackendReadOnlyWithDBReady)
 {
-    util::Config const cfgReadOnly{boost::json::parse(fmt::format(
-        R"({{
-            "read_only": true,
-            "database":
-            {{
-                "type" : "cassandra",
-                "cassandra" : {{
-                    "contact_points": "{}",
-                    "keyspace": "{}",
-                    "replication_factor": 1
-                }}
-            }}
-        }})",
-        TestGlobals::instance().backendHost,
-        keyspace
-    ))};
+    ClioConfigDefinition cfgReadOnly{
+        {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+        {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+        {"database.cassandra.contact_points",
+         ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
+        {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue(keyspace)},
+        {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)}
+    };
 
-    util::Config const cfgWrite{boost::json::parse(fmt::format(
-        R"({{
-            "read_only": false,
-            "database":
-            {{
-                "type" : "cassandra",
-                "cassandra" : {{
-                    "contact_points": "{}",
-                    "keyspace": "{}",
-                    "replication_factor": 1
-                }}
-            }}
-        }})",
-        TestGlobals::instance().backendHost,
-        keyspace
-    ))};
+    ClioConfigDefinition cfgWrite{
+        {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+        {"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra")},
+        {"database.cassandra.contact_points",
+         ConfigValue{ConfigType::String}.defaultValue(TestGlobals::instance().backendHost)},
+        {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue(keyspace)},
+        {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(1)}
+    };
 
     EXPECT_TRUE(data::make_Backend(cfgWrite));
     EXPECT_TRUE(data::make_Backend(cfgReadOnly));
