@@ -51,15 +51,19 @@ var (
 	userName = app.Flag("username", "Username to use when connecting to the cluster").String()
 	password = app.Flag("password", "Password to use when connecting to the cluster").String()
 
-	skipSuccessorTable          = app.Flag("skip-successor", "Whether to skip deletion from successor table").Default("false").Bool()
-	skipObjectsTable            = app.Flag("skip-objects", "Whether to skip deletion from objects table").Default("false").Bool()
-	skipLedgerHashesTable       = app.Flag("skip-ledger-hashes", "Whether to skip deletion from ledger_hashes table").Default("false").Bool()
-	skipTransactionsTable       = app.Flag("skip-transactions", "Whether to skip deletion from transactions table").Default("false").Bool()
-	skipDiffTable               = app.Flag("skip-diff", "Whether to skip deletion from diff table").Default("false").Bool()
-	skipLedgerTransactionsTable = app.Flag("skip-ledger-transactions", "Whether to skip deletion from ledger_transactions table").Default("false").Bool()
-	skipLedgersTable            = app.Flag("skip-ledgers", "Whether to skip deletion from ledgers table").Default("false").Bool()
-	skipWriteLatestLedger       = app.Flag("skip-write-latest-ledger", "Whether to skip writing the latest ledger index").Default("false").Bool()
-	skipAccTransactionsTable    = app.Flag("skip-account-transactions", "Whether to skip deletion from account_transactions table").Default("false").Bool()
+	skipSuccessorTable           = app.Flag("skip-successor", "Whether to skip deletion from successor table").Default("false").Bool()
+	skipObjectsTable             = app.Flag("skip-objects", "Whether to skip deletion from objects table").Default("false").Bool()
+	skipLedgerHashesTable        = app.Flag("skip-ledger-hashes", "Whether to skip deletion from ledger_hashes table").Default("false").Bool()
+	skipTransactionsTable        = app.Flag("skip-transactions", "Whether to skip deletion from transactions table").Default("false").Bool()
+	skipDiffTable                = app.Flag("skip-diff", "Whether to skip deletion from diff table").Default("false").Bool()
+	skipLedgerTransactionsTable  = app.Flag("skip-ledger-transactions", "Whether to skip deletion from ledger_transactions table").Default("false").Bool()
+	skipLedgersTable             = app.Flag("skip-ledgers", "Whether to skip deletion from ledgers table").Default("false").Bool()
+	skipWriteLatestLedger        = app.Flag("skip-write-latest-ledger", "Whether to skip writing the latest ledger index").Default("false").Bool()
+	skipAccTransactionsTable     = app.Flag("skip-account-transactions", "Whether to skip deletion from account_transactions table").Default("false").Bool()
+	skipNFTokenTable             = app.Flag("skip-nf-tokens", "Whether to skip deletion from nf_tokens table").Default("false").Bool()
+	skipIssuerNFTokenTable       = app.Flag("skip-issuer-nf-tokens-v2", "Whether to skip deletion from issuer_nf_tokens_v2 table").Default("false").Bool()
+	skipNFTokenURITable          = app.Flag("skip-nf-tokens-uri", "Whether to skip deletion from nf_token_uris table").Default("false").Bool()
+	skipNFTokenTransactionsTable = app.Flag("skip-nf-token-transactions", "Whether to skip deletion from nf_token_transactions table").Default("false").Bool()
 
 	workerCount        = 1                // the calculated number of parallel goroutines the client should run
 	ranges             []*util.TokenRange // the calculated ranges to be executed in parallel
@@ -81,19 +85,24 @@ func main() {
 	}
 
 	clioCass := cass.NewClioCass(&cass.Settings{
-		SkipSuccessorTable:          *skipSuccessorTable,
-		SkipObjectsTable:            *skipObjectsTable,
-		SkipLedgerHashesTable:       *skipLedgerHashesTable,
-		SkipTransactionsTable:       *skipTransactionsTable,
-		SkipDiffTable:               *skipDiffTable,
-		SkipLedgerTransactionsTable: *skipLedgerHashesTable,
-		SkipLedgersTable:            *skipLedgersTable,
-		SkipWriteLatestLedger:       *skipWriteLatestLedger,
-		SkipAccTransactionsTable:    *skipAccTransactionsTable,
-		WorkerCount:                 workerCount,
-		Ranges:                      ranges,
-		RangesRead:                  ledgerOrTokenRange,
-		Command:                     cmd}, cluster)
+		SkipSuccessorTable:           *skipSuccessorTable,
+		SkipObjectsTable:             *skipObjectsTable,
+		SkipLedgerHashesTable:        *skipLedgerHashesTable,
+		SkipTransactionsTable:        *skipTransactionsTable,
+		SkipDiffTable:                *skipDiffTable,
+		SkipLedgerTransactionsTable:  *skipLedgerHashesTable,
+		SkipLedgersTable:             *skipLedgersTable,
+		SkipWriteLatestLedger:        *skipWriteLatestLedger,
+		SkipAccTransactionsTable:     *skipAccTransactionsTable,
+		SkipNFTokenTable:             *skipNFTokenTable,
+		SkipIssuerNFTokenTable:       *skipIssuerNFTokenTable,
+		SkipNFTokenURITable:          *skipNFTokenURITable,
+		SkipNFTokenTransactionsTable: *skipNFTokenTransactionsTable,
+
+		WorkerCount: workerCount,
+		Ranges:      ranges,
+		RangesRead:  ledgerOrTokenRange,
+		Command:     cmd}, cluster)
 
 	switch command {
 	case deleteAfter.FullCommand():
@@ -171,6 +180,10 @@ Skip deletion of:
 - ledger_transactions table   : %t
 - ledgers table               : %t
 - account_tx table            : %t
+- nf_tokens table             : %t
+- issuer_nf_tokens_v2 table   : %t
+- nf_token_uris table         : %t
+- nf_token_transactions table : %t
 
 Will update ledger_range      : %t
 
@@ -194,6 +207,10 @@ Will update ledger_range      : %t
 		*skipLedgerTransactionsTable,
 		*skipLedgersTable,
 		*skipAccTransactionsTable,
+		*skipNFTokenTable,
+		*skipIssuerNFTokenTable,
+		*skipNFTokenURITable,
+		*skipNFTokenTransactionsTable,
 		!*skipWriteLatestLedger,
 	)
 
@@ -222,6 +239,7 @@ func prepareDb(dbHosts *string) (*gocql.ClusterConfig, error) {
 		}
 	}
 
+	// skips table if tables doesn't exist on earliest ledger
 	return cluster, nil
 }
 
