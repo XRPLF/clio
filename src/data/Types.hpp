@@ -234,6 +234,14 @@ struct NFTsAndCursor {
 };
 
 /**
+ * @brief Represents an array of MPTokens
+ */
+struct MPTHoldersAndCursor {
+    std::vector<Blob> mptokens;
+    std::optional<ripple::AccountID> cursor;
+};
+
+/**
  * @brief Stores a range of sequences as a min and max pair.
  */
 struct LedgerRange {
