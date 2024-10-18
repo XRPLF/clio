@@ -133,7 +133,10 @@ public:
         if (error)
             return std::unexpected{error};
 
-        return Request{boost::beast::buffers_to_string(buffer_.data()), initialRequest_};
+        auto request = boost::beast::buffers_to_string(buffer_.data());
+        buffer_.consume(buffer_.size());
+
+        return Request{std::move(request), initialRequest_};
     }
 
     void

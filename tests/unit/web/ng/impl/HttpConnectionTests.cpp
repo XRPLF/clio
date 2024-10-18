@@ -43,6 +43,7 @@
 #include <chrono>
 #include <cstddef>
 #include <optional>
+#include <ranges>
 #include <utility>
 
 using namespace web::ng::impl;
@@ -162,9 +163,38 @@ TEST_F(HttpConnectionTests, Send)
         auto connection = acceptConnection(yield);
         auto maybeError = connection.send(response, yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+    });
+}
 
-        maybeError = connection.send(response, yield);
+TEST_F(HttpConnectionTests, SendMultipleTimes)
+{
+    Request const request{request_};
+    Response const response{http::status::ok, "some response data", request};
+
+    boost::asio::spawn(ctx, [this, response = response](boost::asio::yield_context yield) mutable {
+        auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
         [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        for ([[maybe_unused]] auto _i : std::ranges::iota_view{0, 3}) {
+            auto const expectedResponse = httpClient_.receive(yield, std::chrono::milliseconds{100});
+            [&]() { ASSERT_TRUE(expectedResponse.has_value()) << maybeError->message(); }();
+
+            auto const receivedResponse = expectedResponse.value();
+            auto const sentResponse = Response{response}.intoHttpResponse();
+            EXPECT_EQ(receivedResponse.result(), sentResponse.result());
+            EXPECT_EQ(receivedResponse.body(), sentResponse.body());
+            EXPECT_EQ(receivedResponse.version(), request_.version());
+            EXPECT_TRUE(receivedResponse.keep_alive());
+        }
+    });
+
+    runSpawn([this, &response](boost::asio::yield_context yield) {
+        auto connection = acceptConnection(yield);
+
+        for ([[maybe_unused]] auto _i : std::ranges::iota_view{0, 3}) {
+            auto maybeError = connection.send(response, yield, std::chrono::milliseconds{100});
+            [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+        }
     });
 }
 
