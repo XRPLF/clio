@@ -51,7 +51,7 @@ make_PlainWsConnection(
     auto maybeError = connection->performHandshake(yield);
     if (maybeError.has_value())
         return std::unexpected{maybeError.value()};
-    return std::move(connection);
+    return connection;
 }
 
 std::expected<std::unique_ptr<SslWsConnection>, Error>
@@ -71,7 +71,7 @@ make_SslWsConnection(
     auto maybeError = connection->performHandshake(yield);
     if (maybeError.has_value())
         return std::unexpected{maybeError.value()};
-    return std::move(connection);
+    return connection;
 }
 
 }  // namespace web::ng::impl

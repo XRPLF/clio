@@ -122,7 +122,7 @@ public:
             [this, &response](auto&& yield) { stream_.async_write(response.asConstBuffer(), yield); }, yield, timeout
         );
         if (error)
-            return std::move(error);
+            return error;
         return std::nullopt;
     }
 

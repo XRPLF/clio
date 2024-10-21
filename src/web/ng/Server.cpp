@@ -24,7 +24,6 @@
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "web/ng/Connection.hpp"
-#include "web/ng/Error.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/impl/HttpConnection.hpp"
 #include "web/ng/impl/ServerSslContext.hpp"
@@ -87,7 +86,7 @@ makeAcceptor(boost::asio::io_context& context, boost::asio::ip::tcp::endpoint co
     } catch (boost::system::system_error const& error) {
         return std::unexpected{fmt::format("Error creating TCP acceptor: {}", error.what())};
     }
-    return std::move(acceptor);
+    return acceptor;
 }
 
 std::expected<std::string, boost::system::system_error>

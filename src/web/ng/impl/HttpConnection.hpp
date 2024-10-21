@@ -127,7 +127,7 @@ public:
         if (request_.has_value()) {
             Request result{std::move(request_).value()};
             request_.reset();
-            return std::move(result);
+            return result;
         }
         auto expectedRequest = fetch(yield, timeout);
         if (expectedRequest.has_value())
@@ -208,7 +208,7 @@ private:
         boost::beast::http::async_read(stream_, buffer_, request, yield[error]);
         if (error)
             return std::unexpected{error};
-        return std::move(request);
+        return request;
     }
 };
 

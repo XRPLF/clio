@@ -232,7 +232,7 @@ HttpAsyncClient::receive(boost::asio::yield_context yield, std::chrono::steady_c
     http::async_read(stream_, buffer_, response, yield[error]);
     if (error)
         return std::unexpected{error};
-    return std::move(response);
+    return response;
 }
 
 void

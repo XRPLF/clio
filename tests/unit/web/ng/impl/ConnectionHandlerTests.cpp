@@ -295,9 +295,13 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Stop)
 }
 
 struct ConnectionHandlerParallelProcessingTest : ConnectionHandlerTest {
-    static size_t const maxParallelRequests = 3;
+    static size_t constexpr maxParallelRequests = 3;
+
     ConnectionHandlerParallelProcessingTest()
-        : ConnectionHandlerTest(ConnectionHandler::ProcessingPolicy::Parallel, maxParallelRequests)
+        : ConnectionHandlerTest(
+              ConnectionHandler::ProcessingPolicy::Parallel,
+              ConnectionHandlerParallelProcessingTest::maxParallelRequests
+          )
     {
     }
 
