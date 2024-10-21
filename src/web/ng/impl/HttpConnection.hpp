@@ -129,9 +129,11 @@ public:
             request_.reset();
             return std::move(result);
         }
-        return fetch(yield, timeout).and_then([](auto httpRequest) -> std::expected<Request, Error> {
-            return Request{std::move(httpRequest)};
-        });
+        auto expectedRequest = fetch(yield, timeout);
+        if (expectedRequest.has_value())
+            return Request{std::move(expectedRequest).value()};
+
+        return std::unexpected{std::move(expectedRequest).error()};
     }
 
     void

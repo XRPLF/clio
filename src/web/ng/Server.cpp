@@ -163,10 +163,12 @@ makeConnection(
     }
 
     if (*expectedIsUpgrade) {
-        return connection->upgrade(sslContext, tagDecoratorFactory, yield)
-            .or_else([](Error error) -> std::expected<ConnectionPtr, std::string> {
-                return std::unexpected{fmt::format("Error upgrading connection: {}", error.what())};
-            });
+        auto expectedUpgradedConnection = connection->upgrade(sslContext, tagDecoratorFactory, yield);
+        if (expectedUpgradedConnection.has_value())
+            return std::move(expectedUpgradedConnection).value();
+
+        return std::unexpected{fmt::format("Error upgrading connection: {}", expectedUpgradedConnection.error().what())
+        };
     }
 
     return connection;
