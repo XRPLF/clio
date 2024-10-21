@@ -363,8 +363,9 @@ func (c *ClioCass) pruneData(
 		marker.ExitTable()
 	}
 
-	// issuer_nf_tokens_v2:  I think if token_id is burned, we can delete? (there's no sequence attached to this RIP)
+	// issuer_nf_tokens_v2: skipped because table is small and not trivial to delete
 
+	// nf_token_URI queries
 	if !c.settings.SkipNFTokenURITable {
 		marker := util.NewMarker(c.settings.Command)
 		if err := marker.EnterTable("nf_token_uris"); err != nil {
@@ -654,7 +655,7 @@ func (c *ClioCass) prepareAndExecuteDeleteQueries(
 								atomic.AddUint64(&totalDeletes, uint64(len(info.Data)))
 								if totalDeletes >= counter {
 									log.Printf("... deleted %d queries ...", counter)
-									counter += 1000
+									atomic.AddUint64(&counter, 1000)
 								}
 								// reset back to the deleted query template after finishing executing delete
 								info = deleteInfo{Query: deleteQueryTemplate}

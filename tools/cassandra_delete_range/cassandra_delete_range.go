@@ -239,7 +239,6 @@ func prepareDb(dbHosts *string) (*gocql.ClusterConfig, error) {
 		}
 	}
 
-	// skips table if tables doesn't exist on earliest ledger
 	return cluster, nil
 }
 
@@ -282,6 +281,15 @@ func prepareResume(cmd *string) {
 	// should be already deleted so we skip for deletion
 	tableFound := false
 	switch scanner.Text() {
+	case "nf_token_transactions":
+		*skipNFTokenURITable = true
+		fallthrough
+	case "nf_token_uris":
+		*skipNFTokenTable = true
+		fallthrough
+	case "nf_tokens":
+		*skipAccTransactionsTable = true
+		fallthrough
 	case "account_tx":
 		*skipLedgersTable = true
 		fallthrough
