@@ -40,12 +40,15 @@ public:
      * @brief The data for an HTTP response.
      */
     struct HttpData {
+        /**
+         * @brief The content type of the response.
+         */
         enum class ContentType { APPLICATION_JSON, TEXT_HTML };
 
-        boost::beast::http::status status;
-        ContentType contentType;
-        bool keepAlive;
-        unsigned int version;
+        boost::beast::http::status status;  ///< The HTTP status.
+        ContentType contentType;            ///< The content type.
+        bool keepAlive;                     ///< Whether the connection should be kept alive.
+        unsigned int version;               ///< The HTTP version.
     };
 
 private:
