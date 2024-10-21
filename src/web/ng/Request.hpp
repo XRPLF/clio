@@ -66,9 +66,6 @@ public:
      */
     Request(std::string request, HttpHeaders const& headers);
 
-    bool
-    operator==(Request const& other) const;
-
     /**
      * @brief Method of the request.
      * @note WEBSOCKET is not a real method, it is used to distinguish WebSocket requests from HTTP requests.

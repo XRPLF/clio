@@ -38,6 +38,9 @@
 
 namespace web::ng {
 
+/**
+ * @brief Web server class.
+ */
 class Server {
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
@@ -54,6 +57,15 @@ class Server {
     bool running_{false};
 
 public:
+    /**
+     * @brief Construct a new Server object.
+     *
+     * @param ctx The boost::asio::io_context to use.
+     * @param endpoint The endpoint to listen on.
+     * @param sslContext The SSL context to use (optional).
+     * @param connectionHandler The connection handler.
+     * @param tagDecoratorFactory The tag decorator factory.
+     */
     Server(
         boost::asio::io_context& ctx,
         boost::asio::ip::tcp::endpoint endpoint,
@@ -62,21 +74,57 @@ public:
         util::TagDecoratorFactory tagDecoratorFactory
     );
 
+    /**
+     * @brief Copy constructor is deleted. The Server couldn't be copied.
+     */
     Server(Server const&) = delete;
+
+    /**
+     * @brief Move constructor is defaulted.
+     */
     Server(Server&&) = default;
 
+    /**
+     * @brief Set handler for GET requests.
+     * @note This method can't be called after run() is called.
+     *
+     * @param target The target of the request.
+     * @param handler The handler to set.
+     */
     void
     onGet(std::string const& target, MessageHandler handler);
 
+    /**
+     * @brief Set handler for POST requests.
+     * @note This method can't be called after run() is called.
+     *
+     * @param target The target of the request.
+     * @param handler The handler to set.
+     */
     void
     onPost(std::string const& target, MessageHandler handler);
 
+    /**
+     * @brief Set handler for WebSocket requests.
+     * @note This method can't be called after run() is called.
+     *
+     * @param handler The handler to set.
+     */
     void
     onWs(MessageHandler handler);
 
+    /**
+     * @brief Run the server.
+     *
+     * @return std::nullopt if the server started successfully, otherwise an error message.
+     */
     std::optional<std::string>
     run();
 
+    /**
+     * @brief Stop the server.
+     ** @note Stopping the server cause graceful shutdown of all connections. And rejecting new connections.
+     */
     void
     stop();
 
@@ -85,6 +133,14 @@ private:
     handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield_context yield);
 };
 
+/**
+ * @brief Create a new Server.
+ *
+ * @param config The configuration.
+ * @param context The boost::asio::io_context to use.
+ *
+ * @return The Server or an error message.
+ */
 std::expected<Server, std::string>
 make_Server(util::Config const& config, boost::asio::io_context& context);
 

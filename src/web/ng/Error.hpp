@@ -23,6 +23,9 @@
 
 namespace web::ng {
 
+/**
+ * @brief Error of any async operation.
+ */
 using Error = boost::system::error_code;
 
 }  // namespace web::ng

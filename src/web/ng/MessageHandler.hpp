@@ -29,6 +29,9 @@
 
 namespace web::ng {
 
+/**
+ * @brief Handler for messages.
+ */
 using MessageHandler = std::function<Response(Request const&, ConnectionContext, boost::asio::yield_context)>;
 
 }  // namespace web::ng

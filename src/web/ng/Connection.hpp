@@ -37,21 +37,50 @@
 
 namespace web::ng {
 
+/**
+ * @brief A forward declaration of ConnectionContext.
+ */
 class ConnectionContext;
 
+/**
+ *@brief A class representing a connection to a client.
+ */
 class Connection : public util::Taggable {
 protected:
-    size_t id_;
     std::string ip_;  // client ip
     boost::beast::flat_buffer buffer_;
 
 public:
+    /**
+     * @brief The default timeout for send, receive, and close operations.
+     */
     static constexpr std::chrono::steady_clock::duration DEFAULT_TIMEOUT = std::chrono::seconds{30};
 
+    /**
+     * @brief Construct a new Connection object
+     *
+     * @param ip The client ip.
+     * @param buffer The buffer to use for reading and writing.
+     * @param tagDecoratorFactory The factory for creating tag decorators.
+     */
     Connection(std::string ip, boost::beast::flat_buffer buffer, util::TagDecoratorFactory const& tagDecoratorFactory);
 
+    /**
+     * @brief Whether the connection was upgraded. Upgraded connections are websocket connections.
+     *
+     * @return true if the connection was upgraded.
+     */
     virtual bool
     wasUpgraded() const = 0;
+
+    /**
+     * @brief Send a response to the client.
+     *
+     * @param response The response to send.
+     * @param yield The yield context.
+     * @param timeout The timeout for the operation.
+     * @return An error if the operation failed or nullopt if it succeeded.
+     */
 
     virtual std::optional<Error>
     send(
@@ -60,34 +89,60 @@ public:
         std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
     ) = 0;
 
+    /**
+     * @brief Receive a request from the client.
+     *
+     * @param yield The yield context.
+     * @param timeout The timeout for the operation.
+     * @return The request if it was received or an error if the operation failed.
+     */
     virtual std::expected<Request, Error>
     receive(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) = 0;
 
+    /**
+     * @brief Gracefully close the connection.
+     *
+     * @param yield The yield context.
+     * @param timeout The timeout for the operation.
+     */
     virtual void
     close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) = 0;
 
-    void
-    subscribeToDisconnect();
-
+    /**
+     * @brief Get the connection context.
+     *
+     * @return The connection context.
+     */
     ConnectionContext
     context() const;
 
-    size_t
-    id() const;
-
+    /**
+     * @brief Get the ip of the client.
+     *
+     * @return The ip of the client.
+     */
     std::string const&
     ip() const;
 };
 
+/**
+ * @brief A pointer to a connection.
+ */
 using ConnectionPtr = std::unique_ptr<Connection>;
 
+/**
+ * @brief A class representing the context of a connection.
+ */
 class ConnectionContext {
     std::reference_wrapper<Connection const> connection_;
 
 public:
+    /**
+     * @brief Construct a new ConnectionContext object.
+     *
+     * @param connection The connection.
+     */
     explicit ConnectionContext(Connection const& connection);
 };
-
-using ConnectionPtr = std::unique_ptr<Connection>;
 
 }  // namespace web::ng

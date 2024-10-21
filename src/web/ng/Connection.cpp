@@ -23,30 +23,18 @@
 
 #include <boost/beast/core/flat_buffer.hpp>
 
-#include <atomic>
 #include <cstddef>
 #include <string>
 #include <utility>
 
 namespace web::ng {
 
-namespace {
-
-size_t
-generateId()
-{
-    static std::atomic_size_t id{0};
-    return id++;
-}
-
-}  // namespace
-
 Connection::Connection(
     std::string ip,
     boost::beast::flat_buffer buffer,
     util::TagDecoratorFactory const& tagDecoratorFactory
 )
-    : util::Taggable(tagDecoratorFactory), id_{generateId()}, ip_{std::move(ip)}, buffer_{std::move(buffer)}
+    : util::Taggable(tagDecoratorFactory), ip_{std::move(ip)}, buffer_{std::move(buffer)}
 {
 }
 
