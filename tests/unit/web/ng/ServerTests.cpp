@@ -21,6 +21,7 @@
 #include "util/AssignRandomPort.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/NameGenerator.hpp"
+#include "util/Taggable.hpp"
 #include "util/TestHttpClient.hpp"
 #include "util/TestWebSocketClient.hpp"
 #include "util/config/Config.hpp"
@@ -30,6 +31,8 @@
 #include "web/ng/Server.hpp"
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/address_v4.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
@@ -45,6 +48,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <utility>
 
 using namespace web::ng;
 
@@ -71,6 +75,15 @@ INSTANTIATE_TEST_CASE_P(
     MakeServerTests,
     MakeServerTest,
     testing::Values(
+        MakeServerTestBundle{
+            "NoIp",
+            R"json(
+                {
+                    "server": {"port": 12345}
+                }
+            )json",
+            false
+        },
         MakeServerTestBundle{
             "BadEndpoint",
             R"json(
@@ -159,7 +172,18 @@ struct ServerTest : SyncAsioContextTest {
         wsHandler_;
 };
 
-struct ServerTestBundle {
+TEST_F(ServerTest, BadEndpoint)
+{
+    boost::asio::ip::tcp::endpoint endpoint{boost::asio::ip::address_v4::from_string("1.2.3.4"), 0};
+    impl::ConnectionHandler connectionHandler{impl::ConnectionHandler::ProcessingPolicy::Sequential, std::nullopt};
+    util::TagDecoratorFactory tagDecoratorFactory{util::Config{boost::json::value{}}};
+    Server server{ctx, endpoint, std::nullopt, std::move(connectionHandler), tagDecoratorFactory};
+    auto maybeError = server.run();
+    ASSERT_TRUE(maybeError.has_value());
+    EXPECT_THAT(*maybeError, testing::HasSubstr("Error creating TCP acceptor"));
+}
+
+struct ServerHttpTestBundle {
     std::string testName;
     http::verb method;
 
@@ -177,7 +201,23 @@ struct ServerTestBundle {
     }
 };
 
-struct ServerHttpTest : ServerTest, testing::WithParamInterface<ServerTestBundle> {};
+struct ServerHttpTest : ServerTest, testing::WithParamInterface<ServerHttpTestBundle> {};
+
+TEST_F(ServerHttpTest, ClientDisconnects)
+{
+    HttpAsyncClient client{ctx};
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        client.disconnect();
+        ctx.stop();
+    });
+
+    server_->run();
+    runContext();
+}
 
 TEST_P(ServerHttpTest, RequestResponse)
 {
@@ -229,9 +269,27 @@ TEST_P(ServerHttpTest, RequestResponse)
 INSTANTIATE_TEST_SUITE_P(
     ServerHttpTests,
     ServerHttpTest,
-    testing::Values(ServerTestBundle{"GET", http::verb::get}, ServerTestBundle{"POST", http::verb::post}),
+    testing::Values(ServerHttpTestBundle{"GET", http::verb::get}, ServerHttpTestBundle{"POST", http::verb::post}),
     tests::util::NameGenerator
 );
+
+TEST_F(ServerTest, WsClientDisconnects)
+{
+    WebSocketAsyncClient client{ctx};
+
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort_), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        client.close();
+        ctx.stop();
+    });
+
+    server_->run();
+
+    runContext();
+}
 
 TEST_F(ServerTest, WsRequestResponse)
 {

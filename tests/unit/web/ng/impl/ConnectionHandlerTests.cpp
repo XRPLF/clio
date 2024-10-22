@@ -162,6 +162,22 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_BadTarget_Send)
     });
 }
 
+TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_BadMethod_Send)
+{
+    EXPECT_CALL(*mockConnection_, receive)
+        .WillOnce(Return(makeRequest(http::request<http::string_body>{http::verb::acl, "/", 11})))
+        .WillOnce(Return(makeError(http::error::end_of_stream)));
+
+    EXPECT_CALL(*mockConnection_, send).WillOnce([](Response response, auto&&, auto&&) {
+        EXPECT_EQ(response.message(), "Unsupported http method");
+        return std::nullopt;
+    });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockConnection_), yield);
+    });
+}
+
 TEST_F(ConnectionHandlerSequentialProcessingTest, Receive_Handle_Send)
 {
     testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>

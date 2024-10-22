@@ -95,6 +95,8 @@ TEST_F(HttpConnectionTests, Receive)
 
     runSpawn([this](boost::asio::yield_context yield) {
         auto connection = acceptConnection(yield);
+        EXPECT_TRUE(connection.ip() == "127.0.0.1" or connection.ip() == "::1") << connection.ip();
+
         auto expectedRequest = connection.receive(yield, std::chrono::milliseconds{100});
         ASSERT_TRUE(expectedRequest.has_value()) << expectedRequest.error().message();
         ASSERT_TRUE(expectedRequest->isHttp());
