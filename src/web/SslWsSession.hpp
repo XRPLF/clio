@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Taggable.hpp"
+#include "util/config/Config.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/WsBase.hpp"
 #include "web/interface/ConnectionBase.hpp"
@@ -58,6 +59,7 @@ public:
      * @brief Create a new non-secure websocket session.
      *
      * @param stream The SSL stream. Ownership is transferred
+     * @param config The config for server
      * @param ip Client's IP address
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
@@ -67,6 +69,7 @@ public:
      */
     explicit SslWsSession(
         boost::beast::ssl_stream<boost::beast::tcp_stream>&& stream,
+        util::Config config,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
@@ -74,7 +77,7 @@ public:
         boost::beast::flat_buffer&& buffer,
         bool isAdmin
     )
-        : impl::WsBase<SslWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
+        : impl::WsBase<SslWsSession, HandlerType>(config, ip, tagFactory, dosGuard, handler, std::move(buffer))
         , ws_(std::move(stream))
     {
         ConnectionBase::isAdmin_ = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
@@ -100,6 +103,7 @@ class SslWsUpgrader : public std::enable_shared_from_this<SslWsUpgrader<HandlerT
     boost::beast::ssl_stream<boost::beast::tcp_stream> https_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
+    util::Config config_;
     std::string ip_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
     std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard_;
@@ -112,6 +116,7 @@ public:
      * @brief Create a new upgrader to secure websocket.
      *
      * @param stream The SSL stream. Ownership is transferred
+     * @param config The config for server
      * @param ip Client's IP address
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
@@ -122,6 +127,7 @@ public:
      */
     SslWsUpgrader(
         boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
+        util::Config config,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
@@ -132,6 +138,7 @@ public:
     )
         : https_(std::move(stream))
         , buffer_(std::move(buffer))
+        , config_(std::move(config))
         , ip_(std::move(ip))
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
@@ -179,7 +186,7 @@ private:
         boost::beast::get_lowest_layer(https_).expires_never();
 
         std::make_shared<SslWsSession<HandlerType>>(
-            std::move(https_), ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_), isAdmin_
+            std::move(https_), config_, ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_), isAdmin_
         )
             ->run(std::move(req_));
     }

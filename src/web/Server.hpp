@@ -87,6 +87,7 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, 
 
     util::Logger log_{"WebServer"};
     boost::beast::tcp_stream stream_;
+    util::Config config_;
     std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
     std::reference_wrapper<dosguard::DOSGuardInterface> const dosGuard_;
@@ -99,6 +100,7 @@ public:
      * @brief Create a new detector.
      *
      * @param socket The socket. Ownership is transferred
+     * @param config The config for server
      * @param ctx The SSL context if any
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
@@ -107,6 +109,7 @@ public:
      */
     Detector(
         tcp::socket&& socket,
+        util::Config config,
         std::optional<std::reference_wrapper<boost::asio::ssl::context>> ctx,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
@@ -114,6 +117,7 @@ public:
         std::shared_ptr<impl::AdminVerificationStrategy> adminVerification
     )
         : stream_(std::move(socket))
+        , config_(std::move(config))
         , ctx_(ctx)
         , tagFactory_(std::cref(tagFactory))
         , dosGuard_(dosGuard)
@@ -170,6 +174,7 @@ public:
 
             std::make_shared<SslSessionType<HandlerType>>(
                 stream_.release_socket(),
+                config_,
                 ip,
                 adminVerification_,
                 *ctx_,
@@ -183,7 +188,14 @@ public:
         }
 
         std::make_shared<PlainSessionType<HandlerType>>(
-            stream_.release_socket(), ip, adminVerification_, tagFactory_, dosGuard_, handler_, std::move(buffer_)
+            stream_.release_socket(),
+            config_,
+            ip,
+            adminVerification_,
+            tagFactory_,
+            dosGuard_,
+            handler_,
+            std::move(buffer_)
         )
             ->run();
     }
@@ -206,6 +218,7 @@ class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslS
     using std::enable_shared_from_this<Server<PlainSessionType, SslSessionType, HandlerType>>::shared_from_this;
 
     util::Logger log_{"WebServer"};
+    util::Config config_;
     std::reference_wrapper<boost::asio::io_context> ioc_;
     std::optional<boost::asio::ssl::context> ctx_;
     util::TagDecoratorFactory tagFactory_;
@@ -218,6 +231,7 @@ public:
     /**
      * @brief Create a new instance of the web server.
      *
+     * @param config The config for server
      * @param ioc The io_context to run the server on
      * @param ctx The SSL context if any
      * @param endpoint The endpoint to listen on
@@ -227,6 +241,7 @@ public:
      * @param adminPassword The optional password to verify admin role in requests
      */
     Server(
+        util::Config config,
         boost::asio::io_context& ioc,
         std::optional<boost::asio::ssl::context> ctx,
         tcp::endpoint endpoint,
@@ -235,7 +250,8 @@ public:
         std::shared_ptr<HandlerType> handler,
         std::optional<std::string> adminPassword
     )
-        : ioc_(std::ref(ioc))
+        : config_(std::move(config))
+        , ioc_(std::ref(ioc))
         , ctx_(std::move(ctx))
         , tagFactory_(tagFactory)
         , dosGuard_(std::ref(dosGuard))
@@ -295,7 +311,7 @@ private:
                 ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;
 
             std::make_shared<Detector<PlainSessionType, SslSessionType, HandlerType>>(
-                std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_, adminVerification_
+                std::move(socket), config_, ctxRef, std::cref(tagFactory_), dosGuard_, handler_, adminVerification_
             )
                 ->run();
         }
@@ -358,6 +374,7 @@ make_HttpServer(
     }
 
     auto server = std::make_shared<HttpServer<HandlerType>>(
+        serverConfig,
         ioc,
         std::move(expectedSslContext).value(),
         boost::asio::ip::tcp::endpoint{address, port},

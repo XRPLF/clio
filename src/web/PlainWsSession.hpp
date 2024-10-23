@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Taggable.hpp"
+#include "util/config/Config.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/WsBase.hpp"
 #include "web/interface/ConnectionBase.hpp"
@@ -57,6 +58,7 @@ public:
      * @brief Create a new non-secure websocket session.
      *
      * @param socket The socket. Ownership is transferred
+     * @param config The config for server
      * @param ip Client's IP address
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
@@ -66,6 +68,7 @@ public:
      */
     explicit PlainWsSession(
         boost::asio::ip::tcp::socket&& socket,
+        util::Config config,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
@@ -73,7 +76,14 @@ public:
         boost::beast::flat_buffer&& buffer,
         bool isAdmin
     )
-        : impl::WsBase<PlainWsSession, HandlerType>(ip, tagFactory, dosGuard, handler, std::move(buffer))
+        : impl::WsBase<PlainWsSession, HandlerType>(
+              std::move(config),
+              ip,
+              tagFactory,
+              dosGuard,
+              handler,
+              std::move(buffer)
+          )
         , ws_(std::move(socket))
     {
         ConnectionBase::isAdmin_ = isAdmin;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
@@ -99,6 +109,7 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<HandlerType>> 
     using std::enable_shared_from_this<WsUpgrader<HandlerType>>::shared_from_this;
 
     boost::beast::tcp_stream http_;
+    util::Config config_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
@@ -113,6 +124,7 @@ public:
      * @brief Create a new upgrader to non-secure websocket.
      *
      * @param stream The TCP stream. Ownership is transferred
+     * @param config The config for server
      * @param ip Client's IP address
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
@@ -123,6 +135,7 @@ public:
      */
     WsUpgrader(
         boost::beast::tcp_stream&& stream,
+        util::Config config,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
@@ -132,6 +145,7 @@ public:
         bool isAdmin
     )
         : http_(std::move(stream))
+        , config_(std::move(config))
         , buffer_(std::move(buffer))
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
@@ -175,7 +189,7 @@ private:
         boost::beast::get_lowest_layer(http_).expires_never();
 
         std::make_shared<PlainWsSession<HandlerType>>(
-            http_.release_socket(), ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_), isAdmin_
+            http_.release_socket(), config_, ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_), isAdmin_
         )
             ->run(std::move(req_));
     }
