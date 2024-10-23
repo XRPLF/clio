@@ -76,12 +76,12 @@ makeHttpData(http::status status, Request const& request)
 }
 }  // namespace
 
-Response::Response(http::status status, std::string message, Request const& request)
+Response::Response(boost::beast::http::status status, std::string message, Request const& request)
     : message_(std::move(message)), httpData_{makeHttpData<decltype(message)>(status, request)}
 {
 }
 
-Response::Response(http::status status, boost::json::object const& message, Request const& request)
+Response::Response(boost::beast::http::status status, boost::json::object const& message, Request const& request)
     : message_(boost::json::serialize(message)), httpData_{makeHttpData<decltype(message)>(status, request)}
 {
 }
