@@ -65,7 +65,6 @@ TEST(ConfigValue, SetValuesOnPortConstraint)
     EXPECT_TRUE(cvPort.setValue(33.33).has_value());
     EXPECT_TRUE(cvPort.setValue(33.33).value().error == "value does not match type integer");
     EXPECT_FALSE(cvPort.setValue(1).has_value());
-
     auto cvPort2 = ConfigValue{ConfigType::String}.defaultValue("4444").withConstraint(validatePort);
     auto const strPortError = cvPort2.setValue("100000");
     EXPECT_TRUE(strPortError.has_value());
@@ -150,9 +149,10 @@ TEST(ConfigValue, PositiveDoubleConstraint)
     auto const doubleCons{PositiveDouble{}};
     EXPECT_FALSE(doubleCons.checkConstraint(0.2));
     EXPECT_FALSE(doubleCons.checkConstraint(5.54));
+    EXPECT_FALSE(doubleCons.checkConstraint(3));
     EXPECT_TRUE(doubleCons.checkConstraint("-5"));
     EXPECT_EQ(doubleCons.checkConstraint("-5")->error, "Double number must be of type int or double");
-    EXPECT_EQ(doubleCons.checkConstraint(-5.6)->error, "Double number must be greater than 0");
+    EXPECT_EQ(doubleCons.checkConstraint(-5.6)->error, "Double number must be greater than or equal to 0");
     EXPECT_FALSE(doubleCons.checkConstraint(12.1));
 }
 

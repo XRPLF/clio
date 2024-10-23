@@ -19,11 +19,12 @@
 
 #include "etl/CacheLoaderSettings.hpp"
 
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 
 namespace etl {
@@ -47,31 +48,29 @@ CacheLoaderSettings::isDisabled() const
 }
 
 [[nodiscard]] CacheLoaderSettings
-make_CacheLoaderSettings(util::Config const& config)
+make_CacheLoaderSettings(util::config::ClioConfigDefinition const& config)
 {
     CacheLoaderSettings settings;
-    settings.numThreads = config.valueOr("io_threads", settings.numThreads);
-    if (config.contains("cache")) {
-        auto const cache = config.section("cache");
-        // Given diff number to generate cursors
-        settings.numCacheDiffs = cache.valueOr<size_t>("num_diffs", settings.numCacheDiffs);
-        // Given cursors number fetching from diff
-        settings.numCacheCursorsFromDiff = cache.valueOr<size_t>("num_cursors_from_diff", 0);
-        // Given cursors number fetching from account
-        settings.numCacheCursorsFromAccount = cache.valueOr<size_t>("num_cursors_from_account", 0);
+    settings.numThreads = config.getValue<uint16_t>("io_threads");
+    auto const cache = config.getObject("cache");
+    // Given diff number to generate cursors
+    settings.numCacheDiffs = cache.getValue<std::size_t>("num_diffs");
+    // Given cursors number fetching from diff
+    settings.numCacheCursorsFromDiff = cache.getValue<std::size_t>("num_cursors_from_diff");
+    // Given cursors number fetching from account
+    settings.numCacheCursorsFromAccount = cache.getValue<std::size_t>("num_cursors_from_account");
 
-        settings.numCacheMarkers = cache.valueOr<size_t>("num_markers", settings.numCacheMarkers);
-        settings.cachePageFetchSize = cache.valueOr<size_t>("page_fetch_size", settings.cachePageFetchSize);
+    settings.numCacheMarkers = cache.getValue<std::size_t>("num_markers");
+    settings.cachePageFetchSize = cache.getValue<std::size_t>("page_fetch_size");
 
-        if (auto entry = cache.maybeValue<std::string>("load"); entry) {
-            if (boost::iequals(*entry, "sync"))
-                settings.loadStyle = CacheLoaderSettings::LoadStyle::SYNC;
-            if (boost::iequals(*entry, "async"))
-                settings.loadStyle = CacheLoaderSettings::LoadStyle::ASYNC;
-            if (boost::iequals(*entry, "none") or boost::iequals(*entry, "no"))
-                settings.loadStyle = CacheLoaderSettings::LoadStyle::NONE;
-        }
-    }
+    auto const entry = cache.getValue<std::string>("load");
+    if (boost::iequals(entry, "sync"))
+        settings.loadStyle = CacheLoaderSettings::LoadStyle::SYNC;
+    if (boost::iequals(entry, "async"))
+        settings.loadStyle = CacheLoaderSettings::LoadStyle::ASYNC;
+    if (boost::iequals(entry, "none") or boost::iequals(entry, "no"))
+        settings.loadStyle = CacheLoaderSettings::LoadStyle::NONE;
+
     return settings;
 }
 

@@ -19,7 +19,6 @@
 
 #include "rpc/WorkQueue.hpp"
 
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
@@ -29,7 +28,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <thread>
 #include <utility>
 
 namespace rpc {
@@ -92,12 +90,12 @@ WorkQueue::stop(std::function<void()> onQueueEmpty)
 }
 
 WorkQueue
-WorkQueue::make_WorkQueue(util::Config const& config)
+WorkQueue::make_WorkQueue(util::config::ClioConfigDefinition const& config)
 {
     static util::Logger const log{"RPC"};
-    auto const serverConfig = config.section("server");
-    auto const numThreads = config.valueOr<uint32_t>("workers", std::thread::hardware_concurrency());
-    auto const maxQueueSize = serverConfig.valueOr<uint32_t>("max_queue_size", 0);  // 0 is no limit
+    auto const serverConfig = config.getObject("server");
+    auto const numThreads = config.getValue<uint32_t>("workers");
+    auto const maxQueueSize = serverConfig.getValue<uint32_t>("max_queue_size");  // 0 is no limit
 
     LOG(log.info()) << "Number of workers = " << numThreads << ". Max queue size = " << maxQueueSize;
     return WorkQueue{numThreads, maxQueueSize};

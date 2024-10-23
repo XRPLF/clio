@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "data/BackendInterface.hpp"
-#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/FakesAndMocks.hpp"
 #include "rpc/RPCEngine.hpp"
@@ -34,8 +33,12 @@
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
-#include "web/Context.hpp"
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
 
@@ -55,6 +58,7 @@ using namespace rpc;
 using namespace util;
 namespace json = boost::json;
 using namespace testing;
+using namespace util::config;
 
 namespace {
 constexpr auto FORWARD_REPLY = R"JSON({
@@ -66,15 +70,30 @@ constexpr auto FORWARD_REPLY = R"JSON({
 })JSON";
 }  // namespace
 
+inline ClioConfigDefinition
+generateDefaultRPCEngineConfig()
+{
+    return ClioConfigDefinition{
+        {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(validateUint16)},
+        {"rpc.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(validatePositiveDouble)},
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
+        {"dos_guard.max_fetches",
+         ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(validateUint32)},
+        {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(validateUint32)
+        },
+        {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(validateUint32)}
+    };
+}
+
 struct RPCEngineTest : util::prometheus::WithPrometheus,
                        MockBackendTest,
                        MockCountersTest,
                        MockLoadBalancerTest,
                        SyncAsioContextTest {
-    Config cfg = Config{json::parse(R"JSON({
-        "server": {"max_queue_size": 2},
-        "workers": 4
-    })JSON")};
+    ClioConfigDefinition cfg = generateDefaultRPCEngineConfig();
+
     util::TagDecoratorFactory tagFactory{cfg};
     WorkQueue queue = WorkQueue::make_WorkQueue(cfg);
     web::dosguard::WhitelistHandler whitelistHandler{cfg};
@@ -179,7 +198,13 @@ TEST_P(RPCEngineFlowParameterTest, Test)
 
     std::shared_ptr<RPCEngine<MockLoadBalancer, MockCounters>> engine =
         RPCEngine<MockLoadBalancer, MockCounters>::make_RPCEngine(
-            Config{}, backend, mockLoadBalancerPtr, dosGuard, queue, *mockCountersPtr, handlerProvider
+            generateDefaultRPCEngineConfig(),
+            backend,
+            mockLoadBalancerPtr,
+            dosGuard,
+            queue,
+            *mockCountersPtr,
+            handlerProvider
         );
 
     if (testBundle.forwarded) {
@@ -321,7 +346,7 @@ generateCacheTestValuesForParametersTest()
 {
     return std::vector<RPCEngineCacheTestCaseBundle>{
         {.testName = "CacheEnabled",
-         .config = R"JSON({      
+         .config = R"JSON({
             "server": {"max_queue_size": 2},
             "workers": 4,
             "rpc": 
@@ -334,7 +359,7 @@ generateCacheTestValuesForParametersTest()
          .config = R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": {}
+            "rpc": {"cache_timeout": 0}
          })JSON",
          .method = "server_info",
          .isAdmin = false,
@@ -343,7 +368,7 @@ generateCacheTestValuesForParametersTest()
          .config = R"JSON({      
             "server": {"max_queue_size": 2},
             "workers": 4,
-            "rpc": {}
+            "rpc": {"cache_timeout": 0}
          })JSON",
          .method = "server_info",
          .isAdmin = false,
@@ -388,7 +413,11 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(RPCEngineCacheParameterTest, Test)
 {
     auto const& testParam = GetParam();
-    auto const cfgCache = Config{json::parse(testParam.config)};
+    auto const json = ConfigFileJson{json::parse(testParam.config).as_object()};
+
+    auto cfgCache{generateDefaultRPCEngineConfig()};
+    auto const errors = cfgCache.parse(json);
+    EXPECT_TRUE(!errors.has_value());
 
     auto const admin = testParam.isAdmin;
     auto const method = testParam.method;
@@ -432,11 +461,11 @@ TEST_P(RPCEngineCacheParameterTest, Test)
 
 TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
 {
-    auto const cfgCache = Config{json::parse(R"JSON({      
-                                                      "server": {"max_queue_size": 2},
-                                                      "workers": 4,
-                                                      "rpc": {"cache_timeout": 10}
-                                                })JSON")};
+    auto const cfgCache = ClioConfigDefinition{
+        {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(validateUint16)},
+        {"rpc.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(validatePositiveDouble)}
+    };
 
     auto const notAdmin = false;
     auto const method = "server_info";

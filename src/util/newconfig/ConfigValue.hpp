@@ -219,7 +219,9 @@ private:
         if (type == ConfigType::Boolean && !std::holds_alternative<bool>(value)) {
             return Error{"value does not match type boolean"};
         }
-        if (type == ConfigType::Double && !std::holds_alternative<double>(value)) {
+        if (type == ConfigType::Double && (!std::holds_alternative<double>(value))) {
+            if (std::holds_alternative<int64_t>(value))
+                return std::nullopt;
             return Error{"value does not match type double"};
         }
         if (type == ConfigType::Integer && !std::holds_alternative<int64_t>(value)) {

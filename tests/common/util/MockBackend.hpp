@@ -22,7 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
 #include "data/Types.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/object.hpp>
@@ -39,7 +39,7 @@
 using namespace data;
 
 struct MockBackend : public BackendInterface {
-    MockBackend(util::Config)
+    MockBackend(util::config::ClioConfigDefinition)
     {
     }
 

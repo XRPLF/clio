@@ -22,7 +22,7 @@
 #include "data/cassandra/Types.hpp"
 #include "data/cassandra/impl/Cluster.hpp"
 #include "util/Constants.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ObjectView.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/value.hpp>
@@ -36,43 +36,26 @@
 #include <ios>
 #include <iterator>
 #include <optional>
-#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <system_error>
 
 namespace data::cassandra {
 
 namespace impl {
-inline Settings::ContactPoints
-tag_invoke(boost::json::value_to_tag<Settings::ContactPoints>, boost::json::value const& value)
-{
-    if (not value.is_object()) {
-        throw std::runtime_error("Feed entire Cassandra section to parse Settings::ContactPoints instead");
-    }
-
-    util::Config const obj{value};
-    Settings::ContactPoints out;
-
-    out.contactPoints = obj.valueOrThrow<std::string>("contact_points", "`contact_points` must be a string");
-    out.port = obj.maybeValue<uint16_t>("port");
-
-    return out;
-}
 
 inline Settings::SecureConnectionBundle
-tag_invoke(boost::json::value_to_tag<Settings::SecureConnectionBundle>, boost::json::value const& value)
+invoke_tag_SecureConnections(std::string_view value)
 {
-    if (not value.is_string())
-        throw std::runtime_error("`secure_connect_bundle` must be a string");
-    return Settings::SecureConnectionBundle{value.as_string().data()};
+    return Settings::SecureConnectionBundle{value.data()};
 }
 }  // namespace impl
 
-SettingsProvider::SettingsProvider(util::Config const& cfg)
+SettingsProvider::SettingsProvider(util::config::ObjectView const& cfg)
     : config_{cfg}
-    , keyspace_{cfg.valueOr<std::string>("keyspace", "clio")}
+    , keyspace_{cfg.getValue<std::string>("keyspace")}
     , tablePrefix_{cfg.maybeValue<std::string>("table_prefix")}
-    , replicationFactor_{cfg.valueOr<uint16_t>("replication_factor", 3)}
+    , replicationFactor_{cfg.getValue<uint16_t>("replication_factor")}
     , settings_{parseSettings()}
 {
 }
@@ -86,8 +69,8 @@ SettingsProvider::getSettings() const
 std::optional<std::string>
 SettingsProvider::parseOptionalCertificate() const
 {
-    if (auto const certPath = config_.maybeValue<std::string>("certfile"); certPath) {
-        auto const path = std::filesystem::path(*certPath);
+    if (auto const certPath = config_.getValueView("certfile"); certPath.hasValue()) {
+        auto const path = std::filesystem::path(certPath.asString());
         std::ifstream fileStream(path.string(), std::ios::in);
         if (!fileStream) {
             throw std::system_error(errno, std::generic_category(), "Opening certificate " + path.string());
@@ -108,30 +91,34 @@ Settings
 SettingsProvider::parseSettings() const
 {
     auto settings = Settings::defaultSettings();
-    if (auto const bundle = config_.maybeValue<Settings::SecureConnectionBundle>("secure_connect_bundle"); bundle) {
-        settings.connectionInfo = *bundle;
+
+    // all config values used in settings is under "database.cassandra" prefix
+    if (config_.getValueView("secure_connect_bundle").hasValue()) {
+        auto const bundle = Settings::SecureConnectionBundle{(config_.getValue<std::string>("secure_connect_bundle"))};
+        settings.connectionInfo = bundle;
     } else {
-        settings.connectionInfo =
-            config_.valueOrThrow<Settings::ContactPoints>("Missing contact_points in Cassandra config");
+        Settings::ContactPoints out;
+        out.contactPoints = config_.getValue<std::string>("contact_points");
+        out.port = config_.maybeValue<uint32_t>("port");
+        settings.connectionInfo = out;
     }
 
-    settings.threads = config_.valueOr<uint32_t>("threads", settings.threads);
-    settings.maxWriteRequestsOutstanding =
-        config_.valueOr<uint32_t>("max_write_requests_outstanding", settings.maxWriteRequestsOutstanding);
-    settings.maxReadRequestsOutstanding =
-        config_.valueOr<uint32_t>("max_read_requests_outstanding", settings.maxReadRequestsOutstanding);
-    settings.coreConnectionsPerHost =
-        config_.valueOr<uint32_t>("core_connections_per_host", settings.coreConnectionsPerHost);
+    settings.threads = config_.getValue<uint32_t>("threads");
+    settings.maxWriteRequestsOutstanding = config_.getValue<uint32_t>("max_write_requests_outstanding");
+    settings.maxReadRequestsOutstanding = config_.getValue<uint32_t>("max_read_requests_outstanding");
+    settings.coreConnectionsPerHost = config_.getValue<uint32_t>("core_connections_per_host");
     settings.queueSizeIO = config_.maybeValue<uint32_t>("queue_size_io");
-    settings.writeBatchSize = config_.valueOr<std::size_t>("write_batch_size", settings.writeBatchSize);
+    settings.writeBatchSize = config_.getValue<std::size_t>("write_batch_size");
 
-    auto const connectTimeoutSecond = config_.maybeValue<uint32_t>("connect_timeout");
-    if (connectTimeoutSecond)
-        settings.connectionTimeout = std::chrono::milliseconds{*connectTimeoutSecond * util::MILLISECONDS_PER_SECOND};
+    if (config_.getValueView("connect_timeout").hasValue()) {
+        auto const connectTimeoutSecond = config_.getValue<uint32_t>("connect_timeout");
+        settings.connectionTimeout = std::chrono::milliseconds{connectTimeoutSecond * util::MILLISECONDS_PER_SECOND};
+    }
 
-    auto const requestTimeoutSecond = config_.maybeValue<uint32_t>("request_timeout");
-    if (requestTimeoutSecond)
-        settings.requestTimeout = std::chrono::milliseconds{*requestTimeoutSecond * util::MILLISECONDS_PER_SECOND};
+    if (config_.getValueView("request_timeout").hasValue()) {
+        auto const requestTimeoutSecond = config_.getValue<uint32_t>("request_timeout");
+        settings.requestTimeout = std::chrono::milliseconds{requestTimeoutSecond * util::MILLISECONDS_PER_SECOND};
+    }
 
     settings.certificate = parseOptionalCertificate();
     settings.username = config_.maybeValue<std::string>("username");

@@ -20,8 +20,10 @@
 #include "web/dosguard/DOSGuard.hpp"
 
 #include "util/Assert.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ArrayView.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ValueView.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
 #include <boost/iterator/transform_iterator.hpp>
@@ -33,13 +35,15 @@
 #include <string_view>
 #include <unordered_set>
 
+using namespace util::config;
+
 namespace web::dosguard {
 
-DOSGuard::DOSGuard(util::Config const& config, WhitelistHandlerInterface const& whitelistHandler)
+DOSGuard::DOSGuard(ClioConfigDefinition const& config, WhitelistHandlerInterface const& whitelistHandler)
     : whitelistHandler_{std::cref(whitelistHandler)}
-    , maxFetches_{config.valueOr("dos_guard.max_fetches", DEFAULT_MAX_FETCHES)}
-    , maxConnCount_{config.valueOr("dos_guard.max_connections", DEFAULT_MAX_CONNECTIONS)}
-    , maxRequestCount_{config.valueOr("dos_guard.max_requests", DEFAULT_MAX_REQUESTS)}
+    , maxFetches_{config.getValue<uint32_t>("dos_guard.max_fetches")}
+    , maxConnCount_{config.getValue<uint32_t>("dos_guard.max_connections")}
+    , maxRequestCount_{config.getValue<uint32_t>("dos_guard.max_requests")}
 {
 }
 
@@ -134,15 +138,16 @@ DOSGuard::clear() noexcept
 }
 
 [[nodiscard]] std::unordered_set<std::string>
-DOSGuard::getWhitelist(util::Config const& config)
+DOSGuard::getWhitelist(ClioConfigDefinition const& config)
 {
-    using T = std::unordered_set<std::string> const;
-    auto whitelist = config.arrayOr("dos_guard.whitelist", {});
-    auto const transform = [](auto const& elem) { return elem.template value<std::string>(); };
-    return T{
-        boost::transform_iterator(std::begin(whitelist), transform),
-        boost::transform_iterator(std::end(whitelist), transform)
-    };
+    std::unordered_set<std::string> ips;
+    auto const whitelist = config.getArray("dos_guard.whitelist");
+
+    for (auto it = whitelist.begin<ValueView>(); it != whitelist.end<ValueView>(); ++it) {
+        ips.insert((*it).asString());
+    }
+
+    return ips;
 }
 
 }  // namespace web::dosguard

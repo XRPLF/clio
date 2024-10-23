@@ -19,7 +19,7 @@
 
 #include "web/dosguard/IntervalSweepHandler.hpp"
 
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -32,14 +32,15 @@
 namespace web::dosguard {
 
 IntervalSweepHandler::IntervalSweepHandler(
-    util::Config const& config,
+    util::config::ClioConfigDefinition const& config,
     boost::asio::io_context& ctx,
     BaseDOSGuard& dosGuard
 )
     : repeat_{std::ref(ctx)}
 {
     auto const sweepInterval{std::max(
-        std::chrono::milliseconds{1u}, util::Config::toMilliseconds(config.valueOr("dos_guard.sweep_interval", 1.0))
+        std::chrono::milliseconds{1u},
+        util::config::ClioConfigDefinition::toMilliseconds(config.getValue<double>("dos_guard.sweep_interval"))
     )};
     repeat_.start(sweepInterval, [&dosGuard] { dosGuard.clear(); });
 }

@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/dosguard/WhitelistHandlerInterface.hpp"
 
@@ -63,17 +63,13 @@ class DOSGuard : public DOSGuardInterface {
     util::Logger log_{"RPC"};
 
 public:
-    static constexpr std::uint32_t DEFAULT_MAX_FETCHES = 1000'000u; /**< Default maximum fetches per sweep */
-    static constexpr std::uint32_t DEFAULT_MAX_CONNECTIONS = 20u;   /**< Default maximum concurrent connections */
-    static constexpr std::uint32_t DEFAULT_MAX_REQUESTS = 20u;      /**< Default maximum requests per sweep */
-
     /**
      * @brief Constructs a new DOS guard.
      *
      * @param config Clio config
      * @param whitelistHandler Whitelist handler that checks whitelist for IP addresses
      */
-    DOSGuard(util::Config const& config, WhitelistHandlerInterface const& whitelistHandler);
+    DOSGuard(util::config::ClioConfigDefinition const& config, WhitelistHandlerInterface const& whitelistHandler);
 
     /**
      * @brief Check whether an ip address is in the whitelist or not.
@@ -148,7 +144,7 @@ public:
 
 private:
     [[nodiscard]] static std::unordered_set<std::string>
-    getWhitelist(util::Config const& config);
+    getWhitelist(util::config::ClioConfigDefinition const& config);
 };
 
 }  // namespace web::dosguard

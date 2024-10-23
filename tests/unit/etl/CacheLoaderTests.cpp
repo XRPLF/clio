@@ -22,13 +22,18 @@
 #include "etl/CacheLoaderSettings.hpp"
 #include "etl/FakeDiffProvider.hpp"
 #include "etl/impl/CacheLoader.hpp"
+#include "util/Assert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockCache.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -39,8 +44,33 @@ using namespace etl;
 using namespace util;
 using namespace data;
 using namespace testing;
+using namespace util::config;
 
 namespace {
+
+inline ClioConfigDefinition
+generateDefaultCacheConfig()
+{
+    return ClioConfigDefinition{
+        {{"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+         {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32)},
+         {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48)},
+         {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+         {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+         {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
+         {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")}}
+    };
+}
+
+inline ClioConfigDefinition
+getParseCacheConfig(boost::json::value val)
+{
+    ConfigFileJson const jsonVal{val.as_object()};
+    auto config = generateDefaultCacheConfig();
+    auto const errors = config.parse(jsonVal);
+    ASSERT(!errors.has_value(), "Error parsing Json for clio config for settings test");
+    return config;
+}
 
 constexpr auto SEQ = 30;
 
@@ -178,7 +208,7 @@ TEST_P(ParametrizedCacheLoaderTest, CacheDisabledLeadsToCancellation)
 //
 TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 {
-    auto const cfg = util::Config(json::parse(R"({"cache": {"load": "sync"}})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "sync"}})"));
     CacheLoader loader{cfg, backend, cache};
 
     auto const diffs = diffProvider.getLatestDiff();
@@ -204,7 +234,7 @@ TEST_F(CacheLoaderTest, SyncCacheLoaderWaitsTillFullyLoaded)
 
 TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
 {
-    auto const cfg = util::Config(json::parse(R"({"cache": {"load": "async"}})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "async"}})"));
     CacheLoader loader{cfg, backend, cache};
 
     auto const diffs = diffProvider.getLatestDiff();
@@ -232,7 +262,7 @@ TEST_F(CacheLoaderTest, AsyncCacheLoaderCanBeStopped)
 
 TEST_F(CacheLoaderTest, DisabledCacheLoaderDoesNotLoadCache)
 {
-    auto cfg = util::Config(json::parse(R"({"cache": {"load": "none"}})"));
+    auto const cfg = getParseCacheConfig(json::parse(R"({"cache": {"load": "none"}})"));
     CacheLoader loader{cfg, backend, cache};
 
     EXPECT_CALL(cache, updateImp).Times(0);

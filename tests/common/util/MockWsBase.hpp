@@ -20,7 +20,9 @@
 #pragma once
 
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast/http/status.hpp>
@@ -32,7 +34,9 @@
 struct MockSession : public web::ConnectionBase {
     MOCK_METHOD(void, send, (std::shared_ptr<std::string>), (override));
     MOCK_METHOD(void, send, (std::string&&, boost::beast::http::status), (override));
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
+    util::TagDecoratorFactory tagDecoratorFactory{util::config::ClioConfigDefinition{
+        {"log_tag_style", util::config::ConfigValue{util::config::ConfigType::String}.defaultValue("none")}
+    }};
 
     MockSession() : web::ConnectionBase(tagDecoratorFactory, "")
     {

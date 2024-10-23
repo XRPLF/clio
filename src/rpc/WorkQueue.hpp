@@ -19,10 +19,9 @@
 
 #pragma once
 
-#include "util/Assert.hpp"
 #include "util/Mutex.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 #include "util/prometheus/Counter.hpp"
 #include "util/prometheus/Gauge.hpp"
 
@@ -97,7 +96,7 @@ public:
      * @return The work queue
      */
     static WorkQueue
-    make_WorkQueue(util::Config const& config);
+    make_WorkQueue(util::config::ClioConfigDefinition const& config);
 
     /**
      * @brief Submit a job to the work queue.

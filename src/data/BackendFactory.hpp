@@ -22,8 +22,8 @@
 #include "data/BackendInterface.hpp"
 #include "data/CassandraBackend.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
-#include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -41,18 +41,18 @@ namespace data {
  * @return A shared_ptr<BackendInterface> with the selected implementation
  */
 inline std::shared_ptr<BackendInterface>
-make_Backend(util::Config const& config)
+make_Backend(util::config::ClioConfigDefinition const& config)
 {
     static util::Logger const log{"Backend"};
     LOG(log.info()) << "Constructing BackendInterface";
 
-    auto const readOnly = config.valueOr("read_only", false);
+    auto const readOnly = config.getValue<bool>("read_only");
 
-    auto const type = config.value<std::string>("database.type");
+    auto const type = config.getValue<std::string>("database.type");
     std::shared_ptr<BackendInterface> backend = nullptr;
 
     if (boost::iequals(type, "cassandra")) {
-        auto cfg = config.section("database." + type);
+        auto const cfg = config.getObject("database." + type);
         backend = std::make_shared<data::cassandra::CassandraBackend>(data::cassandra::SettingsProvider{cfg}, readOnly);
     }
 

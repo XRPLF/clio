@@ -19,11 +19,18 @@
 
 #include "data/cassandra/SettingsProvider.hpp"
 #include "data/cassandra/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/TmpFile.hpp"
-#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/ObjectView.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
@@ -33,17 +40,50 @@
 #include <variant>
 
 using namespace util;
+using namespace util::config;
 using namespace std;
 namespace json = boost::json;
 
 using namespace data::cassandra;
 
+inline ClioConfigDefinition
+getParseSettingsConfig(boost::json::value val)
+{
+    ConfigFileJson const jsonVal{val.as_object()};
+    auto config = ClioConfigDefinition{
+        {"database.cassandra.threads",
+         ConfigValue{ConfigType::Integer}.defaultValue(std::thread::hardware_concurrency())},
+        {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("127.0.0.1")},
+        {"database.cassandra.max_write_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(10000)},
+        {"database.cassandra.max_read_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(100000)},
+        {"database.cassandra.core_connections_per_host", ConfigValue{ConfigType::Integer}.defaultValue(1)},
+        {"database.cassandra.certificate", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional()},
+        {"database.cassandra.write_batch_size", ConfigValue{ConfigType::Integer}.defaultValue(20)},
+        {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.optional()},
+        {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.request_timeout", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+        {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
+        {"database.cassandra.port", ConfigValue{ConfigType::Integer}.optional()},
+        {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(3)},
+        {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
+    };
+    auto const errors = config.parse(jsonVal);
+    ASSERT(!errors.has_value(), "Error generating clio config for settings test");
+    return config;
+};
+
 class SettingsProviderTest : public NoLoggerFixture {};
 
 TEST_F(SettingsProviderTest, Defaults)
 {
-    Config const cfg{json::parse(R"({"contact_points": "127.0.0.1"})")};
-    SettingsProvider const provider{cfg};
+    auto const cfg = getParseSettingsConfig(json::parse(R"({"contact_points": "127.0.0.1"})"));
+    SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.threads, std::thread::hardware_concurrency());
@@ -71,15 +111,15 @@ TEST_F(SettingsProviderTest, Defaults)
 
 TEST_F(SettingsProviderTest, SimpleConfig)
 {
-    Config const cfg{json::parse(R"({
-        "contact_points": "123.123.123.123",
-        "port": 1234,
-        "keyspace": "test",
-        "replication_factor": 42,
-        "table_prefix": "prefix",
-        "threads": 24
-    })")};
-    SettingsProvider const provider{cfg};
+    auto const cfg = getParseSettingsConfig(json::parse(R"({
+        "database.cassandra.contact_points": "123.123.123.123",
+        "database.cassandra.port": 1234,
+        "database.cassandra.keyspace": "test",
+        "database.cassandra.replication_factor": 42,
+        "database.cassandra.table_prefix": "prefix",
+        "database.cassandra.threads": 24
+    })"));
+    SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.threads, 24);
@@ -96,11 +136,11 @@ TEST_F(SettingsProviderTest, SimpleConfig)
 
 TEST_F(SettingsProviderTest, DriverOptionalOptionsSpecified)
 {
-    Config const cfg{json::parse(R"({
-        "contact_points": "123.123.123.123",
-        "queue_size_io": 2
-    })")};
-    SettingsProvider const provider{cfg};
+    auto const cfg = getParseSettingsConfig(json::parse(R"({
+        "database.cassandra.contact_points": "123.123.123.123",
+        "database.cassandra.queue_size_io": 2
+    })"));
+    SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.queueSizeIO, 2);
@@ -108,8 +148,9 @@ TEST_F(SettingsProviderTest, DriverOptionalOptionsSpecified)
 
 TEST_F(SettingsProviderTest, SecureBundleConfig)
 {
-    Config const cfg{json::parse(R"({"secure_connect_bundle": "bundleData"})")};
-    SettingsProvider const provider{cfg};
+    auto const cfg =
+        getParseSettingsConfig(json::parse(R"({"database.cassandra.secure_connect_bundle": "bundleData"})"));
+    SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();
     auto const* sb = std::get_if<Settings::SecureConnectionBundle>(&settings.connectionInfo);
@@ -120,14 +161,14 @@ TEST_F(SettingsProviderTest, SecureBundleConfig)
 TEST_F(SettingsProviderTest, CertificateConfig)
 {
     TmpFile const file{"certificateData"};
-    Config const cfg{json::parse(fmt::format(
+    auto const cfg = getParseSettingsConfig(json::parse(fmt::format(
         R"({{
-            "contact_points": "127.0.0.1",
-            "certfile": "{}"
+            "database.cassandra.contact_points": "127.0.0.1",
+            "database.cassandra.certfile": "{}"
         }})",
         file.path
-    ))};
-    SettingsProvider const provider{cfg};
+    )));
+    SettingsProvider const provider{cfg.getObject("database.cassandra")};
 
     auto const settings = provider.getSettings();
     EXPECT_EQ(settings.certificate, "certificateData");

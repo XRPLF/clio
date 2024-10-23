@@ -16,11 +16,18 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+#include "util/Assert.hpp"
 #include "util/LoggerFixtures.hpp"
-#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
 
 #include <boost/json/parse.hpp>
+#include <boost/json/value.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -29,9 +36,20 @@
 #include <vector>
 
 using namespace util;
+using namespace util::config;
 using namespace web::dosguard;
 
 struct WhitelistHandlerTest : NoLoggerFixture {};
+
+inline ClioConfigDefinition
+getParseWhitelistHandlerConfig(boost::json::value val)
+{
+    ConfigFileJson const jsonVal{val.as_object()};
+    auto config = ClioConfigDefinition{{"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}}};
+    auto const errors = config.parse(jsonVal);
+    ASSERT(!errors.has_value(), "Cannot parse Json Correctly");
+    return config;
+}
 
 TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
 {
@@ -57,7 +75,7 @@ TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
         .Times(3)
         .WillRepeatedly([](auto hostname, auto) -> std::vector<std::string> { return {std::string{hostname}}; });
 
-    Config const cfg{boost::json::parse(JSONDataIPV4)};
+    ClioConfigDefinition const cfg{getParseWhitelistHandlerConfig(boost::json::parse(JSONDataIPV4))};
     WhitelistHandler const whitelistHandler{cfg, mockResolver};
 
     EXPECT_TRUE(whitelistHandler.isWhiteListed("192.168.1.10"));
@@ -79,7 +97,7 @@ TEST_F(WhitelistHandlerTest, TestWhiteListResolvesHostname)
         }
     )JSON";
 
-    Config const cfg{boost::json::parse(JSONDataIPV4)};
+    ClioConfigDefinition const cfg{getParseWhitelistHandlerConfig(boost::json::parse(JSONDataIPV4))};
     WhitelistHandler const whitelistHandler{cfg};
 
     EXPECT_TRUE(whitelistHandler.isWhiteListed("127.0.0.1"));
@@ -101,7 +119,7 @@ TEST_F(WhitelistHandlerTest, TestWhiteListIPV6)
         }
     )JSON";
 
-    Config const cfg{boost::json::parse(JSONDataIPV6)};
+    ClioConfigDefinition const cfg{getParseWhitelistHandlerConfig(boost::json::parse(JSONDataIPV6))};
     WhitelistHandler const whitelistHandler{cfg};
 
     EXPECT_TRUE(whitelistHandler.isWhiteListed("2002:1dd8:85a7:0000:0000:8a6e:0000:1111"));

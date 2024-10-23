@@ -84,7 +84,7 @@ public:
      * @param handlerProvider The handler provider to use
      */
     RPCEngine(
-        util::Config const& config,
+        util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<LoadBalancerType> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,
@@ -100,13 +100,14 @@ public:
         , forwardingProxy_{balancer, counters, handlerProvider}
     {
         // Let main thread catch the exception if config type is wrong
-        auto const cacheTimeout = config.valueOr<float>("rpc.cache_timeout", 0.f);
+        auto const cacheTimeout = config.getValue<float>("rpc.cache_timeout");
 
         if (cacheTimeout > 0.f) {
             LOG(log_.info()) << fmt::format("Init RPC Cache, timeout: {} seconds", cacheTimeout);
 
             responseCache_.emplace(
-                util::Config::toMilliseconds(cacheTimeout), std::unordered_set<std::string>{"server_info"}
+                util::config::ClioConfigDefinition::toMilliseconds(cacheTimeout),
+                std::unordered_set<std::string>{"server_info"}
             );
         }
     }
@@ -125,7 +126,7 @@ public:
      */
     static std::shared_ptr<RPCEngine>
     make_RPCEngine(
-        util::Config const& config,
+        util::config::ClioConfigDefinition const& config,
         std::shared_ptr<BackendInterface> const& backend,
         std::shared_ptr<LoadBalancerType> const& balancer,
         web::dosguard::DOSGuardInterface const& dosGuard,

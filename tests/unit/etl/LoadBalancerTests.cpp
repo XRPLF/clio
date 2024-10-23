@@ -21,6 +21,7 @@
 #include "etl/Source.hpp"
 #include "rpc/Errors.hpp"
 #include "util/AsioContextTestFixture.hpp"
+#include "util/Assert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockPrometheus.hpp"
@@ -28,7 +29,12 @@
 #include "util/MockSubscriptionManager.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Random.hpp"
-#include "util/config/Config.hpp"
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -52,20 +58,77 @@
 #include <vector>
 
 using namespace etl;
+using namespace util::config;
 using testing::Return;
+
+constexpr static auto const TwoSourcesLedgerResponse = R"({
+    "etl_sources": [
+        {
+            "ip": "127.0.0.1",
+            "ws_port": "5005",
+            "grpc_port": "source1"
+        },
+        {
+            "ip": "127.0.0.1",
+            "ws_port": "5005",
+            "grpc_port": "source2"
+        }
+    ]
+})";
+
+constexpr static auto const ThreeSourcesLedgerResponse = R"({
+    "etl_sources": [
+        {
+            "ip": "127.0.0.1",
+            "ws_port": "5005",
+            "grpc_port": "source1"
+        },
+        {
+            "ip": "127.0.0.1",
+            "ws_port": "5005",
+            "grpc_port": "source2"
+        },
+        {
+            "ip": "127.0.0.1",
+            "ws_port": "5005",
+            "grpc_port": "source3"
+        }
+    ]
+})";
+
+inline ClioConfigDefinition
+getParseLoadBalancerConfig(boost::json::value val)
+{
+    ClioConfigDefinition config{
+        {{"forwarding.cache_timeout",
+          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(validatePositiveDouble)},
+         {"forwarding.request_timeout",
+          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(validatePositiveDouble)},
+         {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+         {"etl_sources.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validateIP)}},
+         {"etl_sources.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validatePort)}},
+         {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional()}},
+         {"num_markers", ConfigValue{ConfigType::Integer}.optional().withConstraint(validateNumMarkers)}}
+    };
+
+    auto const errors = config.parse(ConfigFileJson{val.as_object()});
+    ASSERT(!errors.has_value(), "Error parsing Json for clio config for load balancer test");
+    return config;
+}
 
 struct LoadBalancerConstructorTests : util::prometheus::WithPrometheus, MockBackendTestStrict {
     StrictMockSubscriptionManagerSharedPtr subscriptionManager_;
     StrictMockNetworkValidatedLedgersPtr networkManager_;
     StrictMockSourceFactory sourceFactory_{2};
     boost::asio::io_context ioContext_;
-    boost::json::value configJson_{{"etl_sources", {"source1", "source2"}}};
+    boost::json::value configJson_ = boost::json::parse(TwoSourcesLedgerResponse);
 
     std::unique_ptr<LoadBalancer>
     makeLoadBalancer()
     {
+        auto const cfg = getParseLoadBalancerConfig(configJson_);
         return std::make_unique<LoadBalancer>(
-            util::Config{configJson_},
+            cfg,
             ioContext_,
             backend,
             subscriptionManager_,
@@ -326,7 +389,8 @@ struct LoadBalancer3SourcesTests : LoadBalancerConstructorTests {
     LoadBalancer3SourcesTests()
     {
         sourceFactory_.setSourcesNumber(3);
-        configJson_.as_object()["etl_sources"] = {"source1", "source2", "source3"};
+        configJson_ = boost::json::parse(ThreeSourcesLedgerResponse);
+
         EXPECT_CALL(sourceFactory_, makeSource).Times(3);
         EXPECT_CALL(sourceFactory_.sourceAt(0), forwardToRippled).WillOnce(Return(boost::json::object{}));
         EXPECT_CALL(sourceFactory_.sourceAt(0), run);

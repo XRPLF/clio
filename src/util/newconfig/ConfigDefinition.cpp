@@ -20,6 +20,7 @@
 #include "util/newconfig/ConfigDefinition.hpp"
 
 #include "util/Assert.hpp"
+#include "util/Constants.hpp"
 #include "util/OverloadSet.hpp"
 #include "util/newconfig/Array.hpp"
 #include "util/newconfig/ArrayView.hpp"
@@ -34,100 +35,18 @@
 #include <fmt/core.h>
 
 #include <algorithm>
+#include <chrono>
+#include <cmath>
 #include <cstddef>
-#include <cstdint>
 #include <initializer_list>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <thread>
 #include <utility>
 #include <variant>
 #include <vector>
 
 namespace util::config {
-/**
- * @brief Full Clio Configuration definition.
- *
- * Specifies which keys are valid in Clio Config and provides default values if user's do not specify one. Those
- * without default values must be present in the user's config file.
- */
-static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
-    {{"database.type", ConfigValue{ConfigType::String}.defaultValue("cassandra").withConstraint(validateCassandraName)},
-     {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("localhost")},
-     {"database.cassandra.port", ConfigValue{ConfigType::Integer}.withConstraint(validatePort)},
-     {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
-     {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(3u)},
-     {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.defaultValue("table_prefix")},
-     {"database.cassandra.max_write_requests_outstanding",
-      ConfigValue{ConfigType::Integer}.defaultValue(10'000).withConstraint(validateUint32)},
-     {"database.cassandra.max_read_requests_outstanding",
-      ConfigValue{ConfigType::Integer}.defaultValue(100'000).withConstraint(validateUint32)},
-     {"database.cassandra.threads",
-      ConfigValue{ConfigType::Integer}
-          .defaultValue(static_cast<uint32_t>(std::thread::hardware_concurrency()))
-          .withConstraint(validateUint32)},
-     {"database.cassandra.core_connections_per_host",
-      ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(validateUint16)},
-     {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint16)},
-     {"database.cassandra.write_batch_size",
-      ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(validateUint16)},
-     {"etl_source.[].ip", Array{ConfigValue{ConfigType::String}.withConstraint(validateIP)}},
-     {"etl_source.[].ws_port", Array{ConfigValue{ConfigType::String}.withConstraint(validatePort)}},
-     {"etl_source.[].grpc_port", Array{ConfigValue{ConfigType::String}.withConstraint(validatePort)}},
-     {"forwarding.cache_timeout",
-      ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(validatePositiveDouble)},
-     {"forwarding.request_timeout",
-      ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(validatePositiveDouble)},
-     {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}},
-     {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(1000'000).withConstraint(validateUint32)},
-     {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(validateUint32)},
-     {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20).withConstraint(validateUint32)},
-     {"dos_guard.sweep_interval",
-      ConfigValue{ConfigType::Double}.defaultValue(1.0).withConstraint(validatePositiveDouble)},
-     {"cache.peers.[].ip", Array{ConfigValue{ConfigType::String}.withConstraint(validateIP)}},
-     {"cache.peers.[].port", Array{ConfigValue{ConfigType::String}.withConstraint(validatePort)}},
-     {"server.ip", ConfigValue{ConfigType::String}.withConstraint(validateIP)},
-     {"server.port", ConfigValue{ConfigType::Integer}.withConstraint(validatePort)},
-     {"server.workers", ConfigValue{ConfigType::Integer}.withConstraint(validateUint32)},
-     {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(validateUint32)},
-     {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
-     {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
-     {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-     {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(validateUint16)},
-     {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32).withConstraint(validateUint16)},
-     {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48).withConstraint(validateUint16)},
-     {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(validateUint16)},
-     {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(validateUint16)
-     },
-     {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512).withConstraint(validateUint16)},
-     {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async").withConstraint(validateLoadMode)},
-     {"log_channels.[].channel", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validateChannelName)}},
-     {"log_channels.[].log_level",
-      Array{ConfigValue{ConfigType::String}.optional().withConstraint(validateLogLevelName)}},
-     {"log_level", ConfigValue{ConfigType::String}.defaultValue("info").withConstraint(validateLogLevelName)},
-     {"log_format",
-      ConfigValue{ConfigType::String}.defaultValue(
-          R"(%TimeStamp% (%SourceLocation%) [%ThreadID%] %Channel%:%Severity% %Message%)"
-      )},
-     {"log_to_console", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-     {"log_directory", ConfigValue{ConfigType::String}.optional()},
-     {"log_rotation_size", ConfigValue{ConfigType::Integer}.defaultValue(2048u).withConstraint(validateUint32)},
-     {"log_directory_max_size",
-      ConfigValue{ConfigType::Integer}.defaultValue(50u * 1024u).withConstraint(validateUint32)},
-     {"log_rotation_hour_interval", ConfigValue{ConfigType::Integer}.defaultValue(12).withConstraint(validateUint32)},
-     {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint").withConstraint(validateLogTag)},
-     {"extractor_threads", ConfigValue{ConfigType::Integer}.defaultValue(2u).withConstraint(validateUint32)},
-     {"read_only", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
-     {"txn_threshold", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(validateUint16)},
-     {"start_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint32)},
-     {"finish_sequence", ConfigValue{ConfigType::Integer}.optional().withConstraint(validateUint32)},
-     {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
-     {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
-     {"api_version.min", ConfigValue{ConfigType::Integer}},
-     {"api_version.max", ConfigValue{ConfigType::Integer}}}
-};
 
 ClioConfigDefinition::ClioConfigDefinition(std::initializer_list<KeyValuePair> pair)
 {
@@ -154,7 +73,7 @@ ClioConfigDefinition::getObject(std::string_view prefix, std::optional<std::size
         if (hasPrefix && !idx.has_value() && !mapKey.contains(prefixWithDot + "[]"))
             return ObjectView{prefix, *this};
     }
-    ASSERT(false, "Key {} is not found in config", prefixWithDot);
+    ASSERT(false, "Key {} is not found in config", prefix);
     std::unreachable();
 }
 
@@ -188,7 +107,7 @@ ClioConfigDefinition::hasItemsWithPrefix(std::string_view key) const
 }
 
 ValueView
-ClioConfigDefinition::getValue(std::string_view fullKey) const
+ClioConfigDefinition::getValueView(std::string_view fullKey) const
 {
     ASSERT(map_.contains(fullKey), "key {} does not exist in config", fullKey);
     if (std::holds_alternative<ConfigValue>(map_.at(fullKey))) {
@@ -196,6 +115,13 @@ ClioConfigDefinition::getValue(std::string_view fullKey) const
     }
     ASSERT(false, "Value of key {} is an Array, not an object", fullKey);
     std::unreachable();
+}
+
+std::chrono::milliseconds
+ClioConfigDefinition::toMilliseconds(float value)
+{
+    ASSERT(value >= 0.0f, "Floating point value of seconds must be non-negative, got: {}", value);
+    return std::chrono::milliseconds{std::lroundf(value * static_cast<float>(util::MILLISECONDS_PER_SECOND))};
 }
 
 ValueView
