@@ -79,7 +79,7 @@ public:
      * @brief Returns the specified value of given string if value exists
      *
      * @tparam T The type T to return
-     * @param fullKey The config key to search for
+     * @param key The config key to add to prefix and then search for
      * @return Value of key of type T
      */
     template <typename T>
@@ -93,7 +93,7 @@ public:
      * @brief Returns the specified value of given string of type T if type and value exists
      *
      * @tparam T The type T to return
-     * @param fullKey The config key to search for
+     * @param key The config key to add to prefix and then search for
      * @return The value of type T if it exists, std::nullopt otherwise.
      */
     template <typename T>
