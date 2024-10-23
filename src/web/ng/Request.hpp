@@ -70,7 +70,7 @@ public:
      * @brief Method of the request.
      * @note WEBSOCKET is not a real method, it is used to distinguish WebSocket requests from HTTP requests.
      */
-    enum class Method { GET, POST, WEBSOCKET, UNSUPPORTED };
+    enum class Method { Get, Post, Websocket, Unsupported };
 
     /**
      * @brief Get the method of the request.

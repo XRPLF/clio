@@ -35,8 +35,10 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 
+namespace http = boost::beast::http;
 namespace web::ng {
 
 namespace {
@@ -45,9 +47,9 @@ std::string_view
 asString(Response::HttpData::ContentType type)
 {
     switch (type) {
-        case Response::HttpData::ContentType::TEXT_HTML:
+        case Response::HttpData::ContentType::TextHtml:
             return "text/html";
-        case Response::HttpData::ContentType::APPLICATION_JSON:
+        case Response::HttpData::ContentType::ApplicationJson:
             return "application/json";
     }
     ASSERT(false, "Unknown content type");
@@ -56,14 +58,16 @@ asString(Response::HttpData::ContentType type)
 
 template <typename MessageType>
 std::optional<Response::HttpData>
-makeHttpData(boost::beast::http::status status, Request const& request)
+makeHttpData(http::status status, Request const& request)
 {
     if (request.isHttp()) {
         auto const& httpRequest = request.asHttpRequest()->get();
+        auto constexpr contentType = std::is_same_v<std::remove_cvref_t<MessageType>, std::string>
+            ? Response::HttpData::ContentType::TextHtml
+            : Response::HttpData::ContentType::ApplicationJson;
         return Response::HttpData{
             .status = status,
-            .contentType = std::is_same_v<MessageType, std::string> ? Response::HttpData::ContentType::TEXT_HTML
-                                                                    : Response::HttpData::ContentType::APPLICATION_JSON,
+            .contentType = contentType,
             .keepAlive = httpRequest.keep_alive(),
             .version = httpRequest.version()
         };
@@ -72,12 +76,12 @@ makeHttpData(boost::beast::http::status status, Request const& request)
 }
 }  // namespace
 
-Response::Response(boost::beast::http::status status, std::string message, Request const& request)
+Response::Response(http::status status, std::string message, Request const& request)
     : message_(std::move(message)), httpData_{makeHttpData<decltype(message)>(status, request)}
 {
 }
 
-Response::Response(boost::beast::http::status status, boost::json::object const& message, Request const& request)
+Response::Response(http::status status, boost::json::object const& message, Request const& request)
     : message_(boost::json::serialize(message)), httpData_{makeHttpData<decltype(message)>(status, request)}
 {
 }
@@ -88,14 +92,14 @@ Response::message() const
     return message_;
 }
 
-boost::beast::http::response<boost::beast::http::string_body>
+http::response<http::string_body>
 Response::intoHttpResponse() &&
 {
     ASSERT(httpData_.has_value(), "Response must have http data to be converted into http response");
 
-    boost::beast::http::response<boost::beast::http::string_body> result{httpData_->status, httpData_->version};
-    result.set(boost::beast::http::field::server, fmt::format("clio-server-{}", util::build::getClioVersionString()));
-    result.set(boost::beast::http::field::content_type, asString(httpData_->contentType));
+    http::response<http::string_body> result{httpData_->status, httpData_->version};
+    result.set(http::field::server, fmt::format("clio-server-{}", util::build::getClioVersionString()));
+    result.set(http::field::content_type, asString(httpData_->contentType));
     result.keep_alive(httpData_->keepAlive);
     result.body() = std::move(message_);
     result.prepare_payload();
@@ -105,7 +109,7 @@ Response::intoHttpResponse() &&
 boost::asio::const_buffer
 Response::asConstBuffer() const&
 {
-    ASSERT(not httpData_.has_value(), "Loosing existing http data");
+    ASSERT(not httpData_.has_value(), "Losing existing http data");
     return boost::asio::buffer(message_.data(), message_.size());
 }
 

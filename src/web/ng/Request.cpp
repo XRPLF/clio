@@ -39,7 +39,7 @@ template <typename HeadersType, typename HeaderNameType>
 std::optional<std::string_view>
 getHeaderValue(HeadersType const& headers, HeaderNameType const& headerName)
 {
-    auto it = headers.find(headerName);
+    auto const it = headers.find(headerName);
     if (it == headers.end())
         return std::nullopt;
     return it->value();
@@ -60,15 +60,15 @@ Request::Method
 Request::method() const
 {
     if (not isHttp())
-        return Method::WEBSOCKET;
+        return Method::Websocket;
 
     switch (httpRequest().method()) {
         case boost::beast::http::verb::get:
-            return Method::GET;
+            return Method::Get;
         case boost::beast::http::verb::post:
-            return Method::POST;
+            return Method::Post;
         default:
-            return Method::UNSUPPORTED;
+            return Method::Unsupported;
     }
 }
 

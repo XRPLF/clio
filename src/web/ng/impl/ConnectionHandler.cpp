@@ -271,11 +271,11 @@ ConnectionHandler::handleRequest(
 )
 {
     switch (request.method()) {
-        case Request::Method::GET:
+        case Request::Method::Get:
             return handleHttpRequest(connectionContext, getHandlers_, request, yield);
-        case Request::Method::POST:
+        case Request::Method::Post:
             return handleHttpRequest(connectionContext, postHandlers_, request, yield);
-        case Request::Method::WEBSOCKET:
+        case Request::Method::Websocket:
             return handleWsRequest(connectionContext, wsHandler_, request, yield);
         default:
             return Response{boost::beast::http::status::bad_request, "Unsupported http method", request};

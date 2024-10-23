@@ -54,22 +54,22 @@ INSTANTIATE_TEST_SUITE_P(
         RequestMethodTestBundle{
             .testName = "HttpGet",
             .request = Request{http::request<http::string_body>{http::verb::get, "/", 11}},
-            .expectedMethod = Request::Method::GET,
+            .expectedMethod = Request::Method::Get,
         },
         RequestMethodTestBundle{
             .testName = "HttpPost",
             .request = Request{http::request<http::string_body>{http::verb::post, "/", 11}},
-            .expectedMethod = Request::Method::POST,
+            .expectedMethod = Request::Method::Post,
         },
         RequestMethodTestBundle{
             .testName = "WebSocket",
             .request = Request{"websocket message", Request::HttpHeaders{}},
-            .expectedMethod = Request::Method::WEBSOCKET,
+            .expectedMethod = Request::Method::Websocket,
         },
         RequestMethodTestBundle{
             .testName = "Unsupported",
             .request = Request{http::request<http::string_body>{http::verb::acl, "/", 11}},
-            .expectedMethod = Request::Method::UNSUPPORTED,
+            .expectedMethod = Request::Method::Unsupported,
         }
     ),
     tests::util::NameGenerator

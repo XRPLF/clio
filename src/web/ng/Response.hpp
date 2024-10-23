@@ -43,7 +43,7 @@ public:
         /**
          * @brief The content type of the response.
          */
-        enum class ContentType { APPLICATION_JSON, TEXT_HTML };
+        enum class ContentType { ApplicationJson, TextHtml };
 
         boost::beast::http::status status;  ///< The HTTP status.
         ContentType contentType;            ///< The content type.

@@ -192,11 +192,11 @@ struct ServerHttpTestBundle {
     {
         switch (method) {
             case http::verb::get:
-                return Request::Method::GET;
+                return Request::Method::Get;
             case http::verb::post:
-                return Request::Method::POST;
+                return Request::Method::Post;
             default:
-                return Request::Method::UNSUPPORTED;
+                return Request::Method::Unsupported;
         }
     }
 };
@@ -319,7 +319,7 @@ TEST_F(ServerTest, WsRequestResponse)
         .Times(3)
         .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&) {
             EXPECT_FALSE(receivedRequest.isHttp());
-            EXPECT_EQ(receivedRequest.method(), Request::Method::WEBSOCKET);
+            EXPECT_EQ(receivedRequest.method(), Request::Method::Websocket);
             EXPECT_EQ(receivedRequest.message(), requestMessage_);
             EXPECT_EQ(receivedRequest.target(), std::nullopt);
 
