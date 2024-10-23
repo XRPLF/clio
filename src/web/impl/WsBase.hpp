@@ -23,9 +23,6 @@
 #include "rpc/common/Types.hpp"
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
-#include "util/prometheus/Gauge.hpp"
-#include "util/prometheus/Label.hpp"
-#include "util/prometheus/Prometheus.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/interface/Concepts.hpp"
 #include "web/interface/ConnectionBase.hpp"
@@ -41,6 +38,7 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/version.hpp>
+#include <boost/beast/websocket/error.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
 #include <boost/core/ignore_unused.hpp>
@@ -50,6 +48,7 @@
 #include <xrpl/protocol/ErrorCodes.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -74,13 +73,13 @@ template <template <typename> typename Derived, SomeServerHandler HandlerType>
 class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, HandlerType>> {
     using std::enable_shared_from_this<WsBase<Derived, HandlerType>>::shared_from_this;
 
-    std::reference_wrapper<util::prometheus::GaugeInt> messagesLength_;
-
     boost::beast::flat_buffer buffer_;
     std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard_;
     bool sending_ = false;
     std::queue<std::shared_ptr<std::string>> messages_;
     std::shared_ptr<HandlerType> const handler_;
+
+    std::uint32_t maxSendingQueueSize_;
 
 protected:
     util::Logger log_{"WebServer"};
@@ -102,22 +101,19 @@ protected:
 
 public:
     explicit WsBase(
+        util::Config const& config,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer
     )
-        : ConnectionBase(tagFactory, ip)
-        , messagesLength_(PrometheusService::gaugeInt(
-              "ws_messages_length",
-              util::prometheus::Labels(),
-              "The total length of messages in the queue"
-          ))
-        , buffer_(std::move(buffer))
-        , dosGuard_(dosGuard)
-        , handler_(handler)
+        : ConnectionBase(tagFactory, ip), buffer_(std::move(buffer)), dosGuard_(dosGuard), handler_(handler)
     {
+        // If the transactions number is 200 per ledger, A client which subscribes everything will send 400 feeds for
+        // each ledger. Assume 2s per ledger, we allow user delay 80000/400 * 2 = 400s
+        maxSendingQueueSize_ = config.valueOr("ws_max_sending_queue_size", 80000);
+
         upgraded = true;  // NOLINT (cppcoreguidelines-pro-type-member-init)
 
         LOG(perfLog_.debug()) << tag() << "session created";
@@ -126,8 +122,6 @@ public:
     ~WsBase() override
     {
         LOG(perfLog_.debug()) << tag() << "session closed";
-        if (!messages_.empty())
-            messagesLength_.get() -= messages_.size();
         dosGuard_.get().decrement(clientIp);
     }
 
@@ -151,7 +145,6 @@ public:
     onWrite(boost::system::error_code ec, std::size_t)
     {
         messages_.pop();
-        --messagesLength_.get();
         sending_ = false;
         if (ec) {
             wsFail(ec, "Failed to write");
@@ -181,8 +174,12 @@ public:
         boost::asio::dispatch(
             derived().ws().get_executor(),
             [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
+                if (messages_.size() > maxSendingQueueSize_) {
+                    wsFail(boost::asio::error::timed_out, "Client is too slow");
+                    return;
+                }
+
                 messages_.push(msg);
-                ++messagesLength_.get();
                 maybeSendNext();
             }
         );

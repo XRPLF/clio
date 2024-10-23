@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Taggable.hpp"
+#include "util/config/Config.hpp"
 #include "web/SslWsSession.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/HttpBase.hpp"
@@ -58,6 +59,7 @@ template <SomeServerHandler HandlerType>
 class SslHttpSession : public impl::HttpBase<SslHttpSession, HandlerType>,
                        public std::enable_shared_from_this<SslHttpSession<HandlerType>> {
     boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
+    util::Config config_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
 
 public:
@@ -65,6 +67,7 @@ public:
      * @brief Create a new SSL session.
      *
      * @param socket The socket. Ownership is transferred to HttpSession
+     * @param config The config for server
      * @param ip Client's IP address
      * @param adminVerification The admin verification strategy to use
      * @param ctx The SSL context
@@ -75,6 +78,7 @@ public:
      */
     explicit SslHttpSession(
         tcp::socket&& socket,
+        util::Config config,
         std::string const& ip,
         std::shared_ptr<impl::AdminVerificationStrategy> const& adminVerification,
         boost::asio::ssl::context& ctx,
@@ -92,6 +96,7 @@ public:
               std::move(buffer)
           )
         , stream_(std::move(socket), ctx)
+        , config_(std::move(config))
         , tagFactory_(tagFactory)
     {
     }
@@ -167,6 +172,7 @@ public:
     {
         std::make_shared<SslWsUpgrader<HandlerType>>(
             std::move(stream_),
+            config_,
             this->clientIp,
             tagFactory_,
             this->dosGuard_,
