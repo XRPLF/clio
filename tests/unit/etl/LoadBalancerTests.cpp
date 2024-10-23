@@ -21,6 +21,7 @@
 #include "etl/Source.hpp"
 #include "rpc/Errors.hpp"
 #include "util/AsioContextTestFixture.hpp"
+#include "util/Assert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockNetworkValidatedLedgers.hpp"
 #include "util/MockPrometheus.hpp"
@@ -28,7 +29,12 @@
 #include "util/MockSubscriptionManager.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Random.hpp"
-#include "util/newconfig/ClioConfigFactories.hpp"
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -89,6 +95,26 @@ constexpr static auto const ThreeSourcesLedgerResponse = R"({
         }
     ]
 })";
+
+inline ClioConfigDefinition
+getParseLoadBalancerConfig(boost::json::value val)
+{
+    ClioConfigDefinition config{
+        {{"forwarding.cache_timeout",
+          ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(validatePositiveDouble)},
+         {"forwarding.request_timeout",
+          ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(validatePositiveDouble)},
+         {"allow_no_etl", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
+         {"etl_sources.[].ip", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validateIP)}},
+         {"etl_sources.[].ws_port", Array{ConfigValue{ConfigType::String}.optional().withConstraint(validatePort)}},
+         {"etl_sources.[].grpc_port", Array{ConfigValue{ConfigType::String}.optional()}},
+         {"num_markers", ConfigValue{ConfigType::Integer}.optional().withConstraint(validateNumMarkers)}}
+    };
+
+    auto const errors = config.parse(ConfigFileJson{val.as_object()});
+    ASSERT(!errors.has_value(), "Error parsing Json for clio config for load balancer test");
+    return config;
+}
 
 struct LoadBalancerConstructorTests : util::prometheus::WithPrometheus, MockBackendTestStrict {
     StrictMockSubscriptionManagerSharedPtr subscriptionManager_;

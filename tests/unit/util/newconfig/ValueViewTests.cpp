@@ -27,6 +27,8 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <optional>
+#include <string>
 
 using namespace util::config;
 
@@ -46,7 +48,7 @@ TEST_F(ValueViewTest, ValueView)
 
 TEST_F(ValueViewTest, DifferentIntegerTest)
 {
-    auto const vv = configData.getValue("header.port");
+    auto const vv = configData.getValueView("header.port");
     auto const uint32 = vv.asIntType<uint32_t>();
     auto const uint64 = vv.asIntType<uint64_t>();
     auto const int32 = vv.asIntType<int32_t>();
@@ -66,7 +68,7 @@ TEST_F(ValueViewTest, DifferentIntegerTest)
     EXPECT_NEAR(doubleVal, sameDouble, precision);
     EXPECT_NEAR(floatVal, sameFloat, precision);
 
-    auto const ipVal = configData.getValue("ip");
+    auto const ipVal = configData.getValueView("ip");
     auto const ipDouble = ipVal.asDouble();
     auto const ipFloat = ipVal.asFloat();
     EXPECT_NEAR(ipDouble, 444.22, precision);
@@ -85,11 +87,30 @@ TEST_F(ValueViewTest, IntegerAsDoubleTypeValue)
     EXPECT_NEAR(floatVal, 432, precision);
 }
 
+TEST_F(ValueViewTest, OptionalValues)
+{
+    auto const cv = ConfigValue{ConfigType::Integer}.defaultValue(432).optional();
+    auto const cv2 = ConfigValue{ConfigType::Double}.optional();
+    auto const cv3 = ConfigValue{ConfigType::String}.optional();
+    auto const cv4 = ConfigValue{ConfigType::String}.defaultValue("hello").optional();
+
+    ValueView const vv{cv};
+    ValueView const vv2{cv2};
+    ValueView const vv3{cv3};
+    ValueView const vv4{cv4};
+
+    EXPECT_EQ(vv.asOptional<uint32_t>().value(), 432);
+    EXPECT_EQ(vv.asOptional<uint64_t>().value(), 432);
+    EXPECT_EQ(vv2.asOptional<uint64_t>(), std::nullopt);
+    EXPECT_EQ(vv3.asOptional<std::string>(), std::nullopt);
+    EXPECT_EQ(vv4.asOptional<std::string>(), "hello");
+}
+
 struct ValueDeathTest : ValueViewTest {};
 
 TEST_F(ValueDeathTest, WrongTypes)
 {
-    auto const vv = configData.getValue("header.port");
+    auto const vv = configData.getValueView("header.port");
     EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv.asBool(); }, ".*");
     EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv.asString(); }, ".*");
 

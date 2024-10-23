@@ -349,6 +349,7 @@ static constinit OneOf validateLogTag{"log_tag_style", LOG_TAGS};
 
 static constinit PositiveDouble validatePositiveDouble{};
 
+static constinit NumberValueConstraint<uint32_t> validateNumMarkers{1, 256};
 static constinit NumberValueConstraint<uint16_t> validateUint16{
     std::numeric_limits<uint16_t>::min(),
     std::numeric_limits<uint16_t>::max()

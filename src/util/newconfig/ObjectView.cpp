@@ -51,13 +51,13 @@ ObjectView::containsKey(std::string_view key) const
 }
 
 ValueView
-ObjectView::getValue(std::string_view key) const
+ObjectView::getValueView(std::string_view key) const
 {
     auto const fullKey = getFullKey(key);
     if (arrayIndex_.has_value()) {
         return clioConfig_.get().getArray(fullKey).valueAt(arrayIndex_.value());
     }
-    return clioConfig_.get().getValue(fullKey);
+    return clioConfig_.get().getValueView(fullKey);
 }
 
 ObjectView

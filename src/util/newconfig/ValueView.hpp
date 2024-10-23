@@ -29,7 +29,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
+#include <type_traits>
+#include <utility>
 
 namespace util::config {
 
@@ -138,6 +141,50 @@ public:
     isOptional() const
     {
         return configVal_.get().isOptional();
+    }
+
+    /**
+     * @brief Retrieves the stored value as the specified type T
+     *
+     * @tparam T The type to cast the stored value to
+     * @return The value cast to the specified type T
+     */
+    template <typename T>
+    T
+    getValueImpl() const
+    {
+        if constexpr (std::is_same_v<T, bool>) {
+            ASSERT(type() == ConfigType::Boolean, "Value type is not a bool");
+            return asBool();
+        } else if constexpr (std::is_integral_v<T>) {
+            ASSERT(type() == ConfigType::Integer, "Value type is not an int");
+            return asIntType<T>();
+        } else if constexpr (std::is_same_v<T, std::string>) {
+            ASSERT(type() == ConfigType::String, "Value type is not a string");
+            return asString();
+        } else if constexpr (std::is_floating_point_v<T>) {
+            ASSERT(type() == ConfigType::Double || type() == ConfigType::Integer, "Value type is not a floating point");
+            return asDouble();
+        }
+
+        std::unreachable();
+    }
+
+    /**
+     * @brief Returns an optional value of the specified type T if valid
+     *
+     * @tparam T The type of value to retrieve (must be compatible with internal type)
+     * @return Returns the value as an optional<T> value exists, or std::nullopt if not
+     */
+    template <typename T>
+    std::optional<T>
+    asOptional() const
+    {
+        ASSERT(isOptional(), "Value is not an optional value");
+        if (!hasValue())
+            return std::nullopt;
+
+        return std::make_optional(getValueImpl<T>());
     }
 
 private:

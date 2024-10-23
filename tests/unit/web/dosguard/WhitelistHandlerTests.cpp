@@ -16,10 +16,14 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
+#include "util/Assert.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ClioConfigFactories.hpp"
+#include "util/newconfig/Array.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
 
 #include <boost/json/parse.hpp>
@@ -36,6 +40,16 @@ using namespace util::config;
 using namespace web::dosguard;
 
 struct WhitelistHandlerTest : NoLoggerFixture {};
+
+inline ClioConfigDefinition
+getParseWhitelistHandlerConfig(boost::json::value val)
+{
+    ConfigFileJson const jsonVal{val.as_object()};
+    auto config = ClioConfigDefinition{{"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}}};
+    auto const errors = config.parse(jsonVal);
+    ASSERT(!errors.has_value(), "Cannot parse Json Correctly");
+    return config;
+}
 
 TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
 {

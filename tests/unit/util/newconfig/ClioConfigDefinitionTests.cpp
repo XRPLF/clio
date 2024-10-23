@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "util/TmpFile.hpp"
 #include "util/newconfig/ArrayView.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigDescription.hpp"
@@ -33,6 +32,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -46,14 +46,29 @@ struct NewConfigTest : testing::Test {
 
 TEST_F(NewConfigTest, fetchValues)
 {
-    auto const v = configData.getValue("header.port");
+    auto const v = configData.getValueView("header.port");
     EXPECT_EQ(v.type(), ConfigType::Integer);
 
-    EXPECT_EQ("value", configData.getValue("header.text1").asString());
-    EXPECT_EQ(123, configData.getValue("header.port").asIntType<int>());
-    EXPECT_EQ(true, configData.getValue("header.admin").asBool());
-    EXPECT_EQ("TSM", configData.getValue("header.sub.sub2Value").asString());
-    EXPECT_EQ(444.22, configData.getValue("ip").asDouble());
+    EXPECT_EQ("value", configData.getValueView("header.text1").asString());
+    EXPECT_EQ(123, configData.getValueView("header.port").asIntType<int>());
+    EXPECT_EQ(true, configData.getValueView("header.admin").asBool());
+    EXPECT_EQ("TSM", configData.getValueView("header.sub.sub2Value").asString());
+    EXPECT_EQ(444.22, configData.getValueView("ip").asDouble());
+}
+
+TEST_F(NewConfigTest, fetchValuesByTemplate)
+{
+    EXPECT_EQ("value", configData.getValue<std::string>("header.text1"));
+    EXPECT_EQ(123, configData.getValue<int>("header.port"));
+    EXPECT_EQ(true, configData.getValue<bool>("header.admin"));
+    EXPECT_EQ("TSM", configData.getValue<std::string>("header.sub.sub2Value"));
+    EXPECT_EQ(444.22, configData.getValue<double>("ip"));
+}
+
+TEST_F(NewConfigTest, fetchOptionalValues)
+{
+    EXPECT_EQ(std::nullopt, configData.maybeValue<double>("optional.withNoDefault"));
+    EXPECT_EQ(0.0, configData.maybeValue<double>("optional.withDefault"));
 }
 
 TEST_F(NewConfigTest, fetchObjectDirectly)
@@ -63,7 +78,7 @@ TEST_F(NewConfigTest, fetchObjectDirectly)
 
     auto const obj2 = obj.getObject("sub");
     EXPECT_TRUE(obj2.containsKey("sub2Value"));
-    EXPECT_EQ(obj2.getValue("sub2Value").asString(), "TSM");
+    EXPECT_EQ(obj2.getValueView("sub2Value").asString(), "TSM");
 }
 
 TEST_F(NewConfigTest, CheckKeys)
@@ -113,14 +128,14 @@ struct NewConfigDeathTest : NewConfigTest {};
 
 TEST_F(NewConfigDeathTest, GetNonExistentKeys)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("head."); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("asdf"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValueView("head."); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValueView("asdf"); }, ".*");
 }
 
 TEST_F(NewConfigDeathTest, GetValueButIsArray)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("dosguard.whitelist"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValue("dosguard.whitelist.[]"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValueView("dosguard.whitelist"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValueView("dosguard.whitelist.[]"); }, ".*");
 }
 
 TEST_F(NewConfigDeathTest, GetNonExistentObjectKey)
@@ -178,39 +193,39 @@ TEST_F(OverrideConfigVals, ValidateValuesStrings)
 {
     // make sure the values in configData are overriden
     EXPECT_TRUE(configData.contains("header.text1"));
-    EXPECT_EQ(configData.getValue("header.text1").asString(), "value");
+    EXPECT_EQ(configData.getValueView("header.text1").asString(), "value");
 
     EXPECT_FALSE(configData.contains("header.sub"));
     EXPECT_TRUE(configData.contains("header.sub.sub2Value"));
-    EXPECT_EQ(configData.getValue("header.sub.sub2Value").asString(), "TSM");
+    EXPECT_EQ(configData.getValueView("header.sub.sub2Value").asString(), "TSM");
 
     EXPECT_TRUE(configData.contains("requireValue"));
-    EXPECT_EQ(configData.getValue("requireValue").asString(), "required");
+    EXPECT_EQ(configData.getValueView("requireValue").asString(), "required");
 }
 
 TEST_F(OverrideConfigVals, ValidateValuesDouble)
 {
     EXPECT_TRUE(configData.contains("optional.withDefault"));
-    EXPECT_EQ(configData.getValue("optional.withDefault").asDouble(), 0.0);
+    EXPECT_EQ(configData.getValueView("optional.withDefault").asDouble(), 0.0);
 
     // make sure the values not overwritten, (default values) are there too
     EXPECT_TRUE(configData.contains("ip"));
-    EXPECT_EQ(configData.getValue("ip").asDouble(), 444.22);
+    EXPECT_EQ(configData.getValueView("ip").asDouble(), 444.22);
 }
 
 TEST_F(OverrideConfigVals, ValidateValuesInteger)
 {
     EXPECT_TRUE(configData.contains("dosguard.port"));
-    EXPECT_EQ(configData.getValue("dosguard.port").asIntType<int>(), 44444);
+    EXPECT_EQ(configData.getValueView("dosguard.port").asIntType<int>(), 44444);
 
     EXPECT_TRUE(configData.contains("header.port"));
-    EXPECT_EQ(configData.getValue("header.port").asIntType<int64_t>(), 321);
+    EXPECT_EQ(configData.getValueView("header.port").asIntType<int64_t>(), 321);
 }
 
 TEST_F(OverrideConfigVals, ValidateValuesBool)
 {
     EXPECT_TRUE(configData.contains("header.admin"));
-    EXPECT_EQ(configData.getValue("header.admin").asBool(), false);
+    EXPECT_EQ(configData.getValueView("header.admin").asBool(), false);
 }
 
 TEST_F(OverrideConfigVals, ValidateIntegerValuesInArrays)
@@ -267,12 +282,12 @@ TEST_F(OverrideConfigVals, FetchObjectByArray)
     auto const obj2InArr = configData.getObject("array", 1);
     auto const obj3InArr = configData.getObject("array", 2);
 
-    EXPECT_EQ(objInArr.getValue("sub").asDouble(), 111.11);
-    EXPECT_EQ(objInArr.getValue("sub2").asString(), "subCategory");
-    EXPECT_EQ(obj2InArr.getValue("sub").asDouble(), 4321.55);
-    EXPECT_EQ(obj2InArr.getValue("sub2").asString(), "temporary");
-    EXPECT_EQ(obj3InArr.getValue("sub").asDouble(), 5555.44);
-    EXPECT_EQ(obj3InArr.getValue("sub2").asString(), "london");
+    EXPECT_EQ(objInArr.getValueView("sub").asDouble(), 111.11);
+    EXPECT_EQ(objInArr.getValueView("sub2").asString(), "subCategory");
+    EXPECT_EQ(obj2InArr.getValueView("sub").asDouble(), 4321.55);
+    EXPECT_EQ(obj2InArr.getValueView("sub2").asString(), "temporary");
+    EXPECT_EQ(obj3InArr.getValueView("sub").asDouble(), 5555.44);
+    EXPECT_EQ(obj3InArr.getValueView("sub2").asString(), "london");
 }
 
 struct IncorrectOverrideValues : testing::Test {

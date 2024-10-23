@@ -17,12 +17,16 @@
 */
 //==============================================================================
 
+#include "util/Assert.hpp"
 #include "util/AssignRandomPort.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/TestHttpSyncClient.hpp"
-#include "util/newconfig/ClioConfigFactories.hpp"
+#include "util/newconfig/Array.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
@@ -112,6 +116,29 @@ addSslConfig(boost::json::value config)
     config.as_object()["ssl_cert_file"] = TEST_DATA_SSL_CERT_PATH;
     return config;
 }
+
+inline ClioConfigDefinition
+getParseServerConfig(boost::json::value val)
+{
+    ConfigFileJson const jsonVal{val.as_object()};
+    auto config = ClioConfigDefinition{
+        {"server.ip", ConfigValue{ConfigType::String}},
+        {"server.port", ConfigValue{ConfigType::Integer}},
+        {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
+        {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}},
+        {"dos_guard.sweep_interval", ConfigValue{ConfigType::Integer}},
+        {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}},
+        {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}},
+        {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
+        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
+        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
+    };
+    auto const errors = config.parse(jsonVal);
+    ASSERT(!errors.has_value(), "Cannot parse Json Correctly");
+    return config;
+};
 
 struct WebServerTest : NoLoggerFixture {
     ~WebServerTest() override
@@ -507,6 +534,26 @@ struct WebServerAdminTestParams {
     std::string expectedResponse;
 };
 
+inline ClioConfigDefinition
+getParseAdminServerConfig(boost::json::value val)
+{
+    ConfigFileJson const jsonVal{val.as_object()};
+    auto config = ClioConfigDefinition{
+        {"server.ip", ConfigValue{ConfigType::String}},
+        {"server.port", ConfigValue{ConfigType::Integer}},
+        {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
+        {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+        {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
+        {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
+        {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+        {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
+    };
+    auto const errors = config.parse(jsonVal);
+    ASSERT(!errors.has_value(), "Cannot parse Server Json Correctly");
+    return config;
+};
+
 class WebServerAdminTest : public WebServerTest,
                            public ::testing::WithParamInterface<WebServerAdminTestParams>,
                            public prometheus::WithMockPrometheus {};
@@ -522,7 +569,7 @@ TEST_P(WebServerAdminTest, WsAdminCheck)
     ClioConfigDefinition const serverConfig{getParseAdminServerConfig(boost::json::parse(GetParam().config))};
     auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
-    uint32_t const webServerPort = serverConfig.getValue("server.port").asIntType<uint32_t>();
+    uint32_t const webServerPort = serverConfig.getValue<uint32_t>("server.port");
     wsClient.connect("localhost", std::to_string(webServerPort), GetParam().headers);
     std::string const request = "Why hello";
     auto const res = wsClient.syncPost(request);
@@ -536,7 +583,7 @@ TEST_P(WebServerAdminTest, HttpAdminCheck)
     ClioConfigDefinition const serverConfig{getParseAdminServerConfig(boost::json::parse(GetParam().config))};
     auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e);
     std::string const request = "Why hello";
-    uint32_t const webServerPort = serverConfig.getValue("server.port").asIntType<uint32_t>();
+    uint32_t const webServerPort = serverConfig.getValue<uint32_t>("server.port");
     auto const res = HttpSyncClient::syncPost("localhost", std::to_string(webServerPort), request, GetParam().headers);
     EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
 }

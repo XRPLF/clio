@@ -40,7 +40,6 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <exception>
 #include <expected>
 #include <initializer_list>
 #include <optional>
@@ -122,7 +121,25 @@ public:
      * @return ValueView associated with the given key
      */
     [[nodiscard]] ValueView
-    getValue(std::string_view fullKey) const;
+    getValueView(std::string_view fullKey) const;
+
+    /**
+     * @brief Returns the specified value of given string if value exists
+     *
+     * @tparam T The type T to return
+     * @param fullKey The config key to search for
+     * @return Value of key of type T
+     */
+    template <typename T>
+    T
+    getValue(std::string_view fullKey) const
+    {
+        ASSERT(map_.contains(fullKey), "key {} does not exist in config", fullKey);
+        if (std::holds_alternative<ConfigValue>(map_.at(fullKey))) {
+            return ValueView{std::get<ConfigValue>(map_.at(fullKey))}.getValueImpl<T>();
+        }
+        std::unreachable();
+    }
 
     /**
      * @brief Returns the specified ValueView object in an array with a given index
@@ -187,6 +204,20 @@ public:
      */
     static std::chrono::milliseconds
     toMilliseconds(float value);
+
+    /**
+     * @brief Returns the specified value of given string of type T if type and value exists
+     *
+     * @tparam T The type T to return
+     * @param fullKey The config key to search for
+     * @return The value of type T if it exists, std::nullopt otherwise.
+     */
+    template <typename T>
+    std::optional<T>
+    maybeValue(std::string_view fullKey) const
+    {
+        return getValueView(fullKey).asOptional<T>();
+    }
 
     /**
      * @brief Returns an iterator to the beginning of the configuration map.
@@ -288,7 +319,7 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"forwarding.request_timeout",
       ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(validatePositiveDouble)},
      {"rpc.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(validatePositiveDouble)},
-     {"num_markers", ConfigValue{ConfigType::Integer}.withConstraint(validateUint32).optional()},
+     {"num_markers", ConfigValue{ConfigType::Integer}.withConstraint(validateNumMarkers).optional()},
      {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}}},
      {"dos_guard.max_fetches", ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(validateUint32)},
      {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(validateUint32)},

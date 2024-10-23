@@ -130,18 +130,16 @@ private:
         // resolve hostnames to ips
         std::unordered_set<std::string> ips;
 
-        if (whitelist.size() > 0) {
-            for (auto it = whitelist.begin<util::config::ValueView>(); it != whitelist.end<util::config::ValueView>();
-                 ++it)
-                hostnames.insert((*it).asString());
+        for (auto it = whitelist.begin<util::config::ValueView>(); it != whitelist.end<util::config::ValueView>(); ++it)
+            hostnames.insert((*it).asString());
 
-            for (auto const& hostname : hostnames) {
-                auto resolvedIps = resolver.resolve(hostname, "");
-                for (auto& ip : resolvedIps) {
-                    ips.insert(std::move(ip));
-                }
-            };
-        }
+        for (auto const& hostname : hostnames) {
+            auto resolvedIps = resolver.resolve(hostname, "");
+            for (auto& ip : resolvedIps) {
+                ips.insert(std::move(ip));
+            }
+        };
+
         return ips;
     }
 };

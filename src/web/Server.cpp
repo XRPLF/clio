@@ -31,8 +31,8 @@ namespace web {
 std::expected<std::optional<boost::asio::ssl::context>, std::string>
 makeServerSslContext(util::config::ClioConfigDefinition const& config)
 {
-    bool const configHasCertFile = config.getValue("ssl_cert_file").hasValue();
-    bool const configHasKeyFile = config.getValue("ssl_key_file").hasValue();
+    bool const configHasCertFile = config.getValueView("ssl_cert_file").hasValue();
+    bool const configHasKeyFile = config.getValueView("ssl_key_file").hasValue();
 
     if (configHasCertFile != configHasKeyFile)
         return std::unexpected{"Config entries 'ssl_cert_file' and 'ssl_key_file' must be set or unset together."};
@@ -40,8 +40,8 @@ makeServerSslContext(util::config::ClioConfigDefinition const& config)
     if (not configHasCertFile)
         return std::nullopt;
 
-    auto const certFilename = config.getValue("ssl_cert_file").asString();
-    auto const keyFilename = config.getValue("ssl_key_file").asString();
+    auto const certFilename = config.getValue<std::string>("ssl_cert_file");
+    auto const keyFilename = config.getValue<std::string>("ssl_key_file");
 
     return impl::makeServerSslContext(certFilename, keyFilename);
 }

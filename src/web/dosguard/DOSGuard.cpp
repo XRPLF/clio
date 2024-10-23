@@ -41,9 +41,9 @@ namespace web::dosguard {
 
 DOSGuard::DOSGuard(ClioConfigDefinition const& config, WhitelistHandlerInterface const& whitelistHandler)
     : whitelistHandler_{std::cref(whitelistHandler)}
-    , maxFetches_{config.getValue("dos_guard.max_fetches").asIntType<uint32_t>()}
-    , maxConnCount_{config.getValue("dos_guard.max_connections").asIntType<uint32_t>()}
-    , maxRequestCount_{config.getValue("dos_guard.max_requests").asIntType<uint32_t>()}
+    , maxFetches_{config.getValue<uint32_t>("dos_guard.max_fetches")}
+    , maxConnCount_{config.getValue<uint32_t>("dos_guard.max_connections")}
+    , maxRequestCount_{config.getValue<uint32_t>("dos_guard.max_requests")}
 {
 }
 
@@ -143,11 +143,10 @@ DOSGuard::getWhitelist(ClioConfigDefinition const& config)
     std::unordered_set<std::string> ips;
     auto const whitelist = config.getArray("dos_guard.whitelist");
 
-    if (whitelist.size() > 0) {
-        for (auto it = whitelist.begin<ValueView>(); it != whitelist.end<ValueView>(); ++it) {
-            ips.insert((*it).asString());
-        }
+    for (auto it = whitelist.begin<ValueView>(); it != whitelist.end<ValueView>(); ++it) {
+        ips.insert((*it).asString());
     }
+
     return ips;
 }
 

@@ -34,7 +34,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
-#include <stdexcept>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -182,7 +182,7 @@ class TagDecoratorFactory final {
     ParentType parent_ = std::nullopt; /*< The parent tag decorator to bind */
 
     static Type
-    invoke_type(std::string_view style)
+    makeType(std::string_view style)
     {
         if (boost::iequals(style, "int") || boost::iequals(style, "uint"))
             return TagDecoratorFactory::Type::UINT;
@@ -206,7 +206,7 @@ public:
      * @param config The configuration as a json object
      */
     explicit TagDecoratorFactory(util::config::ClioConfigDefinition const& config)
-        : type_{invoke_type(config.getValue("log_tag_style").asString())}
+        : type_{makeType(config.getValue<std::string>("log_tag_style"))}
     {
     }
 

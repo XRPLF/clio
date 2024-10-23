@@ -82,11 +82,7 @@ ClioApplication::ClioApplication(util::config::ClioConfigDefinition const& confi
 int
 ClioApplication::run()
 {
-    auto const threads = config_.getValue("io_threads").asIntType<uint16_t>();
-    if (threads <= 0) {
-        LOG(util::LogService::fatal()) << "io_threads is less than 1";
-        return EXIT_FAILURE;
-    }
+    auto const threads = config_.getValue<uint16_t>("io_threads");
     LOG(util::LogService::info()) << "Number of io threads = " << threads;
 
     // IO context to handle all incoming requests, as well as other things.

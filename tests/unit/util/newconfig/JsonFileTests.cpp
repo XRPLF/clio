@@ -30,30 +30,31 @@
 #include <variant>
 #include <vector>
 
-struct ParseJson : testing::Test {
-    ParseJson() : jsonFileObj{TmpFile(JSONData).path}
+struct JsonFromTempFile : testing::Test {
+    JsonFromTempFile() : jsonFileObj{util::config::ConfigFileJson::make_ConfigFileJson(TmpFile(JSONData).path).value()}
     {
     }
 
-    ConfigFileJson const jsonFileObj;
+    ConfigFileJson jsonFileObj;
 };
 
-TEST_F(ParseJson, validateValues)
+TEST_F(JsonFromTempFile, validateKeys)
 {
     EXPECT_TRUE(jsonFileObj.containsKey("header.text1"));
-    EXPECT_EQ(std::get<std::string>(jsonFileObj.getValue("header.text1")), "value");
-
     EXPECT_TRUE(jsonFileObj.containsKey("header.sub.sub2Value"));
-    EXPECT_EQ(std::get<std::string>(jsonFileObj.getValue("header.sub.sub2Value")), "TSM");
-
     EXPECT_TRUE(jsonFileObj.containsKey("dosguard.port"));
-    EXPECT_EQ(std::get<int64_t>(jsonFileObj.getValue("dosguard.port")), 44444);
-
     EXPECT_FALSE(jsonFileObj.containsKey("idk"));
     EXPECT_FALSE(jsonFileObj.containsKey("optional.withNoDefault"));
 }
 
-TEST_F(ParseJson, validateArrayValue)
+TEST_F(JsonFromTempFile, validateValues)
+{
+    EXPECT_EQ(std::get<std::string>(jsonFileObj.getValue("header.text1")), "value");
+    EXPECT_EQ(std::get<std::string>(jsonFileObj.getValue("header.sub.sub2Value")), "TSM");
+    EXPECT_EQ(std::get<int64_t>(jsonFileObj.getValue("dosguard.port")), 44444);
+}
+
+TEST_F(JsonFromTempFile, validateArrayValue)
 {
     // validate array.[].sub matches expected values
     EXPECT_TRUE(jsonFileObj.containsKey("array.[].sub"));
@@ -89,10 +90,10 @@ TEST_F(ParseJson, validateArrayValue)
     EXPECT_EQ("204.2.2.1", std::get<std::string>(whitelistArr.at(1)));
 }
 
-struct JsonValueDeathTest : ParseJson {};
+struct JsonValueDeathTest : JsonFromTempFile {};
 
 TEST_F(JsonValueDeathTest, invalidGetValues)
 {
-    EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getValue("doesn't exist"), ".*");
+    // not possible for json value to call a value that doesn't exist
     EXPECT_DEATH([[maybe_unused]] auto a = jsonFileObj.getArray("header.text1"), ".*");
 }

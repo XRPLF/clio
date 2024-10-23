@@ -278,15 +278,11 @@ ETLService::ETLService(
     , ledgerPublisher_(ioc, backend, backend->cache(), subscriptions, state_)
     , amendmentBlockHandler_(ioc, state_)
 {
-    startSequence_ = config.getValue("start_sequence").hasValue()
-        ? std::make_optional(config.getValue("start_sequence").asIntType<uint32_t>())
-        : std::nullopt;
-    finishSequence_ = config.getValue("finish_sequence").hasValue()
-        ? std::make_optional(config.getValue("finish_sequence").asIntType<uint32_t>())
-        : std::nullopt;
-    state_.isReadOnly = config.getValue("read_only").asBool();
-    extractorThreads_ = config.getValue("extractor_threads").asIntType<uint32_t>();
-    txnThreshold_ = config.getValue("txn_threshold").asIntType<std::size_t>();
+    startSequence_ = config.maybeValue<uint32_t>("start_sequence");
+    finishSequence_ = config.maybeValue<uint32_t>("finish_sequence");
+    state_.isReadOnly = config.getValue<bool>("read_only");
+    extractorThreads_ = config.getValue<uint32_t>("extractor_threads");
+    txnThreshold_ = config.getValue<std::size_t>("txn_threshold");
 
     // This should probably be done in the backend factory but we don't have state available until here
     backend_->setCorruptionDetector(CorruptionDetector<data::LedgerCache>{state_, backend->cache()});

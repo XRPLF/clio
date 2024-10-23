@@ -19,12 +19,15 @@
 
 #include "data/cassandra/SettingsProvider.hpp"
 #include "data/cassandra/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/TmpFile.hpp"
 #include "util/log/Logger.hpp"
-#include "util/newconfig/ClioConfigFactories.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/ObjectView.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
@@ -42,6 +45,38 @@ using namespace std;
 namespace json = boost::json;
 
 using namespace data::cassandra;
+
+inline ClioConfigDefinition
+getParseSettingsConfig(boost::json::value val)
+{
+    ConfigFileJson const jsonVal{val.as_object()};
+    auto config = ClioConfigDefinition{
+        {"database.cassandra.threads",
+         ConfigValue{ConfigType::Integer}.defaultValue(std::thread::hardware_concurrency())},
+        {"database.cassandra.contact_points", ConfigValue{ConfigType::String}.defaultValue("127.0.0.1")},
+        {"database.cassandra.max_write_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(10000)},
+        {"database.cassandra.max_read_requests_outstanding", ConfigValue{ConfigType::Integer}.defaultValue(100000)},
+        {"database.cassandra.core_connections_per_host", ConfigValue{ConfigType::Integer}.defaultValue(1)},
+        {"database.cassandra.certificate", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.queue_size_io", ConfigValue{ConfigType::Integer}.optional()},
+        {"database.cassandra.write_batch_size", ConfigValue{ConfigType::Integer}.defaultValue(20)},
+        {"database.cassandra.connect_timeout", ConfigValue{ConfigType::Integer}.optional()},
+        {"database.cassandra.certfile", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.request_timeout", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+        {"database.cassandra.secure_connect_bundle", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.username", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.password", ConfigValue{ConfigType::String}.optional()},
+        {"database.cassandra.keyspace", ConfigValue{ConfigType::String}.defaultValue("clio")},
+        {"database.cassandra.port", ConfigValue{ConfigType::Integer}.optional()},
+        {"database.cassandra.replication_factor", ConfigValue{ConfigType::Integer}.defaultValue(3)},
+        {"database.cassandra.table_prefix", ConfigValue{ConfigType::String}.optional()},
+    };
+    auto const errors = config.parse(jsonVal);
+    ASSERT(!errors.has_value(), "Error generating clio config for settings test");
+    return config;
+};
 
 class SettingsProviderTest : public NoLoggerFixture {};
 

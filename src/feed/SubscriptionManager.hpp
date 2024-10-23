@@ -82,7 +82,7 @@ public:
         std::shared_ptr<data::BackendInterface const> const& backend
     )
     {
-        auto const workersNum = config.getValue("subscription_workers").asIntType<uint64_t>();
+        auto const workersNum = config.getValue<uint64_t>("subscription_workers");
 
         util::Logger const logger{"Subscriptions"};
         LOG(logger.info()) << "Starting subscription manager with " << workersNum << " workers";

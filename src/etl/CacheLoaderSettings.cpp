@@ -25,6 +25,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 namespace etl {
 
@@ -50,19 +51,19 @@ CacheLoaderSettings::isDisabled() const
 make_CacheLoaderSettings(util::config::ClioConfigDefinition const& config)
 {
     CacheLoaderSettings settings;
-    settings.numThreads = config.getValue("io_threads").asIntType<uint16_t>();
+    settings.numThreads = config.getValue<uint16_t>("io_threads");
     auto const cache = config.getObject("cache");
     // Given diff number to generate cursors
-    settings.numCacheDiffs = cache.getValue("num_diffs").asIntType<std::size_t>();
+    settings.numCacheDiffs = cache.getValue<std::size_t>("num_diffs");
     // Given cursors number fetching from diff
-    settings.numCacheCursorsFromDiff = cache.getValue("num_cursors_from_diff").asIntType<std::size_t>();
+    settings.numCacheCursorsFromDiff = cache.getValue<std::size_t>("num_cursors_from_diff");
     // Given cursors number fetching from account
-    settings.numCacheCursorsFromAccount = cache.getValue("num_cursors_from_account").asIntType<std::size_t>();
+    settings.numCacheCursorsFromAccount = cache.getValue<std::size_t>("num_cursors_from_account");
 
-    settings.numCacheMarkers = cache.getValue("num_markers").asIntType<std::size_t>();
-    settings.cachePageFetchSize = cache.getValue("page_fetch_size").asIntType<std::size_t>();
+    settings.numCacheMarkers = cache.getValue<std::size_t>("num_markers");
+    settings.cachePageFetchSize = cache.getValue<std::size_t>("page_fetch_size");
 
-    auto const entry = cache.getValue("load").asString();
+    auto const entry = cache.getValue<std::string>("load");
     if (boost::iequals(entry, "sync"))
         settings.loadStyle = CacheLoaderSettings::LoadStyle::SYNC;
     if (boost::iequals(entry, "async"))

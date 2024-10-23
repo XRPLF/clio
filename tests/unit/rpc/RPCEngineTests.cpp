@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "data/BackendInterface.hpp"
-#include "data/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/FakesAndMocks.hpp"
 #include "rpc/RPCEngine.hpp"
@@ -34,10 +33,12 @@
 #include "util/MockPrometheus.hpp"
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
-#include "util/newconfig/ClioConfigFactories.hpp"
+#include "util/newconfig/Array.hpp"
+#include "util/newconfig/ConfigConstraints.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigFileJson.hpp"
-#include "web/Context.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
 
@@ -68,6 +69,23 @@ constexpr auto FORWARD_REPLY = R"JSON({
     }
 })JSON";
 }  // namespace
+
+inline ClioConfigDefinition
+generateDefaultRPCEngineConfig()
+{
+    return ClioConfigDefinition{
+        {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(validateUint16)},
+        {"rpc.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(0.0).withConstraint(validatePositiveDouble)},
+        {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")},
+        {"dos_guard.whitelist.[]", Array{ConfigValue{ConfigType::String}.optional()}},
+        {"dos_guard.max_fetches",
+         ConfigValue{ConfigType::Integer}.defaultValue(1000'000u).withConstraint(validateUint32)},
+        {"dos_guard.max_connections", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(validateUint32)
+        },
+        {"dos_guard.max_requests", ConfigValue{ConfigType::Integer}.defaultValue(20u).withConstraint(validateUint32)}
+    };
+}
 
 struct RPCEngineTest : util::prometheus::WithPrometheus,
                        MockBackendTest,
@@ -443,7 +461,11 @@ TEST_P(RPCEngineCacheParameterTest, Test)
 
 TEST_F(RPCEngineTest, NotCacheIfErrorHappen)
 {
-    auto const cfgCache = getNoCacheRPCEngineConfig();
+    auto const cfgCache = ClioConfigDefinition{
+        {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+        {"workers", ConfigValue{ConfigType::Integer}.defaultValue(4).withConstraint(validateUint16)},
+        {"rpc.cache_timeout", ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(validatePositiveDouble)}
+    };
 
     auto const notAdmin = false;
     auto const method = "server_info";

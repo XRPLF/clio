@@ -73,7 +73,35 @@ public:
      * @return A ValueView object representing the value associated with the key
      */
     [[nodiscard]] ValueView
-    getValue(std::string_view key) const;
+    getValueView(std::string_view key) const;
+
+    /**
+     * @brief Returns the specified value of given string if value exists
+     *
+     * @tparam T The type T to return
+     * @param fullKey The config key to search for
+     * @return Value of key of type T
+     */
+    template <typename T>
+    T
+    getValue(std::string_view key) const
+    {
+        return getValueView(key).getValueImpl<T>();
+    }
+
+    /**
+     * @brief Returns the specified value of given string of type T if type and value exists
+     *
+     * @tparam T The type T to return
+     * @param fullKey The config key to search for
+     * @return The value of type T if it exists, std::nullopt otherwise.
+     */
+    template <typename T>
+    std::optional<T>
+    maybeValue(std::string_view key) const
+    {
+        return getValueView(key).asOptional<T>();
+    }
 
     /**
      * @brief Retrieves an ObjectView in ClioConfigDefinition with key that starts with prefix_.key. The view must be of

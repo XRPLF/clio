@@ -53,9 +53,9 @@ invoke_tag_SecureConnections(std::string_view value)
 
 SettingsProvider::SettingsProvider(util::config::ObjectView const& cfg)
     : config_{cfg}
-    , keyspace_{cfg.getValue("keyspace").asString()}
-    , tablePrefix_{cfg.getValue("table_prefix").hasValue() ? std::make_optional(cfg.getValue("table_prefix").asString()) : std::nullopt}
-    , replicationFactor_{cfg.getValue("replication_factor").asIntType<uint16_t>()}
+    , keyspace_{cfg.getValue<std::string>("keyspace")}
+    , tablePrefix_{cfg.maybeValue<std::string>("table_prefix")}
+    , replicationFactor_{cfg.getValue<uint16_t>("replication_factor")}
     , settings_{parseSettings()}
 {
 }
@@ -69,7 +69,7 @@ SettingsProvider::getSettings() const
 std::optional<std::string>
 SettingsProvider::parseOptionalCertificate() const
 {
-    if (auto const certPath = config_.getValue("certfile"); certPath.hasValue()) {
+    if (auto const certPath = config_.getValueView("certfile"); certPath.hasValue()) {
         auto const path = std::filesystem::path(certPath.asString());
         std::ifstream fileStream(path.string(), std::ios::in);
         if (!fileStream) {
@@ -93,42 +93,36 @@ SettingsProvider::parseSettings() const
     auto settings = Settings::defaultSettings();
 
     // all config values used in settings is under "database.cassandra" prefix
-    if (config_.getValue("secure_connect_bundle").hasValue()) {
-        auto const bundle = impl::invoke_tag_SecureConnections(config_.getValue("secure_connect_bundle").asString());
+    if (config_.getValueView("secure_connect_bundle").hasValue()) {
+        auto const bundle = Settings::SecureConnectionBundle{(config_.getValue<std::string>("secure_connect_bundle"))};
         settings.connectionInfo = bundle;
     } else {
         Settings::ContactPoints out;
-        out.contactPoints = config_.getValue("contact_points").asString();
-        out.port = config_.getValue("port").hasValue()
-            ? std::make_optional(config_.getValue("port").asIntType<uint32_t>())
-            : std::nullopt;
+        out.contactPoints = config_.getValue<std::string>("contact_points");
+        out.port = config_.maybeValue<uint32_t>("port");
         settings.connectionInfo = out;
     }
 
-    settings.threads = config_.getValue("threads").asIntType<uint32_t>();
-    settings.maxWriteRequestsOutstanding = config_.getValue("max_write_requests_outstanding").asIntType<uint32_t>();
-    settings.maxReadRequestsOutstanding = config_.getValue("max_read_requests_outstanding").asIntType<uint32_t>();
-    settings.coreConnectionsPerHost = config_.getValue("core_connections_per_host").asIntType<uint32_t>();
-    settings.queueSizeIO = config_.getValue("queue_size_io").hasValue()
-        ? std::make_optional(config_.getValue("queue_size_io").asIntType<uint32_t>())
-        : std::nullopt;
-    settings.writeBatchSize = config_.getValue("write_batch_size").asIntType<std::size_t>();
+    settings.threads = config_.getValue<uint32_t>("threads");
+    settings.maxWriteRequestsOutstanding = config_.getValue<uint32_t>("max_write_requests_outstanding");
+    settings.maxReadRequestsOutstanding = config_.getValue<uint32_t>("max_read_requests_outstanding");
+    settings.coreConnectionsPerHost = config_.getValue<uint32_t>("core_connections_per_host");
+    settings.queueSizeIO = config_.maybeValue<uint32_t>("queue_size_io");
+    settings.writeBatchSize = config_.getValue<std::size_t>("write_batch_size");
 
-    if (config_.getValue("connect_timeout").hasValue()) {
-        auto const connectTimeoutSecond = config_.getValue("connect_timeout").asIntType<uint32_t>();
+    if (config_.getValueView("connect_timeout").hasValue()) {
+        auto const connectTimeoutSecond = config_.getValue<uint32_t>("connect_timeout");
         settings.connectionTimeout = std::chrono::milliseconds{connectTimeoutSecond * util::MILLISECONDS_PER_SECOND};
     }
 
-    if (config_.getValue("request_timeout").hasValue()) {
-        auto const requestTimeoutSecond = config_.getValue("request_timeout").asIntType<uint32_t>();
+    if (config_.getValueView("request_timeout").hasValue()) {
+        auto const requestTimeoutSecond = config_.getValue<uint32_t>("request_timeout");
         settings.requestTimeout = std::chrono::milliseconds{requestTimeoutSecond * util::MILLISECONDS_PER_SECOND};
     }
 
-    auto const username = config_.getValue("username");
-    auto const password = config_.getValue("password");
     settings.certificate = parseOptionalCertificate();
-    settings.username = username.hasValue() ? std::make_optional(username.asString()) : std::nullopt;
-    settings.password = password.hasValue() ? std::make_optional(password.asString()) : std::nullopt;
+    settings.username = config_.maybeValue<std::string>("username");
+    settings.password = config_.maybeValue<std::string>("password");
 
     return settings;
 }

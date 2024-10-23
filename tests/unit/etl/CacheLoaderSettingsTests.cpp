@@ -18,7 +18,11 @@
 //==============================================================================
 
 #include "etl/CacheLoaderSettings.hpp"
-#include "util/newconfig/ClioConfigFactories.hpp"
+#include "util/Assert.hpp"
+#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/newconfig/ConfigFileJson.hpp"
+#include "util/newconfig/ConfigValue.hpp"
+#include "util/newconfig/Types.hpp"
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
@@ -28,6 +32,30 @@ namespace json = boost::json;
 using namespace etl;
 using namespace testing;
 using namespace util::config;
+
+inline ClioConfigDefinition
+generateDefaultCacheConfig()
+{
+    return ClioConfigDefinition{
+        {{"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2)},
+         {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32)},
+         {"cache.num_markers", ConfigValue{ConfigType::Integer}.defaultValue(48)},
+         {"cache.num_cursors_from_diff", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+         {"cache.num_cursors_from_account", ConfigValue{ConfigType::Integer}.defaultValue(0)},
+         {"cache.page_fetch_size", ConfigValue{ConfigType::Integer}.defaultValue(512)},
+         {"cache.load", ConfigValue{ConfigType::String}.defaultValue("async")}}
+    };
+}
+
+inline ClioConfigDefinition
+getParseCacheConfig(boost::json::value val)
+{
+    ConfigFileJson const jsonVal{val.as_object()};
+    auto config = generateDefaultCacheConfig();
+    auto const errors = config.parse(jsonVal);
+    ASSERT(!errors.has_value(), "Error parsing Json for clio config for settings test");
+    return config;
+}
 
 struct CacheLoaderSettingsTest : Test {};
 

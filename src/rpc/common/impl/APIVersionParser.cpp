@@ -45,9 +45,9 @@ ProductionAPIVersionParser::ProductionAPIVersionParser(
 
 ProductionAPIVersionParser::ProductionAPIVersionParser(util::config::ObjectView const& config)
     : ProductionAPIVersionParser(
-          config.getValue("default").asIntType<uint32_t>(),
-          config.getValue("min").asIntType<uint32_t>(),
-          config.getValue("max").asIntType<uint32_t>()
+          config.getValue<uint32_t>("default"),
+          config.getValue<uint32_t>("min"),
+          config.getValue<uint32_t>("max")
       )
 {
 }

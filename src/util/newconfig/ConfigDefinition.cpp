@@ -107,7 +107,7 @@ ClioConfigDefinition::hasItemsWithPrefix(std::string_view key) const
 }
 
 ValueView
-ClioConfigDefinition::getValue(std::string_view fullKey) const
+ClioConfigDefinition::getValueView(std::string_view fullKey) const
 {
     ASSERT(map_.contains(fullKey), "key {} does not exist in config", fullKey);
     if (std::holds_alternative<ConfigValue>(map_.at(fullKey))) {

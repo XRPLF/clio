@@ -40,7 +40,7 @@ IntervalSweepHandler::IntervalSweepHandler(
 {
     auto const sweepInterval{std::max(
         std::chrono::milliseconds{1u},
-        util::config::ClioConfigDefinition::toMilliseconds(config.getValue("dos_guard.sweep_interval").asDouble())
+        util::config::ClioConfigDefinition::toMilliseconds(config.getValue<double>("dos_guard.sweep_interval"))
     )};
     repeat_.start(sweepInterval, [&dosGuard] { dosGuard.clear(); });
 }

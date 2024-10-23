@@ -337,10 +337,10 @@ make_HttpServer(
     }
 
     auto const serverConfig = config.getObject("server");
-    auto const address = boost::asio::ip::make_address(serverConfig.getValue("ip").asString());
-    auto const port = serverConfig.getValue("port").asIntType<uint32_t>();
-    auto adminPassword = serverConfig.getValue("admin_password");
-    auto const localAdmin = serverConfig.getValue("local_admin");
+    auto const address = boost::asio::ip::make_address(serverConfig.getValue<std::string>("ip"));
+    auto const port = serverConfig.getValue<uint32_t>("port");
+    auto const adminPassword = serverConfig.getValueView("admin_password");
+    auto const localAdmin = serverConfig.getValueView("local_admin");
 
     // Throw config error when localAdmin is true and admin_password is also set
     if (localAdmin.hasValue() && localAdmin.asBool() && adminPassword.hasValue()) {
@@ -362,7 +362,7 @@ make_HttpServer(
         util::TagDecoratorFactory(config),
         dosGuard,
         handler,
-        std::move(adminPassword.hasValue() ? std::make_optional(adminPassword.asString()) : std::nullopt)
+        adminPassword.asOptional<std::string>()
     );
 
     server->run();

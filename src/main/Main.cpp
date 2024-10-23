@@ -43,6 +43,7 @@ try {
             auto const json = ConfigFileJson::make_ConfigFileJson(run.configPath);
             if (!json.has_value()) {
                 std::cerr << json.error().error << std::endl;
+                return EXIT_FAILURE;
             }
             auto const errors = ClioConfig.parse(json.value());
             if (errors.has_value()) {

@@ -99,7 +99,7 @@ SignalsHandler::SignalsHandler(config::ClioConfigDefinition const& config, std::
 {
     impl::SignalsHandlerStatic::registerHandler(*this);
 
-    gracefulPeriod_ = util::config::ClioConfigDefinition::toMilliseconds(config.getValue("graceful_period").asFloat());
+    gracefulPeriod_ = util::config::ClioConfigDefinition::toMilliseconds(config.getValue<float>("graceful_period"));
     setHandler(impl::SignalsHandlerStatic::handleSignal);
 }
 
