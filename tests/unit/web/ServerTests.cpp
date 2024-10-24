@@ -22,7 +22,6 @@
 #include "util/MockPrometheus.hpp"
 #include "util/TestHttpSyncClient.hpp"
 #include "util/config/Config.hpp"
-#include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
 #include "web/Server.hpp"
@@ -43,7 +42,6 @@
 #include <boost/json/value.hpp>
 #include <boost/system/system_error.hpp>
 #include <fmt/core.h>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <condition_variable>
@@ -146,8 +144,6 @@ private:
     std::optional<std::thread> runner;
 };
 
-struct WebServerTestsWithMockPrometheus : WebServerTest, prometheus::WithMockPrometheus {};
-
 class EchoExecutor {
 public:
     void
@@ -208,7 +204,7 @@ makeServerSync(
 
 }  // namespace
 
-TEST_F(WebServerTestsWithMockPrometheus, Http)
+TEST_F(WebServerTest, Http)
 {
     auto e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
@@ -216,13 +212,8 @@ TEST_F(WebServerTestsWithMockPrometheus, Http)
     EXPECT_EQ(res, R"({"Hello":1})");
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, Ws)
+TEST_F(WebServerTest, Ws)
 {
-    ::testing::StrictMock<util::prometheus::MockCounterImplInt>& wsMessagesCounterMock =
-        makeMock<util::prometheus::GaugeInt>("ws_messages_length", "");
-    EXPECT_CALL(wsMessagesCounterMock, add(1));
-    EXPECT_CALL(wsMessagesCounterMock, add(-1));
-
     auto e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     WebSocketSyncClient wsClient;
@@ -232,7 +223,7 @@ TEST_F(WebServerTestsWithMockPrometheus, Ws)
     wsClient.disconnect();
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, HttpInternalError)
+TEST_F(WebServerTest, HttpInternalError)
 {
     auto e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
@@ -243,13 +234,8 @@ TEST_F(WebServerTestsWithMockPrometheus, HttpInternalError)
     );
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, WsInternalError)
+TEST_F(WebServerTest, WsInternalError)
 {
-    ::testing::StrictMock<util::prometheus::MockCounterImplInt>& wsMessagesCounterMock =
-        makeMock<util::prometheus::GaugeInt>("ws_messages_length", "");
-    EXPECT_CALL(wsMessagesCounterMock, add(1));
-    EXPECT_CALL(wsMessagesCounterMock, add(-1));
-
     auto e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     WebSocketSyncClient wsClient;
@@ -262,13 +248,8 @@ TEST_F(WebServerTestsWithMockPrometheus, WsInternalError)
     );
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, WsInternalErrorNotJson)
+TEST_F(WebServerTest, WsInternalErrorNotJson)
 {
-    ::testing::StrictMock<util::prometheus::MockCounterImplInt>& wsMessagesCounterMock =
-        makeMock<util::prometheus::GaugeInt>("ws_messages_length", "");
-    EXPECT_CALL(wsMessagesCounterMock, add(1));
-    EXPECT_CALL(wsMessagesCounterMock, add(-1));
-
     auto e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
     WebSocketSyncClient wsClient;
@@ -281,7 +262,7 @@ TEST_F(WebServerTestsWithMockPrometheus, WsInternalErrorNotJson)
     );
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, IncompleteSslConfig)
+TEST_F(WebServerTest, IncompleteSslConfig)
 {
     auto e = std::make_shared<EchoExecutor>();
 
@@ -292,7 +273,7 @@ TEST_F(WebServerTestsWithMockPrometheus, IncompleteSslConfig)
     EXPECT_EQ(server, nullptr);
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, WrongSslConfig)
+TEST_F(WebServerTest, WrongSslConfig)
 {
     auto e = std::make_shared<EchoExecutor>();
 
@@ -304,7 +285,7 @@ TEST_F(WebServerTestsWithMockPrometheus, WrongSslConfig)
     EXPECT_EQ(server, nullptr);
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, Https)
+TEST_F(WebServerTest, Https)
 {
     auto e = std::make_shared<EchoExecutor>();
     cfg = Config{addSslConfig(generateJSONWithDynamicPort(port))};
@@ -313,13 +294,8 @@ TEST_F(WebServerTestsWithMockPrometheus, Https)
     EXPECT_EQ(res, R"({"Hello":1})");
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, Wss)
+TEST_F(WebServerTest, Wss)
 {
-    ::testing::StrictMock<util::prometheus::MockCounterImplInt>& wsMessagesCounterMock =
-        makeMock<util::prometheus::GaugeInt>("ws_messages_length", "");
-    EXPECT_CALL(wsMessagesCounterMock, add(1));
-    EXPECT_CALL(wsMessagesCounterMock, add(-1));
-
     auto e = std::make_shared<EchoExecutor>();
     cfg = Config{addSslConfig(generateJSONWithDynamicPort(port))};
     auto server = makeServerSync(cfg, ctx, dosGuard, e);
@@ -330,7 +306,7 @@ TEST_F(WebServerTestsWithMockPrometheus, Wss)
     wsClient.disconnect();
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, HttpRequestOverload)
+TEST_F(WebServerTest, HttpRequestOverload)
 {
     auto e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e);
@@ -343,13 +319,8 @@ TEST_F(WebServerTestsWithMockPrometheus, HttpRequestOverload)
     );
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, WsRequestOverload)
+TEST_F(WebServerTest, WsRequestOverload)
 {
-    ::testing::StrictMock<util::prometheus::MockCounterImplInt>& wsMessagesCounterMock =
-        makeMock<util::prometheus::GaugeInt>("ws_messages_length", "");
-    EXPECT_CALL(wsMessagesCounterMock, add(1)).Times(2);
-    EXPECT_CALL(wsMessagesCounterMock, add(-1)).Times(2);
-
     auto e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
@@ -367,7 +338,7 @@ TEST_F(WebServerTestsWithMockPrometheus, WsRequestOverload)
     );
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, HttpPayloadOverload)
+TEST_F(WebServerTest, HttpPayloadOverload)
 {
     std::string const s100(100, 'a');
     auto e = std::make_shared<EchoExecutor>();
@@ -379,13 +350,8 @@ TEST_F(WebServerTestsWithMockPrometheus, HttpPayloadOverload)
     );
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, WsPayloadOverload)
+TEST_F(WebServerTest, WsPayloadOverload)
 {
-    ::testing::StrictMock<util::prometheus::MockCounterImplInt>& wsMessagesCounterMock =
-        makeMock<util::prometheus::GaugeInt>("ws_messages_length", "");
-    EXPECT_CALL(wsMessagesCounterMock, add(1));
-    EXPECT_CALL(wsMessagesCounterMock, add(-1));
-
     std::string const s100(100, 'a');
     auto e = std::make_shared<EchoExecutor>();
     auto server = makeServerSync(cfg, ctx, dosGuardOverload, e);
@@ -399,7 +365,7 @@ TEST_F(WebServerTestsWithMockPrometheus, WsPayloadOverload)
     );
 }
 
-TEST_F(WebServerTestsWithMockPrometheus, WsTooManyConnection)
+TEST_F(WebServerTest, WsTooManyConnection)
 {
     auto e = std::make_shared<EchoExecutor>();
     auto server = makeServerSync(cfg, ctx, dosGuardOverload, e);
@@ -505,17 +471,10 @@ struct WebServerAdminTestParams {
     std::string expectedResponse;
 };
 
-class WebServerAdminTest : public WebServerTest,
-                           public ::testing::WithParamInterface<WebServerAdminTestParams>,
-                           public prometheus::WithMockPrometheus {};
+class WebServerAdminTest : public WebServerTest, public ::testing::WithParamInterface<WebServerAdminTestParams> {};
 
 TEST_P(WebServerAdminTest, WsAdminCheck)
 {
-    ::testing::StrictMock<util::prometheus::MockCounterImplInt>& wsMessagesCounterMock =
-        makeMock<util::prometheus::GaugeInt>("ws_messages_length", "");
-    EXPECT_CALL(wsMessagesCounterMock, add(1));
-    EXPECT_CALL(wsMessagesCounterMock, add(-1));
-
     auto e = std::make_shared<AdminCheckExecutor>();
     Config const serverConfig{boost::json::parse(GetParam().config)};
     auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e);

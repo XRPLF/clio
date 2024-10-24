@@ -41,6 +41,7 @@
 #include <fmt/core.h>
 
 #include <chrono>
+#include <cstdint>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -93,6 +94,7 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, 
     std::shared_ptr<HandlerType> const handler_;
     boost::beast::flat_buffer buffer_;
     std::shared_ptr<impl::AdminVerificationStrategy> const adminVerification_;
+    std::uint32_t maxWsSendingQueueSize_;
 
 public:
     /**
@@ -104,6 +106,7 @@ public:
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
      * @param adminVerification The admin verification strategy to use
+     * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
      */
     Detector(
         tcp::socket&& socket,
@@ -111,7 +114,8 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> handler,
-        std::shared_ptr<impl::AdminVerificationStrategy> adminVerification
+        std::shared_ptr<impl::AdminVerificationStrategy> adminVerification,
+        std::uint32_t maxWsSendingQueueSize
     )
         : stream_(std::move(socket))
         , ctx_(ctx)
@@ -119,6 +123,7 @@ public:
         , dosGuard_(dosGuard)
         , handler_(std::move(handler))
         , adminVerification_(std::move(adminVerification))
+        , maxWsSendingQueueSize_(maxWsSendingQueueSize)
     {
     }
 
@@ -176,14 +181,22 @@ public:
                 tagFactory_,
                 dosGuard_,
                 handler_,
-                std::move(buffer_)
+                std::move(buffer_),
+                maxWsSendingQueueSize_
             )
                 ->run();
             return;
         }
 
         std::make_shared<PlainSessionType<HandlerType>>(
-            stream_.release_socket(), ip, adminVerification_, tagFactory_, dosGuard_, handler_, std::move(buffer_)
+            stream_.release_socket(),
+            ip,
+            adminVerification_,
+            tagFactory_,
+            dosGuard_,
+            handler_,
+            std::move(buffer_),
+            maxWsSendingQueueSize_
         )
             ->run();
     }
@@ -213,6 +226,7 @@ class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslS
     std::shared_ptr<HandlerType> handler_;
     tcp::acceptor acceptor_;
     std::shared_ptr<impl::AdminVerificationStrategy> adminVerification_;
+    std::uint32_t maxWsSendingQueueSize_;
 
 public:
     /**
@@ -225,6 +239,7 @@ public:
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
      * @param adminPassword The optional password to verify admin role in requests
+     * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
      */
     Server(
         boost::asio::io_context& ioc,
@@ -233,7 +248,8 @@ public:
         util::TagDecoratorFactory tagFactory,
         dosguard::DOSGuardInterface& dosGuard,
         std::shared_ptr<HandlerType> handler,
-        std::optional<std::string> adminPassword
+        std::optional<std::string> adminPassword,
+        std::uint32_t maxWsSendingQueueSize
     )
         : ioc_(std::ref(ioc))
         , ctx_(std::move(ctx))
@@ -242,6 +258,7 @@ public:
         , handler_(std::move(handler))
         , acceptor_(boost::asio::make_strand(ioc))
         , adminVerification_(impl::make_AdminVerificationStrategy(std::move(adminPassword)))
+        , maxWsSendingQueueSize_(maxWsSendingQueueSize)
     {
         boost::beast::error_code ec;
 
@@ -295,7 +312,13 @@ private:
                 ctx_ ? std::optional<std::reference_wrapper<boost::asio::ssl::context>>{ctx_.value()} : std::nullopt;
 
             std::make_shared<Detector<PlainSessionType, SslSessionType, HandlerType>>(
-                std::move(socket), ctxRef, std::cref(tagFactory_), dosGuard_, handler_, adminVerification_
+                std::move(socket),
+                ctxRef,
+                std::cref(tagFactory_),
+                dosGuard_,
+                handler_,
+                adminVerification_,
+                maxWsSendingQueueSize_
             )
                 ->run();
         }
@@ -357,6 +380,10 @@ make_HttpServer(
         throw std::logic_error("Admin config error, one method must be specified to authorize admin.");
     }
 
+    // If the transactions number is 200 per ledger, A client which subscribes everything will send 400 feeds for
+    // each ledger. Assume 1s per ledger, we allow user delay 10000/400 = 25s
+    auto const maxWsSendingQueueSize = serverConfig.valueOr("ws_max_sending_queue_size", 10000);
+
     auto server = std::make_shared<HttpServer<HandlerType>>(
         ioc,
         std::move(expectedSslContext).value(),
@@ -364,7 +391,8 @@ make_HttpServer(
         util::TagDecoratorFactory(config),
         dosGuard,
         handler,
-        std::move(adminPassword)
+        std::move(adminPassword),
+        maxWsSendingQueueSize
     );
 
     server->run();
