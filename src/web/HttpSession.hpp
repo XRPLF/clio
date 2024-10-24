@@ -20,7 +20,6 @@
 #pragma once
 
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
 #include "web/PlainWsSession.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/HttpBase.hpp"
@@ -31,6 +30,7 @@
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
@@ -52,31 +52,31 @@ template <SomeServerHandler HandlerType>
 class HttpSession : public impl::HttpBase<HttpSession, HandlerType>,
                     public std::enable_shared_from_this<HttpSession<HandlerType>> {
     boost::beast::tcp_stream stream_;
-    util::Config config_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
+    std::uint32_t maxWsSendingQueueSize_;
 
 public:
     /**
      * @brief Create a new session.
      *
      * @param socket The socket. Ownership is transferred to HttpSession
-     * @param config The config for server
      * @param ip Client's IP address
      * @param adminVerification The admin verification strategy to use
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
      * @param buffer Buffer with initial data received from the peer
+     * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
      */
     explicit HttpSession(
         tcp::socket&& socket,
-        util::Config config,
         std::string const& ip,
         std::shared_ptr<impl::AdminVerificationStrategy> const& adminVerification,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer buffer
+        boost::beast::flat_buffer buffer,
+        std::uint32_t maxWsSendingQueueSize
     )
         : impl::HttpBase<HttpSession, HandlerType>(
               ip,
@@ -87,8 +87,8 @@ public:
               std::move(buffer)
           )
         , stream_(std::move(socket))
-        , config_(std::move(config))
         , tagFactory_(tagFactory)
+        , maxWsSendingQueueSize_(maxWsSendingQueueSize)
     {
     }
 
@@ -127,14 +127,14 @@ public:
     {
         std::make_shared<WsUpgrader<HandlerType>>(
             std::move(stream_),
-            config_,
             this->clientIp,
             tagFactory_,
             this->dosGuard_,
             this->handler_,
             std::move(this->buffer_),
             std::move(this->req_),
-            ConnectionBase::isAdmin()
+            ConnectionBase::isAdmin(),
+            maxWsSendingQueueSize_
         )
             ->run();
     }
