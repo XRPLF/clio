@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,43 +19,19 @@
 
 #pragma once
 
-#include <cstdio>
-#include <filesystem>
-#include <fstream>
-#include <ios>
-#include <string>
-#include <string_view>
-#include <utility>
+#include "web/ng/Connection.hpp"
+#include "web/ng/Request.hpp"
+#include "web/ng/Response.hpp"
 
-struct TmpFile {
-    std::string path;
+#include <boost/asio/spawn.hpp>
 
-    TmpFile(std::string_view content) : path{std::tmpnam(nullptr)}
-    {
-        std::ofstream ofs;
-        ofs.open(path, std::ios::out);
-        ofs << content;
-    }
+#include <functional>
 
-    TmpFile(TmpFile const&) = delete;
-    TmpFile(TmpFile&& other) : path{std::move(other.path)}
-    {
-        other.path.clear();
-    }
-    TmpFile&
-    operator=(TmpFile const&) = delete;
-    TmpFile&
+namespace web::ng {
 
-    operator=(TmpFile&& other)
-    {
-        if (this != &other)
-            *this = std::move(other);
-        return *this;
-    }
+/**
+ * @brief Handler for messages.
+ */
+using MessageHandler = std::function<Response(Request const&, ConnectionContext, boost::asio::yield_context)>;
 
-    ~TmpFile()
-    {
-        if (not path.empty())
-            std::filesystem::remove(path);
-    }
-};
+}  // namespace web::ng

@@ -94,6 +94,7 @@ target_sources(
           rpc/RPCEngineTests.cpp
           rpc/RPCHelpersTests.cpp
           rpc/WorkQueueTests.cpp
+          test_data/SslCert.cpp
           util/AccountUtilsTests.cpp
           util/AssertTests.cpp
           # Async framework
@@ -103,6 +104,7 @@ target_sources(
           util/async/AnyStrandTests.cpp
           util/async/AsyncExecutionContextTests.cpp
           util/BatchingTests.cpp
+          util/CoroutineGroupTests.cpp
           util/LedgerUtilsTests.cpp
           # Prometheus support
           util/prometheus/BoolTests.cpp
@@ -125,12 +127,19 @@ target_sources(
           util/SignalsHandlerTests.cpp
           util/TimeUtilsTests.cpp
           util/TxUtilTests.cpp
+          util/WithTimeout.cpp
           # Webserver
-          web/AdminVerificationTests.cpp
           web/dosguard/DOSGuardTests.cpp
           web/dosguard/IntervalSweepHandlerTests.cpp
           web/dosguard/WhitelistHandlerTests.cpp
-          web/impl/ServerSslContextTests.cpp
+          web/impl/AdminVerificationTests.cpp
+          web/ng/ResponseTests.cpp
+          web/ng/RequestTests.cpp
+          web/ng/ServerTests.cpp
+          web/ng/impl/ConnectionHandlerTests.cpp
+          web/ng/impl/HttpConnectionTests.cpp
+          web/ng/impl/ServerSslContextTests.cpp
+          web/ng/impl/WsConnectionTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
           # New Config
@@ -142,12 +151,6 @@ target_sources(
           util/newconfig/JsonConfigFileTests.cpp
           util/newconfig/ValueViewTests.cpp
 )
-
-configure_file(test_data/cert.pem ${CMAKE_BINARY_DIR}/tests/unit/test_data/cert.pem COPYONLY)
-target_compile_definitions(clio_tests PRIVATE TEST_DATA_SSL_CERT_PATH="tests/unit/test_data/cert.pem")
-
-configure_file(test_data/key.pem ${CMAKE_BINARY_DIR}/tests/unit/test_data/key.pem COPYONLY)
-target_compile_definitions(clio_tests PRIVATE TEST_DATA_SSL_KEY_PATH="tests/unit/test_data/key.pem")
 
 # See https://github.com/google/googletest/issues/3475
 gtest_discover_tests(clio_tests DISCOVERY_TIMEOUT 90)

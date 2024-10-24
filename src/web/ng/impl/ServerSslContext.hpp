@@ -19,18 +19,20 @@
 
 #pragma once
 
-#include <chrono>
-#include <functional>
+#include "util/config/Config.hpp"
 
-namespace tests::common::util {
+#include <boost/asio/ssl/context.hpp>
 
-/**
- * @brief Run a function with a timeout. If the function does not complete within the timeout, the test will fail.
- *
- * @param timeout The timeout duration
- * @param function The function to run
- */
-void
-withTimeout(std::chrono::steady_clock::duration timeout, std::function<void()> function);
+#include <expected>
+#include <optional>
+#include <string>
 
-}  // namespace tests::common::util
+namespace web::ng::impl {
+
+std::expected<std::optional<boost::asio::ssl::context>, std::string>
+makeServerSslContext(util::Config const& config);
+
+std::expected<boost::asio::ssl::context, std::string>
+makeServerSslContext(std::string const& certData, std::string const& keyData);
+
+}  // namespace web::ng::impl
