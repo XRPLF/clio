@@ -17,31 +17,41 @@
 */
 //==============================================================================
 
-#include "util/WithTimeout.hpp"
+#include "web/ng/Connection.hpp"
 
-#include <gtest/gtest.h>
+#include "util/Taggable.hpp"
 
-#include <chrono>
-#include <cstdlib>
-#include <functional>
-#include <future>
-#include <thread>
+#include <boost/beast/core/flat_buffer.hpp>
 
-namespace tests::common::util {
+#include <cstddef>
+#include <string>
+#include <utility>
 
-void
-withTimeout(std::chrono::steady_clock::duration timeout, std::function<void()> function)
+namespace web::ng {
+
+Connection::Connection(
+    std::string ip,
+    boost::beast::flat_buffer buffer,
+    util::TagDecoratorFactory const& tagDecoratorFactory
+)
+    : util::Taggable(tagDecoratorFactory), ip_{std::move(ip)}, buffer_{std::move(buffer)}
 {
-    std::promise<void> promise;
-    auto future = promise.get_future();
-    std::thread t([&promise, &function] {
-        function();
-        promise.set_value();
-    });
-    if (future.wait_for(timeout) == std::future_status::timeout) {
-        FAIL() << "Timeout " << std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count() << "ms exceeded";
-    }
-    t.join();
 }
 
-}  // namespace tests::common::util
+ConnectionContext
+Connection::context() const
+{
+    return ConnectionContext{*this};
+}
+
+std::string const&
+Connection::ip() const
+{
+    return ip_;
+}
+
+ConnectionContext::ConnectionContext(Connection const& connection) : connection_{connection}
+{
+}
+
+}  // namespace web::ng

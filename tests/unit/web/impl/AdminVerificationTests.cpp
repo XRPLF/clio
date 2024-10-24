@@ -18,16 +18,17 @@
 //==============================================================================
 
 #include "util/LoggerFixtures.hpp"
+#include "util/config/Config.hpp"
 #include "web/impl/AdminVerificationStrategy.hpp"
 
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
+#include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
 
 #include <optional>
 #include <string>
-#include <utility>
 
 namespace http = boost::beast::http;
 
@@ -81,16 +82,7 @@ TEST_F(PasswordAdminVerificationStrategyTest, IsAdminReturnsTrueOnlyForValidPass
 }
 
 struct MakeAdminVerificationStrategyTestParams {
-    MakeAdminVerificationStrategyTestParams(
-        std::optional<std::string> passwordOpt,
-        bool expectIpStrategy,
-        bool expectPasswordStrategy
-    )
-        : passwordOpt(std::move(passwordOpt))
-        , expectIpStrategy(expectIpStrategy)
-        , expectPasswordStrategy(expectPasswordStrategy)
-    {
-    }
+    std::string testName;
     std::optional<std::string> passwordOpt;
     bool expectIpStrategy;
     bool expectPasswordStrategy;
@@ -111,8 +103,78 @@ INSTANTIATE_TEST_CASE_P(
     MakeAdminVerificationStrategyTest,
     MakeAdminVerificationStrategyTest,
     testing::Values(
-        MakeAdminVerificationStrategyTestParams(std::nullopt, true, false),
-        MakeAdminVerificationStrategyTestParams("p", false, true),
-        MakeAdminVerificationStrategyTestParams("", false, true)
+        MakeAdminVerificationStrategyTestParams{
+            .testName = "NoPassword",
+            .passwordOpt = std::nullopt,
+            .expectIpStrategy = true,
+            .expectPasswordStrategy = false
+        },
+        MakeAdminVerificationStrategyTestParams{
+            .testName = "HasPassword",
+            .passwordOpt = "p",
+            .expectIpStrategy = false,
+            .expectPasswordStrategy = true
+        },
+        MakeAdminVerificationStrategyTestParams{
+            .testName = "EmptyPassword",
+            .passwordOpt = "",
+            .expectIpStrategy = false,
+            .expectPasswordStrategy = true
+        }
+    )
+);
+
+struct MakeAdminVerificationStrategyFromConfigTestParams {
+    std::string testName;
+    std::string config;
+    bool expectedError;
+};
+
+struct MakeAdminVerificationStrategyFromConfigTest
+    : public testing::TestWithParam<MakeAdminVerificationStrategyFromConfigTestParams> {};
+
+TEST_P(MakeAdminVerificationStrategyFromConfigTest, ChecksConfig)
+{
+    util::Config serverConfig{boost::json::parse(GetParam().config)};
+    auto const result = web::impl::make_AdminVerificationStrategy(serverConfig);
+    if (GetParam().expectedError) {
+        EXPECT_FALSE(result.has_value());
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    MakeAdminVerificationStrategyFromConfigTest,
+    MakeAdminVerificationStrategyFromConfigTest,
+    testing::Values(
+        MakeAdminVerificationStrategyFromConfigTestParams{
+            .testName = "NoPasswordNoLocalAdmin",
+            .config = "{}",
+            .expectedError = true
+        },
+        MakeAdminVerificationStrategyFromConfigTestParams{
+            .testName = "OnlyPassword",
+            .config = R"({"admin_password": "password"})",
+            .expectedError = false
+        },
+        MakeAdminVerificationStrategyFromConfigTestParams{
+            .testName = "OnlyLocalAdmin",
+            .config = R"({"local_admin": true})",
+            .expectedError = false
+        },
+        MakeAdminVerificationStrategyFromConfigTestParams{
+            .testName = "OnlyLocalAdminDisabled",
+            .config = R"({"local_admin": false})",
+            .expectedError = true
+        },
+        MakeAdminVerificationStrategyFromConfigTestParams{
+            .testName = "LocalAdminAndPassword",
+            .config = R"({"local_admin": true, "admin_password": "password"})",
+            .expectedError = true
+        },
+        MakeAdminVerificationStrategyFromConfigTestParams{
+            .testName = "LocalAdminDisabledAndPassword",
+            .config = R"({"local_admin": false, "admin_password": "password"})",
+            .expectedError = false
+        }
     )
 );

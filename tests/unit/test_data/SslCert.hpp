@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,43 +19,22 @@
 
 #pragma once
 
-#include <cstdio>
-#include <filesystem>
-#include <fstream>
-#include <ios>
-#include <string>
+#include "util/TmpFile.hpp"
+
 #include <string_view>
-#include <utility>
 
-struct TmpFile {
-    std::string path;
+namespace tests {
 
-    TmpFile(std::string_view content) : path{std::tmpnam(nullptr)}
-    {
-        std::ofstream ofs;
-        ofs.open(path, std::ios::out);
-        ofs << content;
-    }
+std::string_view
+sslCert();
 
-    TmpFile(TmpFile const&) = delete;
-    TmpFile(TmpFile&& other) : path{std::move(other.path)}
-    {
-        other.path.clear();
-    }
-    TmpFile&
-    operator=(TmpFile const&) = delete;
-    TmpFile&
+TmpFile
+sslCertFile();
 
-    operator=(TmpFile&& other)
-    {
-        if (this != &other)
-            *this = std::move(other);
-        return *this;
-    }
+std::string_view
+sslKey();
 
-    ~TmpFile()
-    {
-        if (not path.empty())
-            std::filesystem::remove(path);
-    }
-};
+TmpFile
+sslKeyFile();
+
+}  // namespace tests

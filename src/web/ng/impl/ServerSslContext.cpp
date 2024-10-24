@@ -17,7 +17,9 @@
 */
 //==============================================================================
 
-#include "web/impl/ServerSslContext.hpp"
+#include "web/ng/impl/ServerSslContext.hpp"
+
+#include "util/config/Config.hpp"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ssl/context.hpp>
@@ -31,7 +33,7 @@
 #include <string>
 #include <utility>
 
-namespace web::impl {
+namespace web::ng::impl {
 
 namespace {
 
@@ -49,32 +51,47 @@ readFile(std::string const& path)
 
 }  // namespace
 
-std::expected<boost::asio::ssl::context, std::string>
-makeServerSslContext(std::string const& certFilePath, std::string const& keyFilePath)
+std::expected<std::optional<boost::asio::ssl::context>, std::string>
+makeServerSslContext(util::Config const& config)
 {
-    auto const certContent = readFile(certFilePath);
+    bool const configHasCertFile = config.contains("ssl_cert_file");
+    bool const configHasKeyFile = config.contains("ssl_key_file");
+
+    if (configHasCertFile != configHasKeyFile)
+        return std::unexpected{"Config entries 'ssl_cert_file' and 'ssl_key_file' must be set or unset together."};
+
+    if (not configHasCertFile)
+        return std::nullopt;
+
+    auto const certFilename = config.value<std::string>("ssl_cert_file");
+    auto const certContent = readFile(certFilename);
     if (!certContent)
-        return std::unexpected{"Can't read SSL certificate: " + certFilePath};
+        return std::unexpected{"Can't read SSL certificate: " + certFilename};
 
-    auto const keyContent = readFile(keyFilePath);
+    auto const keyFilename = config.value<std::string>("ssl_key_file");
+    auto const keyContent = readFile(keyFilename);
     if (!keyContent)
-        return std::unexpected{"Can't read SSL key: " + keyFilePath};
+        return std::unexpected{"Can't read SSL key: " + keyFilename};
 
+    return impl::makeServerSslContext(*certContent, *keyContent);
+}
+
+std::expected<boost::asio::ssl::context, std::string>
+makeServerSslContext(std::string const& certData, std::string const& keyData)
+{
     using namespace boost::asio;
 
     ssl::context ctx{ssl::context::tls_server};
     ctx.set_options(ssl::context::default_workarounds | ssl::context::no_sslv2);
 
     try {
-        ctx.use_certificate_chain(buffer(certContent->data(), certContent->size()));
-        ctx.use_private_key(buffer(keyContent->data(), keyContent->size()), ssl::context::file_format::pem);
+        ctx.use_certificate_chain(buffer(certData.data(), certData.size()));
+        ctx.use_private_key(buffer(keyData.data(), keyData.size()), ssl::context::file_format::pem);
     } catch (...) {
-        return std::unexpected{
-            fmt::format("Error loading SSL certificate ({}) or SSL key ({}).", certFilePath, keyFilePath)
-        };
+        return std::unexpected{fmt::format("Error loading SSL certificate or SSL key.")};
     }
 
     return ctx;
 }
 
-}  // namespace web::impl
+}  // namespace web::ng::impl

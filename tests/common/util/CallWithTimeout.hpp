@@ -17,32 +17,20 @@
 */
 //==============================================================================
 
-#include "web/impl/ServerSslContext.hpp"
+#pragma once
 
-#include <gtest/gtest.h>
+#include <chrono>
+#include <functional>
 
-using namespace web::impl;
+namespace tests::common::util {
 
-TEST(ServerSslContext, makeServerSslContext)
-{
-    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_CERT_PATH, TEST_DATA_SSL_KEY_PATH);
-    ASSERT_TRUE(sslContext);
-}
+/**
+ * @brief Run a function with a timeout. If the function does not complete within the timeout, the test will fail.
+ *
+ * @param timeout The timeout duration
+ * @param function The function to run
+ */
+void
+callWithTimeout(std::chrono::steady_clock::duration timeout, std::function<void()> function);
 
-TEST(ServerSslContext, makeServerSslContext_WrongCertPath)
-{
-    auto const sslContext = makeServerSslContext("wrong_path", TEST_DATA_SSL_KEY_PATH);
-    ASSERT_FALSE(sslContext);
-}
-
-TEST(ServerSslContext, makeServerSslContext_WrongKeyPath)
-{
-    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_CERT_PATH, "wrong_path");
-    ASSERT_FALSE(sslContext);
-}
-
-TEST(ServerSslContext, makeServerSslContext_CertKeyMismatch)
-{
-    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_KEY_PATH, TEST_DATA_SSL_CERT_PATH);
-    ASSERT_FALSE(sslContext);
-}
+}  // namespace tests::common::util

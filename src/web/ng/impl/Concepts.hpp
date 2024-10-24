@@ -17,32 +17,19 @@
 */
 //==============================================================================
 
-#include "web/Server.hpp"
+#pragma once
 
-#include "util/config/Config.hpp"
+#include <boost/beast/core/basic_stream.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 
-#include <boost/asio/ssl/context.hpp>
+#include <type_traits>
 
-#include <optional>
-#include <string>
+namespace web::ng::impl {
 
-namespace web {
+template <typename T>
+concept IsTcpStream = std::is_same_v<std::decay_t<T>, boost::beast::tcp_stream>;
 
-std::expected<std::optional<boost::asio::ssl::context>, std::string>
-makeServerSslContext(util::Config const& config)
-{
-    bool const configHasCertFile = config.contains("ssl_cert_file");
-    bool const configHasKeyFile = config.contains("ssl_key_file");
+template <typename T>
+concept IsSslTcpStream = std::is_same_v<std::decay_t<T>, boost::asio::ssl::stream<boost::beast::tcp_stream>>;
 
-    if (configHasCertFile != configHasKeyFile)
-        return std::unexpected{"Config entries 'ssl_cert_file' and 'ssl_key_file' must be set or unset together."};
-
-    if (not configHasCertFile)
-        return std::nullopt;
-
-    auto const certFilename = config.value<std::string>("ssl_cert_file");
-    auto const keyFilename = config.value<std::string>("ssl_key_file");
-
-    return impl::makeServerSslContext(certFilename, keyFilename);
-}
-}  // namespace web
+}  // namespace web::ng::impl

@@ -18,8 +18,8 @@
 //==============================================================================
 
 #include "util/AsioContextTestFixture.hpp"
+#include "util/CallWithTimeout.hpp"
 #include "util/Repeat.hpp"
-#include "util/WithTimeout.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <gmock/gmock.h>
@@ -41,7 +41,7 @@ struct RepeatTests : SyncAsioContextTest {
     void
     withRunningContext(std::function<void()> func)
     {
-        tests::common::util::withTimeout(std::chrono::seconds{1000}, [this, func = std::move(func)]() {
+        tests::common::util::callWithTimeout(std::chrono::seconds{1}, [this, func = std::move(func)]() {
             auto workGuard = boost::asio::make_work_guard(ctx);
             std::thread thread{[this]() { ctx.run(); }};
             func();

@@ -20,6 +20,7 @@
 #include "web/impl/AdminVerificationStrategy.hpp"
 
 #include "util/JsonUtils.hpp"
+#include "util/config/Config.hpp"
 
 #include <boost/beast/http/field.hpp>
 #include <xrpl/basics/base_uint.h>
@@ -77,6 +78,22 @@ make_AdminVerificationStrategy(std::optional<std::string> password)
         return std::make_shared<PasswordAdminVerificationStrategy>(std::move(*password));
     }
     return std::make_shared<IPAdminVerificationStrategy>();
+}
+
+std::expected<std::shared_ptr<AdminVerificationStrategy>, std::string>
+make_AdminVerificationStrategy(util::Config const& serverConfig)
+{
+    auto adminPassword = serverConfig.maybeValue<std::string>("admin_password");
+    auto const localAdmin = serverConfig.maybeValue<bool>("local_admin");
+    bool const localAdminEnabled = localAdmin && localAdmin.value();
+
+    if (localAdminEnabled == adminPassword.has_value()) {
+        if (adminPassword.has_value())
+            return std::unexpected{"Admin config error, local_admin and admin_password can not be set together."};
+        return std::unexpected{"Admin config error, either local_admin and admin_password must be specified."};
+    }
+
+    return make_AdminVerificationStrategy(std::move(adminPassword));
 }
 
 }  // namespace web::impl

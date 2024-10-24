@@ -24,8 +24,8 @@
 #include "web/HttpSession.hpp"
 #include "web/SslHttpSession.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
-#include "web/impl/ServerSslContext.hpp"
 #include "web/interface/Concepts.hpp"
+#include "web/ng/impl/ServerSslContext.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
@@ -58,15 +58,6 @@
  * Majority of the code is based on examples that came with boost.
  */
 namespace web {
-
-/**
- * @brief A helper function to create a server SSL context.
- *
- * @param config The config to create the context
- * @return Optional SSL context or error message if any
- */
-std::expected<std::optional<boost::asio::ssl::context>, std::string>
-makeServerSslContext(util::Config const& config);
 
 /**
  * @brief The Detector class to detect if the connection is a ssl or not.
@@ -329,7 +320,7 @@ make_HttpServer(
 {
     static util::Logger const log{"WebServer"};
 
-    auto expectedSslContext = makeServerSslContext(config);
+    auto expectedSslContext = ng::impl::makeServerSslContext(config);
     if (not expectedSslContext) {
         LOG(log.error()) << "Failed to create SSL context: " << expectedSslContext.error();
         return nullptr;
