@@ -201,7 +201,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for successor table")
 		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(marker, fromLedgerIdx, toLedgerIdx,
 			"SELECT key, seq FROM successor WHERE token(key) >= ? AND token(key) <= ?",
-			"DELETE FROM successor WHERE key = ? AND seq = ?", deleteMethod{deleteGeneral: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
+			"DELETE FROM successor WHERE key = ? AND seq = ?", deleteMethod{deleteGeneral: maybe.Set(true)}, columnSettings{})
 		log.Printf("Total delete queries: %d\n", deleteCount)
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalRows += rowsCount
@@ -221,7 +221,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for objects table")
 		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(marker, fromLedgerIdx, toLedgerIdx,
 			"SELECT key, sequence FROM objects WHERE token(key) >= ? AND token(key) <= ?",
-			"DELETE FROM objects WHERE key = ? AND sequence = ?", deleteMethod{deleteObject: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: true})
+			"DELETE FROM objects WHERE key = ? AND sequence = ?", deleteMethod{deleteObject: maybe.Set(true)}, columnSettings{})
 		log.Printf("Total delete queries: %d\n", deleteCount)
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalErrors += errCount
@@ -333,7 +333,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for account transactions table")
 		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(marker, fromLedgerIdx, toLedgerIdx,
 			"SELECT account, seq_idx FROM account_tx WHERE token(account) >= ? AND token(account) <= ?",
-			"DELETE FROM account_tx WHERE account = ? AND seq_idx = (?, ?)", deleteMethod{deleteTransaction: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
+			"DELETE FROM account_tx WHERE account = ? AND seq_idx = (?, ?)", deleteMethod{deleteTransaction: maybe.Set(true)}, columnSettings{})
 		log.Printf("Total delete queries: %d\n", deleteCount)
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalRows += rowsCount
@@ -353,7 +353,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for nft tokens table")
 		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(marker, fromLedgerIdx, toLedgerIdx,
 			"SELECT token_id, sequence FROM nf_tokens WHERE token(token_id) >= ? AND token(token_id) <= ?",
-			"DELETE FROM nf_tokens WHERE token_id = ? AND sequence = ?", deleteMethod{deleteGeneral: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: true})
+			"DELETE FROM nf_tokens WHERE token_id = ? AND sequence = ?", deleteMethod{deleteObject: maybe.Set(true)}, columnSettings{})
 		log.Printf("Total delete queries: %d\n", deleteCount)
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalRows += rowsCount
@@ -375,7 +375,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for nft token URI table")
 		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(marker, fromLedgerIdx, toLedgerIdx,
 			"SELECT token_id, sequence FROM nf_token_uris WHERE token(token_id) >= ? AND token(token_id) <= ?",
-			"DELETE FROM nf_token_uris WHERE token_id = ? AND sequence = ?", deleteMethod{deleteObject: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
+			"DELETE FROM nf_token_uris WHERE token_id = ? AND sequence = ?", deleteMethod{deleteObject: maybe.Set(true)}, columnSettings{})
 		log.Printf("Total delete queries: %d\n", deleteCount)
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalRows += rowsCount
@@ -395,7 +395,7 @@ func (c *ClioCass) pruneData(
 		log.Println("Generating delete queries for nft token transactions table")
 		rowsCount, deleteCount, errCount = c.prepareAndExecuteDeleteQueries(marker, fromLedgerIdx, toLedgerIdx,
 			"SELECT token_id, seq_idx FROM nf_token_transactions WHERE token(token_id) >= ? AND token(token_id) <= ?",
-			"DELETE FROM nf_token_transactions WHERE token_id = ? AND seq_idx = (?, ?)", deleteMethod{deleteTransaction: maybe.Set(true)}, columnSettings{UseBlob: true, UseSeq: false})
+			"DELETE FROM nf_token_transactions WHERE token_id = ? AND seq_idx = (?, ?)", deleteMethod{deleteTransaction: maybe.Set(true)}, columnSettings{})
 		log.Printf("Total delete queries: %d\n", deleteCount)
 		log.Printf("Total traversed rows: %d\n\n", rowsCount)
 		totalRows += rowsCount
@@ -451,7 +451,7 @@ func (c *ClioCass) prepareAndExecuteSimpleDeleteQueries(
 			info.Data = append(info.Data, deleteParams{Seq: i})
 			// for every 1000 queries in data, delete
 			if len(info.Data) == 1000 {
-				_, err := c.performDeleteQueries(&info, session, colSettings)
+				err := c.performDeleteQueries(&info, session, colSettings)
 				atomic.AddUint64(&totalDeletes, uint64(len(info.Data)))
 				atomic.AddUint64(&totalErrors, err)
 				info = deleteInfo{Query: deleteQueryTemplate}
@@ -459,7 +459,7 @@ func (c *ClioCass) prepareAndExecuteSimpleDeleteQueries(
 		}
 		// delete the rest of queries if exists
 		if len(info.Data) > 0 {
-			_, err := c.performDeleteQueries(&info, session, colSettings)
+			err := c.performDeleteQueries(&info, session, colSettings)
 			atomic.AddUint64(&totalDeletes, uint64(len(info.Data)))
 			atomic.AddUint64(&totalErrors, err)
 		}
@@ -639,6 +639,8 @@ func (c *ClioCass) prepareAndExecuteDeleteQueries(
 							prepareDeleteResult = c.prepareAccTxnDelete(scanner, &info, fromLedgerIdx, toLedgerIdx, &rowsRetrieved)
 						} else if method.deleteGeneral.HasValue() && method.deleteGeneral.Value() {
 							prepareDeleteResult = c.prepareDefaultDelete(scanner, &info, fromLedgerIdx, toLedgerIdx, &rowsRetrieved)
+						} else {
+							log.Fatal("Deletion method not supported")
 						}
 
 						if !prepareDeleteResult {
@@ -647,19 +649,20 @@ func (c *ClioCass) prepareAndExecuteDeleteQueries(
 							atomic.AddUint64(&totalErrors, 1)
 						}
 
-						if len(nextPageState) == 0 {
-							// Checks for delete queries after iterating all pages
-							if len(info.Data) > 0 {
-								_, numErr := c.performDeleteQueries(&info, session, colSettings)
-								atomic.AddUint64(&totalErrors, numErr)
-								atomic.AddUint64(&totalDeletes, uint64(len(info.Data)))
-								if totalDeletes >= counter {
-									log.Printf("... deleted %d queries ...", counter)
-									atomic.AddUint64(&counter, 1000)
-								}
-								// reset back to the deleted query template after finishing executing delete
-								info = deleteInfo{Query: deleteQueryTemplate}
+						// Checks for delete queries after iterating all pages
+						if len(info.Data) > 0 {
+							numErr := c.performDeleteQueries(&info, session, colSettings)
+							atomic.AddUint64(&totalErrors, numErr)
+							atomic.AddUint64(&totalDeletes, uint64(len(info.Data)))
+							if totalDeletes >= counter {
+								log.Printf("... deleted %d queries ...", counter)
+								counter += 1000
 							}
+							// reset back to the deleted query template after finishing executing delete
+							info = deleteInfo{Query: deleteQueryTemplate}
+						}
+
+						if len(nextPageState) == 0 {
 							break
 						}
 						pageState = nextPageState
@@ -708,10 +711,9 @@ func (c *ClioCass) splitDeleteWork(info *deleteInfo) [][]deleteParams {
 	return chunks
 }
 
-func (c *ClioCass) performDeleteQueries(info *deleteInfo, session *gocql.Session, colSettings columnSettings) (uint64, uint64) {
+func (c *ClioCass) performDeleteQueries(info *deleteInfo, session *gocql.Session, colSettings columnSettings) uint64 {
 	var wg sync.WaitGroup
 	var sessionCreationWaitGroup sync.WaitGroup
-	var totalDeletes uint64
 	var totalErrors uint64
 
 	chunks := c.splitDeleteWork(info)
@@ -754,11 +756,6 @@ func (c *ClioCass) performDeleteQueries(info *deleteInfo, session *gocql.Session
 						log.Printf("DELETE ERROR: %s\n", err)
 						fmt.Fprintf(os.Stderr, "FAILED QUERY: %s\n", fmt.Sprintf("%s [blob=0x%x][seq=%d]", info.Query, r.Blob, r.Seq))
 						atomic.AddUint64(&totalErrors, 1)
-					} else {
-						atomic.AddUint64(&totalDeletes, 1)
-						if atomic.LoadUint64(&totalDeletes)%10000 == 0 {
-							log.Printf("... %d deletes ...\n", totalDeletes)
-						}
 					}
 				}
 			}
@@ -766,7 +763,7 @@ func (c *ClioCass) performDeleteQueries(info *deleteInfo, session *gocql.Session
 	}
 
 	wg.Wait()
-	return totalDeletes, totalErrors
+	return totalErrors
 }
 
 func (c *ClioCass) updateLedgerRange(newStartLedger maybe.Maybe[uint64], newEndLedger maybe.Maybe[uint64]) error {
