@@ -45,6 +45,7 @@
 #include "rpc/handlers/LedgerEntry.hpp"
 #include "rpc/handlers/LedgerIndex.hpp"
 #include "rpc/handlers/LedgerRange.hpp"
+#include "rpc/handlers/MPTHolders.hpp"
 #include "rpc/handlers/NFTBuyOffers.hpp"
 #include "rpc/handlers/NFTHistory.hpp"
 #include "rpc/handlers/NFTInfo.hpp"
@@ -97,6 +98,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"ledger_entry", {LedgerEntryHandler{backend}}},
           {"ledger_index", {LedgerIndexHandler{backend}, true}},  // clio only
           {"ledger_range", {LedgerRangeHandler{backend}}},
+          {"mpt_holders", {MPTHoldersHandler{backend}, true}},       // clio only
           {"nfts_by_issuer", {NFTsByIssuerHandler{backend}, true}},  // clio only
           {"nft_history", {NFTHistoryHandler{backend}, true}},       // clio only
           {"nft_buy_offers", {NFTBuyOffersHandler{backend}}},

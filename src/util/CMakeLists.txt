@@ -44,7 +44,7 @@ target_link_libraries(
          libbacktrace::libbacktrace
          fmt::fmt
          openssl::openssl
-         xrpl::libxrpl
+         xrpl-mpt::libxrpl
          Threads::Threads
          clio_options
 )

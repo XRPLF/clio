@@ -1759,6 +1759,76 @@ generateTestValuesForParametersTest()
             "malformedRequest",
             "Malformed request."
         },
+        ParamTestCaseBundle{
+            "InvalidMPTIssuanceStringIndex",
+            R"({
+                "mpt_issuance": "invalid"
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTIssuanceType",
+            R"({
+                "mpt_issuance": 0
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenStringIndex",
+            R"({
+                "mptoken": "invalid"
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenObject",
+            fmt::format(
+                R"({{
+                    "mptoken": {{}}
+                }})"
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "MissingMPTokenID",
+            fmt::format(
+                R"({{
+                    "mptoken": {{
+                        "account": "{}"
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenAccount",
+            fmt::format(
+                R"({{
+                    "mptoken": {{
+                        "mpt_issuance_id": "0000019315EABA24E6135A4B5CE2899E0DA791206413B33D",
+                        "account": 1
+                    }}
+                }})"
+            ),
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenType",
+            fmt::format(
+                R"({{
+                    "mptoken": 0
+                }})"
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
     };
 }
 
@@ -2397,6 +2467,46 @@ generateTestValuesForNormalPathTest()
                 )
             )
         },
+        NormalPathTestBundle{
+            "MPTIssuance",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "mpt_issuance": "{}"
+                }})",
+                ripple::to_string(ripple::makeMptID(2, account1))
+            ),
+            ripple::keylet::mptIssuance(ripple::makeMptID(2, account1)).key,
+            CreateMPTIssuanceObject(ACCOUNT, 2, "metadata")
+        },
+        NormalPathTestBundle{
+            "MPTokenViaIndex",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "mptoken": "{}"
+                }})",
+                INDEX1
+            ),
+            ripple::uint256{INDEX1},
+            CreateMPTokenObject(ACCOUNT, ripple::makeMptID(2, account1))
+        },
+        NormalPathTestBundle{
+            "MPTokenViaObject",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "mptoken": {{
+                        "account": "{}",
+                        "mpt_issuance_id": "{}"
+                    }}
+                }})",
+                ACCOUNT,
+                ripple::to_string(ripple::makeMptID(2, account1))
+            ),
+            ripple::keylet::mptoken(ripple::makeMptID(2, account1), account1).key,
+            CreateMPTokenObject(ACCOUNT, ripple::makeMptID(2, account1))
+        },
     };
 }
 
@@ -2941,6 +3051,56 @@ TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
         auto const err = rpc::makeError(output.result.error());
         auto const myerr = err.at("error").as_string();
         EXPECT_EQ(myerr, "entryNotFound");
+    });
+}
+
+// this testcase will test the if response includes synthetic mpt_issuance_id
+TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
+{
+    static auto constexpr OUT = R"({
+        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index":30,
+        "validated":true,
+        "index":"FD7E7EFAE2A20E75850D0E0590B205E2F74DC472281768CD6E03988069816336",
+        "node":{
+            "Flags":0,
+            "Issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "LedgerEntryType":"MPTokenIssuance",
+            "MPTokenMetadata":"6D65746164617461",
+            "MaximumAmount":"0",
+            "OutstandingAmount":"0",
+            "OwnerNode":"0",
+            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
+            "PreviousTxnLgrSeq":0,
+            "Sequence":2,
+            "index":"FD7E7EFAE2A20E75850D0E0590B205E2F74DC472281768CD6E03988069816336",
+            "mpt_issuance_id":"000000024B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+        }
+    })";
+
+    auto const mptId = ripple::makeMptID(2, GetAccountIDWithString(ACCOUNT));
+
+    backend->setRange(RANGEMIN, RANGEMAX);
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
+
+    // return valid ledger entry which can be deserialized
+    auto const ledgerEntry = CreateMPTIssuanceObject(ACCOUNT, 2, "metadata");
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::mptIssuance(mptId).key, RANGEMAX, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "mpt_issuance": "{}"
+            }})",
+            ripple::to_string(mptId)
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, json::parse(OUT));
     });
 }
 

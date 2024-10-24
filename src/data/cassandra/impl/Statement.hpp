@@ -106,9 +106,9 @@ public:
         using UintByteTupleType = std::tuple<uint32_t, ripple::uint256>;
         using ByteVectorType = std::vector<ripple::uint256>;
 
-        if constexpr (std::is_same_v<DecayedType, ripple::uint256>) {
+        if constexpr (std::is_same_v<DecayedType, ripple::uint256> || std::is_same_v<DecayedType, ripple::uint192>) {
             auto const rc = bindBytes(value.data(), value.size());
-            throwErrorIfNeeded(rc, "Bind ripple::uint256");
+            throwErrorIfNeeded(rc, "Bind ripple::base_uint");
         } else if constexpr (std::is_same_v<DecayedType, ripple::AccountID>) {
             auto const rc = bindBytes(value.data(), value.size());
             throwErrorIfNeeded(rc, "Bind ripple::AccountID");
