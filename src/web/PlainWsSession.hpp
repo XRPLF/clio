@@ -20,7 +20,6 @@
 #pragma once
 
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/WsBase.hpp"
 #include "web/interface/ConnectionBase.hpp"
@@ -58,31 +57,31 @@ public:
      * @brief Create a new non-secure websocket session.
      *
      * @param socket The socket. Ownership is transferred
-     * @param config The config for server
      * @param ip Client's IP address
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
      * @param buffer Buffer with initial data received from the peer
-     * @param isAdmin Whether the connection has admin privileges
+     * @param isAdmin Whether the connection has admin privileges,
+     * @param maxSendingQueueSize The maximum size of the sending queue for websocket
      */
     explicit PlainWsSession(
         boost::asio::ip::tcp::socket&& socket,
-        util::Config config,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer,
-        bool isAdmin
+        bool isAdmin,
+        std::uint32_t maxSendingQueueSize
     )
         : impl::WsBase<PlainWsSession, HandlerType>(
-              std::move(config),
               ip,
               tagFactory,
               dosGuard,
               handler,
-              std::move(buffer)
+              std::move(buffer),
+              maxSendingQueueSize
           )
         , ws_(std::move(socket))
     {
@@ -109,7 +108,6 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<HandlerType>> 
     using std::enable_shared_from_this<WsUpgrader<HandlerType>>::shared_from_this;
 
     boost::beast::tcp_stream http_;
-    util::Config config_;
     boost::optional<http::request_parser<http::string_body>> parser_;
     boost::beast::flat_buffer buffer_;
     std::reference_wrapper<util::TagDecoratorFactory const> tagFactory_;
@@ -118,13 +116,13 @@ class WsUpgrader : public std::enable_shared_from_this<WsUpgrader<HandlerType>> 
     std::string ip_;
     std::shared_ptr<HandlerType> const handler_;
     bool isAdmin_;
+    std::uint32_t maxWsSendingQueueSize_;
 
 public:
     /**
      * @brief Create a new upgrader to non-secure websocket.
      *
      * @param stream The TCP stream. Ownership is transferred
-     * @param config The config for server
      * @param ip Client's IP address
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
@@ -132,20 +130,20 @@ public:
      * @param buffer Buffer with initial data received from the peer. Ownership is transferred
      * @param request The request. Ownership is transferred
      * @param isAdmin Whether the connection has admin privileges
+     * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
      */
     WsUpgrader(
         boost::beast::tcp_stream&& stream,
-        util::Config config,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
         boost::beast::flat_buffer&& buffer,
         http::request<http::string_body> request,
-        bool isAdmin
+        bool isAdmin,
+        std::uint32_t maxWsSendingQueueSize
     )
         : http_(std::move(stream))
-        , config_(std::move(config))
         , buffer_(std::move(buffer))
         , tagFactory_(tagFactory)
         , dosGuard_(dosGuard)
@@ -153,6 +151,7 @@ public:
         , ip_(std::move(ip))
         , handler_(handler)
         , isAdmin_(isAdmin)
+        , maxWsSendingQueueSize_(maxWsSendingQueueSize)
     {
     }
 
@@ -189,7 +188,14 @@ private:
         boost::beast::get_lowest_layer(http_).expires_never();
 
         std::make_shared<PlainWsSession<HandlerType>>(
-            http_.release_socket(), config_, ip_, tagFactory_, dosGuard_, handler_, std::move(buffer_), isAdmin_
+            http_.release_socket(),
+            ip_,
+            tagFactory_,
+            dosGuard_,
+            handler_,
+            std::move(buffer_),
+            isAdmin_,
+            maxWsSendingQueueSize_
         )
             ->run(std::move(req_));
     }

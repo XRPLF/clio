@@ -72,7 +72,7 @@
         // It's true by default unless admin_password is set,'local_admin' : true and 'admin_password' can not be set at the same time
         "local_admin": false,
         // Max number of responses to queue up before sent successfully. If a client's waiting queue is too long, the server will close the connection.
-        "ws_max_sending_queue_size": 80000
+        "ws_max_sending_queue_size": 10000
     },
     // Time in seconds for graceful shutdown. Defaults to 10 seconds. Not fully implemented yet.
     "graceful_period": 10.0,

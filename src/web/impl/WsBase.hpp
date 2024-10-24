@@ -101,19 +101,19 @@ protected:
 
 public:
     explicit WsBase(
-        util::Config const& config,
         std::string ip,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer&& buffer
+        boost::beast::flat_buffer&& buffer,
+        std::uint32_t maxSendingQueueSize
     )
-        : ConnectionBase(tagFactory, ip), buffer_(std::move(buffer)), dosGuard_(dosGuard), handler_(handler)
+        : ConnectionBase(tagFactory, ip)
+        , buffer_(std::move(buffer))
+        , dosGuard_(dosGuard)
+        , handler_(handler)
+        , maxSendingQueueSize_(maxSendingQueueSize)
     {
-        // If the transactions number is 200 per ledger, A client which subscribes everything will send 400 feeds for
-        // each ledger. Assume 2s per ledger, we allow user delay 80000/400 * 2 = 400s
-        maxSendingQueueSize_ = config.valueOr("ws_max_sending_queue_size", 80000);
-
         upgraded = true;  // NOLINT (cppcoreguidelines-pro-type-member-init)
 
         LOG(perfLog_.debug()) << tag() << "session created";
