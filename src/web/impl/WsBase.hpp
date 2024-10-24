@@ -91,6 +91,7 @@ protected:
         // Don't log if the WebSocket stream was gracefully closed at both endpoints
         if (ec != boost::beast::websocket::error::closed) {
             LOG(perfLog_.error()) << tag() << ": " << what << ": " << ec.message() << ": " << ec.value();
+            LOG(log_.error()) << tag() << ": " << what << ": " << ec.message() << ": " << ec.value();
         }
 
         if (!ec_ && ec != boost::asio::error::operation_aborted) {
