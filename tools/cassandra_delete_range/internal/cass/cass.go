@@ -649,7 +649,7 @@ func (c *ClioCass) prepareAndExecuteDeleteQueries(
 							atomic.AddUint64(&totalErrors, 1)
 						}
 
-						// Checks for delete queries after iterating all pages
+						// Checks for delete queries when there are queries available to delete
 						if len(info.Data) > 0 {
 							numErr := c.performDeleteQueries(&info, session, colSettings)
 							atomic.AddUint64(&totalErrors, numErr)
