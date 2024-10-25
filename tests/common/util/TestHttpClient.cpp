@@ -21,7 +21,6 @@
 
 #include "util/Assert.hpp"
 
-#include <boost/asio/buffer.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
@@ -30,21 +29,16 @@
 #include <boost/asio/ssl/stream_base.hpp>
 #include <boost/asio/ssl/verify_context.hpp>
 #include <boost/asio/ssl/verify_mode.hpp>
-#include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/stream_traits.hpp>
 #include <boost/beast/core/tcp_stream.hpp>
-#include <boost/beast/http.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/ssl/ssl_stream.hpp>
 #include <boost/beast/version.hpp>
-#include <boost/beast/websocket/rfc6455.hpp>
-#include <boost/beast/websocket/stream.hpp>
-#include <boost/beast/websocket/stream_base.hpp>
 #include <openssl/err.h>
 #include <openssl/tls1.h>
 
@@ -198,7 +192,7 @@ HttpAsyncClient::connect(
     if (error)
         return error;
 
-    ASSERT(resolverResults.size() > 0, "No results from resolver");
+    ASSERT(!resolverResults.empty(), "No results from resolver");
 
     boost::beast::get_lowest_layer(stream_).expires_after(timeout);
     stream_.async_connect(resolverResults.begin()->endpoint(), yield[error]);

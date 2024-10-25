@@ -27,7 +27,6 @@
 #include "web/ng/Response.hpp"
 #include "web/ng/impl/HttpConnection.hpp"
 
-#include <boost/asio/error.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>

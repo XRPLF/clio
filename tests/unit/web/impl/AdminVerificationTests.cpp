@@ -135,7 +135,7 @@ struct MakeAdminVerificationStrategyFromConfigTest
 
 TEST_P(MakeAdminVerificationStrategyFromConfigTest, ChecksConfig)
 {
-    util::Config serverConfig{boost::json::parse(GetParam().config)};
+    util::Config const serverConfig{boost::json::parse(GetParam().config)};
     auto const result = web::impl::make_AdminVerificationStrategy(serverConfig);
     if (GetParam().expectedError) {
         EXPECT_FALSE(result.has_value());

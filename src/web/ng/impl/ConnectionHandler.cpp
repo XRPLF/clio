@@ -28,13 +28,9 @@
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 
-#include <boost/asio/bind_cancellation_slot.hpp>
-#include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/error.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include <boost/asio/strand.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/websocket/error.hpp>

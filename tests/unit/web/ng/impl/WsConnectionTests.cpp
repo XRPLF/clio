@@ -33,7 +33,6 @@
 #include <boost/asio/ssl/context.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http/status.hpp>
-#include <boost/beast/websocket/error.hpp>
 #include <boost/json/object.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

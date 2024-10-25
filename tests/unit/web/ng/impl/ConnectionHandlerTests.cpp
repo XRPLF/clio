@@ -28,13 +28,10 @@
 #include "web/ng/Response.hpp"
 #include "web/ng/impl/ConnectionHandler.hpp"
 
-#include <boost/asio/bind_cancellation_slot.hpp>
-#include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
-#include <boost/beast/http.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
@@ -406,7 +403,7 @@ TEST_F(ConnectionHandlerParallelProcessingTest, Receive_Handle_Send_Loop_TooMany
     std::string const responseMessage = "some response";
 
     auto const returnRequest = [&](auto&&, auto&&) { return makeRequest(requestMessage, Request::HttpHeaders{}); };
-    testing::Sequence sequence;
+    testing::Sequence const sequence;
     EXPECT_CALL(*mockConnection_, receive)
         .WillOnce(returnRequest)
         .WillOnce(returnRequest)

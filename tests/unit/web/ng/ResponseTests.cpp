@@ -29,7 +29,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/serialize.hpp>
 #include <fmt/core.h>
-#include <fmt/format.h>
 #include <gtest/gtest.h>
 
 #include <string>
@@ -50,7 +49,7 @@ TEST_F(ResponseDeathTest, intoHttpResponseWithoutHttpData)
 TEST_F(ResponseDeathTest, asConstBufferWithHttpData)
 {
     Request const request{http::request<http::string_body>{http::verb::get, "/", 11}};
-    web::ng::Response response{boost::beast::http::status::ok, "message", request};
+    web::ng::Response const response{boost::beast::http::status::ok, "message", request};
     EXPECT_DEATH(response.asConstBuffer(), "");
 }
 
@@ -103,7 +102,7 @@ TEST_F(ResponseTest, asConstBuffer)
 {
     Request const request("some request", Request::HttpHeaders{});
     std::string const responseMessage = "response message";
-    web::ng::Response response{responseStatus_, responseMessage, request};
+    web::ng::Response const response{responseStatus_, responseMessage, request};
 
     auto const buffer = response.asConstBuffer();
     EXPECT_EQ(buffer.size(), responseMessage.size());
@@ -116,7 +115,7 @@ TEST_F(ResponseTest, asConstBufferJson)
 {
     Request const request("some request", Request::HttpHeaders{});
     boost::json::object const responseMessage{{"key", "value"}};
-    web::ng::Response response{responseStatus_, responseMessage, request};
+    web::ng::Response const response{responseStatus_, responseMessage, request};
 
     auto const buffer = response.asConstBuffer();
     EXPECT_EQ(buffer.size(), boost::json::serialize(responseMessage).size());

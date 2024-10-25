@@ -205,7 +205,7 @@ TEST_F(RequestHeaderValueTest, headerValueString)
 
 TEST_F(RequestHeaderValueTest, headerValueNotFound)
 {
-    http::request<http::string_body> httpRequest{http::verb::get, "/some", 11};
+    http::request<http::string_body> const httpRequest{http::verb::get, "/some", 11};
     Request const request{httpRequest};
     auto const maybeHeaderValue = request.headerValue(http::field::user_agent);
     EXPECT_FALSE(maybeHeaderValue.has_value());

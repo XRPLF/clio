@@ -23,10 +23,7 @@
 #include "web/ng/impl/ServerSslContext.hpp"
 
 #include <boost/json/object.hpp>
-#include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
-#include <fmt/compile.h>
-#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <test_data/SslCert.hpp>
@@ -113,7 +110,7 @@ struct MakeServerSslContextFromConfigRealFilesTest : testing::Test {};
 TEST_F(MakeServerSslContextFromConfigRealFilesTest, WrongKeyFile)
 {
     auto const certFile = tests::sslCertFile();
-    boost::json::object configJson = {{"ssl_cert_file", certFile.path}, {"ssl_key_file", "some_path"}};
+    boost::json::object const configJson = {{"ssl_cert_file", certFile.path}, {"ssl_key_file", "some_path"}};
 
     util::Config const config{configJson};
     auto const expectedServerSslContext = makeServerSslContext(config);
@@ -125,7 +122,7 @@ TEST_F(MakeServerSslContextFromConfigRealFilesTest, BothFilesValid)
 {
     auto const certFile = tests::sslCertFile();
     auto const keyFile = tests::sslKeyFile();
-    boost::json::object configJson = {{"ssl_cert_file", certFile.path}, {"ssl_key_file", keyFile.path}};
+    boost::json::object const configJson = {{"ssl_cert_file", certFile.path}, {"ssl_key_file", keyFile.path}};
 
     util::Config const config{configJson};
     auto const expectedServerSslContext = makeServerSslContext(config);

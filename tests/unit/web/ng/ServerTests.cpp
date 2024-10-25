@@ -174,9 +174,9 @@ struct ServerTest : SyncAsioContextTest {
 
 TEST_F(ServerTest, BadEndpoint)
 {
-    boost::asio::ip::tcp::endpoint endpoint{boost::asio::ip::address_v4::from_string("1.2.3.4"), 0};
+    boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("1.2.3.4"), 0};
     impl::ConnectionHandler connectionHandler{impl::ConnectionHandler::ProcessingPolicy::Sequential, std::nullopt};
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{boost::json::value{}}};
+    util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
     Server server{ctx, endpoint, std::nullopt, std::move(connectionHandler), tagDecoratorFactory};
     auto maybeError = server.run();
     ASSERT_TRUE(maybeError.has_value());
