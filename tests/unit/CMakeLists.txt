@@ -133,6 +133,7 @@ target_sources(
           web/dosguard/IntervalSweepHandlerTests.cpp
           web/dosguard/WhitelistHandlerTests.cpp
           web/impl/AdminVerificationTests.cpp
+          web/impl/ErrorHandlingTests.cpp
           web/ng/ResponseTests.cpp
           web/ng/RequestTests.cpp
           web/ng/ServerTests.cpp

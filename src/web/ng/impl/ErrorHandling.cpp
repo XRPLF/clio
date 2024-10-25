@@ -17,8 +17,6 @@
 */
 //==============================================================================
 
-#pragma once
-
 #include "web/ng/impl/ErrorHandling.hpp"
 
 #include "rpc/Errors.hpp"
@@ -37,6 +35,8 @@
 #include <string>
 #include <utility>
 #include <variant>
+
+namespace http = boost::beast::http;
 
 namespace web::ng::impl {
 
@@ -79,9 +79,7 @@ ErrorHelper::makeError(rpc::Status const& err) const
 {
     if (not rawRequest_.get().isHttp()) {
         return Response{
-            boost::beast::http::status::bad_request,
-            boost::json::serialize(composeError(err, rawRequest_, request_)),
-            rawRequest_
+            http::status::bad_request, boost::json::serialize(composeError(err, rawRequest_, request_)), rawRequest_
         };
     }
 
@@ -90,18 +88,16 @@ ErrorHelper::makeError(rpc::Status const& err) const
         switch (*clioCode) {
             case rpc::ClioError::rpcINVALID_API_VERSION:
                 return Response{
-                    boost::beast::http::status::bad_request,
-                    std::string{rpc::getErrorInfo(*clioCode).error},
-                    rawRequest_
+                    http::status::bad_request, std::string{rpc::getErrorInfo(*clioCode).error}, rawRequest_
                 };
             case rpc::ClioError::rpcCOMMAND_IS_MISSING:
-                return Response{boost::beast::http::status::bad_request, "Null method", rawRequest_};
+                return Response{http::status::bad_request, "Null method", rawRequest_};
             case rpc::ClioError::rpcCOMMAND_IS_EMPTY:
-                return Response{boost::beast::http::status::bad_request, "method is empty", rawRequest_};
+                return Response{http::status::bad_request, "method is empty", rawRequest_};
             case rpc::ClioError::rpcCOMMAND_NOT_STRING:
-                return Response{boost::beast::http::status::bad_request, "method is not string", rawRequest_};
+                return Response{http::status::bad_request, "method is not string", rawRequest_};
             case rpc::ClioError::rpcPARAMS_UNPARSEABLE:
-                return Response{boost::beast::http::status::bad_request, "params unparseable", rawRequest_};
+                return Response{http::status::bad_request, "params unparseable", rawRequest_};
 
             // others are not applicable but we want a compilation error next time we add one
             case rpc::ClioError::rpcUNKNOWN_OPTION:
@@ -122,9 +118,7 @@ ErrorHelper::makeError(rpc::Status const& err) const
     }
 
     return Response{
-        boost::beast::http::status::bad_request,
-        boost::json::serialize(composeError(err, rawRequest_, request_)),
-        rawRequest_
+        http::status::bad_request, boost::json::serialize(composeError(err, rawRequest_, request_)), rawRequest_
     };
 }
 
@@ -132,7 +126,7 @@ Response
 ErrorHelper::makeInternalError() const
 {
     return Response{
-        boost::beast::http::status::internal_server_error,
+        http::status::internal_server_error,
         boost::json::serialize(composeError(rpc::RippledError::rpcINTERNAL, rawRequest_, request_)),
         rawRequest_
     };
@@ -142,7 +136,7 @@ Response
 ErrorHelper::makeNotReadyError() const
 {
     return Response{
-        boost::beast::http::status::ok,
+        http::status::ok,
         boost::json::serialize(composeError(rpc::RippledError::rpcNOT_READY, rawRequest_, request_)),
         rawRequest_
     };
@@ -153,14 +147,14 @@ ErrorHelper::makeTooBusyError() const
 {
     if (not rawRequest_.get().isHttp()) {
         return Response{
-            boost::beast::http::status::too_many_requests,
+            http::status::too_many_requests,
             boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)),
             rawRequest_
         };
     }
 
     return Response{
-        boost::beast::http::status::service_unavailable,
+        http::status::service_unavailable,
         boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)),
         rawRequest_
     };
@@ -171,15 +165,13 @@ ErrorHelper::makeJsonParsingError() const
 {
     if (not rawRequest_.get().isHttp()) {
         return Response{
-            boost::beast::http::status::bad_request,
+            http::status::bad_request,
             boost::json::serialize(rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX)),
             rawRequest_
         };
     }
 
-    return Response{
-        boost::beast::http::status::bad_request, fmt::format("Unable to parse JSON from the request"), rawRequest_
-    };
+    return Response{http::status::bad_request, fmt::format("Unable to parse JSON from the request"), rawRequest_};
 }
 
 }  // namespace web::ng::impl
