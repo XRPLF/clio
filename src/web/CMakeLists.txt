@@ -8,6 +8,7 @@ target_sources(
           dosguard/WhitelistHandler.cpp
           impl/AdminVerificationStrategy.cpp
           ng/Connection.cpp
+          ng/impl/ErrorHandling.cpp
           ng/impl/ConnectionHandler.cpp
           ng/impl/ServerSslContext.cpp
           ng/impl/WsConnection.cpp
