@@ -42,9 +42,15 @@ CoroutineGroup::~CoroutineGroup()
 }
 
 bool
+CoroutineGroup::canSpawn() const
+{
+    return not maxChildren_.has_value() or childrenCounter_ < *maxChildren_;
+}
+
+bool
 CoroutineGroup::spawn(boost::asio::yield_context yield, std::function<void(boost::asio::yield_context)> fn)
 {
-    if (maxChildren_.has_value() && childrenCounter_ >= *maxChildren_)
+    if (not canSpawn())
         return false;
 
     ++childrenCounter_;
