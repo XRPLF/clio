@@ -55,6 +55,14 @@ public:
     ~CoroutineGroup();
 
     /**
+     * @brief Check if a new coroutine can be spawned (i.e. there is space for a new coroutine in the group)
+     *
+     * @return true If a new coroutine can be spawned. false if the maximum number of coroutines has been reached
+     */
+    bool
+    canSpawn() const;
+
+    /**
      * @brief Spawn a new coroutine in the group
      *
      * @param yield The yield context to use for the coroutine (it should be the same as the one used in the
