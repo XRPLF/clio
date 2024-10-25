@@ -371,9 +371,9 @@ make_HttpServer(
         throw std::logic_error("Admin config error, one method must be specified to authorize admin.");
     }
 
-    // If the transactions number is 200 per ledger, A client which subscribes everything will send 400 feeds for
-    // each ledger. Assume 1s per ledger, we allow user delay 10000/400 = 25s
-    auto const maxWsSendingQueueSize = serverConfig.valueOr("ws_max_sending_queue_size", 10000);
+    // If the transactions number is 200 per ledger, A client which subscribes everything will send 400+ feeds for
+    // each ledger. we allow user delay 3 ledgers by default
+    auto const maxWsSendingQueueSize = serverConfig.valueOr("ws_max_sending_queue_size", 1500);
 
     auto server = std::make_shared<HttpServer<HandlerType>>(
         ioc,
