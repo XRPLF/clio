@@ -28,13 +28,9 @@
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 
-#include <boost/asio/bind_cancellation_slot.hpp>
-#include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/error.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include <boost/asio/strand.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/websocket/error.hpp>
@@ -222,21 +218,21 @@ ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::as
             closeConnectionGracefully &= closeGracefully;
             break;
         }
-
-        bool const spawnSuccess = tasksGroup.spawn(
-            yield,  // spawn on the same strand
-            [this, &stop, &closeConnectionGracefully, &connection, request = std::move(expectedRequest).value()](
-                boost::asio::yield_context innerYield
-            ) mutable {
-                auto maybeCloseConnectionGracefully = processRequest(connection, request, innerYield);
-                if (maybeCloseConnectionGracefully.has_value()) {
-                    stop = true;
-                    closeConnectionGracefully &= maybeCloseConnectionGracefully.value();
+        if (tasksGroup.canSpawn()) {
+            bool const spawnSuccess = tasksGroup.spawn(
+                yield,  // spawn on the same strand
+                [this, &stop, &closeConnectionGracefully, &connection, request = std::move(expectedRequest).value()](
+                    boost::asio::yield_context innerYield
+                ) mutable {
+                    auto maybeCloseConnectionGracefully = processRequest(connection, request, innerYield);
+                    if (maybeCloseConnectionGracefully.has_value()) {
+                        stop = true;
+                        closeConnectionGracefully &= maybeCloseConnectionGracefully.value();
+                    }
                 }
-            }
-        );
-
-        if (not spawnSuccess) {
+            );
+            ASSERT(spawnSuccess, "The coroutine was expected to be spawned");
+        } else {
             connection.send(
                 Response{
                     boost::beast::http::status::too_many_requests,

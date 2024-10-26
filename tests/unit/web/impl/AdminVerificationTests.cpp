@@ -151,36 +151,10 @@ generateDefaultAdminConfig()
 
 TEST_P(MakeAdminVerificationStrategyFromConfigTest, ChecksConfig)
 {
-    auto const obj = boost::json::parse(GetParam().config).as_object();
-    // Get the object
-
-    // Loop through the key-value pairs in the object
-    for (auto& kv : obj) {
-        std::string key = kv.key();             // The key (string)
-        boost::json::value value = kv.value();  // The value (could be any type)
-
-        std::cout << "Key: " << key << " - ";
-
-        // Check the type of the value and handle accordingly
-        if (value.is_string()) {
-            std::cout << "String Value: " << value.as_string() << std::endl;
-        } else if (value.is_int64()) {
-            std::cout << "Integer Value: " << value.as_int64() << std::endl;
-        } else if (value.is_bool()) {
-            std::cout << "Boolean Value: " << value.as_bool() << std::endl;
-        } else if (value.is_double()) {
-            std::cout << "Double Value: " << value.as_double() << std::endl;
-        } else if (value.is_object()) {
-            std::cout << "Nested Object" << std::endl;
-            // Recursively handle nested objects
-        } else if (value.is_array()) {
-            std::cout << "Array" << std::endl;
-            // Recursively handle arrays
-        }
-    }
-
     ConfigFileJson const js{boost::json::parse(GetParam().config).as_object()};
     ClioConfigDefinition serverConfig{generateDefaultAdminConfig()};
+    auto const errors = serverConfig.parse(js);
+    ASSERT_TRUE(!errors.has_value());
     auto const result = web::impl::make_AdminVerificationStrategy(serverConfig);
     if (GetParam().expectedError) {
         EXPECT_FALSE(result.has_value());
