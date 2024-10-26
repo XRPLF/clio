@@ -19,10 +19,13 @@
 
 #pragma once
 
+#include "util/newconfig/ConfigDefinition.hpp"
+
 #include <boost/beast/http.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
 
+#include <expected>
 #include <memory>
 #include <optional>
 #include <string>
@@ -81,5 +84,8 @@ public:
 
 std::shared_ptr<AdminVerificationStrategy>
 make_AdminVerificationStrategy(std::optional<std::string> password);
+
+std::expected<std::shared_ptr<AdminVerificationStrategy>, std::string>
+make_AdminVerificationStrategy(util::config::ClioConfigDefinition const& serverConfig);
 
 }  // namespace web::impl

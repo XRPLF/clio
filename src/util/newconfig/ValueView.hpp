@@ -153,6 +153,7 @@ public:
     T
     getValueImpl() const
     {
+        ASSERT(configVal_.get().hasValue(), "ConfigValue does not have a value");
         if constexpr (std::is_same_v<T, bool>) {
             ASSERT(type() == ConfigType::Boolean, "Value type is not a bool");
             return asBool();

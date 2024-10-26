@@ -21,7 +21,9 @@
 #include "util/AssignRandomPort.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
-#include "util/TestHttpSyncClient.hpp"
+#include "util/TestHttpClient.hpp"
+#include "util/TestWebSocketClient.hpp"
+#include "util/TmpFile.hpp"
 #include "util/newconfig/Array.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigFileJson.hpp"
@@ -50,6 +52,7 @@
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <test_data/SslCert.hpp>
 
 #include <condition_variable>
 #include <cstdint>
@@ -109,14 +112,6 @@ generateJSONDataOverload(std::string_view port)
     ));
 }
 
-boost::json::value
-addSslConfig(boost::json::value config)
-{
-    config.as_object()["ssl_key_file"] = TEST_DATA_SSL_KEY_PATH;
-    config.as_object()["ssl_cert_file"] = TEST_DATA_SSL_CERT_PATH;
-    return config;
-}
-
 inline ClioConfigDefinition
 getParseServerConfig(boost::json::value val)
 {
@@ -155,6 +150,14 @@ struct WebServerTest : NoLoggerFixture {
         runner.emplace([this] { ctx.run(); });
     }
 
+    boost::json::value
+    addSslConfig(boost::json::value config) const
+    {
+        config.as_object()["ssl_key_file"] = sslKeyFile.path;
+        config.as_object()["ssl_cert_file"] = sslCertFile.path;
+        return config;
+    }
+
     // this ctx is for dos timer
     boost::asio::io_context ctxSync;
     std::string const port = std::to_string(tests::util::generateFreePort());
@@ -169,6 +172,9 @@ struct WebServerTest : NoLoggerFixture {
     dosguard::IntervalSweepHandler sweepHandlerOverload{cfgOverload, ctxSync, dosGuardOverload};
     // this ctx is for http server
     boost::asio::io_context ctx;
+
+    TmpFile sslCertFile{tests::sslCertFile()};
+    TmpFile sslKeyFile{tests::sslKeyFile()};
 
 private:
     std::optional<boost::asio::io_service::work> work;
@@ -241,7 +247,7 @@ TEST_F(WebServerTestsWithMockPrometheus, Http)
 {
     auto const e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    auto const res = HttpSyncClient::syncPost("localhost", port, R"({"Hello":1})");
+    auto const res = HttpSyncClient::post("localhost", port, R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
 }
 
@@ -265,7 +271,7 @@ TEST_F(WebServerTestsWithMockPrometheus, HttpInternalError)
 {
     auto const e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    auto const res = HttpSyncClient::syncPost("localhost", port, R"({})");
+    auto const res = HttpSyncClient::post("localhost", port, R"({})");
     EXPECT_EQ(
         res,
         R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"})"
@@ -315,7 +321,7 @@ TEST_F(WebServerTestsWithMockPrometheus, IncompleteSslConfig)
     auto const e = std::make_shared<EchoExecutor>();
 
     auto jsonConfig = generateJSONWithDynamicPort(port);
-    jsonConfig.as_object()["ssl_key_file"] = TEST_DATA_SSL_KEY_PATH;
+    jsonConfig.as_object()["ssl_key_file"] = sslKeyFile.path;
 
     auto const server = makeServerSync(getParseServerConfig(jsonConfig), ctx, dosGuard, e);
     EXPECT_EQ(server, nullptr);
@@ -326,7 +332,7 @@ TEST_F(WebServerTestsWithMockPrometheus, WrongSslConfig)
     auto const e = std::make_shared<EchoExecutor>();
 
     auto jsonConfig = generateJSONWithDynamicPort(port);
-    jsonConfig.as_object()["ssl_key_file"] = TEST_DATA_SSL_KEY_PATH;
+    jsonConfig.as_object()["ssl_key_file"] = sslKeyFile.path;
     jsonConfig.as_object()["ssl_cert_file"] = "wrong_path";
 
     auto const server = makeServerSync(getParseServerConfig(jsonConfig), ctx, dosGuard, e);
@@ -363,9 +369,9 @@ TEST_F(WebServerTestsWithMockPrometheus, HttpRequestOverload)
 {
     auto const e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e);
-    auto res = HttpSyncClient::syncPost("localhost", port, R"({})");
+    auto res = HttpSyncClient::post("localhost", port, R"({})");
     EXPECT_EQ(res, "{}");
-    res = HttpSyncClient::syncPost("localhost", port, R"({})");
+    res = HttpSyncClient::post("localhost", port, R"({})");
     EXPECT_EQ(
         res,
         R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response"})"
@@ -401,7 +407,7 @@ TEST_F(WebServerTestsWithMockPrometheus, HttpPayloadOverload)
     std::string const s100(100, 'a');
     auto const e = std::make_shared<EchoExecutor>();
     auto server = makeServerSync(cfg, ctx, dosGuardOverload, e);
-    auto const res = HttpSyncClient::syncPost("localhost", port, fmt::format(R"({{"payload":"{}"}})", s100));
+    auto const res = HttpSyncClient::post("localhost", port, fmt::format(R"({{"payload":"{}"}})", s100));
     EXPECT_EQ(
         res,
         R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})"
@@ -543,6 +549,8 @@ getParseAdminServerConfig(boost::json::value val)
         {"server.port", ConfigValue{ConfigType::Integer}},
         {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
         {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
+        {"server.processing_policy", ConfigValue{ConfigType::String}.defaultValue("parallel")},
+        {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
         {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
         {"ssl_key_file", ConfigValue{ConfigType::String}.optional()},
         {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
@@ -584,7 +592,7 @@ TEST_P(WebServerAdminTest, HttpAdminCheck)
     auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e);
     std::string const request = "Why hello";
     uint32_t const webServerPort = serverConfig.getValue<uint32_t>("server.port");
-    auto const res = HttpSyncClient::syncPost("localhost", std::to_string(webServerPort), request, GetParam().headers);
+    auto const res = HttpSyncClient::post("localhost", std::to_string(webServerPort), request, GetParam().headers);
     EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
 }
 
@@ -708,7 +716,7 @@ TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
         getParseAdminServerConfig(boost::json::parse(JSONServerConfigWithAdminPassword(webServerPort)))
     };
     auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
-    auto const res = HttpSyncClient::syncGet("localhost", std::to_string(webServerPort), "", "/metrics");
+    auto const res = HttpSyncClient::get("localhost", std::to_string(webServerPort), "", "/metrics");
     EXPECT_EQ(res, "Only admin is allowed to collect metrics");
 }
 
@@ -733,7 +741,7 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
     };
     PrometheusService::init(serverConfig);
     auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
-    auto const res = HttpSyncClient::syncGet(
+    auto const res = HttpSyncClient::get(
         "localhost",
         std::to_string(webServerPort),
         "",
@@ -756,7 +764,7 @@ TEST_F(WebServerPrometheusTest, validResponse)
         getParseAdminServerConfig(boost::json::parse(JSONServerConfigWithAdminPassword(webServerPort)))
     };
     auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
-    auto const res = HttpSyncClient::syncGet(
+    auto const res = HttpSyncClient::get(
         "localhost",
         std::to_string(webServerPort),
         "",

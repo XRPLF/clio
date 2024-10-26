@@ -17,32 +17,24 @@
 */
 //==============================================================================
 
-#include "web/Server.hpp"
+#pragma once
 
-#include "util/newconfig/ConfigDefinition.hpp"
+#include "util/TmpFile.hpp"
 
-#include <boost/asio/ssl/context.hpp>
+#include <string_view>
 
-#include <optional>
-#include <string>
+namespace tests {
 
-namespace web {
+std::string_view
+sslCert();
 
-std::expected<std::optional<boost::asio::ssl::context>, std::string>
-makeServerSslContext(util::config::ClioConfigDefinition const& config)
-{
-    bool const configHasCertFile = config.getValueView("ssl_cert_file").hasValue();
-    bool const configHasKeyFile = config.getValueView("ssl_key_file").hasValue();
+TmpFile
+sslCertFile();
 
-    if (configHasCertFile != configHasKeyFile)
-        return std::unexpected{"Config entries 'ssl_cert_file' and 'ssl_key_file' must be set or unset together."};
+std::string_view
+sslKey();
 
-    if (not configHasCertFile)
-        return std::nullopt;
+TmpFile
+sslKeyFile();
 
-    auto const certFilename = config.getValue<std::string>("ssl_cert_file");
-    auto const keyFilename = config.getValue<std::string>("ssl_key_file");
-
-    return impl::makeServerSslContext(certFilename, keyFilename);
-}
-}  // namespace web
+}  // namespace tests

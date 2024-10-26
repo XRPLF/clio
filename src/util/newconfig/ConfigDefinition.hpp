@@ -135,8 +135,9 @@ public:
     getValue(std::string_view fullKey) const
     {
         ASSERT(map_.contains(fullKey), "key {} does not exist in config", fullKey);
-        if (std::holds_alternative<ConfigValue>(map_.at(fullKey))) {
-            return ValueView{std::get<ConfigValue>(map_.at(fullKey))}.getValueImpl<T>();
+        auto const val = map_.at(fullKey);
+        if (std::holds_alternative<ConfigValue>(val)) {
+            return ValueView{std::get<ConfigValue>(val)}.getValueImpl<T>();
         }
         std::unreachable();
     }
@@ -334,6 +335,9 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"server.max_queue_size", ConfigValue{ConfigType::Integer}.defaultValue(0).withConstraint(validateUint32)},
      {"server.local_admin", ConfigValue{ConfigType::Boolean}.optional()},
      {"server.admin_password", ConfigValue{ConfigType::String}.optional()},
+     {"server.processing_policy",
+      ConfigValue{ConfigType::String}.defaultValue("parallel").withConstraint(validateProcessingPolicy)},
+     {"server.parallel_requests_limit", ConfigValue{ConfigType::Integer}.optional()},
      {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
      {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
      {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(validateUint16)},

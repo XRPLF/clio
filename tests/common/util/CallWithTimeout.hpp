@@ -31,6 +31,6 @@ namespace tests::common::util {
  * @param function The function to run
  */
 void
-withTimeout(std::chrono::steady_clock::duration timeout, std::function<void()> function);
+callWithTimeout(std::chrono::steady_clock::duration timeout, std::function<void()> function);
 
 }  // namespace tests::common::util

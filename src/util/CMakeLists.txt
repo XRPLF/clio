@@ -4,6 +4,7 @@ target_sources(
   clio_util
   PRIVATE build/Build.cpp
           config/Config.cpp
+          CoroutineGroup.cpp
           log/Logger.cpp
           prometheus/Http.cpp
           prometheus/Label.cpp

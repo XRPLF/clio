@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "util/WithTimeout.hpp"
 #include "util/requests/Types.hpp"
 #include "util/requests/WsConnection.hpp"
 
@@ -67,15 +68,13 @@ public:
 
         auto operation = [&](auto&& token) { ws_.async_read(buffer, token); };
         if (timeout) {
-            withTimeout(operation, yield[errorCode], *timeout);
+            errorCode = util::withTimeout(operation, yield[errorCode], *timeout);
         } else {
             operation(yield[errorCode]);
         }
 
-        if (errorCode) {
-            errorCode = mapError(errorCode);
+        if (errorCode)
             return std::unexpected{RequestError{"Read error", errorCode}};
-        }
 
         return boost::beast::buffers_to_string(std::move(buffer).data());
     }
@@ -90,15 +89,13 @@ public:
         boost::beast::error_code errorCode;
         auto operation = [&](auto&& token) { ws_.async_write(boost::asio::buffer(message), token); };
         if (timeout) {
-            withTimeout(operation, yield[errorCode], *timeout);
+            errorCode = util::withTimeout(operation, yield, *timeout);
         } else {
             operation(yield[errorCode]);
         }
 
-        if (errorCode) {
-            errorCode = mapError(errorCode);
+        if (errorCode)
             return RequestError{"Write error", errorCode};
-        }
 
         return std::nullopt;
     }
@@ -118,36 +115,6 @@ public:
         if (errorCode)
             return RequestError{"Close error", errorCode};
         return std::nullopt;
-    }
-
-private:
-    template <typename Operation>
-    static void
-    withTimeout(Operation&& operation, boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout)
-    {
-        auto isCompleted = std::make_shared<bool>(false);
-        boost::asio::cancellation_signal cancellationSignal;
-        auto cyield = boost::asio::bind_cancellation_slot(cancellationSignal.slot(), yield);
-
-        boost::asio::steady_timer timer{boost::asio::get_associated_executor(cyield), timeout};
-
-        // The timer below can be called with no error code even if the operation is completed before the timeout, so we
-        // need an additional flag here
-        timer.async_wait([&cancellationSignal, isCompleted](boost::system::error_code errorCode) {
-            if (!errorCode and !*isCompleted)
-                cancellationSignal.emit(boost::asio::cancellation_type::terminal);
-        });
-        operation(cyield);
-        *isCompleted = true;
-    }
-
-    static boost::system::error_code
-    mapError(boost::system::error_code const ec)
-    {
-        if (ec == boost::system::errc::operation_canceled) {
-            return boost::system::errc::make_error_code(boost::system::errc::timed_out);
-        }
-        return ec;
     }
 };
 

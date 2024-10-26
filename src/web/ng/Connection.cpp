@@ -17,32 +17,41 @@
 */
 //==============================================================================
 
-#include "web/impl/ServerSslContext.hpp"
+#include "web/ng/Connection.hpp"
 
-#include <gtest/gtest.h>
+#include "util/Taggable.hpp"
 
-using namespace web::impl;
+#include <boost/beast/core/flat_buffer.hpp>
 
-TEST(ServerSslContext, makeServerSslContext)
+#include <cstddef>
+#include <string>
+#include <utility>
+
+namespace web::ng {
+
+Connection::Connection(
+    std::string ip,
+    boost::beast::flat_buffer buffer,
+    util::TagDecoratorFactory const& tagDecoratorFactory
+)
+    : util::Taggable(tagDecoratorFactory), ip_{std::move(ip)}, buffer_{std::move(buffer)}
 {
-    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_CERT_PATH, TEST_DATA_SSL_KEY_PATH);
-    ASSERT_TRUE(sslContext);
 }
 
-TEST(ServerSslContext, makeServerSslContext_WrongCertPath)
+ConnectionContext
+Connection::context() const
 {
-    auto const sslContext = makeServerSslContext("wrong_path", TEST_DATA_SSL_KEY_PATH);
-    ASSERT_FALSE(sslContext);
+    return ConnectionContext{*this};
 }
 
-TEST(ServerSslContext, makeServerSslContext_WrongKeyPath)
+std::string const&
+Connection::ip() const
 {
-    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_CERT_PATH, "wrong_path");
-    ASSERT_FALSE(sslContext);
+    return ip_;
 }
 
-TEST(ServerSslContext, makeServerSslContext_CertKeyMismatch)
+ConnectionContext::ConnectionContext(Connection const& connection) : connection_{connection}
 {
-    auto const sslContext = makeServerSslContext(TEST_DATA_SSL_KEY_PATH, TEST_DATA_SSL_CERT_PATH);
-    ASSERT_FALSE(sslContext);
 }
+
+}  // namespace web::ng

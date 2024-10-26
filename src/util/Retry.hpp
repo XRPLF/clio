@@ -24,6 +24,7 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/strand.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <memory>
@@ -80,6 +81,7 @@ class Retry {
     RetryStrategyPtr strategy_;
     boost::asio::steady_timer timer_;
     size_t attemptNumber_ = 0;
+    std::shared_ptr<std::atomic_bool> canceled_{std::make_shared<std::atomic_bool>(false)};
 
 public:
     /**
@@ -91,6 +93,11 @@ public:
     Retry(RetryStrategyPtr strategy, boost::asio::strand<boost::asio::io_context::executor_type> strand);
 
     /**
+     * @brief Destroy the Retry object
+     */
+    ~Retry();
+
+    /**
      * @brief Schedule a retry
      *
      * @tparam Fn The type of the callable to execute
@@ -100,15 +107,18 @@ public:
     void
     retry(Fn&& func)
     {
+        *canceled_ = false;
         timer_.expires_after(strategy_->getDelay());
         strategy_->increaseDelay();
-        timer_.async_wait([this, func = std::forward<Fn>(func)](boost::system::error_code const& ec) {
-            if (ec == boost::asio::error::operation_aborted) {
-                return;
+        timer_.async_wait(
+            [this, canceled = canceled_, func = std::forward<Fn>(func)](boost::system::error_code const& ec) {
+                if (ec == boost::asio::error::operation_aborted or *canceled) {
+                    return;
+                }
+                ++attemptNumber_;
+                func();
             }
-            ++attemptNumber_;
-            func();
-        });
+        );
     }
 
     /**

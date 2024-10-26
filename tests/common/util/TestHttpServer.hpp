@@ -21,9 +21,11 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/spawn.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
 
+#include <expected>
 #include <functional>
 #include <optional>
 #include <string>
@@ -43,6 +45,15 @@ public:
      * @param host host to bind to
      */
     TestHttpServer(boost::asio::io_context& context, std::string host);
+
+    /**
+     * @brief Accept a new connection
+     *
+     * @param yield boost::asio::yield_context to use for networking
+     * @return Either a socket with the new connection or an error code
+     */
+    std::expected<boost::asio::ip::tcp::socket, boost::system::error_code>
+    accept(boost::asio::yield_context yield);
 
     /**
      * @brief Start the server

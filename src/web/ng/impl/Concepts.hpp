@@ -17,31 +17,19 @@
 */
 //==============================================================================
 
-#include "util/WithTimeout.hpp"
+#pragma once
 
-#include <gtest/gtest.h>
+#include <boost/beast/core/basic_stream.hpp>
+#include <boost/beast/core/tcp_stream.hpp>
 
-#include <chrono>
-#include <cstdlib>
-#include <functional>
-#include <future>
-#include <thread>
+#include <type_traits>
 
-namespace tests::common::util {
+namespace web::ng::impl {
 
-void
-withTimeout(std::chrono::steady_clock::duration timeout, std::function<void()> function)
-{
-    std::promise<void> promise;
-    auto future = promise.get_future();
-    std::thread t([&promise, &function] {
-        function();
-        promise.set_value();
-    });
-    if (future.wait_for(timeout) == std::future_status::timeout) {
-        FAIL() << "Timeout " << std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count() << "ms exceeded";
-    }
-    t.join();
-}
+template <typename T>
+concept IsTcpStream = std::is_same_v<std::decay_t<T>, boost::beast::tcp_stream>;
 
-}  // namespace tests::common::util
+template <typename T>
+concept IsSslTcpStream = std::is_same_v<std::decay_t<T>, boost::asio::ssl::stream<boost::beast::tcp_stream>>;
+
+}  // namespace web::ng::impl

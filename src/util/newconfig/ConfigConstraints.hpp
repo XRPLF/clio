@@ -80,6 +80,11 @@ static constexpr std::array<char const*, 3> LOAD_CACHE_MODE = {
 static constexpr std::array<char const*, 1> DATABASE_TYPE = {"cassandra"};
 
 /**
+ * @brief specific values that are accepted for server's processing_policy in config.
+ */
+static constexpr std::array<char const*, 2> PROCESSING_POLICY = {"parallel", "sequent"};
+
+/**
  * @brief An interface to enforce constraints on certain values within ClioConfigDefinition.
  */
 class Constraint {
@@ -346,6 +351,7 @@ static constinit OneOf validateLogLevelName{"log_level", LOG_LEVELS};
 static constinit OneOf validateCassandraName{"database.type", DATABASE_TYPE};
 static constinit OneOf validateLoadMode{"cache.load", LOAD_CACHE_MODE};
 static constinit OneOf validateLogTag{"log_tag_style", LOG_TAGS};
+static constinit OneOf validateProcessingPolicy{"server.processing_policy", PROCESSING_POLICY};
 
 static constinit PositiveDouble validatePositiveDouble{};
 

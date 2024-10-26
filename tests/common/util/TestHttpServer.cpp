@@ -19,6 +19,8 @@
 
 #include "util/TestHttpServer.hpp"
 
+#include "util/Assert.hpp"
+
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address.hpp>
@@ -36,6 +38,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <expected>
 #include <string>
 #include <utility>
 
@@ -107,11 +110,25 @@ doSession(
 
 TestHttpServer::TestHttpServer(boost::asio::io_context& context, std::string host) : acceptor_(context)
 {
-    boost::asio::ip::tcp::endpoint const endpoint(boost::asio::ip::make_address(host), 0);
+    boost::asio::ip::tcp::resolver resolver{context};
+    auto const results = resolver.resolve(host, "0");
+    ASSERT(!results.empty(), "Failed to resolve host");
+    boost::asio::ip::tcp::endpoint const& endpoint = results.begin()->endpoint();
     acceptor_.open(endpoint.protocol());
     acceptor_.set_option(asio::socket_base::reuse_address(true));
     acceptor_.bind(endpoint);
     acceptor_.listen(asio::socket_base::max_listen_connections);
+}
+
+std::expected<boost::asio::ip::tcp::socket, boost::system::error_code>
+TestHttpServer::accept(boost::asio::yield_context yield)
+{
+    boost::beast::error_code errorCode;
+    tcp::socket socket(this->acceptor_.get_executor());
+    acceptor_.async_accept(socket, yield[errorCode]);
+    if (errorCode)
+        return std::unexpected{errorCode};
+    return socket;
 }
 
 void

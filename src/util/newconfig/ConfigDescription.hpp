@@ -109,6 +109,13 @@ private:
         KV{"server.max_queue_size", "Maximum size of the server's request queue."},
         KV{"server.local_admin", "Indicates if the server should run with admin privileges."},
         KV{"server.admin_password", "Password for Clio admin-only APIs."},
+        KV{"server.processing_policy",
+           R"(Could be "sequent" or "parallel". For the sequent policy, requests from a single client 
+        connection are processed one by one, with the next request read only after the previous one is processed. For the parallel policy, Clio will accept
+         all requests and process them in parallel, sending a reply for each request as soon as it is ready.)"},
+        KV{"server.parallel_requests_limit", R"(Optional parameter, used only if "processing_strategy" is
+         "parallel". It limits the number of requests for a single client connection that are processed in parallel. If not specified, the limit is infinite.)"
+        },
         KV{"prometheus.enabled", "Enable or disable Prometheus metrics."},
         KV{"prometheus.compress_reply", "Enable or disable compression of Prometheus responses."},
         KV{"io_threads", "Number of I/O threads."},
