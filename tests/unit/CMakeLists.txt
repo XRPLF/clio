@@ -138,6 +138,7 @@ target_sources(
           web/ng/RequestTests.cpp
           web/ng/ServerTests.cpp
           web/ng/impl/ConnectionHandlerTests.cpp
+          web/ng/impl/ErrorHandlingTests.cpp
           web/ng/impl/HttpConnectionTests.cpp
           web/ng/impl/ServerSslContextTests.cpp
           web/ng/impl/WsConnectionTests.cpp
