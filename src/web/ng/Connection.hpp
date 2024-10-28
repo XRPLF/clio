@@ -151,6 +151,12 @@ public:
      */
     std::string const&
     ip() const;
+
+    util::BaseTagDecorator const&
+    tag() const;
+
+    bool
+    wasUpgraded() const;
 };
 
 }  // namespace web::ng

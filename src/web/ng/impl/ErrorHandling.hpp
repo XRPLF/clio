@@ -45,19 +45,19 @@ class ErrorHelper {
 public:
     ErrorHelper(Request const& rawRequest, std::optional<boost::json::object> request = std::nullopt);
 
-    Response
+    [[nodiscard]] Response
     makeError(rpc::Status const& err) const;
 
-    Response
+    [[nodiscard]] Response
     makeInternalError() const;
 
-    Response
+    [[nodiscard]] Response
     makeNotReadyError() const;
 
-    Response
+    [[nodiscard]] Response
     makeTooBusyError() const;
 
-    Response
+    [[nodiscard]] Response
     makeJsonParsingError() const;
 };
 
