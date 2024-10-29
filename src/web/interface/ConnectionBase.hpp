@@ -26,7 +26,7 @@
 #include <boost/signals2.hpp>
 #include <boost/signals2/variadic_signal.hpp>
 
-#include <cstdint>
+#include <atomic>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -55,7 +55,7 @@ public:
      * This is used to track the api version of this connection, which mainly is used by subscription. It is different
      * from the api version in Context, which is only used for the current request.
      */
-    std::uint32_t apiSubVersion = 0;
+    std::atomic_uint32_t apiSubVersion = 0;
 
     /**
      * @brief Create a new connection base.
