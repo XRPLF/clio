@@ -24,6 +24,7 @@
 #include "util/build/Build.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Http.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/interface/Concepts.hpp"
@@ -273,6 +274,11 @@ public:
             msg = boost::json::serialize(jsonResponse);
         }
         sender_(httpResponse(status, "application/json", std::move(msg)));
+    }
+
+    SubscriptionContextPtr
+    subscriptionContext() const override
+    {
     }
 
     void

@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Taggable.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/beast/http.hpp>
 #include <boost/beast/http/status.hpp>
@@ -93,6 +94,14 @@ public:
     {
         throw std::logic_error("web server can not send the shared payload");
     }
+
+    /**
+     *@brief Get the subscription context for this connection.
+     *
+     * @return The subscription context for this connection.
+     */
+    virtual SubscriptionContextPtr
+    subscriptionContext() const = 0;
 
     /**
      * @brief Indicates whether the connection had an error and is considered dead.
