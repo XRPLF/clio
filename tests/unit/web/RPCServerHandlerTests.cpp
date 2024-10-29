@@ -524,7 +524,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPBadSyntaxWhenRequestSubscribe)
                                         "result": {
                                             "error": "badSyntax",
                                             "error_code": 1,
-                                            "error_message": "Subscribe and unsubscribe are only allowed or websocket.",
+                                            "error_message": "Subscribe and unsubscribe are only allowed for websocket.",
                                             "status": "error",
                                             "type": "response",
                                             "request": {
