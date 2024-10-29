@@ -50,6 +50,12 @@ Connection::ip() const
     return ip_;
 }
 
+bool
+Connection::isAdmin() const
+{
+    return isAdmin_.value_or(false);
+}
+
 ConnectionContext::ConnectionContext(Connection const& connection) : connection_{connection}
 {
 }

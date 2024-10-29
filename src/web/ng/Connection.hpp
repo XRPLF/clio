@@ -28,6 +28,7 @@
 #include <boost/beast/core/flat_buffer.hpp>
 
 #include <chrono>
+#include <concepts>
 #include <cstddef>
 #include <expected>
 #include <functional>
@@ -49,6 +50,7 @@ class Connection : public util::Taggable {
 protected:
     std::string ip_;  // client ip
     boost::beast::flat_buffer buffer_;
+    std::optional<bool> isAdmin_;
 
 public:
     /**
@@ -123,6 +125,26 @@ public:
      */
     std::string const&
     ip() const;
+
+    /**
+     * @brieg Get whether the client is an admin.
+     *
+     * @return true if the client is an admin.
+     */
+    bool
+    isAdmin() const;
+
+    /**
+     * @brief Set the isAdmin field.
+     * @note This function is lazy, it will update isAdmin only if it is not set yet.
+     */
+    template <std::invocable T>
+    void
+    setIsAdmin(T&& setter)
+    {
+        if (not isAdmin_.has_value())
+            isAdmin_ = setter();
+    }
 };
 
 /**
