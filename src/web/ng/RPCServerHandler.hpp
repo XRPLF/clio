@@ -26,6 +26,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/impl/APIVersionParser.hpp"
 #include "util/Assert.hpp"
+#include "util/CoroutineGroup.hpp"
 #include "util/JsonUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/Taggable.hpp"
@@ -38,6 +39,7 @@
 #include "web/ng/impl/ErrorHandling.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/json/array.hpp>
@@ -113,8 +115,14 @@ public:
     )
     {
         std::optional<Response> response;
+        util::CoroutineGroup coroutineGroup{yield, 1};
+        auto const onTaskComplete = coroutineGroup.registerForeign();
+        ASSERT(onTaskComplete.has_value(), "Corouine group can't be full");
+
         bool const postSuccessful = rpcEngine_->post(
-            [this, &request, &response, connectionContext, isAdmin](boost::asio::yield_context yield) mutable {
+            [this, &request, &response, onTaskComplete = onTaskComplete.value(), connectionContext, isAdmin](
+                boost::asio::yield_context yield
+            ) mutable {
                 try {
                     auto parsedRequest = boost::json::parse(request.message()).as_object();
                     LOG(perfLog_.debug()) << connectionContext.tag() << "Adding to work queue";
@@ -138,6 +146,8 @@ public:
                     rpcEngine_->notifyInternalError();
                     response = impl::ErrorHelper{request}.makeInternalError();
                 }
+
+                onTaskComplete();
             },
             connectionContext.ip()
         );
@@ -146,6 +156,8 @@ public:
             rpcEngine_->notifyTooBusy();
             return impl::ErrorHelper{request}.makeTooBusyError();
         }
+
+        coroutineGroup.asyncWait(yield);
         ASSERT(response.has_value(), "Woke up coroutine without setting response");
         return std::move(response).value();
     }
