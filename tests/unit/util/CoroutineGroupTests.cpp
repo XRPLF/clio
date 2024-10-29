@@ -155,13 +155,41 @@ TEST_F(CoroutineGroupTests, TooManyCoroutines)
         }));
 
         EXPECT_FALSE(group.spawn(yield, [this](boost::asio::yield_context) { callback2_.Call(); }));
+        EXPECT_TRUE(group.isFull());
 
         boost::asio::steady_timer timer{yield.get_executor(), std::chrono::milliseconds{2}};
         timer.async_wait(yield);
 
+        EXPECT_FALSE(group.isFull());
         EXPECT_TRUE(group.spawn(yield, [this](boost::asio::yield_context) { callback2_.Call(); }));
 
         group.asyncWait(yield);
         callback3_.Call();
+    });
+}
+
+TEST_F(CoroutineGroupTests, SpawnForeign)
+{
+    testing::Sequence const sequence;
+    EXPECT_CALL(callback1_, Call).InSequence(sequence);
+    EXPECT_CALL(callback2_, Call).InSequence(sequence);
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        CoroutineGroup group{yield, 1};
+
+        auto const onForeignComplete = group.registerForeign();
+        [&]() { ASSERT_TRUE(onForeignComplete.has_value()); }();
+
+        [&]() { ASSERT_FALSE(group.registerForeign().has_value()); }();
+
+        boost::asio::spawn(ctx, [this, &onForeignComplete](boost::asio::yield_context innerYield) {
+            boost::asio::steady_timer timer{innerYield.get_executor(), std::chrono::milliseconds{2}};
+            timer.async_wait(innerYield);
+            callback1_.Call();
+            onForeignComplete->operator()();
+        });
+
+        group.asyncWait(yield);
+        callback2_.Call();
     });
 }

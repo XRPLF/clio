@@ -44,17 +44,25 @@ CoroutineGroup::~CoroutineGroup()
 bool
 CoroutineGroup::spawn(boost::asio::yield_context yield, std::function<void(boost::asio::yield_context)> fn)
 {
-    if (maxChildren_.has_value() && childrenCounter_ >= *maxChildren_)
+    if (isFull())
         return false;
 
     ++childrenCounter_;
     boost::asio::spawn(yield, [this, fn = std::move(fn)](boost::asio::yield_context yield) {
         fn(yield);
-        --childrenCounter_;
-        if (childrenCounter_ == 0)
-            timer_.cancel();
+        onCoroutineCompleted();
     });
     return true;
+}
+
+std::optional<std::function<void()>>
+CoroutineGroup::registerForeign()
+{
+    if (isFull())
+        return std::nullopt;
+
+    ++childrenCounter_;
+    return [this]() { onCoroutineCompleted(); };
 }
 
 void
@@ -71,6 +79,20 @@ size_t
 CoroutineGroup::size() const
 {
     return childrenCounter_;
+}
+
+bool
+CoroutineGroup::isFull() const
+{
+    return maxChildren_.has_value() && childrenCounter_ >= *maxChildren_;
+}
+
+void
+CoroutineGroup::onCoroutineCompleted()
+{
+    --childrenCounter_;
+    if (childrenCounter_ == 0)
+        timer_.cancel();
 }
 
 }  // namespace util

@@ -67,6 +67,16 @@ public:
     spawn(boost::asio::yield_context yield, std::function<void(boost::asio::yield_context)> fn);
 
     /**
+     * @brief Register a foreign coroutine this group should wait for.
+     * @note A foreign coroutine is still counted as a child one, i.e. calling this method increases the size of the
+     * group.
+     *
+     * @return A callback to call on foreign coroutine completes or std::nullopt if the group is already full.
+     */
+    std::optional<std::function<void()>>
+    registerForeign();
+
+    /**
      * @brief Wait for all the coroutines in the group to finish
      *
      * @note This method must be called before the object is destroyed
@@ -83,6 +93,18 @@ public:
      */
     size_t
     size() const;
+
+    /**
+     * @brief Check if the group is full
+     *
+     * @return true If the group is full false otherwise
+     */
+    bool
+    isFull() const;
+
+private:
+    void
+    onCoroutineCompleted();
 };
 
 }  // namespace util
