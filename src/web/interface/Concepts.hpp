@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include "web/interface/ConnectionBase.hpp"
-
 #include <boost/beast.hpp>
 #include <boost/beast/core/error.hpp>
 
@@ -28,6 +26,8 @@
 #include <string>
 
 namespace web {
+
+struct ConnectionBase;
 
 /**
  * @brief Specifies the requirements a Webserver handler must fulfill.

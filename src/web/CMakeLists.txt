@@ -2,8 +2,7 @@ add_library(clio_web)
 
 target_sources(
   clio_web
-  PRIVATE Resolver.cpp
-          dosguard/DOSGuard.cpp
+  PRIVATE dosguard/DOSGuard.cpp
           dosguard/IntervalSweepHandler.cpp
           dosguard/WhitelistHandler.cpp
           impl/AdminVerificationStrategy.cpp
@@ -15,6 +14,8 @@ target_sources(
           ng/Server.cpp
           ng/Request.cpp
           ng/Response.cpp
+          Resolver.cpp
+          SubscriptionContext.cpp
 )
 
 target_link_libraries(clio_web PUBLIC clio_util)

@@ -20,10 +20,13 @@
 #pragma once
 
 #include "util/Taggable.hpp"
+#include "web/SubscriptionContextInterface.hpp"
+#include "web/interface/Concepts.hpp"
+#include "web/interface/ConnectionBase.hpp"
 
-#include <boost/signals2/signal.hpp>
 #include <boost/signals2/variadic_signal.hpp>
 
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -32,60 +35,73 @@
 namespace web {
 
 /**
- * @brief An interface to provide connection functionality for subscriptions.
- * @note Since subscription is only allowed for websocket connection, this interface is used only for websocket
- * connections.
+ * @brief A context of a WsBase connection for subscriptions.
  */
-class SubscriptionContextInterface : public util::Taggable {
+class SubscriptionContext : public SubscriptionContextInterface {
+    std::weak_ptr<ConnectionBase> connection_;
+    boost::signals2::signal<void(SubscriptionContextInterface*)> onDisconnect_;
+    /**
+     * @brief The API version of the web stream client.
+     * This is used to track the api version of this connection, which mainly is used by subscription. It is different
+     * from the api version in Context, which is only used for the current request.
+     */
+    std::atomic_uint32_t apiSubVersion_ = 0;
+
 public:
     /**
-     * @brief Reusing Taggable constructor
+     * @brief Construct a new Subscription Context object
+     *
+     * @param factory The tag decorator factory to use to init taggable.
+     * @param connection The connection for which the context is created.
      */
-    using util::Taggable::Taggable;
+    SubscriptionContext(util::TagDecoratorFactory const& factory, std::shared_ptr<ConnectionBase> connection);
+
+    /**
+     * @brief Get tag decorator.
+     *
+     * @return Reference to the tag decorator
+     */
+    util::BaseTagDecorator const&
+    tag() const;
 
     /**
      * @brief Send message to the client
+     * @note This method will not do anything if the related connection got disconnected.
      *
      * @param message The message to send.
      */
-    virtual void
-    send(std::shared_ptr<std::string> message) = 0;
+    void
+    send(std::shared_ptr<std::string> message) override;
 
     /**
      * @brief Connect a slot to onDisconnect connection signal.
+     * @note This method will call the slot immediately if the related connection is already disconnected.
      *
      * @param slot The slot to connect.
      */
-    virtual void
-    onDisconnect(std::function<void(SubscriptionContextInterface*)> const& slot) = 0;
+    void
+    onDisconnect(std::function<void(SubscriptionContextInterface*)> const& slot) override;
 
     /**
      * @brief Set the API subversion.
      * @param value The value to set.
      */
-    virtual void
-    setApiSubversion(uint32_t value) = 0;
+    void
+    setApiSubversion(uint32_t value) override;
 
     /**
      * @brief Get the API subversion.
      *
      * @return The API subversion.
      */
-    virtual uint32_t
-    apiSubversion() const = 0;
-
-    // TODO: make disconnect protected and add WsBase as a friend. It seems apple clang 15 doesn't support this.
+    uint32_t
+    apiSubversion() const override;
 
     /**
      * @brief Notify the context that connection has been disconnected.
      */
-    virtual void
-    disconnect() = 0;
+    void
+    disconnect() override;
 };
-
-/**
- * @brief An alias for shared pointer to a SubscriptionContextInterface.
- */
-using SubscriptionContextPtr = std::shared_ptr<SubscriptionContextInterface>;
 
 }  // namespace web

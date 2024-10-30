@@ -26,6 +26,8 @@
 #include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
+#include "web/SubscriptionContext.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/interface/Concepts.hpp"
 #include "web/interface/ConnectionBase.hpp"
@@ -41,6 +43,7 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/version.hpp>
+#include <boost/beast/websocket/error.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream_base.hpp>
 #include <boost/core/ignore_unused.hpp>
@@ -81,6 +84,8 @@ class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase
     bool sending_ = false;
     std::queue<std::shared_ptr<std::string>> messages_;
     std::shared_ptr<HandlerType> const handler_;
+
+    SubscriptionContextPtr subscriptionContext_;
 
 protected:
     util::Logger log_{"WebServer"};
@@ -125,6 +130,9 @@ public:
 
     ~WsBase() override
     {
+        if (subscriptionContext_ != nullptr)
+            subscriptionContext_->disconnect();
+
         LOG(perfLog_.debug()) << tag() << "session closed";
         if (!messages_.empty())
             messagesLength_.get() -= messages_.size();
@@ -186,6 +194,21 @@ public:
                 maybeSendNext();
             }
         );
+    }
+
+    /**
+     * @brief Get the subscription context for this connection.
+     *
+     * @param factory Tag TagDecoratorFactory to use to create the context.
+     * @return The subscription context for this connection.
+     */
+    SubscriptionContextPtr
+    subscriptionContext(util::TagDecoratorFactory const& factory) override
+    {
+        if (subscriptionContext_ == nullptr) {
+            subscriptionContext_ = std::make_shared<SubscriptionContext>(factory, shared_from_this());
+        }
+        return subscriptionContext_;
     }
 
     /**

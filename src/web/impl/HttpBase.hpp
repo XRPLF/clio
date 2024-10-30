@@ -20,6 +20,7 @@
 #pragma once
 
 #include "rpc/Errors.hpp"
+#include "util/Assert.hpp"
 #include "util/Taggable.hpp"
 #include "util/build/Build.hpp"
 #include "util/log/Logger.hpp"
@@ -277,8 +278,10 @@ public:
     }
 
     SubscriptionContextPtr
-    subscriptionContext() const override
+    subscriptionContext(util::TagDecoratorFactory const&) override
     {
+        ASSERT(false, "SubscriptionContext can't be created for a HTTP connection");
+        std::unreachable();
     }
 
     void

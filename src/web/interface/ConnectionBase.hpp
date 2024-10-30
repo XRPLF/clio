@@ -27,7 +27,6 @@
 #include <boost/signals2.hpp>
 #include <boost/signals2/variadic_signal.hpp>
 
-#include <atomic>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -50,13 +49,6 @@ protected:
 public:
     std::string const clientIp;
     bool upgraded = false;
-    boost::signals2::signal<void(ConnectionBase*)> onDisconnect;
-    /**
-     * @brief The API version of the web stream client.
-     * This is used to track the api version of this connection, which mainly is used by subscription. It is different
-     * from the api version in Context, which is only used for the current request.
-     */
-    std::atomic_uint32_t apiSubVersion = 0;
 
     /**
      * @brief Create a new connection base.
@@ -68,11 +60,6 @@ public:
         : Taggable(tagFactory), clientIp(std::move(ip))
     {
     }
-
-    ~ConnectionBase() override
-    {
-        onDisconnect(this);
-    };
 
     /**
      * @brief Send the response to the client.
@@ -96,12 +83,13 @@ public:
     }
 
     /**
-     *@brief Get the subscription context for this connection.
+     * @brief Get the subscription context for this connection.
      *
+     * @param factory Tag TagDecoratorFactory to use to create the context.
      * @return The subscription context for this connection.
      */
     virtual SubscriptionContextPtr
-    subscriptionContext() const = 0;
+    subscriptionContext(util::TagDecoratorFactory const& factory) = 0;
 
     /**
      * @brief Indicates whether the connection had an error and is considered dead.
