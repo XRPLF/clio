@@ -22,6 +22,7 @@
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/impl/ErrorHandling.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -44,6 +45,12 @@ struct ErrorHandlingTests : NoLoggerFixture {
 
         MOCK_METHOD(void, send, (std::string&&, boost::beast::http::status), (override));
         MOCK_METHOD(void, send, (std::shared_ptr<std::string>), (override));
+        MOCK_METHOD(
+            SubscriptionContextPtr,
+            subscriptionContext,
+            (util::TagDecoratorFactory const& factory),
+            (override)
+        );
     };
 
     util::TagDecoratorFactory tagFactory_{util::Config{}};

@@ -24,7 +24,6 @@
 #include "web/interface/ConnectionBase.hpp"
 
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
@@ -39,6 +38,11 @@ SubscriptionContext::SubscriptionContext(
 {
 }
 
+SubscriptionContext::~SubscriptionContext()
+{
+    onDisconnect_(this);
+}
+
 void
 SubscriptionContext::send(std::shared_ptr<std::string> message)
 {
@@ -47,7 +51,7 @@ SubscriptionContext::send(std::shared_ptr<std::string> message)
 }
 
 void
-SubscriptionContext::onDisconnect(std::function<void(SubscriptionContextInterface*)> const& slot)
+SubscriptionContext::onDisconnect(OnDisconnectSlot const& slot)
 {
     if (auto connection = connection_.lock(); connection != nullptr) {
         onDisconnect_.connect(slot);
@@ -72,7 +76,6 @@ void
 SubscriptionContext::disconnect()
 {
     connection_.reset();
-    onDisconnect_(this);
 }
 
 }  // namespace web

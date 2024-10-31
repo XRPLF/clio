@@ -28,7 +28,6 @@
 
 #include <atomic>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <string>
 
@@ -57,6 +56,11 @@ public:
     SubscriptionContext(util::TagDecoratorFactory const& factory, std::shared_ptr<ConnectionBase> connection);
 
     /**
+     * @brief Destroy the Subscription Context object
+     */
+    ~SubscriptionContext() override;
+
+    /**
      * @brief Get tag decorator.
      *
      * @return Reference to the tag decorator
@@ -80,7 +84,7 @@ public:
      * @param slot The slot to connect.
      */
     void
-    onDisconnect(std::function<void(SubscriptionContextInterface*)> const& slot) override;
+    onDisconnect(OnDisconnectSlot const& slot) override;
 
     /**
      * @brief Set the API subversion.

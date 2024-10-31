@@ -23,7 +23,7 @@
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/SyncExecutionCtxFixture.hpp"
-#include "web/interface/ConnectionBase.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gtest/gtest.h>
@@ -37,25 +37,9 @@
 template <typename TestedFeed>
 struct FeedBaseTest : util::prometheus::WithPrometheus, MockBackendTest, SyncExecutionCtxFixture {
 protected:
-    std::shared_ptr<web::ConnectionBase> sessionPtr;
-    std::shared_ptr<TestedFeed> testFeedPtr;
-    MockSession* mockSessionPtr = nullptr;
-
-    void
-    SetUp() override
-    {
-        testFeedPtr = std::make_shared<TestedFeed>(ctx);
-        sessionPtr = std::make_shared<MockSession>();
-        sessionPtr->apiSubVersion = 1;
-        mockSessionPtr = dynamic_cast<MockSession*>(sessionPtr.get());
-    }
-
-    void
-    TearDown() override
-    {
-        sessionPtr.reset();
-        testFeedPtr.reset();
-    }
+    web::SubscriptionContextPtr sessionPtr = std::make_shared<MockSession>();
+    std::shared_ptr<TestedFeed> testFeedPtr = std::make_shared<TestedFeed>(ctx);
+    MockSession* mockSessionPtr = dynamic_cast<MockSession*>(sessionPtr.get());
 };
 
 namespace impl {

@@ -78,7 +78,11 @@ struct Context : util::Taggable {
         , method(std::move(command))
         , apiVersion(apiVersion)
         , params(std::move(params))
-        , session(connection->subscriptionContext(tagFactory))
+        , session([&connection, &tagFactory]() {
+            if (connection == nullptr)
+                return SubscriptionContextPtr{};
+            return connection->subscriptionContext(tagFactory);
+        }())
         , range(range)
         , clientIp(std::move(clientIp))
         , isAdmin(isAdmin)

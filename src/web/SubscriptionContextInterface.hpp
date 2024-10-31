@@ -52,12 +52,17 @@ public:
     send(std::shared_ptr<std::string> message) = 0;
 
     /**
+     * @brief Alias for on disconnect slot.
+     */
+    using OnDisconnectSlot = std::function<void(SubscriptionContextInterface*)>;
+
+    /**
      * @brief Connect a slot to onDisconnect connection signal.
      *
      * @param slot The slot to connect.
      */
     virtual void
-    onDisconnect(std::function<void(SubscriptionContextInterface*)> const& slot) = 0;
+    onDisconnect(OnDisconnectSlot const& slot) = 0;
 
     /**
      * @brief Set the API subversion.

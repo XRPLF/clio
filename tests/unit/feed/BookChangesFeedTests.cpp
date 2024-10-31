@@ -41,6 +41,7 @@ using FeedBookChangeTest = FeedBaseTest<BookChangesFeed>;
 
 TEST_F(FeedBookChangeTest, Pub)
 {
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
 

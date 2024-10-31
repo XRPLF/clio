@@ -20,6 +20,7 @@
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/LedgerFeed.hpp"
 #include "util/TestObject.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -60,6 +61,7 @@ TEST_F(FeedLedgerTest, SubPub)
         })";
     boost::asio::io_context ioContext;
     boost::asio::spawn(ioContext, [this](boost::asio::yield_context yield) {
+        EXPECT_CALL(*mockSessionPtr, onDisconnect);
         auto res = testFeedPtr->sub(yield, backend, sessionPtr);
         // check the response
         EXPECT_EQ(res, json::parse(LedgerResponse));
@@ -112,6 +114,10 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
             "reserve_base":3,
             "reserve_inc":2
         })";
+
+    web::SubscriptionContextInterface::OnDisconnectSlot slot;
+    EXPECT_CALL(*mockSessionPtr, onDisconnect).WillOnce(testing::SaveArg<0>(&slot));
+
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
         auto res = testFeedPtr->sub(yield, backend, sessionPtr);
         // check the response
@@ -120,7 +126,10 @@ TEST_F(FeedLedgerTest, AutoDisconnect)
     EXPECT_EQ(testFeedPtr->count(), 1);
     EXPECT_CALL(*mockSessionPtr, send(_)).Times(0);
 
+    ASSERT_TRUE(slot);
+    slot(sessionPtr.get());
     sessionPtr.reset();
+
     EXPECT_EQ(testFeedPtr->count(), 0);
 
     auto const ledgerHeader2 = CreateLedgerHeader(LEDGERHASH, 31);

@@ -20,7 +20,7 @@
 #include "feed/impl/TrackableSignal.hpp"
 #include "feed/impl/TrackableSignalMap.hpp"
 #include "util/MockWsBase.hpp"
-#include "web/interface/ConnectionBase.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <gtest/gtest.h>
 
@@ -30,24 +30,12 @@
 using namespace testing;
 
 struct FeedTrackableSignalTests : Test {
-protected:
-    std::shared_ptr<web::ConnectionBase> sessionPtr;
-
-    void
-    SetUp() override
-    {
-        sessionPtr = std::make_shared<MockSession>();
-    }
-
-    void
-    TearDown() override
-    {
-    }
+    web::SubscriptionContextPtr sessionPtr = std::make_shared<MockSession>();
 };
 
 TEST_F(FeedTrackableSignalTests, Connect)
 {
-    feed::impl::TrackableSignal<web::ConnectionBase, std::string> signal;
+    feed::impl::TrackableSignal<web::SubscriptionContextInterface, std::string> signal;
     std::string testString;
     auto const slot = [&](std::string const& s) { testString += s; };
     EXPECT_TRUE(signal.connectTrackableSlot(sessionPtr, slot));
@@ -69,7 +57,7 @@ TEST_F(FeedTrackableSignalTests, Connect)
 
 TEST_F(FeedTrackableSignalTests, AutoDisconnect)
 {
-    feed::impl::TrackableSignal<web::ConnectionBase, std::string> signal;
+    feed::impl::TrackableSignal<web::SubscriptionContextInterface, std::string> signal;
     std::string testString;
     auto const slot = [&](std::string const& s) { testString += s; };
     EXPECT_TRUE(signal.connectTrackableSlot(sessionPtr, slot));
@@ -91,7 +79,7 @@ TEST_F(FeedTrackableSignalTests, AutoDisconnect)
 
 TEST_F(FeedTrackableSignalTests, MapConnect)
 {
-    feed::impl::TrackableSignalMap<std::string, web::ConnectionBase, std::string> signalMap;
+    feed::impl::TrackableSignalMap<std::string, web::SubscriptionContextInterface, std::string> signalMap;
     std::string testString;
     auto const slot = [&](std::string const& s) { testString += s; };
     EXPECT_TRUE(signalMap.connectTrackableSlot(sessionPtr, "test", slot));
@@ -115,7 +103,7 @@ TEST_F(FeedTrackableSignalTests, MapConnect)
 
 TEST_F(FeedTrackableSignalTests, MapAutoDisconnect)
 {
-    feed::impl::TrackableSignalMap<std::string, web::ConnectionBase, std::string> signalMap;
+    feed::impl::TrackableSignalMap<std::string, web::SubscriptionContextInterface, std::string> signalMap;
     std::string testString;
     auto const slot = [&](std::string const& s) { testString += s; };
     EXPECT_TRUE(signalMap.connectTrackableSlot(sessionPtr, "test", slot));
