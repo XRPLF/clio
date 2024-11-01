@@ -32,6 +32,7 @@ namespace rpc {
  *
  * @param sleCred The credential to check
  * @param closed The time that the ledger was closed
+ * @return true if credential not expired, false otherwise
  */
 bool
 checkExpired(ripple::SLE const& sleCred, ripple::NetClock::time_point const& closed);

@@ -528,14 +528,17 @@ struct CustomValidators final {
 };
 
 /**
- * @brief Validates given the prerequisite that the type of the json value is an array,
- * verifies all values within the array is of uint256 hash
- *
- * @param value the value to verify
- * @param key The key used to retrieve the tested value from the outer object
- * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+ * @brief Validates that the elements of the array is of type Hex256 uint
  */
-struct ItemType final {
+struct Hex256ItemType final {
+    /**
+     * @brief Validates given the prerequisite that the type of the json value is an array,
+     * verifies all values within the array is of uint256 hash
+     *
+     * @param value the value to verify
+     * @param key The key used to retrieve the tested value from the outer object
+     * @return `RippledError::rpcINVALID_PARAMS` if validation failed; otherwise no error is returned
+     */
     [[nodiscard]] static MaybeError
     verify(boost::json::value const& value, std::string_view key)
     {

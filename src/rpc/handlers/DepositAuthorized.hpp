@@ -103,7 +103,7 @@ public:
             {JS(destination_account), validation::Required{}, validation::CustomValidators::AccountValidator},
             {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
-            {JS(credentials), validation::Type<boost::json::array>{}, validation::ItemType()}
+            {JS(credentials), validation::Type<boost::json::array>{}, validation::Hex256ItemType()}
         };
 
         return rpcSpec;
