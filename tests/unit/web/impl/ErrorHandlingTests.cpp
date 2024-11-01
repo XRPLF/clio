@@ -25,6 +25,7 @@
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/impl/ErrorHandling.hpp"
 #include "web/interface/ConnectionBase.hpp"
+#include "web/interface/ConnectionBaseMock.hpp"
 
 #include <boost/beast/http/status.hpp>
 #include <boost/json/object.hpp>
@@ -40,22 +41,9 @@ using namespace web::impl;
 using namespace web;
 
 struct ErrorHandlingTests : NoLoggerFixture {
-    struct ConnectionBaseMock : ConnectionBase {
-        using ConnectionBase::ConnectionBase;
-
-        MOCK_METHOD(void, send, (std::string&&, boost::beast::http::status), (override));
-        MOCK_METHOD(void, send, (std::shared_ptr<std::string>), (override));
-        MOCK_METHOD(
-            SubscriptionContextPtr,
-            subscriptionContext,
-            (util::TagDecoratorFactory const& factory),
-            (override)
-        );
-    };
-
     util::TagDecoratorFactory tagFactory_{util::Config{}};
     std::string const clientIp_ = "some ip";
-    std::shared_ptr<testing::StrictMock<ConnectionBaseMock>> connection_ =
+    ConnectionBaseStrictMockPtr connection_ =
         std::make_shared<testing::StrictMock<ConnectionBaseMock>>(tagFactory_, clientIp_);
 };
 

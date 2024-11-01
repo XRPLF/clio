@@ -123,9 +123,6 @@ public:
 
     ~WsBase() override
     {
-        if (subscriptionContext_ != nullptr)
-            subscriptionContext_->disconnect();
-
         LOG(perfLog_.debug()) << tag() << "session closed";
         dosGuard_.get().decrement(clientIp);
     }

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -20,45 +20,26 @@
 #pragma once
 
 #include "util/Taggable.hpp"
-#include "util/config/Config.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast/http/status.hpp>
 #include <gmock/gmock.h>
 
-#include <cstdint>
 #include <memory>
 #include <string>
 
-struct MockSession : public web::SubscriptionContextInterface {
+struct ConnectionBaseMock : web::ConnectionBase {
+    using ConnectionBase::ConnectionBase;
+
+    MOCK_METHOD(void, send, (std::string&&, boost::beast::http::status), (override));
     MOCK_METHOD(void, send, (std::shared_ptr<std::string>), (override));
-    MOCK_METHOD(void, onDisconnect, (OnDisconnectSlot const&), (override));
-    MOCK_METHOD(void, setApiSubversion, (uint32_t), (override));
-    MOCK_METHOD(uint32_t, apiSubversion, (), (const, override));
-
-    util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
-
-    MockSession() : web::SubscriptionContextInterface(tagDecoratorFactory)
-    {
-    }
+    MOCK_METHOD(
+        web::SubscriptionContextPtr,
+        subscriptionContext,
+        (util::TagDecoratorFactory const& factory),
+        (override)
+    );
 };
 
-struct MockDeadSession : public web::ConnectionBase {
-    void
-    send(std::shared_ptr<std::string>) override
-    {
-        // err happen, the session should remove from subscribers
-        ec_.assign(2, boost::system::system_category());
-    }
-
-    void
-    // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
-    send(std::string&&, boost::beast::http::status = boost::beast::http::status::ok) override
-    {
-    }
-
-    MockDeadSession(util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "")
-    {
-    }
-};
+using ConnectionBaseStrictMockPtr = std::shared_ptr<testing::StrictMock<ConnectionBaseMock>>;

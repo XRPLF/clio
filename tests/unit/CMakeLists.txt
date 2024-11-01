@@ -144,6 +144,7 @@ target_sources(
           web/ng/impl/WsConnectionTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
+          web/SubscriptionContextTests.cpp
           # New Config
           util/newconfig/ArrayTests.cpp
           util/newconfig/ArrayViewTests.cpp

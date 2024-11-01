@@ -53,11 +53,7 @@ SubscriptionContext::send(std::shared_ptr<std::string> message)
 void
 SubscriptionContext::onDisconnect(OnDisconnectSlot const& slot)
 {
-    if (auto connection = connection_.lock(); connection != nullptr) {
-        onDisconnect_.connect(slot);
-    } else {
-        slot(this);
-    }
+    onDisconnect_.connect(slot);
 }
 
 void
@@ -70,12 +66,6 @@ uint32_t
 SubscriptionContext::apiSubversion() const
 {
     return apiSubVersion_;
-}
-
-void
-SubscriptionContext::disconnect()
-{
-    connection_.reset();
 }
 
 }  // namespace web

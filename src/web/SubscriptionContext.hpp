@@ -61,14 +61,6 @@ public:
     ~SubscriptionContext() override;
 
     /**
-     * @brief Get tag decorator.
-     *
-     * @return Reference to the tag decorator
-     */
-    util::BaseTagDecorator const&
-    tag() const;
-
-    /**
      * @brief Send message to the client
      * @note This method will not do anything if the related connection got disconnected.
      *
@@ -79,7 +71,6 @@ public:
 
     /**
      * @brief Connect a slot to onDisconnect connection signal.
-     * @note This method will call the slot immediately if the related connection is already disconnected.
      *
      * @param slot The slot to connect.
      */
@@ -100,12 +91,6 @@ public:
      */
     uint32_t
     apiSubversion() const override;
-
-    /**
-     * @brief Notify the context that connection has been disconnected.
-     */
-    void
-    disconnect() override;
 };
 
 }  // namespace web

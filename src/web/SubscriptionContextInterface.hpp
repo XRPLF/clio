@@ -78,14 +78,6 @@ public:
      */
     virtual uint32_t
     apiSubversion() const = 0;
-
-    // TODO: make disconnect protected and add WsBase as a friend. It seems apple clang 15 doesn't support this.
-
-    /**
-     * @brief Notify the context that connection has been disconnected.
-     */
-    virtual void
-    disconnect() = 0;
 };
 
 /**
