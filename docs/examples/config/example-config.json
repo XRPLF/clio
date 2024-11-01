@@ -75,9 +75,9 @@
         // For sequent policy request from one client connection will be processed one by one and the next one will not be read before
         // the previous one is processed. For parallel policy Clio will take all requests and process them in parallel and
         // send a reply for each request whenever it is ready.
-        "parallel_requests_limit": 10 // Optional parameter, used only if "processing_strategy" is "parallel".
-        It limits the number of requests for one client connection processed in parallel. Infinite if not specified.
-
+        "parallel_requests_limit": 10, // Optional parameter, used only if "processing_strategy" is "parallel". It limits the number of requests for one client connection processed in parallel. Infinite if not specified.
+        // Max number of responses to queue up before sent successfully. If a client's waiting queue is too long, the server will close the connection.
+        "ws_max_sending_queue_size": 1500
     },
     // Time in seconds for graceful shutdown. Defaults to 10 seconds. Not fully implemented yet.
     "graceful_period": 10.0,

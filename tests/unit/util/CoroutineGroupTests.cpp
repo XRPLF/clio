@@ -37,7 +37,7 @@ struct CoroutineGroupTests : SyncAsioContextTest {
 
 TEST_F(CoroutineGroupTests, SpawnWait)
 {
-    testing::Sequence sequence;
+    testing::Sequence const sequence;
     EXPECT_CALL(callback1_, Call).InSequence(sequence);
     EXPECT_CALL(callback2_, Call).InSequence(sequence);
     EXPECT_CALL(callback3_, Call).InSequence(sequence);
@@ -68,7 +68,7 @@ TEST_F(CoroutineGroupTests, SpawnWait)
 
 TEST_F(CoroutineGroupTests, SpawnWaitSpawnWait)
 {
-    testing::Sequence sequence;
+    testing::Sequence const sequence;
     EXPECT_CALL(callback1_, Call).InSequence(sequence);
     EXPECT_CALL(callback2_, Call).InSequence(sequence);
     EXPECT_CALL(callback3_, Call).InSequence(sequence);
@@ -102,7 +102,7 @@ TEST_F(CoroutineGroupTests, SpawnWaitSpawnWait)
 
 TEST_F(CoroutineGroupTests, ChildCoroutinesFinishBeforeWait)
 {
-    testing::Sequence sequence;
+    testing::Sequence const sequence;
     EXPECT_CALL(callback2_, Call).InSequence(sequence);
     EXPECT_CALL(callback1_, Call).InSequence(sequence);
     EXPECT_CALL(callback3_, Call).InSequence(sequence);

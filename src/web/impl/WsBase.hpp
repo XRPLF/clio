@@ -23,9 +23,6 @@
 #include "rpc/common/Types.hpp"
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
-#include "util/prometheus/Gauge.hpp"
-#include "util/prometheus/Label.hpp"
-#include "util/prometheus/Prometheus.hpp"
 #include "web/SubscriptionContext.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
@@ -53,6 +50,7 @@
 #include <xrpl/protocol/ErrorCodes.h>
 
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -77,8 +75,6 @@ template <template <typename> typename Derived, SomeServerHandler HandlerType>
 class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase<Derived, HandlerType>> {
     using std::enable_shared_from_this<WsBase<Derived, HandlerType>>::shared_from_this;
 
-    std::reference_wrapper<util::prometheus::GaugeInt> messagesLength_;
-
     boost::beast::flat_buffer buffer_;
     std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard_;
     bool sending_ = false;
@@ -86,6 +82,7 @@ class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase
     std::shared_ptr<HandlerType> const handler_;
 
     SubscriptionContextPtr subscriptionContext_;
+    std::uint32_t maxSendingQueueSize_;
 
 protected:
     util::Logger log_{"WebServer"};
@@ -95,9 +92,8 @@ protected:
     wsFail(boost::beast::error_code ec, char const* what)
     {
         // Don't log if the WebSocket stream was gracefully closed at both endpoints
-        if (ec != boost::beast::websocket::error::closed) {
-            LOG(perfLog_.error()) << tag() << ": " << what << ": " << ec.message() << ": " << ec.value();
-        }
+        if (ec != boost::beast::websocket::error::closed)
+            LOG(log_.error()) << tag() << ": " << what << ": " << ec.message() << ": " << ec.value();
 
         if (!ec_ && ec != boost::asio::error::operation_aborted) {
             ec_ = ec;
@@ -111,17 +107,14 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> const& handler,
-        boost::beast::flat_buffer&& buffer
+        boost::beast::flat_buffer&& buffer,
+        std::uint32_t maxSendingQueueSize
     )
         : ConnectionBase(tagFactory, ip)
-        , messagesLength_(PrometheusService::gaugeInt(
-              "ws_messages_length",
-              util::prometheus::Labels(),
-              "The total length of messages in the queue"
-          ))
         , buffer_(std::move(buffer))
         , dosGuard_(dosGuard)
         , handler_(handler)
+        , maxSendingQueueSize_(maxSendingQueueSize)
     {
         upgraded = true;  // NOLINT (cppcoreguidelines-pro-type-member-init)
 
@@ -134,8 +127,6 @@ public:
             subscriptionContext_->disconnect();
 
         LOG(perfLog_.debug()) << tag() << "session closed";
-        if (!messages_.empty())
-            messagesLength_.get() -= messages_.size();
         dosGuard_.get().decrement(clientIp);
     }
 
@@ -159,7 +150,6 @@ public:
     onWrite(boost::system::error_code ec, std::size_t)
     {
         messages_.pop();
-        --messagesLength_.get();
         sending_ = false;
         if (ec) {
             wsFail(ec, "Failed to write");
@@ -189,8 +179,12 @@ public:
         boost::asio::dispatch(
             derived().ws().get_executor(),
             [this, self = derived().shared_from_this(), msg = std::move(msg)]() {
+                if (messages_.size() > maxSendingQueueSize_) {
+                    wsFail(boost::asio::error::timed_out, "Client is too slow");
+                    return;
+                }
+
                 messages_.push(msg);
-                ++messagesLength_.get();
                 maybeSendNext();
             }
         );

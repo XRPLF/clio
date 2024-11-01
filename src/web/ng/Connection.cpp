@@ -23,7 +23,6 @@
 
 #include <boost/beast/core/flat_buffer.hpp>
 
-#include <cstddef>
 #include <string>
 #include <utility>
 

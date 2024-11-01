@@ -40,6 +40,7 @@
 #include <variant>
 
 namespace http = boost::beast::http;
+
 namespace web::ng {
 
 namespace {
