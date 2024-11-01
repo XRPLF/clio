@@ -30,6 +30,7 @@
 #include "rpc/common/Validators.hpp"
 #include "util/AccountUtils.hpp"
 
+#include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
@@ -104,6 +105,7 @@ public:
         std::optional<uint32_t> chainClaimId;
         std::optional<uint32_t> createAccountClaimId;
         std::optional<ripple::uint256> oracleNode;
+        std::optional<ripple::uint256> credential;
         bool includeDeleted = false;
     };
 
@@ -194,7 +196,8 @@ public:
                       meta::WithCustomError{
                           validation::CustomValidators::AccountBase58Validator, Status(ClioError::rpcMALFORMED_OWNER)
                       }},
-                     {JS(authorized), validation::Required{}, validation::CustomValidators::AccountBase58Validator},
+                     {JS(authorized), validation::CustomValidators::AccountBase58Validator},
+                     {JS(authorize_credentials), validation::Type<boost::json::array>{}, validation::ItemType()}
                  },
              }},
             {JS(directory),
@@ -314,6 +317,30 @@ public:
                       validation::Type<uint32_t, std::string>{}, Status(ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID)
                   },
                   meta::WithCustomError{modifiers::ToNumber{}, Status(ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID)}},
+             }}},
+            {JS(credential),
+             meta::WithCustomError{
+                 validation::Type<std::string, boost::json::object>{}, Status(ClioError::rpcMALFORMED_REQUEST)
+             },
+             meta::IfType<std::string>{
+                 meta::WithCustomError{malformedRequestHexStringValidator, Status(ClioError::rpcMALFORMED_ADDRESS)}
+             },
+             meta::IfType<boost::json::object>{meta::Section{
+                 {JS(subject),
+                  meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                  meta::WithCustomError{
+                      validation::CustomValidators::AccountBase58Validator, Status(ClioError::rpcMALFORMED_ADDRESS)
+                  }},
+                 {JS(issuer),
+                  meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                  meta::WithCustomError{
+                      validation::CustomValidators::AccountBase58Validator, Status(ClioError::rpcMALFORMED_ADDRESS)
+                  }},
+                 {
+                     JS(credential_type),
+                     meta::WithCustomError{validation::Required{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                     meta::WithCustomError{validation::Type<std::string>{}, Status(ClioError::rpcMALFORMED_REQUEST)},
+                 },
              }}},
             {JS(ledger), check::Deprecated{}},
             {"include_deleted", validation::Type<bool>{}},

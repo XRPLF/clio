@@ -22,6 +22,7 @@
 #include "data/Types.hpp"
 
 #include <xrpl/basics/Blob.h>
+#include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Issue.h>
@@ -268,7 +269,14 @@ CreateEscrowLedgerObject(std::string_view account, std::string_view dest);
 CreateCheckLedgerObject(std::string_view account, std::string_view dest);
 
 [[nodiscard]] ripple::STObject
-CreateDepositPreauthLedgerObject(std::string_view account, std::string_view auth);
+CreateDepositPreauthLedgerObjectByAuth(std::string_view account, std::string_view auth);
+
+[[nodiscard]] ripple::STObject
+CreateDepositPreauthLedgerObjectByAuthCredentials(
+    std::string_view account,
+    std::string_view issuer,
+    std::string_view credType
+);
 
 [[nodiscard]] data::NFT
 CreateNFT(
@@ -429,3 +437,15 @@ CreateOracleSetTxWithMetadata(
     bool created,
     std::string_view previousTxnId
 );
+
+[[nodiscard]] ripple::STObject
+CreateCredentialObject(
+    std::string_view acc1,
+    std::string_view acc2,
+    std::string_view credType,
+    bool accept = true,
+    std::optional<uint32_t> expiration = std::nullopt
+);
+
+[[nodiscard]] ripple::STArray
+CreateAuthCredentialArray(std::vector<std::string_view> issuer, std::vector<std::string_view> credType);

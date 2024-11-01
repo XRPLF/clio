@@ -6,6 +6,7 @@ target_sources(
           Factories.cpp
           AMMHelpers.cpp
           RPCHelpers.cpp
+          CredentialHelpers.cpp
           Counters.cpp
           WorkQueue.cpp
           common/Specs.cpp

@@ -127,6 +127,7 @@ struct Amendments {
     REGISTER(fixInnerObjTemplate2);
     REGISTER(fixNFTokenPageLinks);
     REGISTER(InvariantsV1_1);
+    REGISTER(Credentials);
 
     // Obsolete but supported by libxrpl
     REGISTER(CryptoConditionsSuite);

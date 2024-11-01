@@ -112,6 +112,7 @@ class LedgerTypes {
         ),
         LedgerTypeAttribute::AccountOwnedLedgerType(JS(did), ripple::ltDID),
         LedgerTypeAttribute::AccountOwnedLedgerType(JS(oracle), ripple::ltORACLE),
+        LedgerTypeAttribute::AccountOwnedLedgerType(JS(credential), ripple::ltCREDENTIAL),
         LedgerTypeAttribute::ChainLedgerType(JS(nunl), ripple::ltNEGATIVE_UNL),
     };
 

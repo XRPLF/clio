@@ -19,6 +19,7 @@
 
 #include "rpc/handlers/LedgerEntry.hpp"
 
+#include "rpc/CredentialHelpers.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -30,6 +31,8 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <xrpl/basics/Slice.h>
+#include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/json/json_value.h>
@@ -38,6 +41,7 @@
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STXChainBridge.h>
@@ -47,6 +51,8 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iostream>
+#include <ostream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -97,11 +103,29 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         auto const owner = util::parseBase58Wrapper<ripple::AccountID>(
             boost::json::value_to<std::string>(input.depositPreauth->at(JS(owner)))
         );
-        auto const authorized = util::parseBase58Wrapper<ripple::AccountID>(
-            boost::json::value_to<std::string>(input.depositPreauth->at(JS(authorized)))
-        );
+        // Only one of authorize or authorize_credentials MUST exist;
+        if (!input.depositPreauth->contains(JS(authorized)) &&
+            !input.depositPreauth->contains(JS(authorize_credentials)))
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS, "malformedAuthorizeCredentials"}};
 
-        key = ripple::keylet::depositPreauth(*owner, *authorized).key;
+        if (input.depositPreauth->contains(JS(authorized))) {
+            if (input.depositPreauth->contains(JS(authorize_credentials)))
+                return Error{Status{RippledError::rpcBAD_CREDENTIALS, "malformedAuthorizeCredentials"}};
+
+            auto const authorized = util::parseBase58Wrapper<ripple::AccountID>(
+                boost::json::value_to<std::string>(input.depositPreauth->at(JS(authorized)))
+            );
+            key = ripple::keylet::depositPreauth(*owner, *authorized).key;
+        } else {
+            auto const authorizedCredentials =
+                util::parseAuthorizeCredentials(input.depositPreauth->at(JS(authorize_credentials)).as_array());
+            // TODO: Move this check into validation.hpp
+            if (authorizedCredentials.size() > ripple::maxCredentialsArraySize)
+                return Error{Status{RippledError::rpcINVALID_PARAMS, "an array of CredentialID(hash256)"}};
+
+            auto const sorted = makeSorted(authorizedCredentials);
+            key = ripple::keylet::depositPreauth(owner.value(), sorted).key;
+        }
     } else if (input.ticket) {
         auto const id =
             util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(input.ticket->at(JS(account))
@@ -145,6 +169,8 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         }
     } else if (input.oracleNode) {
         key = input.oracleNode.value();
+    } else if (input.credential) {
+        key = input.credential.value();
     } else {
         // Must specify 1 of the following fields to indicate what type
         if (ctx.apiVersion == 1)
@@ -277,6 +303,7 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         {JS(xchain_owned_create_account_claim_id), ripple::ltXCHAIN_OWNED_CREATE_ACCOUNT_CLAIM_ID},
         {JS(xchain_owned_claim_id), ripple::ltXCHAIN_OWNED_CLAIM_ID},
         {JS(oracle), ripple::ltORACLE},
+        {JS(credential), ripple::ltCREDENTIAL},
     };
 
     auto const parseBridgeFromJson = [](boost::json::value const& bridgeJson) {
@@ -300,6 +327,16 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         auto const documentId = boost::json::value_to<uint32_t>(json.at(JS(oracle_document_id)));
 
         return ripple::keylet::oracle(*account, documentId).key;
+    };
+
+    auto const parseCredentialFromJson = [](boost::json::value const& json) {
+        auto const subject =
+            util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(json.at(JS(subject))));
+        auto const issuer =
+            util::parseBase58Wrapper<ripple::AccountID>(boost::json::value_to<std::string>(json.at(JS(issuer))));
+        auto const credType = ripple::strUnHex(boost::json::value_to<std::string>(json.at(JS(credential_type))));
+
+        return ripple::keylet::credential(*subject, *issuer, ripple::Slice(credType->data(), credType->size())).key;
     };
 
     auto const indexFieldType =
@@ -348,6 +385,8 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         );
     } else if (jsonObject.contains(JS(oracle))) {
         input.oracleNode = parseOracleFromJson(jv.at(JS(oracle)));
+    } else if (jsonObject.contains(JS(credential))) {
+        input.credential = parseCredentialFromJson(jv.at(JS(credential)));
     }
 
     if (jsonObject.contains("include_deleted"))

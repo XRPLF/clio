@@ -26,6 +26,7 @@
 
 #include <xrpl/basics/Blob.h>
 #include <xrpl/basics/Slice.h>
+#include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/json/json_value.h>
@@ -48,6 +49,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -540,12 +542,33 @@ CreateCheckLedgerObject(std::string_view account, std::string_view dest)
 }
 
 ripple::STObject
-CreateDepositPreauthLedgerObject(std::string_view account, std::string_view auth)
+CreateDepositPreauthLedgerObjectByAuth(std::string_view account, std::string_view auth)
 {
     ripple::STObject depositPreauth(ripple::sfLedgerEntry);
     depositPreauth.setFieldU16(ripple::sfLedgerEntryType, ripple::ltDEPOSIT_PREAUTH);
     depositPreauth.setAccountID(ripple::sfAccount, GetAccountIDWithString(account));
     depositPreauth.setAccountID(ripple::sfAuthorize, GetAccountIDWithString(auth));
+    depositPreauth.setFieldU32(ripple::sfFlags, 0);
+    depositPreauth.setFieldU64(ripple::sfOwnerNode, 0);
+    depositPreauth.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    depositPreauth.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    return depositPreauth;
+}
+
+ripple::STObject
+CreateDepositPreauthLedgerObjectByAuthCredentials(
+    std::string_view account,
+    std::string_view issuer,
+    std::string_view credType
+)
+{
+    ripple::STObject depositPreauth(ripple::sfLedgerEntry);
+    depositPreauth.setFieldU16(ripple::sfLedgerEntryType, ripple::ltDEPOSIT_PREAUTH);
+    depositPreauth.setAccountID(ripple::sfAccount, GetAccountIDWithString(account));
+    depositPreauth.setFieldArray(
+        ripple::sfAuthorizeCredentials,
+        CreateAuthCredentialArray(std::vector<std::string_view>{issuer}, std::vector<std::string_view>{credType})
+    );
     depositPreauth.setFieldU32(ripple::sfFlags, 0);
     depositPreauth.setFieldU64(ripple::sfOwnerNode, 0);
     depositPreauth.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
@@ -1154,4 +1177,48 @@ CreateOracleObject(
     ledgerObject.setFieldArray(ripple::sfPriceDataSeries, priceDataSeries);
 
     return ledgerObject;
+}
+
+// acc2 issue credential for acc1 so acc2 is issuer
+ripple::STObject
+CreateCredentialObject(
+    std::string_view acc1,
+    std::string_view acc2,
+    std::string_view credType,
+    bool accept,
+    std::optional<uint32_t> expiration
+)
+{
+    ripple::STObject credObj(ripple::sfCredential);
+    credObj.setFieldU16(ripple::sfLedgerEntryType, ripple::ltCREDENTIAL);
+    credObj.setFieldVL(ripple::sfCredentialType, ripple::Blob{credType.begin(), credType.end()});
+    credObj.setAccountID(ripple::sfSubject, GetAccountIDWithString(acc1));
+    credObj.setAccountID(ripple::sfIssuer, GetAccountIDWithString(acc2));
+    if (expiration.has_value())
+        credObj.setFieldU32(ripple::sfExpiration, expiration.value());
+
+    if (accept) {
+        credObj.setFieldU32(ripple::sfFlags, ripple::lsfAccepted);
+    } else {
+        credObj.setFieldU32(ripple::sfFlags, 0);
+    }
+    credObj.setFieldU64(ripple::sfSubjectNode, 0);
+    credObj.setFieldU64(ripple::sfIssuerNode, 0);
+    credObj.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    credObj.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    return credObj;
+}
+
+ripple::STArray
+CreateAuthCredentialArray(std::vector<std::string_view> issuer, std::vector<std::string_view> credType)
+{
+    ripple::STArray arr;
+    ASSERT(issuer.size() == credType.size(), "issuer and credtype vector must be same length");
+    for (std::size_t i = 0; i < issuer.size(); ++i) {
+        auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
+        credential.setAccountID(ripple::sfIssuer, GetAccountIDWithString(issuer[i]));
+        credential.setFieldVL(ripple::sfCredentialType, ripple::strUnHex(std::string(credType[i])).value());
+        arr.push_back(credential);
+    }
+    return arr;
 }

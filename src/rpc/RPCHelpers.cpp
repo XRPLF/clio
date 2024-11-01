@@ -950,7 +950,7 @@ accountHolds(
     auto const blob = backend.fetchLedgerObject(key, sequence, yield);
 
     if (!blob) {
-        amount.clear({currency, issuer});
+        amount.clear(ripple::Issue(currency, issuer));
         return amount;
     }
 
