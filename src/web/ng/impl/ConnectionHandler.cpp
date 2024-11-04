@@ -21,10 +21,12 @@
 
 #include "util/Assert.hpp"
 #include "util/CoroutineGroup.hpp"
+#include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/MessageHandler.hpp"
+#include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 
@@ -99,8 +101,12 @@ ConnectionHandler::StringHash::operator()(std::string const& str) const
     return hash_type{}(str);
 }
 
-ConnectionHandler::ConnectionHandler(ProcessingPolicy processingPolicy, std::optional<size_t> maxParallelRequests)
-    : processingPolicy_{processingPolicy}, maxParallelRequests_{maxParallelRequests}
+ConnectionHandler::ConnectionHandler(
+    ProcessingPolicy processingPolicy,
+    std::optional<size_t> maxParallelRequests,
+    util::TagDecoratorFactory& tagFactory
+)
+    : processingPolicy_{processingPolicy}, maxParallelRequests_{maxParallelRequests}, tagFactory_{tagFactory}
 {
 }
 

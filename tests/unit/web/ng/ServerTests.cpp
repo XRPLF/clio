@@ -26,6 +26,7 @@
 #include "util/TestWebSocketClient.hpp"
 #include "util/config/Config.hpp"
 #include "web/ng/Connection.hpp"
+#include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 #include "web/ng/Server.hpp"
@@ -48,7 +49,6 @@
 #include <optional>
 #include <ranges>
 #include <string>
-#include <utility>
 
 using namespace web::ng;
 
@@ -175,9 +175,8 @@ struct ServerTest : SyncAsioContextTest {
 TEST_F(ServerTest, BadEndpoint)
 {
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("1.2.3.4"), 0};
-    impl::ConnectionHandler connectionHandler{impl::ConnectionHandler::ProcessingPolicy::Sequential, std::nullopt};
     util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
-    Server server{ctx, endpoint, std::nullopt, std::move(connectionHandler), tagDecoratorFactory};
+    Server server{ctx, endpoint, std::nullopt, ProcessingPolicy::Sequential, std::nullopt, tagDecoratorFactory};
     auto maybeError = server.run();
     ASSERT_TRUE(maybeError.has_value());
     EXPECT_THAT(*maybeError, testing::HasSubstr("Error creating TCP acceptor"));

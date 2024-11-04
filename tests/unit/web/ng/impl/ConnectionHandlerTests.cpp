@@ -24,6 +24,7 @@
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/MockConnection.hpp"
+#include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 #include "web/ng/impl/ConnectionHandler.hpp"
@@ -58,8 +59,8 @@ namespace http = boost::beast::http;
 namespace websocket = boost::beast::websocket;
 
 struct ConnectionHandlerTest : SyncAsioContextTest {
-    ConnectionHandlerTest(ConnectionHandler::ProcessingPolicy policy, std::optional<size_t> maxParallelConnections)
-        : connectionHandler_{policy, maxParallelConnections}
+    ConnectionHandlerTest(ProcessingPolicy policy, std::optional<size_t> maxParallelConnections)
+        : tagFactory_{util::Config{}}, connectionHandler_{policy, maxParallelConnections, tagFactory_}
     {
     }
 
@@ -88,6 +89,7 @@ struct ConnectionHandlerTest : SyncAsioContextTest {
         return Request{std::forward<Args>(args)...};
     }
 
+    util::TagDecoratorFactory tagFactory_;
     ConnectionHandler connectionHandler_;
 
     util::TagDecoratorFactory tagDecoratorFactory_{util::Config(boost::json::object{{"log_tag_style", "uint"}})};
@@ -96,8 +98,7 @@ struct ConnectionHandlerTest : SyncAsioContextTest {
 };
 
 struct ConnectionHandlerSequentialProcessingTest : ConnectionHandlerTest {
-    ConnectionHandlerSequentialProcessingTest()
-        : ConnectionHandlerTest(ConnectionHandler::ProcessingPolicy::Sequential, std::nullopt)
+    ConnectionHandlerSequentialProcessingTest() : ConnectionHandlerTest(ProcessingPolicy::Sequential, std::nullopt)
     {
     }
 };
@@ -312,7 +313,7 @@ struct ConnectionHandlerParallelProcessingTest : ConnectionHandlerTest {
 
     ConnectionHandlerParallelProcessingTest()
         : ConnectionHandlerTest(
-              ConnectionHandler::ProcessingPolicy::Parallel,
+              ProcessingPolicy::Parallel,
               ConnectionHandlerParallelProcessingTest::maxParallelRequests
           )
     {

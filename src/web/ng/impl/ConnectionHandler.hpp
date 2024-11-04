@@ -19,10 +19,12 @@
 
 #pragma once
 
+#include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/MessageHandler.hpp"
+#include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 
@@ -41,8 +43,6 @@ namespace web::ng::impl {
 
 class ConnectionHandler {
 public:
-    enum class ProcessingPolicy { Sequential, Parallel };
-
     struct StringHash {
         using hash_type = std::hash<std::string_view>;
         using is_transparent = void;
@@ -64,6 +64,8 @@ private:
     ProcessingPolicy processingPolicy_;
     std::optional<size_t> maxParallelRequests_;
 
+    std::reference_wrapper<util::TagDecoratorFactory> tagFactory_;
+
     TargetToHandlerMap getHandlers_;
     TargetToHandlerMap postHandlers_;
     std::optional<MessageHandler> wsHandler_;
@@ -71,7 +73,11 @@ private:
     boost::signals2::signal<void()> onStop_;
 
 public:
-    ConnectionHandler(ProcessingPolicy processingPolicy, std::optional<size_t> maxParallelRequests);
+    ConnectionHandler(
+        ProcessingPolicy processingPolicy,
+        std::optional<size_t> maxParallelRequests,
+        util::TagDecoratorFactory& tagFactory
+    );
 
     void
     onGet(std::string const& target, MessageHandler handler);

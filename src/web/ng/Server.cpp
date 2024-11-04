@@ -25,6 +25,7 @@
 #include "util/log/Logger.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
+#include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/impl/HttpConnection.hpp"
 #include "web/ng/impl/ServerSslContext.hpp"
 
@@ -179,14 +180,15 @@ Server::Server(
     boost::asio::io_context& ctx,
     boost::asio::ip::tcp::endpoint endpoint,
     std::optional<boost::asio::ssl::context> sslContext,
-    impl::ConnectionHandler connectionHandler,
+    ProcessingPolicy processingPolicy,
+    std::optional<size_t> parallelRequestLimit,
     util::TagDecoratorFactory tagDecoratorFactory
 )
     : ctx_{ctx}
     , sslContext_{std::move(sslContext)}
-    , connectionHandler_{std::move(connectionHandler)}
-    , endpoint_{std::move(endpoint)}
     , tagDecoratorFactory_{tagDecoratorFactory}
+    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_}
+    , endpoint_{std::move(endpoint)}
 {
 }
 
@@ -298,12 +300,12 @@ make_Server(util::Config const& config, boost::asio::io_context& context)
     if (not expectedSslContext)
         return std::unexpected{std::move(expectedSslContext).error()};
 
-    impl::ConnectionHandler::ProcessingPolicy processingPolicy{impl::ConnectionHandler::ProcessingPolicy::Parallel};
+    ProcessingPolicy processingPolicy{ProcessingPolicy::Parallel};
     std::optional<size_t> parallelRequestLimit;
 
     auto const processingStrategyStr = serverConfig.valueOr<std::string>("processing_policy", "parallel");
     if (processingStrategyStr == "sequent") {
-        processingPolicy = impl::ConnectionHandler::ProcessingPolicy::Sequential;
+        processingPolicy = ProcessingPolicy::Sequential;
     } else if (processingStrategyStr == "parallel") {
         parallelRequestLimit = serverConfig.maybeValue<size_t>("parallel_requests_limit");
     } else {
@@ -314,7 +316,8 @@ make_Server(util::Config const& config, boost::asio::io_context& context)
         context,
         std::move(endpoint).value(),
         std::move(expectedSslContext).value(),
-        impl::ConnectionHandler{processingPolicy, parallelRequestLimit},
+        processingPolicy,
+        parallelRequestLimit,
         util::TagDecoratorFactory(config)
     };
 }

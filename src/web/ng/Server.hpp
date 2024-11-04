@@ -24,6 +24,7 @@
 #include "util/log/Logger.hpp"
 #include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/ng/MessageHandler.hpp"
+#include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/impl/ConnectionHandler.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -44,15 +45,14 @@ namespace web::ng {
 class Server {
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
-    std::reference_wrapper<boost::asio::io_context> ctx_;
 
+    std::reference_wrapper<boost::asio::io_context> ctx_;
     std::optional<boost::asio::ssl::context> sslContext_;
 
-    impl::ConnectionHandler connectionHandler_;
-
-    boost::asio::ip::tcp::endpoint endpoint_;
-
     util::TagDecoratorFactory tagDecoratorFactory_;
+
+    impl::ConnectionHandler connectionHandler_;
+    boost::asio::ip::tcp::endpoint endpoint_;
 
     bool running_{false};
 
@@ -70,7 +70,8 @@ public:
         boost::asio::io_context& ctx,
         boost::asio::ip::tcp::endpoint endpoint,
         std::optional<boost::asio::ssl::context> sslContext,
-        impl::ConnectionHandler connectionHandler,
+        ProcessingPolicy processingPolicy,
+        std::optional<size_t> parallelRequestLimit,
         util::TagDecoratorFactory tagDecoratorFactory
     );
 
