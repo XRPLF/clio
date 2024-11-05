@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
@@ -34,8 +35,8 @@
 #include <memory>
 #include <optional>
 
-struct MockConnectionImpl : web::ng::Connection {
-    using web::ng::Connection::Connection;
+struct MockHttpConnectionImpl : web::ng::impl::UpgradableConnection {
+    using UpgradableConnection::UpgradableConnection;
 
     MOCK_METHOD(bool, wasUpgraded, (), (const, override));
 
@@ -56,10 +57,29 @@ struct MockConnectionImpl : web::ng::Connection {
     );
 
     MOCK_METHOD(void, close, (boost::asio::yield_context, std::chrono::steady_clock::duration));
+
+    using IsUpgradeRequestedReturnType = std::expected<bool, web::ng::Error>;
+    MOCK_METHOD(
+        IsUpgradeRequestedReturnType,
+        isUpgradeRequested,
+        (boost::asio::yield_context, std::chrono::steady_clock::duration),
+        (override)
+    );
+
+    using UpgradeReturnType = std::expected<web::ng::ConnectionPtr, web::ng::Error>;
+    using OptionalSslContext = std::optional<boost::asio::ssl::context>;
+    MOCK_METHOD(
+        UpgradeReturnType,
+        upgrade,
+        (OptionalSslContext & sslContext,
+         util::TagDecoratorFactory const& tagDecoratorFactory,
+         boost::asio::yield_context yield),
+        (override)
+    );
 };
 
-using MockConnection = testing::NiceMock<MockConnectionImpl>;
-using MockConnectionPtr = std::unique_ptr<testing::NiceMock<MockConnectionImpl>>;
+using MockHttpConnection = testing::NiceMock<MockHttpConnectionImpl>;
+using MockHttpConnectionPtr = std::unique_ptr<testing::NiceMock<MockHttpConnectionImpl>>;
 
-using StrictMockConnection = testing::StrictMock<MockConnectionImpl>;
-using StrictMockConnectionPtr = std::unique_ptr<testing::StrictMock<MockConnectionImpl>>;
+using StrictMockHttpConnection = testing::StrictMock<MockHttpConnectionImpl>;
+using StrictMockHttpConnectionPtr = std::unique_ptr<testing::StrictMock<MockHttpConnectionImpl>>;

@@ -28,41 +28,30 @@
 
 namespace web::ng {
 
-Connection::Connection(
-    std::string ip,
-    boost::beast::flat_buffer buffer,
-    util::TagDecoratorFactory const& tagDecoratorFactory
-)
-    : util::Taggable(tagDecoratorFactory), ip_{std::move(ip)}, buffer_{std::move(buffer)}
+ConnectionMetadata::ConnectionMetadata(std::string ip, util::TagDecoratorFactory const& tagDecoratorFactory)
+    : util::Taggable(tagDecoratorFactory), ip_{std::move(ip)}
 {
-}
-
-ConnectionContext
-Connection::context() const
-{
-    return ConnectionContext{*this};
 }
 
 std::string const&
-Connection::ip() const
+ConnectionMetadata::ip() const
 {
     return ip_;
 }
 
 bool
-Connection::isAdmin() const
+ConnectionMetadata::isAdmin() const
 {
     return isAdmin_.value_or(false);
 }
 
-ConnectionContext::ConnectionContext(Connection const& connection) : connection_{connection}
+Connection::Connection(
+    std::string ip,
+    boost::beast::flat_buffer buffer,
+    util::TagDecoratorFactory const& tagDecoratorFactory
+)
+    : ConnectionMetadata{std::move(ip), tagDecoratorFactory}, buffer_{std::move(buffer)}
 {
-}
-
-std::string const&
-ConnectionContext::ip() const
-{
-    return connection_.get().ip();
 }
 
 }  // namespace web::ng

@@ -11,9 +11,10 @@ target_sources(
           ng/impl/ConnectionHandler.cpp
           ng/impl/ServerSslContext.cpp
           ng/impl/WsConnection.cpp
-          ng/Server.cpp
           ng/Request.cpp
           ng/Response.cpp
+          ng/Server.cpp
+          ng/SubscriptionContext.cpp
           Resolver.cpp
           SubscriptionContext.cpp
 )

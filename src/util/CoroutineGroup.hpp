@@ -22,7 +22,9 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 
+#include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <optional>
 
@@ -31,11 +33,12 @@ namespace util {
 /**
  * @brief CoroutineGroup is a helper class to manage a group of coroutines. It allows to spawn multiple coroutines and
  * wait for all of them to finish.
+ * @note This class is safe to use from multiple threads.
  */
 class CoroutineGroup {
     boost::asio::steady_timer timer_;
-    std::optional<int> maxChildren_;
-    int childrenCounter_{0};
+    std::optional<int64_t> maxChildren_;
+    std::atomic_int64_t childrenCounter_{0};
 
 public:
     /**
@@ -45,7 +48,7 @@ public:
      * @param maxChildren The maximum number of coroutines that can be spawned at the same time. If not provided, there
      * is no limit
      */
-    CoroutineGroup(boost::asio::yield_context yield, std::optional<int> maxChildren = std::nullopt);
+    CoroutineGroup(boost::asio::yield_context yield, std::optional<int64_t> maxChildren = std::nullopt);
 
     /**
      * @brief Destroy the Coroutine Group object

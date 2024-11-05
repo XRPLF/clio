@@ -25,6 +25,7 @@
 #include "util/TestHttpClient.hpp"
 #include "util/TestWebSocketClient.hpp"
 #include "util/config/Config.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/Request.hpp"
@@ -164,11 +165,14 @@ struct ServerTest : SyncAsioContextTest {
     std::string const headerName_ = "Some-header";
     std::string const headerValue_ = "some value";
 
-    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
         getHandler_;
-    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
         postHandler_;
-    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
         wsHandler_;
 };
 
@@ -250,7 +254,7 @@ TEST_P(ServerHttpTest, RequestResponse)
 
     EXPECT_CALL(handler, Call)
         .Times(3)
-        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&) {
+        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&, auto&&) {
             EXPECT_TRUE(receivedRequest.isHttp());
             EXPECT_EQ(receivedRequest.method(), GetParam().expectedMethod());
             EXPECT_EQ(receivedRequest.message(), request.body());
@@ -316,7 +320,7 @@ TEST_F(ServerTest, WsRequestResponse)
 
     EXPECT_CALL(wsHandler_, Call)
         .Times(3)
-        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&) {
+        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&, auto&&) {
             EXPECT_FALSE(receivedRequest.isHttp());
             EXPECT_EQ(receivedRequest.method(), Request::Method::Websocket);
             EXPECT_EQ(receivedRequest.message(), requestMessage_);

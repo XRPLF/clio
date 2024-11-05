@@ -21,6 +21,7 @@
 
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/MessageHandler.hpp"
@@ -113,24 +114,34 @@ private:
      * @return True if the connection should be gracefully closed, false otherwise.
      */
     bool
-    sequentRequestResponseLoop(Connection& connection, boost::asio::yield_context yield);
+    sequentRequestResponseLoop(
+        Connection& connection,
+        SubscriptionContextPtr& subscriptionContext,
+        boost::asio::yield_context yield
+    );
 
     bool
-    parallelRequestResponseLoop(Connection& connection, boost::asio::yield_context yield);
+    parallelRequestResponseLoop(
+        Connection& connection,
+        SubscriptionContextPtr& subscriptionContext,
+        boost::asio::yield_context yield
+    );
 
     std::optional<bool>
-    processRequest(Connection& connection, Request const& request, boost::asio::yield_context yield);
+    processRequest(
+        Connection& connection,
+        SubscriptionContextPtr& subscriptionContext,
+        Request const& request,
+        boost::asio::yield_context yield
+    );
 
-    /**
-     * @brief Handle a request.
-     *
-     * @param connectionContext The connection context.
-     * @param request The request to handle.
-     * @param yield The yield context.
-     * @return The response to send.
-     */
     Response
-    handleRequest(ConnectionContext const& connectionContext, Request const& request, boost::asio::yield_context yield);
+    handleRequest(
+        ConnectionMetadata const& connectionMetadata,
+        SubscriptionContextPtr& subscriptionContext,
+        Request const& request,
+        boost::asio::yield_context yield
+    );
 };
 
 }  // namespace web::ng::impl

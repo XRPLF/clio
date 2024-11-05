@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include "util/Taggable.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
-#include "web/ng/impl/HttpConnection.hpp"
+#include "web/ng/impl/WsConnection.hpp"
 
+#include <boost/asio/buffer.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
 #include <gmock/gmock.h>
@@ -34,8 +34,8 @@
 #include <memory>
 #include <optional>
 
-struct MockConnectionImpl : web::ng::Connection {
-    using web::ng::Connection::Connection;
+struct MockWsConnectionImpl : web::ng::impl::WsConnectionBase {
+    using WsConnectionBase::WsConnectionBase;
 
     MOCK_METHOD(bool, wasUpgraded, (), (const, override));
 
@@ -56,10 +56,18 @@ struct MockConnectionImpl : web::ng::Connection {
     );
 
     MOCK_METHOD(void, close, (boost::asio::yield_context, std::chrono::steady_clock::duration));
+
+    using SendBufferReturnType = std::optional<web::ng::Error>;
+    MOCK_METHOD(
+        SendBufferReturnType,
+        sendBuffer,
+        (boost::asio::const_buffer, boost::asio::yield_context, std::chrono::steady_clock::duration),
+        (override)
+    );
 };
 
-using MockConnection = testing::NiceMock<MockConnectionImpl>;
-using MockConnectionPtr = std::unique_ptr<testing::NiceMock<MockConnectionImpl>>;
+using MockWsConnection = testing::NiceMock<MockWsConnectionImpl>;
+using MockWsConnectionPtr = std::unique_ptr<testing::NiceMock<MockWsConnectionImpl>>;
 
-using StrictMockConnection = testing::StrictMock<MockConnectionImpl>;
-using StrictMockConnectionPtr = std::unique_ptr<testing::StrictMock<MockConnectionImpl>>;
+using StrictMockWsConnection = testing::StrictMock<MockWsConnectionImpl>;
+using StrictMockWsConnectionPtr = std::unique_ptr<testing::StrictMock<MockWsConnectionImpl>>;

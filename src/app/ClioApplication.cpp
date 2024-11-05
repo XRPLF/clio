@@ -37,6 +37,7 @@
 #include "util/prometheus/Prometheus.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/Server.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
@@ -156,7 +157,10 @@ ClioApplication::run(bool const useNgWebServer)
         httpServer->onGet(
             "/metrics",
             [adminVerifier](
-                web::ng::Request const& request, web::ng::ConnectionContext context, boost::asio::yield_context
+                web::ng::Request const& request,
+                web::ng::ConnectionMetadata const& connectionMetadata,
+                web::SubscriptionContextPtr,
+                boost::asio::yield_context
             ) -> web::ng::Response {
                 auto const maybeHttpRequest = request.asHttpRequest();
                 ASSERT(maybeHttpRequest.has_value(), "Got not a http request in Get");
@@ -164,7 +168,7 @@ ClioApplication::run(bool const useNgWebServer)
 
                 // FIXME(#1702): Using veb server thread to handle prometheus request. Better to post on work queue.
                 auto maybeResponse = util::prometheus::handlePrometheusRequest(
-                    httpRequest, adminVerifier->isAdmin(httpRequest, context.ip())
+                    httpRequest, adminVerifier->isAdmin(httpRequest, connectionMetadata.ip())
                 );
                 ASSERT(maybeResponse.has_value(), "Got unexpected request for Prometheus");
                 return web::ng::Response{std::move(maybeResponse).value(), request};
