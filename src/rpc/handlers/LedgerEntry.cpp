@@ -104,14 +104,10 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             boost::json::value_to<std::string>(input.depositPreauth->at(JS(owner)))
         );
         // Only one of authorize or authorize_credentials MUST exist;
-        if (!input.depositPreauth->contains(JS(authorized)) &&
-            !input.depositPreauth->contains(JS(authorize_credentials)))
+        if (input.depositPreauth->contains(JS(authorized)) == input.depositPreauth->contains(JS(authorize_credentials)))
             return Error{Status{RippledError::rpcBAD_CREDENTIALS, "malformedAuthorizeCredentials"}};
 
         if (input.depositPreauth->contains(JS(authorized))) {
-            if (input.depositPreauth->contains(JS(authorize_credentials)))
-                return Error{Status{RippledError::rpcBAD_CREDENTIALS, "malformedAuthorizeCredentials"}};
-
             auto const authorized = util::parseBase58Wrapper<ripple::AccountID>(
                 boost::json::value_to<std::string>(input.depositPreauth->at(JS(authorized)))
             );
@@ -119,12 +115,12 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         } else {
             auto const authorizedCredentials =
                 util::parseAuthorizeCredentials(input.depositPreauth->at(JS(authorize_credentials)).as_array());
-            // TODO: Move this check into validation.hpp
-            if (authorizedCredentials.size() > ripple::maxCredentialsArraySize)
-                return Error{Status{RippledError::rpcINVALID_PARAMS, "an array of CredentialID(hash256)"}};
 
-            auto const sorted = makeSorted(authorizedCredentials);
-            key = ripple::keylet::depositPreauth(owner.value(), sorted).key;
+            auto const sorted = credentials::createAuthCredentials(authorizedCredentials);
+            if (!sorted.has_value())
+                return Error{sorted.error()};
+
+            key = ripple::keylet::depositPreauth(owner.value(), *sorted).key;
         }
     } else if (input.ticket) {
         auto const id =

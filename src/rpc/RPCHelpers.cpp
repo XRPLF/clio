@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
+#include "rpc/CredentialHelpers.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
@@ -61,6 +62,7 @@
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/NFTSyntheticSerializer.h>
+#include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/PublicKey.h>
 #include <xrpl/protocol/Rate.h>
 #include <xrpl/protocol/SField.h>
@@ -1325,6 +1327,55 @@ toJsonWithBinaryTx(data::TransactionAndMetadata const& txnPlusMeta, std::uint32_
     obj[metaKey] = ripple::strHex(txnPlusMeta.metadata);
     obj[JS(tx_blob)] = ripple::strHex(txnPlusMeta.transaction);
     return obj;
+}
+
+std::expected<ripple::STArray, Status>
+fetchCredentials(
+    std::optional<boost::json::array> const& credID,
+    std::shared_ptr<BackendInterface> const& backend,
+    ripple::LedgerHeader const& info,
+    Context const& ctx
+)
+{
+    ripple::STArray authCreds;
+    if (credID.value().size() > ripple::maxCredentialsArraySize) {
+        return Error{Status{
+            RippledError::rpcINVALID_PARAMS, "Invalid field 'credentials', not an array of CredentialID(hash256)."
+        }};
+    }
+
+    for (auto const& elem : credID.value()) {
+        if (!elem.is_string()) {
+            return Error{Status{
+                RippledError::rpcINVALID_PARAMS, "Invalid field 'credentials', not an array of CredentialID(hash256)"
+            }};
+        }
+
+        ripple::uint256 credHash;
+        if (!credHash.parseHex(boost::json::value_to<std::string>(elem))) {
+            return Error{Status{
+                RippledError::rpcINVALID_PARAMS, "Invalid field 'credentials', not an array of CredentialID(hash256)."
+            }};
+        }
+
+        auto const credKeylet = ripple::keylet::credential(credHash).key;
+        auto const credLedgerObject = backend->fetchLedgerObject(credKeylet, info.seq, ctx.yield);
+        auto credIt = ripple::SerialIter{credLedgerObject->data(), credLedgerObject->size()};
+        auto sleCred = ripple::SLE{credIt, credKeylet};
+
+        if (!credLedgerObject || (sleCred.getType() != ripple::ltCREDENTIAL) ||
+            ((sleCred.getFieldU32(ripple::sfFlags) & ripple::lsfAccepted) == 0u))
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS}};
+
+        if (credentials::checkExpired(sleCred, info))
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS}};
+
+        auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
+        credential.setAccountID(ripple::sfIssuer, sleCred.getAccountID(ripple::sfIssuer));
+        credential.setFieldVL(ripple::sfCredentialType, sleCred.getFieldVL(ripple::sfCredentialType));
+        authCreds.push_back(std::move(credential));
+    }
+    return authCreds;
 }
 
 }  // namespace rpc

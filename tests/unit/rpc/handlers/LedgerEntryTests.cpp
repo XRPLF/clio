@@ -219,6 +219,63 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "Invalid parameters."
         },
+
+        ParamTestCaseBundle{
+            "DepositPreauthAuthorizeEmptyAuthorizeCredentials",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorize_credentials": [
+                        ]
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "invalidParams",
+            "Requires at least one element in authorized_credentials array"
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthAuthorizeCredentialsMissingCredentialType",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorize_credentials": [
+                            {{
+                                "issuer": "{}"
+                            }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "invalidParams",
+            "Field 'CredentialType' is required but missing."
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthAuthorizeCredentialsMissingIssuer",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorize_credentials": [
+                        {{
+                            "credential_type": "{}"
+                        }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                CREDENTIALTYPE
+            ),
+            "invalidParams",
+            "Field 'Issuer' is required but missing."
+        },
+
         ParamTestCaseBundle{
             "InvalidTicketType",
             R"({
@@ -2194,7 +2251,7 @@ generateTestValuesForNormalPathTest()
             ),
             ripple::keylet::depositPreauth(
                 account1,
-                makeSorted(CreateAuthCredentialArray(
+                credentials::makeSorted(CreateAuthCredentialArray(
                     std::vector<std::string_view>{ACCOUNT2}, std::vector<std::string_view>{CREDENTIALTYPE}
                 ))
             )

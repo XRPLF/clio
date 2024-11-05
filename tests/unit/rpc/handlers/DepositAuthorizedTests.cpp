@@ -33,11 +33,13 @@
 #include <gtest/gtest.h>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/chrono.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/STArray.h>
 
+#include <chrono>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -573,8 +575,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
 
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillOnce(Return(ledgerHeader));
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
@@ -623,8 +624,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
 
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillOnce(Return(ledgerHeader));
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
@@ -674,13 +674,17 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
 {
     backend->setRange(10, 30);
 
-    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30, 34);
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30, 100);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
+    // set parent close time to 500 seconds
+    ledgerHeader.parentCloseTime = ripple::NetClock::time_point{std::chrono::seconds{500}};
+
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillOnce(Return(ledgerHeader));
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
+
+    // credential expire time is 23 seconds, so credential will fail
     auto const expiredCredential = CreateCredentialObject(ACCOUNT, ACCOUNT2, CREDENTIALTYPE, true, 23);
 
     auto const credentialIndex = ripple::keylet::credential(
@@ -730,8 +734,7 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
 
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30, 34);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillOnce(Return(ledgerHeader));
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
@@ -778,14 +781,13 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
     });
 }
 
-TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentials)
+TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
 {
     backend->setRange(10, 30);
 
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30, 34);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
-    EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillOnce(Return(ledgerHeader));
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
@@ -832,6 +834,8 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentials)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(err.at("error_message").as_string(), "an array of CredentialID(hash256)");
+        EXPECT_EQ(
+            err.at("error_message").as_string(), "Invalid field 'credentials', not an array of CredentialID(hash256)."
+        );
     });
 }

@@ -732,4 +732,21 @@ getDeliveredAmount(
     uint32_t date
 );
 
+/**
+ * @brief Get Array of Credential objects
+ *
+ * @param cred Array of CredentialID's to parse
+ * @param backend backend interface
+ * @param info The ledger header
+ * @param ctx The coroutine context
+ * @return Array of credential objects
+ */
+std::expected<ripple::STArray, Status>
+fetchCredentials(
+    std::optional<boost::json::array> const& credID,
+    std::shared_ptr<BackendInterface> const& backend,
+    ripple::LedgerHeader const& info,
+    Context const& ctx
+);
+
 }  // namespace rpc

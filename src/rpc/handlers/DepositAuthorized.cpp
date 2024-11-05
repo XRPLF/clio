@@ -86,38 +86,11 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
     bool const credentialsPresent = input.credentials.has_value();
 
     ripple::STArray authCreds;
-    if (credentialsPresent) {
-        // TODO: move this check into validation.hpp
-        if (input.credentials.value().size() > ripple::maxCredentialsArraySize)
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "an array of CredentialID(hash256)"}};
-
-        for (auto const& elem : input.credentials.value()) {
-            if (!elem.is_string())
-                return Error{Status{RippledError::rpcINVALID_PARAMS, "an array of CredentialID(hash256)"}};
-
-            ripple::uint256 credHash;
-            if (!credHash.parseHex(boost::json::value_to<std::string>(elem)))
-                return Error{Status{RippledError::rpcINVALID_PARAMS, "an array of CredentialID(hash256)"}};
-
-            auto const credKeylet = ripple::keylet::credential(credHash).key;
-            auto const credLedgerObject = sharedPtrBackend_->fetchLedgerObject(credKeylet, lgrInfo.seq, ctx.yield);
-            auto credIt = ripple::SerialIter{credLedgerObject->data(), credLedgerObject->size()};
-            auto sleCred = ripple::SLE{credIt, credKeylet};
-
-            if (!credLedgerObject || (sleCred.getType() != ripple::ltCREDENTIAL) ||
-                ((sleCred.getFieldU32(ripple::sfFlags) & ripple::lsfAccepted) == 0u))
-                return Error{Status{RippledError::rpcBAD_CREDENTIALS}};
-
-            if (checkExpired(sleCred, lgrInfo.closeTime))
-                return Error{Status{RippledError::rpcBAD_CREDENTIALS}};
-
-            if (reqAuth) {
-                auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
-                credential.setAccountID(ripple::sfIssuer, sleCred.getAccountID(ripple::sfIssuer));
-                credential.setFieldVL(ripple::sfCredentialType, sleCred.getFieldVL(ripple::sfCredentialType));
-                authCreds.push_back(std::move(credential));
-            }
-        }
+    if (credentialsPresent && reqAuth) {
+        auto const creds = fetchCredentials(input.credentials, sharedPtrBackend_, lgrInfo, ctx);
+        if (!creds.has_value())
+            return Error{creds.error()};
+        authCreds = creds.value();
     }
 
     // If the two accounts are the same OR if that flag is
@@ -125,26 +98,18 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
     bool depositAuthorized = true;
 
     if (reqAuth) {
+        ripple::uint256 hashKey;
         if (credentialsPresent) {
-            auto const sorted = makeSorted(authCreds);
-            if (sorted.empty())
-                return Error{Status{RippledError::rpcBAD_CREDENTIALS, "duplicates in credentials."}};
+            auto const sorted = credentials::createAuthCredentials(authCreds);
+            if (!sorted)
+                return Error{sorted.error()};
 
-            depositAuthorized =
-                sharedPtrBackend_
-                    ->fetchLedgerObject(
-                        ripple::keylet::depositPreauth(*destinationAccountID, sorted).key, lgrInfo.seq, ctx.yield
-                    )
-                    .has_value();
+            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sorted).key;
         } else {
-            depositAuthorized = sharedPtrBackend_
-                                    ->fetchLedgerObject(
-                                        ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID).key,
-                                        lgrInfo.seq,
-                                        ctx.yield
-                                    )
-                                    .has_value();
+            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID).key;
         }
+
+        depositAuthorized = sharedPtrBackend_->fetchLedgerObject(hashKey, lgrInfo.seq, ctx.yield).has_value();
     }
 
     response.sourceAccount = input.sourceAccount;

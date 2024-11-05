@@ -17,26 +17,30 @@
 */
 //==============================================================================
 
+#include "rpc/Errors.hpp"
+
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STArray.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
 
 #include <cstdint>
+#include <expected>
 #include <set>
 #include <utility>
 
-namespace rpc {
+namespace rpc::credentials {
 
 bool
-checkExpired(ripple::SLE const& sleCred, ripple::NetClock::time_point const& closed)
+checkExpired(ripple::SLE const& sleCred, ripple::LedgerHeader const& ledger)
 {
     if (sleCred.isFieldPresent(ripple::sfExpiration)) {
         std::uint32_t exp = sleCred.getFieldU32(ripple::sfExpiration);
-        std::uint32_t const now = closed.time_since_epoch().count();
+        std::uint32_t const now = ledger.parentCloseTime.time_since_epoch().count();
         return now > exp;
     }
     return false;
@@ -54,4 +58,13 @@ makeSorted(ripple::STArray const& in)
     return out;
 }
 
-}  // namespace rpc
+std::expected<std::set<std::pair<ripple::AccountID, ripple::Slice>>, Status>
+createAuthCredentials(ripple::STArray const& in)
+{
+    auto result = makeSorted(in);
+    if (result.empty())
+        return std::unexpected{Status{RippledError::rpcBAD_CREDENTIALS, "duplicates in credentials."}};
+    return result;
+}
+
+}  // namespace rpc::credentials

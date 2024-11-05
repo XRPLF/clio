@@ -525,6 +525,20 @@ struct CustomValidators final {
      * Used by amm_info.
      */
     static CustomValidator CurrencyIssueValidator;
+
+    /**
+     * @brief Provides a validator for validating authorized_credentials json array.
+     *
+     * Used by deposit_preauth.
+     */
+    static CustomValidator AuthorizeCredentialValidator;
+
+    /**
+     * @brief Provides a validator for validating credential_type.
+     *
+     * Used by AuthorizeCredentialValidator in deposit_preauth.
+     */
+    static CustomValidator CredentialTypeValidator;
 };
 
 /**
@@ -546,9 +560,6 @@ struct Hex256ItemType final {
             return {};  // ignore. If field is supposed to exist, let 'required' fail instead
 
         auto const& res = value.as_object().at(key.data());
-        if (!res.is_array()) {
-            return Error{Status{RippledError::rpcINVALID_PARAMS, "Credentials an array of CredentialID(hash256)"}};
-        }
 
         // loop through each item in the array and make sure it is uint256 hex string
         for (auto const& elem : res.as_array()) {

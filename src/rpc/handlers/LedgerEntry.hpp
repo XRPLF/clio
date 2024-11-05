@@ -197,7 +197,9 @@ public:
                           validation::CustomValidators::AccountBase58Validator, Status(ClioError::rpcMALFORMED_OWNER)
                       }},
                      {JS(authorized), validation::CustomValidators::AccountBase58Validator},
-                     {JS(authorize_credentials), validation::Type<boost::json::array>{}, validation::Hex256ItemType()}
+                     {JS(authorize_credentials),
+                      validation::Type<boost::json::array>{},
+                      validation::CustomValidators::AuthorizeCredentialValidator}
                  },
              }},
             {JS(directory),

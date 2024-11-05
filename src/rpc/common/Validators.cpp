@@ -29,8 +29,10 @@
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
 #include <fmt/core.h>
+#include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/UintTypes.h>
 
 #include <charconv>
@@ -243,6 +245,63 @@ CustomValidator CustomValidators::CurrencyIssueValidator =
 
         try {
             parseIssue(value.as_object());
+        } catch (std::runtime_error const&) {
+            return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
+        }
+
+        return MaybeError{};
+    }};
+
+CustomValidator CustomValidators::CredentialTypeValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (not value.is_string())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
+
+        if (!ripple::strViewUnHex(value.as_string()).has_value())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotHexedString"}};
+
+        return MaybeError{};
+    }};
+
+CustomValidator CustomValidators::AuthorizeCredentialValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        if (not value.is_array())
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotObject"}};
+
+        try {
+            auto const& authCred = value.as_array();
+            if (authCred.size() == 0)
+                return Error{Status{
+                    RippledError::rpcINVALID_PARAMS,
+                    fmt::format("Requires at least one element in authorized_credentials array")
+                }};
+
+            if (authCred.size() > ripple::maxCredentialsArraySize)
+                return Error{Status{
+                    RippledError::rpcINVALID_PARAMS,
+                    fmt::format(
+                        "Max {} number of credentials in authorized_credentials array", ripple::maxCredentialsArraySize
+                    )
+                }};
+
+            for (auto const& credObj : value.as_array()) {
+                auto const& obj = credObj.as_object();
+
+                if (!obj.contains("issuer"))
+                    return Error{Status{RippledError::rpcINVALID_PARAMS, "Field 'Issuer' is required but missing."}};
+
+                if (auto const err = IssuerValidator.verify(credObj, "issuer"); !err)
+                    return err;
+
+                if (!obj.contains("credential_type"))
+                    return Error{
+                        Status{RippledError::rpcINVALID_PARAMS, "Field 'CredentialType' is required but missing."}
+                    };
+
+                if (auto const err = CredentialTypeValidator.verify(credObj, "credential_type"); !err)
+                    return err;
+            }
+
         } catch (std::runtime_error const&) {
             return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
         }
