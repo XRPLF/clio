@@ -735,7 +735,7 @@ getDeliveredAmount(
 /**
  * @brief Get Array of Credential objects
  *
- * @param cred Array of CredentialID's to parse
+ * @param credID Array of CredentialID's to parse
  * @param backend backend interface
  * @param info The ledger header
  * @param ctx The coroutine context
