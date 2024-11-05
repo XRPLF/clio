@@ -1360,6 +1360,9 @@ fetchCredentials(
 
         auto const credKeylet = ripple::keylet::credential(credHash).key;
         auto const credLedgerObject = backend->fetchLedgerObject(credKeylet, info.seq, ctx.yield);
+        if (!credLedgerObject)
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS, "credentials aren't accepted."}};
+
         auto credIt = ripple::SerialIter{credLedgerObject->data(), credLedgerObject->size()};
         auto sleCred = ripple::SLE{credIt, credKeylet};
 
