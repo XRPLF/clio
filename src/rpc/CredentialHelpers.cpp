@@ -46,25 +46,16 @@ checkExpired(ripple::SLE const& sleCred, ripple::LedgerHeader const& ledger)
     return false;
 }
 
-std::set<std::pair<ripple::AccountID, ripple::Slice>>
-makeSorted(ripple::STArray const& in)
+std::expected<std::set<std::pair<ripple::AccountID, ripple::Slice>>, Status>
+createAuthCredentials(ripple::STArray const& in)
 {
     std::set<std::pair<ripple::AccountID, ripple::Slice>> out;
     for (auto const& cred : in) {
         auto [it, ins] = out.insert({cred[ripple::sfIssuer], cred[ripple::sfCredentialType]});
         if (!ins)
-            return {};
+            return std::unexpected{Status{RippledError::rpcBAD_CREDENTIALS, "duplicates in credentials."}};
     }
     return out;
-}
-
-std::expected<std::set<std::pair<ripple::AccountID, ripple::Slice>>, Status>
-createAuthCredentials(ripple::STArray const& in)
-{
-    auto result = makeSorted(in);
-    if (result.empty())
-        return std::unexpected{Status{RippledError::rpcBAD_CREDENTIALS, "duplicates in credentials."}};
-    return result;
 }
 
 }  // namespace rpc::credentials

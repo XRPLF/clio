@@ -51,8 +51,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
-#include <ostream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -118,7 +116,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
 
             auto const sorted = credentials::createAuthCredentials(authorizedCredentials);
             if (!sorted.has_value())
-                return Error{sorted.error()};
+                return Error{std::move(sorted).error()};
 
             key = ripple::keylet::depositPreauth(owner.value(), *sorted).key;
         }

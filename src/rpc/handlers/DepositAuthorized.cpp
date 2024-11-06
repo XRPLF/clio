@@ -89,8 +89,8 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
     if (credentialsPresent && reqAuth) {
         auto const creds = fetchCredentials(input.credentials, sharedPtrBackend_, lgrInfo, ctx);
         if (!creds.has_value())
-            return Error{creds.error()};
-        authCreds = creds.value();
+            return Error{std::move(creds).error()};
+        authCreds = std::move(creds).value();
     }
 
     // If the two accounts are the same OR if that flag is
@@ -102,7 +102,7 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
         if (credentialsPresent) {
             auto const sorted = credentials::createAuthCredentials(authCreds);
             if (!sorted)
-                return Error{sorted.error()};
+                return Error{std::move(sorted).error()};
 
             hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sorted).key;
         } else {

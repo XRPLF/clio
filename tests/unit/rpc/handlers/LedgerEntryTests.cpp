@@ -2251,7 +2251,7 @@ generateTestValuesForNormalPathTest()
             ),
             ripple::keylet::depositPreauth(
                 account1,
-                credentials::makeSorted(CreateAuthCredentialArray(
+                *credentials::createAuthCredentials(CreateAuthCredentialArray(
                     std::vector<std::string_view>{ACCOUNT2}, std::vector<std::string_view>{CREDENTIALTYPE}
                 ))
             )

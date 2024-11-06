@@ -44,16 +44,6 @@ bool
 checkExpired(ripple::SLE const& sleCred, ripple::LedgerHeader const& ledger);
 
 /**
- * @brief Returns a set of Account and CredentialID pairs. If there are any
- * duplicate CredentialID's, return empty set.
- *
- * @param in The array of Credential objects to check
- * @return Set of Issuer and CredentialType
- */
-std::set<std::pair<ripple::AccountID, ripple::Slice>>
-makeSorted(ripple::STArray const& in);
-
-/**
  * @brief Creates authentication credential field (which is a set of pairs of AccountID and Credential ID)
  *
  * @param in The array of Credential objects to check
