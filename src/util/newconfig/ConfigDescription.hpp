@@ -116,6 +116,7 @@ private:
         KV{"server.parallel_requests_limit", R"(Optional parameter, used only if "processing_strategy" is
          "parallel". It limits the number of requests for a single client connection that are processed in parallel. If not specified, the limit is infinite.)"
         },
+        KV{"server.ws_max_sending_queue_size", "Maximum size of the websocket sending queue."},
         KV{"prometheus.enabled", "Enable or disable Prometheus metrics."},
         KV{"prometheus.compress_reply", "Enable or disable compression of Prometheus responses."},
         KV{"io_threads", "Number of I/O threads."},

@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/ValueView.hpp"
 
 #include <cstddef>

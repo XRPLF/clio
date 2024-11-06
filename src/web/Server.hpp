@@ -352,17 +352,17 @@ make_HttpServer(
     auto const serverConfig = config.getObject("server");
     auto const address = boost::asio::ip::make_address(serverConfig.getValue<std::string>("ip"));
     auto const port = serverConfig.getValue<uint32_t>("port");
-    auto const adminPassword = serverConfig.getValueView("admin_password");
+    auto const adminPassword = serverConfig.maybeValue<std::string>("admin_password");
     auto const localAdmin = serverConfig.getValueView("local_admin");
 
     // Throw config error when localAdmin is true and admin_password is also set
-    if (localAdmin.hasValue() && localAdmin.asBool() && adminPassword.hasValue()) {
+    if (localAdmin.hasValue() && localAdmin.asBool() && adminPassword.has_value()) {
         LOG(log.error()) << "local_admin is true but admin_password is also set, please specify only one method "
                             "to authorize admin";
         throw std::logic_error("Admin config error, local_admin and admin_password can not be set together.");
     }
     // Throw config error when localAdmin is false but admin_password is not set
-    if (localAdmin.hasValue() && !localAdmin.asBool() && !adminPassword.hasValue()) {
+    if (localAdmin.hasValue() && !localAdmin.asBool() && !adminPassword.has_value()) {
         LOG(log.error()) << "local_admin is false but admin_password is not set, please specify one method "
                             "to authorize admin";
         throw std::logic_error("Admin config error, one method must be specified to authorize admin.");

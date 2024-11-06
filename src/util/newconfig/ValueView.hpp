@@ -181,7 +181,6 @@ public:
     std::optional<T>
     asOptional() const
     {
-        ASSERT(isOptional(), "Value is not an optional value");
         if (!hasValue())
             return std::nullopt;
 

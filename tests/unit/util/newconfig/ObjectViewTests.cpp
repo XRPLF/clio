@@ -143,9 +143,3 @@ TEST_F(ObjectViewDeathTest, KeyisArrayView)
     // dies because only 1 object in higher.[].low
     EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("higher.[].low", 1); }, ".*");
 }
-
-TEST_F(ObjectViewDeathTest, KeyisNotOptional)
-{
-    // dies because not an optional
-    EXPECT_DEATH({ [[maybe_unused]] auto _ = configData.getObject("header").maybeValue<std::string>("text1"); }, ".*");
-}
