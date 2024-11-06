@@ -38,6 +38,11 @@
 
 namespace web::ng {
 
+/**
+ * @brief Implementation of SubscriptionContextInterface.
+ * @note This class is designed to be used with SubscriptionManager. The class is safe to use from multiple threads.
+ * The method disconnect() must be called before the object is destroyed.
+ */
 class SubscriptionContext : public web::SubscriptionContextInterface {
 public:
     /**
@@ -52,6 +57,8 @@ private:
     ErrorHandler errorHandler_;
 
     boost::signals2::signal<void(SubscriptionContextInterface*)> onDisconnect_;
+    std::atomic_bool disconnected_{false};
+
     /**
      * @brief The API version of the web stream client.
      * This is used to track the api version of this connection, which mainly is used by subscription. It is different
@@ -75,6 +82,7 @@ public:
 
     /**
      * @brief Send message to the client
+     * @note This method does nothing after disconnected() was called.
      *
      * @param message The message to send.
      */
@@ -105,14 +113,11 @@ public:
     apiSubversion() const override;
 
     /**
-     * @brief Notify the context that related connection is disconnected.
+     * @brief Notify the context that related connection is disconnected and wait for all the task to complete.
+     * @note This method must be called before the object is destroyed.
      */
     void
     disconnect(boost::asio::yield_context yield);
-
-private:
-    void
-    sendImpl();
 };
 
 }  // namespace web::ng

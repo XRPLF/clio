@@ -50,6 +50,9 @@ SubscriptionContext::SubscriptionContext(
 void
 SubscriptionContext::send(std::shared_ptr<std::string> message)
 {
+    if (disconnected_)
+        return;
+
     tasksGroup_.spawn(yield_, [this, message = std::move(message)](boost::asio::yield_context innerYield) {
         auto const maybeError = connection_.get().sendBuffer(boost::asio::buffer(*message), innerYield);
         if (maybeError.has_value() and errorHandler_(*maybeError, connection_))
@@ -79,6 +82,7 @@ void
 SubscriptionContext::disconnect(boost::asio::yield_context yield)
 {
     onDisconnect_(this);
+    disconnected_ = true;
     tasksGroup_.asyncWait(yield);
 }
 
