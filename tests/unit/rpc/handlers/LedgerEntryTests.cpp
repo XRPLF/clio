@@ -211,7 +211,7 @@ generateTestValuesForParametersTest()
                 R"({{
                     "deposit_preauth": {{
                         "owner": "{}",
-                        "authorize_credentials": "asdf"
+                        "authorized_credentials": "asdf"
                     }}
                 }})",
                 ACCOUNT
@@ -226,7 +226,7 @@ generateTestValuesForParametersTest()
                 R"({{
                     "deposit_preauth": {{
                         "owner": "{}",
-                        "authorize_credentials": [
+                        "authorized_credentials": [
                         ]
                     }}
                 }})",
@@ -242,7 +242,7 @@ generateTestValuesForParametersTest()
                 R"({{
                     "deposit_preauth": {{
                         "owner": "{}",
-                        "authorize_credentials": [
+                        "authorized_credentials": [
                             {{
                                 "issuer": "{}"
                             }}
@@ -262,7 +262,7 @@ generateTestValuesForParametersTest()
                 R"({{
                     "deposit_preauth": {{
                         "owner": "{}",
-                        "authorize_credentials": [
+                        "authorized_credentials": [
                         {{
                             "credential_type": "{}"
                         }}
@@ -2237,7 +2237,7 @@ generateTestValuesForNormalPathTest()
                        "binary": true,
                        "deposit_preauth": {{
                            "owner": "{}",
-                           "authorize_credentials": [
+                           "authorized_credentials": [
                                {{
                                     "issuer": "{}",
                                     "credential_type": "{}"

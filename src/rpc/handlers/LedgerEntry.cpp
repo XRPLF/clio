@@ -101,8 +101,9 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         auto const owner = util::parseBase58Wrapper<ripple::AccountID>(
             boost::json::value_to<std::string>(input.depositPreauth->at(JS(owner)))
         );
-        // Only one of authorize or authorize_credentials MUST exist;
-        if (input.depositPreauth->contains(JS(authorized)) == input.depositPreauth->contains(JS(authorize_credentials)))
+        // Only one of authorize or authorized_credentials MUST exist;
+        if (input.depositPreauth->contains(JS(authorized)) ==
+            input.depositPreauth->contains(JS(authorized_credentials)))
             return Error{Status{RippledError::rpcBAD_CREDENTIALS, "malformedAuthorizeCredentials"}};
 
         if (input.depositPreauth->contains(JS(authorized))) {
@@ -112,7 +113,7 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
             key = ripple::keylet::depositPreauth(*owner, *authorized).key;
         } else {
             auto const authorizedCredentials =
-                util::parseAuthorizeCredentials(input.depositPreauth->at(JS(authorize_credentials)).as_array());
+                util::parseAuthorizeCredentials(input.depositPreauth->at(JS(authorized_credentials)).as_array());
 
             auto const sorted = credentials::createAuthCredentials(authorizedCredentials);
             if (!sorted.has_value())
