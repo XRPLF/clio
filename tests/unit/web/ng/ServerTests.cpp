@@ -180,7 +180,9 @@ TEST_F(ServerTest, BadEndpoint)
 {
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("1.2.3.4"), 0};
     util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
-    Server server{ctx, endpoint, std::nullopt, ProcessingPolicy::Sequential, std::nullopt, tagDecoratorFactory};
+    Server server{
+        ctx, endpoint, std::nullopt, ProcessingPolicy::Sequential, std::nullopt, tagDecoratorFactory, std::nullopt
+    };
     auto maybeError = server.run();
     ASSERT_TRUE(maybeError.has_value());
     EXPECT_THAT(*maybeError, testing::HasSubstr("Error creating TCP acceptor"));

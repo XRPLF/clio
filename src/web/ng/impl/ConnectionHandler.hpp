@@ -66,6 +66,7 @@ private:
     std::optional<size_t> maxParallelRequests_;
 
     std::reference_wrapper<util::TagDecoratorFactory> tagFactory_;
+    std::optional<size_t> maxSubscriptionSendQueueSize_;
 
     TargetToHandlerMap getHandlers_;
     TargetToHandlerMap postHandlers_;
@@ -77,7 +78,8 @@ public:
     ConnectionHandler(
         ProcessingPolicy processingPolicy,
         std::optional<size_t> maxParallelRequests,
-        util::TagDecoratorFactory& tagFactory
+        util::TagDecoratorFactory& tagFactory,
+        std::optional<size_t> maxSubscriptionSendQueueSize
     );
 
     void

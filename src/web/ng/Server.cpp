@@ -182,12 +182,13 @@ Server::Server(
     std::optional<boost::asio::ssl::context> sslContext,
     ProcessingPolicy processingPolicy,
     std::optional<size_t> parallelRequestLimit,
-    util::TagDecoratorFactory tagDecoratorFactory
+    util::TagDecoratorFactory tagDecoratorFactory,
+    std::optional<size_t> maxSubscriptionSendQueueSize
 )
     : ctx_{ctx}
     , sslContext_{std::move(sslContext)}
     , tagDecoratorFactory_{tagDecoratorFactory}
-    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_}
+    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize}
     , endpoint_{std::move(endpoint)}
 {
 }
@@ -312,13 +313,16 @@ make_Server(util::Config const& config, boost::asio::io_context& context)
         return std::unexpected{fmt::format("Invalid 'server.processing_strategy': {}", processingStrategyStr)};
     }
 
+    auto const maxSubscriptionSendQueueSize = serverConfig.maybeValue<size_t>("ws_max_sending_queue_size");
+
     return Server{
         context,
         std::move(endpoint).value(),
         std::move(expectedSslContext).value(),
         processingPolicy,
         parallelRequestLimit,
-        util::TagDecoratorFactory(config)
+        util::TagDecoratorFactory(config),
+        maxSubscriptionSendQueueSize
     };
 }
 

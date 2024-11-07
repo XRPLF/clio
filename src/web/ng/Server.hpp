@@ -65,6 +65,7 @@ public:
      * @param sslContext The SSL context to use (optional).
      * @param connectionHandler The connection handler.
      * @param tagDecoratorFactory The tag decorator factory.
+     * @param maxSubscriptionSendQueueSize The maximum size of the subscription send queue.
      */
     Server(
         boost::asio::io_context& ctx,
@@ -72,7 +73,8 @@ public:
         std::optional<boost::asio::ssl::context> sslContext,
         ProcessingPolicy processingPolicy,
         std::optional<size_t> parallelRequestLimit,
-        util::TagDecoratorFactory tagDecoratorFactory
+        util::TagDecoratorFactory tagDecoratorFactory,
+        std::optional<size_t> maxSubscriptionSendQueueSize
     );
 
     /**

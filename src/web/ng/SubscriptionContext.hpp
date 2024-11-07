@@ -31,9 +31,11 @@
 #include <boost/signals2/variadic_signal.hpp>
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace web::ng {
@@ -52,6 +54,7 @@ public:
 
 private:
     std::reference_wrapper<impl::WsConnectionBase> connection_;
+    std::optional<size_t> maxSendQueueSize_;
     util::CoroutineGroup tasksGroup_;
     boost::asio::yield_context yield_;
     ErrorHandler errorHandler_;
@@ -76,6 +79,7 @@ public:
     SubscriptionContext(
         util::TagDecoratorFactory const& factory,
         impl::WsConnectionBase& connection,
+        std::optional<size_t> maxSendQueueSize,
         boost::asio::yield_context yield,
         ErrorHandler errorHandler
     );

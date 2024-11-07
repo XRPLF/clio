@@ -109,9 +109,13 @@ ConnectionHandler::StringHash::operator()(std::string const& str) const
 ConnectionHandler::ConnectionHandler(
     ProcessingPolicy processingPolicy,
     std::optional<size_t> maxParallelRequests,
-    util::TagDecoratorFactory& tagFactory
+    util::TagDecoratorFactory& tagFactory,
+    std::optional<size_t> maxSubscriptionSendQueueSize
 )
-    : processingPolicy_{processingPolicy}, maxParallelRequests_{maxParallelRequests}, tagFactory_{tagFactory}
+    : processingPolicy_{processingPolicy}
+    , maxParallelRequests_{maxParallelRequests}
+    , tagFactory_{tagFactory}
+    , maxSubscriptionSendQueueSize_{maxSubscriptionSendQueueSize}
 {
 }
 
@@ -146,7 +150,11 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
         auto* ptr = dynamic_cast<impl::WsConnectionBase*>(connectionPtr.get());
         ASSERT(ptr != nullptr, "Casted not websocket connection");
         subscriptionContext = std::make_shared<SubscriptionContext>(
-            tagFactory_, *ptr, yield, [this](Error const& e, Connection const& c) { return handleError(e, c); }
+            tagFactory_,
+            *ptr,
+            maxSubscriptionSendQueueSize_,
+            yield,
+            [this](Error const& e, Connection const& c) { return handleError(e, c); }
         );
     }
     SubscriptionContextPtr subscriptionContextInterfacePtr = subscriptionContext;

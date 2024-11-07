@@ -27,6 +27,7 @@
 #include "web/ng/impl/MockWsConnection.hpp"
 
 #include <boost/asio/buffer.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
@@ -34,6 +35,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string>
@@ -46,9 +48,9 @@ struct ng_SubscriptionContextTests : SyncAsioContextTest {
     testing::StrictMock<testing::MockFunction<bool(Error const&, Connection const&)>> errorHandler_;
 
     SubscriptionContext
-    makeSubscriptionContext(boost::asio::yield_context yield)
+    makeSubscriptionContext(boost::asio::yield_context yield, std::optional<size_t> maxSendQueueSize = std::nullopt)
     {
-        return SubscriptionContext{tagFactory_, connection_, yield, errorHandler_.AsStdFunction()};
+        return SubscriptionContext{tagFactory_, connection_, maxSendQueueSize, yield, errorHandler_.AsStdFunction()};
     }
 };
 
@@ -67,6 +69,33 @@ TEST_F(ng_SubscriptionContextTests, Send)
     });
 }
 
+TEST_F(ng_SubscriptionContextTests, SendOrder)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto subscriptionContext = makeSubscriptionContext(yield);
+        auto const message1 = std::make_shared<std::string>("message1");
+        auto const message2 = std::make_shared<std::string>("message2");
+
+        testing::Sequence sequence;
+        EXPECT_CALL(connection_, sendBuffer)
+            .InSequence(sequence)
+            .WillOnce([&message1](boost::asio::const_buffer buffer, auto, auto) {
+                EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message1);
+                return std::nullopt;
+            });
+        EXPECT_CALL(connection_, sendBuffer)
+            .InSequence(sequence)
+            .WillOnce([&message2](boost::asio::const_buffer buffer, auto, auto) {
+                EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message2);
+                return std::nullopt;
+            });
+
+        subscriptionContext.send(message1);
+        subscriptionContext.send(message2);
+        subscriptionContext.disconnect(yield);
+    });
+}
+
 TEST_F(ng_SubscriptionContextTests, SendFailed)
 {
     runSpawn([this](boost::asio::yield_context yield) {
@@ -79,6 +108,27 @@ TEST_F(ng_SubscriptionContextTests, SendFailed)
         });
         EXPECT_CALL(errorHandler_, Call).WillOnce(testing::Return(true));
         EXPECT_CALL(connection_, close);
+        subscriptionContext.send(message);
+        subscriptionContext.disconnect(yield);
+    });
+}
+
+TEST_F(ng_SubscriptionContextTests, SendTooManySubscriptions)
+{
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto subscriptionContext = makeSubscriptionContext(yield, 1);
+        auto const message = std::make_shared<std::string>("message1");
+
+        EXPECT_CALL(connection_, sendBuffer)
+            .WillOnce([&message](boost::asio::const_buffer buffer, boost::asio::yield_context innerYield, auto) {
+                boost::asio::post(innerYield);  // simulate send is slow by switching to another coroutine
+                EXPECT_EQ(boost::beast::buffers_to_string(buffer), *message);
+                return std::nullopt;
+            });
+        EXPECT_CALL(connection_, close);
+
+        subscriptionContext.send(message);
+        subscriptionContext.send(message);
         subscriptionContext.send(message);
         subscriptionContext.disconnect(yield);
     });

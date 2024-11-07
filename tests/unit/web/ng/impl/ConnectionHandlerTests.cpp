@@ -64,7 +64,7 @@ namespace websocket = boost::beast::websocket;
 
 struct ConnectionHandlerTest : SyncAsioContextTest {
     ConnectionHandlerTest(ProcessingPolicy policy, std::optional<size_t> maxParallelConnections)
-        : tagFactory_{util::Config{}}, connectionHandler_{policy, maxParallelConnections, tagFactory_}
+        : tagFactory_{util::Config{}}, connectionHandler_{policy, maxParallelConnections, tagFactory_, std::nullopt}
     {
     }
 
