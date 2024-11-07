@@ -27,6 +27,7 @@
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <fmt/core.h>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/ErrorCodes.h>
 
 #include <concepts>
@@ -563,10 +564,12 @@ struct Hex256ItemType final {
 
         // loop through each item in the array and make sure it is uint256 hex string
         for (auto const& elem : res.as_array()) {
-            auto const result = CustomValidators::Uint256HexStringValidator.verify(elem, key);
-            if (!result.has_value()) {
-                return Error{result.error()};
-            }
+            ripple::uint256 num;
+            if (!num.parseHex(elem.as_string()))
+                return Error{Status{
+                    RippledError::rpcINVALID_PARAMS,
+                    "Invalid field 'credentials', not an array of CredentialID(hash256)."
+                }};
         }
         return {};
     }

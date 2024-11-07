@@ -217,11 +217,11 @@ generateTestValuesForParametersTest()
                 ACCOUNT
             ),
             "invalidParams",
-            "Invalid parameters."
+            "authorized_credentials not array"
         },
 
         ParamTestCaseBundle{
-            "DepositPreauthAuthorizeEmptyAuthorizeCredentials",
+            "DepositPreauthEmptyAuthorizeCredentials",
             fmt::format(
                 R"({{
                     "deposit_preauth": {{

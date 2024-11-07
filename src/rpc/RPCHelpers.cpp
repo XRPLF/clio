@@ -26,6 +26,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
+#include "util/Assert.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
@@ -1347,18 +1348,13 @@ fetchCredentials(
     }
 
     for (auto const& elem : credID.value()) {
-        if (!elem.is_string()) {
-            return Error{Status{
-                RippledError::rpcINVALID_PARAMS, "Invalid field 'credentials', not an array of CredentialID(hash256)"
-            }};
-        }
+        ASSERT(elem.is_string(), "should already be checked in validators.hpp that elem is a string.");
 
         ripple::uint256 credHash;
-        if (!credHash.parseHex(boost::json::value_to<std::string>(elem))) {
-            return Error{Status{
-                RippledError::rpcINVALID_PARAMS, "Invalid field 'credentials', not an array of CredentialID(hash256)."
-            }};
-        }
+        ASSERT(
+            credHash.parseHex(boost::json::value_to<std::string>(elem)),
+            "should already be checked in validators.hpp that elem is a uin256 hex"
+        );
 
         auto const credKeylet = ripple::keylet::credential(credHash).key;
         auto const credLedgerObject = backend->fetchLedgerObject(credKeylet, info.seq, ctx.yield);

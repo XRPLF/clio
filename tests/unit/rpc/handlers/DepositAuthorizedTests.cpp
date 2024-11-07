@@ -167,7 +167,7 @@ generateTestValuesForParametersTest()
             "ledgerIndexMalformed",
         },
         {
-            "CredentialNotArray",
+            "CredentialsNotArray",
             R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
                 "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
@@ -175,6 +175,17 @@ generateTestValuesForParametersTest()
             })",
             "invalidParams",
             "Invalid parameters.",
+        },
+        {
+            "CredentialsNotHexedStringInArray",
+            R"({
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "credentials": ["234", "432"]
+            })",
+            "invalidParams",
+            "Invalid field 'credentials', not an array of CredentialID(hash256).",
         }
     };
 }

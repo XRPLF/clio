@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "util/Assert.hpp"
+
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
@@ -89,13 +91,17 @@ parseAuthorizeCredentials(boost::json::array const& jv)
         auto const issuer = ripple::parseBase58<ripple::AccountID>(
             static_cast<std::string>(jo.at(ripple::jss::issuer.c_str()).as_string())
         );
-        if (!issuer || !*issuer)
-            return {};
+        ASSERT(
+            issuer.has_value(), "issuer must be present, should already be checked in AuthorizeCredentialValidator."
+        );
 
         auto const credentialType =
             ripple::strUnHex(static_cast<std::string>(jo.at(ripple::jss::credential_type.c_str()).as_string()));
-        if (!credentialType || credentialType->empty())
-            return {};
+
+        ASSERT(
+            credentialType.has_value(),
+            "credential_type must be present, should already be checked in AuthorizeCredentialValidator."
+        );
 
         auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
         credential.setAccountID(ripple::sfIssuer, *issuer);

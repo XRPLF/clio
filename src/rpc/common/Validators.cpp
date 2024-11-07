@@ -266,44 +266,41 @@ CustomValidator CustomValidators::CredentialTypeValidator =
 CustomValidator CustomValidators::AuthorizeCredentialValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (not value.is_array())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotObject"}};
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + " not array"}};
 
-        try {
-            auto const& authCred = value.as_array();
-            if (authCred.size() == 0)
-                return Error{Status{
-                    RippledError::rpcINVALID_PARAMS,
-                    fmt::format("Requires at least one element in authorized_credentials array")
-                }};
+        auto const& authCred = value.as_array();
+        if (authCred.size() == 0) {
+            return Error{Status{
+                RippledError::rpcINVALID_PARAMS,
+                fmt::format("Requires at least one element in authorized_credentials array")
+            }};
+        }
 
-            if (authCred.size() > ripple::maxCredentialsArraySize)
-                return Error{Status{
-                    RippledError::rpcINVALID_PARAMS,
-                    fmt::format(
-                        "Max {} number of credentials in authorized_credentials array", ripple::maxCredentialsArraySize
-                    )
-                }};
+        if (authCred.size() > ripple::maxCredentialsArraySize) {
+            return Error{Status{
+                RippledError::rpcINVALID_PARAMS,
+                fmt::format(
+                    "Max {} number of credentials in authorized_credentials array", ripple::maxCredentialsArraySize
+                )
+            }};
+        }
 
-            for (auto const& credObj : value.as_array()) {
-                auto const& obj = credObj.as_object();
+        for (auto const& credObj : value.as_array()) {
+            auto const& obj = credObj.as_object();
 
-                if (!obj.contains("issuer"))
-                    return Error{Status{RippledError::rpcINVALID_PARAMS, "Field 'Issuer' is required but missing."}};
+            if (!obj.contains("issuer"))
+                return Error{Status{RippledError::rpcINVALID_PARAMS, "Field 'Issuer' is required but missing."}};
 
-                if (auto const err = IssuerValidator.verify(credObj, "issuer"); !err)
-                    return err;
+            if (auto const err = IssuerValidator.verify(credObj, "issuer"); !err)
+                return err;
 
-                if (!obj.contains("credential_type"))
-                    return Error{
-                        Status{RippledError::rpcINVALID_PARAMS, "Field 'CredentialType' is required but missing."}
-                    };
-
-                if (auto const err = CredentialTypeValidator.verify(credObj, "credential_type"); !err)
-                    return err;
+            if (!obj.contains("credential_type")) {
+                return Error{Status{RippledError::rpcINVALID_PARAMS, "Field 'CredentialType' is required but missing."}
+                };
             }
 
-        } catch (std::runtime_error const&) {
-            return Error{Status{ClioError::rpcMALFORMED_REQUEST}};
+            if (auto const err = CredentialTypeValidator.verify(credObj, "credential_type"); !err)
+                return err;
         }
 
         return MaybeError{};
