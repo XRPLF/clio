@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,22 +17,40 @@
 */
 //==============================================================================
 
-#pragma once
+#include "util/MockMigrationBackend.hpp"
+#include "util/config/Config.hpp"
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/Protocol.h>
+#include <memory>
 
-#include <string>
+struct SimpleTestMigrator {
+    using Backend = MockMigrationBackend;
+    static constexpr auto name = "SimpleTestMigrator";
+    static void
+    runMigration(std::shared_ptr<MockMigrationBackend>, util::Config const&)
+    {
+    }
 
-std::string
-hexStringToBinaryString(std::string const& hex);
+    static void
+    reset()
+    {
+    }
+};
 
-ripple::uint256
-binaryStringToUint256(std::string const& bin);
-
-std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
-
-std::vector<std::string>
-splitLines(std::string const& rawlines, char delimiter);
+struct RollbackableTestMigrator {
+    using Backend = MockMigrationBackend;
+    static constexpr auto name = "RollbackableTestMigrator";
+    static bool ranMigration;
+    static bool ranRollback;
+    static void
+    runMigration(std::shared_ptr<MockMigrationBackend>, util::Config const&)
+    {
+    }
+    static void
+    runRollback(std::shared_ptr<MockMigrationBackend>)
+    {
+    }
+    static void
+    reset()
+    {
+    }
+};

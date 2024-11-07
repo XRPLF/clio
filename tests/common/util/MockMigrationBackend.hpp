@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,20 +19,25 @@
 
 #pragma once
 
+#include "util/MockBackend.hpp"
+#include "util/config/Config.hpp"
+
+#include <boost/asio/spawn.hpp>
+#include <boost/json/object.hpp>
+#include <gmock/gmock.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/Protocol.h>
 
 #include <string>
 
-std::string
-hexStringToBinaryString(std::string const& hex);
+using namespace data;
 
-ripple::uint256
-binaryStringToUint256(std::string const& bin);
+struct MockMigrationBackend : public MockBackend {
+    MockMigrationBackend(util::Config) : MockBackend(util::Config{})
+    {
+    }
 
-std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
-
-std::vector<std::string>
-splitLines(std::string const& rawlines, char delimiter);
+    MOCK_METHOD(void, removeMigratedMigrator, (std::string const&), ());
+    MOCK_METHOD(void, writeMigratedMigrator, (std::string const&), ());
+};

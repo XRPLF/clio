@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2022-2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,22 +17,28 @@
 */
 //==============================================================================
 
-#pragma once
+#include "migration/cassandra/ObjectsAdapter.hpp"
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/Protocol.h>
+#include <boost/asio/spawn.hpp>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/Serializer.h>
 
-#include <string>
+#include <optional>
+#include <utility>
 
-std::string
-hexStringToBinaryString(std::string const& hex);
+namespace migration::cassandra {
 
-ripple::uint256
-binaryStringToUint256(std::string const& bin);
+void
+ObjectsAdapter::onRowRead(TableObjectsDesc::Row const& row)
+{
+    auto const& [key, ledgerSeq, blob] = row;
+    // the blob can be empty which means the ledger state is deleted
+    if (blob.empty()) {
+        onStateRead_(ledgerSeq, std::nullopt);
+        return;
+    }
+    ripple::SLE sle{ripple::SerialIter{blob.data(), blob.size()}, key};
+    onStateRead_(ledgerSeq, std::make_optional(std::move(sle)));
+}
 
-std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
-
-std::vector<std::string>
-splitLines(std::string const& rawlines, char delimiter);
+}  // namespace migration::cassandra

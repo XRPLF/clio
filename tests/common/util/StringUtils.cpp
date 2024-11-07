@@ -25,7 +25,9 @@
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/LedgerHeader.h>
 
+#include <sstream>
 #include <string>
+#include <vector>
 
 std::string
 hexStringToBinaryString(std::string const& hex)
@@ -55,3 +57,18 @@ ledgerHeaderToBinaryString(ripple::LedgerHeader const& info)
 
     return strBlob;
 };
+
+std::vector<std::string>
+splitLines(std::string const& rawlines, char delimiter)
+{
+    std::vector<std::string> lines;
+    std::istringstream stream(rawlines);
+    std::string line;
+
+    // Read each line and add it to the vector
+    while (std::getline(stream, line, delimiter)) {
+        lines.push_back(line);
+    }
+
+    return lines;
+}

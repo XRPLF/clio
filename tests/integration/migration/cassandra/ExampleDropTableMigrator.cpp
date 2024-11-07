@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2022-2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,22 +17,22 @@
 */
 //==============================================================================
 
-#pragma once
+#include "migration/cassandra/ExampleDropTableMigrator.hpp"
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/Protocol.h>
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
 
-#include <string>
+#include <memory>
 
-std::string
-hexStringToBinaryString(std::string const& hex);
+void
+ExampleDropTableMigrator::runMigration(std::shared_ptr<Backend> const& backend, util::Config const&)
+{
+    backend->dropDiffTable();
+}
 
-ripple::uint256
-binaryStringToUint256(std::string const& bin);
-
-std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
-
-std::vector<std::string>
-splitLines(std::string const& rawlines, char delimiter);
+void
+ExampleDropTableMigrator::runRollback(std::shared_ptr<Backend> const&)
+{
+    util::Logger log{"Migration"};
+    LOG(log.error()) << "Rollback not implemented for ExampleDropTableMigrato, the table will not be restored";
+}

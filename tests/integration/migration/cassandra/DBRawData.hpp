@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2022-2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,20 +19,11 @@
 
 #pragma once
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/Protocol.h>
-
+#include <array>
 #include <string>
 
-std::string
-hexStringToBinaryString(std::string const& hex);
+extern std::array<std::string, 100> TransactionsRawData;
 
-ripple::uint256
-binaryStringToUint256(std::string const& bin);
+extern std::array<std::string, 100> ObjectsRawData;
 
-std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
-
-std::vector<std::string>
-splitLines(std::string const& rawlines, char delimiter);
+extern std::array<std::string, 50> LedgerHeaderRawData;

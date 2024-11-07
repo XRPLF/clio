@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2022-2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,22 +17,23 @@
 */
 //==============================================================================
 
-#pragma once
+#include "migration/cassandra/TransactionsAdapter.hpp"
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/Protocol.h>
+#include <boost/asio/spawn.hpp>
+#include <xrpl/protocol/STTx.h>
+#include <xrpl/protocol/Serializer.h>
+#include <xrpl/protocol/TxMeta.h>
 
-#include <string>
+namespace migration::cassandra {
 
-std::string
-hexStringToBinaryString(std::string const& hex);
+void
+TransactionsAdapter::onRowRead(TableTransactionsDesc::Row const& row)
+{
+    auto const& [txHash, date, ledgerSeq, metaBlob, txBlob] = row;
 
-ripple::uint256
-binaryStringToUint256(std::string const& bin);
-
-std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
-
-std::vector<std::string>
-splitLines(std::string const& rawlines, char delimiter);
+    ripple::SerialIter it{txBlob.data(), txBlob.size()};
+    ripple::STTx const sttx{it};
+    ripple::TxMeta const txMeta{sttx.getTransactionID(), ledgerSeq, metaBlob};
+    onTransactionRead_(sttx, txMeta);
+}
+}  // namespace migration::cassandra

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2022-2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,20 +19,20 @@
 
 #pragma once
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/Protocol.h>
+#include "migration/MigrationManagerInterface.hpp"
+#include "util/config/Config.hpp"
 
-#include <string>
+#include <memory>
 
-std::string
-hexStringToBinaryString(std::string const& hex);
+namespace migration {
 
-ripple::uint256
-binaryStringToUint256(std::string const& bin);
+/**
+ * @brief The factory to create a MigrationManagerInferface
+ *
+ * @param config The configuration of the migration application, it contains the database connection configuration and
+ * other migration specific configurations
+ */
+std::shared_ptr<MigrationManagerInterface>
+makeMigrationManager(util::Config const& config);
 
-std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
-
-std::vector<std::string>
-splitLines(std::string const& rawlines, char delimiter);
+}  // namespace migration

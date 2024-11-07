@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,22 +17,27 @@
 */
 //==============================================================================
 
-#pragma once
+#include "migration/MigrationManagerFactory.hpp"
+#include "util/LoggerFixtures.hpp"
+#include "util/config/Config.hpp"
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/Protocol.h>
+#include <boost/json/parse.hpp>
+#include <gtest/gtest.h>
 
-#include <string>
+#include <stdexcept>
 
-std::string
-hexStringToBinaryString(std::string const& hex);
+struct MigrationManagerFactoryTests : public NoLoggerFixture {};
 
-ripple::uint256
-binaryStringToUint256(std::string const& bin);
+TEST_F(MigrationManagerFactoryTests, InvalidDBType)
+{
+    constexpr static auto cfgJson = R"JSON(
+        {
+            "database": {
+                "type": "invalid"
+            }
+        }
+    )JSON";
+    util::Config config(boost::json::parse(cfgJson));
 
-std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
-
-std::vector<std::string>
-splitLines(std::string const& rawlines, char delimiter);
+    EXPECT_THROW(migration::makeMigrationManager(config), std::runtime_error);
+}

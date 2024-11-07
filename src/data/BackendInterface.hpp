@@ -45,6 +45,7 @@
 #include <string>
 #include <thread>
 #include <type_traits>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -547,6 +548,15 @@ public:
         std::uint32_t limit,
         boost::asio::yield_context yield
     ) const;
+
+    /**
+     * @brief Database-specific implementation of fetching the migrated features.
+     *
+     * @param yield The coroutine context
+     * @return The name of migrated features on success; nullopt otherwise
+     */
+    virtual std::optional<std::unordered_set<std::string>>
+    fetchMigratedFeatures(boost::asio::yield_context yield) const = 0;
 
     /**
      * @brief Synchronously fetches the ledger range from DB.

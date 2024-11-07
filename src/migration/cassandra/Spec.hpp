@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2022-2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,20 +19,23 @@
 
 #pragma once
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/Protocol.h>
+#include <boost/asio/spawn.hpp>
 
-#include <string>
+#include <concepts>
+#include <tuple>
+#include <type_traits>
 
-std::string
-hexStringToBinaryString(std::string const& hex);
+namespace migration::cassandra {
+// Define the concept for a class like TableObjectsDesc
+template <typename T>
+concept TableSpec = requires {
+    // Check that 'row' exists and is a tuple
+    // keys types are at the begining and the other fields types sort in alphabetical order
+    typename T::Row;
+    requires std::tuple_size<typename T::Row>::value >= 0;  // Ensures 'row' is a tuple
 
-ripple::uint256
-binaryStringToUint256(std::string const& bin);
-
-std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
-
-std::vector<std::string>
-splitLines(std::string const& rawlines, char delimiter);
+    // Check that static constexpr members 'partitionKey' and 'tableName' exist
+    { T::PARTITION_KEY } -> std::convertible_to<char const*>;
+    { T::TABLE_NAME } -> std::convertible_to<char const*>;
+};
+}  // namespace migration::cassandra

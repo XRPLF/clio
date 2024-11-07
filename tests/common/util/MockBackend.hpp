@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 using namespace data;
@@ -172,6 +173,13 @@ struct MockBackend : public BackendInterface {
         std::optional<ripple::uint256>,
         doFetchSuccessorKey,
         (ripple::uint256, std::uint32_t const, boost::asio::yield_context),
+        (const, override)
+    );
+
+    MOCK_METHOD(
+        std::optional<std::unordered_set<std::string>>,
+        fetchMigratedFeatures,
+        (boost::asio::yield_context),
         (const, override)
     );
 

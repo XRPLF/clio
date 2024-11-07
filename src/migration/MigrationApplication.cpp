@@ -1,0 +1,119 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2022-2024, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#include "migration/MigrationApplication.hpp"
+
+#include "migration/MigrationManagerFactory.hpp"
+#include "migration/MigrationManagerInterface.hpp"
+#include "util/OverloadSet.hpp"
+#include "util/config/Config.hpp"
+#include "util/log/Logger.hpp"
+#include "util/prometheus/Prometheus.hpp"
+
+#include <cstdlib>
+#include <iostream>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <variant>
+
+namespace app {
+
+MigratorApplication::MigratorApplication(util::Config const& config, Cmd command) : cmd_(std::move(command))
+{
+    PrometheusService::init(config);
+
+    migrationManager_ = migration::makeMigrationManager(config);
+}
+
+int
+MigratorApplication::run()
+{
+    return std::visit(
+        util::OverloadSet{
+            [this](Cmd::Status const&) { return printStatus(); },
+            [this](Cmd::Migration const& cmdBundle) { return migrate(cmdBundle.migratorName); },
+            [this](Cmd::Rollback const& cmdBundle) { return rollback(cmdBundle.migratorName); }
+        },
+        cmd_.state
+    );
+}
+
+int
+MigratorApplication::printStatus()
+{
+    std::cout << "Current Migration Status:" << std::endl;
+    auto const allMigratorsStatus = migrationManager_->allMigratorsStatus();
+
+    if (allMigratorsStatus.empty()) {
+        std::cout << "No migrator found" << std::endl;
+    }
+
+    for (auto const& [migrator, status] : allMigratorsStatus) {
+        std::cout << "Migrator: " << migrator << " - "
+                  << (status == migration::MigratorStatus::Migrated ? "migrated" : "not migrated") << std::endl;
+    }
+    return EXIT_SUCCESS;
+}
+
+int
+MigratorApplication::migrate(std::string const& migratorName)
+{
+    auto const status = migrationManager_->getMigratorStatusByName(migratorName);
+    if (status == migration::MigratorStatus::Migrated) {
+        std::cout << "Migrator " << migratorName << " has already migrated" << std::endl;
+        printStatus();
+        return EXIT_SUCCESS;
+    }
+
+    if (status == migration::MigratorStatus::NotKnown) {
+        std::cout << "Migrator " << migratorName << " not found" << std::endl;
+        printStatus();
+        return EXIT_FAILURE;
+    }
+
+    std::cout << "Running migration for " << migratorName << std::endl;
+    migrationManager_->runMigration(migratorName);
+    std::cout << "Migration for " << migratorName << " has finished" << std::endl;
+    return EXIT_SUCCESS;
+}
+
+int
+MigratorApplication::rollback(std::string const& migratorName)
+{
+    auto const status = migrationManager_->getMigratorStatusByName(migratorName);
+    if (status == migration::MigratorStatus::NotMigrated) {
+        std::cout << "Migrator " << migratorName << " yet not migrated" << std::endl;
+        printStatus();
+        return EXIT_SUCCESS;
+    }
+
+    if (status == migration::MigratorStatus::NotKnown) {
+        std::cout << "Migrator " << migratorName << " not found" << std::endl;
+        printStatus();
+        return EXIT_FAILURE;
+    }
+
+    std::cout << "Running rollback for " << migratorName << std::endl;
+    migrationManager_->runRollback(migratorName);
+    std::cout << "Rollback for " << migratorName << " finished" << std::endl;
+    return EXIT_SUCCESS;
+}
+
+}  // namespace app

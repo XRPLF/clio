@@ -53,6 +53,7 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -72,12 +73,14 @@ class BasicCassandraBackend : public BackendInterface {
 
     SettingsProviderType settingsProvider_;
     Schema<SettingsProviderType> schema_;
+
+    std::atomic_uint32_t ledgerSequence_ = 0u;
+
+protected:
     Handle handle_;
 
     // have to be mutable because BackendInterface constness :(
     mutable ExecutionStrategyType executor_;
-
-    std::atomic_uint32_t ledgerSequence_ = 0u;
 
 public:
     /**
@@ -833,6 +836,28 @@ public:
         );
 
         return results;
+    }
+
+    std::optional<std::unordered_set<std::string>>
+    fetchMigratedFeatures(boost::asio::yield_context yield) const override
+    {
+        auto const res = executor_.read(yield, schema_->selectMigratedFeatures);
+        if (not res) {
+            LOG(log_.error()) << "Could not fetch migrated features: " << res.error();
+            return {};
+        }
+
+        std::unordered_set<std::string> features;
+        auto const& results = res.value();
+        if (not results) {
+            LOG(log_.warn()) << "No migrated features in database";
+            return features;
+        }
+
+        for (auto [feature] : extract<std::string>(results))
+            features.insert(std::move(feature));
+
+        return features;
     }
 
     void

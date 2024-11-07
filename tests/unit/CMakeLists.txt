@@ -50,6 +50,11 @@ target_sources(
           Main.cpp
           Playground.cpp
           ProfilerTests.cpp
+          # Migration
+          migration/MigratorRegisterTests.cpp
+          migration/MigrationManagerFactoryTests.cpp
+          migration/cassandra/CassandraMigrationManagerTests.cpp
+          migration/cassandra/FullTableScannerTests.cpp
           # RPC
           rpc/APIVersionTests.cpp
           rpc/BaseTests.cpp

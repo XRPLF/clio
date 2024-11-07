@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2022-2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -19,20 +19,24 @@
 
 #pragma once
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/Protocol.h>
+#include "migration/cassandra/CassandraMigrationTestBackend.hpp"
+#include "util/config/Config.hpp"
 
-#include <string>
+#include <memory>
 
-std::string
-hexStringToBinaryString(std::string const& hex);
+/**
+ * @brief Example migrator for the ledgers table. In this example, we show how to migrate the data from table without
+ * full table scan. We create an index table called "ledger_example" which maintains the map of ledger
+ * sequence to account hash. Because ledger sequence is the partition key of ledgers table, we can just fetch the data
+ * via ledger sequence without full table scan.
+ */
+struct ExampleLedgerMigrator {
+    static constexpr char const* name = "ExampleLedgerMigrator";
+    using Backend = CassandraMigrationTestBackend;
 
-ripple::uint256
-binaryStringToUint256(std::string const& bin);
+    static void
+    runMigration(std::shared_ptr<Backend> const& backend, util::Config const& config);
 
-std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
-
-std::vector<std::string>
-splitLines(std::string const& rawlines, char delimiter);
+    static void
+    runRollback(std::shared_ptr<Backend> const& backend);
+};

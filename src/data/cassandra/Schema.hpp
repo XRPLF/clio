@@ -270,6 +270,18 @@ public:
             qualifiedTableName(settingsProvider_.get(), "mp_token_holders")
         ));
 
+        statements.emplace_back(fmt::format(
+            R"(
+           CREATE TABLE IF NOT EXISTS {}
+                  ( 
+                    status TEXT,
+                    feature_name TEXT,
+                    PRIMARY KEY (status, feature_name)
+                  ) 
+            )",
+            qualifiedTableName(settingsProvider_.get(), "migrated_features")
+        ));
+
         return statements;
     }();
 
@@ -766,6 +778,17 @@ public:
                   FROM {}
                 )",
                 qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
+        }();
+
+        PreparedStatement selectMigratedFeatures = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                SELECT feature_name
+                  FROM {}
+                WHERE status = 'migrated'
+                )",
+                qualifiedTableName(settingsProvider_.get(), "migrated_features")
             ));
         }();
     };

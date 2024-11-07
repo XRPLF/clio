@@ -21,6 +21,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <string_view>
 #include <type_traits>
 
 namespace util {
@@ -44,6 +46,27 @@ hasNoDuplicates(auto&&... values)
     auto end = store.end();
     std::ranges::sort(store);
     return (std::unique(std::begin(store), end) == end);
+}
+
+/**
+ * @brief Checks that the list of given type contains no duplicates
+ *
+ * @tparam Types The types to check
+ * @returns true if no duplicates exist; false otherwise
+ */
+template <typename... Types>
+constexpr bool
+hasNoDuplicateNames()
+{
+    constexpr std::array<std::string_view, sizeof...(Types)> names = {Types::name...};
+    for (std::size_t i = 0; i < names.size(); ++i) {
+        for (std::size_t j = i + 1; j < names.size(); ++j) {
+            if (names[i] == names[j]) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 }  // namespace util
