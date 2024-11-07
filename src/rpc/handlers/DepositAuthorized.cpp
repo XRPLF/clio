@@ -80,9 +80,8 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
     Output response;
 
     auto it = ripple::SerialIter{dstAccountLedgerObject->data(), dstAccountLedgerObject->size()};
-    auto sleDest = ripple::SLE{it, dstKeylet};
-    bool const reqAuth = ((sleDest.getFieldU32(ripple::sfFlags) & ripple::lsfDepositAuth) != 0u) &&
-        (sourceAccountID != destinationAccountID);
+    auto const sleDest = ripple::SLE{it, dstKeylet};
+    bool const reqAuth = sleDest.isFlag(ripple::lsfDepositAuth) && (sourceAccountID != destinationAccountID);
     bool const credentialsPresent = input.credentials.has_value();
 
     ripple::STArray authCreds;

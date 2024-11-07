@@ -1353,7 +1353,7 @@ fetchCredentials(
         ripple::uint256 credHash;
         ASSERT(
             credHash.parseHex(boost::json::value_to<std::string>(elem)),
-            "should already be checked in validators.hpp that elem is a uin256 hex"
+            "should already be checked in validators.hpp that elem is a uint256 hex"
         );
 
         auto const credKeylet = ripple::keylet::credential(credHash).key;
