@@ -23,14 +23,12 @@
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
 #include "web/SubscriptionContextInterface.hpp"
-#include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
 #include <boost/json/object.hpp>
 
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <utility>
 
@@ -56,7 +54,7 @@ struct Context : util::Taggable {
      * @param command The method/command requested
      * @param apiVersion The api_version parsed from the request
      * @param params Request's parameters/data as a JSON object
-     * @param connection The connection to the peer
+     * @param subscriptionContext The subscription context of the connection
      * @param tagFactory A factory that is used to generate tags to track requests and connections
      * @param range The ledger range that is available at the time of the request
      * @param clientIp IP of the peer
@@ -67,7 +65,7 @@ struct Context : util::Taggable {
         std::string command,
         std::uint32_t apiVersion,
         boost::json::object params,
-        std::shared_ptr<web::ConnectionBase> const& connection,
+        SubscriptionContextPtr subscriptionContext,
         util::TagDecoratorFactory const& tagFactory,
         data::LedgerRange const& range,
         std::string clientIp,
@@ -78,11 +76,7 @@ struct Context : util::Taggable {
         , method(std::move(command))
         , apiVersion(apiVersion)
         , params(std::move(params))
-        , session([&connection, &tagFactory]() {
-            if (connection == nullptr)
-                return SubscriptionContextPtr{};
-            return connection->subscriptionContext(tagFactory);
-        }())
+        , session(std::move(subscriptionContext))
         , range(range)
         , clientIp(std::move(clientIp))
         , isAdmin(isAdmin)

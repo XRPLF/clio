@@ -32,7 +32,7 @@
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
-#include "web/interface/ConnectionBase.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
@@ -109,8 +109,8 @@ public:
     Response
     operator()(
         Request const& request,
-        ConnectionContext connectionContext,
-        bool const isAdmin,
+        ConnectionMetadata const& connectionMetadata,
+        SubscriptionContextPtr subscriptionContext,
         boost::asio::yield_context yield
     )
     {
@@ -120,17 +120,22 @@ public:
         ASSERT(onTaskComplete.has_value(), "Coroutine group can't be full");
 
         bool const postSuccessful = rpcEngine_->post(
-            [this, &request, &response, onTaskComplete = onTaskComplete.value(), connectionContext, isAdmin](
-                boost::asio::yield_context yield
-            ) mutable {
+            [this,
+             &request,
+             &response,
+             onTaskComplete = onTaskComplete.value(),
+             &connectionMetadata,
+             subscriptionContext = std::move(subscriptionContext)](boost::asio::yield_context yield) mutable {
                 try {
                     auto parsedRequest = boost::json::parse(request.message()).as_object();
-                    LOG(perfLog_.debug()) << connectionContext.tag() << "Adding to work queue";
+                    LOG(perfLog_.debug()) << connectionMetadata.tag() << "Adding to work queue";
 
-                    if (not connectionContext.wasUpgraded() and shouldReplaceParams(parsedRequest))
+                    if (not connectionMetadata.wasUpgraded() and shouldReplaceParams(parsedRequest))
                         parsedRequest[JS(params)] = boost::json::array({boost::json::object{}});
 
-                    response = handleRequest(yield, request, std::move(parsedRequest), connectionContext, isAdmin);
+                    response = handleRequest(
+                        yield, request, std::move(parsedRequest), connectionMetadata, std::move(subscriptionContext)
+                    );
                 } catch (boost::system::system_error const& ex) {
                     // system_error thrown when json parsing failed
                     rpcEngine_->notifyBadSyntax();
@@ -142,14 +147,14 @@ public:
                     LOG(log_.warn()) << "Invalid argument error: " << ex.what() << ". For request: " << request;
                     response = impl::ErrorHelper{request}.makeJsonParsingError();
                 } catch (std::exception const& ex) {
-                    LOG(perfLog_.error()) << connectionContext.tag() << "Caught exception: " << ex.what();
+                    LOG(perfLog_.error()) << connectionMetadata.tag() << "Caught exception: " << ex.what();
                     rpcEngine_->notifyInternalError();
                     response = impl::ErrorHelper{request}.makeInternalError();
                 }
 
                 onTaskComplete();
             },
-            connectionContext.ip()
+            connectionMetadata.ip()
         );
 
         if (not postSuccessful) {
@@ -168,13 +173,13 @@ private:
         boost::asio::yield_context yield,
         Request const& rawRequest,
         boost::json::object&& request,
-        ConnectionContext connectionContext,
-        bool const isAdmin
+        ConnectionMetadata const& connectionMetadata,
+        SubscriptionContextPtr subscriptionContext
     )
     {
-        LOG(log_.info()) << connectionContext.tag() << (connectionContext.wasUpgraded() ? "ws" : "http")
+        LOG(log_.info()) << connectionMetadata.tag() << (connectionMetadata.wasUpgraded() ? "ws" : "http")
                          << " received request from work queue: " << util::removeSecret(request)
-                         << " ip = " << connectionContext.ip();
+                         << " ip = " << connectionMetadata.ip();
 
         try {
             auto const range = backend_->fetchLedgerRange();
@@ -185,33 +190,34 @@ private:
             }
 
             auto const context = [&] {
-                if (connectionContext.wasUpgraded()) {
+                if (connectionMetadata.wasUpgraded()) {
+                    ASSERT(subscriptionContext != nullptr, "Subscription context must exist for a WS connecton");
                     return rpc::make_WsContext(
                         yield,
                         request,
-                        connectionContext,
-                        tagFactory_.with(connectionContext.tag()),
+                        std::move(subscriptionContext),
+                        tagFactory_.with(connectionMetadata.tag()),
                         *range,
-                        connectionContext.ip(),
+                        connectionMetadata.ip(),
                         std::cref(apiVersionParser_),
-                        isAdmin
+                        connectionMetadata.isAdmin()
                     );
                 }
                 return rpc::make_HttpContext(
                     yield,
                     request,
-                    tagFactory_.with(connectionContext.tag()),
+                    tagFactory_.with(connectionMetadata.tag()),
                     *range,
-                    connectionContext.ip(),
+                    connectionMetadata.ip(),
                     std::cref(apiVersionParser_),
-                    isAdmin
+                    connectionMetadata.isAdmin()
                 );
             }();
 
             if (!context) {
                 auto const err = context.error();
-                LOG(perfLog_.warn()) << connectionContext.tag() << "Could not create Web context: " << err;
-                LOG(log_.warn()) << connectionContext.tag() << "Could not create Web context: " << err;
+                LOG(perfLog_.warn()) << connectionMetadata.tag() << "Could not create Web context: " << err;
+                LOG(log_.warn()) << connectionMetadata.tag() << "Could not create Web context: " << err;
 
                 // we count all those as BadSyntax - as the WS path would.
                 // Although over HTTP these will yield a 400 status with a plain text response (for most).
@@ -247,7 +253,7 @@ private:
                 // if the result is forwarded - just use it as is
                 // if forwarded request has error, for http, error should be in "result"; for ws, error should
                 // be at top
-                if (isForwarded && (json.contains(JS(result)) || connectionContext.wasUpgraded())) {
+                if (isForwarded && (json.contains(JS(result)) || connectionMetadata.wasUpgraded())) {
                     for (auto const& [k, v] : json)
                         response.insert_or_assign(k, v);
                 } else {
@@ -259,7 +265,7 @@ private:
 
                 // for ws there is an additional field "status" in the response,
                 // otherwise the "status" is in the "result" field
-                if (connectionContext.wasUpgraded()) {
+                if (connectionMetadata.wasUpgraded()) {
                     auto const appendFieldIfExist = [&](auto const& field) {
                         if (request.contains(field) and not request.at(field).is_null())
                             response[field] = request.at(field);
@@ -289,8 +295,8 @@ private:
         } catch (std::exception const& ex) {
             // note: while we are catching this in buildResponse too, this is here to make sure
             // that any other code that may throw is outside of buildResponse is also worked around.
-            LOG(perfLog_.error()) << connectionContext.tag() << "Caught exception: " << ex.what();
-            LOG(log_.error()) << connectionContext.tag() << "Caught exception: " << ex.what();
+            LOG(perfLog_.error()) << connectionMetadata.tag() << "Caught exception: " << ex.what();
+            LOG(log_.error()) << connectionMetadata.tag() << "Caught exception: " << ex.what();
 
             rpcEngine_->notifyInternalError();
             return impl::ErrorHelper(rawRequest, std::move(request)).makeInternalError();
