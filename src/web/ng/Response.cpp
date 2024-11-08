@@ -73,7 +73,7 @@ makeData(http::status status, MessageType message, Request const& request)
     }
 
     if (not request.isHttp())
-        return std::move(body);
+        return body;
 
     auto const& httpRequest = request.asHttpRequest()->get();
     std::string const contentType = isString<MessageType>() ? "text/html" : "application/json";
