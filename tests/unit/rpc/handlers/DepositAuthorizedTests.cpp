@@ -845,8 +845,6 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
-        EXPECT_EQ(
-            err.at("error_message").as_string(), "Invalid field 'credentials', not an array of CredentialID(hash256)."
-        );
+        EXPECT_EQ(err.at("error_message").as_string(), "credential array too long.");
     });
 }

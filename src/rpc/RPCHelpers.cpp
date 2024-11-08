@@ -94,6 +94,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -1332,19 +1333,17 @@ toJsonWithBinaryTx(data::TransactionAndMetadata const& txnPlusMeta, std::uint32_
     return obj;
 }
 
-std::expected<ripple::STArray, Status>
-fetchCredentials(
+std::expected<std::set<std::pair<ripple::AccountID, ripple::Slice>>, Status>
+createAuthCredsByCredentialID(
     std::optional<boost::json::array> const& credID,
     std::shared_ptr<BackendInterface> const& backend,
     ripple::LedgerHeader const& info,
     Context const& ctx
 )
 {
-    ripple::STArray authCreds;
+    std::set<std::pair<ripple::AccountID, ripple::Slice>> authCreds;
     if (credID.value().size() > ripple::maxCredentialsArraySize) {
-        return Error{Status{
-            RippledError::rpcINVALID_PARAMS, "Invalid field 'credentials', not an array of CredentialID(hash256)."
-        }};
+        return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array too long."}};
     }
 
     for (auto const& elem : credID.value()) {
@@ -1371,11 +1370,13 @@ fetchCredentials(
         if (credentials::checkExpired(sleCred, info))
             return Error{Status{RippledError::rpcBAD_CREDENTIALS}};
 
-        auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
-        credential.setAccountID(ripple::sfIssuer, sleCred.getAccountID(ripple::sfIssuer));
-        credential.setFieldVL(ripple::sfCredentialType, sleCred.getFieldVL(ripple::sfCredentialType));
-        authCreds.push_back(std::move(credential));
+        auto const [it, ins] = authCreds.insert(
+            {sleCred.getAccountID(ripple::sfIssuer), ripple::makeSlice(sleCred.getFieldVL(ripple::sfCredentialType))}
+        );
+        if (!ins)
+            return std::unexpected{Status{RippledError::rpcBAD_CREDENTIALS, "duplicates in credentials."}};
     }
+
     return authCreds;
 }
 

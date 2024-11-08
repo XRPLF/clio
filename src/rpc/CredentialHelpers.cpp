@@ -18,8 +18,12 @@
 //==============================================================================
 
 #include "rpc/Errors.hpp"
+#include "rpc/JS.hpp"
+#include "util/Assert.hpp"
 
+#include <boost/json/array.hpp>
 #include <xrpl/basics/Slice.h>
+#include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/LedgerHeader.h>
@@ -27,10 +31,12 @@
 #include <xrpl/protocol/STArray.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <expected>
 #include <set>
+#include <string>
 #include <utility>
 
 namespace rpc::credentials {
@@ -39,7 +45,7 @@ bool
 checkExpired(ripple::SLE const& sleCred, ripple::LedgerHeader const& ledger)
 {
     if (sleCred.isFieldPresent(ripple::sfExpiration)) {
-        std::uint32_t exp = sleCred.getFieldU32(ripple::sfExpiration);
+        std::uint32_t const exp = sleCred.getFieldU32(ripple::sfExpiration);
         std::uint32_t const now = ledger.parentCloseTime.time_since_epoch().count();
         return now > exp;
     }
@@ -56,6 +62,35 @@ createAuthCredentials(ripple::STArray const& in)
             return std::unexpected{Status{RippledError::rpcBAD_CREDENTIALS, "duplicates in credentials."}};
     }
     return out;
+}
+
+ripple::STArray
+parseAuthorizeCredentials(boost::json::array const& jv)
+{
+    ripple::STArray arr;
+    for (auto const& jo : jv) {
+        auto const issuer = ripple::parseBase58<ripple::AccountID>(
+            static_cast<std::string>(jo.at(ripple::jss::issuer.c_str()).as_string())
+        );
+        ASSERT(
+            issuer.has_value(), "issuer must be present, should already be checked in AuthorizeCredentialValidator."
+        );
+
+        auto const credentialType =
+            ripple::strUnHex(static_cast<std::string>(jo.at(ripple::jss::credential_type.c_str()).as_string()));
+
+        ASSERT(
+            credentialType.has_value(),
+            "credential_type must be present, should already be checked in AuthorizeCredentialValidator."
+        );
+
+        auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
+        credential.setAccountID(ripple::sfIssuer, *issuer);
+        credential.setFieldVL(ripple::sfCredentialType, *credentialType);
+        arr.push_back(std::move(credential));
+    }
+
+    return arr;
 }
 
 }  // namespace rpc::credentials

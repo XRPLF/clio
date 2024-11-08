@@ -84,14 +84,6 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
     bool const reqAuth = sleDest.isFlag(ripple::lsfDepositAuth) && (sourceAccountID != destinationAccountID);
     bool const credentialsPresent = input.credentials.has_value();
 
-    ripple::STArray authCreds;
-    if (credentialsPresent && reqAuth) {
-        auto const creds = fetchCredentials(input.credentials, sharedPtrBackend_, lgrInfo, ctx);
-        if (!creds.has_value())
-            return Error{std::move(creds).error()};
-        authCreds = std::move(creds).value();
-    }
-
     // If the two accounts are the same OR if that flag is
     // not set, then the deposit should be fine.
     bool depositAuthorized = true;
@@ -99,11 +91,12 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
     if (reqAuth) {
         ripple::uint256 hashKey;
         if (credentialsPresent) {
-            auto const sorted = credentials::createAuthCredentials(authCreds);
-            if (!sorted)
-                return Error{std::move(sorted).error()};
+            auto const sortedAuthCreds =
+                createAuthCredsByCredentialID(input.credentials, sharedPtrBackend_, lgrInfo, ctx);
+            if (!sortedAuthCreds)
+                return Error{std::move(sortedAuthCreds).error()};
 
-            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sorted).key;
+            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sortedAuthCreds).key;
         } else {
             hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID).key;
         }

@@ -30,6 +30,8 @@
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/json/array.hpp>
+#include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
@@ -218,6 +220,44 @@ generateTestValuesForParametersTest()
             ),
             "invalidParams",
             "authorized_credentials not array"
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthBothAuthAndAuthCredentialsDoesNotExists",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}"
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "badCredentials",
+            "Must have one of authorized or authorized_credentials."
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthBothAuthAndAuthCredentialsExists",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized": "{}",
+                        "authorized_credentials": [
+                           {{
+                                "issuer": "{}",
+                                "credential_type": "{}"
+                            }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2,
+                ACCOUNT3,
+                CREDENTIALTYPE
+            ),
+            "badCredentials",
+            "Must have one of authorized or authorized_credentials."
         },
 
         ParamTestCaseBundle{

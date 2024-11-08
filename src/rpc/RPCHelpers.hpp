@@ -40,6 +40,7 @@
 #include <boost/regex/v5/regex_fwd.hpp>
 #include <boost/regex/v5/regex_match.hpp>
 #include <fmt/core.h>
+#include <xrpl/basics/Slice.h>
 #include <xrpl/basics/XRPAmount.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/json/json_value.h>
@@ -68,6 +69,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -733,16 +735,16 @@ getDeliveredAmount(
 );
 
 /**
- * @brief Get Array of Credential objects
+ * @brief Get Set of issuerID & CredentialType
  *
  * @param credID Array of CredentialID's to parse
  * @param backend backend interface
  * @param info The ledger header
  * @param ctx The coroutine context
- * @return Array of credential objects
+ * @return Set of issuerID & CredentialType, error
  */
-std::expected<ripple::STArray, Status>
-fetchCredentials(
+std::expected<std::set<std::pair<ripple::AccountID, ripple::Slice>>, Status>
+createAuthCredsByCredentialID(
     std::optional<boost::json::array> const& credID,
     std::shared_ptr<BackendInterface> const& backend,
     ripple::LedgerHeader const& info,

@@ -19,6 +19,7 @@
 
 #include "rpc/Errors.hpp"
 
+#include <boost/json/array.hpp>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/protocol/AccountID.h>
@@ -51,5 +52,14 @@ checkExpired(ripple::SLE const& sleCred, ripple::LedgerHeader const& ledger);
  */
 std::expected<std::set<std::pair<ripple::AccountID, ripple::Slice>>, Status>
 createAuthCredentials(ripple::STArray const& in);
+
+/**
+ * @brief Parses each credential object and makes sure the credential type and values are correct
+ *
+ * @param jv The boost json array of credentials to parse
+ * @return Array of credentials after parsing
+ */
+ripple::STArray
+parseAuthorizeCredentials(boost::json::array const& jv);
 
 }  // namespace rpc::credentials
