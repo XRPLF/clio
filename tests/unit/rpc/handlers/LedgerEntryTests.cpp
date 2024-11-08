@@ -277,6 +277,44 @@ generateTestValuesForParametersTest()
         },
 
         ParamTestCaseBundle{
+            "DepositPreauthAuthorizeCredentialsIncorrectCredentialType",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "credential_type": 432
+                        }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "invalidParams",
+            "Field 'Issuer' is required but missing."
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthAuthorizeCredentialsCredentialTypeNotHex",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "credential_type": "hello world"
+                        }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "invalidParams",
+            "Field 'Issuer' is required but missing."
+        },
+
+        ParamTestCaseBundle{
             "InvalidTicketType",
             R"({
                 "ticket": 123
