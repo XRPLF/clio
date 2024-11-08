@@ -19,6 +19,8 @@
 
 #include "web/ng/Request.hpp"
 
+#include "util/OverloadSet.hpp"
+
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
@@ -102,6 +104,18 @@ Request::target() const
         return std::nullopt;
 
     return httpRequest().target();
+}
+
+Request::HttpHeaders const&
+Request::httpHeaders() const
+{
+    return std::visit(
+        util::OverloadSet{
+            [](HttpRequest const& httpRequest) -> HttpHeaders const& { return httpRequest; },
+            [](WsData const& wsData) -> HttpHeaders const& { return wsData.headers.get(); }
+        },
+        data_
+    );
 }
 
 std::optional<std::string_view>
