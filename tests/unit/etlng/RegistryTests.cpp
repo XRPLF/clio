@@ -457,7 +457,7 @@ TEST_F(RegistryTest, InitialObjectsCorrectOrderOfHookCalls)
     auto extObjs = MockExtInitialObjects{};
     auto extObj = MockExtInitialObject{};
 
-    testing::InSequence seqGuard;
+    testing::InSequence const seqGuard;
     EXPECT_CALL(extObjs, onInitialObjects);
     EXPECT_CALL(extObj, onInitialObject).Times(3);
 
@@ -476,7 +476,7 @@ TEST_F(RegistryTest, InitialDataCorrectOrderOfHookCalls)
         CreateTransaction(ripple::TxType::ttNFTOKEN_CREATE_OFFER),
     };
 
-    testing::InSequence seqGuard;
+    testing::InSequence const seqGuard;
     EXPECT_CALL(extInitialData, onInitialData);
     EXPECT_CALL(extInitialTransaction, onInitialTransaction).Times(2);
 
@@ -510,7 +510,7 @@ TEST_F(RegistryTest, LedgerDataCorrectOrderOfHookCalls)
     };
 
     // testing::Sequence seq;
-    testing::InSequence seqGuard;
+    testing::InSequence const seqGuard;
     EXPECT_CALL(extLedgerData, onLedgerData);
     EXPECT_CALL(extOnTransaction, onTransaction).Times(2);
     EXPECT_CALL(extOnObject, onObject).Times(3);
