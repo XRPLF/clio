@@ -62,7 +62,9 @@ public:
      * @param ctx The boost::asio::io_context to use.
      * @param endpoint The endpoint to listen on.
      * @param sslContext The SSL context to use (optional).
-     * @param connectionHandler The connection handler.
+     * @param processingPolicy The requests processing policy (parallel or sequential).
+     * @param parallelRequestLimit The limit of requests for one connection that can be processed in parallel. Only used
+     * if processingPolicy is parallel.
      * @param tagDecoratorFactory The tag decorator factory.
      * @param maxSubscriptionSendQueueSize The maximum size of the subscription send queue.
      */

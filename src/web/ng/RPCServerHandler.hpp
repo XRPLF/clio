@@ -104,7 +104,10 @@ public:
      * @brief The callback when server receives a request.
      *
      * @param request The request
-     * @param connection The connection
+     * @param connectionMetadata The connection metadata
+     * @param subscriptionContext The subscription context
+     * @param yield The yield context
+     * @return The response
      */
     Response
     operator()(

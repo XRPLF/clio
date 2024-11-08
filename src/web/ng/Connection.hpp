@@ -81,6 +81,9 @@ public:
     /**
      * @brief Set the isAdmin field.
      * @note This function is lazy, it will update isAdmin only if it is not set yet.
+     *
+     * @tparam T The invocable type of the function to call to set the isAdmin.
+     * @param setter The function to call to set the isAdmin.
      */
     template <std::invocable T>
     void

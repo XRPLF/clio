@@ -75,6 +75,9 @@ public:
      *
      * @param factory The tag decorator factory to use to init taggable.
      * @param connection The connection for which the context is created.
+     * @param maxSendQueueSize The maximum size of the send queue. If the queue is full, the connection will be closed.
+     * @param yield The yield context to spawn sending coroutines.
+     * @param errorHandler The error handler.
      */
     SubscriptionContext(
         util::TagDecoratorFactory const& factory,
@@ -119,6 +122,8 @@ public:
     /**
      * @brief Notify the context that related connection is disconnected and wait for all the task to complete.
      * @note This method must be called before the object is destroyed.
+     *
+     * @param yield The yield context to wait for all the tasks to complete.
      */
     void
     disconnect(boost::asio::yield_context yield);
