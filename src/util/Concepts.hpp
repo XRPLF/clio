@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <type_traits>
 
 namespace util {
@@ -28,5 +30,20 @@ namespace util {
  */
 template <typename T>
 concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_const_v<T>;
+
+/**
+ * @brief Checks that the list of given values contains no duplicates
+ *
+ * @param values The list of values to check
+ * @returns true if no duplicates exist; false otherwise
+ */
+static consteval auto
+hasNoDuplicates(auto&&... values)
+{
+    auto store = std::array{values...};
+    auto end = store.end();
+    std::ranges::sort(store);
+    return (std::unique(std::begin(store), end) == end);
+}
 
 }  // namespace util

@@ -31,6 +31,8 @@ target_sources(
           etl/SourceImplTests.cpp
           etl/SubscriptionSourceTests.cpp
           etl/TransformerTests.cpp
+          # ETLng
+          etlng/RegistryTests.cpp
           # Feed
           feed/BookChangesFeedTests.cpp
           feed/ForwardFeedTests.cpp
