@@ -255,10 +255,10 @@ CustomValidator CustomValidators::CurrencyIssueValidator =
 CustomValidator CustomValidators::CredentialTypeValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (not value.is_string())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + " NotString"}};
 
         if (!ripple::strViewUnHex(value.as_string()).has_value())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotHexedString"}};
+            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + " NotHexString"}};
 
         return MaybeError{};
     }};

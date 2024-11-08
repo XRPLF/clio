@@ -284,15 +284,17 @@ generateTestValuesForParametersTest()
                         "owner": "{}",
                         "authorized_credentials": [
                         {{
+                            "issuer": "{}",
                             "credential_type": 432
                         }}
                         ]
                     }}
                 }})",
-                ACCOUNT
+                ACCOUNT,
+                ACCOUNT2
             ),
             "invalidParams",
-            "Field 'Issuer' is required but missing."
+            "credential_type NotString"
         },
 
         ParamTestCaseBundle{
@@ -303,15 +305,17 @@ generateTestValuesForParametersTest()
                         "owner": "{}",
                         "authorized_credentials": [
                         {{
+                            "issuer": "{}",
                             "credential_type": "hello world"
                         }}
                         ]
                     }}
                 }})",
-                ACCOUNT
+                ACCOUNT,
+                ACCOUNT2
             ),
             "invalidParams",
-            "Field 'Issuer' is required but missing."
+            "credential_type NotHexString"
         },
 
         ParamTestCaseBundle{
