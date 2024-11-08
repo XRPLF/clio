@@ -23,6 +23,7 @@
 #include "web/ng/Request.hpp"
 #include "web/ng/impl/ErrorHandling.hpp"
 
+#include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
@@ -36,6 +37,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <variant>
 
 using namespace web::ng::impl;
 using namespace web::ng;
@@ -70,8 +72,16 @@ TEST_P(ng_ErrorHandlingMakeErrorTest, MakeError)
 
     auto response = errorHelper.makeError(GetParam().status);
     EXPECT_EQ(response.message(), GetParam().expectedMessage);
-    if (GetParam().isHttp)
-        EXPECT_EQ(std::move(response).intoHttpResponse().result(), GetParam().expectedStatus);
+    if (GetParam().isHttp) {
+        auto const httpResponse = std::move(response).intoHttpResponse();
+        EXPECT_EQ(httpResponse.result(), GetParam().expectedStatus);
+
+        std::string expectedContentType = "text/html";
+        if (std::holds_alternative<rpc::RippledError>(GetParam().status.code))
+            expectedContentType = "application/json";
+
+        EXPECT_EQ(httpResponse.at(http::field::content_type), expectedContentType);
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -153,8 +163,11 @@ TEST_P(ng_ErrorHandlingMakeInternalErrorTest, ComposeError)
     auto response = errorHelper.makeInternalError();
 
     EXPECT_EQ(response.message(), boost::json::serialize(GetParam().expectedResult));
-    if (GetParam().isHttp)
-        EXPECT_EQ(std::move(response).intoHttpResponse().result(), boost::beast::http::status::internal_server_error);
+    if (GetParam().isHttp) {
+        auto const httpResponse = std::move(response).intoHttpResponse();
+        EXPECT_EQ(httpResponse.result(), boost::beast::http::status::internal_server_error);
+        EXPECT_EQ(httpResponse.at(http::field::content_type), "application/json");
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -234,13 +247,15 @@ TEST_F(ng_ErrorHandlingTests, MakeNotReadyError)
             R"({"result":{"error":"notReady","error_code":13,"error_message":"Not ready to handle this request.","status":"error","type":"response"}})"
         }
     );
-    EXPECT_EQ(std::move(response).intoHttpResponse().result(), http::status::ok);
+    auto const httpResponse = std::move(response).intoHttpResponse();
+    EXPECT_EQ(httpResponse.result(), http::status::ok);
+    EXPECT_EQ(httpResponse.at(http::field::content_type), "application/json");
 }
 
 TEST_F(ng_ErrorHandlingTests, MakeTooBusyError_WebsocketRequest)
 {
     auto const request = makeRequest(false);
-    auto const response = ErrorHelper{request}.makeTooBusyError();
+    auto response = ErrorHelper{request}.makeTooBusyError();
     EXPECT_EQ(
         response.message(),
         std::string{
@@ -259,13 +274,15 @@ TEST_F(ng_ErrorHandlingTests, sendTooBusyError_HttpConnection)
             R"({"error":"tooBusy","error_code":9,"error_message":"The server is too busy to help you now.","status":"error","type":"response"})"
         }
     );
-    EXPECT_EQ(std::move(response).intoHttpResponse().result(), boost::beast::http::status::service_unavailable);
+    auto const httpResponse = std::move(response).intoHttpResponse();
+    EXPECT_EQ(httpResponse.result(), boost::beast::http::status::service_unavailable);
+    EXPECT_EQ(httpResponse.at(http::field::content_type), "application/json");
 }
 
 TEST_F(ng_ErrorHandlingTests, makeJsonParsingError_WebsocketConnection)
 {
     auto const request = makeRequest(false);
-    auto const response = ErrorHelper{request}.makeJsonParsingError();
+    auto response = ErrorHelper{request}.makeJsonParsingError();
     EXPECT_EQ(
         response.message(),
         std::string{
@@ -279,7 +296,9 @@ TEST_F(ng_ErrorHandlingTests, makeJsonParsingError_HttpConnection)
     auto const request = makeRequest(true);
     auto response = ErrorHelper{request}.makeJsonParsingError();
     EXPECT_EQ(response.message(), std::string{"Unable to parse JSON from the request"});
-    EXPECT_EQ(std::move(response).intoHttpResponse().result(), boost::beast::http::status::bad_request);
+    auto const httpResponse = std::move(response).intoHttpResponse();
+    EXPECT_EQ(httpResponse.result(), boost::beast::http::status::bad_request);
+    EXPECT_EQ(httpResponse.at(http::field::content_type), "text/html");
 }
 
 struct ng_ErrorHandlingComposeErrorTestBundle {

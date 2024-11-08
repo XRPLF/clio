@@ -292,7 +292,7 @@ private:
                 warnings.emplace_back(rpc::makeWarning(rpc::warnRPC_OUTDATED));
 
             response["warnings"] = warnings;
-            return Response{boost::beast::http::status::ok, boost::json::serialize(response), rawRequest};
+            return Response{boost::beast::http::status::ok, response, rawRequest};
         } catch (std::exception const& ex) {
             // note: while we are catching this in buildResponse too, this is here to make sure
             // that any other code that may throw is outside of buildResponse is also worked around.

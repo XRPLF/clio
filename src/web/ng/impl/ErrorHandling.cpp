@@ -27,7 +27,6 @@
 
 #include <boost/beast/http/status.hpp>
 #include <boost/json/object.hpp>
-#include <boost/json/serialize.hpp>
 #include <fmt/core.h>
 #include <xrpl/protocol/jss.h>
 
@@ -78,7 +77,7 @@ Response
 ErrorHelper::makeError(rpc::Status const& err) const
 {
     if (not rawRequest_.get().isHttp()) {
-        return Response{http::status::bad_request, boost::json::serialize(composeError(err)), rawRequest_};
+        return Response{http::status::bad_request, composeError(err), rawRequest_};
     }
 
     // Note: a collection of crutches to match rippled output follows
@@ -115,54 +114,36 @@ ErrorHelper::makeError(rpc::Status const& err) const
         }
     }
 
-    return Response{http::status::bad_request, boost::json::serialize(composeError(err)), rawRequest_};
+    return Response{http::status::bad_request, composeError(err), rawRequest_};
 }
 
 Response
 ErrorHelper::makeInternalError() const
 {
-    return Response{
-        http::status::internal_server_error,
-        boost::json::serialize(composeError(rpc::RippledError::rpcINTERNAL)),
-        rawRequest_
-    };
+    return Response{http::status::internal_server_error, composeError(rpc::RippledError::rpcINTERNAL), rawRequest_};
 }
 
 Response
 ErrorHelper::makeNotReadyError() const
 {
-    return Response{
-        http::status::ok, boost::json::serialize(composeError(rpc::RippledError::rpcNOT_READY)), rawRequest_
-    };
+    return Response{http::status::ok, composeError(rpc::RippledError::rpcNOT_READY), rawRequest_};
 }
 
 Response
 ErrorHelper::makeTooBusyError() const
 {
     if (not rawRequest_.get().isHttp()) {
-        return Response{
-            http::status::too_many_requests,
-            boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)),
-            rawRequest_
-        };
+        return Response{http::status::too_many_requests, rpc::makeError(rpc::RippledError::rpcTOO_BUSY), rawRequest_};
     }
 
-    return Response{
-        http::status::service_unavailable,
-        boost::json::serialize(rpc::makeError(rpc::RippledError::rpcTOO_BUSY)),
-        rawRequest_
-    };
+    return Response{http::status::service_unavailable, rpc::makeError(rpc::RippledError::rpcTOO_BUSY), rawRequest_};
 }
 
 Response
 ErrorHelper::makeJsonParsingError() const
 {
     if (not rawRequest_.get().isHttp()) {
-        return Response{
-            http::status::bad_request,
-            boost::json::serialize(rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX)),
-            rawRequest_
-        };
+        return Response{http::status::bad_request, rpc::makeError(rpc::RippledError::rpcBAD_SYNTAX), rawRequest_};
     }
 
     return Response{http::status::bad_request, fmt::format("Unable to parse JSON from the request"), rawRequest_};
