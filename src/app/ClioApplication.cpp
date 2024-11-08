@@ -26,6 +26,7 @@
 #include "etl/NetworkValidatedLedgers.hpp"
 #include "feed/SubscriptionManager.hpp"
 #include "rpc/Counters.hpp"
+#include "rpc/Errors.hpp"
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
@@ -42,15 +43,18 @@
 #include "web/dosguard/IntervalSweepHandler.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
 #include "web/ng/Connection.hpp"
+#include "web/ng/RPCServerHandler.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 #include "web/ng/Server.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/beast/http/status.hpp>
 
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <memory>
 #include <thread>
 #include <utility>
@@ -135,14 +139,12 @@ ClioApplication::run(bool const useNgWebServer)
     auto const rpcEngine =
         RPCEngineType::make_RPCEngine(config_, backend, balancer, dosGuard, workQueue, counters, handlerProvider);
 
-    // Init the web server
-    auto handler =
-        std::make_shared<web::RPCServerHandler<RPCEngineType, etl::ETLService>>(config_, backend, rpcEngine, etl);
+    if (useNgWebServer or config_.valueOr("server.__ng_web_server", false)) {
+        web::ng::RPCServerHandler<RPCEngineType, etl::ETLService> handler{config_, backend, rpcEngine, etl};
 
-    if (useNgWebServer) {
         auto expectedAdminVerifier = web::impl::make_AdminVerificationStrategy(config_);
         if (not expectedAdminVerifier.has_value()) {
-            LOG(util::LogService::error()) << "Error admin verifier: " << expectedAdminVerifier.error();
+            LOG(util::LogService::error()) << "Error creating admin verifier: " << expectedAdminVerifier.error();
             return EXIT_FAILURE;
         }
         auto adminVerifier = std::move(expectedAdminVerifier).value();
@@ -158,7 +160,7 @@ ClioApplication::run(bool const useNgWebServer)
             "/metrics",
             [adminVerifier](
                 web::ng::Request const& request,
-                web::ng::ConnectionMetadata const& connectionMetadata,
+                web::ng::ConnectionMetadata& connectionMetadata,
                 web::SubscriptionContextPtr,
                 boost::asio::yield_context
             ) -> web::ng::Response {
@@ -175,6 +177,35 @@ ClioApplication::run(bool const useNgWebServer)
             }
         );
 
+        util::Logger webServerLog{"WebServer"};
+        auto onRequest = [adminVerifier, &webServerLog, &handler](
+                             web::ng::Request const& request,
+                             web::ng::ConnectionMetadata& connectionMetadata,
+                             web::SubscriptionContextPtr subscriptionContext,
+                             boost::asio::yield_context yield
+                         ) -> web::ng::Response {
+            LOG(webServerLog.info()) << connectionMetadata.tag()
+                                     << "Received request from ip = " << connectionMetadata.ip()
+                                     << " - posting to WorkQueue";
+
+            connectionMetadata.setIsAdmin([&adminVerifier, &request, &connectionMetadata]() {
+                return adminVerifier->isAdmin(request.httpHeaders(), connectionMetadata.ip());
+            });
+
+            try {
+                return handler(request, connectionMetadata, std::move(subscriptionContext), yield);
+            } catch (std::exception const&) {
+                return web::ng::Response{
+                    boost::beast::http::status::internal_server_error,
+                    rpc::makeError(rpc::RippledError::rpcINTERNAL),
+                    request
+                };
+            }
+        };
+
+        httpServer->onPost("/", onRequest);
+        httpServer->onWs(onRequest);
+
         auto const maybeError = httpServer->run();
         if (maybeError.has_value()) {
             LOG(util::LogService::error()) << "Error starting web server: " << *maybeError;
@@ -188,6 +219,10 @@ ClioApplication::run(bool const useNgWebServer)
 
         return EXIT_SUCCESS;
     }
+
+    // Init the web server
+    auto handler =
+        std::make_shared<web::RPCServerHandler<RPCEngineType, etl::ETLService>>(config_, backend, rpcEngine, etl);
 
     auto const httpServer = web::make_HttpServer(config_, ioc, dosGuard, handler);
 

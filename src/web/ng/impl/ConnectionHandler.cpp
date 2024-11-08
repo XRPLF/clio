@@ -56,7 +56,7 @@ namespace {
 
 Response
 handleHttpRequest(
-    ConnectionMetadata const& connectionMetadata,
+    ConnectionMetadata& connectionMetadata,
     SubscriptionContextPtr& subscriptionContext,
     ConnectionHandler::TargetToHandlerMap const& handlers,
     Request const& request,
@@ -73,7 +73,7 @@ handleHttpRequest(
 
 Response
 handleWsRequest(
-    ConnectionMetadata const& connectionMetadata,
+    ConnectionMetadata& connectionMetadata,
     SubscriptionContextPtr& subscriptionContext,
     std::optional<MessageHandler> const& handler,
     Request const& request,
@@ -313,7 +313,7 @@ ConnectionHandler::processRequest(
 
 Response
 ConnectionHandler::handleRequest(
-    ConnectionMetadata const& connectionMetadata,
+    ConnectionMetadata& connectionMetadata,
     SubscriptionContextPtr& subscriptionContext,
     Request const& request,
     boost::asio::yield_context yield

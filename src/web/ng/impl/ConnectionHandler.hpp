@@ -139,7 +139,7 @@ private:
 
     Response
     handleRequest(
-        ConnectionMetadata const& connectionMetadata,
+        ConnectionMetadata& connectionMetadata,
         SubscriptionContextPtr& subscriptionContext,
         Request const& request,
         boost::asio::yield_context yield

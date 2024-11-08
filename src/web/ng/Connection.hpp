@@ -77,6 +77,18 @@ public:
      */
     bool
     isAdmin() const;
+
+    /**
+     * @brief Set the isAdmin field.
+     * @note This function is lazy, it will update isAdmin only if it is not set yet.
+     */
+    template <std::invocable T>
+    void
+    setIsAdmin(T&& setter)
+    {
+        if (not isAdmin_.has_value())
+            isAdmin_ = setter();
+    }
 };
 
 /**
@@ -134,18 +146,6 @@ public:
      */
     virtual void
     close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) = 0;
-
-    /**
-     * @brief Set the isAdmin field.
-     * @note This function is lazy, it will update isAdmin only if it is not set yet.
-     */
-    template <std::invocable T>
-    void
-    setIsAdmin(T&& setter)
-    {
-        if (not isAdmin_.has_value())
-            isAdmin_ = setter();
-    }
 };
 
 /**

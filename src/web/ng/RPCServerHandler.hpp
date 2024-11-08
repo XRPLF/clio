@@ -140,11 +140,12 @@ public:
                     // system_error thrown when json parsing failed
                     rpcEngine_->notifyBadSyntax();
                     response = impl::ErrorHelper{request}.makeJsonParsingError();
-                    LOG(log_.warn()) << "Error parsing JSON: " << ex.what() << ". For request: " << request;
+                    LOG(log_.warn()) << "Error parsing JSON: " << ex.what() << ". For request: " << request.message();
                 } catch (std::invalid_argument const& ex) {
                     // thrown when json parses something that is not an object at top level
                     rpcEngine_->notifyBadSyntax();
-                    LOG(log_.warn()) << "Invalid argument error: " << ex.what() << ". For request: " << request;
+                    LOG(log_.warn()) << "Invalid argument error: " << ex.what()
+                                     << ". For request: " << request.message();
                     response = impl::ErrorHelper{request}.makeJsonParsingError();
                 } catch (std::exception const& ex) {
                     LOG(perfLog_.error()) << connectionMetadata.tag() << "Caught exception: " << ex.what();
