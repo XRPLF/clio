@@ -281,3 +281,59 @@ TEST_F(ng_ErrorHandlingTests, makeJsonParsingError_HttpConnection)
     EXPECT_EQ(response.message(), std::string{"Unable to parse JSON from the request"});
     EXPECT_EQ(std::move(response).intoHttpResponse().result(), boost::beast::http::status::bad_request);
 }
+
+struct ng_ErrorHandlingComposeErrorTestBundle {
+    std::string testName;
+    bool isHttp;
+    std::optional<boost::json::object> request;
+    std::string expectedMessage;
+};
+
+struct ng_ErrorHandlingComposeErrorTest : ng_ErrorHandlingTests,
+                                          testing::WithParamInterface<ng_ErrorHandlingComposeErrorTestBundle> {};
+
+TEST_P(ng_ErrorHandlingComposeErrorTest, ComposeError)
+{
+    auto const request = makeRequest(GetParam().isHttp);
+    ErrorHelper errorHelper{request, GetParam().request};
+    auto const response = errorHelper.composeError(rpc::Status{rpc::RippledError::rpcINTERNAL});
+    EXPECT_EQ(boost::json::serialize(response), GetParam().expectedMessage);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    ng_ErrorHandlingComposeErrorTestGroup,
+    ng_ErrorHandlingComposeErrorTest,
+    testing::ValuesIn(
+        {ng_ErrorHandlingComposeErrorTestBundle{
+             "NoRequest_WebsocketConnection",
+             false,
+             std::nullopt,
+             R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"})"
+         },
+         ng_ErrorHandlingComposeErrorTestBundle{
+             "NoRequest_HttpConnection",
+             true,
+             std::nullopt,
+             R"({"result":{"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"}})"
+         },
+         ng_ErrorHandlingComposeErrorTestBundle{
+             "Request_WebsocketConnection",
+             false,
+             boost::json::object{{"id", 1}, {"api_version", 2}},
+             R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":1,"api_version":2,"request":{"id":1,"api_version":2}})",
+         },
+         ng_ErrorHandlingComposeErrorTestBundle{
+             "Request_WebsocketConnection_NoId",
+             false,
+             boost::json::object{{"api_version", 2}},
+             R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","api_version":2,"request":{"api_version":2}})",
+         },
+         ng_ErrorHandlingComposeErrorTestBundle{
+             "Request_HttpConnection",
+             true,
+             boost::json::object{{"id", 1}, {"api_version", 2}},
+             R"({"result":{"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response","id":1,"request":{"id":1,"api_version":2}}})"
+         }}
+    ),
+    tests::util::NameGenerator
+);

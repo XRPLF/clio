@@ -43,7 +43,7 @@ namespace web::ng::impl {
 namespace {
 
 boost::json::object
-composeError(auto const& error, Request const& rawRequest, std::optional<boost::json::object> const& request)
+composeErrorImpl(auto const& error, Request const& rawRequest, std::optional<boost::json::object> const& request)
 {
     auto e = rpc::makeError(error);
 
@@ -78,9 +78,7 @@ Response
 ErrorHelper::makeError(rpc::Status const& err) const
 {
     if (not rawRequest_.get().isHttp()) {
-        return Response{
-            http::status::bad_request, boost::json::serialize(composeError(err, rawRequest_, request_)), rawRequest_
-        };
+        return Response{http::status::bad_request, boost::json::serialize(composeError(err)), rawRequest_};
     }
 
     // Note: a collection of crutches to match rippled output follows
@@ -117,9 +115,7 @@ ErrorHelper::makeError(rpc::Status const& err) const
         }
     }
 
-    return Response{
-        http::status::bad_request, boost::json::serialize(composeError(err, rawRequest_, request_)), rawRequest_
-    };
+    return Response{http::status::bad_request, boost::json::serialize(composeError(err)), rawRequest_};
 }
 
 Response
@@ -127,7 +123,7 @@ ErrorHelper::makeInternalError() const
 {
     return Response{
         http::status::internal_server_error,
-        boost::json::serialize(composeError(rpc::RippledError::rpcINTERNAL, rawRequest_, request_)),
+        boost::json::serialize(composeError(rpc::RippledError::rpcINTERNAL)),
         rawRequest_
     };
 }
@@ -136,9 +132,7 @@ Response
 ErrorHelper::makeNotReadyError() const
 {
     return Response{
-        http::status::ok,
-        boost::json::serialize(composeError(rpc::RippledError::rpcNOT_READY, rawRequest_, request_)),
-        rawRequest_
+        http::status::ok, boost::json::serialize(composeError(rpc::RippledError::rpcNOT_READY)), rawRequest_
     };
 }
 
@@ -172,6 +166,18 @@ ErrorHelper::makeJsonParsingError() const
     }
 
     return Response{http::status::bad_request, fmt::format("Unable to parse JSON from the request"), rawRequest_};
+}
+
+boost::json::object
+ErrorHelper::composeError(rpc::Status const& error) const
+{
+    return composeErrorImpl(error, rawRequest_, request_);
+}
+
+boost::json::object
+ErrorHelper::composeError(rpc::RippledError error) const
+{
+    return composeErrorImpl(error, rawRequest_, request_);
 }
 
 }  // namespace web::ng::impl
