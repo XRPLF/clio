@@ -36,6 +36,7 @@
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Http.hpp"
 #include "util/prometheus/Prometheus.hpp"
+#include "web/AdminVerificationStrategy.hpp"
 #include "web/RPCServerHandler.hpp"
 #include "web/Server.hpp"
 #include "web/SubscriptionContextInterface.hpp"
@@ -142,7 +143,7 @@ ClioApplication::run(bool const useNgWebServer)
     if (useNgWebServer or config_.valueOr("server.__ng_web_server", false)) {
         web::ng::RPCServerHandler<RPCEngineType, etl::ETLService> handler{config_, backend, rpcEngine, etl};
 
-        auto expectedAdminVerifier = web::impl::make_AdminVerificationStrategy(config_);
+        auto expectedAdminVerifier = web::make_AdminVerificationStrategy(config_);
         if (not expectedAdminVerifier.has_value()) {
             LOG(util::LogService::error()) << "Error creating admin verifier: " << expectedAdminVerifier.error();
             return EXIT_FAILURE;

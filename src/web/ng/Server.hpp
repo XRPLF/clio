@@ -22,7 +22,6 @@
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
-#include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/impl/ConnectionHandler.hpp"

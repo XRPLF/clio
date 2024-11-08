@@ -31,11 +31,14 @@
 #include <string>
 #include <string_view>
 
-namespace web::impl {
+namespace web {
 
+/**
+ * @brief Interface for admin verification strategies.
+ */
 class AdminVerificationStrategy {
 public:
-    using RequestType = boost::beast::http::request<boost::beast::http::string_body>;
+    using RequestHeader = boost::beast::http::request<boost::beast::http::string_body>::header_type;
     virtual ~AdminVerificationStrategy() = default;
 
     /**
@@ -46,9 +49,12 @@ public:
      * @return true if authorized; false otherwise
      */
     virtual bool
-    isAdmin(RequestType const& request, std::string_view ip) const = 0;
+    isAdmin(RequestHeader const& request, std::string_view ip) const = 0;
 };
 
+/**
+ * @brief Admin verification strategy that checks the ip address of the client.
+ */
 class IPAdminVerificationStrategy : public AdminVerificationStrategy {
 public:
     /**
@@ -59,16 +65,27 @@ public:
      * @return true if authorized; false otherwise
      */
     bool
-    isAdmin(RequestType const&, std::string_view ip) const override;
+    isAdmin(RequestHeader const&, std::string_view ip) const override;
 };
 
+/**
+ * @brief Admin verification strategy that checks the password from the request header.
+ */
 class PasswordAdminVerificationStrategy : public AdminVerificationStrategy {
 private:
     std::string passwordSha256_;
 
 public:
+    /**
+     * @brief The prefix for the password in the request header.
+     */
     static constexpr std::string_view passwordPrefix = "Password ";
 
+    /**
+     * @brief Construct a new PasswordAdminVerificationStrategy object
+     *
+     * @param password The password to check
+     */
     PasswordAdminVerificationStrategy(std::string const& password);
 
     /**
@@ -79,13 +96,26 @@ public:
      * @return true if the password from request matches admin password from config
      */
     bool
-    isAdmin(RequestType const& request, std::string_view) const override;
+    isAdmin(RequestHeader const& request, std::string_view) const override;
 };
 
+/**
+ * @brief Factory function for creating an admin verification strategy.
+ *
+ * @param password The optional password to check.
+ * @return Admin verification strategy. If password is provided, it will be PasswordAdminVerificationStrategy.
+ * Otherwise, it will be IPAdminVerificationStrategy.
+ */
 std::shared_ptr<AdminVerificationStrategy>
 make_AdminVerificationStrategy(std::optional<std::string> password);
 
+/**
+ * @brief Factory function for creating an admin verification strategy from server config.
+ *
+ * @param serverConfig The clio config.
+ * @return Admin verification strategy according to the config or an error message.
+ */
 std::expected<std::shared_ptr<AdminVerificationStrategy>, std::string>
 make_AdminVerificationStrategy(util::Config const& serverConfig);
 
-}  // namespace web::impl
+}  // namespace web

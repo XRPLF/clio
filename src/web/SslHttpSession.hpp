@@ -20,6 +20,7 @@
 #pragma once
 
 #include "util/Taggable.hpp"
+#include "web/AdminVerificationStrategy.hpp"
 #include "web/SslWsSession.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/impl/HttpBase.hpp"
@@ -79,7 +80,7 @@ public:
     explicit SslHttpSession(
         tcp::socket&& socket,
         std::string const& ip,
-        std::shared_ptr<impl::AdminVerificationStrategy> const& adminVerification,
+        std::shared_ptr<AdminVerificationStrategy> const& adminVerification,
         boost::asio::ssl::context& ctx,
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,

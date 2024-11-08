@@ -25,9 +25,9 @@
 #include "util/build/Build.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Http.hpp"
+#include "web/AdminVerificationStrategy.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
-#include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/interface/Concepts.hpp"
 #include "web/interface/ConnectionBase.hpp"
 

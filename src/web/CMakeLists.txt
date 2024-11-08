@@ -2,10 +2,10 @@ add_library(clio_web)
 
 target_sources(
   clio_web
-  PRIVATE dosguard/DOSGuard.cpp
+  PRIVATE AdminVerificationStrategy.cpp
+          dosguard/DOSGuard.cpp
           dosguard/IntervalSweepHandler.cpp
           dosguard/WhitelistHandler.cpp
-          impl/AdminVerificationStrategy.cpp
           ng/Connection.cpp
           ng/impl/ErrorHandling.cpp
           ng/impl/ConnectionHandler.cpp
