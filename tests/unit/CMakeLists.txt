@@ -31,6 +31,8 @@ target_sources(
           etl/SourceImplTests.cpp
           etl/SubscriptionSourceTests.cpp
           etl/TransformerTests.cpp
+          # ETLng
+          etlng/RegistryTests.cpp
           # Feed
           feed/BookChangesFeedTests.cpp
           feed/ForwardFeedTests.cpp
@@ -75,6 +77,7 @@ target_sources(
           rpc/handlers/LedgerIndexTests.cpp
           rpc/handlers/LedgerRangeTests.cpp
           rpc/handlers/LedgerTests.cpp
+          rpc/handlers/MPTHoldersTests.cpp
           rpc/handlers/NFTBuyOffersTests.cpp
           rpc/handlers/NFTHistoryTests.cpp
           rpc/handlers/NFTInfoTests.cpp

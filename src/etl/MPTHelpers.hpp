@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,33 +17,34 @@
 */
 //==============================================================================
 
+/** @file */
 #pragma once
 
-#include <algorithm>
-#include <array>
-#include <type_traits>
+#include "data/DBHelpers.hpp"
 
-namespace util {
+#include <ripple/protocol/STTx.h>
+#include <ripple/protocol/TxMeta.h>
 
-/**
- * @brief Specifies a number type
- */
-template <typename T>
-concept SomeNumberType = std::is_arithmetic_v<T> && !std::is_same_v<T, bool> && !std::is_const_v<T>;
+namespace etl {
 
 /**
- * @brief Checks that the list of given values contains no duplicates
+ * @brief Pull MPT data from TX via ETLService.
  *
- * @param values The list of values to check
- * @returns true if no duplicates exist; false otherwise
+ * @param txMeta Transaction metadata
+ * @param sttx The transaction
+ * @return The MPTIssuanceID and holder pair as a optional
  */
-static consteval auto
-hasNoDuplicates(auto&&... values)
-{
-    auto store = std::array{values...};
-    auto end = store.end();
-    std::ranges::sort(store);
-    return (std::unique(std::begin(store), end) == end);
-}
+std::optional<MPTHolderData>
+getMPTHolderFromTx(ripple::TxMeta const& txMeta, ripple::STTx const& sttx);
 
-}  // namespace util
+/**
+ * @brief Pull MPT data from ledger object via loadInitialLedger.
+ *
+ * @param key The owner key
+ * @param blob Object data as blob
+ * @return The MPTIssuanceID and holder pair as a optional
+ */
+std::optional<MPTHolderData>
+getMPTHolderFromObj(std::string const& key, std::string const& blob);
+
+}  // namespace etl

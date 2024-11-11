@@ -547,6 +547,45 @@ public:
         return ret;
     }
 
+    MPTHoldersAndCursor
+    fetchMPTHolders(
+        ripple::uint192 const& mptID,
+        std::uint32_t const limit,
+        std::optional<ripple::AccountID> const& cursorIn,
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context yield
+    ) const override
+    {
+        auto const holderEntries = executor_.read(
+            yield, schema_->selectMPTHolders, mptID, cursorIn.value_or(ripple::AccountID(0)), Limit{limit}
+        );
+
+        auto const& holderResults = holderEntries.value();
+        if (not holderResults.hasRows()) {
+            LOG(log_.debug()) << "No rows returned";
+            return {};
+        }
+
+        std::vector<ripple::uint256> mptKeys;
+        std::optional<ripple::AccountID> cursor;
+        for (auto const [holder] : extract<ripple::AccountID>(holderResults)) {
+            mptKeys.push_back(ripple::keylet::mptoken(mptID, holder).key);
+            cursor = holder;
+        }
+
+        auto mptObjects = doFetchLedgerObjects(mptKeys, ledgerSequence, yield);
+
+        auto it = std::remove_if(mptObjects.begin(), mptObjects.end(), [](Blob const& mpt) { return mpt.size() == 0; });
+
+        mptObjects.erase(it, mptObjects.end());
+
+        ASSERT(mptKeys.size() <= limit, "Number of keys can't exceed the limit");
+        if (mptKeys.size() == limit)
+            return {mptObjects, cursor};
+
+        return {mptObjects, {}};
+    }
+
     std::optional<Blob>
     doFetchLedgerObject(ripple::uint256 const& key, std::uint32_t const sequence, boost::asio::yield_context yield)
         const override
@@ -901,6 +940,16 @@ public:
                 );
             }
         }
+
+        executor_.write(std::move(statements));
+    }
+
+    void
+    writeMPTHolders(std::vector<MPTHolderData> const& data) override
+    {
+        std::vector<Statement> statements;
+        for (auto [mptId, holder] : data)
+            statements.push_back(schema_->insertMPTHolder.bind(std::move(mptId), std::move(holder)));
 
         executor_.write(std::move(statements));
     }

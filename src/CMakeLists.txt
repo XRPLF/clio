@@ -1,6 +1,7 @@
 add_subdirectory(util)
 add_subdirectory(data)
 add_subdirectory(etl)
+add_subdirectory(etlng)
 add_subdirectory(feed)
 add_subdirectory(rpc)
 add_subdirectory(web)
