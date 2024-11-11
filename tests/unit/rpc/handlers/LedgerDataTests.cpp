@@ -729,6 +729,88 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
     });
 }
 
+TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPTIssuance)
+{
+    backend->setRange(RANGEMIN, RANGEMAX);
+
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
+
+    std::vector<Blob> bbs;
+    EXPECT_CALL(*backend, doFetchSuccessorKey).Times(1);
+    ON_CALL(*backend, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
+
+    auto const issuance = CreateMPTIssuanceObject(ACCOUNT, 2, "metadata");
+    bbs.push_back(issuance.getSerializer().peekData());
+
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerDataHandler{backend}};
+        auto const req = json::parse(R"({
+            "limit":1,
+            "type":"mpt_issuance"
+        })");
+
+        auto output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
+        EXPECT_EQ(output.result->as_object().at("state").as_array().size(), 1);
+        EXPECT_EQ(output.result->as_object().at("marker").as_string(), INDEX2);
+        EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+
+        auto const& objects = output.result->as_object().at("state").as_array();
+        EXPECT_EQ(objects.front().at("LedgerEntryType").as_string(), "MPTokenIssuance");
+
+        // make sure mptID is synethetically parsed if object is mptIssuance
+        EXPECT_EQ(
+            objects.front().at("mpt_issuance_id").as_string(),
+            ripple::to_string(ripple::makeMptID(2, GetAccountIDWithString(ACCOUNT)))
+        );
+    });
+}
+
+TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPToken)
+{
+    backend->setRange(RANGEMIN, RANGEMAX);
+
+    EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
+    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
+        .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
+
+    std::vector<Blob> bbs;
+    EXPECT_CALL(*backend, doFetchSuccessorKey).Times(1);
+    ON_CALL(*backend, doFetchSuccessorKey(_, RANGEMAX, _)).WillByDefault(Return(ripple::uint256{INDEX2}));
+
+    auto const mptoken = CreateMPTokenObject(ACCOUNT, ripple::makeMptID(2, GetAccountIDWithString(ACCOUNT)));
+    bbs.push_back(mptoken.getSerializer().peekData());
+
+    ON_CALL(*backend, doFetchLedgerObjects).WillByDefault(Return(bbs));
+    EXPECT_CALL(*backend, doFetchLedgerObjects).Times(1);
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerDataHandler{backend}};
+        auto const req = json::parse(R"({
+            "limit":1,
+            "type":"mptoken"
+        })");
+
+        auto output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_TRUE(output.result->as_object().contains("ledger"));
+        EXPECT_EQ(output.result->as_object().at("state").as_array().size(), 1);
+        EXPECT_EQ(output.result->as_object().at("marker").as_string(), INDEX2);
+        EXPECT_EQ(output.result->as_object().at("ledger_hash").as_string(), LEDGERHASH);
+        EXPECT_EQ(output.result->as_object().at("ledger_index").as_uint64(), RANGEMAX);
+
+        auto const& objects = output.result->as_object().at("state").as_array();
+        EXPECT_EQ(objects.front().at("LedgerEntryType").as_string(), "MPToken");
+    });
+}
+
 TEST(RPCLedgerDataHandlerSpecTest, DeprecatedFields)
 {
     boost::json::value const json{

@@ -1105,6 +1105,43 @@ CreateLPTCurrency(std::string_view assetCurrency, std::string_view asset2Currenc
 }
 
 ripple::STObject
+CreateMPTIssuanceObject(std::string_view accountId, std::uint32_t seq, std::string_view metadata)
+{
+    ripple::STObject mptIssuance(ripple::sfLedgerEntry);
+    mptIssuance.setAccountID(ripple::sfIssuer, GetAccountIDWithString(accountId));
+    mptIssuance.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN_ISSUANCE);
+    mptIssuance.setFieldU32(ripple::sfFlags, 0);
+    mptIssuance.setFieldU32(ripple::sfSequence, seq);
+    mptIssuance.setFieldU64(ripple::sfOwnerNode, 0);
+    mptIssuance.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    mptIssuance.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+    mptIssuance.setFieldU64(ripple::sfMaximumAmount, 0);
+    mptIssuance.setFieldU64(ripple::sfOutstandingAmount, 0);
+    ripple::Slice const sliceMetadata(metadata.data(), metadata.size());
+    mptIssuance.setFieldVL(ripple::sfMPTokenMetadata, sliceMetadata);
+
+    return mptIssuance;
+}
+
+ripple::STObject
+CreateMPTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std::uint64_t mptAmount)
+{
+    ripple::STObject mptoken(ripple::sfLedgerEntry);
+    mptoken.setAccountID(ripple::sfAccount, GetAccountIDWithString(accountId));
+    mptoken[ripple::sfMPTokenIssuanceID] = issuanceID;
+    mptoken.setFieldU16(ripple::sfLedgerEntryType, ripple::ltMPTOKEN);
+    mptoken.setFieldU32(ripple::sfFlags, 0);
+    mptoken.setFieldU64(ripple::sfOwnerNode, 0);
+    mptoken.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
+    mptoken.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
+
+    if (mptAmount)
+        mptoken.setFieldU64(ripple::sfMPTAmount, mptAmount);
+
+    return mptoken;
+}
+
+ripple::STObject
 CreateOraclePriceData(
     uint64_t assetPrice,
     ripple::Currency baseAssetCurrency,

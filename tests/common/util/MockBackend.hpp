@@ -205,4 +205,17 @@ struct MockBackend : public BackendInterface {
     MOCK_METHOD(void, doWriteLedgerObject, (std::string&&, std::uint32_t const, std::string&&), (override));
 
     MOCK_METHOD(bool, doFinishWrites, (), (override));
+
+    MOCK_METHOD(void, writeMPTHolders, ((std::vector<MPTHolderData> const&)), (override));
+
+    MOCK_METHOD(
+        MPTHoldersAndCursor,
+        fetchMPTHolders,
+        (ripple::uint192 const& mptID,
+         std::uint32_t const,
+         (std::optional<ripple::AccountID> const&),
+         std::uint32_t const,
+         boost::asio::yield_context),
+        (const, override)
+    );
 };

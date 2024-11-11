@@ -89,16 +89,19 @@ checkIsU32Numeric(std::string_view sv)
     return ec == std::errc();
 }
 
+CustomValidator CustomValidators::Uint160HexStringValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        return makeHexStringValidator<ripple::uint160>(value, key);
+    }};
+
+CustomValidator CustomValidators::Uint192HexStringValidator =
+    CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
+        return makeHexStringValidator<ripple::uint192>(value, key);
+    }};
+
 CustomValidator CustomValidators::Uint256HexStringValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
-        if (!value.is_string())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "NotString"}};
-
-        ripple::uint256 ledgerHash;
-        if (!ledgerHash.parseHex(boost::json::value_to<std::string>(value)))
-            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + "Malformed"}};
-
-        return MaybeError{};
+        return makeHexStringValidator<ripple::uint256>(value, key);
     }};
 
 CustomValidator CustomValidators::LedgerIndexValidator =
