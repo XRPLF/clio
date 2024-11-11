@@ -69,15 +69,13 @@ parseAuthorizeCredentials(boost::json::array const& jv)
 {
     ripple::STArray arr;
     for (auto const& jo : jv) {
-        auto const issuer = ripple::parseBase58<ripple::AccountID>(
-            static_cast<std::string>(jo.at(ripple::jss::issuer.c_str()).as_string())
-        );
+        auto const issuer =
+            ripple::parseBase58<ripple::AccountID>(static_cast<std::string>(jo.at(JS(issuer)).as_string()));
         ASSERT(
             issuer.has_value(), "issuer must be present, should already be checked in AuthorizeCredentialValidator."
         );
 
-        auto const credentialType =
-            ripple::strUnHex(static_cast<std::string>(jo.at(ripple::jss::credential_type.c_str()).as_string()));
+        auto const credentialType = ripple::strUnHex(static_cast<std::string>(jo.at(JS(credential_type)).as_string()));
 
         ASSERT(
             credentialType.has_value(),

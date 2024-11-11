@@ -750,20 +750,20 @@ getDeliveredAmount(
 );
 
 /**
- * @brief Get Set of issuerID & CredentialType
+ * @brief Get Array of Credential objects
  *
  * @param credID Array of CredentialID's to parse
  * @param backend backend interface
  * @param info The ledger header
- * @param ctx The coroutine context
- * @return Set of issuerID & CredentialType, error
+ * @param yield The coroutine context
+ * @return Array of credential objects, error if failed otherwise
  */
-std::expected<std::set<std::pair<ripple::AccountID, ripple::Slice>>, Status>
-createAuthCredsByCredentialID(
+std::expected<ripple::STArray, Status>
+fetchCredentialArray(
     std::optional<boost::json::array> const& credID,
-    std::shared_ptr<BackendInterface> const& backend,
+    BackendInterface const& backend,
     ripple::LedgerHeader const& info,
-    Context const& ctx
+    boost::asio::yield_context const& yield
 );
 
 }  // namespace rpc

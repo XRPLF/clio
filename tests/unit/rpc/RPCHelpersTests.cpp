@@ -30,10 +30,12 @@
 
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/json/array.hpp>
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <xrpl/basics/Blob.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/ErrorCodes.h>
 #include <xrpl/protocol/Indexes.h>
@@ -47,7 +49,9 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tuple>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -59,6 +63,8 @@ constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 constexpr static auto INDEX1 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr static auto TXNID = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
+constexpr static auto CREDENTIALID = "c7a14f6b9d5d4a9cb9c223a61b8e5c7df58e8b7ad1c6b4f8e7a321fa4e5b4c9d";
+constexpr static std::string_view CREDENTIALTYPE = "credType";
 
 class RPCHelpersTest : public util::prometheus::WithPrometheus, public MockBackendTest, public SyncAsioContextTest {
     void
@@ -539,6 +545,47 @@ TEST_F(RPCHelpersTest, ParseIssue)
         parseIssue(boost::json::parse(R"({"issuer": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"})").as_object()),
         std::runtime_error
     );
+}
+
+TEST_F(RPCHelpersTest, GetInvalidCredentialArray)
+{
+    boost::json::array credentialsArray = {CREDENTIALID};
+    auto const info = CreateLedgerHeader(INDEX1, 30);
+
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto const ret = fetchCredentialArray(credentialsArray, *backend, info, yield);
+        ASSERT_FALSE(ret.has_value());
+        auto const status = ret.error();
+        EXPECT_EQ(status, RippledError::rpcBAD_CREDENTIALS);
+        EXPECT_EQ(status.message, "credentials aren't accepted.");
+    });
+    ctx.run();
+}
+
+TEST_F(RPCHelpersTest, GetValidCredentialArray)
+{
+    backend->setRange(10, 30);
+
+    auto ledgerHeader = CreateLedgerHeader(INDEX1, 30);
+    auto const credLedgerObject = CreateCredentialObject(ACCOUNT2, ACCOUNT, CREDENTIALTYPE, true);
+
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(credLedgerObject.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
+
+    boost::json::array credentialsArray = {CREDENTIALID};
+
+    ripple::STArray expectedAuthCreds;
+    ripple::STObject credential(ripple::sfCredential);
+    credential.setAccountID(ripple::sfIssuer, GetAccountIDWithString(ACCOUNT));
+    credential.setFieldVL(ripple::sfCredentialType, ripple::Blob{std::begin(CREDENTIALTYPE), std::end(CREDENTIALTYPE)});
+    expectedAuthCreds.push_back(std::move(credential));
+
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto const result = fetchCredentialArray(credentialsArray, *backend, ledgerHeader, yield);
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(result.value(), expectedAuthCreds);
+    });
+    ctx.run();
 }
 
 struct IsAdminCmdParamTestCaseBundle {
