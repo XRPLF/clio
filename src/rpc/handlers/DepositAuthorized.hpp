@@ -61,7 +61,7 @@ public:
         std::string destinationAccount;
         std::string ledgerHash;
         uint32_t ledgerIndex{};
-        boost::json::array credentials;
+        std::optional<boost::json::array> credentials;
 
         // validated should be sent via framework
         bool validated = true;

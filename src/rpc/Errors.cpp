@@ -83,6 +83,9 @@ getErrorInfo(ClioError code)
         {ClioError::rpcUNKNOWN_OPTION, "unknownOption", "Unknown option."},
         {ClioError::rpcFIELD_NOT_FOUND_TRANSACTION, "fieldNotFoundTransaction", "Missing field."},
         {ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID, "malformedDocumentID", "Malformed oracle_document_id."},
+        {ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS,
+         "malformedAuthorizedCredentials",
+         "Malformed authorized credentials."},
         // special system errors
         {ClioError::rpcINVALID_API_VERSION, JS(invalid_API_version), "Invalid API version."},
         {ClioError::rpcCOMMAND_IS_MISSING, JS(missingCommand), "Method is not specified or is not a string."},

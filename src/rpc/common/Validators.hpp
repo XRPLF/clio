@@ -596,11 +596,18 @@ struct Hex256ItemType final {
         // loop through each item in the array and make sure it is uint256 hex string
         for (auto const& elem : res.as_array()) {
             ripple::uint256 num;
-            if (!num.parseHex(elem.as_string()))
+            if (!elem.is_string())
                 return Error{Status{
                     RippledError::rpcINVALID_PARAMS,
                     "Invalid field 'credentials', not an array of CredentialID(hash256)."
                 }};
+
+            if (!num.parseHex(elem.as_string())) {
+                return Error{Status{
+                    RippledError::rpcINVALID_PARAMS,
+                    "Invalid field 'credentials', not an array of CredentialID(hash256)."
+                }};
+            }
         }
         return {};
     }

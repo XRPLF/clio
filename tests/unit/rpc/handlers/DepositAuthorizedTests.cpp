@@ -177,6 +177,17 @@ generateTestValuesForParametersTest()
             "Invalid parameters.",
         },
         {
+            "CredentialsNotStringsInArray",
+            R"({
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "credentials": [123]
+            })",
+            "invalidParams",
+            "Invalid field 'credentials', not an array of CredentialID(hash256).",
+        },
+        {
             "CredentialsNotHexedStringInArray",
             R"({
                 "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
@@ -383,8 +394,7 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
             "validated": true,
             "deposit_authorized": true,
             "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "credentials": []
+            "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
         })";
 
     backend->setRange(10, 30);
@@ -427,8 +437,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
             "validated": true,
             "deposit_authorized": true,
             "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-             "credentials": []
+            "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
 
     backend->setRange(10, 30);
@@ -476,8 +485,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
             "validated": true,
             "deposit_authorized": false,
             "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-             "credentials": []
+            "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
 
     backend->setRange(10, 30);
@@ -526,8 +534,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
             "validated": true,
             "deposit_authorized": true,
             "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-            "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
-             "credentials": []
+            "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
 
     backend->setRange(10, 30);
@@ -765,7 +772,7 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
     ON_CALL(*backend, doFetchLedgerObject(credentialIndex, _, _))
         .WillByDefault(Return(credential.getSerializer().peekData()));
 
-    EXPECT_CALL(*backend, doFetchLedgerObject).Times(4);
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
 
     auto const input = json::parse(fmt::format(
         R"({{
@@ -789,6 +796,48 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "badCredentials");
         EXPECT_EQ(err.at("error_message").as_string(), "duplicates in credentials.");
+    });
+}
+
+TEST_F(RPCDepositAuthorizedTest, NoElementsInCredentialsReturnsFalse)
+{
+    backend->setRange(10, 30);
+
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30, 34);
+
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillOnce(Return(ledgerHeader));
+
+    auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
+
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, _, _))
+        .WillByDefault(Return(account1Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
+        .WillByDefault(Return(account2Root.getSerializer().peekData()));
+
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+        "source_account": "{}",
+        "destination_account": "{}",
+        "ledger_hash": "{}",
+        "credentials": []
+        }})",
+        ACCOUNT,
+        ACCOUNT2,
+        LEDGERHASH
+    ));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
+        auto const output = handler.process(input, Context{yield});
+
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "credential array has no elements.");
     });
 }
 

@@ -90,6 +90,7 @@ public:
                     case rpc::ClioError::rpcINVALID_HOT_WALLET:
                     case rpc::ClioError::rpcFIELD_NOT_FOUND_TRANSACTION:
                     case rpc::ClioError::rpcMALFORMED_ORACLE_DOCUMENT_ID:
+                    case rpc::ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS:
                     case rpc::ClioError::etlCONNECTION_ERROR:
                     case rpc::ClioError::etlREQUEST_ERROR:
                     case rpc::ClioError::etlREQUEST_TIMEOUT:

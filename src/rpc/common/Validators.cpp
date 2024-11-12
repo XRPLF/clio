@@ -260,8 +260,17 @@ CustomValidator CustomValidators::CredentialTypeValidator =
         if (not value.is_string())
             return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + " NotString"}};
 
-        if (!ripple::strViewUnHex(value.as_string()).has_value())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + " NotHexString"}};
+        auto const& credTypeHex = ripple::strViewUnHex(value.as_string());
+        if (!credTypeHex.has_value())
+            return Error{Status{ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, std::string(key) + " NotHexString"}};
+
+        if (credTypeHex->empty())
+            return Error{Status{ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, std::string(key) + " is empty"}};
+
+        if (credTypeHex->size() > ripple::maxCredentialTypeLength)
+            return Error{
+                Status{ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, std::string(key) + " greater than max length"}
+            };
 
         return MaybeError{};
     }};
@@ -269,12 +278,12 @@ CustomValidator CustomValidators::CredentialTypeValidator =
 CustomValidator CustomValidators::AuthorizeCredentialValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (not value.is_array())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + " not array"}};
+            return Error{Status{ClioError::rpcMALFORMED_REQUEST, std::string(key) + " not array"}};
 
         auto const& authCred = value.as_array();
         if (authCred.size() == 0) {
             return Error{Status{
-                RippledError::rpcINVALID_PARAMS,
+                ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS,
                 fmt::format("Requires at least one element in authorized_credentials array")
             }};
         }
@@ -292,13 +301,13 @@ CustomValidator CustomValidators::AuthorizeCredentialValidator =
             auto const& obj = credObj.as_object();
 
             if (!obj.contains("issuer"))
-                return Error{Status{RippledError::rpcINVALID_PARAMS, "Field 'Issuer' is required but missing."}};
+                return Error{Status{ClioError::rpcMALFORMED_REQUEST, "Field 'Issuer' is required but missing."}};
 
             if (auto const err = IssuerValidator.verify(credObj, "issuer"); !err)
                 return err;
 
             if (!obj.contains("credential_type")) {
-                return Error{Status{RippledError::rpcINVALID_PARAMS, "Field 'CredentialType' is required but missing."}
+                return Error{Status{ClioError::rpcMALFORMED_REQUEST, "Field 'CredentialType' is required but missing."}
                 };
             }
 

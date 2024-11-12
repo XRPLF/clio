@@ -47,6 +47,8 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
+#include <unordered_set>
 #include <utility>
 
 namespace rpc::credentials {
@@ -62,15 +64,13 @@ checkExpired(ripple::SLE const& sleCred, ripple::LedgerHeader const& ledger)
     return false;
 }
 
-std::expected<std::set<std::pair<ripple::AccountID, ripple::Slice>>, Status>
+std::set<std::pair<ripple::AccountID, ripple::Slice>>
 createAuthCredentials(ripple::STArray const& in)
 {
     std::set<std::pair<ripple::AccountID, ripple::Slice>> out;
-    for (auto const& cred : in) {
-        auto [it, ins] = out.insert({cred[ripple::sfIssuer], cred[ripple::sfCredentialType]});
-        if (!ins)
-            return std::unexpected{Status{RippledError::rpcBAD_CREDENTIALS, "duplicates in credentials."}};
-    }
+    for (auto const& cred : in)
+        out.insert({cred[ripple::sfIssuer], cred[ripple::sfCredentialType]});
+
     return out;
 }
 
@@ -110,12 +110,13 @@ fetchCredentialArray(
 )
 {
     ripple::STArray authCreds;
-    if (credID.value().size() > ripple::maxCredentialsArraySize) {
-        return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array too long."}};
-    }
-
+    std::unordered_set<std::string_view> elems;
     for (auto const& elem : credID.value()) {
         ASSERT(elem.is_string(), "should already be checked in validators.hpp that elem is a string.");
+
+        if (elems.contains(elem.as_string()))
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS, "duplicates in credentials."}};
+        elems.insert(elem.as_string());
 
         ripple::uint256 credHash;
         ASSERT(

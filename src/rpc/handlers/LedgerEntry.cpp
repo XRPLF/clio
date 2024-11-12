@@ -103,10 +103,11 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
         );
         // Only one of authorize or authorized_credentials MUST exist;
         if (input.depositPreauth->contains(JS(authorized)) ==
-            input.depositPreauth->contains(JS(authorized_credentials)))
+            input.depositPreauth->contains(JS(authorized_credentials))) {
             return Error{
-                Status{RippledError::rpcBAD_CREDENTIALS, "Must have one of authorized or authorized_credentials."}
+                Status{ClioError::rpcMALFORMED_REQUEST, "Must have one of authorized or authorized_credentials."}
             };
+        }
 
         if (input.depositPreauth->contains(JS(authorized))) {
             auto const authorized = util::parseBase58Wrapper<ripple::AccountID>(
@@ -118,11 +119,11 @@ LedgerEntryHandler::process(LedgerEntryHandler::Input input, Context const& ctx)
                 input.depositPreauth->at(JS(authorized_credentials)).as_array()
             );
 
-            auto const sorted = credentials::createAuthCredentials(authorizedCredentials);
-            if (!sorted.has_value())
-                return Error{std::move(sorted).error()};
+            auto const authCreds = credentials::createAuthCredentials(authorizedCredentials);
+            if (authCreds.size() != authorizedCredentials.size())
+                return Error{Status{ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, "duplicates in credentials."}};
 
-            key = ripple::keylet::depositPreauth(owner.value(), *sorted).key;
+            key = ripple::keylet::depositPreauth(owner.value(), authCreds).key;
         }
     } else if (input.ticket) {
         auto const id =

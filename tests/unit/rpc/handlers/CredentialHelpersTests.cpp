@@ -65,8 +65,7 @@ TEST(CreateAuthCredentialsTest, UniqueCredentials)
     auto const result = credentials::createAuthCredentials(credentials);
 
     // Validate that the result contains the correct set of credentials
-    ASSERT_TRUE(result.has_value());
-    ASSERT_EQ(result->size(), 2);
+    ASSERT_EQ(result.size(), 2);
 
     auto const cred1Type = cred1.getFieldVL(ripple::sfCredentialType);
     auto const cred2Type = cred2.getFieldVL(ripple::sfCredentialType);
@@ -76,8 +75,8 @@ TEST(CreateAuthCredentialsTest, UniqueCredentials)
     auto const expected_cred2 =
         std::make_pair(cred2.getAccountID(ripple::sfIssuer), ripple::Slice{cred2Type.data(), cred2Type.size()});
 
-    EXPECT_TRUE(result->count(expected_cred1));
-    EXPECT_TRUE(result->count(expected_cred2));
+    EXPECT_TRUE(result.count(expected_cred1));
+    EXPECT_TRUE(result.count(expected_cred2));
 }
 
 TEST(ParseAuthorizeCredentialsTest, ValidCredentialsArray)

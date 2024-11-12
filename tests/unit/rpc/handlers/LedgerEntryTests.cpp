@@ -218,7 +218,7 @@ generateTestValuesForParametersTest()
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
+            "malformedRequest",
             "authorized_credentials not array"
         },
 
@@ -232,7 +232,7 @@ generateTestValuesForParametersTest()
                 }})",
                 ACCOUNT
             ),
-            "badCredentials",
+            "malformedRequest",
             "Must have one of authorized or authorized_credentials."
         },
 
@@ -256,7 +256,7 @@ generateTestValuesForParametersTest()
                 ACCOUNT3,
                 CREDENTIALTYPE
             ),
-            "badCredentials",
+            "malformedRequest",
             "Must have one of authorized or authorized_credentials."
         },
 
@@ -272,7 +272,7 @@ generateTestValuesForParametersTest()
                 }})",
                 ACCOUNT
             ),
-            "invalidParams",
+            "malformedAuthorizedCredentials",
             "Requires at least one element in authorized_credentials array"
         },
 
@@ -292,7 +292,7 @@ generateTestValuesForParametersTest()
                 ACCOUNT,
                 ACCOUNT2
             ),
-            "invalidParams",
+            "malformedRequest",
             "Field 'CredentialType' is required but missing."
         },
 
@@ -312,7 +312,7 @@ generateTestValuesForParametersTest()
                 ACCOUNT,
                 CREDENTIALTYPE
             ),
-            "invalidParams",
+            "malformedRequest",
             "Field 'Issuer' is required but missing."
         },
 
@@ -354,8 +354,57 @@ generateTestValuesForParametersTest()
                 ACCOUNT,
                 ACCOUNT2
             ),
-            "invalidParams",
+            "malformedAuthorizedCredentials",
             "credential_type NotHexString"
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthAuthorizeCredentialsCredentialTypeEmpty",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "issuer": "{}",
+                            "credential_type": ""
+                        }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "malformedAuthorizedCredentials",
+            "credential_type is empty"
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthDuplicateAuthorizeCredentials",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "issuer": "{}",
+                            "credential_type": "{}"
+                        }},
+                        {{
+                            "issuer": "{}",
+                            "credential_type": "{}"
+                        }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2,
+                CREDENTIALTYPE,
+                ACCOUNT2,
+                CREDENTIALTYPE
+            ),
+            "malformedAuthorizedCredentials",
+            "duplicates in credentials."
         },
 
         ParamTestCaseBundle{
@@ -2403,7 +2452,7 @@ generateTestValuesForNormalPathTest()
             ),
             ripple::keylet::depositPreauth(
                 account1,
-                *credentials::createAuthCredentials(CreateAuthCredentialArray(
+                credentials::createAuthCredentials(CreateAuthCredentialArray(
                     std::vector<std::string_view>{ACCOUNT2}, std::vector<std::string_view>{CREDENTIALTYPE}
                 ))
             )

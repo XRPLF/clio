@@ -21,12 +21,10 @@
 
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
-#include "rpc/CredentialHelpers.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
-#include "util/Assert.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 #include "web/Context.hpp"
@@ -63,7 +61,6 @@
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/NFTSyntheticSerializer.h>
-#include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/PublicKey.h>
 #include <xrpl/protocol/Rate.h>
 #include <xrpl/protocol/SField.h>
@@ -84,6 +81,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -94,7 +92,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <set>
 #include <sstream>
 #include <string>
 #include <string_view>

@@ -24,6 +24,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
@@ -82,27 +83,36 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
     auto it = ripple::SerialIter{dstAccountLedgerObject->data(), dstAccountLedgerObject->size()};
     auto const sleDest = ripple::SLE{it, dstKeylet};
     bool const reqAuth = sleDest.isFlag(ripple::lsfDepositAuth) && (sourceAccountID != destinationAccountID);
-    bool const credentialsPresent = input.credentials.has_value();
+    auto const creds = input.credentials;
+    bool const credentialsPresent = creds.has_value();
 
     ripple::STArray authCreds;
-    // If the two accounts are the same OR if that flag is
-    // not set, then the deposit should be fine.
-    bool depositAuthorized = true;
-    if (credentialsPresent && reqAuth) {
+    if (credentialsPresent) {
+        if (creds.value().empty()) {
+            return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array has no elements."}};
+        }
+        if (creds.value().size() > ripple::maxCredentialsArraySize) {
+            return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array too long."}};
+        }
         auto const creds = credentials::fetchCredentialArray(input.credentials, *sharedPtrBackend_, lgrInfo, ctx.yield);
         if (!creds.has_value())
             return Error{std::move(creds).error()};
         authCreds = std::move(creds).value();
     }
 
+    // If the two accounts are the same OR if that flag is
+    // not set, then the deposit should be fine.
+    bool depositAuthorized = true;
+
     if (reqAuth) {
         ripple::uint256 hashKey;
         if (credentialsPresent) {
             auto const sortedAuthCreds = credentials::createAuthCredentials(authCreds);
-            if (!sortedAuthCreds)
-                return Error{std::move(sortedAuthCreds).error()};
+            ASSERT(
+                sortedAuthCreds.size() == authCreds.size(), "should already be checked above that there is no duplicate"
+            );
 
-            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sortedAuthCreds).key;
+            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, sortedAuthCreds).key;
         } else {
             hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID).key;
         }
@@ -157,9 +167,10 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, DepositAuthorize
         {JS(destination_account), output.destinationAccount},
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
-        {JS(validated), output.validated},
-        {JS(credentials), output.credentials}
+        {JS(validated), output.validated}
     };
+    if (output.credentials)
+        jv.as_object()[JS(credentials)] = *output.credentials;
 }
 
 }  // namespace rpc
