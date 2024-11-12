@@ -83,7 +83,7 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
     auto it = ripple::SerialIter{dstAccountLedgerObject->data(), dstAccountLedgerObject->size()};
     auto const sleDest = ripple::SLE{it, dstKeylet};
     bool const reqAuth = sleDest.isFlag(ripple::lsfDepositAuth) && (sourceAccountID != destinationAccountID);
-    auto const creds = input.credentials;
+    auto const& creds = input.credentials;
     bool const credentialsPresent = creds.has_value();
 
     ripple::STArray authCreds;
@@ -94,10 +94,11 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
         if (creds.value().size() > ripple::maxCredentialsArraySize) {
             return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array too long."}};
         }
-        auto const creds = credentials::fetchCredentialArray(input.credentials, *sharedPtrBackend_, lgrInfo, ctx.yield);
-        if (!creds.has_value())
-            return Error{std::move(creds).error()};
-        authCreds = std::move(creds).value();
+        auto const credArray =
+            credentials::fetchCredentialArray(input.credentials, *sharedPtrBackend_, lgrInfo, ctx.yield);
+        if (!credArray.has_value())
+            return Error{std::move(credArray).error()};
+        authCreds = std::move(credArray).value();
     }
 
     // If the two accounts are the same OR if that flag is
