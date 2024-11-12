@@ -1135,7 +1135,7 @@ CreateMPTokenObject(std::string_view accountId, ripple::uint192 issuanceID, std:
     mptoken.setFieldH256(ripple::sfPreviousTxnID, ripple::uint256{});
     mptoken.setFieldU32(ripple::sfPreviousTxnLgrSeq, 0);
 
-    if (mptAmount)
+    if (mptAmount != 0u)
         mptoken.setFieldU64(ripple::sfMPTAmount, mptAmount);
 
     return mptoken;

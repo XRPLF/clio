@@ -17,16 +17,21 @@
 */
 //==============================================================================
 
-#include "data/BackendInterface.hpp"
 #include "data/DBHelpers.hpp"
-#include "data/Types.hpp"
 
-#include <fmt/core.h>
 #include <ripple/protocol/STBase.h>
 #include <ripple/protocol/STTx.h>
 #include <ripple/protocol/TxMeta.h>
+#include <xrpl/basics/base_uint.h>
+#include <xrpl/protocol/LedgerFormats.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/TER.h>
+#include <xrpl/protocol/TxFormats.h>
 
-#include <vector>
+#include <optional>
+#include <string>
 
 namespace etl {
 

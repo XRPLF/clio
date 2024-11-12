@@ -33,6 +33,7 @@
 #include <gtest/gtest.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
 
 #include <cstdint>
 #include <optional>

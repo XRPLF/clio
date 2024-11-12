@@ -33,6 +33,7 @@
 #include <ripple/basics/base_uint.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerHeader.h>
+#include <xrpl/basics/strHex.h>
 
 #include <functional>
 #include <optional>

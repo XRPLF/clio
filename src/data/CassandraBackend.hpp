@@ -575,7 +575,7 @@ public:
 
         auto mptObjects = doFetchLedgerObjects(mptKeys, ledgerSequence, yield);
 
-        auto it = std::remove_if(mptObjects.begin(), mptObjects.end(), [](Blob const& mpt) { return mpt.size() == 0; });
+        auto it = std::remove_if(mptObjects.begin(), mptObjects.end(), [](Blob const& mpt) { return mpt.empty(); });
 
         mptObjects.erase(it, mptObjects.end());
 
@@ -948,7 +948,8 @@ public:
     writeMPTHolders(std::vector<MPTHolderData> const& data) override
     {
         std::vector<Statement> statements;
-        for (auto [mptId, holder] : data)
+        statements.reserve(data.size());
+for (auto [mptId, holder] : data)
             statements.push_back(schema_->insertMPTHolder.bind(std::move(mptId), std::move(holder)));
 
         executor_.write(std::move(statements));

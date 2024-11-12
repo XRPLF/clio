@@ -24,17 +24,18 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 
+#include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <ripple/basics/base_uint.h>
 #include <ripple/basics/strHex.h>
 #include <ripple/protocol/AccountID.h>
-#include <ripple/protocol/ErrorCodes.h>
 #include <ripple/protocol/Indexes.h>
 #include <ripple/protocol/LedgerHeader.h>
 #include <ripple/protocol/jss.h>
-#include <ripple/protocol/nft.h>
+#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/STLedgerEntry.h>
 
 #include <optional>
 #include <string>
@@ -73,7 +74,7 @@ MPTHoldersHandler::process(MPTHoldersHandler::Input input, Context const& ctx) c
     output.limit = limit;
     output.ledgerIndex = lgrInfo.seq;
 
-    boost::json::array mpts;
+    boost::json::array const mpts;
     for (auto const& mpt : dbResponse.mptokens) {
         ripple::STLedgerEntry const sle{ripple::SerialIter{mpt.data(), mpt.size()}, keylet::mptIssuance(mptID).key};
         boost::json::object mptJson;
