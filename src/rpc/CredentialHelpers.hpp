@@ -17,8 +17,12 @@
 */
 //==============================================================================
 
+#pragma once
+
+#include "data/BackendInterface.hpp"
 #include "rpc/Errors.hpp"
 
+#include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/chrono.h>
@@ -29,6 +33,7 @@
 #include <xrpl/protocol/STObject.h>
 
 #include <expected>
+#include <optional>
 #include <set>
 #include <utility>
 
@@ -61,5 +66,22 @@ createAuthCredentials(ripple::STArray const& in);
  */
 ripple::STArray
 parseAuthorizeCredentials(boost::json::array const& jv);
+
+/**
+ * @brief Get Array of Credential objects
+ *
+ * @param credID Array of CredentialID's to parse
+ * @param backend backend interface
+ * @param info The ledger header
+ * @param yield The coroutine context
+ * @return Array of credential objects, error if failed otherwise
+ */
+std::expected<ripple::STArray, Status>
+fetchCredentialArray(
+    std::optional<boost::json::array> const& credID,
+    BackendInterface const& backend,
+    ripple::LedgerHeader const& info,
+    boost::asio::yield_context const& yield
+);
 
 }  // namespace rpc::credentials

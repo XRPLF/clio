@@ -17,24 +17,34 @@
 */
 //==============================================================================
 
+#include "data/BackendInterface.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/Types.hpp"
 #include "util/Assert.hpp"
 
+#include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
+#include <boost/json/value_to.hpp>
 #include <xrpl/basics/Slice.h>
 #include <xrpl/basics/StringUtilities.h>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/chrono.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Indexes.h>
+#include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
+#include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/SField.h>
 #include <xrpl/protocol/STArray.h>
 #include <xrpl/protocol/STLedgerEntry.h>
 #include <xrpl/protocol/STObject.h>
+#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
 
 #include <cstdint>
 #include <expected>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -89,6 +99,52 @@ parseAuthorizeCredentials(boost::json::array const& jv)
     }
 
     return arr;
+}
+
+std::expected<ripple::STArray, Status>
+fetchCredentialArray(
+    std::optional<boost::json::array> const& credID,
+    BackendInterface const& backend,
+    ripple::LedgerHeader const& info,
+    boost::asio::yield_context const& yield
+)
+{
+    ripple::STArray authCreds;
+    if (credID.value().size() > ripple::maxCredentialsArraySize) {
+        return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array too long."}};
+    }
+
+    for (auto const& elem : credID.value()) {
+        ASSERT(elem.is_string(), "should already be checked in validators.hpp that elem is a string.");
+
+        ripple::uint256 credHash;
+        ASSERT(
+            credHash.parseHex(boost::json::value_to<std::string>(elem)),
+            "should already be checked in validators.hpp that elem is a uint256 hex"
+        );
+
+        auto const credKeylet = ripple::keylet::credential(credHash).key;
+        auto const credLedgerObject = backend.fetchLedgerObject(credKeylet, info.seq, yield);
+        if (!credLedgerObject)
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS, "credentials aren't accepted."}};
+
+        auto credIt = ripple::SerialIter{credLedgerObject->data(), credLedgerObject->size()};
+        auto const sleCred = ripple::SLE{credIt, credKeylet};
+
+        if (!credLedgerObject || (sleCred.getType() != ripple::ltCREDENTIAL) ||
+            ((sleCred.getFieldU32(ripple::sfFlags) & ripple::lsfAccepted) == 0u))
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS}};
+
+        if (credentials::checkExpired(sleCred, info))
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS}};
+
+        auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
+        credential.setAccountID(ripple::sfIssuer, sleCred.getAccountID(ripple::sfIssuer));
+        credential.setFieldVL(ripple::sfCredentialType, sleCred.getFieldVL(ripple::sfCredentialType));
+        authCreds.push_back(std::move(credential));
+    }
+
+    return authCreds;
 }
 
 }  // namespace rpc::credentials

@@ -89,7 +89,7 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
     // not set, then the deposit should be fine.
     bool depositAuthorized = true;
     if (credentialsPresent && reqAuth) {
-        auto const creds = fetchCredentialArray(input.credentials, *sharedPtrBackend_, lgrInfo, ctx.yield);
+        auto const creds = credentials::fetchCredentialArray(input.credentials, *sharedPtrBackend_, lgrInfo, ctx.yield);
         if (!creds.has_value())
             return Error{std::move(creds).error()};
         authCreds = std::move(creds).value();

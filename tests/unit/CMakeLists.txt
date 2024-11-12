@@ -67,6 +67,7 @@ target_sources(
           rpc/handlers/AMMInfoTests.cpp
           rpc/handlers/BookChangesTests.cpp
           rpc/handlers/BookOffersTests.cpp
+          rpc/handlers/CredentialHelpersTests.cpp
           rpc/handlers/DefaultProcessorTests.cpp
           rpc/handlers/DepositAuthorizedTests.cpp
           rpc/handlers/FeatureTests.cpp

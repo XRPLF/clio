@@ -749,21 +749,4 @@ getDeliveredAmount(
     uint32_t date
 );
 
-/**
- * @brief Get Array of Credential objects
- *
- * @param credID Array of CredentialID's to parse
- * @param backend backend interface
- * @param info The ledger header
- * @param yield The coroutine context
- * @return Array of credential objects, error if failed otherwise
- */
-std::expected<ripple::STArray, Status>
-fetchCredentialArray(
-    std::optional<boost::json::array> const& credID,
-    BackendInterface const& backend,
-    ripple::LedgerHeader const& info,
-    boost::asio::yield_context const& yield
-);
-
 }  // namespace rpc
