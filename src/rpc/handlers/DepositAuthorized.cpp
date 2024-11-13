@@ -94,8 +94,9 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
         if (creds.value().size() > ripple::maxCredentialsArraySize) {
             return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array too long."}};
         }
-        auto const credArray =
-            credentials::fetchCredentialArray(input.credentials, *sharedPtrBackend_, lgrInfo, ctx.yield);
+        auto const credArray = credentials::fetchCredentialArray(
+            input.credentials, *sourceAccountID, *sharedPtrBackend_, lgrInfo, ctx.yield
+        );
         if (!credArray.has_value())
             return Error{std::move(credArray).error()};
         authCreds = std::move(credArray).value();

@@ -290,7 +290,7 @@ CustomValidator CustomValidators::AuthorizeCredentialValidator =
 
         if (authCred.size() > ripple::maxCredentialsArraySize) {
             return Error{Status{
-                RippledError::rpcINVALID_PARAMS,
+                ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS,
                 fmt::format(
                     "Max {} number of credentials in authorized_credentials array", ripple::maxCredentialsArraySize
                 )

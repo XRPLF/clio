@@ -125,11 +125,12 @@ TEST_F(CredentialHelperTest, GetInvalidCredentialArray)
     auto const info = CreateLedgerHeader(INDEX1, 30);
 
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
-        auto const ret = credentials::fetchCredentialArray(credentialsArray, *backend, info, yield);
+        auto const ret =
+            credentials::fetchCredentialArray(credentialsArray, GetAccountIDWithString(ACCOUNT), *backend, info, yield);
         ASSERT_FALSE(ret.has_value());
         auto const status = ret.error();
         EXPECT_EQ(status, RippledError::rpcBAD_CREDENTIALS);
-        EXPECT_EQ(status.message, "credentials aren't accepted.");
+        EXPECT_EQ(status.message, "credentials don't exist.");
     });
     ctx.run();
 }
@@ -148,12 +149,14 @@ TEST_F(CredentialHelperTest, GetValidCredentialArray)
 
     ripple::STArray expectedAuthCreds;
     ripple::STObject credential(ripple::sfCredential);
-    credential.setAccountID(ripple::sfIssuer, GetAccountIDWithString(ACCOUNT));
+    credential.setAccountID(ripple::sfIssuer, GetAccountIDWithString(ACCOUNT2));
     credential.setFieldVL(ripple::sfCredentialType, ripple::Blob{std::begin(CREDENTIALTYPE), std::end(CREDENTIALTYPE)});
     expectedAuthCreds.push_back(std::move(credential));
 
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
-        auto const result = credentials::fetchCredentialArray(credentialsArray, *backend, ledgerHeader, yield);
+        auto const result = credentials::fetchCredentialArray(
+            credentialsArray, GetAccountIDWithString(ACCOUNT2), *backend, ledgerHeader, yield
+        );
         ASSERT_TRUE(result.has_value());
         EXPECT_EQ(result.value(), expectedAuthCreds);
     });

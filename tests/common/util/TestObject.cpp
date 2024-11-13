@@ -1216,7 +1216,7 @@ CreateOracleObject(
     return ledgerObject;
 }
 
-// acc2 issue credential for acc1 so acc2 is issuer
+// acc1 issue credential for acc2 so acc1 is issuer
 ripple::STObject
 CreateCredentialObject(
     std::string_view acc1,
@@ -1229,8 +1229,8 @@ CreateCredentialObject(
     ripple::STObject credObj(ripple::sfCredential);
     credObj.setFieldU16(ripple::sfLedgerEntryType, ripple::ltCREDENTIAL);
     credObj.setFieldVL(ripple::sfCredentialType, ripple::Blob{credType.begin(), credType.end()});
-    credObj.setAccountID(ripple::sfSubject, GetAccountIDWithString(acc1));
-    credObj.setAccountID(ripple::sfIssuer, GetAccountIDWithString(acc2));
+    credObj.setAccountID(ripple::sfSubject, GetAccountIDWithString(acc2));
+    credObj.setAccountID(ripple::sfIssuer, GetAccountIDWithString(acc1));
     if (expiration.has_value())
         credObj.setFieldU32(ripple::sfExpiration, expiration.value());
 

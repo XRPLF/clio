@@ -185,7 +185,7 @@ generateTestValuesForParametersTest()
                 "credentials": [123]
             })",
             "invalidParams",
-            "Invalid field 'credentials', not an array of CredentialID(hash256).",
+            "Item is not a valid uint256 type.",
         },
         {
             "CredentialsNotHexedStringInArray",
@@ -196,7 +196,7 @@ generateTestValuesForParametersTest()
                 "credentials": ["234", "432"]
             })",
             "invalidParams",
-            "Invalid field 'credentials', not an array of CredentialID(hash256).",
+            "Item is not a valid uint256 type.",
         }
     };
 }
@@ -684,7 +684,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "badCredentials");
-        EXPECT_EQ(err.at("error_message").as_string(), "Credentials do not exist, are not accepted, or have expired.");
+        EXPECT_EQ(err.at("error_message").as_string(), "credentials aren't accepted");
     });
 }
 
@@ -742,7 +742,7 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "badCredentials");
-        EXPECT_EQ(err.at("error_message").as_string(), "Credentials do not exist, are not accepted, or have expired.");
+        EXPECT_EQ(err.at("error_message").as_string(), "credentials are expired");
     });
 }
 
@@ -895,5 +895,56 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
         EXPECT_EQ(err.at("error_message").as_string(), "credential array too long.");
+    });
+}
+
+TEST_F(RPCDepositAuthorizedTest, DifferenIssuerAccountForCredentialReturnsFalse)
+{
+    backend->setRange(10, 30);
+
+    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillOnce(Return(ledgerHeader));
+
+    auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
+    auto const credential = CreateCredentialObject(ACCOUNT, ACCOUNT, CREDENTIALTYPE);
+    auto const credentialIndex = ripple::keylet::credential(
+                                     GetAccountIDWithString(ACCOUNT),
+                                     GetAccountIDWithString(ACCOUNT2),
+                                     ripple::Slice(CREDENTIALTYPE.data(), CREDENTIALTYPE.size())
+    )
+                                     .key;
+
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, _, _))
+        .WillByDefault(Return(account1Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
+        .WillByDefault(Return(account2Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(credentialIndex, _, _))
+        .WillByDefault(Return(credential.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "source_account": "{}",
+            "destination_account": "{}",
+            "ledger_hash": "{}",
+            "credentials": ["{}"]
+        }})",
+        ACCOUNT2,
+        ACCOUNT2,
+        LEDGERHASH,
+        ripple::strHex(credentialIndex)
+    ));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
+        auto const output = handler.process(input, Context{yield});
+
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "badCredentials");
+        EXPECT_EQ(err.at("error_message").as_string(), "credentials doesn't belong to the root account");
     });
 }

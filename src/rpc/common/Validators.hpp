@@ -597,10 +597,7 @@ struct Hex256ItemType final {
         for (auto const& elem : res.as_array()) {
             ripple::uint256 num;
             if (!elem.is_string() || !num.parseHex(elem.as_string())) {
-                return Error{Status{
-                    RippledError::rpcINVALID_PARAMS,
-                    "Invalid field 'credentials', not an array of CredentialID(hash256)."
-                }};
+                return Error{Status{RippledError::rpcINVALID_PARAMS, "Item is not a valid uint256 type."}};
             }
         }
         return {};

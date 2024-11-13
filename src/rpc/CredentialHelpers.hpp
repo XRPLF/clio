@@ -71,6 +71,7 @@ parseAuthorizeCredentials(boost::json::array const& jv);
  * @brief Get Array of Credential objects
  *
  * @param credID Array of CredentialID's to parse
+ * @param srcAcc The Source Account
  * @param backend backend interface
  * @param info The ledger header
  * @param yield The coroutine context
@@ -79,6 +80,7 @@ parseAuthorizeCredentials(boost::json::array const& jv);
 std::expected<ripple::STArray, Status>
 fetchCredentialArray(
     std::optional<boost::json::array> const& credID,
+    ripple::AccountID const& srcAcc,
     BackendInterface const& backend,
     ripple::LedgerHeader const& info,
     boost::asio::yield_context const& yield

@@ -79,14 +79,21 @@ parseAuthorizeCredentials(boost::json::array const& jv)
 {
     ripple::STArray arr;
     for (auto const& jo : jv) {
+        ASSERT(
+            jo.at(JS(issuer)).is_string(),
+            "issuer must be string, should already be checked in AuthorizeCredentialValidator"
+        );
         auto const issuer =
             ripple::parseBase58<ripple::AccountID>(static_cast<std::string>(jo.at(JS(issuer)).as_string()));
         ASSERT(
             issuer.has_value(), "issuer must be present, should already be checked in AuthorizeCredentialValidator."
         );
 
+        ASSERT(
+            jo.at(JS(credential_type)).is_string(),
+            "credential_type must be string, should already be checked in AuthorizeCredentialValidator"
+        );
         auto const credentialType = ripple::strUnHex(static_cast<std::string>(jo.at(JS(credential_type)).as_string()));
-
         ASSERT(
             credentialType.has_value(),
             "credential_type must be present, should already be checked in AuthorizeCredentialValidator."
@@ -104,6 +111,7 @@ parseAuthorizeCredentials(boost::json::array const& jv)
 std::expected<ripple::STArray, Status>
 fetchCredentialArray(
     std::optional<boost::json::array> const& credID,
+    ripple::AccountID const& srcAcc,
     BackendInterface const& backend,
     ripple::LedgerHeader const& info,
     boost::asio::yield_context const& yield
@@ -127,17 +135,20 @@ fetchCredentialArray(
         auto const credKeylet = ripple::keylet::credential(credHash).key;
         auto const credLedgerObject = backend.fetchLedgerObject(credKeylet, info.seq, yield);
         if (!credLedgerObject)
-            return Error{Status{RippledError::rpcBAD_CREDENTIALS, "credentials aren't accepted."}};
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS, "credentials don't exist."}};
 
         auto credIt = ripple::SerialIter{credLedgerObject->data(), credLedgerObject->size()};
         auto const sleCred = ripple::SLE{credIt, credKeylet};
 
-        if (!credLedgerObject || (sleCred.getType() != ripple::ltCREDENTIAL) ||
+        if ((sleCred.getType() != ripple::ltCREDENTIAL) ||
             ((sleCred.getFieldU32(ripple::sfFlags) & ripple::lsfAccepted) == 0u))
-            return Error{Status{RippledError::rpcBAD_CREDENTIALS}};
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS, "credentials aren't accepted"}};
 
         if (credentials::checkExpired(sleCred, info))
-            return Error{Status{RippledError::rpcBAD_CREDENTIALS}};
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS, "credentials are expired"}};
+
+        if (sleCred.getAccountID(ripple::sfIssuer) != srcAcc)
+            return Error{Status{RippledError::rpcBAD_CREDENTIALS, "credentials doesn't belong to the root account"}};
 
         auto credential = ripple::STObject::makeInnerObject(ripple::sfCredential);
         credential.setAccountID(ripple::sfIssuer, sleCred.getAccountID(ripple::sfIssuer));
