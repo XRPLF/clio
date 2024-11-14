@@ -140,7 +140,7 @@ TEST_F(CredentialHelperTest, GetValidCredentialArray)
     backend->setRange(10, 30);
 
     auto ledgerHeader = CreateLedgerHeader(INDEX1, 30);
-    auto const credLedgerObject = CreateCredentialObject(ACCOUNT2, ACCOUNT, CREDENTIALTYPE, true);
+    auto const credLedgerObject = CreateCredentialObject(ACCOUNT, ACCOUNT2, CREDENTIALTYPE, true);
 
     ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(credLedgerObject.getSerializer().peekData()));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(1);
@@ -155,7 +155,7 @@ TEST_F(CredentialHelperTest, GetValidCredentialArray)
 
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
         auto const result = credentials::fetchCredentialArray(
-            credentialsArray, GetAccountIDWithString(ACCOUNT2), *backend, ledgerHeader, yield
+            credentialsArray, GetAccountIDWithString(ACCOUNT), *backend, ledgerHeader, yield
         );
         ASSERT_TRUE(result.has_value());
         EXPECT_EQ(result.value(), expectedAuthCreds);

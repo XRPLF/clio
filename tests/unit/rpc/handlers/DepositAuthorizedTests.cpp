@@ -898,7 +898,7 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
     });
 }
 
-TEST_F(RPCDepositAuthorizedTest, DifferenIssuerAccountForCredentialReturnsFalse)
+TEST_F(RPCDepositAuthorizedTest, DifferenSubjectAccountForCredentialReturnsFalse)
 {
     backend->setRange(10, 30);
 
@@ -908,10 +908,12 @@ TEST_F(RPCDepositAuthorizedTest, DifferenIssuerAccountForCredentialReturnsFalse)
 
     auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
     auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
-    auto const credential = CreateCredentialObject(ACCOUNT, ACCOUNT, CREDENTIALTYPE);
+
+    // reverse the subject and issuer account. Now subject is ACCOUNT2
+    auto const credential = CreateCredentialObject(ACCOUNT2, ACCOUNT, CREDENTIALTYPE);
     auto const credentialIndex = ripple::keylet::credential(
-                                     GetAccountIDWithString(ACCOUNT),
                                      GetAccountIDWithString(ACCOUNT2),
+                                     GetAccountIDWithString(ACCOUNT),
                                      ripple::Slice(CREDENTIALTYPE.data(), CREDENTIALTYPE.size())
     )
                                      .key;
@@ -932,7 +934,7 @@ TEST_F(RPCDepositAuthorizedTest, DifferenIssuerAccountForCredentialReturnsFalse)
             "ledger_hash": "{}",
             "credentials": ["{}"]
         }})",
-        ACCOUNT2,
+        ACCOUNT,
         ACCOUNT2,
         LEDGERHASH,
         ripple::strHex(credentialIndex)
@@ -945,6 +947,6 @@ TEST_F(RPCDepositAuthorizedTest, DifferenIssuerAccountForCredentialReturnsFalse)
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "badCredentials");
-        EXPECT_EQ(err.at("error_message").as_string(), "credentials doesn't belong to the root account");
+        EXPECT_EQ(err.at("error_message").as_string(), "credentials don't belong to the root account");
     });
 }
