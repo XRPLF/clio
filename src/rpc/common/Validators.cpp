@@ -267,10 +267,11 @@ CustomValidator CustomValidators::CredentialTypeValidator =
         if (credTypeHex->empty())
             return Error{Status{ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, std::string(key) + " is empty"}};
 
-        if (credTypeHex->size() > ripple::maxCredentialTypeLength)
+        if (credTypeHex->size() > ripple::maxCredentialTypeLength) {
             return Error{
                 Status{ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, std::string(key) + " greater than max length"}
             };
+}
 
         return MaybeError{};
     }};
@@ -281,7 +282,7 @@ CustomValidator CustomValidators::AuthorizeCredentialValidator =
             return Error{Status{ClioError::rpcMALFORMED_REQUEST, std::string(key) + " not array"}};
 
         auto const& authCred = value.as_array();
-        if (authCred.size() == 0) {
+        if (authCred.empty()) {
             return Error{Status{
                 ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS,
                 fmt::format("Requires at least one element in authorized_credentials array")

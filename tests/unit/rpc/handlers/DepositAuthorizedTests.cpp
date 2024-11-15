@@ -37,7 +37,6 @@
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
-#include <xrpl/protocol/STArray.h>
 
 #include <chrono>
 #include <optional>
