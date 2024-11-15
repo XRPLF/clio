@@ -258,7 +258,7 @@ CustomValidator CustomValidators::CurrencyIssueValidator =
 CustomValidator CustomValidators::CredentialTypeValidator =
     CustomValidator{[](boost::json::value const& value, std::string_view key) -> MaybeError {
         if (not value.is_string())
-            return Error{Status{RippledError::rpcINVALID_PARAMS, std::string(key) + " NotString"}};
+            return Error{Status{ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, std::string(key) + " NotString"}};
 
         auto const& credTypeHex = ripple::strViewUnHex(value.as_string());
         if (!credTypeHex.has_value())
@@ -302,14 +302,18 @@ CustomValidator CustomValidators::AuthorizeCredentialValidator =
             auto const& obj = credObj.as_object();
 
             if (!obj.contains("issuer"))
-                return Error{Status{ClioError::rpcMALFORMED_REQUEST, "Field 'Issuer' is required but missing."}};
+                return Error{
+                    Status{ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, "Field 'Issuer' is required but missing."}
+                };
 
-            if (auto const err = IssuerValidator.verify(credObj, "issuer"); !err)
-                return err;
+            // don't want to change issuer error message to be about credentials
+            if (!IssuerValidator.verify(credObj, "issuer"))
+                return Error{Status{ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, "issuer NotString"}};
 
             if (!obj.contains("credential_type")) {
-                return Error{Status{ClioError::rpcMALFORMED_REQUEST, "Field 'CredentialType' is required but missing."}
-                };
+                return Error{Status{
+                    ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, "Field 'CredentialType' is required but missing."
+                }};
             }
 
             if (auto const err = CredentialTypeValidator.verify(credObj, "credential_type"); !err)
