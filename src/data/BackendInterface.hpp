@@ -365,6 +365,25 @@ public:
     ) const = 0;
 
     /**
+     * @brief Fetches all holders' balances for a MPTIssuanceID
+     *
+     * @param mptID MPTIssuanceID you wish you query.
+     * @param limit Paging limit.
+     * @param cursorIn Optional cursor to allow us to pick up from where we last left off.
+     * @param ledgerSequence The ledger sequence to fetch for
+     * @param yield Currently executing coroutine.
+     * @return std::vector<Blob> of MPToken balances and an optional marker
+     */
+    virtual MPTHoldersAndCursor
+    fetchMPTHolders(
+        ripple::uint192 const& mptID,
+        std::uint32_t const limit,
+        std::optional<ripple::AccountID> const& cursorIn,
+        std::uint32_t const ledgerSequence,
+        boost::asio::yield_context yield
+    ) const = 0;
+
+    /**
      * @brief Fetches a specific ledger object.
      *
      * Currently the real fetch happens in doFetchLedgerObject and fetchLedgerObject attempts to fetch from Cache first
@@ -616,6 +635,14 @@ public:
      */
     virtual void
     writeNFTTransactions(std::vector<NFTTransactionsData> const& data) = 0;
+
+    /**
+     * @brief Write accounts that started holding onto a MPT.
+     *
+     * @param data A vector of MPT ID and account pairs
+     */
+    virtual void
+    writeMPTHolders(std::vector<MPTHolderData> const& data) = 0;
 
     /**
      * @brief Write a new successor.

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -21,72 +21,55 @@
 
 #include "data/BackendInterface.hpp"
 #include "rpc/JS.hpp"
+#include "rpc/common/Modifiers.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
 
-#include <boost/json/array.hpp>
-#include <boost/json/conversion.hpp>
-#include <boost/json/value.hpp>
-#include <xrpl/protocol/STArray.h>
-#include <xrpl/protocol/jss.h>
-
-#include <cstdint>
-#include <memory>
-#include <optional>
-#include <string>
-
 namespace rpc {
 
 /**
- * @brief Handles the `deposit_authorized` command
- *
- * The deposit_authorized command indicates whether one account is authorized to send payments directly to
- * another. See Deposit Authorization for information on how to require authorization to deliver money to your account.
- *
- * For more details see: https://xrpl.org/deposit_authorized.html
+ * @brief The mpt_holders command asks the Clio server for all holders of a particular MPTokenIssuance.
  */
-class DepositAuthorizedHandler {
-    // dependencies
-    std::shared_ptr<BackendInterface> const sharedPtrBackend_;
+class MPTHoldersHandler {
+    std::shared_ptr<BackendInterface> sharedPtrBackend_;
 
 public:
-    // Note: `ledger_current_index` is omitted because it only makes sense for rippled
+    static auto constexpr LIMIT_MIN = 1;
+    static auto constexpr LIMIT_MAX = 100;
+    static auto constexpr LIMIT_DEFAULT = 50;
+
     /**
      * @brief A struct to hold the output data of the command
      */
     struct Output {
-        bool depositAuthorized = true;
-        std::string sourceAccount;
-        std::string destinationAccount;
-        std::string ledgerHash;
-        uint32_t ledgerIndex{};
-        std::optional<boost::json::array> credentials;
-
-        // validated should be sent via framework
+        boost::json::array mpts;
+        uint32_t ledgerIndex;
+        std::string mptID;
         bool validated = true;
+        uint32_t limit;
+        std::optional<std::string> marker;
     };
 
     /**
      * @brief A struct to hold the input data for the command
      */
     struct Input {
-        std::string sourceAccount;
-        std::string destinationAccount;
+        std::string mptID;
         std::optional<std::string> ledgerHash;
         std::optional<uint32_t> ledgerIndex;
-        std::optional<boost::json::array> credentials;
+        std::optional<std::string> marker;
+        std::optional<uint32_t> limit;
     };
 
     using Result = HandlerReturnType<Output>;
 
     /**
-     * @brief Construct a new DepositAuthorizedHandler object
+     * @brief Construct a new MPTHoldersHandler object
      *
      * @param sharedPtrBackend The backend to use
      */
-    DepositAuthorizedHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend)
-        : sharedPtrBackend_(sharedPtrBackend)
+    MPTHoldersHandler(std::shared_ptr<BackendInterface> const& sharedPtrBackend) : sharedPtrBackend_(sharedPtrBackend)
     {
     }
 
@@ -100,18 +83,21 @@ public:
     spec([[maybe_unused]] uint32_t apiVersion)
     {
         static auto const rpcSpec = RpcSpec{
-            {JS(source_account), validation::Required{}, validation::CustomValidators::AccountValidator},
-            {JS(destination_account), validation::Required{}, validation::CustomValidators::AccountValidator},
+            {JS(mpt_issuance_id), validation::Required{}, validation::CustomValidators::Uint192HexStringValidator},
             {JS(ledger_hash), validation::CustomValidators::Uint256HexStringValidator},
             {JS(ledger_index), validation::CustomValidators::LedgerIndexValidator},
-            {JS(credentials), validation::Type<boost::json::array>{}, validation::Hex256ItemType()}
+            {JS(limit),
+             validation::Type<uint32_t>{},
+             validation::Min(1u),
+             modifiers::Clamp<int32_t>{LIMIT_MIN, LIMIT_MAX}},
+            {JS(marker), validation::CustomValidators::Uint160HexStringValidator},
         };
 
         return rpcSpec;
     }
 
     /**
-     * @brief Process the DepositAuthorized command
+     * @brief Process the MPTHolders command
      *
      * @param input The input data for the command
      * @param ctx The context of the request

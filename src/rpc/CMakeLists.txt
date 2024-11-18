@@ -6,6 +6,7 @@ target_sources(
           Factories.cpp
           AMMHelpers.cpp
           RPCHelpers.cpp
+          CredentialHelpers.cpp
           Counters.cpp
           WorkQueue.cpp
           common/Specs.cpp
@@ -33,6 +34,7 @@ target_sources(
           handlers/LedgerEntry.cpp
           handlers/LedgerIndex.cpp
           handlers/LedgerRange.cpp
+          handlers/MPTHolders.cpp
           handlers/NFTsByIssuer.cpp
           handlers/NFTBuyOffers.cpp
           handlers/NFTHistory.cpp

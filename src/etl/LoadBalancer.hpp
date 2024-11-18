@@ -24,6 +24,7 @@
 #include "etl/NetworkValidatedLedgersInterface.hpp"
 #include "etl/Source.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
+#include "rpc/Errors.hpp"
 #include "util/Mutex.hpp"
 #include "util/ResponseExpirationCache.hpp"
 #include "util/config/Config.hpp"

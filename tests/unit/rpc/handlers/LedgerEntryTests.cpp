@@ -18,6 +18,7 @@
 //==============================================================================
 
 #include "data/Types.hpp"
+#include "rpc/CredentialHelpers.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/common/AnyHandler.hpp"
 #include "rpc/common/Types.hpp"
@@ -29,6 +30,8 @@
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/json/array.hpp>
+#include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
@@ -36,6 +39,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/basics/Blob.h>
+#include <xrpl/basics/Slice.h>
+#include <xrpl/basics/StringUtilities.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/AccountID.h>
@@ -49,6 +54,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -66,6 +72,7 @@ constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A
 constexpr static auto TOKENID = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679F4AD1D4850000C0EA";
 constexpr static auto NFTID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
 constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+constexpr static auto CREDENTIALTYPE = "4B5943";
 
 class RPCLedgerEntryTest : public HandlerBaseTest {};
 
@@ -198,6 +205,206 @@ generateTestValuesForParametersTest()
             ),
             "invalidParams",
             "authorizedNotString"
+        },
+
+        ParamTestCaseBundle{
+            "InvalidDepositPreauthJsonAuthorizeCredentialsNotArray",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": "asdf"
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "authorized_credentials not array"
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthBothAuthAndAuthCredentialsDoesNotExists",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}"
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Must have one of authorized or authorized_credentials."
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthBothAuthAndAuthCredentialsExists",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized": "{}",
+                        "authorized_credentials": [
+                           {{
+                                "issuer": "{}",
+                                "credential_type": "{}"
+                            }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2,
+                ACCOUNT3,
+                CREDENTIALTYPE
+            ),
+            "malformedRequest",
+            "Must have one of authorized or authorized_credentials."
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthEmptyAuthorizeCredentials",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        ]
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedAuthorizedCredentials",
+            "Requires at least one element in authorized_credentials array"
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthAuthorizeCredentialsMissingCredentialType",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                            {{
+                                "issuer": "{}"
+                            }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Field 'CredentialType' is required but missing."
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthAuthorizeCredentialsMissingIssuer",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "credential_type": "{}"
+                        }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                CREDENTIALTYPE
+            ),
+            "malformedRequest",
+            "Field 'Issuer' is required but missing."
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthAuthorizeCredentialsIncorrectCredentialType",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "issuer": "{}",
+                            "credential_type": 432
+                        }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "invalidParams",
+            "credential_type NotString"
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthAuthorizeCredentialsCredentialTypeNotHex",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "issuer": "{}",
+                            "credential_type": "hello world"
+                        }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "malformedAuthorizedCredentials",
+            "credential_type NotHexString"
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthAuthorizeCredentialsCredentialTypeEmpty",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "issuer": "{}",
+                            "credential_type": ""
+                        }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "malformedAuthorizedCredentials",
+            "credential_type is empty"
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthDuplicateAuthorizeCredentials",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "issuer": "{}",
+                            "credential_type": "{}"
+                        }},
+                        {{
+                            "issuer": "{}",
+                            "credential_type": "{}"
+                        }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2,
+                CREDENTIALTYPE,
+                ACCOUNT2,
+                CREDENTIALTYPE
+            ),
+            "malformedAuthorizedCredentials",
+            "duplicates in credentials."
         },
 
         ParamTestCaseBundle{
@@ -1759,6 +1966,130 @@ generateTestValuesForParametersTest()
             "malformedRequest",
             "Malformed request."
         },
+        ParamTestCaseBundle{
+            "CredentialInvalidSubjectType",
+            R"({
+                "credential": {
+                    "subject": 123
+                }
+            })",
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "CredentialInvalidIssuerType",
+            fmt::format(
+                R"({{
+                "credential": {{
+                    "issuer": ["{}"]
+                }}
+            }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTIssuanceStringIndex",
+            R"({
+                "mpt_issuance": "invalid"
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTIssuanceType",
+            R"({
+                "mpt_issuance": 0
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenStringIndex",
+            R"({
+                "mptoken": "invalid"
+            })",
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenObject",
+            fmt::format(
+                R"({{
+                    "mptoken": {{}}
+                }})"
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "MissingMPTokenID",
+            fmt::format(
+                R"({{
+                    "mptoken": {{
+                        "account": "{}"
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "CredentialInvalidCredentialType",
+            fmt::format(
+                R"({{
+                "credential": {{
+                    "subject": "{}",
+                    "issuer": "{}",
+                    "credential_type": 1234
+                }}
+            }})",
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "CredentialMissingIssuerField",
+            fmt::format(
+                R"({{
+                "credential": {{
+                    "subject": "{}",
+                    "credential_type": "1234"
+                }}
+            }})",
+                ACCOUNT,
+                ACCOUNT2
+            ),
+            "malformedRequest",
+            "Malformed request."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenAccount",
+            fmt::format(
+                R"({{
+                    "mptoken": {{
+                        "mpt_issuance_id": "0000019315EABA24E6135A4B5CE2899E0DA791206413B33D",
+                        "account": 1
+                    }}
+                }})"
+            ),
+            "malformedAddress",
+            "Malformed address."
+        },
+        ParamTestCaseBundle{
+            "InvalidMPTokenType",
+            fmt::format(
+                R"({{
+                    "mptoken": 0
+                }})"
+            ),
+            "malformedRequest",
+            "Malformed request."
+        }
     };
 }
 
@@ -1998,7 +2329,7 @@ generateTestValuesForNormalPathTest()
                 INDEX1
             ),
             ripple::uint256{INDEX1},
-            CreateDepositPreauthLedgerObject(ACCOUNT, ACCOUNT2)
+            CreateDepositPreauthLedgerObjectByAuth(ACCOUNT, ACCOUNT2)
         },
         NormalPathTestBundle{
             "AccountRoot",
@@ -2085,7 +2416,7 @@ generateTestValuesForNormalPathTest()
             CreateEscrowLedgerObject(ACCOUNT, ACCOUNT2)
         },
         NormalPathTestBundle{
-            "DepositPreauth",
+            "DepositPreauthByAuth",
             fmt::format(
                 R"({{
                     "binary": true,
@@ -2098,7 +2429,58 @@ generateTestValuesForNormalPathTest()
                 ACCOUNT2
             ),
             ripple::keylet::depositPreauth(account1, account2).key,
-            CreateDepositPreauthLedgerObject(ACCOUNT, ACCOUNT2)
+            CreateDepositPreauthLedgerObjectByAuth(ACCOUNT, ACCOUNT2)
+        },
+        NormalPathTestBundle{
+            "DepositPreauthByAuthCredentials",
+            fmt::format(
+                R"({{
+                       "binary": true,
+                       "deposit_preauth": {{
+                           "owner": "{}",
+                           "authorized_credentials": [
+                               {{
+                                    "issuer": "{}",
+                                    "credential_type": "{}"
+                               }}
+                           ]
+                       }}
+                   }})",
+                ACCOUNT,
+                ACCOUNT2,
+                CREDENTIALTYPE
+            ),
+            ripple::keylet::depositPreauth(
+                account1,
+                credentials::createAuthCredentials(CreateAuthCredentialArray(
+                    std::vector<std::string_view>{ACCOUNT2}, std::vector<std::string_view>{CREDENTIALTYPE}
+                ))
+            )
+                .key,
+            CreateDepositPreauthLedgerObjectByAuthCredentials(ACCOUNT, ACCOUNT2, CREDENTIALTYPE)
+        },
+        NormalPathTestBundle{
+            "Credentials",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "credential": {{
+                        "subject": "{}",
+                        "issuer": "{}",
+                        "credential_type": "{}"
+                    }}
+                }})",
+                ACCOUNT,
+                ACCOUNT2,
+                CREDENTIALTYPE
+            ),
+            ripple::keylet::credential(
+                account1,
+                account2,
+                ripple::Slice(ripple::strUnHex(CREDENTIALTYPE)->data(), ripple::strUnHex(CREDENTIALTYPE)->size())
+            )
+                .key,
+            CreateCredentialObject(ACCOUNT, ACCOUNT2, CREDENTIALTYPE)
         },
         NormalPathTestBundle{
             "RippleState",
@@ -2396,6 +2778,46 @@ generateTestValuesForNormalPathTest()
                     {CreateOraclePriceData(1e3, ripple::to_currency("USD"), ripple::to_currency("XRP"), 2)}
                 )
             )
+        },
+        NormalPathTestBundle{
+            "MPTIssuance",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "mpt_issuance": "{}"
+                }})",
+                ripple::to_string(ripple::makeMptID(2, account1))
+            ),
+            ripple::keylet::mptIssuance(ripple::makeMptID(2, account1)).key,
+            CreateMPTIssuanceObject(ACCOUNT, 2, "metadata")
+        },
+        NormalPathTestBundle{
+            "MPTokenViaIndex",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "mptoken": "{}"
+                }})",
+                INDEX1
+            ),
+            ripple::uint256{INDEX1},
+            CreateMPTokenObject(ACCOUNT, ripple::makeMptID(2, account1))
+        },
+        NormalPathTestBundle{
+            "MPTokenViaObject",
+            fmt::format(
+                R"({{
+                    "binary": true,
+                    "mptoken": {{
+                        "account": "{}",
+                        "mpt_issuance_id": "{}"
+                    }}
+                }})",
+                ACCOUNT,
+                ripple::to_string(ripple::makeMptID(2, account1))
+            ),
+            ripple::keylet::mptoken(ripple::makeMptID(2, account1), account1).key,
+            CreateMPTokenObject(ACCOUNT, ripple::makeMptID(2, account1))
         },
     };
 }
@@ -2941,6 +3363,56 @@ TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
         auto const err = rpc::makeError(output.result.error());
         auto const myerr = err.at("error").as_string();
         EXPECT_EQ(myerr, "entryNotFound");
+    });
+}
+
+// this testcase will test the if response includes synthetic mpt_issuance_id
+TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
+{
+    static auto constexpr OUT = R"({
+        "ledger_hash":"4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+        "ledger_index":30,
+        "validated":true,
+        "index":"FD7E7EFAE2A20E75850D0E0590B205E2F74DC472281768CD6E03988069816336",
+        "node":{
+            "Flags":0,
+            "Issuer":"rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "LedgerEntryType":"MPTokenIssuance",
+            "MPTokenMetadata":"6D65746164617461",
+            "MaximumAmount":"0",
+            "OutstandingAmount":"0",
+            "OwnerNode":"0",
+            "PreviousTxnID":"0000000000000000000000000000000000000000000000000000000000000000",
+            "PreviousTxnLgrSeq":0,
+            "Sequence":2,
+            "index":"FD7E7EFAE2A20E75850D0E0590B205E2F74DC472281768CD6E03988069816336",
+            "mpt_issuance_id":"000000024B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
+        }
+    })";
+
+    auto const mptId = ripple::makeMptID(2, GetAccountIDWithString(ACCOUNT));
+
+    backend->setRange(RANGEMIN, RANGEMAX);
+    // return valid ledgerHeader
+    auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
+    EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
+
+    // return valid ledger entry which can be deserialized
+    auto const ledgerEntry = CreateMPTIssuanceObject(ACCOUNT, 2, "metadata");
+    EXPECT_CALL(*backend, doFetchLedgerObject(ripple::keylet::mptIssuance(mptId).key, RANGEMAX, _))
+        .WillRepeatedly(Return(ledgerEntry.getSerializer().peekData()));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
+        auto const req = json::parse(fmt::format(
+            R"({{
+                "mpt_issuance": "{}"
+            }})",
+            ripple::to_string(mptId)
+        ));
+        auto const output = handler.process(req, Context{yield});
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, json::parse(OUT));
     });
 }
 

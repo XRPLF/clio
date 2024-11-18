@@ -19,25 +19,32 @@
 
 #include "rpc/handlers/DepositAuthorized.hpp"
 
+#include "rpc/CredentialHelpers.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 
+#include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/value.hpp>
 #include <boost/json/value_to.hpp>
+#include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 #include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/SField.h>
+#include <xrpl/protocol/Protocol.h>
 #include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/STObject.h>
 #include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/jss.h>
 
+#include <memory>
 #include <string>
+#include <utility>
 #include <variant>
 
 namespace rpc {
@@ -71,26 +78,55 @@ DepositAuthorizedHandler::process(DepositAuthorizedHandler::Input input, Context
 
     Output response;
 
+    auto it = ripple::SerialIter{dstAccountLedgerObject->data(), dstAccountLedgerObject->size()};
+    auto const sleDest = ripple::SLE{it, dstKeylet};
+    bool const reqAuth = sleDest.isFlag(ripple::lsfDepositAuth) && (sourceAccountID != destinationAccountID);
+    auto const& creds = input.credentials;
+    bool const credentialsPresent = creds.has_value();
+
+    ripple::STArray authCreds;
+    if (credentialsPresent) {
+        if (creds.value().empty()) {
+            return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array has no elements."}};
+        }
+        if (creds.value().size() > ripple::maxCredentialsArraySize) {
+            return Error{Status{RippledError::rpcINVALID_PARAMS, "credential array too long."}};
+        }
+        auto const credArray = credentials::fetchCredentialArray(
+            input.credentials, *sourceAccountID, *sharedPtrBackend_, lgrInfo, ctx.yield
+        );
+        if (!credArray.has_value())
+            return Error{std::move(credArray).error()};
+        authCreds = std::move(credArray).value();
+    }
+
+    // If the two accounts are the same OR if that flag is
+    // not set, then the deposit should be fine.
+    bool depositAuthorized = true;
+
+    if (reqAuth) {
+        ripple::uint256 hashKey;
+        if (credentialsPresent) {
+            auto const sortedAuthCreds = credentials::createAuthCredentials(authCreds);
+            ASSERT(
+                sortedAuthCreds.size() == authCreds.size(), "should already be checked above that there is no duplicate"
+            );
+
+            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, sortedAuthCreds).key;
+        } else {
+            hashKey = ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID).key;
+        }
+
+        depositAuthorized = sharedPtrBackend_->fetchLedgerObject(hashKey, lgrInfo.seq, ctx.yield).has_value();
+    }
+
     response.sourceAccount = input.sourceAccount;
     response.destinationAccount = input.destinationAccount;
     response.ledgerHash = ripple::strHex(lgrInfo.hash);
     response.ledgerIndex = lgrInfo.seq;
-
-    // If the two accounts are the same, then the deposit should be fine.
-    if (sourceAccountID != destinationAccountID) {
-        auto it = ripple::SerialIter{dstAccountLedgerObject->data(), dstAccountLedgerObject->size()};
-        auto sle = ripple::SLE{it, dstKeylet};
-
-        // Check destination for the DepositAuth flag.
-        // If that flag is not set then a deposit should be just fine.
-        if ((sle.getFieldU32(ripple::sfFlags) & ripple::lsfDepositAuth) != 0u) {
-            // See if a preauthorization entry is in the ledger.
-            auto const depositPreauthKeylet = ripple::keylet::depositPreauth(*destinationAccountID, *sourceAccountID);
-            auto const sleDepositAuth =
-                sharedPtrBackend_->fetchLedgerObject(depositPreauthKeylet.key, lgrInfo.seq, ctx.yield);
-            response.depositAuthorized = static_cast<bool>(sleDepositAuth);
-        }
-    }
+    response.depositAuthorized = depositAuthorized;
+    if (credentialsPresent)
+        response.credentials = input.credentials.value();
 
     return response;
 }
@@ -115,6 +151,10 @@ tag_invoke(boost::json::value_to_tag<DepositAuthorizedHandler::Input>, boost::js
         }
     }
 
+    if (jsonObject.contains(JS(credentials))) {
+        input.credentials = boost::json::value_to<boost::json::array>(jv.at(JS(credentials)));
+    }
+
     return input;
 }
 
@@ -127,8 +167,10 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, DepositAuthorize
         {JS(destination_account), output.destinationAccount},
         {JS(ledger_hash), output.ledgerHash},
         {JS(ledger_index), output.ledgerIndex},
-        {JS(validated), output.validated},
+        {JS(validated), output.validated}
     };
+    if (output.credentials)
+        jv.as_object()[JS(credentials)] = *output.credentials;
 }
 
 }  // namespace rpc

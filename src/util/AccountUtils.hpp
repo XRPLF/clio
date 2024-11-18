@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <xrpl/basics/StringUtilities.h>
+#include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/tokens.h>
 
 #include <cctype>

@@ -121,19 +121,19 @@ private:
         pipe_.get().finish(startSequence_);
     }
 
-    bool
+    [[nodiscard]] bool
     isStopping() const
     {
         return state_.get().isStopping;
     }
 
-    bool
+    [[nodiscard]] bool
     hasWriteConflict() const
     {
         return state_.get().writeConflict;
     }
 
-    bool
+    [[nodiscard]] bool
     shouldFinish(uint32_t seq) const
     {
         // Stopping conditions:

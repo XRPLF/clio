@@ -33,6 +33,7 @@ target_sources(
           etl/TransformerTests.cpp
           # ETLng
           etlng/RegistryTests.cpp
+          etlng/ExtractionTests.cpp
           # Feed
           feed/BookChangesFeedTests.cpp
           feed/ForwardFeedTests.cpp
@@ -67,6 +68,7 @@ target_sources(
           rpc/handlers/AMMInfoTests.cpp
           rpc/handlers/BookChangesTests.cpp
           rpc/handlers/BookOffersTests.cpp
+          rpc/handlers/CredentialHelpersTests.cpp
           rpc/handlers/DefaultProcessorTests.cpp
           rpc/handlers/DepositAuthorizedTests.cpp
           rpc/handlers/FeatureTests.cpp
@@ -77,6 +79,7 @@ target_sources(
           rpc/handlers/LedgerIndexTests.cpp
           rpc/handlers/LedgerRangeTests.cpp
           rpc/handlers/LedgerTests.cpp
+          rpc/handlers/MPTHoldersTests.cpp
           rpc/handlers/NFTBuyOffersTests.cpp
           rpc/handlers/NFTHistoryTests.cpp
           rpc/handlers/NFTInfoTests.cpp
