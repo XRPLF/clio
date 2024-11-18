@@ -63,7 +63,7 @@ struct MockWsBase : public web::ConnectionBase {
     }
 
     SubscriptionContextPtr
-    subscriptionContext(util::TagDecoratorFactory const&) override
+    makeSubscriptionContext(util::TagDecoratorFactory const&) override
     {
         return {};
     }

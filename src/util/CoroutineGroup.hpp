@@ -24,7 +24,6 @@
 
 #include <atomic>
 #include <cstddef>
-#include <cstdint>
 #include <functional>
 #include <optional>
 
@@ -37,8 +36,8 @@ namespace util {
  */
 class CoroutineGroup {
     boost::asio::steady_timer timer_;
-    std::optional<int64_t> maxChildren_;
-    std::atomic_int64_t childrenCounter_{0};
+    std::optional<size_t> maxChildren_;
+    std::atomic_size_t childrenCounter_{0};
 
 public:
     /**
@@ -48,7 +47,7 @@ public:
      * @param maxChildren The maximum number of coroutines that can be spawned at the same time. If not provided, there
      * is no limit
      */
-    CoroutineGroup(boost::asio::yield_context yield, std::optional<int64_t> maxChildren = std::nullopt);
+    CoroutineGroup(boost::asio::yield_context yield, std::optional<size_t> maxChildren = std::nullopt);
 
     /**
      * @brief Destroy the Coroutine Group object

@@ -29,6 +29,7 @@
 
 #include <string>
 #include <variant>
+
 namespace web::ng {
 
 /**
@@ -91,7 +92,7 @@ public:
      * @return The message of the response as a const buffer.
      */
     boost::asio::const_buffer
-    intoWsResponse() const&;
+    asWsResponse() const&;
 };
 
 }  // namespace web::ng

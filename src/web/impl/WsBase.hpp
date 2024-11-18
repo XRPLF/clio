@@ -194,7 +194,7 @@ public:
      * @return The subscription context for this connection.
      */
     SubscriptionContextPtr
-    subscriptionContext(util::TagDecoratorFactory const& factory) override
+    makeSubscriptionContext(util::TagDecoratorFactory const& factory) override
     {
         if (subscriptionContext_ == nullptr) {
             subscriptionContext_ = std::make_shared<SubscriptionContext>(factory, shared_from_this());

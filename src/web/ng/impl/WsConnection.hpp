@@ -145,7 +145,7 @@ public:
         std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
     ) override
     {
-        return sendBuffer(response.intoWsResponse(), yield, timeout);
+        return sendBuffer(response.asWsResponse(), yield, timeout);
     }
 
     std::expected<Request, Error>

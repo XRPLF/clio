@@ -148,7 +148,7 @@ ClioApplication::run(bool const useNgWebServer)
             LOG(util::LogService::error()) << "Error creating admin verifier: " << expectedAdminVerifier.error();
             return EXIT_FAILURE;
         }
-        auto adminVerifier = std::move(expectedAdminVerifier).value();
+        auto const adminVerifier = std::move(expectedAdminVerifier).value();
 
         auto httpServer = web::ng::make_Server(config_, ioc);
 

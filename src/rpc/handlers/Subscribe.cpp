@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
+#include "feed/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -30,7 +31,6 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
-#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
@@ -139,7 +139,7 @@ boost::json::object
 SubscribeHandler::subscribeToStreams(
     boost::asio::yield_context yield,
     std::vector<std::string> const& streams,
-    web::SubscriptionContextPtr const& session
+    feed::SubscriberSharedPtr const& session
 ) const
 {
     auto response = boost::json::object{};
@@ -166,7 +166,7 @@ SubscribeHandler::subscribeToStreams(
 void
 SubscribeHandler::subscribeToAccountsProposed(
     std::vector<std::string> const& accounts,
-    web::SubscriptionContextPtr const& session
+    feed::SubscriberSharedPtr const& session
 ) const
 {
     for (auto const& account : accounts) {
@@ -178,7 +178,7 @@ SubscribeHandler::subscribeToAccountsProposed(
 void
 SubscribeHandler::subscribeToAccounts(
     std::vector<std::string> const& accounts,
-    web::SubscriptionContextPtr const& session
+    feed::SubscriberSharedPtr const& session
 ) const
 {
     for (auto const& account : accounts) {
@@ -190,7 +190,7 @@ SubscribeHandler::subscribeToAccounts(
 void
 SubscribeHandler::subscribeToBooks(
     std::vector<OrderBook> const& books,
-    web::SubscriptionContextPtr const& session,
+    feed::SubscriberSharedPtr const& session,
     boost::asio::yield_context yield,
     Output& output
 ) const

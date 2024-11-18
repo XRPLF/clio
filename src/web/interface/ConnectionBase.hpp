@@ -89,7 +89,7 @@ public:
      * @return The subscription context for this connection.
      */
     virtual SubscriptionContextPtr
-    subscriptionContext(util::TagDecoratorFactory const& factory) = 0;
+    makeSubscriptionContext(util::TagDecoratorFactory const& factory) = 0;
 
     /**
      * @brief Indicates whether the connection had an error and is considered dead.

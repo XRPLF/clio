@@ -122,7 +122,7 @@ Response::intoHttpResponse() &&
 }
 
 boost::asio::const_buffer
-Response::intoWsResponse() const&
+Response::asWsResponse() const&
 {
     ASSERT(std::holds_alternative<std::string>(data_), "Response must contain WebSocket data");
     auto const& message = std::get<std::string>(data_);

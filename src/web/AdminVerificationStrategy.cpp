@@ -89,7 +89,7 @@ make_AdminVerificationStrategy(util::Config const& config)
     if (adminPassword.has_value() and localAdmin.has_value() and *localAdmin)
         return std::unexpected{"Admin config error: 'local_admin' and admin_password can not be set together."};
 
-    if (localAdmin.has_value() and not*localAdmin and not adminPassword.has_value()) {
+    if (localAdmin.has_value() and !*localAdmin and !adminPassword.has_value()) {
         return std::unexpected{
             "Admin config error: either 'local_admin' should be enabled or 'admin_password' must be specified."
         };

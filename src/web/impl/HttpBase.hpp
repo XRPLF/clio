@@ -278,7 +278,7 @@ public:
     }
 
     SubscriptionContextPtr
-    subscriptionContext(util::TagDecoratorFactory const&) override
+    makeSubscriptionContext(util::TagDecoratorFactory const&) override
     {
         ASSERT(false, "SubscriptionContext can't be created for a HTTP connection");
         std::unreachable();

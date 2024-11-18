@@ -161,7 +161,7 @@ private:
                     return rpc::make_WsContext(
                         yield,
                         request,
-                        connection->subscriptionContext(tagFactory_),
+                        connection->makeSubscriptionContext(tagFactory_),
                         tagFactory_.with(connection->tag()),
                         *range,
                         connection->clientIp,

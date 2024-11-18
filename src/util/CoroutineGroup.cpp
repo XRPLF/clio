@@ -25,14 +25,13 @@
 #include <boost/asio/steady_timer.hpp>
 
 #include <cstddef>
-#include <cstdint>
 #include <functional>
 #include <optional>
 #include <utility>
 
 namespace util {
 
-CoroutineGroup::CoroutineGroup(boost::asio::yield_context yield, std::optional<int64_t> maxChildren)
+CoroutineGroup::CoroutineGroup(boost::asio::yield_context yield, std::optional<size_t> maxChildren)
     : timer_{yield.get_executor(), boost::asio::steady_timer::duration::max()}, maxChildren_{maxChildren}
 {
 }
@@ -91,6 +90,8 @@ CoroutineGroup::isFull() const
 void
 CoroutineGroup::onCoroutineCompleted()
 {
+    ASSERT(childrenCounter_ != 0, "onCoroutineCompleted() called more times than the number of child coroutines");
+
     --childrenCounter_;
     if (childrenCounter_ == 0)
         timer_.cancel();

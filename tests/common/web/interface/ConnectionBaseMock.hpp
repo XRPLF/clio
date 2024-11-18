@@ -36,7 +36,7 @@ struct ConnectionBaseMock : web::ConnectionBase {
     MOCK_METHOD(void, send, (std::shared_ptr<std::string>), (override));
     MOCK_METHOD(
         web::SubscriptionContextPtr,
-        subscriptionContext,
+        makeSubscriptionContext,
         (util::TagDecoratorFactory const& factory),
         (override)
     );
