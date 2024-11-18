@@ -28,16 +28,10 @@
 #include <gmock/gmock.h>
 #include <google/protobuf/repeated_ptr_field.h>
 #include <gtest/gtest.h>
-#include <xrpl/basics/Blob.h>
-#include <xrpl/basics/Slice.h>
-#include <xrpl/basics/StringUtilities.h>
-#include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
 #include <xrpl/proto/org/xrpl/rpc/v1/get_ledger.pb.h>
 #include <xrpl/proto/org/xrpl/rpc/v1/ledger.pb.h>
-#include <xrpl/protocol/LedgerHeader.h>
 #include <xrpl/protocol/STTx.h>
-#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TxFormats.h>
 #include <xrpl/protocol/TxMeta.h>
 

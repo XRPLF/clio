@@ -25,11 +25,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/STTx.h>
-#include <xrpl/protocol/Serializer.h>
 #include <xrpl/protocol/TxFormats.h>
-#include <xrpl/protocol/TxMeta.h>
 
 #include <cstdint>
 #include <string>
