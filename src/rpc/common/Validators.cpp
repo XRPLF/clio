@@ -301,10 +301,11 @@ CustomValidator CustomValidators::AuthorizeCredentialValidator =
         for (auto const& credObj : value.as_array()) {
             auto const& obj = credObj.as_object();
 
-            if (!obj.contains("issuer"))
+            if (!obj.contains("issuer")) {
                 return Error{
                     Status{ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, "Field 'Issuer' is required but missing."}
                 };
+}
 
             // don't want to change issuer error message to be about credentials
             if (!IssuerValidator.verify(credObj, "issuer"))
