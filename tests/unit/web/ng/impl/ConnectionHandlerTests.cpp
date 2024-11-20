@@ -251,6 +251,36 @@ TEST_F(ConnectionHandlerSequentialProcessingTest, SendSubscriptionMessage)
     });
 }
 
+TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsDisconnectedAfterProcessingFinished)
+{
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
+        wsHandlerMock;
+    connectionHandler_.onWs(wsHandlerMock.AsStdFunction());
+
+    testing::StrictMock<testing::MockFunction<void(web::SubscriptionContextInterface*)>> onDisconnectHook;
+
+    EXPECT_CALL(*mockWsConnection_, wasUpgraded).WillOnce(Return(true));
+    testing::Expectation const expectationReceiveCalled = EXPECT_CALL(*mockWsConnection_, receive)
+                                                              .WillOnce(Return(makeRequest("", Request::HttpHeaders{})))
+                                                              .WillOnce(Return(makeError(websocket::error::closed)));
+
+    EXPECT_CALL(wsHandlerMock, Call)
+        .WillOnce([&](Request const& request, auto&&, web::SubscriptionContextPtr subscriptionContext, auto&&) {
+            EXPECT_NE(subscriptionContext, nullptr);
+            subscriptionContext->onDisconnect(onDisconnectHook.AsStdFunction());
+            return Response(http::status::ok, "", request);
+        });
+
+    EXPECT_CALL(*mockWsConnection_, send).WillOnce(Return(std::nullopt));
+
+    EXPECT_CALL(onDisconnectHook, Call).After(expectationReceiveCalled);
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        connectionHandler_.processConnection(std::move(mockWsConnection_), yield);
+    });
+}
+
 TEST_F(ConnectionHandlerSequentialProcessingTest, SubscriptionContextIsNullForHttpConnection)
 {
     std::string const target = "/some/target";

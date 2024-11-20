@@ -167,6 +167,10 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
             shouldCloseGracefully = parallelRequestResponseLoop(connectionRef, subscriptionContextInterfacePtr, yield);
             break;
     }
+
+    if (subscriptionContext != nullptr)
+        subscriptionContext->disconnect(yield);
+
     if (shouldCloseGracefully)
         connectionRef.close(yield);
 
