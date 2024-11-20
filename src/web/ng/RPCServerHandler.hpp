@@ -109,7 +109,7 @@ public:
      * @param yield The yield context
      * @return The response
      */
-    Response
+    [[nodiscard]] Response
     operator()(
         Request const& request,
         ConnectionMetadata const& connectionMetadata,
@@ -126,7 +126,7 @@ public:
             [this,
              &request,
              &response,
-             onTaskComplete = onTaskComplete.value(),
+             &onTaskComplete = onTaskComplete.value(),
              &connectionMetadata,
              subscriptionContext = std::move(subscriptionContext)](boost::asio::yield_context yield) mutable {
                 try {
@@ -156,16 +156,20 @@ public:
                     response = impl::ErrorHelper{request}.makeInternalError();
                 }
 
+                // notify the coroutine group that the foreign task is done
                 onTaskComplete();
             },
             connectionMetadata.ip()
         );
 
         if (not postSuccessful) {
+            // onTaskComplete must be called to notify coroutineGroup that the foreign task is done
+            onTaskComplete->operator()();
             rpcEngine_->notifyTooBusy();
             return impl::ErrorHelper{request}.makeTooBusyError();
         }
 
+        // Put the coroutine to sleep until the foreign task is done
         coroutineGroup.asyncWait(yield);
         ASSERT(response.has_value(), "Woke up coroutine without setting response");
         return std::move(response).value();

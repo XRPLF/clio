@@ -141,6 +141,7 @@ target_sources(
           web/impl/ErrorHandlingTests.cpp
           web/ng/ResponseTests.cpp
           web/ng/RequestTests.cpp
+          web/ng/RPCServerHandlerTests.cpp
           web/ng/ServerTests.cpp
           web/ng/SubscriptionContextTests.cpp
           web/ng/impl/ConnectionHandlerTests.cpp

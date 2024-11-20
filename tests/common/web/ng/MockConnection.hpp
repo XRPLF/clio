@@ -34,6 +34,14 @@
 #include <memory>
 #include <optional>
 
+struct MockConnectionMetadataImpl : web::ng::ConnectionMetadata {
+    using web::ng::ConnectionMetadata::ConnectionMetadata;
+    MOCK_METHOD(bool, wasUpgraded, (), (const, override));
+};
+
+using MockConnectionMetadata = testing::NiceMock<MockConnectionMetadataImpl>;
+using StrictMockConnectionMetadata = testing::StrictMock<MockConnectionMetadataImpl>;
+
 struct MockConnectionImpl : web::ng::Connection {
     using web::ng::Connection::Connection;
 
