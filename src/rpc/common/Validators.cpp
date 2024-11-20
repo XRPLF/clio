@@ -285,7 +285,7 @@ CustomValidator CustomValidators::AuthorizeCredentialValidator =
         if (authCred.empty()) {
             return Error{Status{
                 ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS,
-                fmt::format("Requires at least one element in authorized_credentials array")
+                fmt::format("Requires at least one element in authorized_credentials array.")
             }};
         }
 
@@ -299,13 +299,19 @@ CustomValidator CustomValidators::AuthorizeCredentialValidator =
         }
 
         for (auto const& credObj : value.as_array()) {
+            if (!credObj.is_object()) {
+                return Error{Status{
+                    ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS,
+                    "authorized_credentials elements in array are not objects."
+                }};
+            }
             auto const& obj = credObj.as_object();
 
             if (!obj.contains("issuer")) {
                 return Error{
                     Status{ClioError::rpcMALFORMED_AUTHORIZED_CREDENTIALS, "Field 'Issuer' is required but missing."}
                 };
-}
+            }
 
             // don't want to change issuer error message to be about credentials
             if (!IssuerValidator.verify(credObj, "issuer"))
