@@ -292,7 +292,7 @@ generateTestValuesForParametersTest()
                 ACCOUNT,
                 ACCOUNT2
             ),
-            "malformedRequest",
+            "malformedAuthorizedCredentials",
             "Field 'CredentialType' is required but missing."
         },
 
@@ -312,8 +312,29 @@ generateTestValuesForParametersTest()
                 ACCOUNT,
                 CREDENTIALTYPE
             ),
-            "malformedRequest",
+            "malformedAuthorizedCredentials",
             "Field 'Issuer' is required but missing."
+        },
+
+        ParamTestCaseBundle{
+            "DepositPreauthAuthorizeCredentialsIncorrectIssuerType",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": [
+                        {{
+                            "issuer": 123,
+                            "credential_type": "{}"
+                        }}
+                        ]
+                    }}
+                }})",
+                ACCOUNT,
+                CREDENTIALTYPE
+            ),
+            "malformedAuthorizedCredentials",
+            "issuer NotString"
         },
 
         ParamTestCaseBundle{
@@ -333,7 +354,7 @@ generateTestValuesForParametersTest()
                 ACCOUNT,
                 ACCOUNT2
             ),
-            "invalidParams",
+            "malformedAuthorizedCredentials",
             "credential_type NotString"
         },
 
