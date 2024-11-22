@@ -22,9 +22,7 @@
 #include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
-#include "web/SubscriptionContextInterface.hpp"
 #include "web/impl/ErrorHandling.hpp"
-#include "web/interface/ConnectionBase.hpp"
 #include "web/interface/ConnectionBaseMock.hpp"
 
 #include <boost/beast/http/status.hpp>
@@ -60,7 +58,7 @@ struct ErrorHandlingComposeErrorTest : ErrorHandlingTests,
 TEST_P(ErrorHandlingComposeErrorTest, composeError)
 {
     connection_->upgraded = GetParam().connectionUpgraded;
-    ErrorHelper errorHelper{connection_, GetParam().request};
+    ErrorHelper const errorHelper{connection_, GetParam().request};
     auto const result = errorHelper.composeError(rpc::RippledError::rpcNOT_READY);
     EXPECT_EQ(boost::json::serialize(result), boost::json::serialize(GetParam().expectedResult));
 }
@@ -134,7 +132,7 @@ struct ErrorHandlingSendErrorTest : ErrorHandlingTests,
 TEST_P(ErrorHandlingSendErrorTest, sendError)
 {
     connection_->upgraded = GetParam().connectionUpgraded;
-    ErrorHelper errorHelper{connection_};
+    ErrorHelper const errorHelper{connection_};
 
     EXPECT_CALL(*connection_, send(std::string{GetParam().expectedMessage}, GetParam().expectedStatus));
     errorHelper.sendError(GetParam().status);
@@ -199,7 +197,7 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_F(ErrorHandlingTests, sendInternalError)
 {
-    ErrorHelper errorHelper{connection_};
+    ErrorHelper const errorHelper{connection_};
 
     EXPECT_CALL(
         *connection_,
@@ -215,7 +213,7 @@ TEST_F(ErrorHandlingTests, sendInternalError)
 
 TEST_F(ErrorHandlingTests, sendNotReadyError)
 {
-    ErrorHelper errorHelper{connection_};
+    ErrorHelper const errorHelper{connection_};
     EXPECT_CALL(
         *connection_,
         send(
@@ -231,7 +229,7 @@ TEST_F(ErrorHandlingTests, sendNotReadyError)
 TEST_F(ErrorHandlingTests, sendTooBusyError_UpgradedConnection)
 {
     connection_->upgraded = true;
-    ErrorHelper errorHelper{connection_};
+    ErrorHelper const errorHelper{connection_};
     EXPECT_CALL(
         *connection_,
         send(
@@ -247,7 +245,7 @@ TEST_F(ErrorHandlingTests, sendTooBusyError_UpgradedConnection)
 TEST_F(ErrorHandlingTests, sendTooBusyError_NotUpgradedConnection)
 {
     connection_->upgraded = false;
-    ErrorHelper errorHelper{connection_};
+    ErrorHelper const errorHelper{connection_};
     EXPECT_CALL(
         *connection_,
         send(
@@ -263,7 +261,7 @@ TEST_F(ErrorHandlingTests, sendTooBusyError_NotUpgradedConnection)
 TEST_F(ErrorHandlingTests, sendJsonParsingError_UpgradedConnection)
 {
     connection_->upgraded = true;
-    ErrorHelper errorHelper{connection_};
+    ErrorHelper const errorHelper{connection_};
     EXPECT_CALL(
         *connection_,
         send(
@@ -279,7 +277,7 @@ TEST_F(ErrorHandlingTests, sendJsonParsingError_UpgradedConnection)
 TEST_F(ErrorHandlingTests, sendJsonParsingError_NotUpgradedConnection)
 {
     connection_->upgraded = false;
-    ErrorHelper errorHelper{connection_};
+    ErrorHelper const errorHelper{connection_};
     EXPECT_CALL(
         *connection_,
         send(std::string{"Unable to parse JSON from the request"}, boost::beast::http::status::bad_request)

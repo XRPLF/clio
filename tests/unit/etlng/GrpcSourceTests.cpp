@@ -36,7 +36,6 @@
 #include <org/xrpl/rpc/v1/get_ledger_data.pb.h>
 #include <xrpl/basics/base_uint.h>
 #include <xrpl/basics/strHex.h>
-#include <xrpl/protocol/AccountID.h>
 
 #include <atomic>
 #include <cstddef>
@@ -91,7 +90,7 @@ struct GrpcSourceNgTests : NoLoggerFixture, tests::util::WithMockXrpLedgerAPISer
         std::optional<std::string>
         next(std::string const& marker)
         {
-            std::scoped_lock lock(mtx_);
+            std::scoped_lock const lock(mtx_);
 
             auto const mapKey = ripple::strHex(marker).substr(0, 2);
             auto it = store_.lower_bound(mapKey);
@@ -110,7 +109,7 @@ struct GrpcSourceNgTests : NoLoggerFixture, tests::util::WithMockXrpLedgerAPISer
         std::optional<std::string>
         peek(std::string const& marker)
         {
-            std::scoped_lock lock(mtx_);
+            std::scoped_lock const lock(mtx_);
 
             auto const mapKey = ripple::strHex(marker).substr(0, 2);
             auto it = store_.lower_bound(mapKey);
@@ -264,7 +263,7 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, DataTransferredAndObserverCalledCorre
         });
 
     std::atomic_uint total = 0u;
-    [[maybe_unused]] testing::InSequence seqGuard;
+    [[maybe_unused]] testing::InSequence const seqGuard;
 
     EXPECT_CALL(observer_, onInitialLoadGotMoreObjects)
         .Times(numMarkers_)

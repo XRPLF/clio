@@ -25,8 +25,6 @@
 #include "util/log/Logger.hpp"
 #include "web/Resolver.hpp"
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/ip/tcp.hpp>
 #include <fmt/core.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/security/credentials.h>
@@ -38,7 +36,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
-#include <sstream>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <utility>
