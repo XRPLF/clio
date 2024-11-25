@@ -107,83 +107,6 @@ struct AllHandlersDeathTest : HandlerBaseTest, testing::WithParamInterface<std::
 
     HandlerType handler_;
 
-    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr;
-
-    template <typename Handler>
-    Handler::Input
-    createInput()
-    {
-        return typename Handler::Input{};
-    }
-
-    // need to set specific values for input for some handler's to pass checks in .process() function
-    template <>
-    LedgerEntryHandler::Input
-    createInput<LedgerEntryHandler>()
-    {
-        LedgerEntryHandler::Input input{};
-        input.index = Index1;
-        return input;
-    }
-
-    template <>
-    AMMInfoHandler::Input
-    createInput<AMMInfoHandler>()
-    {
-        AMMInfoHandler::Input input{};
-        input.ammAccount = GetAccountIDWithString(AmmAccount);
-        return input;
-    }
-
-    template <>
-    BookOffersHandler::Input
-    createInput<BookOffersHandler>()
-    {
-        BookOffersHandler::Input input{};
-        input.paysCurrency = ripple::xrpCurrency();
-        input.getsCurrency = ripple::Currency(Currency);
-        input.paysID = ripple::xrpAccount();
-        input.getsID = GetAccountIDWithString(Account);
-
-        return input;
-    }
-
-    template <>
-    NFTBuyOffersHandler::Input
-    createInput<NFTBuyOffersHandler>()
-    {
-        NFTBuyOffersHandler::Input input{};
-        input.nftID = NftID;
-        return input;
-    }
-
-    template <>
-    NFTInfoHandler::Input
-    createInput<NFTInfoHandler>()
-    {
-        NFTInfoHandler::Input input{};
-        input.nftID = NftID;
-        return input;
-    }
-
-    template <>
-    NFTSellOffersHandler::Input
-    createInput<NFTSellOffersHandler>()
-    {
-        NFTSellOffersHandler::Input input{};
-        input.nftID = NftID;
-        return input;
-    }
-
-    template <>
-    AccountInfoHandler::Input
-    createInput<AccountInfoHandler>()
-    {
-        AccountInfoHandler::Input input{};
-        input.account = Account;
-        return input;
-    }
-
 private:
     HandlerType
     initHandler()
@@ -194,7 +117,83 @@ private:
             return HandlerType{this->backend};
         }
     }
+    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr;
 };
+
+template <typename Handler>
+Handler::Input
+createInput()
+{
+    return typename Handler::Input{};
+}
+
+// need to set specific values for input for some handler's to pass checks in .process() function
+template <>
+LedgerEntryHandler::Input
+createInput<LedgerEntryHandler>()
+{
+    LedgerEntryHandler::Input input{};
+    input.index = Index1;
+    return input;
+}
+
+template <>
+AMMInfoHandler::Input
+createInput<AMMInfoHandler>()
+{
+    AMMInfoHandler::Input input{};
+    input.ammAccount = GetAccountIDWithString(AmmAccount);
+    return input;
+}
+
+template <>
+BookOffersHandler::Input
+createInput<BookOffersHandler>()
+{
+    BookOffersHandler::Input input{};
+    input.paysCurrency = ripple::xrpCurrency();
+    input.getsCurrency = ripple::Currency(Currency);
+    input.paysID = ripple::xrpAccount();
+    input.getsID = GetAccountIDWithString(Account);
+
+    return input;
+}
+
+template <>
+NFTBuyOffersHandler::Input
+createInput<NFTBuyOffersHandler>()
+{
+    NFTBuyOffersHandler::Input input{};
+    input.nftID = NftID;
+    return input;
+}
+
+template <>
+NFTInfoHandler::Input
+createInput<NFTInfoHandler>()
+{
+    NFTInfoHandler::Input input{};
+    input.nftID = NftID;
+    return input;
+}
+
+template <>
+NFTSellOffersHandler::Input
+createInput<NFTSellOffersHandler>()
+{
+    NFTSellOffersHandler::Input input{};
+    input.nftID = NftID;
+    return input;
+}
+
+template <>
+AccountInfoHandler::Input
+createInput<AccountInfoHandler>()
+{
+    AccountInfoHandler::Input input{};
+    input.account = Account;
+    return input;
+}
 
 TYPED_TEST_CASE(AllHandlersDeathTest, AnyHandlerType);
 
@@ -205,7 +204,7 @@ TYPED_TEST(AllHandlersDeathTest, NoRangeAvailable)
         [&](boost::asio::yield_context yield) {
             TypeParam handler = this->handler_;
 
-            auto const input = this->template createInput<TypeParam>();
+            auto const input = createInput<TypeParam>();
             auto const context = Context{yield};
             EXPECT_DEATH({ [[maybe_unused]] auto _unused = handler.process(input, context); }, ".*");
         },
