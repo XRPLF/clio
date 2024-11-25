@@ -1,0 +1,214 @@
+//------------------------------------------------------------------------------
+/*
+    This file is part of clio: https://github.com/XRPLF/clio
+    Copyright (c) 2024, the clio developers.
+
+    Permission to use, copy, modify, and distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE  SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH  REGARD  TO  THIS  SOFTWARE  INCLUDING  ALL  IMPLIED  WARRANTIES  OF
+    MERCHANTABILITY  AND  FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY  SPECIAL,  DIRECT,  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER  RESULTING  FROM  LOSS  OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION  OF  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+//==============================================================================
+
+#include "rpc/common/Types.hpp"
+#include "rpc/handlers/AMMInfo.hpp"
+#include "rpc/handlers/AccountChannels.hpp"
+#include "rpc/handlers/AccountCurrencies.hpp"
+#include "rpc/handlers/AccountInfo.hpp"
+#include "rpc/handlers/AccountLines.hpp"
+#include "rpc/handlers/AccountNFTs.hpp"
+#include "rpc/handlers/AccountObjects.hpp"
+#include "rpc/handlers/AccountOffers.hpp"
+#include "rpc/handlers/AccountTx.hpp"
+#include "rpc/handlers/BookChanges.hpp"
+#include "rpc/handlers/BookOffers.hpp"
+#include "rpc/handlers/DepositAuthorized.hpp"
+#include "rpc/handlers/Feature.hpp"
+#include "rpc/handlers/GatewayBalances.hpp"
+#include "rpc/handlers/GetAggregatePrice.hpp"
+#include "rpc/handlers/Ledger.hpp"
+#include "rpc/handlers/LedgerData.hpp"
+#include "rpc/handlers/LedgerEntry.hpp"
+#include "rpc/handlers/LedgerIndex.hpp"
+#include "rpc/handlers/MPTHolders.hpp"
+#include "rpc/handlers/NFTBuyOffers.hpp"
+#include "rpc/handlers/NFTHistory.hpp"
+#include "rpc/handlers/NFTInfo.hpp"
+#include "rpc/handlers/NFTSellOffers.hpp"
+#include "rpc/handlers/NFTsByIssuer.hpp"
+#include "rpc/handlers/NoRippleCheck.hpp"
+#include "rpc/handlers/TransactionEntry.hpp"
+#include "util/HandlerBaseTestFixture.hpp"
+#include "util/MockAmendmentCenter.hpp"
+#include "util/TestObject.hpp"
+
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/spawn.hpp>
+#include <boost/json/parse.hpp>
+#include <fmt/core.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/UintTypes.h>
+
+#include <string>
+
+using ::testing::Types;
+using namespace rpc;
+
+constexpr static auto Index1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
+constexpr static auto AmmAccount = "rLcS7XL6nxRAi7JcbJcn1Na179oF3vdfbh";
+constexpr static auto Account = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr static auto NftID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
+constexpr static auto Currency = "0158415500000000C1F76FF6ECB0BAC600000000";
+
+using AnyHandlerType = Types<
+    AccountChannelsHandler,
+    AccountCurrenciesHandler,
+    AccountInfoHandler,
+    AccountLinesHandler,
+    AccountNFTsHandler,
+    AccountObjectsHandler,
+    AccountOffersHandler,
+    AccountTxHandler,
+    AMMInfoHandler,
+    BookChangesHandler,
+    BookOffersHandler,
+    DepositAuthorizedHandler,
+    FeatureHandler,
+    GatewayBalancesHandler,
+    GetAggregatePriceHandler,
+    LedgerHandler,
+    LedgerDataHandler,
+    LedgerEntryHandler,
+    LedgerIndexHandler,
+    MPTHoldersHandler,
+    NFTsByIssuerHandler,
+    NFTHistoryHandler,
+    NFTBuyOffersHandler,
+    NFTInfoHandler,
+    NFTSellOffersHandler,
+    NoRippleCheckHandler,
+    TransactionEntryHandler>;
+
+template <typename HandlerType>
+struct AllHandlersDeathTest : HandlerBaseTest, testing::WithParamInterface<std::string> {
+    AllHandlersDeathTest() : handler_{initHandler()}
+    {
+    }
+
+    HandlerType handler_;
+
+    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr;
+
+    template <typename Handler>
+    Handler::Input
+    createInput()
+    {
+        return typename Handler::Input{};
+    }
+
+    // need to set specific values for input for some handler's to pass checks in .process() function
+    template <>
+    LedgerEntryHandler::Input
+    createInput<LedgerEntryHandler>()
+    {
+        LedgerEntryHandler::Input input{};
+        input.index = Index1;
+        return input;
+    }
+
+    template <>
+    AMMInfoHandler::Input
+    createInput<AMMInfoHandler>()
+    {
+        AMMInfoHandler::Input input{};
+        input.ammAccount = GetAccountIDWithString(AmmAccount);
+        return input;
+    }
+
+    template <>
+    BookOffersHandler::Input
+    createInput<BookOffersHandler>()
+    {
+        BookOffersHandler::Input input{};
+        input.paysCurrency = ripple::xrpCurrency();
+        input.getsCurrency = ripple::Currency(Currency);
+        input.paysID = ripple::xrpAccount();
+        input.getsID = GetAccountIDWithString(Account);
+
+        return input;
+    }
+
+    template <>
+    NFTBuyOffersHandler::Input
+    createInput<NFTBuyOffersHandler>()
+    {
+        NFTBuyOffersHandler::Input input{};
+        input.nftID = NftID;
+        return input;
+    }
+
+    template <>
+    NFTInfoHandler::Input
+    createInput<NFTInfoHandler>()
+    {
+        NFTInfoHandler::Input input{};
+        input.nftID = NftID;
+        return input;
+    }
+
+    template <>
+    NFTSellOffersHandler::Input
+    createInput<NFTSellOffersHandler>()
+    {
+        NFTSellOffersHandler::Input input{};
+        input.nftID = NftID;
+        return input;
+    }
+
+    template <>
+    AccountInfoHandler::Input
+    createInput<AccountInfoHandler>()
+    {
+        AccountInfoHandler::Input input{};
+        input.account = Account;
+        return input;
+    }
+
+private:
+    HandlerType
+    initHandler()
+    {
+        if constexpr (std::is_same_v<HandlerType, AccountInfoHandler> || std::is_same_v<HandlerType, FeatureHandler>) {
+            return HandlerType{this->backend, this->mockAmendmentCenterPtr};
+        } else {
+            return HandlerType{this->backend};
+        }
+    }
+};
+
+TYPED_TEST_CASE(AllHandlersDeathTest, AnyHandlerType);
+
+TYPED_TEST(AllHandlersDeathTest, NoRangeAvailable)
+{
+    // doesn't work without 'this'
+    this->runSpawn(
+        [&](boost::asio::yield_context yield) {
+            TypeParam handler = this->handler_;
+
+            auto const input = this->template createInput<TypeParam>();
+            auto const context = Context{yield};
+            EXPECT_DEATH({ [[maybe_unused]] auto _unused = handler.process(input, context); }, ".*");
+        },
+        true
+    );
+}

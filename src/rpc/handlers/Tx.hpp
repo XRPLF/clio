@@ -29,6 +29,7 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
+#include "util/Assert.hpp"
 #include "util/JsonUtils.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -188,6 +189,8 @@ public:
             if (rangeSupplied && input.transaction)  // ranges not for ctid
             {
                 auto const range = sharedPtrBackend_->fetchLedgerRange();
+                ASSERT(range.has_value(), "Tx's ledger range must be available");
+
                 auto const searchedAll =
                     range->maxSequence >= *input.maxLedger && range->minSequence <= *input.minLedger;
                 boost::json::object extra;

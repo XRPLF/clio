@@ -205,6 +205,8 @@ TEST_F(RPCNFTBuyOffersHandlerTest, NFTIDNotString)
 // error case ledger non exist via hash
 TEST_F(RPCNFTBuyOffersHandlerTest, NonExistLedgerViaLedgerHash)
 {
+    backend->setRange(10, 30);
+
     // mock fetchLedgerByHash return empty
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));

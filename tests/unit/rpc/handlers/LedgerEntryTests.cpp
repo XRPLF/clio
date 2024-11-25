@@ -3436,27 +3436,3 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
         EXPECT_EQ(*output.result, json::parse(OUT));
     });
 }
-
-using RPCLedgerEntryDeathTest = RPCLedgerEntryTest;
-
-TEST_F(RPCLedgerEntryDeathTest, RangeNotAvailable)
-{
-    boost::asio::io_context ctx;
-    bool checkCalled = false;
-    spawn(ctx, [&, _unused = make_work_guard(ctx)](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
-        auto const req = json::parse(fmt::format(
-            R"({{
-                "index": "{}"
-            }})",
-            INDEX1
-        ));
-        checkCalled = true;
-        EXPECT_DEATH(
-            { [[maybe_unused]] auto _unused2 = handler.process(req, Context{yield}); }, "Ledger range must be available"
-        );
-    });
-
-    ctx.run();
-    ASSERT_TRUE(checkCalled);
-}
