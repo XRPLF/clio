@@ -45,6 +45,7 @@
 #include "rpc/handlers/NFTsByIssuer.hpp"
 #include "rpc/handlers/NoRippleCheck.hpp"
 #include "rpc/handlers/TransactionEntry.hpp"
+#include "util/Assert.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockAmendmentCenter.hpp"
 #include "util/TestObject.hpp"
@@ -103,6 +104,7 @@ template <typename HandlerType>
 struct AllHandlersDeathTest : HandlerBaseTest, testing::WithParamInterface<std::string> {
     AllHandlersDeathTest() : handler_{initHandler()}
     {
+        ASSERT(mockAmendmentCenterPtr.amendmentCenterMock != nullptr, "mockAmendmentCenterPtr is not initialized.");
     }
 
     StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr;
