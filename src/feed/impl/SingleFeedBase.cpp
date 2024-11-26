@@ -49,7 +49,7 @@ SingleFeedBase::sub(SubscriberSharedPtr const& subscriber)
     if (added) {
         LOG(logger_.info()) << subscriber->tag() << "Subscribed " << name_;
         ++subCount_.get();
-        subscriber->onDisconnect.connect([this](SubscriberPtr connectionDisconnecting) {
+        subscriber->onDisconnect([this](SubscriberPtr connectionDisconnecting) {
             unsubInternal(connectionDisconnecting);
         });
     };

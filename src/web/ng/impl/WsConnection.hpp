@@ -28,6 +28,7 @@
 #include "web/ng/Response.hpp"
 #include "web/ng/impl/Concepts.hpp"
 
+#include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/ssl/context.hpp>
@@ -52,8 +53,20 @@
 
 namespace web::ng::impl {
 
+class WsConnectionBase : public Connection {
+public:
+    using Connection::Connection;
+
+    virtual std::optional<Error>
+    sendBuffer(
+        boost::asio::const_buffer buffer,
+        boost::asio::yield_context yield,
+        std::chrono::steady_clock::duration timeout = Connection::DEFAULT_TIMEOUT
+    ) = 0;
+};
+
 template <typename StreamType>
-class WsConnection : public Connection {
+class WsConnection : public WsConnectionBase {
     boost::beast::websocket::stream<StreamType> stream_;
     boost::beast::http::request<boost::beast::http::string_body> initialRequest_;
 
@@ -66,7 +79,7 @@ public:
         util::TagDecoratorFactory const& tagDecoratorFactory
     )
         requires IsTcpStream<StreamType>
-        : Connection(std::move(ip), std::move(buffer), tagDecoratorFactory)
+        : WsConnectionBase(std::move(ip), std::move(buffer), tagDecoratorFactory)
         , stream_(std::move(socket))
         , initialRequest_(std::move(initialRequest))
     {
@@ -81,7 +94,7 @@ public:
         util::TagDecoratorFactory const& tagDecoratorFactory
     )
         requires IsSslTcpStream<StreamType>
-        : Connection(std::move(ip), std::move(buffer), tagDecoratorFactory)
+        : WsConnectionBase(std::move(ip), std::move(buffer), tagDecoratorFactory)
         , stream_(std::move(socket), sslContext)
         , initialRequest_(std::move(initialRequest))
     {
@@ -112,18 +125,27 @@ public:
     }
 
     std::optional<Error>
+    sendBuffer(
+        boost::asio::const_buffer buffer,
+        boost::asio::yield_context yield,
+        std::chrono::steady_clock::duration timeout = Connection::DEFAULT_TIMEOUT
+    ) override
+    {
+        auto error =
+            util::withTimeout([this, buffer](auto&& yield) { stream_.async_write(buffer, yield); }, yield, timeout);
+        if (error)
+            return error;
+        return std::nullopt;
+    }
+
+    std::optional<Error>
     send(
         Response response,
         boost::asio::yield_context yield,
         std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT
     ) override
     {
-        auto error = util::withTimeout(
-            [this, &response](auto&& yield) { stream_.async_write(response.asConstBuffer(), yield); }, yield, timeout
-        );
-        if (error)
-            return error;
-        return std::nullopt;
+        return sendBuffer(response.asWsResponse(), yield, timeout);
     }
 
     std::expected<Request, Error>

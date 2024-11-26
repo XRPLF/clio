@@ -37,6 +37,7 @@
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/json/object.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
@@ -94,7 +95,6 @@ TEST_F(HttpConnectionTests, Receive)
 
     runSpawn([this](boost::asio::yield_context yield) {
         auto connection = acceptConnection(yield);
-        EXPECT_TRUE(connection.ip() == "127.0.0.1" or connection.ip() == "::1") << connection.ip();
 
         auto expectedRequest = connection.receive(yield, std::chrono::milliseconds{100});
         ASSERT_TRUE(expectedRequest.has_value()) << expectedRequest.error().message();
@@ -291,5 +291,41 @@ TEST_F(HttpConnectionTests, Upgrade)
         std::optional<boost::asio::ssl::context> sslContext;
         auto expectedWsConnection = connection.upgrade(sslContext, tagDecoratorFactory_, yield);
         [&]() { ASSERT_TRUE(expectedWsConnection.has_value()) << expectedWsConnection.error().message(); }();
+    });
+}
+
+TEST_F(HttpConnectionTests, Ip)
+{
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) mutable {
+        auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+    });
+
+    runSpawn([this](boost::asio::yield_context yield) {
+        auto connection = acceptConnection(yield);
+        EXPECT_TRUE(connection.ip() == "127.0.0.1" or connection.ip() == "::1") << connection.ip();
+    });
+}
+
+TEST_F(HttpConnectionTests, isAdminSetAdmin)
+{
+    testing::StrictMock<testing::MockFunction<bool()>> adminSetter;
+    EXPECT_CALL(adminSetter, Call).WillOnce(testing::Return(true));
+
+    boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) mutable {
+        auto maybeError = httpClient_.connect("localhost", httpServer_.port(), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+    });
+
+    runSpawn([&](boost::asio::yield_context yield) {
+        auto connection = acceptConnection(yield);
+        EXPECT_FALSE(connection.isAdmin());
+
+        connection.setIsAdmin(adminSetter.AsStdFunction());
+        EXPECT_TRUE(connection.isAdmin());
+
+        // Setter shouldn't not be called here because isAdmin is already set
+        connection.setIsAdmin(adminSetter.AsStdFunction());
+        EXPECT_TRUE(connection.isAdmin());
     });
 }

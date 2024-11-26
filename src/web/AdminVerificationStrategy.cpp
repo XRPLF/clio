@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "web/impl/AdminVerificationStrategy.hpp"
+#include "web/AdminVerificationStrategy.hpp"
 
 #include "util/JsonUtils.hpp"
 #include "util/config/Config.hpp"
@@ -33,10 +33,10 @@
 #include <string_view>
 #include <utility>
 
-namespace web::impl {
+namespace web {
 
 bool
-IPAdminVerificationStrategy::isAdmin(RequestType const&, std::string_view ip) const
+IPAdminVerificationStrategy::isAdmin(RequestHeader const&, std::string_view ip) const
 {
     return ip == "127.0.0.1";
 }
@@ -54,7 +54,7 @@ PasswordAdminVerificationStrategy::PasswordAdminVerificationStrategy(std::string
 }
 
 bool
-PasswordAdminVerificationStrategy::isAdmin(RequestType const& request, std::string_view) const
+PasswordAdminVerificationStrategy::isAdmin(RequestHeader const& request, std::string_view) const
 {
     auto it = request.find(boost::beast::http::field::authorization);
     if (it == request.end()) {
@@ -81,19 +81,21 @@ make_AdminVerificationStrategy(std::optional<std::string> password)
 }
 
 std::expected<std::shared_ptr<AdminVerificationStrategy>, std::string>
-make_AdminVerificationStrategy(util::Config const& serverConfig)
+make_AdminVerificationStrategy(util::Config const& config)
 {
-    auto adminPassword = serverConfig.maybeValue<std::string>("admin_password");
-    auto const localAdmin = serverConfig.maybeValue<bool>("local_admin");
-    bool const localAdminEnabled = localAdmin && localAdmin.value();
+    auto adminPassword = config.maybeValue<std::string>("server.admin_password");
+    auto const localAdmin = config.maybeValue<bool>("server.local_admin");
 
-    if (localAdminEnabled == adminPassword.has_value()) {
-        if (adminPassword.has_value())
-            return std::unexpected{"Admin config error, local_admin and admin_password can not be set together."};
-        return std::unexpected{"Admin config error, either local_admin and admin_password must be specified."};
+    if (adminPassword.has_value() and localAdmin.has_value() and *localAdmin)
+        return std::unexpected{"Admin config error: 'local_admin' and admin_password can not be set together."};
+
+    if (localAdmin.has_value() and !*localAdmin and !adminPassword.has_value()) {
+        return std::unexpected{
+            "Admin config error: either 'local_admin' should be enabled or 'admin_password' must be specified."
+        };
     }
 
     return make_AdminVerificationStrategy(std::move(adminPassword));
 }
 
-}  // namespace web::impl
+}  // namespace web

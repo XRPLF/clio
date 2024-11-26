@@ -32,8 +32,9 @@ target_sources(
           etl/SubscriptionSourceTests.cpp
           etl/TransformerTests.cpp
           # ETLng
-          etlng/RegistryTests.cpp
           etlng/ExtractionTests.cpp
+          etlng/GrpcSourceTests.cpp
+          etlng/RegistryTests.cpp
           # Feed
           feed/BookChangesFeedTests.cpp
           feed/ForwardFeedTests.cpp
@@ -135,19 +136,24 @@ target_sources(
           util/TxUtilTests.cpp
           util/WithTimeout.cpp
           # Webserver
+          web/AdminVerificationTests.cpp
           web/dosguard/DOSGuardTests.cpp
           web/dosguard/IntervalSweepHandlerTests.cpp
           web/dosguard/WhitelistHandlerTests.cpp
-          web/impl/AdminVerificationTests.cpp
+          web/impl/ErrorHandlingTests.cpp
           web/ng/ResponseTests.cpp
           web/ng/RequestTests.cpp
+          web/ng/RPCServerHandlerTests.cpp
           web/ng/ServerTests.cpp
+          web/ng/SubscriptionContextTests.cpp
           web/ng/impl/ConnectionHandlerTests.cpp
+          web/ng/impl/ErrorHandlingTests.cpp
           web/ng/impl/HttpConnectionTests.cpp
           web/ng/impl/ServerSslContextTests.cpp
           web/ng/impl/WsConnectionTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
+          web/SubscriptionContextTests.cpp
           # New Config
           util/newconfig/ArrayTests.cpp
           util/newconfig/ArrayViewTests.cpp

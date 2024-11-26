@@ -18,8 +18,9 @@
 //==============================================================================
 
 #include "util/LoggerFixtures.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/config/Config.hpp"
-#include "web/impl/AdminVerificationStrategy.hpp"
+#include "web/AdminVerificationStrategy.hpp"
 
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
@@ -34,7 +35,7 @@ namespace http = boost::beast::http;
 
 class IPAdminVerificationStrategyTest : public NoLoggerFixture {
 protected:
-    web::impl::IPAdminVerificationStrategy strat_;
+    web::IPAdminVerificationStrategy strat_;
     http::request<http::string_body> request_;
 };
 
@@ -52,7 +53,7 @@ protected:
     std::string const password_ = "secret";
     std::string const passwordHash_ = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
 
-    web::impl::PasswordAdminVerificationStrategy strat_{password_};
+    web::PasswordAdminVerificationStrategy strat_{password_};
 
     static http::request<http::string_body>
     makeRequest(std::string const& password, http::field const field = http::field::authorization)
@@ -92,10 +93,10 @@ class MakeAdminVerificationStrategyTest : public testing::TestWithParam<MakeAdmi
 
 TEST_P(MakeAdminVerificationStrategyTest, ChoosesStrategyCorrectly)
 {
-    auto strat = web::impl::make_AdminVerificationStrategy(GetParam().passwordOpt);
-    auto ipStrat = dynamic_cast<web::impl::IPAdminVerificationStrategy*>(strat.get());
+    auto strat = web::make_AdminVerificationStrategy(GetParam().passwordOpt);
+    auto ipStrat = dynamic_cast<web::IPAdminVerificationStrategy*>(strat.get());
     EXPECT_EQ(ipStrat != nullptr, GetParam().expectIpStrategy);
-    auto passwordStrat = dynamic_cast<web::impl::PasswordAdminVerificationStrategy*>(strat.get());
+    auto passwordStrat = dynamic_cast<web::PasswordAdminVerificationStrategy*>(strat.get());
     EXPECT_EQ(passwordStrat != nullptr, GetParam().expectPasswordStrategy);
 }
 
@@ -136,10 +137,8 @@ struct MakeAdminVerificationStrategyFromConfigTest
 TEST_P(MakeAdminVerificationStrategyFromConfigTest, ChecksConfig)
 {
     util::Config const serverConfig{boost::json::parse(GetParam().config)};
-    auto const result = web::impl::make_AdminVerificationStrategy(serverConfig);
-    if (GetParam().expectedError) {
-        EXPECT_FALSE(result.has_value());
-    }
+    auto const result = web::make_AdminVerificationStrategy(serverConfig);
+    EXPECT_EQ(not result.has_value(), GetParam().expectedError);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -149,32 +148,33 @@ INSTANTIATE_TEST_SUITE_P(
         MakeAdminVerificationStrategyFromConfigTestParams{
             .testName = "NoPasswordNoLocalAdmin",
             .config = "{}",
-            .expectedError = true
+            .expectedError = false
         },
         MakeAdminVerificationStrategyFromConfigTestParams{
             .testName = "OnlyPassword",
-            .config = R"({"admin_password": "password"})",
+            .config = R"({"server": {"admin_password": "password"}})",
             .expectedError = false
         },
         MakeAdminVerificationStrategyFromConfigTestParams{
             .testName = "OnlyLocalAdmin",
-            .config = R"({"local_admin": true})",
+            .config = R"({"server": {"local_admin": true}})",
             .expectedError = false
         },
         MakeAdminVerificationStrategyFromConfigTestParams{
             .testName = "OnlyLocalAdminDisabled",
-            .config = R"({"local_admin": false})",
+            .config = R"({"server": {"local_admin": false}})",
             .expectedError = true
         },
         MakeAdminVerificationStrategyFromConfigTestParams{
             .testName = "LocalAdminAndPassword",
-            .config = R"({"local_admin": true, "admin_password": "password"})",
+            .config = R"({"server": {"local_admin": true, "admin_password": "password"}})",
             .expectedError = true
         },
         MakeAdminVerificationStrategyFromConfigTestParams{
             .testName = "LocalAdminDisabledAndPassword",
-            .config = R"({"local_admin": false, "admin_password": "password"})",
+            .config = R"({"server": {"local_admin": false, "admin_password": "password"}})",
             .expectedError = false
         }
-    )
+    ),
+    tests::util::NameGenerator
 );

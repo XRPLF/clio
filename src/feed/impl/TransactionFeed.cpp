@@ -53,14 +53,14 @@ namespace feed::impl {
 void
 TransactionFeed::TransactionSlot::operator()(AllVersionTransactionsType const& allVersionMsgs) const
 {
-    if (auto connection = connectionWeakPtr.lock(); connection) {
+    if (auto connection = subscriptionContextWeakPtr.lock(); connection) {
         // Check if this connection already sent
         if (feed.get().notified_.contains(connection.get()))
             return;
 
         feed.get().notified_.insert(connection.get());
 
-        if (connection->apiSubVersion < 2u) {
+        if (connection->apiSubversion() < 2u) {
             connection->send(allVersionMsgs[0]);
             return;
         }
@@ -75,7 +75,7 @@ TransactionFeed::sub(SubscriberSharedPtr const& subscriber)
     if (added) {
         LOG(logger_.info()) << subscriber->tag() << "Subscribed transactions";
         ++subAllCount_.get();
-        subscriber->onDisconnect.connect([this](SubscriberPtr connection) { unsubInternal(connection); });
+        subscriber->onDisconnect([this](SubscriberPtr connection) { unsubInternal(connection); });
     }
 }
 
@@ -86,18 +86,16 @@ TransactionFeed::sub(ripple::AccountID const& account, SubscriberSharedPtr const
     if (added) {
         LOG(logger_.info()) << subscriber->tag() << "Subscribed account " << account;
         ++subAccountCount_.get();
-        subscriber->onDisconnect.connect([this, account](SubscriberPtr connection) {
-            unsubInternal(account, connection);
-        });
+        subscriber->onDisconnect([this, account](SubscriberPtr connection) { unsubInternal(account, connection); });
     }
 }
 
 void
 TransactionFeed::subProposed(SubscriberSharedPtr const& subscriber)
 {
-    auto const added = txProposedsignal_.connectTrackableSlot(subscriber, TransactionSlot(*this, subscriber));
+    auto const added = txProposedSignal_.connectTrackableSlot(subscriber, TransactionSlot(*this, subscriber));
     if (added) {
-        subscriber->onDisconnect.connect([this](SubscriberPtr connection) { unsubProposedInternal(connection); });
+        subscriber->onDisconnect([this](SubscriberPtr connection) { unsubProposedInternal(connection); });
     }
 }
 
@@ -107,7 +105,7 @@ TransactionFeed::subProposed(ripple::AccountID const& account, SubscriberSharedP
     auto const added =
         accountProposedSignal_.connectTrackableSlot(subscriber, account, TransactionSlot(*this, subscriber));
     if (added) {
-        subscriber->onDisconnect.connect([this, account](SubscriberPtr connection) {
+        subscriber->onDisconnect([this, account](SubscriberPtr connection) {
             unsubProposedInternal(account, connection);
         });
     }
@@ -120,7 +118,7 @@ TransactionFeed::sub(ripple::Book const& book, SubscriberSharedPtr const& subscr
     if (added) {
         LOG(logger_.info()) << subscriber->tag() << "Subscribed book " << book;
         ++subBookCount_.get();
-        subscriber->onDisconnect.connect([this, book](SubscriberPtr connection) { unsubInternal(book, connection); });
+        subscriber->onDisconnect([this, book](SubscriberPtr connection) { unsubInternal(book, connection); });
     }
 }
 
@@ -285,7 +283,7 @@ TransactionFeed::pub(
         // clear the notified set. If the same connection subscribes both transactions + proposed_transactions,
         // rippled SENDS the same message twice
         notified_.clear();
-        txProposedsignal_.emit(allVersionsMsgs);
+        txProposedSignal_.emit(allVersionsMsgs);
         notified_.clear();
         // check duplicate for account and proposed_account, this prevents sending the same message multiple times
         // if it affects multiple accounts watched by the same connection
@@ -323,7 +321,7 @@ TransactionFeed::unsubInternal(ripple::AccountID const& account, SubscriberPtr s
 void
 TransactionFeed::unsubProposedInternal(SubscriberPtr subscriber)
 {
-    txProposedsignal_.disconnect(subscriber);
+    txProposedSignal_.disconnect(subscriber);
 }
 
 void

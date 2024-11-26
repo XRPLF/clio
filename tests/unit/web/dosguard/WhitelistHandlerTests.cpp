@@ -37,6 +37,7 @@ TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
 {
     struct MockResolver {
         MOCK_METHOD(std::vector<std::string>, resolve, (std::string_view, std::string_view));
+        MOCK_METHOD(std::vector<std::string>, resolve, (std::string_view));
     };
 
     testing::StrictMock<MockResolver> mockResolver;
@@ -53,9 +54,9 @@ TEST_F(WhitelistHandlerTest, TestWhiteListIPV4)
         }
     )JSON";
 
-    EXPECT_CALL(mockResolver, resolve(testing::_, ""))
+    EXPECT_CALL(mockResolver, resolve(testing::_))
         .Times(3)
-        .WillRepeatedly([](auto hostname, auto) -> std::vector<std::string> { return {std::string{hostname}}; });
+        .WillRepeatedly([](auto hostname) -> std::vector<std::string> { return {std::string{hostname}}; });
 
     Config const cfg{boost::json::parse(JSONDataIPV4)};
     WhitelistHandler const whitelistHandler{cfg, mockResolver};

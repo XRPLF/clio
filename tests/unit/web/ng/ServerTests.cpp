@@ -25,7 +25,9 @@
 #include "util/TestHttpClient.hpp"
 #include "util/TestWebSocketClient.hpp"
 #include "util/config/Config.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
+#include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 #include "web/ng/Server.hpp"
@@ -48,7 +50,6 @@
 #include <optional>
 #include <ranges>
 #include <string>
-#include <utility>
 
 using namespace web::ng;
 
@@ -164,20 +165,24 @@ struct ServerTest : SyncAsioContextTest {
     std::string const headerName_ = "Some-header";
     std::string const headerValue_ = "some value";
 
-    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
         getHandler_;
-    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
         postHandler_;
-    testing::StrictMock<testing::MockFunction<Response(Request const&, ConnectionContext, boost::asio::yield_context)>>
+    testing::StrictMock<testing::MockFunction<
+        Response(Request const&, ConnectionMetadata const&, web::SubscriptionContextPtr, boost::asio::yield_context)>>
         wsHandler_;
 };
 
 TEST_F(ServerTest, BadEndpoint)
 {
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("1.2.3.4"), 0};
-    impl::ConnectionHandler connectionHandler{impl::ConnectionHandler::ProcessingPolicy::Sequential, std::nullopt};
     util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
-    Server server{ctx, endpoint, std::nullopt, std::move(connectionHandler), tagDecoratorFactory};
+    Server server{
+        ctx, endpoint, std::nullopt, ProcessingPolicy::Sequential, std::nullopt, tagDecoratorFactory, std::nullopt
+    };
     auto maybeError = server.run();
     ASSERT_TRUE(maybeError.has_value());
     EXPECT_THAT(*maybeError, testing::HasSubstr("Error creating TCP acceptor"));
@@ -251,7 +256,7 @@ TEST_P(ServerHttpTest, RequestResponse)
 
     EXPECT_CALL(handler, Call)
         .Times(3)
-        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&) {
+        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&, auto&&) {
             EXPECT_TRUE(receivedRequest.isHttp());
             EXPECT_EQ(receivedRequest.method(), GetParam().expectedMethod());
             EXPECT_EQ(receivedRequest.message(), request.body());
@@ -317,7 +322,7 @@ TEST_F(ServerTest, WsRequestResponse)
 
     EXPECT_CALL(wsHandler_, Call)
         .Times(3)
-        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&) {
+        .WillRepeatedly([&, response = response](Request const& receivedRequest, auto&&, auto&&, auto&&) {
             EXPECT_FALSE(receivedRequest.isHttp());
             EXPECT_EQ(receivedRequest.method(), Request::Method::Websocket);
             EXPECT_EQ(receivedRequest.message(), requestMessage_);

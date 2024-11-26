@@ -44,6 +44,7 @@ CliArgs::parse(int argc, char const* argv[])
         ("help,h", "print help message and exit")
         ("version,v", "print version and exit")
         ("conf,c", po::value<std::string>()->default_value(defaultConfigPath), "configuration file")
+        ("ng-web-server,w", "Use ng-web-server")
     ;
     // clang-format on
     po::positional_options_description positional;
@@ -64,7 +65,8 @@ CliArgs::parse(int argc, char const* argv[])
     }
 
     auto configPath = parsed["conf"].as<std::string>();
-    return Action{Action::Run{std::move(configPath)}};
+    return Action{Action::Run{.configPath = std::move(configPath), .useNgWebServer = parsed.count("ng-web-server") != 0}
+    };
 }
 
 }  // namespace app

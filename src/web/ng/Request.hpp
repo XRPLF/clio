@@ -113,6 +113,14 @@ public:
     target() const;
 
     /**
+     * @brief Get the headers of the request.
+     *
+     * @return The headers of the request.
+     */
+    HttpHeaders const&
+    httpHeaders() const;
+
+    /**
      * @brief Get the value of a header.
      *
      * @param headerName The name of the header.

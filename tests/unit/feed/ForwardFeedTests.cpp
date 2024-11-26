@@ -20,6 +20,7 @@
 #include "feed/FeedTestUtil.hpp"
 #include "feed/impl/ForwardFeed.hpp"
 #include "util/async/AnyExecutionContext.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
@@ -44,11 +45,14 @@ using FeedForwardTest = FeedBaseTest<NamedForwardFeedTest>;
 
 TEST_F(FeedForwardTest, Pub)
 {
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
+
     auto const json = json::parse(FEED).as_object();
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED))).Times(1);
     testFeedPtr->pub(json);
+
     testFeedPtr->unsub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 0);
     testFeedPtr->pub(json);
@@ -56,12 +60,18 @@ TEST_F(FeedForwardTest, Pub)
 
 TEST_F(FeedForwardTest, AutoDisconnect)
 {
+    web::SubscriptionContextInterface::OnDisconnectSlot slot;
+    EXPECT_CALL(*mockSessionPtr, onDisconnect).WillOnce(testing::SaveArg<0>(&slot));
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->count(), 1);
+
     auto const json = json::parse(FEED).as_object();
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED))).Times(1);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(FEED)));
     testFeedPtr->pub(json);
+
+    slot(sessionPtr.get());
     sessionPtr.reset();
     EXPECT_EQ(testFeedPtr->count(), 0);
+
     testFeedPtr->pub(json);
 }

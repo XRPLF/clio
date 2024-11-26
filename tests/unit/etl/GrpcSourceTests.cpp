@@ -49,7 +49,7 @@ struct GrpcSourceTests : NoLoggerFixture, util::prometheus::WithPrometheus, test
     }
 
     std::shared_ptr<testing::StrictMock<MockBackend>> mockBackend_;
-    testing::StrictMock<GrpcSource> grpcSource_;
+    GrpcSource grpcSource_;
 };
 
 TEST_F(GrpcSourceTests, fetchLedger)
@@ -82,14 +82,14 @@ TEST_F(GrpcSourceTests, fetchLedger)
 
 TEST_F(GrpcSourceTests, fetchLedgerNoStub)
 {
-    testing::StrictMock<GrpcSource> wrongGrpcSource{"wrong", "wrong", mockBackend_};
+    GrpcSource wrongGrpcSource{"wrong", "wrong", mockBackend_};
     auto const [status, _response] = wrongGrpcSource.fetchLedger(0, false, false);
     EXPECT_EQ(status.error_code(), grpc::StatusCode::INTERNAL);
 }
 
 TEST_F(GrpcSourceTests, loadInitialLedgerNoStub)
 {
-    testing::StrictMock<GrpcSource> wrongGrpcSource{"wrong", "wrong", mockBackend_};
+    GrpcSource wrongGrpcSource{"wrong", "wrong", mockBackend_};
     auto const [data, success] = wrongGrpcSource.loadInitialLedger(0, 0, false);
     EXPECT_TRUE(data.empty());
     EXPECT_FALSE(success);

@@ -20,12 +20,14 @@
 #pragma once
 
 #include "rpc/Errors.hpp"
+#include "util/Assert.hpp"
 #include "util/Taggable.hpp"
 #include "util/build/Build.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Http.hpp"
+#include "web/AdminVerificationStrategy.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
-#include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/interface/Concepts.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -273,6 +275,13 @@ public:
             msg = boost::json::serialize(jsonResponse);
         }
         sender_(httpResponse(status, "application/json", std::move(msg)));
+    }
+
+    SubscriptionContextPtr
+    makeSubscriptionContext(util::TagDecoratorFactory const&) override
+    {
+        ASSERT(false, "SubscriptionContext can't be created for a HTTP connection");
+        std::unreachable();
     }
 
     void

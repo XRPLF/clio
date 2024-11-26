@@ -26,12 +26,12 @@
 #include "util/config/Config.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
+#include "web/AdminVerificationStrategy.hpp"
 #include "web/Server.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
-#include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/io_context.hpp>

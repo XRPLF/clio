@@ -43,14 +43,13 @@ public:
     public:
         /** @brief Run action. */
         struct Run {
-            /** @brief Configuration file path. */
-            std::string configPath;
+            std::string configPath;  ///< Configuration file path.
+            bool useNgWebServer;     ///< Whether to use a ng web server
         };
 
         /** @brief Exit action. */
         struct Exit {
-            /** @brief Exit code. */
-            int exitCode;
+            int exitCode;  ///< Exit code.
         };
 
         /**

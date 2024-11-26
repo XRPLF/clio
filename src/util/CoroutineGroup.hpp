@@ -22,6 +22,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 
+#include <atomic>
 #include <cstddef>
 #include <functional>
 #include <optional>
@@ -31,11 +32,12 @@ namespace util {
 /**
  * @brief CoroutineGroup is a helper class to manage a group of coroutines. It allows to spawn multiple coroutines and
  * wait for all of them to finish.
+ * @note This class is safe to use from multiple threads.
  */
 class CoroutineGroup {
     boost::asio::steady_timer timer_;
-    std::optional<int> maxChildren_;
-    int childrenCounter_{0};
+    std::optional<size_t> maxChildren_;
+    std::atomic_size_t childrenCounter_{0};
 
 public:
     /**
@@ -45,7 +47,7 @@ public:
      * @param maxChildren The maximum number of coroutines that can be spawned at the same time. If not provided, there
      * is no limit
      */
-    CoroutineGroup(boost::asio::yield_context yield, std::optional<int> maxChildren = std::nullopt);
+    CoroutineGroup(boost::asio::yield_context yield, std::optional<size_t> maxChildren = std::nullopt);
 
     /**
      * @brief Destroy the Coroutine Group object
@@ -53,14 +55,6 @@ public:
      * @note asyncWait() must be called before the object is destroyed
      */
     ~CoroutineGroup();
-
-    /**
-     * @brief Check if a new coroutine can be spawned (i.e. there is space for a new coroutine in the group)
-     *
-     * @return true If a new coroutine can be spawned. false if the maximum number of coroutines has been reached
-     */
-    bool
-    canSpawn() const;
 
     /**
      * @brief Spawn a new coroutine in the group
@@ -73,6 +67,16 @@ public:
      */
     bool
     spawn(boost::asio::yield_context yield, std::function<void(boost::asio::yield_context)> fn);
+
+    /**
+     * @brief Register a foreign coroutine this group should wait for.
+     * @note A foreign coroutine is still counted as a child one, i.e. calling this method increases the size of the
+     * group.
+     *
+     * @return A callback to call on foreign coroutine completes or std::nullopt if the group is already full.
+     */
+    std::optional<std::function<void()>>
+    registerForeign();
 
     /**
      * @brief Wait for all the coroutines in the group to finish
@@ -91,6 +95,18 @@ public:
      */
     size_t
     size() const;
+
+    /**
+     * @brief Check if the group is full
+     *
+     * @return true If the group is full false otherwise
+     */
+    bool
+    isFull() const;
+
+private:
+    void
+    onCoroutineCompleted();
 };
 
 }  // namespace util

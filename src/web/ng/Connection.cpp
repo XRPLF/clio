@@ -23,34 +23,34 @@
 
 #include <boost/beast/core/flat_buffer.hpp>
 
-#include <cstddef>
 #include <string>
 #include <utility>
 
 namespace web::ng {
+
+ConnectionMetadata::ConnectionMetadata(std::string ip, util::TagDecoratorFactory const& tagDecoratorFactory)
+    : util::Taggable(tagDecoratorFactory), ip_{std::move(ip)}
+{
+}
+
+std::string const&
+ConnectionMetadata::ip() const
+{
+    return ip_;
+}
+
+bool
+ConnectionMetadata::isAdmin() const
+{
+    return isAdmin_.value_or(false);
+}
 
 Connection::Connection(
     std::string ip,
     boost::beast::flat_buffer buffer,
     util::TagDecoratorFactory const& tagDecoratorFactory
 )
-    : util::Taggable(tagDecoratorFactory), ip_{std::move(ip)}, buffer_{std::move(buffer)}
-{
-}
-
-ConnectionContext
-Connection::context() const
-{
-    return ConnectionContext{*this};
-}
-
-std::string const&
-Connection::ip() const
-{
-    return ip_;
-}
-
-ConnectionContext::ConnectionContext(Connection const& connection) : connection_{connection}
+    : ConnectionMetadata{std::move(ip), tagDecoratorFactory}, buffer_{std::move(buffer)}
 {
 }
 

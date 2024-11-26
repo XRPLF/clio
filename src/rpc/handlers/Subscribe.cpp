@@ -22,6 +22,7 @@
 #include "data/BackendInterface.hpp"
 #include "data/Types.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
+#include "feed/Types.hpp"
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
@@ -114,7 +115,7 @@ SubscribeHandler::process(Input input, Context const& ctx) const
     auto output = Output{};
 
     // Mimic rippled. No matter what the request is, the api version changes for the whole session
-    ctx.session->apiSubVersion = ctx.apiVersion;
+    ctx.session->setApiSubversion(ctx.apiVersion);
 
     if (input.streams) {
         auto const ledger = subscribeToStreams(ctx.yield, *(input.streams), ctx.session);
@@ -138,7 +139,7 @@ boost::json::object
 SubscribeHandler::subscribeToStreams(
     boost::asio::yield_context yield,
     std::vector<std::string> const& streams,
-    std::shared_ptr<web::ConnectionBase> const& session
+    feed::SubscriberSharedPtr const& session
 ) const
 {
     auto response = boost::json::object{};
@@ -165,7 +166,7 @@ SubscribeHandler::subscribeToStreams(
 void
 SubscribeHandler::subscribeToAccountsProposed(
     std::vector<std::string> const& accounts,
-    std::shared_ptr<web::ConnectionBase> const& session
+    feed::SubscriberSharedPtr const& session
 ) const
 {
     for (auto const& account : accounts) {
@@ -177,7 +178,7 @@ SubscribeHandler::subscribeToAccountsProposed(
 void
 SubscribeHandler::subscribeToAccounts(
     std::vector<std::string> const& accounts,
-    std::shared_ptr<web::ConnectionBase> const& session
+    feed::SubscriberSharedPtr const& session
 ) const
 {
     for (auto const& account : accounts) {
@@ -189,7 +190,7 @@ SubscribeHandler::subscribeToAccounts(
 void
 SubscribeHandler::subscribeToBooks(
     std::vector<OrderBook> const& books,
-    std::shared_ptr<web::ConnectionBase> const& session,
+    feed::SubscriberSharedPtr const& session,
     boost::asio::yield_context yield,
     Output& output
 ) const

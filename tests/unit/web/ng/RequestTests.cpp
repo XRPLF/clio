@@ -26,8 +26,10 @@
 #include <boost/beast/http/verb.hpp>
 #include <gtest/gtest.h>
 
+#include <iterator>
 #include <optional>
 #include <string>
+#include <utility>
 
 using namespace web::ng;
 namespace http = boost::beast::http;
@@ -175,6 +177,35 @@ INSTANTIATE_TEST_SUITE_P(
     ),
     tests::util::NameGenerator
 );
+
+struct RequestHttpHeadersTest : RequestTest {
+    http::field const headerName_ = http::field::user_agent;
+    std::string const headerValue_ = "clio";
+};
+
+TEST_F(RequestHttpHeadersTest, httpHeaders_HttpRequest)
+{
+    auto httpRequest = http::request<http::string_body>{http::verb::get, "/", 11};
+    httpRequest.set(headerName_, headerValue_);
+    Request const request{std::move(httpRequest)};
+
+    auto const& headersFromRequest = request.httpHeaders();
+    ASSERT_EQ(headersFromRequest.count(headerName_), 1);
+    ASSERT_EQ(std::distance(headersFromRequest.cbegin(), headersFromRequest.cend()), 1);
+    EXPECT_EQ(headersFromRequest.at(headerName_), headerValue_);
+}
+
+TEST_F(RequestHttpHeadersTest, httpHeaders_WsRequest)
+{
+    Request::HttpHeaders headers;
+    headers.set(headerName_, headerValue_);
+    Request const request{"websocket message", headers};
+
+    auto const& headersFromRequest = request.httpHeaders();
+    ASSERT_EQ(std::distance(headersFromRequest.cbegin(), headersFromRequest.cend()), 1);
+    ASSERT_EQ(headersFromRequest.count(headerName_), 1);
+    EXPECT_EQ(headersFromRequest.at(headerName_), headerValue_);
+}
 
 struct RequestHeaderValueTest : RequestTest {};
 

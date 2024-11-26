@@ -44,7 +44,8 @@ try {
             }
             util::LogService::init(config);
             app::ClioApplication clio{config};
-            return clio.run();
+
+            return clio.run(run.useNgWebServer);
         }
     );
 } catch (std::exception const& e) {

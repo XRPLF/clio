@@ -20,6 +20,7 @@
 #pragma once
 
 #include "rpc/Errors.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
@@ -32,7 +33,6 @@
 
 #include <cstdint>
 #include <expected>
-#include <memory>
 #include <string>
 #include <utility>
 #include <variant>
@@ -117,7 +117,7 @@ struct VoidOutput {};
  */
 struct Context {
     boost::asio::yield_context yield;
-    std::shared_ptr<web::ConnectionBase> session = {};  // NOLINT(readability-redundant-member-init)
+    web::SubscriptionContextPtr session = {};  // NOLINT(readability-redundant-member-init)
     bool isAdmin = false;
     std::string clientIp = {};  // NOLINT(readability-redundant-member-init)
     uint32_t apiVersion = 0u;   // invalid by default

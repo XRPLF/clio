@@ -161,11 +161,12 @@ private:
                     return rpc::make_WsContext(
                         yield,
                         request,
-                        connection,
+                        connection->makeSubscriptionContext(tagFactory_),
                         tagFactory_.with(connection->tag()),
                         *range,
                         connection->clientIp,
-                        std::cref(apiVersionParser_)
+                        std::cref(apiVersionParser_),
+                        connection->isAdmin()
                     );
                 }
                 return rpc::make_HttpContext(

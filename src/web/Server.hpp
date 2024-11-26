@@ -21,6 +21,7 @@
 
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
+#include "web/AdminVerificationStrategy.hpp"
 #include "web/HttpSession.hpp"
 #include "web/SslHttpSession.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
@@ -84,7 +85,7 @@ class Detector : public std::enable_shared_from_this<Detector<PlainSessionType, 
     std::reference_wrapper<dosguard::DOSGuardInterface> const dosGuard_;
     std::shared_ptr<HandlerType> const handler_;
     boost::beast::flat_buffer buffer_;
-    std::shared_ptr<impl::AdminVerificationStrategy> const adminVerification_;
+    std::shared_ptr<AdminVerificationStrategy> const adminVerification_;
     std::uint32_t maxWsSendingQueueSize_;
 
 public:
@@ -105,7 +106,7 @@ public:
         std::reference_wrapper<util::TagDecoratorFactory const> tagFactory,
         std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard,
         std::shared_ptr<HandlerType> handler,
-        std::shared_ptr<impl::AdminVerificationStrategy> adminVerification,
+        std::shared_ptr<AdminVerificationStrategy> adminVerification,
         std::uint32_t maxWsSendingQueueSize
     )
         : stream_(std::move(socket))
@@ -216,7 +217,7 @@ class Server : public std::enable_shared_from_this<Server<PlainSessionType, SslS
     std::reference_wrapper<dosguard::DOSGuardInterface> dosGuard_;
     std::shared_ptr<HandlerType> handler_;
     tcp::acceptor acceptor_;
-    std::shared_ptr<impl::AdminVerificationStrategy> adminVerification_;
+    std::shared_ptr<AdminVerificationStrategy> adminVerification_;
     std::uint32_t maxWsSendingQueueSize_;
 
 public:
@@ -229,7 +230,7 @@ public:
      * @param tagFactory A factory that is used to generate tags to track requests and sessions
      * @param dosGuard The denial of service guard to use
      * @param handler The server handler to use
-     * @param adminPassword The optional password to verify admin role in requests
+     * @param adminVerification The admin verification strategy to use
      * @param maxWsSendingQueueSize The maximum size of the sending queue for websocket
      */
     Server(
@@ -239,7 +240,7 @@ public:
         util::TagDecoratorFactory tagFactory,
         dosguard::DOSGuardInterface& dosGuard,
         std::shared_ptr<HandlerType> handler,
-        std::optional<std::string> adminPassword,
+        std::shared_ptr<AdminVerificationStrategy> adminVerification,
         std::uint32_t maxWsSendingQueueSize
     )
         : ioc_(std::ref(ioc))
@@ -248,7 +249,7 @@ public:
         , dosGuard_(std::ref(dosGuard))
         , handler_(std::move(handler))
         , acceptor_(boost::asio::make_strand(ioc))
-        , adminVerification_(impl::make_AdminVerificationStrategy(std::move(adminPassword)))
+        , adminVerification_(std::move(adminVerification))
         , maxWsSendingQueueSize_(maxWsSendingQueueSize)
     {
         boost::beast::error_code ec;
@@ -355,20 +356,11 @@ make_HttpServer(
     auto const serverConfig = config.section("server");
     auto const address = boost::asio::ip::make_address(serverConfig.value<std::string>("ip"));
     auto const port = serverConfig.value<unsigned short>("port");
-    auto adminPassword = serverConfig.maybeValue<std::string>("admin_password");
-    auto const localAdmin = serverConfig.maybeValue<bool>("local_admin");
 
-    // Throw config error when localAdmin is true and admin_password is also set
-    if (localAdmin && localAdmin.value() && adminPassword) {
-        LOG(log.error()) << "local_admin is true but admin_password is also set, please specify only one method "
-                            "to authorize admin";
-        throw std::logic_error("Admin config error, local_admin and admin_password can not be set together.");
-    }
-    // Throw config error when localAdmin is false but admin_password is not set
-    if (localAdmin && !localAdmin.value() && !adminPassword) {
-        LOG(log.error()) << "local_admin is false but admin_password is not set, please specify one method "
-                            "to authorize admin";
-        throw std::logic_error("Admin config error, one method must be specified to authorize admin.");
+    auto expectedAdminVerification = make_AdminVerificationStrategy(config);
+    if (not expectedAdminVerification.has_value()) {
+        LOG(log.error()) << expectedAdminVerification.error();
+        throw std::logic_error{expectedAdminVerification.error()};
     }
 
     // If the transactions number is 200 per ledger, A client which subscribes everything will send 400+ feeds for
@@ -382,7 +374,7 @@ make_HttpServer(
         util::TagDecoratorFactory(config),
         dosGuard,
         handler,
-        std::move(adminPassword),
+        std::move(expectedAdminVerification).value(),
         maxWsSendingQueueSize
     );
 

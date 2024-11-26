@@ -22,8 +22,8 @@
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
-#include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/ng/MessageHandler.hpp"
+#include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/impl/ConnectionHandler.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -44,15 +44,14 @@ namespace web::ng {
 class Server {
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
-    std::reference_wrapper<boost::asio::io_context> ctx_;
 
+    std::reference_wrapper<boost::asio::io_context> ctx_;
     std::optional<boost::asio::ssl::context> sslContext_;
 
-    impl::ConnectionHandler connectionHandler_;
-
-    boost::asio::ip::tcp::endpoint endpoint_;
-
     util::TagDecoratorFactory tagDecoratorFactory_;
+
+    impl::ConnectionHandler connectionHandler_;
+    boost::asio::ip::tcp::endpoint endpoint_;
 
     bool running_{false};
 
@@ -63,15 +62,20 @@ public:
      * @param ctx The boost::asio::io_context to use.
      * @param endpoint The endpoint to listen on.
      * @param sslContext The SSL context to use (optional).
-     * @param connectionHandler The connection handler.
+     * @param processingPolicy The requests processing policy (parallel or sequential).
+     * @param parallelRequestLimit The limit of requests for one connection that can be processed in parallel. Only used
+     * if processingPolicy is parallel.
      * @param tagDecoratorFactory The tag decorator factory.
+     * @param maxSubscriptionSendQueueSize The maximum size of the subscription send queue.
      */
     Server(
         boost::asio::io_context& ctx,
         boost::asio::ip::tcp::endpoint endpoint,
         std::optional<boost::asio::ssl::context> sslContext,
-        impl::ConnectionHandler connectionHandler,
-        util::TagDecoratorFactory tagDecoratorFactory
+        ProcessingPolicy processingPolicy,
+        std::optional<size_t> parallelRequestLimit,
+        util::TagDecoratorFactory tagDecoratorFactory,
+        std::optional<size_t> maxSubscriptionSendQueueSize
     );
 
     /**

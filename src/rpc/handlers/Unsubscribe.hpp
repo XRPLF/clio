@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
+#include "feed/Types.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 
@@ -105,22 +106,17 @@ public:
 
 private:
     void
-    unsubscribeFromStreams(std::vector<std::string> const& streams, std::shared_ptr<web::ConnectionBase> const& session)
+    unsubscribeFromStreams(std::vector<std::string> const& streams, feed::SubscriberSharedPtr const& session) const;
+
+    void
+    unsubscribeFromAccounts(std::vector<std::string> accounts, feed::SubscriberSharedPtr const& session) const;
+
+    void
+    unsubscribeFromProposedAccounts(std::vector<std::string> accountsProposed, feed::SubscriberSharedPtr const& session)
         const;
 
     void
-    unsubscribeFromAccounts(std::vector<std::string> accounts, std::shared_ptr<web::ConnectionBase> const& session)
-        const;
-
-    void
-    unsubscribeFromProposedAccounts(
-        std::vector<std::string> accountsProposed,
-        std::shared_ptr<web::ConnectionBase> const& session
-    ) const;
-
-    void
-    unsubscribeFromBooks(std::vector<OrderBook> const& books, std::shared_ptr<web::ConnectionBase> const& session)
-        const;
+    unsubscribeFromBooks(std::vector<OrderBook> const& books, feed::SubscriberSharedPtr const& session) const;
 
     /**
      * @brief Convert a JSON object to an Input

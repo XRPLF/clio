@@ -25,6 +25,7 @@
 #include "rpc/common/Types.hpp"
 #include "util/Taggable.hpp"
 #include "web/Context.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
@@ -34,8 +35,8 @@
 
 #include <expected>
 #include <functional>
-#include <memory>
 #include <string>
+#include <utility>
 
 using namespace std;
 using namespace util;
@@ -46,11 +47,12 @@ std::expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
-    std::shared_ptr<web::ConnectionBase> const& session,
+    web::SubscriptionContextPtr session,
     util::TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
     std::string const& clientIp,
-    std::reference_wrapper<APIVersionParser const> apiVersionParser
+    std::reference_wrapper<APIVersionParser const> apiVersionParser,
+    bool isAdmin
 )
 {
     boost::json::value commandValue = nullptr;
@@ -68,7 +70,7 @@ make_WsContext(
         return Error{{ClioError::rpcINVALID_API_VERSION, apiVersion.error()}};
 
     auto const command = boost::json::value_to<std::string>(commandValue);
-    return web::Context(yc, command, *apiVersion, request, session, tagFactory, range, clientIp, session->isAdmin());
+    return web::Context(yc, command, *apiVersion, request, std::move(session), tagFactory, range, clientIp, isAdmin);
 }
 
 std::expected<web::Context, Status>
@@ -94,7 +96,7 @@ make_HttpContext(
     auto const command = boost::json::value_to<std::string>(request.at("method"));
 
     if (command == "subscribe" || command == "unsubscribe")
-        return Error{{RippledError::rpcBAD_SYNTAX, "Subscribe and unsubscribe are only allowed or websocket."}};
+        return Error{{RippledError::rpcBAD_SYNTAX, "Subscribe and unsubscribe are only allowed for websocket."}};
 
     if (!request.at("params").is_array())
         return Error{{ClioError::rpcPARAMS_UNPARSEABLE, "Missing params array."}};

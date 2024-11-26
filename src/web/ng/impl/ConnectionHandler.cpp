@@ -21,12 +21,16 @@
 
 #include "util/Assert.hpp"
 #include "util/CoroutineGroup.hpp"
+#include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/MessageHandler.hpp"
+#include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
+#include "web/ng/SubscriptionContext.hpp"
 
 #include <boost/asio/error.hpp>
 #include <boost/asio/spawn.hpp>
@@ -36,6 +40,7 @@
 #include <boost/beast/websocket/error.hpp>
 
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -47,7 +52,8 @@ namespace {
 
 Response
 handleHttpRequest(
-    ConnectionContext const& connectionContext,
+    ConnectionMetadata& connectionMetadata,
+    SubscriptionContextPtr& subscriptionContext,
     ConnectionHandler::TargetToHandlerMap const& handlers,
     Request const& request,
     boost::asio::yield_context yield
@@ -58,12 +64,13 @@ handleHttpRequest(
     if (it == handlers.end()) {
         return Response{boost::beast::http::status::bad_request, "Bad target", request};
     }
-    return it->second(request, connectionContext, yield);
+    return it->second(request, connectionMetadata, subscriptionContext, yield);
 }
 
 Response
 handleWsRequest(
-    ConnectionContext connectionContext,
+    ConnectionMetadata& connectionMetadata,
+    SubscriptionContextPtr& subscriptionContext,
     std::optional<MessageHandler> const& handler,
     Request const& request,
     boost::asio::yield_context yield
@@ -72,7 +79,7 @@ handleWsRequest(
     if (not handler.has_value()) {
         return Response{boost::beast::http::status::bad_request, "WebSocket is not supported by this server", request};
     }
-    return handler->operator()(request, connectionContext, yield);
+    return handler->operator()(request, connectionMetadata, subscriptionContext, yield);
 }
 
 }  // namespace
@@ -95,8 +102,16 @@ ConnectionHandler::StringHash::operator()(std::string const& str) const
     return hash_type{}(str);
 }
 
-ConnectionHandler::ConnectionHandler(ProcessingPolicy processingPolicy, std::optional<size_t> maxParallelRequests)
-    : processingPolicy_{processingPolicy}, maxParallelRequests_{maxParallelRequests}
+ConnectionHandler::ConnectionHandler(
+    ProcessingPolicy processingPolicy,
+    std::optional<size_t> maxParallelRequests,
+    util::TagDecoratorFactory& tagFactory,
+    std::optional<size_t> maxSubscriptionSendQueueSize
+)
+    : processingPolicy_{processingPolicy}
+    , maxParallelRequests_{maxParallelRequests}
+    , tagFactory_{tagFactory}
+    , maxSubscriptionSendQueueSize_{maxSubscriptionSendQueueSize}
 {
 }
 
@@ -126,14 +141,32 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
 
     bool shouldCloseGracefully = false;
 
+    std::shared_ptr<SubscriptionContext> subscriptionContext;
+    if (connectionRef.wasUpgraded()) {
+        auto* ptr = dynamic_cast<impl::WsConnectionBase*>(connectionPtr.get());
+        ASSERT(ptr != nullptr, "Casted not websocket connection");
+        subscriptionContext = std::make_shared<SubscriptionContext>(
+            tagFactory_,
+            *ptr,
+            maxSubscriptionSendQueueSize_,
+            yield,
+            [this](Error const& e, Connection const& c) { return handleError(e, c); }
+        );
+    }
+    SubscriptionContextPtr subscriptionContextInterfacePtr = subscriptionContext;
+
     switch (processingPolicy_) {
         case ProcessingPolicy::Sequential:
-            shouldCloseGracefully = sequentRequestResponseLoop(connectionRef, yield);
+            shouldCloseGracefully = sequentRequestResponseLoop(connectionRef, subscriptionContextInterfacePtr, yield);
             break;
         case ProcessingPolicy::Parallel:
-            shouldCloseGracefully = parallelRequestResponseLoop(connectionRef, yield);
+            shouldCloseGracefully = parallelRequestResponseLoop(connectionRef, subscriptionContextInterfacePtr, yield);
             break;
     }
+
+    if (subscriptionContext != nullptr)
+        subscriptionContext->disconnect(yield);
+
     if (shouldCloseGracefully)
         connectionRef.close(yield);
 
@@ -179,7 +212,11 @@ ConnectionHandler::handleError(Error const& error, Connection const& connection)
 }
 
 bool
-ConnectionHandler::sequentRequestResponseLoop(Connection& connection, boost::asio::yield_context yield)
+ConnectionHandler::sequentRequestResponseLoop(
+    Connection& connection,
+    SubscriptionContextPtr& subscriptionContext,
+    boost::asio::yield_context yield
+)
 {
     // The loop here is infinite because:
     // - For websocket connection is persistent so Clio will try to read and respond infinite unless client
@@ -196,14 +233,19 @@ ConnectionHandler::sequentRequestResponseLoop(Connection& connection, boost::asi
 
         LOG(log_.info()) << connection.tag() << "Received request from ip = " << connection.ip();
 
-        auto maybeReturnValue = processRequest(connection, std::move(expectedRequest).value(), yield);
+        auto maybeReturnValue =
+            processRequest(connection, subscriptionContext, std::move(expectedRequest).value(), yield);
         if (maybeReturnValue.has_value())
             return maybeReturnValue.value();
     }
 }
 
 bool
-ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::asio::yield_context yield)
+ConnectionHandler::parallelRequestResponseLoop(
+    Connection& connection,
+    SubscriptionContextPtr& subscriptionContext,
+    boost::asio::yield_context yield
+)
 {
     // atomic_bool is not needed here because everything happening on coroutine's strand
     bool stop = false;
@@ -218,13 +260,18 @@ ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::as
             closeConnectionGracefully &= closeGracefully;
             break;
         }
-        if (tasksGroup.canSpawn()) {
+
+        if (not tasksGroup.isFull()) {
             bool const spawnSuccess = tasksGroup.spawn(
                 yield,  // spawn on the same strand
-                [this, &stop, &closeConnectionGracefully, &connection, request = std::move(expectedRequest).value()](
-                    boost::asio::yield_context innerYield
-                ) mutable {
-                    auto maybeCloseConnectionGracefully = processRequest(connection, request, innerYield);
+                [this,
+                 &stop,
+                 &closeConnectionGracefully,
+                 &connection,
+                 &subscriptionContext,
+                 request = std::move(expectedRequest).value()](boost::asio::yield_context innerYield) mutable {
+                    auto maybeCloseConnectionGracefully =
+                        processRequest(connection, subscriptionContext, request, innerYield);
                     if (maybeCloseConnectionGracefully.has_value()) {
                         stop = true;
                         closeConnectionGracefully &= maybeCloseConnectionGracefully.value();
@@ -248,9 +295,14 @@ ConnectionHandler::parallelRequestResponseLoop(Connection& connection, boost::as
 }
 
 std::optional<bool>
-ConnectionHandler::processRequest(Connection& connection, Request const& request, boost::asio::yield_context yield)
+ConnectionHandler::processRequest(
+    Connection& connection,
+    SubscriptionContextPtr& subscriptionContext,
+    Request const& request,
+    boost::asio::yield_context yield
+)
 {
-    auto response = handleRequest(connection.context(), request, yield);
+    auto response = handleRequest(connection, subscriptionContext, request, yield);
 
     auto const maybeError = connection.send(std::move(response), yield);
     if (maybeError.has_value()) {
@@ -261,18 +313,19 @@ ConnectionHandler::processRequest(Connection& connection, Request const& request
 
 Response
 ConnectionHandler::handleRequest(
-    ConnectionContext const& connectionContext,
+    ConnectionMetadata& connectionMetadata,
+    SubscriptionContextPtr& subscriptionContext,
     Request const& request,
     boost::asio::yield_context yield
 )
 {
     switch (request.method()) {
         case Request::Method::Get:
-            return handleHttpRequest(connectionContext, getHandlers_, request, yield);
+            return handleHttpRequest(connectionMetadata, subscriptionContext, getHandlers_, request, yield);
         case Request::Method::Post:
-            return handleHttpRequest(connectionContext, postHandlers_, request, yield);
+            return handleHttpRequest(connectionMetadata, subscriptionContext, postHandlers_, request, yield);
         case Request::Method::Websocket:
-            return handleWsRequest(connectionContext, wsHandler_, request, yield);
+            return handleWsRequest(connectionMetadata, subscriptionContext, wsHandler_, request, yield);
         default:
             return Response{boost::beast::http::status::bad_request, "Unsupported http method", request};
     }

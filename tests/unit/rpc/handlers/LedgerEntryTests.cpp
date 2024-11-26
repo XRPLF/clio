@@ -223,6 +223,21 @@ generateTestValuesForParametersTest()
         },
 
         ParamTestCaseBundle{
+            "InvalidDepositPreauthJsonAuthorizeCredentialsMalformedString",
+            fmt::format(
+                R"({{
+                    "deposit_preauth": {{
+                        "owner": "{}",
+                        "authorized_credentials": ["C2F2A19C8D0D893D18F18FDCFE13A3ECB41767E48422DF07F2455CDA08FDF09B"]
+                    }}
+                }})",
+                ACCOUNT
+            ),
+            "malformedAuthorizedCredentials",
+            "authorized_credentials elements in array are not objects."
+        },
+
+        ParamTestCaseBundle{
             "DepositPreauthBothAuthAndAuthCredentialsDoesNotExists",
             fmt::format(
                 R"({{
@@ -273,7 +288,7 @@ generateTestValuesForParametersTest()
                 ACCOUNT
             ),
             "malformedAuthorizedCredentials",
-            "Requires at least one element in authorized_credentials array"
+            "Requires at least one element in authorized_credentials array."
         },
 
         ParamTestCaseBundle{

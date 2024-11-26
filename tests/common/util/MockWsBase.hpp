@@ -21,20 +21,25 @@
 
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast/http/status.hpp>
 #include <gmock/gmock.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
-struct MockSession : public web::ConnectionBase {
+struct MockSession : public web::SubscriptionContextInterface {
     MOCK_METHOD(void, send, (std::shared_ptr<std::string>), (override));
-    MOCK_METHOD(void, send, (std::string&&, boost::beast::http::status), (override));
+    MOCK_METHOD(void, onDisconnect, (OnDisconnectSlot const&), (override));
+    MOCK_METHOD(void, setApiSubversion, (uint32_t), (override));
+    MOCK_METHOD(uint32_t, apiSubversion, (), (const, override));
+
     util::TagDecoratorFactory tagDecoratorFactory{util::Config{}};
 
-    MockSession() : web::ConnectionBase(tagDecoratorFactory, "")
+    MockSession() : web::SubscriptionContextInterface(tagDecoratorFactory)
     {
     }
 };
