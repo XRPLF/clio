@@ -57,6 +57,7 @@
 #include <cstdlib>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -150,7 +151,14 @@ ClioApplication::run(bool const useNgWebServer)
         }
         auto const adminVerifier = std::move(expectedAdminVerifier).value();
 
-        auto httpServer = web::ng::make_Server(config_, ioc);
+        auto httpServer = web::ng::make_Server(
+            config_,
+            [](web::ng::Connection const&) -> std::optional<web::ng::Response> {
+                // TODO(kuznetsss): Add dosguard here
+                return {};
+            },
+            ioc
+        );
 
         if (not httpServer.has_value()) {
             LOG(util::LogService::error()) << "Error creating web server: " << httpServer.error();

@@ -32,6 +32,8 @@
 
 namespace web::ng {
 
+class Connection;
+
 /**
  * @brief Represents an HTTP or Websocket response.
  */
@@ -59,6 +61,16 @@ public:
      * HTTP or WebSocket
      */
     Response(boost::beast::http::status status, boost::json::object const& message, Request const& request);
+
+    /**
+     * @brief Construct a Response from string. Content type will be text/html.
+     *
+     * @param status The HTTP status.
+     * @param message The message to send.
+     * @param connection The connection that triggered this response. Used to determine whether the response should
+     * contain HTTP or WebSocket data.
+     */
+    Response(boost::beast::http::status status, boost::json::object const& message, Connection const& connection);
 
     /**
      * @brief Construct a Response from HTTP response.

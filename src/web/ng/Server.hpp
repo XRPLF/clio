@@ -22,8 +22,10 @@
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
+#include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
 #include "web/ng/ProcessingPolicy.hpp"
+#include "web/ng/Response.hpp"
 #include "web/ng/impl/ConnectionHandler.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -42,6 +44,14 @@ namespace web::ng {
  * @brief Web server class.
  */
 class Server {
+public:
+    /**
+     * @brief Check to perform for each new client connection. The check takes client ip as input and returns a Response
+     * if the check failed. Response will be sent to the client and the connection will be closed.
+     */
+    using OnConnectCheck = std::function<std::optional<Response>(Connection const&)>;
+
+private:
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
 
@@ -52,6 +62,8 @@ class Server {
 
     impl::ConnectionHandler connectionHandler_;
     boost::asio::ip::tcp::endpoint endpoint_;
+
+    OnConnectCheck onConnectCheck_;
 
     bool running_{false};
 
@@ -67,6 +79,7 @@ public:
      * if processingPolicy is parallel.
      * @param tagDecoratorFactory The tag decorator factory.
      * @param maxSubscriptionSendQueueSize The maximum size of the subscription send queue.
+     * @param onConnectCheck The check to perform on each connection.
      */
     Server(
         boost::asio::io_context& ctx,
@@ -75,7 +88,8 @@ public:
         ProcessingPolicy processingPolicy,
         std::optional<size_t> parallelRequestLimit,
         util::TagDecoratorFactory tagDecoratorFactory,
-        std::optional<size_t> maxSubscriptionSendQueueSize
+        std::optional<size_t> maxSubscriptionSendQueueSize,
+        OnConnectCheck onConnectCheck
     );
 
     /**
@@ -141,11 +155,12 @@ private:
  * @brief Create a new Server.
  *
  * @param config The configuration.
+ * @param onConnectCheck The check to perform on each client connection.
  * @param context The boost::asio::io_context to use.
  *
  * @return The Server or an error message.
  */
 std::expected<Server, std::string>
-make_Server(util::Config const& config, boost::asio::io_context& context);
+make_Server(util::Config const& config, Server::OnConnectCheck onConnectCheck, boost::asio::io_context& context);
 
 }  // namespace web::ng

@@ -36,6 +36,7 @@
 #include <boost/asio/ip/address_v4.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
@@ -68,7 +69,7 @@ struct MakeServerTest : NoLoggerFixture, testing::WithParamInterface<MakeServerT
 TEST_P(MakeServerTest, Make)
 {
     util::Config const config{boost::json::parse(GetParam().configJson)};
-    auto const expectedServer = make_Server(config, ioContext_);
+    auto const expectedServer = make_Server(config, [](auto&&) -> std::optional<Response> { return {}; }, ioContext_);
     EXPECT_EQ(expectedServer.has_value(), GetParam().expectSuccess);
 }
 
@@ -159,7 +160,9 @@ struct ServerTest : SyncAsioContextTest {
         boost::json::object{{"server", boost::json::object{{"ip", "127.0.0.1"}, {"port", serverPort_}}}}
     };
 
-    std::expected<Server, std::string> server_ = make_Server(config_, ctx);
+    Server::OnConnectCheck emptyOnConnectCheck_ = [](auto&&) -> std::optional<Response> { return {}; };
+
+    std::expected<Server, std::string> server_ = make_Server(config_, emptyOnConnectCheck_, ctx);
 
     std::string requestMessage_ = "some request";
     std::string const headerName_ = "Some-header";
@@ -181,8 +184,16 @@ TEST_F(ServerTest, BadEndpoint)
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("1.2.3.4"), 0};
     util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
     Server server{
-        ctx, endpoint, std::nullopt, ProcessingPolicy::Sequential, std::nullopt, tagDecoratorFactory, std::nullopt
+        ctx,
+        endpoint,
+        std::nullopt,
+        ProcessingPolicy::Sequential,
+        std::nullopt,
+        tagDecoratorFactory,
+        std::nullopt,
+        emptyOnConnectCheck_
     };
+
     auto maybeError = server.run();
     ASSERT_TRUE(maybeError.has_value());
     EXPECT_THAT(*maybeError, testing::HasSubstr("Error creating TCP acceptor"));
@@ -221,6 +232,114 @@ TEST_F(ServerHttpTest, ClientDisconnects)
     });
 
     server_->run();
+    runContext();
+}
+
+TEST_F(ServerHttpTest, OnConnectCheck)
+{
+    auto const serverPort = tests::util::generateFreePort();
+    boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("0.0.0.0"), serverPort};
+    util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
+
+    testing::StrictMock<testing::MockFunction<std::optional<Response>(Connection const&)>> onConnectCheck;
+
+    Server server{
+        ctx,
+        endpoint,
+        std::nullopt,
+        ProcessingPolicy::Sequential,
+        std::nullopt,
+        tagDecoratorFactory,
+        std::nullopt,
+        onConnectCheck.AsStdFunction()
+    };
+
+    HttpAsyncClient client{ctx};
+
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        boost::asio::steady_timer timer{yield.get_executor()};
+
+        EXPECT_CALL(onConnectCheck, Call).WillOnce([&timer](Connection const& connection) {
+            EXPECT_EQ(connection.ip(), "127.0.0.1");
+            timer.cancel();
+            return std::nullopt;
+        });
+
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
+        client.send(
+            http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
+            yield,
+            std::chrono::milliseconds{100}
+        );
+
+        // Wait for the onConnectCheck to be called
+        timer.expires_after(std::chrono::milliseconds{100});
+        boost::system::error_code error;  // Unused
+        timer.async_wait(yield[error]);
+
+        client.gracefulShutdown();
+        ctx.stop();
+    });
+
+    server.run();
+
+    runContext();
+}
+
+TEST_F(ServerHttpTest, OnConnectCheckFailed)
+{
+    auto const serverPort = tests::util::generateFreePort();
+    boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("0.0.0.0"), serverPort};
+    util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
+
+    testing::StrictMock<testing::MockFunction<std::optional<Response>(Connection const&)>> onConnectCheck;
+
+    Server server{
+        ctx,
+        endpoint,
+        std::nullopt,
+        ProcessingPolicy::Sequential,
+        std::nullopt,
+        tagDecoratorFactory,
+        std::nullopt,
+        onConnectCheck.AsStdFunction()
+    };
+
+    HttpAsyncClient client{ctx};
+
+    EXPECT_CALL(onConnectCheck, Call).WillOnce([](Connection const& connection) {
+        EXPECT_EQ(connection.ip(), "127.0.0.1");
+        return Response{http::status::too_many_requests, boost::json::object{{"error", "some error"}}, connection};
+    });
+
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        // Have to send a request here because the server does async_detect_ssl() which waits for some data to appear
+        client.send(
+            http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
+            yield,
+            std::chrono::milliseconds{100}
+        );
+
+        auto const response = client.receive(yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_TRUE(response.has_value()) << response.error().message(); }();
+        EXPECT_EQ(response->result(), http::status::too_many_requests);
+        EXPECT_EQ(response->body(), R"json({"error":"some error"})json");
+        EXPECT_EQ(response->version(), 11);
+
+        client.gracefulShutdown();
+        ctx.stop();
+    });
+
+    server.run();
+
     runContext();
 }
 
