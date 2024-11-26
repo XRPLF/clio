@@ -105,6 +105,7 @@ struct AllHandlersDeathTest : HandlerBaseTest, testing::WithParamInterface<std::
     {
     }
 
+    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr;
     HandlerType handler_;
 
 private:
@@ -117,7 +118,6 @@ private:
             return HandlerType{this->backend};
         }
     }
-    StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr;
 };
 
 template <typename Handler>
@@ -192,6 +192,7 @@ createInput<AccountInfoHandler>()
 {
     AccountInfoHandler::Input input{};
     input.account = Account;
+    input.ident = "asdf";
     return input;
 }
 
@@ -206,7 +207,9 @@ TYPED_TEST(AllHandlersDeathTest, NoRangeAvailable)
 
             auto const input = createInput<TypeParam>();
             auto const context = Context{yield};
-            EXPECT_DEATH({ [[maybe_unused]] auto _unused = handler.process(input, context); }, ".*");
+            EXPECT_DEATH(
+                { [[maybe_unused]] auto _unused = handler.process(input, context); }, "Assertion .* failed at .*"
+            );
         },
         true
     );
