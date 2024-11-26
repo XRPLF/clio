@@ -20,6 +20,7 @@
 #include "web/ng/Response.hpp"
 
 #include "util/Assert.hpp"
+#include "util/OverloadSet.hpp"
 #include "util/build/Build.hpp"
 #include "web/ng/Request.hpp"
 
@@ -34,83 +35,98 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <type_traits>
 #include <utility>
+#include <variant>
 
 namespace http = boost::beast::http;
+
 namespace web::ng {
 
 namespace {
 
-std::string_view
-asString(Response::HttpData::ContentType type)
+template <typename T>
+consteval bool
+isString()
 {
-    switch (type) {
-        case Response::HttpData::ContentType::TextHtml:
-            return "text/html";
-        case Response::HttpData::ContentType::ApplicationJson:
-            return "application/json";
-    }
-    ASSERT(false, "Unknown content type");
-    std::unreachable();
+    return std::is_same_v<T, std::string>;
+}
+
+http::response<http::string_body>
+prepareResponse(http::response<http::string_body> response, http::request<http::string_body> const& request)
+{
+    response.set(http::field::server, fmt::format("clio-server-{}", util::build::getClioVersionString()));
+    response.keep_alive(request.keep_alive());
+    response.prepare_payload();
+    return response;
 }
 
 template <typename MessageType>
-std::optional<Response::HttpData>
-makeHttpData(http::status status, Request const& request)
+std::variant<http::response<http::string_body>, std::string>
+makeData(http::status status, MessageType message, Request const& request)
 {
-    if (request.isHttp()) {
-        auto const& httpRequest = request.asHttpRequest()->get();
-        auto constexpr contentType = std::is_same_v<std::remove_cvref_t<MessageType>, std::string>
-            ? Response::HttpData::ContentType::TextHtml
-            : Response::HttpData::ContentType::ApplicationJson;
-        return Response::HttpData{
-            .status = status,
-            .contentType = contentType,
-            .keepAlive = httpRequest.keep_alive(),
-            .version = httpRequest.version()
-        };
+    std::string body;
+    if constexpr (isString<MessageType>()) {
+        body = std::move(message);
+    } else {
+        body = boost::json::serialize(message);
     }
-    return std::nullopt;
+
+    if (not request.isHttp())
+        return body;
+
+    auto const& httpRequest = request.asHttpRequest()->get();
+    std::string const contentType = isString<MessageType>() ? "text/html" : "application/json";
+
+    http::response<http::string_body> result{status, httpRequest.version(), std::move(body)};
+    result.set(http::field::content_type, contentType);
+    return prepareResponse(std::move(result), httpRequest);
 }
+
 }  // namespace
 
 Response::Response(boost::beast::http::status status, std::string message, Request const& request)
-    : message_(std::move(message)), httpData_{makeHttpData<decltype(message)>(status, request)}
+    : data_{makeData(status, std::move(message), request)}
 {
 }
 
 Response::Response(boost::beast::http::status status, boost::json::object const& message, Request const& request)
-    : message_(boost::json::serialize(message)), httpData_{makeHttpData<decltype(message)>(status, request)}
+    : data_{makeData(status, message, request)}
 {
+}
+
+Response::Response(boost::beast::http::response<boost::beast::http::string_body> response, Request const& request)
+{
+    ASSERT(request.isHttp(), "Request must be HTTP to construct response from HTTP response");
+    data_ = prepareResponse(std::move(response), request.asHttpRequest()->get());
 }
 
 std::string const&
 Response::message() const
 {
-    return message_;
+    return std::visit(
+        util::OverloadSet{
+            [](http::response<http::string_body> const& response) -> std::string const& { return response.body(); },
+            [](std::string const& message) -> std::string const& { return message; },
+        },
+        data_
+    );
 }
 
 http::response<http::string_body>
 Response::intoHttpResponse() &&
 {
-    ASSERT(httpData_.has_value(), "Response must have http data to be converted into http response");
+    ASSERT(std::holds_alternative<http::response<http::string_body>>(data_), "Response must contain HTTP data");
 
-    http::response<http::string_body> result{httpData_->status, httpData_->version};
-    result.set(http::field::server, fmt::format("clio-server-{}", util::build::getClioVersionString()));
-    result.set(http::field::content_type, asString(httpData_->contentType));
-    result.keep_alive(httpData_->keepAlive);
-    result.body() = std::move(message_);
-    result.prepare_payload();
-    return result;
+    return std::move(std::get<http::response<http::string_body>>(data_));
 }
 
 boost::asio::const_buffer
-Response::asConstBuffer() const&
+Response::asWsResponse() const&
 {
-    ASSERT(not httpData_.has_value(), "Losing existing http data");
-    return boost::asio::buffer(message_.data(), message_.size());
+    ASSERT(std::holds_alternative<std::string>(data_), "Response must contain WebSocket data");
+    auto const& message = std::get<std::string>(data_);
+    return boost::asio::buffer(message.data(), message.size());
 }
 
 }  // namespace web::ng

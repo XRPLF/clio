@@ -30,6 +30,7 @@
 
 #include <boost/asio/impl/spawn.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/json/array.hpp>
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
 #include <gmock/gmock.h>
@@ -47,6 +48,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <variant>
 #include <vector>

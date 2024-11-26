@@ -24,13 +24,15 @@
 #include "util/SyncExecutionCtxFixture.hpp"
 #include "util/TestObject.hpp"
 #include "util/prometheus/Gauge.hpp"
-#include "web/interface/ConnectionBase.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/json/parse.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <memory>
+#include <vector>
 
 constexpr static auto ACCOUNT1 = "rh1HPuRVsYYvThxG2Bs1MfjmrVC73S16Fb";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
@@ -60,10 +62,11 @@ using FeedProposedTransactionTest = FeedBaseTest<ProposedTransactionFeed>;
 
 TEST_F(FeedProposedTransactionTest, ProposedTransaction)
 {
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 1);
 
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION)));
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
 
     testFeedPtr->unsub(sessionPtr);
@@ -75,15 +78,19 @@ TEST_F(FeedProposedTransactionTest, ProposedTransaction)
 TEST_F(FeedProposedTransactionTest, AccountProposedTransaction)
 {
     auto const account = GetAccountIDWithString(ACCOUNT1);
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
-    std::shared_ptr<web::ConnectionBase> const sessionIdle = std::make_shared<MockSession>();
+    web::SubscriptionContextPtr const sessionIdle = std::make_shared<MockSession>();
     auto const accountIdle = GetAccountIDWithString(ACCOUNT3);
+
+    EXPECT_CALL(*dynamic_cast<MockSession*>(sessionIdle.get()), onDisconnect);
     testFeedPtr->sub(accountIdle, sessionIdle);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION)));
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
 
@@ -97,8 +104,11 @@ TEST_F(FeedProposedTransactionTest, AccountProposedTransaction)
 TEST_F(FeedProposedTransactionTest, SubStreamAndAccount)
 {
     auto const account = GetAccountIDWithString(ACCOUNT1);
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect).Times(2);
     testFeedPtr->sub(account, sessionPtr);
     testFeedPtr->sub(sessionPtr);
+
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 1);
     EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(2);
@@ -108,7 +118,7 @@ TEST_F(FeedProposedTransactionTest, SubStreamAndAccount)
     // unsub
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION)));
 
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
 
@@ -124,17 +134,18 @@ TEST_F(FeedProposedTransactionTest, AccountProposedTransactionDuplicate)
     auto const account = GetAccountIDWithString(ACCOUNT1);
     auto const account2 = GetAccountIDWithString(ACCOUNT2);
 
+    EXPECT_CALL(*mockSessionPtr, onDisconnect).Times(2);
     testFeedPtr->sub(account, sessionPtr);
     testFeedPtr->sub(account2, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
 
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION)));
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
 
     // unsub account1
     testFeedPtr->unsub(account, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
-    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION))).Times(1);
+    EXPECT_CALL(*mockSessionPtr, send(SharedStringJsonEq(DUMMY_TRANSACTION)));
     testFeedPtr->pub(json::parse(DUMMY_TRANSACTION).get_object());
 
     // unsub account2
@@ -146,24 +157,33 @@ TEST_F(FeedProposedTransactionTest, AccountProposedTransactionDuplicate)
 
 TEST_F(FeedProposedTransactionTest, Count)
 {
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
     // repeat
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 1);
 
     auto const account1 = GetAccountIDWithString(ACCOUNT1);
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account1, sessionPtr);
     // repeat
     testFeedPtr->sub(account1, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
     auto const sessionPtr2 = std::make_shared<MockSession>();
+
+    EXPECT_CALL(*dynamic_cast<MockSession*>(sessionPtr2.get()), onDisconnect);
     testFeedPtr->sub(sessionPtr2);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 2);
 
     auto const account2 = GetAccountIDWithString(ACCOUNT2);
+
+    EXPECT_CALL(*dynamic_cast<MockSession*>(sessionPtr2.get()), onDisconnect);
     testFeedPtr->sub(account2, sessionPtr2);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
+
+    EXPECT_CALL(*dynamic_cast<MockSession*>(sessionPtr2.get()), onDisconnect);
     testFeedPtr->sub(account1, sessionPtr2);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 3);
 
@@ -184,31 +204,51 @@ TEST_F(FeedProposedTransactionTest, Count)
 
 TEST_F(FeedProposedTransactionTest, AutoDisconnect)
 {
+    std::vector<web::SubscriptionContextInterface::OnDisconnectSlot> sessionOnDisconnectSlots;
+    ON_CALL(*mockSessionPtr, onDisconnect).WillByDefault([&sessionOnDisconnectSlots](auto slot) {
+        sessionOnDisconnectSlots.push_back(slot);
+    });
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
     // repeat
     testFeedPtr->sub(sessionPtr);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 1);
 
     auto const account1 = GetAccountIDWithString(ACCOUNT1);
+
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account1, sessionPtr);
     // repeat
     testFeedPtr->sub(account1, sessionPtr);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
 
     auto sessionPtr2 = std::make_shared<MockSession>();
+    auto mockSessionPtr2 = dynamic_cast<MockSession*>(sessionPtr2.get());
+    std::vector<web::SubscriptionContextInterface::OnDisconnectSlot> session2OnDisconnectSlots;
+    ON_CALL(*mockSessionPtr2, onDisconnect).WillByDefault([&session2OnDisconnectSlots](auto slot) {
+        session2OnDisconnectSlots.push_back(slot);
+    });
+
+    EXPECT_CALL(*mockSessionPtr2, onDisconnect);
     testFeedPtr->sub(sessionPtr2);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 2);
 
     auto const account2 = GetAccountIDWithString(ACCOUNT2);
+
+    EXPECT_CALL(*mockSessionPtr2, onDisconnect);
     testFeedPtr->sub(account2, sessionPtr2);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 2);
+
+    EXPECT_CALL(*mockSessionPtr2, onDisconnect);
     testFeedPtr->sub(account1, sessionPtr2);
     EXPECT_EQ(testFeedPtr->accountSubCount(), 3);
 
+    std::ranges::for_each(session2OnDisconnectSlots, [&sessionPtr2](auto& slot) { slot(sessionPtr2.get()); });
     sessionPtr2.reset();
     EXPECT_EQ(testFeedPtr->accountSubCount(), 1);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 1);
 
+    std::ranges::for_each(sessionOnDisconnectSlots, [this](auto& slot) { slot(sessionPtr.get()); });
     sessionPtr.reset();
     EXPECT_EQ(testFeedPtr->accountSubCount(), 0);
     EXPECT_EQ(testFeedPtr->transactionSubcount(), 0);
@@ -216,21 +256,9 @@ TEST_F(FeedProposedTransactionTest, AutoDisconnect)
 
 struct ProposedTransactionFeedMockPrometheusTest : WithMockPrometheus, SyncExecutionCtxFixture {
 protected:
-    std::shared_ptr<web::ConnectionBase> sessionPtr;
-    std::shared_ptr<ProposedTransactionFeed> testFeedPtr;
-
-    void
-    SetUp() override
-    {
-        testFeedPtr = std::make_shared<ProposedTransactionFeed>(ctx);
-        sessionPtr = std::make_shared<MockSession>();
-    }
-    void
-    TearDown() override
-    {
-        sessionPtr.reset();
-        testFeedPtr.reset();
-    }
+    web::SubscriptionContextPtr sessionPtr = std::make_shared<MockSession>();
+    std::shared_ptr<ProposedTransactionFeed> testFeedPtr = std::make_shared<ProposedTransactionFeed>(ctx);
+    MockSession* mockSessionPtr = dynamic_cast<MockSession*>(sessionPtr.get());
 };
 
 TEST_F(ProposedTransactionFeedMockPrometheusTest, subUnsub)
@@ -243,10 +271,12 @@ TEST_F(ProposedTransactionFeedMockPrometheusTest, subUnsub)
     EXPECT_CALL(counterAccount, add(1));
     EXPECT_CALL(counterAccount, add(-1));
 
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(sessionPtr);
     testFeedPtr->unsub(sessionPtr);
 
     auto const account = GetAccountIDWithString(ACCOUNT1);
+    EXPECT_CALL(*mockSessionPtr, onDisconnect);
     testFeedPtr->sub(account, sessionPtr);
     testFeedPtr->unsub(account, sessionPtr);
 }
@@ -256,15 +286,24 @@ TEST_F(ProposedTransactionFeedMockPrometheusTest, AutoDisconnect)
     auto& counterTx = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"tx_proposed\"}");
     auto& counterAccount = makeMock<GaugeInt>("subscriptions_current_number", "{stream=\"account_proposed\"}");
 
+    std::vector<web::SubscriptionContextInterface::OnDisconnectSlot> sessionOnDisconnectSlots;
+
     EXPECT_CALL(counterTx, add(1));
     EXPECT_CALL(counterTx, add(-1));
     EXPECT_CALL(counterAccount, add(1));
     EXPECT_CALL(counterAccount, add(-1));
 
+    EXPECT_CALL(*mockSessionPtr, onDisconnect).WillOnce([&sessionOnDisconnectSlots](auto slot) {
+        sessionOnDisconnectSlots.push_back(slot);
+    });
     testFeedPtr->sub(sessionPtr);
 
     auto const account = GetAccountIDWithString(ACCOUNT1);
+    EXPECT_CALL(*mockSessionPtr, onDisconnect).WillOnce([&sessionOnDisconnectSlots](auto slot) {
+        sessionOnDisconnectSlots.push_back(slot);
+    });
     testFeedPtr->sub(account, sessionPtr);
 
+    std::ranges::for_each(sessionOnDisconnectSlots, [this](auto& slot) { slot(sessionPtr.get()); });
     sessionPtr.reset();
 }

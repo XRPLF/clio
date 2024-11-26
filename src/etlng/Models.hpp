@@ -120,6 +120,7 @@ struct LedgerData {
     std::vector<Transaction> transactions;
     std::vector<Object> objects;
     std::optional<std::vector<BookSuccessor>> successors;
+    std::optional<std::vector<std::string>> edgeKeys;
 
     ripple::LedgerHeader header;
     std::string rawHeader;

@@ -20,12 +20,14 @@
 #pragma once
 
 #include "rpc/Errors.hpp"
+#include "util/Assert.hpp"
 #include "util/Taggable.hpp"
 #include "util/build/Build.hpp"
 #include "util/log/Logger.hpp"
 #include "util/prometheus/Http.hpp"
+#include "web/AdminVerificationStrategy.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
-#include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/interface/Concepts.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
@@ -59,6 +61,14 @@
 #include <utility>
 
 namespace web::impl {
+
+static auto constexpr HealthCheckHTML = R"html(
+    <!DOCTYPE html>
+    <html>
+        <head><title>Test page for Clio</title></head>
+        <body><h1>Clio Test</h1><p>This page shows Clio http(s) connectivity is working.</p></body>
+    </html>
+)html";
 
 using tcp = boost::asio::ip::tcp;
 
@@ -205,6 +215,9 @@ public:
         if (ec)
             return httpFail(ec, "read");
 
+        if (req_.method() == http::verb::get and req_.target() == "/health")
+            return sender_(httpResponse(http::status::ok, "text/html", HealthCheckHTML));
+
         // Update isAdmin property of the connection
         ConnectionBase::isAdmin_ = adminVerification_->isAdmin(req_, this->clientIp);
 
@@ -273,6 +286,13 @@ public:
             msg = boost::json::serialize(jsonResponse);
         }
         sender_(httpResponse(status, "application/json", std::move(msg)));
+    }
+
+    SubscriptionContextPtr
+    makeSubscriptionContext(util::TagDecoratorFactory const&) override
+    {
+        ASSERT(false, "SubscriptionContext can't be created for a HTTP connection");
+        std::unreachable();
     }
 
     void

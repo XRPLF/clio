@@ -28,24 +28,33 @@
 
 #include <boost/json/parse.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <xrpl/basics/Slice.h>
 #include <xrpl/basics/base_uint.h>
+#include <xrpl/basics/chrono.h>
+#include <xrpl/basics/strHex.h>
 #include <xrpl/protocol/Indexes.h>
 #include <xrpl/protocol/LedgerFormats.h>
 
+#include <chrono>
 #include <optional>
+#include <ranges>
 #include <string>
+#include <string_view>
 #include <vector>
 
-constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
-constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
-constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
-constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
-constexpr static auto INDEX2 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B1";
+constexpr static auto Account = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
+constexpr static auto Account2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
+constexpr static auto LedgerHash = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652";
+constexpr static auto Index1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
+constexpr static auto Index2 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515B1";
+constexpr static std::string_view CredentialType = "credType";
+constexpr static auto CredentialHash = "F245428267E6177AEEFDD4FEA3533285712A4B1091CF82A7EA7BC39A62C3FB1A";
 
-constexpr static auto RANGEMIN = 10;
-constexpr static auto RANGEMAX = 30;
+constexpr static auto RangeMin = 10;
+constexpr static auto RangeMax = 30;
 
 using namespace rpc;
 namespace json = boost::json;
@@ -156,6 +165,38 @@ generateTestValuesForParametersTest()
             "invalidParams",
             "ledgerIndexMalformed",
         },
+        {
+            "CredentialsNotArray",
+            R"({
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "credentials": "x"
+            })",
+            "invalidParams",
+            "Invalid parameters.",
+        },
+        {
+            "CredentialsNotStringsInArray",
+            R"({
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "credentials": [123]
+            })",
+            "invalidParams",
+            "Item is not a valid uint256 type.",
+        },
+        {
+            "CredentialsNotHexedStringInArray",
+            R"({
+                "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", 
+                "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+                "credentials": ["234", "432"]
+            })",
+            "invalidParams",
+            "Item is not a valid uint256 type.",
+        }
     };
 }
 
@@ -184,10 +225,10 @@ TEST_P(DepositAuthorizedParameterTest, InvalidParams)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
+    backend->setRange(RangeMin, RangeMax);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
+    ON_CALL(*backend, fetchLedgerBySequence(RangeMax, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
@@ -197,9 +238,9 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
                 "destination_account": "{}", 
                 "ledger_index": {}
             }})",
-            ACCOUNT,
-            ACCOUNT2,
-            RANGEMAX
+            Account,
+            Account2,
+            RangeMax
         ));
 
         auto const output = handler.process(req, Context{yield});
@@ -213,10 +254,10 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
+    backend->setRange(RangeMin, RangeMax);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
-    ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
+    ON_CALL(*backend, fetchLedgerBySequence(RangeMax, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
@@ -226,9 +267,9 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
                 "destination_account": "{}", 
                 "ledger_index": "{}"
             }})",
-            ACCOUNT,
-            ACCOUNT2,
-            RANGEMAX
+            Account,
+            Account2,
+            RangeMax
         ));
 
         auto const output = handler.process(req, Context{yield});
@@ -242,10 +283,10 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
+    backend->setRange(RangeMin, RangeMax);
 
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
@@ -255,9 +296,9 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
                 "destination_account": "{}", 
                 "ledger_hash": "{}"
             }})",
-            ACCOUNT,
-            ACCOUNT2,
-            LEDGERHASH
+            Account,
+            Account2,
+            LedgerHash
         ));
 
         auto const output = handler.process(req, Context{yield});
@@ -273,9 +314,9 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 {
     backend->setRange(10, 30);
 
-    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(std::optional<Blob>{}));
@@ -287,9 +328,9 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})",
-        ACCOUNT,
-        ACCOUNT2,
-        LEDGERHASH
+        Account,
+        Account2,
+        LedgerHash
     ));
 
     runSpawn([&, this](auto yield) {
@@ -308,14 +349,14 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
 {
     backend->setRange(10, 30);
 
-    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
-    auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto const accountRoot = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
     ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(accountRoot.getSerializer().peekData()));
-    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account2)).key, _, _))
         .WillByDefault(Return(std::optional<Blob>{}));
 
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
@@ -326,9 +367,9 @@ TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})",
-        ACCOUNT,
-        ACCOUNT2,
-        LEDGERHASH
+        Account,
+        Account2,
+        LedgerHash
     ));
 
     runSpawn([&, this](auto yield) {
@@ -357,12 +398,12 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
 
     backend->setRange(10, 30);
 
-    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
-    auto const accountRoot = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
+    auto const accountRoot = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
     ON_CALL(*backend, doFetchLedgerObject).WillByDefault(Return(accountRoot.getSerializer().peekData()));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
@@ -372,9 +413,9 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})",
-        ACCOUNT,
-        ACCOUNT,
-        LEDGERHASH
+        Account,
+        Account,
+        LedgerHash
     ));
 
     runSpawn([&, this](auto yield) {
@@ -400,17 +441,17 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
 
     backend->setRange(10, 30);
 
-    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
-    auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
-    auto const account2Root = CreateAccountRootObject(ACCOUNT2, 0, 2, 200, 2, INDEX2, 2);
+    auto const account1Root = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
+    auto const account2Root = CreateAccountRootObject(Account2, 0, 2, 200, 2, Index2, 2);
 
-    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account)).key, _, _))
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
-    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account2)).key, _, _))
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
 
@@ -420,9 +461,9 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})",
-        ACCOUNT,
-        ACCOUNT2,
-        LEDGERHASH
+        Account,
+        Account2,
+        LedgerHash
     ));
 
     runSpawn([&, this](auto yield) {
@@ -448,18 +489,18 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
 
     backend->setRange(10, 30);
 
-    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
-    auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
-    auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
+    auto const account1Root = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
+    auto const account2Root = CreateAccountRootObject(Account2, ripple::lsfDepositAuth, 2, 200, 2, Index2, 2);
 
     ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::nullopt));
-    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account)).key, _, _))
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
-    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account2)).key, _, _))
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
 
@@ -469,9 +510,9 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})",
-        ACCOUNT,
-        ACCOUNT2,
-        LEDGERHASH
+        Account,
+        Account2,
+        LedgerHash
     ));
 
     runSpawn([&, this](auto yield) {
@@ -497,18 +538,18 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
 
     backend->setRange(10, 30);
 
-    auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
-    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
+    ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
 
-    auto const account1Root = CreateAccountRootObject(ACCOUNT, 0, 2, 200, 2, INDEX1, 2);
-    auto const account2Root = CreateAccountRootObject(ACCOUNT2, ripple::lsfDepositAuth, 2, 200, 2, INDEX2, 2);
+    auto const account1Root = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
+    auto const account2Root = CreateAccountRootObject(Account2, ripple::lsfDepositAuth, 2, 200, 2, Index2, 2);
 
     ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
-    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account)).key, _, _))
         .WillByDefault(Return(account1Root.getSerializer().peekData()));
-    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(ACCOUNT2)).key, _, _))
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account2)).key, _, _))
         .WillByDefault(Return(account2Root.getSerializer().peekData()));
     EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
 
@@ -518,9 +559,9 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
             "destination_account": "{}",
             "ledger_hash": "{}"
         }})",
-        ACCOUNT,
-        ACCOUNT2,
-        LEDGERHASH
+        Account,
+        Account2,
+        LedgerHash
     ));
 
     runSpawn([&, this](auto yield) {
@@ -529,5 +570,382 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
 
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(expectedOut));
+    });
+}
+
+TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
+{
+    static auto const expectedOut = fmt::format(
+        R"({{
+            "ledger_hash": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
+            "ledger_index": 30,
+            "validated": true,
+            "deposit_authorized": true,
+            "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+            "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun",
+            "credentials": ["{}"]
+        }})",
+        CredentialHash  // CREDENTIALHASH should match credentialIndex
+    );
+
+    backend->setRange(10, 30);
+
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
+
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
+
+    auto const account1Root = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
+    auto const account2Root = CreateAccountRootObject(Account2, ripple::lsfDepositAuth, 2, 200, 2, Index2, 2);
+    auto const credential = CreateCredentialObject(Account, Account2, CredentialType);
+    auto const credentialIndex = ripple::keylet::credential(
+                                     GetAccountIDWithString(Account),
+                                     GetAccountIDWithString(Account2),
+                                     ripple::Slice(CredentialType.data(), CredentialType.size())
+    )
+                                     .key;
+
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account)).key, _, _))
+        .WillByDefault(Return(account1Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account2)).key, _, _))
+        .WillByDefault(Return(account2Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(credentialIndex, _, _))
+        .WillByDefault(Return(credential.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(4);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "source_account": "{}",
+            "destination_account": "{}",
+            "ledger_hash": "{}",
+            "credentials": ["{}"]
+        }})",
+        Account,
+        Account2,
+        LedgerHash,
+        ripple::strHex(credentialIndex)
+    ));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
+        auto const output = handler.process(input, Context{yield});
+
+        ASSERT_TRUE(output);
+        EXPECT_EQ(*output.result, json::parse(expectedOut));
+    });
+}
+
+TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
+{
+    backend->setRange(10, 30);
+
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
+
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
+
+    auto const account1Root = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
+    auto const account2Root = CreateAccountRootObject(Account2, ripple::lsfDepositAuth, 2, 200, 2, Index2, 2);
+    auto const credential = CreateCredentialObject(Account, Account2, CredentialType, false);
+    auto const credentialIndex = ripple::keylet::credential(
+                                     GetAccountIDWithString(Account),
+                                     GetAccountIDWithString(Account2),
+                                     ripple::Slice(CredentialType.data(), CredentialType.size())
+    )
+                                     .key;
+
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account)).key, _, _))
+        .WillByDefault(Return(account1Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account2)).key, _, _))
+        .WillByDefault(Return(account2Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(credentialIndex, _, _))
+        .WillByDefault(Return(credential.getSerializer().peekData()));
+
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "source_account": "{}",
+            "destination_account": "{}",
+            "ledger_hash": "{}",
+            "credentials": ["{}"]
+        }})",
+        Account,
+        Account2,
+        LedgerHash,
+        ripple::strHex(credentialIndex)
+    ));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
+        auto const output = handler.process(input, Context{yield});
+
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "badCredentials");
+        EXPECT_EQ(err.at("error_message").as_string(), "credentials aren't accepted");
+    });
+}
+
+TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
+{
+    backend->setRange(10, 30);
+
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30, 100);
+
+    // set parent close time to 500 seconds
+    ledgerHeader.parentCloseTime = ripple::NetClock::time_point{std::chrono::seconds{500}};
+
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
+
+    auto const account1Root = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
+    auto const account2Root = CreateAccountRootObject(Account2, ripple::lsfDepositAuth, 2, 200, 2, Index2, 2);
+
+    // credential expire time is 23 seconds, so credential will fail
+    auto const expiredCredential = CreateCredentialObject(Account, Account2, CredentialType, true, 23);
+
+    auto const credentialIndex = ripple::keylet::credential(
+                                     GetAccountIDWithString(Account),
+                                     GetAccountIDWithString(Account2),
+                                     ripple::Slice(CredentialType.data(), CredentialType.size())
+    )
+                                     .key;
+
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account)).key, _, _))
+        .WillByDefault(Return(account1Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account2)).key, _, _))
+        .WillByDefault(Return(account2Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(credentialIndex, _, _))
+        .WillByDefault(Return(expiredCredential.getSerializer().peekData()));
+
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "source_account": "{}",
+            "destination_account": "{}",
+            "ledger_hash": "{}",
+            "credentials": ["{}"]
+        }})",
+        Account,
+        Account2,
+        LedgerHash,
+        ripple::strHex(credentialIndex)
+    ));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
+        auto const output = handler.process(input, Context{yield});
+
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "badCredentials");
+        EXPECT_EQ(err.at("error_message").as_string(), "credentials are expired");
+    });
+}
+
+TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
+{
+    backend->setRange(10, 30);
+
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30, 34);
+
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
+
+    auto const account1Root = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
+    auto const account2Root = CreateAccountRootObject(Account2, ripple::lsfDepositAuth, 2, 200, 2, Index2, 2);
+    auto const credential = CreateCredentialObject(Account, Account2, CredentialType);
+    auto const credentialIndex = ripple::keylet::credential(
+                                     GetAccountIDWithString(Account),
+                                     GetAccountIDWithString(Account2),
+                                     ripple::Slice(CredentialType.data(), CredentialType.size())
+    )
+                                     .key;
+
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account)).key, _, _))
+        .WillByDefault(Return(account1Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account2)).key, _, _))
+        .WillByDefault(Return(account2Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(credentialIndex, _, _))
+        .WillByDefault(Return(credential.getSerializer().peekData()));
+
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "source_account": "{}",
+            "destination_account": "{}",
+            "ledger_hash": "{}",
+            "credentials": ["{}", "{}"]
+        }})",
+        Account,
+        Account2,
+        LedgerHash,
+        ripple::strHex(credentialIndex),
+        ripple::strHex(credentialIndex)
+    ));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
+        auto const output = handler.process(input, Context{yield});
+
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "badCredentials");
+        EXPECT_EQ(err.at("error_message").as_string(), "duplicates in credentials.");
+    });
+}
+
+TEST_F(RPCDepositAuthorizedTest, NoElementsInCredentialsReturnsFalse)
+{
+    backend->setRange(10, 30);
+
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30, 34);
+
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
+
+    auto const account1Root = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
+    auto const account2Root = CreateAccountRootObject(Account2, ripple::lsfDepositAuth, 2, 200, 2, Index2, 2);
+
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account)).key, _, _))
+        .WillByDefault(Return(account1Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account2)).key, _, _))
+        .WillByDefault(Return(account2Root.getSerializer().peekData()));
+
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "source_account": "{}",
+            "destination_account": "{}",
+            "ledger_hash": "{}",
+            "credentials": []
+        }})",
+        Account,
+        Account2,
+        LedgerHash
+    ));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
+        auto const output = handler.process(input, Context{yield});
+
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "credential array has no elements.");
+    });
+}
+
+TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
+{
+    backend->setRange(10, 30);
+
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30, 34);
+
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
+
+    auto const account1Root = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
+    auto const account2Root = CreateAccountRootObject(Account2, ripple::lsfDepositAuth, 2, 200, 2, Index2, 2);
+    auto const credential = CreateCredentialObject(Account, Account2, CredentialType);
+    auto const credentialIndex = ripple::keylet::credential(
+                                     GetAccountIDWithString(Account),
+                                     GetAccountIDWithString(Account2),
+                                     ripple::Slice(CredentialType.data(), CredentialType.size())
+    )
+                                     .key;
+
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account)).key, _, _))
+        .WillByDefault(Return(account1Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account2)).key, _, _))
+        .WillByDefault(Return(account2Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(credentialIndex, _, _))
+        .WillByDefault(Return(credential.getSerializer().peekData()));
+
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(2);
+
+    std::vector<std::string> credentials(9, ripple::strHex(credentialIndex));
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "source_account": "{}",
+            "destination_account": "{}",
+            "ledger_hash": "{}",
+            "credentials": [{}]
+        }})",
+        Account,
+        Account2,
+        LedgerHash,
+        fmt::join(
+            credentials | std::views::transform([](std::string const& cred) { return fmt::format("\"{}\"", cred); }),
+            ", "
+        )
+    ));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
+        auto const output = handler.process(input, Context{yield});
+
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "invalidParams");
+        EXPECT_EQ(err.at("error_message").as_string(), "credential array too long.");
+    });
+}
+
+TEST_F(RPCDepositAuthorizedTest, DifferenSubjectAccountForCredentialReturnsFalse)
+{
+    backend->setRange(10, 30);
+
+    auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
+
+    EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
+
+    auto const account1Root = CreateAccountRootObject(Account, 0, 2, 200, 2, Index1, 2);
+    auto const account2Root = CreateAccountRootObject(Account2, ripple::lsfDepositAuth, 2, 200, 2, Index2, 2);
+
+    // reverse the subject and issuer account. Now subject is ACCOUNT2
+    auto const credential = CreateCredentialObject(Account2, Account, CredentialType);
+    auto const credentialIndex = ripple::keylet::credential(
+                                     GetAccountIDWithString(Account2),
+                                     GetAccountIDWithString(Account),
+                                     ripple::Slice(CredentialType.data(), CredentialType.size())
+    )
+                                     .key;
+
+    ON_CALL(*backend, doFetchLedgerObject(_, _, _)).WillByDefault(Return(std::optional<Blob>{{1, 2, 3}}));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account)).key, _, _))
+        .WillByDefault(Return(account1Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(ripple::keylet::account(GetAccountIDWithString(Account2)).key, _, _))
+        .WillByDefault(Return(account2Root.getSerializer().peekData()));
+    ON_CALL(*backend, doFetchLedgerObject(credentialIndex, _, _))
+        .WillByDefault(Return(credential.getSerializer().peekData()));
+    EXPECT_CALL(*backend, doFetchLedgerObject).Times(3);
+
+    auto const input = json::parse(fmt::format(
+        R"({{
+            "source_account": "{}",
+            "destination_account": "{}",
+            "ledger_hash": "{}",
+            "credentials": ["{}"]
+        }})",
+        Account,
+        Account2,
+        LedgerHash,
+        ripple::strHex(credentialIndex)
+    ));
+
+    runSpawn([&, this](auto yield) {
+        auto const handler = AnyHandler{DepositAuthorizedHandler{backend}};
+        auto const output = handler.process(input, Context{yield});
+
+        ASSERT_FALSE(output);
+        auto const err = rpc::makeError(output.result.error());
+        EXPECT_EQ(err.at("error").as_string(), "badCredentials");
+        EXPECT_EQ(err.at("error_message").as_string(), "credentials don't belong to the root account");
     });
 }

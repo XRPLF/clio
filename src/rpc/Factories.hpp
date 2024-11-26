@@ -24,7 +24,7 @@
 #include "rpc/common/APIVersion.hpp"
 #include "util/Taggable.hpp"
 #include "web/Context.hpp"
-#include "web/interface/ConnectionBase.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json.hpp>
@@ -32,7 +32,6 @@
 
 #include <expected>
 #include <functional>
-#include <memory>
 #include <string>
 
 /*
@@ -49,22 +48,24 @@ namespace rpc {
  *
  * @param yc The coroutine context
  * @param request The request as JSON object
- * @param session The connection
+ * @param session The subscription context
  * @param tagFactory A factory that provides tags to track requests
  * @param range The ledger range that is available at request time
  * @param clientIp The IP address of the connected client
  * @param apiVersionParser A parser that is used to parse out the "api_version" field
+ * @param isAdmin Whether the request has admin privileges
  * @return A Websocket context or error Status
  */
 std::expected<web::Context, Status>
 make_WsContext(
     boost::asio::yield_context yc,
     boost::json::object const& request,
-    std::shared_ptr<web::ConnectionBase> const& session,
+    web::SubscriptionContextPtr session,
     util::TagDecoratorFactory const& tagFactory,
     data::LedgerRange const& range,
     std::string const& clientIp,
-    std::reference_wrapper<APIVersionParser const> apiVersionParser
+    std::reference_wrapper<APIVersionParser const> apiVersionParser,
+    bool isAdmin
 );
 
 /**

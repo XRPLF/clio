@@ -20,13 +20,14 @@
 #include "data/Types.hpp"
 #include "feed/FeedTestUtil.hpp"
 #include "feed/SubscriptionManager.hpp"
+#include "util/Assert.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"
 #include "util/async/context/BasicExecutionContext.hpp"
 #include "util/async/context/SyncExecutionContext.hpp"
-#include "web/interface/ConnectionBase.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
@@ -39,8 +40,8 @@
 #include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/STObject.h>
 
+#include <algorithm>
 #include <memory>
-#include <string>
 #include <vector>
 
 constexpr static auto ACCOUNT1 = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
@@ -56,25 +57,15 @@ using namespace feed::impl;
 template <class Execution>
 class SubscriptionManagerBaseTest : public util::prometheus::WithPrometheus, public MockBackendTest {
 protected:
-    std::shared_ptr<SubscriptionManager> subscriptionManagerPtr;
-    std::shared_ptr<web::ConnectionBase> session;
-    MockSession* sessionPtr = nullptr;
-
-    void
-    SetUp() override
+    SubscriptionManagerBaseTest()
     {
-        subscriptionManagerPtr = std::make_shared<SubscriptionManager>(Execution(2), backend);
-        session = std::make_shared<MockSession>();
-        session->apiSubVersion = 1;
-        sessionPtr = dynamic_cast<MockSession*>(session.get());
+        ASSERT(sessionPtr != nullptr, "dynamic_cast failed");
     }
 
-    void
-    TearDown() override
-    {
-        session.reset();
-        subscriptionManagerPtr.reset();
-    }
+    std::shared_ptr<SubscriptionManager> subscriptionManagerPtr =
+        std::make_shared<SubscriptionManager>(Execution(2), backend);
+    web::SubscriptionContextPtr session = std::make_shared<MockSession>();
+    MockSession* sessionPtr = dynamic_cast<MockSession*>(session.get());
 };
 
 using SubscriptionManagerTest = SubscriptionManagerBaseTest<util::async::SyncExecutionContext>;
@@ -83,7 +74,9 @@ using SubscriptionManagerAsyncTest = SubscriptionManagerBaseTest<util::async::Po
 
 TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtx)
 {
+    EXPECT_CALL(*sessionPtr, onDisconnect);
     subscriptionManagerPtr->subManifest(session);
+    EXPECT_CALL(*sessionPtr, onDisconnect);
     subscriptionManagerPtr->subValidation(session);
 
     constexpr static auto jsonManifest = R"({"manifest":"test"})";
@@ -97,7 +90,9 @@ TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtx)
 
 TEST_F(SubscriptionManagerAsyncTest, MultipleThreadCtxSessionDieEarly)
 {
+    EXPECT_CALL(*sessionPtr, onDisconnect);
     subscriptionManagerPtr->subManifest(session);
+    EXPECT_CALL(*sessionPtr, onDisconnect);
     subscriptionManagerPtr->subValidation(session);
 
     EXPECT_CALL(*sessionPtr, send(testing::_)).Times(0);
@@ -121,8 +116,18 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
             "books":2,
             "book_changes":2
         })";
-    std::shared_ptr<web::ConnectionBase> const session1 = std::make_shared<MockSession>();
-    std::shared_ptr<web::ConnectionBase> session2 = std::make_shared<MockSession>();
+    web::SubscriptionContextPtr const session1 = std::make_shared<MockSession>();
+    MockSession* mockSession1 = dynamic_cast<MockSession*>(session1.get());
+
+    web::SubscriptionContextPtr session2 = std::make_shared<MockSession>();
+    MockSession* mockSession2 = dynamic_cast<MockSession*>(session2.get());
+    std::vector<web::SubscriptionContextInterface::OnDisconnectSlot> session2OnDisconnectSlots;
+    ON_CALL(*mockSession2, onDisconnect).WillByDefault([&session2OnDisconnectSlots](auto slot) {
+        session2OnDisconnectSlots.push_back(slot);
+    });
+
+    EXPECT_CALL(*mockSession1, onDisconnect).Times(5);
+    EXPECT_CALL(*mockSession2, onDisconnect).Times(4);
     subscriptionManagerPtr->subBookChanges(session1);
     subscriptionManagerPtr->subBookChanges(session2);
     subscriptionManagerPtr->subManifest(session1);
@@ -130,7 +135,10 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     subscriptionManagerPtr->subProposedTransactions(session1);
     subscriptionManagerPtr->subProposedTransactions(session2);
     subscriptionManagerPtr->subTransactions(session1);
-    session2->apiSubVersion = 2;
+
+    // session2->apiSubVersion = 2;
+    EXPECT_CALL(*mockSession1, onDisconnect).Times(5);
+    EXPECT_CALL(*mockSession2, onDisconnect).Times(6);
     subscriptionManagerPtr->subTransactions(session2);
     subscriptionManagerPtr->subValidation(session1);
     subscriptionManagerPtr->subValidation(session2);
@@ -172,6 +180,7 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
     checkResult(subscriptionManagerPtr->report(), 1);
 
     // count down when session disconnect
+    std::ranges::for_each(session2OnDisconnectSlots, [&session2](auto& slot) { slot(session2.get()); });
     session2.reset();
     checkResult(subscriptionManagerPtr->report(), 0);
 }
@@ -179,7 +188,8 @@ TEST_F(SubscriptionManagerTest, ReportCurrentSubscriber)
 TEST_F(SubscriptionManagerTest, ManifestTest)
 {
     constexpr static auto dummyManifest = R"({"manifest":"test"})";
-    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummyManifest))).Times(1);
+    EXPECT_CALL(*sessionPtr, onDisconnect);
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummyManifest)));
     subscriptionManagerPtr->subManifest(session);
     subscriptionManagerPtr->forwardManifest(json::parse(dummyManifest).get_object());
 
@@ -191,7 +201,8 @@ TEST_F(SubscriptionManagerTest, ManifestTest)
 TEST_F(SubscriptionManagerTest, ValidationTest)
 {
     constexpr static auto dummy = R"({"validation":"test"})";
-    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummy))).Times(1);
+    EXPECT_CALL(*sessionPtr, onDisconnect);
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(dummy)));
     subscriptionManagerPtr->subValidation(session);
     subscriptionManagerPtr->forwardValidation(json::parse(dummy).get_object());
 
@@ -202,6 +213,7 @@ TEST_F(SubscriptionManagerTest, ValidationTest)
 
 TEST_F(SubscriptionManagerTest, BookChangesTest)
 {
+    EXPECT_CALL(*sessionPtr, onDisconnect);
     subscriptionManagerPtr->subBookChanges(session);
     EXPECT_EQ(subscriptionManagerPtr->report()["book_changes"], 1);
 
@@ -234,7 +246,7 @@ TEST_F(SubscriptionManagerTest, BookChangesTest)
                 }
             ]
         })";
-    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(bookChangePublish))).Times(1);
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(bookChangePublish)));
 
     subscriptionManagerPtr->pubBookChanges(ledgerHeader, transactions);
 
@@ -266,6 +278,7 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
         })";
     boost::asio::io_context ctx;
     boost::asio::spawn(ctx, [this](boost::asio::yield_context yield) {
+        EXPECT_CALL(*sessionPtr, onDisconnect);
         auto const res = subscriptionManagerPtr->subLedger(yield, session);
         // check the response
         EXPECT_EQ(res, json::parse(LedgerResponse));
@@ -289,7 +302,7 @@ TEST_F(SubscriptionManagerTest, LedgerTest)
             "validated_ledgers":"10-31",
             "txn_count":8
         })";
-    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(ledgerPub))).Times(1);
+    EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(ledgerPub)));
     subscriptionManagerPtr->pubLedger(ledgerHeader2, fee2, "10-31", 8);
 
     // test unsub
@@ -302,6 +315,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
     auto const issue1 = GetIssue(CURRENCY, ISSUER);
     auto const account = GetAccountIDWithString(ISSUER);
     ripple::Book const book{ripple::xrpIssue(), issue1};
+    EXPECT_CALL(*sessionPtr, onDisconnect).Times(3);
     subscriptionManagerPtr->subBook(book, session);
     subscriptionManagerPtr->subTransactions(session);
     subscriptionManagerPtr->subAccount(account, session);
@@ -378,6 +392,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
             "engine_result_message":"The transaction was applied. Only final in a validated ledger."
         })";
     EXPECT_CALL(*sessionPtr, send(SharedStringJsonEq(OrderbookPublish))).Times(3);
+    EXPECT_CALL(*sessionPtr, apiSubversion).Times(3).WillRepeatedly(testing::Return(1));
     subscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
 
     subscriptionManagerPtr->unsubBook(book, session);
@@ -391,6 +406,7 @@ TEST_F(SubscriptionManagerTest, TransactionTest)
 TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
 {
     auto const account = GetAccountIDWithString(ACCOUNT1);
+    EXPECT_CALL(*sessionPtr, onDisconnect).Times(4);
     subscriptionManagerPtr->subProposedAccount(account, session);
     subscriptionManagerPtr->subProposedTransactions(session);
     EXPECT_EQ(subscriptionManagerPtr->report()["accounts_proposed"], 1);
@@ -476,6 +492,7 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
+    EXPECT_CALL(*sessionPtr, apiSubversion).Times(2).WillRepeatedly(testing::Return(1));
     subscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
 
     // unsub account1
@@ -487,6 +504,7 @@ TEST_F(SubscriptionManagerTest, ProposedTransactionTest)
 
 TEST_F(SubscriptionManagerTest, DuplicateResponseSubTxAndProposedTx)
 {
+    EXPECT_CALL(*sessionPtr, onDisconnect).Times(3);
     subscriptionManagerPtr->subProposedTransactions(session);
     subscriptionManagerPtr->subTransactions(session);
     EXPECT_EQ(subscriptionManagerPtr->report()["transactions"], 1);
@@ -502,6 +520,7 @@ TEST_F(SubscriptionManagerTest, DuplicateResponseSubTxAndProposedTx)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
+    EXPECT_CALL(*sessionPtr, apiSubversion).Times(2).WillRepeatedly(testing::Return(1));
     subscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
 
     subscriptionManagerPtr->unsubTransactions(session);
@@ -513,12 +532,13 @@ TEST_F(SubscriptionManagerTest, DuplicateResponseSubTxAndProposedTx)
 TEST_F(SubscriptionManagerTest, NoDuplicateResponseSubAccountAndProposedAccount)
 {
     auto const account = GetAccountIDWithString(ACCOUNT1);
+    EXPECT_CALL(*sessionPtr, onDisconnect).Times(3);
     subscriptionManagerPtr->subProposedAccount(account, session);
     subscriptionManagerPtr->subAccount(account, session);
     EXPECT_EQ(subscriptionManagerPtr->report()["accounts_proposed"], 1);
     EXPECT_EQ(subscriptionManagerPtr->report()["account"], 1);
 
-    EXPECT_CALL(*sessionPtr, send(testing::_)).Times(1);
+    EXPECT_CALL(*sessionPtr, send(testing::_));
 
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 33);
     auto trans1 = TransactionAndMetadata();
@@ -528,6 +548,7 @@ TEST_F(SubscriptionManagerTest, NoDuplicateResponseSubAccountAndProposedAccount)
 
     auto const metaObj = CreateMetaDataForBookChange(CURRENCY, ACCOUNT1, 22, 3, 1, 1, 3);
     trans1.metadata = metaObj.getSerializer().peekData();
+    EXPECT_CALL(*sessionPtr, apiSubversion).WillRepeatedly(testing::Return(1));
     subscriptionManagerPtr->pubTransaction(trans1, ledgerHeader);
 
     // unsub account1

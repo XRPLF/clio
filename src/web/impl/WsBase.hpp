@@ -23,6 +23,8 @@
 #include "rpc/common/Types.hpp"
 #include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
+#include "web/SubscriptionContext.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/interface/Concepts.hpp"
 #include "web/interface/ConnectionBase.hpp"
@@ -79,6 +81,7 @@ class WsBase : public ConnectionBase, public std::enable_shared_from_this<WsBase
     std::queue<std::shared_ptr<std::string>> messages_;
     std::shared_ptr<HandlerType> const handler_;
 
+    SubscriptionContextPtr subscriptionContext_;
     std::uint32_t maxSendingQueueSize_;
 
 protected:
@@ -182,6 +185,21 @@ public:
                 maybeSendNext();
             }
         );
+    }
+
+    /**
+     * @brief Get the subscription context for this connection.
+     *
+     * @param factory Tag TagDecoratorFactory to use to create the context.
+     * @return The subscription context for this connection.
+     */
+    SubscriptionContextPtr
+    makeSubscriptionContext(util::TagDecoratorFactory const& factory) override
+    {
+        if (subscriptionContext_ == nullptr) {
+            subscriptionContext_ = std::make_shared<SubscriptionContext>(factory, shared_from_this());
+        }
+        return subscriptionContext_;
     }
 
     /**

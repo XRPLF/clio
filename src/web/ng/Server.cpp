@@ -26,6 +26,7 @@
 #include "util/newconfig/ObjectView.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/MessageHandler.hpp"
+#include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/impl/HttpConnection.hpp"
 #include "web/ng/impl/ServerSslContext.hpp"
 
@@ -174,14 +175,16 @@ Server::Server(
     boost::asio::io_context& ctx,
     boost::asio::ip::tcp::endpoint endpoint,
     std::optional<boost::asio::ssl::context> sslContext,
-    impl::ConnectionHandler connectionHandler,
-    util::TagDecoratorFactory tagDecoratorFactory
+    ProcessingPolicy processingPolicy,
+    std::optional<size_t> parallelRequestLimit,
+    util::TagDecoratorFactory tagDecoratorFactory,
+    std::optional<size_t> maxSubscriptionSendQueueSize
 )
     : ctx_{ctx}
     , sslContext_{std::move(sslContext)}
-    , connectionHandler_{std::move(connectionHandler)}
-    , endpoint_{std::move(endpoint)}
     , tagDecoratorFactory_{tagDecoratorFactory}
+    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize}
+    , endpoint_{std::move(endpoint)}
 {
 }
 
@@ -293,24 +296,28 @@ make_Server(util::config::ClioConfigDefinition const& config, boost::asio::io_co
     if (not expectedSslContext)
         return std::unexpected{std::move(expectedSslContext).error()};
 
-    impl::ConnectionHandler::ProcessingPolicy processingPolicy{impl::ConnectionHandler::ProcessingPolicy::Parallel};
+    ProcessingPolicy processingPolicy{ProcessingPolicy::Parallel};
     std::optional<size_t> parallelRequestLimit;
 
     auto const processingStrategyStr = serverConfig.getValue<std::string>("processing_policy");
     if (processingStrategyStr == "sequent") {
-        processingPolicy = impl::ConnectionHandler::ProcessingPolicy::Sequential;
+        processingPolicy = ProcessingPolicy::Sequential;
     } else if (processingStrategyStr == "parallel") {
         parallelRequestLimit = serverConfig.maybeValue<size_t>("parallel_requests_limit");
     } else {
         return std::unexpected{fmt::format("Invalid 'server.processing_strategy': {}", processingStrategyStr)};
     }
 
+    auto const maxSubscriptionSendQueueSize = serverConfig.getValue<size_t>("ws_max_sending_queue_size");
+
     return Server{
         context,
         std::move(endpoint).value(),
         std::move(expectedSslContext).value(),
-        impl::ConnectionHandler{processingPolicy, parallelRequestLimit},
-        util::TagDecoratorFactory(config)
+        processingPolicy,
+        parallelRequestLimit,
+        util::TagDecoratorFactory(config),
+        maxSubscriptionSendQueueSize
     };
 }
 

@@ -134,7 +134,7 @@ private:
             hostnames.insert((*it).asString());
 
         for (auto const& hostname : hostnames) {
-            auto resolvedIps = resolver.resolve(hostname, "");
+            auto resolvedIps = resolver.resolve(hostname);
             for (auto& ip : resolvedIps) {
                 ips.insert(std::move(ip));
             }

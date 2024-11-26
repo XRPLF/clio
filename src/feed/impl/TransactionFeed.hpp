@@ -52,10 +52,10 @@ class TransactionFeed {
 
     struct TransactionSlot {
         std::reference_wrapper<TransactionFeed> feed;
-        std::weak_ptr<Subscriber> connectionWeakPtr;
+        std::weak_ptr<Subscriber> subscriptionContextWeakPtr;
 
         TransactionSlot(TransactionFeed& feed, SubscriberSharedPtr const& connection)
-            : feed(feed), connectionWeakPtr(connection)
+            : feed(feed), subscriptionContextWeakPtr(connection)
         {
         }
 
@@ -76,7 +76,7 @@ class TransactionFeed {
 
     // Signals for proposed tx subscribers
     TrackableSignalMap<ripple::AccountID, Subscriber, AllVersionTransactionsType const&> accountProposedSignal_;
-    TrackableSignal<Subscriber, AllVersionTransactionsType const&> txProposedsignal_;
+    TrackableSignal<Subscriber, AllVersionTransactionsType const&> txProposedSignal_;
 
     std::unordered_set<SubscriberPtr>
         notified_;  // Used by slots to prevent double notifications if tx contains multiple subscribed accounts

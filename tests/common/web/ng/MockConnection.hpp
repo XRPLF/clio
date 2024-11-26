@@ -19,17 +19,28 @@
 
 #pragma once
 
+#include "util/Taggable.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
+#include "web/ng/impl/HttpConnection.hpp"
 
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/ssl/context.hpp>
 #include <gmock/gmock.h>
 
 #include <chrono>
 #include <memory>
 #include <optional>
+
+struct MockConnectionMetadataImpl : web::ng::ConnectionMetadata {
+    using web::ng::ConnectionMetadata::ConnectionMetadata;
+    MOCK_METHOD(bool, wasUpgraded, (), (const, override));
+};
+
+using MockConnectionMetadata = testing::NiceMock<MockConnectionMetadataImpl>;
+using StrictMockConnectionMetadata = testing::StrictMock<MockConnectionMetadataImpl>;
 
 struct MockConnectionImpl : web::ng::Connection {
     using web::ng::Connection::Connection;

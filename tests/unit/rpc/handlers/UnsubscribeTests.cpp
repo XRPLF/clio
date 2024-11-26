@@ -26,7 +26,7 @@
 #include "util/MockSubscriptionManager.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/NameGenerator.hpp"
-#include "web/interface/ConnectionBase.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/json/parse.hpp>
 #include <boost/json/value.hpp>
@@ -49,19 +49,7 @@ constexpr static auto ACCOUNT = "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn";
 constexpr static auto ACCOUNT2 = "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun";
 
 struct RPCUnsubscribeTest : HandlerBaseTest {
-    void
-    SetUp() override
-    {
-        HandlerBaseTest::SetUp();
-        session_ = std::make_shared<MockSession>();
-    }
-    void
-    TearDown() override
-    {
-        HandlerBaseTest::TearDown();
-    }
-
-    std::shared_ptr<web::ConnectionBase> session_;
+    web::SubscriptionContextPtr session_ = std::make_shared<MockSession>();
     StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
 };
 

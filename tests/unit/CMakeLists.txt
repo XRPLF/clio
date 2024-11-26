@@ -32,6 +32,8 @@ target_sources(
           etl/SubscriptionSourceTests.cpp
           etl/TransformerTests.cpp
           # ETLng
+          etlng/ExtractionTests.cpp
+          etlng/GrpcSourceTests.cpp
           etlng/RegistryTests.cpp
           # Feed
           feed/BookChangesFeedTests.cpp
@@ -67,6 +69,7 @@ target_sources(
           rpc/handlers/AMMInfoTests.cpp
           rpc/handlers/BookChangesTests.cpp
           rpc/handlers/BookOffersTests.cpp
+          rpc/handlers/CredentialHelpersTests.cpp
           rpc/handlers/DefaultProcessorTests.cpp
           rpc/handlers/DepositAuthorizedTests.cpp
           rpc/handlers/FeatureTests.cpp
@@ -77,6 +80,7 @@ target_sources(
           rpc/handlers/LedgerIndexTests.cpp
           rpc/handlers/LedgerRangeTests.cpp
           rpc/handlers/LedgerTests.cpp
+          rpc/handlers/MPTHoldersTests.cpp
           rpc/handlers/NFTBuyOffersTests.cpp
           rpc/handlers/NFTHistoryTests.cpp
           rpc/handlers/NFTInfoTests.cpp
@@ -131,19 +135,24 @@ target_sources(
           util/TxUtilTests.cpp
           util/WithTimeout.cpp
           # Webserver
+          web/AdminVerificationTests.cpp
           web/dosguard/DOSGuardTests.cpp
           web/dosguard/IntervalSweepHandlerTests.cpp
           web/dosguard/WhitelistHandlerTests.cpp
-          web/impl/AdminVerificationTests.cpp
+          web/impl/ErrorHandlingTests.cpp
           web/ng/ResponseTests.cpp
           web/ng/RequestTests.cpp
+          web/ng/RPCServerHandlerTests.cpp
           web/ng/ServerTests.cpp
+          web/ng/SubscriptionContextTests.cpp
           web/ng/impl/ConnectionHandlerTests.cpp
+          web/ng/impl/ErrorHandlingTests.cpp
           web/ng/impl/HttpConnectionTests.cpp
           web/ng/impl/ServerSslContextTests.cpp
           web/ng/impl/WsConnectionTests.cpp
           web/RPCServerHandlerTests.cpp
           web/ServerTests.cpp
+          web/SubscriptionContextTests.cpp
           # New Config
           util/newconfig/ArrayTests.cpp
           util/newconfig/ArrayViewTests.cpp

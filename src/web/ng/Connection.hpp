@@ -28,9 +28,9 @@
 #include <boost/beast/core/flat_buffer.hpp>
 
 #include <chrono>
+#include <concepts>
 #include <cstddef>
 #include <expected>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -38,16 +38,67 @@
 namespace web::ng {
 
 /**
- * @brief A forward declaration of ConnectionContext.
+ * @brief An interface for a connection metadata class.
  */
-class ConnectionContext;
-
-/**
- *@brief A class representing a connection to a client.
- */
-class Connection : public util::Taggable {
+class ConnectionMetadata : public util::Taggable {
 protected:
     std::string ip_;  // client ip
+    std::optional<bool> isAdmin_;
+
+public:
+    /**
+     * @brief Construct a new ConnectionMetadata object.
+     *
+     * @param ip The client ip.
+     * @param tagDecoratorFactory The factory for creating tag decorators.
+     */
+    ConnectionMetadata(std::string ip, util::TagDecoratorFactory const& tagDecoratorFactory);
+
+    /**
+     * @brief Whether the connection was upgraded. Upgraded connections are websocket connections.
+     *
+     * @return true if the connection was upgraded.
+     */
+    virtual bool
+    wasUpgraded() const = 0;
+
+    /**
+     * @brief Get the ip of the client.
+     *
+     * @return The ip of the client.
+     */
+    std::string const&
+    ip() const;
+
+    /**
+     * @brief Get whether the client is an admin.
+     *
+     * @return true if the client is an admin.
+     */
+    bool
+    isAdmin() const;
+
+    /**
+     * @brief Set the isAdmin field.
+     * @note This function is lazy, it will update isAdmin only if it is not set yet.
+     *
+     * @tparam T The invocable type of the function to call to set the isAdmin.
+     * @param setter The function to call to set the isAdmin.
+     */
+    template <std::invocable T>
+    void
+    setIsAdmin(T&& setter)
+    {
+        if (not isAdmin_.has_value())
+            isAdmin_ = setter();
+    }
+};
+
+/**
+ * @brief A class representing a connection to a client.
+ */
+class Connection : public ConnectionMetadata {
+protected:
     boost::beast::flat_buffer buffer_;
 
 public:
@@ -66,14 +117,6 @@ public:
     Connection(std::string ip, boost::beast::flat_buffer buffer, util::TagDecoratorFactory const& tagDecoratorFactory);
 
     /**
-     * @brief Whether the connection was upgraded. Upgraded connections are websocket connections.
-     *
-     * @return true if the connection was upgraded.
-     */
-    virtual bool
-    wasUpgraded() const = 0;
-
-    /**
      * @brief Send a response to the client.
      *
      * @param response The response to send.
@@ -81,7 +124,6 @@ public:
      * @param timeout The timeout for the operation.
      * @return An error if the operation failed or nullopt if it succeeded.
      */
-
     virtual std::optional<Error>
     send(
         Response response,
@@ -107,42 +149,11 @@ public:
      */
     virtual void
     close(boost::asio::yield_context yield, std::chrono::steady_clock::duration timeout = DEFAULT_TIMEOUT) = 0;
-
-    /**
-     * @brief Get the connection context.
-     *
-     * @return The connection context.
-     */
-    ConnectionContext
-    context() const;
-
-    /**
-     * @brief Get the ip of the client.
-     *
-     * @return The ip of the client.
-     */
-    std::string const&
-    ip() const;
 };
 
 /**
  * @brief A pointer to a connection.
  */
 using ConnectionPtr = std::unique_ptr<Connection>;
-
-/**
- * @brief A class representing the context of a connection.
- */
-class ConnectionContext {
-    std::reference_wrapper<Connection const> connection_;
-
-public:
-    /**
-     * @brief Construct a new ConnectionContext object.
-     *
-     * @param connection The connection.
-     */
-    explicit ConnectionContext(Connection const& connection);
-};
 
 }  // namespace web::ng

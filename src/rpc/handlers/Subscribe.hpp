@@ -21,6 +21,7 @@
 
 #include "data/BackendInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
+#include "feed/Types.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 
@@ -128,23 +129,20 @@ private:
     subscribeToStreams(
         boost::asio::yield_context yield,
         std::vector<std::string> const& streams,
-        std::shared_ptr<web::ConnectionBase> const& session
+        feed::SubscriberSharedPtr const& session
     ) const;
 
     void
-    subscribeToAccounts(std::vector<std::string> const& accounts, std::shared_ptr<web::ConnectionBase> const& session)
+    subscribeToAccounts(std::vector<std::string> const& accounts, feed::SubscriberSharedPtr const& session) const;
+
+    void
+    subscribeToAccountsProposed(std::vector<std::string> const& accounts, feed::SubscriberSharedPtr const& session)
         const;
-
-    void
-    subscribeToAccountsProposed(
-        std::vector<std::string> const& accounts,
-        std::shared_ptr<web::ConnectionBase> const& session
-    ) const;
 
     void
     subscribeToBooks(
         std::vector<OrderBook> const& books,
-        std::shared_ptr<web::ConnectionBase> const& session,
+        feed::SubscriberSharedPtr const& session,
         boost::asio::yield_context yield,
         Output& output
     ) const;

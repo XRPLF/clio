@@ -32,12 +32,12 @@
 #include "util/prometheus/Gauge.hpp"
 #include "util/prometheus/Label.hpp"
 #include "util/prometheus/Prometheus.hpp"
+#include "web/AdminVerificationStrategy.hpp"
 #include "web/Server.hpp"
 #include "web/dosguard/DOSGuard.hpp"
 #include "web/dosguard/DOSGuardInterface.hpp"
 #include "web/dosguard/IntervalSweepHandler.hpp"
 #include "web/dosguard/WhitelistHandler.hpp"
-#include "web/impl/AdminVerificationStrategy.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -62,6 +62,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -245,8 +246,9 @@ TEST_F(WebServerTest, Http)
 {
     auto const e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    auto const res = HttpSyncClient::post("localhost", port, R"({"Hello":1})");
+    auto const [status, res] = HttpSyncClient::post("localhost", port, R"({"Hello":1})");
     EXPECT_EQ(res, R"({"Hello":1})");
+    EXPECT_EQ(status, boost::beast::http::status::ok);
 }
 
 TEST_F(WebServerTest, Ws)
@@ -264,11 +266,12 @@ TEST_F(WebServerTest, HttpInternalError)
 {
     auto const e = std::make_shared<ExceptionExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuard, e);
-    auto const res = HttpSyncClient::post("localhost", port, R"({})");
+    auto const [status, res] = HttpSyncClient::post("localhost", port, R"({})");
     EXPECT_EQ(
         res,
         R"({"error":"internal","error_code":73,"error_message":"Internal error.","status":"error","type":"response"})"
     );
+    EXPECT_EQ(status, boost::beast::http::status::internal_server_error);
 }
 
 TEST_F(WebServerTest, WsInternalError)
@@ -347,13 +350,16 @@ TEST_F(WebServerTest, HttpRequestOverload)
 {
     auto const e = std::make_shared<EchoExecutor>();
     auto const server = makeServerSync(cfg, ctx, dosGuardOverload, e);
-    auto res = HttpSyncClient::post("localhost", port, R"({})");
+    auto [status, res] = HttpSyncClient::post("localhost", port, R"({})");
     EXPECT_EQ(res, "{}");
-    res = HttpSyncClient::post("localhost", port, R"({})");
+    EXPECT_EQ(status, boost::beast::http::status::ok);
+
+    std::tie(status, res) = HttpSyncClient::post("localhost", port, R"({})");
     EXPECT_EQ(
         res,
         R"({"error":"slowDown","error_code":10,"error_message":"You are placing too much load on the server.","status":"error","type":"response"})"
     );
+    EXPECT_EQ(status, boost::beast::http::status::service_unavailable);
 }
 
 TEST_F(WebServerTest, WsRequestOverload)
@@ -380,11 +386,12 @@ TEST_F(WebServerTest, HttpPayloadOverload)
     std::string const s100(100, 'a');
     auto const e = std::make_shared<EchoExecutor>();
     auto server = makeServerSync(cfg, ctx, dosGuardOverload, e);
-    auto const res = HttpSyncClient::post("localhost", port, fmt::format(R"({{"payload":"{}"}})", s100));
+    auto const [status, res] = HttpSyncClient::post("localhost", port, fmt::format(R"({{"payload":"{}"}})", s100));
     EXPECT_EQ(
         res,
         R"({"payload":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","warning":"load","warnings":[{"id":2003,"message":"You are about to be rate limited"}]})"
     );
+    EXPECT_EQ(status, boost::beast::http::status::ok);
 }
 
 TEST_F(WebServerTest, WsPayloadOverload)
@@ -422,6 +429,26 @@ TEST_F(WebServerTest, WsTooManyConnection)
     wsClient1.disconnect();
     wsClient2.disconnect();
     EXPECT_TRUE(exceptionThrown);
+}
+
+TEST_F(WebServerTest, HealthCheck)
+{
+    auto e = std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
+    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
+    auto const [status, res] = HttpSyncClient::get("localhost", port, "", "/health");
+
+    EXPECT_FALSE(res.empty());
+    EXPECT_EQ(status, boost::beast::http::status::ok);
+}
+
+TEST_F(WebServerTest, GetOtherThanHealthCheck)
+{
+    auto e = std::make_shared<ExceptionExecutor>();  // request handled before we get to executor
+    auto const server = makeServerSync(cfg, ctx, dosGuard, e);
+    auto const [status, res] = HttpSyncClient::get("localhost", port, "", "/");
+
+    EXPECT_FALSE(res.empty());
+    EXPECT_EQ(status, boost::beast::http::status::bad_request);
 }
 
 std::string
@@ -554,8 +581,11 @@ TEST_P(WebServerAdminTest, HttpAdminCheck)
     auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e);
     std::string const request = "Why hello";
     uint32_t const webServerPort = serverConfig.getValue<uint32_t>("server.port");
-    auto const res = HttpSyncClient::post("localhost", std::to_string(webServerPort), request, GetParam().headers);
+    auto const [status, res] =
+        HttpSyncClient::post("localhost", std::to_string(webServerPort), request, GetParam().headers);
+
     EXPECT_EQ(res, fmt::format("{} {}", request, GetParam().expectedResponse));
+    EXPECT_EQ(status, boost::beast::http::status::ok);
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -678,8 +708,10 @@ TEST_F(WebServerPrometheusTest, rejectedWithoutAdminPassword)
         getParseAdminServerConfig(boost::json::parse(JSONServerConfigWithAdminPassword(webServerPort)))
     };
     auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
-    auto const res = HttpSyncClient::get("localhost", std::to_string(webServerPort), "", "/metrics");
+    auto const [status, res] = HttpSyncClient::get("localhost", std::to_string(webServerPort), "", "/metrics");
+
     EXPECT_EQ(res, "Only admin is allowed to collect metrics");
+    EXPECT_EQ(status, boost::beast::http::status::unauthorized);
 }
 
 TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
@@ -704,7 +736,7 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
     };
     PrometheusService::init(serverConfig);
     auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
-    auto const res = HttpSyncClient::get(
+    auto const [status, res] = HttpSyncClient::get(
         "localhost",
         std::to_string(webServerPort),
         "",
@@ -715,6 +747,7 @@ TEST_F(WebServerPrometheusTest, rejectedIfPrometheusIsDisabled)
         )}
     );
     EXPECT_EQ(res, "Prometheus is disabled in clio config");
+    EXPECT_EQ(status, boost::beast::http::status::forbidden);
 }
 
 TEST_F(WebServerPrometheusTest, validResponse)
@@ -727,7 +760,7 @@ TEST_F(WebServerPrometheusTest, validResponse)
         getParseAdminServerConfig(boost::json::parse(JSONServerConfigWithAdminPassword(webServerPort)))
     };
     auto server = makeServerSync(serverConfig, ctx, dosGuard, e);
-    auto const res = HttpSyncClient::get(
+    auto const [status, res] = HttpSyncClient::get(
         "localhost",
         std::to_string(webServerPort),
         "",
@@ -738,4 +771,5 @@ TEST_F(WebServerPrometheusTest, validResponse)
         )}
     );
     EXPECT_EQ(res, "# TYPE test_counter counter\ntest_counter 1\n\n");
+    EXPECT_EQ(status, boost::beast::http::status::ok);
 }

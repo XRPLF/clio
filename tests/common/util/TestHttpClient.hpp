@@ -26,6 +26,7 @@
 #include <boost/beast/core/tcp_stream.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
+#include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 
 #include <chrono>
@@ -33,6 +34,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 struct WebHeader {
@@ -43,7 +45,7 @@ struct WebHeader {
 };
 
 struct HttpSyncClient {
-    static std::string
+    static std::pair<boost::beast::http::status, std::string>
     post(
         std::string const& host,
         std::string const& port,
@@ -51,7 +53,7 @@ struct HttpSyncClient {
         std::vector<WebHeader> additionalHeaders = {}
     );
 
-    static std::string
+    static std::pair<boost::beast::http::status, std::string>
     get(std::string const& host,
         std::string const& port,
         std::string const& body,

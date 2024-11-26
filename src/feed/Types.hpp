@@ -19,12 +19,13 @@
 
 #pragma once
 
-#include "web/interface/ConnectionBase.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <memory>
 
 namespace feed {
-using Subscriber = web::ConnectionBase;
+
+using Subscriber = web::SubscriptionContextInterface;
 using SubscriberPtr = Subscriber*;
 using SubscriberSharedPtr = std::shared_ptr<Subscriber>;
 

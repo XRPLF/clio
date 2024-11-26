@@ -29,6 +29,7 @@
 #include "util/newconfig/ConfigValue.hpp"
 #include "util/newconfig/Types.hpp"
 #include "web/RPCServerHandler.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/interface/ConnectionBase.hpp"
 
 #include <boost/beast/http/status.hpp>
@@ -65,33 +66,30 @@ struct MockWsBase : public web::ConnectionBase {
         lastStatus = status;
     }
 
+    SubscriptionContextPtr
+    makeSubscriptionContext(util::TagDecoratorFactory const&) override
+    {
+        return {};
+    }
+
     MockWsBase(util::TagDecoratorFactory const& factory) : web::ConnectionBase(factory, "localhost.fake.ip")
     {
     }
 };
 
 struct WebRPCServerHandlerTest : util::prometheus::WithPrometheus, MockBackendTest, SyncAsioContextTest {
-    void
-    SetUp() override
-    {
-        etl = std::make_shared<MockETLService>();
-        rpcEngine = std::make_shared<MockAsyncRPCEngine>();
-        tagFactory = std::make_shared<util::TagDecoratorFactory>(cfg);
-        session = std::make_shared<MockWsBase>(*tagFactory);
-        handler = std::make_shared<RPCServerHandler<MockAsyncRPCEngine, MockETLService>>(cfg, backend, rpcEngine, etl);
-    }
-
-    std::shared_ptr<MockAsyncRPCEngine> rpcEngine;
-    std::shared_ptr<MockETLService> etl;
-    std::shared_ptr<util::TagDecoratorFactory> tagFactory;
-    std::shared_ptr<RPCServerHandler<MockAsyncRPCEngine, MockETLService>> handler;
-    std::shared_ptr<MockWsBase> session;
     util::config::ClioConfigDefinition cfg{
         {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("none")},
         {"api_version.default", ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_DEFAULT)},
         {"api_version.min", ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_MIN)},
         {"api_version.max", ConfigValue{ConfigType::Integer}.defaultValue(rpc::API_VERSION_MAX)}
     };
+    std::shared_ptr<MockAsyncRPCEngine> rpcEngine = std::make_shared<MockAsyncRPCEngine>();
+    std::shared_ptr<MockETLService> etl = std::make_shared<MockETLService>();
+    std::shared_ptr<util::TagDecoratorFactory> tagFactory = std::make_shared<util::TagDecoratorFactory>(cfg);
+    std::shared_ptr<RPCServerHandler<MockAsyncRPCEngine, MockETLService>> handler =
+        std::make_shared<RPCServerHandler<MockAsyncRPCEngine, MockETLService>>(cfg, backend, rpcEngine, etl);
+    std::shared_ptr<MockWsBase> session = std::make_shared<MockWsBase>(*tagFactory);
 };
 
 TEST_F(WebRPCServerHandlerTest, HTTPDefaultPath)
@@ -533,7 +531,7 @@ TEST_F(WebRPCServerHandlerTest, HTTPBadSyntaxWhenRequestSubscribe)
                                         "result": {
                                             "error": "badSyntax",
                                             "error_code": 1,
-                                            "error_message": "Subscribe and unsubscribe are only allowed or websocket.",
+                                            "error_message": "Subscribe and unsubscribe are only allowed for websocket.",
                                             "status": "error",
                                             "type": "response",
                                             "request": {

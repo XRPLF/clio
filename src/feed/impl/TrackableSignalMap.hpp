@@ -23,6 +23,7 @@
 
 #include <boost/signals2.hpp>
 
+#include <concepts>
 #include <cstddef>
 #include <functional>
 #include <memory>

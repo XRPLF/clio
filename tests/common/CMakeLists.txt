@@ -8,6 +8,7 @@ target_sources(
           util/TestHttpClient.cpp
           util/TestHttpServer.cpp
           util/TestObject.cpp
+          util/BinaryTestObject.cpp
           util/TestWebSocketClient.cpp
           util/TestWsServer.cpp
 )

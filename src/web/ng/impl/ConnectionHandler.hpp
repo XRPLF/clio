@@ -19,10 +19,13 @@
 
 #pragma once
 
+#include "util/Taggable.hpp"
 #include "util/log/Logger.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 #include "web/ng/Connection.hpp"
 #include "web/ng/Error.hpp"
 #include "web/ng/MessageHandler.hpp"
+#include "web/ng/ProcessingPolicy.hpp"
 #include "web/ng/Request.hpp"
 #include "web/ng/Response.hpp"
 
@@ -41,8 +44,6 @@ namespace web::ng::impl {
 
 class ConnectionHandler {
 public:
-    enum class ProcessingPolicy { Sequential, Parallel };
-
     struct StringHash {
         using hash_type = std::hash<std::string_view>;
         using is_transparent = void;
@@ -64,6 +65,9 @@ private:
     ProcessingPolicy processingPolicy_;
     std::optional<size_t> maxParallelRequests_;
 
+    std::reference_wrapper<util::TagDecoratorFactory> tagFactory_;
+    std::optional<size_t> maxSubscriptionSendQueueSize_;
+
     TargetToHandlerMap getHandlers_;
     TargetToHandlerMap postHandlers_;
     std::optional<MessageHandler> wsHandler_;
@@ -71,7 +75,12 @@ private:
     boost::signals2::signal<void()> onStop_;
 
 public:
-    ConnectionHandler(ProcessingPolicy processingPolicy, std::optional<size_t> maxParallelRequests);
+    ConnectionHandler(
+        ProcessingPolicy processingPolicy,
+        std::optional<size_t> maxParallelRequests,
+        util::TagDecoratorFactory& tagFactory,
+        std::optional<size_t> maxSubscriptionSendQueueSize
+    );
 
     void
     onGet(std::string const& target, MessageHandler handler);
@@ -107,24 +116,34 @@ private:
      * @return True if the connection should be gracefully closed, false otherwise.
      */
     bool
-    sequentRequestResponseLoop(Connection& connection, boost::asio::yield_context yield);
+    sequentRequestResponseLoop(
+        Connection& connection,
+        SubscriptionContextPtr& subscriptionContext,
+        boost::asio::yield_context yield
+    );
 
     bool
-    parallelRequestResponseLoop(Connection& connection, boost::asio::yield_context yield);
+    parallelRequestResponseLoop(
+        Connection& connection,
+        SubscriptionContextPtr& subscriptionContext,
+        boost::asio::yield_context yield
+    );
 
     std::optional<bool>
-    processRequest(Connection& connection, Request const& request, boost::asio::yield_context yield);
+    processRequest(
+        Connection& connection,
+        SubscriptionContextPtr& subscriptionContext,
+        Request const& request,
+        boost::asio::yield_context yield
+    );
 
-    /**
-     * @brief Handle a request.
-     *
-     * @param connectionContext The connection context.
-     * @param request The request to handle.
-     * @param yield The yield context.
-     * @return The response to send.
-     */
     Response
-    handleRequest(ConnectionContext const& connectionContext, Request const& request, boost::asio::yield_context yield);
+    handleRequest(
+        ConnectionMetadata& connectionMetadata,
+        SubscriptionContextPtr& subscriptionContext,
+        Request const& request,
+        boost::asio::yield_context yield
+    );
 };
 
 }  // namespace web::ng::impl
