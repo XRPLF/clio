@@ -74,7 +74,7 @@ jobs:
             conan_profile: clang
             code_coverage: false
             static: true
-          - os: macos14
+          - os: macos15c16
             build_type: Release
             code_coverage: false
             static: false
