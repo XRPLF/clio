@@ -44,11 +44,18 @@
 #include "rpc/handlers/NFTSellOffers.hpp"
 #include "rpc/handlers/NFTsByIssuer.hpp"
 #include "rpc/handlers/NoRippleCheck.hpp"
+#include "rpc/handlers/ServerInfo.hpp"
+#include "rpc/handlers/Subscribe.hpp"
 #include "rpc/handlers/TransactionEntry.hpp"
 #include "util/Assert.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockAmendmentCenter.hpp"
+#include "util/MockCountersFixture.hpp"
+#include "util/MockETLServiceTestFixture.hpp"
+#include "util/MockSubscriptionManager.hpp"
+#include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"
+#include "web/SubscriptionContextInterface.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
@@ -58,12 +65,17 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/protocol/AccountID.h>
+#include <xrpl/protocol/Book.h>
+#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/UintTypes.h>
 
+#include <memory>
 #include <string>
+#include <vector>
 
 using ::testing::Types;
 using namespace rpc;
+using TestServerInfoHandler = BaseServerInfoHandler<MockLoadBalancer, MockETLService, MockCounters>;
 
 constexpr static auto Index1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 constexpr static auto AmmAccount = "rLcS7XL6nxRAi7JcbJcn1Na179oF3vdfbh";
@@ -98,15 +110,24 @@ using AnyHandlerType = Types<
     NFTInfoHandler,
     NFTSellOffersHandler,
     NoRippleCheckHandler,
+    TestServerInfoHandler,
+    SubscribeHandler,
     TransactionEntryHandler>;
 
 template <typename HandlerType>
-struct AllHandlersDeathTest : HandlerBaseTest, testing::WithParamInterface<std::string> {
+struct AllHandlersDeathTest : HandlerBaseTest,
+                              MockLoadBalancerTest,
+                              MockCountersTest,
+                              testing::WithParamInterface<std::string> {
     AllHandlersDeathTest() : handler_{initHandler()}
     {
         ASSERT(mockAmendmentCenterPtr.amendmentCenterMock != nullptr, "mockAmendmentCenterPtr is not initialized.");
+        ASSERT(mockSubscriptionManagerPtr.subscriptionManagerMock != nullptr, "mockSubscriptionPtr is not initialized");
     }
 
+    web::SubscriptionContextPtr session_ = std::make_shared<MockSession>();
+    MockSession* mockSession_ = dynamic_cast<MockSession*>(session_.get());
+    StrictMockSubscriptionManagerSharedPtr mockSubscriptionManagerPtr;
     StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr;
     HandlerType handler_;
 
@@ -116,6 +137,16 @@ private:
     {
         if constexpr (std::is_same_v<HandlerType, AccountInfoHandler> || std::is_same_v<HandlerType, FeatureHandler>) {
             return HandlerType{this->backend, this->mockAmendmentCenterPtr};
+        } else if constexpr (std::is_same_v<HandlerType, SubscribeHandler>) {
+            return HandlerType{this->backend, this->mockSubscriptionManagerPtr};
+        } else if constexpr (std::is_same_v<HandlerType, TestServerInfoHandler>) {
+            return HandlerType{
+                this->backend,
+                this->mockSubscriptionManagerPtr,
+                mockLoadBalancerPtr,
+                mockETLServicePtr,
+                *mockCountersPtr
+            };
         } else {
             return HandlerType{this->backend};
         }
@@ -131,11 +162,12 @@ createInput()
 
 // need to set specific values for input for some handler's to pass checks in .process() function
 template <>
-LedgerEntryHandler::Input
-createInput<LedgerEntryHandler>()
+AccountInfoHandler::Input
+createInput<AccountInfoHandler>()
 {
-    LedgerEntryHandler::Input input{};
-    input.index = Index1;
+    AccountInfoHandler::Input input{};
+    input.account = Account;
+    input.ident = "asdf";
     return input;
 }
 
@@ -158,6 +190,15 @@ createInput<BookOffersHandler>()
     input.paysID = ripple::xrpAccount();
     input.getsID = GetAccountIDWithString(Account);
 
+    return input;
+}
+
+template <>
+LedgerEntryHandler::Input
+createInput<LedgerEntryHandler>()
+{
+    LedgerEntryHandler::Input input{};
+    input.index = Index1;
     return input;
 }
 
@@ -189,12 +230,13 @@ createInput<NFTSellOffersHandler>()
 }
 
 template <>
-AccountInfoHandler::Input
-createInput<AccountInfoHandler>()
+SubscribeHandler::Input
+createInput<SubscribeHandler>()
 {
-    AccountInfoHandler::Input input{};
-    input.account = Account;
-    input.ident = "asdf";
+    SubscribeHandler::Input input{};
+
+    input.books =
+        std::vector<SubscribeHandler::OrderBook>{SubscribeHandler::OrderBook{ripple::Book{}, Account, true, true}};
     return input;
 }
 
@@ -208,7 +250,8 @@ TYPED_TEST(AllHandlersDeathTest, NoRangeAvailable)
             TypeParam handler = this->handler_;
 
             auto const input = createInput<TypeParam>();
-            auto const context = Context{yield};
+            auto const context = Context{yield, this->session_};
+
             EXPECT_DEATH(
                 { [[maybe_unused]] auto _unused = handler.process(input, context); }, "Assertion .* failed at .*"
             );

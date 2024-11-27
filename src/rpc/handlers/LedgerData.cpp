@@ -120,7 +120,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
         if (page.cursor) {
             output.marker = ripple::strHex(*(page.cursor));
         } else if (input.outOfOrder) {
-            output.diffMarker = sharedPtrBackend_->fetchLedgerRange()->maxSequence;
+            output.diffMarker = range->maxSequence;
         }
     }
 

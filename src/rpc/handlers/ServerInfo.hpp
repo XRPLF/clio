@@ -26,6 +26,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/build/Build.hpp"
 
 #include <boost/json/conversion.hpp>
@@ -196,6 +197,8 @@ public:
         using namespace std::chrono;
 
         auto const range = backend_->fetchLedgerRange();
+        ASSERT(range.has_value(), "ServerInfo's ledger range must be available");
+
         auto const lgrInfo = backend_->fetchLedgerBySequence(range->maxSequence, ctx.yield);
         if (not lgrInfo.has_value())
             return Error{Status{RippledError::rpcINTERNAL}};
