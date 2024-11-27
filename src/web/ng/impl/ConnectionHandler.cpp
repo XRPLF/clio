@@ -110,12 +110,14 @@ ConnectionHandler::ConnectionHandler(
     ProcessingPolicy processingPolicy,
     std::optional<size_t> maxParallelRequests,
     util::TagDecoratorFactory& tagFactory,
-    std::optional<size_t> maxSubscriptionSendQueueSize
+    std::optional<size_t> maxSubscriptionSendQueueSize,
+    OnDisconnectHook onDisconnectHook
 )
     : processingPolicy_{processingPolicy}
     , maxParallelRequests_{maxParallelRequests}
     , tagFactory_{tagFactory}
     , maxSubscriptionSendQueueSize_{maxSubscriptionSendQueueSize}
+    , onDisconnectHook_{std::move(onDisconnectHook)}
 {
 }
 
@@ -175,6 +177,7 @@ ConnectionHandler::processConnection(ConnectionPtr connectionPtr, boost::asio::y
         connectionRef.close(yield);
 
     signalConnection.disconnect();
+    onDisconnectHook_(connectionRef);
 }
 
 void

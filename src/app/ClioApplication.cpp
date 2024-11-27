@@ -154,8 +154,11 @@ ClioApplication::run(bool const useNgWebServer)
         auto httpServer = web::ng::make_Server(
             config_,
             [](web::ng::Connection const&) -> std::optional<web::ng::Response> {
-                // TODO(kuznetsss): Add dosguard here
+                // TODO(kuznetsss): Add dosguard increment and check here
                 return {};
+            },
+            [](web::ng::Connection const&) {
+                // TODO(kuznetsss): Add dosguard decrement here
             },
             ioc
         );

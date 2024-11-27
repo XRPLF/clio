@@ -51,6 +51,11 @@ public:
      */
     using OnConnectCheck = std::function<std::optional<Response>(Connection const&)>;
 
+    /**
+     * @brief Hook called when any connection disconnects
+     */
+    using OnDisconnectHook = impl::ConnectionHandler::OnDisconnectHook;
+
 private:
     util::Logger log_{"WebServer"};
     util::Logger perfLog_{"Performance"};
@@ -80,6 +85,7 @@ public:
      * @param tagDecoratorFactory The tag decorator factory.
      * @param maxSubscriptionSendQueueSize The maximum size of the subscription send queue.
      * @param onConnectCheck The check to perform on each connection.
+     * @param onDisconnectHook The hook to call on each disconnection.
      */
     Server(
         boost::asio::io_context& ctx,
@@ -89,7 +95,8 @@ public:
         std::optional<size_t> parallelRequestLimit,
         util::TagDecoratorFactory tagDecoratorFactory,
         std::optional<size_t> maxSubscriptionSendQueueSize,
-        OnConnectCheck onConnectCheck
+        OnConnectCheck onConnectCheck,
+        OnDisconnectHook onDisconnectHook
     );
 
     /**
@@ -156,11 +163,17 @@ private:
  *
  * @param config The configuration.
  * @param onConnectCheck The check to perform on each client connection.
+ * @param onDisconnectHook The hook to call when client disconnects.
  * @param context The boost::asio::io_context to use.
  *
  * @return The Server or an error message.
  */
 std::expected<Server, std::string>
-make_Server(util::Config const& config, Server::OnConnectCheck onConnectCheck, boost::asio::io_context& context);
+make_Server(
+    util::Config const& config,
+    Server::OnConnectCheck onConnectCheck,
+    Server::OnDisconnectHook onDisconnectHook,
+    boost::asio::io_context& context
+);
 
 }  // namespace web::ng

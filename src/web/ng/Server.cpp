@@ -192,12 +192,13 @@ Server::Server(
     std::optional<size_t> parallelRequestLimit,
     util::TagDecoratorFactory tagDecoratorFactory,
     std::optional<size_t> maxSubscriptionSendQueueSize,
-    OnConnectCheck onConnectCheck
+    OnConnectCheck onConnectCheck,
+    OnDisconnectHook onDisconnectHook
 )
     : ctx_{ctx}
     , sslContext_{std::move(sslContext)}
     , tagDecoratorFactory_{tagDecoratorFactory}
-    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize}
+    , connectionHandler_{processingPolicy, parallelRequestLimit, tagDecoratorFactory_, maxSubscriptionSendQueueSize, std::move(onDisconnectHook)}
     , endpoint_{std::move(endpoint)}
     , onConnectCheck_{std::move(onConnectCheck)}
 {
@@ -304,7 +305,12 @@ Server::handleConnection(boost::asio::ip::tcp::socket socket, boost::asio::yield
 }
 
 std::expected<Server, std::string>
-make_Server(util::Config const& config, Server::OnConnectCheck onConnectCheck, boost::asio::io_context& context)
+make_Server(
+    util::Config const& config,
+    Server::OnConnectCheck onConnectCheck,
+    Server::OnDisconnectHook onDisconnectHook,
+    boost::asio::io_context& context
+)
 {
     auto const serverConfig = config.section("server");
 
@@ -338,7 +344,8 @@ make_Server(util::Config const& config, Server::OnConnectCheck onConnectCheck, b
         parallelRequestLimit,
         util::TagDecoratorFactory(config),
         maxSubscriptionSendQueueSize,
-        std::move(onConnectCheck)
+        std::move(onConnectCheck),
+        std::move(onDisconnectHook)
     };
 }
 

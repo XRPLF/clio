@@ -69,7 +69,8 @@ struct MakeServerTest : NoLoggerFixture, testing::WithParamInterface<MakeServerT
 TEST_P(MakeServerTest, Make)
 {
     util::Config const config{boost::json::parse(GetParam().configJson)};
-    auto const expectedServer = make_Server(config, [](auto&&) -> std::optional<Response> { return {}; }, ioContext_);
+    auto const expectedServer =
+        make_Server(config, [](auto&&) -> std::optional<Response> { return {}; }, [](auto&&) {}, ioContext_);
     EXPECT_EQ(expectedServer.has_value(), GetParam().expectSuccess);
 }
 
@@ -162,7 +163,7 @@ struct ServerTest : SyncAsioContextTest {
 
     Server::OnConnectCheck emptyOnConnectCheck_ = [](auto&&) -> std::optional<Response> { return {}; };
 
-    std::expected<Server, std::string> server_ = make_Server(config_, emptyOnConnectCheck_, ctx);
+    std::expected<Server, std::string> server_ = make_Server(config_, emptyOnConnectCheck_, [](auto&&) {}, ctx);
 
     std::string requestMessage_ = "some request";
     std::string const headerName_ = "Some-header";
@@ -191,7 +192,8 @@ TEST_F(ServerTest, BadEndpoint)
         std::nullopt,
         tagDecoratorFactory,
         std::nullopt,
-        emptyOnConnectCheck_
+        emptyOnConnectCheck_,
+        [](auto&&) {}
     };
 
     auto maybeError = server.run();
@@ -251,7 +253,8 @@ TEST_F(ServerHttpTest, OnConnectCheck)
         std::nullopt,
         tagDecoratorFactory,
         std::nullopt,
-        onConnectCheck.AsStdFunction()
+        onConnectCheck.AsStdFunction(),
+        [](auto&&) {}
     };
 
     HttpAsyncClient client{ctx};
@@ -306,7 +309,8 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         std::nullopt,
         tagDecoratorFactory,
         std::nullopt,
-        onConnectCheck.AsStdFunction()
+        onConnectCheck.AsStdFunction(),
+        [](auto&&) {}
     };
 
     HttpAsyncClient client{ctx};
@@ -335,6 +339,57 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
         EXPECT_EQ(response->version(), 11);
 
         client.gracefulShutdown();
+        ctx.stop();
+    });
+
+    server.run();
+
+    runContext();
+}
+
+TEST_F(ServerHttpTest, OnDisconnectHook)
+{
+    auto const serverPort = tests::util::generateFreePort();
+    boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("0.0.0.0"), serverPort};
+    util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
+
+    testing::StrictMock<testing::MockFunction<void(Connection const&)>> OnDisconnectHookMock;
+
+    Server server{
+        ctx,
+        endpoint,
+        std::nullopt,
+        ProcessingPolicy::Sequential,
+        std::nullopt,
+        tagDecoratorFactory,
+        std::nullopt,
+        [](auto&&) { return std::nullopt; },
+        OnDisconnectHookMock.AsStdFunction()
+    };
+
+    HttpAsyncClient client{ctx};
+
+    boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
+        boost::asio::steady_timer timer{ctx.get_executor(), std::chrono::milliseconds{100}};
+
+        EXPECT_CALL(OnDisconnectHookMock, Call).WillOnce([&timer](auto&&) { timer.cancel(); });
+
+        auto maybeError =
+            client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
+        [&]() { ASSERT_FALSE(maybeError.has_value()) << maybeError->message(); }();
+
+        client.send(
+            http::request<http::string_body>{http::verb::get, "/", 11, requestMessage_},
+            yield,
+            std::chrono::milliseconds{100}
+        );
+
+        client.gracefulShutdown();
+
+        // Wait for OnDisconnectHook is called
+        boost::system::error_code error;
+        timer.async_wait(yield[error]);
+
         ctx.stop();
     });
 
