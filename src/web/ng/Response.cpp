@@ -123,6 +123,11 @@ Response::Response(boost::beast::http::status status, boost::json::object const&
 {
 }
 
+Response::Response(boost::beast::http::status status, std::string message, Connection const& connection)
+    : data_{makeData(status, std::move(message), connection)}
+{
+}
+
 Response::Response(boost::beast::http::response<boost::beast::http::string_body> response, Request const& request)
 {
     ASSERT(request.isHttp(), "Request must be HTTP to construct response from HTTP response");
@@ -138,6 +143,34 @@ Response::message() const
             [](std::string const& message) -> std::string const& { return message; },
         },
         data_
+    );
+}
+
+void
+Response::setMessage(std::string newMessage)
+{
+    if (std::holds_alternative<std::string>(data_)) {
+        std::get<std::string>(data_) = std::move(newMessage);
+        return;
+    }
+    MessageData messageData{std::move(newMessage)};
+    auto const& oldHttpResponse = std::get<http::response<http::string_body>>(data_);
+    data_ = makeHttpData(
+        std::move(messageData), oldHttpResponse.result(), oldHttpResponse.version(), oldHttpResponse.keep_alive()
+    );
+}
+
+void
+Response::setMessage(boost::json::object const& newMessage)
+{
+    MessageData messageData{newMessage};
+    if (std::holds_alternative<std::string>(data_)) {
+        std::get<std::string>(data_) = std::move(messageData).body;
+        return;
+    }
+    auto const& oldHttpResponse = std::get<http::response<http::string_body>>(data_);
+    data_ = makeHttpData(
+        std::move(messageData), oldHttpResponse.result(), oldHttpResponse.version(), oldHttpResponse.keep_alive()
     );
 }
 
