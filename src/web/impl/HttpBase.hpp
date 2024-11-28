@@ -62,6 +62,14 @@
 
 namespace web::impl {
 
+static auto constexpr HealthCheckHTML = R"html(
+    <!DOCTYPE html>
+    <html>
+        <head><title>Test page for Clio</title></head>
+        <body><h1>Clio Test</h1><p>This page shows Clio http(s) connectivity is working.</p></body>
+    </html>
+)html";
+
 using tcp = boost::asio::ip::tcp;
 
 /**
@@ -206,6 +214,9 @@ public:
 
         if (ec)
             return httpFail(ec, "read");
+
+        if (req_.method() == http::verb::get and req_.target() == "/health")
+            return sender_(httpResponse(http::status::ok, "text/html", HealthCheckHTML));
 
         // Update isAdmin property of the connection
         ConnectionBase::isAdmin_ = adminVerification_->isAdmin(req_, this->clientIp);

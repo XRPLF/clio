@@ -29,7 +29,6 @@
 #include <boost/asio/ssl/stream_base.hpp>
 #include <boost/asio/ssl/verify_context.hpp>
 #include <boost/asio/ssl/verify_mode.hpp>
-#include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/stream_traits.hpp>
@@ -37,6 +36,7 @@
 #include <boost/beast/http.hpp>  // IWYU pragma: keep
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/message.hpp>
+#include <boost/beast/http/status.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/http/write.hpp>  // IWYU pragma: keep
@@ -59,7 +59,7 @@ using tcp = boost::asio::ip::tcp;
 
 namespace {
 
-std::string
+std::pair<boost::beast::http::status, std::string>
 syncRequest(
     std::string const& host,
     std::string const& port,
@@ -97,7 +97,7 @@ syncRequest(
     boost::beast::error_code ec;
     stream.socket().shutdown(tcp::socket::shutdown_both, ec);
 
-    return res.body();
+    return {res.result(), res.body()};
 }
 
 }  // namespace
@@ -106,7 +106,7 @@ WebHeader::WebHeader(http::field name, std::string value) : name(name), value(st
 {
 }
 
-std::string
+std::pair<boost::beast::http::status, std::string>
 HttpSyncClient::post(
     std::string const& host,
     std::string const& port,
@@ -117,7 +117,7 @@ HttpSyncClient::post(
     return syncRequest(host, port, body, std::move(additionalHeaders), http::verb::post);
 }
 
-std::string
+std::pair<boost::beast::http::status, std::string>
 HttpSyncClient::get(
     std::string const& host,
     std::string const& port,

@@ -68,6 +68,14 @@ namespace app {
 
 namespace {
 
+auto constexpr HealthCheckHTML = R"html(
+    <!DOCTYPE html>
+    <html>
+        <head><title>Test page for Clio</title></head>
+        <body><h1>Clio Test</h1><p>This page shows Clio http(s) connectivity is working.</p></body>
+    </html>
+)html";
+
 /**
  * @brief Start context threads
  *
@@ -192,6 +200,16 @@ ClioApplication::run(bool const useNgWebServer)
                 );
                 ASSERT(maybeResponse.has_value(), "Got unexpected request for Prometheus");
                 return web::ng::Response{std::move(maybeResponse).value(), request};
+            }
+        );
+
+        httpServer->onGet(
+            "/health",
+            [](web::ng::Request const& request,
+               web::ng::ConnectionMetadata&,
+               web::SubscriptionContextPtr,
+               boost::asio::yield_context) -> web::ng::Response {
+                return web::ng::Response{boost::beast::http::status::ok, HealthCheckHTML, request};
             }
         );
 

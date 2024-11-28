@@ -76,7 +76,7 @@ TEST_F(ng_SubscriptionContextTests, SendOrder)
         auto const message1 = std::make_shared<std::string>("message1");
         auto const message2 = std::make_shared<std::string>("message2");
 
-        testing::Sequence sequence;
+        testing::Sequence const sequence;
         EXPECT_CALL(connection_, sendBuffer)
             .InSequence(sequence)
             .WillOnce([&message1](boost::asio::const_buffer buffer, auto, auto) {

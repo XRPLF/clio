@@ -17,12 +17,14 @@
 //==============================================================================
 
 #include "rpc/Errors.hpp"
+#include "rpc/common/APIVersion.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AsioContextTestFixture.hpp"
 #include "util/MockBackendTestFixture.hpp"
 #include "util/MockETLService.hpp"
 #include "util/MockPrometheus.hpp"
 #include "util/MockRPCEngine.hpp"
+#include "util/NameGenerator.hpp"
 #include "util/Taggable.hpp"
 #include "util/config/Config.hpp"
 #include "web/RPCServerHandler.hpp"
@@ -31,17 +33,22 @@
 
 #include <boost/beast/http/status.hpp>
 #include <boost/json/parse.hpp>
+#include <fmt/core.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 using namespace web;
 
-constexpr static auto MINSEQ = 10;
-constexpr static auto MAXSEQ = 30;
+namespace {
+
+constexpr auto MINSEQ = 10;
+constexpr auto MAXSEQ = 30;
 
 struct MockWsBase : public web::ConnectionBase {
     std::string message;
@@ -464,54 +471,6 @@ TEST_F(WebRPCServerHandlerTest, WsNotReady)
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
 
-TEST_F(WebRPCServerHandlerTest, HTTPInvalidAPIVersion)
-{
-    static auto constexpr request = R"({
-                                        "method": "server_info",
-                                        "params": [{
-                                            "api_version": null
-                                        }]
-                                    })";
-
-    backend->setRange(MINSEQ, MAXSEQ);
-
-    static auto constexpr response = "invalid_API_version";
-
-    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
-
-    (*handler)(request, session);
-    EXPECT_EQ(session->message, response);
-    EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
-}
-
-TEST_F(WebRPCServerHandlerTest, WSInvalidAPIVersion)
-{
-    session->upgraded = true;
-    static auto constexpr request = R"({
-                                        "method": "server_info",
-                                        "api_version": null
-                                    })";
-
-    backend->setRange(MINSEQ, MAXSEQ);
-
-    static auto constexpr response = R"({
-                                        "error": "invalid_API_version",
-                                        "error_code": 6000,
-                                        "error_message": "API version must be an integer",
-                                        "status": "error",
-                                        "type": "response",
-                                        "request": {
-                                            "method": "server_info",
-                                            "api_version": null
-                                        }
-                                    })";
-
-    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
-
-    (*handler)(request, session);
-    EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
-}
-
 TEST_F(WebRPCServerHandlerTest, HTTPBadSyntaxWhenRequestSubscribe)
 {
     static auto constexpr request = R"({"method": "subscribe"})";
@@ -870,3 +829,84 @@ TEST_F(WebRPCServerHandlerTest, WsRequestNotJson)
     (*handler)(request, session);
     EXPECT_EQ(boost::json::parse(session->message), boost::json::parse(response));
 }
+
+struct InvalidAPIVersionTestBundle {
+    std::string testName;
+    std::string version;
+    std::string wsMessage;
+};
+
+// parameterized test cases for parameters check
+struct WebRPCServerHandlerInvalidAPIVersionParamTest : public WebRPCServerHandlerTest,
+                                                       public testing::WithParamInterface<InvalidAPIVersionTestBundle> {
+};
+
+auto
+generateInvalidVersions()
+{
+    return std::vector<InvalidAPIVersionTestBundle>{
+        {"v0", "0", fmt::format("Requested API version is lower than minimum supported ({})", rpc::API_VERSION_MIN)},
+        {"v4", "4", fmt::format("Requested API version is higher than maximum supported ({})", rpc::API_VERSION_MAX)},
+        {"null", "null", "API version must be an integer"},
+        {"str", "\"bogus\"", "API version must be an integer"},
+        {"bool", "false", "API version must be an integer"},
+        {"double", "12.34", "API version must be an integer"},
+    };
+}
+
+INSTANTIATE_TEST_CASE_P(
+    WebRPCServerHandlerAPIVersionGroup,
+    WebRPCServerHandlerInvalidAPIVersionParamTest,
+    testing::ValuesIn(generateInvalidVersions()),
+    tests::util::NameGenerator
+);
+
+TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, HTTPInvalidAPIVersion)
+{
+    auto request = fmt::format(
+        R"({{
+            "method": "server_info",
+            "params": [{{
+                "api_version": {}
+            }}]
+        }})",
+        GetParam().version
+    );
+
+    backend->setRange(MINSEQ, MAXSEQ);
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
+
+    (*handler)(request, session);
+    EXPECT_EQ(session->message, "invalid_API_version");
+    EXPECT_EQ(session->lastStatus, boost::beast::http::status::bad_request);
+}
+
+TEST_P(WebRPCServerHandlerInvalidAPIVersionParamTest, WSInvalidAPIVersion)
+{
+    session->upgraded = true;
+    auto request = fmt::format(
+        R"({{
+            "method": "server_info",
+            "api_version": {}
+        }})",
+        GetParam().version
+    );
+
+    backend->setRange(MINSEQ, MAXSEQ);
+
+    EXPECT_CALL(*rpcEngine, notifyBadSyntax).Times(1);
+
+    (*handler)(request, session);
+
+    auto response = boost::json::parse(session->message);
+    EXPECT_TRUE(response.is_object());
+    EXPECT_TRUE(response.as_object().contains("error"));
+    EXPECT_EQ(response.at("error").as_string(), "invalid_API_version");
+    EXPECT_TRUE(response.as_object().contains("error_message"));
+    EXPECT_EQ(response.at("error_message").as_string(), GetParam().wsMessage);
+    EXPECT_TRUE(response.as_object().contains("error_code"));
+    EXPECT_EQ(response.at("error_code").as_int64(), static_cast<int64_t>(rpc::ClioError::rpcINVALID_API_VERSION));
+}
+
+}  // namespace

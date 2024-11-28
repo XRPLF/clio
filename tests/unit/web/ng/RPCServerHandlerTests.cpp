@@ -380,7 +380,7 @@ TEST_F(ng_RPCServerHandlerWsTest, HandleRequest_Successful_WsRequest)
 {
     backend->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
-        Request::HttpHeaders headers;
+        Request::HttpHeaders const headers;
         auto const request = Request(R"json({"method":"some_method", "id": 1234, "api_version": 1})json", headers);
 
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {
@@ -411,7 +411,7 @@ TEST_F(ng_RPCServerHandlerWsTest, HandleRequest_Successful_WsRequest_HasError)
 {
     backend->setRange(0, 1);
     runSpawn([&](boost::asio::yield_context yield) {
-        Request::HttpHeaders headers;
+        Request::HttpHeaders const headers;
         auto const request = Request(R"json({"method":"some_method", "id": 1234, "api_version": 1})json", headers);
 
         EXPECT_CALL(*rpcEngine_, post).WillOnce([&](auto&& fn, auto&&) {

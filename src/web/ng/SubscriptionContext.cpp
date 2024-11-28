@@ -22,7 +22,6 @@
 #include "util/Taggable.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 
-#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/spawn.hpp>
 

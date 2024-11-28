@@ -31,7 +31,6 @@
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>
 #include <boost/json/serialize.hpp>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <optional>
@@ -68,7 +67,7 @@ struct ng_ErrorHandlingMakeErrorTest : ng_ErrorHandlingTests,
 TEST_P(ng_ErrorHandlingMakeErrorTest, MakeError)
 {
     auto const request = makeRequest(GetParam().isHttp);
-    ErrorHelper errorHelper{request};
+    ErrorHelper const errorHelper{request};
 
     auto response = errorHelper.makeError(GetParam().status);
     EXPECT_EQ(response.message(), GetParam().expectedMessage);
@@ -158,7 +157,7 @@ TEST_P(ng_ErrorHandlingMakeInternalErrorTest, ComposeError)
     std::optional<boost::json::object> const requestJson = GetParam().request.has_value()
         ? std::make_optional(boost::json::parse(*GetParam().request).as_object())
         : std::nullopt;
-    ErrorHelper errorHelper{request, requestJson};
+    ErrorHelper const errorHelper{request, requestJson};
 
     auto response = errorHelper.makeInternalError();
 
@@ -314,7 +313,7 @@ struct ng_ErrorHandlingComposeErrorTest : ng_ErrorHandlingTests,
 TEST_P(ng_ErrorHandlingComposeErrorTest, ComposeError)
 {
     auto const request = makeRequest(GetParam().isHttp);
-    ErrorHelper errorHelper{request, GetParam().request};
+    ErrorHelper const errorHelper{request, GetParam().request};
     auto const response = errorHelper.composeError(rpc::Status{rpc::RippledError::rpcINTERNAL});
     EXPECT_EQ(boost::json::serialize(response), GetParam().expectedMessage);
 }
