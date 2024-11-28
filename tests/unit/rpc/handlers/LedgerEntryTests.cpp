@@ -74,7 +74,12 @@ constexpr static auto NFTID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875
 constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD";
 constexpr static auto CREDENTIALTYPE = "4B5943";
 
-class RPCLedgerEntryTest : public HandlerBaseTest {};
+struct RPCLedgerEntryTest : HandlerBaseTest {
+    RPCLedgerEntryTest()
+    {
+        backend->setRange(RANGEMIN, RANGEMAX);
+    }
+};
 
 struct ParamTestCaseBundle {
     std::string testName;
@@ -2213,7 +2218,6 @@ TEST_P(IndexTest, InvalidIndexNotString)
 
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotFound)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
@@ -2871,7 +2875,6 @@ TEST_P(RPCLedgerEntryNormalPathTest, NormalPath)
 {
     auto const testBundle = GetParam();
 
-    backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
@@ -2921,7 +2924,6 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
         }
     })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
@@ -2947,7 +2949,6 @@ TEST_F(RPCLedgerEntryTest, BinaryFalse)
 
 TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
@@ -2974,8 +2975,6 @@ TEST_F(RPCLedgerEntryTest, UnexpectedLedgerType)
 
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
@@ -2998,8 +2997,6 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
@@ -3022,8 +3019,6 @@ TEST_F(RPCLedgerEntryTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCLedgerEntryTest, LedgerNotExistViaHash)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillRepeatedly(Return(std::nullopt));
 
     runSpawn([&, this](auto yield) {
@@ -3109,7 +3104,6 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleted)
         }
     })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
@@ -3157,7 +3151,6 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
             "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD"
             }
         })";
-    backend->setRange(RANGEMIN, RANGEMAX);
     auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
     // return valid ledger entry which can be deserialized
@@ -3187,7 +3180,6 @@ TEST_F(RPCLedgerEntryTest, LedgerEntryDeleted)
 // Expected Result: return entryNotFound error
 TEST_F(RPCLedgerEntryTest, LedgerEntryNotExist)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
@@ -3239,7 +3231,6 @@ TEST_F(RPCLedgerEntryTest, BinaryFalseIncludeDeleteFalse)
         }
     })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
@@ -3297,7 +3288,6 @@ TEST_F(RPCLedgerEntryTest, ObjectUpdateIncludeDelete)
             }
         })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerinfo
     auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
@@ -3348,7 +3338,6 @@ TEST_F(RPCLedgerEntryTest, ObjectDeletedPreviously)
             "index": "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F9DD"
             }
         })";
-    backend->setRange(RANGEMIN, RANGEMAX);
     auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
     // return valid ledger entry which can be deserialized
@@ -3378,7 +3367,6 @@ TEST_F(RPCLedgerEntryTest, ObjectDeletedPreviously)
 // Expected Result: return entryNotFound error
 TEST_F(RPCLedgerEntryTest, ObjectSeqNotExist)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerinfo));
     EXPECT_CALL(*backend, doFetchLedgerObject(ripple::uint256{INDEX1}, RANGEMAX, _))
@@ -3428,7 +3416,6 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
 
     auto const mptId = ripple::makeMptID(2, GetAccountIDWithString(ACCOUNT));
 
-    backend->setRange(RANGEMIN, RANGEMAX);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
@@ -3450,28 +3437,4 @@ TEST_F(RPCLedgerEntryTest, SyntheticMPTIssuanceID)
         ASSERT_TRUE(output);
         EXPECT_EQ(*output.result, json::parse(OUT));
     });
-}
-
-using RPCLedgerEntryDeathTest = RPCLedgerEntryTest;
-
-TEST_F(RPCLedgerEntryDeathTest, RangeNotAvailable)
-{
-    boost::asio::io_context ctx;
-    bool checkCalled = false;
-    spawn(ctx, [&, _unused = make_work_guard(ctx)](boost::asio::yield_context yield) {
-        auto const handler = AnyHandler{LedgerEntryHandler{backend}};
-        auto const req = json::parse(fmt::format(
-            R"({{
-                "index": "{}"
-            }})",
-            INDEX1
-        ));
-        checkCalled = true;
-        EXPECT_DEATH(
-            { [[maybe_unused]] auto _unused2 = handler.process(req, Context{yield}); }, "Ledger range must be available"
-        );
-    });
-
-    ctx.run();
-    ASSERT_TRUE(checkCalled);
 }

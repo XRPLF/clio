@@ -60,7 +60,12 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-class RPCDepositAuthorizedTest : public HandlerBaseTest {};
+struct RPCDepositAuthorizedTest : HandlerBaseTest {
+    RPCDepositAuthorizedTest()
+    {
+        backend->setRange(RangeMin, RangeMax);
+    }
+};
 
 struct DepositAuthorizedTestCaseBundle {
     std::string testName;
@@ -70,8 +75,8 @@ struct DepositAuthorizedTestCaseBundle {
 };
 
 // parameterized test cases for parameters check
-struct DepositAuthorizedParameterTest : public RPCDepositAuthorizedTest,
-                                        public WithParamInterface<DepositAuthorizedTestCaseBundle> {};
+struct DepositAuthorizedParameterTest : RPCDepositAuthorizedTest,
+                                        WithParamInterface<DepositAuthorizedTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -225,8 +230,6 @@ TEST_P(DepositAuthorizedParameterTest, InvalidParams)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
 {
-    backend->setRange(RangeMin, RangeMax);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RangeMax, _)).WillByDefault(Return(std::nullopt));
 
@@ -254,8 +257,6 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
 {
-    backend->setRange(RangeMin, RangeMax);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RangeMax, _)).WillByDefault(Return(std::nullopt));
 
@@ -283,8 +284,6 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
 {
-    backend->setRange(RangeMin, RangeMax);
-
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(std::nullopt));
 
@@ -312,8 +311,6 @@ TEST_F(RPCDepositAuthorizedTest, LedgerNotExistViaHash)
 
 TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 {
-    backend->setRange(10, 30);
-
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(ledgerHeader));
@@ -347,8 +344,6 @@ TEST_F(RPCDepositAuthorizedTest, SourceAccountDoesNotExist)
 
 TEST_F(RPCDepositAuthorizedTest, DestinationAccountDoesNotExist)
 {
-    backend->setRange(10, 30);
-
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(ledgerHeader));
@@ -396,8 +391,6 @@ TEST_F(RPCDepositAuthorizedTest, AccountsAreEqual)
             "destination_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn"
         })";
 
-    backend->setRange(10, 30);
-
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(ledgerHeader));
@@ -438,8 +431,6 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsNoDepositAuthFlag)
             "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
-
-    backend->setRange(10, 30);
 
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
@@ -487,8 +478,6 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsFals
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
 
-    backend->setRange(10, 30);
-
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillByDefault(Return(ledgerHeader));
@@ -535,8 +524,6 @@ TEST_F(RPCDepositAuthorizedTest, DifferentAccountsWithDepositAuthFlagReturnsTrue
             "source_account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
             "destination_account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun"
         })";
-
-    backend->setRange(10, 30);
 
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
@@ -588,8 +575,6 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
         CredentialHash  // CREDENTIALHASH should match credentialIndex
     );
 
-    backend->setRange(10, 30);
-
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
     EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
@@ -637,8 +622,6 @@ TEST_F(RPCDepositAuthorizedTest, CredentialAcceptedAndNotExpiredReturnsTrue)
 
 TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
 {
-    backend->setRange(10, 30);
-
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
     EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
@@ -689,8 +672,6 @@ TEST_F(RPCDepositAuthorizedTest, CredentialNotAuthorizedReturnsFalse)
 
 TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
 {
-    backend->setRange(10, 30);
-
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30, 100);
 
     // set parent close time to 500 seconds
@@ -747,8 +728,6 @@ TEST_F(RPCDepositAuthorizedTest, CredentialExpiredReturnsFalse)
 
 TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
 {
-    backend->setRange(10, 30);
-
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30, 34);
 
     EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
@@ -800,8 +779,6 @@ TEST_F(RPCDepositAuthorizedTest, DuplicateCredentialsReturnsFalse)
 
 TEST_F(RPCDepositAuthorizedTest, NoElementsInCredentialsReturnsFalse)
 {
-    backend->setRange(10, 30);
-
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30, 34);
 
     EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
@@ -842,8 +819,6 @@ TEST_F(RPCDepositAuthorizedTest, NoElementsInCredentialsReturnsFalse)
 
 TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
 {
-    backend->setRange(10, 30);
-
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30, 34);
 
     EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
@@ -899,8 +874,6 @@ TEST_F(RPCDepositAuthorizedTest, MoreThanMaxNumberOfCredentialsReturnsFalse)
 
 TEST_F(RPCDepositAuthorizedTest, DifferenSubjectAccountForCredentialReturnsFalse)
 {
-    backend->setRange(10, 30);
-
     auto ledgerHeader = CreateLedgerHeader(LedgerHash, 30);
 
     EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LedgerHash}, _)).WillOnce(Return(ledgerHeader));
