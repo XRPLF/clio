@@ -178,8 +178,8 @@ PrometheusImpl::getMetric(
 void
 PrometheusService::init(util::config::ClioConfigDefinition const& config)
 {
-    bool const enabled = config.getValue<bool>("prometheus.enabled");
-    bool const compressReply = config.getValue<bool>("prometheus.compress_reply");
+    bool const enabled = config.get<bool>("prometheus.enabled");
+    bool const compressReply = config.get<bool>("prometheus.compress_reply");
 
     instance_ = std::make_unique<util::prometheus::PrometheusImpl>(enabled, compressReply);
 }

@@ -63,12 +63,12 @@ makeServerSslContext(util::config::ClioConfigDefinition const& config)
     if (not configHasCertFile)
         return std::nullopt;
 
-    auto const certFilename = config.getValue<std::string>("ssl_cert_file");
+    auto const certFilename = config.get<std::string>("ssl_cert_file");
     auto const certContent = readFile(certFilename);
     if (!certContent)
         return std::unexpected{"Can't read SSL certificate: " + certFilename};
 
-    auto const keyFilename = config.getValue<std::string>("ssl_key_file");
+    auto const keyFilename = config.get<std::string>("ssl_key_file");
     auto const keyContent = readFile(keyFilename);
     if (!keyContent)
         return std::unexpected{"Can't read SSL key: " + keyFilename};

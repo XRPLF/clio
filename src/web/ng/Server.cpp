@@ -59,14 +59,14 @@ namespace {
 std::expected<boost::asio::ip::tcp::endpoint, std::string>
 makeEndpoint(util::config::ObjectView const& serverConfig)
 {
-    auto const ip = serverConfig.getValue<std::string>("ip");
+    auto const ip = serverConfig.get<std::string>("ip");
 
     boost::system::error_code error;
     auto const address = boost::asio::ip::make_address(ip, error);
     if (error)
         return std::unexpected{fmt::format("Error parsing provided IP: {}", error.message())};
 
-    auto const port = serverConfig.getValue<unsigned short>("port");
+    auto const port = serverConfig.get<unsigned short>("port");
     return boost::asio::ip::tcp::endpoint{address, port};
 }
 
@@ -299,7 +299,7 @@ make_Server(util::config::ClioConfigDefinition const& config, boost::asio::io_co
     ProcessingPolicy processingPolicy{ProcessingPolicy::Parallel};
     std::optional<size_t> parallelRequestLimit;
 
-    auto const processingStrategyStr = serverConfig.getValue<std::string>("processing_policy");
+    auto const processingStrategyStr = serverConfig.get<std::string>("processing_policy");
     if (processingStrategyStr == "sequent") {
         processingPolicy = ProcessingPolicy::Sequential;
     } else if (processingStrategyStr == "parallel") {
@@ -308,7 +308,7 @@ make_Server(util::config::ClioConfigDefinition const& config, boost::asio::io_co
         return std::unexpected{fmt::format("Invalid 'server.processing_strategy': {}", processingStrategyStr)};
     }
 
-    auto const maxSubscriptionSendQueueSize = serverConfig.getValue<size_t>("ws_max_sending_queue_size");
+    auto const maxSubscriptionSendQueueSize = serverConfig.get<size_t>("ws_max_sending_queue_size");
 
     return Server{
         context,

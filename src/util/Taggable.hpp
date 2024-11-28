@@ -206,7 +206,7 @@ public:
      * @param config The configuration as a json object
      */
     explicit TagDecoratorFactory(util::config::ClioConfigDefinition const& config)
-        : type_{makeType(config.getValue<std::string>("log_tag_style"))}
+        : type_{makeType(config.get<std::string>("log_tag_style"))}
     {
     }
 

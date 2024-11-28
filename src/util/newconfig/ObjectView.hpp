@@ -83,7 +83,7 @@ public:
      */
     template <typename T>
     T
-    getValue(std::string_view key) const
+    get(std::string_view key) const
     {
         return getValueView(key).getValueImpl<T>();
     }

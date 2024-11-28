@@ -51,9 +51,9 @@ make_Source(
     SourceBase::OnLedgerClosedHook onLedgerClosed
 )
 {
-    auto const ip = config.getValue<std::string>("ip");
-    auto const wsPort = config.getValue<std::string>("ws_port");
-    auto const grpcPort = config.getValue<std::string>("grpc_port");
+    auto const ip = config.get<std::string>("ip");
+    auto const wsPort = config.get<std::string>("ws_port");
+    auto const grpcPort = config.get<std::string>("grpc_port");
 
     impl::ForwardingSource forwardingSource{ip, wsPort, forwardingTimeout};
     impl::GrpcSource grpcSource{ip, grpcPort, std::move(backend)};

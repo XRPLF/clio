@@ -280,9 +280,9 @@ ETLService::ETLService(
 {
     startSequence_ = config.maybeValue<uint32_t>("start_sequence");
     finishSequence_ = config.maybeValue<uint32_t>("finish_sequence");
-    state_.isReadOnly = config.getValue<bool>("read_only");
-    extractorThreads_ = config.getValue<uint32_t>("extractor_threads");
-    txnThreshold_ = config.getValue<std::size_t>("txn_threshold");
+    state_.isReadOnly = config.get<bool>("read_only");
+    extractorThreads_ = config.get<uint32_t>("extractor_threads");
+    txnThreshold_ = config.get<std::size_t>("txn_threshold");
 
     // This should probably be done in the backend factory but we don't have state available until here
     backend_->setCorruptionDetector(CorruptionDetector<data::LedgerCache>{state_, backend->cache()});

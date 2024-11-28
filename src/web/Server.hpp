@@ -351,8 +351,8 @@ make_HttpServer(
     }
 
     auto const serverConfig = config.getObject("server");
-    auto const address = boost::asio::ip::make_address(serverConfig.getValue<std::string>("ip"));
-    auto const port = serverConfig.getValue<unsigned short>("port");
+    auto const address = boost::asio::ip::make_address(serverConfig.get<std::string>("ip"));
+    auto const port = serverConfig.get<unsigned short>("port");
 
     auto expectedAdminVerification = make_AdminVerificationStrategy(config);
     if (not expectedAdminVerification.has_value()) {
@@ -362,7 +362,7 @@ make_HttpServer(
 
     // If the transactions number is 200 per ledger, A client which subscribes everything will send 400+ feeds for
     // each ledger. we allow user delay 3 ledgers by default
-    auto const maxWsSendingQueueSize = serverConfig.getValue<uint32_t>("ws_max_sending_queue_size");
+    auto const maxWsSendingQueueSize = serverConfig.get<uint32_t>("ws_max_sending_queue_size");
 
     auto server = std::make_shared<HttpServer<HandlerType>>(
         ioc,

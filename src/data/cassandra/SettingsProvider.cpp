@@ -53,9 +53,9 @@ invoke_tag_SecureConnections(std::string_view value)
 
 SettingsProvider::SettingsProvider(util::config::ObjectView const& cfg)
     : config_{cfg}
-    , keyspace_{cfg.getValue<std::string>("keyspace")}
+    , keyspace_{cfg.get<std::string>("keyspace")}
     , tablePrefix_{cfg.maybeValue<std::string>("table_prefix")}
-    , replicationFactor_{cfg.getValue<uint16_t>("replication_factor")}
+    , replicationFactor_{cfg.get<uint16_t>("replication_factor")}
     , settings_{parseSettings()}
 {
 }
@@ -94,29 +94,29 @@ SettingsProvider::parseSettings() const
 
     // all config values used in settings is under "database.cassandra" prefix
     if (config_.getValueView("secure_connect_bundle").hasValue()) {
-        auto const bundle = Settings::SecureConnectionBundle{(config_.getValue<std::string>("secure_connect_bundle"))};
+        auto const bundle = Settings::SecureConnectionBundle{(config_.get<std::string>("secure_connect_bundle"))};
         settings.connectionInfo = bundle;
     } else {
         Settings::ContactPoints out;
-        out.contactPoints = config_.getValue<std::string>("contact_points");
+        out.contactPoints = config_.get<std::string>("contact_points");
         out.port = config_.maybeValue<uint32_t>("port");
         settings.connectionInfo = out;
     }
 
-    settings.threads = config_.getValue<uint32_t>("threads");
-    settings.maxWriteRequestsOutstanding = config_.getValue<uint32_t>("max_write_requests_outstanding");
-    settings.maxReadRequestsOutstanding = config_.getValue<uint32_t>("max_read_requests_outstanding");
-    settings.coreConnectionsPerHost = config_.getValue<uint32_t>("core_connections_per_host");
+    settings.threads = config_.get<uint32_t>("threads");
+    settings.maxWriteRequestsOutstanding = config_.get<uint32_t>("max_write_requests_outstanding");
+    settings.maxReadRequestsOutstanding = config_.get<uint32_t>("max_read_requests_outstanding");
+    settings.coreConnectionsPerHost = config_.get<uint32_t>("core_connections_per_host");
     settings.queueSizeIO = config_.maybeValue<uint32_t>("queue_size_io");
-    settings.writeBatchSize = config_.getValue<std::size_t>("write_batch_size");
+    settings.writeBatchSize = config_.get<std::size_t>("write_batch_size");
 
     if (config_.getValueView("connect_timeout").hasValue()) {
-        auto const connectTimeoutSecond = config_.getValue<uint32_t>("connect_timeout");
+        auto const connectTimeoutSecond = config_.get<uint32_t>("connect_timeout");
         settings.connectionTimeout = std::chrono::milliseconds{connectTimeoutSecond * util::MILLISECONDS_PER_SECOND};
     }
 
     if (config_.getValueView("request_timeout").hasValue()) {
-        auto const requestTimeoutSecond = config_.getValue<uint32_t>("request_timeout");
+        auto const requestTimeoutSecond = config_.get<uint32_t>("request_timeout");
         settings.requestTimeout = std::chrono::milliseconds{requestTimeoutSecond * util::MILLISECONDS_PER_SECOND};
     }
 

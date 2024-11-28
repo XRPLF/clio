@@ -62,9 +62,9 @@ TEST_F(ObjectViewTest, ObjectValueTest)
 TEST_F(ObjectViewTest, ObjectGetValueByTemplateTest)
 {
     auto const headerObj = configData.getObject("header");
-    EXPECT_EQ("value", headerObj.getValue<std::string>("text1"));
-    EXPECT_EQ(321, headerObj.getValue<int>("port"));
-    EXPECT_EQ(false, headerObj.getValue<bool>("admin"));
+    EXPECT_EQ("value", headerObj.get<std::string>("text1"));
+    EXPECT_EQ(321, headerObj.get<int>("port"));
+    EXPECT_EQ(false, headerObj.get<bool>("admin"));
 }
 
 TEST_F(ObjectViewTest, GetOptionalValue)

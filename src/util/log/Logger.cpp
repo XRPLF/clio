@@ -120,9 +120,9 @@ LogService::init(config::ClioConfigDefinition const& config)
 
     boost::log::add_common_attributes();
     boost::log::register_simple_formatter_factory<Severity, char>("Severity");
-    std::string format = config.getValue<std::string>("log_format");
+    std::string format = config.get<std::string>("log_format");
 
-    if (config.getValue<bool>("log_to_console")) {
+    if (config.get<bool>("log_to_console")) {
         boost::log::add_console_log(
             std::cout, keywords::format = format, keywords::filter = log_severity < Severity::FTL
         );
@@ -136,9 +136,9 @@ LogService::init(config::ClioConfigDefinition const& config)
         boost::filesystem::path dirPath{logDir.value()};
         if (!boost::filesystem::exists(dirPath))
             boost::filesystem::create_directories(dirPath);
-        auto const rotationSize = config.getValue<uint64_t>("log_rotation_size");
-        auto const rotationPeriod = config.getValue<uint32_t>("log_rotation_hour_interval");
-        auto const dirSize = config.getValue<uint64_t>("log_directory_max_size");
+        auto const rotationSize = config.get<uint64_t>("log_rotation_size");
+        auto const rotationPeriod = config.get<uint32_t>("log_rotation_hour_interval");
+        auto const dirSize = config.get<uint64_t>("log_directory_max_size");
         auto fileSink = boost::log::add_file_log(
             keywords::file_name = dirPath / "clio.log",
             keywords::target_file_name = dirPath / "clio_%Y-%m-%d_%H-%M-%S.log",
@@ -156,7 +156,7 @@ LogService::init(config::ClioConfigDefinition const& config)
     }
 
     // get default severity, can be overridden per channel using the `log_channels` array
-    auto defaultSeverity = invoke_tag(config.getValue<std::string>("log_level"));
+    auto defaultSeverity = invoke_tag(config.get<std::string>("log_level"));
 
     std::unordered_map<std::string, Severity> min_severity;
     for (auto const& channel : Logger::CHANNELS)
@@ -167,11 +167,11 @@ LogService::init(config::ClioConfigDefinition const& config)
 
     for (auto it = overrides.begin<util::config::ObjectView>(); it != overrides.end<util::config::ObjectView>(); ++it) {
         auto const& cfg = *it;
-        auto name = cfg.getValue<std::string>("channel");
+        auto name = cfg.get<std::string>("channel");
         if (std::count(std::begin(Logger::CHANNELS), std::end(Logger::CHANNELS), name) == 0)
             throw std::runtime_error("Can't override settings for log channel " + name + ": invalid channel");
 
-        min_severity[name] = invoke_tag(config.getValue<std::string>("log_level"));
+        min_severity[name] = invoke_tag(config.get<std::string>("log_level"));
     }
 
     auto log_filter = [min_severity = std::move(min_severity),

@@ -58,11 +58,11 @@ TEST_F(NewConfigTest, fetchValues)
 
 TEST_F(NewConfigTest, fetchValuesByTemplate)
 {
-    EXPECT_EQ("value", configData.getValue<std::string>("header.text1"));
-    EXPECT_EQ(123, configData.getValue<int>("header.port"));
-    EXPECT_EQ(true, configData.getValue<bool>("header.admin"));
-    EXPECT_EQ("TSM", configData.getValue<std::string>("header.sub.sub2Value"));
-    EXPECT_EQ(444.22, configData.getValue<double>("ip"));
+    EXPECT_EQ("value", configData.get<std::string>("header.text1"));
+    EXPECT_EQ(123, configData.get<int>("header.port"));
+    EXPECT_EQ(true, configData.get<bool>("header.admin"));
+    EXPECT_EQ("TSM", configData.get<std::string>("header.sub.sub2Value"));
+    EXPECT_EQ(444.22, configData.get<double>("ip"));
 }
 
 TEST_F(NewConfigTest, fetchOptionalValues)

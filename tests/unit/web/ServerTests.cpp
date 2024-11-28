@@ -566,7 +566,7 @@ TEST_P(WebServerAdminTest, WsAdminCheck)
     ClioConfigDefinition const serverConfig{getParseAdminServerConfig(boost::json::parse(GetParam().config))};
     auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e);
     WebSocketSyncClient wsClient;
-    uint32_t const webServerPort = serverConfig.getValue<uint32_t>("server.port");
+    uint32_t const webServerPort = serverConfig.get<uint32_t>("server.port");
     wsClient.connect("localhost", std::to_string(webServerPort), GetParam().headers);
     std::string const request = "Why hello";
     auto const res = wsClient.syncPost(request);
@@ -580,7 +580,7 @@ TEST_P(WebServerAdminTest, HttpAdminCheck)
     ClioConfigDefinition const serverConfig{getParseAdminServerConfig(boost::json::parse(GetParam().config))};
     auto server = makeServerSync(serverConfig, ctx, dosGuardOverload, e);
     std::string const request = "Why hello";
-    uint32_t const webServerPort = serverConfig.getValue<uint32_t>("server.port");
+    uint32_t const webServerPort = serverConfig.get<uint32_t>("server.port");
     auto const [status, res] =
         HttpSyncClient::post("localhost", std::to_string(webServerPort), request, GetParam().headers);
 

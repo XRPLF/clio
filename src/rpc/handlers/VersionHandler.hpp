@@ -55,9 +55,9 @@ public:
      */
     explicit VersionHandler(util::config::ClioConfigDefinition const& config)
         : apiVersionParser_(
-              config.getValue<uint32_t>("api_version.default"),
-              config.getValue<uint32_t>("api_version.min"),
-              config.getValue<uint32_t>("api_version.max")
+              config.get<uint32_t>("api_version.default"),
+              config.get<uint32_t>("api_version.min"),
+              config.get<uint32_t>("api_version.max")
           )
     {
     }

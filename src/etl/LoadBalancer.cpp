@@ -83,7 +83,7 @@ LoadBalancer::LoadBalancer(
     SourceFactory sourceFactory
 )
 {
-    auto const forwardingCacheTimeout = config.getValue<float>("forwarding.cache_timeout");
+    auto const forwardingCacheTimeout = config.get<float>("forwarding.cache_timeout");
     if (forwardingCacheTimeout > 0.f) {
         forwardingCache_ = util::ResponseExpirationCache{
             util::config::ClioConfigDefinition::toMilliseconds(forwardingCacheTimeout),
@@ -99,7 +99,7 @@ LoadBalancer::LoadBalancer(
         downloadRanges_ = 4;
     }
 
-    auto const allowNoEtl = config.getValue<bool>("allow_no_etl");
+    auto const allowNoEtl = config.get<bool>("allow_no_etl");
 
     auto const checkOnETLFailure = [this, allowNoEtl](std::string const& log) {
         LOG(log_.warn()) << log;
@@ -111,7 +111,7 @@ LoadBalancer::LoadBalancer(
     };
 
     auto const forwardingTimeout =
-        ClioConfigDefinition::toMilliseconds(config.getValue<float>("forwarding.request_timeout"));
+        ClioConfigDefinition::toMilliseconds(config.get<float>("forwarding.request_timeout"));
     auto const etlArray = config.getArray("etl_sources");
     for (auto it = etlArray.begin<ObjectView>(); it != etlArray.end<ObjectView>(); ++it) {
         auto source = sourceFactory(

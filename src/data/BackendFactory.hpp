@@ -46,9 +46,9 @@ make_Backend(util::config::ClioConfigDefinition const& config)
     static util::Logger const log{"Backend"};
     LOG(log.info()) << "Constructing BackendInterface";
 
-    auto const readOnly = config.getValue<bool>("read_only");
+    auto const readOnly = config.get<bool>("read_only");
 
-    auto const type = config.getValue<std::string>("database.type");
+    auto const type = config.get<std::string>("database.type");
     std::shared_ptr<BackendInterface> backend = nullptr;
 
     if (boost::iequals(type, "cassandra")) {

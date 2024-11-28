@@ -41,9 +41,9 @@ namespace web::dosguard {
 
 DOSGuard::DOSGuard(ClioConfigDefinition const& config, WhitelistHandlerInterface const& whitelistHandler)
     : whitelistHandler_{std::cref(whitelistHandler)}
-    , maxFetches_{config.getValue<uint32_t>("dos_guard.max_fetches")}
-    , maxConnCount_{config.getValue<uint32_t>("dos_guard.max_connections")}
-    , maxRequestCount_{config.getValue<uint32_t>("dos_guard.max_requests")}
+    , maxFetches_{config.get<uint32_t>("dos_guard.max_fetches")}
+    , maxConnCount_{config.get<uint32_t>("dos_guard.max_connections")}
+    , maxRequestCount_{config.get<uint32_t>("dos_guard.max_requests")}
 {
 }
 

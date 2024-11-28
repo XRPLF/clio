@@ -132,7 +132,7 @@ public:
      */
     template <typename T>
     T
-    getValue(std::string_view fullKey) const
+    get(std::string_view fullKey) const
     {
         ASSERT(map_.contains(fullKey), "key {} does not exist in config", fullKey);
         auto const val = map_.at(fullKey);

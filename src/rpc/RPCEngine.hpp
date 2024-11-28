@@ -100,7 +100,7 @@ public:
         , forwardingProxy_{balancer, counters, handlerProvider}
     {
         // Let main thread catch the exception if config type is wrong
-        auto const cacheTimeout = config.getValue<float>("rpc.cache_timeout");
+        auto const cacheTimeout = config.get<float>("rpc.cache_timeout");
 
         if (cacheTimeout > 0.f) {
             LOG(log_.info()) << fmt::format("Init RPC Cache, timeout: {} seconds", cacheTimeout);
