@@ -18,8 +18,7 @@ runs:
         CONAN_PROFILE: apple_clang_16
       id: conan_setup_mac
       run: |
-        echo "Creating $CONAN_PROFILE conan profile";
-        env
+        echo "Creating $CONAN_PROFILE conan profile"
         conan profile new $CONAN_PROFILE --detect --force
         conan profile update settings.compiler.libcxx=libc++ $CONAN_PROFILE
         conan profile update settings.compiler.cppstd=20 $CONAN_PROFILE
