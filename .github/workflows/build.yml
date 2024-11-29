@@ -198,7 +198,7 @@ jobs:
             conan_profile: clang
             build_type: Debug
           - os: macos15c16
-            conan_profile: apple_clang_15
+            conan_profile: apple_clang_16
             build_type: Release
     runs-on: [self-hosted, "${{ matrix.os }}"]
     container: ${{ matrix.container }}
