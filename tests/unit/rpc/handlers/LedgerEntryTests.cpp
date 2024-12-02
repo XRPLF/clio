@@ -27,9 +27,6 @@
 #include "util/NameGenerator.hpp"
 #include "util/TestObject.hpp"
 
-#include <boost/asio/executor_work_guard.hpp>
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/json/parse.hpp>

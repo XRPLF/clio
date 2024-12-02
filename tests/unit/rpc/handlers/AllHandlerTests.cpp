@@ -50,23 +50,21 @@
 #include "util/Assert.hpp"
 #include "util/HandlerBaseTestFixture.hpp"
 #include "util/MockAmendmentCenter.hpp"
+#include "util/MockCounters.hpp"
 #include "util/MockCountersFixture.hpp"
+#include "util/MockETLService.hpp"
 #include "util/MockETLServiceTestFixture.hpp"
+#include "util/MockLoadBalancer.hpp"
 #include "util/MockSubscriptionManager.hpp"
 #include "util/MockWsBase.hpp"
 #include "util/TestObject.hpp"
 #include "web/SubscriptionContextInterface.hpp"
 
-#include <boost/asio/executor_work_guard.hpp>
-#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/json/parse.hpp>
 #include <fmt/core.h>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/Book.h>
-#include <xrpl/protocol/Issue.h>
 #include <xrpl/protocol/UintTypes.h>
 
 #include <memory>
@@ -247,7 +245,7 @@ TYPED_TEST(AllHandlersDeathTest, NoRangeAvailable)
     // doesn't work without 'this'
     this->runSpawn(
         [&](boost::asio::yield_context yield) {
-            TypeParam handler = this->handler_;
+            TypeParam const handler = this->handler_;
 
             auto const input = createInput<TypeParam>();
             auto const context = Context{yield, this->session_};
