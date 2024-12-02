@@ -133,8 +133,6 @@ TEST_P(AccountInfoParameterTest, InvalidParams)
 
 TEST_F(AccountInfoParameterTest, ApiV1SignerListIsNotBool)
 {
-    backend->setRange(10, 30);
-
     static constexpr auto reqJson = R"(
         {"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1}
     )";

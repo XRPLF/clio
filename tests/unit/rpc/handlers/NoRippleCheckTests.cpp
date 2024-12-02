@@ -181,8 +181,6 @@ TEST_P(NoRippleCheckParameterTest, InvalidParams)
 
 TEST_F(NoRippleCheckParameterTest, V1ApiTransactionsIsNotBool)
 {
-    backend->setRange(10, 30);
-
     static constexpr auto reqJson = R"(
         {
             "account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",

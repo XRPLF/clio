@@ -273,8 +273,6 @@ TEST_F(RPCAccountChannelsHandlerTest, AccountNotString)
 // error case ledger non exist via hash
 TEST_F(RPCAccountChannelsHandlerTest, NonExistLedgerViaLedgerHash)
 {
-    backend->setRange(10, 30);
-
     // mock fetchLedgerByHash return empty
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));

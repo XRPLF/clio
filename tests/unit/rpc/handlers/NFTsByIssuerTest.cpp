@@ -206,8 +206,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NFTIssuerNotString)
 // error case ledger non exist via hash
 TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash)
 {
-    backend->setRange(10, 30);
-
     // mock fetchLedgerByHash return empty
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
