@@ -24,6 +24,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/LedgerUtils.hpp"
 #include "util/log/Logger.hpp"
 
@@ -61,6 +62,8 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
         return Error{Status{RippledError::rpcINVALID_PARAMS, "markerNotString"}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "LedgerData's ledger range must be available");
+
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );
@@ -117,7 +120,7 @@ LedgerDataHandler::process(Input input, Context const& ctx) const
         if (page.cursor) {
             output.marker = ripple::strHex(*(page.cursor));
         } else if (input.outOfOrder) {
-            output.diffMarker = sharedPtrBackend_->fetchLedgerRange()->maxSequence;
+            output.diffMarker = range->maxSequence;
         }
     }
 

@@ -22,6 +22,7 @@
 #include "rpc/Errors.hpp"
 #include "rpc/JS.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/TimeUtils.hpp"
 
 #include <boost/json/conversion.hpp>
@@ -42,6 +43,8 @@ LedgerIndexHandler::Result
 LedgerIndexHandler::process(LedgerIndexHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "LedgerIndex's ledger range must be available");
+
     auto const [minIndex, maxIndex] = *range;
 
     auto const fillOutputByIndex = [&](std::uint32_t index) {

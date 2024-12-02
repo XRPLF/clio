@@ -77,11 +77,14 @@ private:
 struct SyncAsioContextTest : virtual public NoLoggerFixture {
     template <typename F>
     void
-    runSpawn(F&& f)
+    runSpawn(F&& f, bool allowMockLeak = false)
     {
         using namespace boost::asio;
 
         testing::MockFunction<void()> call;
+        if (allowMockLeak)
+            testing::Mock::AllowLeak(&call);
+
         spawn(ctx, [&, _ = make_work_guard(ctx)](yield_context yield) {
             f(yield);
             call.Call();

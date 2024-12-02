@@ -197,6 +197,7 @@ TEST_F(LoadBalancerConstructorDeathTest, numMarkersSpecifiedInConfigIsInvalid)
 {
     uint32_t const numMarkers = 257;
     configJson_.as_object()["num_markers"] = numMarkers;
+    testing::Mock::AllowLeak(&sourceFactory_);
     EXPECT_DEATH({ makeLoadBalancer(); }, ".*");
 }
 

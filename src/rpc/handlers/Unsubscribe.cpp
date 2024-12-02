@@ -19,7 +19,6 @@
 
 #include "rpc/handlers/Unsubscribe.hpp"
 
-#include "data/BackendInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "feed/Types.hpp"
 #include "rpc/Errors.hpp"
@@ -46,11 +45,8 @@
 
 namespace rpc {
 
-UnsubscribeHandler::UnsubscribeHandler(
-    std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-    std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
-)
-    : sharedPtrBackend_(sharedPtrBackend), subscriptions_(subscriptions)
+UnsubscribeHandler::UnsubscribeHandler(std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions)
+    : subscriptions_(subscriptions)
 {
 }
 

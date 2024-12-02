@@ -61,7 +61,12 @@ constexpr static auto TOKENID = "000827103B94ECBB7BF0A0A6ED62B3607801A27B65F4679
 constexpr static auto MAXSEQ = 30;
 constexpr static auto MINSEQ = 10;
 
-class RPCAccountObjectsHandlerTest : public HandlerBaseTest {};
+struct RPCAccountObjectsHandlerTest : HandlerBaseTest {
+    RPCAccountObjectsHandlerTest()
+    {
+        backend->setRange(MINSEQ, MAXSEQ);
+    }
+};
 
 struct AccountObjectsParamTestCaseBundle {
     std::string testName;
@@ -196,7 +201,6 @@ TEST_P(AccountObjectsParameterTest, InvalidParams)
 
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     // return empty ledgerHeader
     EXPECT_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
 
@@ -219,7 +223,6 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaIntSequence)
 
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     // return empty ledgerHeader
     EXPECT_CALL(*backend, fetchLedgerBySequence(MAXSEQ, _)).WillOnce(Return(std::nullopt));
 
@@ -242,7 +245,6 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaStringSequence)
 
 TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     // return empty ledgerHeader
     EXPECT_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
         .WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
@@ -267,7 +269,6 @@ TEST_F(RPCAccountObjectsHandlerTest, LedgerNonExistViaHash)
 
 TEST_F(RPCAccountObjectsHandlerTest, AccountNotExist)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
@@ -323,7 +324,6 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
                                             ]
                                         })";
 
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -362,7 +362,6 @@ TEST_F(RPCAccountObjectsHandlerTest, DefaultParameterNoNFTFound)
 
 TEST_F(RPCAccountObjectsHandlerTest, Limit)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -408,7 +407,6 @@ TEST_F(RPCAccountObjectsHandlerTest, Limit)
 
 TEST_F(RPCAccountObjectsHandlerTest, Marker)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -453,7 +451,6 @@ TEST_F(RPCAccountObjectsHandlerTest, Marker)
 
 TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -505,7 +502,6 @@ TEST_F(RPCAccountObjectsHandlerTest, MultipleDirNoNFT)
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -557,7 +553,6 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilter)
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -603,7 +598,6 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterAmmType)
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -654,8 +648,6 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterReturnEmpty)
 
 TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -710,8 +702,6 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilter)
 
 TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -755,8 +745,6 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithTypeFilter)
 
 TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -817,8 +805,6 @@ TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterEmptyResult)
 
 TEST_F(RPCAccountObjectsHandlerTest, DeletionBlockersOnlyFilterWithIncompatibleTypeYieldsEmptyResult)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -942,7 +928,6 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
                                             ]
                                         })";
 
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -989,7 +974,6 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMixOtherObjects)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -1033,7 +1017,6 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -1081,7 +1064,6 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -1153,7 +1135,6 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
 // when limit reached, happen to be the end of NFT page list
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -1207,7 +1188,6 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNoMoreNFT)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -1237,7 +1217,6 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotInRange)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -1271,7 +1250,6 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarkerNotExist)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -1384,7 +1362,6 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
                                             ]
                                         })";
 
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -1432,7 +1409,6 @@ TEST_F(RPCAccountObjectsHandlerTest, FilterNFT)
 
 TEST_F(RPCAccountObjectsHandlerTest, NFTZeroMarkerNotAffectOtherMarker)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -1512,7 +1488,6 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitLessThanMin)
         AccountObjectsHandler::LIMIT_MIN
     );
 
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -1588,7 +1563,6 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
         AccountObjectsHandler::LIMIT_MAX
     );
 
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
 
@@ -1629,7 +1603,6 @@ TEST_F(RPCAccountObjectsHandlerTest, LimitMoreThanMax)
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTIssuanceType)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 
@@ -1678,7 +1651,6 @@ TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTIssuanceType)
 
 TEST_F(RPCAccountObjectsHandlerTest, TypeFilterMPTokenType)
 {
-    backend->setRange(MINSEQ, MAXSEQ);
     auto const ledgerinfo = CreateLedgerHeader(LEDGERHASH, MAXSEQ);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerinfo));
 

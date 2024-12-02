@@ -31,6 +31,7 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/json/array.hpp>
@@ -201,8 +202,10 @@ SubscribeHandler::subscribeToBooks(
 
     for (auto const& internalBook : books) {
         if (internalBook.snapshot) {
-            if (!rng)
+            if (!rng) {
                 rng = sharedPtrBackend_->fetchLedgerRange();
+                ASSERT(rng.has_value(), "Subscribe's ledger range must be available");
+            }
 
             auto const getOrderBook = [&](auto const& book, auto& snapshots) {
                 auto const bookBase = getBookBase(book);

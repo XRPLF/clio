@@ -25,6 +25,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/JsonBool.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/JsonUtils.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
@@ -55,6 +56,8 @@ AccountTxHandler::Result
 AccountTxHandler::process(AccountTxHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "AccountTX's ledger range must be available");
+
     auto [minIndex, maxIndex] = *range;
 
     if (input.ledgerIndexMin) {

@@ -54,6 +54,11 @@ constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A
 constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC";
 
 struct RPCAccountInfoHandlerTest : HandlerBaseTest {
+    RPCAccountInfoHandlerTest()
+    {
+        backend->setRange(10, 30);
+    }
+
 protected:
     StrictMockAmendmentCenterSharedPtr mockAmendmentCenterPtr;
 };
@@ -66,8 +71,7 @@ struct AccountInfoParamTestCaseBundle {
 };
 
 // parameterized test cases for parameters check
-struct AccountInfoParameterTest : public RPCAccountInfoHandlerTest,
-                                  public WithParamInterface<AccountInfoParamTestCaseBundle> {};
+struct AccountInfoParameterTest : RPCAccountInfoHandlerTest, WithParamInterface<AccountInfoParamTestCaseBundle> {};
 
 static auto
 generateTestValuesForParametersTest()
@@ -129,6 +133,8 @@ TEST_P(AccountInfoParameterTest, InvalidParams)
 
 TEST_F(AccountInfoParameterTest, ApiV1SignerListIsNotBool)
 {
+    backend->setRange(10, 30);
+
     static constexpr auto reqJson = R"(
         {"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1}
     )";
@@ -149,8 +155,6 @@ TEST_F(AccountInfoParameterTest, ApiV1SignerListIsNotBool)
 
 TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
 {
-    backend->setRange(10, 30);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
@@ -174,7 +178,6 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaIntSequence)
 
 TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
 {
-    backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::nullopt));
@@ -198,7 +201,6 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaStringSequence)
 
 TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
 {
-    backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
@@ -224,7 +226,6 @@ TEST_F(RPCAccountInfoHandlerTest, LedgerNonExistViaHash)
 
 TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
 {
-    backend->setRange(10, 30);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
@@ -250,7 +251,6 @@ TEST_F(RPCAccountInfoHandlerTest, AccountNotExist)
 
 TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
 {
-    backend->setRange(10, 30);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
@@ -277,7 +277,6 @@ TEST_F(RPCAccountInfoHandlerTest, AccountInvalid)
 
 TEST_F(RPCAccountInfoHandlerTest, SignerListsInvalid)
 {
-    backend->setRange(10, 30);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
@@ -381,7 +380,6 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV2)
         LEDGERHASH
     );
 
-    backend->setRange(10, 30);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
@@ -483,7 +481,6 @@ TEST_F(RPCAccountInfoHandlerTest, SignerListsTrueV1)
         LEDGERHASH
     );
 
-    backend->setRange(10, 30);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
@@ -551,7 +548,6 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
         LEDGERHASH
     );
 
-    backend->setRange(10, 30);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
@@ -591,7 +587,6 @@ TEST_F(RPCAccountInfoHandlerTest, Flags)
 
 TEST_F(RPCAccountInfoHandlerTest, IdentAndSignerListsFalse)
 {
-    backend->setRange(10, 30);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
@@ -659,7 +654,6 @@ TEST_F(RPCAccountInfoHandlerTest, DisallowIncoming)
         LEDGERHASH
     );
 
-    backend->setRange(10, 30);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
@@ -735,7 +729,6 @@ TEST_F(RPCAccountInfoHandlerTest, Clawback)
         LEDGERHASH
     );
 
-    backend->setRange(10, 30);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));

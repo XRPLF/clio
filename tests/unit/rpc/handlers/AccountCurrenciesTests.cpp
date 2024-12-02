@@ -51,11 +51,15 @@ constexpr static auto INDEX1 = "1B8590C01B0006EDFA9ED60296DD052DC5E90F99659B2501
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC321";
 constexpr static auto TXNID = "E3FE6EA3D48F0C2B639448020EA4F03D4F4F8FFDB243A852A0F59177921B4879";
 
-class RPCAccountCurrenciesHandlerTest : public HandlerBaseTest {};
+struct RPCAccountCurrenciesHandlerTest : HandlerBaseTest {
+    RPCAccountCurrenciesHandlerTest()
+    {
+        backend->setRange(10, 30);
+    }
+};
 
 TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
 {
-    backend->setRange(10, 30);
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
 
@@ -81,7 +85,6 @@ TEST_F(RPCAccountCurrenciesHandlerTest, AccountNotExist)
 
 TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaIntSequence)
 {
-    backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
@@ -106,7 +109,6 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
 {
     auto constexpr seq = 12;
 
-    backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(12, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
@@ -131,7 +133,6 @@ TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaStringSequence)
 
 TEST_F(RPCAccountCurrenciesHandlerTest, LedgerNonExistViaHash)
 {
-    backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
@@ -171,7 +172,6 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
         ]
     })";
 
-    backend->setRange(10, 30);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
@@ -219,7 +219,6 @@ TEST_F(RPCAccountCurrenciesHandlerTest, DefaultParameter)
 
 TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
 {
-    backend->setRange(10, 30);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
@@ -256,7 +255,6 @@ TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderHash)
 
 TEST_F(RPCAccountCurrenciesHandlerTest, RequestViaLegderSeq)
 {
-    backend->setRange(10, 30);
     auto const ledgerSeq = 29;
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, ledgerSeq);

@@ -24,6 +24,8 @@
 #include "util/MockETLServiceTestFixture.hpp"
 #include "util/MockPrometheus.hpp"
 
+#include <gmock/gmock.h>
+
 /**
  * @brief Fixture with an mock backend and an embedded boost::asio context.
  *
