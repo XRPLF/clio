@@ -43,6 +43,12 @@ struct TokenRange {
     std::int64_t start;
     std::int64_t end;
 
+    /**
+     * @brief Construct a new Token Range object
+     *
+     * @param start The start token
+     * @param end The end token
+     */
     TokenRange(std::int64_t start, std::int64_t end) : start{start}, end{end}
     {
     }

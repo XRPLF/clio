@@ -58,12 +58,17 @@ struct MigrationManagerInterface {
 
     /**
      * @brief Get all registered migrators' names
+     *
+     * @return A vector of migrators' names
      */
     virtual std::vector<std::string>
     allMigratorsNames() const = 0;
 
     /**
      * @brief Get the status of a migrator by its name
+     *
+     * @param name The migrator's name
+     * @return The status of the migrator
      */
     virtual MigratorStatus
     getMigratorStatusByName(std::string const& name) const = 0;

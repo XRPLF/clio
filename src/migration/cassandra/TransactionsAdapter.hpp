@@ -67,6 +67,8 @@ public:
 
     /**
      *@brief The callback when a row is read.
+     *
+     *@param row The row to read
      */
     void
     onRowRead(TableTransactionsDesc::Row const& row) override;

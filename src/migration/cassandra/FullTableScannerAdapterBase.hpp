@@ -40,6 +40,13 @@ template <TableSpec TableDesc>
 struct FullTableScannerAdapterBase {
     static_assert(TableSpec<TableDesc>);
 
+protected:
+    /**
+     * @brief The backend to use
+     */
+    std::shared_ptr<CassandraMigrationBackend> backend_;
+
+public:
     virtual ~FullTableScannerAdapterBase() = default;
 
     /**
@@ -47,7 +54,6 @@ struct FullTableScannerAdapterBase {
      *
      * @param backend The backend
      */
-    std::shared_ptr<CassandraMigrationBackend> backend_;
     FullTableScannerAdapterBase(std::shared_ptr<CassandraMigrationBackend> backend) : backend_(std::move(backend))
     {
     }

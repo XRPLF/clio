@@ -67,10 +67,20 @@ struct Limit {
 struct Text {
     std::string text;
 
+    /**
+     * @brief Construct a new Text object from string type
+     *
+     * @param text The text to wrap
+     */
     explicit Text(std::string text) : text{std::move(text)}
     {
     }
 
+    /**
+     * @brief Construct a new Text object from char const* type
+     *
+     * @param text The text to wrap
+     */
     explicit Text(char const* text) : text{text}
     {
     }

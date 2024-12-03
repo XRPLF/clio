@@ -58,17 +58,27 @@ public:
 
         std::variant<Status, Migration, Rollback> state;
 
-        // Helper methods for convenience
+        /**
+         * @brief Helper function to create a status command
+         */
         static Cmd
         status()
         {
             return Cmd{Status{}};
         }
+
+        /**
+         * @brief Helper function to create a migration command
+         */
         static Cmd
         migration(std::string const& name)
         {
             return Cmd{Migration{name}};
         }
+
+        /**
+         * @brief Helper function to create a rollback command
+         */
         static Cmd
         rollback(std::string const& name)
         {
@@ -80,6 +90,7 @@ public:
      * @brief Construct a new MigratorApplication object
      *
      * @param config The configuration of the application
+     * @param command The command to run
      */
     MigratorApplication(util::Config const& config, Cmd command);
 
