@@ -77,8 +77,6 @@ TEST_F(RPCTransactionEntryHandlerTest, TxHashWrongFormat)
 
 TEST_F(RPCTransactionEntryHandlerTest, NonExistLedgerViaLedgerHash)
 {
-    backend->setRange(10, 30);
-
     // mock fetchLedgerByHash return empty
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{INDEX}, _))
         .WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
