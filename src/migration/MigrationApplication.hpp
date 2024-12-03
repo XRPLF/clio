@@ -60,6 +60,8 @@ public:
 
         /**
          * @brief Helper function to create a status command
+         *
+         * @return Cmd object containing the status command
          */
         static Cmd
         status()
@@ -69,6 +71,9 @@ public:
 
         /**
          * @brief Helper function to create a migration command
+         *
+         * @param name The name of the migration to run
+         * @return Cmd object containing the migration command
          */
         static Cmd
         migration(std::string const& name)
@@ -78,6 +83,9 @@ public:
 
         /**
          * @brief Helper function to create a rollback command
+         *
+         * @param name The name of the migration to rollback
+         * @return Cmd object containing the rollback command
          */
         static Cmd
         rollback(std::string const& name)

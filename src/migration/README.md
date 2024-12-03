@@ -76,7 +76,6 @@ If you need to do full scan against other table, you can follow below steps:
     - `PARTITION_KEY`, it's the name of the partition key of the table.
     > **Note** The order of types should match what database will return in a row. Key types should come first, followed by other field types sorted in alphabetical order.
     - `TABLE_NAME`
-
 - Inherent from `FullTableScannerAdapterBase`.
 - Implement `onRowRead`, its parameter is the `Row` we defined. It's the callback function when a row is read.
 
