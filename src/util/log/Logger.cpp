@@ -92,7 +92,7 @@ operator<<(std::ostream& stream, Severity sev)
  * @return Severity The corresponding Severity enum value.
  */
 Severity
-invoke_tag(std::string_view logLevel)
+getSeverityLevel(std::string_view logLevel)
 {
     if (boost::iequals(logLevel, "trace"))
         return Severity::TRC;
@@ -156,7 +156,7 @@ LogService::init(config::ClioConfigDefinition const& config)
     }
 
     // get default severity, can be overridden per channel using the `log_channels` array
-    auto defaultSeverity = invoke_tag(config.get<std::string>("log_level"));
+    auto const defaultSeverity = getSeverityLevel(config.get<std::string>("log_level"));
 
     std::unordered_map<std::string, Severity> min_severity;
     for (auto const& channel : Logger::CHANNELS)
@@ -171,7 +171,7 @@ LogService::init(config::ClioConfigDefinition const& config)
         if (std::count(std::begin(Logger::CHANNELS), std::end(Logger::CHANNELS), name) == 0)
             throw std::runtime_error("Can't override settings for log channel " + name + ": invalid channel");
 
-        min_severity[name] = invoke_tag(config.get<std::string>("log_level"));
+        min_severity[name] = getSeverityLevel(config.get<std::string>("log_level"));
     }
 
     auto log_filter = [min_severity = std::move(min_severity),

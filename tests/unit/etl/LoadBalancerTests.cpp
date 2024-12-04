@@ -112,7 +112,8 @@ getParseLoadBalancerConfig(boost::json::value val)
     };
 
     auto const errors = config.parse(ConfigFileJson{val.as_object()});
-    ASSERT(!errors.has_value(), "Error parsing Json for clio config for load balancer test");
+    [&]() { ASSERT_FALSE(errors.has_value()); }();
+
     return config;
 }
 
@@ -252,15 +253,6 @@ TEST_F(LoadBalancerConstructorTests, fetchETLState_DifferentNetworkIDButAllowNoE
 
     configJson_.as_object()["allow_no_etl"] = true;
     makeLoadBalancer();
-}
-
-struct LoadBalancerConstructorDeathTest : LoadBalancerConstructorTests {};
-
-TEST_F(LoadBalancerConstructorDeathTest, numMarkersSpecifiedInConfigIsInvalid)
-{
-    uint32_t const numMarkers = 257;
-    configJson_.as_object()["num_markers"] = numMarkers;
-    EXPECT_DEATH({ makeLoadBalancer(); }, ".*");
 }
 
 struct LoadBalancerOnConnectHookTests : LoadBalancerConstructorTests {

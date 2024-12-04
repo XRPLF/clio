@@ -182,7 +182,7 @@ class TagDecoratorFactory final {
     ParentType parent_ = std::nullopt; /*< The parent tag decorator to bind */
 
     static Type
-    makeType(std::string_view style)
+    getLogTagType(std::string_view style)
     {
         if (boost::iequals(style, "int") || boost::iequals(style, "uint"))
             return TagDecoratorFactory::Type::UINT;
@@ -206,7 +206,7 @@ public:
      * @param config The configuration as a json object
      */
     explicit TagDecoratorFactory(util::config::ClioConfigDefinition const& config)
-        : type_{makeType(config.get<std::string>("log_tag_style"))}
+        : type_{getLogTagType(config.get<std::string>("log_tag_style"))}
     {
     }
 

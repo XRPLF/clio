@@ -106,7 +106,7 @@ private:
         KV{"workers", "Number of threads to process RPC requests."},
         KV{"server.ip", "IP address of the Clio HTTP server."},
         KV{"server.port", "Port number of the Clio HTTP server."},
-        KV{"server.max_queue_size", "Maximum size of the server's request queue."},
+        KV{"server.max_queue_size", "Maximum size of the server's request queue. Value of 0 is no limit."},
         KV{"server.local_admin", "Indicates if the server should run with admin privileges."},
         KV{"server.admin_password", "Password for Clio admin-only APIs."},
         KV{"server.processing_policy",
@@ -119,7 +119,7 @@ private:
         KV{"server.ws_max_sending_queue_size", "Maximum size of the websocket sending queue."},
         KV{"prometheus.enabled", "Enable or disable Prometheus metrics."},
         KV{"prometheus.compress_reply", "Enable or disable compression of Prometheus responses."},
-        KV{"io_threads", "Number of I/O threads."},
+        KV{"io_threads", "Number of I/O threads. Value must be greater than 1"},
         KV{"subscription_workers",
            "The number of worker threads or processes that are responsible for managing and processing "
            "subscription-based tasks."},

@@ -52,7 +52,6 @@
 
 namespace util {
 
-class Config;
 namespace config {
 class ClioConfigDefinition;
 }  // namespace config

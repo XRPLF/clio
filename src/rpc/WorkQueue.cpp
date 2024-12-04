@@ -95,7 +95,7 @@ WorkQueue::make_WorkQueue(util::config::ClioConfigDefinition const& config)
     static util::Logger const log{"RPC"};
     auto const serverConfig = config.getObject("server");
     auto const numThreads = config.get<uint32_t>("workers");
-    auto const maxQueueSize = serverConfig.get<uint32_t>("max_queue_size");  // 0 is no limit
+    auto const maxQueueSize = serverConfig.get<uint32_t>("max_queue_size");
 
     LOG(log.info()) << "Number of workers = " << numThreads << ". Max queue size = " << maxQueueSize;
     return WorkQueue{numThreads, maxQueueSize};

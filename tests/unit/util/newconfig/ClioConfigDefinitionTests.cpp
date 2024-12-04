@@ -128,37 +128,37 @@ struct NewConfigDeathTest : NewConfigTest {};
 
 TEST_F(NewConfigDeathTest, GetNonExistentKeys)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValueView("head."); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValueView("asdf"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("head."); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("asdf"); }, ".*");
 }
 
 TEST_F(NewConfigDeathTest, GetValueButIsArray)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValueView("dosguard.whitelist"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getValueView("dosguard.whitelist.[]"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getValueView("dosguard.whitelist.[]"); }, ".*");
 }
 
 TEST_F(NewConfigDeathTest, GetNonExistentObjectKey)
 {
     ASSERT_FALSE(configData.contains("head"));
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("head"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("doesNotExist"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("head"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("doesNotExist"); }, ".*");
 }
 
 TEST_F(NewConfigDeathTest, GetObjectButIsArray)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("array"); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getObject("array", 2); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("array"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getObject("array", 2); }, ".*");
 }
 
 TEST_F(NewConfigDeathTest, GetArrayButIsValue)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getArray("header.text1"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getArray("header.text1"); }, ".*");
 }
 
 TEST_F(NewConfigDeathTest, GetNonExistentArrayKey)
 {
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = configData.getArray("asdf"); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = configData.getArray("asdf"); }, ".*");
 }
 
 TEST(ConfigDescription, GetValues)

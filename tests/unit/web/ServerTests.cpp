@@ -132,7 +132,7 @@ getParseServerConfig(boost::json::value val)
         {"ssl_cert_file", ConfigValue{ConfigType::String}.optional()},
     };
     auto const errors = config.parse(jsonVal);
-    ASSERT(!errors.has_value(), "Cannot parse Json Correctly");
+    [&]() { ASSERT_FALSE(errors.has_value()); }();
     return config;
 };
 
@@ -554,7 +554,7 @@ getParseAdminServerConfig(boost::json::value val)
         {"log_tag_style", ConfigValue{ConfigType::String}.defaultValue("uint")}
     };
     auto const errors = config.parse(jsonVal);
-    ASSERT(!errors.has_value(), "Cannot parse Server Json Correctly");
+    [&]() { ASSERT_FALSE(errors.has_value()); }();
     return config;
 };
 

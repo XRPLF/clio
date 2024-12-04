@@ -54,7 +54,6 @@
 #include <utility>
 #include <vector>
 
-using namespace util;
 using namespace util::config;
 
 namespace etl {

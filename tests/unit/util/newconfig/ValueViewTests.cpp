@@ -111,15 +111,15 @@ struct ValueDeathTest : ValueViewTest {};
 TEST_F(ValueDeathTest, WrongTypes)
 {
     auto const vv = configData.getValueView("header.port");
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv.asBool(); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv.asString(); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = vv.asBool(); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = vv.asString(); }, ".*");
 
     auto const cv = ConfigValue{ConfigType::Integer}.defaultValue(-5);
     auto const vv2 = ValueView(cv);
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv2.asIntType<uint32_t>(); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = vv2.asIntType<uint32_t>(); }, ".*");
 
     auto const cv2 = ConfigValue{ConfigType::String}.defaultValue("asdf");
     auto const vv3 = ValueView(cv2);
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv3.asDouble(); }, ".*");
-    EXPECT_DEATH({ [[maybe_unused]] auto a_ = vv3.asFloat(); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = vv3.asDouble(); }, ".*");
+    EXPECT_DEATH({ [[maybe_unused]] auto unused = vv3.asFloat(); }, ".*");
 }

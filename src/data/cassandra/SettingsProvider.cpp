@@ -42,15 +42,6 @@
 
 namespace data::cassandra {
 
-namespace impl {
-
-inline Settings::SecureConnectionBundle
-invoke_tag_SecureConnections(std::string_view value)
-{
-    return Settings::SecureConnectionBundle{value.data()};
-}
-}  // namespace impl
-
 SettingsProvider::SettingsProvider(util::config::ObjectView const& cfg)
     : config_{cfg}
     , keyspace_{cfg.get<std::string>("keyspace")}
