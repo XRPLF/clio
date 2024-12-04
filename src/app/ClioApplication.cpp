@@ -19,6 +19,7 @@
 
 #include "app/ClioApplication.hpp"
 
+#include "app/WebHandlers.hpp"
 #include "data/AmendmentCenter.hpp"
 #include "data/BackendFactory.hpp"
 #include "etl/ETLService.hpp"
@@ -30,11 +31,9 @@
 #include "rpc/RPCEngine.hpp"
 #include "rpc/WorkQueue.hpp"
 #include "rpc/common/impl/HandlerProvider.hpp"
-#include "util/Assert.hpp"
 #include "util/build/Build.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
-#include "util/prometheus/Http.hpp"
 #include "util/prometheus/Prometheus.hpp"
 #include "web/AdminVerificationStrategy.hpp"
 #include "web/RPCServerHandler.hpp"
@@ -67,14 +66,6 @@
 namespace app {
 
 namespace {
-
-auto constexpr HealthCheckHTML = R"html(
-    <!DOCTYPE html>
-    <html>
-        <head><title>Test page for Clio</title></head>
-        <body><h1>Clio Test</h1><p>This page shows Clio http(s) connectivity is working.</p></body>
-    </html>
-)html";
 
 /**
  * @brief Start context threads
@@ -161,114 +152,18 @@ ClioApplication::run(bool const useNgWebServer)
         }
         auto const adminVerifier = std::move(expectedAdminVerifier).value();
 
-        auto httpServer = web::ng::make_Server(
-            config_,
-            [&dosGuard](web::ng::Connection const& connection) -> std::optional<web::ng::Response> {
-                dosGuard.increment(connection.ip());
-                if (not dosGuard.isOk(connection.ip())) {
-                    return web::ng::Response{
-                        boost::beast::http::status::too_many_requests, "Too many requests", connection
-                    };
-                }
-
-                return {};
-            },
-            [&dosGuard](web::ng::Connection const& connection) { dosGuard.decrement(connection.ip()); },
-            ioc
-        );
+        auto httpServer = web::ng::make_Server(config_, OnConnectCheck{dosGuard}, DisconnectHook{dosGuard}, ioc);
 
         if (not httpServer.has_value()) {
             LOG(util::LogService::error()) << "Error creating web server: " << httpServer.error();
             return EXIT_FAILURE;
         }
 
-        httpServer->onGet(
-            "/metrics",
-            [adminVerifier](
-                web::ng::Request const& request,
-                web::ng::ConnectionMetadata& connectionMetadata,
-                web::SubscriptionContextPtr,
-                boost::asio::yield_context
-            ) -> web::ng::Response {
-                auto const maybeHttpRequest = request.asHttpRequest();
-                ASSERT(maybeHttpRequest.has_value(), "Got not a http request in Get");
-                auto const& httpRequest = maybeHttpRequest->get();
-
-                // FIXME(#1702): Using veb server thread to handle prometheus request. Better to post on work queue.
-                auto maybeResponse = util::prometheus::handlePrometheusRequest(
-                    httpRequest, adminVerifier->isAdmin(httpRequest, connectionMetadata.ip())
-                );
-                ASSERT(maybeResponse.has_value(), "Got unexpected request for Prometheus");
-                return web::ng::Response{std::move(maybeResponse).value(), request};
-            }
-        );
-
-        httpServer->onGet(
-            "/health",
-            [](web::ng::Request const& request,
-               web::ng::ConnectionMetadata&,
-               web::SubscriptionContextPtr,
-               boost::asio::yield_context) -> web::ng::Response {
-                return web::ng::Response{boost::beast::http::status::ok, HealthCheckHTML, request};
-            }
-        );
-
-        util::Logger webServerLog{"WebServer"};
-        auto onRequest = [adminVerifier, &webServerLog, &handler, &dosGuard](
-                             web::ng::Request const& request,
-                             web::ng::ConnectionMetadata& connectionMetadata,
-                             web::SubscriptionContextPtr subscriptionContext,
-                             boost::asio::yield_context yield
-                         ) -> web::ng::Response {
-            if (not dosGuard.request(connectionMetadata.ip())) {
-                auto error = rpc::makeError(rpc::RippledError::rpcSLOW_DOWN);
-
-                if (not request.isHttp()) {
-                    try {
-                        auto requestJson = boost::json::parse(request.message());
-                        if (requestJson.is_object() && requestJson.as_object().contains("id"))
-                            error["id"] = requestJson.as_object().at("id");
-                        error["request"] = request.message();
-                    } catch (std::exception const&) {
-                        error["request"] = request.message();
-                    }
-                }
-                return web::ng::Response{boost::beast::http::status::service_unavailable, error, request};
-            }
-            LOG(webServerLog.info()) << connectionMetadata.tag()
-                                     << "Received request from ip = " << connectionMetadata.ip()
-                                     << " - posting to WorkQueue";
-
-            connectionMetadata.setIsAdmin([&adminVerifier, &request, &connectionMetadata]() {
-                return adminVerifier->isAdmin(request.httpHeaders(), connectionMetadata.ip());
-            });
-
-            try {
-                auto response = handler(request, connectionMetadata, std::move(subscriptionContext), yield);
-
-                if (not dosGuard.add(connectionMetadata.ip(), response.message().size())) {
-                    auto jsonResponse = boost::json::parse(response.message()).as_object();
-                    jsonResponse["warning"] = "load";
-                    if (jsonResponse.contains("warnings") && jsonResponse["warnings"].is_array()) {
-                        jsonResponse["warnings"].as_array().push_back(rpc::makeWarning(rpc::warnRPC_RATE_LIMIT));
-                    } else {
-                        jsonResponse["warnings"] = boost::json::array{rpc::makeWarning(rpc::warnRPC_RATE_LIMIT)};
-                    }
-                    response.setMessage(jsonResponse);
-                }
-
-                return response;
-            } catch (std::exception const&) {
-                return web::ng::Response{
-                    boost::beast::http::status::internal_server_error,
-                    rpc::makeError(rpc::RippledError::rpcINTERNAL),
-                    request
-                };
-            }
-        };
-
-        httpServer->onPost("/", onRequest);
-        httpServer->onWs(onRequest);
+        httpServer->onGet("/metrics", MetricsHandler{adminVerifier});
+        httpServer->onGet("/health", HealthCheckHandler{});
+        auto requestHandler = RequestHandler{adminVerifier, handler, dosGuard};
+        httpServer->onPost("/", requestHandler);
+        httpServer->onWs(std::move(requestHandler));
 
         auto const maybeError = httpServer->run();
         if (maybeError.has_value()) {
