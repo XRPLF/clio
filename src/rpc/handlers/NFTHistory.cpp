@@ -24,6 +24,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 #include "util/Profiler.hpp"
 #include "util/log/Logger.hpp"
 
@@ -53,6 +54,8 @@ NFTHistoryHandler::Result
 NFTHistoryHandler::process(NFTHistoryHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "NFTHistory's ledger range must be available");
+
     auto [minIndex, maxIndex] = *range;
 
     if (input.ledgerIndexMin) {

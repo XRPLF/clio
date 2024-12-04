@@ -24,6 +24,7 @@
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
 #include "util/AccountUtils.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <boost/bimap/bimap.hpp>
@@ -61,6 +62,8 @@ GetAggregatePriceHandler::Result
 GetAggregatePriceHandler::process(GetAggregatePriceHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "GetAggregatePrice's ledger range must be available");
+
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );

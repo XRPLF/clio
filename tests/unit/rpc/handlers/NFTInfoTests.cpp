@@ -45,7 +45,12 @@ constexpr static auto LEDGERHASH = "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A
 constexpr static auto NFTID = "00010000A7CAD27B688D14BA1A9FA5366554D6ADCF9CE0875B974D9F00000004";
 constexpr static auto NFTID2 = "00081388319F12E15BCA13E1B933BF4C99C8E1BBC36BD4910A85D52F00000022";
 
-class RPCNFTInfoHandlerTest : public HandlerBaseTest {};
+struct RPCNFTInfoHandlerTest : HandlerBaseTest {
+    RPCNFTInfoHandlerTest()
+    {
+        backend->setRange(10, 30);
+    }
+};
 
 TEST_F(RPCNFTInfoHandlerTest, NonHexLedgerHash)
 {
@@ -170,7 +175,6 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash)
 // error case ledger non exist via index
 TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
-    backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
@@ -193,7 +197,6 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerStringIndex)
 
 TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
-    backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
@@ -218,7 +221,6 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIntIndex)
 // idk why this case will happen in reality
 TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
 {
-    backend->setRange(10, 30);
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 31);
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
@@ -244,7 +246,6 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerHash2)
 // error case ledger > max seq via index
 TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
 {
-    backend->setRange(10, 30);
     // no need to check from db,call fetchLedgerBySequence 0 time
     // differ from previous logic
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(0);
@@ -268,7 +269,6 @@ TEST_F(RPCNFTInfoHandlerTest, NonExistLedgerViaLedgerIndex2)
 // error case nft does not exist
 TEST_F(RPCNFTInfoHandlerTest, NonExistNFT)
 {
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
@@ -310,7 +310,6 @@ TEST_F(RPCNFTInfoHandlerTest, DefaultParameters)
         "validated": true
     })";
 
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
@@ -351,7 +350,6 @@ TEST_F(RPCNFTInfoHandlerTest, BurnedNFT)
         "validated": true
     })";
 
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
@@ -393,7 +391,6 @@ TEST_F(RPCNFTInfoHandlerTest, NotBurnedNFTWithoutURI)
         "validated": true
     })";
 
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
@@ -434,7 +431,6 @@ TEST_F(RPCNFTInfoHandlerTest, NFTWithExtraFieldsSet)
         "validated": true
     })";
 
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     ON_CALL(*backend, fetchLedgerBySequence).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);

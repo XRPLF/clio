@@ -53,7 +53,12 @@ constexpr static auto INDEX1 = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C
 constexpr static auto INDEX2 = "E6DBAFC99223B42257915A63DFC6B0C032D4070F9A574B255AD97466726FC322";
 constexpr static auto TXNID = "05FB0EB4B899F056FA095537C5817163801F544BAFCEA39C995D76DB4D16F0DD";
 
-class RPCLedgerDataHandlerTest : public HandlerBaseTest {};
+struct RPCLedgerDataHandlerTest : HandlerBaseTest {
+    RPCLedgerDataHandlerTest()
+    {
+        backend->setRange(RANGEMIN, RANGEMAX);
+    }
+};
 
 struct LedgerDataParamTestCaseBundle {
     std::string testName;
@@ -110,7 +115,6 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_P(LedgerDataParameterTest, InvalidParams)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
     auto const testBundle = GetParam();
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{LedgerDataHandler{backend}};
@@ -125,8 +129,6 @@ TEST_P(LedgerDataParameterTest, InvalidParams)
 
 TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
@@ -148,8 +150,6 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
@@ -171,8 +171,6 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
 
@@ -194,8 +192,6 @@ TEST_F(RPCLedgerDataHandlerTest, LedgerNotExistViaHash)
 
 TEST_F(RPCLedgerDataHandlerTest, MarkerNotExist)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
         .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
@@ -235,8 +231,6 @@ TEST_F(RPCLedgerDataHandlerTest, NoMarker)
       "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "closed":true
    })";
-
-    backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
@@ -295,8 +289,6 @@ TEST_F(RPCLedgerDataHandlerTest, Version2)
       "closed": true
    })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
 
     // When 'type' not specified, default to all the types
@@ -349,8 +341,6 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilter)
       "transaction_hash":"0000000000000000000000000000000000000000000000000000000000000000",
       "closed":true
    })";
-
-    backend->setRange(RANGEMIN, RANGEMAX);
 
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
@@ -415,8 +405,6 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterAMM)
       "closed":true
    })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
         .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
@@ -477,8 +465,6 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
       "closed":true
    })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
         .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
@@ -513,8 +499,6 @@ TEST_F(RPCLedgerDataHandlerTest, OutOfOrder)
 
 TEST_F(RPCLedgerDataHandlerTest, Marker)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
         .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
@@ -564,8 +548,6 @@ TEST_F(RPCLedgerDataHandlerTest, Marker)
 
 TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
         .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
@@ -608,8 +590,6 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
 
 TEST_F(RPCLedgerDataHandlerTest, Binary)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
         .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
@@ -649,8 +629,6 @@ TEST_F(RPCLedgerDataHandlerTest, Binary)
 
 TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
         .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
@@ -691,8 +669,6 @@ TEST_F(RPCLedgerDataHandlerTest, BinaryLimitMoreThanMax)
 
 TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
         .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
@@ -732,8 +708,6 @@ TEST_F(RPCLedgerDataHandlerTest, JsonLimitMoreThanMax)
 
 TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPTIssuance)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
         .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));
@@ -776,8 +750,6 @@ TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPTIssuance)
 
 TEST_F(RPCLedgerDataHandlerTest, TypeFilterMPToken)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _))
         .WillByDefault(Return(CreateLedgerHeader(LEDGERHASH, RANGEMAX)));

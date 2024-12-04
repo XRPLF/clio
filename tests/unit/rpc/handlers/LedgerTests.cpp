@@ -59,7 +59,12 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-class RPCLedgerHandlerTest : public HandlerBaseTest {};
+struct RPCLedgerHandlerTest : HandlerBaseTest {
+    RPCLedgerHandlerTest()
+    {
+        backend->setRange(RANGEMIN, RANGEMAX);
+    }
+};
 
 struct LedgerParamTestCaseBundle {
     std::string testName;
@@ -185,8 +190,6 @@ TEST_P(LedgerParameterTest, InvalidParams)
 
 TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
@@ -208,8 +211,6 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaIntSequence)
 
 TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(std::nullopt));
 
@@ -231,8 +232,6 @@ TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaStringSequence)
 
 TEST_F(RPCLedgerHandlerTest, LedgerNotExistViaHash)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(std::nullopt));
 
@@ -275,8 +274,6 @@ TEST_F(RPCLedgerHandlerTest, Default)
             }
         })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
@@ -295,8 +292,6 @@ TEST_F(RPCLedgerHandlerTest, Default)
 // fields not supported for specific value can be set to its default value
 TEST_F(RPCLedgerHandlerTest, ConditionallyNotSupportedFieldsDefaultValue)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillRepeatedly(Return(ledgerHeader));
 
@@ -316,8 +311,6 @@ TEST_F(RPCLedgerHandlerTest, ConditionallyNotSupportedFieldsDefaultValue)
 
 TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(15, _)).WillByDefault(Return(ledgerHeader));
@@ -333,8 +326,6 @@ TEST_F(RPCLedgerHandlerTest, QueryViaLedgerIndex)
 
 TEST_F(RPCLedgerHandlerTest, QueryViaLedgerHash)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{INDEX1}, _)).WillByDefault(Return(ledgerHeader));
@@ -360,8 +351,6 @@ TEST_F(RPCLedgerHandlerTest, BinaryTrue)
                 "closed":true
             }
         })";
-
-    backend->setRange(RANGEMIN, RANGEMAX);
 
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
@@ -402,8 +391,6 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinary)
                 ]
             }
         })";
-
-    backend->setRange(RANGEMIN, RANGEMAX);
 
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
@@ -456,8 +443,6 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandBinaryV2)
                 ]
             }
         })";
-
-    backend->setRange(RANGEMIN, RANGEMAX);
 
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerHeader));
@@ -544,8 +529,6 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinary)
                 ]
             }
         })";
-
-    backend->setRange(RANGEMIN, RANGEMAX);
 
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
@@ -647,8 +630,6 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
             }
         })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerHeader));
 
@@ -678,8 +659,6 @@ TEST_F(RPCLedgerHandlerTest, TransactionsExpandNotBinaryV2)
 
 TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillOnce(Return(ledgerHeader));
 
@@ -726,8 +705,6 @@ TEST_F(RPCLedgerHandlerTest, TwoRequestInARowTransactionsExpandNotBinaryV2)
 
 TEST_F(RPCLedgerHandlerTest, TransactionsNotExpand)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
@@ -777,8 +754,6 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
             }
         ])";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
@@ -821,8 +796,6 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
                 "object":"1100612200400000240000000125000000032B000000002D00000002551B8590C01B0006EDFA9ED60296DD052DC5E90F99659B25014D08E1BC983515BC62400000000000000A81144B4E9C06F24296074F7BC48F92A97916C6DC5EA9"
             }
         ])";
-
-    backend->setRange(RANGEMIN, RANGEMAX);
 
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
@@ -915,8 +888,6 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsEmtpy)
             }
         })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
@@ -1006,8 +977,6 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryFalse)
             "validated": true
         })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
@@ -1075,8 +1044,6 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
             "validated": true
         })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
@@ -1124,8 +1091,6 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsTrueBinaryTrue)
 
 TEST_F(RPCLedgerHandlerTest, OwnerFundsIssuerIsSelf)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
@@ -1181,8 +1146,6 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
             "validated": true
         })";
 
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
@@ -1230,8 +1193,6 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotEnoughForReserve)
 
 TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));
@@ -1284,8 +1245,6 @@ TEST_F(RPCLedgerHandlerTest, OwnerFundsNotXRP)
 
 TEST_F(RPCLedgerHandlerTest, OwnerFundsIgnoreFreezeLine)
 {
-    backend->setRange(RANGEMIN, RANGEMAX);
-
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, RANGEMAX);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     ON_CALL(*backend, fetchLedgerBySequence(RANGEMAX, _)).WillByDefault(Return(ledgerHeader));

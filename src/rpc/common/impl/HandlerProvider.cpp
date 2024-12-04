@@ -111,7 +111,7 @@ ProductionHandlerProvider::ProductionHandlerProvider(
           {"transaction_entry", {TransactionEntryHandler{backend}}},
           {"tx", {TxHandler{backend, etl}}},
           {"subscribe", {SubscribeHandler{backend, subscriptionManager}}},
-          {"unsubscribe", {UnsubscribeHandler{backend, subscriptionManager}}},
+          {"unsubscribe", {UnsubscribeHandler{subscriptionManager}}},
           {"version", {VersionHandler{config}}},
       }
 {

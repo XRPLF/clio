@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "data/BackendInterface.hpp"
 #include "feed/SubscriptionManagerInterface.hpp"
 #include "feed/Types.hpp"
 #include "rpc/common/Specs.hpp"
@@ -49,7 +48,6 @@ namespace rpc {
  */
 
 class UnsubscribeHandler {
-    std::shared_ptr<BackendInterface> sharedPtrBackend_;
     std::shared_ptr<feed::SubscriptionManagerInterface> subscriptions_;
 
 public:
@@ -77,13 +75,9 @@ public:
     /**
      * @brief Construct a new BaseUnsubscribeHandler object
      *
-     * @param sharedPtrBackend The backend to use
      * @param subscriptions The subscription manager to use
      */
-    UnsubscribeHandler(
-        std::shared_ptr<BackendInterface> const& sharedPtrBackend,
-        std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions
-    );
+    UnsubscribeHandler(std::shared_ptr<feed::SubscriptionManagerInterface> const& subscriptions);
 
     /**
      * @brief Returns the API specification for the command

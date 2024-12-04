@@ -23,6 +23,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
@@ -59,6 +60,8 @@ GatewayBalancesHandler::process(GatewayBalancesHandler::Input input, Context con
 {
     // check ledger
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "GatewayBalances' ledger range must be available");
+
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );

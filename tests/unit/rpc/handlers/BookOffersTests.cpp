@@ -67,7 +67,12 @@ using namespace rpc;
 namespace json = boost::json;
 using namespace testing;
 
-class RPCBookOffersHandlerTest : public HandlerBaseTest {};
+struct RPCBookOffersHandlerTest : HandlerBaseTest {
+    RPCBookOffersHandlerTest()
+    {
+        backend->setRange(10, 300);
+    }
+};
 
 struct ParameterTestBundle {
     std::string testName;
@@ -76,7 +81,7 @@ struct ParameterTestBundle {
     std::string expectedErrorMessage;
 };
 
-struct RPCBookOffersParameterTest : public RPCBookOffersHandlerTest, public WithParamInterface<ParameterTestBundle> {};
+struct RPCBookOffersParameterTest : RPCBookOffersHandlerTest, WithParamInterface<ParameterTestBundle> {};
 
 TEST_P(RPCBookOffersParameterTest, CheckError)
 {
@@ -509,7 +514,6 @@ TEST_P(RPCBookOffersNormalPathTest, CheckOutput)
     auto const& bundle = GetParam();
     auto const seq = 300;
 
-    backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
@@ -1159,7 +1163,6 @@ INSTANTIATE_TEST_SUITE_P(
 // ledger not exist
 TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
 {
-    backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
@@ -1191,7 +1194,6 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaIntSequence)
 
 TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
 {
-    backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerBySequence(30, _)).WillByDefault(Return(std::optional<ripple::LedgerHeader>{}));
@@ -1223,7 +1225,6 @@ TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaSequence)
 
 TEST_F(RPCBookOffersHandlerTest, LedgerNonExistViaHash)
 {
-    backend->setRange(10, 30);
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
     // return empty ledgerHeader
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _))
@@ -1259,7 +1260,6 @@ TEST_F(RPCBookOffersHandlerTest, Limit)
 {
     auto const seq = 300;
 
-    backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);
@@ -1333,7 +1333,6 @@ TEST_F(RPCBookOffersHandlerTest, LimitMoreThanMax)
 {
     auto const seq = 300;
 
-    backend->setRange(10, seq);
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
     // return valid ledgerHeader
     auto const ledgerHeader = CreateLedgerHeader(LEDGERHASH, seq);

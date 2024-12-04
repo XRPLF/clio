@@ -28,6 +28,7 @@
 #include "rpc/common/Specs.hpp"
 #include "rpc/common/Types.hpp"
 #include "rpc/common/Validators.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/json/array.hpp>
 #include <boost/json/conversion.hpp>
@@ -94,6 +95,8 @@ AMMInfoHandler::process(AMMInfoHandler::Input input, Context const& ctx) const
         return Error{Status{RippledError::rpcINVALID_PARAMS}};
 
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "AMMInfo's ledger range must be available");
+
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );

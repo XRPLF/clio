@@ -25,6 +25,7 @@
 #include "rpc/JS.hpp"
 #include "rpc/RPCHelpers.hpp"
 #include "rpc/common/Types.hpp"
+#include "util/Assert.hpp"
 
 #include <boost/json/conversion.hpp>
 #include <boost/json/object.hpp>
@@ -45,6 +46,8 @@ BookChangesHandler::Result
 BookChangesHandler::process(BookChangesHandler::Input input, Context const& ctx) const
 {
     auto const range = sharedPtrBackend_->fetchLedgerRange();
+    ASSERT(range.has_value(), "BookChanges' ledger range must be available");
+
     auto const lgrInfoOrStatus = getLedgerHeaderFromHashOrSeq(
         *sharedPtrBackend_, ctx.yield, input.ledgerHash, input.ledgerIndex, range->maxSequence
     );

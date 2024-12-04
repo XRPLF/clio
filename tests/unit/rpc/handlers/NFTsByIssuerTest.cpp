@@ -89,7 +89,12 @@ static std::string NFT3OUT =
         "nft_serial": 4
     })";
 
-class RPCNFTsByIssuerHandlerTest : public HandlerBaseTest {};
+struct RPCNFTsByIssuerHandlerTest : HandlerBaseTest {
+    RPCNFTsByIssuerHandlerTest()
+    {
+        backend->setRange(10, 30);
+    }
+};
 
 TEST_F(RPCNFTsByIssuerHandlerTest, NonHexLedgerHash)
 {
@@ -228,7 +233,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash)
 // error case ledger non exist via index
 TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerStringIndex)
 {
-    backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
     auto const input = json::parse(fmt::format(
@@ -250,7 +254,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerStringIndex)
 
 TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIntIndex)
 {
-    backend->setRange(10, 30);
     // mock fetchLedgerBySequence return empty
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(std::optional<ripple::LedgerHeader>{}));
     auto const input = json::parse(fmt::format(
@@ -274,7 +277,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIntIndex)
 // idk why this case will happen in reality
 TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash2)
 {
-    backend->setRange(10, 30);
     // mock fetchLedgerByHash return ledger but seq is 31 > 30
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 31);
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
@@ -300,7 +302,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerHash2)
 // error case ledger > max seq via index
 TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIndex2)
 {
-    backend->setRange(10, 30);
     // no need to check from db,call fetchLedgerBySequence 0 time
     // differ from previous logic
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(0);
@@ -324,7 +325,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, NonExistLedgerViaLedgerIndex2)
 // normal case when issuer does not exist or has no NFTs
 TEST_F(RPCNFTsByIssuerHandlerTest, AccountNotFound)
 {
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     ON_CALL(*backend, fetchLedgerByHash(ripple::uint256{LEDGERHASH}, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerByHash).Times(1);
@@ -364,7 +364,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, DefaultParameters)
         NFT1OUT
     );
 
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -421,7 +420,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, SpecificLedgerIndex)
         specificLedger
     );
 
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, specificLedger);
     ON_CALL(*backend, fetchLedgerBySequence(specificLedger, _)).WillByDefault(Return(ledgerHeader));
     EXPECT_CALL(*backend, fetchLedgerBySequence).Times(1);
@@ -471,7 +469,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, TaxonParameter)
         NFT1OUT
     );
 
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -516,7 +513,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MarkerParameter)
         NFT3OUT
     );
 
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -563,7 +559,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, MultipleNFTs)
         NFT3OUT
     );
 
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
@@ -610,7 +605,6 @@ TEST_F(RPCNFTsByIssuerHandlerTest, LimitMoreThanMAx)
         NFT1OUT
     );
 
-    backend->setRange(10, 30);
     auto ledgerHeader = CreateLedgerHeader(LEDGERHASH, 30);
     EXPECT_CALL(*backend, fetchLedgerBySequence).WillOnce(Return(ledgerHeader));
     auto const accountKk = ripple::keylet::account(GetAccountIDWithString(ACCOUNT)).key;
