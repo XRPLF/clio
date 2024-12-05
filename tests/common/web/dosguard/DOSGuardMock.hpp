@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,37 +17,25 @@
 */
 //==============================================================================
 
-#include "util/AsioContextTestFixture.hpp"
-#include "util/config/Config.hpp"
-#include "web/dosguard/DOSGuardMock.hpp"
-#include "web/dosguard/IntervalSweepHandler.hpp"
+#pragma once
 
-#include <boost/json/parse.hpp>
+#include "web/dosguard/DOSGuardInterface.hpp"
+
 #include <gmock/gmock.h>
-#include <gtest/gtest.h>
 
-#include <chrono>
+#include <cstdint>
+#include <string>
+#include <string_view>
 
-using namespace web::dosguard;
-
-struct IntervalSweepHandlerTest : SyncAsioContextTest {
-protected:
-    constexpr static auto JSONData = R"JSON(
-    {
-        "dos_guard": {
-            "sweep_interval": 0
-        }
-    }
-)JSON";
-
-    DOSGuardStrictMock guardMock;
-
-    util::Config cfg{boost::json::parse(JSONData)};
-    IntervalSweepHandler sweepHandler{cfg, ctx, guardMock};
+struct DOSGuardMockImpl : web::dosguard::DOSGuardInterface {
+    MOCK_METHOD(bool, isWhiteListed, (std::string_view const ip), (const, noexcept, override));
+    MOCK_METHOD(bool, isOk, (std::string const& ip), (const, noexcept, override));
+    MOCK_METHOD(void, increment, (std::string const& ip), (noexcept, override));
+    MOCK_METHOD(void, decrement, (std::string const& ip), (noexcept, override));
+    MOCK_METHOD(bool, add, (std::string const& ip, uint32_t size), (noexcept, override));
+    MOCK_METHOD(bool, request, (std::string const& ip), (noexcept, override));
+    MOCK_METHOD(void, clear, (), (noexcept, override));
 };
 
-TEST_F(IntervalSweepHandlerTest, SweepAfterInterval)
-{
-    EXPECT_CALL(guardMock, clear()).Times(testing::AtLeast(10));
-    runContextFor(std::chrono::milliseconds{20});
-}
+using DOSGuardMock = testing::NiceMock<DOSGuardMockImpl>;
+using DOSGuardStrictMock = testing::StrictMock<DOSGuardMockImpl>;
