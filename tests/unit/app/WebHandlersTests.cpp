@@ -51,7 +51,7 @@
 using namespace app;
 namespace http = boost::beast::http;
 
-struct WebHandlersTest : NoLoggerFixture {
+struct WebHandlersTest : virtual NoLoggerFixture {
     DOSGuardStrictMock dosGuardMock_;
     util::TagDecoratorFactory tagFactory_{util::Config{}};
     std::string const ip_ = "some ip";
