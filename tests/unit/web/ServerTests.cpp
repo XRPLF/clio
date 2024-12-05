@@ -17,7 +17,6 @@
 */
 //==============================================================================
 
-#include "util/Assert.hpp"
 #include "util/AssignRandomPort.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"

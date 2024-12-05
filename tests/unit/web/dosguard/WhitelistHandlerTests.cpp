@@ -16,7 +16,7 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 //==============================================================================
-#include "util/Assert.hpp"
+
 #include "util/LoggerFixtures.hpp"
 #include "util/log/Logger.hpp"
 #include "util/newconfig/Array.hpp"

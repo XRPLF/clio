@@ -18,7 +18,6 @@
 //==============================================================================
 
 #include "etl/CacheLoaderSettings.hpp"
-#include "util/Assert.hpp"
 #include "util/newconfig/ConfigDefinition.hpp"
 #include "util/newconfig/ConfigFileJson.hpp"
 #include "util/newconfig/ConfigValue.hpp"
