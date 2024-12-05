@@ -343,7 +343,7 @@ static ClioConfigDefinition ClioConfig = ClioConfigDefinition{
      {"server.__ng_web_server", ConfigValue{ConfigType::Boolean}.defaultValue(false)},
      {"prometheus.enabled", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
      {"prometheus.compress_reply", ConfigValue{ConfigType::Boolean}.defaultValue(true)},
-     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(validateUint16)},
+     {"io_threads", ConfigValue{ConfigType::Integer}.defaultValue(2).withConstraint(validateIOThreads)},
      {"subscription_workers", ConfigValue{ConfigType::Integer}.defaultValue(1).withConstraint(validateUint32)},
      {"graceful_period", ConfigValue{ConfigType::Double}.defaultValue(10.0).withConstraint(validatePositiveDouble)},
      {"cache.num_diffs", ConfigValue{ConfigType::Integer}.defaultValue(32).withConstraint(validateUint16)},

@@ -356,6 +356,8 @@ static constinit OneOf validateProcessingPolicy{"server.processing_policy", PROC
 static constinit PositiveDouble validatePositiveDouble{};
 
 static constinit NumberValueConstraint<uint32_t> validateNumMarkers{1, 256};
+static constinit NumberValueConstraint<uint32_t> validateIOThreads{1, std::numeric_limits<uint16_t>::max()};
+
 static constinit NumberValueConstraint<uint16_t> validateUint16{
     std::numeric_limits<uint16_t>::min(),
     std::numeric_limits<uint16_t>::max()
