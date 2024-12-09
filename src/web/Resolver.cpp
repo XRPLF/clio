@@ -41,17 +41,17 @@ bool
 isAddress(std::string_view hostname)
 {
     boost::system::error_code ec;
-    asio::ip::make_address(hostname.data(), ec);
+    asio::ip::make_address(hostname, ec);
     if (ec == boost::system::errc::success) {
         return true;
     }
 
-    asio::ip::make_network_v4(hostname.data(), ec);
+    asio::ip::make_network_v4(hostname, ec);
     if (ec == boost::system::errc::success) {
         return true;
     }
 
-    asio::ip::make_network_v6(hostname.data(), ec);
+    asio::ip::make_network_v6(hostname, ec);
     return ec == boost::system::errc::success;
 }
 

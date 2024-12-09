@@ -77,34 +77,59 @@ static auto
 generateTestValuesForParametersTest()
 {
     return std::vector<AccountInfoParamTestCaseBundle>{
-        AccountInfoParamTestCaseBundle{"MissingAccountAndIdent", R"({})", "invalidParams", "Missing field 'account'."},
-        AccountInfoParamTestCaseBundle{"AccountNotString", R"({"account":1})", "invalidParams", "accountNotString"},
-        AccountInfoParamTestCaseBundle{"AccountInvalid", R"({"account":"xxx"})", "actMalformed", "accountMalformed"},
-        AccountInfoParamTestCaseBundle{"IdentNotString", R"({"ident":1})", "invalidParams", "identNotString"},
-        AccountInfoParamTestCaseBundle{"IdentInvalid", R"({"ident":"xxx"})", "actMalformed", "identMalformed"},
         AccountInfoParamTestCaseBundle{
-            "SignerListsInvalid",
-            R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "MissingAccountAndIdent",
+            .testJson = R"({})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Missing field 'account'."
         },
         AccountInfoParamTestCaseBundle{
-            "LedgerHashInvalid",
-            R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})",
-            "invalidParams",
-            "ledger_hashMalformed"
+            .testName = "AccountNotString",
+            .testJson = R"({"account":1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "accountNotString"
         },
         AccountInfoParamTestCaseBundle{
-            "LedgerHashNotString",
-            R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":1})",
-            "invalidParams",
-            "ledger_hashNotString"
+            .testName = "AccountInvalid",
+            .testJson = R"({"account":"xxx"})",
+            .expectedError = "actMalformed",
+            .expectedErrorMessage = "accountMalformed"
         },
         AccountInfoParamTestCaseBundle{
-            "LedgerIndexInvalid",
-            R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})",
-            "invalidParams",
-            "ledgerIndexMalformed"
+            .testName = "IdentNotString",
+            .testJson = R"({"ident":1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "identNotString"
+        },
+        AccountInfoParamTestCaseBundle{
+            .testName = "IdentInvalid",
+            .testJson = R"({"ident":"xxx"})",
+            .expectedError = "actMalformed",
+            .expectedErrorMessage = "identMalformed"
+        },
+        AccountInfoParamTestCaseBundle{
+            .testName = "SignerListsInvalid",
+            .testJson = R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "signer_lists":1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        AccountInfoParamTestCaseBundle{
+            .testName = "LedgerHashInvalid",
+            .testJson = R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashMalformed"
+        },
+        AccountInfoParamTestCaseBundle{
+            .testName = "LedgerHashNotString",
+            .testJson = R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashNotString"
+        },
+        AccountInfoParamTestCaseBundle{
+            .testName = "LedgerIndexInvalid",
+            .testJson = R"({"ident":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
     };
 }

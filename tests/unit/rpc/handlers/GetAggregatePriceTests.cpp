@@ -112,26 +112,35 @@ generateTestValuesForParametersTest()
 {
     return std::vector<GetAggregatePriceParamTestCaseBundle>{
         GetAggregatePriceParamTestCaseBundle{
-            "ledger_indexInvalid", R"({"ledger_index": "x"})", "invalidParams", "ledgerIndexMalformed"
+            .testName = "ledger_indexInvalid",
+            .testJson = R"({"ledger_index": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
         GetAggregatePriceParamTestCaseBundle{
-            "ledger_hashInvalid", R"({"ledger_hash": "x"})", "invalidParams", "ledger_hashMalformed"
+            .testName = "ledger_hashInvalid",
+            .testJson = R"({"ledger_hash": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         GetAggregatePriceParamTestCaseBundle{
-            "ledger_hashNotString", R"({"ledger_hash": 123})", "invalidParams", "ledger_hashNotString"
+            .testName = "ledger_hashNotString",
+            .testJson = R"({"ledger_hash": 123})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         GetAggregatePriceParamTestCaseBundle{
-            "no_oracles",
-            R"({
+            .testName = "no_oracles",
+            .testJson = R"({
                     "base_asset": "XRP",
                     "quote_asset": "USD"
                 })",
-            "invalidParams",
-            "Required field 'oracles' missing"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'oracles' missing"
         },
         GetAggregatePriceParamTestCaseBundle{
-            "no_base_asset",
-            R"({
+            .testName = "no_base_asset",
+            .testJson = R"({
                     "quote_asset": "USD",
                     "oracles": 
                     [
@@ -141,12 +150,12 @@ generateTestValuesForParametersTest()
                         }
                     ]
                 })",
-            "invalidParams",
-            "Required field 'base_asset' missing"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'base_asset' missing"
         },
         GetAggregatePriceParamTestCaseBundle{
-            "invalid_base_asset",
-            R"({
+            .testName = "invalid_base_asset",
+            .testJson = R"({
                     "quote_asset" : "USD",
                     "base_asset": "asdf",
                     "oracles": 
@@ -157,12 +166,12 @@ generateTestValuesForParametersTest()
                         }
                     ]
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "emtpy_base_asset",
-            R"({
+            .testName = "emtpy_base_asset",
+            .testJson = R"({
                     "quote_asset" : "USD",
                     "base_asset": "",
                     "oracles": 
@@ -173,12 +182,12 @@ generateTestValuesForParametersTest()
                         }
                     ]
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "invalid_base_asset2",
-            R"({
+            .testName = "invalid_base_asset2",
+            .testJson = R"({
                     "quote_asset" : "USD",
                     "base_asset": "+aa",
                     "oracles": 
@@ -189,12 +198,12 @@ generateTestValuesForParametersTest()
                         }
                     ]
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "no_quote_asset",
-            R"({
+            .testName = "no_quote_asset",
+            .testJson = R"({
                     "base_asset": "USD",
                     "oracles": 
                     [
@@ -204,12 +213,12 @@ generateTestValuesForParametersTest()
                         }
                     ]
                 })",
-            "invalidParams",
-            "Required field 'quote_asset' missing"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'quote_asset' missing"
         },
         GetAggregatePriceParamTestCaseBundle{
-            "invalid_quote_asset",
-            R"({
+            .testName = "invalid_quote_asset",
+            .testJson = R"({
                     "quote_asset" : "asdf",
                     "base_asset": "USD",
                     "oracles": 
@@ -220,12 +229,12 @@ generateTestValuesForParametersTest()
                         }
                     ]
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "empty_quote_asset",
-            R"({
+            .testName = "empty_quote_asset",
+            .testJson = R"({
                     "quote_asset" : "",
                     "base_asset": "USD",
                     "oracles": 
@@ -236,12 +245,12 @@ generateTestValuesForParametersTest()
                         }
                     ]
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "invalid_quote_asset2",
-            R"({
+            .testName = "invalid_quote_asset2",
+            .testJson = R"({
                     "quote_asset" : "+aa",
                     "base_asset": "USD",
                     "oracles": 
@@ -252,32 +261,32 @@ generateTestValuesForParametersTest()
                         }
                     ]
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "oraclesIsEmpty",
-            R"({
+            .testName = "oraclesIsEmpty",
+            .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "oracles": []
                 })",
-            "oracleMalformed",
-            "Oracle request is malformed."
+            .expectedError = "oracleMalformed",
+            .expectedErrorMessage = "Oracle request is malformed."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "oraclesNotArray",
-            R"({
+            .testName = "oraclesNotArray",
+            .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "oracles": 1
                 })",
-            "oracleMalformed",
-            "Oracle request is malformed."
+            .expectedError = "oracleMalformed",
+            .expectedErrorMessage = "Oracle request is malformed."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "thresholdNotInt",
-            R"({
+            .testName = "thresholdNotInt",
+            .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "oracles": 
@@ -289,12 +298,12 @@ generateTestValuesForParametersTest()
                     ],
                     "time_threshold": "x"
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "trimNotInt",
-            R"({
+            .testName = "trimNotInt",
+            .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "oracles": 
@@ -306,12 +315,12 @@ generateTestValuesForParametersTest()
                     ],
                     "trim": "x"
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "trimTooSmall",
-            R"({
+            .testName = "trimTooSmall",
+            .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "oracles":
@@ -323,12 +332,12 @@ generateTestValuesForParametersTest()
                     ],
                     "trim": 0
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "trimTooLarge",
-            R"({
+            .testName = "trimTooLarge",
+            .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "oracles": 
@@ -340,12 +349,12 @@ generateTestValuesForParametersTest()
                     ],
                     "trim": 26
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "oracleAccountInvalid",
-            R"({
+            .testName = "oracleAccountInvalid",
+            .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "oracles": 
@@ -356,12 +365,12 @@ generateTestValuesForParametersTest()
                         }
                     ]
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "oracleDocumentIdNotInt",
-            R"({
+            .testName = "oracleDocumentIdNotInt",
+            .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "oracles":
@@ -372,28 +381,28 @@ generateTestValuesForParametersTest()
                         }
                     ]
                 })",
-            "invalidParams",
-            "Invalid parameters."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "oracleMissingAccount",
-            R"({
+            .testName = "oracleMissingAccount",
+            .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "oracles": [{"oracle_document_id": 2}]
                 })",
-            "oracleMalformed",
-            "Oracle request is malformed."
+            .expectedError = "oracleMalformed",
+            .expectedErrorMessage = "Oracle request is malformed."
         },
         GetAggregatePriceParamTestCaseBundle{
-            "oracleMissingDocumentId",
-            R"({
+            .testName = "oracleMissingDocumentId",
+            .testJson = R"({
                     "base_asset": "USD",
                     "quote_asset": "XRP",
                     "oracles": [{"account": "rGh1VZCRBJY6rJiaFpD4LZtyHiuCkC8aeD"}]
                 })",
-            "oracleMalformed",
-            "Oracle request is malformed."
+            .expectedError = "oracleMalformed",
+            .expectedErrorMessage = "Oracle request is malformed."
         },
     };
 }

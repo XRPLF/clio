@@ -68,7 +68,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNotInt)
             }})",
             NFTID
         ));
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -87,7 +87,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitNegative)
             }})",
             NFTID
         ));
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -106,7 +106,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, LimitZero)
             }})",
             NFTID
         ));
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -125,7 +125,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonHexLedgerHash)
             }})",
             NFTID
         ));
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -145,7 +145,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonStringLedgerHash)
             }})",
             NFTID
         ));
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -165,7 +165,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, InvalidLedgerIndexString)
             }})",
             NFTID
         ));
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -182,7 +182,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDInvalidFormat)
         auto const input = json::parse(R"({ 
             "nft_id": "00080000B4F4AFC5FBCBD76873F18006173D2193467D3EE7"
         })");
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "invalidParams");
@@ -198,7 +198,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NFTIDNotString)
         auto const input = json::parse(R"({ 
             "nft_id": 12
         })");
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -225,7 +225,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
 
         auto const err = rpc::makeError(output.result.error());
@@ -249,7 +249,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -275,7 +275,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerHash2)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -298,7 +298,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NonExistLedgerViaLedgerIndex2)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "lgrNotFound");
@@ -324,7 +324,7 @@ TEST_F(RPCNFTSellOffersHandlerTest, NoNFT)
     ));
     runSpawn([&, this](boost::asio::yield_context yield) {
         auto const handler = AnyHandler{NFTSellOffersHandler{backend}};
-        auto const output = handler.process(input, Context{yield});
+        auto const output = handler.process(input, Context{.yield = yield});
         ASSERT_FALSE(output);
         auto const err = rpc::makeError(output.result.error());
         EXPECT_EQ(err.at("error").as_string(), "objectNotFound");

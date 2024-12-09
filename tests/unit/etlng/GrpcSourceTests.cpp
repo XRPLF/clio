@@ -82,7 +82,7 @@ struct GrpcSourceNgTests : NoLoggerFixture, tests::util::WithMockXrpLedgerAPISer
             for (auto mi = 0uz; mi < markers.size(); ++mi) {
                 for (auto i = 0uz; i < totalPerMarker; ++i) {
                     auto const mapKey = ripple::strHex(markers.at(mi)).substr(0, 2);
-                    store_[mapKey].push(keys_.at(mi * totalPerMarker + i));
+                    store_[mapKey].push(keys_.at((mi * totalPerMarker) + i));
                 }
             }
         }
@@ -223,11 +223,8 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, ObserverCalledCorrectly)
     EXPECT_EQ(data, std::vector<std::string>(4, keyStr));
 }
 
-// TODO(godexsoft): Enable after fixing in #1752
 TEST_F(GrpcSourceNgLoadInitialLedgerTests, DataTransferredAndObserverCalledCorrectly)
 {
-    GTEST_SKIP() << "Skipping flaky test. Will be fixed in #1752.";
-
     auto const totalKeys = 256uz;
     auto const totalPerMarker = totalKeys / numMarkers_;
     auto const batchSize = totalPerMarker / 4uz;
@@ -265,22 +262,21 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, DataTransferredAndObserverCalledCorre
             return grpc::Status::OK;
         });
 
-    std::atomic_uint total = 0u;
-    [[maybe_unused]] testing::InSequence const seqGuard;
+    std::atomic_size_t total = 0uz;
+    std::atomic_size_t totalWithLastKey = 0uz;
+    std::atomic_size_t totalWithoutLastKey = 0uz;
 
     EXPECT_CALL(observer_, onInitialLoadGotMoreObjects)
-        .Times(numMarkers_)
+        .Times(numMarkers_ * batchesPerMarker)
         .WillRepeatedly([&](uint32_t, std::vector<Object> const& data, std::optional<std::string> lastKey) {
             EXPECT_LE(data.size(), batchSize);
-            EXPECT_FALSE(lastKey.has_value());
-            total += data.size();
-        });
 
-    EXPECT_CALL(observer_, onInitialLoadGotMoreObjects)
-        .Times((numMarkers_ - 1) * batchesPerMarker)
-        .WillRepeatedly([&](uint32_t, std::vector<Object> const& data, std::optional<std::string> lastKey) {
-            EXPECT_LE(data.size(), batchSize);
-            EXPECT_TRUE(lastKey.has_value());
+            if (lastKey.has_value()) {
+                ++totalWithLastKey;
+            } else {
+                ++totalWithoutLastKey;
+            }
+
             total += data.size();
         });
 
@@ -289,4 +285,7 @@ TEST_F(GrpcSourceNgLoadInitialLedgerTests, DataTransferredAndObserverCalledCorre
     EXPECT_TRUE(success);
     EXPECT_EQ(data.size(), numMarkers_);
     EXPECT_EQ(total, totalKeys);
+    EXPECT_EQ(totalWithLastKey + totalWithoutLastKey, numMarkers_ * batchesPerMarker);
+    EXPECT_EQ(totalWithoutLastKey, numMarkers_);
+    EXPECT_EQ(totalWithLastKey, (numMarkers_ - 1) * batchesPerMarker);
 }

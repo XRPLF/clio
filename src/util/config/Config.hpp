@@ -187,7 +187,7 @@ public:
         try {
             return maybeValue<Result>(key).value();
         } catch (std::exception const&) {
-            throw std::runtime_error(err.data());
+            throw std::runtime_error(std::string{err});
         }
     }
 
@@ -349,7 +349,7 @@ public:
         try {
             return maybeValue<Result>().value();
         } catch (std::exception const&) {
-            throw std::runtime_error(err.data());
+            throw std::runtime_error(std::string{err});
         }
     }
 

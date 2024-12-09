@@ -42,19 +42,19 @@ public:
     generateTestValuesForParametersTest()
     {
         return std::vector<JsonBoolTestsCaseBundle>{
-            {"NullValue", R"({ "test_bool": null })", false},
-            {"BoolTrueValue", R"({ "test_bool": true })", true},
-            {"BoolFalseValue", R"({ "test_bool": false })", false},
-            {"IntTrueValue", R"({ "test_bool": 1 })", true},
-            {"IntFalseValue", R"({ "test_bool": 0 })", false},
-            {"DoubleTrueValue", R"({ "test_bool": 0.1 })", true},
-            {"DoubleFalseValue", R"({ "test_bool": 0.0 })", false},
-            {"StringTrueValue", R"({ "test_bool": "true" })", true},
-            {"StringFalseValue", R"({ "test_bool": "false" })", true},
-            {"ArrayTrueValue", R"({ "test_bool": [0] })", true},
-            {"ArrayFalseValue", R"({ "test_bool": [] })", false},
-            {"ObjectTrueValue", R"({ "test_bool": { "key": null } })", true},
-            {"ObjectFalseValue", R"({ "test_bool": {} })", false}
+            {.testName = "NullValue", .json = R"({ "test_bool": null })", .expectedBool = false},
+            {.testName = "BoolTrueValue", .json = R"({ "test_bool": true })", .expectedBool = true},
+            {.testName = "BoolFalseValue", .json = R"({ "test_bool": false })", .expectedBool = false},
+            {.testName = "IntTrueValue", .json = R"({ "test_bool": 1 })", .expectedBool = true},
+            {.testName = "IntFalseValue", .json = R"({ "test_bool": 0 })", .expectedBool = false},
+            {.testName = "DoubleTrueValue", .json = R"({ "test_bool": 0.1 })", .expectedBool = true},
+            {.testName = "DoubleFalseValue", .json = R"({ "test_bool": 0.0 })", .expectedBool = false},
+            {.testName = "StringTrueValue", .json = R"({ "test_bool": "true" })", .expectedBool = true},
+            {.testName = "StringFalseValue", .json = R"({ "test_bool": "false" })", .expectedBool = true},
+            {.testName = "ArrayTrueValue", .json = R"({ "test_bool": [0] })", .expectedBool = true},
+            {.testName = "ArrayFalseValue", .json = R"({ "test_bool": [] })", .expectedBool = false},
+            {.testName = "ObjectTrueValue", .json = R"({ "test_bool": { "key": null } })", .expectedBool = true},
+            {.testName = "ObjectFalseValue", .json = R"({ "test_bool": {} })", .expectedBool = false}
         };
     }
 };

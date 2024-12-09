@@ -37,23 +37,8 @@ public:
      */
     Label(std::string name, std::string value);
 
-    /**
-     * @brief Less than operator for labels
-     *
-     * @param rhs The label to compare to
-     * @return true if this label is less than the other; false otherwise
-     */
-    bool
-    operator<(Label const& rhs) const;
-
-    /**
-     * @brief Compare two labels
-     *
-     * @param rhs The label to compare to
-     * @return true if labels are equal; false otherwise
-     */
-    bool
-    operator==(Label const& rhs) const;
+    auto
+    operator<=>(Label const& rhs) const = default;
 
     /**
      * @brief Serialize the label to a string in Prometheus format (e.g. name="value"). The value is escaped

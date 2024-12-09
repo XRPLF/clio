@@ -348,11 +348,10 @@ tag_invoke(boost::json::value_to_tag<LedgerEntryHandler::Input>, boost::json::va
         return ripple::keylet::credential(*subject, *issuer, ripple::Slice(credType->data(), credType->size())).key;
     };
 
-    auto const indexFieldType =
-        std::find_if(indexFieldTypeMap.begin(), indexFieldTypeMap.end(), [&jsonObject](auto const& pair) {
-            auto const& [field, _] = pair;
-            return jsonObject.contains(field) && jsonObject.at(field).is_string();
-        });
+    auto const indexFieldType = std::ranges::find_if(indexFieldTypeMap, [&jsonObject](auto const& pair) {
+        auto const& [field, _] = pair;
+        return jsonObject.contains(field) && jsonObject.at(field).is_string();
+    });
 
     if (indexFieldType != indexFieldTypeMap.end()) {
         input.index = boost::json::value_to<std::string>(jv.at(indexFieldType->first));

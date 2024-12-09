@@ -127,9 +127,7 @@ public:
     GetLedgerEntryTypeStrList()
     {
         std::array<char const*, std::size(LEDGER_TYPES)> res{};
-        std::transform(std::begin(LEDGER_TYPES), std::end(LEDGER_TYPES), std::begin(res), [](auto const& item) {
-            return item.name;
-        });
+        std::ranges::transform(LEDGER_TYPES, std::begin(res), [](auto const& item) { return item.name; });
         return res;
     }
 
@@ -148,7 +146,7 @@ public:
         auto constexpr accountOwnedCount = std::count_if(std::begin(LEDGER_TYPES), std::end(LEDGER_TYPES), filter);
         std::array<char const*, accountOwnedCount> res{};
         auto it = std::begin(res);
-        std::for_each(std::begin(LEDGER_TYPES), std::end(LEDGER_TYPES), [&](auto const& item) {
+        std::ranges::for_each(LEDGER_TYPES, [&](auto const& item) {
             if (filter(item)) {
                 *it = item.name;
                 ++it;
@@ -172,7 +170,7 @@ public:
         auto constexpr deletionBlockersCount = std::count_if(std::begin(LEDGER_TYPES), std::end(LEDGER_TYPES), filter);
         std::array<ripple::LedgerEntryType, deletionBlockersCount> res{};
         auto it = std::begin(res);
-        std::for_each(std::begin(LEDGER_TYPES), std::end(LEDGER_TYPES), [&](auto const& item) {
+        std::ranges::for_each(LEDGER_TYPES, [&](auto const& item) {
             if (filter(item)) {
                 *it = item.type;
                 ++it;

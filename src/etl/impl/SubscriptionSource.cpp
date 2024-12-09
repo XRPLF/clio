@@ -353,7 +353,7 @@ SubscriptionSource::setValidatedRange(std::string range)
             pairs.emplace_back(min, max);
         }
     }
-    std::sort(pairs.begin(), pairs.end(), [](auto left, auto right) { return left.first < right.first; });
+    std::ranges::sort(pairs, [](auto left, auto right) { return left.first < right.first; });
 
     auto dataLock = validatedLedgersData_.lock();
     dataLock->validatedLedgers = std::move(pairs);

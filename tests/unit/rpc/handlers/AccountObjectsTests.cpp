@@ -84,96 +84,109 @@ generateTestValuesForParametersTest()
 {
     return std::vector<AccountObjectsParamTestCaseBundle>{
         AccountObjectsParamTestCaseBundle{
-            "MissingAccount", R"({})", "invalidParams", "Required field 'account' missing"
-        },
-        AccountObjectsParamTestCaseBundle{"AccountNotString", R"({"account":1})", "invalidParams", "accountNotString"},
-        AccountObjectsParamTestCaseBundle{"AccountInvalid", R"({"account":"xxx"})", "actMalformed", "accountMalformed"},
-        AccountObjectsParamTestCaseBundle{
-            "TypeNotString",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":1})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "MissingAccount",
+            .testJson = R"({})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Required field 'account' missing"
         },
         AccountObjectsParamTestCaseBundle{
-            "TypeInvalid",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":"wrong"})",
-            "invalidParams",
-            "Invalid field 'type'."
+            .testName = "AccountNotString",
+            .testJson = R"({"account":1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "accountNotString"
         },
         AccountObjectsParamTestCaseBundle{
-            "TypeNotAccountOwned",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":"amendments"})",
-            "invalidParams",
-            "Invalid field 'type'."
+            .testName = "AccountInvalid",
+            .testJson = R"({"account":"xxx"})",
+            .expectedError = "actMalformed",
+            .expectedErrorMessage = "accountMalformed"
         },
         AccountObjectsParamTestCaseBundle{
-            "LedgerHashInvalid",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})",
-            "invalidParams",
-            "ledger_hashMalformed"
+            .testName = "TypeNotString",
+            .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         AccountObjectsParamTestCaseBundle{
-            "LedgerHashNotString",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":1})",
-            "invalidParams",
-            "ledger_hashNotString"
+            .testName = "TypeInvalid",
+            .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":"wrong"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'type'."
         },
         AccountObjectsParamTestCaseBundle{
-            "LedgerIndexInvalid",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})",
-            "invalidParams",
-            "ledgerIndexMalformed"
+            .testName = "TypeNotAccountOwned",
+            .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "type":"amendments"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'type'."
         },
         AccountObjectsParamTestCaseBundle{
-            "LimitNotInt",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":"1"})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "LedgerHashInvalid",
+            .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":"1"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         AccountObjectsParamTestCaseBundle{
-            "LimitNagetive",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":-1})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "LedgerHashNotString",
+            .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_hash":1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashNotString"
         },
         AccountObjectsParamTestCaseBundle{
-            "LimitZero",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":0})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "LedgerIndexInvalid",
+            .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "ledger_index":"a"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
         AccountObjectsParamTestCaseBundle{
-            "MarkerNotString",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":9})",
-            "invalidParams",
-            "markerNotString"
+            .testName = "LimitNotInt",
+            .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":"1"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         AccountObjectsParamTestCaseBundle{
-            "MarkerInvalid",
-            R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":"xxxx"})",
-            "invalidParams",
-            "Malformed cursor."
+            .testName = "LimitNagetive",
+            .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":-1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         AccountObjectsParamTestCaseBundle{
-            "NFTMarkerInvalid",
-            fmt::format(
+            .testName = "LimitZero",
+            .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "limit":0})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        AccountObjectsParamTestCaseBundle{
+            .testName = "MarkerNotString",
+            .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":9})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "markerNotString"
+        },
+        AccountObjectsParamTestCaseBundle{
+            .testName = "MarkerInvalid",
+            .testJson = R"({"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":"xxxx"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Malformed cursor."
+        },
+        AccountObjectsParamTestCaseBundle{
+            .testName = "NFTMarkerInvalid",
+            .testJson = fmt::format(
                 R"({{"account":"rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "marker":"wronghex256,{}"}})",
                 std::numeric_limits<uint32_t>::max()
             ),
-            "invalidParams",
-            "Malformed cursor."
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Malformed cursor."
         },
         AccountObjectsParamTestCaseBundle{
-            "DeletionBlockersOnlyInvalidString",
-            R"({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "deletion_blockers_only": "wrong"})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "DeletionBlockersOnlyInvalidString",
+            .testJson = R"({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "deletion_blockers_only": "wrong"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
         AccountObjectsParamTestCaseBundle{
-            "DeletionBlockersOnlyInvalidNull",
-            R"({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "deletion_blockers_only": null})",
-            "invalidParams",
-            "Invalid parameters."
+            .testName = "DeletionBlockersOnlyInvalidNull",
+            .testJson = R"({"account": "rLEsXccBGNR3UPuPu2hUXPjziKC3qKSBun", "deletion_blockers_only": null})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
         },
     };
 }
@@ -983,9 +996,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitReturnMarker)
 
     auto current = ripple::keylet::nftpage_max(account).key;
     std::string first{INDEX1};
-    sort(first.begin(), first.end());
+    std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
-        std::next_permutation(first.begin(), first.end());
+        std::ranges::next_permutation(first);
         auto previous =
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =
@@ -1026,9 +1039,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTReachLimitNoMarker)
 
     auto current = ripple::keylet::nftpage_max(account).key;
     std::string first{INDEX1};
-    sort(first.begin(), first.end());
+    std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
-        std::next_permutation(first.begin(), first.end());
+        std::ranges::next_permutation(first);
         auto previous =
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =
@@ -1074,9 +1087,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTMarker)
     std::string first{INDEX1};
     auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
     auto const marker = current;
-    sort(first.begin(), first.end());
+    std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
-        std::next_permutation(first.begin(), first.end());
+        std::ranges::next_permutation(first);
         auto previous =
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =
@@ -1260,9 +1273,9 @@ TEST_F(RPCAccountObjectsHandlerTest, NFTLimitAdjust)
     std::string first{INDEX1};
     auto current = ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
     auto const marker = current;
-    sort(first.begin(), first.end());
+    std::ranges::sort(first);
     for (auto i = 0; i < 10; i++) {
-        std::next_permutation(first.begin(), first.end());
+        std::ranges::next_permutation(first);
         auto previous =
             ripple::keylet::nftpage(ripple::keylet::nftpage_min(account), ripple::uint256{first.c_str()}).key;
         auto const nftpage =

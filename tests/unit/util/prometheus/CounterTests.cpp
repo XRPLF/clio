@@ -139,7 +139,7 @@ TEST_F(CounterIntTests, multithreadAdd)
     });
     thread1.join();
     thread2.join();
-    EXPECT_EQ(counter.value(), numAdditions + numNumberAdditions * numberToAdd);
+    EXPECT_EQ(counter.value(), numAdditions + (numNumberAdditions * numberToAdd));
 }
 
 struct CounterDoubleTests : ::testing::Test {
@@ -178,5 +178,5 @@ TEST_F(CounterDoubleTests, multithreadAdd)
     });
     thread1.join();
     thread2.join();
-    EXPECT_NEAR(counter.value(), numAdditions + numNumberAdditions * numberToAdd, 1e-9);
+    EXPECT_NEAR(counter.value(), numAdditions + (numNumberAdditions * numberToAdd), 1e-9);
 }

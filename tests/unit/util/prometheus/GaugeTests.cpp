@@ -124,7 +124,8 @@ TEST_F(GaugeIntTests, multithreadAddAndSubstract)
     thread4.join();
     EXPECT_EQ(
         gauge.value(),
-        numAdditions + numNumberAdditions * numberToAdd - numSubstractions - numNumberSubstractions * numberToSubstract
+        numAdditions + (numNumberAdditions * numberToAdd) - numSubstractions -
+            (numNumberSubstractions * numberToSubstract)
     );
 }
 
@@ -197,7 +198,8 @@ TEST_F(GaugeDoubleTests, multithreadAddAndSubstract)
     thread4.join();
     EXPECT_NEAR(
         gauge.value(),
-        numAdditions + numNumberAdditions * numberToAdd - numSubstractions - numNumberSubstractions * numberToSubstract,
+        numAdditions + (numNumberAdditions * numberToAdd) - numSubstractions -
+            (numNumberSubstractions * numberToSubstract),
         1e-9
     );
 }

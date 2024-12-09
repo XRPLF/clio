@@ -125,12 +125,30 @@ public:
     {
         // start from 2024-06-25T12:23:10Z to 2024-06-25T12:23:50Z with step 2
         return std::vector<LedgerIndexTestsCaseBundle>{
-            {"LaterThanMaxLedger", R"({"date": "2024-06-25T12:23:55Z"})", RANGEMAX, "2024-06-25T12:23:50Z"},
-            {"GreaterThanMinLedger", R"({"date": "2024-06-25T12:23:11Z"})", RANGEMIN, "2024-06-25T12:23:10Z"},
-            {"IsMinLedger", R"({"date": "2024-06-25T12:23:10Z"})", RANGEMIN, "2024-06-25T12:23:10Z"},
-            {"IsMaxLedger", R"({"date": "2024-06-25T12:23:50Z"})", RANGEMAX, "2024-06-25T12:23:50Z"},
-            {"IsMidLedger", R"({"date": "2024-06-25T12:23:30Z"})", 20, "2024-06-25T12:23:30Z"},
-            {"BetweenLedgers", R"({"date": "2024-06-25T12:23:29Z"})", 19, "2024-06-25T12:23:28Z"}
+            {.testName = "LaterThanMaxLedger",
+             .json = R"({"date": "2024-06-25T12:23:55Z"})",
+             .expectedLedgerIndex = RANGEMAX,
+             .closeTimeIso = "2024-06-25T12:23:50Z"},
+            {.testName = "GreaterThanMinLedger",
+             .json = R"({"date": "2024-06-25T12:23:11Z"})",
+             .expectedLedgerIndex = RANGEMIN,
+             .closeTimeIso = "2024-06-25T12:23:10Z"},
+            {.testName = "IsMinLedger",
+             .json = R"({"date": "2024-06-25T12:23:10Z"})",
+             .expectedLedgerIndex = RANGEMIN,
+             .closeTimeIso = "2024-06-25T12:23:10Z"},
+            {.testName = "IsMaxLedger",
+             .json = R"({"date": "2024-06-25T12:23:50Z"})",
+             .expectedLedgerIndex = RANGEMAX,
+             .closeTimeIso = "2024-06-25T12:23:50Z"},
+            {.testName = "IsMidLedger",
+             .json = R"({"date": "2024-06-25T12:23:30Z"})",
+             .expectedLedgerIndex = 20,
+             .closeTimeIso = "2024-06-25T12:23:30Z"},
+            {.testName = "BetweenLedgers",
+             .json = R"({"date": "2024-06-25T12:23:29Z"})",
+             .expectedLedgerIndex = 19,
+             .closeTimeIso = "2024-06-25T12:23:28Z"}
         };
     }
 };
@@ -150,7 +168,7 @@ TEST_P(LedgerIndexTests, SearchFromLedgerRange)
     // start from 1719318190 , which is the unix time for 2024-06-25T12:23:10Z to 2024-06-25T12:23:50Z with
     // step 2
     for (uint32_t i = RANGEMIN; i <= RANGEMAX; i++) {
-        auto const ledgerHeader = CreateLedgerHeaderWithUnixTime(LEDGERHASH, i, 1719318190 + 2 * (i - RANGEMIN));
+        auto const ledgerHeader = CreateLedgerHeaderWithUnixTime(LEDGERHASH, i, 1719318190 + (2 * (i - RANGEMIN)));
         auto const exactNumberOfCalls = i == RANGEMIN ? Exactly(3) : Exactly(2);
         EXPECT_CALL(*backend, fetchLedgerBySequence(i, _))
             .Times(i == testBundle.expectedLedgerIndex ? exactNumberOfCalls : AtMost(1))

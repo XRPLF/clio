@@ -699,7 +699,7 @@ TEST_F(RPCTxTest, NFTCancelOffer)
 
         for (auto const& id : output.result->at("meta").at("nftoken_ids").as_array()) {
             auto const idStr = id.as_string();
-            auto const it = std::find(ids.begin(), ids.end(), idStr);
+            auto const it = std::find(ids.begin(), ids.end(), idStr);  // NOLINT(modernize-use-ranges)
             ASSERT_NE(it, ids.end()) << "Unexpected NFT ID: " << idStr;
             ids.erase(it);
         }
@@ -1083,7 +1083,7 @@ TEST_F(RPCTxTest, ViaLowercaseCTID)
     EXPECT_CALL(*rawETLPtr, getETLState).WillOnce(Return(etl::ETLState{.networkID = 2}));
 
     std::string ctid(CTID);
-    std::transform(ctid.begin(), ctid.end(), ctid.begin(), ::tolower);
+    std::ranges::transform(ctid, ctid.begin(), ::tolower);
 
     runSpawn([&, this](auto yield) {
         auto const handler = AnyHandler{TestTxHandler{backend, mockETLServicePtr}};

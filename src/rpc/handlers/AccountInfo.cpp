@@ -166,7 +166,7 @@ tag_invoke(boost::json::value_from_tag, boost::json::value& jv, AccountInfoHandl
 
     boost::json::object acctFlags;
     for (auto const& lsf : lsFlags)
-        acctFlags[lsf.first.data()] = output.accountData.isFlag(lsf.second);
+        acctFlags[lsf.first] = output.accountData.isFlag(lsf.second);
 
     jv.as_object()[JS(account_flags)] = std::move(acctFlags);
 

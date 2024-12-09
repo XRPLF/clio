@@ -78,41 +78,41 @@ ProductionHandlerProvider::ProductionHandlerProvider(
     Counters const& counters
 )
     : handlerMap_{
-          {"account_channels", {AccountChannelsHandler{backend}}},
-          {"account_currencies", {AccountCurrenciesHandler{backend}}},
-          {"account_info", {AccountInfoHandler{backend, amendmentCenter}}},
-          {"account_lines", {AccountLinesHandler{backend}}},
-          {"account_nfts", {AccountNFTsHandler{backend}}},
-          {"account_objects", {AccountObjectsHandler{backend}}},
-          {"account_offers", {AccountOffersHandler{backend}}},
-          {"account_tx", {AccountTxHandler{backend}}},
-          {"amm_info", {AMMInfoHandler{backend}}},
-          {"book_changes", {BookChangesHandler{backend}}},
-          {"book_offers", {BookOffersHandler{backend}}},
-          {"deposit_authorized", {DepositAuthorizedHandler{backend}}},
-          {"feature", {FeatureHandler{backend, amendmentCenter}}},
-          {"gateway_balances", {GatewayBalancesHandler{backend}}},
-          {"get_aggregate_price", {GetAggregatePriceHandler{backend}}},
-          {"ledger", {LedgerHandler{backend}}},
-          {"ledger_data", {LedgerDataHandler{backend}}},
-          {"ledger_entry", {LedgerEntryHandler{backend}}},
-          {"ledger_index", {LedgerIndexHandler{backend}, true}},  // clio only
-          {"ledger_range", {LedgerRangeHandler{backend}}},
-          {"mpt_holders", {MPTHoldersHandler{backend}, true}},       // clio only
-          {"nfts_by_issuer", {NFTsByIssuerHandler{backend}, true}},  // clio only
-          {"nft_history", {NFTHistoryHandler{backend}, true}},       // clio only
-          {"nft_buy_offers", {NFTBuyOffersHandler{backend}}},
-          {"nft_info", {NFTInfoHandler{backend}, true}},  // clio only
-          {"nft_sell_offers", {NFTSellOffersHandler{backend}}},
-          {"noripple_check", {NoRippleCheckHandler{backend}}},
-          {"ping", {PingHandler{}}},
-          {"random", {RandomHandler{}}},
-          {"server_info", {ServerInfoHandler{backend, subscriptionManager, balancer, etl, counters}}},
-          {"transaction_entry", {TransactionEntryHandler{backend}}},
-          {"tx", {TxHandler{backend, etl}}},
-          {"subscribe", {SubscribeHandler{backend, subscriptionManager}}},
-          {"unsubscribe", {UnsubscribeHandler{subscriptionManager}}},
-          {"version", {VersionHandler{config}}},
+          {"account_channels", {.handler = AccountChannelsHandler{backend}}},
+          {"account_currencies", {.handler = AccountCurrenciesHandler{backend}}},
+          {"account_info", {.handler = AccountInfoHandler{backend, amendmentCenter}}},
+          {"account_lines", {.handler = AccountLinesHandler{backend}}},
+          {"account_nfts", {.handler = AccountNFTsHandler{backend}}},
+          {"account_objects", {.handler = AccountObjectsHandler{backend}}},
+          {"account_offers", {.handler = AccountOffersHandler{backend}}},
+          {"account_tx", {.handler = AccountTxHandler{backend}}},
+          {"amm_info", {.handler = AMMInfoHandler{backend}}},
+          {"book_changes", {.handler = BookChangesHandler{backend}}},
+          {"book_offers", {.handler = BookOffersHandler{backend}}},
+          {"deposit_authorized", {.handler = DepositAuthorizedHandler{backend}}},
+          {"feature", {.handler = FeatureHandler{backend, amendmentCenter}}},
+          {"gateway_balances", {.handler = GatewayBalancesHandler{backend}}},
+          {"get_aggregate_price", {.handler = GetAggregatePriceHandler{backend}}},
+          {"ledger", {.handler = LedgerHandler{backend}}},
+          {"ledger_data", {.handler = LedgerDataHandler{backend}}},
+          {"ledger_entry", {.handler = LedgerEntryHandler{backend}}},
+          {"ledger_index", {.handler = LedgerIndexHandler{backend}, .isClioOnly = true}},  // clio only
+          {"ledger_range", {.handler = LedgerRangeHandler{backend}}},
+          {"mpt_holders", {.handler = MPTHoldersHandler{backend}, .isClioOnly = true}},       // clio only
+          {"nfts_by_issuer", {.handler = NFTsByIssuerHandler{backend}, .isClioOnly = true}},  // clio only
+          {"nft_history", {.handler = NFTHistoryHandler{backend}, .isClioOnly = true}},       // clio only
+          {"nft_buy_offers", {.handler = NFTBuyOffersHandler{backend}}},
+          {"nft_info", {.handler = NFTInfoHandler{backend}, .isClioOnly = true}},  // clio only
+          {"nft_sell_offers", {.handler = NFTSellOffersHandler{backend}}},
+          {"noripple_check", {.handler = NoRippleCheckHandler{backend}}},
+          {"ping", {.handler = PingHandler{}}},
+          {"random", {.handler = RandomHandler{}}},
+          {"server_info", {.handler = ServerInfoHandler{backend, subscriptionManager, balancer, etl, counters}}},
+          {"transaction_entry", {.handler = TransactionEntryHandler{backend}}},
+          {"tx", {.handler = TxHandler{backend, etl}}},
+          {"subscribe", {.handler = SubscribeHandler{backend, subscriptionManager}}},
+          {"unsubscribe", {.handler = UnsubscribeHandler{subscriptionManager}}},
+          {"version", {.handler = VersionHandler{config}}},
       }
 {
 }

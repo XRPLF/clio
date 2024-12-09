@@ -76,33 +76,80 @@ generateTestValuesForParametersTest()
 {
     return std::vector<LedgerDataParamTestCaseBundle>{
         LedgerDataParamTestCaseBundle{
-            "ledger_indexInvalid", R"({"ledger_index": "x"})", "invalidParams", "ledgerIndexMalformed"
+            .testName = "ledger_indexInvalid",
+            .testJson = R"({"ledger_index": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledgerIndexMalformed"
         },
         LedgerDataParamTestCaseBundle{
-            "ledger_hashInvalid", R"({"ledger_hash": "x"})", "invalidParams", "ledger_hashMalformed"
+            .testName = "ledger_hashInvalid",
+            .testJson = R"({"ledger_hash": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashMalformed"
         },
         LedgerDataParamTestCaseBundle{
-            "ledger_hashNotString", R"({"ledger_hash": 123})", "invalidParams", "ledger_hashNotString"
+            .testName = "ledger_hashNotString",
+            .testJson = R"({"ledger_hash": 123})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashNotString"
         },
-        LedgerDataParamTestCaseBundle{"binaryNotBool", R"({"binary": 123})", "invalidParams", "Invalid parameters."},
-        LedgerDataParamTestCaseBundle{"limitNotInt", R"({"limit": "xxx"})", "invalidParams", "Invalid parameters."},
-        LedgerDataParamTestCaseBundle{"limitNagetive", R"({"limit": -1})", "invalidParams", "Invalid parameters."},
-        LedgerDataParamTestCaseBundle{"limitZero", R"({"limit": 0})", "invalidParams", "Invalid parameters."},
-        LedgerDataParamTestCaseBundle{"markerInvalid", R"({"marker": "xxx"})", "invalidParams", "markerMalformed"},
         LedgerDataParamTestCaseBundle{
-            "markerOutOfOrder",
-            R"({
+            .testName = "binaryNotBool",
+            .testJson = R"({"binary": 123})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        LedgerDataParamTestCaseBundle{
+            .testName = "limitNotInt",
+            .testJson = R"({"limit": "xxx"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        LedgerDataParamTestCaseBundle{
+            .testName = "limitNagetive",
+            .testJson = R"({"limit": -1})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        LedgerDataParamTestCaseBundle{
+            .testName = "limitZero",
+            .testJson = R"({"limit": 0})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters."
+        },
+        LedgerDataParamTestCaseBundle{
+            .testName = "markerInvalid",
+            .testJson = R"({"marker": "xxx"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "markerMalformed"
+        },
+        LedgerDataParamTestCaseBundle{
+            .testName = "markerOutOfOrder",
+            .testJson = R"({
                 "marker": "4BC50C9B0D8515D3EAAE1E74B29A95804346C491EE1A95BF25E4AAB854A6A652",
                 "out_of_order": true
             })",
-            "invalidParams",
-            "outOfOrderMarkerNotInt"
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "outOfOrderMarkerNotInt"
         },
-        LedgerDataParamTestCaseBundle{"markerNotString", R"({"marker": 123})", "invalidParams", "markerNotString"},
         LedgerDataParamTestCaseBundle{
-            "typeNotString", R"({"type": 123})", "invalidParams", "Invalid field 'type', not string."
+            .testName = "markerNotString",
+            .testJson = R"({"marker": 123})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "markerNotString"
         },
-        LedgerDataParamTestCaseBundle{"typeNotValid", R"({"type": "xxx"})", "invalidParams", "Invalid field 'type'."},
+        LedgerDataParamTestCaseBundle{
+            .testName = "typeNotString",
+            .testJson = R"({"type": 123})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'type', not string."
+        },
+        LedgerDataParamTestCaseBundle{
+            .testName = "typeNotValid",
+            .testJson = R"({"type": "xxx"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid field 'type'."
+        },
     };
 }
 
@@ -561,7 +608,8 @@ TEST_F(RPCLedgerDataHandlerTest, DiffMarker)
     while ((limit--) != 0) {
         auto const line = CreateRippleStateLedgerObject("USD", ACCOUNT2, 10, ACCOUNT, 100, ACCOUNT2, 200, TXNID, 123);
         bbs.push_back(line.getSerializer().peekData());
-        los.emplace_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});  // NOLINT(modernize-use-emplace)
+        los.emplace_back(LedgerObject{.key = ripple::uint256{INDEX2}, .blob = Blob{}}
+        );  // NOLINT(modernize-use-emplace)
     }
     ON_CALL(*backend, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));
 

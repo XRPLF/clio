@@ -81,88 +81,88 @@ generateTestValuesForParametersTest()
 {
     return std::vector<LedgerParamTestCaseBundle>{
         {
-            "AccountsInvalidBool",
-            R"({"accounts": true})",
-            "notSupported",
-            "Not supported field 'accounts's value 'true'",
+            .testName = "AccountsInvalidBool",
+            .testJson = R"({"accounts": true})",
+            .expectedError = "notSupported",
+            .expectedErrorMessage = "Not supported field 'accounts's value 'true'",
         },
         {
-            "AccountsInvalidInt",
-            R"({"accounts": 123})",
-            "invalidParams",
-            "Invalid parameters.",
+            .testName = "AccountsInvalidInt",
+            .testJson = R"({"accounts": 123})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
         },
         {
-            "FullInvalidBool",
-            R"({"full": true})",
-            "notSupported",
-            "Not supported field 'full's value 'true'",
+            .testName = "FullInvalidBool",
+            .testJson = R"({"full": true})",
+            .expectedError = "notSupported",
+            .expectedErrorMessage = "Not supported field 'full's value 'true'",
         },
         {
-            "FullInvalidInt",
-            R"({"full": 123})",
-            "invalidParams",
-            "Invalid parameters.",
+            .testName = "FullInvalidInt",
+            .testJson = R"({"full": 123})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
         },
         {
-            "QueueExist",
-            R"({"queue": true})",
-            "notSupported",
-            "Not supported field 'queue's value 'true'",
+            .testName = "QueueExist",
+            .testJson = R"({"queue": true})",
+            .expectedError = "notSupported",
+            .expectedErrorMessage = "Not supported field 'queue's value 'true'",
         },
         {
-            "QueueNotBool",
-            R"({"queue": 123})",
-            "invalidParams",
-            "Invalid parameters.",
+            .testName = "QueueNotBool",
+            .testJson = R"({"queue": 123})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
         },
         {
-            "OwnerFundsNotBool",
-            R"({"owner_funds": 123})",
-            "invalidParams",
-            "Invalid parameters.",
+            .testName = "OwnerFundsNotBool",
+            .testJson = R"({"owner_funds": 123})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
         },
         {
-            "LedgerHashInvalid",
-            R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})",
-            "invalidParams",
-            "ledger_hashMalformed",
+            .testName = "LedgerHashInvalid",
+            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashMalformed",
         },
         {
-            "LedgerHashNotString",
-            R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})",
-            "invalidParams",
-            "ledger_hashNotString",
+            .testName = "LedgerHashNotString",
+            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_hash": 123})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledger_hashNotString",
         },
         {
-            "LedgerIndexNotInt",
-            R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})",
-            "invalidParams",
-            "ledgerIndexMalformed",
+            .testName = "LedgerIndexNotInt",
+            .testJson = R"({"account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn", "ledger_index": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "ledgerIndexMalformed",
         },
         {
-            "TransactionsNotBool",
-            R"({"transactions": "x"})",
-            "invalidParams",
-            "Invalid parameters.",
+            .testName = "TransactionsNotBool",
+            .testJson = R"({"transactions": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
         },
         {
-            "ExpandNotBool",
-            R"({"expand": "x"})",
-            "invalidParams",
-            "Invalid parameters.",
+            .testName = "ExpandNotBool",
+            .testJson = R"({"expand": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
         },
         {
-            "BinaryNotBool",
-            R"({"binary": "x"})",
-            "invalidParams",
-            "Invalid parameters.",
+            .testName = "BinaryNotBool",
+            .testJson = R"({"binary": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
         },
         {
-            "DiffNotBool",
-            R"({"diff": "x"})",
-            "invalidParams",
-            "Invalid parameters.",
+            .testName = "DiffNotBool",
+            .testJson = R"({"diff": "x"})",
+            .expectedError = "invalidParams",
+            .expectedErrorMessage = "Invalid parameters.",
         },
     };
 }
@@ -762,10 +762,11 @@ TEST_F(RPCLedgerHandlerTest, DiffNotBinary)
 
     EXPECT_CALL(*backend, fetchLedgerDiff).Times(1);
 
-    los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});  // NOLINT(modernize-use-emplace)
+    los.push_back(LedgerObject{.key = ripple::uint256{INDEX2}, .blob = Blob{}});  // NOLINT(modernize-use-emplace)
     los.push_back(LedgerObject{
-        ripple::uint256{INDEX1},
-        CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()
+        .key = ripple::uint256{INDEX1},
+        .blob =
+            CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()
     });
 
     ON_CALL(*backend, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));
@@ -805,10 +806,11 @@ TEST_F(RPCLedgerHandlerTest, DiffBinary)
 
     EXPECT_CALL(*backend, fetchLedgerDiff).Times(1);
 
-    los.push_back(LedgerObject{ripple::uint256{INDEX2}, Blob{}});  // NOLINT(modernize-use-emplace)
+    los.push_back(LedgerObject{.key = ripple::uint256{INDEX2}, .blob = Blob{}});  // NOLINT(modernize-use-emplace)
     los.push_back(LedgerObject{
-        ripple::uint256{INDEX1},
-        CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()
+        .key = ripple::uint256{INDEX1},
+        .blob =
+            CreateAccountRootObject(ACCOUNT, ripple::lsfGlobalFreeze, 1, 10, 2, INDEX1, 3).getSerializer().peekData()
     });
 
     ON_CALL(*backend, fetchLedgerDiff(RANGEMAX, _)).WillByDefault(Return(los));

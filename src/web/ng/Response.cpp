@@ -107,7 +107,9 @@ Response::message() const
     return std::visit(
         util::OverloadSet{
             [](http::response<http::string_body> const& response) -> std::string const& { return response.body(); },
-            [](std::string const& message) -> std::string const& { return message; },
+            [](std::string const& message) -> std::string const& {
+                return message;  // NOLINT(bugprone-return-const-ref-from-parameter)
+            },
         },
         data_
     );
