@@ -36,7 +36,6 @@
 #include <exception>
 #include <functional>
 #include <memory>
-#include <optional>
 #include <utility>
 
 namespace app {
@@ -59,9 +58,9 @@ public:
      * @brief Check if the connection is allowed to proceed.
      *
      * @param connection The connection to check.
-     * @return std::optional<web::ng::Response> An optional response if the connection is not allowed to proceed.
+     * @return A response if the connection is not allowed to proceed or void otherwise.
      */
-    std::optional<web::ng::Response>
+    std::expected<void, web::ng::Response>
     operator()(web::ng::Connection const& connection);
 };
 

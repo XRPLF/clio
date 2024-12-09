@@ -49,7 +49,7 @@ public:
      * @brief Check to perform for each new client connection. The check takes client ip as input and returns a Response
      * if the check failed. Response will be sent to the client and the connection will be closed.
      */
-    using OnConnectCheck = std::function<std::optional<Response>(Connection const&)>;
+    using OnConnectCheck = std::function<std::expected<void, Response>(Connection const&)>;
 
     /**
      * @brief Hook called when any connection disconnects

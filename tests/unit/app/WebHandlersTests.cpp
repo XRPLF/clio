@@ -71,7 +71,7 @@ TEST_F(OnConnectCheckTests, Ok)
 {
     EXPECT_CALL(dosGuardMock_, increment(ip_));
     EXPECT_CALL(dosGuardMock_, isOk(ip_)).WillOnce(testing::Return(true));
-    EXPECT_EQ(onConnectCheck_(connectionMock_), std::nullopt);
+    EXPECT_TRUE(onConnectCheck_(connectionMock_).has_value());
 }
 
 TEST_F(OnConnectCheckTests, RateLimited)
@@ -81,8 +81,8 @@ TEST_F(OnConnectCheckTests, RateLimited)
     EXPECT_CALL(connectionMock_, wasUpgraded).WillOnce(testing::Return(false));
 
     auto response = onConnectCheck_(connectionMock_);
-    ASSERT_TRUE(response.has_value());
-    auto const httpResponse = std::move(response).value().intoHttpResponse();
+    ASSERT_FALSE(response.has_value());
+    auto const httpResponse = std::move(response).error().intoHttpResponse();
     EXPECT_EQ(httpResponse.result(), boost::beast::http::status::too_many_requests);
     EXPECT_EQ(httpResponse.body(), "Too many requests");
 }

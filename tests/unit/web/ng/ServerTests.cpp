@@ -70,7 +70,7 @@ TEST_P(MakeServerTest, Make)
 {
     util::Config const config{boost::json::parse(GetParam().configJson)};
     auto const expectedServer =
-        make_Server(config, [](auto&&) -> std::optional<Response> { return {}; }, [](auto&&) {}, ioContext_);
+        make_Server(config, [](auto&&) -> std::expected<void, Response> { return {}; }, [](auto&&) {}, ioContext_);
     EXPECT_EQ(expectedServer.has_value(), GetParam().expectSuccess);
 }
 
@@ -161,7 +161,7 @@ struct ServerTest : SyncAsioContextTest {
         boost::json::object{{"server", boost::json::object{{"ip", "127.0.0.1"}, {"port", serverPort_}}}}
     };
 
-    Server::OnConnectCheck emptyOnConnectCheck_ = [](auto&&) -> std::optional<Response> { return {}; };
+    Server::OnConnectCheck emptyOnConnectCheck_ = [](auto&&) -> std::expected<void, Response> { return {}; };
 
     std::expected<Server, std::string> server_ = make_Server(config_, emptyOnConnectCheck_, [](auto&&) {}, ctx);
 
@@ -243,7 +243,7 @@ TEST_F(ServerHttpTest, OnConnectCheck)
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("0.0.0.0"), serverPort};
     util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
 
-    testing::StrictMock<testing::MockFunction<std::optional<Response>(Connection const&)>> onConnectCheck;
+    testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>> onConnectCheck;
 
     Server server{
         ctx,
@@ -262,11 +262,12 @@ TEST_F(ServerHttpTest, OnConnectCheck)
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
         boost::asio::steady_timer timer{yield.get_executor()};
 
-        EXPECT_CALL(onConnectCheck, Call).WillOnce([&timer](Connection const& connection) {
-            EXPECT_EQ(connection.ip(), "127.0.0.1");
-            timer.cancel();
-            return std::nullopt;
-        });
+        EXPECT_CALL(onConnectCheck, Call)
+            .WillOnce([&timer](Connection const& connection) -> std::expected<void, Response> {
+                EXPECT_EQ(connection.ip(), "127.0.0.1");
+                timer.cancel();
+                return {};
+            });
 
         auto maybeError =
             client.connect("127.0.0.1", std::to_string(serverPort), yield, std::chrono::milliseconds{100});
@@ -299,7 +300,7 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
     boost::asio::ip::tcp::endpoint const endpoint{boost::asio::ip::address_v4::from_string("0.0.0.0"), serverPort};
     util::TagDecoratorFactory const tagDecoratorFactory{util::Config{boost::json::value{}}};
 
-    testing::StrictMock<testing::MockFunction<std::optional<Response>(Connection const&)>> onConnectCheck;
+    testing::StrictMock<testing::MockFunction<std::expected<void, Response>(Connection const&)>> onConnectCheck;
 
     Server server{
         ctx,
@@ -317,7 +318,9 @@ TEST_F(ServerHttpTest, OnConnectCheckFailed)
 
     EXPECT_CALL(onConnectCheck, Call).WillOnce([](Connection const& connection) {
         EXPECT_EQ(connection.ip(), "127.0.0.1");
-        return Response{http::status::too_many_requests, boost::json::object{{"error", "some error"}}, connection};
+        return std::unexpected{
+            Response{http::status::too_many_requests, boost::json::object{{"error", "some error"}}, connection}
+        };
     });
 
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
@@ -363,7 +366,7 @@ TEST_F(ServerHttpTest, OnDisconnectHook)
         std::nullopt,
         tagDecoratorFactory,
         std::nullopt,
-        [](auto&&) { return std::nullopt; },
+        emptyOnConnectCheck_,
         OnDisconnectHookMock.AsStdFunction()
     };
 

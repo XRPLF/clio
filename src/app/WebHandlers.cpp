@@ -41,12 +41,14 @@ OnConnectCheck::OnConnectCheck(web::dosguard::DOSGuardInterface& dosguard) : dos
 {
 }
 
-std::optional<web::ng::Response>
+std::expected<void, web::ng::Response>
 OnConnectCheck::operator()(web::ng::Connection const& connection)
 {
     dosguard_.get().increment(connection.ip());
     if (not dosguard_.get().isOk(connection.ip())) {
-        return web::ng::Response{boost::beast::http::status::too_many_requests, "Too many requests", connection};
+        return std::unexpected{
+            web::ng::Response{boost::beast::http::status::too_many_requests, "Too many requests", connection}
+        };
     }
 
     return {};

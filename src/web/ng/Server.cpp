@@ -155,9 +155,9 @@ makeConnection(
         );
     }
 
-    auto const checkFailed = onConnectCheck(*connection);
-    if (checkFailed) {
-        connection->send(*checkFailed, yield);
+    auto expectedSuccess = onConnectCheck(*connection);
+    if (not expectedSuccess.has_value()) {
+        connection->send(std::move(expectedSuccess).error(), yield);
         connection->close(yield);
         return std::unexpected{std::nullopt};
     }
