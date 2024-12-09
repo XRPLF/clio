@@ -46,7 +46,8 @@ struct ResponseDeathTest : testing::Test {};
 
 TEST_F(ResponseDeathTest, intoHttpResponseWithoutHttpData)
 {
-    Request const request{"some messsage", Request::HttpHeaders{}};
+    Request::HttpHeaders const headers{};
+    Request const request{"some message", headers};
     Response response{boost::beast::http::status::ok, "message", request};
     EXPECT_DEATH(std::move(response).intoHttpResponse(), "");
 }
@@ -61,6 +62,7 @@ TEST_F(ResponseDeathTest, asConstBufferWithHttpData)
 struct ResponseTest : testing::Test {
     int const httpVersion_ = 11;
     http::status const responseStatus_ = http::status::ok;
+    Request::HttpHeaders const headers_;
 };
 
 TEST_F(ResponseTest, intoHttpResponse)
@@ -105,7 +107,7 @@ TEST_F(ResponseTest, intoHttpResponseJson)
 
 TEST_F(ResponseTest, asConstBuffer)
 {
-    Request const request("some request", Request::HttpHeaders{});
+    Request const request("some request", headers_);
     std::string const responseMessage = "response message";
     Response const response{responseStatus_, responseMessage, request};
 
@@ -118,7 +120,7 @@ TEST_F(ResponseTest, asConstBuffer)
 
 TEST_F(ResponseTest, asConstBufferJson)
 {
-    Request const request("some request", Request::HttpHeaders{});
+    Request const request("some request", headers_);
     boost::json::object const responseMessage{{"key", "value"}};
     Response const response{responseStatus_, responseMessage, request};
 
@@ -163,7 +165,7 @@ TEST_F(ResponseTest, createFromJsonAndConnection)
     EXPECT_EQ(it->value(), "application/json");
 }
 
-TEST_F(ResponseTest, setMessageString)
+TEST_F(ResponseTest, setMessageString_HttpResponse)
 {
     Request const request{http::request<http::string_body>{http::verb::post, "/", httpVersion_, "some request"}};
     Response response{boost::beast::http::status::ok, "message", request};
@@ -178,7 +180,18 @@ TEST_F(ResponseTest, setMessageString)
     EXPECT_EQ(it->value(), "text/html");
 }
 
-TEST_F(ResponseTest, setMessageJson)
+TEST_F(ResponseTest, setMessageString_WsResponse)
+{
+    Request const request{"some request", headers_};
+    Response response{boost::beast::http::status::ok, "message", request};
+
+    std::string const newMessage = "new message";
+    response.setMessage(newMessage);
+
+    EXPECT_EQ(response.message(), newMessage);
+}
+
+TEST_F(ResponseTest, setMessageJson_HttpResponse)
 {
     Request const request{http::request<http::string_body>{http::verb::post, "/", httpVersion_, "some request"}};
     Response response{boost::beast::http::status::ok, "message", request};
@@ -190,4 +203,15 @@ TEST_F(ResponseTest, setMessageJson)
     auto it = httpResponse.find(http::field::content_type);
     ASSERT_NE(it, httpResponse.end());
     EXPECT_EQ(it->value(), "application/json");
+}
+
+TEST_F(ResponseTest, setMessageJson_WsResponse)
+{
+    Request const request{"some request", headers_};
+    Response response{boost::beast::http::status::ok, "message", request};
+
+    boost::json::object const newMessage{{"key", "value"}};
+    response.setMessage(newMessage);
+
+    EXPECT_EQ(response.message(), boost::json::serialize(newMessage));
 }

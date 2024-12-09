@@ -474,7 +474,8 @@ TEST_F(ServerTest, WsRequestResponse)
 {
     WebSocketAsyncClient client{ctx};
 
-    Response const response{http::status::ok, "some response", Request{requestMessage_, Request::HttpHeaders{}}};
+    Request::HttpHeaders const headers{};
+    Response const response{http::status::ok, "some response", Request{requestMessage_, headers}};
 
     boost::asio::spawn(ctx, [&](boost::asio::yield_context yield) {
         auto maybeError =

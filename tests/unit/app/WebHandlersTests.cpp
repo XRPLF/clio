@@ -187,7 +187,8 @@ TEST_F(RequestHandlerTest, DosguardRateLimited_Http)
 TEST_F(RequestHandlerTest, DosguardRateLimited_Ws)
 {
     auto const requestMessage = R"json({"some": "request", "id": "some id"})json";
-    web::ng::Request const request{requestMessage, web::ng::Request::HttpHeaders{}};
+    web::ng::Request::HttpHeaders const headers{};
+    web::ng::Request const request{requestMessage, headers};
 
     EXPECT_CALL(dosGuardMock_, request(ip_)).WillOnce(testing::Return(false));
 
@@ -206,7 +207,8 @@ TEST_F(RequestHandlerTest, DosguardRateLimited_Ws)
 TEST_F(RequestHandlerTest, DosguardRateLimited_Ws_ErrorParsing)
 {
     auto const requestMessage = R"json(some request "id": "some id")json";
-    web::ng::Request const request{requestMessage, web::ng::Request::HttpHeaders{}};
+    web::ng::Request::HttpHeaders const headers{};
+    web::ng::Request const request{requestMessage, headers};
 
     EXPECT_CALL(dosGuardMock_, request(ip_)).WillOnce(testing::Return(false));
 
