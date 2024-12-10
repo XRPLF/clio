@@ -17,10 +17,10 @@
 */
 //==============================================================================
 
-#include "migration/MigrationManagerInterface.hpp"
-#include "migration/MigratorsRegister.hpp"
+#include "migration/MigratiorStatus.hpp"
 #include "migration/TestMigrators.hpp"
-#include "migration/cassandra/CassandraMigrationManager.hpp"
+#include "migration/impl/MigrationManagerBase.hpp"
+#include "migration/impl/MigratorsRegister.hpp"
 #include "util/MockMigrationBackend.hpp"
 #include "util/MockMigrationBackendFixture.hpp"
 #include "util/MockPrometheus.hpp"
@@ -33,20 +33,18 @@
 #include <memory>
 #include <string>
 #include <tuple>
-#include <unordered_set>
 
 using TestMigratorRegister =
-    migration::MigratorsRegister<MockMigrationBackend, SimpleTestMigrator, RollbackableTestMigrator>;
+    migration::impl::MigratorsRegister<MockMigrationBackend, SimpleTestMigrator, SimpleTestMigrator2>;
 
-using TestCassandraMigrationManager = migration::cassandra::CassandraMigrationManagerBase<TestMigratorRegister>;
+using TestCassandraMigrationManager = migration::impl::MigrationManagerBase<TestMigratorRegister>;
 
-struct CassandraMigrationManagerTest : public util::prometheus::WithMockPrometheus,
-                                       public MockMigrationBackendTestStrict {
+struct MigrationManagerBaseTest : public util::prometheus::WithMockPrometheus, public MockMigrationBackendTestStrict {
     util::Config cfg;
 
     std::shared_ptr<TestCassandraMigrationManager> migrationManager;
 
-    CassandraMigrationManagerTest()
+    MigrationManagerBaseTest()
     {
         auto mockBackendPtr = backend.operator std::shared_ptr<MockMigrationBackend>();
         TestMigratorRegister migratorRegister(mockBackendPtr);
@@ -54,10 +52,11 @@ struct CassandraMigrationManagerTest : public util::prometheus::WithMockPromethe
     }
 };
 
-TEST_F(CassandraMigrationManagerTest, AllStatus)
+TEST_F(MigrationManagerBaseTest, AllStatus)
 {
-    EXPECT_CALL(*backend, fetchMigratedFeatures(testing::_))
-        .WillOnce(testing::Return(std::unordered_set<std::string>{"SimpleTestMigrator"}));
+    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
+    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
+        .WillOnce(testing::Return("NotMigrated"));
     auto const status = migrationManager->allMigratorsStatus();
     EXPECT_EQ(status.size(), 2);
     EXPECT_TRUE(
@@ -67,40 +66,31 @@ TEST_F(CassandraMigrationManagerTest, AllStatus)
     );
     EXPECT_TRUE(
         std::find(
-            status.begin(),
-            status.end(),
-            std::make_tuple("RollbackableTestMigrator", migration::MigratorStatus::NotMigrated)
+            status.begin(), status.end(), std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
         ) != status.end()
     );
 }
 
-TEST_F(CassandraMigrationManagerTest, AllNames)
+TEST_F(MigrationManagerBaseTest, AllNames)
 {
     auto const names = migrationManager->allMigratorsNames();
     EXPECT_EQ(names.size(), 2);
     EXPECT_EQ(names[0], "SimpleTestMigrator");
-    EXPECT_EQ(names[1], "RollbackableTestMigrator");
+    EXPECT_EQ(names[1], "SimpleTestMigrator2");
 }
 
-TEST_F(CassandraMigrationManagerTest, RunMigration)
+TEST_F(MigrationManagerBaseTest, RunMigration)
 {
-    EXPECT_CALL(*backend, writeMigratedMigrator("SimpleTestMigrator")).Times(1);
+    EXPECT_CALL(*backend, writeMigratorStatus("SimpleTestMigrator", "Migrated")).Times(1);
     migrationManager->runMigration("SimpleTestMigrator");
 }
 
-TEST_F(CassandraMigrationManagerTest, runRollback)
+TEST_F(MigrationManagerBaseTest, getMigratorStatusByName)
 {
-    EXPECT_CALL(*backend, removeMigratedMigrator("SimpleTestMigrator")).Times(1);
-    migrationManager->runRollback("SimpleTestMigrator");
-}
+    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
+    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
+        .WillOnce(testing::Return("NotMigrated"));
 
-TEST_F(CassandraMigrationManagerTest, getMigratorStatusByName)
-{
-    EXPECT_CALL(*backend, fetchMigratedFeatures(testing::_))
-        .Times(2)
-        .WillRepeatedly(testing::Return(std::unordered_set<std::string>{"SimpleTestMigrator"}));
     EXPECT_EQ(migrationManager->getMigratorStatusByName("SimpleTestMigrator"), migration::MigratorStatus::Migrated);
-    EXPECT_EQ(
-        migrationManager->getMigratorStatusByName("RollbackableTestMigrator"), migration::MigratorStatus::NotMigrated
-    );
+    EXPECT_EQ(migrationManager->getMigratorStatusByName("SimpleTestMigrator2"), migration::MigratorStatus::NotMigrated);
 }

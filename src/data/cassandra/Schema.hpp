@@ -274,12 +274,12 @@ public:
             R"(
            CREATE TABLE IF NOT EXISTS {}
                   ( 
-                    status TEXT,
-                    feature_name TEXT,
-                    PRIMARY KEY (status, feature_name)
+                   migrator_name TEXT,
+                          status TEXT,
+                         PRIMARY KEY (migrator_name)
                   ) 
             )",
-            qualifiedTableName(settingsProvider_.get(), "migrated_features")
+            qualifiedTableName(settingsProvider_.get(), "migrator_status")
         ));
 
         return statements;
@@ -475,6 +475,17 @@ public:
                  WHERE is_latest = false
                 )",
                 qualifiedTableName(settingsProvider_.get(), "ledger_range")
+            ));
+        }();
+
+        PreparedStatement insertMigratorStatus = [this]() {
+            return handle_.get().prepare(fmt::format(
+                R"(
+                INSERT INTO {}
+                       (migrator_name, status)
+                VALUES (?, ?)
+                )",
+                qualifiedTableName(settingsProvider_.get(), "migrator_status")
             ));
         }();
 
@@ -781,14 +792,14 @@ public:
             ));
         }();
 
-        PreparedStatement selectMigratedFeatures = [this]() {
+        PreparedStatement selectMigratorStatus = [this]() {
             return handle_.get().prepare(fmt::format(
                 R"(
-                SELECT feature_name
+                SELECT status
                   FROM {}
-                WHERE status = 'migrated'
+                 WHERE migrator_name = ?
                 )",
-                qualifiedTableName(settingsProvider_.get(), "migrated_features")
+                qualifiedTableName(settingsProvider_.get(), "migrator_status")
             ));
         }();
     };

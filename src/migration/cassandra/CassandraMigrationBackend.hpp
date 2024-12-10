@@ -22,8 +22,9 @@
 #include "data/CassandraBackend.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
 #include "data/cassandra/Types.hpp"
-#include "migration/cassandra/CassandraMigrationSchema.hpp"
-#include "migration/cassandra/Spec.hpp"
+#include "migration/MigratiorStatus.hpp"
+#include "migration/cassandra/impl/CassandraMigrationSchema.hpp"
+#include "migration/cassandra/impl/Spec.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -41,7 +42,7 @@ namespace migration::cassandra {
 class CassandraMigrationBackend : public data::cassandra::CassandraBackend {
     util::Logger log_{"Migration"};
     data::cassandra::SettingsProvider settingsProvider_;
-    CassandraMigrationSchema migrationSchema_;
+    impl::CassandraMigrationSchema migrationSchema_;
 
 public:
     /**
@@ -65,7 +66,7 @@ public:
      *@param callback The callback to call for each row
      *@param yield The boost asio yield context
      */
-    template <TableSpec TableDesc>
+    template <impl::TableSpec TableDesc>
     void
     migrateInTokenRange(
         std::int64_t const& start,
@@ -75,7 +76,7 @@ public:
     )
     {
         LOG(log_.debug()) << "Travsering token range: " << start << " - " << end
-                          << "- table: " << TableDesc::TABLE_NAME;
+                          << " ; table: " << TableDesc::TABLE_NAME;
         // for each table we only have one prepared statement
         static auto statementPrepared =
             migrationSchema_.getPreparedFullScanStatement(handle_, TableDesc::TABLE_NAME, TableDesc::PARTITION_KEY);
@@ -85,8 +86,8 @@ public:
         auto const res = this->executor_.read(yield, statement);
         auto const& results = res.value();
         if (not results.hasRows()) {
-            LOG(log_.debug()) << "No rows returned  - table: " << TableDesc::TABLE_NAME << " - range: " << start
-                              << " - " << end;
+            LOG(log_.debug()) << "No rows returned  - table: " << TableDesc::TABLE_NAME << " range: " << start << " - "
+                              << end;
             return;
         }
 
@@ -96,32 +97,6 @@ public:
              )) {
             callback(row);
         }
-    }
-
-    /**
-     *@brief Record the migration status of a migrator in the database
-     *
-     *@param migratorName The name of the migrator
-     */
-    void
-    writeMigratedMigrator(std::string const& migratorName)
-    {
-        auto const& preparedStatement = migrationSchema_.getPreparedInsertMigratedMigrator(handle_);
-        this->executor_.writeSync(
-            preparedStatement, data::cassandra::Text("migrated"), data::cassandra::Text{migratorName}
-        );
-    }
-
-    /**
-     *@brief Remove the migration status of a migrator from the database
-     *
-     *@param migratorName The name of the migrator
-     */
-    void
-    removeMigratedMigrator(std::string const& migratorName)
-    {
-        auto const& preparedStatement = migrationSchema_.getPreparedRemoveMigratedMigrator(handle_);
-        this->executor_.writeSync(preparedStatement, data::cassandra::Text{migratorName});
     }
 };
 }  // namespace migration::cassandra

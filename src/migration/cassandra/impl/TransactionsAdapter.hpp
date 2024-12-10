@@ -20,7 +20,7 @@
 #pragma once
 
 #include "migration/cassandra/CassandraMigrationBackend.hpp"
-#include "migration/cassandra/FullTableScannerAdapterBase.hpp"
+#include "migration/cassandra/impl/FullTableScannerAdapterBase.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <xrpl/basics/Blob.h>
@@ -34,7 +34,7 @@
 #include <tuple>
 #include <utility>
 
-namespace migration::cassandra {
+namespace migration::cassandra::impl {
 
 /**
  * @brief The description of the transactions table. It has to be a TableSpec.
@@ -50,7 +50,7 @@ struct TableTransactionsDesc {
  * @brief The adapter for the transactions table. This class is responsible for reading the transactions from the
  * FullTableScanner and converting the blobs to the STTx and TxMeta.
  */
-class TransactionsAdapter : public FullTableScannerAdapterBase<TableTransactionsDesc> {
+class TransactionsAdapter : public impl::FullTableScannerAdapterBase<TableTransactionsDesc> {
 public:
     using OnTransactionRead = std::function<void(ripple::STTx, ripple::TxMeta)>;
 
@@ -77,4 +77,4 @@ private:
     OnTransactionRead onTransactionRead_;
 };
 
-}  // namespace migration::cassandra
+}  // namespace migration::cassandra::impl

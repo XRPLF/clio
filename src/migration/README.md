@@ -21,7 +21,7 @@ This command returns the current migration status of each migrator. The example 
 
     
     Current Migration Status:
-    Migrator: ExampleMigrator - not migrated
+    Migrator: ExampleMigrator - Feature v1, Clio v3 - not migrated
     
 
 ### To start a migration:
@@ -30,33 +30,25 @@ This command returns the current migration status of each migrator. The example 
     ./clio_server --migrate ExampleMigrator  ~/config/migrator.json
     
     
-Migration will run if the migrator has not been migrated. The migrator will be marked as migrated after the migration is completed. User can not re-run the migration for the same migrator.
-
-### To rollback a migration:
-    
-    
-    ./clio_server --migrate_rollback ExampleMigrator  ~/config/migrator.json
-    
-    
-> **Note** Some migrators are **not** reversible, the rollback command will only reset the migration status. User can re-run the migration command after rollback.
+Migration will run if the migrator has not been migrated. The migrator will be marked as migrated after the migration is completed.
 
 ## How to write a migrator
 
 > **Note** If you'd like to add new index table in Clio and old historical data needs to be migrated into new table, you'd need to write a migrator.
 
-A migrator either satisfies the `MigratorSpec`(Spec.hpp) concept or `RollbackableMigratorSpec`(Spec.hpp) concept.
+A migrator satisfies the `MigratorSpec`(impl/Spec.hpp) concept.
 
 It contains:
 
--  A `name` which will be used to identify the migrator. User will refer this migrator in command-line tool by this name. The name needs to be different with other migrators, otherwise a compiler error will be raised.
+-  A `name` which will be used to identify the migrator. User will refer this migrator in command-line tool by this name. The name needs to be different with other migrators, otherwise a compilation error will be raised.
+
+-  A `description` which is the detail information of the migrator.
 
 - A static function `runMigration`, it will be called when user run `--migrate name`. It accepts two parameters: backend, which provides the DB operations interface, and cfg, which provides migration-related configuration. Each migrator can have its own configuration under `.migration` session.
 
 - A type name alias `Backend` which specifies the backend type it supports.
 
 > **Note** Each migrator is designed to work with a specific database.
-
-- If a migrator supports rollback, it can implement static function `runRollback`, which will be called when user call `--migrate_rollback name`. 
 
 - Register your migrator in MigrationManager. Currently we only support Cassandra/ScyllaDB.  Migrator needs to be registered in `CassandraSupportedMigrators`.
 
@@ -91,7 +83,7 @@ We have some example migrators under `tests/integration/migration/cassandra` fol
     This migrator drops `diff` table. 
 - ExampleLedgerMigrator
 
-    This migrator shows how to migrate data when we don't need to do full table scan. This migrator creates an index table `ledger_example` which maintains the map of ledger sequence and its account hash. The rollback for this migration is dropping the new table.
+    This migrator shows how to migrate data when we don't need to do full table scan. This migrator creates an index table `ledger_example` which maintains the map of ledger sequence and its account hash. 
 - ExampleObjectsMigrator
 
     This migrator shows how to migrate ledger states related data. It uses `ObjectsScanner` to proceed the full scan in parallel. It counts the number of ACCOUNT_ROOT.

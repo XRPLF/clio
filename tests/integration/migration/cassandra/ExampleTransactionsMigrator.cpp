@@ -20,8 +20,8 @@
 #include "migration/cassandra/ExampleTransactionsMigrator.hpp"
 
 #include "data/DBHelpers.hpp"
-#include "migration/cassandra/TransactionsAdapter.hpp"
-#include "migration/cassandra/Types.hpp"
+#include "migration/cassandra/impl/TransactionsAdapter.hpp"
+#include "migration/cassandra/impl/Types.hpp"
 #include "util/config/Config.hpp"
 
 #include <xrpl/basics/base_uint.h>
@@ -45,10 +45,10 @@ ExampleTransactionsMigrator::runMigration(std::shared_ptr<Backend> const& backen
 
     std::unordered_set<std::string> hashSet;
     std::mutex mtx;  // protect hashSet
-    migration::cassandra::TransactionsScanner scaner(
+    migration::cassandra::impl::TransactionsScanner scaner(
         ctxFullScanThreads,
         jobsFullScan,
-        migration::cassandra::TransactionsAdapter(
+        migration::cassandra::impl::TransactionsAdapter(
             backend,
             [&](ripple::STTx const& tx, ripple::TxMeta const&) {
                 {
@@ -63,10 +63,4 @@ ExampleTransactionsMigrator::runMigration(std::shared_ptr<Backend> const& backen
     );
     scaner.wait();
     count = hashSet.size();
-}
-
-void
-ExampleTransactionsMigrator::runRollback(std::shared_ptr<Backend> const& backend)
-{
-    backend->dropTxIndexExampleTable();
 }

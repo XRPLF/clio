@@ -31,12 +31,11 @@
  */
 struct ExampleTransactionsMigrator {
     static constexpr char const* name = "ExampleTransactionsMigrator";
+    static constexpr char const* description = "The migrator for transactions table";
+
     using Backend = CassandraMigrationTestBackend;
     static std::uint64_t count;
 
     static void
     runMigration(std::shared_ptr<Backend> const& backend, util::Config const& config);
-
-    static void
-    runRollback(std::shared_ptr<Backend> const& backend);
 };

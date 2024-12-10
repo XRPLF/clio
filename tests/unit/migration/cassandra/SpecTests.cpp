@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2023, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,19 +17,24 @@
 */
 //==============================================================================
 
-#pragma once
+#include "migration/cassandra/impl/Spec.hpp"
 
-#include <xrpl/basics/base_uint.h>
-#include <xrpl/protocol/LedgerHeader.h>
-#include <xrpl/protocol/Protocol.h>
+#include <gtest/gtest.h>
 
-#include <string>
+#include <cstdint>
+#include <tuple>
 
-std::string
-hexStringToBinaryString(std::string const& hex);
+namespace {
+class Empty {};
 
-ripple::uint256
-binaryStringToUint256(std::string const& bin);
-
-std::string
-ledgerHeaderToBinaryString(ripple::LedgerHeader const& info);
+struct SimpleTestTable {
+    using Row = std::tuple<std::uint32_t, std::uint32_t>;
+    static constexpr char const* PARTITION_KEY = "key";
+    static constexpr char const* TABLE_NAME = "test";
+};
+}  // namespace
+TEST(MigrationSpec, TableSpec)
+{
+    static_assert(!migration::cassandra::impl::TableSpec<Empty>);
+    static_assert(migration::cassandra::impl::TableSpec<SimpleTestTable>);
+}

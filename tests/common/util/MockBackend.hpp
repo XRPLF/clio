@@ -34,7 +34,6 @@
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 using namespace data;
@@ -177,9 +176,9 @@ struct MockBackend : public BackendInterface {
     );
 
     MOCK_METHOD(
-        std::optional<std::unordered_set<std::string>>,
-        fetchMigratedFeatures,
-        (boost::asio::yield_context),
+        std::optional<std::string>,
+        fetchMigratorStatus,
+        (std::string const&, boost::asio::yield_context),
         (const, override)
     );
 
@@ -214,7 +213,7 @@ struct MockBackend : public BackendInterface {
 
     MOCK_METHOD(bool, doFinishWrites, (), (override));
 
-    MOCK_METHOD(void, writeMPTHolders, ((std::vector<MPTHolderData> const&)), (override));
+    MOCK_METHOD(void, writeMPTHolders, (std::vector<MPTHolderData> const&), (override));
 
     MOCK_METHOD(
         MPTHoldersAndCursor,
@@ -226,4 +225,6 @@ struct MockBackend : public BackendInterface {
          boost::asio::yield_context),
         (const, override)
     );
+
+    MOCK_METHOD(void, writeMigratorStatus, (std::string const&, std::string const&), (override));
 };

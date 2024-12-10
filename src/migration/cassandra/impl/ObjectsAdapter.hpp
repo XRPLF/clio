@@ -21,7 +21,7 @@
 
 #include "data/Types.hpp"
 #include "migration/cassandra/CassandraMigrationBackend.hpp"
-#include "migration/cassandra/FullTableScannerAdapterBase.hpp"
+#include "migration/cassandra/impl/FullTableScannerAdapterBase.hpp"
 
 #include <boost/asio/spawn.hpp>
 #include <xrpl/basics/base_uint.h>
@@ -35,7 +35,7 @@
 #include <tuple>
 #include <utility>
 
-namespace migration::cassandra {
+namespace migration::cassandra::impl {
 
 /**
  * @brief The description of the objects table. It has to be a TableSpec.
@@ -50,7 +50,7 @@ struct TableObjectsDesc {
  * @brief The adapter for the objects table. This class is responsible for reading the objects from the
  * FullTableScanner and converting the blobs to the STObject.
  */
-class ObjectsAdapter : public FullTableScannerAdapterBase<TableObjectsDesc> {
+class ObjectsAdapter : public impl::FullTableScannerAdapterBase<TableObjectsDesc> {
 public:
     using OnStateRead = std::function<void(std::uint32_t, std::optional<ripple::SLE>)>;
 
@@ -77,4 +77,4 @@ private:
     OnStateRead onStateRead_;
 };
 
-}  // namespace migration::cassandra
+}  // namespace migration::cassandra::impl

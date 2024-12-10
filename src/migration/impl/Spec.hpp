@@ -27,7 +27,7 @@
 #include <memory>
 #include <string>
 
-namespace migration {
+namespace migration::impl {
 
 /**
  * @brief The migrator specification concept
@@ -37,6 +37,9 @@ concept MigratorSpec = requires(std::shared_ptr<Backend> const& backend, util::C
     // Check that 'name' exists and is a string
     { T::name } -> std::convertible_to<std::string>;
 
+    // Check that 'description' exists and is a string
+    { T::description } -> std::convertible_to<std::string>;
+
     // Check that the migrator specifies the backend type it supports
     typename T::Backend;
 
@@ -45,19 +48,9 @@ concept MigratorSpec = requires(std::shared_ptr<Backend> const& backend, util::C
 };
 
 /**
- * @brief The rollbackable migrator specification concept,
- */
-template <typename T, typename Backend>
-concept RollbackableMigratorSpec =
-    MigratorSpec<T, Backend> && requires(std::shared_ptr<Backend> const& backend, util::Config const& cfg) {
-        // Check that 'runRollback' exists and is callable
-        { T::runRollback(backend) } -> std::same_as<void>;
-    };
-
-/**
  * @brief used by variadic template to check all migrators are MigratorSpec
  */
 template <typename... Types>
 concept AllMigratorSpec = (MigratorSpec<Types, typename Types::Backend> && ...);
 
-}  // namespace migration
+}  // namespace migration::impl

@@ -26,16 +26,14 @@
 
 /**
  * @brief Example migrator for dropping the table. In this example, our migrator will drop the table. The table removal
- * is not reversible. So we log the error in rollback.
+ * is not reversible.
  */
 struct ExampleDropTableMigrator {
     using Backend = CassandraMigrationTestBackend;
 
     static constexpr char const* name = "ExampleDropTableMigrator";
+    static constexpr char const* description = "The migrator for dropping the table";
 
     static void
     runMigration(std::shared_ptr<Backend> const& backend, util::Config const& config);
-
-    static void
-    runRollback(std::shared_ptr<Backend> const& backend);
 };

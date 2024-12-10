@@ -19,13 +19,13 @@
 
 #pragma once
 
-#include "migration/cassandra/FullTableScanner.hpp"
-#include "migration/cassandra/ObjectsAdapter.hpp"
-#include "migration/cassandra/TransactionsAdapter.hpp"
+#include "migration/cassandra/impl/FullTableScanner.hpp"
+#include "migration/cassandra/impl/ObjectsAdapter.hpp"
+#include "migration/cassandra/impl/TransactionsAdapter.hpp"
 
-namespace migration::cassandra {
+namespace migration::cassandra::impl {
 
-using ObjectsScanner = FullTableScanner<ObjectsAdapter>;
-using TransactionsScanner = FullTableScanner<TransactionsAdapter>;
+using ObjectsScanner = impl::FullTableScanner<impl::ObjectsAdapter>;
+using TransactionsScanner = impl::FullTableScanner<impl::TransactionsAdapter>;
 
-}  // namespace migration::cassandra
+}  // namespace migration::cassandra::impl

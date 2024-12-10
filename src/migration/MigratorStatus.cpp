@@ -17,22 +17,40 @@
 */
 //==============================================================================
 
-#pragma once
+#include "migration/MigratiorStatus.hpp"
 
-#include "migration/MigrationManagerInterface.hpp"
-#include "util/config/Config.hpp"
-
-#include <memory>
+#include <cstddef>
+#include <string>
 
 namespace migration {
 
-/**
- * @brief The factory to create a MigrationManagerInferface
- *
- * @param config The configuration of the migration application, it contains the database connection configuration and
- * other migration specific configurations
- */
-std::shared_ptr<MigrationManagerInterface>
-makeMigrationManager(util::Config const& config);
+bool
+MigratorStatus::operator==(MigratorStatus const& other) const
+{
+    return status_ == other.status_;
+}
+
+bool
+MigratorStatus::operator==(Status const& other) const
+{
+    return status_ == other;
+}
+
+std::string
+MigratorStatus::toString() const
+{
+    return statusStrMap[static_cast<size_t>(status_)];
+}
+
+MigratorStatus
+MigratorStatus::fromString(std::string const& statusStr)
+{
+    for (std::size_t i = 0; i < statusStrMap.size(); ++i) {
+        if (statusStr == statusStrMap[i]) {
+            return MigratorStatus(static_cast<Status>(i));
+        }
+    }
+    return MigratorStatus(NotMigrated);
+}
 
 }  // namespace migration

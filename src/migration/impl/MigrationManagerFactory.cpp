@@ -17,12 +17,12 @@
 */
 //==============================================================================
 
-#include "migration/MigrationManagerFactory.hpp"
+#include "migration/impl/MigrationManagerFactory.hpp"
 
 #include "data/cassandra/SettingsProvider.hpp"
-#include "migration/MigrationManagerInterface.hpp"
 #include "migration/cassandra/CassandraMigrationBackend.hpp"
 #include "migration/cassandra/CassandraMigrationManager.hpp"
+#include "migration/impl/MigrationManagerInterface.hpp"
 #include "util/log/Logger.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -32,9 +32,9 @@
 #include <string>
 #include <utility>
 
-namespace migration {
+namespace migration::impl {
 
-std::shared_ptr<MigrationManagerInterface>
+std::shared_ptr<impl::MigrationManagerInterface>
 makeMigrationManager(util::Config const& config)
 {
     static util::Logger const log{"Migration"};
@@ -56,4 +56,4 @@ makeMigrationManager(util::Config const& config)
     );
 }
 
-}  // namespace migration
+}  // namespace migration::impl

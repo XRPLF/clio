@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "migration/cassandra/FullTableScanner.hpp"
+#include "migration/cassandra/impl/FullTableScanner.hpp"
 #include "util/LoggerFixtures.hpp"
 
 #include <boost/asio/spawn.hpp>
@@ -30,7 +30,7 @@ namespace {
 
 // Help to verify that the function is called
 struct MockObject {
-    MOCK_METHOD(void, call, (migration::cassandra::TokenRange const&, boost::asio::yield_context));
+    MOCK_METHOD(void, call, (migration::cassandra::impl::TokenRange const&, boost::asio::yield_context));
 };
 
 struct TestScannerAdaper {
@@ -42,7 +42,7 @@ struct TestScannerAdaper {
     std::reference_wrapper<MockObject> objRef;
 
     void
-    readByTokenRange(migration::cassandra::TokenRange const& range, boost::asio::yield_context yield) const
+    readByTokenRange(migration::cassandra::impl::TokenRange const& range, boost::asio::yield_context yield) const
     {
         objRef.get().call(range, yield);
     }
@@ -55,7 +55,7 @@ TEST_F(FullTableScannerTests, workerNumZero)
 {
     MockObject obj;
     EXPECT_DEATH(
-        migration::cassandra::FullTableScanner<TestScannerAdaper>(1, 0, TestScannerAdaper(obj)),
+        migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(1, 0, TestScannerAdaper(obj)),
         "workersNum for full table scanner must be greater than 0"
     );
 }
@@ -64,7 +64,7 @@ TEST_F(FullTableScannerTests, SingleThreadCtx)
 {
     MockObject obj;
     EXPECT_CALL(obj, call(testing::_, testing::_)).Times(100);
-    auto scanner = migration::cassandra::FullTableScanner<TestScannerAdaper>(1, 1, TestScannerAdaper(obj));
+    auto scanner = migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(1, 1, TestScannerAdaper(obj));
     scanner.wait();
 }
 
@@ -72,6 +72,6 @@ TEST_F(FullTableScannerTests, MultipleThreadCtx)
 {
     MockObject obj;
     EXPECT_CALL(obj, call(testing::_, testing::_)).Times(200);
-    auto scanner = migration::cassandra::FullTableScanner<TestScannerAdaper>(2, 2, TestScannerAdaper(obj));
+    auto scanner = migration::cassandra::impl::FullTableScanner<TestScannerAdaper>(2, 2, TestScannerAdaper(obj));
     scanner.wait();
 }

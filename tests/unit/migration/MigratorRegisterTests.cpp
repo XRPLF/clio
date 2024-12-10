@@ -17,9 +17,9 @@
 */
 //==============================================================================
 
-#include "migration/MigrationManagerInterface.hpp"
-#include "migration/MigratorsRegister.hpp"
+#include "migration/MigratiorStatus.hpp"
 #include "migration/TestMigrators.hpp"
+#include "migration/impl/MigratorsRegister.hpp"
 #include "util/MockMigrationBackend.hpp"
 #include "util/MockMigrationBackendFixture.hpp"
 #include "util/MockPrometheus.hpp"
@@ -33,9 +33,8 @@
 #include <optional>
 #include <string>
 #include <tuple>
-#include <unordered_set>
 
-using EmptyMigratorRegister = migration::MigratorsRegister<MockMigrationBackend>;
+using EmptyMigratorRegister = migration::impl::MigratorsRegister<MockMigrationBackend>;
 
 struct MigratorRegisterTests : public util::prometheus::WithMockPrometheus, public MockMigrationBackendTest {
     util::Config cfg;
@@ -49,11 +48,10 @@ TEST_F(MigratorRegisterTests, EmptyMigratorRegister)
     EXPECT_EQ(migratorRegister.getMigratorNames().size(), 0);
     EXPECT_EQ(migratorRegister.getMigratorStatus("unknown"), migration::MigratorStatus::NotKnown);
     EXPECT_NO_THROW(migratorRegister.runMigrator("unknown", cfg));
-    EXPECT_NO_THROW(migratorRegister.runRollback("unknown"));
 }
 
 using MultipleMigratorRegister =
-    migration::MigratorsRegister<MockMigrationBackend, SimpleTestMigrator, RollbackableTestMigrator>;
+    migration::impl::MigratorsRegister<MockMigrationBackend, SimpleTestMigrator, SimpleTestMigrator2>;
 
 struct MultipleMigratorRegisterTests : public util::prometheus::WithMockPrometheus, public MockMigrationBackendTest {
     util::Config cfg;
@@ -69,7 +67,9 @@ struct MultipleMigratorRegisterTests : public util::prometheus::WithMockPromethe
 
 TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenError)
 {
-    EXPECT_CALL(*backend, fetchMigratedFeatures(testing::_)).WillOnce(testing::Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchMigratorStatus(testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(testing::Return(std::nullopt));
 
     auto const status = migratorRegister->getMigratorsStatus();
     EXPECT_EQ(status.size(), 2);
@@ -80,17 +80,16 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenError)
     );
     EXPECT_TRUE(
         std::find(
-            status.begin(),
-            status.end(),
-            std::make_tuple("RollbackableTestMigrator", migration::MigratorStatus::NotMigrated)
+            status.begin(), status.end(), std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
         ) != status.end()
     );
 }
 
-TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenNothingMigrated)
+TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenReturnInvalidStatus)
 {
-    EXPECT_CALL(*backend, fetchMigratedFeatures(testing::_))
-        .WillOnce(testing::Return(std::unordered_set<std::string>{}));
+    EXPECT_CALL(*backend, fetchMigratorStatus(testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(testing::Return("Invalid"));
 
     auto const status = migratorRegister->getMigratorsStatus();
     EXPECT_EQ(status.size(), 2);
@@ -101,17 +100,16 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenNothingMigrated)
     );
     EXPECT_TRUE(
         std::find(
-            status.begin(),
-            status.end(),
-            std::make_tuple("RollbackableTestMigrator", migration::MigratorStatus::NotMigrated)
+            status.begin(), status.end(), std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
         ) != status.end()
     );
 }
 
 TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenOneMigrated)
 {
-    EXPECT_CALL(*backend, fetchMigratedFeatures(testing::_))
-        .WillOnce(testing::Return(std::unordered_set<std::string>{"SimpleTestMigrator"}));
+    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
+    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
+        .WillOnce(testing::Return("NotMigrated"));
 
     auto const status = migratorRegister->getMigratorsStatus();
     EXPECT_EQ(status.size(), 2);
@@ -122,31 +120,31 @@ TEST_F(MultipleMigratorRegisterTests, GetMigratorsStatusWhenOneMigrated)
     );
     EXPECT_TRUE(
         std::find(
-            status.begin(),
-            status.end(),
-            std::make_tuple("RollbackableTestMigrator", migration::MigratorStatus::NotMigrated)
+            status.begin(), status.end(), std::make_tuple("SimpleTestMigrator2", migration::MigratorStatus::NotMigrated)
         ) != status.end()
     );
 }
 
 TEST_F(MultipleMigratorRegisterTests, GetMigratorStatus)
 {
-    EXPECT_CALL(*backend, fetchMigratedFeatures(testing::_))
-        .Times(3)
-        .WillRepeatedly(testing::Return(std::unordered_set<std::string>{"SimpleTestMigrator"}));
+    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator", testing::_)).WillOnce(testing::Return("Migrated"));
+    EXPECT_CALL(*backend, fetchMigratorStatus("SimpleTestMigrator2", testing::_))
+        .WillOnce(testing::Return("NotMigrated"));
 
     EXPECT_EQ(migratorRegister->getMigratorStatus("unknown"), migration::MigratorStatus::NotKnown);
     EXPECT_EQ(migratorRegister->getMigratorStatus("SimpleTestMigrator"), migration::MigratorStatus::Migrated);
-    EXPECT_EQ(migratorRegister->getMigratorStatus("RollbackableTestMigrator"), migration::MigratorStatus::NotMigrated);
+    EXPECT_EQ(migratorRegister->getMigratorStatus("SimpleTestMigrator2"), migration::MigratorStatus::NotMigrated);
 }
 
 TEST_F(MultipleMigratorRegisterTests, GetMigratorStatusWhenError)
 {
-    EXPECT_CALL(*backend, fetchMigratedFeatures(testing::_)).Times(3).WillRepeatedly(testing::Return(std::nullopt));
+    EXPECT_CALL(*backend, fetchMigratorStatus(testing::_, testing::_))
+        .Times(2)
+        .WillRepeatedly(testing::Return(std::nullopt));
 
     EXPECT_EQ(migratorRegister->getMigratorStatus("unknown"), migration::MigratorStatus::NotKnown);
     EXPECT_EQ(migratorRegister->getMigratorStatus("SimpleTestMigrator"), migration::MigratorStatus::NotMigrated);
-    EXPECT_EQ(migratorRegister->getMigratorStatus("RollbackableTestMigrator"), migration::MigratorStatus::NotMigrated);
+    EXPECT_EQ(migratorRegister->getMigratorStatus("SimpleTestMigrator2"), migration::MigratorStatus::NotMigrated);
 }
 
 TEST_F(MultipleMigratorRegisterTests, Names)
@@ -154,35 +152,17 @@ TEST_F(MultipleMigratorRegisterTests, Names)
     auto names = migratorRegister->getMigratorNames();
     EXPECT_EQ(names.size(), 2);
     EXPECT_TRUE(std::find(names.begin(), names.end(), "SimpleTestMigrator") != names.end());
-    EXPECT_TRUE(std::find(names.begin(), names.end(), "RollbackableTestMigrator") != names.end());
-}
-
-TEST_F(MultipleMigratorRegisterTests, RollBackUnknownMigrator)
-{
-    EXPECT_CALL(*backend, removeMigratedMigrator(testing::_)).Times(0);
-    EXPECT_NO_THROW(migratorRegister->runRollback("unknown"));
+    EXPECT_TRUE(std::find(names.begin(), names.end(), "SimpleTestMigrator2") != names.end());
 }
 
 TEST_F(MultipleMigratorRegisterTests, RunUnknownMigrator)
 {
-    EXPECT_CALL(*backend, writeMigratedMigrator(testing::_)).Times(0);
+    EXPECT_CALL(*backend, writeMigratorStatus(testing::_, testing::_)).Times(0);
     EXPECT_NO_THROW(migratorRegister->runMigrator("unknown", cfg));
-}
-
-TEST_F(MultipleMigratorRegisterTests, RollBackUnrollbackableMigrator)
-{
-    EXPECT_CALL(*backend, removeMigratedMigrator("SimpleTestMigrator")).Times(1);
-    EXPECT_NO_THROW(migratorRegister->runRollback("SimpleTestMigrator"));
-}
-
-TEST_F(MultipleMigratorRegisterTests, RollBackRollbackableMigrator)
-{
-    EXPECT_CALL(*backend, removeMigratedMigrator("RollbackableTestMigrator")).Times(1);
-    EXPECT_NO_THROW(migratorRegister->runRollback("RollbackableTestMigrator"));
 }
 
 TEST_F(MultipleMigratorRegisterTests, MigrateNormalMigrator)
 {
-    EXPECT_CALL(*backend, writeMigratedMigrator("SimpleTestMigrator")).Times(1);
+    EXPECT_CALL(*backend, writeMigratorStatus("SimpleTestMigrator", "Migrated")).Times(1);
     EXPECT_NO_THROW(migratorRegister->runMigrator("SimpleTestMigrator", cfg));
 }

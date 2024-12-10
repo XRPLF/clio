@@ -47,9 +47,3 @@ ExampleLedgerMigrator::runMigration(std::shared_ptr<Backend> const& backend, uti
         }
     });
 }
-
-void
-ExampleLedgerMigrator::runRollback(std::shared_ptr<Backend> const& backend)
-{
-    backend->dropLedgerExampleTable();
-}

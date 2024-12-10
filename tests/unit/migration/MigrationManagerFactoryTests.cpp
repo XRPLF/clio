@@ -17,7 +17,7 @@
 */
 //==============================================================================
 
-#include "migration/MigrationManagerFactory.hpp"
+#include "migration/impl/MigrationManagerFactory.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/config/Config.hpp"
 
@@ -39,5 +39,5 @@ TEST_F(MigrationManagerFactoryTests, InvalidDBType)
     )JSON";
     util::Config config(boost::json::parse(cfgJson));
 
-    EXPECT_THROW(migration::makeMigrationManager(config), std::runtime_error);
+    EXPECT_THROW(migration::impl::makeMigrationManager(config), std::runtime_error);
 }

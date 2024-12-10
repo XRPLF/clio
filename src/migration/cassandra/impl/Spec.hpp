@@ -17,23 +17,25 @@
 */
 //==============================================================================
 
-#include "migration/cassandra/TransactionsAdapter.hpp"
+#pragma once
 
 #include <boost/asio/spawn.hpp>
-#include <xrpl/protocol/STTx.h>
-#include <xrpl/protocol/Serializer.h>
-#include <xrpl/protocol/TxMeta.h>
 
-namespace migration::cassandra {
+#include <concepts>
+#include <tuple>
+#include <type_traits>
 
-void
-TransactionsAdapter::onRowRead(TableTransactionsDesc::Row const& row)
-{
-    auto const& [txHash, date, ledgerSeq, metaBlob, txBlob] = row;
+namespace migration::cassandra::impl {
+// Define the concept for a class like TableObjectsDesc
+template <typename T>
+concept TableSpec = requires {
+    // Check that 'row' exists and is a tuple
+    // keys types are at the begining and the other fields types sort in alphabetical order
+    typename T::Row;
+    requires std::tuple_size<typename T::Row>::value >= 0;  // Ensures 'row' is a tuple
 
-    ripple::SerialIter it{txBlob.data(), txBlob.size()};
-    ripple::STTx const sttx{it};
-    ripple::TxMeta const txMeta{sttx.getTransactionID(), ledgerSeq, metaBlob};
-    onTransactionRead_(sttx, txMeta);
-}
-}  // namespace migration::cassandra
+    // Check that static constexpr members 'partitionKey' and 'tableName' exist
+    { T::PARTITION_KEY } -> std::convertible_to<char const*>;
+    { T::TABLE_NAME } -> std::convertible_to<char const*>;
+};
+}  // namespace migration::cassandra::impl

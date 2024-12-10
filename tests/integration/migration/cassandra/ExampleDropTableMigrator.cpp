@@ -29,10 +29,3 @@ ExampleDropTableMigrator::runMigration(std::shared_ptr<Backend> const& backend, 
 {
     backend->dropDiffTable();
 }
-
-void
-ExampleDropTableMigrator::runRollback(std::shared_ptr<Backend> const&)
-{
-    util::Logger log{"Migration"};
-    LOG(log.error()) << "Rollback not implemented for ExampleDropTableMigrato, the table will not be restored";
-}

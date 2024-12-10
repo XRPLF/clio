@@ -838,26 +838,24 @@ public:
         return results;
     }
 
-    std::optional<std::unordered_set<std::string>>
-    fetchMigratedFeatures(boost::asio::yield_context yield) const override
+    std::optional<std::string>
+    fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const override
     {
-        auto const res = executor_.read(yield, schema_->selectMigratedFeatures);
+        auto const res = executor_.read(yield, schema_->selectMigratorStatus, Text(migratorName));
         if (not res) {
-            LOG(log_.error()) << "Could not fetch migrated features: " << res.error();
+            LOG(log_.error()) << "Could not fetch migrator status: " << res.error();
             return {};
         }
 
-        std::unordered_set<std::string> features;
         auto const& results = res.value();
         if (not results) {
-            LOG(log_.warn()) << "No migrated features in database";
-            return features;
+            return {};
         }
 
-        for (auto [feature] : extract<std::string>(results))
-            features.insert(std::move(feature));
+        for (auto [statusString] : extract<std::string>(results))
+            return statusString;
 
-        return features;
+        return {};
     }
 
     void
@@ -985,6 +983,14 @@ public:
     {
         // Note: no-op in original implementation too.
         // probably was used in PG to start a transaction or smth.
+    }
+
+    void
+    writeMigratorStatus(std::string const& migratorName, std::string const& status) override
+    {
+        executor_.writeSync(
+            schema_->insertMigratorStatus, data::cassandra::Text{migratorName}, data::cassandra::Text(status)
+        );
     }
 
     bool

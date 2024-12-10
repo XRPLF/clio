@@ -45,7 +45,6 @@
 #include <string>
 #include <thread>
 #include <type_traits>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -550,13 +549,14 @@ public:
     ) const;
 
     /**
-     * @brief Database-specific implementation of fetching the migrated features.
+     * @brief Fetches the status of migrator by name.
      *
+     * @param migratorName The name of the migrator
      * @param yield The coroutine context
-     * @return The name of migrated features on success; nullopt otherwise
+     * @return The status of the migrator if found; nullopt otherwise
      */
-    virtual std::optional<std::unordered_set<std::string>>
-    fetchMigratedFeatures(boost::asio::yield_context yield) const = 0;
+    virtual std::optional<std::string>
+    fetchMigratorStatus(std::string const& migratorName, boost::asio::yield_context yield) const = 0;
 
     /**
      * @brief Synchronously fetches the ledger range from DB.
@@ -682,6 +682,15 @@ public:
      */
     bool
     finishWrites(std::uint32_t ledgerSequence);
+
+    /**
+     *@brief Mark the migration status of a migrator as Migrated in the database
+     *
+     *@param migratorName The name of the migrator
+     *@param status The status to set
+     */
+    virtual void
+    writeMigratorStatus(std::string const& migratorName, std::string const& status) = 0;
 
     /**
      * @return true if database is overwhelmed; false otherwise

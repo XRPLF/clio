@@ -29,15 +29,8 @@
 #include <xrpl/protocol/AccountID.h>
 #include <xrpl/protocol/LedgerHeader.h>
 
-#include <string>
-
-using namespace data;
-
 struct MockMigrationBackend : public MockBackend {
     MockMigrationBackend(util::Config) : MockBackend(util::Config{})
     {
     }
-
-    MOCK_METHOD(void, removeMigratedMigrator, (std::string const&), ());
-    MOCK_METHOD(void, writeMigratedMigrator, (std::string const&), ());
 };

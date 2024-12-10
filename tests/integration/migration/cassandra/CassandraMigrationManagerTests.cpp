@@ -21,15 +21,15 @@
 #include "data/DBHelpers.hpp"
 #include "data/cassandra/Handle.hpp"
 #include "data/cassandra/SettingsProvider.hpp"
-#include "migration/MigrationManagerInterface.hpp"
-#include "migration/MigratorsRegister.hpp"
-#include "migration/cassandra/CassandraMigrationManager.hpp"
 #include "migration/cassandra/CassandraMigrationTestBackend.hpp"
 #include "migration/cassandra/DBRawData.hpp"
 #include "migration/cassandra/ExampleDropTableMigrator.hpp"
 #include "migration/cassandra/ExampleLedgerMigrator.hpp"
 #include "migration/cassandra/ExampleObjectsMigrator.hpp"
 #include "migration/cassandra/ExampleTransactionsMigrator.hpp"
+#include "migration/impl/MigrationManagerBase.hpp"
+#include "migration/impl/MigrationManagerInterface.hpp"
+#include "migration/impl/MigratorsRegister.hpp"
 #include "util/CassandraDBHelper.hpp"
 #include "util/LoggerFixtures.hpp"
 #include "util/MockPrometheus.hpp"
@@ -56,7 +56,7 @@ using namespace migration;
 namespace json = boost::json;
 
 // Register the migrators
-using CassandraSupportedTestMigrators = MigratorsRegister<
+using CassandraSupportedTestMigrators = migration::impl::MigratorsRegister<
     CassandraMigrationTestBackend,
     ExampleObjectsMigrator,
     ExampleTransactionsMigrator,
@@ -64,10 +64,10 @@ using CassandraSupportedTestMigrators = MigratorsRegister<
     ExampleDropTableMigrator>;
 
 // Define the test migration manager
-using CassandraMigrationTestManager = cassandra::CassandraMigrationManagerBase<CassandraSupportedTestMigrators>;
+using CassandraMigrationTestManager = migration::impl::MigrationManagerBase<CassandraSupportedTestMigrators>;
 
 namespace {
-std::pair<std::shared_ptr<MigrationManagerInterface>, std::shared_ptr<CassandraMigrationTestBackend>>
+std::pair<std::shared_ptr<migration::impl::MigrationManagerInterface>, std::shared_ptr<CassandraMigrationTestBackend>>
 make_MigrationTestManagerAndBackend(util::Config const& config)
 {
     auto const cfg = config.section("database.cassandra");
@@ -105,24 +105,25 @@ protected:
         TestGlobals::instance().backendKeyspace
     ))};
 
-    std::shared_ptr<MigrationManagerInterface> testMigrationManager;
+    std::shared_ptr<migration::impl::MigrationManagerInterface> testMigrationManager;
     std::shared_ptr<CassandraMigrationTestBackend> testMigrationBackend;
 
-    void
-    SetUp() override
+    MigrationCassandraSimpleTest()
     {
         auto const testBundle = make_MigrationTestManagerAndBackend(cfg);
         testMigrationManager = testBundle.first;
         testMigrationBackend = testBundle.second;
+    }
 
+    void
+    SetUp() override
+    {
         setupDatabase();
     }
 
     void
     TearDown() override
     {
-        testMigrationManager.reset();
-        testMigrationBackend.reset();
         // drop the keyspace
         Handle const handle{TestGlobals::instance().backendHost};
         EXPECT_TRUE(handle.connect());
@@ -221,14 +222,6 @@ TEST_F(MigrationCassandraManagerTxTableTest, MigrateExampleTransactionsMigrator)
     EXPECT_EQ(txType.value(), "AMMCreate");
 
     EXPECT_EQ(testMigrationManager->getMigratorStatusByName(TransactionsMigratorName), MigratorStatus::Migrated);
-    testMigrationManager->runRollback(TransactionsMigratorName);
-
-    auto const newTableSizeAfterRollback =
-        data::synchronous([&](auto ctx) { return testMigrationBackend->fetchTxIndexTableSize(ctx); });
-
-    EXPECT_FALSE(newTableSizeAfterRollback.has_value());
-
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(TransactionsMigratorName), MigratorStatus::NotMigrated);
 }
 
 // The test suite for testing migration process for ExampleObjectsMigrator. In this test suite, the objects are written
@@ -256,9 +249,6 @@ TEST_F(MigrationCassandraManagerObjectsTableTest, MigrateExampleObjectsMigrator)
     EXPECT_EQ(ExampleObjectsMigrator::accountCount, 37);
 
     EXPECT_EQ(testMigrationManager->getMigratorStatusByName(ObjectsMigratorName), MigratorStatus::Migrated);
-
-    testMigrationManager->runRollback(ObjectsMigratorName);
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(ObjectsMigratorName), MigratorStatus::NotMigrated);
 }
 
 // The test suite for testing migration process for ExampleLedgerMigrator. In this test suite, the ledger headers are
@@ -301,13 +291,6 @@ TEST_F(MigrationCassandraManagerLedgerTableTest, MigrateExampleLedgerMigrator)
     EXPECT_EQ(
         getAccountHash(5619395), ripple::uint256("D0A61C158AD8941868666AD51C4662EEAAA2A141BF0F4435BC22B9BC6783AF65")
     );
-
-    testMigrationManager->runRollback(HeaderMigratorName);
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(HeaderMigratorName), MigratorStatus::NotMigrated);
-
-    auto const newTableSizeAfterRollback =
-        data::synchronous([&](auto ctx) { return testMigrationBackend->fetchLedgerTableSize(ctx); });
-    EXPECT_EQ(newTableSizeAfterRollback, std::nullopt);
 }
 
 // The test suite for testing migration process for ExampleDropTableMigrator.
@@ -328,7 +311,4 @@ TEST_F(MigrationCassandraManagerDropTableTest, MigrateDropTableMigrator)
     auto const newTableSize =
         data::synchronous([&](auto ctx) { return testMigrationBackend->fetchDiffTableSize(ctx); });
     EXPECT_EQ(newTableSize, std::nullopt);
-
-    testMigrationManager->runRollback(DropTableMigratorName);
-    EXPECT_EQ(testMigrationManager->getMigratorStatusByName(DropTableMigratorName), MigratorStatus::NotMigrated);
 }

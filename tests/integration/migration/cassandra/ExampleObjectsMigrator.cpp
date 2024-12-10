@@ -19,8 +19,8 @@
 
 #include "migration/cassandra/ExampleObjectsMigrator.hpp"
 
-#include "migration/cassandra/ObjectsAdapter.hpp"
-#include "migration/cassandra/Types.hpp"
+#include "migration/cassandra/impl/ObjectsAdapter.hpp"
+#include "migration/cassandra/impl/Types.hpp"
 #include "util/config/Config.hpp"
 
 #include <xrpl/basics/base_uint.h>
@@ -46,10 +46,10 @@ ExampleObjectsMigrator::runMigration(std::shared_ptr<Backend> const& backend, ut
     auto const jobsFullScan = config.valueOr<std::uint32_t>("jobs_full_scan", 4);
 
     std::unordered_set<ripple::uint256> idx;
-    migration::cassandra::ObjectsScanner scaner(
+    migration::cassandra::impl::ObjectsScanner scaner(
         ctxFullScanThreads,
         jobsFullScan,
-        migration::cassandra::ObjectsAdapter(
+        migration::cassandra::impl::ObjectsAdapter(
             backend,
             [&](std::uint32_t, std::optional<ripple::SLE> sle) {
                 if (sle.has_value()) {

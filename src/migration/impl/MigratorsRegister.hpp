@@ -20,26 +20,35 @@
 #pragma once
 
 #include "data/BackendInterface.hpp"
-#include "migration/MigrationManagerInterface.hpp"
-#include "migration/Spec.hpp"
+#include "migration/MigratiorStatus.hpp"
+#include "migration/impl/Spec.hpp"
 #include "util/Concepts.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
 
+#include <algorithm>
 #include <array>
-#include <iostream>
+#include <iterator>
 #include <memory>
-#include <optional>
-#include <ostream>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <tuple>
 #include <vector>
 
-namespace migration {
+namespace migration::impl {
 
 /**
- *@brief The register of migrators. It will dispatch the migration and rollback to the corresponding migrator. It also
+ * The concept to check if BackendType is the same as the migrator's required backend type
+ */
+template <typename BackendType, typename MigratorType>
+concept MigrationBackend = requires { requires std::same_as<typename MigratorType::Backend, BackendType>; };
+
+template <typename Backend, typename... MigratorType>
+concept BackendMatchAllMigrators = (MigrationBackend<Backend, MigratorType> && ...);
+
+/**
+ *@brief The register of migrators. It will dispatch the migration to the corresponding migrator. It also
  *hold the shared pointer of backend, which is used by the migrators.
  *
  *@tparam Backend The backend type
@@ -60,28 +69,16 @@ class MigratorsRegister {
         if (name == Migrator::name) {
             LOG(log_.info()) << "Running migration: " << name;
             Migrator::runMigration(backend_, config);
-            backend_->writeMigratedMigrator(name);
+            backend_->writeMigratorStatus(name, MigratorStatus(MigratorStatus::Status::Migrated).toString());
             LOG(log_.info()) << "Finished migration: " << name;
         }
     }
 
-    template <typename Migrator>
-    void
-    callRollback(std::string const& name)
+    template <typename T>
+    static constexpr std::string_view
+    getDescriptionIfMatch(std::string_view targetName)
     {
-        if (name == Migrator::name) {
-            if constexpr (not RollbackableMigratorSpec<Migrator, Backend>) {
-                LOG(log_.warn()) << name << " is not rollbackable, will mark it as not migrated instead";
-                std::cout << name
-                          << " is not rollbackable, will mark it as not migrated instead, run migration again if needed"
-                          << std::endl;
-            } else {
-                LOG(log_.info()) << "Running migration rollback: " << name;
-                Migrator::runRollback(backend_);
-            }
-            backend_->removeMigratedMigrator(name);
-            LOG(log_.info()) << "Finished migration rollback: " << name;
-        }
+        return (T::name == targetName) ? T::description : "";
     }
 
 public:
@@ -95,7 +92,7 @@ public:
      *
      * @param backend The backend shared pointer
      */
-    MigratorsRegister(std::shared_ptr<Backend> backend) : backend_{std::move(backend)}
+    MigratorsRegister(std::shared_ptr<BackendType> backend) : backend_{std::move(backend)}
     {
     }
 
@@ -107,19 +104,9 @@ public:
      */
     void
     runMigrator(std::string const& name, util::Config const& config)
+        requires BackendMatchAllMigrators<BackendType, MigratorType...>
     {
         (callMigration<MigratorType>(name, config), ...);
-    }
-
-    /**
-     * @brief Rollback the migration according to the given migrator's name
-     *
-     * @param name The migrator's name
-     */
-    void
-    runRollback(std::string const& name)
-    {
-        (callRollback<MigratorType>(name), ...);
     }
 
     /**
@@ -131,42 +118,34 @@ public:
     std::vector<std::tuple<std::string, MigratorStatus>>
     getMigratorsStatus() const
     {
-        auto const migratedList = data::synchronous([&](auto yield) { return backend_->fetchMigratedFeatures(yield); });
         auto const fullList = getMigratorNames();
 
         std::vector<std::tuple<std::string, MigratorStatus>> status;
 
-        for (auto const i : fullList) {
-            if (migratedList != std::nullopt &&
-                std::find(migratedList->begin(), migratedList->end(), i) != migratedList->end()) {
-                status.emplace_back(i, MigratorStatus::Migrated);
-            } else {
-                status.emplace_back(i, MigratorStatus::NotMigrated);
-            }
-        }
+        std::transform(fullList.begin(), fullList.end(), std::back_inserter(status), [&](auto const& migratorName) {
+            auto const migratorNameStr = std::string(migratorName);
+            return std::make_tuple(migratorNameStr, getMigratorStatus(migratorNameStr));
+        });
         return status;
     }
 
     /**
      * @brief Get the status of a migrator by its name
      *
-     * @param name The migrator's name
+     * @param name The migrator's name to get the status
      * @return The status of the migrator
      */
     MigratorStatus
     getMigratorStatus(std::string const& name) const
     {
-        auto const migratedList = data::synchronous([&](auto yield) { return backend_->fetchMigratedFeatures(yield); });
         auto const fullList = getMigratorNames();
-
-        if (std::find(fullList.begin(), fullList.end(), name) == fullList.end())
+        if (std::ranges::find(fullList, name) == fullList.end()) {
             return MigratorStatus::NotKnown;
+        }
+        auto const statusStringOpt =
+            data::synchronous([&](auto yield) { return backend_->fetchMigratorStatus(name, yield); });
 
-        if (migratedList != std::nullopt &&
-            std::find(migratedList->begin(), migratedList->end(), name) != migratedList->end())
-            return MigratorStatus::Migrated;
-
-        return MigratorStatus::NotMigrated;
+        return statusStringOpt ? MigratorStatus::fromString(statusStringOpt.value()) : MigratorStatus::NotMigrated;
     }
 
     /**
@@ -179,6 +158,27 @@ public:
     {
         return std::array<std::string_view, sizeof...(MigratorType)>{MigratorType::name...};
     }
+
+    /**
+     * @brief Get the description of a migrator by its name
+     *
+     * @param name The migrator's name
+     * @return The description of the migrator
+     */
+    std::string
+    getMigratorDescription(std::string const& name) const
+    {
+        if constexpr (sizeof...(MigratorType) == 0) {
+            return "No Description";
+        } else {
+            // Fold expression to search through all types
+            std::string result = ([](std::string const& name) {
+                return std::string(getDescriptionIfMatch<MigratorType>(name));
+            }(name) + ...);
+
+            return result.empty() ? "No Description" : result;
+        }
+    }
 };
 
-}  // namespace migration
+}  // namespace migration::impl

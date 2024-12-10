@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 /*
     This file is part of clio: https://github.com/XRPLF/clio
-    Copyright (c) 2022-2024, the clio developers.
+    Copyright (c) 2024, the clio developers.
 
     Permission to use, copy, modify, and distribute this software for any
     purpose with or without fee is hereby granted, provided that the above
@@ -17,25 +17,25 @@
 */
 //==============================================================================
 
-#pragma once
+#include "migration/TestMigrators.hpp"
+#include "migration/impl/Spec.hpp"
+#include "util/MockMigrationBackend.hpp"
 
-#include <boost/asio/spawn.hpp>
+#include <gtest/gtest.h>
 
-#include <concepts>
-#include <tuple>
-#include <type_traits>
+namespace {
+class Fake {};
 
-namespace migration::cassandra {
-// Define the concept for a class like TableObjectsDesc
-template <typename T>
-concept TableSpec = requires {
-    // Check that 'row' exists and is a tuple
-    // keys types are at the begining and the other fields types sort in alphabetical order
-    typename T::Row;
-    requires std::tuple_size<typename T::Row>::value >= 0;  // Ensures 'row' is a tuple
+}  // namespace
 
-    // Check that static constexpr members 'partitionKey' and 'tableName' exist
-    { T::PARTITION_KEY } -> std::convertible_to<char const*>;
-    { T::TABLE_NAME } -> std::convertible_to<char const*>;
-};
-}  // namespace migration::cassandra
+TEST(MigrationSpec, MigratorSpec)
+{
+    static_assert(!migration::impl::MigratorSpec<Fake, MockMigrationBackend>);
+    static_assert(migration::impl::MigratorSpec<SimpleTestMigrator, MockMigrationBackend>);
+}
+
+TEST(MigrationSpec, AllMigratorSpec)
+{
+    static_assert(!migration::impl::AllMigratorSpec<SimpleTestMigrator, SimpleTestMigrator2, Fake>);
+    static_assert(migration::impl::AllMigratorSpec<SimpleTestMigrator2, SimpleTestMigrator>);
+}

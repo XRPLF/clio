@@ -29,7 +29,7 @@
 #include <functional>
 #include <string>
 
-namespace migration::cassandra {
+namespace migration::cassandra::impl {
 
 /**
  * @brief The schema for the migration process. It contains the prepared statements only used for the migration process.
@@ -65,10 +65,10 @@ public:
     {
         return handler.prepare(fmt::format(
             R"(
-                SELECT * FROM {} 
-                         WHERE TOKEN({}) >= ? 
-                           AND TOKEN({}) <= ?
-                )",
+            SELECT * 
+              FROM {} 
+             WHERE TOKEN({}) >= ? AND TOKEN({}) <= ?
+            )",
             data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), tableName),
             key,
             key
@@ -76,41 +76,23 @@ public:
     }
 
     /**
-     * @brief Get the prepared statement for insertion of migrated_features table
+     * @brief Get the prepared statement for insertion of migrator_status table
      *
      * @param handler The database handler
-     * @return The prepared statement to insert into migrated_features table
+     * @return The prepared statement to insert into migrator_status table
      */
     data::cassandra::PreparedStatement const&
     getPreparedInsertMigratedMigrator(data::cassandra::Handle const& handler)
     {
         static auto prepared = handler.prepare(fmt::format(
             R"(
-                INSERT INTO {} (status, feature_name)
-                VALUES (?, ?)
-                )",
-            data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), "migrated_features")
-        ));
-        return prepared;
-    }
-
-    /**
-     * @brief Get the prepared statement for removal of migrated_features table
-     *
-     * @param handler The database handler
-     * @return The prepared statement to remove from migrated_features table
-     */
-    data::cassandra::PreparedStatement const&
-    getPreparedRemoveMigratedMigrator(data::cassandra::Handle const& handler)
-    {
-        static auto prepared = handler.prepare(fmt::format(
-            R"(
-                DELETE FROM {} WHERE status = 'migrated'
-                               AND feature_name = ?
-                )",
-            data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), "migrated_features")
+            INSERT INTO {} 
+                    (migrator_name, status)
+                 VALUES (?, ?)
+            )",
+            data::cassandra::qualifiedTableName<SettingsProviderType>(settingsProvider_.get(), "migrator_status")
         ));
         return prepared;
     }
 };
-}  // namespace migration::cassandra
+}  // namespace migration::cassandra::impl

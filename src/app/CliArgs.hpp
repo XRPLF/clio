@@ -56,7 +56,7 @@ public:
         /** @brief Migration action. */
         struct Migrate {
             std::string configPath;
-            MigratorApplication::Cmd subCmd;
+            MigrateSubCmd subCmd;
         };
 
         /**

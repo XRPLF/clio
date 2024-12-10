@@ -19,8 +19,9 @@
 
 #include "migration/MigrationApplication.hpp"
 
-#include "migration/MigrationManagerFactory.hpp"
-#include "migration/MigrationManagerInterface.hpp"
+#include "migration/MigratiorStatus.hpp"
+#include "migration/impl/MigrationManagerFactory.hpp"
+#include "migration/impl/MigrationManagerInterface.hpp"
 #include "util/OverloadSet.hpp"
 #include "util/config/Config.hpp"
 #include "util/log/Logger.hpp"
@@ -35,11 +36,11 @@
 
 namespace app {
 
-MigratorApplication::MigratorApplication(util::Config const& config, Cmd command) : cmd_(std::move(command))
+MigratorApplication::MigratorApplication(util::Config const& config, MigrateSubCmd command) : cmd_(std::move(command))
 {
     PrometheusService::init(config);
 
-    migrationManager_ = migration::makeMigrationManager(config);
+    migrationManager_ = migration::impl::makeMigrationManager(config);
 }
 
 int
@@ -47,9 +48,8 @@ MigratorApplication::run()
 {
     return std::visit(
         util::OverloadSet{
-            [this](Cmd::Status const&) { return printStatus(); },
-            [this](Cmd::Migration const& cmdBundle) { return migrate(cmdBundle.migratorName); },
-            [this](Cmd::Rollback const& cmdBundle) { return rollback(cmdBundle.migratorName); }
+            [this](MigrateSubCmd::Status const&) { return printStatus(); },
+            [this](MigrateSubCmd::Migration const& cmdBundle) { return migrate(cmdBundle.migratorName); }
         },
         cmd_.state
     );
@@ -66,8 +66,8 @@ MigratorApplication::printStatus()
     }
 
     for (auto const& [migrator, status] : allMigratorsStatus) {
-        std::cout << "Migrator: " << migrator << " - "
-                  << (status == migration::MigratorStatus::Migrated ? "migrated" : "not migrated") << std::endl;
+        std::cout << "Migrator: " << migrator << " - " << migrationManager_->getMigratorDescriptionByName(migrator)
+                  << " - " << status.toString() << std::endl;
     }
     return EXIT_SUCCESS;
 }
@@ -91,28 +91,6 @@ MigratorApplication::migrate(std::string const& migratorName)
     std::cout << "Running migration for " << migratorName << std::endl;
     migrationManager_->runMigration(migratorName);
     std::cout << "Migration for " << migratorName << " has finished" << std::endl;
-    return EXIT_SUCCESS;
-}
-
-int
-MigratorApplication::rollback(std::string const& migratorName)
-{
-    auto const status = migrationManager_->getMigratorStatusByName(migratorName);
-    if (status == migration::MigratorStatus::NotMigrated) {
-        std::cout << "Migrator " << migratorName << " yet not migrated" << std::endl;
-        printStatus();
-        return EXIT_SUCCESS;
-    }
-
-    if (status == migration::MigratorStatus::NotKnown) {
-        std::cout << "Migrator " << migratorName << " not found" << std::endl;
-        printStatus();
-        return EXIT_FAILURE;
-    }
-
-    std::cout << "Running rollback for " << migratorName << std::endl;
-    migrationManager_->runRollback(migratorName);
-    std::cout << "Rollback for " << migratorName << " finished" << std::endl;
     return EXIT_SUCCESS;
 }
 

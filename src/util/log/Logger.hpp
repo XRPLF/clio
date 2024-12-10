@@ -169,7 +169,7 @@ class Logger final {
     };
 
 public:
-    static constexpr std::array<char const*, 7> CHANNELS = {
+    static constexpr std::array<char const*, 8> CHANNELS = {
         "General",
         "WebServer",
         "Backend",
@@ -177,6 +177,7 @@ public:
         "ETL",
         "Subscriptions",
         "Performance",
+        "Migration",
     };
 
     /**

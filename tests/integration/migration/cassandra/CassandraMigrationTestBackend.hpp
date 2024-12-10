@@ -160,22 +160,6 @@ public:
     }
 
     /**
-     * @brief Drop the tx_index_example table. It's used by ExampleTransactionsMigrator rollback.
-     *
-     * @return The result of the operation
-     */
-    auto
-    dropTxIndexExampleTable()
-    {
-        return handle_.execute(fmt::format(
-            R"(
-            DROP TABLE IF EXISTS {}
-            )",
-            data::cassandra::qualifiedTableName(settingsProvider_, "tx_index_example")
-        ));
-    }
-
-    /**
      *@brief Write the ledger account hash to the ledger_example table. It's used by ExampleLedgerMigrator.
      *
      * @param sequence The ledger sequence
@@ -269,22 +253,6 @@ public:
             return std::nullopt;
         }
         return std::nullopt;
-    }
-
-    /**
-     * @brief Drop the ledger_example table. It's used by ExampleLedgerMigrator rollback.
-     *
-     * @return The result of the operation
-     */
-    auto
-    dropLedgerExampleTable()
-    {
-        return handle_.execute(fmt::format(
-            R"(
-            DROP TABLE IF EXISTS {}
-            )",
-            data::cassandra::qualifiedTableName(settingsProvider_, "ledger_example")
-        ));
     }
 
     /**

@@ -34,7 +34,7 @@
 #include <ranges>
 #include <vector>
 
-namespace migration::cassandra {
+namespace migration::cassandra::impl {
 
 /**
  * @brief The token range used to split the full table scan into multiple ranges.
@@ -90,8 +90,10 @@ class FullTableScanner {
             uint64_t rangeSize = (static_cast<uint64_t>(maxValue) * 2) / numRanges_;
 
             std::vector<TokenRange> ranges;
+            ranges.reserve(numRanges_);
+
             for (std::int64_t i = 0; i < numRanges_; ++i) {
-                int64_t start = minValue + i * static_cast<uint64_t>(rangeSize);
+                int64_t start = minValue + i * rangeSize;
                 int64_t end = (i == numRanges_ - 1) ? maxValue : start + static_cast<int64_t>(rangeSize) - 1;
                 ranges.emplace_back(start, end);
             }
@@ -157,7 +159,6 @@ public:
     }
 
     /**
-     *
      * @brief Wait for all workers to finish.
      */
     void
@@ -169,4 +170,4 @@ public:
     }
 };
 
-}  // namespace migration::cassandra
+}  // namespace migration::cassandra::impl

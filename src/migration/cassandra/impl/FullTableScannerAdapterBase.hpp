@@ -20,14 +20,14 @@
 #pragma once
 
 #include "migration/cassandra/CassandraMigrationBackend.hpp"
-#include "migration/cassandra/FullTableScanner.hpp"
+#include "migration/cassandra/impl/FullTableScanner.hpp"
 
 #include <boost/asio/spawn.hpp>
 
 #include <memory>
 #include <utility>
 
-namespace migration::cassandra {
+namespace migration::cassandra::impl {
 
 /**
  * @brief The base class for the full table scanner adapter. It is responsible for reading the rows from the full table
@@ -81,4 +81,4 @@ public:
     virtual void
     onRowRead(TableDesc::Row const& row) = 0;
 };
-}  // namespace migration::cassandra
+}  // namespace migration::cassandra::impl

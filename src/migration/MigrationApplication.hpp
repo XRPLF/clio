@@ -19,88 +19,72 @@
 
 #pragma once
 
-#include "migration/MigrationManagerInterface.hpp"
+#include "migration/impl/MigrationManagerInterface.hpp"
 #include "util/config/Config.hpp"
 
 #include <memory>
 #include <string>
 #include <variant>
+
 namespace app {
+
+/**
+ * @brief The command to run for migration framework
+ */
+struct MigrateSubCmd {
+    /**
+     * @brief Check the status of the migrations
+     */
+    struct Status {};
+    /**
+     * @brief Run a migration
+     */
+    struct Migration {
+        std::string migratorName;
+    };
+
+    std::variant<Status, Migration> state;
+
+    /**
+     * @brief Helper function to create a status command
+     *
+     * @return Cmd object containing the status command
+     */
+    static MigrateSubCmd
+    status()
+    {
+        return MigrateSubCmd{Status{}};
+    }
+
+    /**
+     * @brief Helper function to create a migration command
+     *
+     * @param name The name of the migration to run
+     * @return Cmd object containing the migration command
+     */
+    static MigrateSubCmd
+    migration(std::string const& name)
+    {
+        return MigrateSubCmd{Migration{name}};
+    }
+};
 
 /**
  * @brief The migration application class
  */
 class MigratorApplication {
     std::string option_;
-    std::shared_ptr<migration::MigrationManagerInterface> migrationManager_;
+    std::shared_ptr<migration::impl::MigrationManagerInterface> migrationManager_;
+    MigrateSubCmd cmd_;
 
 public:
-    /**
-     * @brief The command to run
-     */
-    struct Cmd {
-        /**
-         * @brief Check the status of the migrations
-         */
-        struct Status {};
-        /**
-         * @brief Run a migration
-         */
-        struct Migration {
-            std::string migratorName;
-        };
-        /**
-         * @brief Rollback a migration
-         */
-        struct Rollback {
-            std::string migratorName;
-        };
-
-        std::variant<Status, Migration, Rollback> state;
-
-        /**
-         * @brief Helper function to create a status command
-         *
-         * @return Cmd object containing the status command
-         */
-        static Cmd
-        status()
-        {
-            return Cmd{Status{}};
-        }
-
-        /**
-         * @brief Helper function to create a migration command
-         *
-         * @param name The name of the migration to run
-         * @return Cmd object containing the migration command
-         */
-        static Cmd
-        migration(std::string const& name)
-        {
-            return Cmd{Migration{name}};
-        }
-
-        /**
-         * @brief Helper function to create a rollback command
-         *
-         * @param name The name of the migration to rollback
-         * @return Cmd object containing the rollback command
-         */
-        static Cmd
-        rollback(std::string const& name)
-        {
-            return Cmd{Rollback{name}};
-        }
-    };
-
     /**
      * @brief Construct a new MigratorApplication object
      *
      * @param config The configuration of the application
      * @param command The command to run
      */
-    MigratorApplication(util::Config const& config, Cmd command);
+    MigratorApplication(util::Config const& config, MigrateSubCmd command);
 
     /**
      * @brief Run the application
@@ -116,10 +100,5 @@ private:
 
     int
     migrate(std::string const& name);
-
-    int
-    rollback(std::string const& name);
-
-    Cmd cmd_;
 };
 }  // namespace app

@@ -19,16 +19,13 @@
 
 #pragma once
 
+#include "migration/MigratiorStatus.hpp"
+
 #include <string>
 #include <tuple>
 #include <vector>
 
-namespace migration {
-
-/**
- * @brief The status of a migrator
- */
-enum class MigratorStatus { Migrated, NotMigrated, NotKnown };
+namespace migration::impl {
 
 /**
  * @brief The interface for the migration manager. This interface is tend to be implemented for specific database. The
@@ -42,12 +39,6 @@ struct MigrationManagerInterface {
      */
     virtual void
     runMigration(std::string const&) = 0;
-
-    /**
-     * @brief Rollback the migration according to the given migrator's name
-     */
-    virtual void
-    runRollback(std::string const&) = 0;
 
     /**
      * @brief Get the status of all the migrators
@@ -72,6 +63,15 @@ struct MigrationManagerInterface {
      */
     virtual MigratorStatus
     getMigratorStatusByName(std::string const& name) const = 0;
+
+    /**
+     * @brief Get the description of a migrator by its name
+     *
+     * @param name The migrator's name
+     * @return The description of the migrator
+     */
+    virtual std::string
+    getMigratorDescriptionByName(std::string const& name) const = 0;
 };
 
-}  // namespace migration
+}  // namespace migration::impl

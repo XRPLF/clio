@@ -17,28 +17,23 @@
 */
 //==============================================================================
 
-#include "migration/cassandra/ObjectsAdapter.hpp"
+#include "migration/cassandra/impl/TransactionsAdapter.hpp"
 
 #include <boost/asio/spawn.hpp>
-#include <xrpl/protocol/STLedgerEntry.h>
+#include <xrpl/protocol/STTx.h>
 #include <xrpl/protocol/Serializer.h>
+#include <xrpl/protocol/TxMeta.h>
 
-#include <optional>
-#include <utility>
-
-namespace migration::cassandra {
+namespace migration::cassandra::impl {
 
 void
-ObjectsAdapter::onRowRead(TableObjectsDesc::Row const& row)
+TransactionsAdapter::onRowRead(TableTransactionsDesc::Row const& row)
 {
-    auto const& [key, ledgerSeq, blob] = row;
-    // the blob can be empty which means the ledger state is deleted
-    if (blob.empty()) {
-        onStateRead_(ledgerSeq, std::nullopt);
-        return;
-    }
-    ripple::SLE sle{ripple::SerialIter{blob.data(), blob.size()}, key};
-    onStateRead_(ledgerSeq, std::make_optional(std::move(sle)));
-}
+    auto const& [txHash, date, ledgerSeq, metaBlob, txBlob] = row;
 
-}  // namespace migration::cassandra
+    ripple::SerialIter it{txBlob.data(), txBlob.size()};
+    ripple::STTx const sttx{it};
+    ripple::TxMeta const txMeta{sttx.getTransactionID(), ledgerSeq, metaBlob};
+    onTransactionRead_(sttx, txMeta);
+}
+}  // namespace migration::cassandra::impl
